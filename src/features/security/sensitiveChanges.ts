@@ -1,13 +1,11 @@
 import type { GlobalAfterChangeHook } from '@/engine'
 
-// The audit and settings modules load on demand: the globals that use this hook are imported by those modules' own config.
-
 /**
  * Sensitive settings: the ones whose change can lock admins out or open the site
  * to someone new. Changing them is NOT blocked by a second confirmation (a
- * single-admin site would be locked out). Instead every change is written to the
- * audit log with the old and new values, and every admin is emailed a notice with
- * who changed it and when.
+ * single-admin site would be locked out). Instead every admin is emailed a notice
+ * with the old and new values, who changed them and when. The audit log row for the
+ * save comes from the settings audit hook (Task 9b, PR #196), not from this file.
  */
 
 type Watch = {
@@ -87,8 +85,9 @@ async function adminEmails(engine: unknown): Promise<string[]> {
 }
 
 /**
- * Global afterChange hook: audit-logs and emails all admins when a watched
- * field changed. Never fails the save: a log or email problem is swallowed.
+ * Global afterChange hook: emails all admins when a watched field changed,
+ * with what changed, who changed it and when. Never fails the save: an email
+ * problem is swallowed.
  */
 export function sensitiveSettingsAfterChange(globalSlug: string, watch: readonly Watch[]): GlobalAfterChangeHook {
   return async ({ doc, previousDoc, req }) => {
@@ -100,24 +99,6 @@ export function sensitiveSettingsAfterChange(globalSlug: string, watch: readonly
 
       const who = request.user?.email ?? 'an admin'
       const when = new Date().toISOString()
-      const { audit, auditContext, impersonatorTag } = await import('./auditLog')
-      const { getSecuritySettings } = await import('./settings')
-      const settings = await getSecuritySettings(request.engine as Parameters<typeof getSecuritySettings>[0])
-      const tag = await impersonatorTag(request.headers?.get('cookie'), request.user?.id)
-      const context = request.headers ? auditContext(new Request('https://engage.local', { headers: request.headers })) : {}
-      await audit(
-        {
-          action: 'settings.update',
-          collectionSlug: globalSlug,
-          actorId: request.user?.id ?? null,
-          actorEmail: request.user?.email ?? null,
-          ...context,
-          ...(tag ?? {}),
-          detail: `Sensitive: ${changes.map((c) => `${c.label} ${c.before} -> ${c.after}`).join('; ')}`,
-        },
-        settings,
-      )
-
       const to = await adminEmails(request.engine)
       if (to.length > 0) {
         const { sendEmail } = await import('@/features/email')
