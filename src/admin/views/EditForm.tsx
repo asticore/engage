@@ -328,7 +328,7 @@ export const EditForm: React.FC<EditFormProps> = ({
                   </>
                 )}
                 {afterFields}
-                {!readOnly && <SaveButton collectionSlug={collectionSlug} draftsEnabled={draftsEnabled} globalSlug={globalSlug} id={id} />}
+                {!readOnly && <SaveButton collectionSlug={collectionSlug} draftsEnabled={draftsEnabled} globalSlug={globalSlug} id={id} expectedUpdatedAt={globalSlug && typeof doc?.updatedAt === 'string' ? doc.updatedAt : null} />}
               </div>
             </div>
           </div>

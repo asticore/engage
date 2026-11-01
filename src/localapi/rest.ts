@@ -181,7 +181,7 @@ import { handleShopSubscriptionEvent } from '@/features/ecommerce/subscriptions/
 import type Stripe from 'stripe'
 
 import type { FieldConfigLike } from './operations'
-import { NotFound as OperationsNotFound, ValidationError } from './operations'
+import { ConflictError, NotFound as OperationsNotFound, ValidationError } from './operations'
 import { parseSearchParams } from './queryParser'
 import { NotFound as ReadNotFound } from './read-operations'
 import type { VersionsRegistryEntry } from './registry'
@@ -288,6 +288,9 @@ type ErrorResponseBody = { errors: Array<{ name?: string; message: string; data?
 function errorToResponse(err: unknown): { status: number; body: ErrorResponseBody } {
   if (err instanceof ValidationError) {
     return { status: 400, body: { errors: [{ name: 'ValidationError', message: err.message, data: { errors: err.errors } }] } }
+  }
+  if (err instanceof ConflictError) {
+    return { status: 409, body: { errors: [{ name: 'Conflict', message: err.message }] } }
   }
   if (err instanceof Forbidden) {
     return { status: 403, body: { errors: [{ name: 'Forbidden', message: err.message }] } }
@@ -1439,7 +1442,9 @@ async function handleGlobalFind(engine: Engine, slug: string, request: Request, 
 /** Real global update is `POST /`, not `PATCH /`, and its response key is `result`, not `doc` - see this file's header. */
 async function handleGlobalUpdate(engine: Engine, slug: string, request: Request, user: Parameters<Engine['find']>[0]['user']): Promise<Response> {
   const { data } = await readRequestBody(request)
-  const result = await engine.updateGlobal({ slug, data, user })
+  // The admin sends the `updatedAt` it loaded, so a save over a newer copy is refused (409) instead of overwriting it.
+  const expectedUpdatedAt = request.headers.get('x-expected-updated-at')
+  const result = await engine.updateGlobal({ slug, data, user, expectedUpdatedAt })
   return Response.json({ message: 'Updated successfully.', result }, { status: 200 })
 }
 

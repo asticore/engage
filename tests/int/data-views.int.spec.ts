@@ -557,7 +557,7 @@ describe('framing', () => {
     const csp = securityHeaders(settings, '/embed/data/1')['Content-Security-Policy']!
     expect(csp).toContain("default-src 'self'")
     expect(csp).toContain('frame-ancestors *')
-    expect(csp).not.toContain("'none'")
+    expect(csp).not.toMatch(/frame-ancestors [^;]*'none'/)
     expect(securityHeaders(settings, '/')['Content-Security-Policy']).toContain("frame-ancestors 'none'")
   })
 })

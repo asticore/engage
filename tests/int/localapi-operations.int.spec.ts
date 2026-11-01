@@ -13,7 +13,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { LocalReq } from '@/localapi/access'
 import { Forbidden } from '@/localapi/access'
 import type { CollectionConfigLike, CollectionDbOps, GlobalConfigLike, GlobalDbOps } from '@/localapi/operations'
-import { createDocument, deleteDocument, matchesWhere, NotFound, updateDocument, updateGlobalDocument, uniqueConstraintErrorToValidationError, ValidationError } from '@/localapi/operations'
+import { ConflictError, createDocument, deleteDocument, matchesWhere, NotFound, updateDocument, updateGlobalDocument, uniqueConstraintErrorToValidationError, ValidationError } from '@/localapi/operations'
 
 /* -------------------------------------------------------------------------- */
 /* Test fixtures                                                              */
@@ -387,6 +387,16 @@ describe('operations/updateGlobalDocument', () => {
   it('throws Forbidden when access denies', async () => {
     const db = makeFakeGlobalDb()
     await expect(updateGlobalDocument({ global: baseGlobal, db, data: { siteName: 'x' }, req: anonReq })).rejects.toThrow(Forbidden)
+  })
+
+  it('refuses a save built on an older copy of the global (ConflictError), and allows the current one', async () => {
+    const db = makeFakeGlobalDb({ siteName: 'new name', updatedAt: '2026-11-01T10:00:00.000Z' })
+    await expect(
+      updateGlobalDocument({ global: baseGlobal, db, data: { siteName: 'mine' }, req: adminReq, overrideAccess: true, expectedUpdatedAt: '2026-11-01T09:00:00.000Z' }),
+    ).rejects.toThrow(ConflictError)
+    await expect(
+      updateGlobalDocument({ global: baseGlobal, db, data: { siteName: 'mine' }, req: adminReq, overrideAccess: true, expectedUpdatedAt: '2026-11-01T10:00:00.000Z' }),
+    ).resolves.toBeTruthy()
   })
 
   it("global beforeValidate/beforeChange hooks receive overrideAccess - Deviation 3 (a collection's own do not)", async () => {
