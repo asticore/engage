@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /** A labelled control with an optional plain-English hint. Shared by the block and brand editors. */
 export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
@@ -36,10 +37,9 @@ type NumberProps = { label: string; value: number; min: number; max: number; onC
 export function NumberField({ label, value, min, max, onChange, hint, title }: NumberProps) {
   return (
     <Field label={label} hint={hint}>
-      <input
+      <Tooltip text={title} block><input
         className="ed-input ed-input--short"
         type="number"
-        title={title}
         min={min}
         max={max}
         value={Number.isFinite(value) ? value : ''}
@@ -47,7 +47,7 @@ export function NumberField({ label, value, min, max, onChange, hint, title }: N
           const next = Number(event.target.value)
           if (Number.isFinite(next)) onChange(next)
         }}
-      />
+      /></Tooltip>
     </Field>
   )
 }

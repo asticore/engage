@@ -4,6 +4,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useEffect, useRef, useState } from 'react'
 import type { EditorField } from '@/lib/elements/fieldTypes'
 import { readColourTokens, type ColourToken } from '@/views/visualEditor/designHelpers'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type ColorValue = {
   value: string
@@ -176,13 +177,13 @@ export const ColorPickerField: React.FC<{
           Theme colours
         </button>
         {linked && (
-          <span className="ve-colour-chip" title={linked}>
+          <Tooltip text={linked}><span className="ve-colour-chip">
             <span className="ve-colour-chip__dot" style={{ background: linkedTokenValue || `var(${linked})` }} />
             <span>{linked}</span>
             <button type="button" className="ve-colour-chip__clear" onClick={clearToken} aria-label={t('aria.clearThemeColourLink')}>
               clear
             </button>
-          </span>
+          </span></Tooltip>
         )}
       </div>
       {showTokens && (
@@ -191,16 +192,14 @@ export const ColorPickerField: React.FC<{
             <span className="ve-colour-tokens__empty">No theme colours on this page.</span>
           ) : (
             tokens.map((t) => (
-              <button
-                key={t.name}
+              <Tooltip text={t.css} key={t.name}><button
                 type="button"
                 className={linked === t.name ? 've-colour-token ve-colour-token--on' : 've-colour-token'}
                 onClick={() => pickToken(t)}
-                title={t.css}
               >
                 <span className="ve-colour-token__swatch" style={{ background: t.value || 'transparent' }} />
                 <span>{t.name}</span>
-              </button>
+              </button></Tooltip>
             ))
           )}
         </div>
@@ -234,11 +233,9 @@ export const ColorPickerField: React.FC<{
               }}
             >
               {globalColors.map((color) => (
-                <button
-                  key={color.id}
+                <Tooltip text={color.label} key={color.id}><button
                   type="button"
                   onClick={() => pickGlobalColor(color.id, color.value)}
-                  title={color.label}
                   style={{
                     padding: 0,
                     border: colorObj.globalColorId === color.id ? '2px solid #333' : '1px solid #ccc',
@@ -260,7 +257,7 @@ export const ColorPickerField: React.FC<{
                     }}
                   />
                   <span style={{ padding: '0 4px 4px 4px', textAlign: 'center', color: '#666' }}>{color.label}</span>
-                </button>
+                </button></Tooltip>
               ))}
             </div>
           ) : (

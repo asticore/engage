@@ -1,7 +1,7 @@
 .local-draft-banner {
   align-items: center;
-  background: var(--local-draft-bg, #f4f1ea);
-  border: 1px solid var(--local-draft-border, #d8d0bd);
+  background: var(--local-draft-bg, var(--lit-f4f1ea, #f4f1ea));
+  border: 1px solid var(--local-draft-border, var(--lit-d8d0bd, #d8d0bd));
   border-radius: 6px;
   display: flex;
   flex-wrap: wrap;

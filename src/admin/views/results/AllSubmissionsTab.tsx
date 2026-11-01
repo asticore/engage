@@ -8,6 +8,7 @@ import { ResultsMessage, ResultsPager, ResultsStat } from './ResultsChrome'
 import { formatWhen, type AllSubmissionRow, type PageInfo } from './rows'
 import type { UiStringKey } from '@/features/uiStrings'
 import { useResultsPage } from './useResultsPage'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type Page = PageInfo & { docs: AllSubmissionRow[] }
 
@@ -76,7 +77,7 @@ export function AllSubmissionsTab({ forms }: { forms: OwnerOption[] }) {
                     <td className="et-clip">
                       <AdminLink path={`/content/forms/${row.formId}`}>{row.formTitle}</AdminLink>
                     </td>
-                    <td className="et-clip" title={row.summary}>{row.summary}</td>
+                    <td className="et-clip"><Tooltip text={row.summary}><span>{row.summary}</span></Tooltip></td>
                     <td className="et-nowrap">{paymentLabel(t, row.paymentStatus)}</td>
                     <td className="et-nowrap">
                       <AdminLink path={`/other/form-submissions/${row.id}`}>{t('frm.lit.open_entry')}</AdminLink>

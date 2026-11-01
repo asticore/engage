@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import { useDocumentInfo, useField } from '@/engine/ui'
 
 import { SUBSCRIPTION_STATUS_LABELS, type SubscriptionStatus } from '../plan'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 /**
  * Pause, resume and cancel buttons on a subscription's edit screen. Only the ones that make sense for
@@ -20,6 +22,7 @@ const ALLOWED: Record<'cancel' | 'keep' | 'pause' | 'resume', SubscriptionStatus
 const LABELS = { cancel: 'Cancel at period end', keep: 'Undo cancellation', pause: 'Pause payments', resume: 'Resume payments' } as const
 
 export function SubscriptionAdminPanel() {
+  const t = useAdminT()
   const { id } = useDocumentInfo()
   const { value } = useField<string>({ path: 'status' })
   const [message, setMessage] = useState('')
@@ -50,9 +53,9 @@ export function SubscriptionAdminPanel() {
 
   return (
     <div className="field-type">
-      <p style={{ margin: '0 0 8px' }} title="Where the subscription is now. Kept up to date from Stripe.">
+      <p style={{ margin: '0 0 8px' }}><Tooltip text={t('tip.whereTheSubscriptionIsNow')}><span>
         Status: <strong>{SUBSCRIPTION_STATUS_LABELS[status] ?? status}</strong>
-      </p>
+      </span></Tooltip></p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {(Object.keys(LABELS) as (keyof typeof LABELS)[]).map((action) => (
           <button key={action} type="button" className="btn btn--style-secondary" disabled={busy || !id || !ALLOWED[action].includes(status)} onClick={() => act(action)}>

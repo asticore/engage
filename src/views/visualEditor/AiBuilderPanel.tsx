@@ -50,6 +50,7 @@ import {
   type AiProvider,
   type AiProviders,
 } from './aiBuilderState'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * "Build with AI" panel, shown in the dialog opened from the Elements tab. Walks a person through brief -> questions or outline -> review and insert.
@@ -433,9 +434,9 @@ export const AiBuilderPanel: React.FC<AiBuilderPanelProps> = ({ pageTitle, selec
           <ul className="ve-ai__saved" aria-label={t('ai.lit.saved_prompts')}>
             {savedPrompts.map((item) => (
               <li key={item.id} className="ve-ai__saved-item">
-                <button type="button" className="ve-ai__chip" title={item.brief} onClick={() => setBrief(item.brief)}>
+                <Tooltip text={item.brief}><button type="button" className="ve-ai__chip" onClick={() => setBrief(item.brief)}>
                   {item.name}
-                </button>
+                </button></Tooltip>
                 <button
                   type="button"
                   className="ve-ai__btn ve-ai__btn--small"

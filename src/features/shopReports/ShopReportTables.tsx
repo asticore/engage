@@ -5,6 +5,8 @@ import React from 'react'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { formatMoney } from '@/features/ecommerce/lib/money'
 import type { ShopReport } from './report'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 type Props = {
   report: ShopReport
@@ -17,6 +19,7 @@ const pctText = (value: number | null) => (value === null ? '-' : `${value}%`)
 
 /** The detail tables. Each sits in a collapsible card (closed until opened) with a CSV download. */
 export function ShopReportTables({ report, currency, csvQuery, onPage }: Props) {
+  const t = useAdminT()
   const money = (cents: number) => formatMoney(cents, currency)
   return (
     <div className="shop-reports__tables">
@@ -73,13 +76,13 @@ export function ShopReportTables({ report, currency, csvQuery, onPage }: Props) 
       </CollapsibleCard>
       <CollapsibleCard id="shop-reports-abandoned" title="Abandoned carts">
         <dl className="shop-reports__pairs">
-          <dt title="Carts with an email address that were not bought, last changed in this range.">Carts left behind</dt>
+          <dt><Tooltip text={t('tip.cartsWithAnEmailAddress')}><span>Carts left behind</span></Tooltip></dt>
           <dd>{report.abandoned.abandoned}</dd>
-          <dt title="Carts that got at least one reminder email.">Carts sent a reminder</dt>
+          <dt><Tooltip text={t('tip.cartsThatGotAtLeast')}><span>Carts sent a reminder</span></Tooltip></dt>
           <dd>{report.abandoned.reminded}</dd>
-          <dt title="Reminded carts that were bought later, in this range.">Bought after a reminder</dt>
+          <dt><Tooltip text={t('tip.remindedCartsThatWereBought')}><span>Bought after a reminder</span></Tooltip></dt>
           <dd>{report.abandoned.recovered}</dd>
-          <dt title="Bought after a reminder, as a share of carts sent a reminder.">Recovery rate</dt>
+          <dt><Tooltip text={t('tip.boughtAfterAReminderAs')}><span>Recovery rate</span></Tooltip></dt>
           <dd>{pctText(report.abandoned.recoveryRatePct)}</dd>
         </dl>
       </CollapsibleCard>
@@ -90,12 +93,13 @@ export function ShopReportTables({ report, currency, csvQuery, onPage }: Props) 
 type Pager = { page: number; pages: number; onPage: (page: number) => void }
 
 function Table({ head, rows, empty, csv, pager }: { head: string[]; rows: (string | number)[][]; empty: string; csv: string; pager?: Pager }) {
+  const t = useAdminT()
   return (
     <div className="shop-reports__table-wrap">
       <div className="shop-reports__table-actions">
-        <a className="shop-reports__csv" href={`/api/admin-shop-reports?${csv}`} download title="Download this table as a spreadsheet file (up to 5,000 rows).">
+        <Tooltip text={t('tip.downloadThisTableAsA')}><a className="shop-reports__csv" href={`/api/admin-shop-reports?${csv}`} download>
           Download CSV
-        </a>
+        </a></Tooltip>
       </div>
       {rows.length === 0 ? (
         <p className="shop-reports__empty">{empty}</p>

@@ -8,9 +8,10 @@ import { changeText, formatInt, pathOf } from '../format'
 import { useWidget } from '../useWidget'
 import type { AnalyticsData, WidgetState } from '../types'
 import { Tile, DataTable, StateNotice, type Column } from './common'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const pageColumns: Column<AnalyticsData['topPages'][number]>[] = [
-  { head: 'Page', cell: (r) => <span title={r.path}>{pathOf(r.path)}</span> },
+  { head: 'Page', cell: (r) => <Tooltip text={r.path}><span>{pathOf(r.path)}</span></Tooltip> },
   { head: 'Views', align: 'right', cell: (r) => formatInt(r.views), help: 'Times the page was viewed.' },
   { head: 'Visitors', align: 'right', cell: (r) => formatInt(r.users), help: 'Different people who viewed the page.' },
 ]

@@ -25,6 +25,7 @@ import { DataViewView } from '../components/DataViewView'
 import { EmbedCard } from './EmbedCard'
 import { GridEditor } from './GridEditor'
 import './dataViewEditor.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type CollectionInfo = { slug: string; label: string; hasCategory: boolean }
 type Tab = 'data' | 'columns' | 'display'
@@ -353,13 +354,13 @@ function ColumnsTab({ cfg, update, readOnly, available, source }: PanelProps & {
               {column.format === 'number' || column.format === 'currency' || column.format === 'percent' ? (
                 <label className="dve-field">
                   <span>Decimal places</span>
-                  <input type="number" min={-1} max={6} value={column.decimals} disabled={readOnly} onChange={(e) => patch(i, { decimals: Math.max(-1, Math.min(6, Math.round(Number(e.target.value)))) })} title="-1 chooses automatically" />
+                  <Tooltip text={t('tip.1ChoosesAutomatically')} block><input type="number" min={-1} max={6} value={column.decimals} disabled={readOnly} onChange={(e) => patch(i, { decimals: Math.max(-1, Math.min(6, Math.round(Number(e.target.value)))) })} /></Tooltip>
                 </label>
               ) : null}
               {column.format === 'currency' ? (
                 <label className="dve-field">
                   <span>Currency code</span>
-                  <input type="text" maxLength={3} value={column.currency} disabled={readOnly} onChange={(e) => patch(i, { currency: e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3) })} title="Three letters, for example AUD, USD, EUR" />
+                  <Tooltip text={t('tip.threeLettersForExampleAud')} block><input type="text" maxLength={3} value={column.currency} disabled={readOnly} onChange={(e) => patch(i, { currency: e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3) })} /></Tooltip>
                 </label>
               ) : null}
               <div className="dve-row">
@@ -406,9 +407,9 @@ function ColumnsTab({ cfg, update, readOnly, available, source }: PanelProps & {
 
 function Check({ label, checked, onChange, readOnly, help }: { label: string; checked: boolean; onChange: (value: boolean) => void; readOnly?: boolean; help?: string }) {
   return (
-    <label className="dve-check" title={help}>
+    <Tooltip text={help}><label className="dve-check">
       <input type="checkbox" checked={checked} disabled={readOnly} onChange={(e) => onChange(e.target.checked)} /> {label}
-    </label>
+    </label></Tooltip>
   )
 }
 

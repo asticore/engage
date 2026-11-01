@@ -10,6 +10,7 @@
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useCallback, useRef, useState } from 'react'
 import { type ThemePref, useTheme } from '@/admin/context/ThemeContext'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const OPTIONS: { label: string; value: ThemePref }[] = [
   { label: 'Light', value: 'light' },
@@ -52,9 +53,9 @@ export const ThemeToggler: React.FC = () => {
 
   return (
     <div className="theme-toggler" onBlur={handleBlur} ref={wrapRef}>
-      <button aria-label={t('al.colorScheme')} className="theme-toggler__trigger" onClick={() => setOpen((prev) => !prev)} title={t('al.colorScheme')} type="button">
+      <Tooltip text={t('al.colorScheme')}><button aria-label={t('al.colorScheme')} className="theme-toggler__trigger" onClick={() => setOpen((prev) => !prev)} type="button">
         <Icon />
-      </button>
+      </button></Tooltip>
       {open && (
         <div className="theme-toggler__menu" role="menu">
           {OPTIONS.map((opt) => (

@@ -3,6 +3,8 @@
 import React from 'react'
 
 import { type LineView } from './refundView'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 export type LinePatch = { units?: string; amount?: string; restock?: boolean }
 
@@ -22,6 +24,7 @@ export function OrderRefundLines({
   onShipping: (value: string) => void
   disabled: boolean
 }) {
+  const t = useAdminT()
   return (
     <table className="order-refunds__table">
       <thead>
@@ -29,9 +32,9 @@ export function OrderRefundLines({
           <th>Item</th>
           <th className="num">Paid</th>
           <th className="num">Refunded so far</th>
-          <th className="num" title="How many of this item are being refunded. Leave at 0 to refund money only.">Units to refund</th>
-          <th className="num" title="Money to give back for this line, in dollars. Includes its tax.">Amount to refund ($)</th>
-          <th title="Put the refunded units back into stock. Only ticked lines are restocked.">Restock</th>
+          <th className="num"><Tooltip text={t('tip.howManyOfThisItem')}><span>Units to refund</span></Tooltip></th>
+          <th className="num"><Tooltip text={t('tip.moneyToGiveBackFor')}><span>Amount to refund ($)</span></Tooltip></th>
+          <th><Tooltip text={t('tip.putTheRefundedUnitsBack')}><span>Restock</span></Tooltip></th>
         </tr>
       </thead>
       <tbody>

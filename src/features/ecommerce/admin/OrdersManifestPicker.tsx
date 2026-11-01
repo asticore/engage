@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /** A collapsed checklist of labelled orders. Ticking none means "all labelled orders not yet on a manifest". */
 export function OrdersManifestPicker({
@@ -17,9 +18,9 @@ export function OrdersManifestPicker({
   const toggle = (id: number) => onChange(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id])
   return (
     <details className="list-toolbar-picker">
-      <summary className="list-toolbar-btn" title={t('orders.manifest.pickTip')}>
+      <summary className="list-toolbar-btn"><Tooltip text={t('orders.manifest.pickTip')}><span>
         {picked.length > 0 ? t('orders.manifest.ticked', { count: picked.length }) : t('orders.manifest.pick')}
-      </summary>
+      </span></Tooltip></summary>
       {orders.length === 0 ? (
         <p>{t('orders.manifest.noLabelled')}</p>
       ) : (

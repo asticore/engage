@@ -7,6 +7,8 @@ import { useDocumentInfo } from '@/engine/ui'
 import { OrderRefundLines } from './OrderRefundLines'
 import './order-refunds.css'
 import { EMPTY_ROW, buildLineViews, selectedRefund, toCents, type LineRow, type RefundInfo } from './refundView'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 const money = (cents: number) => `$${(cents / 100).toFixed(2)}`
 
@@ -24,6 +26,7 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 
 /** Refunds for one order: pick lines (and shipping) to refund, or refund a custom amount or everything left. */
 export function OrderRefundsPanel() {
+  const t = useAdminT()
   const id = useOrderId()
   const [info, setInfo] = useState<RefundInfo | null>(null)
   const [rows, setRows] = useState<Record<number, LineRow>>({})
@@ -93,9 +96,9 @@ export function OrderRefundsPanel() {
               <p className="order-refunds__total">This refund: {money(picked.total)}</p>
               <div className="order-refunds__options">
                 <label>Reason <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} /></label>
-                <label title="Record the refund without moving money. Use it when you refunded outside the shop.">
+                <Tooltip text={t('tip.recordTheRefundWithoutMoving')}><label>
                   <input type="checkbox" checked={method.manual} disabled={!info.canCardRefund || toCredit} onChange={(e) => setManual(e.target.checked)} /> Manual refund (record only, no card refund)
-                </label>
+                </label></Tooltip>
                 {info.canStoreCredit && (
                   <label><input type="checkbox" checked={toCredit} onChange={(e) => setToCredit(e.target.checked)} /> Refund to the customer&apos;s store credit instead of the card</label>
                 )}

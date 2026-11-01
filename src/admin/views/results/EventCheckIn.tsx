@@ -13,17 +13,19 @@ import {
 import { formatWhen } from './rows'
 import { useResultsPage } from './useResultsPage'
 import './event-checkin.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type CheckInPayload = { event: { id: number; title: string }; attendees: CheckInAttendee[]; truncated: boolean }
 
 /** The button on an event's RSVPs tab. It opens the check-in screen full width over the page. */
 export function EventCheckInButton({ eventId }: { eventId: number }) {
+  const t = useAdminT()
   const [open, setOpen] = useState(false)
   return (
     <>
-      <button className="et-button" onClick={() => setOpen(true)} title="Open a full-screen list to tick guests in at the door" type="button">
+      <Tooltip text={t('tip.openAFullScreenList')}><button className="et-button" onClick={() => setOpen(true)} type="button">
         Check-in
-      </button>
+      </button></Tooltip>
       {open && <EventCheckInView eventId={eventId} onClose={() => setOpen(false)} />}
     </>
   )
@@ -153,15 +155,14 @@ function EventCheckInView({ eventId, onClose }: { eventId: number; onClose: () =
               )}
             </div>
             {attendee.checkedIn ? (
-              <button
+              <Tooltip text={t('tip.removeTheCheckInIf')}><button
                 className="eci-action eci-action--undo"
                 disabled={Boolean(saving[attendee.id])}
                 onClick={() => toggle(attendee)}
-                title="Remove the check-in if this was a mistake"
                 type="button"
               >
                 Undo
-              </button>
+              </button></Tooltip>
             ) : (
               <button
                 className="eci-action"

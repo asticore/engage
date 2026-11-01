@@ -27,7 +27,7 @@ describe('element library layout', () => {
     expect(lib).toContain("useState<'compact' | 'comfortable'>('compact')")
     expect(lib).toContain('ve-library--${density}')
     expect(lib).toContain('aria-label={`${block.label}: ${block.description}`}')
-    expect(lib).toContain('title={`${block.label}: ${block.description}`}')
+    expect(lib).toContain('<Tooltip text={`${block.label}: ${block.description}`}')
     expect(styles).toContain('.ve-library--compact .ve-library__grid')
   })
 })

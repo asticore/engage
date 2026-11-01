@@ -17,7 +17,7 @@
 
 .header p {
   margin: 0;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary, var(--lit-666, #666));
 }
 
 .rolesContainer {
@@ -35,9 +35,9 @@
 
 /* Roles list */
 .rolesList {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border, var(--lit-ddd, #ddd));
   border-radius: 4px;
-  background: var(--color-bg-secondary, #f9f9f9);
+  background: var(--color-bg-secondary, var(--lit-f9f9f9, #f9f9f9));
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -51,7 +51,7 @@
 
 .rolesHeader {
   padding: 1rem;
-  border-bottom: 1px solid var(--color-border, #ddd);
+  border-bottom: 1px solid var(--color-border, var(--lit-ddd, #ddd));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -70,7 +70,7 @@
 .roleItem {
   padding: 0.75rem 1rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--color-border, #eee);
+  border-bottom: 1px solid var(--color-border, var(--lit-eee, #eee));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -86,7 +86,7 @@
 }
 
 .roleItem:hover {
-  background: var(--color-bg, #fff);
+  background: var(--color-bg, var(--lit-fff, #fff));
 }
 
 [data-theme='dark'] .roleItem:hover {
@@ -94,7 +94,7 @@
 }
 
 .roleItemActive {
-  background: var(--color-primary-light, #e8f4ff);
+  background: var(--color-primary-light, var(--lit-e8f4ff, #e8f4ff));
   font-weight: 600;
 }
 
@@ -110,7 +110,7 @@
   display: inline-block;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
-  background: var(--color-gray, #ddd);
+  background: var(--color-gray, var(--lit-ddd, #ddd));
   border-radius: 3px;
   white-space: nowrap;
   margin-left: 0.5rem;
@@ -135,7 +135,7 @@
 }
 
 .dialogContent {
-  background: var(--color-bg, #fff);
+  background: var(--color-bg, var(--lit-fff, #fff));
   border-radius: 8px;
   padding: 2rem;
   max-width: 400px;
@@ -156,7 +156,7 @@
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border, var(--lit-ddd, #ddd));
   border-radius: 4px;
   font-family: inherit;
   font-size: 1rem;
@@ -171,7 +171,7 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--color-primary, #0066cc);
+  border-color: var(--color-primary, var(--lit-0066cc, #0066cc));
   box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
@@ -210,9 +210,9 @@
 }
 
 .btnSecondary {
-  background: var(--color-bg, #f0f0f0);
-  color: var(--color-text, #000);
-  border: 1px solid var(--color-border, #ccc);
+  background: var(--color-bg, var(--lit-f0f0f0, #f0f0f0));
+  color: var(--color-text, var(--lit-000, #000));
+  border: 1px solid var(--color-border, var(--lit-ccc, #ccc));
 }
 
 [data-theme='dark'] .btnSecondary {
@@ -222,7 +222,7 @@
 }
 
 .btnSecondary:hover:not(:disabled) {
-  background: var(--color-bg, #e0e0e0);
+  background: var(--color-bg, var(--lit-e0e0e0, #e0e0e0));
 }
 
 [data-theme='dark'] .btnSecondary:hover:not(:disabled) {
@@ -245,10 +245,10 @@
 
 /* Matrix panel */
 .matrixPanel {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border, var(--lit-ddd, #ddd));
   border-radius: 4px;
   padding: 2rem;
-  background: var(--color-bg, #fff);
+  background: var(--color-bg, var(--lit-fff, #fff));
 }
 
 [data-theme='dark'] .matrixPanel {
@@ -272,17 +272,17 @@
 
 .desc {
   margin: 0.5rem 0 0 0;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary, var(--lit-666, #666));
   font-size: 0.95rem;
 }
 
 .readOnly {
   margin: 0.5rem 0 0 0;
   padding: 0.5rem 0.75rem;
-  background: var(--color-bg-secondary, #f5f5f5);
+  background: var(--color-bg-secondary, var(--lit-f5f5f5, #f5f5f5));
   border-radius: 3px;
   font-size: 0.85rem;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary, var(--lit-666, #666));
   display: inline-block;
 }
 
@@ -312,7 +312,7 @@
 .matrix th,
 .matrix td {
   padding: 0.75rem;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border, var(--lit-ddd, #ddd));
   text-align: left;
 }
 
@@ -322,7 +322,7 @@
 }
 
 .matrix th {
-  background: var(--color-bg-secondary, #f5f5f5);
+  background: var(--color-bg-secondary, var(--lit-f5f5f5, #f5f5f5));
   font-weight: 600;
   position: sticky;
   top: 0;
@@ -340,9 +340,9 @@
 }
 
 .groupHeader {
-  background: var(--color-bg-secondary, #f9f9f9);
+  background: var(--color-bg-secondary, var(--lit-f9f9f9, #f9f9f9));
   font-weight: 600;
-  border-top: 2px solid var(--color-border, #ddd);
+  border-top: 2px solid var(--color-border, var(--lit-ddd, #ddd));
 }
 
 [data-theme='dark'] .groupHeader {
@@ -353,7 +353,7 @@
 .groupHeader td {
   padding: 1rem 0.75rem;
   border: none;
-  border-top: 2px solid var(--color-border, #ddd);
+  border-top: 2px solid var(--color-border, var(--lit-ddd, #ddd));
 }
 
 [data-theme='dark'] .groupHeader td {
@@ -365,7 +365,7 @@
 }
 
 .resourceRow:hover {
-  background: var(--color-bg-secondary, #fafafa);
+  background: var(--color-bg-secondary, var(--lit-fafafa, #fafafa));
 }
 
 [data-theme='dark'] .resourceRow:hover {
@@ -385,7 +385,7 @@
   display: block;
   font-size: 0.8rem;
   font-weight: normal;
-  color: var(--color-text-secondary, #999);
+  color: var(--color-text-secondary, var(--lit-999, #999));
 }
 
 .cellContainer {
@@ -407,16 +407,16 @@
 .emptyState {
   padding: 3rem 1rem;
   text-align: center;
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary, var(--lit-666, #666));
 }
 
 .error {
   padding: 1rem;
   margin-bottom: 1rem;
-  background: #ffebee;
-  border: 1px solid #ef5350;
+  background: var(--lit-ffebee, #ffebee);
+  border: 1px solid var(--lit-ef5350, #ef5350);
   border-radius: 4px;
-  color: #c62828;
+  color: var(--lit-c62828, #c62828);
 }
 
 [data-theme='dark'] .error {

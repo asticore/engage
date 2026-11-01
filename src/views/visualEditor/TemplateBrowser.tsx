@@ -6,6 +6,7 @@ import type { SectionNode } from '@/lib/sectionTree'
 
 import { TEMPLATE_CATEGORY_OPTIONS, TEMPLATE_PRESETS, type TemplateKind } from './templatePresets'
 import { renderTemplateThumbnail, type ThumbnailPalette } from './templateThumbnail'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /** Fired on `window` after a template is saved so the browser refreshes "My templates". */
 export const TEMPLATES_CHANGED_EVENT = 've-templates-changed'
@@ -337,8 +338,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[])
             const loading = loadingKey === card.key
             const showImage = card.image && !brokenImages[card.key]
             return (
-              <div
-                key={card.key}
+              <Tooltip text={card.description} key={card.key}><div
                 role="button"
                 tabIndex={card.disabled ? -1 : 0}
                 className="ve-tpl__card"
@@ -356,7 +356,6 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[])
                 aria-disabled={card.disabled || (loadingKey !== null && !loading)}
                 aria-busy={loading}
                 aria-label={`Insert template ${card.name}`}
-                title={card.description}
               >
                 <span className="ve-tpl__thumb">
                   {showImage ? (
@@ -379,7 +378,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[])
                   {card.origin === 'repo' && <span className="ve-tpl__chip ve-tpl__chip--repo">Library</span>}
                   {card.origin === 'mine' && <span className="ve-tpl__chip ve-tpl__chip--mine">{card.kind === 'section' ? 'Section' : 'Page'}</span>}
                 </span>
-              </div>
+              </div></Tooltip>
             )
           })}
         </div>

@@ -16,6 +16,7 @@ import {
 
 import type { ColumnOp } from './canvasBridge'
 import { CheckRow, DesignPanel, makeResponsive, NumberRow, RespNumber, SelectRow, type EditDevice, type RowResp } from './DesignPanel'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type Tab = 'layout' | 'design'
 
@@ -284,12 +285,12 @@ export const ColumnPanel: React.FC<{
       </div>
 
       <div className="ve-panel__footer ve-panel__footer--wrap">
-        <button type="button" className="ve-btn ve-btn--ghost" onClick={() => onOp('moveLeft')} disabled={!canEditLayout || index === 0} title={t('ve.col.moveLeft')}>
+        <Tooltip text={t('ve.col.moveLeft')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => onOp('moveLeft')} disabled={!canEditLayout || index === 0}>
           {'←'} Left
-        </button>
-        <button type="button" className="ve-btn ve-btn--ghost" onClick={() => onOp('moveRight')} disabled={!canEditLayout || index === columns.length - 1} title={t('ve.col.moveRight')}>
+        </button></Tooltip>
+        <Tooltip text={t('ve.col.moveRight')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => onOp('moveRight')} disabled={!canEditLayout || index === columns.length - 1}>
           Right {'→'}
-        </button>
+        </button></Tooltip>
         <button type="button" className="ve-btn ve-btn--ghost" onClick={() => onOp('add')} disabled={!canEditLayout}>
           {t('ve.col.addColumn')}
         </button>

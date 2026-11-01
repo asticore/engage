@@ -8,11 +8,12 @@ import { formatInt, pathOf } from '../format'
 import { useWidget } from '../useWidget'
 import type { SpeedSummary, WidgetState } from '../types'
 import { Tile, DataTable, StateNotice, type Column } from './common'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type Row = SpeedSummary['worst'][number]
 
 const columns: Column<Row>[] = [
-  { head: 'Page', cell: (r) => <a href={r.editHref} title={r.url}>{pathOf(r.url)}</a> },
+  { head: 'Page', cell: (r) => <Tooltip text={r.url}><a href={r.editHref}>{pathOf(r.url)}</a></Tooltip> },
   { head: 'Mobile score', align: 'right', cell: (r) => formatInt(r.performance), help: 'PageSpeed performance score on a phone, 0 to 100. 90 or more is good.' },
 ]
 

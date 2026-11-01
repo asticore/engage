@@ -4,7 +4,7 @@
   padding: 16px;
   max-width: 1000px;
   box-sizing: border-box;
-  color: var(--theme-elevation-900, #1a1a1a);
+  color: var(--theme-elevation-900, var(--lit-1a1a1a, #1a1a1a));
 }
 
 .et-header {
@@ -23,7 +23,7 @@
 }
 
 .et-muted {
-  color: var(--theme-elevation-600, #555);
+  color: var(--theme-elevation-600, var(--lit-555, #555));
   font-size: 13px;
   margin: 8px 0;
 }
@@ -46,7 +46,7 @@
   text-align: left;
   vertical-align: top;
   padding: 8px;
-  border-bottom: 1px solid var(--theme-elevation-150, #e5e5e5);
+  border-bottom: 1px solid var(--theme-elevation-150, var(--lit-e5e5e5, #e5e5e5));
 }
 
 .et-table th {
@@ -60,18 +60,18 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--theme-elevation-100, #eee);
-  color: var(--theme-elevation-800, #333);
+  background: var(--theme-elevation-100, var(--lit-eee, #eee));
+  color: var(--theme-elevation-800, var(--lit-333, #333));
 }
 
 .et-badge--good {
   background: #e3f5e8;
-  color: #1d6b34;
+  color: var(--lit-1d6b34, #1d6b34);
 }
 
 .et-badge--missing {
-  background: #fbe6e3;
-  color: #a33226;
+  background: var(--lit-fbe6e3, #fbe6e3);
+  color: var(--lit-a33226, #a33226);
 }
 
 .et-form {
@@ -93,9 +93,9 @@
 .et-input {
   padding: 8px;
   font-size: 14px;
-  border: 1px solid var(--theme-elevation-200, #ccc);
+  border: 1px solid var(--theme-elevation-200, var(--lit-ccc, #ccc));
   border-radius: 4px;
-  background: var(--theme-input-bg, #fff);
+  background: var(--theme-input-bg, var(--lit-fff, #fff));
   color: inherit;
   max-width: 100%;
   box-sizing: border-box;
@@ -112,7 +112,7 @@
   padding: 8px 14px;
   font-size: 14px;
   border-radius: 4px;
-  border: 1px solid #2b5fd9;
+  border: 1px solid var(--lit-2b5fd9, #2b5fd9);
   background: #2b5fd9;
   color: #fff;
   cursor: pointer;
@@ -120,7 +120,7 @@
 
 .et-button--secondary {
   background: transparent;
-  color: #2b5fd9;
+  color: var(--lit-2b5fd9, #2b5fd9);
 }
 
 .et-button:disabled {
@@ -138,7 +138,7 @@
 .et-sms-row {
   margin-top: 16px;
   padding-top: 12px;
-  border-top: 1px solid var(--theme-elevation-150, #e5e5e5);
+  border-top: 1px solid var(--theme-elevation-150, var(--lit-e5e5e5, #e5e5e5));
 }
 
 [data-theme='dark'] .et-muted {

@@ -5,6 +5,7 @@ import React, { useState } from 'react'
 import { serializeStyle } from './editorClipboard'
 import { addPreset, applyPresetDesign, loadPresets, removePreset, savePresets, type StylePreset } from './stylePresets'
 import './navLibraryPresets.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /** Save the current block style under a name, then apply or delete saved presets. Apply is one onChange (one undo step). */
 export const StylePresets: React.FC<{
@@ -64,7 +65,7 @@ export const StylePresets: React.FC<{
             <ul className="ve-presets__list">
               {presets.map((p) => (
                 <li key={p.id} className="ve-presets__item">
-                  <span className="ve-presets__name" title={p.name}>{p.name}</span>
+                  <Tooltip text={p.name}><span className="ve-presets__name">{p.name}</span></Tooltip>
                   <button type="button" className="ve-presets__btn" onClick={() => apply(p)} aria-label={`Apply preset ${p.name}`}>Apply</button>
                   <button type="button" className="ve-presets__btn" onClick={() => del(p.id)} aria-label={`Delete preset ${p.name}`}>Delete</button>
                 </li>

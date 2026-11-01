@@ -22,6 +22,7 @@ import { pathKey, type NodePath } from './treeOps'
 import { CanvasInlineEditor, type InlineEditorProps } from './CanvasInlineEditor'
 import { inlineCandidate } from './inlineEdit'
 import type { CanvasBlockMark } from './translateCanvas'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 export type CanvasHandlers = {
   /** Double-click on editable text: start editing it in place (itemIndex for list items). */
@@ -202,14 +203,14 @@ const CanvasNode: React.FC<{
         </button>
         <span className="ve-node__label">
           {lock && (
-            <span className="ve-node__lock" role="img" aria-label={lock.mode === 'full' ? t('cv.lit.fully_locked') : 'Structure locked'} title={lock.mode === 'full' ? t('cv.lit.fully_locked') : 'Structure locked: text only'}>
+            <Tooltip text={lock.mode === 'full' ? t('cv.lit.fully_locked') : t('tip.structureLockedTextOnly')}><span className="ve-node__lock" role="img" aria-label={lock.mode === 'full' ? t('cv.lit.fully_locked') : 'Structure locked'}>
               🔒{' '}
-            </span>
+            </span></Tooltip>
           )}
           {def?.icon} {def?.label || node.blockType}
         </span>
         <span className="ve-node__spacer" />
-        <button
+        <Tooltip text={t('cv.lit.move_up')}><button
           type="button"
           className="ve-node__act"
           onClick={(e) => {
@@ -218,11 +219,10 @@ const CanvasNode: React.FC<{
           }}
           disabled={blocked || index === 0}
           aria-label={t('cv.lit.move_up')}
-          title={t('cv.lit.move_up')}
         >
           ↑
-        </button>
-        <button
+        </button></Tooltip>
+        <Tooltip text={t('cv.lit.move_down')}><button
           type="button"
           className="ve-node__act"
           onClick={(e) => {
@@ -231,11 +231,10 @@ const CanvasNode: React.FC<{
           }}
           disabled={blocked || index === total - 1}
           aria-label={t('cv.lit.move_down')}
-          title={t('cv.lit.move_down')}
         >
           ↓
-        </button>
-        <button
+        </button></Tooltip>
+        <Tooltip text={t('cv.lit.duplicate')}><button
           type="button"
           className="ve-node__act"
           disabled={blocked}
@@ -244,11 +243,10 @@ const CanvasNode: React.FC<{
             handlers.onDuplicate(path)
           }}
           aria-label={t('cv.lit.duplicate')}
-          title={t('cv.lit.duplicate')}
         >
           ⧉
-        </button>
-        <button
+        </button></Tooltip>
+        <Tooltip text={t('cv.lit.delete')}><button
           type="button"
           className="ve-node__act ve-node__act--danger"
           disabled={blocked}
@@ -257,10 +255,9 @@ const CanvasNode: React.FC<{
             handlers.onDelete(path)
           }}
           aria-label={t('cv.lit.delete')}
-          title={t('cv.lit.delete')}
         >
           ✕
-        </button>
+        </button></Tooltip>
       </div>
       {/* Shape dividers are real rendered SVGs on the live site (StyledBlock),
           not a CSS style - so the wrapperStyle above (blockStyleToCss) alone
@@ -278,13 +275,12 @@ const CanvasNode: React.FC<{
         />
       )}
       {hasVisibilityRules(design) && (
-        <span
+        <Tooltip text={t('cv.lit.this_block_only_shows_when_its_visibilit')}><span
           className="ve-node__badge"
-          title={t('cv.lit.this_block_only_shows_when_its_visibilit')}
           style={{ position: 'absolute', top: 4, left: 4, zIndex: 5, padding: '1px 6px', borderRadius: 8, fontSize: 10, background: '#4f46e5', color: '#fff', pointerEvents: 'none' }}
         >
           Has visibility rules
-        </span>
+        </span></Tooltip>
       )}
       <div className="ve-node__body">
         {node.blockType === 'section' ? (
@@ -472,14 +468,13 @@ const ColumnResizeHandle: React.FC<{
   }
 
   return (
-    <div
+    <Tooltip text={t('cv.lit.drag_to_resize_these_two_columns')}><div
       className={`ve-col-resize${tip ? ' ve-col-resize--active' : ''}`}
       style={{ left: `${left}%` }}
       role="separator"
       aria-orientation="vertical"
       aria-label={`Resize columns ${index + 1} and ${index + 2}`}
       aria-disabled={disabled || undefined}
-      title={t('cv.lit.drag_to_resize_these_two_columns')}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={(event) => finish(event, true)}
@@ -487,7 +482,7 @@ const ColumnResizeHandle: React.FC<{
       onClick={(event) => event.stopPropagation()}
     >
       {tip && <span className="ve-col-resize__tip" role="status">{`${tip[0]}% / ${tip[1]}%`}</span>}
-    </div>
+    </div></Tooltip>
   )
 }
 
@@ -548,7 +543,7 @@ const SectionColumns: React.FC<{
     }
     const colorVar = parsedLayout?.tabsColor ? ({ '--be-tab-color': parsedLayout.tabsColor } as React.CSSProperties) : undefined
     const addBtn = (
-      <button
+      <Tooltip text={display === 'tabs' ? t('cv.lit.add_tab') : t('tip.addPanel')}><button
         type="button"
         className="ve-tabs-bar__add"
         disabled={ownerLocked}
@@ -557,10 +552,9 @@ const SectionColumns: React.FC<{
           handlers.onColumnOp?.([...path, columns.length - 1], 'add')
         }}
         aria-label={display === 'tabs' ? t('cv.lit.add_tab') : 'Add panel'}
-        title={display === 'tabs' ? t('cv.lit.add_tab') : 'Add panel'}
       >
         +
-      </button>
+      </button></Tooltip>
     )
     const renderPanel = (column: SectionColumn, i: number) => (
       <CanvasColumn
@@ -747,21 +741,21 @@ const CanvasColumn: React.FC<{
       <div className="ve-column__tag">Column {index + 1}</div>
       {selected && (
         <div className="ve-column__toolbar" role="toolbar" aria-label={`Column ${index + 1} actions`}>
-          <button type="button" className="ve-column__act" disabled={ownerLocked || index === 0} onClick={(e) => op(e, 'moveLeft')} aria-label={t('cv.lit.move_column_left')} title={t('cv.lit.move_column_left')}>
+          <Tooltip text={t('cv.lit.move_column_left')}><button type="button" className="ve-column__act" disabled={ownerLocked || index === 0} onClick={(e) => op(e, 'moveLeft')} aria-label={t('cv.lit.move_column_left')}>
             {'←'}
-          </button>
-          <button type="button" className="ve-column__act" disabled={ownerLocked || index === count - 1} onClick={(e) => op(e, 'moveRight')} aria-label={t('cv.lit.move_column_right')} title={t('cv.lit.move_column_right')}>
+          </button></Tooltip>
+          <Tooltip text={t('cv.lit.move_column_right')}><button type="button" className="ve-column__act" disabled={ownerLocked || index === count - 1} onClick={(e) => op(e, 'moveRight')} aria-label={t('cv.lit.move_column_right')}>
             {'→'}
-          </button>
-          <button type="button" className="ve-column__act" disabled={ownerLocked} onClick={(e) => op(e, 'add')} aria-label={t('cv.lit.add_column')} title={t('cv.lit.add_column_after_this_one')}>
+          </button></Tooltip>
+          <Tooltip text={t('cv.lit.add_column_after_this_one')}><button type="button" className="ve-column__act" disabled={ownerLocked} onClick={(e) => op(e, 'add')} aria-label={t('cv.lit.add_column')}>
             +
-          </button>
-          <button type="button" className="ve-column__act" disabled={ownerLocked} onClick={(e) => op(e, 'duplicate')} aria-label={t('cv.lit.duplicate_column')} title={t('cv.lit.duplicate_column')}>
+          </button></Tooltip>
+          <Tooltip text={t('cv.lit.duplicate_column')}><button type="button" className="ve-column__act" disabled={ownerLocked} onClick={(e) => op(e, 'duplicate')} aria-label={t('cv.lit.duplicate_column')}>
             {'⧉'}
-          </button>
-          <button type="button" className="ve-column__act ve-column__act--danger" disabled={ownerLocked || count <= 1} onClick={(e) => op(e, 'delete')} aria-label={t('cv.lit.delete_column')} title={count <= 1 ? t('cv.lit.a_section_needs_at_least_one_column') : t('cv.lit.delete_column')}>
+          </button></Tooltip>
+          <Tooltip text={count <= 1 ? t('cv.lit.a_section_needs_at_least_one_column') : t('cv.lit.delete_column')}><button type="button" className="ve-column__act ve-column__act--danger" disabled={ownerLocked || count <= 1} onClick={(e) => op(e, 'delete')} aria-label={t('cv.lit.delete_column')}>
             {'✕'}
-          </button>
+          </button></Tooltip>
         </div>
       )}
       <CanvasNodeList nodes={column.blocks || []} containerPath={columnPath} handlers={handlers} depth={depth + 1} />
@@ -828,7 +822,7 @@ const InsertSlot: React.FC<{
       data-ve-container={JSON.stringify(containerPath)}
       data-ve-at={at}
     >
-      <button
+      <Tooltip text={isOpen ? t('cv.lit.close_element_picker') : t('tip.addAnElementHere')}><button
         type="button"
         className="ve-insert__btn"
         onClick={(e) => {
@@ -836,10 +830,9 @@ const InsertSlot: React.FC<{
           onAdd(containerPath, at)
         }}
         aria-label={isOpen ? t('cv.lit.close_element_picker') : 'Add an element here'}
-        title={isOpen ? t('cv.lit.close_element_picker') : 'Add an element here'}
       >
         +
-      </button>
+      </button></Tooltip>
     </div>
   )
 }

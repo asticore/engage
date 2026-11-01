@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 type Report = {
   dryRun: boolean
@@ -15,6 +17,7 @@ type Report = {
 
 /** Export and import of products on the Products list: preview first, then confirm. */
 export function ProductsCsvActions() {
+  const t = useAdminT()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -60,13 +63,13 @@ export function ProductsCsvActions() {
 
   return (
     <>
-      <button type="button" onClick={exportCsv} className="list-toolbar-btn" title="Download all products as CSV">
+      <Tooltip text={t('tip.downloadAllProductsAsCsv')}><button type="button" onClick={exportCsv} className="list-toolbar-btn">
         Export CSV
-      </button>
+      </button></Tooltip>
       <div className="list-import-modal">
-        <button type="button" onClick={() => { setOpen(!open); setReport(null); setError('') }} className="list-toolbar-btn" title="Import products from CSV">
+        <Tooltip text={t('tip.importProductsFromCsv')}><button type="button" onClick={() => { setOpen(!open); setReport(null); setError('') }} className="list-toolbar-btn">
           Import CSV
-        </button>
+        </button></Tooltip>
         {open && (
           <div className="list-import-panel">
             {!report || (!report.dryRun && report) ? (

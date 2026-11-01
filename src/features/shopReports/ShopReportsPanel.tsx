@@ -7,6 +7,8 @@ import type { ShopReport } from './report'
 import { ShopReportsChart } from './ShopReportsChart'
 import { ShopReportTables } from './ShopReportTables'
 import './shop-reports.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 type Query = { preset: string; from: string; to: string; bucket: string; products: number; locations: number; lowStock: number }
 type Payload = { currency: string; report: ShopReport }
@@ -38,6 +40,7 @@ function toParams(q: Query): string {
  * Every number comes from /api/admin-shop-reports (SQL on the server, cached five minutes).
  */
 export function ShopReportsPanel() {
+  const t = useAdminT()
   const [query, setQuery] = useState<Query>(INITIAL)
   const [result, setResult] = useState<{ key: string; data?: Payload; error?: string }>({ key: '' })
   const key = toParams(query)
@@ -89,7 +92,7 @@ export function ShopReportsPanel() {
             </label>
           </>
         ) : null}
-        <label className="shop-reports__field" title="How the chart groups sales. Leave on automatic to let the range decide.">
+        <Tooltip text={t('tip.howTheChartGroupsSales')}><label className="shop-reports__field">
           <span>Chart groups by</span>
           <select value={query.bucket} onChange={(e) => set({ bucket: e.target.value })}>
             <option value="">Automatic</option>
@@ -97,7 +100,7 @@ export function ShopReportsPanel() {
             <option value="week">Week</option>
             <option value="month">Month</option>
           </select>
-        </label>
+        </label></Tooltip>
       </div>
 
       {data ? (
@@ -142,10 +145,10 @@ export function ShopReportsPanel() {
 
 function Kpi({ label, value, hint, extra }: { label: string; value: string; hint: string; extra?: string }) {
   return (
-    <div className="shop-reports__kpi" title={hint}>
+    <Tooltip text={hint}><div className="shop-reports__kpi">
       <span className="shop-reports__kpi-label">{label}</span>
       <strong className="shop-reports__kpi-value">{value}</strong>
       {extra ? <span className="shop-reports__kpi-extra">{extra}</span> : null}
-    </div>
+    </div></Tooltip>
   )
 }

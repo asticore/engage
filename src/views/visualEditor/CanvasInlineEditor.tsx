@@ -4,6 +4,7 @@ import React, { useEffect, useReducer, useRef } from 'react'
 
 import { ALL_MARKS, applyFormat, clearFormat, sanitizeInlineHtml, shortcutMark, type Mark } from './inlineFormat'
 import { inlineReducer, inlineResult, startInline } from './inlineEdit'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 export type InlineEditorProps = {
   /** Text when editing began. */
@@ -147,9 +148,8 @@ function pointAt(root: Node, offset: number): { node: Node; offset: number } {
 }
 
 const ToolButton: React.FC<{ text: string; title: string; run: () => void; style?: React.CSSProperties }> = ({ text, title, run, style }) => (
-  <button
+  <Tooltip text={title}><button
     type="button"
-    title={title}
     aria-label={title}
     onMouseDown={(e) => {
       e.preventDefault()
@@ -158,7 +158,7 @@ const ToolButton: React.FC<{ text: string; title: string; run: () => void; style
     style={{ padding: '2px 8px', border: 0, background: 'transparent', color: '#fff', cursor: 'pointer', font: '600 13px sans-serif', ...style }}
   >
     {text}
-  </button>
+  </button></Tooltip>
 )
 
 const RichInlineEditor: React.FC<Pick<InlineEditorProps, 'value' | 'multiline' | 'formats' | 'label' | 'onCommit' | 'onCancel' | 'onTab'>> = ({ value, multiline, formats = ALL_MARKS, label, onCommit, onCancel, onTab }) => {

@@ -12,6 +12,7 @@ import { createFormFromPreset, filterFormPresetCards, formPresetCards } from './
 import { TemplateBrowser } from './TemplateBrowser'
 import { FAVS_KEY, RECENTS_KEY, loadList, pushRecent, saveList, toggleFavourite } from './libraryRecents'
 import './navLibraryPresets.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const CATEGORY_KEY = 've-library-category'
 const DENSITY_KEY = 've-library-density'
@@ -157,8 +158,7 @@ export const ElementLibrary: React.FC<{
   }, [results])
 
   const renderCard = (block: BlockDef) => (
-                                          <div
-                        key={block.slug}
+                                          <Tooltip text={`${block.label}: ${block.description}`} key={block.slug}><div
                         role="button"
                         tabIndex={0}
                         className="ve-library__card"
@@ -179,7 +179,6 @@ export const ElementLibrary: React.FC<{
                             pick(block.slug)
                           }
                         }}
-                        title={`${block.label}: ${block.description}`}
                         aria-label={`${block.label}: ${block.description}`}
                       >
                         <span className="ve-library__card-icon">{block.icon}</span>
@@ -198,7 +197,7 @@ export const ElementLibrary: React.FC<{
                         >
                           {favs.includes(block.slug) ? String.fromCharCode(9733) : String.fromCharCode(9734)}
                         </button>
-                      </div>
+                      </div></Tooltip>
                       )
 
   return (
@@ -290,8 +289,7 @@ export const ElementLibrary: React.FC<{
                 <h4 className="ve-library__group-title">{t('ve.lib.global')}</h4>
                 <div className="ve-library__grid">
                   {globalMatches.map((g) => (
-                    <div
-                      key={g.id}
+                    <Tooltip text={`${g.name}: ${g.description || t('tip.editsGlobalSection')}`} key={g.id}><div
                       role="button"
                       tabIndex={0}
                       className="ve-library__card"
@@ -302,12 +300,11 @@ export const ElementLibrary: React.FC<{
                           onPickTemplate([globalNode(g.id)])
                         }
                       }}
-                      title={`${g.name}: ${g.description || 'Edits to this global section update every page that uses it.'}`}
                       aria-label={g.name}
                     >
                       <span className="ve-library__card-icon">{String.fromCodePoint(0x1f310)}</span>
                       <span className="ve-library__card-label">{g.name}</span>
-                    </div>
+                    </div></Tooltip>
                   ))}
                 </div>
               </div>
@@ -333,8 +330,7 @@ export const ElementLibrary: React.FC<{
                       else setFormNotice(result.error)
                     }
                     return (
-                      <div
-                        key={f.id}
+                      <Tooltip text={`${f.label}: ${f.description}`} key={f.id}><div
                         role="button"
                         tabIndex={0}
                         className="ve-library__card"
@@ -345,12 +341,11 @@ export const ElementLibrary: React.FC<{
                             void insert()
                           }
                         }}
-                        title={`${f.label}: ${f.description}`}
                         aria-label={f.label}
                       >
                         <span className="ve-library__card-icon">{String.fromCodePoint(0x1f4dd)}</span>
                         <span className="ve-library__card-label">{f.label}</span>
-                      </div>
+                      </div></Tooltip>
                     )
                   })}
                 </div>
@@ -362,8 +357,7 @@ export const ElementLibrary: React.FC<{
                 <h4 className="ve-library__group-title">{t('ve.lib.shop')}</h4>
                 <div className="ve-library__grid">
                   {shopCards.map((c) => (
-                    <div
-                      key={c.id}
+                    <Tooltip text={`${c.label}: ${c.description}`} key={c.id}><div
                       role="button"
                       tabIndex={0}
                       className="ve-library__card"
@@ -374,12 +368,11 @@ export const ElementLibrary: React.FC<{
                           onPickTemplate([commercePresetNode(c.id)!])
                         }
                       }}
-                      title={`${c.label}: ${c.description}`}
                       aria-label={c.label}
                     >
                       <span className="ve-library__card-icon">{String.fromCodePoint(0x1f6d2)}</span>
                       <span className="ve-library__card-label">{c.label}</span>
-                    </div>
+                    </div></Tooltip>
                   ))}
                 </div>
               </div>

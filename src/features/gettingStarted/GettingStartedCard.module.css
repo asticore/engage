@@ -1,8 +1,8 @@
 /* Getting-started card styles matching admin dark theme */
 
 .card {
-  background: var(--color-admin-bg-secondary, #1a1a1a);
-  border: 1px solid var(--color-admin-border, #333333);
+  background: var(--color-admin-bg-secondary, var(--lit-1a1a1a, #1a1a1a));
+  border: 1px solid var(--color-admin-border, var(--lit-333333, #333333));
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 24px;
@@ -14,8 +14,8 @@
 }
 
 [data-theme='light'] .card {
-  background: #ffffff;
-  border-color: #e0e0e0;
+  background: var(--lit-ffffff, #ffffff);
+  border-color: var(--lit-e0e0e0, #e0e0e0);
 }
 
 .header {
@@ -33,7 +33,7 @@
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 4px 0;
-  color: var(--color-admin-text, #ffffff);
+  color: var(--color-admin-text, var(--lit-ffffff, #ffffff));
 }
 
 [data-theme='dark'] .title {
@@ -41,12 +41,12 @@
 }
 
 [data-theme='light'] .title {
-  color: #000000;
+  color: var(--lit-000000, #000000);
 }
 
 .subtitle {
   font-size: 13px;
-  color: var(--color-admin-text-secondary, #999999);
+  color: var(--color-admin-text-secondary, var(--lit-999999, #999999));
   margin: 0;
 }
 
@@ -55,7 +55,7 @@
 }
 
 [data-theme='light'] .subtitle {
-  color: #666666;
+  color: var(--lit-666666, #666666);
 }
 
 .controls {
@@ -66,8 +66,8 @@
 .collapseBtn,
 .dismissBtn {
   background: none;
-  border: 1px solid var(--color-admin-border, #333333);
-  color: var(--color-admin-text, #ffffff);
+  border: 1px solid var(--color-admin-border, var(--lit-333333, #333333));
+  color: var(--color-admin-text, var(--lit-ffffff, #ffffff));
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 4px;
@@ -88,13 +88,13 @@
 
 [data-theme='light'] .collapseBtn,
 [data-theme='light'] .dismissBtn {
-  border-color: #d0d0d0;
-  color: #000000;
+  border-color: var(--lit-d0d0d0, #d0d0d0);
+  color: var(--lit-000000, #000000);
 }
 
 [data-theme='light'] .collapseBtn:hover,
 [data-theme='light'] .dismissBtn:hover {
-  background-color: #f5f5f5;
+  background-color: var(--lit-f5f5f5, #f5f5f5);
 }
 
 .progressContainer {
@@ -107,7 +107,7 @@
 .progressBar {
   flex: 1;
   height: 8px;
-  background: var(--color-admin-bg-tertiary, #2a2a2a);
+  background: var(--color-admin-bg-tertiary, var(--lit-2a2a2a, #2a2a2a));
   border-radius: 4px;
   overflow: hidden;
 }
@@ -117,7 +117,7 @@
 }
 
 [data-theme='light'] .progressBar {
-  background: #f0f0f0;
+  background: var(--lit-f0f0f0, #f0f0f0);
 }
 
 .progressFill {
@@ -129,7 +129,7 @@
 .progressLabel {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-admin-text, #ffffff);
+  color: var(--color-admin-text, var(--lit-ffffff, #ffffff));
   min-width: 30px;
   text-align: right;
 }
@@ -139,7 +139,7 @@
 }
 
 [data-theme='light'] .progressLabel {
-  color: #000000;
+  color: var(--lit-000000, #000000);
 }
 
 .content {
@@ -155,7 +155,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--color-admin-text-secondary, #999999);
+  color: var(--color-admin-text-secondary, var(--lit-999999, #999999));
   margin: 0 0 12px 0;
   display: flex;
   justify-content: space-between;
@@ -167,12 +167,12 @@
 }
 
 [data-theme='light'] .categoryTitle {
-  color: #666666;
+  color: var(--lit-666666, #666666);
 }
 
 .categoryCount {
   font-size: 11px;
-  color: var(--color-admin-text-secondary, #666666);
+  color: var(--color-admin-text-secondary, var(--lit-666666, #666666));
 }
 
 [data-theme='dark'] .categoryCount {
@@ -180,7 +180,7 @@
 }
 
 [data-theme='light'] .categoryCount {
-  color: #999999;
+  color: var(--lit-999999, #999999);
 }
 
 .items {
@@ -195,7 +195,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  background: var(--color-admin-bg-tertiary, #2a2a2a);
+  background: var(--color-admin-bg-tertiary, var(--lit-2a2a2a, #2a2a2a));
   border-radius: 4px;
   transition: background-color 0.2s;
 }
@@ -209,11 +209,11 @@
 }
 
 [data-theme='light'] .item {
-  background: #f5f5f5;
+  background: var(--lit-f5f5f5, #f5f5f5);
 }
 
 [data-theme='light'] .item:hover {
-  background: #eeeeee;
+  background: var(--lit-eeeeee, #eeeeee);
 }
 
 .itemContent {
@@ -241,7 +241,7 @@
 .itemTitle {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-admin-text, #ffffff);
+  color: var(--color-admin-text, var(--lit-ffffff, #ffffff));
 }
 
 [data-theme='dark'] .itemTitle {
@@ -249,12 +249,12 @@
 }
 
 [data-theme='light'] .itemTitle {
-  color: #000000;
+  color: var(--lit-000000, #000000);
 }
 
 .itemHelp {
   font-size: 12px;
-  color: var(--color-admin-text-secondary, #999999);
+  color: var(--color-admin-text-secondary, var(--lit-999999, #999999));
   margin: 0;
 }
 
@@ -263,14 +263,14 @@
 }
 
 [data-theme='light'] .itemHelp {
-  color: #666666;
+  color: var(--lit-666666, #666666);
 }
 
 .itemLink {
   display: inline-flex;
   align-items: center;
   font-size: 12px;
-  color: #4a9eff;
+  color: var(--lit-4a9eff, #4a9eff);
   text-decoration: none;
   padding: 4px 8px;
   border-radius: 4px;

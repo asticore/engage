@@ -19,6 +19,8 @@ import {
 } from '../types'
 import { AdminLineChart } from '@/admin/charts/AdminLineChart'
 import './pagespeed.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 type Loaded = {
   testable: boolean
@@ -43,12 +45,13 @@ const bandClass = (band: Band | null): string => `ps-band--${band ?? 'none'}`
 const BAND_WORD: Record<Band, string> = { good: 'Good', 'needs-work': 'Needs work', poor: 'Poor' }
 
 function Ring({ label, help, score, previous }: { label: string; help: string; score: number | null; previous: number | null }) {
+  const t = useAdminT()
   const band = scoreBand(score)
   const radius = 30
   const circumference = 2 * Math.PI * radius
   const delta = scoreDelta(score, previous)
   return (
-    <div className={`ps-ring ${bandClass(band)}`} title={help}>
+    <Tooltip text={help}><div className={`ps-ring ${bandClass(band)}`}>
       <svg className="ps-ring__svg" viewBox="0 0 72 72" role="img" aria-label={`${label}: ${score === null ? 'no score' : `${score} out of 100${band ? `, ${BAND_WORD[band]}` : ''}`}`}>
         <circle className="ps-ring__track" cx="36" cy="36" r={radius} />
         {score !== null && (
@@ -60,11 +63,11 @@ function Ring({ label, help, score, previous }: { label: string; help: string; s
       </svg>
       <span className="ps-ring__label">{label}</span>
       {delta && (
-        <span className={`ps-delta ps-delta--${delta.direction}`} title="Change since the previous test of this page">
+        <Tooltip text={t('tip.changeSinceThePreviousTest')}><span className={`ps-delta ps-delta--${delta.direction}`}>
           {delta.direction === 'same' ? 'no change' : `${delta.change > 0 ? '+' : ''}${delta.change} since last`}
-        </span>
+        </span></Tooltip>
       )}
-    </div>
+    </div></Tooltip>
   )
 }
 
@@ -98,6 +101,7 @@ function Chart({ history }: { history: StoredResult[] }) {
 }
 
 function Report({ latest, previous, hasKey }: { latest: StoredResult; previous: StoredResult | null; hasKey: boolean }) {
+  const t = useAdminT()
   const metrics = METRIC_ORDER.filter((key) => latest.metrics[key])
   const field = latest.fieldData
   const fieldKeys = field ? (['lcp', 'cls', 'inp', 'fcp', 'ttfb'] as const).filter((key) => field.metrics[key]) : []
@@ -128,7 +132,7 @@ function Report({ latest, previous, hasKey }: { latest: StoredResult; previous: 
                   <tr key={key} className={bandClass(metric.band)}>
                     <th scope="row">
                       <span className="ps-dot" aria-hidden="true" />
-                      <span className="ps__tip" title={THRESHOLDS[key].help}>{THRESHOLDS[key].label}</span>
+                      <Tooltip text={THRESHOLDS[key].help}><span className="ps__tip">{THRESHOLDS[key].label}</span></Tooltip>
                     </th>
                     <td>
                       <span className="ps__value">{formatMetric(key, metric.value)}</span> <span className="ps__muted">{BAND_WORD[metric.band]}</span>
@@ -146,9 +150,9 @@ function Report({ latest, previous, hasKey }: { latest: StoredResult; previous: 
 
       {field && fieldKeys.length > 0 && (
         <div>
-          <h3 className="ps__h" title="Measured from real Chrome visitors over the last 28 days. Only shown by Google for pages with enough traffic.">
+          <h3 className="ps__h"><Tooltip text={t('tip.measuredFromRealChromeVisitors')}><span>
             Real visitors (Chrome UX Report){field.originFallback ? ', whole site' : ''}
-          </h3>
+          </span></Tooltip></h3>
           <table className="ps__table">
             <tbody>
               {fieldKeys.map((key) => {
@@ -158,7 +162,7 @@ function Report({ latest, previous, hasKey }: { latest: StoredResult; previous: 
                   <tr key={key} className={bandClass(metric.band)}>
                     <th scope="row">
                       <span className="ps-dot" aria-hidden="true" />
-                      <span className="ps__tip" title={THRESHOLDS[key].help}>{THRESHOLDS[key].label}</span>
+                      <Tooltip text={THRESHOLDS[key].help}><span className="ps__tip">{THRESHOLDS[key].label}</span></Tooltip>
                     </th>
                     <td>
                       <span className="ps__value">{formatMetric(key, metric.percentile)}</span> <span className="ps__muted">{BAND_WORD[metric.band]}</span>
@@ -174,7 +178,7 @@ function Report({ latest, previous, hasKey }: { latest: StoredResult; previous: 
 
       {latest.suggestions.opportunities.length > 0 && (
         <div>
-          <h3 className="ps__h" title="Changes Google estimates would make the page load faster, biggest first. Savings are estimates.">Opportunities</h3>
+          <h3 className="ps__h"><Tooltip text={t('tip.changesGoogleEstimatesWouldMake')}><span>Opportunities</span></Tooltip></h3>
           <ul className="ps__list">
             {latest.suggestions.opportunities.map((item) => (
               <li key={item.id}>
@@ -192,7 +196,7 @@ function Report({ latest, previous, hasKey }: { latest: StoredResult; previous: 
 
       {latest.suggestions.diagnostics.length > 0 && (
         <div>
-          <h3 className="ps__h" title="Things worth looking at that do not have a direct time saving.">Diagnostics</h3>
+          <h3 className="ps__h"><Tooltip text={t('tip.thingsWorthLookingAtThat')}><span>Diagnostics</span></Tooltip></h3>
           <ul className="ps__list">
             {latest.suggestions.diagnostics.map((item) => (
               <li key={item.id}>
@@ -208,6 +212,7 @@ function Report({ latest, previous, hasKey }: { latest: StoredResult; previous: 
 }
 
 function PageSpeedBody({ collectionSlug, id }: { collectionSlug: string; id: number }) {
+  const t = useAdminT()
   const [open] = useCardOpen(CARD_ID)
   const [data, setData] = useState<Loaded | null>(null)
   const [strategy, setStrategy] = useState<Strategy>('mobile')
@@ -271,15 +276,14 @@ function PageSpeedBody({ collectionSlug, id }: { collectionSlug: string; id: num
             ))}
           </div>
           {data.canRun && (
-            <button
+            <Tooltip text={t('tip.asksGoogleToLoadThe')}><button
               type="button"
               className="btn"
               disabled={busy !== null || !data.testable}
-              title="Asks Google to load the live page and score it. Takes 15 to 60 seconds. Google limits how many tests can run, and results vary a little each time."
               onClick={() => void run(strategy)}
             >
               {busy ? `Testing ${busy}...` : `Run ${strategy} test`}
-            </button>
+            </button></Tooltip>
           )}
           {data.url && <span className="ps__muted">{data.url}</span>}
         </div>
@@ -289,7 +293,7 @@ function PageSpeedBody({ collectionSlug, id }: { collectionSlug: string; id: num
       {data && !latest && data.testable && <p className="ps__muted">No {strategy} test yet. Run one to see scores, Core Web Vitals and suggestions.</p>}
       {history.length > 0 && (
         <div>
-          <h3 className="ps__h" title="Performance score of each past test of this page on this device. Lines at 90 and 50 mark the green and red limits.">History ({strategy})</h3>
+          <h3 className="ps__h"><Tooltip text={t('tip.performanceScoreOfEachPast')}><span>History ({strategy})</span></Tooltip></h3>
           <Chart history={history} />
         </div>
       )}

@@ -22,7 +22,7 @@
   opacity: 0.7;
 }
 .dve-error {
-  color: #b3261e;
+  color: var(--lit-b3261e, #b3261e);
   font-size: 13px;
   margin: 0 0 8px;
 }
@@ -185,7 +185,7 @@
   margin: 0 0 12px;
 }
 .dve-status--on {
-  color: #1a7f37;
+  color: var(--lit-1a7f37, #1a7f37);
 }
 [data-theme='dark'] .dve-status--on {
   color: #7ee2a0;

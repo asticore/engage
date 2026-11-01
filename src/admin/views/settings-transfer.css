@@ -15,7 +15,7 @@
   margin: 0 0 8px 0;
   font-size: 24px;
   font-weight: 600;
-  color: var(--theme-elevation-900, #1a1a1a);
+  color: var(--theme-elevation-900, var(--lit-1a1a1a, #1a1a1a));
 }
 
 .st-heading {
@@ -31,18 +31,18 @@
 }
 
 .st-muted {
-  color: var(--color-text-secondary, #666);
+  color: var(--color-text-secondary, var(--lit-666, #666));
   font-size: 14px;
   line-height: 1.5;
   margin: 0;
 }
 
 .st-card {
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-border, var(--lit-ddd, #ddd));
   border-radius: 6px;
   padding: 20px;
   margin-bottom: 24px;
-  background: var(--color-bg, #fff);
+  background: var(--color-bg, var(--lit-fff, #fff));
   box-sizing: border-box;
 }
 
@@ -90,7 +90,7 @@
 }
 
 .st-secrets {
-  border-top: 1px solid var(--color-border, #ddd);
+  border-top: 1px solid var(--color-border, var(--lit-ddd, #ddd));
   margin-top: 8px;
   padding-top: 16px;
   display: grid;
@@ -147,7 +147,7 @@
 .st-table td {
   text-align: left;
   padding: 8px 10px;
-  border-bottom: 1px solid var(--color-border, #e5e5e5);
+  border-bottom: 1px solid var(--color-border, var(--lit-e5e5e5, #e5e5e5));
 }
 
 .st-table td {
@@ -155,7 +155,7 @@
 }
 
 .st-error-count {
-  color: #c62828;
+  color: var(--lit-c62828, #c62828);
   font-weight: 600;
 }
 

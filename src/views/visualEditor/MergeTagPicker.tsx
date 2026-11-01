@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react'
 
 import { MERGE_TAG_LIBRARY } from '@/lib/mergeTags'
 import { fetchFieldGroups, type CustomFieldDef, type FieldGroupDoc } from '@/fields/customFields/types'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 /**
  * Dropdown that inserts a merge tag into a text field.
@@ -37,6 +39,7 @@ function tagsFor(defs: CustomFieldDef[], prefix: string): { tag: string; label: 
 }
 
 export const MergeTagPicker: React.FC<{ onInsert: (tag: string) => void; collection?: string }> = ({ onInsert, collection }) => {
+  const t = useAdminT()
   const [open, setOpen] = useState(false)
   const [groups, setGroups] = useState<FieldGroupDoc[] | null>(null)
 
@@ -58,15 +61,14 @@ export const MergeTagPicker: React.FC<{ onInsert: (tag: string) => void; collect
 
   return (
     <div className="ve-tagpicker">
-      <button
+      <Tooltip text={t('tip.insertAMergeTag')}><button
         type="button"
         className="ve-tagpicker__btn"
         onClick={() => setOpen(!open)}
-        title="Insert a merge tag"
         aria-label="Insert a merge tag"
       >
         {'{ }'}
-      </button>
+      </button></Tooltip>
 
       {open && (
         <>

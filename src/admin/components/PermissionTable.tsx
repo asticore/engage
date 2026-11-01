@@ -19,6 +19,7 @@ import {
   getScope,
   setScope,
 } from '@/features/roles/permissionTable'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -244,8 +245,7 @@ export function PermissionTable({
                               <td
                                 key={`${row.resource}-${action}`}
                                 className={styles.cellContainer}
-                                title={displayState}
-                              >
+                              ><Tooltip text={displayState}><span>
                                 <button
                                   onClick={() => handleToggleCell(row.resource, action as Action)}
                                   disabled={readOnly || isSecret}
@@ -266,7 +266,7 @@ export function PermissionTable({
                                 >
                                   {displayState === 'allow' ? '✓' : displayState === 'deny' ? '✕' : inheritedVal ? '–' : ''}
                                 </button>
-                              </td>
+                              </span></Tooltip></td>
                             )
                           } else {
                             const isEnabled = perms[action as Action] ?? false

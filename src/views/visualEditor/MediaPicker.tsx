@@ -7,6 +7,7 @@ import { formatLimit, loadUploadRules, runPool, UPLOAD_CONCURRENCY, uploadFile, 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { filenameToAlt, filesFromClipboard, validateFiles } from './mediaPickerUpload'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type MediaDoc = {
   id: number
@@ -184,12 +185,10 @@ export const MediaPicker: React.FC<{
           )}
           <div className="ve-media-grid">
             {items.map((item) => (
-              <button
-                key={item.id}
+              <Tooltip text={item.filename || ''} key={item.id}><button
                 type="button"
                 className="ve-media-grid__item"
                 onClick={() => onSelect(item.id, item)}
-                title={item.filename || ''}
               >
                 {item.url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -197,7 +196,7 @@ export const MediaPicker: React.FC<{
                 ) : (
                   <span>{t('ve.media.noPreview')}</span>
                 )}
-              </button>
+              </button></Tooltip>
             ))}
           </div>
         </div>

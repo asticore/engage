@@ -10,12 +10,12 @@
 
 .edit-lock-banner--warning {
   background-color: rgba(251, 146, 60, 0.1);
-  border-bottom-color: rgb(251, 146, 60);
+  border-bottom-color: var(--lit-rgb-251-146-60, rgb(251, 146, 60));
 }
 
 .edit-lock-banner--taken-over {
   background-color: rgba(239, 68, 68, 0.1);
-  border-bottom-color: rgb(239, 68, 68);
+  border-bottom-color: var(--lit-rgb-239-68-68, rgb(239, 68, 68));
 }
 
 .edit-lock-banner__content {
@@ -32,11 +32,11 @@
 }
 
 .edit-lock-banner--warning .edit-lock-banner__text {
-  color: rgb(120, 53, 15);
+  color: var(--lit-rgb-120-53-15, rgb(120, 53, 15));
 }
 
 .edit-lock-banner--taken-over .edit-lock-banner__text {
-  color: rgb(127, 29, 29);
+  color: var(--lit-rgb-127-29-29, rgb(127, 29, 29));
 }
 
 .edit-lock-banner__button {

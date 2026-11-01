@@ -18,10 +18,21 @@
 
 .seo-analysis-dot--ok {
   background-color: var(--color-warning-500);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
+/* Shape as well as colour: good is a circle, ok a diamond, bad a square. */
 .seo-analysis-dot--bad {
   background-color: var(--color-error-500);
+  border-radius: 2px;
+}
+
+[data-theme='dark'] .seo-analysis-dot--good {
+  background-color: #5cc47a;
+}
+
+[data-theme='dark'] .seo-analysis-dot--bad {
+  background-color: #ff8a80;
 }
 
 .seo-analysis-dot--info {

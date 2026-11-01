@@ -12,14 +12,14 @@
 
 .es-muted {
   margin: 0 0 8px 0;
-  color: #666;
+  color: var(--lit-666, #666);
   font-size: 13px;
 }
 
 .es-tier {
   margin: 0 0 12px 0;
   padding: 12px;
-  border: 1px solid #d8d8d8;
+  border: 1px solid var(--lit-d8d8d8, #d8d8d8);
   border-radius: 4px;
 }
 
@@ -49,14 +49,14 @@
   margin: 0 0 12px 0;
   padding: 10px 14px;
   border-left: 3px solid #b58900;
-  background: #fbf7e8;
-  color: #1a1a1a;
+  background: var(--lit-fbf7e8, #fbf7e8);
+  color: var(--lit-1a1a1a, #1a1a1a);
   font-size: 14px;
 }
 
 .es-banner--trash {
-  border-left-color: #b3261e;
-  background: #fbeceb;
+  border-left-color: var(--lit-b3261e, #b3261e);
+  background: var(--lit-fbeceb, #fbeceb);
 }
 
 .es-banner p {
@@ -71,19 +71,19 @@
   gap: 8px;
   margin: 0 0 12px 0;
   padding: 8px 12px;
-  border: 1px solid #d0d0d0;
+  border: 1px solid var(--lit-d0d0d0, #d0d0d0);
   border-radius: 4px;
-  background: #f7f7f7;
+  background: var(--lit-f7f7f7, #f7f7f7);
   font-size: 14px;
 }
 
 .es-bulk select,
 .es-bulk input[type='text'] {
   padding: 5px 8px;
-  border: 1px solid #c8c8c8;
+  border: 1px solid var(--lit-c8c8c8, #c8c8c8);
   border-radius: 4px;
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--lit-fff, #fff);
+  color: var(--lit-1a1a1a, #1a1a1a);
   font: inherit;
   font-size: 13px;
 }
@@ -96,13 +96,13 @@
   flex: 1 1 100%;
   padding: 8px 10px;
   border-left: 3px solid #b58900;
-  background: #fbf7e8;
-  color: #1a1a1a;
+  background: var(--lit-fbf7e8, #fbf7e8);
+  color: var(--lit-1a1a1a, #1a1a1a);
 }
 
 .es-bulk__confirm--danger {
-  border-left-color: #b3261e;
-  background: #fbeceb;
+  border-left-color: var(--lit-b3261e, #b3261e);
+  background: var(--lit-fbeceb, #fbeceb);
 }
 
 .es-bulk__result {
@@ -146,10 +146,10 @@
 .es-field-row input,
 .es-field-row textarea {
   padding: 5px 8px;
-  border: 1px solid #c8c8c8;
+  border: 1px solid var(--lit-c8c8c8, #c8c8c8);
   border-radius: 4px;
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--lit-fff, #fff);
+  color: var(--lit-1a1a1a, #1a1a1a);
   font: inherit;
 }
 
@@ -165,11 +165,11 @@
 }
 
 .es-tool-diff del {
-  color: #b3261e;
+  color: var(--lit-b3261e, #b3261e);
 }
 
 .es-tool-diff ins {
-  color: #2e7d32;
+  color: var(--lit-2e7d32, #2e7d32);
   text-decoration: none;
   font-weight: 600;
 }

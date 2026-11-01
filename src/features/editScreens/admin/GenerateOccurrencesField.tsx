@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 
 import { useDocumentInfo } from '@/engine/ui'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 type GenerateResult = { ok?: boolean; created?: number; skipped?: number; failed?: number; truncated?: boolean; error?: string }
 
@@ -11,6 +13,7 @@ type GenerateResult = { ok?: boolean; created?: number; skipped?: number; failed
  * drafts. The event must be saved first, because the server reads the saved repeat rule.
  */
 export function GenerateOccurrencesField() {
+  const t = useAdminT()
   const { id } = useDocumentInfo()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -44,9 +47,9 @@ export function GenerateOccurrencesField() {
 
   return (
     <div className="field-type" style={{ marginBottom: 16 }}>
-      <button type="button" className="btn btn--secondary" disabled={busy} onClick={run} title="Creates a draft event for each other date in the series. Dates that already exist are left alone.">
+      <Tooltip text={t('tip.createsADraftEventFor')}><button type="button" className="btn btn--secondary" disabled={busy} onClick={run}>
         {busy ? 'Creating dates...' : 'Generate occurrences'}
-      </button>
+      </button></Tooltip>
       {message ? (
         <p role="status" style={{ marginTop: 8 }}>
           {message}

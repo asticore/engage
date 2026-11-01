@@ -75,7 +75,7 @@
   cursor: pointer;
 }
 .ed-button:disabled { opacity: 0.5; cursor: not-allowed; }
-.ed-button--primary { background: var(--ed-focus); border-color: var(--ed-focus); color: #ffffff; }
+.ed-button--primary { background: var(--ed-focus); border-color: var(--ed-focus); color: var(--lit-ffffff, #ffffff); }
 .ed-button--quiet { background: transparent; }
 .ed-button--danger { color: var(--ed-danger); background: transparent; }
 

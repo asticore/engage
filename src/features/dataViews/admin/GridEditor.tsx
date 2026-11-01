@@ -5,6 +5,8 @@ import React from 'react'
 import { parseCsv } from '@/lib/spreadsheet/csv'
 
 import { LIMITS, type GridConfig } from '../types'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 /**
  * A small spreadsheet: type in cells, add or remove rows and columns, choose whether the first row
@@ -12,6 +14,7 @@ import { LIMITS, type GridConfig } from '../types'
  * from the cell you pasted into. Merged cells are not supported.
  */
 export function GridEditor({ grid, onChange, readOnly }: { grid: GridConfig; onChange: (next: GridConfig) => void; readOnly?: boolean }) {
+  const t = useAdminT()
   const rows = grid.rows
   const width = rows.reduce((max, row) => Math.max(max, row.length), 0) || 1
 
@@ -58,9 +61,9 @@ export function GridEditor({ grid, onChange, readOnly }: { grid: GridConfig; onC
               <th aria-label="Row" />
               {Array.from({ length: width }, (_, c) => (
                 <th key={c}>
-                  <button type="button" className="dve-link" disabled={readOnly || width <= 1} onClick={() => removeCol(c)} title="Remove this column">
+                  <Tooltip text={t('tip.removeThisColumn')}><button type="button" className="dve-link" disabled={readOnly || width <= 1} onClick={() => removeCol(c)}>
                     Remove column {c + 1}
-                  </button>
+                  </button></Tooltip>
                 </th>
               ))}
             </tr>
@@ -69,9 +72,9 @@ export function GridEditor({ grid, onChange, readOnly }: { grid: GridConfig; onC
             {rows.map((row, r) => (
               <tr key={r} className={r === 0 && grid.headerRow ? 'dve-grid__head' : undefined}>
                 <th scope="row">
-                  <button type="button" className="dve-link" disabled={readOnly || rows.length <= 1} onClick={() => removeRow(r)} title="Remove this row">
+                  <Tooltip text={t('tip.removeThisRow')}><button type="button" className="dve-link" disabled={readOnly || rows.length <= 1} onClick={() => removeRow(r)}>
                     Remove
-                  </button>
+                  </button></Tooltip>
                 </th>
                 {Array.from({ length: width }, (_, c) => (
                   <td key={c}>

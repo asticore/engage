@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react'
 
 import { STRUCTURES, structureRects, type Structure } from './columnOps'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /** Small SVG of a structure: one rounded rectangle per column. */
 export const StructureIcon: React.FC<{ widths: number[] }> = ({ widths }) => (
@@ -54,18 +55,16 @@ export const StructurePicker: React.FC<{
         </p>
         <div className="ve-structure__grid">
           {STRUCTURES.map((structure, i) => (
-            <button
-              key={structure.id}
+            <Tooltip text={structure.label} key={structure.id}><button
               ref={i === 0 ? firstRef : undefined}
               type="button"
               className="ve-structure__option"
               onClick={() => onPick(structure)}
-              title={structure.label}
               aria-label={structure.label}
             >
               <StructureIcon widths={structure.widths} />
               <span className="ve-structure__label">{structure.label}</span>
-            </button>
+            </button></Tooltip>
           ))}
         </div>
         <div className="ve-structure__footer">

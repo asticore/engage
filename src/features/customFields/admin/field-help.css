@@ -4,10 +4,10 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  border: 1px solid var(--theme-elevation-150, #d6d2e0);
+  border: 1px solid var(--theme-elevation-150, var(--lit-d6d2e0, #d6d2e0));
   border-left: 4px solid #2e3192;
   border-radius: 6px;
-  background: var(--theme-elevation-50, #f5f4f9);
+  background: var(--theme-elevation-50, var(--lit-f5f4f9, #f5f4f9));
   padding: 12px 14px;
   font-size: 13px;
   line-height: 1.45;
@@ -56,7 +56,7 @@
   height: 18px;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--theme-elevation-300, #8f8a9c);
+  border: 1px solid var(--theme-elevation-300, var(--lit-8f8a9c, #8f8a9c));
   border-radius: 50%;
   background: transparent;
   color: inherit;
@@ -69,8 +69,8 @@
 
 .cf-tag-hint__btn:hover,
 .cf-tag-hint__btn:focus-visible {
-  border-color: #2e3192;
-  color: #2e3192;
+  border-color: var(--lit-2e3192, #2e3192);
+  color: var(--lit-2e3192, #2e3192);
   outline: 2px solid #2e3192;
   outline-offset: 2px;
 }
@@ -85,10 +85,10 @@
   flex-direction: column;
   gap: 6px;
   padding: 10px 12px;
-  border: 1px solid #b9b5c6;
+  border: 1px solid var(--lit-b9b5c6, #b9b5c6);
   border-radius: 6px;
-  background: #ffffff;
-  color: #1d1b26;
+  background: var(--lit-ffffff, #ffffff);
+  color: var(--lit-1d1b26, #1d1b26);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
   font-size: 12px;
   font-weight: 400;
@@ -104,7 +104,7 @@
   display: block;
   padding: 6px 8px;
   border-radius: 4px;
-  background: #f1f0f6;
+  background: var(--lit-f1f0f6, #f1f0f6);
   font-size: 12px;
   overflow-wrap: anywhere;
   user-select: all;
@@ -124,7 +124,7 @@
 .cf-tag-hint__copy {
   margin: 0;
   padding: 3px 9px;
-  border: 1px solid #8f8a9c;
+  border: 1px solid var(--lit-8f8a9c, #8f8a9c);
   border-radius: 5px;
   background: transparent;
   color: inherit;
@@ -135,8 +135,8 @@
 
 .cf-tag-hint__copy:hover,
 .cf-tag-hint__copy:focus-visible {
-  border-color: #2e3192;
-  color: #2e3192;
+  border-color: var(--lit-2e3192, #2e3192);
+  color: var(--lit-2e3192, #2e3192);
 }
 
 .cf-tag-hint__status {

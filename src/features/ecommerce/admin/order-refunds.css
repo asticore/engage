@@ -16,7 +16,7 @@
   text-align: left;
   padding: 6px 8px;
   vertical-align: middle;
-  border-bottom: 1px solid var(--theme-elevation-150, #ddd);
+  border-bottom: 1px solid var(--theme-elevation-150, var(--lit-ddd, #ddd));
 }
 
 .order-refunds__table .num {
