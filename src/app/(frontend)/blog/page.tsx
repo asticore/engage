@@ -90,6 +90,7 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
         baseUrl: context.baseUrl,
         siteName: context.siteName,
         breadcrumbs: listBreadcrumbs({ baseUrl: context.baseUrl, path: '/blog', name: 'Blog' }),
+        listItems: postArchiveItems(posts).map((item) => ({ name: item.title, url: context.baseUrl + item.href })),
       })
     : null
 

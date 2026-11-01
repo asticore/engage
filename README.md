@@ -120,7 +120,7 @@ Both endpoints are guarded by an `x-seed-key` header, checked against `INTERNAL_
 
 - **D1 database** (`d1_databases`, binding `D1`). The `database_id` must exist in the target account. Create it or point the config at the restored one, then run `deploy:database` so every migration and the hand-built SQL reach it.
 - **Images binding** (`images`, binding `IMAGES`). It is used by media optimisation (`src/features/media/optimise.ts`), so it needs Images transformations enabled on the account.
-- **Cron trigger** (`triggers.crons`, `*/5 * * * *`). The Worker runs its scheduled handler from this. Check it under the Worker's Triggers tab after the first deploy.
+- **Cron trigger** (`triggers.crons`, `*/5 * * * *`, entry `cloudflare-worker.ts`). Scheduled publishing runs on this trigger every 5 minutes, so the Worker's scheduled handler publishes and unpublishes due pages from it. Confirm the trigger in the Cloudflare dashboard under the Worker's Triggers tab after the first deploy.
 - **Secrets and variables**: `INTERNAL_ROUTE_KEY` (used by the internal endpoints) and any integration keys. Set them before `deploy:migrate` so the endpoints can be reached.
 
 Restore or first-deploy checklist:
