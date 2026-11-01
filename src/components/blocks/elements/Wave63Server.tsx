@@ -34,7 +34,7 @@ export async function PostFeaturedImageElement(props: P): Promise<React.ReactEle
   const url = str(img?.url)
   if (!url) return null
   // eslint-disable-next-line @next/next/no-img-element
-  return <img className="post-featured-image" src={url} alt={str(img?.alt)} style={{ width: '100%', height: 'auto' }} />
+  return <img decoding="async" fetchPriority="high" className="post-featured-image" src={url} alt={str(img?.alt)} style={{ width: '100%', height: 'auto' }} />
 }
 
 export async function PostExcerptElement(props: P): Promise<React.ReactElement | null> {
@@ -100,7 +100,7 @@ export async function ArchiveGridElement(props: P): Promise<React.ReactElement |
               <Link href={item.href} className="archive-grid__item block">
                 {showImage && item.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.image.url} alt={item.image.alt ?? ''} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
+                  <img decoding="async" src={item.image.url} alt={item.image.alt ?? ''} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
                 ) : null}
                 <h2 style={{ fontSize: '1.1rem' }}>{item.title}</h2>
                 {showExcerpt && item.excerpt ? <p>{item.excerpt}</p> : null}
