@@ -18,7 +18,7 @@ import { loadDisplayState } from '@/features/ecommerce/server/displayState'
 import { shopCurrency } from '@/features/ecommerce/server/pricing'
 import { getAllResolvedPages, getAllResolvedPagesAnyDomain, type ResolvedPage } from '@/utilities/pagePaths'
 import { requestHost } from '@/features/domains/request'
-import { menuPageEntry } from '@/features/domains/menu'
+import { menuPageEntry, menuPageOtherDomain } from '@/features/domains/menu'
 import type { Media } from '@/engage-types'
 
 import { SeoBodyScripts, SeoJsonLd, SeoScripts } from '@/features/seo'
@@ -114,7 +114,11 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       const pageId = item.page && typeof item.page === 'object' ? (item.page as { id?: unknown }).id : item.page
       if (!pageId) return null
       const entry = menuPageEntry(pageId as number | string, host, resolvedPages, anyDomainPages)
-      if (!entry) return null
+      if (!entry) {
+        // Scoped only to another domain: link to its address there (absolute), instead of dropping the link.
+        const other = menuPageOtherDomain(pageId as number | string, host, anyDomainPages)
+        return other ? `https://${other.host}${other.path}` : null
+      }
       return entry.page.isHomepage ? '/' : `/${entry.path.join('/')}`
     }
     return item.customUrl || null

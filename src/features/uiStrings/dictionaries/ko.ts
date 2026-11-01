@@ -2392,6 +2392,15 @@ const ko: UiDictionary = {
   // --- site-scoped content (Available on domains picker) ---
   'domains.site.shared': '모든 도메인 (공유)',
   'domains.site.scoped': '사이트 전용: {domains}에서만 표시됩니다. 다른 도메인은 같은 슬러그를 자체 콘텐츠와 함께 사용할 수 있습니다.',
+  'sites.switcherLabel': 'Site',
+  'sites.allSites': 'All sites',
+  'sites.switcherError': 'Could not change the site. Try again.',
+  'dns.connect': 'Connect domain',
+  'dns.connecting': 'Connecting...',
+  'dns.connectDone': 'Attached to the Worker. DNS may take a few minutes to start answering.',
+  'dns.connectFailed': 'Cloudflare did not attach this domain: {message}',
+  'dns.connectManual': 'Connect in Cloudflare by hand: follow the steps above. Add a Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare to connect from here.',
+  'dns.connectNeedsSetup': 'Not set up yet: add the Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare.',
   // --- Task 3 Languages: admin leftovers (final pass) ---
   'st.title': '내보내기 및 가져오기',
   'st.intro': '설정, 콘텐츠, 사용자를 사이트 간에 옮기거나 사본을 보관할 수 있습니다. 이 페이지는 관리자만 사용할 수 있습니다.',

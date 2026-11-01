@@ -2392,6 +2392,15 @@ const hi: UiDictionary = {
   // --- site-scoped content (Available on domains picker) ---
   'domains.site.shared': 'सभी डोमेन (साझा)',
   'domains.site.scoped': 'साइट-विशिष्ट: केवल {domains} पर दिखाया जाता है। कोई अन्य डोमेन वही स्लग अपनी सामग्री के साथ उपयोग कर सकता है।',
+  'sites.switcherLabel': 'Site',
+  'sites.allSites': 'All sites',
+  'sites.switcherError': 'Could not change the site. Try again.',
+  'dns.connect': 'Connect domain',
+  'dns.connecting': 'Connecting...',
+  'dns.connectDone': 'Attached to the Worker. DNS may take a few minutes to start answering.',
+  'dns.connectFailed': 'Cloudflare did not attach this domain: {message}',
+  'dns.connectManual': 'Connect in Cloudflare by hand: follow the steps above. Add a Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare to connect from here.',
+  'dns.connectNeedsSetup': 'Not set up yet: add the Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare.',
   // --- Task 3 Languages: admin leftovers (final pass) ---
   'st.title': 'निर्यात और आयात',
   'st.intro': 'सेटिंग्स, सामग्री और उपयोगकर्ताओं को साइटों के बीच ले जाएँ, या एक प्रति सहेजें। इस पेज का उपयोग केवल एडमिन कर सकते हैं।',

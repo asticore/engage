@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
 import { getEngine } from '@/lib/engine'
+import { attachConfigured } from '@/features/domains/cloudflareAttach'
 
 export const dynamic = 'force-dynamic'
 
 /**
- * GET: the registered domains (host, name, status, primary), for the domain picker on pages, posts, products,
+ * GET: the registered domains (host, name, status, primary) and whether Connect domain is set up, for the domain picker on pages, posts, products,
  * users and roles, and for the DNS checklist on Settings > Domains. Host names are not secret, so any signed-in
  * admin-panel user can read them; the registry itself stays admin-only to change.
  */
@@ -27,5 +28,6 @@ export async function GET(): Promise<Response> {
       status: row.status === 'disabled' ? 'disabled' : 'active',
       isPrimary: Boolean(row.isPrimary),
     }))
-  return NextResponse.json({ domains })
+  const integrations = await engine.findGlobal({ slug: 'integrations', depth: 0, overrideAccess: true }).catch((): null => null)
+  return NextResponse.json({ domains, attachConfigured: attachConfigured(integrations) })
 }

@@ -2391,6 +2391,15 @@ const zhHans: UiDictionary = {
   // --- site-scoped content (Available on domains picker) ---
   'domains.site.shared': '所有域名（共享）',
   'domains.site.scoped': '站点专用：仅在 {domains} 上显示。其他域名可以使用相同的 slug 并放置各自的内容。',
+  'sites.switcherLabel': 'Site',
+  'sites.allSites': 'All sites',
+  'sites.switcherError': 'Could not change the site. Try again.',
+  'dns.connect': 'Connect domain',
+  'dns.connecting': 'Connecting...',
+  'dns.connectDone': 'Attached to the Worker. DNS may take a few minutes to start answering.',
+  'dns.connectFailed': 'Cloudflare did not attach this domain: {message}',
+  'dns.connectManual': 'Connect in Cloudflare by hand: follow the steps above. Add a Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare to connect from here.',
+  'dns.connectNeedsSetup': 'Not set up yet: add the Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare.',
   // --- Task 3 Languages: admin leftovers (final pass) ---
   'st.title': '导出和导入',
   'st.intro': '在站点之间迁移设置、内容和用户，或保留一份副本。只有管理员可以使用此页面。',

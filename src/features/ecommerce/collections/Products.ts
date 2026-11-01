@@ -2,6 +2,7 @@ import { domainSlugValidate } from '@/features/domains/slugs'
 import { webhookContentAfterChange } from '@/features/webhooks/hooks'
 import { noAdsField } from '@/features/ads/fields'
 import { domainScopedAccess, domainWriteGuard } from '@/features/domains/access'
+import { domainSiteDefault } from '@/features/domains/hooks'
 import { availableDomainsField } from '@/features/domains/field'
 import { machineAutoDraftAfterChange } from '@/features/multilingual/machine/autoDraft'
 import { outdatedAfterChange } from '@/features/multilingual/outdated'
@@ -184,7 +185,7 @@ export const Products: CollectionConfig = {
     ...pageSpeedFields,
   ],
   hooks: {
-    beforeChange: [domainWriteGuard, authorshipBeforeChange, contentEditGuard, publishGuard, catalogueBeforeChange, pageSpeedBeforeChange, embedShortLinksFor('layout')],
+    beforeChange: [domainSiteDefault, domainWriteGuard, authorshipBeforeChange, contentEditGuard, publishGuard, catalogueBeforeChange, pageSpeedBeforeChange, embedShortLinksFor('layout')],
     afterChange: [stockAlertAfterChange, backInStockAfterChange, subscriptionAfterChange, slugRedirectAfterChange('products'), pageSpeedAfterChange('products'), indexNowAfterChange('products'), machineAutoDraftAfterChange('products'), outdatedAfterChange('products'), webhookContentAfterChange('products')],
     afterDelete: [indexNowAfterDelete('products')],
   },

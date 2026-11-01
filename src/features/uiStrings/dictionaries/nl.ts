@@ -2392,6 +2392,15 @@ const nl: UiDictionary = {
   // --- site-scoped content (Available on domains picker) ---
   'domains.site.shared': 'Alle domeinen (gedeeld)',
   'domains.site.scoped': 'Sitespecifiek: alleen zichtbaar op {domains}. Een ander domein kan dezelfde slug gebruiken met eigen inhoud.',
+  'sites.switcherLabel': 'Site',
+  'sites.allSites': 'All sites',
+  'sites.switcherError': 'Could not change the site. Try again.',
+  'dns.connect': 'Connect domain',
+  'dns.connecting': 'Connecting...',
+  'dns.connectDone': 'Attached to the Worker. DNS may take a few minutes to start answering.',
+  'dns.connectFailed': 'Cloudflare did not attach this domain: {message}',
+  'dns.connectManual': 'Connect in Cloudflare by hand: follow the steps above. Add a Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare to connect from here.',
+  'dns.connectNeedsSetup': 'Not set up yet: add the Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare.',
   // --- Task 3 Languages: admin leftovers (final pass) ---
   'st.title': 'Exporteren en importeren',
   'st.intro': 'Verplaats instellingen, inhoud en gebruikers tussen sites, of bewaar een kopie. Alleen beheerders kunnen deze pagina gebruiken.',
