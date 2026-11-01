@@ -125,6 +125,7 @@ export const NAV_STRUCTURE: NavGroupDef[] = [
   {
     label: 'Settings',
     entities: [
+      { slug: 'all-settings', type: 'view', href: '/settings', label: 'All settings' },
       { slug: 'settings-tracking', type: 'view', href: '/settings/tracking', label: 'Tracking' },
       { slug: 'settings-site', type: 'view', href: '/settings/site', label: 'General' },
       { slug: 'settings-domains', type: 'view', href: '/settings/domains', label: 'Domains' },

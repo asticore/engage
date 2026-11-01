@@ -50,6 +50,7 @@ import { CollapseAllBar } from '@/admin/components/CollapseAllBar'
 import { SectionOutline } from '@/admin/components/SectionOutline'
 import { useDocumentSave, type SaveTarget } from './useDocumentSave'
 import { LocalDraftRecovery } from '@/admin/edit/useLocalDraft'
+import { SettingsResetDefaults } from './SettingsResetDefaults'
 
 export type EditFormProps = {
   collectionSlug?: string
@@ -93,6 +94,8 @@ export type EditFormProps = {
   afterFields?: React.ReactNode
   /** Do not render this form's own Collapse all / Expand all bar (the host page renders one). Default false. */
   hideCollapseBar?: boolean
+  /** Settings sections only: shows a Reset this section button for this form's fields, named by this title. */
+  resetSectionTitle?: string
 }
 
 /**
@@ -245,6 +248,7 @@ export const EditForm: React.FC<EditFormProps> = ({
   panel,
   pageTypeField,
   readOnly,
+  resetSectionTitle,
   visualBlocksCount,
   visualBlocksField,
 }) => {
@@ -328,6 +332,7 @@ export const EditForm: React.FC<EditFormProps> = ({
                   </>
                 )}
                 {afterFields}
+                {!readOnly && resetSectionTitle && <SettingsResetDefaults fields={fields} sectionTitle={resetSectionTitle} />}
                 {!readOnly && <SaveButton collectionSlug={collectionSlug} draftsEnabled={draftsEnabled} globalSlug={globalSlug} id={id} />}
               </div>
             </div>

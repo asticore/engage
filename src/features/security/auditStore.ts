@@ -1,6 +1,7 @@
 import { resolveD1Binding } from '@/cms/db/connect'
 
 import { AUDIT_PAGE_SIZE, buildAuditSelect, type AuditFilter } from './auditQuery'
+import { AUDIT_TABLE } from './auditLog'
 
 /**
  * Reads one page of account-security events for the admin review screen.
@@ -53,4 +54,24 @@ export async function listAuthAuditPage(filter: AuditFilter, pageSize = AUDIT_PA
   const result = await d1.prepare(sql).bind(...binds).all<Raw>()
   const raw = result.results ?? []
   return { rows: raw.slice(0, pageSize).map(toRow), hasNext: raw.length > pageSize }
+}
+
+export type SettingsChange = { by: string | null; at: string }
+
+/**
+ * The latest settings save for each global slug, from the audit log. A save
+ * with no signed-in actor (a script, a seed) comes back with `by` null.
+ * Only `settings.update` rows count; one row per slug, the newest.
+ */
+export async function latestSettingsChanges(slugs: readonly string[]): Promise<Map<string, SettingsChange>> {
+  const names = [...new Set(slugs)]
+  const out = new Map<string, SettingsChange>()
+  if (names.length === 0) return out
+  const d1 = await resolveD1Binding()
+  const marks = names.map(() => '?').join(', ')
+  const sql = `SELECT collection_slug, actor_email, created_at FROM \`${AUDIT_TABLE}\`
+    WHERE id IN (SELECT MAX(id) FROM \`${AUDIT_TABLE}\` WHERE action = 'settings.update' AND collection_slug IN (${marks}) GROUP BY collection_slug)`
+  const result = await d1.prepare(sql).bind(...names).all<{ collection_slug: string; actor_email: string | null; created_at: string }>()
+  for (const row of result.results ?? []) out.set(row.collection_slug, { by: row.actor_email, at: row.created_at })
+  return out
 }
