@@ -2432,6 +2432,15 @@ export const UI_STRING_SOURCE = {
   // --- site-scoped content (Available on domains picker, src/features/domains/admin/DomainPicker.tsx) ---
   'domains.site.shared': 'All domains (shared)',
   'domains.site.scoped': 'Site-specific: shown only on {domains}. Another domain can use the same slug with its own content.',
+  'sites.switcherLabel': 'Site',
+  'sites.allSites': 'All sites',
+  'sites.switcherError': 'Could not change the site. Try again.',
+  'dns.connect': 'Connect domain',
+  'dns.connecting': 'Connecting...',
+  'dns.connectDone': 'Attached to the Worker. DNS may take a few minutes to start answering.',
+  'dns.connectFailed': 'Cloudflare did not attach this domain: {message}',
+  'dns.connectManual': 'Connect in Cloudflare by hand: follow the steps above. Add a Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare to connect from here.',
+  'dns.connectNeedsSetup': 'Not set up yet: add the Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare.',
   // --- Task 3 Languages: admin leftovers (final pass) ---
   'st.title': 'Export and import',
   'st.intro': 'Move settings, content and users between sites, or keep a copy. Only admins can use this page.',

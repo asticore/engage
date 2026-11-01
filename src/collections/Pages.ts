@@ -1,5 +1,6 @@
 import { noAdsField } from '@/features/ads/fields'
 import { domainScopedAccess, domainWriteGuard } from '@/features/domains/access'
+import { domainSiteDefault } from '@/features/domains/hooks'
 import { availableDomainsField } from '@/features/domains/field'
 import { slugClaimsConflict } from '@/features/domains/scope'
 import { machineAutoDraftAfterChange } from '@/features/multilingual/machine/autoDraft'
@@ -187,6 +188,7 @@ export const Pages: CollectionConfig = {
     afterChange: [pageSpeedAfterChange('pages'), indexNowAfterChange('pages'), machineAutoDraftAfterChange('pages'), outdatedAfterChange('pages'), webhookContentAfterChange('pages')],
     afterDelete: [indexNowAfterDelete('pages')],
     beforeChange: [
+      domainSiteDefault,
       domainWriteGuard,
       authorshipBeforeChange,
       trashGuard,
