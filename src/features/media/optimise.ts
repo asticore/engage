@@ -96,17 +96,46 @@ export function settingsForFile(settings: OptimiseSettings, fileFormat: string |
 /**
  * Which format the stored copy is written in. An explicit site format wins;
  * otherwise AVIF wins when switched on, then WebP, otherwise the picture keeps
- * its own format.
+ * its own format. JPEG has no transparency, so a picture with alpha that would
+ * become a JPEG is written as WebP instead (WebP keeps alpha and is smaller than PNG).
  */
-export function chooseOutputMimeType(input: OptimisableMimeType, settings: OptimiseSettings): OutputMimeType {
+export function chooseOutputMimeType(input: OptimisableMimeType, settings: OptimiseSettings, alpha = false): OutputMimeType {
   const explicit = pictureFormatOf(settings.outputImageFormat)
-  if (explicit === 'jpeg') return 'image/jpeg'
+  if (explicit === 'jpeg') return alpha ? 'image/webp' : 'image/jpeg'
   if (explicit === 'webp') return 'image/webp'
   if (explicit === 'avif') return 'image/avif'
   if (explicit === 'original') return input
   if (settings.convertToAvif) return 'image/avif'
   if (settings.convertToWebp) return 'image/webp'
   return input
+}
+
+/**
+ * True when a PNG or WebP carries an alpha channel (transparency). PNG: colour
+ * type 4 or 6, or a tRNS chunk before the image data. WebP: the alpha flag in
+ * the VP8X chunk. Anything else (JPEG included) has none.
+ */
+export function hasAlpha(data: Uint8Array, mimeType: string | null | undefined): boolean {
+  const type = (mimeType ?? '').toLowerCase()
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength)
+  if (type === 'image/png') {
+    if (data.byteLength < 26 || ascii(data, 1, 3) !== 'PNG') return false
+    const colourType = data[25]
+    if (colourType === 4 || colourType === 6) return true
+    let offset = 8
+    while (offset + 8 <= data.byteLength) {
+      const chunkType = ascii(data, offset + 4, 4)
+      if (chunkType === 'tRNS') return true
+      if (chunkType === 'IDAT') return false
+      offset += 12 + view.getUint32(offset, false)
+    }
+    return false
+  }
+  if (type === 'image/webp') {
+    if (data.byteLength < 21 || ascii(data, 0, 4) !== 'RIFF' || ascii(data, 8, 4) !== 'WEBP' || ascii(data, 12, 4) !== 'VP8X') return false
+    return (data[20] & 0x10) !== 0
+  }
+  return false
 }
 
 export type OptimiseOptions = {
@@ -120,12 +149,12 @@ export type OptimiseOptions = {
 }
 
 /** Pure: settings and input format in, the transform the binding should run. */
-export function buildOptimiseOptions(settings: OptimiseSettings, input: OptimisableMimeType): OptimiseOptions {
+export function buildOptimiseOptions(settings: OptimiseSettings, input: OptimisableMimeType, alpha = false): OptimiseOptions {
   return {
     width: settings.maxWidth,
     height: settings.maxHeight,
     fit: 'scale-down',
-    format: chooseOutputMimeType(input, settings),
+    format: chooseOutputMimeType(input, settings, alpha),
     quality: Math.min(100, Math.max(1, settings.quality)),
     stripMetadata: settings.stripMetadata,
   }
@@ -230,7 +259,7 @@ export async function transformImageBytes(
   input: OptimisableMimeType,
   settings: OptimiseSettings,
 ): Promise<OptimisedBytes> {
-  const options = buildOptimiseOptions(settings, input)
+  const options = buildOptimiseOptions(settings, input, hasAlpha(data, input))
   const stream = new Blob([data as BlobPart]).stream() as ReadableStream<Uint8Array>
   const result = await binding
     .input(stream)

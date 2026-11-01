@@ -30,8 +30,19 @@ export type InstalledFont = {
   /**
    * `${weight}-${style}` (for example `400-normal`, `700-italic`) to the file
    * URL. Set for `upload` fonts and for locally hosted fonts; empty otherwise.
+   * A subset other than latin adds it to the key (`400-normal-cyrillic`).
    */
   files: Record<string, string>
+  /**
+   * Fontsource package version the files were taken from (exact, for example
+   * `5.2.6`). Fonts installed before this was recorded have none and keep the
+   * unpinned jsDelivr path until they are installed again.
+   */
+  version?: string
+  /** Character subsets chosen for a Fontsource font (latin is the default). Google fonts are split by Google's own stylesheet. */
+  subsets?: string[]
+  /** Weights the source offers for this family, from the catalog. A Google stylesheet only asks for weights in this list. */
+  available?: number[]
 }
 
 /** One row of the Fontsource catalog, as returned by admin-fonts-search. */

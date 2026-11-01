@@ -1,13 +1,15 @@
 import { parseCsv } from './csv'
+import { readOds } from './ods'
 import { readXlsx, XlsxError } from './xlsx'
 
 export * from './csv'
+export { readOds } from './ods'
 export { readXlsx, excelSerialToIso, XLSX_MAX_ENTRIES, XLSX_MAX_UNCOMPRESSED, XlsxError } from './xlsx'
 
 export const SPREADSHEET_MAX_BYTES = 2 * 1024 * 1024
 export const SPREADSHEET_MAX_DATA_ROWS = 5000
 
-export type SheetData = { rows: string[][]; truncated: boolean; kind: 'csv' | 'xlsx' }
+export type SheetData = { rows: string[][]; truncated: boolean; kind: 'csv' | 'xlsx' | 'ods' }
 export type SheetResult = ({ ok: true } & SheetData) | { ok: false; error: string }
 
 /** Parses already-loaded bytes. `name` decides the format. */
@@ -21,6 +23,10 @@ export function parseSpreadsheetBytes(name: string, bytes: Uint8Array): SheetRes
       const { rows, truncated } = readXlsx(bytes, { maxRows })
       return { ok: true, rows, truncated, kind: 'xlsx' }
     }
+    if (lower.endsWith('.ods')) {
+      const { rows, truncated } = readOds(bytes, { maxRows })
+      return { ok: true, rows, truncated, kind: 'ods' }
+    }
     if (lower.endsWith('.csv') || lower.endsWith('.tsv') || lower.endsWith('.txt')) {
       const text = new TextDecoder('utf-8').decode(bytes)
       const { rows, truncated } = parseCsv(text, { maxRows, delimiter: lower.endsWith('.tsv') ? '\t' : undefined })
@@ -29,7 +35,7 @@ export function parseSpreadsheetBytes(name: string, bytes: Uint8Array): SheetRes
   } catch (error) {
     return { ok: false, error: error instanceof XlsxError ? error.message : 'Could not read this file.' }
   }
-  return { ok: false, error: 'Choose a .csv, .tsv or .xlsx file.' }
+  return { ok: false, error: 'Choose a .csv, .tsv, .xlsx or .ods file.' }
 }
 
 export async function readSpreadsheetFile(file: File): Promise<SheetResult> {

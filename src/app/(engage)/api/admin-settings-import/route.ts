@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { applyImport, parseImportSections, planImport, readExportFile } from '@/features/settingsTransfer/import'
 import { ExportFormatError } from '@/features/settingsTransfer/format'
+import { readLimitedText } from '@/lib/limitedBody'
 
 /** Largest import body accepted. A full export with media details is far below this. */
 const MAX_IMPORT_REQUEST_BYTES = 25 * 1024 * 1024
@@ -18,15 +19,13 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  // Refuse an oversized body before it is parsed.
-  const declared = request.headers.get('content-length')
-  if (declared !== null && Number(declared) > MAX_IMPORT_REQUEST_BYTES) {
-    return NextResponse.json({ error: 'Import files must be 25 MB or smaller.' }, { status: 413 })
-  }
+  // Counts the bytes as they arrive: Content-Length alone is only a claim.
+  const read = await readLimitedText(request, MAX_IMPORT_REQUEST_BYTES, 'Import files must be 25 MB or smaller.')
+  if ('response' in read) return read.response
 
   let body: unknown
   try {
-    body = await request.json()
+    body = JSON.parse(read.text)
   } catch {
     return NextResponse.json({ error: 'Send the import request as JSON.' }, { status: 400 })
   }
