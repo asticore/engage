@@ -132,6 +132,7 @@ import * as migration_20270201_100000_error_alert_settings from './20270201_1000
 import * as migration_20270210_100000_media_formats_video_links from './20270210_100000_media_formats_video_links';
 import * as migration_20270220_100000_cloudflare_worker_domains from './20270220_100000_cloudflare_worker_domains';
 import * as migration_20270220_110000_domain_scoped_content from './20270220_110000_domain_scoped_content';
+import * as migration_20270224_100000_block_form_id from './20270224_100000_block_form_id';
 
 import * as migration_20270124_100000_privacy_requests from './20270124_100000_privacy_requests';
 export const migrations = [
@@ -800,7 +801,6 @@ export const migrations = [
     down: migration_20270210_100000_media_formats_video_links.down,
     name: '20270210_100000_media_formats_video_links',
   },
-
   {
     up: migration_20270220_100000_cloudflare_worker_domains.up,
     down: migration_20270220_100000_cloudflare_worker_domains.down,
@@ -810,5 +810,10 @@ export const migrations = [
     up: migration_20270220_110000_domain_scoped_content.up,
     down: migration_20270220_110000_domain_scoped_content.down,
     name: '20270220_110000_domain_scoped_content',
+  },
+  {
+    up: migration_20270224_100000_block_form_id.up,
+    down: migration_20270224_100000_block_form_id.down,
+    name: '20270224_100000_block_form_id',
   },
 ];

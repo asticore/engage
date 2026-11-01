@@ -7,65 +7,46 @@
  * pages and the actual version history mechanism.
  */
 
-import { afterAll, beforeEach, beforeAll, describe, expect, it } from 'vitest'
-import { drizzle } from 'drizzle-orm/d1'
+import { afterAll, beforeEach, beforeAll, describe, expect, it, vi } from 'vitest'
+
 import { getPlatformProxy } from 'wrangler'
 
 import { consoleLogger } from '@/localapi/logger'
-import { runMigrations, type Drizzle, type MigrationEntry } from '@/localapi/migrate'
-import { migrations } from '@/migrations'
-import type { EngineDb } from '@/migrations/schema/engineBootstrap'
-import { ensureMigrationsTable } from '@/migrations/schema/engineBootstrap'
+import { runInternalMigrate } from '@/migrations/runInternalMigrate'
 import { createEngine, type Engine } from '@/localapi/engine'
 import { deleteVersionRow, isVersionedCollection, type VersionedCollection } from '@/cms/db/versionDelete'
 import { findPageVersions } from '@/cms/db/collections/pages'
 import type { TypedUser } from '@/engine'
 
-const REAL_MIGRATIONS = migrations as unknown as MigrationEntry[]
+// Real D1 work (migrations, engine writes) is slower than vitest's 5s default.
+vi.setConfig({ testTimeout: 60_000 })
+
+// Route the engine's D1 to this file's own in-memory database, so specs never share local wrangler state.
+const d1Holder = vi.hoisted(() => ({ d1: undefined as D1Database | undefined }))
+vi.mock('@/cms/db/d1Binding', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/cms/db/d1Binding')>()),
+  resolveD1Binding: async () => {
+    if (!d1Holder.d1) throw new Error('The test D1 is not ready yet.')
+    return d1Holder.d1
+  },
+}))
 
 describe('version-delete with real engine and fresh D1', () => {
   let proxy: Awaited<ReturnType<typeof getPlatformProxy<{ D1: D1Database }>>>
-  let db: Drizzle
-  let engineDb: EngineDb
   let engine: Engine
   let adminUser: TypedUser
 
   beforeAll(
     async () => {
-      // Get a genuinely empty, in-memory D1 (no persistence)
+      // A genuinely empty in-memory D1 for this file; the engine reads it through d1Holder.
       proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
       const d1 = proxy.env.D1
-      db = drizzle(d1) as unknown as Drizzle
+      d1Holder.d1 = d1
 
-      engineDb = {
-        exists: async (table) => {
-          const result = await d1.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name=?`).bind(table).all()
-          return (result.results?.length ?? 0) > 0
-        },
-        listTables: async () => {
-          const result = await d1.prepare(`SELECT name FROM sqlite_master WHERE type='table'`).all()
-          return ((result.results ?? []) as { name: string }[]).map((row) => row.name)
-        },
-        columnsOf: async (table) => {
-          const result = await d1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
-          return ((result.results ?? []) as { name: string }[]).map((row) => row.name)
-        },
-        run: (statement) => d1.prepare(statement).run(),
-        countRows: async (table) => {
-          const result = await d1.prepare(`SELECT COUNT(*) AS n FROM \`${table}\``).all()
-          return (result.results?.[0] as { n: number } | undefined)?.n ?? 0
-        },
-      }
-
-      // Run all migrations on the empty database
-      await ensureMigrationsTable(engineDb)
-      const migrateResult = await runMigrations({
-        db,
-        engineDb,
-        logger: consoleLogger,
-        migrations: REAL_MIGRATIONS,
-      })
-      expect(migrateResult.ran).toHaveLength(REAL_MIGRATIONS.length)
+      // Build the schema the way a fresh install does: base tables first, then every migration.
+      // Running only the migration list on an empty D1 left base tables such as eg_users missing.
+      const outcome = await runInternalMigrate(d1, consoleLogger)
+      expect(outcome.errorCount).toBe(0)
 
       // Create the engine against this migrated database
       engine = createEngine()
@@ -99,7 +80,7 @@ describe('version-delete with real engine and fresh D1', () => {
   })
 
   afterAll(async () => {
-    await proxy?.dispose()
+    await proxy.dispose()
   })
 
   it('isVersionedCollection returns true for versioned collections', async () => {

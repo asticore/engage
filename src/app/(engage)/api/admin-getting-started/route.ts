@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
-import { saveListPrefs, prefsKey } from '@/admin/list/listPrefs'
+import { loadListPrefs, saveListPrefs } from '@/admin/list/listPrefs'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,28 +32,9 @@ export async function POST(request: Request): Promise<Response> {
       return NextResponse.json({ error: 'Missing id or done' }, { status: 400 })
     }
 
-    // Load current done IDs from preferences using the same key that load.ts reads
-    const key = prefsKey('getting-started')
-    let doneIds: string[] = []
-    try {
-      const docs = await context.engine.find({
-        collection: 'preferences',
-        where: { key: { equals: key } },
-        limit: 1,
-        depth: 0,
-        user: context.user,
-        overrideAccess: true,
-      })
-      if (docs && docs.docs && docs.docs.length > 0) {
-        const doc = docs.docs[0] as Record<string, unknown>
-        const stored = doc.doneIds as unknown
-        if (Array.isArray(stored)) {
-          doneIds = stored.filter((x: unknown) => typeof x === 'string')
-        }
-      }
-    } catch {
-      // New user, no prefs yet
-    }
+    // Read the saved ticks through the same helper load.ts uses, so both sides agree on the stored shape.
+    const current = await loadListPrefs(context.engine, context.user, 'getting-started')
+    let doneIds: string[] = current.doneIds ?? []
 
     // Update based on done flag
     if (done && !doneIds.includes(id)) {

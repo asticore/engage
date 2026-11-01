@@ -151,7 +151,6 @@ describe('navStructure', () => {
       'audit-log',
       'users',
       'integrations',
-      'translations',
     ]
 
     for (const slug of hiddenSlugs) {

@@ -1272,12 +1272,6 @@ button {
   margin-top: calc(var(--base) * 0.8);
 }
 
-.doc-settings-card__title {
-  font-size: calc(var(--base) * 1.05);
-  font-weight: 600;
-  margin: 0 0 calc(var(--base) * 0.6);
-}
-
 .doc-content-card {
   display: flex;
   align-items: center;
@@ -1305,12 +1299,6 @@ button {
   border-radius: var(--style-radius-l);
   padding: calc(var(--base) * 1.25);
   margin-top: calc(var(--base) * 0.8);
-}
-
-.doc-seo-card__title {
-  font-size: calc(var(--base) * 1.05);
-  font-weight: 600;
-  margin: 0 0 calc(var(--base) * 0.6);
 }
 
 .doc-seo-card__tabs {
