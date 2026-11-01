@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { handleReviewGet, handleReviewPost } from '@/features/approval/handlers'
 import { viewerFromContext } from '@/features/approval/viewer'
+import { claimDocumentWrite } from '@/features/approval/claim'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +47,7 @@ export async function POST(request: Request): Promise<Response> {
       viewer,
       origin: new URL(request.url).origin,
       body,
+      claim: claimDocumentWrite,
     })
     return NextResponse.json(result.body, { status: result.status, headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {

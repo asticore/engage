@@ -4,7 +4,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useCallback, useMemo, useState } from 'react'
 import styles from '@/admin/admin.module.css'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
-import { APPROVAL_COLLECTIONS, MAX_APPROVALS_PER_STEP, type ApprovalCollection } from '@/features/approval/workflows'
+import { APPROVAL_COLLECTIONS, MAX_APPROVALS_PER_STEP, isApprovalCollection, type ApprovalCollection } from '@/features/approval/workflows'
 import {
   COLLECTION_LABELS,
   canAddStep,
@@ -141,6 +141,11 @@ function WorkflowForm({
         </span>
       </label>
 
+      <label className="rw-check">
+        <input type="checkbox" checked={draft.allowRepeatApprover} disabled={disabled} onChange={(event) => onChange({ ...draft, allowRepeatApprover: event.target.checked })} />
+        <span>Let one person approve more than one step of the same review. Off keeps each step to a different person.</span>
+      </label>
+
       <RolePicker
         legend="Who can submit"
         hint="Leave all unticked to let anyone who can edit this content submit it. Admins can always submit."
@@ -252,6 +257,9 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, canEdit, app
   const [busyId, setBusyId] = useState<number | null>(null)
   const [errors, setErrors] = useState<Record<string, string | null>>({})
   const [confirmingDelete, setConfirmingDelete] = useState<number | null>(null)
+  /** After an active workflow is saved: how many documents of its content type are in review. */
+  const [offer, setOffer] = useState<{ id: number; collection: ApprovalCollection; count: number } | null>(null)
+  const [moving, setMoving] = useState(false)
 
   const choices = useMemo(() => roleChoices(roles), [roles])
   const knownRoles = useMemo(() => ['admin', ...choices.map((choice) => choice.slug)], [choices])
@@ -309,6 +317,22 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, canEdit, app
       delete next[id]
       return next
     })
+    setOffer(null)
+    if (doc.active === true && isApprovalCollection(doc.collection)) {
+      // Documents already in review keep their step. Offer to move them to the first step of this flow.
+      const counted = await request(`/api/admin-review-move?collection=${encodeURIComponent(doc.collection)}`, 'GET')
+      const count = Number((counted.body as { count?: unknown } | null)?.count ?? 0)
+      if (counted.ok && count > 0) setOffer({ id, collection: doc.collection, count })
+    }
+  }
+
+  const moveInReview = async () => {
+    if (!offer) return
+    setMoving(true)
+    const result = await request('/api/admin-review-move', 'POST', { collection: offer.collection })
+    setMoving(false)
+    if (result.ok) setOffer(null)
+    else setError(String(offer.id), errorMessageFrom(result.body, 'Could not move the documents in review. Try again.'))
   }
 
   const remove = async (id: number) => {
@@ -401,6 +425,19 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, canEdit, app
               onDelete={() => void remove(workflow.id)}
               confirmDelete={confirmingDelete === workflow.id}
             />
+            {offer && offer.id === workflow.id && (
+              <div className="rw-offer" role="status">
+                <p>
+                  {offer.count} {offer.count === 1 ? 'document is' : 'documents are'} in review ({COLLECTION_LABELS[offer.collection]}) at the step {offer.count === 1 ? 'it was' : 'they were'} at before this change. Move {offer.count === 1 ? 'it' : 'them'} to step 1 of this workflow? Approvals are cleared and each one gets a history row.
+                </p>
+                <button type="button" className={styles.btnPrimary} disabled={moving} onClick={() => void moveInReview()}>
+                  {moving ? 'Moving...' : 'Move to step 1'}
+                </button>
+                <button type="button" className={styles.btnSecondary} disabled={moving} onClick={() => setOffer(null)}>
+                  Leave them where they are
+                </button>
+              </div>
+            )}
           </CollapsibleCard>
         )
       })}

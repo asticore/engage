@@ -54,6 +54,7 @@ export const customFieldsField: Field = {
           value,
           doc: { ...originalDoc, ...siblingData },
           userRoles: userRolesOf(args.req),
+          engine: (args.req as { engine?: unknown } | undefined)?.engine as never,
         })
         return prepared
       },

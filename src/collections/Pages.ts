@@ -22,6 +22,7 @@ import { formatSlugHook, slugify } from '../utilities/formatSlug'
 import { customFieldsField } from '../fields/customFields'
 import { membersOnlyField } from '@/features/members'
 import { contentEditGuard, publishGuard } from '@/features/roles/contentEditGuard'
+import { publishAfterChange } from '@/features/approval/publishAfterChange'
 import { lockGuard } from '@/features/roles/lockGuard'
 import { locksField } from '../fields/locks'
 import { reviewFields } from '@/features/approval/fields'
@@ -185,7 +186,7 @@ export const Pages: CollectionConfig = {
         return data
       },
     ],
-    afterChange: [pageSpeedAfterChange('pages'), indexNowAfterChange('pages'), machineAutoDraftAfterChange('pages'), outdatedAfterChange('pages'), webhookContentAfterChange('pages')],
+    afterChange: [publishAfterChange('pages'), pageSpeedAfterChange('pages'), indexNowAfterChange('pages'), machineAutoDraftAfterChange('pages'), outdatedAfterChange('pages'), webhookContentAfterChange('pages')],
     afterDelete: [indexNowAfterDelete('pages')],
     beforeChange: [
       domainSiteDefault,

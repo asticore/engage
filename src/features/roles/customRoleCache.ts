@@ -104,3 +104,16 @@ export async function attachCustomRole<T extends SessionUserLike | null>(engine:
 export function resetCustomRoleCache(): void {
   cache.clear()
 }
+
+/**
+ * Makes sure a user that reaches a write hook carries its custom role matrix. Requests that come
+ * through engine.auth() already do; any other path (a server action, a script that passes a user)
+ * may not, and then a custom role would grant nothing in the publish guards. The matrix is loaded
+ * here when the user has a custom role and none is attached yet. Users with no custom role are
+ * returned untouched.
+ */
+export async function ensureCustomRoleOnUser<T extends SessionUserLike>(engine: EngineLike | null | undefined, user: T): Promise<T> {
+  if (!user || !engine || user.customRolePermissions !== undefined) return user
+  if (relationId(user.customRole) === null) return user
+  return attachCustomRole(engine, user)
+}
