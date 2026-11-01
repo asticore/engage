@@ -1323,6 +1323,8 @@ const de: UiDictionary = {
   "store.enterEmailFirst": "Bitte gib zuerst deine E-Mail-Adresse ein.",
   "store.productBrand": "Marke: {name}",
   "store.productTags": "Schlagwörter: {tags}",
+  "store.filterBrand": "Marke",
+  "store.filterTag": "Schlagwort",
   "store.pricesIn": "Preise in",
   "store.pageNotFound": "Seite nicht gefunden",
   "store.notFoundHelp": "Die gesuchte Seite wurde möglicherweise verschoben, oder die Adresse enthält einen Tippfehler.",

@@ -1322,6 +1322,8 @@ const ru: UiDictionary = {
   "store.enterEmailFirst": "Сначала укажите адрес электронной почты.",
   "store.productBrand": "Бренд: {name}",
   "store.productTags": "Метки: {tags}",
+  "store.filterBrand": "Бренд",
+  "store.filterTag": "Тег",
   "store.pricesIn": "Цены в",
   "store.pageNotFound": "Страница не найдена",
   "store.notFoundHelp": "Возможно, страница, которую вы искали, была перемещена, или в адресе есть опечатка.",

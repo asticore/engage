@@ -1322,6 +1322,8 @@ const es: UiDictionary = {
   "store.enterEmailFirst": "Introduce primero tu dirección de correo electrónico.",
   "store.productBrand": "Marca: {name}",
   "store.productTags": "Etiquetas: {tags}",
+  "store.filterBrand": "Marca",
+  "store.filterTag": "Etiqueta",
   "store.pricesIn": "Precios en",
   "store.pageNotFound": "Página no encontrada",
   "store.notFoundHelp": "Es posible que la página que buscas se haya movido o que la dirección tenga una errata.",

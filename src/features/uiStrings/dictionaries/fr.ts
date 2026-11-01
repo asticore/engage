@@ -1322,6 +1322,8 @@ const fr: UiDictionary = {
   "store.enterEmailFirst": "Veuillez d'abord saisir votre adresse e-mail.",
   "store.productBrand": "Marque : {name}",
   "store.productTags": "Étiquettes : {tags}",
+  "store.filterBrand": "Marque",
+  "store.filterTag": "Étiquette",
   "store.pricesIn": "Prix en",
   "store.pageNotFound": "Page introuvable",
   "store.notFoundHelp": "La page que vous recherchez a peut-être été déplacée, ou l'adresse contient une faute de frappe.",

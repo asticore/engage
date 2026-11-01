@@ -1322,6 +1322,8 @@ const ar: UiDictionary = {
   "store.enterEmailFirst": "يُرجى إدخال عنوان بريدك الإلكتروني أولًا.",
   "store.productBrand": "العلامة التجارية: {name}",
   "store.productTags": "الوسوم: {tags}",
+  "store.filterBrand": "العلامة التجارية",
+  "store.filterTag": "الوسم",
   "store.pricesIn": "الأسعار بـ",
   "store.pageNotFound": "الصفحة غير موجودة",
   "store.notFoundHelp": "ربما تم نقل الصفحة التي تبحث عنها، أو أن العنوان يحتوي على خطأ مطبعي.",

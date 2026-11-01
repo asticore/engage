@@ -1322,6 +1322,8 @@ const nl: UiDictionary = {
   "store.enterEmailFirst": "Vul eerst je e-mailadres in.",
   "store.productBrand": "Merk: {name}",
   "store.productTags": "Tags: {tags}",
+  "store.filterBrand": "Merk",
+  "store.filterTag": "Tag",
   "store.pricesIn": "Prijzen in",
   "store.pageNotFound": "Pagina niet gevonden",
   "store.notFoundHelp": "De pagina die je zocht is misschien verplaatst, of het adres bevat een typfout.",

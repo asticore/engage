@@ -1322,6 +1322,8 @@ const ja: UiDictionary = {
   "store.enterEmailFirst": "先にメールアドレスを入力してください。",
   "store.productBrand": "ブランド：{name}",
   "store.productTags": "タグ：{tags}",
+  "store.filterBrand": "ブランド",
+  "store.filterTag": "タグ",
   "store.pricesIn": "価格の通貨",
   "store.pageNotFound": "ページが見つかりません",
   "store.notFoundHelp": "お探しのページは移動したか、アドレスに誤りがある可能性があります。",
