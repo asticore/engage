@@ -4,6 +4,8 @@ import { getAllResolvedPages } from '@/utilities/pagePaths'
 import { getDb } from '@/cms/db/connect'
 import { getPasswordHash } from '@/cms/db/contentPasswords'
 
+import { searchTerms } from './synonyms'
+
 /**
  * Live-search suggestions. Mirrors the sources and URL shapes of the /search results page (pages, posts, products,
  * events), published items only. Password protected pages, posts, products and events are left out so a private title never leaks.
@@ -43,11 +45,12 @@ async function isOpen(collection: string, id: unknown): Promise<boolean> {
   }
 }
 
-async function findDocs(collection: string, query: string, fields: string[], sort: string, limit: number): Promise<Row[]> {
+/** Published rows whose any listed field contains any of the terms (the query plus its synonyms). */
+async function findDocs(collection: string, terms: string[], fields: string[], sort: string, limit: number): Promise<Row[]> {
   const engine = await getEngine()
   const { docs } = (await engine.find({
     collection,
-    where: { and: [{ _status: { equals: 'published' } }, { or: fields.map((f) => ({ [f]: { contains: query } })) }] },
+    where: { and: [{ _status: { equals: 'published' } }, { or: fields.flatMap((f) => terms.map((term) => ({ [f]: { contains: term } }))) }] },
     sort,
     limit,
     depth: 0,
@@ -59,7 +62,8 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
   const query = normalizeSuggestQuery(rawQuery)
   if (query.length < SUGGEST_MIN_CHARS) return []
   const limit = Math.max(1, Math.min(SUGGEST_MAX_RESULTS, Math.floor(max) || SUGGEST_MAX_RESULTS))
-  const needle = query.toLowerCase()
+  const terms = searchTerms(query)
+  const any = (...texts: unknown[]): boolean => texts.some((text) => terms.some((term) => has(text, term)))
   let flags: Awaited<ReturnType<typeof getFeatureFlags>> | null = null
   try {
     flags = await getFeatureFlags()
@@ -72,7 +76,7 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
     for (const { page, path } of (await getAllResolvedPages()).slice(0, 200)) {
       if (!page.isHomepage && (path.length === 0 || path.some((s) => !s))) continue
       const desc = page.seo?.metaDescription ?? null
-      if (!(has(page.title, needle) || has(page.slug, needle) || has(desc, needle))) continue
+      if (!any(page.title, page.slug, desc)) continue
       if (!(await isOpen('pages', page.id))) continue
       out.push({ title: String(page.title ?? ''), url: page.isHomepage ? '/' : `/${path.join('/')}`, type: 'Page', excerpt: gated(page) ? '' : clipExcerpt(desc) })
       if (out.length >= limit) break
@@ -80,7 +84,7 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
     return out
   }
   const posts = async (): Promise<Suggestion[]> => {
-    const docs = await findDocs('posts', query, ['title', 'slug', 'excerpt'], '-publishedDate', limit)
+    const docs = await findDocs('posts', terms, ['title', 'slug', 'excerpt'], '-publishedDate', limit)
     const out: Suggestion[] = []
     for (const d of docs) {
       if (!d.slug || !(await isOpen('posts', d.id))) continue
@@ -90,7 +94,7 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
   }
   const products = async (): Promise<Suggestion[]> => {
     const out: Suggestion[] = []
-    for (const d of await findDocs('products', query, ['title', 'slug'], '-createdAt', limit)) {
+    for (const d of await findDocs('products', terms, ['title', 'slug'], '-createdAt', limit)) {
       if (!d.slug || !(await isOpen('products', d.id))) continue
       out.push({ title: String(d.title ?? ''), url: `/shop/${d.slug}`, type: 'Product', excerpt: '' })
     }
@@ -98,7 +102,7 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
   }
   const events = async (): Promise<Suggestion[]> => {
     const out: Suggestion[] = []
-    for (const d of await findDocs('events', query, ['title', 'slug'], '-startDate', limit)) {
+    for (const d of await findDocs('events', terms, ['title', 'slug'], '-startDate', limit)) {
       if (!d.slug || !(await isOpen('events', d.id))) continue
       out.push({ title: String(d.title ?? ''), url: `/events/${d.slug}`, type: 'Event', excerpt: '' })
     }
