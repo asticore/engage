@@ -59,6 +59,7 @@ export default async function EventsPage() {
         baseUrl: context.baseUrl,
         siteName: context.siteName,
         breadcrumbs: listBreadcrumbs({ baseUrl: context.baseUrl, path: '/events', name: 'Events' }),
+        listItems: upcoming.map((event) => ({ name: event.title, url: `${context.baseUrl}/events/${event.slug}` })),
       })
     : null
 

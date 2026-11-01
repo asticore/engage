@@ -1,10 +1,17 @@
 import { cache } from 'react'
 import { getEngine } from '@/lib/engine'
+import { getSiteSnapshot } from '@/features/speed/siteSnapshot'
 import { BUILT_IN_FACES, builtInFontFileName } from './builtIn'
 
-/** Whether the admin chose to serve the built-in theme fonts from this site (Speed settings). Never throws: a failed read means jsDelivr, as before. */
+/**
+ * Whether the admin chose to serve the built-in theme fonts from this site (Speed settings).
+ * The option lives in Speed, so it is only read when the Speed feature is on (no extra read per page otherwise).
+ * Never throws: a failed read means jsDelivr, as before.
+ */
 export const readSelfHostBuiltInFonts = cache(async (): Promise<boolean> => {
   try {
+    const site = (await getSiteSnapshot().catch((): null => null))?.settings as unknown as { features?: { speed?: unknown } } | null
+    if (site?.features?.speed !== true) return false
     const engine = await getEngine()
     const settings = (await engine.findGlobal({ slug: 'speed-settings', depth: 0 }).catch((): null => null)) as
       | { fonts?: { selfHostBuiltInFonts?: unknown } }
