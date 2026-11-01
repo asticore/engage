@@ -87,6 +87,7 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
     description: 'A YouTube, Vimeo or .mp4 video at 16:9. YouTube loads from the privacy-friendly no-cookie address.',
     fields: [
       text('url', 'Video link', { helpText: 'A YouTube or Vimeo page address, or a direct .mp4 / .webm file.' }),
+      { name: 'video', label: 'Video from the media library', type: 'media', helpText: 'An uploaded video or a video link from the Media gallery. When set, it is used instead of the link above.' },
       { name: 'poster', label: 'Poster image', type: 'media', helpText: 'Shown before the video plays. A direct file loads no video data until it is played when a poster is set.' },
       text('title', 'Title (for screen readers)'), text('caption', 'Caption'),
     ],

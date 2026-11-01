@@ -37,6 +37,7 @@ export type MediaSettingsDoc = {
     convertToAvif?: boolean | null
     stripMetadata?: boolean | null
     keepOriginals?: boolean | null
+    outputImageFormat?: string | null
   } | null
   resizing?: {
     maxWidth?: number | null
@@ -47,6 +48,11 @@ export type MediaSettingsDoc = {
   delivery?: {
     cloudflareAccountHash?: string | null
     deliveryUrlPrefix?: string | null
+  } | null
+  video?: {
+    outputFormat?: string | null
+    streamAccountId?: string | null
+    streamApiToken?: string | null
   } | null
   bulk?: {
     batchSize?: number | null

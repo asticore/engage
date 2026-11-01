@@ -1,0 +1,40 @@
+/* Thin progress bar at the top of the admin (Task 12b). Colour is the admin accent token. */
+.admin-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+.admin-progress__bar {
+  height: 100%;
+  width: 100%;
+  background: var(--ac-gold);
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  opacity: 0;
+  /* Idle: fade out first, then reset the width while invisible. */
+  transition: opacity 0.3s ease, transform 0s linear 0.3s;
+}
+
+.admin-progress[data-state='running'] .admin-progress__bar {
+  opacity: 1;
+  transform: scaleX(0.8);
+  /* Creeps towards 80% while the page loads; the real end comes from the navigation or request finishing. */
+  transition: transform 8s cubic-bezier(0.1, 0.7, 0.2, 1), opacity 0.1s ease;
+}
+
+.admin-progress[data-state='done'] .admin-progress__bar {
+  opacity: 1;
+  transform: scaleX(1);
+  transition: transform 0.2s ease, opacity 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-progress__bar {
+    transition: none !important;
+  }
+}

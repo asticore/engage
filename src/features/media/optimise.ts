@@ -13,6 +13,7 @@
  * checked without Cloudflare.
  */
 
+import { pictureFormatOf } from './formats'
 import type { MediaProvider } from './types'
 
 /** The only input formats that are re-encoded. GIF (may be animated), SVG (a script-capable document) and PDF are never touched. */
@@ -45,6 +46,8 @@ export type OptimiseSettings = {
   /** When on, the untouched copy is kept under original/<filename> before it is replaced. */
   keepOriginals: boolean
   batchSize: number
+  /** The site picture format: `switches` (follow convertToWebp and convertToAvif) or an explicit format value. */
+  outputImageFormat?: string
 }
 
 const PROVIDERS: readonly MediaProvider[] = ['cloudflare-images', 'cloudflare-resizing', 'none']
@@ -80,14 +83,27 @@ export function resolveOptimiseSettings(settings: unknown): OptimiseSettings {
     maxHeight: positiveInt(resizing.maxHeight, 2560),
     keepOriginals: optimisation.keepOriginals === true,
     batchSize: Math.min(MAX_BATCH_SIZE, positiveInt(bulk.batchSize, 25)),
+    outputImageFormat: typeof optimisation.outputImageFormat === 'string' ? optimisation.outputImageFormat : 'switches',
   }
 }
 
+/** The settings with one file's own output format applied (`default` and video values leave the site format alone). */
+export function settingsForFile(settings: OptimiseSettings, fileFormat: string | null | undefined): OptimiseSettings {
+  const explicit = pictureFormatOf(fileFormat)
+  return explicit ? { ...settings, outputImageFormat: explicit } : settings
+}
+
 /**
- * Which format the stored copy is written in. AVIF wins when switched on, then
- * WebP, otherwise the picture keeps its own format.
+ * Which format the stored copy is written in. An explicit site format wins;
+ * otherwise AVIF wins when switched on, then WebP, otherwise the picture keeps
+ * its own format.
  */
 export function chooseOutputMimeType(input: OptimisableMimeType, settings: OptimiseSettings): OutputMimeType {
+  const explicit = pictureFormatOf(settings.outputImageFormat)
+  if (explicit === 'jpeg') return 'image/jpeg'
+  if (explicit === 'webp') return 'image/webp'
+  if (explicit === 'avif') return 'image/avif'
+  if (explicit === 'original') return input
   if (settings.convertToAvif) return 'image/avif'
   if (settings.convertToWebp) return 'image/webp'
   return input
