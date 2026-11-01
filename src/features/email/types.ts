@@ -135,4 +135,6 @@ export type SmsSettingsDoc = {
     messagingServiceSid?: string | null
   } | null
   testPhone?: string | null
+  /** Off by default. When on, a shipped order sends one text (src/features/sms/shippedText.ts). */
+  shippedOrderText?: boolean | number | null
 }

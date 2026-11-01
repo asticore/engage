@@ -76,6 +76,8 @@ Wrangler creates local emulated D1 and R2 bindings automatically — no connecti
 | `STRIPE_*` | shop only | Leave blank to deploy with the Shop feature off. |
 | `INTERNAL_ROUTE_KEY` | recommended | Guards the four internal maintenance routes (`/api/internal-migrate`, `/api/internal-seed`, `/api/internal-backup-run`, `/api/internal-backup-restore`). Not a hard security boundary — none of those routes can drop or modify data — but worth setting so a stray request can't run up unbounded D1 work. Falls back to a retired default if unset, so an install that hasn't set it yet still works. Generate with `openssl rand -hex 32`. |
 | `ENGAGE_LOG_LEVEL` | no | `debug` \| `info` \| `warn` \| `error`. Defaults to `info` in production. |
+| `EMAIL_EVENTS_KEY` | for bounce feeds | Secret in the URL of the Postmark and Brevo bounce webhooks (`/api/email-events/<provider>?key=`). Generate with `openssl rand -hex 24`. Without it those routes refuse every post. |
+| `RESEND_WEBHOOK_SECRET`, `SENDGRID_WEBHOOK_PUBLIC_KEY`, `MAILGUN_WEBHOOK_SIGNING_KEY`, `MANDRILL_WEBHOOK_KEY` | for those feeds | The signing secret or key each provider shows for its webhook. The route checks every post against it. Amazon SES needs none (SNS signs its messages). Cloudflare Email has no bounce feed. |
 
 ### Useful scripts
 
