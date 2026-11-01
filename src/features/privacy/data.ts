@@ -32,6 +32,24 @@ export async function customerRecords(engine: EngineLike, d1: D1Like, userId: nu
   return { addresses: addresses.docs, orders: orders.docs, bookings: bookings.docs, submissions }
 }
 
+/**
+ * Store credit, carts and product reviews. Used by the export, and by the erasure for carts and
+ * reviews (store credit is money the shop holds, so its rows stay with the accounting records).
+ */
+export async function commerceRecords(engine: EngineLike, userId: number, email: string) {
+  const credit = await engine.find({ collection: 'store-credits', where: { user: { equals: userId } }, limit: 1, depth: 0, overrideAccess: true })
+  const movements = await engine.find({ collection: 'credit-ledger', where: { user: { equals: userId } }, limit: LIMIT, depth: 0, overrideAccess: true })
+  const carts = await engine.find({
+    collection: 'carts',
+    where: { or: [{ customer: { equals: userId } }, { email: { equals: email } }] },
+    limit: LIMIT,
+    depth: 0,
+    overrideAccess: true,
+  })
+  const reviews = await engine.find({ collection: 'product-reviews', where: { email: { equals: email } }, limit: LIMIT, depth: 0, overrideAccess: true })
+  return { storeCredit: credit.docs[0] ?? null, movements: movements.docs, carts: carts.docs, reviews: reviews.docs }
+}
+
 export type MatchedSubmission = { id: number; form: string; submittedAt: string | null; values: unknown }
 
 /**
