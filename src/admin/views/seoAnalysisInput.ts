@@ -31,5 +31,6 @@ export function buildSeoAnalysisInput(values: Record<string, unknown>): Analysis
     headings: body.headings,
     links: body.links,
     images: body.images,
+    cornerstone: values['seo.cornerstone'] === true,
   }
 }

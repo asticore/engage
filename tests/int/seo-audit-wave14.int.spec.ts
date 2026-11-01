@@ -58,8 +58,13 @@ const rowOf = (over: Partial<AuditRow>): AuditRow => ({
   readabilityScore: 'good',
   hasKeyphrase: true,
   hasMetaDescription: true,
+  metaTitle: '',
+  metaDescription: '',
   problems: [],
   noIndex: false,
+  cornerstone: false,
+  orphan: false,
+  linkSuggestions: [],
   ...over,
 })
 
@@ -72,6 +77,8 @@ describe('summariseAuditRows', () => {
       rowOf({ id: 4, seoScore: 'bad', hasKeyphrase: false, hasMetaDescription: false }),
     ]
     expect(summariseAuditRows(rows)).toEqual({
+      cornerstone: 0,
+      orphans: 0,
       total: 4,
       good: 1,
       ok: 1,
@@ -83,7 +90,7 @@ describe('summariseAuditRows', () => {
   })
 
   it('returns zeros for an empty list', () => {
-    expect(summariseAuditRows([])).toEqual({ total: 0, good: 0, ok: 0, bad: 0, missingKeyphrase: 0, missingMetaDescription: 0, noIndex: 0 })
+    expect(summariseAuditRows([])).toEqual({ total: 0, good: 0, ok: 0, bad: 0, missingKeyphrase: 0, missingMetaDescription: 0, noIndex: 0, cornerstone: 0, orphans: 0 })
   })
 })
 
@@ -125,7 +132,8 @@ describe('loadAuditRows', () => {
     }
     const rows = await loadAuditRows(engine, ['pages', 'events'])
     expect(rows.map((r) => r.id)).toEqual([1])
-    expect(calls.map((c) => c.collection)).toEqual(['pages', 'events'])
+    // Every collection is read (overrideAccess) so the link graph is complete; only the allowed ones become rows.
+    expect(calls.map((c) => c.collection)).toEqual(['pages', 'posts', 'products', 'events'])
     expect(calls[0]?.where).toEqual({ _status: { equals: 'published' } })
     expect(calls[0]?.limit).toBe(AUDIT_LIMIT_PER_COLLECTION)
   })

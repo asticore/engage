@@ -203,3 +203,67 @@
 [data-theme='dark'] .sa-dot--bad {
   background: #e57373;
 }
+/* Bulk edit of SEO titles and descriptions, cornerstone and link columns. */
+.sa-edit-input,
+.sa-edit-area {
+  width: 100%;
+  min-width: 140px;
+  padding: 4px 6px;
+  border: 1px solid var(--theme-elevation-200, var(--lit-ccc, #ccc));
+  border-radius: 4px;
+  font: inherit;
+  background: var(--theme-elevation-0, var(--lit-fff, #fff));
+  color: inherit;
+}
+
+.sa-edit-area {
+  min-height: 52px;
+  resize: vertical;
+}
+
+.sa-edit-changed {
+  outline: 2px solid var(--theme-success-500, #2f8f46);
+  outline-offset: -1px;
+}
+
+.sa-savebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.sa-savebar button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--theme-elevation-300, #999);
+  background: var(--theme-elevation-0, #fff);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.sa-savebar button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sa-orphan {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--theme-warning-100, #fff4d6);
+  font-size: 12px;
+}
+
+.sa-suggestions {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 12px;
+}
+
+.sa-error-text {
+  color: var(--theme-error-500, #b42318);
+  font-size: 12px;
+}

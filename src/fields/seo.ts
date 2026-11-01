@@ -26,3 +26,22 @@ export const seoFields: Field = {
     { name: 'xImage', type: 'upload', relationTo: 'media', label: 'X image (optional)', admin: { description: 'Leave blank to use the social image.' } },
   ],
 }
+
+/**
+ * The SEO group with the cornerstone checkbox added. Only pages and posts use it: the
+ * SEO audit checks a cornerstone item more strictly and can filter to them.
+ */
+export const seoFieldsWithCornerstone: Field = {
+  ...seoFields,
+  fields: [
+    ...((seoFields.fields as Field[] | undefined) ?? []).slice(0, 1),
+    {
+      name: 'cornerstone',
+      type: 'checkbox',
+      defaultValue: false,
+      label: 'Cornerstone content',
+      admin: { description: 'Mark the main page on a topic. The SEO audit checks it more strictly: at least 900 words, a keyphrase in a subheading, and internal links.' },
+    },
+    ...((seoFields.fields as Field[] | undefined) ?? []).slice(1),
+  ],
+}

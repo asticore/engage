@@ -8,6 +8,8 @@ import { getEngine } from '@/lib/engine'
 import { getFeatureFlags } from '@/utilities/features'
 import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
 import { buildMetadata } from '@/utilities/seo'
+import { buildFaqPageJsonLd } from '@/features/seo/pageSchema'
+import { getSeoContext } from '@/features/seo/settings'
 import type { Faq, FaqSetting } from '@/engage-types'
 
 export const dynamic = 'force-dynamic'
@@ -29,6 +31,10 @@ export default async function FaqPage() {
   ])) as unknown as [FaqSetting | null, { docs: Faq[] }]
   const faqs = await applyTranslationsToDocs(rawFaqs, 'faqs', await currentRequestLocale())
 
+  // FAQPage structured data for every question on this page (same answers as the list below).
+  const seoContext = await getSeoContext()
+  const faqNode = seoContext.enabled ? buildFaqPageJsonLd({ url: `${seoContext.baseUrl}/faq`, name: settings?.pageTitle || 'Frequently Asked Questions', faqs }) : null
+
   return (
     <div className="page-shell">
       {settings?.introBlocks && settings.introBlocks.length > 0 ? (
@@ -39,6 +45,7 @@ export default async function FaqPage() {
         </div>
       )}
       {settings?.intro && <p className="mb-8 max-w-[640px] opacity-80">{settings.intro}</p>}
+      {faqNode && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqNode).replaceAll('</', '<\\/') }} />}
 
       {faqs.length === 0 ? (
         <p className="empty-state">No FAQs added yet - add some in the admin panel.</p>

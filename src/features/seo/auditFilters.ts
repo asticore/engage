@@ -13,6 +13,8 @@ export type AuditFilters = {
   collection: 'all' | AuditCollection
   score: ScoreFilter
   missingKeyphrase: boolean
+  cornerstoneOnly: boolean
+  orphanOnly: boolean
   /** Case-insensitive text that must appear in one of the row's problem messages. */
   problemText: string
   sort: SortKey
@@ -22,6 +24,8 @@ export const DEFAULT_AUDIT_FILTERS: AuditFilters = {
   collection: 'all',
   score: 'all',
   missingKeyphrase: false,
+  cornerstoneOnly: false,
+  orphanOnly: false,
   problemText: '',
   sort: 'worst',
 }
@@ -34,6 +38,8 @@ export function filterAuditRows(rows: AuditRow[], filters: AuditFilters): AuditR
     if (filters.collection !== 'all' && row.collection !== filters.collection) return false
     if (filters.score !== 'all' && row.seoScore !== filters.score) return false
     if (filters.missingKeyphrase && row.hasKeyphrase) return false
+    if (filters.cornerstoneOnly && !row.cornerstone) return false
+    if (filters.orphanOnly && !row.orphan) return false
     if (needle && !row.problems.some((problem) => problem.toLowerCase().includes(needle))) return false
     return true
   })

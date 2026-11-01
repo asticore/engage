@@ -9,12 +9,13 @@ import { noAdsField } from '@/features/ads/fields'
 import { pageSpeedFields } from '@/features/pagespeed/fields'
 import { pageSpeedAfterChange, pageSpeedBeforeChange } from '@/features/pagespeed/hooks'
 import { indexNowAfterChange, indexNowAfterDelete } from '@/features/seo/indexNowHook'
+import { slugRedirectAfterChange } from '@/features/redirects/slugChange'
 import type { CollectionConfig } from '@/engine'
 import { excludeProtectedAccess } from '@/features/visibility/excludeProtected'
 
 import { roleAccess, roleOrPublished } from '../access/ecommerceAccess'
 import { pageBuilderBlocks } from '../blocks'
-import { seoFields } from '../fields/seo'
+import { seoFieldsWithCornerstone } from '../fields/seo'
 import { schemaTypeField } from '../fields/schemaType'
 import { authorshipFields, authorshipBeforeChange } from '../fields/authorship'
 import { formatSlugHook } from '../utilities/formatSlug'
@@ -91,7 +92,7 @@ export const Posts: CollectionConfig = {
         initCollapsed: true,
       },
     },
-    seoFields,
+    seoFieldsWithCornerstone,
     customFieldsField,
     membersOnlyField,
     ...authorshipFields,
@@ -105,7 +106,7 @@ export const Posts: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [domainWriteGuard, authorshipBeforeChange, trashGuard, seoEditGuard, readingTimeBeforeChange, contentEditGuard, publishGuard, pageSpeedBeforeChange, embedShortLinksBeforeChange],
-    afterChange: [pageSpeedAfterChange('posts'), indexNowAfterChange('posts'), machineAutoDraftAfterChange('posts'), outdatedAfterChange('posts'), webhookContentAfterChange('posts')],
+    afterChange: [slugRedirectAfterChange('posts'), pageSpeedAfterChange('posts'), indexNowAfterChange('posts'), machineAutoDraftAfterChange('posts'), outdatedAfterChange('posts'), webhookContentAfterChange('posts')],
     afterDelete: [indexNowAfterDelete('posts')],
   },
 }

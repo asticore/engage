@@ -14,6 +14,7 @@ import { schemaTypeField } from '../fields/schemaType'
 import { authorshipFields, authorshipBeforeChange } from '../fields/authorship'
 import { pageSpeedFields } from '@/features/pagespeed/fields'
 import { pageSpeedAfterChange, pageSpeedBeforeChange } from '@/features/pagespeed/hooks'
+import { slugRedirectAfterChange } from '@/features/redirects/slugChange'
 import { formatSlugHook } from '../utilities/formatSlug'
 import { customFieldsField } from '../fields/customFields'
 import { publishGuard } from '@/features/roles/contentEditGuard'
@@ -198,7 +199,7 @@ export const Events: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [authorshipBeforeChange, trashGuard, seoEditGuard, publishGuard, pageSpeedBeforeChange, tierIdsBeforeChange],
-    afterChange: [pageSpeedAfterChange('events'), indexNowAfterChange('events'), machineAutoDraftAfterChange('events'), outdatedAfterChange('events'), webhookContentAfterChange('events')],
+    afterChange: [slugRedirectAfterChange('events'), pageSpeedAfterChange('events'), indexNowAfterChange('events'), machineAutoDraftAfterChange('events'), outdatedAfterChange('events'), webhookContentAfterChange('events')],
     afterDelete: [indexNowAfterDelete('events')],
   },
 }
