@@ -26,7 +26,7 @@ const Cta: React.FC<{ text: unknown; url: unknown; variant?: 'primary' | 'second
 
 const Avatar: React.FC<{ photo: unknown; name: string }> = ({ photo, name }) => {
   const m = mediaOf(photo)
-  return m?.url ? <img className="el-avatar" src={m.url} alt={name} loading="lazy" width={64} height={64} /> : null
+  return m?.url ? <img decoding="async" className="el-avatar" src={m.url} alt={name} loading="lazy" width={64} height={64} /> : null
 }
 
 /** `testimonial`: a quote with the person's name, role, photo and optional stars. */
@@ -108,7 +108,7 @@ export const TeamMemberElement: React.FC<P> = (p) => {
   const social = cells(p.social, 2)
   return (
     <article className={`el-team ${alignClass(p.align ?? 'center')}`}>
-      {m?.url ? <img className="el-team__photo" src={m.url} alt={str(p.alt) || name} loading="lazy" /> : <div className="el-placeholder el-team__photo">Photo</div>}
+      {m?.url ? <img decoding="async" className="el-team__photo" src={m.url} alt={str(p.alt) || name} loading="lazy" /> : <div className="el-placeholder el-team__photo">Photo</div>}
       <h3>{name}</h3>
       {str(p.role) && <p className="el-team__role">{str(p.role)}</p>}
       {str(p.bio) && <p>{str(p.bio)}</p>}
@@ -203,7 +203,7 @@ export const ImageBoxElement: React.FC<P> = (p) => {
   const m = mediaOf(p.image) || mediaOf(p.url)
   return (
     <div className={`el-box el-box--image ${alignClass(p.align)}`}>
-      {m?.url ? <img src={m.url} alt={str(p.alt) || str(m.alt)} loading="lazy" className="el-box__img" /> : <div className="el-placeholder">Choose an image</div>}
+      {m?.url ? <img decoding="async" src={m.url} alt={str(p.alt) || str(m.alt)} loading="lazy" className="el-box__img" /> : <div className="el-placeholder">Choose an image</div>}
       <div className="el-box__body">
         <Titled tag={p.tag} link={p.link}>
           {str(p.title, 'Image box')}

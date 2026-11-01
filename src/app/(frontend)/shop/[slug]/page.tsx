@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { contentAvailableHere, requestHost } from '@/features/domains/request'
 import { pickForHost } from '@/features/domains/scope'
 import { cookies } from 'next/headers'
-import React from 'react'
+import React, { cache } from 'react'
 import type { Metadata } from 'next'
 import { RichText } from '@/engine/editor/react'
 
@@ -54,7 +54,8 @@ const STAR_OFF = String.fromCharCode(0x2606)
 
 export const dynamic = 'force-dynamic'
 
-async function getProduct(slug: string) {
+// Memoised per request: generateMetadata and the page both load the product.
+const getProduct = cache(async (slug: string) => {
   const engine = await getEngine()
   const { docs } = (await engine.find({
     collection: 'products',
@@ -64,7 +65,7 @@ async function getProduct(slug: string) {
   })) as unknown as { docs: Product[] }
   // The same slug can exist on several domains: this domain's own product, else the shared one (features/domains/scope.ts).
   return pickForHost(docs, await requestHost(), (product) => (product as { availableDomains?: unknown }).availableDomains)
-}
+})
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: requested } = await params

@@ -110,7 +110,7 @@ export const CardElement: React.FC<P> = (p) => {
   } else if (image?.url) {
     mediaNode = (
       <figure className="be-el-47-card__media be-el-47-card__media--image" style={ratio === 'auto' ? undefined : { aspectRatio: RATIO_CSS[ratio] }}>
-        <img className={`be-el-47-card__img be-el-47-card__img--${fit}`} src={image.url} alt={str(image.alt)} loading="lazy" />
+        <img decoding="async" className={`be-el-47-card__img be-el-47-card__img--${fit}`} src={image.url} alt={str(image.alt)} loading="lazy" />
       </figure>
     )
   }

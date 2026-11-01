@@ -35,7 +35,11 @@ export const getAllResolvedPages = cache(async (): Promise<ResolvedPage[]> => lo
  */
 export const getAllResolvedPagesAnyDomain = cache(async (): Promise<ResolvedPage[]> => loadResolvedPages(null, false))
 
-async function loadResolvedPages(host: string | null, narrow: boolean): Promise<ResolvedPage[]> {
+/**
+ * Every published page row, read once per request and shared by both resolved lists above. Both lists walk the same
+ * rows (they differ only in which domain they keep), so the second list costs no extra read.
+ */
+const publishedPageRows = cache(async (): Promise<Page[]> => {
   const engine = await getEngine()
   const { docs } = await engine.find({
     collection: 'pages',
@@ -43,9 +47,14 @@ async function loadResolvedPages(host: string | null, narrow: boolean): Promise<
     limit: 0,
     depth: 0,
   })
+  return docs as unknown as Page[]
+})
+
+async function loadResolvedPages(host: string | null, narrow: boolean): Promise<ResolvedPage[]> {
+  const rows = await publishedPageRows()
 
   const byId = new Map<string, Page>()
-  docs.forEach((doc) => byId.set(String(doc.id), doc as unknown as Page))
+  rows.forEach((doc) => byId.set(String(doc.id), doc))
   const onThisDomain = (page: Page) => !narrow || availableOnHost((page as { availableDomains?: unknown }).availableDomains, host)
 
   const resolve = (page: Page): ResolvedPage | null => {
@@ -69,7 +78,7 @@ async function loadResolvedPages(host: string | null, narrow: boolean): Promise<
   }
 
   const byAddress = new Map<string, ResolvedPage[]>()
-  for (const doc of docs as unknown as Page[]) {
+  for (const doc of rows) {
     if (!onThisDomain(doc)) continue
     const entry = resolve(doc)
     if (!entry) continue
@@ -93,7 +102,8 @@ export const findPageByPath = async (segments: string[]): Promise<ResolvedPage |
 }
 
 /** The homepage this request's domain serves: its own homepage, else the shared one. Null when none is on this domain. */
-export const getHomepage = async (): Promise<Page | null> => {
+// Memoised per request: generateMetadata and the page both ask for it.
+export const getHomepage = cache(async (): Promise<Page | null> => {
   const host = await requestHost()
   const engine = await getEngine()
   const { docs } = await engine.find({
@@ -103,4 +113,4 @@ export const getHomepage = async (): Promise<Page | null> => {
     depth: 2,
   })
   return pickForHost(docs as unknown as Page[], host, (page) => (page as { availableDomains?: unknown }).availableDomains)
-}
+})

@@ -156,7 +156,7 @@ export const GalleryLightbox: React.FC<{ items: GalleryItem[]; children: React.R
               Picture {(index ?? 0) + 1} of {count}
             </p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="be-el-49-lb__img" src={item.url} alt={item.alt} />
+            <img decoding="async" className="be-el-49-lb__img" src={item.url} alt={item.alt} />
             {item.alt && <p className="be-el-49-lb__caption" aria-hidden="true">{item.alt}</p>}
             <div className="be-el-49-lb__bar">
               {count > 1 && (

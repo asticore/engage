@@ -5,7 +5,7 @@ import { publicLocale } from '@/features/uiStrings/storeTextsServer'
 import { formatDateFor } from '@/features/uiStrings/publicFormat'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import React from 'react'
+import React, { cache } from 'react'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 
@@ -39,7 +39,8 @@ export const dynamic = 'force-dynamic'
  * Published posts only. Drafts are seen through the signed preview route (src/app/(frontend)/preview),
  * which checks a token rather than the visitor's session, so this lookup never needs to return them.
  */
-async function getPost(slug: string) {
+// Memoised per request: generateMetadata and the page both load the post.
+const getPost = cache(async (slug: string) => {
   const engine = await getEngine()
   const { docs } = (await engine.find({
     collection: 'posts',
@@ -49,7 +50,7 @@ async function getPost(slug: string) {
   })) as unknown as { docs: Post[] }
   // The same slug can exist on several domains: this domain's own post, else the shared one (features/domains/scope.ts).
   return pickForHost(docs, await requestHost(), (post) => (post as { availableDomains?: unknown }).availableDomains)
-}
+})
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug: requested } = await params

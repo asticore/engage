@@ -80,7 +80,7 @@ export const SiteLogoElement: React.FC<P> = async (p) => {
   if (!site.logo && !site.siteName) return null
   const alt = str(p.alt).trim() || site.siteName
   const inner = site.logo ? (
-    <img
+    <img decoding="async"
       className="be-el-logo__img"
       src={site.logo.url}
       alt={alt}

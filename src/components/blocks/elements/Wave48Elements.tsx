@@ -445,7 +445,7 @@ export const ReviewsElement: React.FC<P> = (p) => {
               {showStars && r.rating !== null && <Stars rating={r.rating} />}
               {r.text && <p className="be-el-48-review__text">{r.text}</p>}
               <footer className="be-el-48-review__by">
-                {r.avatar?.url && <img className="be-el-48-review__avatar" src={r.avatar.url} alt="" width={40} height={40} loading="lazy" />}
+                {r.avatar?.url && <img decoding="async" className="be-el-48-review__avatar" src={r.avatar.url} alt="" width={40} height={40} loading="lazy" />}
                 <span>
                   {r.name && <strong className="be-el-48-review__name">{r.name}</strong>}
                   {r.name && r.source && ' '}

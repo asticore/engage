@@ -145,7 +145,7 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
     <AccountShell title={org.name} current={START}>
       <OrganizationStyles />
       <div className="org-head">
-        {org.logo ? <img className="org-logo" src={org.logo} alt="" width={56} height={56} /> : null}
+        {org.logo ? <img decoding="async" className="org-logo" src={org.logo} alt="" width={56} height={56} /> : null}
         <div>
           <span className="org-badge">{tx('orgs.roleBadge', { role: detail.myRole })}</span>
           <p className="org-muted">/{org.slug}</p>
