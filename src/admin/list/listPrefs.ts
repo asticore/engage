@@ -15,6 +15,8 @@ export type ListPrefs = {
   sort?: string
   limit?: number
   view?: string
+  /** Getting-started checklist: item ids the admin ticked by hand (only the getting-started key uses it). */
+  doneIds?: string[]
 }
 
 /**
@@ -25,6 +27,7 @@ export type ListPrefs = {
  * - sort: string matching /^-?[A-Za-z0-9_.]+$/
  * - limit: one of 10, 25, 50, 100
  * - view: one of 'list', 'gallery', 'calendar', 'tree'
+ * - doneIds: up to 200 checklist item ids (lowercase words and dashes), kept even when empty so a last untick saves
  * Drops everything else.
  */
 export function sanitizeListPrefs(input: unknown): ListPrefs {
@@ -62,6 +65,13 @@ export function sanitizeListPrefs(input: unknown): ListPrefs {
   // Sanitize view
   if (typeof obj.view === 'string' && ['list', 'gallery', 'calendar', 'tree'].includes(obj.view)) {
     result.view = obj.view
+  }
+
+  // Sanitize getting-started ticks (the only key that stores a list of ids)
+  if (Array.isArray(obj.doneIds)) {
+    result.doneIds = obj.doneIds
+      .slice(0, 200)
+      .filter((id): id is string => typeof id === 'string' && /^[a-z0-9-]{1,80}$/.test(id))
   }
 
   return result

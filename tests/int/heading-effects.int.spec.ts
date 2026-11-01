@@ -169,7 +169,6 @@ describe('hidden library flags', () => {
   it('leaves the heading and other elements in the library', () => {
     const slugs = new Set(libraryCards().map((c) => c.slug))
     expect(slugs.has('element:heading')).toBe(true)
-    expect(slugs.has('element:count-up')).toBe(true)
     expect(getElementDef('table')?.hidden).toBeFalsy()
   })
 

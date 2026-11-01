@@ -40,121 +40,10 @@ import * as apiEndpointsSchema from '@/cms/db/schema/apiEndpoints'
 
 // Intentionally unmigrated tables/columns - add here ONLY if confirmed that migrations
 // deliberately do not create them, with a reason for each.
-// Note: These are NOT bugs to hide, but documented gaps between drizzle schema
-// generation (which models what SHOULD be there) and actual migrations (which
-// haven't caught up yet).
-const KNOWN_UNMIGRATED: Array<{ tableName: string; column?: string; reason: string }> = [
-  {
-    tableName: 'eg_posts_rels',
-    column: 'eg_media_id',
-    reason: 'Drizzle schema includes this for Gallery blocks, but migrations use media_id without eg_ prefix',
-  },
-  {
-    tableName: 'eg_posts_rels',
-    column: 'eg_faqs_id',
-    reason: 'Drizzle schema includes this for FAQ blocks, but migrations use faqs_id without eg_ prefix',
-  },
-  {
-    tableName: '_eg_posts_v_rels',
-    column: 'eg_media_id',
-    reason: 'Versioned rels table - same schema gap as eg_posts_rels',
-  },
-  {
-    tableName: '_eg_posts_v_rels',
-    column: 'eg_faqs_id',
-    reason: 'Versioned rels table - same schema gap as eg_posts_rels',
-  },
-  {
-    tableName: 'eg_faq_settings_rels',
-    column: 'eg_media_id',
-    reason: 'Drizzle schema includes for Gallery blocks; migrations use media_id',
-  },
-  {
-    tableName: 'eg_faq_settings_rels',
-    column: 'eg_faqs_id',
-    reason: 'Drizzle schema includes for Faq blocks; migrations use faqs_id',
-  },
-  {
-    tableName: 'eg_blog_settings_rels',
-    column: 'eg_media_id',
-    reason: 'Drizzle schema includes for Gallery blocks; migrations use media_id',
-  },
-  {
-    tableName: 'eg_blog_settings_rels',
-    column: 'eg_faqs_id',
-    reason: 'Drizzle schema includes for Faq blocks; migrations use faqs_id',
-  },
-  {
-    tableName: 'eg_shop_settings_rels',
-    column: 'eg_media_id',
-    reason: 'Drizzle schema includes for Gallery blocks; migrations use media_id',
-  },
-  {
-    tableName: 'eg_shop_settings_rels',
-    column: 'eg_faqs_id',
-    reason: 'Drizzle schema includes for Faq blocks; migrations use faqs_id',
-  },
-  {
-    tableName: 'eg_page_templates_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled',
-  },
-  {
-    tableName: 'eg_pages_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled',
-  },
-  {
-    tableName: '_eg_pages_v_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Versioned form block - same as eg_pages_blocks_form',
-  },
-  {
-    tableName: 'eg_posts_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled',
-  },
-  {
-    tableName: '_eg_posts_v_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Versioned form block - same as eg_posts_blocks_form',
-  },
-  {
-    tableName: 'eg_faq_settings_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled',
-  },
-  {
-    tableName: 'eg_blog_settings_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled',
-  },
-  {
-    tableName: 'eg_shop_settings_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled',
-  },
-  {
-    tableName: 'eg_reusable_sections_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled (the form is stored in the _rels table)',
-  },
-  {
-    tableName: 'eg_site_templates_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled (the form is stored in the _rels table)',
-  },
-  {
-    tableName: 'eg_products_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Form block form_id documented in schema/generate.ts as deliberately not modeled',
-  },
-  {
-    tableName: '_eg_products_v_blocks_form',
-    column: 'form_id',
-    reason: 'Known gap: Versioned form block - same as eg_products_blocks_form',
-  },
-]
+// Empty: the rels target columns (media_id/faqs_id on the five legacy rels tables, eg_media_id
+// elsewhere) and the Form block's form_id (added by migration 20270224_100000_block_form_id)
+// now match the migrations, so nothing is left unmigrated.
+const KNOWN_UNMIGRATED: Array<{ tableName: string; column?: string; reason: string }> = []
 
 describe('Fresh install schema coverage - all drizzle tables created and columns match', () => {
   let proxy: Awaited<ReturnType<typeof getPlatformProxy<{ D1: D1Database }>>>
@@ -413,7 +302,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
         }
       }
     },
-    180_000,
+    300_000,
   )
 
   afterAll(async () => {

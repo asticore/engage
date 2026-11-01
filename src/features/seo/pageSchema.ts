@@ -6,6 +6,9 @@ type JsonLdNode = Record<string, unknown>
 
 const ARTICLE_TYPES = ['BlogPosting', 'Article', 'NewsArticle']
 
+/** Most items a listing page declares in its ItemList. A listing shows a page of cards, so this is generous. */
+const MAX_LIST_ITEMS = 100
+
 /**
  * Builds per-page JSON-LD structured data.
  *
@@ -42,6 +45,8 @@ export const buildPageJsonLd = (input: {
   faqs?: FaqItem[]
   /** Breadcrumb trail from Home to the page itself. */
   breadcrumbs?: Crumb[]
+  /** Items a listing page shows (name and absolute URL). On a CollectionPage they become its ItemList. */
+  listItems?: Array<{ name: string; url: string }>
   extra?: Record<string, unknown>
 }): JsonLdNode | null => {
   const {
@@ -66,6 +71,7 @@ export const buildPageJsonLd = (input: {
     brand,
     faqs,
     breadcrumbs,
+    listItems,
     extra,
   } = input
 
@@ -152,6 +158,17 @@ export const buildPageJsonLd = (input: {
   if (faqs && faqs.length > 0 && type === 'FAQPage') {
     const entities = faqEntities(faqs)
     if (entities.length > 0) result.mainEntity = entities
+  }
+
+  // A collection page declares the items it lists as an ItemList, so the listing is more than a bare WebPage.
+  if (type === 'CollectionPage' && listItems && listItems.length > 0) {
+    const elements = listItems
+      .filter((item) => item.name && item.url)
+      .slice(0, MAX_LIST_ITEMS)
+      .map((item, index) => ({ '@type': 'ListItem', position: index + 1, name: item.name, url: item.url }))
+    if (elements.length > 0) {
+      result.mainEntity = { '@type': 'ItemList', numberOfItems: elements.length, itemListElement: elements }
+    }
   }
 
   // Breadcrumb trail, embedded on the page node so the page stays one script
