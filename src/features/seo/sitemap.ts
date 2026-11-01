@@ -5,7 +5,8 @@ import { getFeatureFlags } from '@/utilities/features'
 import { isNoIndexedPage, readPasswordGate } from './indexable'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
-import { getSeoContext, normalisePath, parsePathList, pathMatches } from './settings'
+import { absoluteUrl, getSeoContext, mediaUrl, normalisePath, parsePathList, pathMatches } from './settings'
+import type { Media } from '@/engage-types'
 import { sitemapVariants, type Alternate } from './localeSeo'
 import { isLocaleRoutable } from '@/features/multilingual/routing'
 import { nonDefaultLocales, publishIndex, publishableLocalesForDocument, type PublishIndex } from '@/features/multilingual/availability'
@@ -21,6 +22,9 @@ import { getAdminRoot } from '@/features/security/settings'
 
 export type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never'
 
+/** A picture on a sitemap entry (image:image namespace). */
+export type SitemapImage = { url: string; title?: string }
+
 export type SitemapEntry = {
   url: string
   lastModified?: string
@@ -28,7 +32,12 @@ export type SitemapEntry = {
   priority: number
   /** One per active locale when multilingual is on; omitted otherwise. */
   alternates?: Alternate[]
+  /** Pictures of a post, product or event. */
+  images?: SitemapImage[]
 }
+
+/** Most pictures listed under one address. */
+export const MAX_SITEMAP_IMAGES = 10
 
 type CollectionRow = { slug?: string | null; updatedAt?: string | null }
 
@@ -94,11 +103,11 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
   type DocRef = { collection: string; id: number | string; doc: unknown }
   // Entries are collected first and emitted together, so a document scoped to this domain is seen before the shared one
   // that has the same address, and so hreflang knows where another domain serves its own document.
-  const candidates: { path: string; lastModified?: string | null; priority: number; ref?: DocRef }[] = []
-  const add = (path: string, lastModified?: string | null, priority = 0.6, ref?: DocRef) => {
-    candidates.push({ path, lastModified, priority, ref })
+  const candidates: { path: string; lastModified?: string | null; priority: number; ref?: DocRef; images?: SitemapImage[] }[] = []
+  const add = (path: string, lastModified?: string | null, priority = 0.6, ref?: DocRef, images?: SitemapImage[]) => {
+    candidates.push({ path, lastModified, priority, ref, images })
   }
-  const emit = (path: string, lastModified?: string | null, priority = 0.6, ref?: DocRef) => {
+  const emit = (path: string, lastModified?: string | null, priority = 0.6, ref?: DocRef, images?: SitemapImage[]) => {
     const normalised = normalisePath(path)
     if (seen.has(normalised)) return
     // The admin, the API and the preview never belong in a sitemap, whatever the content says.
@@ -128,6 +137,7 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
         changeFrequency,
         priority,
         ...(alternates.length > 0 ? { alternates } : {}),
+        ...(images && images.length > 0 ? { images } : {}),
       })
     }
   }
@@ -141,6 +151,22 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
     }
   }
 
+  // Pictures of a post (featured image), product (images) or event (cover image). Media needs depth 1 for its URL.
+  const imagesOf = (collection: string, doc: Record<string, unknown>): SitemapImage[] => {
+    const field = collection === 'posts' ? doc.featuredImage : collection === 'events' ? doc.coverImage : doc.images
+    const list = Array.isArray(field) ? field : [field]
+    const out: SitemapImage[] = []
+    for (const value of list) {
+      const url = absoluteUrl(mediaUrl(value as Media | null | undefined), baseUrl)
+      if (!url) continue
+      const alt = value && typeof value === 'object' ? String((value as { alt?: unknown }).alt ?? '').trim() : ''
+      const title = alt || (typeof doc.title === 'string' ? doc.title.trim() : '')
+      out.push(title ? { url, title } : { url })
+      if (out.length >= MAX_SITEMAP_IMAGES) break
+    }
+    return out
+  }
+
   const addCollection = async (collection: string, prefix: string, priority: number) => {
     try {
       const engine = await getEngine()
@@ -148,13 +174,13 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
         collection: collection as 'posts',
         where: { _status: { equals: 'published' } },
         limit: 0,
-        depth: 0,
+        depth: 1,
       })
       const visible = await excludeProtected(collection as 'posts' | 'products' | 'events', docs as (CollectionRow & { id?: number })[])
       visible.forEach((doc) => {
         if (!doc.slug) return
         const ref = doc.id !== undefined ? { collection, id: doc.id, doc } : undefined
-        add(`${prefix}/${doc.slug}`, doc.updatedAt, priority, ref)
+        add(`${prefix}/${doc.slug}`, doc.updatedAt, priority, ref, imagesOf(collection, doc as unknown as Record<string, unknown>))
       })
     } catch {
       // A collection that will not read costs its own entries, nothing more.
@@ -242,13 +268,14 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
   }
   const hereFirst = (ref?: DocRef) => (requestHost && parseHostList((ref?.doc as { availableDomains?: unknown } | undefined)?.availableDomains).includes(requestHost) ? 1 : 0)
   candidates.sort((a, b) => hereFirst(b.ref) - hereFirst(a.ref))
-  for (const candidate of candidates) emit(candidate.path, candidate.lastModified, candidate.priority, candidate.ref)
+  for (const candidate of candidates) emit(candidate.path, candidate.lastModified, candidate.priority, candidate.ref, candidate.images)
 
   return entries
 }
 
 export const renderSitemapXml = (entries: SitemapEntry[]): string => {
   const hasAlternates = entries.some((entry) => entry.alternates && entry.alternates.length > 0)
+  const hasImages = entries.some((entry) => entry.images && entry.images.length > 0)
   const urls = entries
     .map((entry) => {
       const parts = [`    <loc>${escapeXml(entry.url)}</loc>`]
@@ -258,10 +285,15 @@ export const renderSitemapXml = (entries: SitemapEntry[]): string => {
       for (const alt of entry.alternates ?? []) {
         parts.push(`    <xhtml:link rel="alternate" hreflang="${escapeXml(alt.hreflang)}" href="${escapeXml(alt.href)}" />`)
       }
+      for (const image of entry.images ?? []) {
+        parts.push('    <image:image>', `      <image:loc>${escapeXml(image.url)}</image:loc>`)
+        if (image.title) parts.push(`      <image:title>${escapeXml(image.title)}</image:title>`)
+        parts.push('    </image:image>')
+      }
       return `  <url>\n${parts.join('\n')}\n  </url>`
     })
     .join('\n')
 
-  const namespaces = `xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${hasAlternates ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : ''}`
+  const namespaces = `xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"${hasAlternates ? ' xmlns:xhtml="http://www.w3.org/1999/xhtml"' : ''}${hasImages ? ' xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"' : ''}`
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset ${namespaces}>\n${urls}\n</urlset>\n`
 }

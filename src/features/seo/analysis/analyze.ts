@@ -14,6 +14,11 @@ const META_MIN = 120
 const META_MAX = 160
 const TEXT_GOOD = 300
 const TEXT_OK = 150
+/** Cornerstone items are longer and checked more strictly. */
+const CORNERSTONE_TEXT_GOOD = 900
+const CORNERSTONE_TEXT_OK = 600
+/** Checks that a cornerstone item fails at 'ok' (it is missing something) and so reports as 'bad'. */
+const CORNERSTONE_STRICT = new Set(['keyphrase-in-subheading', 'internal-links', 'keyphrase-in-alt', 'image-alt'])
 const DENSITY_MIN = 0.5
 const DENSITY_MAX = 3
 
@@ -90,12 +95,14 @@ function imageKeyphraseCheck(input: AnalysisInput, phrase: string[], checks: Che
 
 function lengthChecks(input: AnalysisInput, checks: Check[]): void {
   const count = rawWords(input.text).length
-  if (count >= TEXT_GOOD) {
+  const good = input.cornerstone ? CORNERSTONE_TEXT_GOOD : TEXT_GOOD
+  const ok = input.cornerstone ? CORNERSTONE_TEXT_OK : TEXT_OK
+  if (count >= good) {
     checks.push(check('text-length', 'Text length', 'good', `The text has ${count} words. Good.`))
-  } else if (count >= TEXT_OK) {
-    checks.push(check('text-length', 'Text length', 'ok', `The text has ${count} words. Aim for at least ${TEXT_GOOD}.`))
+  } else if (count >= ok) {
+    checks.push(check('text-length', 'Text length', 'ok', `The text has ${count} words. Aim for at least ${good}.`))
   } else {
-    checks.push(check('text-length', 'Text length', 'bad', `The text has ${count} words. Write at least ${TEXT_OK}, ideally ${TEXT_GOOD} or more.`))
+    checks.push(check('text-length', 'Text length', 'bad', `The text has ${count} words. Write at least ${ok}, ideally ${good} or more.`))
   }
 
   const title = (input.metaTitle.trim() || input.title).trim()
@@ -160,7 +167,9 @@ export function seoChecks(input: AnalysisInput): Check[] {
 
 /** Runs every SEO and readability check on one page. Pure. */
 export function analyze(input: AnalysisInput): AnalysisResult {
-  const seo = seoChecks(input)
+  const seo = input.cornerstone
+    ? seoChecks(input).map((c) => (c.status === 'ok' && CORNERSTONE_STRICT.has(c.id) ? { ...c, status: 'bad' as Status } : c))
+    : seoChecks(input)
   const readability = readabilityChecks(input.text, input.headings)
   return {
     seo,

@@ -14,7 +14,7 @@ import { excludeProtectedAccess } from '@/features/visibility/excludeProtected'
 
 import { roleAccess, roleOrPublished } from '../access/ecommerceAccess'
 import { pageBuilderBlocks } from '../blocks'
-import { seoFields } from '../fields/seo'
+import { seoFieldsWithCornerstone } from '../fields/seo'
 import { schemaTypeField } from '../fields/schemaType'
 import { authorshipFields, authorshipBeforeChange } from '../fields/authorship'
 import { formatSlugHook, slugify } from '../utilities/formatSlug'
@@ -147,7 +147,7 @@ export const Pages: CollectionConfig = {
     },
     pageFeaturedImageField,
     pageExcerptField,
-    seoFields,
+    seoFieldsWithCornerstone,
     {
       name: 'blocks',
       type: 'blocks',

@@ -8,6 +8,7 @@ import { outdatedAfterChange } from '@/features/multilingual/outdated'
 import { pageSpeedFields } from '@/features/pagespeed/fields'
 import { pageSpeedAfterChange, pageSpeedBeforeChange } from '@/features/pagespeed/hooks'
 import { indexNowAfterChange, indexNowAfterDelete } from '@/features/seo/indexNowHook'
+import { slugRedirectAfterChange } from '@/features/redirects/slugChange'
 import type { CollectionConfig } from '@/engine'
 import { excludeProtectedAccess } from '@/features/visibility/excludeProtected'
 
@@ -184,7 +185,7 @@ export const Products: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [domainWriteGuard, authorshipBeforeChange, contentEditGuard, publishGuard, catalogueBeforeChange, pageSpeedBeforeChange, embedShortLinksFor('layout')],
-    afterChange: [stockAlertAfterChange, backInStockAfterChange, subscriptionAfterChange, pageSpeedAfterChange('products'), indexNowAfterChange('products'), machineAutoDraftAfterChange('products'), outdatedAfterChange('products'), webhookContentAfterChange('products')],
+    afterChange: [stockAlertAfterChange, backInStockAfterChange, subscriptionAfterChange, slugRedirectAfterChange('products'), pageSpeedAfterChange('products'), indexNowAfterChange('products'), machineAutoDraftAfterChange('products'), outdatedAfterChange('products'), webhookContentAfterChange('products')],
     afterDelete: [indexNowAfterDelete('products')],
   },
 }
