@@ -6,11 +6,26 @@
  * The orchestration takes its fetch and storage as arguments so the route
  * stays a thin adapter.
  */
-import { detectFontFormat, localFontFileName, localFontUrl, MAX_FONT_UPLOAD_BYTES, RESERVED_FONT_IDS, sanitizeFamily, sanitizeFontId, sanitizeWeights } from './installed'
-import { fontsourceFileUrl, REMOTE_SUBSET } from './css'
+import {
+  detectFontFormat,
+  fontFileKey,
+  FONT_SUBSETS,
+  localFontFileName,
+  localFontUrl,
+  MAX_FONT_UPLOAD_BYTES,
+  RESERVED_FONT_IDS,
+  sanitizeFamily,
+  sanitizeFontId,
+  sanitizeSubsets,
+  sanitizeVersion,
+  sanitizeWeights,
+} from './installed'
+import { fontsourceFileUrl } from './css'
 import type { FontSource, InstalledFont } from './types'
 
 export const FONTSOURCE_META_URL = 'https://api.fontsource.org/v1/fonts'
+/** jsDelivr's data API: the package's `tags.latest` is the version a new install pins. */
+export const FONTSOURCE_PACKAGE_URL = 'https://data.jsdelivr.com/v1/package/npm/@fontsource'
 
 /** The subset of the Fontsource v1 font record that installing needs. */
 export type FontMetadata = {
@@ -27,9 +42,11 @@ export type InstallRequest = {
   weights?: unknown
   italic?: boolean
   local?: boolean
+  /** Character subsets to install (for example ["latin", "cyrillic"]). Latin when omitted. */
+  subsets?: unknown
 }
 
-export type InstallTarget = { weight: number; style: 'normal' | 'italic'; key: string }
+export type InstallTarget = { weight: number; style: 'normal' | 'italic'; subset: string; key: string }
 
 export type InstallPlan = {
   font: Omit<InstalledFont, 'files'>
@@ -70,7 +87,7 @@ export async function fetchFontMetadata(id: string, fetchImpl: FetchLike = fetch
  * Checks an install request against the font's metadata and works out the
  * InstalledFont it would produce, plus the files a local install must fetch.
  */
-export function planInstall(meta: FontMetadata, request: InstallRequest): PlanResult {
+export function planInstall(meta: FontMetadata, request: InstallRequest, version = ''): PlanResult {
   const requested = Array.isArray(request.weights) ? sanitizeWeights(request.weights) : []
   const weights = requested.length > 0 ? requested : meta.weights.includes(400) ? [400] : meta.weights.slice(0, 1)
   if (weights.length === 0) return { ok: false, status: 400, error: 'This font has no weights to install.' }
@@ -83,14 +100,24 @@ export function planInstall(meta: FontMetadata, request: InstallRequest): PlanRe
   if (italic && !meta.styles.includes('italic')) {
     return { ok: false, status: 400, error: `${meta.family} has no italic style.` }
   }
-  if (!meta.subsets.includes(REMOTE_SUBSET)) {
-    return { ok: false, status: 422, error: `${meta.family} has no ${REMOTE_SUBSET} subset, which the site needs.` }
+  const requestedSubsets = request.subsets === undefined ? [] : Array.isArray(request.subsets) ? request.subsets : null
+  if (requestedSubsets === null || requestedSubsets.some((s) => !(FONT_SUBSETS as readonly unknown[]).includes(s))) {
+    return { ok: false, status: 400, error: 'Choose subsets from the list: latin, latin-ext, cyrillic, greek or vietnamese.' }
   }
+  const subsets = sanitizeSubsets(requestedSubsets)
+  const missing = subsets.filter((subset) => !meta.subsets.includes(subset))
+  if (missing.length > 0) {
+    return { ok: false, status: 422, error: `${meta.family} has no ${missing.join(', ')} subset.` }
+  }
+  const pinned = sanitizeVersion(version)
+  if (!pinned) return { ok: false, status: 502, error: `Could not read the Fontsource version of ${meta.family}. Try again.` }
 
   const styles: Array<'normal' | 'italic'> = italic ? ['normal', 'italic'] : ['normal']
   const targets: InstallTarget[] = []
-  for (const weight of weights) {
-    for (const style of styles) targets.push({ weight, style, key: `${weight}-${style}` })
+  for (const subset of subsets) {
+    for (const weight of weights) {
+      for (const style of styles) targets.push({ weight, style, subset, key: fontFileKey(weight, style, subset) })
+    }
   }
 
   const source: FontSource = meta.type === 'google' ? 'google' : 'fontsource'
@@ -101,14 +128,29 @@ export function planInstall(meta: FontMetadata, request: InstallRequest): PlanRe
     weights,
     italic,
     local: request.local === true,
+    version: pinned,
+    subsets,
   }
+  // Google's list of offered weights is what the stylesheet is checked against later.
+  if (meta.weights.length > 0) font.available = meta.weights
   if (meta.category) font.category = meta.category
   return { ok: true, plan: { font, targets } }
 }
 
-/** Downloads one latin woff2 file from jsDelivr and checks it really is a WOFF2. */
-export async function downloadFontFile(id: string, target: InstallTarget, fetchImpl: FetchLike = fetch): Promise<Uint8Array | null> {
-  const response = await fetchImpl(fontsourceFileUrl(id, target.weight, target.style), {
+/** The newest version of a Fontsource package, from jsDelivr's data API. Null when it cannot be read. */
+export async function fetchFontsourceVersion(id: string, fetchImpl: FetchLike = fetch): Promise<string | null> {
+  const response = await fetchImpl(`${FONTSOURCE_PACKAGE_URL}/${encodeURIComponent(id)}`, {
+    headers: { accept: 'application/json' },
+    signal: AbortSignal.timeout(8000),
+  })
+  if (!response.ok) return null
+  const raw = (await response.json().catch((): null => null)) as { tags?: { latest?: unknown } } | null
+  return sanitizeVersion(raw?.tags?.latest)
+}
+
+/** Downloads one woff2 file of a pinned Fontsource package and checks it really is a WOFF2. */
+export async function downloadFontFile(id: string, version: string, target: InstallTarget, fetchImpl: FetchLike = fetch): Promise<Uint8Array | null> {
+  const response = await fetchImpl(fontsourceFileUrl({ id, version }, target.weight, target.style, target.subset), {
     signal: AbortSignal.timeout(15000),
   })
   if (!response.ok) return null
@@ -136,16 +178,17 @@ export async function installFont(
   const meta = await fetchFontMetadata(id, fetchImpl)
   if (!meta) return { ok: false, status: 404, error: 'Font not found in the Fontsource catalog.' }
 
-  const planned = planInstall(meta, request)
+  const version = await fetchFontsourceVersion(meta.id, fetchImpl)
+  const planned = planInstall(meta, request, version ?? '')
   if (planned.ok === false) return planned
 
   const files: Record<string, string> = {}
   if (planned.plan.font.local) {
     if (!deps.store) return { ok: false, status: 500, error: 'Font storage is not configured.' }
     for (const target of planned.plan.targets) {
-      const bytes = await downloadFontFile(meta.id, target, fetchImpl)
+      const bytes = await downloadFontFile(meta.id, planned.plan.font.version ?? version ?? '', target, fetchImpl)
       if (!bytes) return { ok: false, status: 502, error: `Could not download ${target.key} for ${meta.family}.` }
-      const fileName = localFontFileName(meta.id, target.weight, target.style, 'woff2')
+      const fileName = localFontFileName(meta.id, target.weight, target.style, 'woff2', target.subset)
       await deps.store(fileName, bytes, 'font/woff2')
       files[target.key] = localFontUrl(fileName)
     }

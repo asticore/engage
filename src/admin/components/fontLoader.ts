@@ -38,6 +38,11 @@ export function loadFontInAdmin(font: InstalledFont): void {
   let link = document.getElementById(linkId) as HTMLLinkElement | null
   if (safe.source === 'google' && !safe.local) {
     const href = googleStylesheetUrl(safe)
+    // No weight the family offers was chosen: there is nothing valid to ask Google for, so no stylesheet.
+    if (href === '') {
+      link?.remove()
+      return
+    }
     if (!link) {
       link = document.createElement('link')
       link.id = linkId

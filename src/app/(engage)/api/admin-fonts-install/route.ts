@@ -32,7 +32,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const outcome = await installFont(
       id,
-      { weights: body.weights, italic: body.italic === true, local: body.local === true },
+      { weights: body.weights, italic: body.italic === true, local: body.local === true, subsets: body.subsets },
       { store: putMediaObject },
     )
     if (outcome.ok === false) return NextResponse.json({ error: outcome.error }, { status: outcome.status })

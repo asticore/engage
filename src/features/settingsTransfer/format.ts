@@ -164,6 +164,8 @@ export type ContentOptions = {
   posts: boolean
   products: boolean
   mediaMetadata: boolean
+  /** Shop customers (admin only). Exported for records; an import does not recreate them. */
+  customers: boolean
 }
 
 export type ExportOptions = {
@@ -198,6 +200,7 @@ export type ExportFile = {
     posts: JsonObject[]
     products: JsonObject[]
     mediaMetadata: JsonObject[]
+    customers: JsonObject[]
   }
   warnings: string[]
 }
@@ -345,7 +348,7 @@ function injectPath(target: unknown, existing: unknown, segments: string[]): voi
 /* Parsing                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const emptyContent = (): ExportFile['content'] => ({ pages: [], posts: [], products: [], mediaMetadata: [] })
+const emptyContent = (): ExportFile['content'] => ({ pages: [], posts: [], products: [], mediaMetadata: [], customers: [] })
 
 function docList(value: unknown, field: string): JsonObject[] {
   if (value === undefined || value === null) return []
@@ -384,6 +387,7 @@ export function parseExportFile(raw: unknown): ExportFile {
   content.posts = docList(contentRaw.posts, 'content.posts')
   content.products = docList(contentRaw.products, 'content.products')
   content.mediaMetadata = docList(contentRaw.mediaMetadata, 'content.mediaMetadata')
+  content.customers = docList(contentRaw.customers, 'content.customers')
 
   return {
     app: EXPORT_APP_ID,

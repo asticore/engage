@@ -9,7 +9,7 @@ import type { CustomFieldDef } from './types'
 import './spreadsheet-import.css'
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
-const ACCEPT = '.csv,.tsv,.txt,.xlsx,.xls'
+const ACCEPT = '.csv,.tsv,.txt,.xlsx,.ods,.xls'
 const subscribeNoop = () => () => {}
 
 /** Accessible modal: role=dialog, Escape closes, Tab stays inside, focus returns on close. */
@@ -95,7 +95,7 @@ function FilePicker({ onLoaded }: { onLoaded: (loaded: Loaded | null) => void })
         }}
       />
       <p className="ssi-note">
-        .csv, .tsv or .xlsx, up to 2 MB and {SPREADSHEET_MAX_DATA_ROWS.toLocaleString()} rows. Old .xls files are not supported: save them as .xlsx or .csv first. The file is read in your browser and is not uploaded.
+        .csv, .tsv, .xlsx or .ods, up to 2 MB and {SPREADSHEET_MAX_DATA_ROWS.toLocaleString()} rows. Old .xls files are not supported: save them as .xlsx or .csv first. The file is read in your browser and is not uploaded.
       </p>
       {busy && <p className="ssi-note">Reading file...</p>}
       {error && (

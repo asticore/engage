@@ -74,10 +74,29 @@ export async function getMediaBucket(): Promise<R2Bucket> {
   return cachedBucket
 }
 
-/** `uploadFile.js`, ported. */
+/** Files above this size are written to R2 in parts (multipart upload). R2 single puts are fine further, but parts keep each request small. */
+export const MULTIPART_THRESHOLD_BYTES = 25 * 1024 * 1024
+/** Size of each part. Every part but the last must be at least 5 MB; 10 MB keeps a 100 MB file to 10 parts. */
+export const MULTIPART_PART_BYTES = 10 * 1024 * 1024
+
+/** `uploadFile.js`, ported. Files over MULTIPART_THRESHOLD_BYTES go to R2 as a multipart upload, and an unfinished upload is aborted so no partial object is left behind. */
 export async function putMediaObject(key: string, data: Uint8Array, contentType: string): Promise<void> {
   const bucket = await getMediaBucket()
-  await bucket.put(key, data, { httpMetadata: { contentType } })
+  if (data.byteLength <= MULTIPART_THRESHOLD_BYTES) {
+    await bucket.put(key, data, { httpMetadata: { contentType } })
+    return
+  }
+  const upload = await bucket.createMultipartUpload(key, { httpMetadata: { contentType } })
+  try {
+    const parts = []
+    for (let offset = 0, number = 1; offset < data.byteLength; offset += MULTIPART_PART_BYTES, number += 1) {
+      parts.push(await upload.uploadPart(number, data.subarray(offset, Math.min(offset + MULTIPART_PART_BYTES, data.byteLength))))
+    }
+    await upload.complete(parts)
+  } catch (error) {
+    await upload.abort().catch((): void => undefined)
+    throw error
+  }
 }
 
 /** Where an untouched copy of a picture is kept when Media Settings asks for it. Never served by the public file route. */
@@ -149,17 +168,20 @@ function parseRangeHeader(rangeHeader: string | null): R2Range | undefined {
 /**
  * Whether a requested filename may be served by the public file route. Refuses
  * anything that could reach outside the flat media namespace (path separators,
- * `..`), and anything that starts with `original`, so the kept copies under
- * `original/<name>` (see `putOriginalIfMissing`) are never publicly readable.
+ * `..`). The kept copies live under `original/<name>` (see `putOriginalIfMissing`);
+ * the slash refuses them here, so a visitor's file named `original-photo.jpg` is
+ * served like any other.
  */
 export function isServableMediaFilename(filename: string): boolean {
   if (!filename || filename.includes('\0')) return false
   if (filename.includes('/') || filename.includes('\\') || filename.includes('..')) return false
-  if (filename.toLowerCase().startsWith('original')) return false
   return true
 }
 
-/** Pictures a browser may display inline from this origin. SVG is deliberately absent: it can carry script. */
+/**
+ * Pictures a browser may display inline from this origin. SVG is deliberately absent: it can carry script.
+ * ICO, HEIC, BMP and TIFF are served with their own type but as downloads, since most browsers cannot show them and none should render them here.
+ */
 const INLINE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'])
 
 /**

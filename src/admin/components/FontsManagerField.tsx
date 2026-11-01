@@ -28,11 +28,14 @@ const MIN_QUERY_LENGTH = 2
 const SEARCH_DELAY_MS = 300
 const SAMPLE = 'The quick brown fox jumps over the lazy dog'
 
-type Selection = { font: CatalogFont; weights: number[]; italic: boolean; local: boolean }
+type Selection = { font: CatalogFont; weights: number[]; italic: boolean; local: boolean; subsets: string[] }
 type Notice = { kind: 'ok' | 'error'; text: string }
 type FontResponse = { ok: true; font: InstalledFont } | { ok: false; error: string }
 
 const defaultWeights = (font: CatalogFont): number[] => (font.weights.includes(400) ? [400] : font.weights.slice(0, 1))
+/** Latin unless the family has no latin file, then its first subset. */
+const defaultSubsets = (font: CatalogFont): string[] => (font.subsets.includes('latin') ? ['latin'] : font.subsets.slice(0, 1))
+const SUBSET_CHOICES: readonly string[] = ['latin', 'latin-ext', 'cyrillic', 'greek', 'vietnamese']
 
 /** The preview-only shape of a catalog result, for loadFontInAdmin. */
 const previewOf = (font: CatalogFont, weights: number[], italic: boolean): InstalledFont => ({
@@ -127,7 +130,7 @@ export function FontsManagerField({ field, path, readOnly }: FontsManagerFieldPr
 
   const choose = (font: CatalogFont) => {
     const weights = defaultWeights(font)
-    setSelection({ font, weights, italic: false, local: false })
+    setSelection({ font, weights, italic: false, local: false, subsets: defaultSubsets(font) })
     setNotice(null)
     loadFontInAdmin(previewOf(font, weights, false))
   }
@@ -135,6 +138,14 @@ export function FontsManagerField({ field, path, readOnly }: FontsManagerFieldPr
   const updateSelection = (next: Selection) => {
     setSelection(next)
     loadFontInAdmin(previewOf(next.font, next.weights, next.italic))
+  }
+
+  const toggleSubset = (subset: string) => {
+    if (!selection) return
+    const subsets = selection.subsets.includes(subset)
+      ? selection.subsets.filter((s) => s !== subset)
+      : SUBSET_CHOICES.filter((choice) => choice === subset || selection.subsets.includes(choice))
+    updateSelection({ ...selection, subsets })
   }
 
   const toggleWeight = (weight: number) => {
@@ -166,14 +177,14 @@ export function FontsManagerField({ field, path, readOnly }: FontsManagerFieldPr
 
   const install = () => {
     if (!selection || busy) return
-    const { font, weights, italic, local } = selection
+    const { font, weights, italic, local, subsets } = selection
     void addFont(
       () =>
         fetch('/api/admin-fonts-install', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ id: font.id, weights, italic, local }),
+          body: JSON.stringify({ id: font.id, weights, italic, local, subsets }),
         }),
       (installedFont) => `${installedFont.family} added. Save the page to publish it.`,
     )
@@ -293,6 +304,19 @@ export function FontsManagerField({ field, path, readOnly }: FontsManagerFieldPr
                 </label>
               ))}
             </div>
+            <div className="fm-checks" role="group" aria-label="Character subsets">
+              {SUBSET_CHOICES.filter((subset) => selection.font.subsets.includes(subset)).map((subset) => (
+                <label key={subset}>
+                  <input
+                    type="checkbox"
+                    checked={selection.subsets.includes(subset)}
+                    disabled={readOnly || busy || (selection.font.type === 'google' && !selection.local)}
+                    onChange={() => toggleSubset(subset)}
+                  />
+                  {subset}
+                </label>
+              ))}
+            </div>
             <div className="fm-checks">
               {selection.font.styles.includes('italic') && (
                 <label>
@@ -328,7 +352,7 @@ export function FontsManagerField({ field, path, readOnly }: FontsManagerFieldPr
               <button
                 type="button"
                 className="fm-button"
-                disabled={readOnly || busy || selection.weights.length === 0}
+                disabled={readOnly || busy || selection.weights.length === 0 || selection.subsets.length === 0}
                 onClick={install}
               >
                 {busy ? 'Installing...' : 'Install font'}

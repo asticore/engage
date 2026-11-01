@@ -1,4 +1,7 @@
 import type { Engine } from '@/engine'
+import { MEDIA_KEY } from '@/features/media/usage'
+import { LOCAL_FONT_PATH_PREFIX } from '@/features/fonts/installed'
+import { getMediaBucket } from '@/localapi/storage'
 
 import { decryptJson, DecryptionError, isEncryptedEnvelope } from './crypto'
 import {
@@ -97,6 +100,31 @@ type RunContext = {
   mode: 'plan' | 'apply'
   origin?: string
   allowAdminUsers: boolean
+  /** Picture ids in the file mapped to the ids they have on this site (see resolveMediaIds). */
+  mediaIds: Map<number, number>
+}
+
+/**
+ * Works out which picture on this site each picture in the file is. A picture
+ * matches by id and file name together first (a restore onto the same site),
+ * then by file name alone (a copy onto another site). A picture with neither is
+ * left out of the map, and its settings keep the id they had.
+ */
+async function resolveMediaIds(engine: Engine, file: ExportFile): Promise<Map<number, number>> {
+  const map = new Map<number, number>()
+  for (const item of file.content.mediaMetadata) {
+    const sourceId = typeof item.id === 'number' ? item.id : null
+    const filename = textOf(item.filename)
+    if (sourceId === null || !filename) continue
+    const byId = (await engine.findByID({ collection: 'media', id: sourceId, depth: 0, overrideAccess: true }).catch((): null => null)) as JsonObject | null
+    if (byId && byId.filename === filename) {
+      map.set(sourceId, sourceId)
+      continue
+    }
+    const byName = await findOne(engine, 'media', 'filename', filename)
+    if (byName && typeof byName.id === 'number') map.set(sourceId, byName.id)
+  }
+  return map
 }
 
 async function runImport(
@@ -115,6 +143,8 @@ async function runImport(
     mode: options.mode,
     origin: options.origin,
     allowAdminUsers: options.allowAdminUsers === true,
+    // Only read the site's pictures when a section that uses them is being imported.
+    mediaIds: requested.some((section) => section === 'mediaMetadata' || section === 'settings' || section === 'headerFooter') ? await resolveMediaIds(engine, file) : new Map<number, number>(),
   }
   const sections: SectionReport[] = []
   for (const section of requested) {
@@ -239,15 +269,20 @@ const BUILT_IN_FONT_DEFAULTS = { headingFont: 'cormorant', bodyFont: 'jost' } as
  * body font that pointed at one goes back to its built-in default. Returns the
  * family names that were dropped. `doc` is the copy being written and is changed in place.
  */
-function withoutLocalFonts(doc: JsonObject): string[] {
+async function withoutLocalFonts(doc: JsonObject, filePresent: (url: string) => Promise<boolean>): Promise<string[]> {
   const theme = doc.theme
   if (!isPlainObject(theme) || !Array.isArray(theme.customFonts)) return []
 
   const kept: unknown[] = []
   const dropped: JsonObject[] = []
   for (const entry of theme.customFonts) {
-    if (isPlainObject(entry) && (entry.local === true || entry.source === 'upload')) dropped.push(entry)
-    else kept.push(entry)
+    if (isPlainObject(entry) && (entry.local === true || entry.source === 'upload')) {
+      // A font whose files are still on this site (a restore onto the same site) is kept as it is.
+      const urls = isPlainObject(entry.files) ? Object.values(entry.files).filter((url): url is string => typeof url === 'string') : []
+      const present = urls.length > 0 && (await Promise.all(urls.map(filePresent))).every(Boolean)
+      if (present) kept.push(entry)
+      else dropped.push(entry)
+    } else kept.push(entry)
   }
   if (dropped.length === 0) return []
 
@@ -258,6 +293,32 @@ function withoutLocalFonts(doc: JsonObject): string[] {
   }
   doc.theme = updated
   return dropped.map((entry) => (typeof entry.family === 'string' && entry.family ? entry.family : String(entry.id)))
+}
+
+/** Whether a locally stored font file is in this site's R2 bucket. */
+async function fontFilePresent(url: string): Promise<boolean> {
+  if (!url.startsWith(LOCAL_FONT_PATH_PREFIX)) return false
+  const bucket = await getMediaBucket()
+  return (await bucket.head(url.slice(LOCAL_FONT_PATH_PREFIX.length))) !== null
+}
+
+/** Keys that hold a number which is never a picture id, even when the key name mentions a picture. */
+const NOT_A_PICTURE_NUMBER = /size|width|height|count|order|index|quality|ratio|length|position|sort|max|min|px|ms|days|seconds/i
+
+/**
+ * Points picture ids held by settings at this site's copies of the same pictures.
+ * Only numbers under a key that names a picture are changed, and only when the
+ * id is in the map (see resolveMediaIds). Anything else is left exactly as exported.
+ */
+export function remapMediaIds(value: unknown, ids: Map<number, number>, key = ''): unknown {
+  if (Array.isArray(value)) return value.map((item) => remapMediaIds(item, ids, key))
+  if (isPlainObject(value)) {
+    const out: JsonObject = {}
+    for (const [name, item] of Object.entries(value)) out[name] = remapMediaIds(item, ids, name)
+    return out
+  }
+  if (typeof value === 'number' && MEDIA_KEY.test(key) && !NOT_A_PICTURE_NUMBER.test(key) && ids.has(value)) return ids.get(value)
+  return value
 }
 
 async function importGlobals(ctx: RunContext, section: ImportSection, report: SectionReport): Promise<void> {
@@ -275,12 +336,12 @@ async function importGlobals(ctx: RunContext, section: ImportSection, report: Se
 
     try {
       const existing = (await engine.findGlobal({ slug, depth: 0, overrideAccess: true })) as JsonObject | null
-      const next = withoutKeys(doc, DOC_NOISE_KEYS)
+      const next = remapMediaIds(withoutKeys(doc, DOC_NOISE_KEYS), ctx.mediaIds) as JsonObject
       if (slug === 'site-settings') {
-        const dropped = withoutLocalFonts(next)
+        const dropped = await withoutLocalFonts(next, fontFilePresent)
         if (dropped.length > 0) {
           report.warnings.push(
-            `Font files are not part of the export, so these fonts were not imported: ${dropped.join(', ')}. Install them again in the font settings.`,
+            `Font files are not part of the export. Fonts whose files are not on this site were not imported: ${dropped.join(', ')}. Install them again in the font settings.`,
           )
         }
       }
@@ -491,9 +552,10 @@ async function importMediaDetails(ctx: RunContext, report: SectionReport): Promi
       continue
     }
     try {
-      const existing = await findOne(engine, 'media', 'filename', filename)
+      const targetId = typeof item.id === 'number' ? ctx.mediaIds.get(item.id) : undefined
+      const existing = targetId === undefined ? null : ((await engine.findByID({ collection: 'media', id: targetId, depth: 0, overrideAccess: true })) as JsonObject | null)
       if (!existing) {
-        record(report, filename, 'skipped', 'No uploaded image has this file name. Upload it first, then import again.')
+        record(report, filename, 'skipped', 'No uploaded image matches this file by id or file name. Upload it first, then import again.')
         continue
       }
       if (typeof item.alt !== 'string') {
@@ -501,7 +563,7 @@ async function importMediaDetails(ctx: RunContext, report: SectionReport): Promi
         continue
       }
       if (mode === 'apply') {
-        await engine.update({ collection: 'media', id: existing.id as number, data: { alt: item.alt }, overrideAccess: true })
+        await engine.update({ collection: 'media', id: targetId as number, data: { alt: item.alt }, overrideAccess: true })
       }
       record(report, filename, 'updated')
     } catch (error) {

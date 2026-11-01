@@ -25,7 +25,7 @@ const MAX_DEPTH = 12
  * to the media id only counts under one of these, so `sortOrder: 7` never looks
  * like a reference to media 7.
  */
-const MEDIA_KEY = /image|img|media|photo|logo|icon|favicon|thumb|poster|cover|background|hero|file|avatar|banner|gallery|picture/i
+export const MEDIA_KEY = /image|img|media|photo|logo|icon|favicon|thumb|poster|cover|background|hero|file|avatar|banner|gallery|picture/i
 
 export type UsageTarget =
   | { kind: 'collection'; slug: string; relationFields?: string[] }

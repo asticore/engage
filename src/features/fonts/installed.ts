@@ -18,7 +18,11 @@ export const LOCAL_FONT_PATH_PREFIX = '/api/media/file/'
 const LOCAL_FILE_PATH = /^\/api\/media\/file\/[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/
 const SAFE_URL_CHARS = /^[A-Za-z0-9\-._~:/?#&=%+@;,]+$/
 const ALLOWED_REMOTE_HOSTS = ['fonts.googleapis.com', 'cdn.jsdelivr.net']
-const FILE_KEY = /^(\d{3})-(normal|italic)$/
+const FILE_KEY = /^(\d{3})-(normal|italic)(?:-([a-z-]+))?$/
+const VERSION_PATTERN = /^\d{1,3}\.\d{1,3}\.\d{1,3}$/
+/** Character subsets a Fontsource font can be installed with. Latin is always the default. */
+export const FONT_SUBSETS = ['latin', 'latin-ext', 'cyrillic', 'greek', 'vietnamese'] as const
+export const DEFAULT_SUBSET = 'latin'
 
 export const FONT_SOURCES: readonly FontSource[] = ['google', 'fontsource', 'upload']
 
@@ -153,9 +157,31 @@ export function uniqueUploadFontId(family: string, taken: ReadonlyArray<Pick<Ins
   }
 }
 
+/** Keeps only known subsets, de-duplicated, latin first. An empty or unknown list means latin. */
+export function sanitizeSubsets(value: unknown): string[] {
+  const list = Array.isArray(value) ? value : []
+  const chosen = new Set<string>()
+  for (const entry of list) {
+    if (typeof entry === 'string' && (FONT_SUBSETS as readonly string[]).includes(entry)) chosen.add(entry)
+  }
+  if (chosen.size === 0) return [DEFAULT_SUBSET]
+  return [...FONT_SUBSETS].filter((subset) => chosen.has(subset))
+}
+
+/** A Fontsource package version written as x.y.z, or null. */
+export function sanitizeVersion(value: unknown): string | null {
+  return typeof value === 'string' && VERSION_PATTERN.test(value.trim()) ? value.trim() : null
+}
+
+/** The `files` key for one weight, style and subset. Latin keeps the short key used before subsets existed. */
+export function fontFileKey(weight: number, style: string, subset: string = DEFAULT_SUBSET): string {
+  return subset === DEFAULT_SUBSET ? `${weight}-${style}` : `${weight}-${style}-${subset}`
+}
+
 /** Flat R2 key for one locally stored font file. */
-export function localFontFileName(id: string, weight: number, style: string, format: FontFormat): string {
-  return `font-${id}-${weight}-${style}.${format}`
+export function localFontFileName(id: string, weight: number, style: string, format: FontFormat, subset: string = DEFAULT_SUBSET): string {
+  const subsetPart = subset === DEFAULT_SUBSET ? '' : `${subset}-`
+  return `font-${id}-${subsetPart}${weight}-${style}.${format}`
 }
 
 export function localFontUrl(fileName: string): string {
@@ -216,6 +242,11 @@ export function sanitizeInstalledFonts(value: unknown): InstalledFont[] {
 
     const font: InstalledFont = { id, family, source, weights, italic: e.italic === true, local, files }
     if (typeof e.category === 'string' && e.category.length > 0 && e.category.length <= 40) font.category = e.category
+    const version = sanitizeVersion(e.version)
+    if (version) font.version = version
+    if (source !== 'upload') font.subsets = sanitizeSubsets(e.subsets)
+    const available = sanitizeWeights(e.available)
+    if (available.length > 0) font.available = available
     seen.add(id)
     out.push(font)
   }
@@ -234,6 +265,7 @@ export function mergeInstalledFont(current: InstalledFont[], incoming: Installed
     ...existing,
     ...incoming,
     weights: sanitizeWeights([...existing.weights, ...incoming.weights]),
+    ...(incoming.source !== 'upload' ? { subsets: sanitizeSubsets([...(existing.subsets ?? []), ...(incoming.subsets ?? [])]) } : {}),
     italic: existing.italic || incoming.italic,
     local: existing.local || incoming.local,
     files: { ...existing.files, ...incoming.files },

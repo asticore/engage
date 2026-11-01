@@ -28,6 +28,13 @@ export const SiteSettings: GlobalConfig = {
       async ({ req }) => {
         await revalidateAdmin(req?.engine?.config?.routes?.admin ?? '/admin')
       },
+      // Font files of fonts removed in this save are deleted from R2 once the save has committed.
+      async ({ doc, previousDoc }) => {
+        const before = (previousDoc as { theme?: { customFonts?: unknown } } | undefined)?.theme?.customFonts
+        const after = (doc as { theme?: { customFonts?: unknown } } | undefined)?.theme?.customFonts
+        const { removeDroppedFontFiles } = await import('@/features/fonts/cleanup')
+        await removeDroppedFontFiles(before, after).catch((error: unknown) => console.error('Removing dropped font files failed.', error))
+      },
     ],
   },
   admin: {

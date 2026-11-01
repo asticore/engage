@@ -219,10 +219,10 @@ describe('CSS generation', () => {
   })
 
   it('builds jsDelivr @font-face rules for remote Fontsource fonts', () => {
-    const fontsource: InstalledFont = { ...lora, id: 'lato', family: 'Lato', source: 'fontsource', weights: [400], italic: true, category: 'sans-serif' }
+    const fontsource: InstalledFont = { ...lora, id: 'lato', family: 'Lato', source: 'fontsource', weights: [400], italic: true, category: 'sans-serif', version: '5.3.0' }
     const css = buildFontCss([fontsource])
-    expect(css).toContain(`src: url("${fontsourceFileUrl('lato', 400, 'normal')}") format("woff2")`)
-    expect(css).toContain(`src: url("${fontsourceFileUrl('lato', 400, 'italic')}") format("woff2")`)
+    expect(css).toContain(`src: url("${fontsourceFileUrl(fontsource, 400, 'normal')}") format("woff2")`)
+    expect(css).toContain(`src: url("${fontsourceFileUrl(fontsource, 400, 'italic')}") format("woff2")`)
     expect(css).toContain('font-family: "Lato"')
     expect(css).toContain('font-display: swap')
   })
@@ -323,6 +323,45 @@ describe('catalog', () => {
   })
 })
 
+describe('pinned Fontsource files, subsets and Google weights', () => {
+  const meta: FontMetadata = { id: 'lora', family: 'Lora', category: 'serif', weights: [400, 500, 700], styles: ['normal', 'italic'], subsets: ['latin', 'cyrillic'], type: 'google' }
+  it('pins a Fontsource file to its package version, and keeps the old unpinned path only for fonts installed before versions were recorded', () => {
+    expect(fontsourceFileUrl({ id: 'lato', version: '5.2.6' }, 400, 'normal')).toBe(
+      'https://cdn.jsdelivr.net/npm/@fontsource/lato@5.2.6/files/lato-latin-400-normal.woff2',
+    )
+    expect(fontsourceFileUrl({ id: 'lato', version: '5.2.6' }, 700, 'italic', 'cyrillic')).toBe(
+      'https://cdn.jsdelivr.net/npm/@fontsource/lato@5.2.6/files/lato-cyrillic-700-italic.woff2',
+    )
+    expect(fontsourceFileUrl({ id: 'lato' }, 400, 'normal')).toBe('https://cdn.jsdelivr.net/fontsource/fonts/lato@latest/latin-400-normal.woff2')
+  })
+
+  it('emits one face per chosen subset, each with its own unicode-range', () => {
+    const css = buildFontCss([{ ...lora, id: 'lato', family: 'Lato', source: 'fontsource', weights: [400], italic: false, version: '5.2.6', subsets: ['latin', 'greek'] }])
+    expect(css.match(/@font-face/g)).toHaveLength(2)
+    expect(css).toContain('lato-greek-400-normal.woff2')
+    expect(css).toContain('unicode-range: U+0370-0377')
+    expect(css).toContain('unicode-range: U+0000-00FF')
+  })
+
+  it('asks Google only for weights the family offers, and builds no stylesheet when none is valid', () => {
+    expect(googleStylesheetUrl({ ...lora, weights: [300, 700], available: [400, 700] })).toBe('https://fonts.googleapis.com/css2?family=Lora:wght@700&display=swap')
+    expect(googleStylesheetUrl({ ...lora, weights: [300], available: [400, 700] })).toBe('https://fonts.googleapis.com/css2?family=Lora:wght@400&display=swap')
+    expect(googleStylesheetUrl({ ...lora, weights: [300], available: [700] })).toBe('')
+    expect(remoteStylesheetUrls([{ ...lora, weights: [300], available: [700] }])).toEqual([])
+  })
+
+  it('rejects unknown subsets and records the chosen ones, latin by default', () => {
+    expect(planInstall(meta, { subsets: ['klingon'] }, '5.3.0')).toMatchObject({ ok: false, status: 400 })
+    const result = planInstall({ ...meta, subsets: ['latin', 'cyrillic'] }, { subsets: ['cyrillic', 'latin'], local: true }, '5.3.0')
+    expect(result.ok && result.plan.font).toMatchObject({ version: '5.3.0', subsets: ['latin', 'cyrillic'], available: [400, 500, 700] })
+    expect(result.ok && result.plan.targets.map((t) => t.key)).toEqual(['400-normal', '400-normal-cyrillic'])
+  })
+
+  it('refuses to plan an install when the Fontsource version is unknown', () => {
+    expect(planInstall(meta, {})).toMatchObject({ ok: false, status: 502 })
+  })
+})
+
 describe('install planning', () => {
   const meta: FontMetadata = {
     id: 'lora',
@@ -335,16 +374,16 @@ describe('install planning', () => {
   }
 
   it('defaults to weight 400 and maps google fonts to the google source', () => {
-    const result = planInstall(meta, {})
+    const result = planInstall(meta, {}, '5.3.0')
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.plan.font).toMatchObject({ id: 'lora', family: 'Lora', source: 'google', weights: [400], italic: false, local: false, category: 'serif' })
-      expect(result.plan.targets).toEqual([{ weight: 400, style: 'normal', key: '400-normal' }])
+      expect(result.plan.targets).toEqual([{ weight: 400, style: 'normal', subset: 'latin', key: '400-normal' }])
     }
   })
 
   it('lists a target per weight and style for italic local installs', () => {
-    const result = planInstall(meta, { weights: [700, 400], italic: true, local: true })
+    const result = planInstall(meta, { weights: [700, 400], italic: true, local: true }, '5.3.0')
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.plan.font.local).toBe(true)
@@ -353,13 +392,13 @@ describe('install planning', () => {
   })
 
   it('refuses weights, italics or subsets the family does not have', () => {
-    expect(planInstall(meta, { weights: [900] })).toMatchObject({ ok: false, status: 400 })
-    expect(planInstall({ ...meta, styles: ['normal'] }, { italic: true })).toMatchObject({ ok: false, status: 400 })
-    expect(planInstall({ ...meta, subsets: ['cyrillic'] }, {})).toMatchObject({ ok: false, status: 422 })
+    expect(planInstall(meta, { weights: [900] }, '5.3.0')).toMatchObject({ ok: false, status: 400 })
+    expect(planInstall({ ...meta, styles: ['normal'] }, { italic: true }, '5.3.0')).toMatchObject({ ok: false, status: 400 })
+    expect(planInstall({ ...meta, subsets: ['cyrillic'] }, {}, '5.3.0')).toMatchObject({ ok: false, status: 422 })
   })
 
   it('maps non-google families to the fontsource source', () => {
-    const result = planInstall({ ...meta, type: 'other' }, {})
+    const result = planInstall({ ...meta, type: 'other' }, {}, '5.3.0')
     expect(result.ok && result.plan.font.source).toBe('fontsource')
   })
 })
@@ -379,6 +418,7 @@ describe('installFont orchestration', () => {
   beforeEach(() => {
     fetchMock = vi.fn(async (url: string) => {
       if (url.startsWith('https://api.fontsource.org/v1/fonts/')) return jsonResponse(metadata)
+      if (url.startsWith('https://data.jsdelivr.com/')) return jsonResponse({ tags: { latest: '5.2.6' } })
       if (url.startsWith('https://cdn.jsdelivr.net/')) return new Response(WOFF2_BYTES, { status: 200 })
       return new Response('nope', { status: 404 })
     })
@@ -406,7 +446,7 @@ describe('installFont orchestration', () => {
       expect(outcome.font.files).toEqual({ '700-normal': '/api/media/file/font-lora-700-normal.woff2' })
     }
     expect(store).toHaveBeenCalledWith('font-lora-700-normal.woff2', expect.any(Uint8Array), 'font/woff2')
-    expect(fetchMock).toHaveBeenCalledWith('https://cdn.jsdelivr.net/fontsource/fonts/lora@latest/latin-700-normal.woff2', expect.anything())
+    expect(fetchMock).toHaveBeenCalledWith('https://cdn.jsdelivr.net/npm/@fontsource/lora@5.2.6/files/lora-latin-700-normal.woff2', expect.anything())
   })
 
   it('reports a bad download as 502 and stores nothing for it', async () => {
@@ -480,6 +520,7 @@ describe('admin routes', () => {
   it('installs a font from a JSON body, storing local files in R2', async () => {
     getAdminContextMock.mockResolvedValue(allowed)
     globalThis.fetch = vi.fn(async (url: string) => {
+      if (url.startsWith('https://data.jsdelivr.com/')) return jsonResponse({ tags: { latest: '5.2.6' } })
       if (url.startsWith('https://api.fontsource.org/')) {
         return jsonResponse({ id: 'lora', family: 'Lora', type: 'google', weights: [400], styles: ['normal'], subsets: ['latin'] })
       }

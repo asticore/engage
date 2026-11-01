@@ -21,10 +21,10 @@ describe('isServableMediaFilename', () => {
     expect(isServableMediaFilename('x..y.jpg')).toBe(false)
   })
 
-  it('refuses any name starting with original, in any case', () => {
-    expect(isServableMediaFilename('original-harbour.jpg')).toBe(false)
-    expect(isServableMediaFilename('Original.jpg')).toBe(false)
+  it('refuses the kept originals under the original/ prefix but serves a plain name that starts with original', () => {
     expect(isServableMediaFilename(`${ORIGINAL_PREFIX}harbour.jpg`)).toBe(false)
+    expect(isServableMediaFilename('original-harbour.jpg')).toBe(true)
+    expect(isServableMediaFilename('Original.jpg')).toBe(true)
   })
 
   it('refuses an empty name or one containing a NUL byte', () => {

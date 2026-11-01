@@ -45,7 +45,7 @@ export const MediaSettings: GlobalConfig = {
           name: 'allowedExtensions',
           type: 'textarea',
           label: 'Allowed file types',
-          defaultValue: 'jpg, jpeg, png, gif, webp, avif, pdf, doc, docx, xls, xlsx, ppt, pptx, csv, txt, zip, mp3, wav, mp4, webm, mov',
+          defaultValue: 'jpg, jpeg, png, gif, webp, avif, heic, bmp, tiff, ico, pdf, doc, docx, xls, xlsx, ods, ppt, pptx, csv, txt, json, rtf, zip, mp3, wav, ogg, m4a, mp4, webm, mov',
           admin: {
             description:
               'File extensions separated by commas. Remove any you do not want editors to upload. Only the types in the default list are understood: anything else typed here (for example svg, html or exe) is ignored. Leave blank to allow the whole default list.',

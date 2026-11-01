@@ -258,6 +258,17 @@ export const SpeedSettings: GlobalConfig = {
               admin: { width: '50%', hidden: true, description: 'Start fetching your typefaces sooner.' },
             },
             {
+              // Built-in theme fonts come from this site instead of jsDelivr. Each file is copied from npm the first time it is requested.
+              name: 'selfHostBuiltInFonts',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: {
+                width: '100%',
+                description:
+                  'Serve the theme fonts (Cormorant, Playfair, Cinzel, Jost, Montserrat, Inter) from this site rather than jsDelivr. Each file is copied from the Fontsource package once, on the first visit that needs it. Turn on if visitors or your privacy policy should not reach a third-party CDN.',
+              },
+            },
+            {
               // No effect, kept for stored data.
               name: 'fontDisplaySwap',
               type: 'checkbox',

@@ -279,8 +279,8 @@ function CsvImport({ cfg, update, readOnly }: PanelProps) {
   return (
     <div className="dve-panel">
       <label className="dve-field">
-        <span>Choose a CSV, TSV or Excel (.xlsx) file</span>
-        <input type="file" accept=".csv,.tsv,.txt,.xlsx" disabled={readOnly} onChange={onFile} />
+        <span>Choose a CSV, TSV, Excel (.xlsx) or OpenDocument (.ods) file</span>
+        <input type="file" accept=".csv,.tsv,.txt,.xlsx,.ods" disabled={readOnly} onChange={onFile} />
         <span className="dve-help">The first row must hold the column headings. Files stay in your browser until you save; the data is then stored with this view, so re-import to refresh it.</span>
       </label>
       {message ? <p className="dve-help">{message}</p> : null}
