@@ -30,7 +30,7 @@ export async function POST(request: Request): Promise<Response> {
     const item = found.manifestItems.find((candidate) => candidate.slug === slug)
     if (!item || !found.row.config) return libraryJson({ ok: false, error: 'That item is not in this library.' }, 404)
 
-    const template = await loadItemTemplate(found.row.config, item)
+    const template = await loadItemTemplate(found.row.config, item, {}, found.token)
     if (!template.ok) return libraryJson({ ok: false, error: template.error }, 502)
     const imported = await importItemPictures(access.context, found.row.config, template.value, `${found.row.url}#${item.file}`, false)
     if (!imported.ok) return libraryJson({ ok: false, error: imported.error }, 422)

@@ -134,7 +134,7 @@ export type BuilderStreamEvent =
   | { event: 'delta'; data: { chars: number } }
   | { event: 'usage'; data: { inputTokens: number; outputTokens: number } }
   | { event: 'done'; data: Record<string, unknown> }
-  | { event: 'error'; data: { error: string; status?: number } }
+  | { event: 'error'; data: { error: string; status?: number; code?: string | null } }
 
 /** Encodes one event for the browser. */
 export function formatBuilderEvent(event: BuilderStreamEvent): string {
@@ -161,7 +161,14 @@ export function parseBuilderEvent(message: SseMessage): BuilderStreamEvent | nul
     case 'done':
       return { event: 'done', data: d }
     case 'error':
-      return { event: 'error', data: { error: typeof d.error === 'string' ? d.error : 'The builder could not finish.', status: typeof d.status === 'number' ? d.status : undefined } }
+      return {
+        event: 'error',
+        data: {
+          error: typeof d.error === 'string' ? d.error : 'The builder could not finish.',
+          status: typeof d.status === 'number' ? d.status : undefined,
+          code: typeof d.code === 'string' ? d.code : undefined,
+        },
+      }
     default:
       return null
   }

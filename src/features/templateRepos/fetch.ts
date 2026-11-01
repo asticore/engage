@@ -272,8 +272,8 @@ export async function loadAssetFile(
  * Checks the access token without ever returning or logging it: a HEAD request for the manifest
  * (through the authenticated API when a token is set). Answers with a plain-English message only.
  */
-export async function testRepoAccess(repo: TemplateRepoConfig, token: string | null, deps: FetchDeps = {}): Promise<Result<string>> {
-  const request = buildFileRequest(repo, 'manifest.json', token)
+export async function testRepoAccess(repo: TemplateRepoConfig, token: string | null, deps: FetchDeps = {}, relativePath = 'manifest.json'): Promise<Result<string>> {
+  const request = buildFileRequest(repo, relativePath, token)
   if (!request) return { ok: false, error: 'The repository details are not valid.' }
   const fetchImpl: FetchLike = deps.fetchImpl ?? ((input, init) => fetch(input, init))
   const controller = new AbortController()

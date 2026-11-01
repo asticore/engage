@@ -17,7 +17,7 @@ export async function listLibraries(engine: LibraryStoreEngine, options: { fresh
   const state = await readLibraryState(engine)
   const deps = options.fresh ? { bypassCache: true } : {}
   const loaded = await Promise.all(
-    state.rows.map(async (row) => (row.enabled && row.config ? loadLibraryManifest(row.config, deps) : null)),
+    state.rows.map(async (row) => (row.enabled && row.config ? loadLibraryManifest(row.config, deps, state.token) : null)),
   )
 
   const libraries: LibrarySummary[] = []
@@ -53,11 +53,11 @@ export async function listLibraries(engine: LibraryStoreEngine, options: { fresh
 export async function findLibraryItem(
   engine: LibraryStoreEngine,
   libraryId: string,
-): Promise<{ ok: true; row: Awaited<ReturnType<typeof readLibraryState>>['rows'][number]; manifestItems: LibraryItem[]; error?: undefined; status?: undefined } | { ok: false; error: string; status: number; row?: undefined; manifestItems?: undefined }> {
+): Promise<{ ok: true; row: Awaited<ReturnType<typeof readLibraryState>>['rows'][number]; manifestItems: LibraryItem[]; token: string | null; error?: undefined; status?: undefined } | { ok: false; error: string; status: number; row?: undefined; manifestItems?: undefined }> {
   const state = await readLibraryState(engine)
   const row = state.rows.find((candidate) => candidate.id === libraryId)
   if (!row || !row.enabled || !row.config) return { ok: false, error: 'That library is not available.', status: 404 }
-  const manifest = await loadLibraryManifest(row.config)
+  const manifest = await loadLibraryManifest(row.config, {}, state.token)
   if (!manifest.ok) return { ok: false, error: manifest.error, status: 502 }
-  return { ok: true, row, manifestItems: manifest.value.items }
+  return { ok: true, row, manifestItems: manifest.value.items, token: state.token }
 }

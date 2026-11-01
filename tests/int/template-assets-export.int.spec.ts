@@ -3,9 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
-const { getAdminContext, readSettings } = vi.hoisted(() => ({ getAdminContext: vi.fn(), readSettings: vi.fn() }))
+const { getAdminContext } = vi.hoisted(() => ({ getAdminContext: vi.fn() }))
 vi.mock('@/admin/auth', () => ({ getAdminContext }))
-vi.mock('@/features/templateRepos/settings', () => ({ readTemplateRepoSettings: readSettings }))
 
 import { collectAssets, relinkAssets } from '@/features/templateRepos/assets'
 import { sanitizeTemplateTree } from '@/features/templateRepos/sanitize'

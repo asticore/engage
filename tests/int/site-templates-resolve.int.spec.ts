@@ -61,6 +61,7 @@ const importModules = async () => ({
   resolve: await import('@/features/siteTemplates/resolve'),
   render: await import('@/features/siteTemplates/render'),
   cond: await import('@/features/siteTemplates/conditions'),
+  chrome: await import('@/features/siteTemplates/chrome'),
 })
 // Cache the promise, not the result: beforeAll and the first test both call load() while the cold import is still running.
 let modules: Promise<Awaited<ReturnType<typeof importModules>>> | undefined
@@ -184,11 +185,10 @@ describe('resolve safety and cost', () => {
 
 describe('chrome templates', () => {
   it('strips content-slot elements at top level and in nested sections', async () => {
-    const { stripContentSlots } = await import('@/features/siteTemplates/chrome')
     const nested = { blockType: 'section', columns: [{ blocks: [slotBlock, { blockType: 'section', columns: [{ blocks: [slotBlock, textBlock('keep')] }] }] }] }
-    const out = stripContentSlots([slotBlock, textBlock('a'), nested])
-    const render = await load()
-    expect(render.render.hasContentSlot(out)).toBe(false)
+    const mods = await load()
+    const out = mods.chrome.stripContentSlots([slotBlock, textBlock('a'), nested])
+    expect(mods.render.hasContentSlot(out)).toBe(false)
     expect(JSON.stringify(out)).toContain('keep')
     expect(out).toHaveLength(2)
   })

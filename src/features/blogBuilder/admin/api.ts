@@ -7,6 +7,8 @@ import { createSseParser, parseBuilderEvent, type SseMessage } from '@/features/
 import type { BlogBrief, BlogMeta, BlogOutlineItem } from '../request'
 
 export const BLOG_BUILDER_ENDPOINT = '/api/admin-blog-builder'
+export const BLOG_PROMPTS_ENDPOINT = '/api/admin-blog-builder/prompts'
+export const BLOG_MEDIA_ENDPOINT = '/api/admin-blog-builder/media'
 
 export class BlogBuilderError extends Error {
   readonly code: string | null
@@ -25,7 +27,13 @@ export type BlogUsage = {
   capReached: boolean
 }
 
-export type BlogStatus = { providers: { claude: boolean; openai: boolean }; usage: BlogUsage }
+export type BlogSavedPrompt = { id: string; name: string; brief: BlogBrief }
+export type BlogStatus = {
+  providers: { claude: boolean; openai: boolean }
+  usage: BlogUsage
+  savedPrompts: BlogSavedPrompt[]
+}
+export type BlogMediaMatch = { id: number; url: string; alt: string; filename: string }
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : null
@@ -67,10 +75,45 @@ export async function fetchBlogStatus(signal?: AbortSignal): Promise<BlogStatus>
       capUsd: Number(usage.capUsd) || 0,
       capReached: usage.capReached === true,
     },
+    savedPrompts: Array.isArray(record.savedPrompts) ? (record.savedPrompts as BlogSavedPrompt[]) : [],
   }
 }
 
-export type BlogStepBody =
+/** Saves a brief as a named prompt, or deletes one. Returns the list as now saved. */
+export async function postSavedPrompt(
+  body: { action: 'save'; name: string; brief: BlogBrief } | { action: 'delete'; id: string },
+): Promise<BlogSavedPrompt[]> {
+  const res = await fetch(BLOG_PROMPTS_ENDPOINT, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await readJson(res)
+  const record = asRecord(data)
+  if (!res.ok || !record?.ok) throw failureText(data, res.status)
+  return Array.isArray(record.savedPrompts) ? (record.savedPrompts as BlogSavedPrompt[]) : []
+}
+
+/** Gallery pictures that match the words given (alt text, caption, file name). Best first. */
+export async function fetchMediaMatches(query: string, signal?: AbortSignal): Promise<BlogMediaMatch[]> {
+  const res = await fetch(`${BLOG_MEDIA_ENDPOINT}?q=${encodeURIComponent(query)}`, {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+    signal,
+  })
+  const data = await readJson(res)
+  const record = asRecord(data)
+  if (!res.ok || !record?.ok) throw failureText(data, res.status)
+  return Array.isArray(record.matches) ? (record.matches as BlogMediaMatch[]) : []
+}
+
+/** Fields every step can carry: the sources, and the draft's key and AI call limit. */
+export type BlogStepCommon = { sources?: string[]; draftKey?: string; callLimit?: number }
+
+export type BlogStepBody = BlogStepCommon &
+  (
   | { action: 'titles'; brief: BlogBrief }
   | { action: 'outline'; brief: BlogBrief; title: string }
   | {
@@ -94,7 +137,9 @@ export type BlogStepBody =
       outline: BlogOutlineItem[]
       sections: string[]
       meta: BlogMeta
+      featuredImageId?: number | null
     }
+  )
 
 /**
  * POST one step. AI steps stream: onProgress gets the running character count. Resolves
@@ -144,7 +189,7 @@ async function readStep(
       if (!event) continue
       if (event.event === 'delta') onProgress(event.data.chars)
       else if (event.event === 'done') result = event.data
-      else if (event.event === 'error') throw new BlogBuilderError(event.data.error)
+      else if (event.event === 'error') throw new BlogBuilderError(event.data.error, event.data.code ?? null)
     }
   }
   for (;;) {

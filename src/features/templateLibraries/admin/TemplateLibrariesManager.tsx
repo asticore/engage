@@ -9,7 +9,8 @@ import type { LibrarySummary } from '../types'
 /** Where the author guide and the example library live. */
 export const TEMPLATE_LIBRARY_GUIDE_URL = 'https://github.com/asticore/gracengatsby/blob/main/docs/template-libraries.md'
 
-type Listing = { ok?: boolean; error?: string; libraries?: LibrarySummary[]; canManage?: boolean }
+type Listing = { ok?: boolean; error?: string; libraries?: LibrarySummary[]; canManage?: boolean; hasToken?: boolean }
+type TokenCheck = { libraryId: string; libraryLabel: string; ok: boolean; message: string }
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
@@ -21,6 +22,8 @@ export const TemplateLibrariesManager: React.FC = () => {
   const [label, setLabel] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
+  const [token, setToken] = useState('')
+  const [tokenChecks, setTokenChecks] = useState<TokenCheck[] | null>(null)
 
   const fetchListing = useCallback(
     async (fresh: boolean): Promise<Listing> => {
@@ -71,6 +74,27 @@ export const TemplateLibrariesManager: React.FC = () => {
     }
   }
 
+  const saveToken = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (await post({ action: 'token', token }, 'token')) setToken('')
+  }
+
+  const testToken = async () => {
+    setBusy('test')
+    setNote(null)
+    setTokenChecks(null)
+    try {
+      const res = await fetch('/api/template-libraries/test-token', { method: 'POST', credentials: 'include' })
+      const json = (await res.json().catch((): null => null)) as { ok?: boolean; error?: string; results?: TokenCheck[] } | null
+      if (!res.ok || !json || json.ok === false) setNote(json?.error || t('templateLibraries.actionFailed'))
+      else setTokenChecks(json.results ?? [])
+    } catch {
+      setNote(t('templateLibraries.actionFailed'))
+    } finally {
+      setBusy(null)
+    }
+  }
+
   const add = async (event: React.FormEvent) => {
     event.preventDefault()
     if (await post({ action: 'add', url, label }, 'add')) {
@@ -100,6 +124,7 @@ export const TemplateLibrariesManager: React.FC = () => {
               onChange={(event) => setUrl(event.target.value)}
               style={{ padding: '6px 8px' }}
             />
+            <small style={{ opacity: 0.8 }}>{t('templateLibraries.pinHint')}</small>
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 160px' }}>
             <span>{t('templateLibraries.nameLabel')}</span>
@@ -112,6 +137,43 @@ export const TemplateLibrariesManager: React.FC = () => {
             {busy === 'refresh' ? t('templateLibraries.refreshing') : t('templateLibraries.refresh')}
           </button>
         </form>
+      ) : null}
+
+      {canManage ? (
+        <form onSubmit={saveToken} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', margin: '0 0 16px' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '2 1 320px' }}>
+            <span>{t('templateLibraries.tokenLabel')}</span>
+            <input
+              type="password"
+              autoComplete="off"
+              value={token}
+              onChange={(event) => setToken(event.target.value)}
+              style={{ padding: '6px 8px' }}
+            />
+            <small style={{ opacity: 0.8 }}>{listing?.hasToken ? t('templateLibraries.tokenSaved') : t('templateLibraries.tokenNone')} {t('templateLibraries.tokenHelp')}</small>
+          </label>
+          <button type="submit" className="btn" disabled={busy !== null || token.trim() === ''}>
+            {busy === 'token' ? t('templateLibraries.tokenSaving') : t('templateLibraries.tokenSave')}
+          </button>
+          {listing?.hasToken ? (
+            <button type="button" className="btn btn--style-secondary" disabled={busy !== null} onClick={() => void post({ action: 'token', token: '' }, 'token')}>
+              {t('templateLibraries.tokenRemove')}
+            </button>
+          ) : null}
+          <button type="button" className="btn btn--style-secondary" disabled={busy !== null || libraries.length === 0} onClick={() => void testToken()}>
+            {busy === 'test' ? t('templateLibraries.tokenTesting') : t('templateLibraries.tokenTest')}
+          </button>
+        </form>
+      ) : null}
+
+      {tokenChecks ? (
+        <ul role="status" style={{ margin: '0 0 12px', paddingLeft: 18 }}>
+          {tokenChecks.map((check) => (
+            <li key={check.libraryId}>
+              <strong>{check.libraryLabel}</strong>: {check.message}
+            </li>
+          ))}
+        </ul>
       ) : null}
 
       {note ? (

@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   readBuilderSettings: vi.fn(),
   aiKeyAvailability: vi.fn(),
   readUsageSummary: vi.fn(),
+  readDraftCalls: vi.fn(),
   recordUsage: vi.fn(),
   callAiDetailed: vi.fn(),
   streamAiDetailed: vi.fn(),
@@ -25,6 +26,7 @@ vi.mock('@/features/ai/builderContext', () => ({ readSiteContext: vi.fn(async ()
 vi.mock('@/features/ai/builderUsage', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/features/ai/builderUsage')>()),
   readUsageSummary: h.readUsageSummary,
+  readDraftCalls: h.readDraftCalls,
   recordUsage: h.recordUsage,
 }))
 vi.mock('@/features/ai/client', async (importOriginal) => ({
@@ -71,6 +73,7 @@ describe('admin-blog-builder route', () => {
     vi.clearAllMocks()
     h.readBuilderSettings.mockResolvedValue({ models: { claude: 'claude-sonnet-4-5', openai: 'gpt-4o' }, capUsd: 0 })
     h.readUsageSummary.mockResolvedValue(usage())
+    h.readDraftCalls.mockResolvedValue(0)
     h.recordUsage.mockResolvedValue(undefined)
     h.audit.mockResolvedValue(undefined)
     h.readAiKey.mockImplementation(async (provider: string) => (provider === 'claude' ? 'sk-test' : null))
@@ -119,6 +122,54 @@ describe('admin-blog-builder route', () => {
     expect(args.messages[0].content).toContain('Candle care')
     expect(options.apiKey).toBe('sk-test')
     expect(h.recordUsage).toHaveBeenCalledWith(expect.objectContaining({ mode: 'blog', provider: 'claude', ok: true, estimated: false }))
+  })
+
+  it('stops a post once its own AI call limit is used, before any provider call', async () => {
+    asAdmin()
+    h.readDraftCalls.mockResolvedValue(10)
+    const response = await POST(post({ action: 'titles', brief, draftKey: 'draft-abcdef12', callLimit: 10 }))
+    expect(response.status).toBe(429)
+    expect(((await response.json()) as { code: string }).code).toBe('post_limit')
+    expect(h.readDraftCalls).toHaveBeenCalledWith('draft-abcdef12')
+    expect(h.callAiDetailed).not.toHaveBeenCalled()
+  })
+
+  it('records each call under the draft key so the post limit can count it', async () => {
+    asAdmin()
+    h.callAiDetailed.mockResolvedValue({ text: '{"titles": ["One title"]}', usage: { inputTokens: 10, outputTokens: 5 } })
+    const response = await POST(post({ action: 'titles', brief, draftKey: 'draft-abcdef12', callLimit: 25 }))
+    expect(response.status).toBe(200)
+    expect(h.recordUsage).toHaveBeenCalledWith(expect.objectContaining({ draftKey: 'draft-abcdef12', ok: true }))
+  })
+
+  it('adds the brand voice to the system prompt when the admin set one', async () => {
+    asAdmin()
+    h.readBuilderSettings.mockResolvedValue({ models: { claude: 'claude-sonnet-4-5', openai: 'gpt-4o' }, capUsd: 0, brandVoice: 'Warm and plain. Never shouty.', savedPrompts: [] })
+    h.callAiDetailed.mockResolvedValue({ text: '{"titles": ["One title"]}', usage: { inputTokens: 10, outputTokens: 5 } })
+    await POST(post({ action: 'titles', brief }))
+    const [args] = h.callAiDetailed.mock.calls[0]
+    expect(args.system).toContain('Warm and plain. Never shouty.')
+  })
+
+  it('passes the admin sources to the section step and strips citations that name no source', async () => {
+    asAdmin()
+    h.callAiDetailed.mockResolvedValue({ text: 'Wax burns clean [1] and wicks matter [3].', usage: { inputTokens: 10, outputTokens: 5 } })
+    const response = await POST(
+      post({
+        action: 'section',
+        brief,
+        title: 'Candle care',
+        outline: [{ heading: 'Wax', notes: '' }],
+        index: 0,
+        sections: [],
+        sources: ['https://example.test/wax', 'https://example.test/wick'],
+      }),
+    )
+    const body = (await response.json()) as { text?: string }
+    expect(response.status).toBe(200)
+    expect(body.text).toBe('Wax burns clean [1] and wicks matter.')
+    const [args] = h.callAiDetailed.mock.calls[0]
+    expect(args.messages[0].content).toContain('[2] https://example.test/wick')
   })
 
   it('stops before calling the provider when the monthly cap is reached', async () => {

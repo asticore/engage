@@ -1,6 +1,4 @@
-import { NextResponse } from 'next/server'
-
-import { getAdminContext, type AdminContext } from '@/admin/auth'
+import { type AdminContext } from '@/admin/auth'
 import {
   AiError,
   callAiDetailed,
@@ -11,11 +9,11 @@ import {
 import { resolveBuilderModel, type AiProvider } from '@/features/ai/models'
 import { aiKeyAvailability, readAiKey, readBuilderSettings } from '@/features/ai/keys'
 import { readSiteContext } from '@/features/ai/builderContext'
-import { estimateTokensFromChars, readUsageSummary, recordUsage } from '@/features/ai/builderUsage'
+import { estimateTokensFromChars, readDraftCalls, readUsageSummary, recordUsage } from '@/features/ai/builderUsage'
 import { formatBuilderEvent, type BuilderStreamEvent } from '@/features/ai/streamParse'
 import { createBlogDraft } from '@/features/blogBuilder/draft'
 import {
-  parseDetails,
+  parseDetailsReply,
   parseOutline,
   parseSectionText,
   parseTitles,
@@ -34,6 +32,7 @@ import {
 } from '@/features/blogBuilder/request'
 import { audit, auditContext } from '@/features/security/auditLog'
 import { getSecuritySettings } from '@/features/security/settings'
+import { authorizeBlog, blogJson as json } from '@/features/blogBuilder/server'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,23 +41,16 @@ const MAX_TOKENS = { titles: 500, outline: 900, section: 1800, details: 700 } as
 
 type Emit = (event: BuilderStreamEvent) => void
 
-const json = (body: unknown, status = 200): Response =>
-  NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
-
-/**
- * Write with AI is for people who can create posts. The AI steps write nothing; only
- * the final create call saves a draft, through the posts collection's own rules.
- */
-async function authorizeBlog() {
-  const context = await getAdminContext()
-  if (!context.user) return { response: json({ ok: false, error: 'Please sign in again.' }, 401) }
-  if (context.isAdmin || context.can('posts', 'create')) return { context }
-  return {
-    response: json({ ok: false, error: 'You do not have permission to create posts.' }, 403),
+/** Thrown before a provider call when this post has used its AI call limit. */
+class PostLimitError extends Error {
+  readonly limit: number
+  constructor(limit: number) {
+    super(`This post has used its ${limit} AI calls.`)
+    this.limit = limit
   }
 }
 
-/** Providers with a key, and the month's spend. Presence only: no key ever reaches the browser. */
+/** Providers with a key, the month's spend, and the saved prompts. Presence only: no key ever reaches the browser. */
 export async function GET(): Promise<Response> {
   const auth = await authorizeBlog()
   if (!auth.context) return auth.response
@@ -67,6 +59,7 @@ export async function GET(): Promise<Response> {
     ok: true,
     providers: await aiKeyAvailability(),
     usage: await readUsageSummary(settings.capUsd),
+    savedPrompts: settings.savedPrompts,
   })
 }
 
@@ -131,6 +124,8 @@ export async function POST(request: Request): Promise<Response> {
           outline,
           sections: req.sections ?? [],
           meta: req.meta!,
+          sources: req.sources ?? [],
+          featuredImageId: req.featuredImageId ?? null,
         },
       )
       await recordAudit(auth.context, request, req.title ?? '', outline.length, created.id)
@@ -149,6 +144,11 @@ export async function POST(request: Request): Promise<Response> {
 
   const settings = await readBuilderSettings()
   const before = await readUsageSummary(settings.capUsd)
+  // Per-post limit: the calls this draft has already made. Counted from the usage table, so a reload
+  // of the page cannot reset it while the same draft key is in use.
+  const draftKey = req.draftKey ?? null
+  const callLimit = req.callLimit ?? 0
+  let draftUsed = draftKey ? await readDraftCalls(draftKey) : 0
   if (before.capReached) {
     return json(
       {
@@ -164,7 +164,7 @@ export async function POST(request: Request): Promise<Response> {
   const apiKey = (await readAiKey(provider))!
   const model = resolveBuilderModel(provider, settings.models[provider])
   const site = await readSiteContext()
-  const system = systemPrompt(site)
+  const system = systemPrompt(site, settings.brandVoice ?? '')
   const user = auth.context.user as { id?: number | string } | null
   const userId = user?.id !== undefined && user?.id !== null ? String(user.id) : null
   const options = { apiKey, timeoutMs: BLOG_TIMEOUT_MS }
@@ -172,6 +172,7 @@ export async function POST(request: Request): Promise<Response> {
 
   /** One provider call, recorded in the usage table (counts only: never the brief or the output). */
   const ask = async (args: CallAiArgs, emit?: Emit): Promise<string> => {
+    if (draftKey && callLimit > 0 && draftUsed >= callLimit) throw new PostLimitError(callLimit)
     try {
       let result: { text: string; usage: { inputTokens: number; outputTokens: number } | null }
       if (emit) {
@@ -201,7 +202,9 @@ export async function POST(request: Request): Promise<Response> {
         outputTokens: result.usage?.outputTokens ?? estimateTokensFromChars(result.text.length),
         ok: true,
         estimated: !result.usage,
+        draftKey,
       })
+      draftUsed += 1
       return result.text
     } catch (error) {
       await recordUsage({
@@ -212,6 +215,7 @@ export async function POST(request: Request): Promise<Response> {
         inputTokens: 0,
         outputTokens: 0,
         ok: false,
+        draftKey,
       })
       throw error
     }
@@ -259,22 +263,23 @@ export async function POST(request: Request): Promise<Response> {
     if (r.action === 'section') {
       const outline = r.outline!
       const index = r.index!
+      const sources = r.sources ?? []
       const text = await askParsed(
-        sectionPrompt(r.brief, r.title, outline, index, r.sections ?? []),
+        sectionPrompt(r.brief, r.title, outline, index, r.sections ?? [], sources),
         MAX_TOKENS.section,
-        parseSectionText,
+        (reply) => parseSectionText(reply, sources.length),
         emit,
       )
       return { text, index }
     }
-    // details
-    const meta = await askParsed(
+    // details: the search details and the featured image prompt
+    const details = await askParsed(
       detailsPrompt(r.brief, r.title, r.outline!, r.sections ?? []),
       MAX_TOKENS.details,
-      (reply) => parseDetails(reply, r.title),
+      (reply) => parseDetailsReply(reply, r.title),
       emit,
     )
-    return { meta }
+    return { meta: details.meta, featuredImagePrompt: details.featuredImagePrompt }
   }
 
   const finish = async (payload: Record<string, unknown>) => ({
@@ -285,10 +290,13 @@ export async function POST(request: Request): Promise<Response> {
     usageEstimated: estimated,
   })
 
-  const failure = (error: unknown): { body: Record<string, unknown>; status: number } =>
-    error instanceof AiError
+  const failure = (error: unknown): { body: Record<string, unknown>; status: number } => {
+    if (error instanceof PostLimitError)
+      return { body: { ok: false, code: 'post_limit', limit: error.limit, error: error.message }, status: 429 }
+    return error instanceof AiError
       ? { body: { ok: false, error: error.message }, status: 502 }
       : { body: { ok: false, error: 'The blog builder could not finish. Try again.' }, status: 500 }
+  }
 
   const wantsStream = (request.headers.get('accept') ?? '').includes('text/event-stream')
   if (!wantsStream) {
@@ -314,7 +322,7 @@ export async function POST(request: Request): Promise<Response> {
         emit({ event: 'done', data: await finish({ ok: true, ...(await execute(emit)) }) })
       } catch (error) {
         const { body: payload, status } = failure(error)
-        emit({ event: 'error', data: { error: String(payload.error), status } })
+        emit({ event: 'error', data: { error: String(payload.error), status, code: typeof payload.code === 'string' ? payload.code : undefined } })
       }
       try {
         controller.close()

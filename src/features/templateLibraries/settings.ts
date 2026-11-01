@@ -1,6 +1,7 @@
 import type { GlobalConfig } from '@/engine'
 
-import { isAdmin } from '../../access/ecommerceAccess'
+import { adminOnlyFieldAccess, isAdmin } from '../../access/ecommerceAccess'
+import { decryptSecretHook, encryptSecretHook } from '../../utilities/secretField'
 
 export const TEMPLATE_LIBRARIES_SLUG = 'template-libraries'
 export const TEMPLATE_LIBRARIES_TABLE = 'eg_template_libraries'
@@ -22,6 +23,16 @@ export const TemplateLibraries: GlobalConfig = {
     update: isAdmin,
   },
   fields: [
+    {
+      name: 'token',
+      type: 'text',
+      label: 'Access token (private libraries only)',
+      access: { read: adminOnlyFieldAccess, update: adminOnlyFieldAccess },
+      hooks: { beforeChange: [encryptSecretHook], afterRead: [decryptSecretHook] },
+      admin: {
+        description: 'Fine-grained read-only token from GitHub. Needed only for private libraries. Stored encrypted at rest, visible only to admins.',
+      },
+    },
     {
       name: 'libraries',
       type: 'array',

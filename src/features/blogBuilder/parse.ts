@@ -66,14 +66,22 @@ export function parseOutline(reply: string): ParseResult<BlogOutlineItem[]> {
   return { ok: true, value: items }
 }
 
-/** A section's body. Headings and emphasis markers are removed; "- " lines stay as bullets. */
-export function parseSectionText(reply: string): ParseResult<string> {
+/**
+ * A section's body. Headings and emphasis markers are removed; "- " lines stay as bullets.
+ * Citation markers are kept only when they name one of the admin's sources ([1] to [sourceCount]);
+ * any other [n] is removed, so the text never cites a source that was not given.
+ */
+export function parseSectionText(reply: string, sourceCount = 0): ParseResult<string> {
   const body = reply
     .replace(/```[a-z]*\n?/gi, '')
     .split('\n')
     .filter((line) => !/^\s{0,3}#{1,6}\s/.test(line))
     .map((line) => line.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1'))
     .join('\n')
+    .replace(/ ?\[(\d{1,3})\]/g, (marker, digits: string) => {
+      const n = Number(digits)
+      return n >= 1 && n <= sourceCount ? marker : ''
+    })
     .replace(/\n{3,}/g, '\n\n')
     .trim()
   if (!body) return { ok: false, error: 'The section came back empty. Write the section text.' }
@@ -98,5 +106,19 @@ export function parseDetails(reply: string, fallbackTitle: string): ParseResult<
   return {
     ok: true,
     value: { metaTitle, metaDescription, slug, tags, category: clean(json.category, 60) },
+  }
+}
+
+/** The details reply: the search details (parseDetails) and the featured image prompt. */
+export function parseDetailsReply(
+  reply: string,
+  fallbackTitle: string,
+): ParseResult<{ meta: BlogMeta; featuredImagePrompt: string }> {
+  const meta = parseDetails(reply, fallbackTitle)
+  if (meta.ok === false) return meta
+  const json = extractJsonObject(reply) ?? {}
+  return {
+    ok: true,
+    value: { meta: meta.value, featuredImagePrompt: clean(json.featuredImagePrompt, 300) },
   }
 }

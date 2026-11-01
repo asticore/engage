@@ -57,5 +57,6 @@ export const LIBRARY_LIMITS = {
   maxImports: 2000,
   urlMaxLength: 300,
   labelMaxLength: 80,
+  tokenMaxLength: 400,
   cacheTtlMs: 5 * 60 * 1000,
 } as const

@@ -19,7 +19,7 @@ export async function GET(request: Request): Promise<Response> {
     const item = found.manifestItems.find((candidate) => candidate.slug === slug)
     if (!item || !found.row.config) return libraryJson({ ok: false, error: 'That item is not in this library.' }, 404)
 
-    const picture = await loadItemPreview(found.row.config, item)
+    const picture = await loadItemPreview(found.row.config, item, {}, found.token)
     if (!picture.ok) return libraryJson({ ok: false, error: picture.error }, 502)
     return new Response(picture.value.bytes as BodyInit, {
       headers: {

@@ -1,5 +1,6 @@
 import { getEngine } from '@/lib/engine'
 
+import { parseSavedPrompts, type SavedPrompt } from '../blogBuilder/savedPrompts'
 import { AI_BUILDER_MODELS, AI_PROVIDERS, isAllowedBuilderModel, type AiProvider } from './models'
 
 /**
@@ -25,8 +26,16 @@ export async function aiKeyAvailability(): Promise<Record<AiProvider, boolean>> 
   return result
 }
 
-/** The configured builder models and monthly cap. No keys. Falls back to the defaults and no cap. */
-export async function readBuilderSettings(): Promise<{ models: Record<AiProvider, string>; capUsd: number }> {
+/**
+ * The configured builder models, monthly cap, and the blog builder's brand voice and saved prompts. No keys.
+ * Falls back to the defaults, no cap, no brand voice and no saved prompts.
+ */
+export async function readBuilderSettings(): Promise<{
+  models: Record<AiProvider, string>
+  capUsd: number
+  brandVoice: string
+  savedPrompts: SavedPrompt[]
+}> {
   const engine = await getEngine()
   const g = (await engine
     .findGlobal({ slug: 'integrations', depth: 0, overrideAccess: true })
@@ -34,11 +43,14 @@ export async function readBuilderSettings(): Promise<{ models: Record<AiProvider
   const claude = g?.aiClaudeModel
   const openai = g?.aiOpenaiModel
   const cap = Number(g?.aiMonthlyCapUsd)
+  const voice = typeof g?.blogBrandVoice === 'string' ? g.blogBrandVoice.trim().slice(0, 600) : ''
   return {
     models: {
       claude: isAllowedBuilderModel('claude', claude) ? claude : AI_BUILDER_MODELS.claude,
       openai: isAllowedBuilderModel('openai', openai) ? openai : AI_BUILDER_MODELS.openai,
     },
     capUsd: Number.isFinite(cap) && cap > 0 ? cap : 0,
+    brandVoice: voice,
+    savedPrompts: parseSavedPrompts(g?.blogSavedPrompts),
   }
 }

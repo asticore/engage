@@ -39,8 +39,21 @@ export type BlogMeta = {
   category: string
 }
 
+/** Per-post AI call limits the admin can pick. The default is the second choice. */
+export const BLOG_CALL_LIMITS = [10, 25, 50, 100] as const
+export const DEFAULT_CALL_LIMIT = 25
+export const MAX_SOURCES = 10
+
 export type BlogRequest = {
   action: BlogAction
+  /** Links the admin pasted: the only sources the model may cite, by number. Empty when none. */
+  sources?: string[]
+  /** Random id of this draft (one per post in the wizard). Counts the AI calls of the post. */
+  draftKey?: string
+  /** Most AI calls this post may make. Set only with draftKey. */
+  callLimit?: number
+  /** For `create`: the gallery picture chosen as the featured image, or null for none. */
+  featuredImageId?: number | null
   brief?: BlogBrief
   title?: string
   outline?: BlogOutlineItem[]
@@ -65,6 +78,8 @@ const MAX_SECTION_TEXT = 20_000
 const MAX_CONTEXT_SECTIONS = 12
 const MAX_OUTLINE = 10
 const MAX_TAGS = 10
+const MAX_SOURCE_URL = 300
+const DRAFT_KEY_RE = /^[A-Za-z0-9-]{8,64}$/
 
 const text = (value: unknown, max: number): string | null => {
   if (typeof value !== 'string') return null
@@ -152,6 +167,34 @@ export function parseMeta(value: unknown): ParseResult<BlogMeta> {
   return { ok: true, value: { metaTitle, metaDescription, slug, tags, category } }
 }
 
+/**
+ * The sources the admin pasted: one https link per line (or a list). Trimmed, de-duplicated, at most
+ * MAX_SOURCES. Anything else is refused with a plain reason, so the prompt never carries a bad link.
+ */
+export function parseSources(value: unknown): ParseResult<string[]> {
+  if (value === undefined || value === null || value === '') return { ok: true, value: [] }
+  const lines: unknown[] = typeof value === 'string' ? value.split(/\r?\n/) : Array.isArray(value) ? value : []
+  if (typeof value !== 'string' && !Array.isArray(value)) return { ok: false, error: 'Sources must be a list of links.' }
+  const out: string[] = []
+  for (const line of lines) {
+    if (typeof line !== 'string') return { ok: false, error: 'Each source must be a link.' }
+    const url = line.trim()
+    if (!url) continue
+    if (url.length > MAX_SOURCE_URL || /\s/.test(url)) return { ok: false, error: `Each source must be one link of up to ${MAX_SOURCE_URL} characters.` }
+    let parsed: URL
+    try {
+      parsed = new URL(url)
+    } catch {
+      return { ok: false, error: `This source is not a valid link: ${url.slice(0, 80)}` }
+    }
+    if (parsed.protocol !== 'https:') return { ok: false, error: 'Sources must be secure (https) links.' }
+    if (parsed.username || parsed.password) return { ok: false, error: 'Sources must not contain a user name or password.' }
+    if (!out.includes(parsed.href)) out.push(parsed.href)
+  }
+  if (out.length > MAX_SOURCES) return { ok: false, error: `Add up to ${MAX_SOURCES} sources.` }
+  return { ok: true, value: out }
+}
+
 /** Parses the body of a request for the blog builder. Errors are safe to show. */
 export function parseBlogRequest(body: unknown): ParseResult<BlogRequest> {
   if (!body || typeof body !== 'object') return { ok: false, error: 'Send a JSON body.' }
@@ -162,6 +205,15 @@ export function parseBlogRequest(body: unknown): ParseResult<BlogRequest> {
   if (!action) return { ok: false, error: 'Unknown step for the blog builder.' }
 
   const req: BlogRequest = { action }
+  const sources = parseSources(b.sources)
+  if (sources.ok === false) return sources
+  req.sources = sources.value
+  if (typeof b.draftKey === 'string' && DRAFT_KEY_RE.test(b.draftKey)) {
+    req.draftKey = b.draftKey
+    req.callLimit = (BLOG_CALL_LIMITS as readonly number[]).includes(b.callLimit as number)
+      ? (b.callLimit as number)
+      : DEFAULT_CALL_LIMIT
+  }
   if (action !== 'create') {
     const brief = parseBrief(b.brief)
     if (brief.ok === false) return brief
@@ -213,6 +265,15 @@ export function parseBlogRequest(body: unknown): ParseResult<BlogRequest> {
     const meta = parseMeta(b.meta)
     if (meta.ok === false) return meta
     req.meta = meta.value
+    const picked = b.featuredImageId
+    if (picked !== undefined && picked !== null) {
+      if (typeof picked !== 'number' || !Number.isInteger(picked) || picked < 1) {
+        return { ok: false, error: 'The featured image is not valid.' }
+      }
+      req.featuredImageId = picked
+    } else {
+      req.featuredImageId = null
+    }
   }
   return { ok: true, value: req }
 }
