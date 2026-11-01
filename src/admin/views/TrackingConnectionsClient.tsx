@@ -7,6 +7,7 @@ import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { GoogleConnectionStatus } from '@/features/google/status'
+import { allDone, connectionSetup, type SetupCheck } from '@/features/tracking/connect/setup'
 import type { ProviderStatus, TrackingConnectionStatus } from '@/features/tracking/connect/status'
 import type { UiStringKey } from '@/features/uiStrings'
 
@@ -19,6 +20,8 @@ type Props = {
   redirectUris: { meta: string; tiktok: string; google: string }
   /** Only administrators can save app secrets. Everyone else sees the screen read-only. */
   isAdmin: boolean
+  /** Whether ENGAGE_SECRET is set on the server. A yes or no only; the value never reaches the browser. */
+  engageSecretSet: boolean
 }
 
 type Tone = 'ok' | 'error'
@@ -54,6 +57,7 @@ function reasonText(t: T, reason: string): string {
   if (reason === 'refused') return t('tconnect.notice_refused')
   if (reason === 'forbidden') return t('tconnect.notice_forbidden')
   if (reason === 'bad-app') return t('tconnect.notice_bad_app')
+  if (reason === 'no-secret') return t('tconnect.notice_no_secret')
   return t('tconnect.notice_error')
 }
 
@@ -368,10 +372,23 @@ function PlatformCard(props: {
   )
 }
 
-function GoogleCard({ google, redirectUri, isAdmin, t }: { google: GoogleConnectionStatus; redirectUri: string; isAdmin: boolean; t: T }) {
+function GoogleCard({
+  google,
+  redirectUri,
+  isAdmin,
+  t,
+  connected,
+  setConnected,
+}: {
+  google: GoogleConnectionStatus
+  redirectUri: string
+  isAdmin: boolean
+  t: T
+  connected: boolean
+  setConnected: (value: boolean) => void
+}) {
   const [ga4, setGa4] = useState(google.ga4MeasurementId)
   const [gtm, setGtm] = useState(google.gtmContainerId)
-  const [connected, setConnected] = useState(google.connected)
   const [notice, setNotice] = useState<Notice | null>(null)
   const hasClient = Boolean(google.clientId)
   const account = google.connectedEmail || 'Google'
@@ -445,14 +462,48 @@ function GoogleCard({ google, redirectUri, isAdmin, t }: { google: GoogleConnect
   )
 }
 
-function Body({ status, google, redirectUris, isAdmin }: Props) {
+/** One line per piece: Done or Missing as words, so the state never depends on colour alone. */
+function SetupList({ title, checks, labels, t }: { title: string; checks: SetupCheck[]; labels: Record<SetupCheck['key'], string>; t: T }) {
+  return (
+    <div className="google-connection__row">
+      <p className="google-connection__row-label">
+        <strong>{title}</strong>
+      </p>
+      <ul className="google-connection__steps">
+        {checks.map((check) => (
+          <li key={check.key}>
+            {labels[check.key]}: <strong>{check.done ? t('tconnect.setup_done') : t('tconnect.setup_missing')}</strong>
+          </li>
+        ))}
+      </ul>
+      <p className="google-connection__help">{allDone(checks) ? t('tconnect.setup_ready') : t('tconnect.setup_not_ready')}</p>
+    </div>
+  )
+}
+
+function Body({ status, google, redirectUris, isAdmin, engageSecretSet }: Props) {
   const t = useAdminT()
   const search = useSearchParams()
   const notice = noticeText(t, search.get('notice') ?? '', (p) => (p === 'tiktok' ? 'TikTok' : 'Facebook'))
   const [metaStatus, setMetaStatus] = useState(status.meta)
   const [tiktokStatus, setTiktokStatus] = useState(status.tiktok)
+  const [googleConnected, setGoogleConnected] = useState(google.connected)
   const [flash, setFlash] = useState<Notice | null>(null)
   const shown = flash ?? notice
+  const setup = connectionSetup({
+    engageSecretSet,
+    meta: metaStatus,
+    tiktok: tiktokStatus,
+    google: { clientId: google.clientId, hasClientSecret: google.hasClientSecret, connected: googleConnected },
+  })
+  const setupLabels: Record<SetupCheck['key'], string> = {
+    'app-id': t('tconnect.setup_app_id'),
+    'app-secret': t('tconnect.setup_app_secret'),
+    'google-client': t('tconnect.setup_google_client'),
+    'google-secret': t('tconnect.setup_google_secret'),
+    'engage-secret': t('tconnect.setup_engage_secret'),
+    'sign-in': t('tconnect.setup_sign_in'),
+  }
 
   return (
     <div className="google-connection">
@@ -462,7 +513,17 @@ function Body({ status, google, redirectUris, isAdmin }: Props) {
           {shown.text}
         </p>
       )}
-      <GoogleCard google={google} redirectUri={redirectUris.google} isAdmin={isAdmin} t={t} />
+      <section aria-labelledby="tracking-connections-setup">
+        <h2 id="tracking-connections-setup" className="google-connection__text">
+          <strong>{t('tconnect.setup_title')}</strong>
+        </h2>
+        <p className="google-connection__help">{t('tconnect.setup_intro')}</p>
+        {!engageSecretSet && <p className="google-connection__notice google-connection__notice--error">{t('tconnect.setup_engage_hint')}</p>}
+        <SetupList title={t('tconnect.card_google')} checks={setup.google} labels={setupLabels} t={t} />
+        <SetupList title={t('tconnect.card_meta')} checks={setup.meta} labels={setupLabels} t={t} />
+        <SetupList title={t('tconnect.card_tiktok')} checks={setup.tiktok} labels={setupLabels} t={t} />
+      </section>
+      <GoogleCard google={google} redirectUri={redirectUris.google} isAdmin={isAdmin} t={t} connected={googleConnected} setConnected={setGoogleConnected} />
       <PlatformCard
         provider="meta"
         name="Facebook"

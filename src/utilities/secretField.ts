@@ -26,6 +26,10 @@ export const encryptSecretHook: FieldHook = ({ value }) => {
   if (typeof value !== 'string' || value.length === 0) return value
   // Already encrypted (e.g. re-saving the doc without touching this field) - don't double-encrypt.
   if (value.startsWith(PREFIX)) return value
+  // Without ENGAGE_SECRET the key would be the public hash of an empty string: refuse instead of storing a weakly keyed secret.
+  if (!process.env.ENGAGE_SECRET) {
+    throw new Error('ENGAGE_SECRET is not set on this site, so secret values cannot be stored. Set ENGAGE_SECRET and save again.')
+  }
 
   const iv = crypto.randomBytes(12)
   const cipher = crypto.createCipheriv('aes-256-gcm', getKey(), iv)
