@@ -44,8 +44,8 @@ describe('blog builder settings - fresh install on an empty D1', () => {
     expect(indexes).toContain('ai_builder_usage_draft_key_idx')
   })
 
-  it('is registered as the last migration', async () => {
+  it('is registered before the shop organise migration', async () => {
     const { migrations } = await import('@/migrations/index')
-    expect(migrations[migrations.length - 1].name).toBe('20270128_100000_blog_builder_settings')
+    expect(migrations[migrations.length - 2].name).toBe('20270128_100000_blog_builder_settings')
   })
 })

@@ -254,7 +254,7 @@ export default async function ProductPage({
                 <p className="my-1 whitespace-pre-wrap">{review.text}</p>
                 <p className="m-0 text-[0.8rem] opacity-70">
                   {review.name}
-                  {review.verifiedOwner ? ' - Verified buyer' : ''}
+                  {review.verifiedOwner ? <span className="ml-2 inline-block border border-current px-1.5 text-[0.7rem] uppercase tracking-[0.04em]">Verified buyer</span> : null}
                 </p>
               </li>
             ))}

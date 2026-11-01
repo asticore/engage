@@ -147,12 +147,13 @@ export async function ListView({
     extraSearch,
   })
 
-  // Trash (pages, posts, events): the list hides trashed items; ?trash=1 shows only them.
+  // Trash (pages, posts, events, products): the list hides trashed items; ?trash=1 shows only them. Orders have no trash.
   const bulkCollection = isBulkCollection(collectionSlug) ? collectionSlug : null
-  const trashView = bulkCollection !== null && searchParams.trash === '1'
-  const trashClause = bulkCollection ? { trashedAt: { exists: trashView } } : null
+  const hasTrash = bulkCollection !== null && bulkCollection !== 'orders'
+  const trashView = hasTrash && searchParams.trash === '1'
+  const trashClause = hasTrash ? { trashedAt: { exists: trashView } } : null
   const listWhere = trashClause ? (findArgs.where ? { and: [findArgs.where, trashClause] } : trashClause) : findArgs.where
-  const trashCount = bulkCollection
+  const trashCount = hasTrash
     ? await context.engine.count({ collection: collectionSlug, where: { trashedAt: { exists: true } } as any, user: context.user }).then((r) => r.totalDocs).catch(() => 0)
     : 0
 
@@ -325,7 +326,7 @@ export async function ListView({
       )}
 
       {/* Trash (pages, posts, events) */}
-      {bulkCollection && activeTab.view === 'list' && (
+      {hasTrash && activeTab.view === 'list' && (
         <nav aria-label={ui.t('aria.trash')} className="es-trash-links">
           <a aria-current={!trashView ? 'true' : undefined} href={`${adminCollectionPath(collectionSlug)}`}>
             All
@@ -344,6 +345,7 @@ export async function ListView({
               canChangeAuthor={actionRefusal('changeAuthor', bulkPerms) === null}
               canDelete={bulkPerms.delete}
               canPublish={bulkPerms.publish}
+              canUpdate={bulkPerms.update}
               collection={bulkCollection}
               noun={bulkCollection.slice(0, -1)}
               trashView={trashView}
