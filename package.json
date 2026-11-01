@@ -23,7 +23,9 @@
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test": "pnpm run test:int && pnpm run test:e2e",
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --import=tsx/esm\" playwright test --config=playwright.config.ts",
+    "pretest:int": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/checkDevD1.mts",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
+    "check:dev-d1": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/checkDevD1.mts",
     "prepare:engine-tables": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/prepareEngineTables.mts",
     "db:local": "pnpm run prepare:engine-tables && pnpm run migrate:standalone",
     "migrate:standalone": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/runMigrationsStandalone.mts"
