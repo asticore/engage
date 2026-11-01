@@ -4,6 +4,7 @@ import { isAdmin } from '../access/ecommerceAccess'
 import { LOCALE_OPTIONS } from '../features/multilingual/locales'
 import { domainSettingsBeforeChange } from '../features/domains/hooks'
 import { invalidateDomainsCache } from '../features/domains/store'
+import { DOMAIN_SENSITIVE_FIELDS, sensitiveSettingsAfterChange } from '../features/security/sensitiveChanges'
 
 /**
  * Regional domains (example.com, example.com.au, example.co.uk) served by this one site.
@@ -22,7 +23,7 @@ export const DomainSettings: GlobalConfig = {
   hooks: {
     beforeChange: [domainSettingsBeforeChange],
     // This isolate reads the new registry at once; other isolates pick it up within the cache window (60 seconds).
-    afterChange: [() => invalidateDomainsCache()],
+    afterChange: [() => invalidateDomainsCache(), sensitiveSettingsAfterChange('domain-settings', DOMAIN_SENSITIVE_FIELDS)],
   },
   admin: {
     group: 'Settings',

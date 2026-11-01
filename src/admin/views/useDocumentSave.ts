@@ -21,7 +21,7 @@ import { adminCollectionPath } from '@/admin/adminPaths'
  */
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDocumentEvents, useFormFields, useResetFormModified } from '@/admin/context'
 import { unflattenFields } from '@/admin/fields/shared'
 
@@ -30,6 +30,11 @@ export type SaveTarget = {
   globalSlug?: string
   id?: number
   draftsEnabled?: boolean
+  /**
+   * Globals only: the `updatedAt` the page loaded. Sent with the save so the server refuses
+   * (409) when another tab or admin has changed the global since, instead of overwriting it.
+   */
+  expectedUpdatedAt?: string | null
 }
 
 export type SaveStatus = 'draft' | 'published' | 'unpublish'
@@ -56,6 +61,11 @@ export function useDocumentSave(target: SaveTarget) {
   const [busy, setBusy] = useState<BusyAction | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<number | null>(null)
+  // The version this page last loaded or saved. A save moves it on, so two quick saves do not conflict with themselves.
+  const expectedRef = useRef<string | null>(target.expectedUpdatedAt ?? null)
+  useEffect(() => {
+    expectedRef.current = target.expectedUpdatedAt ?? null
+  }, [target.expectedUpdatedAt])
 
   const entitySlug = target.collectionSlug ?? target.globalSlug ?? ''
 
@@ -68,10 +78,12 @@ export function useDocumentSave(target: SaveTarget) {
       if (target.draftsEnabled) data._status = status === 'published' ? 'published' : 'draft'
       // Only "Save draft" carries the flag; unpublish must write the live row.
       const { url, method } = saveRequest(target, status === 'draft')
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (target.globalSlug && expectedRef.current) headers['X-Expected-Updated-At'] = expectedRef.current
       const response = await fetch(url, {
         body: JSON.stringify(data),
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         method,
       })
       const body: unknown = await response.json().catch((): unknown => null)
@@ -80,6 +92,8 @@ export function useDocumentSave(target: SaveTarget) {
         return false
       }
 
+      const savedVersion = (body as { result?: { updatedAt?: unknown } } | null)?.result?.updatedAt
+      if (typeof savedVersion === 'string') expectedRef.current = savedVersion
       resetModified()
       setSavedAt(Date.now())
       reportUpdate({ entitySlug, updatedAt: new Date().toISOString() })

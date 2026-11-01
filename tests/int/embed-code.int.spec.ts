@@ -155,7 +155,7 @@ describe('embed-code headers', () => {
   it('keeps the admin portal policy-free and an admin custom CSP on other paths', () => {
     expect(securityHeaders(on, '/admin/x')['Content-Security-Policy']).toBeUndefined()
     const custom = { ...on, headers: { ...on.headers, contentSecurityPolicy: "default-src 'self'" } }
-    expect(securityHeaders(custom, '/reviews')['Content-Security-Policy']).toBe("default-src 'self'")
+    expect(securityHeaders(custom, '/reviews')['Content-Security-Policy']).toBe(DEFAULT_CONTENT_SECURITY_POLICY)
   })
 })
 

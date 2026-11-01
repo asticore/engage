@@ -53,6 +53,15 @@ export const Integrations: GlobalConfig = {
       },
     },
     {
+      name: 'checkAiKeys',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/features/integrations/admin/IntegrationChecks#CheckAiKeysButton',
+        },
+      },
+    },
+    {
       name: 'aiClaudeModel',
       type: 'select',
       label: 'Build with AI: Claude model',
@@ -148,6 +157,15 @@ export const Integrations: GlobalConfig = {
       label: 'Google (Analytics, Tag Manager, Maps)',
       admin: { description: 'Measurement IDs and keys for Google services. Tags only load once the visitor agrees, see Cookie consent.' },
       fields: [
+        {
+          name: 'checkAnalyticsIds',
+          type: 'ui',
+          admin: {
+            components: {
+              Field: '@/features/integrations/admin/IntegrationChecks#CheckAnalyticsIdsButton',
+            },
+          },
+        },
         {
           name: 'ga4Enabled',
           type: 'checkbox',
@@ -373,6 +391,15 @@ export const Integrations: GlobalConfig = {
             description: 'Automatically purge Cloudflare cache when you publish content.',
             components: {
               Field: '@/admin/components/CloudflarePurgeOnPublishField#CloudflarePurgeOnPublishField',
+            },
+          },
+        },
+        {
+          name: 'checkCloudflare',
+          type: 'ui',
+          admin: {
+            components: {
+              Field: '@/features/integrations/admin/IntegrationChecks#CheckCloudflareButton',
             },
           },
         },

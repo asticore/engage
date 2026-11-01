@@ -59,9 +59,11 @@ describe('csp frame-src', () => {
     expect(directive(DEFAULT_CONTENT_SECURITY_POLICY, 'script-src')).not.toMatch(/youtube|vimeo|typeform|lottie|google\.com\b(?!\/)/)
   })
 
-  it('still uses an admin custom policy verbatim', () => {
-    const custom = "default-src 'self'; frame-src 'self'"
+  it('merges an admin custom policy into the default, keeping the default hosts', () => {
+    const custom = "default-src 'self'; frame-src https://extra.example"
     const h = securityHeaders({ ...DEFAULT_SECURITY_SETTINGS, featureEnabled: true, headers: { ...DEFAULT_SECURITY_SETTINGS.headers, contentSecurityPolicy: custom } }, '/')
-    expect(h['Content-Security-Policy']).toBe(custom)
+    expect(h['Content-Security-Policy']).toContain('https://extra.example')
+    expect(directive(h['Content-Security-Policy']!, 'frame-src')).toContain('https://www.googletagmanager.com')
+    expect(directive(h['Content-Security-Policy']!, 'font-src')).toContain('https://fonts.gstatic.com')
   })
 })

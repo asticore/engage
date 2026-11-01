@@ -76,6 +76,27 @@ export { Forbidden } from './access'
 export type ValidationFieldError = { path: string; message: string }
 
 /** Stands in for the reference engine's `ValidationError` (no engine import, no i18n lookup). */
+/**
+ * A global save that was built on a copy of the document that someone else has
+ * since changed (another tab, or another admin). The client sends the
+ * `updatedAt` it loaded; a mismatch refuses the save instead of overwriting.
+ */
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'ConflictError'
+  }
+}
+
+/** Refuses a global save whose `expectedUpdatedAt` no longer matches the stored row. A missing expectation skips the check. */
+export function assertGlobalNotChanged(existingUpdatedAt: unknown, expectedUpdatedAt: string | null | undefined): void {
+  if (!expectedUpdatedAt || typeof existingUpdatedAt !== 'string') return
+  if (existingUpdatedAt === expectedUpdatedAt) return
+  throw new ConflictError(
+    'These settings changed in another tab or by another admin, so this save was not made. Reload the page to see the latest values, then make your change again.',
+  )
+}
+
 export class ValidationError extends Error {
   errors: ValidationFieldError[]
   constructor(errors: ValidationFieldError[]) {
@@ -984,6 +1005,8 @@ export type UpdateGlobalDocumentArgs<TDoc> = {
   data: Record<string, unknown>
   req: LocalReq
   overrideAccess?: boolean
+  /** The `updatedAt` the caller loaded; the save is refused when the stored row has moved on. */
+  expectedUpdatedAt?: string | null
 }
 
 /** See the file header for the UPDATE GLOBAL step order. Globals' beforeValidate/beforeChange hooks receive `overrideAccess`; a collection's do not. */
@@ -1000,6 +1023,7 @@ export async function updateGlobalDocument<TDoc>(args: UpdateGlobalDocumentArgs<
   }
 
   const existing = (await db.find()) as Record<string, unknown> | null
+  assertGlobalNotChanged(existing?.updatedAt, args.expectedUpdatedAt)
   const originalDoc: Record<string, unknown> = existing ? { ...existing } : {}
 
   let data: Record<string, unknown> = { ...args.data }
