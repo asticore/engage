@@ -35,6 +35,7 @@ import { CacheToolsView } from '@/admin/views/CacheToolsView'
 import { GoogleConnectionView } from '@/admin/views/GoogleConnectionView'
 import { ThemeStylesView } from '@/admin/views/ThemeStylesView'
 import { EmailTestingView } from '@/admin/views/EmailTestingView'
+import { EmailSuppressionsView } from '@/admin/views/EmailSuppressionsView'
 import { EmailDesignerView } from '@/admin/views/EmailDesignerView'
 import { CookieConsentView } from '@/admin/views/CookieConsentView'
 import { ShopSettingsView } from '@/admin/views/ShopSettingsView'
@@ -251,6 +252,12 @@ export const CUSTOM_ADMIN_VIEWS = [
     Component: EmailTestingView,
     path: '/email-testing',
     meta: { title: 'Email testing', description: 'Check the email connection, send test emails and check the sending domain.' },
+  },
+  {
+    key: 'emailSuppressions',
+    Component: EmailSuppressionsView,
+    path: '/email-suppressions',
+    meta: { title: 'Email suppression list', description: 'Addresses that get no bulk or reminder email. Search them and remove an address.' },
   },
   {
     key: 'emailDesigner',

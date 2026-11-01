@@ -1,3 +1,4 @@
+import { getSiteSnapshot } from '@/features/speed/siteSnapshot'
 import { cache } from 'react'
 import { cookies, headers } from 'next/headers'
 
@@ -60,7 +61,8 @@ const decodeCookie = (raw: string | undefined): string | null => {
 export const getAdsContext = cache(async (): Promise<AdsContext> => {
   try {
     const engine = await getEngine()
-    const site = (await engine.findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch((): null => null)) as Loose
+    // Site settings come from the per-request snapshot, so the layout pays no extra read for ads.
+    const site = ((await getSiteSnapshot().catch((): null => null))?.settings ?? null) as unknown as Loose
     const flag = (site?.features as { ads?: unknown } | undefined)?.ads === true
     if (!flag) return DISABLED_CONTEXT
 

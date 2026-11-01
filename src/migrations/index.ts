@@ -137,6 +137,9 @@ import * as migration_20270220_110000_domain_scoped_content from './20270220_110
 import * as migration_20270221_100000_media_types_font_selfhost from './20270221_100000_media_types_font_selfhost';
 import * as migration_20270222_100000_approval_repeat_approver from './20270222_100000_approval_repeat_approver';
 import * as migration_20270222_110000_edit_collapse_prefs_cleanup from './20270222_110000_edit_collapse_prefs_cleanup';
+import * as migration_20270223_100000_not_found_log from './20270223_100000_not_found_log';
+import * as migration_20270223_110000_coupon_reservations from './20270223_110000_coupon_reservations';
+import * as migration_20270223_120000_consent_logo from './20270223_120000_consent_logo';
 import * as migration_20270224_100000_block_form_id from './20270224_100000_block_form_id';
 
 export const migrations = [
@@ -829,6 +832,21 @@ export const migrations = [
     up: migration_20270222_110000_edit_collapse_prefs_cleanup.up,
     down: migration_20270222_110000_edit_collapse_prefs_cleanup.down,
     name: '20270222_110000_edit_collapse_prefs_cleanup',
+  },
+  {
+    up: migration_20270223_100000_not_found_log.up,
+    down: migration_20270223_100000_not_found_log.down,
+    name: '20270223_100000_not_found_log',
+  },
+  {
+    up: migration_20270223_110000_coupon_reservations.up,
+    down: migration_20270223_110000_coupon_reservations.down,
+    name: '20270223_110000_coupon_reservations',
+  },
+  {
+    up: migration_20270223_120000_consent_logo.up,
+    down: migration_20270223_120000_consent_logo.down,
+    name: '20270223_120000_consent_logo',
   },
   {
     up: migration_20270224_100000_block_form_id.up,

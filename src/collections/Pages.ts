@@ -1,4 +1,5 @@
 import { noAdsField } from '@/features/ads/fields'
+import { pageSlugRedirectAfterChange } from '@/features/redirects/slugChange'
 import { domainScopedAccess, domainWriteGuard } from '@/features/domains/access'
 import { domainSiteDefault } from '@/features/domains/hooks'
 import { availableDomainsField } from '@/features/domains/field'
@@ -186,7 +187,7 @@ export const Pages: CollectionConfig = {
         return data
       },
     ],
-    afterChange: [publishAfterChange('pages'), pageSpeedAfterChange('pages'), indexNowAfterChange('pages'), machineAutoDraftAfterChange('pages'), outdatedAfterChange('pages'), webhookContentAfterChange('pages')],
+    afterChange: [publishAfterChange('pages'), pageSlugRedirectAfterChange, pageSpeedAfterChange('pages'), indexNowAfterChange('pages'), machineAutoDraftAfterChange('pages'), outdatedAfterChange('pages'), webhookContentAfterChange('pages')],
     afterDelete: [indexNowAfterDelete('pages')],
     beforeChange: [
       domainSiteDefault,

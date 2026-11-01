@@ -1,9 +1,10 @@
 'use client'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
-import React, { useRef, useSyncExternalStore } from 'react'
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { Field } from '@/engine'
-import type { ConsentConfig } from '@/features/consent/config'
+import { normaliseConsentConfig, type ConsentConfig } from '@/features/consent/config'
+import { useFormFields } from '@/admin/context'
 import { resolveActiveTab } from '@/admin/settingsPages'
 import { EditForm } from './EditForm'
 import { CookieConsentPreview } from './CookieConsentPreview'
@@ -44,6 +45,26 @@ type Props = {
 }
 
 /**
+ * Reads the consent fields of the form as they are now (saved or not) and hands
+ * the normalised banner settings up, so the Preview tab shows unsaved edits.
+ * Form values are flat: the consent group's fields are named `consent.<field>`.
+ */
+function ConsentDraftBridge({ onChange, fallbackPrivacyUrl }: { onChange: (config: ConsentConfig) => void; fallbackPrivacyUrl: string | null }): null {
+  const fields = useFormFields(([values]) => values)
+  const key = useMemo(() => {
+    const consent: Record<string, unknown> = {}
+    for (const [path, entry] of Object.entries(fields ?? {})) {
+      if (path.startsWith('consent.')) consent[path.slice('consent.'.length)] = entry?.value
+    }
+    return JSON.stringify(consent)
+  }, [fields])
+  useEffect(() => {
+    onChange(normaliseConsentConfig({ consent: JSON.parse(key) as Record<string, unknown> }, null, fallbackPrivacyUrl))
+  }, [key, onChange, fallbackPrivacyUrl])
+  return null
+}
+
+/**
  * Cookie consent page: Banner (the settings form), Preview and Consent log.
  *
  * The Banner panel stays mounted while another tab is showing, so unsaved
@@ -53,6 +74,7 @@ type Props = {
  */
 export const CookieConsentClient: React.FC<Props> = ({ doc, fields, config }) => {
   const t = useAdminT()
+  const [draft, setDraft] = useState<ConsentConfig>(config)
   const hash = useSyncExternalStore(subscribeToHash, readHash, readServerHash)
   const active = resolveActiveTab(hash, TAB_SLUGS)
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -128,7 +150,13 @@ export const CookieConsentClient: React.FC<Props> = ({ doc, fields, config }) =>
             tabIndex={0}
             className="settings-tabs__panel"
           >
-            <EditForm doc={doc} fields={fields} globalSlug="integrations" onlyGroups={['consent']} />
+            <EditForm
+              doc={doc}
+              fields={fields}
+              globalSlug="integrations"
+              onlyGroups={['consent']}
+              afterFields={<ConsentDraftBridge onChange={setDraft} fallbackPrivacyUrl={config.privacyPolicyUrl} />}
+            />
           </div>
 
           <div
@@ -139,7 +167,7 @@ export const CookieConsentClient: React.FC<Props> = ({ doc, fields, config }) =>
             tabIndex={0}
             className="settings-tabs__panel"
           >
-            {active === 'preview' ? <CookieConsentPreview config={config} /> : null}
+            {active === 'preview' ? <CookieConsentPreview config={draft} /> : null}
           </div>
 
           <div

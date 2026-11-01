@@ -168,6 +168,13 @@ export const SETTINGS_PAGES: SettingsPage[] = [
         description: 'Check the email connection, send test copies of each email and check the sending domain.',
         type: 'view',
       },
+      {
+        kind: 'link',
+        label: 'Suppression list',
+        href: '/email-suppressions',
+        description: 'Addresses that get no bulk or reminder email. Search the list and remove an address.',
+        type: 'view',
+      },
       { kind: 'link', label: 'Email log', href: collectionRoute('email-log'), description: 'Every email the site has sent, with a resend button.', type: 'collection' },
     ],
   },

@@ -3,7 +3,7 @@
  * gated-markup transform, settings normalisation, the consent-log route (with
  * the audit writer mocked), the CSP, and the banner / gate components.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createElement as h, type ReactElement } from 'react'
 
@@ -288,7 +288,13 @@ describe('consent-log route', () => {
     })
   }
 
-  const good = { id: 'abcdefgh-1234', v: 1, c: { preferences: false, analytics: true, marketing: false } }
+  // The banner's token for policy version 1 (see logToken.ts); every good request carries it.
+  let good: { id: string; v: number; c: { preferences: boolean; analytics: boolean; marketing: boolean }; t: string }
+
+  beforeAll(async () => {
+    const { consentLogToken } = await import('@/features/consent/logToken')
+    good = { id: 'abcdefgh-1234', v: 1, c: { preferences: false, analytics: true, marketing: false }, t: await consentLogToken(1) }
+  })
 
   beforeEach(async () => {
     audit.mockReset()
@@ -317,6 +323,16 @@ describe('consent-log route', () => {
     await POST(request(good, { 'cf-ipcountry': 'DE' }))
     const [entry] = audit.mock.calls[0] as [{ detail: string }]
     expect(JSON.parse(entry.detail).region).toBe('DE')
+  })
+
+  it('writes nothing without the banner token, or with one from another policy version, but still answers 204', async () => {
+    const withoutToken: Record<string, unknown> = { ...good }
+    delete withoutToken.t
+    expect((await POST(request(withoutToken))).status).toBe(204)
+    expect((await POST(request({ ...good, t: 'f'.repeat(32) }))).status).toBe(204)
+    const { consentLogToken } = await import('@/features/consent/logToken')
+    expect((await POST(request({ ...good, t: await consentLogToken(2) }))).status).toBe(204)
+    expect(audit).not.toHaveBeenCalled()
   })
 
   it('writes nothing when logging is off, but still answers 204', async () => {
@@ -620,5 +636,25 @@ describe('consent banner with the SEO feature off', () => {
     expect(await renderConsentOnly('head')).toBeNull()
     getEngine.mockResolvedValue({ findGlobal: vi.fn().mockResolvedValue({ consent: { enabled: true } }) })
     expect(await renderConsentOnly('bodyEnd')).toBeNull()
+  })
+})
+
+describe('banner logo from the media library', () => {
+  it('uses the picked media item path when the logo is switched on, and keeps the path field otherwise', async () => {
+    const { resolveBannerLogo } = await import('@/features/consent/bannerLogo')
+    const { normaliseConsentConfig } = await import('@/features/consent/config')
+    const { getEngine } = await import('@/lib/engine')
+    const find = vi.fn().mockResolvedValue({ docs: [{ id: 9, url: '/api/media/file/brand-logo.png' }] })
+    vi.mocked(getEngine).mockResolvedValue({ find } as never)
+    const integrations = { consent: { showLogo: true, logo: 9, logoUrl: '' } }
+    const picked = await resolveBannerLogo(normaliseConsentConfig(integrations, null), integrations)
+    expect(picked.logoUrl).toBe('/api/media/file/brand-logo.png')
+    expect(find).toHaveBeenCalledWith(expect.objectContaining({ collection: 'media' }))
+
+    const pathOnly = { consent: { showLogo: true, logoUrl: '/api/media/file/old.png' } }
+    expect((await resolveBannerLogo(normaliseConsentConfig(pathOnly, null), pathOnly)).logoUrl).toBe('/api/media/file/old.png')
+
+    const off = { consent: { showLogo: false, logo: 9 } }
+    expect((await resolveBannerLogo(normaliseConsentConfig(off, null), off)).logoUrl).toBeNull()
   })
 })

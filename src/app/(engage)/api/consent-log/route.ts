@@ -2,6 +2,7 @@ import { getEngine } from '@/lib/engine'
 import { normaliseConsentConfig } from '@/features/consent/config'
 import { consentLogDetail, MAX_CONSENT_LOG_BYTES, parseConsentLogBody } from '@/features/consent/log'
 import { normaliseCountry } from '@/features/consent/regions'
+import { isValidConsentLogToken } from '@/features/consent/logToken'
 import { audit } from '@/features/security/auditLog'
 import { clientKey, hit } from '@/features/security/rateLimit'
 import { getSecuritySettings } from '@/features/security/settings'
@@ -47,7 +48,8 @@ async function readCappedText(request: Request, max: number): Promise<string | n
 /**
  * POST /api/consent-log - records one consent decision, anonymised.
  *
- * Public and unauthenticated by design: the visitor is not signed in. Writes
+ * Public and unauthenticated by design: the visitor is not signed in. The body
+ * must carry the banner token `t` (see logToken.ts) and each IP is limited per minute. Writes
  * an audit entry (consent.update) only when the Integrations "keep a log"
  * setting is on. Always answers 204 for a valid request, whether or not it
  * was logged, so the response reveals nothing about the settings.
@@ -78,6 +80,10 @@ export async function POST(request: Request): Promise<Response> {
 
   const body = parseConsentLogBody(raw)
   if (!body) return noContent(400)
+
+  // Only a visitor who loaded the banner has the token. Anyone else gets the same 204 with nothing logged.
+  const token = (raw as { t?: unknown }).t
+  if (!(await isValidConsentLogToken(token, body.v))) return noContent()
 
   try {
     const engine = await getEngine()

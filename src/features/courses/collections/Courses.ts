@@ -8,6 +8,7 @@ import { formatSlugHook } from '@/utilities/formatSlug'
 import { publishGuard } from '@/features/roles/contentEditGuard'
 import { publishAfterChange } from '@/features/approval/publishAfterChange'
 import { reviewFields } from '@/features/approval/fields'
+import { slugRedirectAfterChange } from '@/features/redirects/slugChange'
 
 import { COURSES_SLUG, LESSONS_SLUG } from '../types'
 
@@ -130,6 +131,6 @@ export const Courses: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [authorshipBeforeChange, publishGuard],
-    afterChange: [publishAfterChange('courses')],
+    afterChange: [publishAfterChange('courses'), slugRedirectAfterChange('courses')],
   },
 }

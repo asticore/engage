@@ -85,6 +85,15 @@ export const SECTION_TABS: Record<string, SectionTab[]> = {
       deniedReason: 'Seeing every RSVP needs an administrator, or a role that can read RSVPs and edit events.',
     },
   ],
+  redirects: [
+    { key: 'redirects', label: 'Redirects', deniedReason: '' },
+    {
+      key: 'not-found',
+      label: '404s',
+      collection: 'redirects',
+      deniedReason: 'Your role cannot read redirects. Ask an administrator to give your role Read on Redirects.',
+    },
+  ],
   'ab-tests': [
     { key: 'tests', label: 'Tests', deniedReason: '' },
     {
