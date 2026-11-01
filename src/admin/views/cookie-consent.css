@@ -87,10 +87,6 @@
 /* Chart */
 .cc-chart { display: block; width: 100%; max-width: 720px; height: 160px; }
 .cc-chart--loading { background: var(--cc-surface); border-radius: 8px; }
-.cc-chart__grid { stroke: var(--cc-line); stroke-width: 1; }
-.cc-chart__axis { fill: var(--cc-muted); font: 10px system-ui, sans-serif; }
-.cc-chart__bar { fill: var(--cc-bar); }
-.cc-chart__empty { fill: var(--cc-bar-empty); }
 
 /* Filters and table */
 .cc-filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 12px; }
