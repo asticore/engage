@@ -1319,6 +1319,8 @@ const zhHans: UiDictionary = {
   "store.orderReference": "订单编号：",
   "store.enterEmail": "请输入您的电子邮箱地址。",
   "store.enterEmailFirst": "请先输入您的电子邮箱地址。",
+  "store.productBrand": "品牌：{name}",
+  "store.productTags": "标签：{tags}",
   "store.pricesIn": "价格显示为",
   "store.pageNotFound": "页面未找到",
   "store.notFoundHelp": "您要查找的页面可能已被移动，或地址中有拼写错误。",

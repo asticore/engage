@@ -1320,6 +1320,8 @@ const hi: UiDictionary = {
   "store.orderReference": "ऑर्डर संदर्भ:",
   "store.enterEmail": "कृपया अपना ईमेल पता दर्ज करें।",
   "store.enterEmailFirst": "कृपया पहले अपना ईमेल पता दर्ज करें।",
+  "store.productBrand": "ब्रांड: {name}",
+  "store.productTags": "टैग: {tags}",
   "store.pricesIn": "कीमतें इस मुद्रा में",
   "store.pageNotFound": "पेज नहीं मिला",
   "store.notFoundHelp": "आप जो पेज खोज रहे थे वह शायद स्थानांतरित हो गया है, या पते में कोई टाइपो है।",

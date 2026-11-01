@@ -1321,6 +1321,8 @@ const de: UiDictionary = {
   "store.orderReference": "Bestellnummer:",
   "store.enterEmail": "Bitte gib deine E-Mail-Adresse ein.",
   "store.enterEmailFirst": "Bitte gib zuerst deine E-Mail-Adresse ein.",
+  "store.productBrand": "Marke: {name}",
+  "store.productTags": "Schlagwörter: {tags}",
   "store.pricesIn": "Preise in",
   "store.pageNotFound": "Seite nicht gefunden",
   "store.notFoundHelp": "Die gesuchte Seite wurde möglicherweise verschoben, oder die Adresse enthält einen Tippfehler.",

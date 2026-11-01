@@ -1320,6 +1320,8 @@ const it: UiDictionary = {
   "store.orderReference": "Riferimento ordine:",
   "store.enterEmail": "Inserisci il tuo indirizzo email.",
   "store.enterEmailFirst": "Inserisci prima il tuo indirizzo email.",
+  "store.productBrand": "Marchio: {name}",
+  "store.productTags": "Etichette: {tags}",
   "store.pricesIn": "Prezzi in",
   "store.pageNotFound": "Pagina non trovata",
   "store.notFoundHelp": "La pagina cercata potrebbe essere stata spostata o l'indirizzo potrebbe contenere un errore.",

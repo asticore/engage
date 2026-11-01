@@ -21,6 +21,9 @@ import { FaqList } from '@/components/FaqList'
 import { ProductCard } from '@/components/ProductCard'
 import { WishlistHeart } from '@/components/WishlistHeart'
 import { ProductGallery } from '@/components/ProductGallery'
+import { ProductTaxonomy } from '@/components/ProductTaxonomy'
+import { storeTexts } from '@/features/uiStrings/storeTextsServer'
+import { translateWith } from '@/features/uiStrings/t'
 import { BundleContentsList } from '@/components/BundleContentsList'
 import { ProductRecommendations } from '@/components/ProductRecommendations'
 import { bundleStorefrontFields } from '@/features/ecommerce/server/bundles'
@@ -169,6 +172,9 @@ export default async function ProductPage({
     .find({ collection: 'product-reviews', where: { and: [{ product: { equals: product.id } }, { status: { equals: 'approved' } }] }, sort: '-createdAt', limit: 50, depth: 0 })
     .catch((): { docs: never[] } => ({ docs: [] }))) as unknown as { docs: Array<{ id: number; name: string; rating: number; text: string; status: string; verifiedOwner?: boolean; createdAt: string }> }
   const ratings = summariseRatings(reviewDocs)
+  const storeDict = await storeTexts()
+  const tx = (key: 'store.productBrand' | 'store.productTags') => translateWith(storeDict, key) ?? ''
+  const taxonomy = product as unknown as { brand?: unknown; tags?: unknown }
   const reviewsOn = (settings as { reviewsEnabled?: boolean } | null)?.reviewsEnabled !== false
   // Same brand the Google feed uses: the feed brand, else the business name.
   const brandSource = settings as { storefront?: { feedBrand?: string | null }; tax?: { businessName?: string | null } } | null
@@ -204,6 +210,7 @@ export default async function ProductPage({
         {product.shortDescription && (
           <p className="mb-6 text-[rgba(20,17,15,0.7)]">{product.shortDescription}</p>
         )}
+        <ProductTaxonomy brand={taxonomy.brand} tags={taxonomy.tags} brandLine={tx('store.productBrand')} tagsLine={tx('store.productTags')} />
 
         {bundle ? <BundleContentsList items={bundle.contents} /> : null}
         <ProductPurchase productId={product.id} view={view} grouped={grouped} giftConfig={giftConfig} />

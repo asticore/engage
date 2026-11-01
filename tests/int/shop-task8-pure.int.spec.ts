@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { offlineEnabled, offlineMethodsFor, publicPaymentConfig } from '@/features/ecommerce/lib/paymentMethods'
 import { parseBulkRequest, runBulk, tagIdsAfter, actionRefusal, type BulkPermissions } from '@/features/editScreens/bulk'
 import { reviewLinksFor } from '@/features/ecommerce/server/emails'
+import { brandName, fillLine, tagNames } from '@/features/ecommerce/lib/productTaxonomy'
 
 const offline = { bankTransferEnabled: true, bankTransferDetails: '  BSB 000-000  ', chequeEnabled: false, chequeDetails: 'Payable to Shop', codEnabled: true, codDetails: 'Exact cash' }
 
@@ -93,5 +94,24 @@ describe('review links', () => {
       vi.unstubAllEnvs()
     }
     expect(reviewLinksFor(order, bySlug)).toBe('Candle\nSoap')
+  })
+})
+
+describe('brand and tags on the storefront', () => {
+  it('reads the names of a populated brand and skips a brand that is only an id', () => {
+    expect(brandName({ id: 2, name: ' Acme ' })).toBe('Acme')
+    expect(brandName(7)).toBeNull()
+    expect(brandName(null)).toBeNull()
+    expect(brandName({ id: 2, name: '  ' })).toBeNull()
+  })
+
+  it('lists tag names in pick order, without repeats or unpopulated ids', () => {
+    expect(tagNames([{ id: 1, name: 'Gift ideas' }, 5, { id: 2, name: 'Best sellers' }, { id: 1, name: 'Gift ideas' }])).toEqual(['Gift ideas', 'Best sellers'])
+    expect(tagNames(undefined)).toEqual([])
+  })
+
+  it('fills the placeholder as plain text, even when the value holds $ patterns', () => {
+    expect(fillLine('Brand: {name}', 'Acme')).toBe('Brand: Acme')
+    expect(fillLine('Tags: {tags}', 'Price $& more')).toBe('Tags: Price $& more')
   })
 })

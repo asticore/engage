@@ -1360,6 +1360,8 @@ export const UI_STRING_SOURCE = {
   "store.orderReference": "Order reference:",
   "store.enterEmail": "Please enter your email address.",
   "store.enterEmailFirst": "Please enter your email address first.",
+  "store.productBrand": "Brand: {name}",
+  "store.productTags": "Tags: {tags}",
   "store.pricesIn": "Prices in",
   "store.pageNotFound": "Page not found",
   "store.notFoundHelp": "The page you were looking for may have moved, or the address may have a typo.",

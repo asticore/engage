@@ -1320,6 +1320,8 @@ const pt: UiDictionary = {
   "store.orderReference": "Referência do pedido:",
   "store.enterEmail": "Informe seu endereço de e-mail.",
   "store.enterEmailFirst": "Informe primeiro o seu endereço de e-mail.",
+  "store.productBrand": "Marca: {name}",
+  "store.productTags": "Tags: {tags}",
   "store.pricesIn": "Preços em",
   "store.pageNotFound": "Página não encontrada",
   "store.notFoundHelp": "A página que você procura pode ter sido movida, ou o endereço pode ter um erro de digitação.",

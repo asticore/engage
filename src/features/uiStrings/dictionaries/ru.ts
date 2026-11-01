@@ -1320,6 +1320,8 @@ const ru: UiDictionary = {
   "store.orderReference": "Номер заказа:",
   "store.enterEmail": "Укажите адрес электронной почты.",
   "store.enterEmailFirst": "Сначала укажите адрес электронной почты.",
+  "store.productBrand": "Бренд: {name}",
+  "store.productTags": "Метки: {tags}",
   "store.pricesIn": "Цены в",
   "store.pageNotFound": "Страница не найдена",
   "store.notFoundHelp": "Возможно, страница, которую вы искали, была перемещена, или в адресе есть опечатка.",

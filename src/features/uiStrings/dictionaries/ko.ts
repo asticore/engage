@@ -1320,6 +1320,8 @@ const ko: UiDictionary = {
   "store.orderReference": "주문 번호:",
   "store.enterEmail": "이메일 주소를 입력해 주세요.",
   "store.enterEmailFirst": "먼저 이메일 주소를 입력해 주세요.",
+  "store.productBrand": "브랜드: {name}",
+  "store.productTags": "태그: {tags}",
   "store.pricesIn": "가격 통화",
   "store.pageNotFound": "페이지를 찾을 수 없습니다",
   "store.notFoundHelp": "찾으시는 페이지가 이동되었거나 주소에 오타가 있을 수 있습니다.",

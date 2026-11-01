@@ -1320,6 +1320,8 @@ const ja: UiDictionary = {
   "store.orderReference": "注文番号:",
   "store.enterEmail": "メールアドレスを入力してください。",
   "store.enterEmailFirst": "先にメールアドレスを入力してください。",
+  "store.productBrand": "ブランド：{name}",
+  "store.productTags": "タグ：{tags}",
   "store.pricesIn": "価格の通貨",
   "store.pageNotFound": "ページが見つかりません",
   "store.notFoundHelp": "お探しのページは移動したか、アドレスに誤りがある可能性があります。",

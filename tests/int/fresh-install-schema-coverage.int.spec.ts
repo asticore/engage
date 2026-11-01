@@ -859,27 +859,14 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
 
   it('password groups migration is registered before organizations and is safe to run twice, keeping existing rows', async () => {
     const { migrations } = await import('@/migrations/index')
-    expect(migrations.map((x) => x.name).slice(-19)).toEqual([
-      '20261130_110000_admin_path',
-      '20261201_100000_content_domains',
-      '20261208_100000_user_domains',
-      '20261215_100000_domain_overrides',
-      '20261220_100000_site_scoped_slugs',
-      '20261229_100000_tracking_events',
-      '20261230_100000_tracking_switches',
-      '20261231_100000_tracking_categories',
-      '20270102_100000_tracking_connections',
-      '20270103_100000_tracking_value_source',
-      '20270110_100000_api_endpoints',
-      '20270117_100000_webhooks',
-      '20270118_100000_ai_usage_estimated',
-      '20270124_100000_privacy_requests',
-      '20270125_100000_template_libraries',
-      '20270126_100000_design_grouped',
-      '20270127_100000_template_library_token',
-      '20270128_100000_blog_builder_settings',
-      '20270129_100000_shop_organise_offline',
-    ])
+    // Relative order only: later migrations may be appended without touching this list.
+    const order = migrations.map((x) => x.name)
+    let last = -1
+    for (const name of ['20261130_110000_admin_path', '20261201_100000_content_domains', '20261208_100000_user_domains', '20261215_100000_domain_overrides', '20261220_100000_site_scoped_slugs', '20261229_100000_tracking_events', '20261230_100000_tracking_switches', '20261231_100000_tracking_categories', '20270102_100000_tracking_connections', '20270103_100000_tracking_value_source', '20270110_100000_api_endpoints', '20270117_100000_webhooks', '20270118_100000_ai_usage_estimated', '20270124_100000_privacy_requests', '20270125_100000_template_libraries', '20270126_100000_design_grouped', '20270127_100000_template_library_token', '20270128_100000_blog_builder_settings', '20270129_100000_shop_organise_offline']) {
+      const at = order.indexOf(name)
+      expect(at, name).toBeGreaterThan(last)
+      last = at
+    }
     const mod = await import('@/migrations/20261123_100000_password_groups')
     const { drizzle } = await import('drizzle-orm/d1')
     const db = drizzle(proxy.env.D1) as never
