@@ -10,11 +10,11 @@ import { contentTemplatesFor, type ContentType } from '@/features/seo/templates'
 import { getSeoContext } from '@/features/seo/settings'
 import { requestSiteOrigin } from '@/utilities/siteOrigin'
 import { currentPageLocale } from '@/features/seo/pageLocale'
+import { getSiteSnapshot } from '@/features/speed/siteSnapshot'
 import { localeSeoFields, languagesMap } from '@/features/seo/localeSeo'
 import { availableLocalesForPath } from '@/features/multilingual/applyTranslations'
 import { localizedPathsFor } from '@/features/multilingual/slugIndex'
-import { getEngine } from '@/lib/engine'
-import type { Media, SiteSetting } from '@/engage-types'
+import type { Media } from '@/engage-types'
 
 type SeoLike = {
   metaTitle?: string | null
@@ -111,8 +111,8 @@ export const buildMetadata = async (opts: {
   /** The document's "Available on domains" list. Its hreflang alternates skip the domains it is not on. */
   availableDomains?: unknown
 }): Promise<Metadata> => {
-  const engine = await getEngine()
-  const settings = (await engine.findGlobal({ slug: 'site-settings', depth: 1 }).catch((): null => null)) as SiteSetting | null
+  // Shared with the root layout for this request (features/speed/siteSnapshot.ts).
+  const settings = (await getSiteSnapshot()).settings
   const context = await getSeoContext()
   const resolved = context.enabled
     ? resolveSeo(context, {

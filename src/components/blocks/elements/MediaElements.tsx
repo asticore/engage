@@ -20,7 +20,7 @@ export const ImageElement: React.FC<P> = (p) => {
   const caption = str(p.caption)
   const alt = str(p.alt) || str(media?.alt)
   const img = media?.url ? (
-    <img
+    <img decoding="async"
       src={media.url}
       alt={alt}
       loading="lazy"
@@ -51,13 +51,15 @@ export const VideoElement: React.FC<P> = (p) => {
   const source = parseVideoUrl(p.url)
   const title = str(p.title, 'Video')
   const caption = str(p.caption)
+  // With a poster the browser draws the picture and fetches no video bytes until the viewer presses play.
+  const poster = mediaOf(p.poster)?.url ?? undefined
   return (
     <figure className="el-video">
       <div className="el-video__frame">
         {!source ? (
           <Placeholder label="Paste a YouTube, Vimeo or .mp4 link" />
         ) : source.kind === 'file' ? (
-          <video src={source.src} controls preload="metadata" playsInline aria-label={title} />
+          <video src={source.src} poster={poster} controls preload={poster ? 'none' : 'metadata'} playsInline aria-label={title} />
         ) : (
           <iframe
             src={source.src}
@@ -84,7 +86,7 @@ export const ImageGalleryElement: React.FC<P> = (p) => {
     <ul className="el-gallery" style={{ ['--el-cols' as string]: String(cols) }}>
       {items.map((m, i) => (
         <li key={i}>
-          <img src={m.url || ''} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '1 / 1' : ratio }} />
+          <img decoding="async" src={m.url || ''} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '1 / 1' : ratio }} />
         </li>
       ))}
     </ul>
@@ -101,7 +103,7 @@ export const ImageCarouselElement: React.FC<P> = (p) => {
     <div className="el-carousel" role="region" aria-label={str(p.label, 'Image carousel')} tabIndex={0} style={{ ['--el-visible' as string]: String(visible) }}>
       {items.map((m, i) => (
         <div className="el-carousel__slide" key={i}>
-          <img src={m.url || ''} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '16 / 9' : ratio }} />
+          <img decoding="async" src={m.url || ''} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '16 / 9' : ratio }} />
         </div>
       ))}
     </div>
@@ -141,7 +143,7 @@ export const LogoStripElement: React.FC<P> = (p) => {
     <ul className={`el-logos ${flag(p.grayscale, true) ? 'el-logos--gray' : ''} ${alignClass(pick(p.align, ALIGNS, 'center'))}`}>
       {items.map((m, i) => (
         <li key={i}>
-          <img src={m.url || ''} alt={str(m.alt)} loading="lazy" style={{ height }} />
+          <img decoding="async" src={m.url || ''} alt={str(m.alt)} loading="lazy" style={{ height }} />
         </li>
       ))}
     </ul>

@@ -113,7 +113,7 @@ const Card: React.FC<{ item: LoopItem; s: LoopSettings }> = ({ item, s }) => {
     <div className={`be-el-47-card__face be-el-47-card__front--${s.layout === 'list' ? 'left' : 'top'}`}>
       {image && (
         <figure className="be-el-47-card__media be-el-47-card__media--image">
-          <img className="be-el-47-card__img be-el-47-card__img--cover" src={image} alt="" loading="lazy" />
+          <img decoding="async" className="be-el-47-card__img be-el-47-card__img--cover" src={image} alt="" loading="lazy" />
         </figure>
       )}
       <div className="be-el-47-card__body">

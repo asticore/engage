@@ -47,7 +47,7 @@ export const GalleryElement: React.FC<P> = (p) => {
   const vars = { '--be-el-49-cols': String(cols), '--be-el-49-gap': `${gap}px` } as React.CSSProperties
 
   const figure = (m: GalleryItem, i: number) => {
-    const img = <img className="be-el-49-gallery__img" src={m.url} alt={m.alt} loading="lazy" style={{ aspectRatio: shape, objectFit: imgFit }} />
+    const img = <img decoding="async" className="be-el-49-gallery__img" src={m.url} alt={m.alt} loading="lazy" style={{ aspectRatio: shape, objectFit: imgFit }} />
     return (
       <figure className="be-el-49-gallery__item">
         {lightbox ? (
