@@ -29,7 +29,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.6rem 0;
-  border-bottom: 1px solid rgba(128, 128, 128, 0.35);
+  border-bottom: 1px solid var(--lit-rgba-128-128-128-0p35, rgba(128, 128, 128, 0.35));
 }
 
 .tf-methods {

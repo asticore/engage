@@ -4,7 +4,7 @@
   padding: 16px;
   max-width: 1100px;
   box-sizing: border-box;
-  color: var(--theme-elevation-900, #1a1a1a);
+  color: var(--theme-elevation-900, var(--lit-1a1a1a, #1a1a1a));
 }
 
 .sa-header {
@@ -20,19 +20,19 @@
 .sa-intro {
   margin: 0;
   font-size: 14px;
-  color: var(--theme-elevation-600, #555);
+  color: var(--theme-elevation-600, var(--lit-555, #555));
 }
 
 .sa-muted {
-  color: var(--theme-elevation-600, #555);
+  color: var(--theme-elevation-600, var(--lit-555, #555));
   font-size: 13px;
 }
 
 .sa-alert {
   padding: 12px;
-  border: 1px solid #c0392b;
+  border: 1px solid var(--lit-c0392b, #c0392b);
   border-radius: 4px;
-  color: #c0392b;
+  color: var(--lit-c0392b, #c0392b);
 }
 
 .sa-tiles {
@@ -44,9 +44,9 @@
 
 .sa-tile {
   padding: 12px;
-  border: 1px solid var(--theme-elevation-150, #e2e2e2);
+  border: 1px solid var(--theme-elevation-150, var(--lit-e2e2e2, #e2e2e2));
   border-radius: 6px;
-  background: var(--theme-elevation-0, #fff);
+  background: var(--theme-elevation-0, var(--lit-fff, #fff));
 }
 
 .sa-tile__value {
@@ -56,7 +56,7 @@
 
 .sa-tile__label {
   font-size: 12px;
-  color: var(--theme-elevation-600, #555);
+  color: var(--theme-elevation-600, var(--lit-555, #555));
 }
 
 .sa-filters {
@@ -74,16 +74,16 @@
 }
 
 .sa-field__label {
-  color: var(--theme-elevation-600, #555);
+  color: var(--theme-elevation-600, var(--lit-555, #555));
 }
 
 .sa-field select,
 .sa-field input {
   padding: 6px 8px;
-  border: 1px solid var(--theme-elevation-200, #ccc);
+  border: 1px solid var(--theme-elevation-200, var(--lit-ccc, #ccc));
   border-radius: 4px;
   font: inherit;
-  background: var(--theme-elevation-0, #fff);
+  background: var(--theme-elevation-0, var(--lit-fff, #fff));
   color: inherit;
 }
 
@@ -117,7 +117,7 @@
 .sa-table th,
 .sa-table td {
   padding: 8px;
-  border-bottom: 1px solid var(--theme-elevation-150, #e2e2e2);
+  border-bottom: 1px solid var(--theme-elevation-150, var(--lit-e2e2e2, #e2e2e2));
   text-align: left;
   vertical-align: top;
 }
@@ -127,7 +127,7 @@
 }
 
 .sa-row:hover {
-  background: var(--theme-elevation-50, #f7f7f7);
+  background: var(--theme-elevation-50, var(--lit-f7f7f7, #f7f7f7));
 }
 
 .sa-title {
@@ -137,11 +137,11 @@
 
 .sa-slug {
   font-size: 12px;
-  color: var(--theme-elevation-600, #555);
+  color: var(--theme-elevation-600, var(--lit-555, #555));
 }
 
 .sa-missing {
-  color: #b35c00;
+  color: var(--lit-b35c00, #b35c00);
   font-weight: 600;
 }
 
@@ -156,7 +156,7 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #888;
+  background: var(--lit-888, #888);
 }
 
 .sa-dot--good {
@@ -176,7 +176,7 @@
 }
 
 .sa-dot--info {
-  background: #888;
+  background: var(--lit-888, #888);
 }
 
 [data-theme='dark'] .sa-tile {

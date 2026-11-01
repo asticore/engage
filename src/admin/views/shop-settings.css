@@ -28,7 +28,7 @@
 .shop-test-panel {
   margin-top: 24px;
   padding-top: 12px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid var(--lit-ddd, #ddd);
 }
 
 .shop-test-row {
@@ -40,16 +40,16 @@
 }
 
 .shop-test-row__ok {
-  color: #1a7f37;
+  color: var(--lit-1a7f37, #1a7f37);
 }
 
 .shop-test-row__bad {
-  color: #b42318;
+  color: var(--lit-b42318, #b42318);
 }
 
 .shop-test-carrier {
   padding: 8px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--lit-eee, #eee);
 }
 
 [data-theme='dark'] .shop-test-panel,

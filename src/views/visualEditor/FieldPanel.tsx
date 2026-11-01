@@ -40,6 +40,7 @@ import { ColorPickerField } from '@/admin/fields/ColorPickerField'
 import { TypographyPopoverField } from '@/admin/fields/TypographyPopoverField'
 import { ShadowPopoverField } from '@/admin/fields/ShadowPopoverField'
 import { GradientEditorField } from '@/admin/fields/GradientEditorField'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type MediaThumb = { id: number; url?: string | null; alt?: string | null }
 type PanelTab = 'content' | 'design'
@@ -351,17 +352,15 @@ const SectionLayoutFields: React.FC<{
       <Accordion title={t('ve.fp.structure')} defaultOpen>
         <div className="ve-structure__mini" role="group" aria-label={t('ve.fp.colStructure')}>
           {STRUCTURES.map((structure) => (
-            <button
-              key={structure.id}
+            <Tooltip text={t('tip.useStructure', { label: structure.label })} key={structure.id}><button
               type="button"
               className="ve-structure__mini-btn"
               disabled={!canEditLayout}
               onClick={() => applyPreset(structure.widths)}
-              title={`Use ${structure.label}`}
-              aria-label={`Use ${structure.label}`}
+              aria-label={t('tip.useStructure', { label: structure.label })}
             >
               <StructureIcon widths={structure.widths} />
-            </button>
+            </button></Tooltip>
           ))}
         </div>
 
@@ -422,20 +421,19 @@ const SectionLayoutFields: React.FC<{
                 </span>
               )}
               {onSelectColumn && (
-                <button type="button" className="ve-btn ve-btn--ghost" onClick={() => onSelectColumn(index)} title={t('ve.fp.openColumn')}>
+                <Tooltip text={t('ve.fp.openColumn')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => onSelectColumn(index)}>
                   Edit
-                </button>
+                </button></Tooltip>
               )}
-              <button
+              <Tooltip text={canEditLayout ? t('tip.removeColumn') : t('tip.youCannotModifyLayout')}><button
                 type="button"
                 className="ve-icon-btn"
                 onClick={() => removeColumn(index)}
                 disabled={!canEditLayout}
                 aria-label={`Remove column ${index + 1}`}
-                title={canEditLayout ? 'Remove column' : 'You cannot modify layout'}
               >
                 &#10005;
-              </button>
+              </button></Tooltip>
             </div>
           )
         })}
@@ -1020,18 +1018,18 @@ const RepeaterCards: React.FC<{ field: EditorField; value: unknown; onChange: (v
           <summary className="ve-repeater__head">
             <span className="ve-repeater__num">{i + 1}</span>
             <span className="ve-repeater__preview">{preview(row, i)}</span>
-            <button type="button" className="ve-repeater__btn" title={t('ve.fp.moveUp')} aria-label={t('ve.fp.moveUp')} disabled={i === 0} onClick={(e) => stop(e, () => moveRow(i, -1))}>
+            <Tooltip text={t('ve.fp.moveUp')}><button type="button" className="ve-repeater__btn" aria-label={t('ve.fp.moveUp')} disabled={i === 0} onClick={(e) => stop(e, () => moveRow(i, -1))}>
               &#8593;
-            </button>
-            <button type="button" className="ve-repeater__btn" title={t('ve.fp.moveDown')} aria-label={t('ve.fp.moveDown')} disabled={i === rows.length - 1} onClick={(e) => stop(e, () => moveRow(i, 1))}>
+            </button></Tooltip>
+            <Tooltip text={t('ve.fp.moveDown')}><button type="button" className="ve-repeater__btn" aria-label={t('ve.fp.moveDown')} disabled={i === rows.length - 1} onClick={(e) => stop(e, () => moveRow(i, 1))}>
               &#8595;
-            </button>
-            <button type="button" className="ve-repeater__btn" title={t('ve.fp.duplicate')} aria-label={t('ve.fp.duplicate')} onClick={(e) => stop(e, () => duplicateRow(i))}>
+            </button></Tooltip>
+            <Tooltip text={t('ve.fp.duplicate')}><button type="button" className="ve-repeater__btn" aria-label={t('ve.fp.duplicate')} onClick={(e) => stop(e, () => duplicateRow(i))}>
               &#10064;
-            </button>
-            <button type="button" className="ve-repeater__btn ve-repeater__btn--danger" title={t('ve.fp.delete')} aria-label={t('ve.fp.delete')} onClick={(e) => stop(e, () => deleteRow(i))}>
+            </button></Tooltip>
+            <Tooltip text={t('ve.fp.delete')}><button type="button" className="ve-repeater__btn ve-repeater__btn--danger" aria-label={t('ve.fp.delete')} onClick={(e) => stop(e, () => deleteRow(i))}>
               &times;
-            </button>
+            </button></Tooltip>
           </summary>
           <div className="ve-repeater__body">
             {defFields.map((f) => (

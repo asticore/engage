@@ -17,6 +17,7 @@ import { pathKey, type NodePath } from './treeOps'
 import { isHiddenEverywhere, planKeyMove, planNavDrop, toggleHideEverywhere, zoneFromOffset, type DropZone } from './navigatorOps'
 import { toStoredDesign } from '@/lib/design/storeDesign'
 import './navLibraryPresets.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 interface NavigatorPanelProps {
   nodes: SectionNode[]
@@ -313,11 +314,10 @@ const NavRow: React.FC<{
 
   return (
     <li role="treeitem" aria-expanded={row.hasChildren ? open : undefined} aria-selected={selected}>
-      <div
+      <Tooltip text={row.hint}><div
         ref={rowRef}
         className={`ve-nav__row${selected ? ' ve-nav__row--selected' : ''}${hidden ? ' ve-nav__row--hidden' : ''}${dropZone ? ` ve-nav__row--drop-${dropZone}` : ''}${dnd.dragFrom && pathKey(dnd.dragFrom) === row.key ? ' ve-nav__row--dragging' : ''}`}
         tabIndex={0}
-        title={row.hint}
         draggable={canDrag}
         onDragStart={(e) => {
           if (!canDrag) return
@@ -390,33 +390,32 @@ const NavRow: React.FC<{
           />
         ) : (
           <>
-            <span className="ve-nav__label" title={row.name}>{row.name}</span>
+            <Tooltip text={row.name}><span className="ve-nav__label">{row.name}</span></Tooltip>
             {row.custom && row.kind !== 'column' && <span className="ve-nav__type">{row.typeLabel}</span>}
           </>
         )}
-        {hidden && !renaming && <span className="ve-nav__flag" title={t('ve.nav.hiddenAll')} aria-label={t('ve.nav.hiddenAll')}>{String.fromCharCode(0x1f6ab)}</span>}
-        {locked && !renaming && <span className="ve-nav__flag" title={t('ve.nav.locked')} aria-label={t('ve.nav.locked')}>{String.fromCharCode(0x1f512)}</span>}
-        {row.kind === 'virtual' && <span className="ve-nav__type" title={row.hint}>legacy</span>}
-        {row.anchor && !renaming && <span className="ve-nav__anchor" title={t('ve.nav.jumpLink', { anchor: row.anchor })}>#{row.anchor}</span>}
+        {hidden && !renaming && <Tooltip text={t('ve.nav.hiddenAll')}><span className="ve-nav__flag" aria-label={t('ve.nav.hiddenAll')}>{String.fromCharCode(0x1f6ab)}</span></Tooltip>}
+        {locked && !renaming && <Tooltip text={t('ve.nav.locked')}><span className="ve-nav__flag" aria-label={t('ve.nav.locked')}>{String.fromCharCode(0x1f512)}</span></Tooltip>}
+        {row.kind === 'virtual' && <Tooltip text={row.hint}><span className="ve-nav__type">legacy</span></Tooltip>}
+        {row.anchor && !renaming && <Tooltip text={t('ve.nav.jumpLink', { anchor: row.anchor })}><span className="ve-nav__anchor">#{row.anchor}</span></Tooltip>}
         {!renaming && !readOnly && (
           <span className="ve-nav__actions" onClick={(e) => e.stopPropagation()}>
             {dnd.onDesignChange && !isColumn && !locked && (
-              <button
+              <Tooltip text={hidden ? t('ve.nav.showOnAll') : t('ve.nav.hideOnAll')}><button
                 type="button"
                 className="ve-nav__icon-btn"
-                title={hidden ? t('ve.nav.showOnAll') : t('ve.nav.hideOnAll')}
                 aria-label={hidden ? t('ve.nav.showNamed', { name: row.name }) : t('ve.nav.hideNamed', { name: row.name })}
                 aria-pressed={hidden}
                 onClick={() => dnd.onDesignChange?.(row.path, toStoredDesign(toggleHideEverywhere(row.design) as unknown as BlockStyle))}
               >
                 {hidden ? String.fromCharCode(0x1f576) : String.fromCharCode(0x1f441)}
-              </button>
+              </button></Tooltip>
             )}
-            <button type="button" className="ve-nav__icon-btn" title={t('ve.nav.rename')} aria-label={t('ve.nav.renameNamed', { name: row.name })} onClick={startRename}>✎</button>
-            <button type="button" className="ve-nav__icon-btn" title={t('ve.nav.setAnchor')} aria-label={t('ve.nav.setAnchorNamed', { name: row.name })} onClick={startAnchor}>🔗</button>
+            <Tooltip text={t('ve.nav.rename')}><button type="button" className="ve-nav__icon-btn" aria-label={t('ve.nav.renameNamed', { name: row.name })} onClick={startRename}>✎</button></Tooltip>
+            <Tooltip text={t('ve.nav.setAnchor')}><button type="button" className="ve-nav__icon-btn" aria-label={t('ve.nav.setAnchorNamed', { name: row.name })} onClick={startAnchor}>🔗</button></Tooltip>
           </span>
         )}
-      </div>
+      </div></Tooltip>
       {anchoring && (
         <>
           <div className="ve-nav__anchor-edit">

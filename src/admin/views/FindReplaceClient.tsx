@@ -3,6 +3,8 @@
 import React, { useState } from 'react'
 import './find-replace.css'
 import type { FindReplaceCollection, FindReplaceOptions } from '@/features/editScreens/findReplace'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 type Place = { key: FindReplaceCollection; label: string }
 
@@ -42,6 +44,7 @@ function summaryLine(preview: PreviewResult): string {
 }
 
 export function FindReplaceClient({ collections }: { collections: Place[] }) {
+  const t = useAdminT()
   const [find, setFind] = useState('')
   const [replace, setReplace] = useState('')
   const [caseSensitive, setCaseSensitive] = useState(false)
@@ -111,27 +114,25 @@ export function FindReplaceClient({ collections }: { collections: Place[] }) {
         <h2 className="fr-heading" id="fr-form-heading">What to change</h2>
         <div className="fr-field">
           <label className="fr-label" htmlFor="fr-find">Find this text</label>
-          <input
+          <Tooltip text={t('tip.theExactTextToLook')} block><input
             className="fr-input"
             id="fr-find"
             maxLength={200}
             onChange={(event) => setFind(event.target.value)}
-            title="The exact text to look for. Spaces count."
             type="text"
             value={find}
-          />
+          /></Tooltip>
         </div>
         <div className="fr-field">
           <label className="fr-label" htmlFor="fr-replace">Replace it with</label>
-          <input
+          <Tooltip text={t('tip.leaveThisEmptyToDelete')} block><input
             className="fr-input"
             id="fr-replace"
             maxLength={500}
             onChange={(event) => setReplace(event.target.value)}
-            title="Leave this empty to delete the found text."
             type="text"
             value={replace}
-          />
+          /></Tooltip>
         </div>
 
         <fieldset className="fr-fieldset">
@@ -140,10 +141,10 @@ export function FindReplaceClient({ collections }: { collections: Place[] }) {
             <input checked={caseSensitive} onChange={(event) => setCaseSensitive(event.target.checked)} type="checkbox" />
             Match upper and lower case
           </label>
-          <label className="fr-check" title="Only match the text as a whole word, not inside a longer word.">
+          <Tooltip text={t('tip.onlyMatchTheTextAs')}><label className="fr-check">
             <input checked={wholeWord} onChange={(event) => setWholeWord(event.target.checked)} type="checkbox" />
             Whole words only
-          </label>
+          </label></Tooltip>
         </fieldset>
 
         <fieldset className="fr-fieldset">

@@ -8,8 +8,8 @@
   inset: 0;
   z-index: 1000;
   overflow-y: auto;
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--lit-fff, #fff);
+  color: var(--lit-1a1a1a, #1a1a1a);
   padding: 16px;
   box-sizing: border-box;
 }
@@ -39,7 +39,7 @@
 
 .eci-event {
   margin: 2px 0 0 0;
-  color: #555;
+  color: var(--lit-555, #555);
   font-size: 14px;
 }
 
@@ -47,10 +47,10 @@
   flex: 0 0 auto;
   min-height: 44px;
   padding: 8px 14px;
-  border: 1px solid #c8c8c8;
+  border: 1px solid var(--lit-c8c8c8, #c8c8c8);
   border-radius: 6px;
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--lit-fff, #fff);
+  color: var(--lit-1a1a1a, #1a1a1a);
   font: inherit;
   font-size: 16px;
   cursor: pointer;
@@ -96,10 +96,10 @@
   width: 100%;
   min-height: 52px;
   padding: 10px 14px;
-  border: 1px solid #b5b5b5;
+  border: 1px solid var(--lit-b5b5b5, #b5b5b5);
   border-radius: 6px;
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--lit-fff, #fff);
+  color: var(--lit-1a1a1a, #1a1a1a);
   font: inherit;
   font-size: 18px;
   box-sizing: border-box;
@@ -129,19 +129,19 @@
   margin: 0 0 12px 0;
   padding: 10px 12px;
   border-left: 4px solid #c0392b;
-  color: #8e2419;
+  color: var(--lit-8e2419, #8e2419);
   font-size: 15px;
 }
 
 .eci-warning {
   margin: 0 0 12px 0;
-  color: #8a5a00;
+  color: var(--lit-8a5a00, #8a5a00);
   font-size: 15px;
 }
 
 .eci-muted {
   margin: 0 0 12px 0;
-  color: #666;
+  color: var(--lit-666, #666);
   font-size: 16px;
 }
 
@@ -157,12 +157,12 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid #e2e2e2;
+  border-bottom: 1px solid var(--lit-e2e2e2, #e2e2e2);
 }
 
 .eci-row--in .eci-name::after {
   content: '  checked in';
-  color: #2e7d32;
+  color: var(--lit-2e7d32, #2e7d32);
   font-size: 13px;
   font-weight: 600;
 }
@@ -181,7 +181,7 @@
 }
 
 .eci-meta {
-  color: #555;
+  color: var(--lit-555, #555);
   font-size: 14px;
   overflow-wrap: anywhere;
 }
@@ -207,9 +207,9 @@
 }
 
 .eci-action--undo {
-  background: #fff;
-  color: #8e2419;
-  border: 2px solid #c0392b;
+  background: var(--lit-fff, #fff);
+  color: var(--lit-8e2419, #8e2419);
+  border: 2px solid var(--lit-c0392b, #c0392b);
 }
 
 .eci-action:disabled {

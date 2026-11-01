@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import './csv-export.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * The list's Export CSV button. It downloads the export in place rather than as a plain link, so
@@ -58,9 +59,9 @@ export function CsvExportButton({ href, label, title, className, maxRows, fallba
 
   return (
     <>
-      <button type="button" onClick={run} disabled={exporting} aria-busy={exporting} className={className} title={title}>
+      <Tooltip text={title}><button type="button" onClick={run} disabled={exporting} aria-busy={exporting} className={className}>
         {exporting ? t('list.exporting') : label}
-      </button>
+      </button></Tooltip>
       <span role="status" className="csv-export__message">
         {message}
       </span>

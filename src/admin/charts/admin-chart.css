@@ -9,17 +9,17 @@
 }
 
 .admin-chart__axis {
-  fill: var(--admin-chart-muted, var(--theme-elevation-600, #666));
+  fill: var(--admin-chart-muted, var(--theme-elevation-600, var(--lit-666, #666)));
   font-size: 10px;
 }
 
 .admin-chart__grid {
-  stroke: var(--admin-chart-line, var(--theme-elevation-150, #ddd));
+  stroke: var(--admin-chart-line, var(--theme-elevation-150, var(--lit-ddd, #ddd)));
   stroke-width: 1;
 }
 
 .admin-chart__empty {
-  color: var(--admin-chart-muted, var(--theme-elevation-600, #666));
+  color: var(--admin-chart-muted, var(--theme-elevation-600, var(--lit-666, #666)));
   font-size: 0.9rem;
   margin: 0;
 }

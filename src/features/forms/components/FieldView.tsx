@@ -8,6 +8,8 @@ import { roundTo } from '../expression'
 import { SLOT_TAKEN_MESSAGE } from '../slots'
 import { PlacesAutocomplete } from './PlacesAutocomplete'
 import { useTakenSlots } from './useTakenSlots'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 /**
  * One form field, drawn the same way on the live site, in the embed page and on
@@ -371,6 +373,7 @@ const AppointmentInput: React.FC<{
   formKey?: string
   apiBase?: string
 }> = ({ field, id, value, onChange, label, formKey, apiBase }) => {
+  const t = useAdminT()
   const [date, time] = value.split(' ')
   const taken = useTakenSlots(apiBase, formKey, field.name, date || '')
   const slots = (field.appointment?.slots || []).map((slot) => {
@@ -411,16 +414,14 @@ const AppointmentInput: React.FC<{
           {slots.map((slot) => {
             const full = taken.includes(slot)
             return (
-              <button
-                key={slot}
+              <Tooltip text={full ? t('tip.alreadyBooked') : undefined} key={slot}><button
                 type="button"
                 aria-pressed={time === slot}
                 onClick={() => date && onChange(`${date} ${slot}`)}
                 disabled={!date || full}
-                title={full ? 'Already booked' : undefined}
               >
                 {slot}
-              </button>
+              </button></Tooltip>
             )
           })}
         </div>

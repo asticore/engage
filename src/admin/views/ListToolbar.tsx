@@ -184,14 +184,13 @@ export function ListToolbar({
     <div className="list-toolbar">
       {/* Search box */}
       <form onSubmit={handleSearch} className="list-search-form">
-        <input
+        <Tooltip text={collectionSlug === 'orders' ? t('list.findOrdersHint') : undefined} block><input
           type="text"
           name="q"
           placeholder={collectionSlug === 'orders' ? t('list.ordersSearchPlaceholder') : t('list.searchPlaceholder')}
-          title={collectionSlug === 'orders' ? t('list.findOrdersHint') : undefined}
           defaultValue={state.q || ''}
           className="list-search-input"
-        />
+        /></Tooltip>
         <button type="submit" className="list-search-btn">
           {t('common.search')}
         </button>
@@ -370,6 +369,7 @@ export function ListToolbar({
  * Redirects-specific toolbar actions: CSV export/import and URL testing
  */
 function RedirectsToolbarActions() {
+  const t = useAdminT()
   const [showImport, setShowImport] = useState(false)
   const [showTest, setShowTest] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -465,21 +465,20 @@ function RedirectsToolbarActions() {
 
   return (
     <>
-      <button onClick={handleExportCsv} className="list-toolbar-btn" title="Export redirects to CSV">
+      <Tooltip text={t('tip.exportRedirectsToCsv')}><button onClick={handleExportCsv} className="list-toolbar-btn">
         Export CSV
-      </button>
+      </button></Tooltip>
 
       <div className="list-import-modal" ref={importRef}>
-        <button
+        <Tooltip text={t('tip.importRedirectsFromCsv')}><button
           onClick={() => {
             setShowImport(!showImport)
             setImportResult(null)
           }}
           className="list-toolbar-btn"
-          title="Import redirects from CSV"
         >
           Import CSV
-        </button>
+        </button></Tooltip>
         {showImport && (
           <div className="list-import-panel">
             {!importResult ? (
@@ -541,16 +540,15 @@ function RedirectsToolbarActions() {
       </div>
 
       <div className="list-test-modal" ref={testRef}>
-        <button
+        <Tooltip text={t('tip.testARedirectUrl')}><button
           onClick={() => {
             setShowTest(!showTest)
             setTestResult(null)
           }}
           className="list-toolbar-btn"
-          title="Test a redirect URL"
         >
           Test URL
-        </button>
+        </button></Tooltip>
         {showTest && (
           <div className="list-test-panel">
             <input

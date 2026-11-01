@@ -18,6 +18,7 @@ import type { AddressInput } from '../addresses'
 import { IDLE, type ActionState } from '../types'
 import { Note, SubmitButton } from './FormBits'
 import { usePortalText } from './PortalText'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * The signed-in forms.
@@ -89,13 +90,12 @@ export const AddressForm: React.FC<{ address?: (AddressInput & { id?: number }) 
         </label>
         <label>
           {tx('addresses.country')}
-          <input
+          <Tooltip text={tx('addresses.countryHint')} block><input
             name="country"
             defaultValue={address?.country ?? 'AU'}
             maxLength={2}
-            title={tx('addresses.countryHint')}
             required
-          />
+          /></Tooltip>
         </label>
       </div>
       <label>

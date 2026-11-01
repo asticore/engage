@@ -5,6 +5,7 @@ import { Hamburger, Link, NavGroup, useNav } from '@/engine/ui'
 import { usePathname } from 'next/navigation'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { NAV_GROUP_KEYS } from '@/admin/i18n/navKeys'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const baseClass = 'nav'
 
@@ -74,9 +75,9 @@ export const AdminNavClient: React.FC<{
 
     if (pathname === entity.href) {
       return (
-        <div className={`${baseClass}__link`} id={entity.id} key={entityKey} title={entity.label}>
+        <Tooltip text={entity.label} key={entityKey}><div className={`${baseClass}__link`} id={entity.id}>
           {label}
-        </div>
+        </div></Tooltip>
       )
     }
 

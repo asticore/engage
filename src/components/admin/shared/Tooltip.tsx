@@ -14,15 +14,18 @@ export function Tooltip({
   text,
   children,
   placement = 'top',
+  block = false,
 }: {
   text: string
   children: React.ReactElement
   placement?: 'top' | 'bottom'
+  /** Full-width wrapper, for inputs and selects that must fill their row. */
+  block?: boolean
 }) {
   const id = useId()
   if (!text) return children
   return (
-    <span className={`admin-tip admin-tip--${placement}`}>
+    <span className={`admin-tip admin-tip--${placement}${block ? ' admin-tip--block' : ''}`}>
       {cloneElement(children as React.ReactElement<Record<string, unknown>>, { 'aria-describedby': id })}
       <span role="tooltip" id={id} className="admin-tip__bubble">
         {text}

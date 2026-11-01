@@ -6,6 +6,7 @@ import type { Field } from '@/engine'
 import { fieldLabel, fieldRequired } from '@/admin/fields/shared'
 import { lengthUnit, normaliseUnitSystem, unitHelp, weightUnit, type UnitSystem } from '@/features/ecommerce/lib/units'
 import { displayToCanonical, parseTyped, shownText, type UnitKind } from '@/features/ecommerce/lib/unitInput'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type UnitFieldProps = {
   field: Field
@@ -63,7 +64,7 @@ function UnitNumberInput({ field, path, readOnly, kind }: UnitFieldProps & { kin
     <div className="field-type number">
       <FieldLabel htmlFor={`field-${path}`} label={fieldLabel(field)} name={field.name} path={path} required={fieldRequired(field)} />
       <div style={{ alignItems: 'center', display: 'flex', gap: 4 }}>
-        <input
+        <Tooltip text={help} block><input
           id={`field-${path}`}
           name={path}
           type="text"
@@ -71,7 +72,6 @@ function UnitNumberInput({ field, path, readOnly, kind }: UnitFieldProps & { kin
           autoComplete="off"
           readOnly={readOnly || system === null}
           value={text}
-          title={help}
           onChange={(e) => {
             if (system === null) return
             const next = e.target.value
@@ -79,10 +79,10 @@ function UnitNumberInput({ field, path, readOnly, kind }: UnitFieldProps & { kin
             const typed = parseTyped(next)
             setValue(typed === undefined ? undefined : displayToCanonical(kind, typed, system))
           }}
-        />
-        <span title={help} aria-label={help} style={{ opacity: 0.7 }}>
+        /></Tooltip>
+        <Tooltip text={help}><span aria-label={help} style={{ opacity: 0.7 }}>
           {unit}
-        </span>
+        </span></Tooltip>
       </div>
     </div>
   )

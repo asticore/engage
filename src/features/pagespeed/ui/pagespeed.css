@@ -74,7 +74,7 @@
 }
 
 .ps__tab[aria-pressed='true'] {
-  background: var(--theme-elevation-100, #e4e4e7);
+  background: var(--theme-elevation-100, var(--lit-e4e4e7, #e4e4e7));
   font-weight: 600;
 }
 

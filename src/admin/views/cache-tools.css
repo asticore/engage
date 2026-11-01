@@ -23,11 +23,11 @@
 }
 
 .cache-tools__notice--ok {
-  color: #1a7f37;
+  color: var(--lit-1a7f37, #1a7f37);
 }
 
 .cache-tools__notice--error {
-  color: #b3261e;
+  color: var(--lit-b3261e, #b3261e);
 }
 
 [data-theme='dark'] .cache-tools__notice--ok {
