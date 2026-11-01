@@ -1,6 +1,7 @@
 import { EMBED_FRAME_SOURCES } from '@/lib/embedHosts'
 import { EMBED_CODE_CSP, isEmbedFramePath } from '@/lib/embedCode'
 import { DEFAULT_SECURITY_SETTINGS, type SecuritySettings } from './settings'
+import { mergeCustomPolicy } from './customPolicy'
 
 /**
  * Turns the Headers section of the Security screen into the actual response
@@ -143,8 +144,9 @@ export function securityHeaders(
     headers['Permissions-Policy'] = normalisePermissionsPolicy(config.permissionsPolicy)
   }
 
-  const csp = config.contentSecurityPolicy
-    ? config.contentSecurityPolicy.replace(/\s+/g, ' ').trim()
+  // A custom policy is added to the default one (see customPolicy.ts), so it never drops the default's hosts.
+  const csp = config.contentSecurityPolicy?.trim()
+    ? mergeCustomPolicy(DEFAULT_CONTENT_SECURITY_POLICY, config.contentSecurityPolicy)
     : isPolicyFreePath(pathname)
       ? ''
       : DEFAULT_CONTENT_SECURITY_POLICY

@@ -4,6 +4,8 @@ import { adminOnlyFieldAccess, isAdmin } from '../access/ecommerceAccess'
 import { refuseSocialSwitchWithoutCredentials } from '../features/socialLogin/validate'
 import { socialLoginFields } from './socialLoginFields'
 import { validateAdminPathField } from '../features/security/adminPathValidate'
+import { validateCustomPolicyField } from '../features/security/customPolicy'
+import { SECURITY_SENSITIVE_FIELDS, sensitiveSettingsAfterChange } from '../features/security/sensitiveChanges'
 
 /**
  * Login protection, response headers, rate limiting and the audit log.
@@ -37,6 +39,8 @@ export const SecuritySettings: GlobalConfig = {
         const { invalidateSecuritySettingsCache } = await import('../features/security/settings')
         invalidateSecuritySettingsCache()
       },
+      // Sensitive changes are audit-logged and emailed to every admin (see sensitiveChanges.ts).
+      sensitiveSettingsAfterChange('security-settings', SECURITY_SENSITIVE_FIELDS),
     ],
   },
   access: {
@@ -546,9 +550,11 @@ export const SecuritySettings: GlobalConfig = {
         {
           name: 'contentSecurityPolicy',
           type: 'textarea',
+          // Checked on save: unknown directive names and malformed sources are refused with a message naming the directive.
+          validate: validateCustomPolicyField,
           admin: {
             description:
-              'Warning: this one can break your site silently. It lists exactly which sources of scripts, styles and images are allowed, and anything you forget to include simply stops working - often a payment form or an embedded video, with no visible error. Leave it blank unless you are prepared to test every page afterwards.',
+              'Optional. The sources you list are ADDED to the default policy, so the default hosts (fonts, analytics, embeds) keep working; a directive set to just \'none\' replaces the default for that directive. Anything you add still needs a test on every page, because a wrong source blocks silently with no visible error.',
           },
         },
       ],

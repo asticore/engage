@@ -124,8 +124,7 @@ async function tryRedirect(request: NextRequest, settings: SecuritySettings): Pr
 }
 
 /** Extends the default Content-Security-Policy with the ad hosts. A policy typed into Security settings is left exactly as written. */
-function applyAdsCsp(response: NextResponse, additions: CspAdditions, customPolicy: string): void {
-  if (customPolicy) return
+function applyAdsCsp(response: NextResponse, additions: CspAdditions): void {
   const current = response.headers.get('Content-Security-Policy')
   if (current) response.headers.set('Content-Security-Policy', extendCsp(current, additions))
 }
@@ -211,7 +210,7 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
     const response = NextResponse.next()
     response.headers.append('x-pathname', pathname)
     applySecurityHeaders(response, settings, pathname)
-    if (adsCsp) applyAdsCsp(response, adsCsp, settings.headers.contentSecurityPolicy)
+    if (adsCsp) applyAdsCsp(response, adsCsp)
     return applyServerResponseHeaders(response, rules, pathname)
   }
 

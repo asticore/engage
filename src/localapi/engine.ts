@@ -145,7 +145,7 @@ export type Engine = {
   create: (args: CommonOpts & { collection: string; data: Record<string, unknown>; draft?: boolean; file?: UploadFile }) => Promise<Doc>
   update: (args: CommonOpts & { collection: string; id: number; data: Record<string, unknown>; draft?: boolean; file?: UploadFile }) => Promise<Doc | null>
   delete: (args: CommonOpts & { collection: string; id: number }) => Promise<Doc>
-  updateGlobal: (args: CommonOpts & { slug: string; data: Record<string, unknown> }) => Promise<Doc>
+  updateGlobal: (args: CommonOpts & { slug: string; data: Record<string, unknown>; expectedUpdatedAt?: string | null }) => Promise<Doc>
   login: (args: { collection: string; data: { email: string; password: string }; client?: SessionClient }) => Promise<{ user: AuthUserDoc; token?: string; exp?: number; twoFactorRequired?: boolean; pendingToken?: string }>
   /** Step two of a two-step sign-in: the pending token `login` returned plus an authenticator or backup code. */
   loginSecondFactor: (args: { collection: string; data: { pendingToken: string; code: string; method?: 'email' | 'app' }; client?: SessionClient }) => Promise<{ user: AuthUserDoc; token?: string; exp?: number; trustedDevice?: { token: string; maxAgeSeconds: number } }>
@@ -408,11 +408,11 @@ export function createEngine(): Engine {
       return deleted
     },
     updateGlobal: async (args) => {
-      const { slug, data, overrideAccess, user, req } = args
+      const { slug, data, overrideAccess, user, req, expectedUpdatedAt } = args
       const entry = readRegistry.globals[slug]
       const db = writeRegistry.globals[slug]
       if (!entry || !db) throw new Error(`createEngine().updateGlobal: unknown global "${slug}"`)
-      return updateGlobalDocument({ global: entry.config, db, data, req: toLocalReq(engine, { user, req }), overrideAccess })
+      return updateGlobalDocument({ global: entry.config, db, data, req: toLocalReq(engine, { user, req }), overrideAccess, expectedUpdatedAt })
     },
 
     login: async (args) => {
