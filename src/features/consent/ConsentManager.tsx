@@ -15,7 +15,7 @@ import { DEFAULT_CONSENT_TEXT, readableTextOn, type ConsentConfig } from './conf
 import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
 import type { UiStringKey } from '@/features/uiStrings/keys'
 import { activateGatedMarkup } from './gate'
-import { configureConsent, type ConsentState, getConsentState, saveConsent, SERVER_CONSENT_STATE, subscribeConsent } from './store'
+import { configureConsent, setConsentLogToken, type ConsentState, getConsentState, saveConsent, SERVER_CONSENT_STATE, subscribeConsent } from './store'
 
 import './consent.css'
 
@@ -70,6 +70,14 @@ export type ConsentManagerProps = {
   previewTheme?: 'light' | 'dark'
   /** Preview only: apply the small-screen layout (the frame is narrower than the window). */
   previewNarrow?: boolean
+  /** The banner token the consent log checks (logToken.ts). */
+  logToken?: string | null
+  /**
+   * Whether withdrawing a category needs a page reload. A tag already in the page
+   * cannot be unloaded, so a reload is only asked for where no consent signal or
+   * API reaches that tag (see SeoScripts). Both default to true, the safe choice.
+   */
+  reloadOnWithdraw?: { analytics: boolean; marketing: boolean }
 }
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -101,7 +109,17 @@ export const consentStyleVariables = (config: ConsentConfig): CSSProperties => {
  * run in that case, so custom code gated as "necessary" or with consent off
  * is activated as normal.
  */
-export const ConsentManager = ({ config, optIn, initialDecided, previewMode, previewView = 'banner', previewTheme = 'light', previewNarrow }: ConsentManagerProps) => {
+export const ConsentManager = ({
+  config,
+  optIn,
+  initialDecided,
+  previewMode,
+  previewView = 'banner',
+  previewTheme = 'light',
+  previewNarrow,
+  logToken = null,
+  reloadOnWithdraw = { analytics: true, marketing: true },
+}: ConsentManagerProps) => {
   const storeText = useStoreText()
   const copy = consentCopy(config, storeText)
   const preview = previewMode === true
@@ -119,7 +137,8 @@ export const ConsentManager = ({ config, optIn, initialDecided, previewMode, pre
   useEffect(() => {
     if (preview) return
     configureConsent({ policyVersion, defaultGranted: !optIn, logConsent })
-  }, [preview, policyVersion, optIn, logConsent])
+    setConsentLogToken(logToken)
+  }, [preview, policyVersion, optIn, logConsent, logToken])
 
   useEffect(() => {
     if (preview) return
@@ -186,12 +205,14 @@ export const ConsentManager = ({ config, optIn, initialDecided, previewMode, pre
       return
     }
     const before = effectiveChoices(getConsentState().record, policyVersion, !optIn)
-    const withdrew = (before.analytics && !next.analytics) || (before.marketing && !next.marketing)
+    const withdrewAnalytics = before.analytics && !next.analytics
+    const withdrewMarketing = before.marketing && !next.marketing
     saveConsent(next)
     setDialogOpen(false)
-    // A tag already in the page cannot be unloaded. Withdrawing analytics or
-    // marketing reloads the page, so the refusal applies to every tag at once.
-    if (withdrew && typeof window !== 'undefined') window.location.reload()
+    // A tag already in the page cannot be unloaded. Where it cannot be stopped in place (see
+    // reloadOnWithdraw), withdrawing reloads the page so the refusal applies to every tag at once.
+    const reload = (withdrewAnalytics && reloadOnWithdraw.analytics) || (withdrewMarketing && reloadOnWithdraw.marketing)
+    if (reload && typeof window !== 'undefined') window.location.reload()
   }
 
   const onDialogKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {

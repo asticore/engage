@@ -2,6 +2,7 @@ import React from 'react'
 
 import { buildFaqPageJsonLd, buildPageJsonLd } from './pageSchema'
 import { videoElementsOf, videoObjectNodes } from './videoNodes'
+import { resolveVideoFacts } from './videoResolve'
 import { getSeoContext, mediaUrl, absoluteUrl, type DocumentSeo } from './settings'
 import { articleFacts, authorNameOf, eventExtraFor, loadFaqItems } from './pageSchemaData'
 import { currentPageLocale } from './pageLocale'
@@ -141,13 +142,27 @@ export const PageJsonLd = async ({
     const faqNode = buildFaqPageJsonLd({ url, name: title, faqs })
     if (faqNode) extraNodes.push(faqNode)
   }
-  extraNodes.push(
-    ...videoObjectNodes(videoElementsOf(record), {
-      title,
-      description: doc.seo?.metaDescription,
-      publishedDate: doc.publishedDate || doc.datePublished,
-    }),
-  )
+  const videoFacts = videoElementsOf(record)
+  if (videoFacts.length > 0) {
+    const { getEngine } = await import('@/lib/engine')
+    const engine = await getEngine().catch((): null => null)
+    const origin = new URL(url).origin
+    const resolvedVideos = await resolveVideoFacts(videoFacts, {
+      baseUrl: origin,
+      mediaDate: async (id) => {
+        const found = await engine?.find({ collection: 'media', where: { id: { equals: id } }, limit: 1, depth: 0, overrideAccess: true }).catch((): null => null)
+        const createdAt = (found?.docs?.[0] as { createdAt?: unknown } | undefined)?.createdAt
+        return typeof createdAt === 'string' ? createdAt : undefined
+      },
+    })
+    extraNodes.push(
+      ...videoObjectNodes(resolvedVideos, {
+        title,
+        description: doc.seo?.metaDescription,
+        publishedDate: doc.publishedDate || doc.datePublished,
+      }),
+    )
+  }
   const nodes = extraNodes.length > 0 ? [jsonLd, ...extraNodes] : jsonLd
 
   // Escape </ to prevent early script tag closure

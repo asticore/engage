@@ -159,13 +159,20 @@ export function saveConsent(choices: ConsentChoices, now = Date.now()): ConsentR
  * Posts the anonymised entry. keepalive lets it finish if the visitor navigates
  * away straight after choosing. A failure is ignored: the choice still applies.
  */
+let consentLogToken: string | null = null
+
+/** The banner token the log needs (set by ConsentManager from the server-rendered banner). */
+export function setConsentLogToken(token: string | null): void {
+  consentLogToken = token
+}
+
 function sendConsentLog(record: ConsentRecord): void {
   if (typeof fetch !== 'function') return
   try {
     void fetch('/api/consent-log', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id: record.id, v: record.v, c: record.c }),
+      body: JSON.stringify({ id: record.id, v: record.v, c: record.c, t: consentLogToken }),
       keepalive: true,
       credentials: 'omit',
     }).catch((): void => undefined)

@@ -25,6 +25,7 @@ import { archiveFacets, archiveQueryString, filterArchiveItems, parseArchiveFilt
 import { archivePageHref } from '@/lib/templateWidgets'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
 import { postArchiveItems } from '@/lib/blockContextFrom'
+import { InFeedAd } from '@/features/ads/components/InFeedAd'
 import type { BlogSetting, Media, Post } from '@/engage-types'
 
 export const dynamic = 'force-dynamic'
@@ -117,11 +118,12 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
         <p className="empty-state">No posts published yet - add one in the admin panel.</p>
       ) : (
         <div className={`blog-archive__${layout}`}>
-          {posts.map((post) => {
+          {posts.map((post, index) => {
             const image = post.featuredImage && typeof post.featuredImage === 'object' ? (post.featuredImage as Media) : null
             const readTime = readingTimeLabel(post.readingTime)
             return (
-              <Link key={post.id} href={`/blog/${post.slug}`} className="blog-card block">
+              <React.Fragment key={post.id}>
+                <Link href={`/blog/${post.slug}`} className="blog-card block">
                 {image?.url && (
                   <div className="blog-card__image mb-4 overflow-hidden">
                     <Image src={image.url} alt={post.title} width={640} height={420} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
@@ -143,6 +145,8 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
                   {readTime && <span className="mt-1 block text-[0.75rem] opacity-60">{readTime}</span>}
                 </div>
               </Link>
+              <InFeedAd index={index} total={posts.length} />
+              </React.Fragment>
             )
           })}
         </div>

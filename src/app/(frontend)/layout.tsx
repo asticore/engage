@@ -24,6 +24,7 @@ import type { Media } from '@/engage-types'
 import { SeoBodyScripts, SeoJsonLd, SeoScripts } from '@/features/seo'
 import { AdsRoot } from '@/features/ads/components/AdsRoot'
 import { AdPlacements } from '@/features/ads/components/AdPlacements'
+import { getAdsContext } from '@/features/ads/server'
 import { SpeedHead } from '@/features/speed'
 import { getSiteSnapshot } from '@/features/speed/siteSnapshot'
 import { getSitePages, isSignedInAdmin } from '@/features/site/pages'
@@ -242,6 +243,18 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   const chrome = await renderChromeTemplates(requestPathOf(await headers()), chromeScope)
   // Sidebars are for the public site: not the maintenance screen and not the customer portal.
   const sidebars = showMaintenance || portal ? { left: null, right: null } : await renderSidebarTemplates(requestPathOf(await headers()), chromeScope)
+  // Sidebar ad slots (Ads > Placements, mode Sidebar) sit under the right sidebar; with no sidebar template they make the column alone.
+  const adsState = showMaintenance || portal ? null : await getAdsContext()
+  const hasSidebarAds = Boolean(adsState?.config && adsState.placements.some((p) => p.enabled && p.mode === 'sidebar'))
+  const sidebarAds = hasSidebarAds ? <AdPlacements position="sidebar" /> : null
+  const rightSidebar = sidebars.right ? (
+    <>
+      {sidebars.right}
+      {sidebarAds}
+    </>
+  ) : (
+    sidebarAds
+  )
   const siteEffects = siteEffectsFor(settings, requestPathOf(await headers()))
 
   const storeDict = await storeTexts()
@@ -300,7 +313,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           )}
           <AdPlacements position="header" />
           <main>
-            {showMaintenance ? <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} /> : <SidebarLayout left={sidebars.left} right={sidebars.right}>{children}</SidebarLayout>}
+            {showMaintenance ? <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} /> : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
           </main>
           <AdPlacements position="footer" />
           {chrome.footer ? (

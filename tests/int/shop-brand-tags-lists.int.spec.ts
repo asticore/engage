@@ -30,7 +30,7 @@ const PRODUCTS: Row[] = [
   { id: 24, title: 'Hidden acme', slug: 'hidden-acme', _status: 'draft', brand: ACME, tags: [] },
 ]
 
-/** The subset of the Where syntax the search page sends: and, or, equals and contains. */
+/** The subset of the Where syntax the shop and search pages send: and, or, equals, contains and in. */
 function matches(row: Row, where: Where): boolean {
   return Object.entries(where).every(([key, value]) => {
     if (key === 'and') return (value as Where[]).every((part) => matches(row, part))
@@ -39,12 +39,28 @@ function matches(row: Row, where: Where): boolean {
       const field = row[key]
       if (operator === 'equals') return field === operand
       if (operator === 'contains') return typeof field === 'string' && field.toLowerCase().includes(String(operand).toLowerCase())
+      if (operator === 'in') {
+        // A relationship is compared by id: a populated object or a bare id, or a list of them for tags.
+        const ids = operand as unknown[]
+        const idOf = (value: unknown) => (value && typeof value === 'object' ? (value as { id?: unknown }).id : value)
+        return Array.isArray(field) ? field.some((item) => ids.includes(idOf(item))) : ids.includes(idOf(field))
+      }
       throw new Error(`unsupported operator ${operator}`)
     })
   })
 }
 
-const COLLECTIONS: Record<string, Row[]> = { pages: [], posts: [], products: PRODUCTS, events: [] }
+const COLLECTIONS: Record<string, Row[]> = {
+  pages: [],
+  posts: [],
+  products: PRODUCTS,
+  events: [],
+  'product-brands': [ACME, { id: 2, name: 'Field Co' }],
+  'product-tags': [
+    { id: 5, name: 'Gift Ideas' },
+    { id: 6, name: 'Winter' },
+  ],
+}
 
 beforeEach(() => {
   vi.clearAllMocks()

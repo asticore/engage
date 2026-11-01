@@ -11,7 +11,7 @@
 /** Unit and placement keys: they appear in data attributes, DOM ids and the tracking beacon. */
 export const AD_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{0,39}$/
 /** `ca-pub-1234567890123456` (the form AdSense scripts use). */
-export const ADSENSE_CLIENT_PATTERN = /^ca-pub-\d{10,20}$/
+export const ADSENSE_CLIENT_PATTERN = /^ca-pub-\d{16}$/
 /** AdSense `data-ad-slot`. */
 export const ADSENSE_SLOT_PATTERN = /^\d{6,20}$/
 export const GAM_NETWORK_CODE_PATTERN = /^\d{4,12}$/

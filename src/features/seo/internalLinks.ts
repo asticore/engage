@@ -6,10 +6,11 @@
 
 import { extractForAnalysis } from './analysis/extract'
 import { words } from './analysis/keyphrase'
+import { pagePathOf } from './pagePath'
+
+export { pagePathOf }
 
 export const MAX_LINK_SUGGESTIONS = 5
-/** Deepest parent chain walked when building a page path (same ceiling as the page tree). */
-const MAX_PARENT_DEPTH = 8
 
 const STOP_WORDS = new Set(['the', 'and', 'for', 'with', 'your', 'our', 'from', 'how', 'what', 'about', 'this', 'that', 'you', 'are', 'can'])
 
@@ -33,25 +34,6 @@ export function internalTargetsOf(doc: Record<string, unknown>): string[] {
     if (path) out.add(path)
   }
   return [...out]
-}
-
-/**
- * The public path of a page from its slug and its parent chain, root first.
- * `lookup` returns a page by id from the same read, or undefined.
- */
-export function pagePathOf(doc: Record<string, unknown>, lookup: (id: string) => Record<string, unknown> | undefined): string | null {
-  if (doc.isHomepage === true) return '/'
-  const segments: string[] = []
-  let current: Record<string, unknown> | undefined = doc
-  for (let depth = 0; current && depth < MAX_PARENT_DEPTH; depth += 1) {
-    if (typeof current.slug !== 'string' || current.slug === '') return null
-    segments.unshift(current.slug)
-    const parent = current.parent
-    const parentId = parent && typeof parent === 'object' ? (parent as { id?: unknown }).id : parent
-    if (parentId === undefined || parentId === null || parentId === '') break
-    current = lookup(String(parentId))
-  }
-  return `/${segments.join('/')}`
 }
 
 /** A page no other document's content links to. The home page is never an orphan. */

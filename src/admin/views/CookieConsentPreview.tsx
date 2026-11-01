@@ -49,7 +49,7 @@ export function regionsFor(mode: ConsentConfig['mode']): Region[] {
 
 /**
  * Previews the real banner and Customise dialog (ConsentManager in preview
- * mode) inside a mock page, for the settings as last saved. Preview mode never
+ * mode) inside a mock page, for the settings in the form (saved or not). Preview mode never
  * writes the consent cookie, never logs a choice and never loads a script, so
  * clicking around here changes nothing on the site.
  */
@@ -68,7 +68,7 @@ export const CookieConsentPreview: React.FC<{ config: ConsentConfig }> = ({ conf
   return (
     <div className="cc-preview">
       <p className="cc-note" id={noteId}>
-        Shows the settings as last saved. Save on the Banner tab to update the preview. Nothing you click here is
+        Shows the banner as the form has it now, including edits not yet saved. Nothing you click here is
         stored or logged.
         {!config.enabled ? ' The banner is currently switched off, so visitors do not see it.' : ''}
       </p>

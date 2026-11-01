@@ -79,4 +79,10 @@ export const HUB_SCREENS: HubScreen[] = [
     href: '/email-testing',
     description: 'Check the email connection, send test copies and check the sending domain.',
   },
+  {
+    key: 'email-suppressions',
+    label: 'Suppression list',
+    href: '/email-suppressions',
+    description: 'Addresses that get no bulk or reminder email. Search the list and remove an address.',
+  },
 ]
