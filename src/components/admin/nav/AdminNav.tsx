@@ -3,6 +3,8 @@ import { adminLabel } from '@/features/uiStrings'
 import React from 'react'
 import { Logout } from '@/engine/ui'
 import { AdminLanguagePicker } from '@/admin/ui/AdminLanguagePicker'
+import { AdminSiteSwitcher } from '@/features/domains/admin/AdminSiteSwitcher'
+import { ALL_SITES, resolveAdminSite } from '@/features/domains/adminSite'
 import { PREFERENCE_KEYS, formatAdminURL } from '@/engine/shared'
 import type { Engine, TypedUser } from '@/engine'
 import { can, type Resource } from '@/features/roles/permissions'
@@ -139,6 +141,9 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
     badges.translations = await countItemsNeedingTranslation({ engine: engine as never, user, settings })
   }
 
+  // The site switcher lists only the sites this account may use. It is shown when there are two or more.
+  const siteState = user ? await resolveAdminSite(engine, user as never) : null
+  const switcherSites = (siteState?.visible.sites ?? []).map((site) => ({ host: site.host, label: site.label }))
   const navPreferences = await getNavPreferences(req)
   const openGroups: Record<string, boolean> = {}
   for (const group of groups) {
@@ -149,6 +154,13 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
     <AdminNavShell>
       <SettingsRefresh />
       <nav className={`${baseClass}__wrap`}>
+        {siteState && switcherSites.length > 1 ? (
+          <AdminSiteSwitcher
+            current={siteState.host ?? (siteState.visible.unrestricted ? ALL_SITES : null)}
+            sites={switcherSites}
+            unrestricted={siteState.visible.unrestricted}
+          />
+        ) : null}
         <AdminNavDashboardLink href={formatAdminURL({ adminRoute, path: '' })} />
         <AdminNavClient groups={groups} openGroups={openGroups} badges={badges} />
         <AsticoreSaasComingSoon />

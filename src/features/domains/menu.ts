@@ -26,3 +26,23 @@ export function menuPageEntry<T extends MenuPageEntry>(
   const same = onDomain.find((entry) => entry.path.join('/') === address)
   return same && parseHostList(same.page.availableDomains).includes(host) ? same : null
 }
+
+/**
+ * A menu link to a page scoped only to other domains (no same-address page here): the absolute address of that page on
+ * its first domain, so the link still works from this domain. Null when the page is shared, scoped here, unknown, or when
+ * the request is not on a registered domain. Pure.
+ */
+export function menuPageOtherDomain<T extends MenuPageEntry & { page: { isHomepage?: boolean } }>(
+  pageId: number | string,
+  host: string | null,
+  anyDomain: readonly T[],
+): { host: string; path: string } | null {
+  if (!host) return null
+  const id = String(pageId)
+  const original = anyDomain.find((entry) => String(entry.page.id) === id)
+  if (!original) return null
+  const hosts = parseHostList(original.page.availableDomains)
+  if (hosts.length === 0 || hosts.includes(host)) return null
+  const target = hosts[0]
+  return { host: target, path: original.page.isHomepage ? '/' : `/${original.path.join('/')}` }
+}
