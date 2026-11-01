@@ -5,6 +5,7 @@
  * on the server with the same helpers), and site results come from
  * /api/search-suggest.
  */
+import { searchTerms } from '@/features/search/synonyms'
 import type { PortalStringKey } from '@/features/uiStrings/portalAdapter'
 
 export type ScreenLink = { href: string; label: string; keywords?: string[] }
@@ -16,41 +17,6 @@ export const PORTAL_SEARCH_MAX_RESULTS = 10
 /** Trims, collapses spaces and caps the length. Keeps the query the user typed otherwise. */
 export function normaliseQuery(raw: string): string {
   return raw.replace(/\s+/g, ' ').trim().slice(0, PORTAL_SEARCH_MAX_QUERY).trim()
-}
-
-/**
- * Synonym groups. A query that touches one word of a group also searches the
- * other words in it, so "purchase" finds Orders and "2fa" finds the two-step
- * setting. English only: a label in another language still matches on its own text.
- * Words are kept at three letters or more so a short query cannot expand by accident.
- */
-export const SYNONYM_GROUPS: readonly (readonly string[])[] = [
-  ['order', 'orders', 'purchase', 'purchases', 'receipt', 'receipts', 'invoice', 'invoices', 'bought', 'parcel'],
-  ['booking', 'bookings', 'reservation', 'reservations', 'appointment', 'appointments', 'rsvp', 'ticket', 'tickets'],
-  ['subscription', 'subscriptions', 'recurring', 'membership', 'renewal', 'renew', 'plan', 'plans', 'billing'],
-  ['address', 'addresses', 'delivery', 'shipping', 'postcode', 'postal', 'location'],
-  ['password', 'passwords', 'passphrase', 'login', 'log in', 'sign in'],
-  ['email', 'e-mail', 'mail', 'inbox'],
-  ['language', 'languages', 'locale', 'translation', 'translate'],
-  ['passkey', 'passkeys', 'fingerprint', 'biometric', 'face id', 'touch id', 'security key'],
-  ['two-step', 'two step', 'two-factor', 'two factor', '2fa', 'mfa', 'verification', 'one-time code'],
-  ['session', 'sessions', 'devices', 'sign out', 'logout', 'log out'],
-  ['api', 'api key', 'api keys', 'token', 'developer'],
-  ['credit', 'store credit', 'balance', 'wallet', 'refund', 'gift card'],
-  ['name', 'display name', 'username', 'first name', 'last name'],
-  ['connected', 'linked', 'social', 'google'],
-  ['account', 'profile', 'details', 'personal'],
-]
-
-/** The query plus every synonym it reaches, lower case. */
-export function searchTerms(raw: string): string[] {
-  const query = normaliseQuery(raw).toLowerCase()
-  const terms = new Set<string>([query])
-  if (query.length < PORTAL_SEARCH_MIN_CHARS) return [...terms]
-  for (const group of SYNONYM_GROUPS) {
-    if (group.some((word) => word.includes(query) || query.includes(word))) group.forEach((word) => terms.add(word))
-  }
-  return [...terms]
 }
 
 /** True when any of the texts contains any of the terms (case-insensitive). */

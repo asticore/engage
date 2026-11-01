@@ -3,7 +3,8 @@ import type { PortalTexts } from '@/features/multilingual/portalStrings'
 
 import { bookingsForCustomer } from './bookings'
 import type { AccountUser } from './session'
-import { matchesTerms, orderNumberIn, PORTAL_SEARCH_MAX_RESULTS, searchTerms, type AccountSearchResults } from './portalSearch'
+import { matchesTerms, orderNumberIn, PORTAL_SEARCH_MAX_RESULTS, type AccountSearchResults } from './portalSearch'
+import { searchTerms } from '@/features/search/synonyms'
 import { ORDERS_SLUG } from './types'
 
 /** The shop's subscription rows, the same collection the subscriptions screen reads. */

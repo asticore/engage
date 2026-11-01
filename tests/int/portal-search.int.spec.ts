@@ -14,10 +14,10 @@ import {
   normaliseQuery,
   orderNumberIn,
   parseAccountSearch,
-  searchTerms,
   SETTINGS_FIELDS,
   type ScreenLink,
 } from '@/features/accounts/portalSearch'
+import { searchTerms } from '@/features/search/synonyms'
 
 const LINKS: ScreenLink[] = [
   { href: '/account', label: 'Overview' },
