@@ -77,8 +77,11 @@ describe('design grouped migration - D1', () => {
     await proxy.dispose()
   })
 
-  it('is registered last', () => {
-    expect(migrations.at(-1)?.name).toBe('20270126_100000_design_grouped')
+  it('is registered after every earlier migration (later ones must not touch designs)', () => {
+    const names = migrations.map((m) => m.name)
+    const at = names.indexOf('20270126_100000_design_grouped')
+    expect(at).toBeGreaterThan(-1)
+    expect(names.slice(at + 1).every((n) => n > '20270126_100000_design_grouped')).toBe(true)
   })
 
   it('converts stored v1 rows, keeps typed and empty rows, and is idempotent', async () => {
