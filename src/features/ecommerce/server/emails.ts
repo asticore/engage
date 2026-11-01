@@ -7,8 +7,11 @@ import { formatCents } from '../lib/money'
 import { ORDER_STATUS_LABELS, isOrderStatus } from '../lib/orderStatus'
 import { preorderSummary } from '../lib/preorder'
 
-type Engine = { findGlobal: (a: unknown) => Promise<Record<string, unknown>> }
-export type EmailKind = 'processing' | 'completed' | 'onHold' | 'cancelled' | 'refunded' | 'failed' | 'customerNote' | 'shipped'
+type Engine = {
+  findGlobal: (a: unknown) => Promise<Record<string, unknown>>
+  find?: (a: unknown) => Promise<{ docs: Array<Record<string, unknown>> }>
+}
+export type EmailKind = 'processing' | 'completed' | 'onHold' | 'cancelled' | 'refunded' | 'failed' | 'customerNote' | 'shipped' | 'reviewRequest' | 'awaitingPayment'
 
 const STATUS_TO_KIND: Record<string, EmailKind | undefined> = {
   processing: 'processing',
@@ -18,6 +21,35 @@ const STATUS_TO_KIND: Record<string, EmailKind | undefined> = {
   refunded: 'refunded',
   failed: 'failed',
 }
+/** Links to the reviews of each product in the order, on the shop's product pages. Needs SITE_URL to be absolute. */
+export function reviewLinksFor(order: Record<string, unknown>, slugById: Map<number, { slug: string; title: string }>): string {
+  const base = (process.env.SITE_URL ?? '').replace(/\/+$/, '')
+  const items = (Array.isArray(order.lineItems) ? order.lineItems : []) as Array<{ productId?: unknown }>
+  const seen = new Set<number>()
+  const lines: string[] = []
+  for (const item of items) {
+    const id = Number(item.productId)
+    const product = slugById.get(id)
+    if (!product || seen.has(id)) continue
+    seen.add(id)
+    lines.push(base ? `${product.title}: ${base}/shop/${product.slug}#reviews` : product.title)
+  }
+  return lines.join('\n')
+}
+
+/** The product slugs and titles behind an order's lines, read once for the review request. */
+async function productsForReview(engine: Engine, order: Record<string, unknown>): Promise<Map<number, { slug: string; title: string }>> {
+  const items = (Array.isArray(order.lineItems) ? order.lineItems : []) as Array<{ productId?: unknown }>
+  const ids = [...new Set(items.map((i) => Number(i.productId)).filter((n) => Number.isInteger(n) && n > 0))]
+  const out = new Map<number, { slug: string; title: string }>()
+  if (ids.length === 0 || !engine.find) return out
+  const { docs } = await engine.find({ collection: 'products', where: { id: { in: ids } }, limit: ids.length, depth: 0, overrideAccess: true })
+  for (const doc of docs) {
+    if (typeof doc.id === 'number' && typeof doc.slug === 'string' && doc.slug) out.set(doc.id, { slug: doc.slug, title: String(doc.title ?? doc.slug) })
+  }
+  return out
+}
+
 export const kindForStatus = (status: string): EmailKind | null => STATUS_TO_KIND[status] ?? null
 
 const DEFAULTS: Record<EmailKind, { subject: string; body: string }> = {
@@ -29,6 +61,8 @@ const DEFAULTS: Record<EmailKind, { subject: string; body: string }> = {
   failed: { subject: 'Payment failed for order #{{order_id}}', body: 'Hi {{customer_name}},\n\nThe payment for order #{{order_id}} did not go through.' },
   customerNote: { subject: 'A note about your order #{{order_id}}', body: 'Hi {{customer_name}},\n\nThere is a note on your order #{{order_id}}:\n\n{{note}}' },
   shipped: { subject: 'Your order #{{order_id}} is on its way', body: 'Hi {{customer_name}},\n\nYour order #{{order_id}} has shipped with {{carrier}}.\nTracking number: {{tracking_number}}\nTrack it here: {{tracking_url}}' },
+  reviewRequest: { subject: 'How was your order #{{order_id}}?', body: 'Hi {{customer_name}},\n\nThanks for your order #{{order_id}}. If you have a moment, please tell other shoppers what you think:\n\n{{review_links}}' },
+  awaitingPayment: { subject: 'Your order #{{order_id}} is waiting for payment', body: 'Hi {{customer_name}},\n\nThanks for your order #{{order_id}}. Total: {{order_total}}.\n\nPay by {{payment_method}}:\n{{payment_instructions}}\n\nWe will start on your order when the payment arrives.' },
 }
 
 /** Every kind a shop owner can edit the wording of (Shop settings > Emails). */
@@ -66,7 +100,7 @@ const orderTemplateFor = (kind: EmailKind, locale: string | null | undefined): {
   }
 }
 
-export function renderOrderEmail(kind: EmailKind, order: Record<string, unknown>, opts: { note?: string; siteName?: string; bodyOverride?: string; template?: EmailTemplateOverride; locale?: string | null }) {
+export function renderOrderEmail(kind: EmailKind, order: Record<string, unknown>, opts: { note?: string; siteName?: string; bodyOverride?: string; template?: EmailTemplateOverride; locale?: string | null; paymentInstructions?: string; paymentMethod?: string; reviewLinks?: string }) {
   const addr = (order.shippingAddress ?? {}) as Record<string, unknown>
   const name = [addr.firstName, addr.lastName].filter((x) => typeof x === 'string' && x).join(' ') || 'there'
   const status = String(order.status ?? '')
@@ -81,6 +115,9 @@ export function renderOrderEmail(kind: EmailKind, order: Record<string, unknown>
     carrier: String(order.trackingCarrier ?? ''),
     tracking_number: String(order.trackingNumber ?? ''),
     tracking_url: String(order.trackingUrl ?? ''),
+    payment_method: opts.paymentMethod ?? '',
+    payment_instructions: opts.paymentInstructions ?? '',
+    review_links: opts.reviewLinks ?? '',
   }
   const tpl = orderTemplateFor(kind, opts.locale)
   const subject = mergeFields(opts.template?.subject ?? tpl.subject, values, false).replace(/[\r\n]+/g, ' ')
@@ -94,19 +131,33 @@ export function renderOrderEmail(kind: EmailKind, order: Record<string, unknown>
 }
 
 /** Sends one order email if its toggle is on. Never throws. */
-export async function sendOrderEmail(engine: Engine, order: Record<string, unknown>, kind: EmailKind, note?: string): Promise<boolean> {
+/** Trims a wording field from the settings; blank means the built-in text. */
+const clean = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+
+export async function sendOrderEmail(engine: Engine, order: Record<string, unknown>, kind: EmailKind, note?: string, extra: { paymentInstructions?: string; paymentMethod?: string } = {}): Promise<boolean> {
   try {
     const to = typeof order.customerEmail === 'string' ? order.customerEmail : ''
     if (!to) return false
     const settings = (await engine.findGlobal({ slug: 'shop-settings', depth: 0, overrideAccess: true })) as { emails?: Record<string, unknown>; templates?: unknown }
     const emails = settings.emails ?? {}
-    const defaultOn = kind !== 'failed'
-    if ((emails[kind] ?? defaultOn) === false || emails[kind] === 0) return false
+    let template = templateFor(settings.templates, kind)
+    // The shared body template is for the status emails only. Offline instructions and review requests keep their own wording.
+    let bodyOverride = typeof emails.bodyTemplate === 'string' && emails.bodyTemplate.trim() ? emails.bodyTemplate : undefined
+    if (kind === 'reviewRequest') {
+      // Review requests are switched and worded on the Shop switches global (the shop-settings row is full). Off by default.
+      const switches = ((await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null)) ?? {}) as Record<string, unknown>
+      if (switches.reviewRequestEmail !== true) return false
+      template = { subject: clean(switches.reviewRequestSubject, 300) || undefined, body: clean(switches.reviewRequestBody, 5000) || undefined }
+      bodyOverride = undefined
+    } else {
+      if (kind === 'awaitingPayment') bodyOverride = undefined
+      if ((emails[kind] ?? (kind !== 'failed')) === false || emails[kind] === 0) return false
+    }
     const site = (await engine.findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch(() => ({}))) as { siteName?: string }
     // The customer's own language, when they have chosen one. Otherwise English.
     const locale = await localeForRecipient(engine as never, to)
     if (locale) await loadStrings(locale)
-    const msg = renderOrderEmail(kind, order, { note, siteName: site.siteName, locale, template: templateFor(settings.templates, kind), bodyOverride: typeof emails.bodyTemplate === 'string' && emails.bodyTemplate.trim() ? emails.bodyTemplate : undefined })
+    const msg = renderOrderEmail(kind, order, { note, siteName: site.siteName, locale, template, bodyOverride, ...extra, reviewLinks: kind === 'reviewRequest' ? reviewLinksFor(order, await productsForReview(engine, order)) : undefined })
     const result = await sendEmail({ to, template: `order.${kind}`, ...msg })
     return result.ok
   } catch {

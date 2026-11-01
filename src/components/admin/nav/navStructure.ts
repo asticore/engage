@@ -67,6 +67,8 @@ export const NAV_STRUCTURE: NavGroupDef[] = [
     entities: [
       { slug: 'products', type: 'collections' },
       { slug: 'product-attributes', type: 'collections' },
+      { slug: 'product-tags', type: 'collections' },
+      { slug: 'product-brands', type: 'collections' },
       { slug: 'shipping-classes', type: 'collections' },
       { slug: 'product-reviews', type: 'collections' },
       { slug: 'stock-subscriptions', type: 'collections' },

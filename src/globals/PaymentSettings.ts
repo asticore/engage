@@ -198,6 +198,20 @@ export const PaymentSettings: GlobalConfig = {
     },
     {
       type: 'group',
+      name: 'offline',
+      label: 'Offline payment methods',
+      admin: { description: 'Payment without a card: bank transfer, cheque or cash on delivery. The order is saved as Pending payment with these instructions. Mark it paid on the order once the money arrives.' },
+      fields: [
+        { name: 'bankTransferEnabled', type: 'checkbox', defaultValue: false, admin: { description: 'Offer bank transfer at checkout.' } },
+        { name: 'bankTransferDetails', type: 'textarea', admin: { description: 'Account name, BSB, account number and the reference to quote. Sent to the customer with the order.' } },
+        { name: 'chequeEnabled', type: 'checkbox', defaultValue: false, admin: { description: 'Offer payment by cheque at checkout.' } },
+        { name: 'chequeDetails', type: 'textarea', admin: { description: 'Who to make the cheque payable to, and where to post it.' } },
+        { name: 'codEnabled', type: 'checkbox', defaultValue: false, admin: { description: 'Offer cash on delivery at checkout.' } },
+        { name: 'codDetails', type: 'textarea', admin: { description: 'What the customer should have ready for the courier, for example exact cash.' } },
+      ],
+    },
+    {
+      type: 'group',
       name: 'general',
       label: 'General',
       admin: { description: 'Settings that apply no matter which gateway takes the payment.' },

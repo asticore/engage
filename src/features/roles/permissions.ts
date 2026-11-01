@@ -9,6 +9,8 @@ export const RESOURCES = [
   'media',
   'products',
   'product-attributes',
+  'product-tags',
+  'product-brands',
   'shipping-classes',
   'product-reviews',
   'stock-subscriptions',
@@ -558,6 +560,8 @@ export const PERMISSION_CATEGORIES: Array<{
     rows: [
       { resource: 'products', label: 'Products', actions: ['read', 'create', 'update', 'delete', 'publish'] },
       { resource: 'product-attributes', label: 'Product attributes', actions: ['read', 'create', 'update', 'delete'] },
+      { resource: 'product-tags', label: 'Product tags', actions: ['read', 'create', 'update', 'delete'] },
+      { resource: 'product-brands', label: 'Product brands', actions: ['read', 'create', 'update', 'delete'] },
       { resource: 'shipping-classes', label: 'Shipping classes', actions: ['read', 'create', 'update', 'delete'] },
       { resource: 'product-reviews', label: 'Product reviews', actions: ['read', 'create', 'update', 'delete'] },
       { resource: 'stock-subscriptions', label: 'Back-in-stock sign-ups', description: 'Read: see who is waiting. Delete: remove a sign-up.', actions: ['read', 'delete'] },

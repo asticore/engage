@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { useDocumentInfo } from '@/engine/ui'
+import { useDocumentInfo, useField } from '@/engine/ui'
 
 type Note = { id: string; type: 'internal' | 'customer'; text: string; author: string; createdAt: string }
 
@@ -72,6 +72,37 @@ export function OrderNotesPanel() {
 }
 
 export { OrderRefundsPanel } from './OrderRefundsPanel'
+
+const OFFLINE_LABEL: Record<string, string> = { 'bank-transfer': 'bank transfer', cheque: 'cheque', 'cash-on-delivery': 'cash on delivery' }
+
+/** For an order placed to be paid offline and still waiting: the way it is paid and a button to mark the money received. */
+export function OfflinePaymentPanel() {
+  const id = useOrderId()
+  const { value: method } = useField<string | null | undefined>({ path: 'paymentMethod' })
+  const { value: status } = useField<string | null | undefined>({ path: 'status' })
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  if (!id || !method || !OFFLINE_LABEL[method] || status !== 'pending') return null
+  const mark = async () => {
+    setBusy(true)
+    setError('')
+    try {
+      await call(`/api/admin-order-mark-paid/${id}`, { method: 'POST' })
+      window.location.reload()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not mark the order paid.')
+      setBusy(false)
+    }
+  }
+  return (
+    <div style={box} role="region" aria-label="Offline payment">
+      <strong>Waiting for {OFFLINE_LABEL[method]}</strong>
+      <p style={{ margin: '6px 0' }}>The customer was sent the payment instructions. Mark the order paid once the money has arrived. This takes the stock and sends the processing email.</p>
+      <button type="button" onClick={mark} disabled={busy}>{busy ? 'Saving...' : 'Mark payment received'}</button>
+      {error && <p role="alert" style={{ color: 'var(--theme-error-500, #b42318)' }}>{error}</p>}
+    </div>
+  )
+}
 
 export function OrderInvoicePanel() {
   const id = useOrderId()

@@ -17,6 +17,8 @@ import { Addresses } from '@/features/ecommerce/collections/Addresses'
 import { Carts } from '@/features/ecommerce/collections/Carts'
 import { Orders } from '@/features/ecommerce/collections/Orders'
 import { Products } from '@/features/ecommerce/collections/Products'
+import { ProductBrands } from '@/features/ecommerce/collections/ProductBrands'
+import { ProductTags } from '@/features/ecommerce/collections/ProductTags'
 import { Transactions } from '@/features/ecommerce/collections/Transactions'
 import { ABTests } from '@/features/abTesting/collections/ABTests'
 import { Backups } from '@/features/backups/collection'
@@ -136,6 +138,8 @@ function resolveTargetTable(slug: string): string {
   if (slug === Transactions.slug) return tableNameFor(Transactions)
   if (slug === Users.slug) return tableNameFor(Users)
   if (slug === Products.slug) return tableNameFor(Products)
+  if (slug === ProductTags.slug) return tableNameFor(ProductTags)
+  if (slug === ProductBrands.slug) return tableNameFor(ProductBrands)
   throw new Error(`cms/db/schema: no known table for target collection "${slug}" - add it to resolveTargetTable in schema/index.ts.`)
 }
 

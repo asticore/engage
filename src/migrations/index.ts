@@ -125,6 +125,7 @@ import * as migration_20270126_100000_design_grouped from './20270126_100000_des
 import * as migration_20270127_100000_template_library_token from './20270127_100000_template_library_token';
 import * as migration_20270128_100000_blog_builder_settings from './20270128_100000_blog_builder_settings';
 import * as migration_20270129_100000_email_suppressions from './20270129_100000_email_suppressions';
+import * as migration_20270129_100000_shop_organise_offline from './20270129_100000_shop_organise_offline';
 import * as migration_20270130_100000_sms_shipped_text from './20270130_100000_sms_shipped_text';
 
 import * as migration_20270124_100000_privacy_requests from './20270124_100000_privacy_requests';
@@ -768,6 +769,11 @@ export const migrations = [
     up: migration_20270129_100000_email_suppressions.up,
     down: migration_20270129_100000_email_suppressions.down,
     name: '20270129_100000_email_suppressions',
+  },
+  {
+    up: migration_20270129_100000_shop_organise_offline.up,
+    down: migration_20270129_100000_shop_organise_offline.down,
+    name: '20270129_100000_shop_organise_offline',
   },
   {
     up: migration_20270130_100000_sms_shipped_text.up,

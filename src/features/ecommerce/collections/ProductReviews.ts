@@ -22,7 +22,7 @@ export const ProductReviews: CollectionConfig = {
   admin: {
     group: 'Ecommerce',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'product', 'rating', 'status', 'createdAt'],
+    defaultColumns: ['name', 'product', 'rating', 'status', 'verifiedOwner', 'createdAt'],
     description: 'Moderation queue: new reviews arrive as Pending and only show on the shop once Approved.',
   },
   access: {

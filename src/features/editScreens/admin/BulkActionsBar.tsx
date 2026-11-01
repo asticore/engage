@@ -7,24 +7,31 @@ import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
 import type { AuthorOption } from '../authors'
-import type { BulkAction, BulkRowResult, CategoryMode } from '../bulk'
+import { ORDER_STATUSES, ORDER_STATUS_LABELS, type OrderStatus } from '@/features/ecommerce/lib/orderStatus'
+import type { BulkAction, BulkCollection, BulkRowResult, CategoryMode } from '../bulk'
 import './edit-screens.css'
 
 export type BulkBarProps = {
-  collection: 'pages' | 'posts' | 'events'
+  collection: BulkCollection
   /** The trash view lists trashed items only; its actions are Restore and Delete for good. */
   trashView: boolean
   canPublish: boolean
   canDelete: boolean
   canChangeAuthor: boolean
-  /** Singular label for messages: "page", "post", "event". */
+  /** Whether the user may edit the rows (status, tags, brand on the shop lists). */
+  canUpdate: boolean
+  /** Singular label for messages: "page", "post", "event", "product", "order". */
   noun: string
 }
+
+type NamedOption = { id: number; name: string }
 
 type Choice = { value: BulkAction; labelKey: UiStringKey }
 
 /** The actions offered, by view and permission. The server checks them again for the whole request and for every row. */
-export function bulkChoices(props: Pick<BulkBarProps, 'collection' | 'trashView' | 'canPublish' | 'canDelete' | 'canChangeAuthor'>): Choice[] {
+export function bulkChoices(props: Pick<BulkBarProps, 'collection' | 'trashView' | 'canPublish' | 'canDelete' | 'canChangeAuthor' | 'canUpdate'>): Choice[] {
+  // Orders have no publish or trash: their only bulk action is the status.
+  if (props.collection === 'orders') return props.canUpdate ? [{ value: 'setStatus', labelKey: 'bulk.action.setStatus' }] : []
   if (props.trashView) {
     const trashChoices: Choice[] = []
     if (props.canDelete) trashChoices.push({ value: 'restore', labelKey: 'bulk.action.restore' }, { value: 'delete', labelKey: 'trash.deletePermanently' })
@@ -35,6 +42,9 @@ export function bulkChoices(props: Pick<BulkBarProps, 'collection' | 'trashView'
   if (props.canDelete) choices.push({ value: 'trash', labelKey: 'edit.moveToTrash' })
   if (props.canChangeAuthor) choices.push({ value: 'changeAuthor', labelKey: 'bulk.action.changeAuthor' })
   if (props.collection === 'posts') choices.push({ value: 'changeCategory', labelKey: 'bulk.action.changeCategory' })
+  if (props.collection === 'products' && props.canUpdate) {
+    choices.push({ value: 'addTag', labelKey: 'bulk.action.addTag' }, { value: 'removeTag', labelKey: 'bulk.action.removeTag' }, { value: 'setBrand', labelKey: 'bulk.action.setBrand' })
+  }
   return choices
 }
 
@@ -61,6 +71,12 @@ export function BulkActionsBar(props: BulkBarProps) {
   const [author, setAuthor] = useState('')
   const [categoryName, setCategoryName] = useState('')
   const [categoryMode, setCategoryMode] = useState<CategoryMode>('add')
+  const [status, setStatus] = useState<OrderStatus | ''>('')
+  const [tagOptions, setTagOptions] = useState<NamedOption[] | null>(null)
+  const [brandOptions, setBrandOptions] = useState<NamedOption[] | null>(null)
+  const [tagId, setTagId] = useState('')
+  // '0' means "no brand"; a real brand id is a number as text.
+  const [brandId, setBrandId] = useState('')
 
   useEffect(() => {
     const sync = (event: Event) => {
@@ -80,10 +96,27 @@ export function BulkActionsBar(props: BulkBarProps) {
 
   if (choices.length === 0) return null
 
+  // Loads the choices for a tag or brand picker. A failure is shown in the bar, not thrown.
+  function loadOptions(collection: 'product-tags' | 'product-brands', set: (rows: NamedOption[]) => void) {
+    fetch(`/api/${collection}?limit=500&depth=0&sort=name`, { credentials: 'same-origin' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('failed')
+        return (await response.json()) as { docs: Array<{ id: number; name?: string }> }
+      })
+      .then((body) => set(body.docs.map((doc) => ({ id: doc.id, name: doc.name ?? `#${doc.id}` }))))
+      .catch(() => setError(t('bulk.optionsLoadError')))
+  }
+
   const choose = (next: BulkAction | '') => {
     setAction(next)
     setConfirming(false)
     setError(null)
+    if ((next === 'addTag' || next === 'removeTag') && tagOptions === null) {
+      loadOptions('product-tags', setTagOptions)
+    }
+    if (next === 'setBrand' && brandOptions === null) {
+      loadOptions('product-brands', setBrandOptions)
+    }
     if (next === 'changeAuthor' && authors === null) {
       fetch(`/api/admin-authors?collection=${props.collection}`, { credentials: 'same-origin' })
         .then(async (response) => {
@@ -100,7 +133,11 @@ export function BulkActionsBar(props: BulkBarProps) {
     selected.length > 0 &&
     action !== '' &&
     (action !== 'changeAuthor' || author !== '') &&
-    (action !== 'changeCategory' || categoryName.trim() !== '')
+    (action !== 'changeCategory' || categoryName.trim() !== '') &&
+    (action !== 'setStatus' || status !== '') &&
+    ((action !== 'addTag' && action !== 'removeTag') || tagId !== '') &&
+    (action !== 'setBrand' || brandId !== '')
+  const tagName = tagOptions?.find((o) => String(o.id) === tagId)?.name ?? ''
 
   const count = selected.length
   const plural = selected.length === 1 ? props.noun : `${props.noun}s`
@@ -129,6 +166,15 @@ export function BulkActionsBar(props: BulkBarProps) {
           count,
           noun: plural,
         })
+      case 'setStatus':
+        return t('bulk.confirm.setStatus', { count, noun: plural, status: ORDER_STATUS_LABELS[status as OrderStatus] ?? status })
+      case 'addTag':
+      case 'removeTag':
+        return t('bulk.confirm.tag', { verb: t(action === 'addTag' ? 'bulk.verb.add' : 'bulk.verb.remove'), name: tagName, count, noun: plural })
+      case 'setBrand':
+        return brandId === '0'
+          ? t('bulk.confirm.clearBrand', { count, noun: plural })
+          : t('bulk.confirm.setBrand', { count, noun: plural, name: brandOptions?.find((o) => String(o.id) === brandId)?.name ?? '' })
       default:
         return ''
     }
@@ -142,6 +188,9 @@ export function BulkActionsBar(props: BulkBarProps) {
       const body: Record<string, unknown> = { collection: props.collection, ids: selected.map((row) => row.id), action }
       if (action === 'changeAuthor') body.author = Number(author)
       if (action === 'changeCategory') body.category = { name: categoryName.trim(), mode: categoryMode }
+      if (action === 'setStatus') body.status = status
+      if (action === 'addTag' || action === 'removeTag') body.tag = Number(tagId)
+      if (action === 'setBrand') body.brand = brandId === '0' ? null : Number(brandId)
       const response = await fetch('/api/admin-bulk', {
         body: JSON.stringify(body),
         credentials: 'same-origin',
@@ -214,6 +263,46 @@ export function BulkActionsBar(props: BulkBarProps) {
             <input disabled={busy} maxLength={80} onChange={(event) => setCategoryName(event.target.value)} placeholder={t('bulk.categoryPlaceholder')} type="text" value={categoryName} />
           </label>
         </>
+      )}
+      {action === 'setStatus' && (
+        <label>
+          <span className="es-sr">{t('bulk.chooseStatus')}</span>
+          <select disabled={busy} onChange={(event) => setStatus(event.target.value as OrderStatus | '')} value={status}>
+            <option value="">{t('bulk.chooseStatus')}</option>
+            {ORDER_STATUSES.map((value) => (
+              <option key={value} value={value}>
+                {ORDER_STATUS_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {(action === 'addTag' || action === 'removeTag') && (
+        <label>
+          <span className="es-sr">{t('bulk.chooseTag')}</span>
+          <select disabled={busy || tagOptions === null} onChange={(event) => setTagId(event.target.value)} value={tagId}>
+            <option value="">{tagOptions === null ? t('bulk.loadingOptions') : t('bulk.chooseTag')}</option>
+            {(tagOptions ?? []).map((o) => (
+              <option key={o.id} value={String(o.id)}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {action === 'setBrand' && (
+        <label>
+          <span className="es-sr">{t('bulk.chooseBrand')}</span>
+          <select disabled={busy || brandOptions === null} onChange={(event) => setBrandId(event.target.value)} value={brandId}>
+            <option value="">{brandOptions === null ? t('bulk.loadingOptions') : t('bulk.chooseBrand')}</option>
+            <option value="0">{t('bulk.clearBrand')}</option>
+            {(brandOptions ?? []).map((o) => (
+              <option key={o.id} value={String(o.id)}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </label>
       )}
       {!confirming && (
         <button className="btn" disabled={!ready || busy} onClick={() => setConfirming(true)} type="button">
