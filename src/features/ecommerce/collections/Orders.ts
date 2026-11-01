@@ -126,6 +126,8 @@ export const Orders: CollectionConfig = {
     { name: 'couponLines', type: 'json', admin: { readOnly: true } },
     { name: 'lineItems', type: 'json', admin: { readOnly: true, description: 'Prices and names as they were when the order was placed.' } },
     { name: 'preorderPanel', type: 'ui', admin: { components: { Field: '@/features/ecommerce/admin/PreorderOrderPanel#PreorderOrderPanel' } } },
+    { name: 'paymentMethod', type: 'text', admin: { readOnly: true, position: 'sidebar', description: 'Set when the order is placed without a card: bank-transfer, cheque or cash-on-delivery.' } },
+    { name: 'offlinePaymentPanel', type: 'ui', admin: { components: { Field: '@/features/ecommerce/admin/OrderPanels#OfflinePaymentPanel' } } },
     { name: 'checkoutFields', type: 'json', admin: { readOnly: true, description: 'Answers to the optional checkout fields.' } },
     { name: 'customerNote', type: 'textarea', admin: { readOnly: true } },
     { name: 'paidAt', type: 'date', admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },

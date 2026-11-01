@@ -22,6 +22,8 @@ import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
 import { archiveQueryString, filterArchiveItems, parseArchiveFilters, sortArchiveItems } from '@/features/siteTemplates/archiveFilter'
 import { archivePageHref } from '@/lib/templateWidgets'
+import { brandKey, brandOptionsOf, tagOptionsOf, tagNames } from '@/features/ecommerce/lib/productTaxonomy'
+import { slugify } from '@/utilities/formatSlug'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
 import { productArchiveItems } from '@/lib/blockContextFrom'
 import type { Product, ShopSetting } from '@/engage-types'
@@ -49,6 +51,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   setRequestQuery(params)
   const category = typeof params.category === 'string' ? params.category.slice(0, 40) : undefined
   const filters = parseAttributeFilters(params)
+  const brandParam = typeof params.brand === 'string' ? slugify(params.brand.trim().slice(0, 80)) : ''
   const engine = await getEngine()
 
   const [settings, { docs: scanned }] = (await Promise.all([
@@ -59,25 +62,39 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         and: [{ _status: { equals: 'published' } }, ...(category ? [{ category: { equals: category } }] : [])],
       },
       sort: '-createdAt',
-      // Filters are applied to this bounded scan of published products.
+      // Filters are applied to this bounded scan of published products. Depth 1 gives the brand and tags as objects.
       limit: 300,
+      depth: 1,
     }),
   ])) as unknown as [ShopSetting | null, { docs: Product[] }]
   const open = await applyTranslationsToDocs(await excludeProtected('products', scanned), 'products', await currentRequestLocale())
-  const matching = open.filter((product) => matchesAttributeFilters(product as never, filters))
-  // Price, search and sort params (?min=&max=&q=&sort=) narrow the list before paging. The category is already applied by the query above.
+  const matchingAttributes = open.filter((product) => matchesAttributeFilters(product as never, filters))
+  // The brand filter (?brand=<slug>) keeps products sold under that brand. The brand choices come from every open product.
+  const matching = brandParam ? matchingAttributes.filter((product) => brandKey((product as { brand?: unknown }).brand) === brandParam) : matchingAttributes
+  // Price, search, sort, tag params (?min=&max=&q=&sort=&tag=) narrow the list before paging. The category is already applied by the query above.
   const archiveFilters = parseArchiveFilters(params)
   const pool = matching.map((product) => {
-    const p = product as unknown as { title?: unknown; shortDescription?: unknown; priceInAUD?: unknown; createdAt?: unknown }
-    return { product, title: String(p.title ?? ''), excerpt: typeof p.shortDescription === 'string' ? p.shortDescription : '', price: p.priceInAUD, date: p.createdAt, categories: [] as string[], tags: [] as string[] }
+    const p = product as unknown as { title?: unknown; shortDescription?: unknown; priceInAUD?: unknown; createdAt?: unknown; tags?: unknown }
+    return { product, title: String(p.title ?? ''), excerpt: typeof p.shortDescription === 'string' ? p.shortDescription : '', price: p.priceInAUD, date: p.createdAt, categories: [] as string[], tags: tagNames(p.tags) }
   })
-  const kept = filterArchiveItems(pool, { ...archiveFilters, category: '', tag: '' })
+  const kept = filterArchiveItems(pool, { ...archiveFilters, category: '' })
   const ordered = archiveFilters.sort === 'newest' ? kept.map((k) => k.product) : sortArchiveItems(kept, archiveFilters.sort).map((k) => k.product)
   const paged = paginate(ordered, parsePage(params.page), 100)
   const products = paged.items
-  const archiveBase = `/shop${archiveQueryString({ ...archiveFilters, category: category ?? '' })}`
+  // Every list link keeps the other active filters (category, tag, brand, price, search, sort).
+  const shopHref = (over: { tag?: string; brand?: string }) => {
+    const qs = new URLSearchParams(archiveQueryString({ ...archiveFilters, category: category ?? '', tag: over.tag ?? archiveFilters.tag }).slice(1))
+    const brand = over.brand ?? brandParam
+    if (brand) qs.set('brand', brand)
+    const text = qs.toString()
+    return `/shop${text ? `?${text}` : ''}`
+  }
+  const archiveBase = shopHref({})
   const pageHref = (n: number) => archivePageHref(archiveBase, n)
   const filterOptions = availableFilterOptions(open as never[])
+  const brandChoices = brandOptionsOf(open)
+  const tagChoices = tagOptionsOf(open)
+  const activeTag = archiveFilters.tag ? slugify(archiveFilters.tag) : ''
 
   const layout = settings?.archiveLayout || 'grid-4'
   const context = await getSeoContext()
@@ -147,6 +164,31 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         </div>
       )}
 
+      {(brandChoices.length > 0 || tagChoices.length > 0) && (
+        <div className="mb-8 grid gap-3 text-[0.8rem]">
+          {brandChoices.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="uppercase tracking-[0.06em] opacity-70">{tx('store.filterBrand')}</span>
+              {brandChoices.map((brand) => (
+                <Link key={brand.slug} href={shopHref({ brand: brandParam === brand.slug ? '' : brand.slug })} className={filterLinkClassName(brandParam === brand.slug)}>
+                  {brand.name}
+                </Link>
+              ))}
+            </div>
+          )}
+          {tagChoices.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="uppercase tracking-[0.06em] opacity-70">{tx('store.filterTag')}</span>
+              {tagChoices.map((tag) => (
+                <Link key={tag.slug} href={shopHref({ tag: activeTag === tag.slug ? '' : tag.name })} className={filterLinkClassName(activeTag === tag.slug)}>
+                  {tag.name}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {products.length === 0 ? (
         <p className="empty-state">
           Nothing here yet - add products from the admin panel and they&apos;ll appear here
@@ -181,7 +223,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       items: productArchiveItems(products),
       kind: 'products',
       filters: { ...archiveFilters, category: category ?? '' },
-      facets: { categories: shopCategories, tags: [] },
+      facets: { categories: shopCategories, tags: tagChoices },
     },
   })
   return renderWithTemplate({ kind: 'archive-shop', ctx: { path: '/shop', productCategory: category ?? null }, content: body })

@@ -1,6 +1,7 @@
 /**
- * Bulk actions on the Pages, Posts and Events lists: publish, switch to draft,
- * move to trash, restore, delete for good, change author, change category.
+ * Bulk actions on the Pages, Posts, Events, Products and Orders lists: publish, switch to draft,
+ * move to trash, restore, delete for good, change author, change category (posts), and for the shop:
+ * change order status, add or remove a product tag, set or clear a product brand.
  *
  * The request is validated here and each row is handled on its own: a row the
  * user may not touch fails with its own message and the rest still go ahead.
@@ -11,10 +12,14 @@
  * permission up front, and who may be made the author.
  */
 
-export const BULK_COLLECTIONS = ['pages', 'posts', 'events'] as const
+import { isOrderStatus, transitionError } from '@/features/ecommerce/lib/orderStatus'
+
+export const BULK_COLLECTIONS = ['pages', 'posts', 'events', 'products', 'orders'] as const
 export type BulkCollection = (typeof BULK_COLLECTIONS)[number]
 
-export const BULK_ACTIONS = ['publish', 'unpublish', 'trash', 'restore', 'delete', 'changeAuthor', 'changeCategory'] as const
+export const BULK_ACTIONS = ['publish', 'unpublish', 'trash', 'restore', 'delete', 'changeAuthor', 'changeCategory', 'setStatus', 'addTag', 'removeTag', 'setBrand'] as const
+/** Actions that only make sense on the shop's collections. */
+const SHOP_ACTIONS: readonly BulkAction[] = ['setStatus', 'addTag', 'removeTag', 'setBrand']
 export type BulkAction = (typeof BULK_ACTIONS)[number]
 
 export const MAX_BULK_IDS = 100
@@ -29,6 +34,12 @@ export type BulkRequest = {
   author?: number
   /** changeCategory: what to do with which category. */
   category?: { name: string; mode: CategoryMode }
+  /** setStatus (orders): the order status to move each order to. */
+  status?: string
+  /** addTag / removeTag (products): the tag document id. */
+  tag?: number
+  /** setBrand (products): the brand document id, or null to clear the brand. */
+  brand?: number | null
 }
 
 export type BulkRowResult = { id: number; ok: boolean; error?: string }
@@ -40,8 +51,12 @@ const isAction = (value: unknown): value is BulkAction => typeof value === 'stri
 export function parseBulkRequest(body: unknown): { ok: true; request: BulkRequest } | { ok: false; error: string } {
   if (!body || typeof body !== 'object') return { ok: false, error: 'Send a JSON body.' }
   const b = body as Record<string, unknown>
-  if (!isCollection(b.collection)) return { ok: false, error: 'Bulk actions work on pages, posts and events.' }
+  if (!isCollection(b.collection)) return { ok: false, error: 'Bulk actions work on pages, posts, events, products and orders.' }
   if (!isAction(b.action)) return { ok: false, error: 'Unknown action.' }
+  if (SHOP_ACTIONS.includes(b.action) && (b.action === 'setStatus' ? b.collection !== 'orders' : b.collection !== 'products')) {
+    return { ok: false, error: b.action === 'setStatus' ? 'Only orders have a status.' : 'Only products have tags and brands.' }
+  }
+  if (b.collection === 'orders' && b.action !== 'setStatus') return { ok: false, error: 'Orders can only change status in bulk.' }
   if (!Array.isArray(b.ids) || b.ids.length === 0) return { ok: false, error: 'Choose at least one item.' }
   if (b.ids.length > MAX_BULK_IDS) return { ok: false, error: `Choose at most ${MAX_BULK_IDS} items at a time.` }
   const ids: number[] = []
@@ -52,6 +67,26 @@ export function parseBulkRequest(body: unknown): { ok: true; request: BulkReques
   }
 
   const request: BulkRequest = { collection: b.collection, ids, action: b.action }
+
+  if (b.action === 'setStatus') {
+    if (!isOrderStatus(b.status)) return { ok: false, error: 'Choose the status to set.' }
+    request.status = b.status
+  }
+
+  if (b.action === 'addTag' || b.action === 'removeTag') {
+    const tag = Number(b.tag)
+    if (!Number.isInteger(tag) || tag <= 0) return { ok: false, error: 'Choose a tag.' }
+    request.tag = tag
+  }
+
+  if (b.action === 'setBrand') {
+    if (b.brand === null || b.brand === '' || b.brand === 0) request.brand = null
+    else {
+      const brand = Number(b.brand)
+      if (!Number.isInteger(brand) || brand <= 0) return { ok: false, error: 'Choose a brand, or clear it.' }
+      request.brand = brand
+    }
+  }
 
   if (b.action === 'changeAuthor') {
     const author = Number(b.author)
@@ -97,8 +132,25 @@ export function actionRefusal(action: BulkAction, permissions: BulkPermissions):
         ? null
         : 'Changing the author needs an administrator, or a role that can edit other people\'s work.'
     case 'changeCategory':
+    case 'setStatus':
+    case 'addTag':
+    case 'removeTag':
+    case 'setBrand':
       return permissions.update ? null : 'Your role cannot edit this.'
   }
+}
+
+/** The tag ids on a product after adding or removing one. Accepts ids or populated tag objects. */
+export function tagIdsAfter(current: unknown, tag: number, mode: 'add' | 'remove'): number[] {
+  const ids: number[] = []
+  if (Array.isArray(current)) {
+    for (const entry of current) {
+      const id = typeof entry === 'number' ? entry : entry && typeof entry === 'object' ? Number((entry as { id?: unknown }).id) : NaN
+      if (Number.isInteger(id) && id > 0 && !ids.includes(id)) ids.push(id)
+    }
+  }
+  if (mode === 'add') return ids.includes(tag) ? ids : [...ids, tag]
+  return ids.filter((id) => id !== tag)
 }
 
 /** The new category list for a post, given its current one. */
@@ -198,6 +250,31 @@ export async function runBulk(engine: BulkEngine, user: unknown, request: BulkRe
           user,
           overrideAccess: false,
         })
+      } else if (request.action === 'setStatus' && request.status) {
+        const order = (await engine.findByID({ collection: 'orders', id, depth: 0, user, overrideAccess: false })) as Record<string, unknown> | null
+        if (!order) {
+          results.push({ id, ok: false, error: 'Not found or not yours to change.' })
+          continue
+        }
+        const refused = transitionError(order.status as string | null, request.status)
+        if (refused) {
+          results.push({ id, ok: false, error: refused })
+          continue
+        }
+        if (order.status === request.status) {
+          results.push({ id, ok: true })
+          continue
+        }
+        await engine.update({ collection: 'orders', id, data: { status: request.status }, user, overrideAccess: false })
+      } else if ((request.action === 'addTag' || request.action === 'removeTag') && request.tag !== undefined) {
+        const product = (await engine.findByID({ collection: 'products', id, depth: 0, user, overrideAccess: false })) as Record<string, unknown> | null
+        if (!product) {
+          results.push({ id, ok: false, error: 'Not found or not yours to change.' })
+          continue
+        }
+        await engine.update({ collection: 'products', id, data: { tags: tagIdsAfter(product.tags, request.tag, request.action === 'addTag' ? 'add' : 'remove') }, user, overrideAccess: false })
+      } else if (request.action === 'setBrand') {
+        await engine.update({ collection: 'products', id, data: { brand: request.brand ?? null }, user, overrideAccess: false })
       } else if (request.action === 'changeAuthor' && request.author !== undefined) {
         await engine.update({ collection: request.collection, id, data: authorPatch(request.collection, request.author), user, overrideAccess: false })
       } else {

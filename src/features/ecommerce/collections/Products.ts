@@ -149,6 +149,8 @@ export const Products: CollectionConfig = {
     { name: 'description', type: 'richText', editor: richTextEditor() },
     { name: 'images', type: 'upload', relationTo: 'media', hasMany: true },
     { name: 'faqs', type: 'relationship', relationTo: 'faqs', hasMany: true },
+    { name: 'brand', type: 'relationship', relationTo: 'product-brands', admin: { position: 'sidebar', description: 'Optional. Pick from Product brands.' } },
+    { name: 'tags', type: 'relationship', relationTo: 'product-tags', hasMany: true, admin: { position: 'sidebar', description: 'Optional. Pick from Product tags.' } },
     {
       name: 'layout',
       type: 'blocks',
