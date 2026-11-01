@@ -68,7 +68,7 @@ export function sensitiveChanges(
 }
 
 /** Every admin account's address (role `admin`). Paged, bounded, and never throws. */
-async function adminEmails(engine: unknown): Promise<string[]> {
+export async function adminEmails(engine: unknown): Promise<string[]> {
   const emails = new Set<string>()
   const find = (engine as { find?: (args: Record<string, unknown>) => Promise<{ docs: Array<Record<string, unknown>> }> }).find
   if (!find) return []

@@ -190,6 +190,46 @@ describe('data export', () => {
     expect(JSON.stringify(doc)).not.toContain('pbkdf2$secret-hash')
   })
 
+  it('exports store credit, its movements, carts and reviews, without a cart secret', async () => {
+    const { engine } = fakeEngine({
+      'store-credits': [{ id: 2, balance: 1500, updatedAt: '2026-05-01T00:00:00.000Z', user: 7 }],
+      'credit-ledger': [{ id: 4, kind: 'manual', direction: 'credit', amount: 1500, balanceAfter: 1500, reason: 'Goodwill', user: 7, createdAt: '2026-05-01' }],
+      carts: [{ id: 8, items: [], subtotal: 900, currency: 'usd', email: 'ana@example.com', secret: 'cart-secret-value', createdAt: '2026-04-20' }],
+      'product-reviews': [{ id: 9, product: 3, name: 'Ana', email: 'ana@example.com', rating: 5, text: 'Great', status: 'published', createdAt: '2026-04-21' }],
+    })
+    const { d1 } = fakeD1()
+    const doc = (await exportCustomerData(engine, d1 as never, user as never, new Date('2026-10-31T00:00:00.000Z'))) as {
+      storeCredit: { balance: number }
+      storeCreditMovements: unknown[]
+      carts: Record<string, unknown>[]
+      reviews: Record<string, unknown>[]
+    }
+    expect(doc.storeCredit.balance).toBe(1500)
+    expect(doc.storeCreditMovements).toHaveLength(1)
+    expect(doc.carts).toHaveLength(1)
+    expect(doc.carts[0]).not.toHaveProperty('secret')
+    expect(doc.reviews).toHaveLength(1)
+    expect(doc.reviews[0].text).toBe('Great')
+    expect(JSON.stringify(doc)).not.toContain('cart-secret-value')
+  })
+
+  it('erases carts and clears the reviewer details on reviews, but keeps store credit', async () => {
+    const { engine, writes } = fakeEngine({
+      orders: [],
+      addresses: [],
+      'event-rsvps': [],
+      'store-credits': [{ id: 2, balance: 1500, user: 7 }],
+      carts: [{ id: 8, customer: 7 }],
+      'product-reviews': [{ id: 9, email: 'ana@example.com', name: 'Ana', text: 'Great' }],
+    })
+    const { d1 } = fakeD1()
+    const counts = await eraseCustomerData(engine, d1 as never, 7, 'ana@example.com')
+    expect(writes).toContainEqual({ op: 'delete', collection: 'carts', id: 8 })
+    expect(writes).toContainEqual({ op: 'update', collection: 'product-reviews', id: 9, data: { name: 'Former customer', email: null } })
+    expect(writes.some((w) => w.collection === 'store-credits' || w.collection === 'credit-ledger')).toBe(false)
+    expect(counts).toMatchObject({ carts: 1, reviews: 1 })
+  })
+
   it('leaves guest bookings out of the export until the customer address is verified', async () => {
     const { engine } = fakeEngine({ orders: [], addresses: [], 'event-rsvps': [{ id: 5, name: 'Ana', email: 'ana@example.com', guestCount: 1 }] })
     const { d1 } = fakeD1()

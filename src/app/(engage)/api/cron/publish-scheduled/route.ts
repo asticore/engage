@@ -133,6 +133,13 @@ async function handleCronRequest(request: Request): Promise<Response> {
       { due: hourly },
     )
 
+    // Error spike alert: emails the admins when many new errors land in 15 minutes (threshold and on/off on the Speed settings).
+    await runJob('error-alert', async () => {
+      const { runErrorSpikeAlert } = await import('@/features/errors/spikeAlert')
+      const report = await runErrorSpikeAlert(engine as never, new Date())
+      if (report.error) throw new Error(report.error)
+    })
+
     // Automatic exchange rates for the extra display currencies. Checked hourly, refreshed about once a day. Does nothing when none are automatic.
     await runJob(
       'display-rates',
