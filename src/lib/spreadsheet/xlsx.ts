@@ -18,7 +18,7 @@ export class XlsxError extends Error {}
 
 const decoder = new TextDecoder('utf-8')
 
-function extract(data: Uint8Array, wanted: (name: string) => boolean): Map<string, string> {
+export function extract(data: Uint8Array, wanted: (name: string) => boolean): Map<string, string> {
   const out = new Map<string, string>()
   let entries = 0
   let total = 0

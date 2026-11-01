@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { buildTemplateExport, TEMPLATE_IO_MAX_BYTES, validateTemplateImport } from '@/features/siteTemplates/templateIo'
+import { readLimitedText } from '@/lib/limitedBody'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,8 +35,9 @@ export async function POST(request: Request): Promise<Response> {
     if (!hasAdminPanelAccess(context.user)) return json({ error: 'Unauthorised' }, 401)
     if (!(context.isAdmin || context.can('site-templates', 'create'))) return json({ error: 'Forbidden' }, 403)
 
-    const text = await request.text()
-    if (text.length > TEMPLATE_IO_MAX_BYTES * 2) return json({ error: 'File is too large (500KB maximum).' }, 413)
+    const read = await readLimitedText(request, TEMPLATE_IO_MAX_BYTES * 2, 'File is too large (500KB maximum).')
+    if ('response' in read) return read.response
+    const text = read.text
     const result = validateTemplateImport(text)
     if (result.ok === false) return json({ error: result.error }, 400)
     const t = result.template

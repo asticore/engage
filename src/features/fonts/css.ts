@@ -2,10 +2,11 @@
  * Pure CSS and link generation for installed fonts. Input is re-sanitised here
  * (sanitizeInstalledFonts is idempotent), so callers may pass a raw theme value.
  */
-import { FONT_FORMATS, fontFormatFromUrl, fontStack, sanitizeInstalledFonts } from './installed'
+import { DEFAULT_SUBSET, FONT_FORMATS, fontFormatFromUrl, fontStack, sanitizeInstalledFonts } from './installed'
 import type { FontPreload, InstalledFont } from './types'
+import { UNICODE_RANGE, type FontSubset } from './unicodeRanges'
 
-/** Subset requested from jsDelivr for remotely served Fontsource families. */
+/** Subset a Fontsource font uses when none is chosen. Kept as the name the install check uses. */
 export const REMOTE_SUBSET = 'latin'
 
 const FONTS_CSS_BASE = 'https://fonts.googleapis.com/css2'
@@ -38,18 +39,41 @@ export function resolveThemeFont(
  * Google requires the `ital,wght` tuples in ascending order: every upright
  * `0,w` first, then every italic `1,w`, with no repeats.
  */
+/**
+ * The weights to ask Google for. Google answers a request for a weight the
+ * family does not have with an error, so when the catalog's list is known only
+ * those weights are asked for; a family with none of them asks for 400 (Regular).
+ * Returns an empty list when nothing valid is left, and no stylesheet is built.
+ */
+export function validGoogleWeights(font: InstalledFont): number[] {
+  const wanted = [...new Set(font.weights)].sort((a, b) => a - b)
+  if (!font.available) return wanted
+  const offered = wanted.filter((weight) => font.available?.includes(weight))
+  if (offered.length > 0) return offered
+  return font.available.includes(400) ? [400] : []
+}
+
+/** Google CSS2 stylesheet for one Google family, with its valid weights. Empty when no weight is valid. */
 export function googleStylesheetUrl(font: InstalledFont): string {
+  const weights = validGoogleWeights(font)
+  if (weights.length === 0) return ''
   const family = font.family.replace(/ /g, '+')
-  const weights = [...new Set(font.weights)].sort((a, b) => a - b)
   const axis = font.italic
     ? `ital,wght@${[...weights.map((w) => `0,${w}`), ...weights.map((w) => `1,${w}`)].join(';')}`
     : `wght@${weights.join(';')}`
   return `${FONTS_CSS_BASE}?family=${family}:${axis}&display=swap`
 }
 
-/** jsDelivr file for one Fontsource weight/style, latin subset. */
-export function fontsourceFileUrl(id: string, weight: number, style: string): string {
-  return `https://cdn.jsdelivr.net/fontsource/fonts/${id}@latest/${REMOTE_SUBSET}-${weight}-${style}.woff2`
+/**
+ * URL of one Fontsource file. A pinned version gives the npm package file, which
+ * never changes under the same version. A font installed before versions were
+ * recorded has none and keeps the old unpinned jsDelivr path until reinstalled.
+ */
+export function fontsourceFileUrl(font: { id: string; version?: string }, weight: number, style: string, subset: string = REMOTE_SUBSET): string {
+  if (font.version) {
+    return `https://cdn.jsdelivr.net/npm/@fontsource/${font.id}@${font.version}/files/${font.id}-${subset}-${weight}-${style}.woff2`
+  }
+  return `https://cdn.jsdelivr.net/fontsource/fonts/${font.id}@latest/${subset}-${weight}-${style}.woff2`
 }
 
 /**
@@ -60,11 +84,13 @@ export function remoteStylesheetUrls(fonts: readonly InstalledFont[]): string[] 
   const urls = sanitizeInstalledFonts(fonts)
     .filter((font) => font.source === 'google' && !font.local)
     .map(googleStylesheetUrl)
+    .filter((url) => url !== '')
   return [...new Set(urls)]
 }
 
-function fontFace(family: string, weight: number, style: string, url: string, format: string): string {
-  return `@font-face { font-family: "${family}"; font-style: ${style}; font-weight: ${weight}; font-display: swap; src: url("${url}") format("${format}"); }`
+function fontFace(family: string, weight: number, style: string, url: string, format: string, subset?: FontSubset): string {
+  const range = subset ? `; unicode-range: ${UNICODE_RANGE[subset]}` : ''
+  return `@font-face { font-family: "${family}"; font-style: ${style}; font-weight: ${weight}; font-display: swap; src: url("${url}") format("${format}")${range}; }`
 }
 
 /**
@@ -77,16 +103,20 @@ export function buildFontCss(fonts: readonly InstalledFont[]): string {
   for (const font of sanitizeInstalledFonts(fonts)) {
     if (font.local || font.source === 'upload') {
       for (const [key, url] of Object.entries(font.files)) {
-        const [weight, style] = key.split('-')
+        const [weight, style, subset] = key.split('-')
         const format = fontFormatFromUrl(url) ?? 'woff2'
-        rules.push(fontFace(font.family, Number(weight), style, url, FONT_FORMATS[format].css))
+        // Upload fonts have no subset and keep no range. A Fontsource file names its subset in the key.
+        const range = font.source === 'upload' ? undefined : ((subset ?? DEFAULT_SUBSET) as FontSubset)
+        rules.push(fontFace(font.family, Number(weight), style, url, FONT_FORMATS[format].css, range))
       }
     } else if (font.source === 'fontsource') {
       const styles = font.italic ? ['normal', 'italic'] : ['normal']
-      for (const weight of font.weights) {
-        for (const style of styles) {
-          const url = fontsourceFileUrl(font.id, weight, style)
-          rules.push(fontFace(font.family, weight, style, url, 'woff2'))
+      for (const subset of font.subsets ?? [DEFAULT_SUBSET]) {
+        for (const weight of font.weights) {
+          for (const style of styles) {
+            const url = fontsourceFileUrl(font, weight, style, subset)
+            rules.push(fontFace(font.family, weight, style, url, 'woff2', subset as FontSubset))
+          }
         }
       }
     }

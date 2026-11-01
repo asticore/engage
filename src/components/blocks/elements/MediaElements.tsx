@@ -22,6 +22,8 @@ export const ImageElement: React.FC<P> = (p) => {
   const img = media?.url ? (
     <img decoding="async"
       src={media.url}
+      srcSet={media.srcSet}
+      sizes={media.srcSet ? `${width}vw` : undefined}
       alt={alt}
       loading="lazy"
       className="el-image__img"

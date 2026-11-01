@@ -15,7 +15,15 @@ export function iconName(v: unknown): string {
 }
 
 /** A media item as renderers need it. The canvas and the live site both resolve stored ids to this shape. */
-export type MediaRef = { id?: number; url?: string | null; alt?: string | null }
+export type MediaRef = { id?: number; url?: string | null; alt?: string | null; srcSet?: string }
+
+/** A srcset value written by the server (see ElementWithMedia). Each candidate must be a plain path or https address with a width descriptor. */
+export function safeSrcSet(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.length > 2000) return undefined
+  const candidates = value.split(', ')
+  const ok = candidates.every((candidate) => /^(\/[A-Za-z0-9._~\-/?=&%+,]*|https:\/\/[A-Za-z0-9.\-]+\/[A-Za-z0-9._~\-/?=&%+,]*) \d{1,5}w$/.test(candidate))
+  return ok ? value : undefined
+}
 
 export const str = (v: unknown, fallback = ''): string => (typeof v === 'string' ? v : typeof v === 'number' ? String(v) : fallback)
 
@@ -119,7 +127,8 @@ export function mediaOf(v: unknown): MediaRef | null {
   if (typeof v === 'object') {
     const m = v as MediaRef
     const url = safeUrl(m.url)
-    return url ? { id: m.id, url, alt: m.alt } : null
+    const srcSet = safeSrcSet(m.srcSet)
+    return url ? { id: m.id, url, alt: m.alt, ...(srcSet ? { srcSet } : {}) } : null
   }
   return null
 }
