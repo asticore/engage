@@ -46,7 +46,7 @@ const redirectUris = {
 }
 
 function screenFor(props: { isAdmin: boolean; status?: TrackingConnectionStatus; engageSecretSet?: boolean }) {
-  return h(TrackingConnectionsClient, { status: props.status ?? status, google, redirectUris, isAdmin: props.isAdmin, engageSecretSet: props.engageSecretSet ?? true })
+  return h(TrackingConnectionsClient, { status: props.status ?? status, google, redirectUris, isAdmin: props.isAdmin, engageSecretSet: props.engageSecretSet ?? true, versions: {} })
 }
 
 afterEach(() => {

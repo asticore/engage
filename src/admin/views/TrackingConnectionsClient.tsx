@@ -1,10 +1,12 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useState } from 'react'
+import { Suspense, useContext, useRef, useState } from 'react'
 
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
+import { ConnectionVersionsContext, rememberVersions, versionHeaders, type VersionRef } from '@/features/integrations/admin/connectionVersions'
+import { CONFLICT_MESSAGE, type ConnectionVersions } from '@/features/integrations/versionHeaders'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { GoogleConnectionStatus } from '@/features/google/status'
 import { allDone, connectionSetup, type SetupCheck } from '@/features/tracking/connect/setup'
@@ -22,6 +24,8 @@ type Props = {
   isAdmin: boolean
   /** Whether ENGAGE_SECRET is set on the server. A yes or no only; the value never reaches the browser. */
   engageSecretSet: boolean
+  /** The versions of the globals this screen writes when it loaded (stale-tab check, Task 9c). */
+  versions: ConnectionVersions
 }
 
 type Tone = 'ok' | 'error'
@@ -33,10 +37,11 @@ type T = ReturnType<typeof useAdminT>
 const str = (value: unknown): string => (typeof value === 'string' ? value : '')
 
 /** One call to one of our own routes. A network failure becomes a reason, never a thrown error. */
-async function call(url: string, init?: RequestInit): Promise<Json> {
+async function call(url: string, init?: RequestInit, versions: VersionRef | null = null): Promise<Json> {
   try {
-    const response = await fetch(url, { credentials: 'include', ...init })
+    const response = await fetch(url, { credentials: 'include', ...init, headers: { ...(init?.headers as Record<string, string> | undefined), ...versionHeaders(versions) } })
     const body = (await response.json().catch((): null => null)) as Json | null
+    rememberVersions(versions, body)
     return body ?? { ok: false, reason: 'error' }
   } catch {
     return { ok: false, reason: 'network' }
@@ -47,6 +52,7 @@ const jsonInit = (body: unknown): RequestInit => ({ method: 'POST', headers: { '
 
 /** The reason codes the routes return, as sentences. Provider text is never shown. */
 function reasonText(t: T, reason: string): string {
+  if (reason === 'conflict') return CONFLICT_MESSAGE
   if (reason === 'not-connected') return t('tconnect.err_not_connected')
   if (reason === 'expired') return t('tconnect.notice_expired')
   if (reason === 'not-listed' || reason === 'bad-value') return t('tconnect.err_not_listed')
@@ -211,12 +217,13 @@ function SignInRow(props: {
   onError: (text: string) => void
   t: T
 }) {
+  const versions = useContext(ConnectionVersionsContext)
   const { t, status } = props
   const [busy, setBusy] = useState(false)
   const disconnect = async () => {
     if (!window.confirm(t('tconnect.confirm_disconnect', { provider: props.name }))) return
     setBusy(true)
-    const body = await call(`/api/tracking-connect/${props.provider}/disconnect`, jsonInit({}))
+    const body = await call(`/api/tracking-connect/${props.provider}/disconnect`, jsonInit({}), versions)
     setBusy(false)
     if (body.ok === true) props.onDisconnected(body.revokedAtProvider === true)
     else props.onError(reasonText(t, str(body.reason)))
@@ -253,6 +260,7 @@ function SignInRow(props: {
 
 /** The app ID and secret form. The secret is admin-only; the ID is shown to everyone. */
 function AppForm(props: { provider: 'meta' | 'tiktok'; status: ProviderStatus; isAdmin: boolean; onSaved: (appId: string, signedOut: boolean) => void; t: T }) {
+  const versions = useContext(ConnectionVersionsContext)
   const { t, status } = props
   const [appId, setAppId] = useState(status.appId)
   const [secret, setSecret] = useState('')
@@ -261,7 +269,7 @@ function AppForm(props: { provider: 'meta' | 'tiktok'; status: ProviderStatus; i
   const save = async () => {
     setBusy(true)
     setNotice(null)
-    const body = await call(`/api/tracking-connect/${props.provider}/app`, jsonInit({ appId, appSecret: secret }))
+    const body = await call(`/api/tracking-connect/${props.provider}/app`, jsonInit({ appId, appSecret: secret }), versions)
     setBusy(false)
     if (body.ok === true) {
       setSecret('')
@@ -322,6 +330,7 @@ function PlatformCard(props: {
   onNotice: (notice: Notice) => void
   t: T
 }) {
+  const versions = useContext(ConnectionVersionsContext)
   const { t, status } = props
   const [current, setCurrent] = useState(status.currentPixelId)
   const ready = Boolean(status.appId && status.hasAppSecret)
@@ -362,8 +371,8 @@ function PlatformCard(props: {
         saved={pixelSaved}
         disabled={!status.connected}
         emptyText={t('tconnect.empty_list')}
-        load={() => call(`/api/tracking-connect/${props.provider}/pixels`)}
-        save={(value) => call(`/api/tracking-connect/${props.provider}/pick`, jsonInit({ value }))}
+        load={() => call(`/api/tracking-connect/${props.provider}/pixels`, undefined, versions)}
+        save={(value) => call(`/api/tracking-connect/${props.provider}/pick`, jsonInit({ value }), versions)}
         savedMessage={(body) => pixelMessage(t, body)}
         onSaved={(body) => setCurrent(str(body.pixelId))}
       />
@@ -387,6 +396,7 @@ function GoogleCard({
   connected: boolean
   setConnected: (value: boolean) => void
 }) {
+  const versions = useContext(ConnectionVersionsContext)
   const [ga4, setGa4] = useState(google.ga4MeasurementId)
   const [gtm, setGtm] = useState(google.gtmContainerId)
   const [notice, setNotice] = useState<Notice | null>(null)
@@ -396,7 +406,7 @@ function GoogleCard({
 
   const disconnect = async () => {
     if (!window.confirm(t('tconnect.confirm_disconnect', { provider: 'Google' }))) return
-    const body = await call('/api/google/disconnect', jsonInit({}))
+    const body = await call('/api/google/disconnect', jsonInit({}), versions)
     if (body.ok === true) {
       setConnected(false)
       setNotice({ tone: 'ok', text: t('tconnect.disconnected', { provider: 'Google' }) })
@@ -440,8 +450,8 @@ function GoogleCard({
         saved={ga4 ? t('tconnect.current_value', { value: ga4 }) : t('tconnect.nothing_chosen')}
         disabled={!connected}
         emptyText={t('tconnect.empty_list')}
-        load={() => call('/api/tracking-connect/google/lists?kind=ga4')}
-        save={(value) => call('/api/tracking-connect/google/pick', jsonInit({ kind: 'ga4', value }))}
+        load={() => call('/api/tracking-connect/google/lists?kind=ga4', undefined, versions)}
+        save={(value) => call('/api/tracking-connect/google/pick', jsonInit({ kind: 'ga4', value }), versions)}
         savedMessage={(body) => (str(body.value) ? t('tconnect.picked', { value: str(body.value) }) : t('tconnect.google_no_stream'))}
         onSaved={(body) => setGa4(str(body.value) || ga4)}
       />
@@ -452,8 +462,8 @@ function GoogleCard({
         saved={gtm ? t('tconnect.current_value', { value: gtm }) : t('tconnect.nothing_chosen')}
         disabled={!connected}
         emptyText={t('tconnect.empty_list')}
-        load={() => call('/api/tracking-connect/google/lists?kind=gtm')}
-        save={(value) => call('/api/tracking-connect/google/pick', jsonInit({ kind: 'gtm', value }))}
+        load={() => call('/api/tracking-connect/google/lists?kind=gtm', undefined, versions)}
+        save={(value) => call('/api/tracking-connect/google/pick', jsonInit({ kind: 'gtm', value }), versions)}
         savedMessage={(body) => t('tconnect.picked', { value: str(body.value) })}
         onSaved={(body) => setGtm(str(body.value) || gtm)}
       />
@@ -558,10 +568,13 @@ function Body({ status, google, redirectUris, isAdmin, engageSecretSet }: Props)
 
 /** The Tracking connections screen (/admin/tracking-connections). Sign-ins for Google, Meta and TikTok. */
 export function TrackingConnectionsClient(props: Props) {
+  const versionRef = useRef<ConnectionVersions>(props.versions)
   return (
-    <Suspense fallback={null}>
-      <Body {...props} />
-    </Suspense>
+    <ConnectionVersionsContext.Provider value={versionRef}>
+      <Suspense fallback={null}>
+        <Body {...props} />
+      </Suspense>
+    </ConnectionVersionsContext.Provider>
   )
 }
 

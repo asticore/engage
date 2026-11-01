@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useContext, useState } from 'react'
+
+import { ConnectionVersionsContext, rememberVersions, versionHeaders } from '@/features/integrations/admin/connectionVersions'
 
 import type { PickerKind } from '@/features/google/constants'
 
@@ -26,6 +28,7 @@ type Props = {
  * save it. The server checks the choice against Google before saving.
  */
 export function PickerRow({ kind, label, help, current, currentLabel, disabled }: Props) {
+  const versions = useContext(ConnectionVersionsContext)
   const [items, setItems] = useState<Item[] | null>(null)
   const [selected, setSelected] = useState(current)
   const [saved, setSaved] = useState(current)
@@ -42,6 +45,7 @@ export function PickerRow({ kind, label, help, current, currentLabel, disabled }
     try {
       const response = await fetch(`/api/admin-google-lists?kind=${kind}`, { credentials: 'include' })
       const body = (await response.json().catch((): null => null)) as { ok?: boolean; items?: Item[]; message?: string } | null
+      rememberVersions(versions, body)
       if (response.ok && body?.ok && Array.isArray(body.items)) {
         setItems(body.items)
         if (body.items.length === 0) setNotice({ tone: 'error', text: 'Google listed nothing for this account. Check that it has access to this service.', notes: [] })
@@ -63,10 +67,11 @@ export function PickerRow({ kind, label, help, current, currentLabel, disabled }
       const response = await fetch('/api/admin-google-picks', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...versionHeaders(versions) },
         body: JSON.stringify({ kind, value: selected }),
       })
       const body = (await response.json().catch((): null => null)) as { ok?: boolean; message?: string; error?: string; notes?: string[] } | null
+      rememberVersions(versions, body)
       if (response.ok && body?.ok) {
         setSaved(selected)
         setSavedLabel(options.find((item) => item.value === selected)?.label ?? selected)

@@ -6,6 +6,7 @@ import { readGoogleConnection } from '@/features/google/auth'
 import { connectRedirectUri } from '@/features/tracking/connect/constants'
 import { redirectUriFor } from '@/features/google/constants'
 import { publicOrigin } from '@/features/google/origin'
+import { currentVersions } from '@/features/integrations/staleTab'
 import { readConnectionDoc } from '@/features/tracking/connect/store'
 import { toTrackingConnectionStatus } from '@/features/tracking/connect/status'
 import { adminHref } from '@/features/security/adminPath'
@@ -29,6 +30,7 @@ export async function TrackingConnectionsView() {
   const integrations = (await engine.findGlobal({ slug: 'integrations', depth: 0, overrideAccess: true }).catch((): null => null)) as Record<string, unknown> | null
   const status = toTrackingConnectionStatus(connections, integrations)
   const google = await readGoogleConnection(engine)
+  const versions = await currentVersions(engine)
 
   const incoming = await headers()
   const host = incoming.get('host')
@@ -41,6 +43,7 @@ export async function TrackingConnectionsView() {
       google={google}
       isAdmin={context.isAdmin}
       engageSecretSet={Boolean(process.env.ENGAGE_SECRET)}
+      versions={versions}
       redirectUris={{
         meta: connectRedirectUri(origin, 'meta'),
         tiktok: connectRedirectUri(origin, 'tiktok'),
