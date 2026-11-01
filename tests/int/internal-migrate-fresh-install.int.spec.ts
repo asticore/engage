@@ -221,6 +221,8 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
       'clarity_project_id',
       'meta_pixel_pixel_id',
       'cloudflare_zone_id',
+      'cloudflare_account_id',
+      'cloudflare_worker_name',
       'cloudflare_api_token',
       'cloudflare_purge_on_publish',
       'openai_api_key',
@@ -658,6 +660,22 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
       await up({ db: drizzle(proxy.env.D1) } as never)
       const left = await proxy.env.D1.prepare("SELECT COUNT(*) AS n FROM `eg_preferences` WHERE `key` = 'edit-screen-collapse'").first<{ n: number }>()
       expect(left?.n ?? 0).toBe(0)
+    }
+  })
+
+  it('adds the Connect domain columns and the per-domain slug index, registered after the media formats migration', async () => {
+    const { migrations } = await import('@/migrations/index')
+    const names = migrations.map((x) => x.name)
+    const at = names.indexOf('20270220_100000_cloudflare_worker_domains')
+    expect(at).toBeGreaterThan(names.indexOf('20270210_100000_media_formats_video_links'))
+    expect(names.indexOf('20270220_110000_domain_scoped_content')).toBeGreaterThan(at)
+    expect(names.slice(at + 1).every((x) => x > '20270220_100000_cloudflare_worker_domains')).toBe(true)
+
+    const integrations = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_integrations`)').all()).results as { name: string }[]
+    expect(integrations.map((c) => c.name)).toEqual(expect.arrayContaining(['cloudflare_account_id', 'cloudflare_worker_name']))
+    for (const index of ['eg_posts_scope_slug_uidx', 'eg_products_scope_slug_uidx']) {
+      const row = (await proxy.env.D1.prepare(`SELECT sql FROM sqlite_master WHERE type='index' AND name='${index}'`).first()) as { sql?: string } | null
+      expect(row?.sql ?? '', index).toMatch(/CREATE UNIQUE INDEX/i)
     }
   })
 

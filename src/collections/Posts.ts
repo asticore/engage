@@ -2,6 +2,7 @@ import { domainSlugValidate } from '@/features/domains/slugs'
 import { webhookContentAfterChange } from '@/features/webhooks/hooks'
 import { pageAudioField } from '@/features/pageAudio/fields'
 import { domainScopedAccess, domainWriteGuard } from '@/features/domains/access'
+import { domainSiteDefault } from '@/features/domains/hooks'
 import { availableDomainsField } from '@/features/domains/field'
 import { machineAutoDraftAfterChange } from '@/features/multilingual/machine/autoDraft'
 import { outdatedAfterChange } from '@/features/multilingual/outdated'
@@ -106,7 +107,7 @@ export const Posts: CollectionConfig = {
     trashedAtField,
   ],
   hooks: {
-    beforeChange: [domainWriteGuard, authorshipBeforeChange, trashGuard, seoEditGuard, readingTimeBeforeChange, contentEditGuard, publishGuard, pageSpeedBeforeChange, embedShortLinksBeforeChange],
+    beforeChange: [domainSiteDefault, domainWriteGuard, authorshipBeforeChange, trashGuard, seoEditGuard, readingTimeBeforeChange, contentEditGuard, publishGuard, pageSpeedBeforeChange, embedShortLinksBeforeChange],
     afterChange: [publishAfterChange('posts'), slugRedirectAfterChange('posts'), pageSpeedAfterChange('posts'), indexNowAfterChange('posts'), machineAutoDraftAfterChange('posts'), outdatedAfterChange('posts'), webhookContentAfterChange('posts')],
     afterDelete: [indexNowAfterDelete('posts')],
   },

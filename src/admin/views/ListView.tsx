@@ -1,4 +1,6 @@
 import { adminHref } from '@/features/security/adminPath'
+import { domainScopeWhere } from '@/features/domains/access'
+import { resolveAdminSite } from '@/features/domains/adminSite'
 import { loadFormUsage, withUsageLinks } from '@/features/forms/pageUsageServer'
 import { FormUsageTable } from './FormUsage'
 import { getAdminRoot } from '@/features/security/settings'
@@ -49,6 +51,8 @@ const LEGACY_LIST_TABS: Record<string, { collection: string; tab: string }> = {
   'event-rsvps': { collection: 'events', tab: 'rsvps' },
   'form-submissions': { collection: 'forms', tab: 'submissions' },
 }
+/** Collections that carry "Available on domains", so the site switcher narrows them. */
+const SITE_FILTERED_COLLECTIONS = new Set(['pages', 'posts', 'products'])
 
 export async function ListView({
   collectionSlug,
@@ -168,10 +172,15 @@ export async function ListView({
     ? await context.engine.count({ collection: collectionSlug, where: { trashedAt: { exists: true } } as any, user: context.user }).then((r) => r.totalDocs).catch(() => 0)
     : 0
 
+  // Site switcher: pages, posts and products show the chosen site plus shared content (features/domains/adminSite.ts).
+  const siteHost = SITE_FILTERED_COLLECTIONS.has(collectionSlug) ? (await resolveAdminSite(context.engine, context.user as never)).host : null
+  const siteClause = siteHost ? domainScopeWhere([siteHost]) : null
+  const scopedWhere = siteClause ? (listWhere ? { and: [listWhere, siteClause] } : siteClause) : listWhere
+
   // Execute find
   const result = await context.engine.find({
     collection: collectionSlug,
-    where: listWhere as any,
+    where: scopedWhere as any,
     sort: findArgs.sort,
     page: findArgs.page,
     limit: findArgs.limit,
