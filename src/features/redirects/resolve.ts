@@ -47,6 +47,14 @@ async function getD1(): Promise<D1Database | null> {
 }
 
 /**
+ * The D1 database the redirect tables live in, or null outside the Worker (tests
+ * inject one with __setD1ForTests). Shared with the 404 log.
+ */
+export async function getRedirectsD1(): Promise<D1Database | null> {
+  return getD1()
+}
+
+/**
  * Invalidate the cached redirects so the next request re-reads from D1
  */
 export function invalidateRedirectsCache(): void {

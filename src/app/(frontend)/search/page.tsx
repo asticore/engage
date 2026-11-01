@@ -9,6 +9,7 @@ import { viewerFromRequestContext } from '@/features/visibility/gate'
 import { getFeatureFlags } from '@/utilities/features'
 import { getAllResolvedPages } from '@/utilities/pagePaths'
 import { productTaxonomyMatches } from '@/features/ecommerce/lib/productTaxonomy'
+import { brandIdsWhere, brandIn, tagIdsWhere, tagIn } from '@/features/ecommerce/server/taxonomyFilters'
 import { storeTexts } from '@/features/uiStrings/storeTextsServer'
 import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
@@ -125,15 +126,25 @@ async function searchProducts(query: string): Promise<Found> {
     depth: 0,
   })) as unknown as { docs: Product[]; totalDocs: number }
   const titleVisible = await excludeProtected('products', docs, viewer)
-  const { docs: scanned } = (await engine.find({
-    collection: 'products',
-    where: { _status: { equals: 'published' } },
-    sort: '-createdAt',
-    limit: MAX_SCAN,
-    depth: 1,
-  })) as unknown as { docs: Product[] }
+  // Products whose brand or tag name contains the query: the matching brand and tag ids are read first,
+  // then the products are asked for by id, so the whole shop is searched and not only the newest products.
+  const needle = query.trim().toLowerCase()
+  const [brandIds, tagIds] = await Promise.all([
+    brandIdsWhere(engine, (name) => name.toLowerCase().includes(needle)),
+    tagIdsWhere(engine, (name) => name.toLowerCase().includes(needle)),
+  ])
+  const taxonomyClauses = [...(brandIds.length > 0 ? [brandIn(brandIds)] : []), ...(tagIds.length > 0 ? [tagIn(tagIds)] : [])]
+  const { docs: taxonomyDocs } = (taxonomyClauses.length > 0
+    ? await engine.find({
+        collection: 'products',
+        where: { and: [{ _status: { equals: 'published' } }, { or: taxonomyClauses }] },
+        sort: '-createdAt',
+        limit: MAX_SCAN,
+        depth: 1,
+      })
+    : { docs: [] }) as unknown as { docs: Product[] }
   const titleIds = new Set(docs.map((product) => product.id))
-  const taxonomyMatches = scanned.filter((product) => !titleIds.has(product.id) && productTaxonomyMatches(product, query))
+  const taxonomyMatches = taxonomyDocs.filter((product) => !titleIds.has(product.id) && productTaxonomyMatches(product, query))
   const taxonomyVisible = await excludeProtected('products', taxonomyMatches, viewer)
   const hits = [...titleVisible, ...taxonomyVisible]
     .filter((product) => product.slug)

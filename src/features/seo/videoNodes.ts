@@ -2,10 +2,14 @@ import { parseVideoUrl } from '@/components/blocks/elements/videoUrl'
 
 /**
  * VideoObject structured data for the `video` elements on a page. Pure: the page
- * data comes in as plain objects. A video is described only when its name,
- * thumbnail and upload date can all be worked out from the page. Vimeo, uploaded
- * files and any video without a thumbnail get no node (there is no thumbnail to
- * read for them).
+ * data comes in as plain objects (videoResolve.ts looks up what is not on the
+ * page: the Vimeo thumbnail and the media item date). A video is described only
+ * when its name, thumbnail and upload date can all be worked out:
+ * - YouTube: the thumbnail is the video's own picture;
+ * - Vimeo: the thumbnail comes from Vimeo's oEmbed (resolved beforehand);
+ * - an uploaded file: the thumbnail is the poster picture chosen for it.
+ * The upload date is the media item's date when the video is a media item, and
+ * otherwise the page's publish date.
  */
 
 type JsonLdNode = Record<string, unknown>
@@ -13,9 +17,32 @@ type JsonLdNode = Record<string, unknown>
 /** Most video nodes per page. */
 export const MAX_VIDEO_NODES = 10
 
-export type VideoElementFact = { url: string; title: string; caption: string }
+export type VideoElementFact = {
+  url: string
+  title: string
+  caption: string
+  /** The media library file picked for the element (upload or video link), when there is one. */
+  mediaUrl?: string
+  mediaId?: number
+  /** The poster picture of the element, when one is picked. */
+  posterUrl?: string
+}
+
+/** A video element with what the page does not carry filled in by videoResolve.ts. */
+export type VideoResolvedFact = VideoElementFact & { thumbnailUrl?: string; uploadDate?: string }
 
 const str = (value: unknown): string => (typeof value === 'string' ? value.trim() : '')
+
+/** The url and numeric id of a media reference (a populated media item or a bare id). */
+export function mediaRefOf(value: unknown): { url?: string; id?: number } {
+  if (typeof value === 'number' && Number.isFinite(value)) return { id: value }
+  if (!value || typeof value !== 'object') return {}
+  const record = value as { url?: unknown; id?: unknown }
+  const out: { url?: string; id?: number } = {}
+  if (typeof record.url === 'string' && record.url.trim()) out.url = record.url.trim()
+  if (typeof record.id === 'number' && Number.isFinite(record.id)) out.id = record.id
+  return out
+}
 
 /** Every `video` element found anywhere in the page's blocks or layout, in order. */
 export function videoElementsOf(doc: Record<string, unknown>): VideoElementFact[] {
@@ -30,7 +57,13 @@ export function videoElementsOf(doc: Record<string, unknown>): VideoElementFact[
     const record = value as Record<string, unknown>
     if (record.blockType === 'element' && record.elementType === 'video') {
       const props = record.props && typeof record.props === 'object' ? (record.props as Record<string, unknown>) : {}
-      found.push({ url: str(props.url), title: str(props.title), caption: str(props.caption) })
+      const fact: VideoElementFact = { url: str(props.url), title: str(props.title), caption: str(props.caption) }
+      const picked = mediaRefOf(props.video)
+      if (picked.url) fact.mediaUrl = picked.url
+      if (picked.id !== undefined) fact.mediaId = picked.id
+      const poster = mediaRefOf(props.poster).url
+      if (poster) fact.posterUrl = poster
+      found.push(fact)
       return
     }
     for (const item of Object.values(record)) walk(item, depth + 1)
@@ -42,25 +75,26 @@ export function videoElementsOf(doc: Record<string, unknown>): VideoElementFact[
 
 /** VideoObject nodes for the page's video elements that have everything Google needs. */
 export function videoObjectNodes(
-  elements: VideoElementFact[],
+  elements: VideoResolvedFact[],
   page: { title: string; description?: string; publishedDate?: string },
 ): JsonLdNode[] {
   const nodes: JsonLdNode[] = []
   for (const element of elements) {
-    const source = parseVideoUrl(element.url)
+    const source = parseVideoUrl(element.mediaUrl || element.url)
     if (!source) continue
     const name = element.title || element.caption || page.title
-    // The page's publish date stands in for the upload date: the element does not record its own.
-    const uploadDate = page.publishedDate
+    const uploadDate = element.uploadDate || page.publishedDate
     const videoId = source.kind === 'youtube' ? source.src.split('/embed/')[1] : undefined
-    if (!name || !uploadDate || !videoId) continue
+    const thumbnailUrl = source.kind === 'youtube' && videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : element.thumbnailUrl
+    if (!name || !uploadDate || !thumbnailUrl) continue
     const node: JsonLdNode = {
       '@type': 'VideoObject',
       name,
-      thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      thumbnailUrl,
       uploadDate,
-      embedUrl: source.src,
     }
+    if (source.kind === 'file') node.contentUrl = source.src
+    else node.embedUrl = source.src
     const description = element.caption || page.description
     if (description) node.description = description
     nodes.push(node)

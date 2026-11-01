@@ -54,6 +54,10 @@ export const sendViaSesApi: EmailAdapter<SesConfig> = (message, config) =>
             ...(message.html ? { Html: { Data: message.html, Charset: 'UTF-8' } } : {}),
             ...(message.text ? { Text: { Data: message.text, Charset: 'UTF-8' } } : {}),
           },
+          // SESv2 takes extra message headers here, such as List-Unsubscribe and List-Unsubscribe-Post.
+          ...(message.headers && Object.keys(message.headers).length > 0
+            ? { Headers: Object.entries(message.headers).map(([Name, Value]) => ({ Name, Value })) }
+            : {}),
         },
       },
     })

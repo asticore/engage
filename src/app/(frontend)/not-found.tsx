@@ -2,6 +2,7 @@ import { storeTexts } from '@/features/uiStrings/storeTextsServer'
 import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 import React from 'react'
 
 import { BlockRenderer } from '@/components/blocks/BlockRenderer'
@@ -10,13 +11,25 @@ import { resolveDocumentContent } from '@/features/customFields/server'
 import { getNotFoundPage } from '@/features/site/pages'
 import { getFeatureFlags } from '@/utilities/features'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
+import { recordNotFound } from '@/features/redirects/notFoundLog'
 
 /**
  * Shown for any address that does not exist under the public site. Next answers with HTTP 404 for it
  * (notFound() in [...slug]/page.tsx), so the status is right either way. When a 404 page is picked in
  * Site pages, its blocks are rendered here; otherwise a short built-in message is shown.
  */
+/** Counts this address in the 404 log (Redirects, 404s tab). Never throws. */
+async function logNotFound() {
+  try {
+    const reader = await headers()
+    await recordNotFound(reader.get('x-pathname') || reader.get('next-url'), reader.get('referer'))
+  } catch {
+    // Outside a request, or no headers: nothing to log.
+  }
+}
+
 export default async function NotFound() {
+  await logNotFound()
   const dict = await storeTexts()
   const t = (key: UiStringKey) => translateWith(dict, key)
   const page = await getNotFoundPage()

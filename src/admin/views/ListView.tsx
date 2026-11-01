@@ -29,6 +29,8 @@ import { resolveComponent } from '@/admin/componentRegistry'
 import { AllSubmissionsTab } from './results/AllSubmissionsTab'
 import { AllRsvpsTab } from './results/AllRsvpsTab'
 import { ABResultsOverview } from './results/ABResultsOverview'
+import { NotFoundsTab } from '@/features/redirects/admin/NotFoundsTab'
+import { loadNotFoundTab, type PageFinder } from '@/features/redirects/notFoundAdmin'
 import { MediaGalleryView } from '@/views/media/MediaGalleryView'
 import { EventsCalendarView } from '@/views/events/EventsCalendarView'
 import { PagesTreeView } from './PagesTreeView'
@@ -88,6 +90,9 @@ export async function ListView({
     } else if (collectionSlug === 'events') {
       const events = await context.engine.find({ collection: 'events', depth: 0, limit: 200, sort: '-startDate', user: context.user }).catch(() => ({ docs: [] as unknown[] }))
       panel = <AllRsvpsTab events={events.docs.map((doc) => ({ id: (doc as { id: number }).id, title: String((doc as { title?: unknown }).title ?? `Event #${(doc as { id: number }).id}`) }))} />
+    } else if (collectionSlug === 'redirects') {
+      const canReadPages = context.isAdmin || context.can('pages', 'read')
+      panel = <NotFoundsTab rows={await loadNotFoundTab(context.engine as unknown as PageFinder, canReadPages)} />
     } else {
       panel = <ABResultsOverview engine={context.engine} user={context.user} />
     }

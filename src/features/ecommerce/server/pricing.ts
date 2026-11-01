@@ -6,6 +6,7 @@ import { toCents } from '../lib/money'
 import { currencyFromShopSettings } from '../lib/shopCurrency'
 import { cleanRecipient, giftAmountError, normaliseGiftCardSettings } from '../lib/storedValue'
 import { PAID_STATUSES } from '../lib/orderStatus'
+import { holdCouponUse } from './couponHold'
 import type { ShippingAddress, ShippingOption, ShippingZone } from '../lib/shipping'
 import { DEFAULT_TAX_SETTINGS, type TaxClass, type TaxRate, type TaxSettings } from '../lib/tax'
 import { fetchLiveRates, normaliseShippingConfig } from '../shipping/registry'
@@ -320,8 +321,8 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
   const code = normalizeCode(input.couponCode)
   let coupon = code ? await findCoupon(engine, code) : null
   const uses = coupon && input.email ? await couponUsesBy(engine, code, input.email, { excludeCartId: input.cartId }) : 0
-  if (coupon?.usageLimit) {
-    // Pending checkouts hold a use for 30 minutes so concurrent payers cannot overshoot the limit.
+  if (coupon?.usageLimit && !input.strict) {
+    // A quote shows the limit as the pending checkouts leave it. The final checkout is decided by its own atomic hold instead.
     const held = await couponReservations(engine, code, { excludeCartId: input.cartId })
     coupon = { ...coupon, usageCount: (coupon.usageCount ?? 0) + held }
   }
@@ -345,6 +346,13 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
   })
   if (!result.ok) throw new CheckoutError((result as { error: string }).error)
   if (input.strict && result.couponError) throw new CheckoutError(result.couponError)
+  // The final checkout takes its place in the coupon's usage limit atomically (see couponHold.ts).
+  if (input.strict && coupon?.usageLimit && code && input.cartId !== undefined) {
+    // Loaded here, not at the top: the database module loads the schema, which loads the collections that use this file.
+    const db = await import('@/cms/db/connect').then((m) => m.resolveD1Binding()).catch((): null => null)
+    const held = await holdCouponUse(db as unknown as Parameters<typeof holdCouponUse>[0], code, Number(input.cartId), Number(coupon.usageLimit))
+    if (held === false) throw new CheckoutError(`Coupon "${code}" has reached its usage limit.`)
+  }
   return { totals: result as OrderTotals, config, lines }
 }
 

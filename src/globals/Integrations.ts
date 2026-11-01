@@ -570,10 +570,17 @@ export const Integrations: GlobalConfig = {
         },
         { name: 'showLogo', type: 'checkbox', label: 'Show a logo in the banner' },
         {
+          name: 'logo',
+          type: 'upload',
+          relationTo: 'media',
+          label: 'Logo picture',
+          admin: { description: 'Pick a picture from the media library. Used when the logo is switched on; it takes priority over the path below.' },
+        },
+        {
           name: 'logoUrl',
           type: 'text',
           label: 'Logo image URL',
-          admin: { description: 'Use a path like /api/media/file/logo.png (a file in the media library). Only used when the logo is switched on.' },
+          admin: { description: 'Use a path like /api/media/file/logo.png (a file in the media library). Only used when the logo is switched on and no picture is picked above.' },
         },
         { name: 'privacyPolicyUrl', type: 'text', label: 'Privacy policy URL' },
         { name: 'cookieSettingsLabel', type: 'text', label: 'Cookie settings link label' },

@@ -6,6 +6,8 @@ import { CONSENT_COOKIE_NAME, isCurrentRecord, parseRecord } from '@/features/co
 import { normaliseConsentConfig, scriptGate, type ConsentConfig } from '@/features/consent/config'
 import { GatedScript } from '@/features/consent/GatedScript'
 import { ConsentManager } from '@/features/consent/ConsentManager'
+import { consentLogToken } from '@/features/consent/logToken'
+import { resolveBannerLogo } from '@/features/consent/bannerLogo'
 import { requireOptIn } from '@/features/consent/regions'
 import { getPrivacyPolicyPath } from '@/features/site/pages'
 
@@ -84,7 +86,8 @@ const readConsentState = async (consent: ConsentConfig, country: string | null) 
 /** The consent banner alone, for when the SEO feature is off. */
 const ConsentOnly = async ({ consent, country }: { consent: ConsentConfig; country: string | null }) => {
   const { initialDecided, optIn } = await readConsentState(consent, country)
-  return <ConsentManager config={consent} optIn={optIn} initialDecided={initialDecided} />
+  const logToken = await consentLogToken(consent.policyVersion).catch((): null => null)
+  return <ConsentManager config={consent} optIn={optIn} initialDecided={initialDecided} logToken={logToken} reloadOnWithdraw={{ analytics: false, marketing: false }} />
 }
 
 /**
@@ -102,7 +105,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
   const integrations = await loadIntegrations()
   const analytics = seoOn ? (context.settings?.analytics as Record<string, unknown> | undefined) : undefined
   const privacyFallback = await getPrivacyPolicyPath().catch((): null => null)
-  const consent = normaliseConsentConfig(integrations, analytics, privacyFallback)
+  const consent = await resolveBannerLogo(normaliseConsentConfig(integrations, analytics, privacyFallback), integrations)
 
   // Consent is independent of SEO. With SEO off, the banner still shows when
   // consent is on; custom code and analytics tags come from SEO settings, so
@@ -126,6 +129,14 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
   const { gtmContainerId, ga4MeasurementId, metaPixelId, tiktokPixelId, clarityProjectId } = pickPublicIds(integrations, { analytics })
 
   const { initialDecided, optIn } = await readConsentState(consent, country)
+  const logToken = await consentLogToken(consent.policyVersion).catch((): null => null)
+  // Withdrawing needs a reload only for a tag or script that no consent signal or API reaches:
+  // GA4 and GTM without Consent Mode, TikTok, and custom code (its markup cannot be taken back).
+  const hasCustomCode = Boolean(headHtml || custom?.bodyEndScripts?.trim())
+  const reloadOnWithdraw = {
+    analytics: Boolean(((gtmContainerId || ga4MeasurementId) && !consent.consentModeV2) || hasCustomCode),
+    marketing: Boolean(tiktokPixelId || hasCustomCode),
+  }
 
   // Tracking events fire only where a platform is connected and an enabled event exists.
   const trackingEvents = await getPublicTrackingEvents()
@@ -143,7 +154,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
   return (
     <>
       {headHtml ? <GatedScript html={headHtml} category={scriptGate(consent, 'head')} label="head" /> : null}
-      <ConsentManager config={consent} optIn={optIn} initialDecided={initialDecided} />
+      <ConsentManager config={consent} optIn={optIn} initialDecided={initialDecided} logToken={logToken} reloadOnWithdraw={reloadOnWithdraw} />
       <AnalyticsLoader
         gtmContainerId={gtmContainerId}
         ga4MeasurementId={ga4MeasurementId}

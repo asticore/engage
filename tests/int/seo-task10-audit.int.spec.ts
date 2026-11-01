@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { buildAuditRow, ORPHAN_PROBLEM } from '@/features/seo/audit'
 import { internalPathOf, internalTargetsOf, isOrphan, pagePathOf, suggestInternalLinks } from '@/features/seo/internalLinks'
 import { loadAuditRows, type AuditFindEngine } from '@/features/seo/auditLoader'
@@ -7,6 +7,7 @@ import { changedSeoRows, rowKey } from '@/features/seo/auditEdits'
 import { analyze } from '@/features/seo/analysis/analyze'
 import { renderSitemapXml, type SitemapEntry } from '@/features/seo/sitemap'
 import { videoElementsOf, videoObjectNodes } from '@/features/seo/videoNodes'
+import { resolveVideoFacts } from '@/features/seo/videoResolve'
 import { buildFaqPageJsonLd, buildPageJsonLd } from '@/features/seo/pageSchema'
 import { slugRedirectPaths } from '@/features/redirects/slugChange'
 
@@ -90,6 +91,37 @@ describe('audit loader: orphans, suggestions and cornerstone', () => {
     expect(byTitle.Lonely.problems).toContain(ORPHAN_PROBLEM)
     expect(byTitle.Self.orphan).toBe(true)
     expect(byTitle.Home.orphan).toBe(false)
+  })
+
+  it('counts links from the header menu, its children, the announcement bar and the footer as links', async () => {
+    const data = {
+      pages: [
+        { id: 1, title: 'Home', slug: 'home', isHomepage: true, _status: 'published', seo: {} },
+        { id: 2, title: 'Menu page', slug: 'menu-page', _status: 'published', seo: {} },
+        { id: 3, title: 'Child page', slug: 'child-page', _status: 'published', seo: {} },
+        { id: 4, title: 'Footer page', slug: 'footer-page', _status: 'published', seo: {} },
+        { id: 5, title: 'Bar page', slug: 'bar-page', _status: 'published', seo: {} },
+        { id: 6, title: 'Lonely', slug: 'lonely', _status: 'published', seo: {} },
+      ],
+    }
+    const globals: Record<string, Record<string, unknown>> = {
+      header: {
+        menu: [{ id: 'a', page: 2, children: [{ id: 'b', page: 3 }] }],
+        announcementBar: { linkUrl: '/bar-page' },
+      },
+      footer: { columns: [{ id: 'c', links: [{ id: 'd', page: 4 }, { id: 'e', customUrl: 'https://example.com/x' }] }] },
+    }
+    const engine: AuditFindEngine = {
+      find: async ({ collection }) => ({ docs: data[collection as 'pages'] ?? [] }),
+      findGlobal: async ({ slug }) => globals[slug] ?? null,
+    }
+    const rows = await loadAuditRows(engine, ['pages'])
+    const byTitle = Object.fromEntries(rows.map((r) => [r.title, r]))
+    expect(byTitle['Menu page'].orphan).toBe(false)
+    expect(byTitle['Child page'].orphan).toBe(false)
+    expect(byTitle['Footer page'].orphan).toBe(false)
+    expect(byTitle['Bar page'].orphan).toBe(false)
+    expect(byTitle.Lonely.orphan).toBe(true)
   })
 
   it('returns only the allowed collections as rows, and suggestions only for pages', async () => {
@@ -208,6 +240,48 @@ describe('video JSON-LD', () => {
     expect(videoObjectNodes(vimeo, { title: 'P', publishedDate: '2026-10-01' })).toEqual([])
     expect(videoObjectNodes(file, { title: 'P', publishedDate: '2026-10-01' })).toEqual([])
     expect(videoObjectNodes(videoElementsOf(page), { title: 'P' })).toEqual([])
+  })
+})
+
+describe('VideoObject for Vimeo, uploaded video and media dates', () => {
+  it('describes an uploaded file with its poster as thumbnail and the media item date as upload date', async () => {
+    const page = { blocks: [{ blockType: 'element', elementType: 'video', props: { video: { id: 7, url: '/media/clip.mp4' }, poster: { url: '/media/poster.jpg' }, title: 'Clip' } }] }
+    const facts = resolveVideoFacts(videoElementsOf(page), { baseUrl: 'https://site.example', mediaDate: async (id) => (id === 7 ? '2026-09-02T10:00:00.000Z' : undefined) })
+    const nodes = videoObjectNodes(await facts, { title: 'Page', publishedDate: '2026-10-01T00:00:00.000Z' })
+    expect(nodes).toEqual([
+      { '@type': 'VideoObject', name: 'Clip', thumbnailUrl: 'https://site.example/media/poster.jpg', uploadDate: '2026-09-02T10:00:00.000Z', contentUrl: 'https://site.example/media/clip.mp4' },
+    ])
+  })
+
+  it('gives an uploaded file no node without a poster picture', async () => {
+    const page = { blocks: [{ blockType: 'element', elementType: 'video', props: { video: { url: 'https://site.example/media/clip.mp4' }, title: 'Clip' } }] }
+    const facts = await resolveVideoFacts(videoElementsOf(page), { baseUrl: 'https://site.example', mediaDate: async () => undefined })
+    expect(videoObjectNodes(facts, { title: 'Page', publishedDate: '2026-10-01' })).toEqual([])
+  })
+
+  it('reads the Vimeo thumbnail from oEmbed and keeps the page date when the media item has none', async () => {
+    const calls: string[] = []
+    vi.stubGlobal('fetch', async (input: string) => {
+      calls.push(input)
+      return new Response(JSON.stringify({ thumbnail_url: 'https://i.vimeocdn.com/video/123_640.jpg' }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    })
+    try {
+      const page = { blocks: [{ blockType: 'element', elementType: 'video', props: { url: 'https://vimeo.com/123456789', title: 'Talk' } }] }
+      const facts = await resolveVideoFacts(videoElementsOf(page), { baseUrl: 'https://site.example', mediaDate: async () => undefined })
+      const nodes = videoObjectNodes(facts, { title: 'Page', publishedDate: '2026-10-01T00:00:00.000Z' })
+      expect(nodes).toEqual([
+        {
+          '@type': 'VideoObject',
+          name: 'Talk',
+          thumbnailUrl: 'https://i.vimeocdn.com/video/123_640.jpg',
+          uploadDate: '2026-10-01T00:00:00.000Z',
+          embedUrl: 'https://player.vimeo.com/video/123456789?dnt=1',
+        },
+      ])
+      expect(calls[0]).toContain('vimeo.com/api/oembed.json')
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 

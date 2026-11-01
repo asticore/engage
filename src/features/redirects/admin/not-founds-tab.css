@@ -1,0 +1,16 @@
+/* The Redirects screen "404s" tab. */
+.nf-tab { display: grid; gap: 12px; }
+.nf-note { margin: 0; font-size: 0.9rem; opacity: 0.8; }
+.nf-empty { opacity: 0.8; }
+.nf-table-wrap { overflow-x: auto; }
+.nf-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.nf-table th, .nf-table td { text-align: left; vertical-align: top; padding: 8px; border-bottom: 1px solid var(--color-border, #d9d9d9); }
+.nf-referrer { max-width: 22ch; overflow-wrap: anywhere; }
+.nf-input { min-width: 22ch; padding: 6px 8px; }
+.nf-select { padding: 6px 8px; }
+.nf-actions { white-space: nowrap; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.nf-button { padding: 6px 10px; cursor: pointer; }
+.nf-button--primary { font-weight: 600; }
+.nf-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.nf-error { color: #b00020; font-size: 0.85rem; }
+.nf-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

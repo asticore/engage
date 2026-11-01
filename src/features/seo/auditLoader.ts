@@ -1,5 +1,5 @@
 import { AUDIT_COLLECTIONS, ORPHAN_PROBLEM, buildAuditRow, type AuditCollection, type AuditRow } from './audit'
-import { isOrphan, internalTargetsOf, pagePathOf, suggestInternalLinks, type LinkCandidate } from './internalLinks'
+import { internalPathOf, isOrphan, internalTargetsOf, pagePathOf, suggestInternalLinks, type LinkCandidate } from './internalLinks'
 
 /** Most documents read per collection. Anything beyond this is not audited. */
 export const AUDIT_LIMIT_PER_COLLECTION = 500
@@ -12,6 +12,25 @@ export type AuditFindEngine = {
     depth?: number
     overrideAccess?: boolean
   }): Promise<{ docs: unknown[] }>
+  /** Reads a global (header, footer). Optional so tests can pass a collections-only engine. */
+  findGlobal?(args: { slug: string; depth?: number }): Promise<unknown>
+}
+
+type NavLink = { page?: unknown; customUrl?: unknown; linkType?: unknown }
+const asArray = (value: unknown): Record<string, unknown>[] =>
+  Array.isArray(value) ? value.filter((item): item is Record<string, unknown> => !!item && typeof item === 'object') : []
+
+/** Every link the header menu, its children, the announcement bar and the footer columns make. */
+function navLinksOf(header: Record<string, unknown> | null, footer: Record<string, unknown> | null): NavLink[] {
+  const out: NavLink[] = []
+  for (const item of asArray(header?.menu)) {
+    out.push(item as NavLink)
+    out.push(...(asArray(item.children) as NavLink[]))
+  }
+  const bar = (header?.announcementBar && typeof header.announcementBar === 'object' ? header.announcementBar : {}) as Record<string, unknown>
+  if (typeof bar.linkUrl === 'string') out.push({ customUrl: bar.linkUrl, linkType: 'custom' })
+  for (const column of asArray(footer?.columns)) out.push(...(asArray(column.links) as NavLink[]))
+  return out
 }
 
 
@@ -56,14 +75,32 @@ export async function loadAuditRows(
   // target path -> keys of the documents that link to it, and each document's own link targets.
   const linkedFrom = new Map<string, Set<string>>()
   const linksOut = new Map<string, Set<string>>()
+  const addLinks = (key: string, targets: Iterable<string>) => {
+    const own = new Set(targets)
+    linksOut.set(key, own)
+    for (const target of own) linkedFrom.set(target, new Set([...(linkedFrom.get(target) ?? []), key]))
+  }
   for (const collection of AUDIT_COLLECTIONS) {
-    for (const doc of docsOf.get(collection) ?? []) {
-      const key = `${collection}-${String(doc.id)}`
-      const targets = new Set(internalTargetsOf(doc))
-      linksOut.set(key, targets)
-      for (const target of targets) linkedFrom.set(target, new Set([...(linkedFrom.get(target) ?? []), key]))
+    for (const doc of docsOf.get(collection) ?? []) addLinks(`${collection}-${String(doc.id)}`, internalTargetsOf(doc))
+  }
+  // Menus, header and footer count as linking documents too, so a page only in the menu is not an orphan.
+  const globalOf = async (slug: string): Promise<Record<string, unknown> | null> => {
+    try {
+      const doc = await engine.findGlobal?.({ slug, depth: 0 })
+      return doc && typeof doc === 'object' ? (doc as Record<string, unknown>) : null
+    } catch {
+      return null
     }
   }
+  const header = await globalOf('header')
+  const footer = await globalOf('footer')
+  const navTargets = new Set<string>()
+  for (const link of navLinksOf(header, footer)) {
+    const page = link.page !== undefined && link.page !== null && link.page !== '' ? pagesById.get(String(typeof link.page === 'object' && link.page ? (link.page as { id?: unknown }).id : link.page)) : undefined
+    const path = page ? pathOf.get(String(page.id)) ?? null : typeof link.customUrl === 'string' ? internalPathOf(link.customUrl) : null
+    if (path) navTargets.add(path)
+  }
+  addLinks('navigation', navTargets)
 
   // Candidates for suggestions: published pages with a path, not hidden from search engines.
   const candidates: LinkCandidate[] = []

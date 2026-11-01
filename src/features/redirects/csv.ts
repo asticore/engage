@@ -67,6 +67,30 @@ function parseCsvLine(line: string): string[] {
 }
 
 /**
+ * Split CSV text into records on line breaks that are outside quotes, so a quoted
+ * field may hold a newline (RFC 4180). Each record keeps its own embedded newlines;
+ * a trailing carriage return is dropped.
+ */
+function splitCsvRecords(text: string): string[] {
+  const records: string[] = []
+  let current = ''
+  let inQuotes = false
+  for (const char of text) {
+    if (char === '"') {
+      inQuotes = !inQuotes
+      current += char
+    } else if (char === '\n' && !inQuotes) {
+      records.push(current.replace(/\r$/, ''))
+      current = ''
+    } else {
+      current += char
+    }
+  }
+  records.push(current.replace(/\r$/, ''))
+  return records
+}
+
+/**
  * Convert an array of redirect rows to CSV text.
  * Returns valid RFC 4180 CSV with header row.
  */
@@ -103,7 +127,7 @@ export function parseCsv(text: string, existing: Array<{ id?: number; fromPath: 
   const errors: Array<{ line: number; message: string }> = []
   const rows: Array<CsvRow & { lineNumber: number }> = []
 
-  const lines = text.trim().split('\n')
+  const lines = splitCsvRecords(text.trim())
 
   // Validate header
   if (lines.length === 0) {

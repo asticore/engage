@@ -50,6 +50,36 @@ const tagState = {
   analytics: false,
   marketing: false,
   tiktok: false,
+  /** The last consent the loaded Meta pixel and Clarity were given through their consent APIs. */
+  metaConsent: null as boolean | null,
+  clarityConsent: null as boolean | null,
+}
+
+/** Calls a tag's own function when the tag is on the page. Never throws. */
+const callTag = (name: 'fbq' | 'clarity', args: unknown[]) => {
+  try {
+    const fn = (window as unknown as Record<string, unknown>)[name]
+    if (typeof fn === 'function') (fn as (...a: unknown[]) => void)(...args)
+  } catch {
+    // A tag that misbehaves must not stop the rest of the page.
+  }
+}
+
+/*
+ * Consent APIs. Meta's pixel stops setting cookies and sending data on "revoke"
+ * and resumes on "grant"; Clarity takes consent() to start and consent(false) to
+ * stop. Both work in place, so a withdrawal needs no reload for them.
+ */
+const syncMetaConsent = (granted: boolean) => {
+  if (!tagState.marketing || tagState.metaConsent === granted) return
+  tagState.metaConsent = granted
+  callTag('fbq', ['consent', granted ? 'grant' : 'revoke'])
+}
+
+const syncClarityConsent = (granted: boolean) => {
+  if (!tagState.analytics || tagState.clarityConsent === granted) return
+  tagState.clarityConsent = granted
+  callTag('clarity', granted ? ['consent'] : ['consent', false])
 }
 
 const loadGtm = (gtmContainerId?: string) => {
@@ -109,6 +139,7 @@ const loadTikTokPixel = (tiktokPixelId?: string) => {
 const loadMetaPixel = ({ metaPixelId }: AnalyticsIds) => {
   if (tagState.marketing || !metaPixelId) return
   tagState.marketing = true
+  tagState.metaConsent = true
   appendScript(
     {},
     `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?` +
@@ -150,6 +181,10 @@ export function syncAnalyticsTags(ids: AnalyticsIds, consentModeV2: boolean, cho
   if (choices.analytics) loadAnalyticsTags(ids)
   if (choices[ids.metaCategory ?? 'marketing']) loadMetaPixel(ids)
   if (choices[ids.tiktokCategory ?? 'marketing']) loadTikTokPixel(ids.tiktokPixelId)
+
+  // Pixels already on the page follow the choice through their consent APIs.
+  if (ids.metaPixelId) syncMetaConsent(choices[ids.metaCategory ?? 'marketing'])
+  if (ids.clarityProjectId) syncClarityConsent(choices.analytics)
 }
 
 /**

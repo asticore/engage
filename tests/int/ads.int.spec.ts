@@ -6,7 +6,7 @@ import { DEFAULT_ADS_SETTINGS, normaliseAdsSettings, normaliseUnit, nestSettings
 import { inFeedPositions, planAfterParagraphs } from '@/features/ads/inject'
 import { adsAllowed, planScripts } from '@/features/ads/loader'
 import { isLikelyBot, parseRange, parseTrackBody, ctrOf } from '@/features/ads/track'
-import { parsePrebidUrl, parseSizes, parseTargeting, validateAdUnit, validatePlacement } from '@/features/ads/validate'
+import { normalisePublisherId, parsePrebidUrl, parseSizes, parseTargeting, validateAdUnit, validatePlacement } from '@/features/ads/validate'
 import { BUILT_IN_ROLES, can, PERMISSION_CATEGORIES, RESOURCES } from '@/features/roles/permissions'
 import { DEFAULT_FLAGS } from '@/features/registry'
 import { makeChoices } from '@/features/consent/consent'
@@ -117,7 +117,7 @@ describe('builders', () => {
     expect(extendCsp(csp, adsCspAdditions(DEFAULT_ADS_SETTINGS))).toBe(csp)
   })
   it('reads a flat D1 row', () => {
-    const s = normaliseAdsSettings(nestSettingsRow({ adsense_enabled: 1, adsense_publisher_id: 'ca-pub-1234567890', prebid_bidders: '{"ix":{"enabled":true,"sellerId":"5"}}' }), true)
+    const s = normaliseAdsSettings(nestSettingsRow({ adsense_enabled: 1, adsense_publisher_id: 'ca-pub-1234567890123456', prebid_bidders: '{"ix":{"enabled":true,"sellerId":"5"}}' }), true)
     expect(s.adsense.enabled).toBe(true)
     expect(s.prebid.bidders.ix!.sellerId).toBe('5')
   })
@@ -202,5 +202,15 @@ describe('ads settings permission copy', () => {
     const row = PERMISSION_CATEGORIES.flatMap((c) => c.rows).find((r) => r.resource === 'settings:ad-settings')
     expect(row?.label).toMatch(/admin-equivalent/i)
     expect(row?.description).toMatch(/third-party/i)
+  })
+})
+
+describe('AdSense publisher ids', () => {
+  it('accepts only the 16-digit publisher id, with or without the ca- prefix, and writes it in ads.txt form', () => {
+    expect(normalisePublisherId('pub-1234567890123456')).toBe('ca-pub-1234567890123456')
+    expect(normalisePublisherId(' CA-PUB-1234567890123456 ')).toBe('ca-pub-1234567890123456')
+    expect(normalisePublisherId('ca-pub-123')).toBeNull()
+    expect(normalisePublisherId('ca-pub-12345678901234567890')).toBeNull()
+    expect(normalisePublisherId('ca-pub-123456789012345a')).toBeNull()
   })
 })

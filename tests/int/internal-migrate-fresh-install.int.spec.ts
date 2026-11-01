@@ -1427,4 +1427,30 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_language_settings`)').all()).results as { name: string }[]
     expect(info.filter((c) => c.name === 'multilingual_machine_auto_draft')).toHaveLength(1)
   })
+
+  it('creates the 404 log table on a fresh install, registered after the media migration, and is safe to run twice', async () => {
+    const { migrations } = await import('@/migrations/index')
+    const names = migrations.map((x) => x.name)
+    expect(names.indexOf('20270223_100000_not_found_log')).toBeGreaterThan(names.indexOf('20270210_100000_media_formats_video_links'))
+    const mod = await import('@/migrations/20270223_100000_not_found_log')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    await mod.up({ db, engine: { logger: consoleLogger } } as never)
+    await mod.up({ db, engine: { logger: consoleLogger } } as never)
+    const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_not_found_log`)').all()).results as { name: string }[]
+    for (const column of ['path', 'hit_count', 'last_seen', 'referrer']) expect(info.map((c) => c.name), column).toContain(column)
+  })
+
+  it('creates the coupon reservation table after the 404 log, and running it twice keeps the table', async () => {
+    const { migrations } = await import('@/migrations/index')
+    const names = migrations.map((x) => x.name)
+    expect(names.indexOf('20270223_110000_coupon_reservations')).toBeGreaterThan(names.indexOf('20270223_100000_not_found_log'))
+    const mod = await import('@/migrations/20270223_110000_coupon_reservations')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    await mod.up({ db, engine: { logger: consoleLogger } } as never)
+    await mod.up({ db, engine: { logger: consoleLogger } } as never)
+    const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_coupon_reservations`)').all()).results as { name: string }[]
+    for (const column of ['coupon_code', 'cart_id', 'expires_at']) expect(info.map((c) => c.name), column).toContain(column)
+  })
 })

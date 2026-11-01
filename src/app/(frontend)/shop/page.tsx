@@ -22,7 +22,8 @@ import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
 import { archiveQueryString, filterArchiveItems, parseArchiveFilters, sortArchiveItems } from '@/features/siteTemplates/archiveFilter'
 import { archivePageHref } from '@/lib/templateWidgets'
-import { brandKey, brandOptionsOf, tagOptionsOf, tagNames } from '@/features/ecommerce/lib/productTaxonomy'
+import { brandOptionsOf, tagOptionsOf, tagNames } from '@/features/ecommerce/lib/productTaxonomy'
+import { brandIdsForSlug, brandIn, tagIdsForSlug, tagIn } from '@/features/ecommerce/server/taxonomyFilters'
 import { slugify } from '@/utilities/formatSlug'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
 import { productArchiveItems } from '@/lib/blockContextFrom'
@@ -53,26 +54,41 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const filters = parseAttributeFilters(params)
   const brandParam = typeof params.brand === 'string' ? slugify(params.brand.trim().slice(0, 80)) : ''
   const engine = await getEngine()
+  const archiveFilters = parseArchiveFilters(params)
+  // Brand and tag narrow the products in the database (their ids are looked up first), so the list is
+  // the whole shop's matches, not the newest few hundred. Depth 1 gives the brand and tags as objects.
+  const brandIds = brandParam ? await brandIdsForSlug(engine, brandParam) : null
+  const tagIds = archiveFilters.tag ? await tagIdsForSlug(engine, archiveFilters.tag) : null
+  const search = archiveFilters.q.trim()
 
-  const [settings, { docs: scanned }] = (await Promise.all([
+  const baseClauses = [{ _status: { equals: 'published' } }, ...(category ? [{ category: { equals: category } }] : [])]
+  const narrowed = Boolean(brandIds || tagIds || search)
+  const [settings, { docs: scanned }, facetResult] = (await Promise.all([
     engine.findGlobal({ slug: 'shop-settings' }).catch((): null => null),
     engine.find({
       collection: 'products',
       where: {
-        and: [{ _status: { equals: 'published' } }, ...(category ? [{ category: { equals: category } }] : [])],
+        and: [
+          ...baseClauses,
+          ...(brandIds ? [brandIn(brandIds)] : []),
+          ...(tagIds ? [tagIn(tagIds)] : []),
+          ...(search ? [{ or: [{ title: { contains: search } }, { shortDescription: { contains: search } }] }] : []),
+        ],
       },
       sort: '-createdAt',
-      // Filters are applied to this bounded scan of published products. Depth 1 gives the brand and tags as objects.
       limit: 300,
       depth: 1,
     }),
-  ])) as unknown as [ShopSetting | null, { docs: Product[] }]
-  const open = await applyTranslationsToDocs(await excludeProtected('products', scanned), 'products', await currentRequestLocale())
+    // The filter choices (brands, tags, attributes) still come from the whole category, not from the
+    // narrowed list, so picking one brand does not hide the others. Read only when a filter is on.
+    narrowed ? engine.find({ collection: 'products', where: { and: baseClauses }, sort: '-createdAt', limit: 300, depth: 1 }) : null,
+  ])) as unknown as [ShopSetting | null, { docs: Product[] }, { docs: Product[] } | null]
+  const locale = await currentRequestLocale()
+  const open = await applyTranslationsToDocs(await excludeProtected('products', scanned), 'products', locale)
+  const facetSource = facetResult ? await applyTranslationsToDocs(await excludeProtected('products', facetResult.docs), 'products', locale) : open
   const matchingAttributes = open.filter((product) => matchesAttributeFilters(product as never, filters))
-  // The brand filter (?brand=<slug>) keeps products sold under that brand. The brand choices come from every open product.
-  const matching = brandParam ? matchingAttributes.filter((product) => brandKey((product as { brand?: unknown }).brand) === brandParam) : matchingAttributes
-  // Price, search, sort, tag params (?min=&max=&q=&sort=&tag=) narrow the list before paging. The category is already applied by the query above.
-  const archiveFilters = parseArchiveFilters(params)
+  // The brand, tag and search params are applied by the query above. The price and sort are applied here, before paging.
+  const matching = matchingAttributes
   const pool = matching.map((product) => {
     const p = product as unknown as { title?: unknown; shortDescription?: unknown; priceInAUD?: unknown; createdAt?: unknown; tags?: unknown }
     return { product, title: String(p.title ?? ''), excerpt: typeof p.shortDescription === 'string' ? p.shortDescription : '', price: p.priceInAUD, date: p.createdAt, categories: [] as string[], tags: tagNames(p.tags) }
@@ -91,9 +107,9 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   }
   const archiveBase = shopHref({})
   const pageHref = (n: number) => archivePageHref(archiveBase, n)
-  const filterOptions = availableFilterOptions(open as never[])
-  const brandChoices = brandOptionsOf(open)
-  const tagChoices = tagOptionsOf(open)
+  const filterOptions = availableFilterOptions(facetSource as never[])
+  const brandChoices = brandOptionsOf(facetSource)
+  const tagChoices = tagOptionsOf(facetSource)
   const activeTag = archiveFilters.tag ? slugify(archiveFilters.tag) : ''
 
   const layout = settings?.archiveLayout || 'grid-4'
