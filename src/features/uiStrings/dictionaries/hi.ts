@@ -2950,6 +2950,12 @@ const hi: UiDictionary = {
   "portal.search.siteUnavailable": "साइट खोज अभी उपलब्ध नहीं है। आपके खाते की स्क्रीन फिर भी दिख रही हैं।",
   "portal.search.clear": "खोज साफ़ करें",
   "portal.search.status": "{count} मिले।",
+  "portal.search.ordersHeading": "आपके ऑर्डर",
+  "portal.search.bookingsHeading": "आपकी बुकिंग",
+  "portal.search.subscriptionsHeading": "आपकी सदस्यताएँ",
+  "portal.search.settingsHeading": "सेटिंग",
+  "portal.search.accountUnavailable": "अभी आपके ऑर्डर, बुकिंग और सदस्यताएँ खोजी नहीं जा सकीं। बाकी परिणाम अभी भी दिख रहे हैं।",
+  "portal.search.defaultAddress": "डिफ़ॉल्ट पता",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "AI से लिखें",
   "blog.ai.dialogTitle": "AI से ब्लॉग पोस्ट लिखें",

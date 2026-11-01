@@ -2992,6 +2992,13 @@ export const UI_STRING_SOURCE = {
   "portal.search.siteUnavailable": "Site search is unavailable right now. Your account screens are still listed.",
   "portal.search.clear": "Clear search",
   "portal.search.status": "{count} found.",
+  // Portal search: orders, bookings, subscriptions, settings (task 5, added 1 Nov 2026)
+  "portal.search.ordersHeading": "Your orders",
+  "portal.search.bookingsHeading": "Your bookings",
+  "portal.search.subscriptionsHeading": "Your subscriptions",
+  "portal.search.settingsHeading": "Settings",
+  "portal.search.accountUnavailable": "Your orders, bookings and subscriptions could not be searched right now. The other results are still listed.",
+  "portal.search.defaultAddress": "Default address",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "Write with AI",
   "blog.ai.dialogTitle": "Write a blog post with AI",

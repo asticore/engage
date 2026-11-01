@@ -2950,6 +2950,12 @@ const ja: UiDictionary = {
   "portal.search.siteUnavailable": "サイト検索は現在利用できません。アカウントの画面は引き続き表示されます。",
   "portal.search.clear": "検索をクリア",
   "portal.search.status": "{count} 件見つかりました。",
+  "portal.search.ordersHeading": "ご注文",
+  "portal.search.bookingsHeading": "ご予約",
+  "portal.search.subscriptionsHeading": "ご購読",
+  "portal.search.settingsHeading": "設定",
+  "portal.search.accountUnavailable": "ご注文、ご予約、ご購読の検索が今はできません。それ以外の検索結果は表示されています。",
+  "portal.search.defaultAddress": "既定の住所",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "AIで書く",
   "blog.ai.dialogTitle": "AIでブログ記事を書く",

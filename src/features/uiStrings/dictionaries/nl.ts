@@ -2950,6 +2950,12 @@ const nl: UiDictionary = {
   "portal.search.siteUnavailable": "Zoeken op de site is nu niet beschikbaar. Je accountschermen staan nog wel vermeld.",
   "portal.search.clear": "Zoekopdracht wissen",
   "portal.search.status": "{count} gevonden.",
+  "portal.search.ordersHeading": "Uw bestellingen",
+  "portal.search.bookingsHeading": "Uw boekingen",
+  "portal.search.subscriptionsHeading": "Uw abonnementen",
+  "portal.search.settingsHeading": "Instellingen",
+  "portal.search.accountUnavailable": "Uw bestellingen, boekingen en abonnementen konden nu niet worden doorzocht. De overige resultaten worden nog steeds getoond.",
+  "portal.search.defaultAddress": "Standaardadres",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "Schrijven met AI",
   "blog.ai.dialogTitle": "Een blogbericht met AI schrijven",

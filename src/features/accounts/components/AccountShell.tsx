@@ -3,6 +3,7 @@ import React from 'react'
 import type { PortalStringKey } from '@/features/multilingual/portalStrings'
 
 import { accountTexts } from '../portalCopy'
+import { SCREEN_KEYWORDS, SETTINGS_FIELDS } from '../portalSearch'
 import { AccountNav } from './AccountNav'
 import { PortalSearch } from './PortalSearch'
 import { PortalTextProvider } from './PortalText'
@@ -57,12 +58,14 @@ export const AccountShell = async ({
     ? [...LINKS.slice(0, -1), { href: '/account/organizations', key: 'nav.organizations' as const }, LINKS[LINKS.length - 1]]
     : LINKS
   const links = entries.map((entry) => ({ href: entry.href, label: tx(entry.key) }))
+  const searchScreens = links.map((link) => ({ ...link, keywords: SCREEN_KEYWORDS[link.href] }))
+  const searchSettings = SETTINGS_FIELDS.map((field) => ({ href: field.href, label: tx(field.key), keywords: field.keywords }))
   return (
     <PortalTextProvider strings={tx.dictionary}>
       <div className="page-shell">
         <AccountStyles />
         <h1>{title}</h1>
-        <PortalSearch links={links} />
+        <PortalSearch links={searchScreens} settings={searchSettings} account />
         <div className="account">
           <AccountNav links={links} current={current} />
           <div className="account-panel">{children}</div>

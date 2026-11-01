@@ -2950,6 +2950,12 @@ const ar: UiDictionary = {
   "portal.search.siteUnavailable": "بحث الموقع غير متاح حاليًا. ما زالت شاشات حسابك معروضة.",
   "portal.search.clear": "مسح البحث",
   "portal.search.status": "تم العثور على {count}.",
+  "portal.search.ordersHeading": "طلباتك",
+  "portal.search.bookingsHeading": "حجوزاتك",
+  "portal.search.subscriptionsHeading": "اشتراكاتك",
+  "portal.search.settingsHeading": "الإعدادات",
+  "portal.search.accountUnavailable": "تعذر البحث في طلباتك وحجوزاتك واشتراكاتك الآن. ما زالت النتائج الأخرى معروضة.",
+  "portal.search.defaultAddress": "العنوان الافتراضي",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "الكتابة بالذكاء الاصطناعي",
   "blog.ai.dialogTitle": "كتابة مقال مدونة بالذكاء الاصطناعي",

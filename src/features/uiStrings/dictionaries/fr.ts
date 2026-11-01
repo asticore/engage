@@ -2950,6 +2950,12 @@ const fr: UiDictionary = {
   "portal.search.siteUnavailable": "La recherche sur le site est indisponible pour le moment. Les écrans de votre compte restent affichés.",
   "portal.search.clear": "Effacer la recherche",
   "portal.search.status": "{count} trouvé(s).",
+  "portal.search.ordersHeading": "Vos commandes",
+  "portal.search.bookingsHeading": "Vos réservations",
+  "portal.search.subscriptionsHeading": "Vos abonnements",
+  "portal.search.settingsHeading": "Paramètres",
+  "portal.search.accountUnavailable": "Vos commandes, réservations et abonnements n'ont pas pu être recherchés pour le moment. Les autres résultats restent affichés.",
+  "portal.search.defaultAddress": "Adresse par défaut",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "Rédiger avec l’IA",
   "blog.ai.dialogTitle": "Rédiger un article de blog avec l’IA",

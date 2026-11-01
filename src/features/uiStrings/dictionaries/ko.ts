@@ -2950,6 +2950,12 @@ const ko: UiDictionary = {
   "portal.search.siteUnavailable": "지금은 사이트 검색을 사용할 수 없습니다. 내 계정 화면은 계속 표시됩니다.",
   "portal.search.clear": "검색 지우기",
   "portal.search.status": "{count}개를 찾았습니다.",
+  "portal.search.ordersHeading": "주문 내역",
+  "portal.search.bookingsHeading": "예약 내역",
+  "portal.search.subscriptionsHeading": "구독 내역",
+  "portal.search.settingsHeading": "설정",
+  "portal.search.accountUnavailable": "지금은 주문, 예약, 구독을 검색할 수 없습니다. 나머지 검색 결과는 계속 표시됩니다.",
+  "portal.search.defaultAddress": "기본 주소",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "AI로 작성",
   "blog.ai.dialogTitle": "AI로 블로그 글 작성",

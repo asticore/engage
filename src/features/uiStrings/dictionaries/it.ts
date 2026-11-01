@@ -2950,6 +2950,12 @@ const it: UiDictionary = {
   "portal.search.siteUnavailable": "La ricerca nel sito non è disponibile al momento. Le schermate del tuo account restano elencate.",
   "portal.search.clear": "Cancella ricerca",
   "portal.search.status": "{count} trovati.",
+  "portal.search.ordersHeading": "I tuoi ordini",
+  "portal.search.bookingsHeading": "Le tue prenotazioni",
+  "portal.search.subscriptionsHeading": "I tuoi abbonamenti",
+  "portal.search.settingsHeading": "Impostazioni",
+  "portal.search.accountUnavailable": "Al momento non è possibile cercare tra ordini, prenotazioni e abbonamenti. Gli altri risultati restano visibili.",
+  "portal.search.defaultAddress": "Indirizzo predefinito",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "Scrivi con l’IA",
   "blog.ai.dialogTitle": "Scrivi un articolo del blog con l’IA",

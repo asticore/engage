@@ -2950,6 +2950,12 @@ const ru: UiDictionary = {
   "portal.search.siteUnavailable": "Поиск по сайту сейчас недоступен. Разделы аккаунта по-прежнему показаны.",
   "portal.search.clear": "Очистить поиск",
   "portal.search.status": "Найдено: {count}.",
+  "portal.search.ordersHeading": "Ваши заказы",
+  "portal.search.bookingsHeading": "Ваши бронирования",
+  "portal.search.subscriptionsHeading": "Ваши подписки",
+  "portal.search.settingsHeading": "Настройки",
+  "portal.search.accountUnavailable": "Сейчас не удалось выполнить поиск по вашим заказам, бронированиям и подпискам. Остальные результаты по-прежнему показаны.",
+  "portal.search.defaultAddress": "Адрес по умолчанию",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "Написать с ИИ",
   "blog.ai.dialogTitle": "Написать запись блога с ИИ",

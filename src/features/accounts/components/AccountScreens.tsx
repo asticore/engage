@@ -410,13 +410,13 @@ export const ProfileScreen: React.FC<{ socialError?: string; passwordDue?: boole
 
   return (
     <AccountShell title={tx('profile.title')} current="/account/profile">
-      <section className="account-section">
+      <section className="account-section" id="name">
         <h2>{tx('profile.name')}</h2>
         <NameForm name={preferences.name} />
       </section>
 
       {languageOptions && (
-        <section className="account-section">
+        <section className="account-section" id="language">
           <h2>{tx('profile.language')}</h2>
           <LanguageForm
             current={preferences.locale ?? ''}
@@ -426,13 +426,13 @@ export const ProfileScreen: React.FC<{ socialError?: string; passwordDue?: boole
         </section>
       )}
 
-      <section className="account-section">
+      <section className="account-section" id="email">
         <h2>{tx('profile.emailHeading')}</h2>
         <p>{tx('profile.emailNote')}</p>
         <EmailForm email={email} />
       </section>
 
-      <section className="account-section">
+      <section className="account-section" id="password">
         <h2>{tx('auth.password')}</h2>
         {passwordDue ? (
           <p className="account-note account-note--error">{tx('profile.passwordDue')}</p>

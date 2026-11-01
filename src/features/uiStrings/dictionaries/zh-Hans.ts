@@ -2949,6 +2949,12 @@ const zhHans: UiDictionary = {
   "portal.search.siteUnavailable": "网站搜索暂时不可用。账户页面仍会列出。",
   "portal.search.clear": "清除搜索",
   "portal.search.status": "找到 {count} 项。",
+  "portal.search.ordersHeading": "您的订单",
+  "portal.search.bookingsHeading": "您的预订",
+  "portal.search.subscriptionsHeading": "您的订阅",
+  "portal.search.settingsHeading": "设置",
+  "portal.search.accountUnavailable": "目前无法搜索您的订单、预订和订阅。其他结果仍会显示。",
+  "portal.search.defaultAddress": "默认地址",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "用 AI 撰写",
   "blog.ai.dialogTitle": "用 AI 撰写博客文章",
