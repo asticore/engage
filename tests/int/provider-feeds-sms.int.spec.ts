@@ -16,7 +16,7 @@ const b64 = (buf: ArrayBuffer | Uint8Array): string => btoa(String.fromCharCode(
 const hex = (buf: ArrayBuffer): string => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
 
 async function hmacKey(hash: 'SHA-1' | 'SHA-256', raw: Uint8Array): Promise<CryptoKey> {
-  return crypto.subtle.importKey('raw', raw, { name: 'HMAC', hash }, false, ['sign'])
+  return crypto.subtle.importKey('raw', raw as Uint8Array<ArrayBuffer>, { name: 'HMAC', hash }, false, ['sign'])
 }
 
 describe('provider bounce and complaint parsers', () => {
