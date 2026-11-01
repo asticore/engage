@@ -106,7 +106,7 @@ export const SECRET_PATHS: Readonly<Record<string, readonly string[]>> = {
     'destination.sftp.privateKey',
   ],
   'form-settings': ['turnstileSecretKey'],
-  'media-settings': ['stock.unsplashAccessKey', 'stock.pexelsApiKey', 'stock.pixabayApiKey'],
+  'media-settings': ['stock.unsplashAccessKey', 'stock.pexelsApiKey', 'stock.pixabayApiKey', 'video.streamApiToken'],
   // Social login client secrets (src/globals/socialLoginFields.ts). They sit in
   // the socialLogin group, so the paths carry that prefix.
   'security-settings': [

@@ -37,6 +37,10 @@ export type MediaDoc = {
   source?: string | null
   originalSize?: number | null
   optimizedSize?: number | null
+  outputFormat?: string | null
+  poster?: number | null
+  streamUid?: string | null
+  conversionStatus?: string | null
   updatedAt: string
   createdAt: string
 }

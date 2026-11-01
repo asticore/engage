@@ -1,5 +1,7 @@
 import type { MediaConfig, MediaProvider } from './types'
 
+import { pictureFormatOf } from './formats'
+
 import { DISABLED_CONFIG } from './url'
 
 /**
@@ -86,7 +88,8 @@ export function resolveMediaConfig(settings: unknown, featureEnabled: boolean): 
     enabled: true,
     provider,
     quality: Math.min(100, Math.max(1, toPositiveInt(optimisation.quality, 82))),
-    format: resolveFormat(optimisation.convertToWebp !== false, optimisation.convertToAvif === true),
+    // An explicit site picture format wins over the older WebP and AVIF switches; 'switches' (or nothing) keeps them.
+    format: pictureFormatOf(optimisation.outputImageFormat) ?? resolveFormat(optimisation.convertToWebp !== false, optimisation.convertToAvif === true),
     stripMetadata: optimisation.stripMetadata !== false,
     maxWidth: toPositiveInt(resizing.maxWidth, DISABLED_CONFIG.maxWidth),
     maxHeight: toPositiveInt(resizing.maxHeight, DISABLED_CONFIG.maxHeight),

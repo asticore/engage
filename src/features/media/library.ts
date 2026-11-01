@@ -13,7 +13,7 @@
 import { generateUploadFields, isImageMimeType, normaliseMimeType, probeImageDimensions, type UploadFile } from '@/localapi/uploads'
 import { putMediaObject, putOriginalIfMissing, readMediaObject } from '@/localapi/storage'
 
-import { isOptimisableMimeType, optimiseBytes, scaledDimensions, type ImagesBinding, type OptimiseSettings } from './optimise'
+import { isOptimisableMimeType, optimiseBytes, scaledDimensions, settingsForFile, type ImagesBinding, type OptimiseSettings } from './optimise'
 import type { PreparedUpload } from './uploadHook'
 
 /** The storage calls the operations need. Defaults to the real R2 helpers. */
@@ -41,6 +41,8 @@ export type StoredMedia = {
   height?: number | null
   originalSize?: number | null
   optimizedSize?: number | null
+  /** The file's own output format (formats.ts); `default` or absent uses the site setting. */
+  outputFormat?: string | null
 }
 
 export type OptimiseItemResult = {
@@ -131,7 +133,7 @@ export async function optimiseStoredMedia(
     const stored = await io.read(doc.filename)
     if (!stored) return result('failed', { reason: 'The file is missing from storage.' })
 
-    const outcome = await optimiseBytes(binding, stored.data, doc.mimeType, settings)
+    const outcome = await optimiseBytes(binding, stored.data, doc.mimeType, settingsForFile(settings, doc.outputFormat))
     if (outcome.status !== 'optimised') {
       return result(outcome.status === 'kept' ? 'kept' : 'skipped', { reason: outcome.reason })
     }

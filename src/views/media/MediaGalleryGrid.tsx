@@ -5,6 +5,16 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { describeSaving, formatBytes, postJson, requestJson } from '@/features/media/admin/mediaApi'
+import {
+  effectivePictureFormat,
+  effectiveVideoFormat,
+  fileTypeLabel,
+  isVideoLinkMimeType,
+  isVideoMimeType,
+  pictureFormatLabel,
+  type PictureFormat,
+} from '@/features/media/formats'
+import { VideoLinkForm } from './VideoLinkForm'
 
 import { INLINE_IMAGE_TYPES } from '@/features/media/fileTypes'
 
@@ -22,6 +32,14 @@ export interface GalleryDoc {
   folder?: string
   originalSize?: number
   optimizedSize?: number
+  outputFormat?: string
+}
+
+/** What the site is set to output, read on the server and passed down (see MediaGalleryView). */
+export type GalleryFormats = {
+  siteImage: PictureFormat
+  siteVideo: 'original' | 'mp4' | 'webm'
+  streamReady: boolean
 }
 
 type TileSize = 'sm' | 'md' | 'lg'
@@ -39,6 +57,20 @@ const STORAGE_KEY = 'engage-media-gallery-tile-size'
 const ALT_BATCH = 25
 
 const OPTIMISABLE = new Set(['image/jpeg', 'image/png', 'image/webp'])
+
+/** The line on a tile that says what Optimise will do to this file, or null when it does nothing. */
+function targetLine(doc: GalleryDoc, formats: GalleryFormats): string | null {
+  if (isVideoLinkMimeType(doc.mimeType)) return null
+  if (isVideoMimeType(doc.mimeType)) {
+    const target = effectiveVideoFormat(doc.outputFormat, formats.siteVideo)
+    if (target === 'mp4') return `${fileTypeLabel(doc.mimeType)} to MP4 (Stream)`
+    if (target === 'webm') return `${fileTypeLabel(doc.mimeType)} kept (WebM not made)`
+    return `${fileTypeLabel(doc.mimeType)} (no output format set)`
+  }
+  if (!doc.mimeType || !OPTIMISABLE.has(doc.mimeType)) return null
+  const target = effectivePictureFormat(doc.outputFormat, formats.siteImage)
+  return target === 'original' ? `${fileTypeLabel(doc.mimeType)} kept as it is` : `${fileTypeLabel(doc.mimeType)} to ${pictureFormatLabel(target)}`
+}
 
 function readStoredSize(): TileSize {
   // Runs inside useState's lazy initializer, not an effect, so no extra render
@@ -74,6 +106,7 @@ export function MediaGalleryGrid({
   batchSize,
   optimisationOn,
   noticeFromServer,
+  formats,
 }: {
   docs: GalleryDoc[]
   folders: string[]
@@ -81,6 +114,7 @@ export function MediaGalleryGrid({
   batchSize: number
   optimisationOn: boolean
   noticeFromServer?: string
+  formats: GalleryFormats
 }) {
   const router = useRouter()
   const [size, setSize] = useState<TileSize>(readStoredSize)
@@ -91,6 +125,7 @@ export function MediaGalleryGrid({
   const [keys, setKeys] = useState<Record<Provider, boolean> | null>(null)
   const [folderInput, setFolderInput] = useState('')
   const [stockOpen, setStockOpen] = useState(false)
+  const [linkOpen, setLinkOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -136,8 +171,11 @@ export function MediaGalleryGrid({
     let optimised = 0
     let kept = 0
     let failed = 0
+    let converting = 0
+    let needsStream = 0
+    let reason = ''
     for (let i = 0; i < ids.length; i += batchSize) {
-      const result = await postJson<{ results: Array<{ status: string }> }>('/api/admin-media-optimise', {
+      const result = await postJson<{ results: Array<{ status: string; reason?: string }> }>('/api/admin-media-optimise', {
         ids: ids.slice(i, i + batchSize),
       })
       if (result.ok === false) {
@@ -147,11 +185,20 @@ export function MediaGalleryGrid({
       for (const item of result.data.results) {
         if (item.status === 'optimised') optimised += 1
         else if (item.status === 'failed') failed += 1
+        else if (item.status === 'converting') converting += 1
+        else if (item.status === 'needs-stream') needsStream += 1
         else kept += 1
+        if (item.reason && !reason && item.status !== 'optimised') reason = item.reason
       }
     }
     setSelected(new Set())
-    finish(failed > 0 ? 'error' : 'ok', `Optimised ${optimised}. Left ${kept} as they were${failed ? `, ${failed} failed` : ''}.`)
+    const parts = [`Optimised ${optimised}`]
+    if (converting) parts.push(`${converting} converting in Stream (press Optimise again)`)
+    if (kept) parts.push(`left ${kept} as they were`)
+    if (needsStream) parts.push(`${needsStream} need Cloudflare Stream`)
+    if (failed) parts.push(`${failed} failed`)
+    const text = `${parts.join('. ')}.${failed === 0 && reason && optimised === 0 ? ` ${reason}` : ''}`
+    finish(failed > 0 ? 'error' : 'ok', text)
   }
 
   const writeAlt = async (ids: number[]) => {
@@ -195,7 +242,14 @@ export function MediaGalleryGrid({
     finish('ok', `Moved ${result.data.moved} to ${folder || 'the top level'}.`)
   }
 
-  const optimiseOne = (id: string) => optimiseIds([Number(id)])
+  const optimiseOne = (id: string) => {
+    const doc = docs.find((item) => item.id === id)
+    if (doc && isVideoMimeType(doc.mimeType) && !formats.streamReady) {
+      setNotice({ kind: 'error', text: 'Video conversion needs Cloudflare Stream. Add the account ID and API token under Media settings, Video.' })
+      return
+    }
+    return optimiseIds([Number(id)])
+  }
 
   const copyUrl = async (doc: GalleryDoc) => {
     if (!doc.url) return
@@ -242,6 +296,9 @@ export function MediaGalleryGrid({
           <button type="button" className={buttonClass} onClick={() => setStockOpen(true)}>
             Search stock photos
           </button>
+          <button type="button" className={buttonClass} aria-expanded={linkOpen} onClick={() => setLinkOpen((open) => !open)}>
+            Add video link
+          </button>
           {currentFolder ? <span className="text-[12px] text-[var(--theme-elevation-500)]">Folder: {currentFolder}</span> : null}
         </div>
         <div className="flex items-center gap-[calc(var(--base)*0.25)]">{tileSizeButtons}</div>
@@ -250,11 +307,9 @@ export function MediaGalleryGrid({
       {selectedIds.length > 0 ? (
         <div role="toolbar" aria-label="Bulk actions" className="flex flex-wrap items-center gap-[10px] rounded-[6px] border border-[var(--ac-gold)] p-[10px]">
           <span className="text-[12px] font-medium text-[var(--theme-elevation-800)]">{selectedIds.length} selected</span>
-          {optimisationOn ? (
-            <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => optimiseIds(selectedIds)}>
-              {busy === 'optimise' ? 'Optimising...' : 'Optimise'}
-            </button>
-          ) : null}
+          <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => optimiseIds(selectedIds)} title={optimisationOn ? undefined : 'Pictures need optimisation switched on in Media settings. Videos need Cloudflare Stream.'}>
+            {busy === 'optimise' ? 'Optimising...' : 'Optimise'}
+          </button>
           <label className="flex items-center gap-[6px] text-[12px] text-[var(--theme-elevation-700)]">
             Alt text with
             <select
@@ -299,6 +354,17 @@ export function MediaGalleryGrid({
         </div>
       ) : null}
 
+      {linkOpen ? (
+        <VideoLinkForm
+          onAdded={() => {
+            setLinkOpen(false)
+            setNotice({ kind: 'ok', text: 'Video link added. Set its poster picture on its edit screen.' })
+            router.refresh()
+          }}
+          onCancel={() => setLinkOpen(false)}
+        />
+      ) : null}
+
       {notice || noticeFromServer ? (
         <p role="status" className={`m-0 text-[12px] ${notice?.kind === 'error' ? 'text-[var(--theme-error-600,#c53030)]' : 'text-[var(--theme-elevation-700)]'}`}>
           {notice?.text ?? noticeFromServer}
@@ -311,7 +377,8 @@ export function MediaGalleryGrid({
         suppressHydrationWarning
       >
         {docs.map((doc) => {
-          const canOptimise = optimisationOn && Boolean(doc.mimeType && OPTIMISABLE.has(doc.mimeType))
+          const canOptimise = (optimisationOn && Boolean(doc.mimeType && OPTIMISABLE.has(doc.mimeType))) || (isVideoMimeType(doc.mimeType) && !isVideoLinkMimeType(doc.mimeType))
+          const target = targetLine(doc, formats)
           return (
             <div
               key={doc.id}
@@ -342,6 +409,9 @@ export function MediaGalleryGrid({
                 <div className="flex flex-col gap-[calc(var(--base)*0.1)] px-[calc(var(--base)*0.5)] pt-[calc(var(--base)*0.4)]">
                   <span className="truncate text-[calc(var(--base)*0.72)] font-medium text-[var(--theme-elevation-900)]">{doc.filename ?? doc.id}</span>
                   {sizeLabel(doc) ? <span className="text-[calc(var(--base)*0.65)] text-[var(--theme-elevation-500)]">{sizeLabel(doc)}</span> : null}
+                  {target && (optimisationOn || isVideoMimeType(doc.mimeType)) ? (
+                    <span className="truncate text-[calc(var(--base)*0.65)] text-[var(--theme-elevation-500)]" title="What Optimise does to this file">{target}</span>
+                  ) : null}
                   {doc.folder ? <span className="truncate text-[calc(var(--base)*0.65)] text-[var(--theme-elevation-500)]">{doc.folder}</span> : null}
                 </div>
               </Link>
@@ -358,7 +428,7 @@ export function MediaGalleryGrid({
                 ) : null}
                 {canOptimise ? (
                   <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => optimiseOne(doc.id)}>
-                    {busy === 'optimise' ? 'Optimising...' : 'Optimise'}
+                    {busy === 'optimise' ? 'Optimising...' : isVideoMimeType(doc.mimeType) && !formats.streamReady ? 'Optimise (needs Stream)' : 'Optimise'}
                   </button>
                 ) : null}
               </div>

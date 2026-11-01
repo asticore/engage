@@ -48,7 +48,9 @@ export const ImageElement: React.FC<P> = (p) => {
 
 /** `video`: YouTube (no-cookie host), Vimeo (do-not-track) or a direct mp4/webm file, always 16:9. */
 export const VideoElement: React.FC<P> = (p) => {
-  const source = parseVideoUrl(p.url)
+  // A video picked from the media library (upload or video link) wins over the typed link.
+  const picked = mediaOf(p.video)?.url
+  const source = parseVideoUrl(picked || p.url)
   const title = str(p.title, 'Video')
   const caption = str(p.caption)
   // With a poster the browser draws the picture and fetches no video bytes until the viewer presses play.
