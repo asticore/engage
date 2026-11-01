@@ -32,6 +32,7 @@ Ask an administrator to open **Settings > Template libraries** and paste the add
 | --- | --- |
 | `https://github.com/owner/repo` | the repository root, branch `main` |
 | `https://github.com/owner/repo/tree/branch` | a branch |
+| `https://github.com/owner/repo/tree/v1.2.0` | a tag or commit: pins the library to that version (a commit id works too) |
 | `https://github.com/owner/repo/tree/branch/folder/inside` | a folder on a branch |
 
 Only `https://` addresses on `github.com` are accepted. Addresses with a user name, a port, a query or a
@@ -177,5 +178,4 @@ Each GitHub request has an 8 second timeout, redirects are refused, and public r
 3. In **Settings > Template libraries**, add `https://github.com/<you>/<repo>` (or the folder address).
 4. Open **Templates > Library**, or the visual editor's templates panel, to see the two items.
 
-The example is checked by the test suite (`tests/int/template-library-example.int.spec.ts`), so it stays valid
-as the format changes.
+The example is checked by the test suite (`tests/int/template-library-example.int.spec.ts`), so it 

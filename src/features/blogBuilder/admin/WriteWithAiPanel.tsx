@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { BlogWizard } from './BlogWizard'
-import { fetchBlogStatus, type BlogStatus, type BlogUsage } from './api'
+import { fetchBlogStatus, type BlogSavedPrompt, type BlogStatus, type BlogUsage } from './api'
 import './blog-builder.css'
 
 /**
@@ -17,6 +17,7 @@ export function WriteWithAiPanel() {
   const t = useAdminT()
   const [status, setStatus] = useState<BlogStatus | null>(null)
   const [usage, setUsage] = useState<BlogUsage | null>(null)
+  const [savedPrompts, setSavedPrompts] = useState<BlogSavedPrompt[]>([])
   const [hidden, setHidden] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -26,6 +27,7 @@ export function WriteWithAiPanel() {
       .then((next) => {
         setStatus(next)
         setUsage(next.usage)
+        setSavedPrompts(next.savedPrompts)
       })
       .catch(() => {
         if (!ctrl.signal.aborted) setHidden(true)
@@ -71,6 +73,8 @@ export function WriteWithAiPanel() {
               usage={usage}
               onUsage={setUsage}
               onClose={() => setOpen(false)}
+              savedPrompts={savedPrompts}
+              onSavedPrompts={setSavedPrompts}
             />
           </div>
         </div>

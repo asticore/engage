@@ -19,12 +19,13 @@ export type LibraryStoreEngine = {
 /** One picture already in the media gallery, keyed by the hash of its bytes. */
 export type ImportRecord = { sha256: string; mediaId: number; sourceUrl: string }
 
-export type LibraryState = { rows: LibraryRow[]; imports: ImportRecord[] }
+export type LibraryState = { rows: LibraryRow[]; imports: ImportRecord[]; token: string | null }
 
 const isOff = (value: unknown): boolean => value === false || value === 0 || value === '0' || value === 'false'
 
 export function normaliseLibraryState(raw: unknown): LibraryState {
-  const doc = (raw && typeof raw === 'object' ? raw : {}) as { libraries?: unknown; imports?: unknown }
+  const doc = (raw && typeof raw === 'object' ? raw : {}) as { libraries?: unknown; imports?: unknown; token?: unknown }
+  const token = typeof doc.token === 'string' && doc.token.trim() !== '' ? doc.token.trim() : null
   const libraries = Array.isArray(doc.libraries) ? doc.libraries.slice(0, LIBRARY_LIMITS.maxLibraries) : []
   const rows: LibraryRow[] = libraries.map((item, index): LibraryRow => {
     const row = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>
@@ -48,7 +49,7 @@ export function normaliseLibraryState(raw: unknown): LibraryState {
         })
         .filter((record) => /^[0-9a-f]{64}$/.test(record.sha256) && Number.isInteger(record.mediaId) && record.mediaId > 0)
     : []
-  return { rows, imports }
+  return { rows, imports, token }
 }
 
 export async function readLibraryState(engine: LibraryStoreEngine): Promise<LibraryState> {
@@ -57,6 +58,11 @@ export async function readLibraryState(engine: LibraryStoreEngine): Promise<Libr
 }
 
 export type LibraryWrite = { id?: string; label: string; url: string; enabled: boolean }
+
+/** Saves the access token alone (encrypted by the field hook). An empty value clears it. */
+export async function writeLibraryToken(engine: LibraryStoreEngine, token: string | null, user?: unknown): Promise<void> {
+  await engine.updateGlobal({ slug: TEMPLATE_LIBRARIES_SLUG, data: { token: token ?? '' }, user, overrideAccess: true })
+}
 
 /** Saves the whole list and the picture records. Records beyond the cap are dropped oldest first. */
 export async function writeLibraryState(engine: LibraryStoreEngine, libraries: LibraryWrite[], imports: ImportRecord[], user?: unknown): Promise<void> {
