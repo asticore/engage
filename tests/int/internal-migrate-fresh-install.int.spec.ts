@@ -370,6 +370,8 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
         'cleanup_delete_form_submissions_after_days',
         'cleanup_delete_audit_log_after_days',
         'cleanup_delete_email_log_after_days',
+        'error_alerts_enabled',
+        'error_alerts_threshold',
       ]),
     )
   })

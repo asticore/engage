@@ -11,6 +11,7 @@ const ja: UiDictionary = {
   'portal.nav.addresses': '住所',
   'portal.nav.bookings': 'イベント予約',
   'portal.nav.profile': 'プロフィール',
+  'portal.nav.privacy': 'プライバシー',
   'portal.nav.organizations': '組織',
   'portal.profile.language': '言語',
   'portal.profile.languageAuto': '自動（ブラウザーに合わせる）',

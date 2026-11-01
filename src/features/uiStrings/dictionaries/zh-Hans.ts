@@ -11,6 +11,7 @@ const zhHans: UiDictionary = {
   'portal.nav.addresses': '地址',
   'portal.nav.bookings': '活动预订',
   'portal.nav.profile': '个人资料',
+  'portal.nav.privacy': '隐私',
   'portal.nav.organizations': '组织',
   'portal.profile.language': '语言',
   'portal.profile.languageAuto': '自动（跟随浏览器）',

@@ -11,6 +11,7 @@ const ar: UiDictionary = {
   'portal.nav.addresses': 'العناوين',
   'portal.nav.bookings': 'حجوزات الفعاليات',
   'portal.nav.profile': 'الملف الشخصي',
+  'portal.nav.privacy': 'الخصوصية',
   'portal.nav.organizations': 'المؤسسات',
   'portal.profile.language': 'اللغة',
   'portal.profile.languageAuto': 'تلقائي (وفقًا لمتصفحي)',

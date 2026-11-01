@@ -437,5 +437,30 @@ export const SpeedSettings: GlobalConfig = {
         },
       ],
     },
+    {
+      type: 'group',
+      name: 'errorAlerts',
+      label: 'Error alerts',
+      admin: {
+        description:
+          'Emails every admin when many new errors are logged within 15 minutes. At most one alert email an hour. The Error log keeps every error either way.',
+      },
+      fields: [
+        {
+          name: 'enabled',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: { description: 'Send the alert email when the threshold is passed.' },
+        },
+        {
+          name: 'threshold',
+          type: 'number',
+          defaultValue: 10,
+          min: 1,
+          max: 1000,
+          admin: { description: 'How many new errors in 15 minutes it takes to send an alert.' },
+        },
+      ],
+    },
   ],
 }

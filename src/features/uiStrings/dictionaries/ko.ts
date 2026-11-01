@@ -11,6 +11,7 @@ const ko: UiDictionary = {
   'portal.nav.addresses': '주소',
   'portal.nav.bookings': '이벤트 예약',
   'portal.nav.profile': '프로필',
+  'portal.nav.privacy': '개인정보',
   'portal.nav.organizations': '조직',
   'portal.profile.language': '언어',
   'portal.profile.languageAuto': '자동(브라우저 설정 따르기)',

@@ -32,6 +32,7 @@ const LINKS: { href: string; key: PortalStringKey }[] = [
   { href: '/account/addresses', key: 'nav.addresses' },
   { href: '/account/bookings', key: 'nav.bookings' },
   { href: '/account/profile', key: 'nav.profile' },
+  { href: '/account/privacy', key: 'nav.privacy' },
 ]
 
 /** The Organizations link shows only while that feature is switched on (Security settings). Any read failure hides it. */

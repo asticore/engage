@@ -4,6 +4,7 @@ import { getPlatformProxy } from 'wrangler'
 
 import type { StreamingUpload } from '@/features/backups/destinations'
 import { dumpTables } from '@/features/backups/export/database'
+import { listAppTables } from '@/features/backups/export/tables'
 import { dropStaging, stageDump, swapIn } from '@/features/backups/restore'
 import { consoleLogger } from '@/localapi/logger'
 import { runInternalMigrate } from '@/migrations/runInternalMigrate'
@@ -113,6 +114,27 @@ describe('backup and restore round trip (real D1, in memory)', () => {
   it('refuses a table that the database does not have', async () => {
     const line = JSON.stringify({ t: 'table', name: 'eg_not_a_table', columns: ['id'] }) + '\n'
     await expect(stageDump(db, chunkedStream(new TextEncoder().encode(line), 16), null)).rejects.toThrow(/does not exist/)
+  })
+
+  it('puts the approval-workflows tables in the database part of a backup', async () => {
+    const split = await listAppTables(db)
+    const approval = (await db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'eg_approval_workflows%'`).all())
+      .results as { name: string }[]
+    expect(approval.map((row) => row.name)).toContain('eg_approval_workflows')
+    for (const row of approval) expect(split.database).toContain(row.name)
+    expect(split.settings).not.toContain('eg_approval_workflows')
+  })
+
+  it('round-trips the approval-workflows tables (dump, then restore to the same state)', async () => {
+    const tables = (await listAppTables(db)).database.filter((name) => name.startsWith('eg_approval_workflows'))
+    expect(tables.length).toBeGreaterThan(0)
+    const { upload, bytes } = memoryUpload()
+    const counts = await dumpTables(db, tables, upload)
+    const stage = await stageDump(db, chunkedStream(bytes(), 64), null)
+    expect(stage.staged).toEqual(counts)
+    await swapIn(db, stage.staging)
+    await dropStaging(db, stage.staging)
+    for (const table of tables) expect(await allRows(db, table)).toHaveLength(counts[table] ?? 0)
   })
 
   it('stages only the tables asked for', async () => {

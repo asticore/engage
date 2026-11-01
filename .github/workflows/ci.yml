@@ -44,15 +44,21 @@ jobs:
         run: pnpm exec eslint .
 
       - name: Integration specs (safe subset)
-        # Specs left out until they are fixed: known flaky or failing before this workflow existed.
-        # seo-page-jsonld also imports the `server-only` package, which pnpm does not hoist here.
-        # The last group failed in a local run of this same subset (assertions, real-D1 setup and one cold-import timeout); remove them as they are fixed.
-        # Real-D1 specs (miniflare) fail here with an "internal error" under parallel load; those listed last fail on most runs. Retries absorb the rest.
-        # Local Node is 22 and CI uses 24, so this has not been checked on 24.
-        # Failing only in CI (pull_request merge ref): version-delete-real-engine (eg_users missing in fresh D1), cross-sells-currency-wave7 (empty list),
-        # media-read-body (an unhandled ReadableStream error that makes vitest exit 1). Not investigated yet.
+        # Specs left out until they are fixed. Checked on 1 Nov 2026 with Node 22 (CI uses 24) in one parallel run:
+        # these 7 passed and came back in: admin-dom-hydration, ai-builder-v2, auth-slice-2-store, media-read-body,
+        # password-policy, user-sessions, site-scoped-slugs-migration.
+        # Load error (the `server-only` package is not hoisted by pnpm here): seo-page-jsonld, settings-pages.
+        # Load error (needs a built `.open-next/worker.js`): cloudflare-worker.
+        # Skipped or failing on the local D1 migration helper ("no such table", 45 errors in admin-pages-tree): admin-list-prefs-real-engine,
+        # admin-pages-tree, cms-db-carts-orders-transactions, page-delete-after-children, pages-homepage-switch, pages-sort-order,
+        # product-addons-db, redirects-collection, schedule-admin-route, shop-catalogue-db, shop-review-fixes, social-login-settings-real-engine,
+        # version-delete-real-engine.
+        # Assertion failures, not investigated yet: AdminNavClient, authorship-fields, cookie-consent, cross-sells-currency-wave7, custom-fields,
+        # ecommerce-cart-hooks, heading-effects, nav-structure (expects "translations" in HIDDEN_FROM_NAV), own-scope-routes,
+        # product-addons-pricing-rules, schedule-publish-due, seo-metadata (Task 10 owns it), shop-recommendations-wave19, wishlist-wave7.
+        # Real-D1 specs (miniflare) can fail with an "internal error" or SQLITE_BUSY under parallel load; retries absorb some of it.
         run: |
-          EXCLUDE='admin-list-prefs-real-engine|admin-pages-tree|settings-pages|admin-dom-hydration|schedule-admin-route|wishlist-wave7|password-policy|user-sessions|seo-metadata|shop-recommendations-wave19|nav-structure|authorship-fields|custom-fields|cookie-consent|ai-builder-v2|seo-page-jsonld|AdminNavClient|cloudflare-worker|ecommerce-cart-hooks|heading-effects|own-scope-routes|page-delete-after-children|pages-sort-order|product-addons-db|product-addons-pricing-rules|redirects-collection|schedule-publish-due|shop-catalogue-db|shop-review-fixes|site-scoped-slugs-migration|auth-slice-2-store|cms-db-carts-orders-transactions|pages-homepage-switch|social-login-settings-real-engine|version-delete-real-engine|cross-sells-currency-wave7|media-read-body'
+          EXCLUDE='admin-list-prefs-real-engine|admin-pages-tree|settings-pages|schedule-admin-route|wishlist-wave7|authorship-fields|custom-fields|cookie-consent|seo-page-jsonld|AdminNavClient|cloudflare-worker|ecommerce-cart-hooks|heading-effects|own-scope-routes|page-delete-after-children|pages-sort-order|product-addons-db|product-addons-pricing-rules|redirects-collection|schedule-publish-due|shop-catalogue-db|shop-review-fixes|cms-db-carts-orders-transactions|pages-homepage-switch|social-login-settings-real-engine|version-delete-real-engine|cross-sells-currency-wave7|nav-structure|shop-recommendations-wave19|seo-metadata'
           FILES=$(ls tests/int/*.int.spec.ts | grep -Ev "/(${EXCLUDE})\.int\.spec\.ts$")
           echo "Running $(echo "$FILES" | wc -l) spec files"
           pnpm exec vitest run --config ./vitest.config.mts --retry=2 $FILES

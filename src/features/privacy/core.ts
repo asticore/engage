@@ -119,6 +119,10 @@ export const EXPORT_ORDER_FIELDS = [
   'createdAt',
 ] as const
 export const EXPORT_RSVP_FIELDS = ['id', 'name', 'email', 'guestCount', 'notes', 'status', 'createdAt'] as const
+export const EXPORT_CREDIT_FIELDS = ['balance', 'updatedAt'] as const
+export const EXPORT_MOVEMENT_FIELDS = ['id', 'kind', 'direction', 'amount', 'balanceAfter', 'reason', 'createdAt'] as const
+export const EXPORT_CART_FIELDS = ['id', 'items', 'subtotal', 'currency', 'email', 'purchasedAt', 'createdAt', 'updatedAt'] as const
+export const EXPORT_REVIEW_FIELDS = ['id', 'product', 'name', 'rating', 'text', 'status', 'verifiedOwner', 'createdAt'] as const
 
 export type ExportInput = {
   user: Record<string, unknown>
@@ -126,6 +130,11 @@ export type ExportInput = {
   orders: Record<string, unknown>[]
   bookings: Record<string, unknown>[]
   submissions: { form: string; submittedAt: string | null; values: unknown }[]
+  /** Store credit balance and its movements, carts and product reviews. Optional so older callers still build a document. */
+  storeCredit?: Record<string, unknown> | null
+  creditMovements?: Record<string, unknown>[]
+  carts?: Record<string, unknown>[]
+  reviews?: Record<string, unknown>[]
   requestedAt: string
 }
 
@@ -146,6 +155,10 @@ export function buildExportDocument(input: ExportInput): Record<string, unknown>
     orders: input.orders.map((o) => pick(o, EXPORT_ORDER_FIELDS)),
     bookings: input.bookings.map((b) => pick(b, EXPORT_RSVP_FIELDS)),
     formSubmissions: input.submissions.map((s) => ({ form: s.form, submittedAt: s.submittedAt, values: s.values })),
+    storeCredit: input.storeCredit ? pick(input.storeCredit, EXPORT_CREDIT_FIELDS) : { balance: 0 },
+    storeCreditMovements: (input.creditMovements ?? []).map((m) => pick(m, EXPORT_MOVEMENT_FIELDS)),
+    carts: (input.carts ?? []).map((c) => pick(c, EXPORT_CART_FIELDS)),
+    reviews: (input.reviews ?? []).map((r) => pick(r, EXPORT_REVIEW_FIELDS)),
     notIncluded: [
       'Wishlist: kept in your browser on this device, not on the site.',
       'Cookie choices: kept without your account, so they cannot be linked to you.',

@@ -11,6 +11,7 @@ const nl: UiDictionary = {
   'portal.nav.addresses': 'Adressen',
   'portal.nav.bookings': 'Evenementreserveringen',
   'portal.nav.profile': 'Profiel',
+  'portal.nav.privacy': 'Gegevensbescherming',
   'portal.nav.organizations': 'Organisaties',
   'portal.profile.language': 'Taal',
   'portal.profile.languageAuto': 'Automatisch (zoals mijn browser)',

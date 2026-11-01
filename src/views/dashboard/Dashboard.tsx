@@ -29,6 +29,8 @@ import { viewerFromContext } from '@/features/approval/viewer'
 import { ReviewQueueTable } from '@/features/approval/views/ReviewQueueTable'
 import { getAdminUi } from '@/admin/i18n/serverUi'
 import { GettingStartedCard } from '@/features/gettingStarted/GettingStartedCard'
+import { policyReviewCanShow } from '@/features/privacy/notice/policyReview'
+import { PolicyReviewNotice } from '@/features/privacy/notice/PolicyReviewNotice'
 
 /**
  * The portal's landing page.
@@ -118,10 +120,11 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
 
   // Both are read-only and independent, so there is no reason to wait for one
   // before starting the other. Also load getting-started progress.
-  const [stats, recent, gettingStartedResult] = await Promise.all([
+  const [stats, recent, gettingStartedResult, policyReviewVisible] = await Promise.all([
     getStatTiles(engine, groups, req),
     getRecentActivity(engine, groups, RECENT_LIMIT, req),
     loadGettingStartedProgress(engine, user),
+    policyReviewCanShow(engine),
   ])
   const { progress: gettingStartedProgress, manualDoneIds } = gettingStartedResult
 
@@ -175,6 +178,8 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
           View site
         </a>
       </header>
+
+      <PolicyReviewNotice visible={policyReviewVisible} />
 
       <GettingStartedCard progress={gettingStartedProgress} initialDoneIds={manualDoneIds} />
 

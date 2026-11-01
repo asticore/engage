@@ -11,6 +11,7 @@ const hi: UiDictionary = {
   'portal.nav.addresses': 'पते',
   'portal.nav.bookings': 'इवेंट बुकिंग',
   'portal.nav.profile': 'प्रोफ़ाइल',
+  'portal.nav.privacy': 'गोपनीयता',
   'portal.nav.organizations': 'संगठन',
   'portal.profile.language': 'भाषा',
   'portal.profile.languageAuto': 'स्वचालित (मेरे ब्राउज़र के अनुसार)',

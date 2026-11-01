@@ -164,6 +164,7 @@ export const UI_STRING_SOURCE = {
   'portal.nav.addresses': 'Addresses',
   'portal.nav.bookings': 'Event bookings',
   'portal.nav.profile': 'Profile',
+  'portal.nav.privacy': 'Privacy',
   'portal.nav.organizations': 'Organizations',
   'portal.profile.language': 'Language',
   'portal.profile.languageAuto': 'Automatic (match my browser)',
