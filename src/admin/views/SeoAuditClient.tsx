@@ -10,6 +10,7 @@ import type { Status } from '@/features/seo/analysis/types'
 import { AUDIT_COLLECTIONS, type AuditCollection, type AuditRow, type AuditSummary } from '@/features/seo/audit'
 import { DEFAULT_AUDIT_FILTERS, filterAuditRows, sortAuditRows, type AuditFilters, type ScoreFilter, type SortKey } from '@/features/seo/auditFilters'
 import './seo-audit.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type AuditResponse = { rows: AuditRow[]; summary: AuditSummary }
 type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: AuditResponse }
@@ -33,7 +34,7 @@ const PROBLEMS_SHOWN = 3
 function StatusDot({ status }: { status: Status }) {
   const t = useAdminT()
   const text = STATUS_KEY[status] ? t(STATUS_KEY[status]) : 'For information'
-  return <span className={`sa-dot sa-dot--${status}`} role="img" aria-label={text} title={text} />
+  return <Tooltip text={text}><span className={`sa-dot sa-dot--${status}`} role="img" aria-label={text} /></Tooltip>
 }
 
 function SummaryTile({ value, label }: { value: number; label: string }) {

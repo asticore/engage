@@ -17,7 +17,7 @@
 .google-connection__help,
 .google-connection__current {
   font-size: 13px;
-  color: #5f6368;
+  color: var(--lit-5f6368, #5f6368);
 }
 
 .google-connection__status {
@@ -55,10 +55,10 @@
   min-height: 36px;
   padding: 6px 10px;
   font-size: 14px;
-  border: 1px solid #c4c7c5;
+  border: 1px solid var(--lit-c4c7c5, #c4c7c5);
   border-radius: 6px;
-  background: #ffffff;
-  color: #1f1f1f;
+  background: var(--lit-ffffff, #ffffff);
+  color: var(--lit-1f1f1f, #1f1f1f);
 }
 
 .google-connection__picker {
@@ -72,7 +72,7 @@
 .google-connection__row {
   padding: 0 0 16px;
   margin: 0 0 16px;
-  border-bottom: 1px solid #e0e2e0;
+  border-bottom: 1px solid var(--lit-e0e2e0, #e0e2e0);
 }
 
 .google-connection__row:last-child {
@@ -99,15 +99,15 @@
 }
 
 .google-connection__note {
-  color: #5f6368;
+  color: var(--lit-5f6368, #5f6368);
 }
 
 .google-connection__notice--ok {
-  color: #1a7f37;
+  color: var(--lit-1a7f37, #1a7f37);
 }
 
 .google-connection__notice--error {
-  color: #b3261e;
+  color: var(--lit-b3261e, #b3261e);
 }
 
 @media (max-width: 640px) {

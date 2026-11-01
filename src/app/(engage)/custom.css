@@ -33,6 +33,8 @@
  *   mapping. Only the MAPPING is theme-aware; the ramp itself is defined once.
  */
 
+@import './literal-tokens.css';
+
 /* ---------------------------------------------------------------- *
  * Brand tokens, density, and the neutral + status ramps              *
  * ---------------------------------------------------------------- */
@@ -103,7 +105,7 @@
   --color-base-250: #bbbdd6;
   --color-base-300: #a8abc8;
   --color-base-350: #9598b8;
-  --color-base-400: #8386a8;
+  --color-base-400: #6b6e90;
   --color-base-450: #857c8d;
   --color-base-500: #626587;
   --color-base-550: #545777;
@@ -198,7 +200,7 @@
   --theme-elevation-250: var(--color-base-650);
   --theme-elevation-300: var(--color-base-600);
   --theme-elevation-400: var(--color-base-450);
-  --theme-elevation-500: var(--color-base-400);
+  --theme-elevation-500: var(--color-base-350);
   --theme-elevation-600: var(--color-base-300);
   --theme-elevation-700: var(--color-base-200);
   --theme-elevation-800: var(--color-base-100);
@@ -236,7 +238,7 @@
     --theme-elevation-250: var(--color-base-650);
     --theme-elevation-300: var(--color-base-600);
     --theme-elevation-400: var(--color-base-450);
-    --theme-elevation-500: var(--color-base-400);
+    --theme-elevation-500: var(--color-base-350);
     --theme-elevation-600: var(--color-base-300);
     --theme-elevation-700: var(--color-base-200);
     --theme-elevation-800: var(--color-base-100);
@@ -1125,13 +1127,13 @@ button {
 }
 
 .doc-unsaved {
-  color: var(--theme-warning-600, #a15c00);
+  color: var(--theme-warning-600, var(--lit-a15c00, #a15c00));
   font-size: calc(var(--base) * 0.7);
   font-weight: 600;
 }
 
 .doc-saved {
-  color: var(--theme-success-600, #1a7f37);
+  color: var(--theme-success-600, var(--lit-1a7f37, #1a7f37));
   font-size: calc(var(--base) * 0.7);
   font-weight: 600;
 }
@@ -1217,7 +1219,7 @@ button {
 }
 
 .doc-link--danger {
-  color: var(--theme-error-500, #b3261e);
+  color: var(--theme-error-500, var(--lit-b3261e, #b3261e));
 }
 
 .doc-confirm {
@@ -1227,7 +1229,7 @@ button {
 
 .doc-error {
   margin: calc(var(--base) * 0.4) 0 0;
-  color: var(--theme-error-500, #b3261e);
+  color: var(--theme-error-500, var(--lit-b3261e, #b3261e));
   font-size: calc(var(--base) * 0.75);
 }
 
@@ -1355,7 +1357,7 @@ button {
 }
 
 .seo-snippet__url {
-  color: #006621;
+  color: var(--lit-006621, #006621);
   margin-bottom: calc(var(--base) * 0.2);
 }
 
@@ -1370,7 +1372,7 @@ button {
 }
 
 .seo-snippet__title {
-  color: #1a0dab;
+  color: var(--lit-1a0dab, #1a0dab);
   font-weight: 500;
   margin-bottom: calc(var(--base) * 0.2);
   overflow: hidden;
@@ -1390,7 +1392,7 @@ button {
 }
 
 .seo-snippet__description {
-  color: #4d5156;
+  color: var(--lit-4d5156, #4d5156);
   margin-bottom: calc(var(--base) * 0.4);
   overflow: hidden;
   text-overflow: ellipsis;

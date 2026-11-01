@@ -9,6 +9,7 @@ import type { WorstPage } from '../worst'
 import type { Strategy } from '../types'
 import './pagespeed.css'
 import './pagespeed-worst.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * "Slowest pages" card for the PageSpeed settings screen. Collapsed by default; the list is only fetched
@@ -58,13 +59,13 @@ export function WorstPagesCard() {
         </p>
         <label className="ps-worst__strategy">
           <span>Test type</span>
-          <select value={strategy} onChange={(event) => setStrategy(event.target.value as Strategy)} title="Mobile is what Google ranks on. Desktop shows the computer result.">
+          <Tooltip text={t('tip.mobileIsWhatGoogleRanks')} block><select value={strategy} onChange={(event) => setStrategy(event.target.value as Strategy)}>
             {(['mobile', 'desktop'] as Strategy[]).map((value) => (
               <option key={value} value={value}>
                 {STRATEGY_LABEL[value]}
               </option>
             ))}
-          </select>
+          </select></Tooltip>
         </label>
 
         {!current && <p className="ps__muted">Loading...</p>}
@@ -86,14 +87,14 @@ export function WorstPagesCard() {
               {current.pages.map((page) => (
                 <tr key={`${page.collection}-${page.docId}`}>
                   <td>
-                    <span className={`ps-badge ps-band--${page.band ?? 'none'}`} title="Performance score out of 100 from the latest test.">
+                    <Tooltip text={t('tip.performanceScoreOutOf100')}><span className={`ps-badge ps-band--${page.band ?? 'none'}`}>
                       {page.score}
-                    </span>
+                    </span></Tooltip>
                   </td>
                   <td>
-                    <a href={page.editHref} className="list-link" title="Open this page to edit it">
+                    <Tooltip text={t('tip.openThisPageToEdit')}><a href={page.editHref} className="list-link">
                       {page.title}
-                    </a>
+                    </a></Tooltip>
                     <div className="ps__muted ps-worst__url">{page.url}</div>
                   </td>
                   <td>{dateText(page.lastRun)}</td>
@@ -103,9 +104,9 @@ export function WorstPagesCard() {
                     ) : (
                       <ul className="ps-worst__audits">
                         {page.failingAudits.map((audit) => (
-                          <li key={audit.id} title={audit.displayValue ?? undefined}>
+                          <li key={audit.id}><Tooltip text={audit.displayValue ?? undefined}><span>
                             {audit.title}
-                          </li>
+                          </span></Tooltip></li>
                         ))}
                       </ul>
                     )}

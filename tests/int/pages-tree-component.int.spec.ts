@@ -228,8 +228,8 @@ describe('PagesTreeClient component', () => {
     // No sticky bar
     expect(screen.queryByText(/change\(s\)/)).toBeFalsy()
 
-    // Content should not be focusable (tabindex should be -1)
-    const contentDivs = document.querySelectorAll('[role="button"][tabindex="-1"]')
+    // Rows stay focusable in read-only mode so arrow keys can still move through the tree
+    const contentDivs = document.querySelectorAll('[role="button"][tabindex="0"]')
     expect(contentDivs.length).toBeGreaterThan(0)
   })
 
@@ -366,5 +366,58 @@ describe('PagesTreeClient component', () => {
       // When canEdit is true, should be focusable
       expect(btn.getAttribute('tabindex')).toBe('0')
     })
+  })
+})
+
+describe('PagesTreeClient plain-key navigation and expand/collapse all', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
+  const navPages = (): TreePage[] => [
+    { id: 1, title: 'Home', parent: null, sortOrder: 10, status: 'published', isHomepage: true, slug: '' },
+    { id: 2, title: 'About', parent: null, sortOrder: 20, status: 'published', isHomepage: false, slug: 'about' },
+    { id: 3, title: 'Team', parent: 2, sortOrder: 10, status: 'published', isHomepage: false, slug: 'team' },
+    { id: 4, title: 'Contact', parent: null, sortOrder: 30, status: 'published', isHomepage: false, slug: 'contact' },
+  ]
+
+  const rowTitles = () =>
+    Array.from(document.querySelectorAll<HTMLElement>('.pages-tree__content')).map(el => el.querySelector('a')?.textContent)
+
+  const rowFor = (title: string) =>
+    Array.from(document.querySelectorAll<HTMLElement>('.pages-tree__content')).find(el => el.querySelector('a')?.textContent === title)!
+
+  it('ArrowDown and ArrowUp move focus between visible rows, Home and End jump to the ends (read-only too)', () => {
+    render(h(PagesTreeClient, { pages: navPages(), canEdit: false }))
+    rowFor('Home').focus()
+    fireEvent.keyDown(rowFor('Home'), { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(rowFor('About'))
+    fireEvent.keyDown(rowFor('About'), { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(rowFor('Team'))
+    fireEvent.keyDown(rowFor('Team'), { key: 'End' })
+    expect(document.activeElement).toBe(rowFor('Contact'))
+    fireEvent.keyDown(rowFor('Contact'), { key: 'Home' })
+    expect(document.activeElement).toBe(rowFor('Home'))
+    fireEvent.keyDown(rowFor('Home'), { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(rowFor('Home'))
+  })
+
+  it('ArrowLeft and ArrowRight collapse and expand a parent, and ArrowLeft on a child goes to its parent', () => {
+    render(h(PagesTreeClient, { pages: navPages(), canEdit: true }))
+    expect(rowTitles()).toContain('Team')
+    fireEvent.keyDown(rowFor('About'), { key: 'ArrowLeft' })
+    expect(rowTitles()).not.toContain('Team')
+    fireEvent.keyDown(rowFor('About'), { key: 'ArrowRight' })
+    expect(rowTitles()).toContain('Team')
+    fireEvent.keyDown(rowFor('Team'), { key: 'ArrowLeft' })
+    expect(document.activeElement).toBe(rowFor('About'))
+  })
+
+  it('Collapse all hides every child and Expand all shows them again', () => {
+    render(h(PagesTreeClient, { pages: navPages(), canEdit: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse all' }))
+    expect(rowTitles()).not.toContain('Team')
+    fireEvent.click(screen.getByRole('button', { name: 'Expand all' }))
+    expect(rowTitles()).toContain('Team')
   })
 })

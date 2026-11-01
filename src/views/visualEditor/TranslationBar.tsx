@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * The language dropdown and the per-language progress chips in the builder's
@@ -47,19 +48,17 @@ export function TranslationBar({
         </select>
       </label>
       {progress.map((chip) => (
-        <button
-          key={chip.code}
+        <Tooltip text={t('ve.lang.chipTitle', { label: chip.label, approved: chip.approved, total: chip.total })} key={chip.code}><button
           type="button"
           className={`ve-translation-bar__chip${chip.code === selected ? ' ve-translation-bar__chip--active' : ''}`}
           aria-pressed={chip.code === selected}
-          title={t('ve.lang.chipTitle', { label: chip.label, approved: chip.approved, total: chip.total })}
           onClick={() => onSelect(chip.code)}
           data-locale={chip.code}
           data-approved={chip.approved}
           data-total={chip.total}
         >
           {t('ve.lang.chipText', { code: chip.code.split('-')[0].toUpperCase(), approved: chip.approved, total: chip.total })}
-        </button>
+        </button></Tooltip>
       ))}
     </div>
   )

@@ -10,6 +10,7 @@ import { diffVersion, type DiffEntry } from './versionDiff'
 import { useReviewState } from '@/features/approval/ui/useReviewState'
 import { ReviewBox } from '@/features/approval/ui/ReviewPanel'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 interface Version {
   id: number
@@ -288,15 +289,14 @@ export function VersionsList({
                         >
                           {t('edit.restoreAndPublish')}
                         </button>
-                        <button
+                        <Tooltip text={version.latest ? t('tip.theLatestVersionCannotBe') : t('tip.deleteThisVersion')}><button
                           className="btn btn--small"
                           onClick={() => openConfirm(version.id, 'delete')}
                           disabled={busy !== null || version.latest}
-                          title={version.latest ? 'The latest version cannot be deleted' : 'Delete this version'}
                           style={{ color: 'var(--theme-error-500)' }}
                         >
                           Delete
-                        </button>
+                        </button></Tooltip>
                       </div>
                     )}
                   </td>

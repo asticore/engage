@@ -18,10 +18,10 @@
   width: min(780px, 100%);
   max-height: calc(100vh - 32px);
   overflow: auto;
-  border: 1px solid var(--theme-elevation-150, #d6d2e0);
+  border: 1px solid var(--theme-elevation-150, var(--lit-d6d2e0, #d6d2e0));
   border-radius: 8px;
-  background: var(--theme-bg, #fff);
-  color: var(--theme-text, #1d1d24);
+  background: var(--theme-bg, var(--lit-fff, #fff));
+  color: var(--theme-text, var(--lit-1d1d24, #1d1d24));
   padding: 18px;
   font-size: 13px;
   line-height: 1.45;
@@ -46,22 +46,22 @@
 
 .ssi-error {
   margin: 0;
-  border: 1px solid #b3453a;
+  border: 1px solid var(--lit-b3453a, #b3453a);
   border-radius: 5px;
   padding: 8px;
   font-size: 12px;
-  color: #b3453a;
+  color: var(--lit-b3453a, #b3453a);
 }
 
 .ssi-warn {
   margin: 0;
   font-size: 12px;
-  color: #8a5a00;
+  color: var(--lit-8a5a00, #8a5a00);
 }
 
 .ssi-scroll {
   overflow: auto;
-  border: 1px solid var(--theme-elevation-150, #d6d2e0);
+  border: 1px solid var(--theme-elevation-150, var(--lit-d6d2e0, #d6d2e0));
   border-radius: 5px;
 }
 
@@ -73,7 +73,7 @@
 
 .ssi-table th,
 .ssi-table td {
-  border-bottom: 1px solid var(--theme-elevation-100, #e6e3ee);
+  border-bottom: 1px solid var(--theme-elevation-100, var(--lit-e6e3ee, #e6e3ee));
   padding: 4px 8px;
   text-align: left;
   white-space: nowrap;
@@ -83,7 +83,7 @@
 }
 
 .ssi-table th {
-  background: var(--theme-elevation-50, #f5f4f9);
+  background: var(--theme-elevation-50, var(--lit-f5f4f9, #f5f4f9));
   font-weight: 600;
 }
 
@@ -98,9 +98,9 @@
 .ssi-select {
   width: 100%;
   min-width: 0;
-  border: 1px solid var(--theme-elevation-150, #cac7d1);
+  border: 1px solid var(--theme-elevation-150, var(--lit-cac7d1, #cac7d1));
   border-radius: 5px;
-  background: var(--theme-input-bg, #fff);
+  background: var(--theme-input-bg, var(--lit-fff, #fff));
   padding: 5px 8px;
   font: inherit;
   color: inherit;
@@ -115,7 +115,7 @@
 
 .ssi-btn {
   cursor: pointer;
-  border: 1px solid var(--theme-elevation-150, #cac7d1);
+  border: 1px solid var(--theme-elevation-150, var(--lit-cac7d1, #cac7d1));
   border-radius: 5px;
   background: transparent;
   padding: 6px 12px;
@@ -124,7 +124,7 @@
 }
 
 .ssi-btn:hover:not(:disabled) {
-  border-color: #2e3192;
+  border-color: var(--lit-2e3192, #2e3192);
 }
 
 .ssi-btn:disabled {
@@ -133,7 +133,7 @@
 }
 
 .ssi-btn--primary {
-  border-color: #2e3192;
+  border-color: var(--lit-2e3192, #2e3192);
   background: #2e3192;
   color: #fff;
 }
@@ -147,7 +147,7 @@
 }
 
 .ssi-link {
-  color: #2e3192;
+  color: var(--lit-2e3192, #2e3192);
   text-decoration: underline;
 }
 

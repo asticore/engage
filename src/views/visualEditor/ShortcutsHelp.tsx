@@ -6,6 +6,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { SHORTCUT_LIST } from './useEditorShortcuts'
 import './saveStatusChip.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * Top-bar button that opens a small list of every keyboard shortcut. The parent owns `open` so the
@@ -41,33 +42,31 @@ export const ShortcutsHelp: React.FC<{
 
   return (
     <div className="ve-shortcuts" ref={rootRef}>
-      <button
+      <Tooltip text={t('ve.shortcuts.buttonTitle')}><button
         type="button"
         className="ve-btn ve-btn--ghost"
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={t('ve.shortcuts.title')}
-        title={t('ve.shortcuts.buttonTitle')}
         onClick={() => onOpenChange(!open)}
       >
         {t('ve.shortcuts.button')}
-      </button>
+      </button></Tooltip>
       {open && (
         <div className="ve-shortcuts__panel" role="dialog" aria-label={t('ve.shortcuts.title')}>
           <div className="ve-shortcuts__head">
             <p className="ve-shortcuts__title">{t('ve.shortcuts.title')}</p>
             {onTour && (
-              <button
+              <Tooltip text={t('ve.shortcuts.tourTitle')}><button
                 type="button"
                 className="ve-shortcuts__tour"
                 onClick={() => {
                   onOpenChange(false)
                   onTour()
                 }}
-                title={t('ve.shortcuts.tourTitle')}
               >
                 {t('ve.shortcuts.tour')}
-              </button>
+              </button></Tooltip>
             )}
           </div>
           <dl className="ve-shortcuts__list">

@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react'
 
 import '@/features/shopReports/shop-reports.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 type ApiRow = { code: string; enabled: boolean; rateMode: 'manual' | 'auto'; manualRate: number | null; autoRate: number | null; autoRateAt: string | null; shownRate: number | null }
 type Loaded = { base: string; attribution: string; maxCurrencies: number; currencies: ApiRow[] }
@@ -12,6 +14,7 @@ const toDraft = (r: ApiRow): Draft => ({ code: r.code, enabled: r.enabled, rateM
 
 /** The list of extra display currencies: which ones shoppers can pick, and how their rates are set. */
 export function DisplayCurrenciesPanel() {
+  const t = useAdminT()
   const [loaded, setLoaded] = useState<Loaded | null>(null)
   const [drafts, setDrafts] = useState<Draft[]>([])
   const [loadError, setLoadError] = useState('')
@@ -146,16 +149,16 @@ export function DisplayCurrenciesPanel() {
                   </select>
                 </label>
                 {d.rateMode === 'manual' ? (
-                  <label style={{ display: 'grid', gap: 4 }} title={`How many ${d.code} one ${base} is worth. For example, 0.66 means 10 ${base} shows as 6.60 ${d.code}.`}>
+                  <Tooltip text={t('tip.countRateExplain', { code: d.code, base })}><label style={{ display: 'grid', gap: 4 }}>
                     <span>
                       {d.code} for 1 {base}
                     </span>
                     <input type="number" min="0" step="any" value={d.manualRate} onChange={(e) => update(i, { manualRate: e.target.value })} />
-                  </label>
+                  </label></Tooltip>
                 ) : null}
-                <span className="shop-reports__range" title="The exchange rate shoppers see right now.">
+                <Tooltip text={t('tip.theExchangeRateShoppersSee')}><span className="shop-reports__range">
                   {saved && saved.shownRate !== null ? `Rate in use: 1 ${base} = ${saved.shownRate} ${d.code}` : 'No rate yet. Save, then fetch automatic rates, or type a rate.'}
-                </span>
+                </span></Tooltip>
               </div>
             </li>
           )
@@ -173,9 +176,9 @@ export function DisplayCurrenciesPanel() {
         <button type="button" onClick={save} disabled={busy}>
           Save list
         </button>
-        <button type="button" onClick={refresh} disabled={busy || !drafts.some((d) => d.rateMode === 'auto')} title="Fetch the automatic rates now instead of waiting for the daily update.">
+        <Tooltip text={t('tip.fetchTheAutomaticRatesNow')}><button type="button" onClick={refresh} disabled={busy || !drafts.some((d) => d.rateMode === 'auto')}>
           Fetch automatic rates now
-        </button>
+        </button></Tooltip>
       </div>
       {message ? <p role="status">{message}</p> : null}
       <p className="shop-reports__range">{loaded.attribution}. Converted amounts are estimates and are rounded for display only.</p>

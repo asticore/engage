@@ -6,6 +6,7 @@ import React, { useState } from 'react'
 import { ResultsMessage, ResultsPager, ResultsStat } from './ResultsChrome'
 import { cellText, formatWhen, type PageInfo, type SubmissionColumn, type SubmissionRow } from './rows'
 import { useResultsPage } from './useResultsPage'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type SubmissionPage = PageInfo & { columns: SubmissionColumn[]; docs: SubmissionRow[] }
 
@@ -57,9 +58,9 @@ export function FormResultsTab({ formId }: { formId: number }) {
                     {data.columns.map((column) => {
                       const text = cellText(row.values[column.name])
                       return (
-                        <td className="et-clip" key={column.name} title={text}>
+                        <td className="et-clip" key={column.name}><Tooltip text={text}><span>
                           {text}
-                        </td>
+                        </span></Tooltip></td>
                       )
                     })}
                     {showPayment && <td className="et-nowrap">{row.paymentStatus}</td>}

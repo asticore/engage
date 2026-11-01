@@ -34,10 +34,10 @@
 .pages-tree__alert {
   margin-bottom: 16px;
   padding: 12px 16px;
-  background: var(--theme-error-100, #ffebee);
-  border: 1px solid var(--theme-error-300, #ef9a9a);
+  background: var(--theme-error-100, var(--lit-ffebee, #ffebee));
+  border: 1px solid var(--theme-error-300, var(--lit-ef9a9a, #ef9a9a));
   border-radius: var(--style-radius-s);
-  color: var(--theme-error-900, #b71c1c);
+  color: var(--theme-error-900, var(--lit-b71c1c, #b71c1c));
   font-size: 14px;
   animation: fadeOut 4s ease-in-out forwards;
 }
@@ -194,12 +194,12 @@
 
 .pages-tree__badge--draft {
   background: var(--theme-warning-100, #fff3e0);
-  color: var(--theme-warning-900, #e65100);
+  color: var(--theme-warning-900, var(--lit-e65100, #e65100));
 }
 
 .pages-tree__badge--homepage {
-  background: var(--theme-info-100, #e3f2fd);
-  color: var(--theme-info-900, #01579b);
+  background: var(--theme-info-100, var(--lit-e3f2fd, #e3f2fd));
+  color: var(--theme-info-900, var(--lit-01579b, #01579b));
 }
 
 .pages-tree__count {
@@ -590,10 +590,45 @@
   display: inline-block;
   padding: 2px 6px;
   background: var(--theme-warning-100, #fff3e0);
-  color: var(--theme-warning-900, #e65100);
+  color: var(--theme-warning-900, var(--lit-e65100, #e65100));
   border-radius: 3px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   white-space: nowrap;
+}
+/* Toolbar above the tree: Expand all and Collapse all. */
+.pages-tree__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px 0;
+}
+
+/* Keyboard focus on a row is visible in both themes. */
+.pages-tree__content:focus-visible {
+  outline: 2px solid var(--ac-gold);
+  outline-offset: 2px;
+}
+
+/* Dark theme: the draft and homepage badges use light fallbacks, so give them dark surfaces. */
+[data-theme='dark'] .pages-tree__badge--draft {
+  background: #3d2a12;
+  color: #ffcc80;
+}
+
+[data-theme='dark'] .pages-tree__badge--homepage {
+  background: #14304a;
+  color: #9fd4ff;
+}
+
+[data-theme='dark'] .pages-tree__alert {
+  background: #3b1a1a;
+  border-color: #7a3a3a;
+  color: #ffb4a8;
+}
+
+[data-theme='dark'] .parent-picker__badge {
+  background: #3d2a12;
+  color: #ffcc80;
 }

@@ -10,6 +10,7 @@ import { CsvExportButton } from '@/admin/list/CsvExportButton'
 import { CSV_MAX_ROWS } from '@/admin/list/csvExport'
 import { OrdersManifestAction } from '@/features/ecommerce/admin/OrdersManifestAction'
 import { OrdersFilterBar } from '@/features/ecommerce/admin/OrdersFilterBar'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 import { ProductsCsvActions } from '@/features/ecommerce/admin/ProductsCsvActions'
 
 interface ListToolbarProps {
@@ -183,14 +184,13 @@ export function ListToolbar({
     <div className="list-toolbar">
       {/* Search box */}
       <form onSubmit={handleSearch} className="list-search-form">
-        <input
+        <Tooltip text={collectionSlug === 'orders' ? t('list.findOrdersHint') : undefined} block><input
           type="text"
           name="q"
           placeholder={collectionSlug === 'orders' ? t('list.ordersSearchPlaceholder') : t('list.searchPlaceholder')}
-          title={collectionSlug === 'orders' ? t('list.findOrdersHint') : undefined}
           defaultValue={state.q || ''}
           className="list-search-input"
-        />
+        /></Tooltip>
         <button type="submit" className="list-search-btn">
           {t('common.search')}
         </button>
@@ -302,24 +302,28 @@ export function ListToolbar({
                     {col.label}
                   </label>
                   {isVisible && visibleIdx > 0 && (
-                    <button
-                      onClick={() => handleColumnReorder(visibleIdx, visibleIdx - 1)}
-                      className="list-column-up-btn"
-                      title={t('list.moveUp')}
-                      type="button"
-                    >
-                      ↑
-                    </button>
+                    <Tooltip text={t('list.moveUp')}>
+                      <button
+                        onClick={() => handleColumnReorder(visibleIdx, visibleIdx - 1)}
+                        className="list-column-up-btn"
+                        aria-label={t('list.moveUp')}
+                        type="button"
+                      >
+                        ↑
+                      </button>
+                    </Tooltip>
                   )}
                   {isVisible && visibleIdx < visibleNames.length - 1 && (
-                    <button
-                      onClick={() => handleColumnReorder(visibleIdx, visibleIdx + 1)}
-                      className="list-column-down-btn"
-                      title={t('list.moveDown')}
-                      type="button"
-                    >
-                      ↓
-                    </button>
+                    <Tooltip text={t('list.moveDown')}>
+                      <button
+                        onClick={() => handleColumnReorder(visibleIdx, visibleIdx + 1)}
+                        className="list-column-down-btn"
+                        aria-label={t('list.moveDown')}
+                        type="button"
+                      >
+                        ↓
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
               )
@@ -329,28 +333,22 @@ export function ListToolbar({
       </div>
 
       {/* Save/Reset preferences buttons */}
-      <button
-        onClick={handleSavePrefs}
-        disabled={isSaving}
-        className="list-toolbar-btn"
-        title={t('list.saveDefaultHint')}
-      >
-        {isSaving ? t('common.saving') : t('list.saveDefault')}
-      </button>
+      <Tooltip text={t('list.saveDefaultHint')}>
+        <button onClick={handleSavePrefs} disabled={isSaving} className="list-toolbar-btn">
+          {isSaving ? t('common.saving') : t('list.saveDefault')}
+        </button>
+      </Tooltip>
       {saveError && (
         <span role="alert" className="list-toolbar-error">
           {saveError}
         </span>
       )}
       {hasSavedPrefs && (
-        <button
-          onClick={handleResetPrefs}
-          disabled={isSaving}
-          className="list-toolbar-btn"
-          title={t('list.resetDefaultHint')}
-        >
-          {isSaving ? t('list.resetting') : t('list.resetDefault')}
-        </button>
+        <Tooltip text={t('list.resetDefaultHint')}>
+          <button onClick={handleResetPrefs} disabled={isSaving} className="list-toolbar-btn">
+            {isSaving ? t('list.resetting') : t('list.resetDefault')}
+          </button>
+        </Tooltip>
       )}
 
       {/* Collection-specific actions */}
@@ -371,6 +369,7 @@ export function ListToolbar({
  * Redirects-specific toolbar actions: CSV export/import and URL testing
  */
 function RedirectsToolbarActions() {
+  const t = useAdminT()
   const [showImport, setShowImport] = useState(false)
   const [showTest, setShowTest] = useState(false)
   const [importFile, setImportFile] = useState<File | null>(null)
@@ -466,21 +465,20 @@ function RedirectsToolbarActions() {
 
   return (
     <>
-      <button onClick={handleExportCsv} className="list-toolbar-btn" title="Export redirects to CSV">
+      <Tooltip text={t('tip.exportRedirectsToCsv')}><button onClick={handleExportCsv} className="list-toolbar-btn">
         Export CSV
-      </button>
+      </button></Tooltip>
 
       <div className="list-import-modal" ref={importRef}>
-        <button
+        <Tooltip text={t('tip.importRedirectsFromCsv')}><button
           onClick={() => {
             setShowImport(!showImport)
             setImportResult(null)
           }}
           className="list-toolbar-btn"
-          title="Import redirects from CSV"
         >
           Import CSV
-        </button>
+        </button></Tooltip>
         {showImport && (
           <div className="list-import-panel">
             {!importResult ? (
@@ -542,16 +540,15 @@ function RedirectsToolbarActions() {
       </div>
 
       <div className="list-test-modal" ref={testRef}>
-        <button
+        <Tooltip text={t('tip.testARedirectUrl')}><button
           onClick={() => {
             setShowTest(!showTest)
             setTestResult(null)
           }}
           className="list-toolbar-btn"
-          title="Test a redirect URL"
         >
           Test URL
-        </button>
+        </button></Tooltip>
         {showTest && (
           <div className="list-test-panel">
             <input

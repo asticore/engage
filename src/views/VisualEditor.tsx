@@ -111,6 +111,7 @@ import { applyInlineEdit } from './visualEditor/inlineEdit'
 import { canInsertInto, effectiveLock, lockedKeySet, lockKeyOf, lockMapForCanvas, withNodeLock } from './visualEditor/lockState'
 import { canConvertLegacy, convertLegacyBlock } from './visualEditor/convertLegacy'
 import type { LockUi } from './visualEditor/LockControls'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 export const VisualEditorView: React.FC = () => {
   // The URL is read after mount so the server render and first client render match (no window on the server).
@@ -1402,15 +1403,14 @@ export const VisualEditorView: React.FC = () => {
           >
             Back
           </a>
-          <button
+          <Tooltip text={dockCollapsed ? t('ve.top.showPanel') : t('ve.top.collapsePanel')}><button
             type="button"
             className="ve-btn ve-btn--ghost ve-btn--icon"
             onClick={() => setDockCollapsed((c) => !c)}
             aria-label={dockCollapsed ? t('ve.top.showPanel') : t('ve.top.collapsePanel')}
-            title={dockCollapsed ? t('ve.top.showPanel') : t('ve.top.collapsePanel')}
           >
             {dockCollapsed ? String.fromCodePoint(0xbb) : String.fromCodePoint(0xab)}
-          </button>
+          </button></Tooltip>
           <span className="ve-topbar__title">
             {t('ve.top.title', { title: docTitle })} {status && <span className="ve-topbar__status">({status})</span>}
           </span>
@@ -1437,30 +1437,28 @@ export const VisualEditorView: React.FC = () => {
             />
           ) : null}
           <div className="ve-history" role="group" aria-label={t('ve.top.history')}>
-            <button
+            <Tooltip text={t('ve.top.undoTitle', { mod: modLabel })}><button
               type="button"
               className="ve-btn ve-btn--ghost"
               onClick={undo}
               disabled={!historyFlags.undo}
               aria-label={t('ve.shortcut.undo')}
-              title={t('ve.top.undoTitle', { mod: modLabel })}
             >
               {t('ve.shortcut.undo')}
-            </button>
-            <button
+            </button></Tooltip>
+            <Tooltip text={t('ve.top.redoTitle', { mod: modLabel })}><button
               type="button"
               className="ve-btn ve-btn--ghost"
               onClick={redo}
               disabled={!historyFlags.redo}
               aria-label={t('ve.shortcut.redo')}
-              title={t('ve.top.redoTitle', { mod: modLabel })}
             >
               {t('ve.shortcut.redo')}
-            </button>
+            </button></Tooltip>
           </div>
-          <button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)} title={t('ve.top.importTitle')}>
+          <Tooltip text={t('ve.top.importTitle')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)}>
             {t('ve.top.importExport')}
-          </button>
+          </button></Tooltip>
           <ShortcutsHelp
             modLabel={modLabel}
             open={helpOpen}
@@ -1468,44 +1466,40 @@ export const VisualEditorView: React.FC = () => {
             onTour={() => setTourOpen(true)}
           />
           <div className="ve-device-toggle" role="group" aria-label={t('ve.top.devicePreview')}>
-            <button
+            <Tooltip text={t('ve.top.desktopPreviewTitle')}><button
               type="button"
               className={`ve-device-btn ${device === 'desktop' ? 've-device-btn--active' : ''}`}
               onClick={() => setDevice('desktop')}
               aria-label={t('ve.top.desktopPreview')}
-              title={t('ve.top.desktopPreviewTitle')}
             >
               {t('ve.top.desktop')}
-            </button>
-            <button
+            </button></Tooltip>
+            <Tooltip text={t('ve.top.tabletPreview')}><button
               type="button"
               className={`ve-device-btn ${device === 'tablet' ? 've-device-btn--active' : ''}`}
               onClick={() => setDevice('tablet')}
               aria-label={t('ve.top.tabletPreview')}
-              title={t('ve.top.tabletPreview')}
             >
               {t('ve.top.tablet')}
-            </button>
-            <button
+            </button></Tooltip>
+            <Tooltip text={t('ve.top.mobilePreview')}><button
               type="button"
               className={`ve-device-btn ${device === 'mobile' ? 've-device-btn--active' : ''}`}
               onClick={() => setDevice('mobile')}
               aria-label={t('ve.top.mobilePreview')}
-              title={t('ve.top.mobilePreview')}
             >
               {t('ve.top.mobile')}
-            </button>
+            </button></Tooltip>
           </div>
           {!formMode && (
-            <button
+            <Tooltip text={selectedPath && selectedPath.length === 1 ? t('ve.top.templateSection') : t('ve.top.templatePage')}><button
               type="button"
               className="ve-btn"
               onClick={() => setSaveTemplateOpen(true)}
               disabled={blocks.length === 0}
-              title={selectedPath && selectedPath.length === 1 ? t('ve.top.templateSection') : t('ve.top.templatePage')}
             >
               {t('ve.top.saveAsTemplate')}
-            </button>
+            </button></Tooltip>
           )}
           <SaveStatusChip status={saving} dirty={dirty} savedAt={savedAt} onRetry={() => save(false)} />
           <button type="button" className="ve-btn" onClick={() => save(false)} disabled={saving === 'saving'}>

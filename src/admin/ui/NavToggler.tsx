@@ -18,6 +18,7 @@
 
 import React from 'react'
 import { useNav } from '@/admin/context'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const PanelIcon: React.FC = () => (
   <svg aria-hidden="true" height="16" viewBox="0 0 16 16" width="16">
@@ -33,16 +34,15 @@ export const NavToggler: React.FC = () => {
   const label = isOpenState ? 'Collapse sidebar' : 'Expand sidebar'
 
   return (
-    <button
+    <Tooltip text={`${label} (Ctrl/⌘+B)`}><button
       aria-label={label}
       className="nav-toggler"
       onClick={toggleSidebar}
       suppressHydrationWarning
-      title={`${label} (Ctrl/⌘+B)`}
       type="button"
     >
       <PanelIcon />
-    </button>
+    </button></Tooltip>
   )
 }
 

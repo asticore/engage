@@ -11,6 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { buildQuickEditPatch, getDescendantIds, type QuickEditData } from '@/admin/list/quickEdit'
 import { SignInAsCustomerButton } from '@/features/impersonation/components/SignInAsCustomerButton'
 import { showSignInAsRow } from '@/features/impersonation/policy'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 interface ListRowActionsProps {
   collectionSlug: string
@@ -157,14 +158,13 @@ export function ListRowActions({
     <>
       <div className="list-row-actions">
         {canDuplicate && (
-          <button
+          <Tooltip text={t('tip.duplicateThisDocument')}><button
             onClick={handleDuplicate}
             disabled={isDuplicating}
             className="list-row-action-btn"
-            title="Duplicate this document"
           >
             {isDuplicating ? '...' : t('common.duplicate')}
-          </button>
+          </button></Tooltip>
         )}
         {signInAs && showSignInAsRow({ id: doc.id, roles: doc.roles, email: doc.email }, signInAs.admin) && (
           <SignInAsCustomerButton email={String(doc.email)} maxMinutes={signInAs.maxMinutes} />
@@ -175,13 +175,12 @@ export function ListRowActions({
           </AdminLink>
         )}
         {canUpdate && (
-          <button
+          <Tooltip text={t('tip.quickEditTitleSlugStatus')}><button
             onClick={() => setShowQuickEdit(true)}
             className="list-row-action-btn"
-            title="Quick edit title, slug, status"
           >
             Quick edit
-          </button>
+          </button></Tooltip>
         )}
       </div>
 

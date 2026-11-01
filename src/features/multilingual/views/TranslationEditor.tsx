@@ -7,6 +7,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { errorMessageFrom, TranslationStatusBadge } from './TranslationStatusBadge'
 import type { TranslationStatus } from '../translationStatus'
 import type { OverviewUser } from './TranslationsOverview'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * The editor for one item: every field, in every language, side by side.
@@ -239,16 +240,14 @@ export function TranslationEditor(props: TranslationEditorProps) {
           {t('common.save')}{changed.length ? ' ' + (changed.length === 1 ? t('translations.editor.saveChangesOne', { count: changed.length }) : t('translations.editor.saveChangesOther', { count: changed.length })) : ''}
         </button>
         {props.targetLocales.map((locale) => (
-          <button
-            key={locale}
+          <Tooltip text={props.approvable[locale] ? undefined : t('translations.editor.onlyReviewer')} key={locale}><button
             type="button"
             className="btn"
             disabled={busy || !props.approvable[locale]}
-            title={props.approvable[locale] ? undefined : t('translations.editor.onlyReviewer')}
             onClick={() => approve(locale)}
           >
             {t('translations.editor.approve', { locale: props.localeLabels[locale] ?? locale })}
-          </button>
+          </button></Tooltip>
         ))}
       </div>
 

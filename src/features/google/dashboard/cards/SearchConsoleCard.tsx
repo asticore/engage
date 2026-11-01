@@ -8,6 +8,7 @@ import { changeText, formatInt, formatPercent, formatPosition, pathOf } from '..
 import { useWidget } from '../useWidget'
 import type { SearchConsoleData, SearchRow, WidgetState } from '../types'
 import { Tile, DataTable, StateNotice, type Column } from './common'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const queryColumns = (): Column<SearchRow>[] => [
   { head: 'Search', cell: (r) => r.key },
@@ -17,7 +18,7 @@ const queryColumns = (): Column<SearchRow>[] => [
 ]
 
 const pageColumns = (): Column<SearchRow>[] => [
-  { head: 'Page', cell: (r) => <span title={r.key}>{pathOf(r.key)}</span> },
+  { head: 'Page', cell: (r) => <Tooltip text={r.key}><span>{pathOf(r.key)}</span></Tooltip> },
   { head: 'Clicks', align: 'right', cell: (r) => formatInt(r.clicks), help: 'Clicks from Google results.' },
   { head: 'Impressions', align: 'right', cell: (r) => formatInt(r.impressions), help: 'Times a result was shown.' },
   { head: 'Position', align: 'right', cell: (r) => formatPosition(r.position), help: 'Average position in Google results. 1 is the top.' },

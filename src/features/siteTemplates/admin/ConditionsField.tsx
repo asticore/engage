@@ -7,6 +7,7 @@ import { useField } from '@/engine/ui'
 import { TEMPLATE_AUDIENCES, type LocationGroups, type LocationParam, type LocationRule } from '@/fields/customFields/types'
 
 import { CONDITION_KINDS, fromStoredConditions, summariseConditions, toStoredConditions, validateConditions, type PageTitles } from '../conditionsSummary'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /** The pages a `page` rule can pick from. Read once when the editor opens; a failure leaves the picker empty with a note. */
 type PageOption = { id: string; title: string }
@@ -52,12 +53,11 @@ const PagePicker: React.FC<{ value: string; pages: PageOption[]; state: 'loading
   if (state === 'failed') return <span className="text-[12px] text-red-700">{t('siteTemplates.pagesFailed')}</span>
   if (options.length === 0) return <span className="text-[12px] opacity-70">{t('siteTemplates.pagesNone')}</span>
   return (
-    <select
+    <Tooltip text={t('siteTemplates.pagesHint')} block><select
       className={`${inputClass} min-w-[220px]`}
       multiple
       size={Math.min(6, Math.max(3, options.length))}
       aria-label={t('siteTemplates.pagesLabel')}
-      title={t('siteTemplates.pagesHint')}
       value={selected}
       onChange={(e) => onChange(Array.from(e.target.selectedOptions, (option) => option.value).join(','))}
     >
@@ -66,7 +66,7 @@ const PagePicker: React.FC<{ value: string; pages: PageOption[]; state: 'loading
           {page.title}
         </option>
       ))}
-    </select>
+    </select></Tooltip>
   )
 }
 

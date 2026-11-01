@@ -61,6 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * The "Design" tab of the visual editor's right-hand panel.
@@ -111,21 +112,19 @@ export const DesignPanel: React.FC<{
       </div>
       <div className="ve-d51-devbar" role="group" aria-label={t('dp.device.overrides')}>
         {(['tablet', 'mobile'] as const).map((d) => (
-          <button
-            key={`copy-${d}`}
+          <Tooltip text={t('tip.copyDesktopValues', { d })} key={`copy-${d}`}><button
             type="button"
             className="ve-btn ve-btn--ghost"
             onClick={() => onChange(copyDesktopToDevice(value, d))}
-            title={`Copy the desktop values of the responsive settings into the ${d} overrides`}
           >
             Copy desktop to {d}
-          </button>
+          </button></Tooltip>
         ))}
         {(['tablet', 'mobile'] as const).some((d) => hasDeviceOverrides(value, d)) && (
-          <span className="ve-d51-badge" title={t('dp.device.differ')}>
+          <Tooltip text={t('dp.device.differ')}><span className="ve-d51-badge">
             <span className="ve-d51-dot" aria-hidden="true" />
             Overrides{(['tablet', 'mobile'] as const).filter((d) => hasDeviceOverrides(value, d)).map((d) => ` ${d}`).join(',')}
-          </span>
+          </span></Tooltip>
         )}
         {device !== 'desktop' && hasDeviceOverrides(value, device) && (
           <button type="button" className="ve-d51-reset" onClick={() => onChange(clearDeviceOverrides(value, device))}>
@@ -528,7 +527,7 @@ export const Accordion: React.FC<{
       <button type="button" className="ve-acc__head" onClick={() => setOpen(!open)}>
         <span>
           {title}
-          {modified && <span className="ve-d51-dot" title={t('dp.changed')} aria-label={t('dp.changed')} />}
+          {modified && <Tooltip text={t('dp.changed')}><span className="ve-d51-dot" aria-label={t('dp.changed')} /></Tooltip>}
         </span>
         <span className="ve-acc__chev">{open ? String.fromCodePoint(0x25be) : String.fromCodePoint(0x25b8)}</span>
       </button>
@@ -583,40 +582,38 @@ const Row: React.FC<{ label: string; help?: string; resp?: RowResp; applied?: bo
   <label className="ve-row">
     <span className="ve-row__label">
       {label}
-      {showApplied && <span className="ve-d51-dot" title={t('dp.changed')} aria-label={t('dp.changed')} role="img" />}
+      {showApplied && <Tooltip text={t('dp.changed')}><span className="ve-d51-dot" aria-label={t('dp.changed')} role="img" /></Tooltip>}
       {showSettingReset && (
-        <button
+        <Tooltip text={t('dp.resetDefault')}><button
           type="button"
           className="ve-dev__reset"
           onClick={(e) => {
             e.preventDefault()
             onReset?.()
           }}
-          title={t('dp.resetDefault')}
           aria-label={`${t('dp.resetDefault')}: ${label}`}
         >
           {t('dp.reset')}
-        </button>
+        </button></Tooltip>
       )}
       {resp && (
-        <span className={`ve-dev ${resp.device !== 'desktop' ? 've-dev--on' : ''}`} title={`Applies to ${DEVICE_LABEL[resp.device].toLowerCase()}`}>
+        <Tooltip text={t('tip.appliesTo', { device: DEVICE_LABEL[resp.device].toLowerCase() })}><span className={`ve-dev ${resp.device !== 'desktop' ? 've-dev--on' : ''}`}>
           <DeviceIcon device={resp.device} />
           <span className="ve-sr">{DEVICE_LABEL[resp.device]}</span>
-        </span>
+        </span></Tooltip>
       )}
       {resp?.overridden && resp.onReset && (
-        <button
+        <Tooltip text={t('dp.resetInherited')}><button
           type="button"
           className="ve-dev__reset"
           onClick={(e) => {
             e.preventDefault()
             resp.onReset?.()
           }}
-          title={t('dp.resetInherited')}
           aria-label={`Reset ${label} to inherited`}
         >
           Reset
-        </button>
+        </button></Tooltip>
       )}
     </span>
     {children}
@@ -762,16 +759,16 @@ export const CheckRow: React.FC<{
     <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
     <span className="ve-row__label">
       {label}
-      {showApplied && <span className="ve-d51-dot" title={t('dp.changed')} aria-label={t('dp.changed')} role="img" />}
+      {showApplied && <Tooltip text={t('dp.changed')}><span className="ve-d51-dot" aria-label={t('dp.changed')} role="img" /></Tooltip>}
       {showApplied && onReset && (
-        <button type="button" className="ve-dev__reset" onClick={(e) => { e.preventDefault(); onReset() }} title={t('dp.resetDefault')} aria-label={`${t('dp.resetDefault')}: ${label}`}>
+        <Tooltip text={t('dp.resetDefault')}><button type="button" className="ve-dev__reset" onClick={(e) => { e.preventDefault(); onReset() }} aria-label={`${t('dp.resetDefault')}: ${label}`}>
           {t('dp.reset')}
-        </button>
+        </button></Tooltip>
       )}
       {resp && (
-        <span className={`ve-dev ${resp.device !== 'desktop' ? 've-dev--on' : ''}`} title={`Applies to ${DEVICE_LABEL[resp.device].toLowerCase()}`}>
+        <Tooltip text={t('tip.appliesTo', { device: DEVICE_LABEL[resp.device].toLowerCase() })}><span className={`ve-dev ${resp.device !== 'desktop' ? 've-dev--on' : ''}`}>
           <DeviceIcon device={resp.device} />
-        </span>
+        </span></Tooltip>
       )}
     </span>
     {help && <span className="ve-row__help">{help}</span>}
@@ -1070,10 +1067,9 @@ const ColorRow: React.FC<{ label: string; value?: string; onChange: (v: string |
           value={value || ''}
           onChange={(e) => onChange(e.target.value || undefined)}
         />
-        <button
+        <Tooltip text={t('dp.theme.pick')}><button
           type="button"
           className="ve-d51-tokbtn"
-          title={t('dp.theme.pick')}
           aria-label={t('dp.theme.label')}
           onClick={(e) => {
             e.preventDefault()
@@ -1081,7 +1077,7 @@ const ColorRow: React.FC<{ label: string; value?: string; onChange: (v: string |
           }}
         >
           Theme
-        </button>
+        </button></Tooltip>
         {value && (
           <button type="button" className="ve-color__clear" onClick={() => onChange(undefined)} aria-label={t('dp.color.clear')}>
             &#10005;
@@ -1092,18 +1088,16 @@ const ColorRow: React.FC<{ label: string; value?: string; onChange: (v: string |
         <div className="ve-d51-tokens">
           {tokens.length === 0 && <span className="ve-row__help">{t('dp.theme.none')}</span>}
           {tokens.map((t) => (
-            <button
-              key={t.name}
+            <Tooltip text={t.name} key={t.name}><button
               type="button"
               className={`ve-d51-swatch ${value === t.css ? 've-d51-swatch--on' : ''}`}
               style={{ background: t.value || undefined }}
-              title={t.name}
               aria-label={t.name}
               onClick={(e) => {
                 e.preventDefault()
                 onChange(t.css)
               }}
-            />
+            /></Tooltip>
           ))}
         </div>
       )}
@@ -1220,12 +1214,10 @@ const ToggleRow: React.FC<{
       {options.map((o) => {
         const on = current === o.value
         return (
-          <button
-            key={o.value}
+          <Tooltip text={o.title ?? o.label} key={o.value}><button
             type="button"
             className="ve-btn ve-btn--ghost"
             aria-pressed={on}
-            title={o.title ?? o.label}
             style={on ? { outline: '2px solid currentColor', fontWeight: 700 } : undefined}
             onClick={(e) => {
               e.preventDefault()
@@ -1233,7 +1225,7 @@ const ToggleRow: React.FC<{
             }}
           >
             {o.label}
-          </button>
+          </button></Tooltip>
         )
       })}
     </div>
@@ -1274,10 +1266,9 @@ const TypoRange: React.FC<{
         />
         {unit}
         {typeof own === 'number' && ctl.device === 'desktop' && (
-          <button
+          <Tooltip text={t('dp.resetDefault')}><button
             type="button"
             className="ve-btn ve-btn--ghost"
-            title={t('dp.resetDefault')}
             aria-label={`Reset ${label}`}
             onClick={(e) => {
               e.preventDefault()
@@ -1287,7 +1278,7 @@ const TypoRange: React.FC<{
             }}
           >
             {String.fromCharCode(0x21BA)}
-          </button>
+          </button></Tooltip>
         )}
       </div>
     </Row>
