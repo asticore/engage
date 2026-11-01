@@ -127,6 +127,7 @@ import * as migration_20270128_100000_blog_builder_settings from './20270128_100
 import * as migration_20270129_100000_email_suppressions from './20270129_100000_email_suppressions';
 import * as migration_20270129_100000_shop_organise_offline from './20270129_100000_shop_organise_offline';
 import * as migration_20270130_100000_sms_shipped_text from './20270130_100000_sms_shipped_text';
+import * as migration_20270131_100000_seo_cornerstone from './20270131_100000_seo_cornerstone';
 
 import * as migration_20270124_100000_privacy_requests from './20270124_100000_privacy_requests';
 export const migrations = [
@@ -779,5 +780,10 @@ export const migrations = [
     up: migration_20270130_100000_sms_shipped_text.up,
     down: migration_20270130_100000_sms_shipped_text.down,
     name: '20270130_100000_sms_shipped_text',
+  },
+  {
+    up: migration_20270131_100000_seo_cornerstone.up,
+    down: migration_20270131_100000_seo_cornerstone.down,
+    name: '20270131_100000_seo_cornerstone',
   },
 ];
