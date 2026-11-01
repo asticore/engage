@@ -1,6 +1,5 @@
 import { getAdminRoot } from '@/features/security/settings'
 import { adminCollectionPath } from '@/admin/adminPaths'
-import { purgeCache } from '@/features/speed/purge'
 import {
   loadApprovalSettings,
   requiredApprovalsFor,
@@ -27,6 +26,7 @@ import { reviewPermissions, type ReviewViewer } from './permissions'
 import { notifyRequester, notifyStepReady, notifySubmitted } from './notify'
 import { clampStep, describeAwaiting, type ApprovalWorkflow } from './workflows'
 import { roleSlugsOfUser } from './roleSlugs'
+import type { ClaimFn } from './claim'
 
 /**
  * The approval routes' logic, separated from Next.js so it can be tested with a fake engine. The
@@ -105,7 +105,7 @@ async function priorApproversThisRound(
   workflow: ApprovalWorkflow | null,
   index: number,
 ): Promise<number[]> {
-  if (!workflow || index === 0) return []
+  if (!workflow || index === 0 || workflow.allowRepeatApprover) return []
   const current = workflow.steps[index].name
   const earlier = new Set(workflow.steps.slice(0, index).map((step) => step.name).filter((name) => name !== current))
   if (earlier.size === 0) return []
@@ -276,6 +276,8 @@ export async function handleReviewPost(args: {
   origin: string
   body: unknown
   now?: string
+  /** The conditional claim of the document (see claim.ts). The route passes it; without it the write is not claimed. */
+  claim?: ClaimFn
 }): Promise<HandlerResult> {
   if (!args.body || typeof args.body !== 'object') return json(400, { error: 'Invalid request body' })
   const body = args.body as Record<string, unknown>
@@ -340,6 +342,12 @@ export async function handleReviewPost(args: {
     const fresh = await loadState(args.engine, ref.collection, ref.id)
     if (!fresh) return json(404, { error: 'Not found' })
     if (fresh.state.status !== loaded.state.status || fresh.doc.updatedAt !== loaded.doc.updatedAt) {
+      return json(409, { error: 'This changed while you were working on it. Reload and try again.' })
+    }
+    // The re-read alone leaves a window: claim the row with a conditional update, so a second request
+    // that read the same version is refused rather than writing over this one (see claim.ts).
+    const claimed = args.claim ? await args.claim(ref.collection, ref.id, loaded.doc.updatedAt, now) : null
+    if (claimed === false) {
       return json(409, { error: 'This changed while you were working on it. Reload and try again.' })
     }
 
@@ -409,10 +417,6 @@ export async function handleReviewPost(args: {
     await notifyRequester({ engine: args.engine, requesterId, collection: ref.collection, id: ref.id, title, outcome: 'approved', reviewerName, note: note ?? null, origin: args.origin })
   } else if (action === 'request_changes') {
     await notifyRequester({ engine: args.engine, requesterId, collection: ref.collection, id: ref.id, title, outcome: 'changes_requested', reviewerName, note: note ?? null, origin: args.origin })
-  }
-
-  if (result.publish && ref.collection === 'pages') {
-    await purgeCache(`/pages/${ref.id}`).catch((): null => null)
   }
 
   return json(200, {
@@ -514,4 +518,65 @@ export async function handleReviewQueue(args: { engine: ReviewEngine; viewer: Re
   const settings = await loadApprovalSettings(args.engine)
   const rows = await loadReviewQueue({ engine: args.engine, viewer: args.viewer, settings })
   return json(200, { enabled: settings.enabled, rows })
+}
+
+/**
+ * Documents of one content type that are in review right now. Used when a workflow is saved: the
+ * editor offers to move them to the first step of the new flow. Admins only (they write workflows).
+ */
+export async function handleInReviewCount(args: { engine: ReviewEngine; viewer: ReviewViewer; collection: unknown }): Promise<HandlerResult> {
+  if (!args.viewer.isAdmin) return json(403, { error: 'Forbidden' })
+  if (!isApprovalCollection(args.collection)) return json(400, { error: 'Invalid collection' })
+  const { docs } = await args.engine.find({
+    collection: args.collection,
+    where: { reviewStatus: { equals: 'in_review' } },
+    limit: 1000,
+    depth: 0,
+    overrideAccess: true,
+  })
+  return json(200, { collection: args.collection, count: docs.length })
+}
+
+/**
+ * Moves every document of one content type that is in review back to step 1 of its (new) workflow,
+ * clearing the approvals they had. Each one gets a history row, so the change is visible. Admins only.
+ */
+export async function handleInReviewMove(args: { engine: ReviewEngine; viewer: ReviewViewer; collection: unknown; now?: string }): Promise<HandlerResult> {
+  if (!args.viewer.isAdmin) return json(403, { error: 'Forbidden' })
+  if (!isApprovalCollection(args.collection)) return json(400, { error: 'Invalid collection' })
+  const { docs } = await args.engine.find({
+    collection: args.collection,
+    where: { reviewStatus: { equals: 'in_review' } },
+    limit: 1000,
+    depth: 0,
+    overrideAccess: true,
+  })
+  let moved = 0
+  for (const doc of docs) {
+    const id = Number(doc.id)
+    if (!Number.isInteger(id) || id <= 0) continue
+    const fresh = await args.engine.findByID({ collection: args.collection, id, depth: 0, overrideAccess: true })
+    if (!fresh || parseStatus(fresh.reviewStatus) !== 'in_review') continue
+    await args.engine.update({
+      collection: args.collection,
+      id,
+      data: { reviewStep: 0, reviewApprovals: serializeStoredReview({ hash: hashReviewedContent(fresh), approvals: [] }) },
+      overrideAccess: true,
+    })
+    await args.engine.create({
+      collection: 'review-events',
+      data: {
+        collection: args.collection,
+        docId: id,
+        docTitle: titleOf(fresh, id),
+        action: 'reset',
+        note: 'The approval workflow changed. Review starts again at step 1.',
+        actor: args.viewer.id,
+        actorName: args.viewer.name,
+      },
+      overrideAccess: true,
+    })
+    moved += 1
+  }
+  return json(200, { collection: args.collection, moved })
 }

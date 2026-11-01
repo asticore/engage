@@ -37,6 +37,8 @@ export const CustomFieldsPanel: React.FC<{ path?: string }> = ({ path = 'customF
   const parent = useFormFields(([f]) => f?.parent?.value)
   const status = useFormFields(([f]) => f?.['_status']?.value)
   const categoriesKey = useFormFields(([f]) => JSON.stringify(f?.categories?.value ?? null))
+  // Posts have a tags list; tag location rules match against it (the same names the server reads).
+  const tagsKey = useFormFields(([f]) => JSON.stringify(f?.tags?.value ?? null))
 
   const [groups, setGroups] = useState<FieldGroupDoc[]>([])
   const [userRoles, setUserRoles] = useState<string[]>([])
@@ -71,6 +73,17 @@ export const CustomFieldsPanel: React.FC<{ path?: string }> = ({ path = 'customF
   const values: CustomFieldValues = value && typeof value === 'object' && !Array.isArray(value) ? value : {}
   if (!collectionSlug || loading || groups.length === 0) return null
 
+  const tags = (() => {
+    try {
+      const parsed = JSON.parse(tagsKey) as unknown
+      return Array.isArray(parsed)
+        ? parsed.map((t) => (typeof t === 'string' ? t : t && typeof t === 'object' ? (t as { name?: unknown }).name : null)).filter((n): n is string => typeof n === 'string')
+        : []
+    } catch {
+      return []
+    }
+  })()
+
   const categories = (() => {
     try {
       const parsed = JSON.parse(categoriesKey) as unknown
@@ -91,7 +104,7 @@ export const CustomFieldsPanel: React.FC<{ path?: string }> = ({ path = 'customF
   }
   if (collectionSlug === 'posts') {
     ctx.postCategories = categories
-    ctx.postTags = []
+    ctx.postTags = tags
   }
 
   const matching = groups.filter((group) => matchesLocation(group.location, ctx))
@@ -116,11 +129,20 @@ export const CustomFieldsPanel: React.FC<{ path?: string }> = ({ path = 'customF
   }
 
   const mediaIds = collectMediaIds(allDefs, values)
+  // Two groups that apply here may both define a field with the same name; they then share one stored value.
+  const seenNames = new Map<string, number>()
+  for (const group of matching) for (const def of group.fields) seenNames.set(def.name, (seenNames.get(def.name) ?? 0) + 1)
+  const sharedNames = [...seenNames.entries()].filter(([, count]) => count > 1).map(([name]) => name)
 
   return (
     <CustomFieldMediaContext.Provider value={{ urls: mediaUrls, remember }}>
       <MediaUrlsLoader ids={mediaIds} remember={remember} />
       <div className="mb-[24px] flex flex-col gap-[24px]">
+        {sharedNames.length > 0 && (
+          <p className="text-[13px] text-[var(--color-warning,#8a5a00)]" role="status">
+            Warning: {sharedNames.length === 1 ? 'two field groups that apply here both have a field' : 'several field groups that apply here reuse field names'} called {sharedNames.join(', ')}. They share one value, so only the first one shows its value. Rename one in Field groups.
+          </p>
+        )}
         {matching.map((group) => {
           const visible = group.fields.filter((def) => isFieldVisible(def, values))
           return (

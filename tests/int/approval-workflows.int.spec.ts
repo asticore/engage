@@ -4,7 +4,7 @@
  * fail-closed behaviour, the publish gate, the review handlers end to end, who gets emailed
  * (including people on a custom role), validation and access on the collection.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi, beforeAll } from 'vitest'
 
 const sendEmail = vi.hoisted(() => vi.fn(async () => ({ ok: true }) as unknown))
 vi.mock('@/features/email', () => ({ sendEmail }))
@@ -46,6 +46,7 @@ const FLOW: ApprovalWorkflow = {
   name: 'Editorial then legal',
   collection: 'pages',
   active: true,
+  allowRepeatApprover: false,
   submitterRoles: [],
   steps: [
     { name: 'Editor review', approverRoles: ['editor'], approverNames: ['Editor'], approvalsNeeded: 1 },
@@ -434,6 +435,12 @@ describe('workflow review handlers', () => {
   const post = (engine: ReturnType<typeof makeEngine>, who: number, body: Doc) =>
     handleReviewPost({ engine: engine as never, viewer: viewerFor(user(who)), origin: 'https://x.test', body: { collection: 'pages', id: 5, ...body }, now: NOW })
   const recipients = () => sendEmail.mock.calls.map((call) => (call as unknown as [{ to: string }])[0].to).sort()
+
+  // The notifier loads the email template module on first use. That cold load can take longer than one test
+  // allows, so it is paid here, in the setup, rather than inside whichever test happens to run first.
+  beforeAll(async () => {
+    await import('@/features/email/templateLoad')
+  }, 60_000)
 
   beforeEach(() => {
     sendEmail.mockClear()

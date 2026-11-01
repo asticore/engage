@@ -148,6 +148,50 @@ export class LockBudgetError extends Error {
 }
 
 /** The identity a lock is stored under: the database block id for top-level blocks, `_id` for nested nodes. */
+/**
+ * Pairs the keys of template nodes with the keys of the nodes made from them (same shape, same order),
+ * so a copy can take over the locks of the nodes it came from. Walks sections, their columns and the
+ * blocks in each column. Pairs whose two sides do not match in shape are skipped.
+ */
+export function pairLockKeys(original: unknown[], copies: unknown[]): Array<[string, string]> {
+  const pairs: Array<[string, string]> = []
+  const walk = (from: unknown[], to: unknown[]) => {
+    from.forEach((node, index) => {
+      const copy = to[index]
+      if (!isPlainObject(node) || !isPlainObject(copy)) return
+      const oldKey = nodeKey(node)
+      const newKey = nodeKey(copy)
+      if (oldKey && newKey) pairs.push([oldKey, newKey])
+      if (Array.isArray(node.columns) && Array.isArray(copy.columns)) {
+        node.columns.forEach((column, c) => {
+          const copyColumn = (copy.columns as unknown[])[c]
+          if (!isPlainObject(column) || !isPlainObject(copyColumn)) return
+          const oldColumnKey = nodeKey(column)
+          const newColumnKey = nodeKey(copyColumn)
+          if (oldColumnKey && newColumnKey) pairs.push([oldColumnKey, newColumnKey])
+          if (Array.isArray(column.blocks) && Array.isArray(copyColumn.blocks)) walk(column.blocks, copyColumn.blocks)
+        })
+      }
+    })
+  }
+  walk(original, copies)
+  return pairs
+}
+
+/**
+ * The node locks of a template, moved onto the nodes made from it. Only node entries are copied (a
+ * whole-document lock belongs to the template, not to a page made from it). Nodes without a pair are
+ * dropped. The result is what the new page's `locks` should hold, merged over what it already has.
+ */
+export function copyNodeLocks(source: Locks, pairs: Array<[string, string]>, existing: Locks = EMPTY_LOCKS): Locks {
+  const nodes: Record<string, LockEntry> = { ...existing.nodes }
+  for (const [from, to] of pairs) {
+    const entry = source.nodes[from]
+    if (entry && nodes[to] === undefined) nodes[to] = entry
+  }
+  return { ...existing, nodes }
+}
+
 export function nodeKey(node: unknown): string | undefined {
   if (!isPlainObject(node)) return undefined
   const id = node.id

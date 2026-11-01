@@ -80,6 +80,7 @@ import { SaveStatusChip } from './visualEditor/SaveStatusChip'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
 import { clientToFrame, isLibraryDragTypes, resolveDropSlotInDoc, VE_BLOCK_MIME, VE_TEMPLATE_MIME } from './visualEditor/dropSlot'
+import { VE_TEMPLATE_LOCKS_MIME } from './visualEditor/TemplateBrowser'
 
 let idCounter = 0
 const nextId = () => `ve-${Date.now()}-${idCounter++}`
@@ -106,7 +107,7 @@ function withIds(nodes: SectionNode[]): SectionNode[] {
   })
 }
 
-import { nodeKey, parseLocks, serializeLocks, type LockEntry, type Locks, type LockUser } from '@/features/roles/locks'
+import { copyNodeLocks, nodeKey, pairLockKeys, parseLocks, serializeLocks, type LockEntry, type Locks, type LockUser } from '@/features/roles/locks'
 import { applyInlineEdit } from './visualEditor/inlineEdit'
 import { canInsertInto, effectiveLock, lockedKeySet, lockKeyOf, lockMapForCanvas, withNodeLock } from './visualEditor/lockState'
 import { canConvertLegacy, convertLegacyBlock } from './visualEditor/convertLegacy'
@@ -685,20 +686,25 @@ export const VisualEditorView: React.FC = () => {
 
   /** Templates (a curated preset or a saved Page Template) insert several blocks at once. */
   const insertTemplateAt = useCallback(
-    (templateBlocks: SectionNode[], containerPath: NodePath, at: number) => {
+    (templateBlocks: SectionNode[], containerPath: NodePath, at: number, templateLocks?: Locks) => {
       if (templateBlocks.length === 0) return
       if (insertBlocked(containerPath)) return
       const withFreshIds = templateBlocks.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
 
       applyBlocks((prev) => insertNodes(prev, containerPath, at, withFreshIds))
+      // The template's section locks go with its sections (only for someone who may set locks; the server checks too).
+      if (templateLocks && lockUser?.canManageLocks && Object.keys(templateLocks.nodes).length > 0) {
+        const pairs = pairLockKeys(templateBlocks, withFreshIds)
+        setLocks((prev) => copyNodeLocks(templateLocks, pairs, prev))
+      }
       setSelectedPath([...containerPath, at])
       setDockTab('settings')
     },
-    [insertBlocked, applyBlocks],
+    [insertBlocked, applyBlocks, lockUser],
   )
 
   const addTemplateBlocks = useCallback(
-    (templateBlocks: SectionNode[]) => insertTemplateAt(templateBlocks, insertTarget.containerPath, insertTarget.at),
+    (templateBlocks: SectionNode[], templateLocks?: Locks) => insertTemplateAt(templateBlocks, insertTarget.containerPath, insertTarget.at, templateLocks),
     [insertTarget, insertTemplateAt],
   )
 
@@ -1203,7 +1209,9 @@ export const VisualEditorView: React.FC = () => {
       }
       try {
         const parsed: unknown = JSON.parse(templateRaw)
-        if (Array.isArray(parsed)) insertTemplateAt(parsed as SectionNode[], slot.containerPath, slot.at)
+        const lockRaw = event.dataTransfer.getData(VE_TEMPLATE_LOCKS_MIME)
+        const templateLocks = lockRaw ? parseLocks(JSON.parse(lockRaw)) : undefined
+        if (Array.isArray(parsed)) insertTemplateAt(parsed as SectionNode[], slot.containerPath, slot.at, templateLocks)
       } catch {
         setLockNotice('That template could not be dropped.')
         setTimeout(() => setLockNotice(null), 4000)

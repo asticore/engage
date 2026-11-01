@@ -637,6 +637,30 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
   })
 
+  it('adds the repeat-approver column to approval workflows and clears the old edit-screen collapse rows, registered after the media formats migration', async () => {
+    const { migrations } = await import('@/migrations/index')
+    const names = migrations.map((x) => x.name)
+    const at = names.indexOf('20270222_100000_approval_repeat_approver')
+    expect(at).toBeGreaterThan(names.indexOf('20270210_100000_media_formats_video_links'))
+    expect(names.indexOf('20270222_110000_edit_collapse_prefs_cleanup')).toBeGreaterThan(at)
+    expect(names.slice(at + 1).every((x) => x > '20270222_100000_approval_repeat_approver')).toBe(true)
+
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    if (tables.includes('eg_approval_workflows')) expect(await columnsOf('eg_approval_workflows')).toContain('allow_repeat_approver')
+    if (tables.includes('eg_preferences')) {
+      // Plant an old row, then run the cleanup migration's own up() against the same database.
+      await proxy.env.D1.prepare("INSERT INTO `eg_preferences` (`key`) VALUES ('edit-screen-collapse')").run()
+      const { drizzle } = await import('drizzle-orm/d1')
+      const { up } = await import('@/migrations/20270222_110000_edit_collapse_prefs_cleanup')
+      await up({ db: drizzle(proxy.env.D1) } as never)
+      const left = await proxy.env.D1.prepare("SELECT COUNT(*) AS n FROM `eg_preferences` WHERE `key` = 'edit-screen-collapse'").first<{ n: number }>()
+      expect(left?.n ?? 0).toBe(0)
+    }
+  })
+
   it('adds the Templates by content type columns to the SEO settings table', async () => {
     const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`eg_seo_settings\`)`).all()
     const columnNames = (result.results as { name: string }[]).map((r) => r.name)
