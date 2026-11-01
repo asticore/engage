@@ -2,13 +2,15 @@ import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { notFound, redirect } from 'next/navigation'
 import type { Field } from '@/engine'
-import { getAdminContext, hasAdminPanelAccess, getGlobalConfig } from '@/admin/auth'
+import { getAdminContext, hasAdminPanelAccess, getGlobalConfig, isAdminUser } from '@/admin/auth'
 import { readFeatureFlags } from '@/components/admin/shared/resolveEntities'
 import { isGlobalEnabled } from '@/features/registry'
 import { sanitizeFieldsForClient } from '@/admin/fields/shared'
 import { SETTINGS_PAGES, type SettingsPage, type GlobalSection, type LinkSection } from '@/admin/settingsPages'
 import { SettingsPageClient, type SettingsPageSection } from './SettingsPageClient'
 import { trackingDomainContext } from '@/features/tracking/editor/domainContext'
+import { latestSettingsChanges, type SettingsChange } from '@/features/security/auditStore'
+import { settingsFieldsWithHelp } from '@/admin/settings/settingsFields'
 
 /**
  * Settings page view factory. Creates server components for each page in
@@ -53,7 +55,7 @@ export async function SettingsPageView({ pageKey }: { pageKey: string }) {
         return {
           slug: section.slug,
           label: typeof globalConfig.label === 'string' ? globalConfig.label : section.slug,
-          fields: sanitizeFieldsForClient(globalConfig.fields),
+          fields: settingsFieldsWithHelp(section.slug, sanitizeFieldsForClient(globalConfig.fields)),
           doc,
         }
       })
@@ -98,7 +100,21 @@ export async function SettingsPageView({ pageKey }: { pageKey: string }) {
 
   const trackingContext = page.topCard === 'tracking-tags' ? await trackingDomainContext() : undefined
 
-  return <SettingsPageClient page={page} sections={visibleSections} trackingContext={trackingContext} />
+  // The audit log is admin-only (its rows name who signed in and changed what), so the line shows to admins only.
+  const lastChange = isAdminUser(context.user) ? await lastChangeFor(page) : null
+
+  return <SettingsPageClient page={page} sections={visibleSections} trackingContext={trackingContext} lastChange={lastChange} />
+}
+
+/** The newest save across this page's globals, formatted for the page header. Never throws: a log that cannot be read just means no line. */
+async function lastChangeFor(page: SettingsPage): Promise<{ by: string | null; at: string } | null> {
+  const slugs = page.sections.filter((s): s is GlobalSection => s.kind === 'global').map((s) => s.slug)
+  const changes: Map<string, SettingsChange> = await latestSettingsChanges(slugs).catch((): Map<string, SettingsChange> => new Map())
+  let newest: SettingsChange | null = null
+  for (const change of changes.values()) if (!newest || change.at > newest.at) newest = change
+  if (!newest) return null
+  // The audit log stores ISO times in UTC; shown the same way as the audit screen.
+  return { by: newest.by, at: `${newest.at.replace('T', ' ').slice(0, 16)} UTC` }
 }
 
 export default SettingsPageView

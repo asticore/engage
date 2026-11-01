@@ -29,6 +29,8 @@ interface SettingsPageClientProps {
   sections: SettingsPageSection[]
   /** Domain facts for the tag editor on the Tracking page. */
   trackingContext?: TrackingPageContext
+  /** The newest save across this page's globals, from the audit log (admins only; null when none). */
+  lastChange?: { by: string | null; at: string } | null
 }
 
 /** Fired after a tab click so the hash subscription re-reads the URL (replaceState does not fire hashchange). */
@@ -55,7 +57,7 @@ const readServerHash = () => ''
  * - One box with tabs (2+ global sections) or a single titled section, each global section's EditForm in its panel
  * - Link sections as a grid of cards, visible on every tab
  */
-export const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ page, sections, trackingContext }) => {
+export const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ page, sections, trackingContext, lastChange }) => {
   const t = useAdminT()
   const labelFor = useAdminLabel()
   // Page title and description come from the reference table, keyed by page key.
@@ -117,6 +119,11 @@ export const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ page, se
       <div className="settings-page__header">
         <h1 className="settings-page__title">{pageTitle}</h1>
         <p className="settings-page__description">{pageDescription}</p>
+        {lastChange && (
+          <p className="settings-page__last-change">
+            {lastChange.by ? `Last changed by ${lastChange.by} on ${lastChange.at}` : `Last changed on ${lastChange.at}`}
+          </p>
+        )}
         {/* One bar for every card on the page, above the box (outside it). */}
         {globalSections.length > 0 && (
           <div className="settings-page__actions">
@@ -182,7 +189,7 @@ export const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ page, se
                   tabIndex={showTabs ? 0 : undefined}
                   className="settings-tabs__panel"
                 >
-                  <EditForm doc={section.doc} fields={section.fields} globalSlug={section.slug} hideCollapseBar />
+                  <EditForm doc={section.doc} fields={section.fields} globalSlug={section.slug} hideCollapseBar resetSectionTitle={labelFor('global', section.slug, section.label)} />
                 </div>
               )
             })}
