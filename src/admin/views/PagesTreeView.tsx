@@ -1,6 +1,9 @@
 import type { Engine } from '@/engine'
 import type { TreePage } from '@/features/pagesTree/plan'
-import { PagesTreeClient } from './PagesTreeClient'
+import dynamic from 'next/dynamic'
+
+/** The drag-and-drop tree library loads with this list only, not with every admin screen. */
+const PagesTreeClient = dynamic(() => import('./PagesTreeClient').then((mod) => mod.PagesTreeClient))
 
 interface PagesTreeViewProps {
   engine?: Engine

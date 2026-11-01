@@ -11,7 +11,7 @@
 export type MediaProvider = 'cloudflare-images' | 'cloudflare-resizing' | 'none'
 
 /** What the delivery URL should negotiate down to. */
-export type DeliveryFormat = 'auto' | 'avif' | 'webp' | 'original'
+export type DeliveryFormat = 'auto' | 'avif' | 'webp' | 'jpeg' | 'original'
 
 export type MediaConfig = {
   /**
@@ -57,6 +57,8 @@ export type MediaLike = {
   focalY?: number | null
   /** Crop preset chosen in the admin. `free` or absent means no fixed shape. */
   crop?: { ratio?: string | null } | null
+  /** Per-file output format (see formats.ts). `default`, absent or a video value means the site format applies. */
+  outputFormat?: string | null
   /** Bumped on every save or file replacement, so a changed picture is not served from an old cache entry. */
   updatedAt?: string | null
 }

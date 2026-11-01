@@ -145,6 +145,24 @@ export const MediaSettings: GlobalConfig = {
               'Keep the untouched copy of each picture (stored under original/) so an optimisation can be undone. Uses extra storage, so it is off by default.',
           },
         },
+        {
+          name: 'outputImageFormat',
+          type: 'select',
+          label: 'Output format for pictures',
+          defaultValue: 'switches',
+          options: [
+            { label: 'Follow the WebP and AVIF switches above', value: 'switches' },
+            { label: 'Original (keep each picture in its own format)', value: 'original' },
+            { label: 'JPEG', value: 'jpeg' },
+            { label: 'WebP', value: 'webp' },
+            { label: 'AVIF', value: 'avif' },
+            { label: 'JPEG XL (browser support limited: pictures are kept as they are)', value: 'jxl' },
+          ],
+          admin: {
+            description:
+              'The format public picture URLs and Optimise use. Each picture can override this in the gallery. JPEG drops transparency, so keep PNG or WebP pictures with transparency on Original. JPEG XL is not produced by Cloudflare, so those pictures are served and kept as they are.',
+          },
+        },
       ],
     },
     {
@@ -279,6 +297,43 @@ export const MediaSettings: GlobalConfig = {
           access: { read: adminOnlyFieldAccess, update: adminOnlyFieldAccess },
           hooks: { beforeChange: [encryptSecretHook], afterRead: [decryptSecretHook] },
           admin: { description: 'Found on your Pixabay account page under API.' },
+        },
+      ],
+    },
+    {
+      type: 'group',
+      name: 'video',
+      label: 'Video',
+      admin: {
+        description:
+          'Video conversion uses Cloudflare Stream: it makes an MP4 copy of a video, which then replaces the uploaded file. Without a Stream account and token, Optimise on a video explains that it needs Stream.',
+      },
+      fields: [
+        {
+          name: 'outputFormat',
+          type: 'select',
+          label: 'Output format for videos',
+          defaultValue: 'original',
+          options: [
+            { label: 'Original (keep the uploaded file)', value: 'original' },
+            { label: 'MP4 (through Cloudflare Stream)', value: 'mp4' },
+            { label: 'WebM (not produced by Cloudflare Stream: kept as it is)', value: 'webm' },
+          ],
+          admin: { description: 'The format Optimise converts a video to. Each video can override this in the gallery.' },
+        },
+        {
+          name: 'streamAccountId',
+          type: 'text',
+          label: 'Cloudflare account ID for Stream',
+          admin: { description: 'The account ID shown on the Cloudflare dashboard, used for Stream.' },
+        },
+        {
+          name: 'streamApiToken',
+          type: 'text',
+          label: 'Cloudflare Stream API token',
+          access: { read: adminOnlyFieldAccess, update: adminOnlyFieldAccess },
+          hooks: { beforeChange: [encryptSecretHook], afterRead: [decryptSecretHook] },
+          admin: { description: 'An API token with Stream edit permission. Stored encrypted and visible only to admins.' },
         },
       ],
     },

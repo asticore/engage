@@ -32,6 +32,7 @@ import { NavToggler } from '@/admin/ui/NavToggler'
 import { ThemeToggler } from '@/admin/ui/ThemeToggler'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { SessionWatch } from '@/admin/SessionWatch'
+import { AdminProgressBar } from '@/admin/ui/AdminProgressBar'
 import { THEME_SCRIPT } from '@/admin/context/themeScript'
 import { ImpersonationBanner } from '@/features/impersonation/components/ImpersonationBanner'
 import { AdminUiProvider } from './i18n/AdminUiProvider'
@@ -65,6 +66,7 @@ export async function RootLayout({ children }: { children: ReactNode; config?: u
                 // the vendor package's own CSS-grid rules. See AdminShell.tsx.
                 <>
                   <SessionWatch />
+                  <AdminProgressBar />
                   <AdminShell>
                     <NavToggler />
                     <ThemeToggler />

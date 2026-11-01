@@ -8,6 +8,8 @@ import { IMAGES_UNAVAILABLE_MESSAGE, resolveOptimiseSettings } from '@/features/
 import { resolveImagesBinding } from '@/features/media/imagesBinding'
 import { distinctFolders } from '@/features/media/folders'
 import { describeSaving, formatBytes } from '@/features/media/admin/mediaApi'
+import { siteImageFormat, videoFormatOf } from '@/features/media/formats'
+import { streamCredentials } from '@/features/media/stream'
 
 import { MediaGalleryGrid, type GalleryDoc } from './MediaGalleryGrid'
 import { FileIcon } from './FileIcon'
@@ -175,6 +177,11 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
     finder?.findGlobal ? await finder.findGlobal({ slug: 'media-settings', depth: 0 }).catch((): null => null) : null,
   )
   const binding = settings.enabled ? await resolveImagesBinding() : null
+  const mediaGlobal = finder?.findGlobal ? await finder.findGlobal({ slug: 'media-settings', depth: 0 }).catch((): null => null) : null
+  const rawSettings = (mediaGlobal ?? {}) as { optimisation?: Record<string, unknown>; video?: Record<string, unknown> }
+  const siteImage = siteImageFormat(rawSettings.optimisation?.outputImageFormat, rawSettings.optimisation?.convertToWebp !== false, rawSettings.optimisation?.convertToAvif === true)
+  const videoSettings = rawSettings.video ?? {}
+  const streamReady = Boolean(streamCredentials(videoSettings as { streamAccountId?: unknown; streamApiToken?: unknown }))
   const noticeFromServer = settings.enabled && !binding ? IMAGES_UNAVAILABLE_MESSAGE : undefined
 
   // Builds a URL preserving every current param except the ones passed in
@@ -208,6 +215,7 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
     folder: typeof doc.folder === 'string' ? doc.folder : undefined,
     originalSize: typeof doc.originalSize === 'number' ? doc.originalSize : undefined,
     optimizedSize: typeof doc.optimizedSize === 'number' ? doc.optimizedSize : undefined,
+    outputFormat: typeof doc.outputFormat === 'string' ? doc.outputFormat : undefined,
   }))
 
   const page = pager.page
@@ -337,6 +345,11 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
           batchSize={settings.batchSize}
           optimisationOn={settings.enabled}
           noticeFromServer={noticeFromServer}
+          formats={{
+            siteImage: siteImage,
+            siteVideo: videoFormatOf(videoSettings.outputFormat),
+            streamReady: streamReady,
+          }}
         />
       ) : (
         <div className="overflow-x-auto rounded-[4px] border border-[var(--theme-elevation-150)]">

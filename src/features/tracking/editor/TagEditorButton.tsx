@@ -1,12 +1,15 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { DomainNotice } from './DomainNotice'
 import type { TrackingDomainInfo } from './domains'
-import { TagEditor } from './TagEditor'
+
+/** The tag editor is large and only opens on demand, so it is a separate chunk that loads when the button is pressed. */
+const TagEditor = dynamic(() => import('./TagEditor').then((mod) => mod.TagEditor), { ssr: false })
 
 export type TagEditorButtonProps = {
   domains: TrackingDomainInfo[]

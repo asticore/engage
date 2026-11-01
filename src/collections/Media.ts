@@ -148,6 +148,43 @@ export const Media: CollectionConfig = {
       type: 'number',
       admin: { readOnly: true, description: 'Size in bytes after optimisation. Blank if never optimised.' },
     },
+    {
+      name: 'outputFormat',
+      type: 'select',
+      defaultValue: 'default',
+      options: [
+        { label: 'Use the site setting', value: 'default' },
+        { label: 'Original', value: 'original' },
+        { label: 'JPEG', value: 'jpeg' },
+        { label: 'WebP', value: 'webp' },
+        { label: 'AVIF', value: 'avif' },
+        { label: 'JPEG XL (kept as it is)', value: 'jxl' },
+        { label: 'MP4 (video, through Stream)', value: 'mp4' },
+        { label: 'WebM (video, kept as it is)', value: 'webm' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: 'Overrides the site output format for this file only.',
+      },
+    },
+    {
+      // A video link (mimeType video/link) takes its poster from here. Uploaded
+      // videos may also have one; the poster is shown before the video plays.
+      name: 'poster',
+      type: 'upload',
+      relationTo: 'media',
+      admin: { description: 'Picture shown before a video plays. Used by video links; uploaded videos can use it too.' },
+    },
+    {
+      name: 'streamUid',
+      type: 'text',
+      admin: { readOnly: true, hidden: true },
+    },
+    {
+      name: 'conversionStatus',
+      type: 'text',
+      admin: { readOnly: true, hidden: true },
+    },
   ],
   upload: {
     // These are not supported on Workers yet due to lack of sharp

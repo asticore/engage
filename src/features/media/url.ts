@@ -20,6 +20,7 @@
  */
 
 import type { DeliveryFormat, ImageRequest, MediaConfig, MediaLike, ResolvedImage } from './types'
+import { pictureFormatOf } from './formats'
 
 /**
  * The safe answer to every question when media optimisation is off or
@@ -97,12 +98,22 @@ export function withVersion(url: string, updatedAt?: string | null): string {
   return `${url}${url.includes('?') ? '&' : '?'}v=${stamp}`
 }
 
+/** Only pictures are transformed. Video, audio, documents and the untransformable picture types keep their stored address. */
 const isTransformable = (media: MediaLike): boolean =>
-  !media.mimeType || !UNTRANSFORMABLE.has(media.mimeType)
+  !media.mimeType || (media.mimeType.startsWith('image/') && !UNTRANSFORMABLE.has(media.mimeType))
 
 /** Nothing may be requested wider than the configured cap. */
 export const clampWidth = (width: number, config: MediaConfig): number =>
   Math.max(1, Math.min(Math.round(width), config.maxWidth))
+
+/**
+ * The delivery format of one record: its own picture-format override when it
+ * names one (JPEG XL and original keep the stored format), otherwise the site
+ * format. Videos and records without an override use the site format.
+ */
+export function deliveryFormatFor(media: MediaLike, config: MediaConfig): DeliveryFormat {
+  return pictureFormatOf(media.outputFormat) ?? config.format
+}
 
 const formatParam = (format: DeliveryFormat): string | null =>
   format === 'original' ? null : `format=${format}`
@@ -191,7 +202,7 @@ export function buildImageUrl(
   if (!isTransformable(media)) return source
   if (source.includes(RESIZING_SEGMENT)) return source
 
-  const params = buildTransformParams(config, request, focusFor(media))
+  const params = buildTransformParams({ ...config, format: deliveryFormatFor(media, config) }, request, focusFor(media))
 
   if (config.provider === 'cloudflare-resizing') {
     return resizingUrl(source, params)

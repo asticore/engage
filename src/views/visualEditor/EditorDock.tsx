@@ -8,7 +8,10 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { AiBuilderPanel, type AiBuilderPanelProps } from './AiBuilderPanel'
 import type { BlockDef } from './blockSchemas'
 import { ElementLibrary } from './ElementLibrary'
-import { FieldPanel } from './FieldPanel'
+import dynamic from 'next/dynamic'
+
+/** The field panel and the design panel it holds are large; they load as their own chunk when the dock needs them. */
+const FieldPanel = dynamic(() => import('./FieldPanel').then((mod) => mod.FieldPanel), { ssr: false })
 import type { EditDevice } from './DesignPanel'
 import { collectWarnings, indexNodePaths, type DesignWarning } from './designWarnings'
 import type { LockUi } from './LockControls'

@@ -618,6 +618,25 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
   })
 
+  it('adds the picture and video format, video link and Stream columns, registered after the SEO cornerstone migration', async () => {
+    const { migrations } = await import('@/migrations/index')
+    const names = migrations.map((x) => x.name)
+    const at = names.indexOf('20270210_100000_media_formats_video_links')
+    expect(at).toBeGreaterThan(names.indexOf('20270131_100000_seo_cornerstone'))
+    expect(names.slice(at + 1).every((x) => x > '20270210_100000_media_formats_video_links')).toBe(true)
+
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    const media = await columnsOf('eg_media')
+    for (const column of ['output_format', 'poster_id', 'stream_uid', 'conversion_status']) expect(media, column).toContain(column)
+    const settings = await columnsOf('eg_media_settings')
+    for (const column of ['optimisation_output_image_format', 'video_output_format', 'video_stream_account_id', 'video_stream_api_token']) {
+      expect(settings, column).toContain(column)
+    }
+  })
+
   it('adds the Templates by content type columns to the SEO settings table', async () => {
     const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`eg_seo_settings\`)`).all()
     const columnNames = (result.results as { name: string }[]).map((r) => r.name)
