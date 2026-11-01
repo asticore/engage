@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { PasswordGroupsClient } from '@/admin/views/PasswordGroupsClient'
+import { canManagePasswords } from '@/features/visibility/passwordAccess'
 
 /**
  * /admin/security/password-groups. Shared passwords that protect many documents: create, rotate, delete,
@@ -13,7 +14,7 @@ import { PasswordGroupsClient } from '@/admin/views/PasswordGroupsClient'
 export async function PasswordGroupsView() {
   const context = await getAdminContext()
   if (!hasAdminPanelAccess(context.user)) redirect(adminHref('/login', await getAdminRoot()))
-  if (!(context.isAdmin || context.can('admin-visibility-password', 'update'))) {
+  if (!canManagePasswords(context)) {
     return (
       <div style={{ maxWidth: 820, padding: '1.5rem' }}>
         <p>You do not have permission to see password groups.</p>

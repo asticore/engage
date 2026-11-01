@@ -7,6 +7,7 @@ import { readSecuritySettingsFromD1 } from '@/features/security/settings'
 import { purgeDocuments } from '@/features/visibility/docPaths'
 import { recordGroupEvent } from '@/features/visibility/groupAudit'
 import { hashPassword } from '@/features/visibility/password'
+import { canManagePasswords } from '@/features/visibility/passwordAccess'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,7 @@ const MAX_NAME_LENGTH = 80
 
 type Context = Awaited<ReturnType<typeof getAdminContext>>
 
-const canView = (context: Context) => context.isAdmin || context.can('admin-visibility-password', 'update')
+const canView = (context: Context) => canManagePasswords(context)
 const actorOf = (context: Context) => {
   const user = context.user as { id?: number | string; email?: string } | null | undefined
   return { id: user?.id ?? null, email: user?.email ?? null }
