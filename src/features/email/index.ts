@@ -1,5 +1,6 @@
 import { getEngine } from '@/lib/engine'
 import { getFeatureFlags } from '@/utilities/features'
+import { configuredSiteOrigin } from '@/utilities/siteOrigin'
 
 import type { EmailSettingsDoc, OutgoingEmail, SendEmailArgs, SendEmailResult } from './types'
 
@@ -7,6 +8,8 @@ import { loadEmailSettings } from './connectionLoad'
 import { planAttempts, sendWithFailover } from './failover'
 import { isSupportedProvider } from './providers'
 import { recordEmailSend } from './emailLogStore'
+import { suppressedAmong } from './suppression'
+import { unsubscribeHeaders, unsubscribeUrlFor, withHtmlFooter, withTextFooter } from './unsubscribe'
 import { SCHEDULE_GLOBAL_SLUG, isTemplateEnabled, scheduleKeyFor, type EmailScheduleDoc } from './schedule'
 
 export type { SendEmailArgs, SendEmailResult, EmailProviderKey } from './types'
@@ -73,6 +76,7 @@ const prepare = (args: SendEmailArgs, settings: EmailSettingsDoc): Prepared => {
       fromEmail,
       fromName: text(settings.fromName) || undefined,
       replyTo: text(args.replyTo) || text(settings.replyToEmail) || undefined,
+      ...(args.bulk && args.unsubscribeUrl ? { headers: unsubscribeHeaders(args.unsubscribeUrl) } : {}),
     },
   }
 }
@@ -160,11 +164,72 @@ const deliverEmail = async (args: SendEmailArgs): Promise<SendEmailResult> => {
  * a send the feature has switched off is not logged at all.
  */
 export const sendEmail = async (args: SendEmailArgs): Promise<SendEmailResult> => {
-  const result: SendEmailResult = (await scheduleHolds(args))
-    ? { ok: false, reason: 'turned-off', error: 'Turned off under Settings > Communication > When emails are sent.' }
-    : await deliverEmail(args)
+  if (await scheduleHolds(args)) {
+    const result: SendEmailResult = { ok: false, reason: 'turned-off', error: 'Turned off under Settings > Communication > When emails are sent.' }
+    await recordEmailSend(args, result)
+    return result
+  }
+  if (args.bulk) return deliverBulk(args)
+  const result = await deliverEmail(args)
   await recordEmailSend(args, result)
   return result
+}
+
+/**
+ * Reminder and marketing mail: one message per recipient, so each one gets its
+ * own unsubscribe link and List-Unsubscribe header. Addresses on the suppression
+ * list are skipped and logged as skipped. Refused outright when the public
+ * address or ENGAGE_SECRET is missing, since the unsubscribe link cannot be made.
+ * Each send is logged on its own; never throws.
+ */
+const deliverBulk = async (args: SendEmailArgs): Promise<SendEmailResult> => {
+  const recipients = toRecipients(args.to)
+  const refuse = async (result: SendEmailResult): Promise<SendEmailResult> => {
+    await recordEmailSend({ ...args, to: recipients }, result)
+    return result
+  }
+  if (recipients.length === 0) return refuse({ ok: false, reason: 'invalid-message', error: 'No recipient was given.' })
+
+  const base = configuredSiteOrigin()
+  const secret = process.env.ENGAGE_SECRET || ''
+  if (!base || !secret) {
+    return refuse({
+      ok: false,
+      reason: 'not-configured',
+      error: 'Reminder and marketing email needs SITE_URL and ENGAGE_SECRET set, so every message can carry an unsubscribe link.',
+    })
+  }
+
+  let blocked: Set<string>
+  try {
+    blocked = await suppressedAmong(recipients)
+  } catch (error) {
+    return refuse({
+      ok: false,
+      reason: 'provider-rejected',
+      error: `The suppression list could not be checked, so nothing was sent: ${error instanceof Error ? error.message : String(error)}`,
+    })
+  }
+
+  let sentCount = 0
+  let lastFailure: SendEmailResult | null = null
+  for (const address of recipients) {
+    if (blocked.has(address.toLowerCase())) {
+      await recordEmailSend({ ...args, to: address }, { ok: false, reason: 'suppressed', error: 'This address has unsubscribed or cannot receive mail.' })
+      continue
+    }
+    const url = args.unsubscribeUrl || (await unsubscribeUrlFor(base, secret, address))
+    const html = args.html ? withHtmlFooter(args.html, url) : undefined
+    const text = args.text ? withTextFooter(args.text, url) : undefined
+    const result = await deliverEmail({ ...args, to: [address], html, text, unsubscribeUrl: url })
+    await recordEmailSend({ ...args, to: address }, result)
+    if (result.ok) sentCount += 1
+    else lastFailure = result
+  }
+
+  if (sentCount > 0) return { ok: true }
+  if (lastFailure) return lastFailure
+  return { ok: false, reason: 'suppressed', error: 'Every recipient has unsubscribed or cannot receive mail.' }
 }
 
 /**

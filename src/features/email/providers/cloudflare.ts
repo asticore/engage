@@ -33,6 +33,7 @@ export const sendViaCloudflare: EmailAdapter<CloudflareConfig> = (message, confi
             ...(message.fromName ? { name: message.fromName } : {}),
           },
           ...(message.replyTo ? { reply_to: { email: message.replyTo } } : {}),
+          ...(message.headers ? { headers: message.headers } : {}),
           subject: message.subject,
           content: [
             ...(message.text ? [{ type: 'text/plain', value: message.text }] : []),
