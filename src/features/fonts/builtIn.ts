@@ -13,6 +13,8 @@
  * family, as it does for any missing glyph.
  */
 
+import { UNICODE_RANGE, type FontSubset } from './unicodeRanges'
+
 export type BuiltInFace = {
   family: string
   /** Fontsource package name, also the npm path segment. */
@@ -23,7 +25,7 @@ export type BuiltInFace = {
   subsets: readonly BuiltInSubset[]
 }
 
-export type BuiltInSubset = 'latin' | 'latin-ext' | 'cyrillic'
+export type BuiltInSubset = FontSubset
 
 const ALL_SUBSETS: readonly BuiltInSubset[] = ['latin', 'latin-ext', 'cyrillic']
 
@@ -36,13 +38,6 @@ export const BUILT_IN_FACES: Readonly<Record<string, BuiltInFace>> = {
   inter: { family: 'Inter', id: 'inter', version: '5.3.0', weights: [400, 500, 600], subsets: ALL_SUBSETS },
 }
 
-const UNICODE_RANGE: Record<BuiltInSubset, string> = {
-  latin: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD',
-  'latin-ext':
-    'U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF',
-  cyrillic: 'U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116',
-}
-
 /** Built-in face keys that appear in the list, de-duplicated; unknown keys are ignored. */
 export function builtInFaceKeys(values: readonly (string | null | undefined)[]): string[] {
   const out: string[] = []
@@ -52,14 +47,29 @@ export function builtInFaceKeys(values: readonly (string | null | undefined)[]):
   return out
 }
 
-/** @font-face rules for the built-in faces named, one rule per subset and weight. */
-export function buildBuiltInFontCss(values: readonly (string | null | undefined)[]): string {
+/** Where a built-in face's file is read from: jsDelivr, or this site when the admin chose to self-host (see BUILT_IN_FONT_ROUTE). */
+export const BUILT_IN_FONT_ROUTE = '/font-files'
+
+/** The file name inside a Fontsource package, for one subset and weight (normal style). */
+export function builtInFontFileName(face: BuiltInFace, subset: BuiltInSubset, weight: number): string {
+  return `${face.id}-${subset}-${weight}-normal.woff2`
+}
+
+/**
+ * @font-face rules for the built-in faces named, one rule per subset and weight.
+ * With `selfHost`, the files come from this site's own route, which copies each
+ * file from the npm package the first time it is asked for (see
+ * src/app/(frontend)/font-files/[...path]/route.ts). Otherwise they come from jsDelivr.
+ */
+export function buildBuiltInFontCss(values: readonly (string | null | undefined)[], options: { selfHost?: boolean } = {}): string {
   const rules: string[] = []
   for (const key of builtInFaceKeys(values)) {
     const face = BUILT_IN_FACES[key]
     for (const weight of face.weights) {
       for (const subset of face.subsets) {
-        const url = `https://cdn.jsdelivr.net/npm/@fontsource/${face.id}@${face.version}/files/${face.id}-${subset}-${weight}-normal.woff2`
+        const url = options.selfHost
+          ? `${BUILT_IN_FONT_ROUTE}/${face.id}@${face.version}/${builtInFontFileName(face, subset, weight)}`
+          : `https://cdn.jsdelivr.net/npm/@fontsource/${face.id}@${face.version}/files/${builtInFontFileName(face, subset, weight)}`
         rules.push(
           `@font-face { font-family: "${face.family}"; font-style: normal; font-weight: ${weight}; font-display: swap; src: url("${url}") format("woff2"); unicode-range: ${UNICODE_RANGE[subset]}; }`,
         )

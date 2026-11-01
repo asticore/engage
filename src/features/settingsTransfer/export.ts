@@ -66,6 +66,7 @@ export function parseExportOptions(raw: unknown): ExportOptions {
       posts: readBoolean(contentRaw.posts, 'content.posts'),
       products: readBoolean(contentRaw.products, 'content.products'),
       mediaMetadata: readBoolean(contentRaw.mediaMetadata, 'content.mediaMetadata'),
+      customers: readBoolean(contentRaw.customers, 'content.customers'),
     },
     includeSecrets,
   }
@@ -128,7 +129,7 @@ export async function buildExport(engine: Engine, options: ExportOptions): Promi
     redirects: [],
     pageTemplates: [],
     fieldGroups: [],
-    content: { pages: [], posts: [], products: [], mediaMetadata: [] },
+    content: { pages: [], posts: [], products: [], mediaMetadata: [], customers: [] },
     warnings,
   }
 
@@ -184,13 +185,27 @@ export async function buildExport(engine: Engine, options: ExportOptions): Promi
     ['pages', 'pages', options.content.pages],
     ['posts', 'posts', options.content.posts],
     ['products', 'products', options.content.products],
-    ['mediaMetadata', 'media', options.content.mediaMetadata],
   ]
   for (const [key, collection, enabled] of contentDocs) {
     if (!enabled) continue
     file.content[key] = (await listAll(engine, collection)).map((doc) =>
       withoutKeys(doc, [...DOC_NOISE_KEYS, ...RELATION_KEYS]),
     )
+  }
+
+  // Picture details keep the source id, so an import can match a picture by id and remap the
+  // picture ids that settings hold (see importMediaDetails in import.ts).
+  if (options.content.mediaMetadata) {
+    file.content.mediaMetadata = (await listAll(engine, 'media')).map((doc) =>
+      withoutKeys(doc, [...DOC_NOISE_KEYS.filter((key) => key !== 'id'), ...RELATION_KEYS]),
+    )
+  }
+
+  // Shop customers are personal data: admin only (the export route is admin-gated), with the same credential fields removed as users.
+  if (options.content.customers) {
+    file.content.customers = (await listAll(engine, 'users'))
+      .filter((doc) => !hasAdminPanelRole(doc))
+      .map((doc) => withoutKeys(doc, [...DOC_NOISE_KEYS, ...RELATION_KEYS, ...USER_SENSITIVE_KEYS]))
   }
 
   // Keep the document-level copy independent of anything the engine returned.

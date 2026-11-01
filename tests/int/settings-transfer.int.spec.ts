@@ -69,7 +69,7 @@ const ALL_OFF: ExportOptions = {
   redirects: false,
   pageTemplates: false,
   fieldGroups: false,
-  content: { pages: false, posts: false, products: false, mediaMetadata: false },
+  content: { pages: false, posts: false, products: false, mediaMetadata: false, customers: false },
   includeSecrets: false,
 }
 
