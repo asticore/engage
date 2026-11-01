@@ -22,6 +22,7 @@ export function buildBrevoBody(message: OutgoingEmail): Record<string, unknown> 
     ...(message.html ? { htmlContent: message.html } : {}),
     ...(message.text ? { textContent: message.text } : {}),
     ...(message.replyTo ? { replyTo: { email: message.replyTo } } : {}),
+    ...(message.headers ? { headers: message.headers } : {}),
   }
 }
 

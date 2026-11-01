@@ -21,7 +21,7 @@ export function buildMandrillBody(message: OutgoingEmail, apiKey: string): Recor
       to: message.to.map((email) => ({ email, type: 'to' })),
       ...(message.html ? { html: message.html } : {}),
       ...(message.text ? { text: message.text } : {}),
-      ...(message.replyTo ? { headers: { 'Reply-To': message.replyTo } } : {}),
+      ...(message.replyTo || message.headers ? { headers: { ...(message.replyTo ? { 'Reply-To': message.replyTo } : {}), ...(message.headers ?? {}) } } : {}),
     },
   }
 }
