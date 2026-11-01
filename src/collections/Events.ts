@@ -18,6 +18,7 @@ import { slugRedirectAfterChange } from '@/features/redirects/slugChange'
 import { formatSlugHook } from '../utilities/formatSlug'
 import { customFieldsField } from '../fields/customFields'
 import { publishGuard } from '@/features/roles/contentEditGuard'
+import { publishAfterChange } from '@/features/approval/publishAfterChange'
 import { reviewFields } from '@/features/approval/fields'
 import { generateOccurrencesField, recurrenceField, seriesOfField, ticketTiersField, trashedAtField } from '@/features/editScreens/fields'
 import { seoEditGuard, trashGuard } from '@/features/editScreens/guards'
@@ -199,7 +200,7 @@ export const Events: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [authorshipBeforeChange, trashGuard, seoEditGuard, publishGuard, pageSpeedBeforeChange, tierIdsBeforeChange],
-    afterChange: [slugRedirectAfterChange('events'), pageSpeedAfterChange('events'), indexNowAfterChange('events'), machineAutoDraftAfterChange('events'), outdatedAfterChange('events'), webhookContentAfterChange('events')],
+    afterChange: [publishAfterChange('events'), slugRedirectAfterChange('events'), pageSpeedAfterChange('events'), indexNowAfterChange('events'), machineAutoDraftAfterChange('events'), outdatedAfterChange('events'), webhookContentAfterChange('events')],
     afterDelete: [indexNowAfterDelete('events')],
   },
 }

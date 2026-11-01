@@ -48,6 +48,11 @@ import { actionRefusal } from '@/features/editScreens/bulk'
 import { bulkPermissions, isBulkCollection } from '@/features/editScreens/authors'
 import '@/features/editScreens/admin/edit-screens.css'
 
+/** Old list screens for results, and the tab that replaces each one. */
+const LEGACY_LIST_TABS: Record<string, { collection: string; tab: string }> = {
+  'event-rsvps': { collection: 'events', tab: 'rsvps' },
+  'form-submissions': { collection: 'forms', tab: 'submissions' },
+}
 /** Collections that carry "Available on domains", so the site switcher narrows them. */
 const SITE_FILTERED_COLLECTIONS = new Set(['pages', 'posts', 'products'])
 
@@ -60,6 +65,11 @@ export async function ListView({
 }) {
   const context = await getAdminContext()
   if (!hasAdminPanelAccess(context.user)) redirect(adminHref('/login', await getAdminRoot()))
+
+  // The separate RSVP and submission lists were replaced by the RSVPs and Submissions tabs on the Events and
+  // Forms lists. Old links go to the tab; the per-entry edit pages are unchanged.
+  const legacy = LEGACY_LIST_TABS[collectionSlug]
+  if (legacy) redirect(`${adminCollectionPath(legacy.collection, await getAdminRoot())}?tab=${legacy.tab}`)
 
   const collection = getCollectionConfig(context.engine, collectionSlug)
   if (!collection) notFound()

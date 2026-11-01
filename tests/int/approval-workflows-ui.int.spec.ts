@@ -48,6 +48,7 @@ describe('workflow form helpers', () => {
       name: 'Flow',
       collection: 'pages',
       active: true,
+      allowRepeatApprover: false,
       submitterRoles: ['editor'],
       steps: [
         { name: 'Editor review', approverRoles: ['editor'], approvalsNeeded: 1 },

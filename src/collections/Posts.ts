@@ -23,6 +23,7 @@ import { formatSlugHook } from '../utilities/formatSlug'
 import { customFieldsField } from '../fields/customFields'
 import { membersOnlyField } from '@/features/members'
 import { contentEditGuard, publishGuard } from '@/features/roles/contentEditGuard'
+import { publishAfterChange } from '@/features/approval/publishAfterChange'
 import { reviewFields } from '@/features/approval/fields'
 import { readingTimeField, stickyField, trashedAtField } from '@/features/editScreens/fields'
 import { seoEditGuard, trashGuard } from '@/features/editScreens/guards'
@@ -107,7 +108,7 @@ export const Posts: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [domainSiteDefault, domainWriteGuard, authorshipBeforeChange, trashGuard, seoEditGuard, readingTimeBeforeChange, contentEditGuard, publishGuard, pageSpeedBeforeChange, embedShortLinksBeforeChange],
-    afterChange: [slugRedirectAfterChange('posts'), pageSpeedAfterChange('posts'), indexNowAfterChange('posts'), machineAutoDraftAfterChange('posts'), outdatedAfterChange('posts'), webhookContentAfterChange('posts')],
+    afterChange: [publishAfterChange('posts'), slugRedirectAfterChange('posts'), pageSpeedAfterChange('posts'), indexNowAfterChange('posts'), machineAutoDraftAfterChange('posts'), outdatedAfterChange('posts'), webhookContentAfterChange('posts')],
     afterDelete: [indexNowAfterDelete('posts')],
   },
 }

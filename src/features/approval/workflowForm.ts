@@ -29,6 +29,7 @@ export type WorkflowDraft = {
   name: string
   collection: ApprovalCollection
   active: boolean
+  allowRepeatApprover: boolean
   submitterRoles: string[]
   steps: DraftStep[]
 }
@@ -39,6 +40,7 @@ export type WorkflowRecord = {
   name?: string
   collection?: string
   active?: boolean | null
+  allowRepeatApprover?: boolean | null
   submitterRoles?: unknown
   steps?: Array<{ id?: string; name?: string | null; approverRoles?: unknown; approvalsNeeded?: number | null }> | null
 }
@@ -55,6 +57,7 @@ export const emptyDraft = (collection: ApprovalCollection = 'pages'): WorkflowDr
   name: '',
   collection,
   active: false,
+  allowRepeatApprover: false,
   submitterRoles: [],
   steps: [emptyStep()],
 })
@@ -66,6 +69,7 @@ export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
     name: typeof record.name === 'string' ? record.name : '',
     collection,
     active: record.active === true,
+    allowRepeatApprover: record.allowRepeatApprover === true,
     submitterRoles: parseRoleList(record.submitterRoles),
     steps: (record.steps ?? []).map((step) => ({
       key: step.id || newStepKey(),
@@ -82,6 +86,7 @@ export function payloadFromDraft(draft: WorkflowDraft): Record<string, unknown> 
     name: draft.name.trim(),
     collection: draft.collection,
     active: draft.active,
+    allowRepeatApprover: draft.allowRepeatApprover,
     submitterRoles: draft.submitterRoles,
     steps: draft.steps.map((step) => ({
       name: step.name.trim(),

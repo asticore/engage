@@ -38,6 +38,7 @@ export const ReviewEvents: CollectionConfig = {
         { label: 'Comment', value: 'comment' },
         { label: 'Published', value: 'published' },
         { label: 'Withdrawn', value: 'withdrawn' },
+        { label: 'Edited, review started again', value: 'reset' },
       ],
       admin: { readOnly: true },
     },
