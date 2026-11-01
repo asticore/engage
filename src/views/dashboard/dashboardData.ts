@@ -174,3 +174,51 @@ export function greetingFor(date: Date): string {
   if (hour < 18) return 'Good afternoon'
   return 'Good evening'
 }
+
+export type DailyCount = { day: string; count: number }
+
+/** The last `days` UTC days ending today, oldest first, as YYYY-MM-DD. */
+export function lastDays(days: number, now: Date): string[] {
+  const out: string[] = []
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i))
+    out.push(d.toISOString().slice(0, 10))
+  }
+  return out
+}
+
+/**
+ * Documents created per day over the last `days` days, for one collection, read with the
+ * viewer's own access. Returns null when the read fails, so the chart is left out rather than
+ * drawn as a flat line of zeros. Counts are capped by `limit`; the newest rows are the ones kept.
+ */
+export async function getDailyCounts(
+  engine: Engine,
+  collection: string,
+  days: number,
+  now: Date,
+  req?: EngineRequest,
+  limit = 5000,
+): Promise<DailyCount[] | null> {
+  const dayList = lastDays(days, now)
+  const since = `${dayList[0]}T00:00:00.000Z`
+  try {
+    const result = await engine.find({
+      collection: collection as CollectionSlug,
+      where: { createdAt: { greater_than_equal: since } },
+      depth: 0,
+      limit,
+      sort: '-createdAt',
+      req: req as never,
+      overrideAccess: false,
+    })
+    const counts = new Map(dayList.map((day) => [day, 0]))
+    for (const doc of result.docs as Record<string, unknown>[]) {
+      const created = typeof doc.createdAt === 'string' ? doc.createdAt.slice(0, 10) : ''
+      if (counts.has(created)) counts.set(created, (counts.get(created) ?? 0) + 1)
+    }
+    return dayList.map((day) => ({ day, count: counts.get(day) ?? 0 }))
+  } catch {
+    return null
+  }
+}

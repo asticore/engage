@@ -30,6 +30,8 @@ export type AdminBarChartProps = {
   emptyText: string
   /** Text shown when every value is zero. The chart still draws its axis. */
   allZeroText?: string
+  /** A fixed top for the value axis (for example 100 for percentages). Values above it are drawn at the top. */
+  axisMax?: number
 }
 
 /** Value-axis ticks (0, half, top) for a chart whose largest bar is `max`. */
@@ -38,7 +40,7 @@ export function axisTicks(max: number): number[] {
   return [0, Math.round(top / 2), top]
 }
 
-export function AdminBarChart({ data, ariaLabel, formatTick, emptyText, allZeroText }: AdminBarChartProps) {
+export function AdminBarChart({ data, ariaLabel, formatTick, emptyText, allZeroText, axisMax }: AdminBarChartProps) {
   if (data.length === 0) return <p className="admin-chart__empty">{emptyText}</p>
 
   const width = 640
@@ -50,7 +52,7 @@ export function AdminBarChart({ data, ariaLabel, formatTick, emptyText, allZeroT
   const plotWidth = width - left - right
   const plotHeight = height - top - bottom
   const max = Math.max(1, ...data.map((d) => d.value))
-  const ticks = axisTicks(max)
+  const ticks = axisMax && axisMax > 0 ? [0, axisMax / 2, axisMax] : axisTicks(max)
   const scale = Math.max(1, ticks[ticks.length - 1])
   const slot = plotWidth / data.length
   const barWidth = Math.max(2, slot * 0.7)
@@ -72,7 +74,7 @@ export function AdminBarChart({ data, ariaLabel, formatTick, emptyText, allZeroT
           )
         })}
         {data.map((d, i) => {
-          const h = Math.max(0, Math.round((plotHeight * d.value) / scale))
+          const h = Math.max(0, Math.round((plotHeight * Math.min(d.value, scale)) / scale))
           const x = left + i * slot + (slot - barWidth) / 2
           return (
             <g key={d.key}>

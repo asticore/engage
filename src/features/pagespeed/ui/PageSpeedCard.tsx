@@ -17,6 +17,7 @@ import {
   type StoredResult,
   type Strategy,
 } from '../types'
+import { AdminLineChart } from '@/admin/charts/AdminLineChart'
 import './pagespeed.css'
 
 type Loaded = {
@@ -72,27 +73,27 @@ const METRIC_ORDER: MetricKey[] = ['lcp', 'cls', 'tbt', 'fcp', 'speedIndex', 'tt
 function Chart({ history }: { history: StoredResult[] }) {
   const points = [...history].reverse().filter((r) => r.scores.performance !== null)
   if (points.length < 2) return <p className="ps__muted ps__help">Run the test a few times on different days to see a trend here.</p>
-  const w = 300
-  const h = 90
-  const x = (i: number) => 8 + (i * (w - 16)) / (points.length - 1)
-  const y = (score: number) => h - 8 - (score / 100) * (h - 16)
-  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)} ${y(p.scores.performance as number).toFixed(1)}`).join(' ')
   return (
-    <svg className="ps-chart" viewBox={`0 0 ${w} ${h}`} role="img" aria-label={`Performance score over the last ${points.length} tests`} preserveAspectRatio="none">
-      <line className="ps-chart__grid" x1="0" x2={w} y1={y(90)} y2={y(90)} />
-      <line className="ps-chart__grid" x1="0" x2={w} y1={y(50)} y2={y(50)} />
-      <path className="ps-chart__line" d={path} vectorEffect="non-scaling-stroke" />
-      {points.map((p, i) => {
+    <AdminLineChart
+      points={points.map((p, i) => {
         const score = p.scores.performance as number
-        return (
-          <g key={p.id} className={bandClass(scoreBand(score))}>
-            <circle className="ps-chart__dot" cx={x(i)} cy={y(score)} r="3.5">
-              <title>{`${score} on ${new Date(p.fetchedAt).toLocaleString()}`}</title>
-            </circle>
-          </g>
-        )
+        return {
+          key: String(p.id ?? i),
+          value: score,
+          label: new Date(p.fetchedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+          tip: `${score} on ${new Date(p.fetchedAt).toLocaleString()}`,
+          className: `ps-chart__dot ${bandClass(scoreBand(score))}`,
+        }
       })}
-    </svg>
+      ariaLabel={`Performance score over the last ${points.length} tests`}
+      axisMin={0}
+      axisMax={100}
+      ticks={[0, 50, 90, 100]}
+      formatTick={(tick) => String(tick)}
+      emptyText=""
+      width={300}
+      height={110}
+    />
   )
 }
 

@@ -12,10 +12,14 @@ import {
 
 import {
   formatRelativeTime,
+  getDailyCounts,
   getRecentActivity,
   getStatTiles,
   greetingFor,
+  type DailyCount,
 } from './dashboardData'
+import { AdminBarChart, type AdminBarDatum } from '@/admin/charts/AdminBarChart'
+import type { AdminUiServer } from '@/admin/i18n/serverUi'
 
 import { loadGettingStartedProgress } from '@/features/gettingStarted/load'
 import { getAdminContext } from '@/admin/auth'
@@ -45,6 +49,8 @@ import { GettingStartedCard } from '@/features/gettingStarted/GettingStartedCard
 const QUICK_CREATE_SLUGS = ['pages', 'posts', 'products', 'events', 'media']
 
 const RECENT_LIMIT = 8
+/** Days in the trend charts. */
+const TREND_DAYS = 30
 
 const PlusIcon: React.FC = () => (
   <svg aria-hidden="true" className="h-[calc(var(--base)*0.85)] w-[calc(var(--base)*0.85)] shrink-0" viewBox="0 0 16 16">
@@ -58,6 +64,28 @@ const findEntity = (groups: ResolvedGroup[], slug: string): ResolvedEntity | und
     if (match) return match
   }
   return undefined
+}
+
+/** One daily-count bar chart with its title, on the shared admin bar chart. */
+const TrendCard: React.FC<{ title: string; series: DailyCount[]; ui: AdminUiServer }> = ({ title, series, ui }) => {
+  const data: AdminBarDatum[] = series.map((point) => ({
+    key: point.day,
+    value: point.count,
+    label: point.day.slice(5),
+    tip: ui.t('chart.trendTip', { day: point.day, count: point.count }),
+  }))
+  return (
+    <div className="rounded-[4px] border border-[var(--theme-elevation-150)] bg-[var(--ac-surface)] p-[calc(var(--base)*0.9)]">
+      <h3 className="m-0 mb-[calc(var(--base)*0.5)] text-[calc(var(--base)*0.8)] font-semibold text-[var(--theme-elevation-800)]">{title}</h3>
+      <AdminBarChart
+        data={data}
+        ariaLabel={ui.t('chart.trendAria', { metric: title })}
+        formatTick={(tick) => String(Math.round(tick))}
+        emptyText={ui.t('chart.trendNone')}
+        allZeroText={ui.t('chart.trendNone')}
+      />
+    </div>
+  )
 }
 
 export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
@@ -107,6 +135,12 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
       : null
 
   const now = new Date()
+
+  // The 30-day trend exists only while its feature is on, and is left out when the read is refused.
+  const [ordersTrend, submissionsTrend] = await Promise.all([
+    flags.ecommerce ? getDailyCounts(engine, 'orders', TREND_DAYS, now, req) : Promise.resolve(null),
+    flags.forms ? getDailyCounts(engine, 'form-submissions', TREND_DAYS, now, req) : Promise.resolve(null),
+  ])
 
   const quickCreates = QUICK_CREATE_SLUGS.map((slug) => findEntity(groups, slug)).filter(
     (entity): entity is ResolvedEntity & { createHref: string } => Boolean(entity?.createHref),
@@ -185,6 +219,16 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
                 <span className="text-[calc(var(--base)*0.72)] text-[var(--theme-elevation-600)]">{stat.label}</span>
               </Link>
             ))}
+          </div>
+        </section>
+      )}
+
+      {(ordersTrend || submissionsTrend) && (
+        <section>
+          <h2 className={sectionTitleClassName}>{ui.t('chart.trendTitle')}</h2>
+          <div className="grid grid-cols-1 gap-[calc(var(--base)*1)] md:grid-cols-2">
+            {ordersTrend && <TrendCard title={ui.t('chart.trendOrders')} series={ordersTrend} ui={ui} />}
+            {submissionsTrend && <TrendCard title={ui.t('chart.trendSubmissions')} series={submissionsTrend} ui={ui} />}
           </div>
         </section>
       )}
