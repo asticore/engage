@@ -146,8 +146,10 @@ export const buildPageJsonLd = (input: {
     }
   }
 
-  // FAQ questions from the page's FAQ blocks
-  if (faqs && faqs.length > 0) {
+  // FAQ questions go on an FAQPage node. On an FAQPage page they are its mainEntity; on any
+  // other type they are emitted as a separate node (buildFaqPageJsonLd), because a rich
+  // result needs @type FAQPage and a WebPage with questions does not qualify.
+  if (faqs && faqs.length > 0 && type === 'FAQPage') {
     const entities = faqEntities(faqs)
     if (entities.length > 0) result.mainEntity = entities
   }
@@ -182,4 +184,21 @@ export const buildPageJsonLd = (input: {
   })
 
   return result
+}
+
+/**
+ * A stand-alone FAQPage node for questions shown on a page whose own type is not FAQPage.
+ * Entries missing a question or an answer are dropped; no usable entry means no node. Pure.
+ */
+export const buildFaqPageJsonLd = (input: { url: string; name: string; faqs: FaqItem[] }): JsonLdNode | null => {
+  const entities = faqEntities(input.faqs)
+  if (entities.length === 0) return null
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    '@id': `${input.url}#faq`,
+    url: input.url,
+    name: input.name,
+    mainEntity: entities,
+  }
 }

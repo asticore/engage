@@ -599,6 +599,25 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
   })
 
+  it('adds the SEO cornerstone column to pages and posts and their version tables, registered after the SMS shipped text migration', async () => {
+    const { migrations } = await import('@/migrations/index')
+    const names = migrations.map((x) => x.name)
+    const at = names.indexOf('20270131_100000_seo_cornerstone')
+    expect(at).toBeGreaterThan(names.indexOf('20270130_100000_sms_shipped_text'))
+    expect(names.slice(at + 1).every((x) => x > '20270131_100000_seo_cornerstone')).toBe(true)
+
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    for (const table of ['eg_pages', 'eg_posts']) {
+      if (tables.includes(table)) expect(await columnsOf(table), table).toContain('seo_cornerstone')
+    }
+    for (const table of ['_eg_pages_v', '_eg_posts_v']) {
+      if (tables.includes(table)) expect(await columnsOf(table), table).toContain('version_seo_cornerstone')
+    }
+  })
+
   it('adds the Templates by content type columns to the SEO settings table', async () => {
     const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`eg_seo_settings\`)`).all()
     const columnNames = (result.results as { name: string }[]).map((r) => r.name)

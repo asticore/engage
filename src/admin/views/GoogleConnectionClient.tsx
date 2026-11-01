@@ -2,9 +2,11 @@
 
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
-import { Suspense, useState } from 'react'
+import { Suspense, useContext, useRef, useState } from 'react'
 
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
+import { ConnectionVersionsContext, rememberVersions, versionHeaders } from '@/features/integrations/admin/connectionVersions'
+import type { ConnectionVersions } from '@/features/integrations/versionHeaders'
 import type { GoogleConnectionStatus } from '@/features/google/status'
 
 import { GoogleFlagNotice } from './GoogleFlagNotice'
@@ -14,6 +16,8 @@ import './google-connection.css'
 type Props = {
   status: GoogleConnectionStatus
   redirectUri: string
+  /** The versions of the globals this screen writes when it loaded (stale-tab check, Task 9c). */
+  versions: ConnectionVersions
 }
 
 type Notice = { tone: 'ok' | 'error'; text: string }
@@ -22,8 +26,18 @@ type Notice = { tone: 'ok' | 'error'; text: string }
  * The Google connection screen (/admin/google-connection). Three collapsible
  * cards: the Google Cloud client, the sign-in, and the choices the dashboards read.
  */
-export function GoogleConnectionClient({ status, redirectUri }: Props) {
+export function GoogleConnectionClient(props: Props) {
+  const versionRef = useRef<ConnectionVersions>(props.versions)
+  return (
+    <ConnectionVersionsContext.Provider value={versionRef}>
+      <GoogleConnectionScreen {...props} />
+    </ConnectionVersionsContext.Provider>
+  )
+}
+
+function GoogleConnectionScreen({ status, redirectUri }: Omit<Props, 'versions'>) {
   const t = useAdminT()
+  const versionRef = useContext(ConnectionVersionsContext)
   const [clientId, setClientId] = useState(status.clientId)
   const [clientSecret, setClientSecret] = useState('')
   const [busy, setBusy] = useState<'client' | 'disconnect' | null>(null)
@@ -50,10 +64,11 @@ export function GoogleConnectionClient({ status, redirectUri }: Props) {
       const response = await fetch('/api/admin-google-client', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...versionHeaders(versionRef) },
         body: JSON.stringify({ clientId, clientSecret }),
       })
       const body = (await response.json().catch((): null => null)) as { ok?: boolean; message?: string; error?: string; signedOut?: boolean } | null
+      rememberVersions(versionRef, body)
       if (response.ok && body?.ok) {
         setClientSecret('')
         if (body.signedOut) setConnected(false)
@@ -76,10 +91,11 @@ export function GoogleConnectionClient({ status, redirectUri }: Props) {
       const response = await fetch('/api/google/disconnect', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...versionHeaders(versionRef) },
         body: '{}',
       })
       const body = (await response.json().catch((): null => null)) as { ok?: boolean; error?: string } | null
+      rememberVersions(versionRef, body)
       if (response.ok && body?.ok) {
         setConnected(false)
         setSignInNotice({ tone: 'ok', text: t('gc.lit.disconnected') })

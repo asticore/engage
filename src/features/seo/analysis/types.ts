@@ -23,6 +23,8 @@ export interface AnalysisInput {
   links: { href: string; internal: boolean }[]
   images: { alt: string }[]
   siteName?: string
+  /** A cornerstone item is checked more strictly (see analyze.ts). */
+  cornerstone?: boolean
 }
 
 export interface AnalysisResult {

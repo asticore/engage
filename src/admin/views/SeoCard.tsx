@@ -93,7 +93,7 @@ export const SeoCard: React.FC<SeoCardProps> = ({ seoField, readOnly, liveHref }
 
   const seoFields = ((seoField.fields as Field[] | undefined) || []).filter((f) => {
     const name = 'name' in f ? (f as { name?: string }).name : undefined
-    return ['metaTitle', 'metaDescription', 'canonicalUrl', 'noIndex', 'noFollow'].includes(name as string)
+    return ['metaTitle', 'metaDescription', 'canonicalUrl', 'noIndex', 'noFollow', 'cornerstone'].includes(name as string)
   })
 
   const socialFields = ((seoField.fields as Field[] | undefined) || []).filter((f) => {

@@ -1,6 +1,7 @@
 import React from 'react'
 
-import { buildPageJsonLd } from './pageSchema'
+import { buildFaqPageJsonLd, buildPageJsonLd } from './pageSchema'
+import { videoElementsOf, videoObjectNodes } from './videoNodes'
 import { getSeoContext, mediaUrl, absoluteUrl, type DocumentSeo } from './settings'
 import { articleFacts, authorNameOf, eventExtraFor, loadFaqItems } from './pageSchemaData'
 import { currentPageLocale } from './pageLocale'
@@ -132,8 +133,25 @@ export const PageJsonLd = async ({
 
   if (!jsonLd) return null
 
+  // Questions on a page that is not an FAQPage get their own FAQPage node, and each video element
+  // with a derivable name, thumbnail and upload date gets a VideoObject node. With neither, the
+  // output is the single page node, as before.
+  const extraNodes: Record<string, unknown>[] = []
+  if (jsonLd['@type'] !== 'FAQPage') {
+    const faqNode = buildFaqPageJsonLd({ url, name: title, faqs })
+    if (faqNode) extraNodes.push(faqNode)
+  }
+  extraNodes.push(
+    ...videoObjectNodes(videoElementsOf(record), {
+      title,
+      description: doc.seo?.metaDescription,
+      publishedDate: doc.publishedDate || doc.datePublished,
+    }),
+  )
+  const nodes = extraNodes.length > 0 ? [jsonLd, ...extraNodes] : jsonLd
+
   // Escape </ to prevent early script tag closure
-  const jsonString = JSON.stringify(jsonLd).replaceAll('</', '<\\/')
+  const jsonString = JSON.stringify(nodes).replaceAll('</', '<\\/')
 
   return (
     <script
