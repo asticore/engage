@@ -968,6 +968,15 @@ export const Integrations: GlobalConfig = {
               },
             },
             {
+              name: 'shippedOrderText',
+              type: 'checkbox',
+              label: 'Text the customer when an order ships',
+              defaultValue: false,
+              admin: {
+                description: 'Off by default. Sends one text with the tracking link when a shipping label is bought, to the phone number on the order. Needs the Twilio details above and a number in international format.',
+              },
+            },
+            {
               name: 'sendTestText',
               type: 'ui',
               admin: {
