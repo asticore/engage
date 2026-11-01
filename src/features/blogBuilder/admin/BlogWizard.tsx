@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import { adminCollectionPath } from '@/admin/adminPaths'
-import { AsticoreSaasComingSoon } from '@/components/branding/AsticoreSaasComingSoon'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings'
 import {
@@ -697,7 +696,12 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
           </button>
         ) : null}
       </div>
-      <AsticoreSaasComingSoon />
+      <div className="blog-ai__saas">
+        <button type="button" className="btn" disabled aria-describedby="blog-ai-saas-note">
+          {t('blog.ai.saasButton')}
+        </button>
+        <p id="blog-ai-saas-note" className="blog-ai__intro">{t('blog.ai.saasNote')}</p>
+      </div>
     </>
   )
 }

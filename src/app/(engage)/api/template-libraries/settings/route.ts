@@ -1,7 +1,7 @@
 import { libraryJson, librarySettingsAccess, storeEngine } from '@/features/templateLibraries/server'
 import { loadLibraryManifest } from '@/features/templateLibraries/loader'
 import { parseLibraryUrl } from '@/features/templateLibraries/url'
-import { readLibraryState, writeLibraryState } from '@/features/templateLibraries/store'
+import { readLibraryState, writeLibraryState, writeLibraryToken } from '@/features/templateLibraries/store'
 import { LIBRARY_LIMITS } from '@/features/templateLibraries/types'
 
 export const dynamic = 'force-dynamic'
@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic'
  *   { action: 'add', url: string, label?: string }   add a library by its GitHub address
  *   { action: 'remove', id: string }                 remove a library
  *   { action: 'toggle', id: string, enabled: boolean }
+ *   { action: 'token', token: string }              save the access token for private libraries ('' removes it)
  *
  * Administrators only. A new library is saved even when its folder cannot be read yet: its row then
  * shows the reason, so a temporary GitHub problem never blocks adding it.
@@ -37,12 +38,21 @@ export async function POST(request: Request): Promise<Response> {
       }
       const id = crypto.randomUUID()
       await writeLibraryState(engine, [...rows, { id, label: parsed.value.config.label, url: parsed.value.url, enabled: true }], state.imports, access.context.user)
-      const check = await loadLibraryManifest(parsed.value.config, { bypassCache: true })
+      const check = await loadLibraryManifest(parsed.value.config, { bypassCache: true }, state.token)
       return libraryJson({
         ok: true,
         id,
         message: check.ok ? `Added. ${check.value.items.length} items found in "${check.value.name}".` : `Added, but the library could not be read yet: ${check.error}`,
       })
+    }
+
+    if (action === 'token') {
+      const token = typeof body?.token === 'string' ? body.token.trim() : ''
+      if (token.length > LIBRARY_LIMITS.tokenMaxLength || /\s/.test(token)) {
+        return libraryJson({ ok: false, error: 'The token must be one line with no spaces, up to 400 characters.' }, 400)
+      }
+      await writeLibraryToken(engine, token || null, access.context.user)
+      return libraryJson({ ok: true, message: token ? 'Token saved. Use Test token to check it.' : 'Token removed.' })
     }
 
     if (action === 'remove' || action === 'toggle') {
