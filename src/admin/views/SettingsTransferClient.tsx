@@ -145,6 +145,8 @@ function IssueList({ report }: { report: ImportReport }) {
 export function SettingsTransferClient() {
   const t = useAdminT()
   const [choices, setChoices] = useState<Choices>({ ...NO_CHOICES, settings: true })
+  // Shop customers are an export-only choice (admin only); an import never recreates them.
+  const [exportCustomers, setExportCustomers] = useState(false)
   const [includeSecrets, setIncludeSecrets] = useState(false)
   const [exportPassword, setExportPassword] = useState('')
   const [exportBusy, setExportBusy] = useState(false)
@@ -198,6 +200,7 @@ export function SettingsTransferClient() {
           posts: choices.posts,
           products: choices.products,
           mediaMetadata: choices.mediaMetadata,
+          customers: exportCustomers,
         },
         includeSecrets,
         ...(includeSecrets ? { password: exportPassword } : {}),
@@ -319,6 +322,15 @@ export function SettingsTransferClient() {
                 </label>
               </li>
             ))}
+            <li>
+              <label className="st-check">
+                <input type="checkbox" className={styles.checkbox} checked={exportCustomers} onChange={() => setExportCustomers((on) => !on)} />
+                <span>
+                  <span className="st-check-label">{t('st.label.customers')}</span>
+                  <span className="st-muted st-check-hint">{t('st.hint.customers')}</span>
+                </span>
+              </label>
+            </li>
           </ul>
         </fieldset>
 

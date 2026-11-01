@@ -61,6 +61,8 @@ function containsAscii(bytes: Uint8Array, needle: string): boolean {
 const isZip = (b: Uint8Array): boolean => startsWith(b, [0x50, 0x4b, 0x03, 0x04]) || startsWith(b, [0x50, 0x4b, 0x05, 0x06])
 const isOle = (b: Uint8Array): boolean => startsWith(b, [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])
 /** An Office Open XML file is a ZIP whose entries include `[Content_Types].xml`. */
+/** An OpenDocument file is a ZIP whose first entry is an uncompressed `mimetype` naming the type, so the type is in the first bytes. */
+const isOpenDocumentSheet = (b: Uint8Array): boolean => startsWith(b, [0x50, 0x4b, 0x03, 0x04]) && containsAscii(b.subarray(0, 120), 'application/vnd.oasis.opendocument.spreadsheet')
 const isOoxml = (b: Uint8Array): boolean => startsWith(b, [0x50, 0x4b, 0x03, 0x04]) && containsAscii(b, '[Content_Types].xml')
 
 /** Text that opens like a web page, SVG, XML or script is refused even under a text extension. */
@@ -81,6 +83,19 @@ const isWav = (b: Uint8Array): boolean => ascii(b, 0, 'RIFF') && ascii(b, 8, 'WA
 const isQuickTime = (b: Uint8Array): boolean => ascii(b, 4, 'ftypqt') || ['moov', 'wide', 'mdat', 'free', 'skip'].some((atom) => ascii(b, 4, atom))
 const isMp4 = (b: Uint8Array): boolean => ascii(b, 4, 'ftyp') && !ascii(b, 4, 'ftypqt')
 const isWebm = (b: Uint8Array): boolean => startsWith(b, [0x1a, 0x45, 0xdf, 0xa3])
+const isIco = (b: Uint8Array): boolean => startsWith(b, [0x00, 0x00, 0x01, 0x00])
+const isTiff = (b: Uint8Array): boolean => startsWith(b, [0x49, 0x49, 0x2a, 0x00]) || startsWith(b, [0x4d, 0x4d, 0x00, 0x2a])
+/** HEIF still pictures carry one of these brands in the `ftyp` box. */
+const isHeic = (b: Uint8Array): boolean => ascii(b, 4, 'ftyp') && ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'].some((brand) => ascii(b, 8, brand))
+const isOgg = (b: Uint8Array): boolean => ascii(b, 0, 'OggS')
+const isM4a = (b: Uint8Array): boolean => ascii(b, 4, 'ftypM4A') || ascii(b, 4, 'ftypM4B')
+const isRtf = (b: Uint8Array): boolean => ascii(b, 0, '{\\rtf')
+/** JSON text: plain text whose first non-space character opens an object or an array. */
+const isJson = (b: Uint8Array): boolean => {
+  if (!isPlainText(b)) return false
+  const head = new TextDecoder('utf-8').decode(b.subarray(0, 512)).trimStart()
+  return head.startsWith('{') || head.startsWith('[')
+}
 
 const OOXML = 'application/vnd.openxmlformats-officedocument'
 
@@ -95,18 +110,27 @@ export const ACCEPTED_TYPES: AcceptedType[] = [
   { extension: 'gif', mimeType: 'image/gif', kind: 'image', label: 'GIF picture', sniff: (b) => ascii(b, 0, 'GIF87a') || ascii(b, 0, 'GIF89a') },
   { extension: 'webp', mimeType: 'image/webp', kind: 'image', label: 'WebP picture', sniff: (b) => ascii(b, 0, 'RIFF') && ascii(b, 8, 'WEBP') },
   { extension: 'avif', mimeType: 'image/avif', kind: 'image', label: 'AVIF picture', sniff: (b) => ascii(b, 4, 'ftypavif') || ascii(b, 4, 'ftypavis') },
+  { extension: 'heic', mimeType: 'image/heic', kind: 'image', label: 'HEIC picture', sniff: isHeic },
+  { extension: 'bmp', mimeType: 'image/bmp', kind: 'image', label: 'BMP picture', sniff: (b) => ascii(b, 0, 'BM') },
+  { extension: 'tiff', mimeType: 'image/tiff', kind: 'image', label: 'TIFF picture', sniff: isTiff },
+  { extension: 'ico', mimeType: 'image/x-icon', kind: 'image', label: 'Icon (.ico)', sniff: isIco },
   { extension: 'pdf', mimeType: 'application/pdf', kind: 'pdf', label: 'PDF', sniff: (b) => containsAscii(b.subarray(0, 1024), '%PDF-') },
   { extension: 'doc', mimeType: 'application/msword', kind: 'document', label: 'Word document (.doc)', sniff: isOle },
   { extension: 'docx', mimeType: `${OOXML}.wordprocessingml.document`, kind: 'document', label: 'Word document', sniff: isOoxml },
   { extension: 'xls', mimeType: 'application/vnd.ms-excel', kind: 'spreadsheet', label: 'Excel spreadsheet (.xls)', sniff: isOle },
   { extension: 'xlsx', mimeType: `${OOXML}.spreadsheetml.sheet`, kind: 'spreadsheet', label: 'Excel spreadsheet', sniff: isOoxml },
+  { extension: 'ods', mimeType: 'application/vnd.oasis.opendocument.spreadsheet', kind: 'spreadsheet', label: 'OpenDocument spreadsheet', sniff: isOpenDocumentSheet },
   { extension: 'ppt', mimeType: 'application/vnd.ms-powerpoint', kind: 'presentation', label: 'PowerPoint (.ppt)', sniff: isOle },
   { extension: 'pptx', mimeType: `${OOXML}.presentationml.presentation`, kind: 'presentation', label: 'PowerPoint', sniff: isOoxml },
   { extension: 'csv', mimeType: 'text/csv', kind: 'text', label: 'CSV data', sniff: isPlainText },
   { extension: 'txt', mimeType: 'text/plain', kind: 'text', label: 'Plain text', sniff: isPlainText },
+  { extension: 'json', mimeType: 'application/json', kind: 'text', label: 'JSON data', sniff: isJson },
+  { extension: 'rtf', mimeType: 'application/rtf', kind: 'document', label: 'Rich text (.rtf)', sniff: isRtf },
   { extension: 'zip', mimeType: 'application/zip', kind: 'archive', label: 'ZIP archive', sniff: isZip },
   { extension: 'mp3', mimeType: 'audio/mpeg', kind: 'audio', label: 'MP3 audio', sniff: isMp3 },
   { extension: 'wav', mimeType: 'audio/wav', kind: 'audio', label: 'WAV audio', sniff: isWav },
+  { extension: 'ogg', mimeType: 'audio/ogg', kind: 'audio', label: 'Ogg audio', sniff: isOgg },
+  { extension: 'm4a', mimeType: 'audio/mp4', kind: 'audio', label: 'M4A audio', sniff: isM4a },
   { extension: 'mp4', mimeType: 'video/mp4', kind: 'video', label: 'MP4 video', sniff: isMp4 },
   { extension: 'webm', mimeType: 'video/webm', kind: 'video', label: 'WebM video', sniff: isWebm },
   { extension: 'mov', mimeType: 'video/quicktime', kind: 'video', label: 'QuickTime video', sniff: isQuickTime },

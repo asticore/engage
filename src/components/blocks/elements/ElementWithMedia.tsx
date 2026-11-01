@@ -2,7 +2,7 @@ import React from 'react'
 
 import { getEngine } from '@/lib/engine'
 import { getMediaConfig } from '@/features/media/settings'
-import { buildImageUrl } from '@/features/media/url'
+import { buildImageUrl, buildSrcSet } from '@/features/media/url'
 import { isVideoMimeType } from '@/features/media/formats'
 import type { MediaLike } from '@/features/media/types'
 
@@ -29,10 +29,11 @@ export const ElementWithMedia = async ({ elementType, props }: { elementType: st
       ids.slice(0, 60).map(async (id) => {
         const doc = await engine.findByID({ collection: 'media', id, depth: 0 }).catch((): null => null)
         if (!doc || typeof doc.url !== 'string') return
-        const url = isVideoMimeType(typeof doc.mimeType === 'string' ? doc.mimeType : null)
-          ? doc.url
-          : buildImageUrl(doc as MediaLike, config)
-        docs.set(id, { id, url, alt: typeof doc.alt === 'string' ? doc.alt : null })
+        const isVideo = isVideoMimeType(typeof doc.mimeType === 'string' ? doc.mimeType : null)
+        const url = isVideo ? doc.url : buildImageUrl(doc as MediaLike, config)
+        // Pictures also get a srcset of the sizes Media settings generates, so the browser picks the smallest adequate file.
+        const srcSet = isVideo ? undefined : buildSrcSet(doc as MediaLike, config)
+        docs.set(id, { id, url, alt: typeof doc.alt === 'string' ? doc.alt : null, ...(srcSet ? { srcSet } : {}) })
       }),
     )
     resolved = substituteMedia(props, keys, docs)

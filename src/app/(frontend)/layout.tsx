@@ -32,6 +32,7 @@ import { BYPASS_COOKIE, shouldShowMaintenance } from '@/features/site/maintenanc
 import { MaintenanceScreen } from '@/features/site/MaintenanceScreen'
 import { buildFontCss, preloadLinks, remoteStylesheetUrls, resolveThemeFont } from '@/features/fonts/css'
 import { buildBuiltInFontCss } from '@/features/fonts/builtIn'
+import { readSelfHostBuiltInFonts } from '@/features/fonts/selfHost'
 import { sanitizeInstalledFonts } from '@/features/fonts/installed'
 import type { InstalledFont } from '@/features/fonts/types'
 import { buildThemeStylesCss } from '@/features/themeStyles/css'
@@ -177,7 +178,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // A built-in face is loaded only when the theme uses it (a value that is not a known face falls back, as resolveThemeFont does).
   const builtInHeading = Object.hasOwn(HEADING_FONT_VARS, theme?.headingFont || '') ? theme?.headingFont : 'cormorant'
   const builtInBody = Object.hasOwn(BODY_FONT_VARS, theme?.bodyFont || '') ? theme?.bodyFont : 'jost'
-  const builtInFontsCss = buildBuiltInFontCss([heading.installed ? null : builtInHeading, body.installed ? null : builtInBody])
+  const builtInFontsCss = buildBuiltInFontCss([heading.installed ? null : builtInHeading, body.installed ? null : builtInBody], { selfHost: await readSelfHostBuiltInFonts() })
   const fontCss = [builtInFontsCss, buildFontCss(fontsInUse)].filter(Boolean).join('\n')
   const googleStylesheets = remoteStylesheetUrls(fontsInUse)
   const fontPreloads = preloadLinks(fontsInUse, fontsInUse.map((font) => font.family))

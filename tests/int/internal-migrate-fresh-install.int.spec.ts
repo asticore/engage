@@ -655,6 +655,20 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
   })
 
+  it('adds the built-in font self-host column and the new media types, registered after the picture format migration', async () => {
+    const { migrations } = await import('@/migrations/index')
+    const names = migrations.map((x) => x.name)
+    const at = names.indexOf('20270221_100000_media_types_font_selfhost')
+    expect(at).toBeGreaterThan(names.indexOf('20270210_100000_media_formats_video_links'))
+    expect(names.slice(at + 1).every((x) => x > '20270221_100000_media_types_font_selfhost')).toBe(true)
+
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    expect(await columnsOf('eg_speed_settings')).toContain('fonts_self_host_built_in_fonts')
+  })
+
   it('adds the Templates by content type columns to the SEO settings table', async () => {
     const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`eg_seo_settings\`)`).all()
     const columnNames = (result.results as { name: string }[]).map((r) => r.name)
@@ -1012,6 +1026,7 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
     expect(await columnsOf('eg_speed_settings')).toEqual(
       expect.arrayContaining([
+        'fonts_self_host_built_in_fonts',
         'cache_epoch',
         'caching_page_cache',
         'caching_never_cache_paths',

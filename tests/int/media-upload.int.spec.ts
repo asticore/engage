@@ -73,6 +73,15 @@ const samples: Record<string, Uint8Array> = {
   mp4: ascii('ftypisom', 4),
   webm: pad([0x1a, 0x45, 0xdf, 0xa3]),
   mov: ascii('ftypqt  ', 4),
+  ico: Uint8Array.from([0, 0, 1, 0, 1, 0, 16, 16, ...new Uint8Array(40)]),
+  heic: Uint8Array.from([0, 0, 0, 0x18, ...text('ftypheic'), 0, 0, 0, 0, ...new Uint8Array(40)]),
+  bmp: ascii('BM', 0),
+  tiff: Uint8Array.from([0x49, 0x49, 0x2a, 0, ...new Uint8Array(40)]),
+  ods: Uint8Array.from([0x50, 0x4b, 0x03, 0x04, ...text('mimetypeapplication/vnd.oasis.opendocument.spreadsheet'), ...new Uint8Array(40)]),
+  json: text('{"name": "Grace"}\n'),
+  rtf: text('{\\rtf1\\ansi Hello}'),
+  ogg: ascii('OggS'),
+  m4a: ascii('ftypM4A ', 4),
 }
 
 const file = (name: string, mimetype: string, data: Uint8Array): UploadFile => ({ name, mimetype, data, size: data.byteLength })
