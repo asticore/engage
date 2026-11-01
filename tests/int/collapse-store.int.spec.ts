@@ -22,8 +22,8 @@ describe('sanitizeCardIds', () => {
     expect(sanitizeCardIds('settings')).toEqual([])
   })
 
-  it('caps at 100 ids', () => {
-    expect(sanitizeCardIds(Array.from({ length: 120 }, (_, i) => `c${i}`))).toHaveLength(100)
+  it('caps at 500 ids', () => {
+    expect(sanitizeCardIds(Array.from({ length: 520 }, (_, i) => `c${i}`))).toHaveLength(500)
   })
 })
 

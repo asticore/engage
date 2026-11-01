@@ -4,6 +4,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { SectionNode } from '@/lib/sectionTree'
+import type { Locks } from '@/features/roles/locks'
 
 import { BLOCK_CATEGORIES, libraryCards, type BlockDef } from './blockSchemas'
 import { globalCards, globalNode, type GlobalCard } from './libraryGlobals'
@@ -33,7 +34,7 @@ type Source = 'blocks' | 'templates'
 export const ElementLibrary: React.FC<{
   targetLabel: string
   onPickBlock: (blockType: string) => void
-  onPickTemplate: (blocks: SectionNode[]) => void
+  onPickTemplate: (blocks: SectionNode[], locks?: Locks) => void
   /** Form builder: only layout and form fields are offered, and page templates are hidden. */
   formMode?: boolean
 }> = ({ targetLabel, onPickBlock, onPickTemplate, formMode }) => {

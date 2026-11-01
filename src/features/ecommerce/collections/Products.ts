@@ -22,6 +22,7 @@ import { seoFields } from '@/fields/seo'
 import { schemaTypeField } from '@/fields/schemaType'
 import { authorshipFields, authorshipBeforeChange } from '@/fields/authorship'
 import { contentEditGuard, publishGuard } from '@/features/roles/contentEditGuard'
+import { publishAfterChange } from '@/features/approval/publishAfterChange'
 import { customFieldsField } from '@/fields/customFields'
 import { reviewFields } from '@/features/approval/fields'
 import { catalogueFields, productTypeField } from './productFields'
@@ -186,7 +187,7 @@ export const Products: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [domainSiteDefault, domainWriteGuard, authorshipBeforeChange, contentEditGuard, publishGuard, catalogueBeforeChange, pageSpeedBeforeChange, embedShortLinksFor('layout')],
-    afterChange: [stockAlertAfterChange, backInStockAfterChange, subscriptionAfterChange, slugRedirectAfterChange('products'), pageSpeedAfterChange('products'), indexNowAfterChange('products'), machineAutoDraftAfterChange('products'), outdatedAfterChange('products'), webhookContentAfterChange('products')],
+    afterChange: [publishAfterChange('products'), stockAlertAfterChange, backInStockAfterChange, subscriptionAfterChange, slugRedirectAfterChange('products'), pageSpeedAfterChange('products'), indexNowAfterChange('products'), machineAutoDraftAfterChange('products'), outdatedAfterChange('products'), webhookContentAfterChange('products')],
     afterDelete: [indexNowAfterDelete('products')],
   },
 }

@@ -22,15 +22,15 @@ const COMMON: FieldSpec[] = [
 ]
 
 /** The ten lists: the admin's most-used collections (decided in Task 4 of remaining-work.md). */
+// Form submissions and RSVPs no longer have their own list screens: ListView redirects them to the
+// Submissions tab on the form and the RSVPs tab on the event (see LEGACY_LIST_TABS), so they are not listed here.
 const LISTS: { slug: string; label: string; fields: FieldSpec[]; docs: Record<string, unknown>[] }[] = [
   { slug: 'pages', label: 'Pages', fields: COMMON, docs: [] },
   { slug: 'posts', label: 'Posts', fields: COMMON, docs: [] },
   { slug: 'products', label: 'Products', fields: [...COMMON, { name: 'price', type: 'number', label: 'Price' }], docs: [] },
   { slug: 'orders', label: 'Orders', fields: [{ name: 'number', type: 'text', label: 'Number' }, { name: 'total', type: 'number', label: 'Total' }, { name: 'status', type: 'select', options: ['pending', 'paid'] }, { name: 'createdAt', type: 'date', label: 'Created' }], docs: [] },
   { slug: 'forms', label: 'Forms', fields: [{ name: 'title', type: 'text', label: 'Title' }, { name: 'updatedAt', type: 'date', label: 'Updated' }], docs: [] },
-  { slug: 'form-submissions', label: 'Form submissions', fields: [{ name: 'form', type: 'text', label: 'Form' }, { name: 'createdAt', type: 'date', label: 'Received' }], docs: [] },
   { slug: 'events', label: 'Events', fields: [...COMMON, { name: 'startDate', type: 'date', label: 'Starts' }], docs: [] },
-  { slug: 'event-rsvps', label: 'RSVPs', fields: [{ name: 'name', type: 'text', label: 'Name' }, { name: 'attending', type: 'checkbox', label: 'Attending' }, { name: 'createdAt', type: 'date', label: 'Received' }], docs: [] },
   { slug: 'redirects', label: 'Redirects', fields: [{ name: 'from', type: 'text', label: 'From' }, { name: 'to', type: 'text', label: 'To' }], docs: [] },
   { slug: 'coupons', label: 'Coupons', fields: [{ name: 'code', type: 'text', label: 'Code' }, { name: 'percentOff', type: 'number', label: 'Percent off' }, { name: 'updatedAt', type: 'date', label: 'Updated' }], docs: [] },
 ]

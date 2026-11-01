@@ -24,7 +24,7 @@ import { useEffect, useSyncExternalStore } from 'react'
 export const CARD_PREFS_ENDPOINT = '/api/admin-edit-prefs'
 
 const ID_PATTERN = /^[A-Za-z0-9_.:-]{1,60}$/
-const MAX_IDS = 100
+const MAX_IDS = 500
 const SAVE_DELAY_MS = 400
 const RETRY_AFTER_MS = 30_000
 
@@ -38,6 +38,14 @@ export function sanitizeCardIds(input: unknown): string[] {
     if (typeof id === 'string' && ID_PATTERN.test(id)) seen.add(id)
   }
   return [...seen]
+}
+
+/**
+ * What a save sends: the cards this tab opened and closed since the last save. The server applies them to
+ * the stored set, so two tabs (or two devices) that change different cards keep both changes.
+ */
+export function cardDelta(open: ReadonlySet<string>, shut: ReadonlySet<string>): { set: string[]; unset: string[] } {
+  return { set: sanitizeCardIds([...open]), unset: sanitizeCardIds([...shut]) }
 }
 
 /** Pure reducer over the opened-id set. `clear` closes every card. */
@@ -58,6 +66,9 @@ const knownIds = new Set<string>()
 const listeners = new Set<() => void>()
 /** Ops made before the server state arrived; replayed on top of it. */
 let pendingOps: CardOp[] = []
+/** Cards opened or closed by this tab since the last save; sent as a delta (see cardDelta). */
+const changedOpen = new Set<string>()
+const changedShut = new Set<string>()
 let loadState: 'idle' | 'loading' | 'ready' | 'failed' = 'idle'
 let failedAt = 0
 let saveTimer: ReturnType<typeof setTimeout> | undefined
@@ -71,6 +82,26 @@ function emit(): void {
 function commit(next: ReadonlySet<string>): void {
   opened = next
   emit()
+}
+
+/** Remembers one change so the next save sends it. A change to a card cancels the opposite change for it. */
+function rememberChange(op: CardOp): void {
+  if (op.type === 'clear') {
+    for (const id of opened) {
+      changedShut.add(id)
+      changedOpen.delete(id)
+    }
+    return
+  }
+  for (const id of op.ids) {
+    if (op.open) {
+      changedOpen.add(id)
+      changedShut.delete(id)
+    } else {
+      changedShut.add(id)
+      changedOpen.delete(id)
+    }
+  }
 }
 
 async function sendSave(body: string, keepalive: boolean): Promise<void> {
@@ -94,7 +125,10 @@ function persistNow(keepalive: boolean): void {
     saveTimer = undefined
   }
   if (loadState !== 'ready') return
-  const body = JSON.stringify({ open: sanitizeCardIds([...opened]) })
+  if (changedOpen.size === 0 && changedShut.size === 0) return
+  const body = JSON.stringify(cardDelta(changedOpen, changedShut))
+  changedOpen.clear()
+  changedShut.clear()
   if (keepalive) {
     void sendSave(body, true)
     return
@@ -138,6 +172,7 @@ function ensureLoaded(): void {
         for (const op of pendingOps) next = applyCardOp(next, op)
         const hadOps = pendingOps.length > 0
         pendingOps = []
+        // The saved set is the base; this tab's own changes are applied on top and sent with the next save.
         loadState = 'ready'
         commit(next)
         if (hadOps) scheduleSave()
@@ -150,6 +185,7 @@ function ensureLoaded(): void {
 
 function dispatch(op: CardOp): void {
   if (loadState !== 'ready') pendingOps.push(op)
+  rememberChange(op)
   commit(applyCardOp(opened, op))
   scheduleSave()
 }
@@ -157,6 +193,26 @@ function dispatch(op: CardOp): void {
 /** Registers a card id so collapseAll() / expandAll() with no arguments cover it. */
 export function registerCardId(id: string): void {
   knownIds.add(id)
+}
+
+/**
+ * Opens every card that holds a field with an error, so a validation error is never hidden in a folded
+ * card. `path` is the field path the server reported (for example `seo.title` or `title`). A card is found
+ * by a form control whose name or id ends with the last segment of that path, or that path itself.
+ * Returns the ids it opened (at most the first matching card). Best effort: does nothing when no control matches.
+ */
+export function revealCardForField(path: string, root: ParentNode | null = typeof document === 'undefined' ? null : document): string[] {
+  if (!root || !path) return []
+  const leaf = path.split('.').pop() ?? path
+  const quote = (text: string) => text.replace(/["\\]/g, '\\$&')
+  const selector = `[name="${quote(path)}"], [name="${quote(leaf)}"], [id$="${quote(leaf)}"]`
+  for (const control of Array.from(root.querySelectorAll(selector))) {
+    const id = control.closest('[data-collapse-id]')?.getAttribute('data-collapse-id')
+    if (!id) continue
+    setCardOpen(id, true)
+    return [id]
+  }
+  return []
 }
 
 /** Opens or closes one card. */

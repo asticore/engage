@@ -9,7 +9,7 @@ export type ReviewEventDoc = {
   collection: string
   docId: number
   docTitle?: string | null
-  action: 'submitted' | 'approved' | 'changes_requested' | 'comment' | 'published' | 'withdrawn'
+  action: 'submitted' | 'approved' | 'changes_requested' | 'comment' | 'published' | 'withdrawn' | 'reset'
   note?: string | null
   step?: string | null
   actor?: number | null

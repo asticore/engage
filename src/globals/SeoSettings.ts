@@ -23,6 +23,14 @@ export const SeoSettings: GlobalConfig = {
   dbName: 'eg_seo_settings',
   hooks: {
     beforeChange: [indexNowKeyBeforeChange],
+    // The header, blocked-path and llms.txt rules are held in memory for a minute on each isolate. Saving
+    // them drops this isolate's copy at once (other isolates still wait out their minute).
+    afterChange: [
+      async () => {
+        const { invalidateServerRulesCache } = await import('@/features/seo/serverRules')
+        invalidateServerRulesCache()
+      },
+    ],
   },
   admin: {
     group: 'Settings',

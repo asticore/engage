@@ -77,6 +77,12 @@ export const ApprovalWorkflows: CollectionConfig = {
     },
     { name: 'active', type: 'checkbox', defaultValue: false },
     {
+      name: 'allowRepeatApprover',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: { description: 'When on, one person who can approve two steps may approve both in the same review. Off keeps each step to a different person.' },
+    },
+    {
       name: 'submitterRoles',
       type: 'json',
       admin: { description: 'Role slugs that may submit. Empty means anyone who can edit this content.' },

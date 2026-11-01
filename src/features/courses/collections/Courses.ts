@@ -6,6 +6,7 @@ import { schemaTypeField } from '@/fields/schemaType'
 import { authorshipFields, authorshipBeforeChange } from '@/fields/authorship'
 import { formatSlugHook } from '@/utilities/formatSlug'
 import { publishGuard } from '@/features/roles/contentEditGuard'
+import { publishAfterChange } from '@/features/approval/publishAfterChange'
 import { reviewFields } from '@/features/approval/fields'
 
 import { COURSES_SLUG, LESSONS_SLUG } from '../types'
@@ -129,5 +130,6 @@ export const Courses: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [authorshipBeforeChange, publishGuard],
+    afterChange: [publishAfterChange('courses')],
   },
 }

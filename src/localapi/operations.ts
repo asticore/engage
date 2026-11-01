@@ -924,7 +924,9 @@ export async function updateDocument<TDoc extends { id: number }>(args: UpdateDo
   // as createDocument's db.create call.
   let updated: TDoc | null
   try {
-    updated = await db.updateByID(id, resultData, { draft: args.draft })
+    // A write guard may turn a save into a draft save (a non-publisher saving a published page).
+    const draftOnly = (req as { draftOnlySave?: boolean }).draftOnlySave === true
+    updated = await db.updateByID(id, resultData, { draft: Boolean(args.draft) || (draftOnly && draftsEnabled) })
   } catch (error) {
     throw uniqueConstraintErrorToValidationError(error) ?? error
   }

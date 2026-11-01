@@ -45,6 +45,8 @@ export type ApprovalWorkflow = {
   /** Empty means anyone who can edit this collection and has review.update may submit. */
   submitterRoles: string[]
   steps: WorkflowStep[]
+  /** One person may approve more than one step of a review round. Off by default (separation of duties). */
+  allowRepeatApprover: boolean
 }
 
 /** What the state machine needs from a workflow. */
@@ -112,6 +114,7 @@ export function parseWorkflow(doc: unknown, roleNames: ReadonlyMap<string, strin
     active: toBool(row.active),
     submitterRoles: parseRoleList(row.submitterRoles),
     steps,
+    allowRepeatApprover: toBool(row.allowRepeatApprover),
   }
 }
 
@@ -153,6 +156,7 @@ export type WorkflowInput = {
   active?: unknown
   submitterRoles?: unknown
   steps?: unknown
+  allowRepeatApprover?: unknown
 }
 
 /**

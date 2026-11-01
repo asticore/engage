@@ -20,12 +20,12 @@ describe('sanitizeEditPrefs', () => {
     expect(sanitizeEditPrefs({ open: ['a', 'a', 'b'] }).open).toEqual(['a', 'b'])
   })
 
-  it('caps at 100 ids', () => {
-    const open = Array.from({ length: 150 }, (_, i) => `card-${i}`)
+  it('caps at 500 ids', () => {
+    const open = Array.from({ length: 550 }, (_, i) => `card-${i}`)
     const result = sanitizeEditPrefs({ open })
-    expect(result.open).toHaveLength(100)
+    expect(result.open).toHaveLength(500)
     expect(result.open[0]).toBe('card-0')
-    expect(result.open[99]).toBe('card-99')
+    expect(result.open[499]).toBe('card-499')
   })
 
   it('returns empty open for non-array open and non-object input', () => {

@@ -19,7 +19,7 @@ import type { Engine, TypedUser } from '@/engine'
 
 export const EDIT_PREFS_KEY = 'edit-screen-open'
 
-export const MAX_OPEN_IDS = 100
+export const MAX_OPEN_IDS = 500
 
 const ID_PATTERN = /^[A-Za-z0-9_.:-]{1,60}$/
 
@@ -95,13 +95,28 @@ export async function loadEditPrefs(engine: Engine, user: TypedUser | null): Pro
 }
 
 /**
- * Save the opened-card state for a user. `open` is the full list, so the
- * stored value is replaced rather than appended to.
+ * Merges one tab's card changes into the stored set: `set` ids are opened, `unset` ids are closed, and
+ * every other card keeps what the stored set says. Two tabs that change different cards keep both
+ * changes; the same card changed in two tabs ends with the later save.
+ */
+export function mergeEditPrefs(stored: EditPrefs, change: { set?: unknown; unset?: unknown }): EditPrefs {
+  const set = sanitizeEditPrefs({ open: change.set }).open
+  const unset = new Set(sanitizeEditPrefs({ open: change.unset }).open)
+  const next = new Set(stored.open.filter((id) => !unset.has(id)))
+  for (const id of set) next.add(id)
+  return sanitizeEditPrefs({ open: [...next] })
+}
+
+/** True when the body is a delta (`set` / `unset`) rather than a full list (`open`). */
+const isDelta = (input: unknown): input is { set?: unknown; unset?: unknown } =>
+  typeof input === 'object' && input !== null && !Array.isArray((input as { open?: unknown }).open) && ('set' in input || 'unset' in input)
+
+/**
+ * Save the opened-card state for a user. A delta (`set` / `unset`, what the edit screen now sends) is
+ * merged into the stored set. A full list (`open`) replaces it, as before.
  */
 export async function saveEditPrefs(engine: Engine, user: TypedUser | null, input: unknown): Promise<EditPrefs> {
   if (!user) return { open: [] }
-
-  const sanitized = sanitizeEditPrefs(input)
 
   const docs = await engine.find({
     collection: 'preferences',
@@ -114,6 +129,9 @@ export async function saveEditPrefs(engine: Engine, user: TypedUser | null, inpu
   })
 
   const mine = (docs.docs ?? []).filter((d) => belongsTo(d, user))
+  const current = mine.length > 0 ? sanitizeEditPrefs((mine[0] as { value?: unknown }).value) : { open: [] }
+  const sanitized = isDelta(input) ? mergeEditPrefs(current, input) : sanitizeEditPrefs(input)
+
   if (mine.length > 0) {
     const doc = mine[0]
     await engine.update({

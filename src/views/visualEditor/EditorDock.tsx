@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import type { SectionNode } from '@/lib/sectionTree'
+import type { Locks } from '@/features/roles/locks'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { AiBuilderPanel, type AiBuilderPanelProps } from './AiBuilderPanel'
@@ -162,7 +163,7 @@ export const EditorDock: React.FC<{
   onTabChange: (tab: DockTab) => void
   targetLabel: string
   onPickBlock: (blockType: string) => void
-  onPickTemplate: (blocks: SectionNode[]) => void
+  onPickTemplate: (blocks: SectionNode[], locks?: Locks) => void
   selectedNode: Record<string, unknown> | undefined
   selectedDef: BlockDef | undefined
   onChangeSelected: (next: Record<string, unknown>) => void

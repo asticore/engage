@@ -1,4 +1,5 @@
 'use client'
+import { revealCardForField } from '@/admin/components/collapseStore'
 import { adminCollectionPath } from '@/admin/adminPaths'
 
 /**
@@ -89,6 +90,9 @@ export function useDocumentSave(target: SaveTarget) {
       const body: unknown = await response.json().catch((): unknown => null)
       if (!response.ok) {
         setError(extractErrorMessage(body))
+        // A card folded shut must not hide the field that failed: open the card that holds it.
+        const firstPath = (body as { errors?: Array<{ path?: unknown }> } | null)?.errors?.[0]?.path
+        if (typeof firstPath === 'string') revealCardForField(firstPath)
         return false
       }
 

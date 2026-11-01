@@ -3,12 +3,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { SectionNode } from '@/lib/sectionTree'
+import { parseLocks, type Locks } from '@/features/roles/locks'
 
 import { TEMPLATE_CATEGORY_OPTIONS, TEMPLATE_PRESETS, type TemplateKind } from './templatePresets'
 import { renderTemplateThumbnail, type ThumbnailPalette } from './templateThumbnail'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /** Fired on `window` after a template is saved so the browser refreshes "My templates". */
+/** Drag payload: the section locks of a template, beside its blocks (see dragTemplate). */
+export const VE_TEMPLATE_LOCKS_MIME = 'application/x-ve-template-locks'
+
 export const TEMPLATES_CHANGED_EVENT = 've-templates-changed'
 
 type Filter = 'all' | 'page' | 'section' | 'mine'
@@ -21,6 +25,8 @@ type PageTemplateDoc = {
   kind?: string | null
   category?: string | null
   blocks?: SectionNode[]
+  /** The template's section locks, copied onto a page made from it (see copyNodeLocks). */
+  locks?: Locks
   previewImage?: { url?: string | null } | number | string | null
 }
 
@@ -46,6 +52,8 @@ type Card = {
   tags: string[]
   /** Local templates carry their blocks; repository ones are fetched on click. */
   blocks?: () => SectionNode[]
+  /** The template's section locks (local templates only). */
+  locks?: Locks
   image?: string
   repo?: { libraryId: string; slug: string }
   disabled?: boolean
@@ -58,8 +66,10 @@ const asKind = (value: unknown): TemplateKind => (value === 'section' ? 'section
 const asNodes = (value: unknown): SectionNode[] => (Array.isArray(value) ? (value as SectionNode[]) : [])
 
 /** Native HTML5 drag payload for a template card: the blocks it would insert, dropped by VisualEditor.tsx. */
-const dragTemplate = (e: React.DragEvent, blocks: SectionNode[]) => {
+const dragTemplate = (e: React.DragEvent, blocks: SectionNode[], locks?: Locks) => {
   e.dataTransfer.setData('application/x-ve-template', JSON.stringify(blocks))
+  // The template's section locks travel beside its blocks, so a dropped template keeps them too.
+  if (locks && Object.keys(locks.nodes).length > 0) e.dataTransfer.setData(VE_TEMPLATE_LOCKS_MIME, JSON.stringify(locks))
   e.dataTransfer.effectAllowed = 'copy'
 }
 
@@ -89,7 +99,7 @@ const previewUrlOf = (doc: PageTemplateDoc): string | undefined => {
   return undefined
 }
 
-export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[]) => void }> = ({ onPickTemplate }) => {
+export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[], locks?: Locks) => void }> = ({ onPickTemplate }) => {
   const rootRef = useRef<HTMLDivElement>(null)
   const [palette, setPalette] = useState<Partial<ThumbnailPalette>>({})
   const [filter, setFilter] = useState<Filter>('all')
@@ -187,6 +197,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[])
         categoryLabel: CATEGORY_LABELS[cat],
         tags: [],
         blocks: () => blocks,
+        locks: parseLocks(doc.locks),
         image: previewUrlOf(doc) || renderTemplateThumbnail(blocks, palette),
         disabled: blocks.length === 0,
       })
@@ -274,7 +285,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[])
       void pickRepo(card)
       return
     }
-    if (card.blocks) onPickTemplate(card.blocks())
+    if (card.blocks) onPickTemplate(card.blocks(), card.locks)
   }
 
   const FILTERS: Array<{ key: Filter; label: string }> = [
@@ -343,7 +354,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[])
                 tabIndex={card.disabled ? -1 : 0}
                 className="ve-tpl__card"
                 draggable={Boolean(card.blocks) && !card.disabled}
-                onDragStart={(e) => card.blocks && dragTemplate(e, card.blocks())}
+                onDragStart={(e) => card.blocks && dragTemplate(e, card.blocks(), card.locks)}
                 onClick={() => {
                   if (!(card.disabled || (loadingKey !== null && !loading))) onPick(card)
                 }}

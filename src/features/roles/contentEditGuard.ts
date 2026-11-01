@@ -5,6 +5,8 @@
 
 import type { CollectionBeforeChangeHook } from '@/engine'
 import { can } from './permissions'
+import { ensureCustomRoleOnUser } from './customRoleCache'
+import { elementStyleKeys, restoreStyleProps } from './elementStyleKeys'
 import { loadApprovalSettings, publishBlockMessage } from '@/features/approval/settings'
 import {
   hashReviewedContent,
@@ -96,9 +98,14 @@ export function applyContentOnlyEdit({
         restored.columns = originalBlock.columns
       }
 
-      // For element block, only restore design
-      if (incomingBlock.blockType === 'element' && originalBlock.design !== undefined) {
-        restored.design = originalBlock.design
+      // Element block: restore its design, and the styling keys of its props. The text keys keep the
+      // user's edits (see elementStyleKeys.ts).
+      if (incomingBlock.blockType === 'element') {
+        if (originalBlock.design !== undefined) restored.design = originalBlock.design
+        const styleKeys = elementStyleKeys(incomingBlock.elementType)
+        if (styleKeys.length > 0 && incomingBlock.props !== undefined) {
+          restored.props = restoreStyleProps(incomingBlock.props, originalBlock.props, styleKeys)
+        }
       }
 
       return restored
@@ -134,6 +141,7 @@ export const contentEditGuard: CollectionBeforeChangeHook = async (args: unknown
   if (!req?.user) return
   // Skip for admins
   if (req.user.roles?.includes('admin')) return
+  Object.assign(req.user, await ensureCustomRoleOnUser(req.engine, req.user))
 
   // Skip for create operations (no original to compare)
   if (operation === 'create') return
@@ -196,7 +204,7 @@ const relationId = (value: unknown): number | null => {
  * whose content changed keeps its place in review but loses its approvals, for the same reason.
  * "Changed" is judged by a hash of the reviewed content, stored with the approvals.
  */
-function applyReviewFieldRules(data: Record<string, any>, originalDoc: Record<string, any> | undefined, operation: string): void {
+function applyReviewFieldRules(data: Record<string, any>, originalDoc: Record<string, any> | undefined, operation: string, req?: Record<string, any>): void {
   if (operation === 'create' || !originalDoc) {
     data.reviewStatus = 'none'
     data.reviewRequestedBy = null
@@ -227,6 +235,15 @@ function applyReviewFieldRules(data: Record<string, any>, originalDoc: Record<st
     hash: next.status === 'in_review' ? contentHash : null,
     approvals: next.approvals,
   })
+
+  // A live save that takes content out of review writes a history row after the save (see
+  // publishAfterChange). A draft save does not touch the live review, so it writes none.
+  if (contentChanged && status !== 'none' && status !== 'changes_requested' && req && data._status !== 'draft' && !req.draftOnlySave) {
+    req.reviewReset = {
+      action: 'reset',
+      note: status === 'approved' ? 'Edited after approval. Review starts again.' : 'Edited while in review. Approvals cleared and review starts again.',
+    }
+  }
 }
 
 /**
@@ -254,8 +271,10 @@ export const publishGuard: CollectionBeforeChangeHook = async (args: unknown): P
 
   const isAdmin = Boolean(req.user.roles?.includes('admin'))
   const slug = String(collection?.slug ?? '')
+  // A custom role's matrix must be on the user before can() is asked (see ensureCustomRoleOnUser).
+  if (!isAdmin) Object.assign(req.user, await ensureCustomRoleOnUser(req.engine, req.user))
 
-  applyReviewFieldRules(data, originalDoc, operation)
+  applyReviewFieldRules(data, originalDoc, operation, req)
 
   if (!isAdmin) {
     // Check if user has publish permission
@@ -267,15 +286,18 @@ export const publishGuard: CollectionBeforeChangeHook = async (args: unknown): P
         data._status = 'draft'
       }
     } else if (operation === 'update') {
-      // If original was published and user can't publish, block the update
+      // A non-publisher editing a published page saves a draft of it. The live page is not
+      // changed: the write goes to the draft version (see updateDocument, which reads
+      // req.draftOnlySave). An editor publishes it later.
       if (originalDoc?._status === 'published' && !canPublish) {
-        await throwValidation('_status', 'Your role can save drafts but not change a published document. Ask an editor to publish.')
+        req.draftOnlySave = true
       }
 
       // If trying to publish and user can't, force to draft
       if (data._status === 'published' && !canPublish) {
         data._status = 'draft'
       }
+      if (req.draftOnlySave) data._status = 'draft'
     }
 
     const effectiveStatus = data._status ?? (operation === 'update' ? originalDoc?._status : undefined)

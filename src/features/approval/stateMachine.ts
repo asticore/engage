@@ -33,7 +33,7 @@ export const REVIEW_ACTIONS = ['submit', 'approve', 'request_changes', 'comment'
 export type ReviewAction = (typeof REVIEW_ACTIONS)[number]
 
 /** Matches the `action` options of the review-events collection. */
-export type ReviewEventAction = 'submitted' | 'approved' | 'changes_requested' | 'comment' | 'published' | 'withdrawn'
+export type ReviewEventAction = 'submitted' | 'approved' | 'changes_requested' | 'comment' | 'published' | 'withdrawn' | 'reset'
 
 export type ReviewApproval = { userId: number; name: string; at: string }
 
@@ -352,10 +352,44 @@ function cyrb53(text: string): string {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)
 }
 
+const NUMBER_TEXT = /^-?\d+(\.\d+)?$/
+
+/**
+ * One value in the form the database holds it. The admin form and the database often spell the
+ * same content differently: an empty text is null, a number may arrive as text, a relation as an
+ * object `{ id }` and a key the form never sent is absent. Normalising both sides means a plain
+ * save of unchanged content hashes the same, so approvals are not cleared by accident.
+ */
+export function normaliseReviewedValue(value: unknown): unknown {
+  if (value === undefined || value === null) return null
+  if (typeof value === 'string') {
+    if (value === '') return null
+    if (NUMBER_TEXT.test(value)) return Number(value)
+    if (value === 'true') return true
+    if (value === 'false') return false
+    return value
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return value
+  if (Array.isArray(value)) return value.map(normaliseReviewedValue)
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    const keys = Object.keys(record)
+    // A populated relation is hashed as its id, the form and the database then agree.
+    if (keys.length === 1 && keys[0] === 'id') return normaliseReviewedValue(record.id)
+    const result: Record<string, unknown> = {}
+    for (const key of keys) {
+      const normal = normaliseReviewedValue(record[key])
+      if (normal !== null) result[key] = normal
+    }
+    return result
+  }
+  return value
+}
+
 /** A stable hash of the reviewed content fields of one document. Missing fields count as empty. */
 export function hashReviewedContent(doc: Record<string, unknown>): string {
   const picked: Record<string, unknown> = {}
-  for (const key of REVIEWED_CONTENT_FIELDS) picked[key] = doc[key] ?? null
+  for (const key of REVIEWED_CONTENT_FIELDS) picked[key] = normaliseReviewedValue(doc[key])
   return cyrb53(stableStringify(picked))
 }
 
