@@ -6,6 +6,7 @@ import { getPasswordHash, setPasswordHash, clearPassword } from '@/cms/db/conten
 import { hashPassword } from '@/features/visibility/password'
 import { noteDocumentChanged } from '@/features/dataViews/cache'
 import { purgeCache } from '@/features/speed/purge'
+import { canManagePasswords } from '@/features/visibility/passwordAccess'
 
 export const dynamic = 'force-dynamic'
 
@@ -80,9 +81,6 @@ async function purgeDocument(
  */
 async function handleGet(request: Request): Promise<Response> {
   const context = await getAdminContext()
-  if (!(context.isAdmin || context.can('admin-visibility-password', 'update'))) {
-    return NextResponse.json({ error: 'unauthorised' }, { status: 401 })
-  }
 
   const url = new URL(request.url)
   const collection = url.searchParams.get('collection') ?? ''
@@ -90,6 +88,9 @@ async function handleGet(request: Request): Promise<Response> {
 
   if (!ALLOWED_COLLECTIONS.has(collection)) {
     return NextResponse.json({ error: 'Invalid collection' }, { status: 400 })
+  }
+  if (!canManagePasswords(context, collection)) {
+    return NextResponse.json({ error: 'unauthorised' }, { status: 401 })
   }
   if (!Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
@@ -118,9 +119,6 @@ async function handleGet(request: Request): Promise<Response> {
  */
 async function handlePost(request: Request): Promise<Response> {
   const context = await getAdminContext()
-  if (!(context.isAdmin || context.can('admin-visibility-password', 'update'))) {
-    return NextResponse.json({ error: 'unauthorised' }, { status: 401 })
-  }
 
   let body: { collection?: unknown; id?: unknown; password?: unknown }
   try {
@@ -141,6 +139,9 @@ async function handlePost(request: Request): Promise<Response> {
 
   if (typeof collection !== 'string' || !ALLOWED_COLLECTIONS.has(collection)) {
     return NextResponse.json({ error: 'Invalid collection' }, { status: 400 })
+  }
+  if (!canManagePasswords(context, collection)) {
+    return NextResponse.json({ error: 'unauthorised' }, { status: 401 })
   }
   if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 })
@@ -173,9 +174,6 @@ async function handlePost(request: Request): Promise<Response> {
  */
 async function handleDelete(request: Request): Promise<Response> {
   const context = await getAdminContext()
-  if (!(context.isAdmin || context.can('admin-visibility-password', 'update'))) {
-    return NextResponse.json({ error: 'unauthorised' }, { status: 401 })
-  }
 
   const url = new URL(request.url)
   const collection = url.searchParams.get('collection') ?? ''
@@ -183,6 +181,9 @@ async function handleDelete(request: Request): Promise<Response> {
 
   if (!ALLOWED_COLLECTIONS.has(collection)) {
     return NextResponse.json({ error: 'Invalid collection' }, { status: 400 })
+  }
+  if (!canManagePasswords(context, collection)) {
+    return NextResponse.json({ error: 'unauthorised' }, { status: 401 })
   }
   if (!Number.isInteger(id) || id <= 0) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 })

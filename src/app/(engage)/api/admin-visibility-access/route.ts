@@ -8,6 +8,7 @@ import { noteDocumentChanged } from '@/features/dataViews/cache'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
 import { purgeDocuments } from '@/features/visibility/docPaths'
 import { recordGroupEvent } from '@/features/visibility/groupAudit'
+import { canManagePasswords } from '@/features/visibility/passwordAccess'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,7 @@ const MAX_LIST = 20
 
 type Context = Awaited<ReturnType<typeof getAdminContext>>
 
-const allowed = (context: Context) => context.isAdmin || context.can('admin-visibility-password', 'update')
+const allowed = (context: Context) => canManagePasswords(context)
 
 function parseList(value: unknown): string[] | null {
   if (value === undefined || value === null) return []
