@@ -8,6 +8,7 @@ import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { viewerFromRequestContext } from '@/features/visibility/gate'
 import { getFeatureFlags } from '@/utilities/features'
 import { getAllResolvedPages } from '@/utilities/pagePaths'
+import { productTaxonomyMatches } from '@/features/ecommerce/lib/productTaxonomy'
 import { storeTexts } from '@/features/uiStrings/storeTextsServer'
 import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
@@ -104,8 +105,13 @@ async function searchPosts(query: string): Promise<Found> {
   return { hits, total: Math.max(0, totalDocs - (docs.length - visible.length)) }
 }
 
+/**
+ * Products match by title or slug (database query), and by brand name or tag name (a bounded scan of the newest
+ * published products, read with depth 1 so the brand and tags are objects). Each product appears once.
+ */
 async function searchProducts(query: string): Promise<Found> {
   const engine = await getEngine()
+  const viewer = await viewerFromRequestContext()
   const { docs, totalDocs } = (await engine.find({
     collection: 'products',
     where: {
@@ -118,8 +124,18 @@ async function searchProducts(query: string): Promise<Found> {
     limit: MAX_RESULTS,
     depth: 0,
   })) as unknown as { docs: Product[]; totalDocs: number }
-  const visible = await excludeProtected('products', docs, await viewerFromRequestContext())
-  const hits = visible
+  const titleVisible = await excludeProtected('products', docs, viewer)
+  const { docs: scanned } = (await engine.find({
+    collection: 'products',
+    where: { _status: { equals: 'published' } },
+    sort: '-createdAt',
+    limit: MAX_SCAN,
+    depth: 1,
+  })) as unknown as { docs: Product[] }
+  const titleIds = new Set(docs.map((product) => product.id))
+  const taxonomyMatches = scanned.filter((product) => !titleIds.has(product.id) && productTaxonomyMatches(product, query))
+  const taxonomyVisible = await excludeProtected('products', taxonomyMatches, viewer)
+  const hits = [...titleVisible, ...taxonomyVisible]
     .filter((product) => product.slug)
     .map((product): Hit => ({
       key: `product-${product.id}`,
@@ -128,7 +144,7 @@ async function searchProducts(query: string): Promise<Found> {
       href: `/shop/${product.slug}`,
       excerpt: '',
     }))
-  return { hits, total: Math.max(0, totalDocs - (docs.length - visible.length)) }
+  return { hits, total: Math.max(0, totalDocs - (docs.length - titleVisible.length)) + taxonomyVisible.length }
 }
 
 async function searchEvents(query: string): Promise<Found> {

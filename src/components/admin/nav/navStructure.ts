@@ -67,6 +67,8 @@ export const NAV_STRUCTURE: NavGroupDef[] = [
     entities: [
       { slug: 'products', type: 'collections' },
       { slug: 'product-attributes', type: 'collections' },
+      { slug: 'product-tags', type: 'collections' },
+      { slug: 'product-brands', type: 'collections' },
       { slug: 'shipping-classes', type: 'collections' },
       { slug: 'product-reviews', type: 'collections' },
       { slug: 'stock-subscriptions', type: 'collections' },
@@ -125,6 +127,7 @@ export const NAV_STRUCTURE: NavGroupDef[] = [
   {
     label: 'Settings',
     entities: [
+      { slug: 'all-settings', type: 'view', href: '/settings', label: 'All settings' },
       { slug: 'settings-tracking', type: 'view', href: '/settings/tracking', label: 'Tracking' },
       { slug: 'settings-site', type: 'view', href: '/settings/site', label: 'General' },
       { slug: 'settings-domains', type: 'view', href: '/settings/domains', label: 'Domains' },

@@ -27,6 +27,8 @@ export async function runOrderAfterChange({ doc, previousDoc, operation, req, co
     if (to === 'cancelled' && from !== 'pending' && from !== 'failed') await restockOrder(engine, doc, 'Order cancelled')
     const kind = kindForStatus(to)
     if (kind) await sendOrderEmail(engine, doc, kind)
+    // Asks for a review once the order is complete. sendOrderEmail checks the Review request switch (off by default).
+    if (to === 'completed' && from !== 'completed') await sendOrderEmail(engine, doc, 'reviewRequest')
   } catch {
     /* hooks must not fail a status save */
   }

@@ -101,6 +101,10 @@ type Props = {
   extraFields?: Field[] | null
 }
 
+/** Review request fields live on the shop switches row and are edited on the Emails tab. */
+const REVIEW_SWITCHES: readonly string[] = ['reviewRequestEmail', 'reviewRequestSubject', 'reviewRequestBody']
+const isReviewSwitch = (field: Field): boolean => REVIEW_SWITCHES.includes((field as { name?: string }).name ?? '')
+
 const SCOPED = new Set<string>([...SHOP_TABS.general, ...SHOP_TABS.giftCards, ...SHOP_TABS.checkout, ...SHOP_TABS.emails, 'invoice'])
 
 /**
@@ -213,13 +217,21 @@ export const ShopSettingsClient: React.FC<Props> = ({ shopDoc, shopFields, payme
           {panel('invoices', shopForm(['invoice'], { afterFields: <InvoicePreview /> }))}
           {panel('gift-cards', shopForm(SHOP_TABS.giftCards))}
           {panel('checkout', shopForm(SHOP_TABS.checkout))}
-          {panel('emails', shopForm(SHOP_TABS.emails))}
+          {panel(
+            'emails',
+            <>
+              {shopForm(SHOP_TABS.emails)}
+              {extraDoc && extraFields ? (
+                <EditForm key={`shop-extra-reviews:${String(extraDoc.updatedAt ?? 'new')}`} doc={extraDoc} fields={extraFields.filter(isReviewSwitch)} globalSlug="shop-extra-settings" />
+              ) : null}
+            </>,
+          )}
           {panel(
             'storefront',
             <>
               {shopForm(layoutNames)}
               {extraDoc && extraFields ? (
-                <EditForm key={`shop-extra:${String(extraDoc.updatedAt ?? 'new')}`} doc={extraDoc} fields={extraFields} globalSlug="shop-extra-settings" />
+                <EditForm key={`shop-extra:${String(extraDoc.updatedAt ?? 'new')}`} doc={extraDoc} fields={extraFields.filter((f) => !isReviewSwitch(f))} globalSlug="shop-extra-settings" />
               ) : null}
             </>,
           )}

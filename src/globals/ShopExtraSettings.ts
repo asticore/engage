@@ -57,6 +57,25 @@ export const ShopExtraSettings: GlobalConfig = {
       },
     },
     {
+      name: 'reviewRequestEmail',
+      type: 'checkbox',
+      label: 'Ask for a review after an order is completed',
+      defaultValue: false,
+      admin: { description: 'Email the customer a link to review each product in a completed order. Off by default, so no extra email goes out until you turn it on.' },
+    },
+    {
+      name: 'reviewRequestSubject',
+      type: 'text',
+      label: 'Review request subject',
+      admin: { description: 'Leave blank for the built-in wording. Merge fields: {{order_id}}, {{customer_name}}, {{site_name}}.' },
+    },
+    {
+      name: 'reviewRequestBody',
+      type: 'textarea',
+      label: 'Review request message',
+      admin: { description: 'Leave blank for the built-in wording. Merge fields: {{order_id}}, {{customer_name}}, {{review_links}}, {{site_name}}. Review links need the SITE_URL setting to be full web addresses.' },
+    },
+    {
       type: 'collapsible',
       label: 'Dynamic pricing rules',
       fields: [
