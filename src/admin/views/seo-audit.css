@@ -164,11 +164,15 @@
 }
 
 .sa-dot--ok {
-  background: #d4a017;
+  /* Darker amber so the dot passes 3:1 on white; the diamond shape also marks it without colour. */
+  background: #8f6c00;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
+/* Shape as well as colour: good is a circle, ok a diamond, bad a square. */
 .sa-dot--bad {
   background: #c0392b;
+  border-radius: 2px;
 }
 
 .sa-dot--info {

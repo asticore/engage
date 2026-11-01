@@ -2,6 +2,7 @@
 
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -69,15 +70,26 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
   }, [])
 
   // Toggle expand for a tree item
-  const toggleExpanded = (id: number) => {
-    const next = new Set(collapsedIds)
-    if (next.has(id)) {
-      next.delete(id)
-    } else {
-      next.add(id)
+  const toggleExpanded = useCallback((id: number) => {
+    setCollapsedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }, [])
+
+  // Expand all clears the collapsed set; collapse all lists every page that has children.
+  const parentIds = useMemo(() => {
+    const parents = new Set<number>()
+    for (const p of currentPages) {
+      if (p.parent !== null) parents.add(p.parent)
     }
-    setCollapsedIds(next)
-  }
+    return Array.from(parents)
+  }, [currentPages])
 
   // Apply a drop and validate
   const handleDrop = useCallback(
@@ -107,13 +119,15 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
     [pages, arrangement, canEdit, clearErrors]
   )
 
-  // Keyboard handlers for tree items
+  // Keyboard handlers for tree items. Plain arrows, Home and End move focus (and expand or collapse);
+  // Alt+Arrow moves the page itself, as before.
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent, pageId: number, parentId: number | null, siblingIds: number[]) => {
+      if (!e.altKey) {
+        navigateTree(e, pageId, toggleExpanded)
+        return
+      }
       if (!canEdit) return
-
-      const isAltKey = e.altKey
-      if (!isAltKey) return
 
       const pageIndex = siblingIds.indexOf(pageId)
       if (pageIndex === -1) return
@@ -157,7 +171,7 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
         }
       }
     },
-    [canEdit, currentPages, handleDrop, clearErrors]
+    [canEdit, currentPages, handleDrop, clearErrors, toggleExpanded]
   )
 
   // Save changes: post preview
@@ -332,6 +346,21 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
         </div>
       )}
 
+      {parentIds.length > 0 && (
+        <div className="pages-tree__toolbar" role="group" aria-label="Tree controls">
+          <button type="button" className="pages-tree__btn pages-tree__btn--secondary" onClick={() => setCollapsedIds(new Set())}>
+            Expand all
+          </button>
+          <button
+            type="button"
+            className="pages-tree__btn pages-tree__btn--secondary"
+            onClick={() => setCollapsedIds(new Set(parentIds))}
+          >
+            Collapse all
+          </button>
+        </div>
+      )}
+
       <DndContext
         sensors={sensors}
         collisionDetection={pointerWithin}
@@ -488,34 +517,39 @@ function TreeNodeItem({
     >
       <div ref={setDropRef} className={`pages-tree__row${hint ? ` pages-tree__row--drop-${hint}` : ''}`}>
         {children.length > 0 && (
-          <button
-            className="pages-tree__toggle"
-            onClick={() => onToggleExpanded(page.id)}
-            aria-label={isExpanded ? 'Collapse' : 'Expand'}
-            type="button"
-          >
-            {isExpanded ? '▼' : '▶'}
-          </button>
+          <Tooltip text={isExpanded ? 'Collapse' : 'Expand'}>
+            <button
+              className="pages-tree__toggle"
+              onClick={() => onToggleExpanded(page.id)}
+              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+              type="button"
+            >
+              {isExpanded ? '▼' : '▶'}
+            </button>
+          </Tooltip>
         )}
         {!children.length && <div className="pages-tree__toggle-spacer" />}
 
         {canEdit && (
-          <button
-            ref={setDragRef}
-            className="pages-tree__handle"
-            {...attributes}
-            {...listeners}
-            aria-label={t('aria.drag', { name: page.title })}
-            type="button"
-          >
-            ⠿
-          </button>
+          <Tooltip text="Drag to move. With the keyboard: Alt plus an arrow key moves the page.">
+            <button
+              ref={setDragRef}
+              className="pages-tree__handle"
+              {...attributes}
+              {...listeners}
+              aria-label={t('aria.drag', { name: page.title })}
+              type="button"
+            >
+              ⠿
+            </button>
+          </Tooltip>
         )}
 
         <div
           className="pages-tree__content"
           onKeyDown={e => onKeyDown(e, page.id, page.parent, siblingIds)}
-          tabIndex={canEdit ? 0 : -1}
+          tabIndex={0}
+          data-page-id={page.id}
           role="button"
         >
           <AdminLink path={`/content/pages/${page.id}`} className="pages-tree__title">
@@ -644,3 +678,55 @@ function ConfirmDialog({
 }
 
 export default PagesTreeClient
+
+/**
+ * Plain-key tree navigation (no Alt): Up and Down move between visible rows, Home and End jump to
+ * the first and last visible row, Right expands a collapsed parent or steps into its children, and
+ * Left collapses an open parent or moves to the parent row. Works read-only too.
+ */
+function navigateTree(e: React.KeyboardEvent, pageId: number, toggle: (id: number) => void) {
+  const current = e.currentTarget as HTMLElement
+  const rows = Array.from(current.closest('.pages-tree')?.querySelectorAll<HTMLElement>('.pages-tree__content') ?? [])
+  const index = rows.indexOf(current)
+  const item = current.closest<HTMLElement>('li[role="treeitem"]')
+  const expanded = item?.getAttribute('aria-expanded') ?? null
+  const focusRow = (target: HTMLElement | undefined) => {
+    if (!target) return
+    e.preventDefault()
+    target.focus()
+  }
+
+  switch (e.key) {
+    case 'ArrowDown':
+      focusRow(rows[index + 1])
+      break
+    case 'ArrowUp':
+      focusRow(rows[index - 1])
+      break
+    case 'Home':
+      focusRow(rows[0])
+      break
+    case 'End':
+      focusRow(rows[rows.length - 1])
+      break
+    case 'ArrowRight':
+      if (expanded === 'false') {
+        e.preventDefault()
+        toggle(pageId)
+      } else if (expanded === 'true') {
+        // The first child row is the next row in document order.
+        focusRow(rows[index + 1])
+      }
+      break
+    case 'ArrowLeft': {
+      if (expanded === 'true') {
+        e.preventDefault()
+        toggle(pageId)
+        break
+      }
+      const parentRow = item?.parentElement?.closest<HTMLElement>('li[role="treeitem"]')
+      focusRow(parentRow?.querySelector<HTMLElement>('.pages-tree__content') ?? undefined)
+      break
+    }
+  }
+}

@@ -10,6 +10,7 @@ import { CsvExportButton } from '@/admin/list/CsvExportButton'
 import { CSV_MAX_ROWS } from '@/admin/list/csvExport'
 import { OrdersManifestAction } from '@/features/ecommerce/admin/OrdersManifestAction'
 import { OrdersFilterBar } from '@/features/ecommerce/admin/OrdersFilterBar'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 import { ProductsCsvActions } from '@/features/ecommerce/admin/ProductsCsvActions'
 
 interface ListToolbarProps {
@@ -302,24 +303,28 @@ export function ListToolbar({
                     {col.label}
                   </label>
                   {isVisible && visibleIdx > 0 && (
-                    <button
-                      onClick={() => handleColumnReorder(visibleIdx, visibleIdx - 1)}
-                      className="list-column-up-btn"
-                      title={t('list.moveUp')}
-                      type="button"
-                    >
-                      ↑
-                    </button>
+                    <Tooltip text={t('list.moveUp')}>
+                      <button
+                        onClick={() => handleColumnReorder(visibleIdx, visibleIdx - 1)}
+                        className="list-column-up-btn"
+                        aria-label={t('list.moveUp')}
+                        type="button"
+                      >
+                        ↑
+                      </button>
+                    </Tooltip>
                   )}
                   {isVisible && visibleIdx < visibleNames.length - 1 && (
-                    <button
-                      onClick={() => handleColumnReorder(visibleIdx, visibleIdx + 1)}
-                      className="list-column-down-btn"
-                      title={t('list.moveDown')}
-                      type="button"
-                    >
-                      ↓
-                    </button>
+                    <Tooltip text={t('list.moveDown')}>
+                      <button
+                        onClick={() => handleColumnReorder(visibleIdx, visibleIdx + 1)}
+                        className="list-column-down-btn"
+                        aria-label={t('list.moveDown')}
+                        type="button"
+                      >
+                        ↓
+                      </button>
+                    </Tooltip>
                   )}
                 </div>
               )
@@ -329,28 +334,22 @@ export function ListToolbar({
       </div>
 
       {/* Save/Reset preferences buttons */}
-      <button
-        onClick={handleSavePrefs}
-        disabled={isSaving}
-        className="list-toolbar-btn"
-        title={t('list.saveDefaultHint')}
-      >
-        {isSaving ? t('common.saving') : t('list.saveDefault')}
-      </button>
+      <Tooltip text={t('list.saveDefaultHint')}>
+        <button onClick={handleSavePrefs} disabled={isSaving} className="list-toolbar-btn">
+          {isSaving ? t('common.saving') : t('list.saveDefault')}
+        </button>
+      </Tooltip>
       {saveError && (
         <span role="alert" className="list-toolbar-error">
           {saveError}
         </span>
       )}
       {hasSavedPrefs && (
-        <button
-          onClick={handleResetPrefs}
-          disabled={isSaving}
-          className="list-toolbar-btn"
-          title={t('list.resetDefaultHint')}
-        >
-          {isSaving ? t('list.resetting') : t('list.resetDefault')}
-        </button>
+        <Tooltip text={t('list.resetDefaultHint')}>
+          <button onClick={handleResetPrefs} disabled={isSaving} className="list-toolbar-btn">
+            {isSaving ? t('list.resetting') : t('list.resetDefault')}
+          </button>
+        </Tooltip>
       )}
 
       {/* Collection-specific actions */}

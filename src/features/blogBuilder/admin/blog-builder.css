@@ -53,6 +53,10 @@
   color: #b42318;
 }
 
+[data-theme='dark'] .blog-ai__error {
+  color: #ffb4a8;
+}
+
 .blog-ai__busy {
   margin: 8px 0;
   font-style: italic;

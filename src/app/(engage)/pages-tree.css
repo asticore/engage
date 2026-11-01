@@ -597,3 +597,33 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* Toolbar above the tree: Expand all and Collapse all. */
+.pages-tree__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px 0;
+}
+
+/* Keyboard focus on a row is visible in both themes. */
+.pages-tree__content:focus-visible {
+  outline: 2px solid var(--ac-gold);
+  outline-offset: 2px;
+}
+
+/* Dark theme: the draft and homepage badges use light fallbacks, so give them dark surfaces. */
+[data-theme='dark'] .pages-tree__badge--draft {
+  background: #3d2a12;
+  color: #ffcc80;
+}
+
+[data-theme='dark'] .pages-tree__badge--homepage {
+  background: #14304a;
+  color: #9fd4ff;
+}
+
+[data-theme='dark'] .pages-tree__alert {
+  background: #3b1a1a;
+  border-color: #7a3a3a;
+  color: #ffb4a8;
+}

@@ -6,3 +6,10 @@
 .doc-visibility__access-button:disabled { opacity: 0.6; cursor: not-allowed; }
 .doc-visibility__access-ok { padding: 8px 12px; background: #e8f5e9; color: #2e7d32; border-radius: 4px; font-size: 0.9rem; }
 .doc-visibility__access-error { padding: 8px 12px; background: #ffebee; color: #c62828; border-radius: 4px; font-size: 0.9rem; }
+
+/* Dark theme: same roles as the light values above. */
+[data-theme='dark'] .doc-visibility__access-label { color: #b8bcd6; }
+[data-theme='dark'] .doc-visibility__access-hint { color: #a7abc9; }
+[data-theme='dark'] .doc-visibility__access-input { background: #1d1f30; color: #f5f3f5; border-color: #4a4d6b; }
+[data-theme='dark'] .doc-visibility__access-ok { background: #17361d; color: #9fe0a9; }
+[data-theme='dark'] .doc-visibility__access-error { background: #3b1a1a; color: #ffb4a8; }

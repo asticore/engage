@@ -103,7 +103,7 @@
   --color-base-250: #bbbdd6;
   --color-base-300: #a8abc8;
   --color-base-350: #9598b8;
-  --color-base-400: #8386a8;
+  --color-base-400: #6b6e90;
   --color-base-450: #857c8d;
   --color-base-500: #626587;
   --color-base-550: #545777;
@@ -198,7 +198,7 @@
   --theme-elevation-250: var(--color-base-650);
   --theme-elevation-300: var(--color-base-600);
   --theme-elevation-400: var(--color-base-450);
-  --theme-elevation-500: var(--color-base-400);
+  --theme-elevation-500: var(--color-base-350);
   --theme-elevation-600: var(--color-base-300);
   --theme-elevation-700: var(--color-base-200);
   --theme-elevation-800: var(--color-base-100);
@@ -236,7 +236,7 @@
     --theme-elevation-250: var(--color-base-650);
     --theme-elevation-300: var(--color-base-600);
     --theme-elevation-400: var(--color-base-450);
-    --theme-elevation-500: var(--color-base-400);
+    --theme-elevation-500: var(--color-base-350);
     --theme-elevation-600: var(--color-base-300);
     --theme-elevation-700: var(--color-base-200);
     --theme-elevation-800: var(--color-base-100);
