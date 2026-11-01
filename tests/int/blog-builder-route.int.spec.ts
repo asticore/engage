@@ -165,7 +165,7 @@ describe('admin-blog-builder route', () => {
         sources: ['https://example.test/wax', 'https://example.test/wick'],
       }),
     )
-    const body = await response.json()
+    const body = (await response.json()) as { text?: string }
     expect(response.status).toBe(200)
     expect(body.text).toBe('Wax burns clean [1] and wicks matter.')
     const [args] = h.callAiDetailed.mock.calls[0]

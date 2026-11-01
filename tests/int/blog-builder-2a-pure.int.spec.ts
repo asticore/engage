@@ -63,9 +63,13 @@ describe('featured image on create', () => {
   const create = (featuredImageId: unknown) => parseBlogRequest({ action: 'create', title: 'Candle care', outline: [{ heading: 'Wax', notes: '' }], sections: ['Text.'], meta, featuredImageId })
 
   it('accepts a gallery picture id, or none', () => {
-    expect(create(42).ok && create(42).value.featuredImageId).toBe(42)
-    expect(create(null).ok && create(null).value.featuredImageId).toBe(null)
-    expect(create(undefined).ok && create(undefined).value.featuredImageId).toBe(null)
+    const id = (v: unknown) => {
+      const r = create(v)
+      return r.ok ? (r.value as { featuredImageId?: unknown }).featuredImageId : 'rejected'
+    }
+    expect(id(42)).toBe(42)
+    expect(id(null)).toBe(null)
+    expect(id(undefined)).toBe(null)
   })
 
   it('refuses a picture id that is not a positive whole number', () => {
