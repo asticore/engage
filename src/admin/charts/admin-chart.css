@@ -23,3 +23,13 @@
   font-size: 0.9rem;
   margin: 0;
 }
+
+.admin-chart__line {
+  stroke: var(--admin-chart-bar, currentColor);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-chart__dot {
+  fill: var(--admin-chart-bar, currentColor);
+}

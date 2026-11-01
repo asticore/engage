@@ -4,6 +4,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings'
 import React, { useEffect, useMemo, useState } from 'react'
 import type { ConsentLogRecord, ConsentSummary } from '@/features/consent/logStats'
+import { AdminBarChart, type AdminBarDatum } from '@/admin/charts/AdminBarChart'
 
 type ApiResponse = {
   rows: ConsentLogRecord[]
@@ -38,58 +39,26 @@ const queryFor = (filters: Filters, extra: Record<string, string>): string => {
 
 const percent = (value: number): string => `${Math.round(value * 100)}%`
 
-/** Bars for the share of each day's decisions that accepted everything. Neutral colours; light/dark via CSS. */
+/** Bars for the share of each day's decisions that accepted everything, on the shared admin bar chart with a fixed 0 to 100% axis. */
 export const AcceptanceChart: React.FC<{ daily: ConsentSummary['daily'] }> = ({ daily }) => {
-  const width = 600
-  const height = 140
-  const left = 34
-  const bottom = 20
-  const top = 8
-  const plotWidth = width - left - 4
-  const plotHeight = height - bottom - top
-  const step = plotWidth / Math.max(daily.length, 1)
-  const barWidth = Math.max(step - 2, 1)
   const withData = daily.filter((day) => day.total > 0)
   const summary = withData.length
     ? `Acceptance rate by day, last ${daily.length} days. ${withData.length} days had decisions.`
     : `Acceptance rate by day, last ${daily.length} days. No decisions yet.`
-
+  const data: AdminBarDatum[] = daily.map((day) => ({
+    key: day.date,
+    value: day.rate === null ? 0 : day.rate * 100,
+    label: day.date.slice(5),
+    tip: day.rate === null ? `${day.date}: no decisions` : `${day.date}: ${percent(day.rate)} accepted all (${day.accepted} of ${day.total})`,
+  }))
   return (
-    <svg className="cc-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={summary} preserveAspectRatio="none">
-      {[0, 0.5, 1].map((tick) => {
-        const y = top + plotHeight * (1 - tick)
-        return (
-          <g key={tick}>
-            <line className="cc-chart__grid" x1={left} x2={width - 4} y1={y} y2={y} />
-            <text className="cc-chart__axis" x={left - 4} y={y + 3} textAnchor="end">
-              {percent(tick)}
-            </text>
-          </g>
-        )
-      })}
-      {daily.map((day, index) => {
-        const x = left + index * step + 1
-        if (day.rate === null) {
-          return (
-            <rect key={day.date} className="cc-chart__empty" x={x} y={top + plotHeight - 1} width={barWidth} height={1}>
-              <title>{`${day.date}: no decisions`}</title>
-            </rect>
-          )
-        }
-        const barHeight = Math.max(day.rate * plotHeight, 1)
-        return (
-          <rect key={day.date} className="cc-chart__bar" x={x} y={top + plotHeight - barHeight} width={barWidth} height={barHeight}>
-            <title>{`${day.date}: ${percent(day.rate)} accepted all (${day.accepted} of ${day.total})`}</title>
-          </rect>
-        )
-      })}
-      <text className="cc-chart__axis" x={left} y={height - 5}>
-        {daily[0]?.date.slice(5) ?? ''}
-      </text>
-      <text className="cc-chart__axis" x={width - 4} y={height - 5} textAnchor="end">
-        {daily[daily.length - 1]?.date.slice(5) ?? ''}
-      </text>
-    </svg>
+    <AdminBarChart
+      data={data}
+      ariaLabel={summary}
+      formatTick={(tick) => `${Math.round(tick)}%`}
+      emptyText="No days in this range."
+      axisMax={100}
+    />
   )
 }
 

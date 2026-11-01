@@ -6,6 +6,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { ListState, ColumnDef, ListFilter } from '@/admin/list/listQuery'
 import { serializeListState } from '@/admin/list/listQuery'
+import { CsvExportButton } from '@/admin/list/CsvExportButton'
+import { CSV_MAX_ROWS } from '@/admin/list/csvExport'
 import { OrdersManifestAction } from '@/features/ecommerce/admin/OrdersManifestAction'
 import { OrdersFilterBar } from '@/features/ecommerce/admin/OrdersFilterBar'
 import { ProductsCsvActions } from '@/features/ecommerce/admin/ProductsCsvActions'
@@ -195,7 +197,7 @@ export function ListToolbar({
       </form>
 
       {/* Page size selector */}
-      <select value={limit} onChange={handleLimitChange} className="list-limit-select">
+      <select value={limit} onChange={handleLimitChange} className="list-limit-select" aria-label={t('list.pageSize')}>
         <option value="10">{t('list.perPage', { count: 10 })}</option>
         <option value="25">{t('list.perPage', { count: 25 })}</option>
         <option value="50">{t('list.perPage', { count: 50 })}</option>
@@ -357,9 +359,7 @@ export function ListToolbar({
       )}
       {collectionSlug === 'products' && <ProductsCsvActions />}
       {csvHref && collectionSlug !== 'products' && collectionSlug !== 'redirects' && (
-        <a href={csvHref} download className="list-toolbar-btn" title={t('list.exportCsvHint')}>
-          {t('list.exportCsv')}
-        </a>
+        <CsvExportButton href={csvHref} className="list-toolbar-btn" title={t('list.exportCsvHint')} label={t('list.exportCsv')} maxRows={CSV_MAX_ROWS} />
       )}
       {collectionSlug === 'orders' && <OrdersFilterBar state={state} onChange={handleOrderFilters} />}
       {collectionSlug === 'orders' && <OrdersManifestAction />}
