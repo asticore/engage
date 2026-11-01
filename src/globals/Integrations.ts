@@ -199,6 +199,15 @@ export const Integrations: GlobalConfig = {
           admin: { description: 'Found in Google Search Console > Settings > Ownership verification.' },
         },
         {
+          name: 'checkSearchConsoleCode',
+          type: 'ui',
+          admin: {
+            components: {
+              Field: '@/features/integrations/admin/IntegrationChecks#CheckSearchConsoleButton',
+            },
+          },
+        },
+        {
           name: 'mapsApiKey',
           type: 'text',
           label: 'Google Maps key (address suggestions on forms)',
@@ -216,6 +225,15 @@ export const Integrations: GlobalConfig = {
           },
         },
         {
+          name: 'checkMapsKey',
+          type: 'ui',
+          admin: {
+            components: {
+              Field: '@/features/integrations/admin/IntegrationChecks#CheckMapsButton',
+            },
+          },
+        },
+        {
           name: 'pageSpeedApiKey',
           type: 'text',
           label: 'PageSpeed Insights API key',
@@ -230,6 +248,15 @@ export const Integrations: GlobalConfig = {
           admin: {
             description:
               'Optional. Speed tests work without it but Google allows only a few per minute for everyone sharing the free allowance. A free key (Google Cloud Console > enable "PageSpeed Insights API" > Credentials) gives you your own, much larger quota. Stored encrypted at rest, visible only to admins.',
+          },
+        },
+        {
+          name: 'checkPageSpeedKey',
+          type: 'ui',
+          admin: {
+            components: {
+              Field: '@/features/integrations/admin/IntegrationChecks#CheckPageSpeedButton',
+            },
           },
         },
       ],
@@ -271,6 +298,15 @@ export const Integrations: GlobalConfig = {
           },
           admin: {
             description: 'Found at google.com/recaptcha/admin. Stored encrypted at rest, visible only to admins.',
+          },
+        },
+        {
+          name: 'checkRecaptchaKeys',
+          type: 'ui',
+          admin: {
+            components: {
+              Field: '@/features/integrations/admin/IntegrationChecks#CheckRecaptchaButton',
+            },
           },
         },
       ],

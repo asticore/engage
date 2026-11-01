@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { getEngine } from '@/lib/engine'
+import { GOOGLE_CONNECTION_SLUG } from '@/features/google/constants'
 import { saveClient, validateClientInput } from '@/features/google/connectionSave'
+import { conflictResponse, currentVersions, expectedVersions, isStale } from '@/features/integrations/staleTab'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,11 +27,13 @@ export async function POST(request: NextRequest): Promise<Response> {
     if ('error' in input) return NextResponse.json({ ok: false, error: input.error }, { status: 400, headers: NO_STORE })
 
     const engine = await getEngine()
+    if (await isStale(engine, GOOGLE_CONNECTION_SLUG, expectedVersions(request))) return conflictResponse(NO_STORE)
     const { signedOut } = await saveClient(engine, input)
     const message = signedOut
       ? 'Client saved. The old Google sign-in was ended, because it belonged to the previous client. Connect with Google again.'
       : 'Client saved.'
-    return NextResponse.json({ ok: true, message, signedOut }, { headers: NO_STORE })
+    const versions = await currentVersions(engine)
+    return NextResponse.json({ ok: true, message, signedOut, versions }, { headers: NO_STORE })
   } catch (error) {
     console.error('admin-google-client error:', error instanceof Error ? error.name : 'unknown')
     return NextResponse.json({ ok: false, error: 'The client could not be saved. Try again.' }, { status: 500, headers: NO_STORE })

@@ -7,6 +7,8 @@ import { REVOKE_URL } from '@/features/google/constants'
 import { readGoogleDoc } from '@/features/google/auth'
 import { requestJson } from '@/features/google/http'
 import { clearSignIn } from '@/features/google/connectionSave'
+import { GOOGLE_CONNECTION_SLUG } from '@/features/google/constants'
+import { conflictResponse, currentVersions, expectedVersions, isStale } from '@/features/integrations/staleTab'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +28,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (!context.user || !context.isAdmin) return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403, headers: NO_STORE })
 
     const engine = await getEngine()
+    if (await isStale(engine, GOOGLE_CONNECTION_SLUG, expectedVersions(request))) return conflictResponse(NO_STORE)
     const doc = await readGoogleDoc(engine)
     const token = typeof doc?.refreshTokenEnc === 'string' ? doc.refreshTokenEnc.trim() : ''
     if (token) {
@@ -36,7 +39,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       }).catch((): null => null)
     }
     await clearSignIn(engine)
-    return NextResponse.json({ ok: true, message: 'Google is disconnected.' }, { headers: NO_STORE })
+    const versions = await currentVersions(engine)
+    return NextResponse.json({ ok: true, message: 'Google is disconnected.', versions }, { headers: NO_STORE })
   } catch (error) {
     console.error('google disconnect error:', error instanceof Error ? error.name : 'unknown')
     return NextResponse.json({ ok: false, error: 'Google could not be disconnected. Try again.' }, { status: 500, headers: NO_STORE })
