@@ -40,6 +40,7 @@ export async function TrackingConnectionsView() {
       status={status}
       google={google}
       isAdmin={context.isAdmin}
+      engageSecretSet={Boolean(process.env.ENGAGE_SECRET)}
       redirectUris={{
         meta: connectRedirectUri(origin, 'meta'),
         tiktok: connectRedirectUri(origin, 'tiktok'),

@@ -45,8 +45,8 @@ const redirectUris = {
   google: 'https://shop.example.com/api/google/callback',
 }
 
-function screenFor(props: { isAdmin: boolean; status?: TrackingConnectionStatus }) {
-  return h(TrackingConnectionsClient, { status: props.status ?? status, google, redirectUris, isAdmin: props.isAdmin })
+function screenFor(props: { isAdmin: boolean; status?: TrackingConnectionStatus; engageSecretSet?: boolean }) {
+  return h(TrackingConnectionsClient, { status: props.status ?? status, google, redirectUris, isAdmin: props.isAdmin, engageSecretSet: props.engageSecretSet ?? true })
 }
 
 afterEach(() => {
@@ -57,9 +57,10 @@ afterEach(() => {
 describe('Tracking connections screen', () => {
   it('shows the Google, Meta and TikTok cards with their redirect addresses', () => {
     render(screenFor({ isAdmin: true }))
-    expect(screen.getByText('Google (Analytics and Tag Manager)')).toBeTruthy()
-    expect(screen.getByText('Meta (Facebook and Instagram pixel)')).toBeTruthy()
-    expect(screen.getByText('TikTok (TikTok Ads pixel)')).toBeTruthy()
+    // Each platform name appears once in the setup checklist and once as its card title.
+    expect(screen.getAllByText('Google (Analytics and Tag Manager)').length).toBe(2)
+    expect(screen.getAllByText('Meta (Facebook and Instagram pixel)').length).toBe(2)
+    expect(screen.getAllByText('TikTok (TikTok Ads pixel)').length).toBe(2)
     expect(screen.getByText(redirectUris.meta)).toBeTruthy()
     expect(screen.getByText(redirectUris.tiktok)).toBeTruthy()
     expect(screen.getByText(redirectUris.google)).toBeTruthy()
@@ -84,6 +85,26 @@ describe('Tracking connections screen', () => {
     render(screenFor({ isAdmin: true }))
     const link = screen.getByText('Connect with Google', { selector: 'a' })
     expect(link.getAttribute('href')).toBe('/api/google/connect?return=tracking')
+  })
+
+  it('shows a setup status for Google, Meta and TikTok with Done or Missing for each piece', () => {
+    const { container } = render(screenFor({ isAdmin: true }))
+    expect(screen.getByText('Setup status')).toBeTruthy()
+    // Meta has its app ID and secret saved; TikTok has nothing saved yet.
+    const metaItems = screen.getAllByText('Meta (Facebook and Instagram pixel)')[0].closest('.google-connection__row')!
+    expect(metaItems.textContent).toContain('App ID saved: Done')
+    expect(metaItems.textContent).toContain('App secret saved: Done')
+    expect(metaItems.textContent).toContain('Signed in: Missing')
+    const tiktokItems = screen.getAllByText('TikTok (TikTok Ads pixel)')[0].closest('.google-connection__row')!
+    expect(tiktokItems.textContent).toContain('App ID saved: Missing')
+    expect(tiktokItems.textContent).toContain('App secret saved: Missing')
+    expect(container.textContent).toContain('ENGAGE_SECRET set on the server: Done')
+  })
+
+  it('warns when ENGAGE_SECRET is not set, without showing any value', () => {
+    const { container } = render(screenFor({ isAdmin: true, engageSecretSet: false }))
+    expect(container.textContent?.split('ENGAGE_SECRET set on the server: Missing').length).toBe(4)
+    expect(screen.getByText(/ENGAGE_SECRET is not set on the server/)).toBeTruthy()
   })
 
   it('turns the callback notice in the address into a plain sentence', () => {

@@ -205,6 +205,13 @@ describe('disconnect and app credentials', () => {
     expect(docs['tracking-connections'].tiktokAccessTokenEnc).toBe('')
   })
 
+  it('refuses to store an app secret without ENGAGE_SECRET, but still saves the app ID', async () => {
+    const { engine, writes } = memoryEngine({})
+    expect(await saveAppCredentials(deps(engine, providerFetch([]), ''), 'meta', { appId: '1234567890', appSecret: 'meta-app-secret-value' })).toEqual({ ok: false, reason: 'no-secret' })
+    expect(writes.length).toBe(0)
+    expect(await saveAppCredentials(deps(engine, providerFetch([]), ''), 'meta', { appId: '1234567890', appSecret: null })).toEqual({ ok: true, signedOut: false })
+  })
+
   it('validates the app ID and secret shapes, keeps the secret when blank, and ends the sign-in when the app changes', async () => {
     const { engine, docs } = memoryEngine({ 'tracking-connections': META_CONNECTED })
     expect(await saveAppCredentials(deps(engine, providerFetch([])), 'meta', { appId: 'abc', appSecret: null })).toEqual({ ok: false, reason: 'bad-app' })
@@ -236,6 +243,13 @@ describe('the encrypted token field', () => {
   })
   afterEach(() => {
     vi.unstubAllEnvs()
+  })
+
+  it('refuses to encrypt when ENGAGE_SECRET is unset, instead of using an empty key', () => {
+    vi.stubEnv('ENGAGE_SECRET', '')
+    expect(() => (encryptSecretHook as unknown as (a: { value: string }) => string)({ value: 'LONG-META-TOKEN' })).toThrow(/ENGAGE_SECRET is not set/)
+    // An empty value needs no key, so clearing a field still works.
+    expect((encryptSecretHook as unknown as (a: { value: string }) => string)({ value: '' })).toBe('')
   })
 
   it('encrypts on write and decrypts on read, and fails closed for a different secret', () => {

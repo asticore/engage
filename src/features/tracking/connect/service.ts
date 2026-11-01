@@ -154,6 +154,8 @@ export async function saveAppCredentials(
 ): Promise<SaveAppResult> {
   if (!/^\d{5,30}$/.test(input.appId)) return { ok: false, reason: 'bad-app' }
   if (input.appSecret !== null && !/^[!-~]{8,200}$/.test(input.appSecret)) return { ok: false, reason: 'bad-app' }
+  // A secret is stored encrypted with ENGAGE_SECRET; without it the write is refused, not stored weakly.
+  if (input.appSecret !== null && !deps.secret) return { ok: false, reason: 'no-secret' }
   const { signedOut } = await writeAppCredentials(deps.engine, provider, input)
   return { ok: true, signedOut }
 }
