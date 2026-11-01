@@ -5,6 +5,7 @@ import { isPickerKind } from '@/features/google/constants'
 import { listFor, type PickerItem } from '@/features/google/lists'
 import { GoogleApiError } from '@/features/google/fetchJson'
 import { getEngine } from '@/lib/engine'
+import { currentVersions } from '@/features/integrations/staleTab'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,7 +25,8 @@ export async function GET(request: NextRequest): Promise<Response> {
 
     const engine = await getEngine()
     const items: PickerItem[] = await listFor(engine, kind)
-    return NextResponse.json({ ok: true, items }, { headers: NO_STORE })
+    const versions = await currentVersions(engine)
+    return NextResponse.json({ ok: true, items, versions }, { headers: NO_STORE })
   } catch (error) {
     if (error instanceof GoogleApiError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 502, headers: NO_STORE })

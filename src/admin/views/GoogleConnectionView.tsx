@@ -7,6 +7,7 @@ import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { readGoogleConnection } from '@/features/google/auth'
 import { redirectUriFor } from '@/features/google/constants'
 import { publicOrigin } from '@/features/google/origin'
+import { currentVersions } from '@/features/integrations/staleTab'
 import { GoogleConnectionClient } from './GoogleConnectionClient'
 
 /**
@@ -24,5 +25,6 @@ export async function GoogleConnectionView() {
   const host = incoming.get('host')
   const proto = incoming.get('x-forwarded-proto') || 'https'
   const origin = publicOrigin(host ? `${proto}://${host}/` : undefined)
-  return <GoogleConnectionClient status={status} redirectUri={redirectUriFor(origin)} />
+  const versions = await currentVersions(context.engine)
+  return <GoogleConnectionClient status={status} redirectUri={redirectUriFor(origin)} versions={versions} />
 }
