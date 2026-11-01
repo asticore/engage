@@ -2950,6 +2950,12 @@ const pt: UiDictionary = {
   "portal.search.siteUnavailable": "A pesquisa do site está indisponível no momento. As telas da sua conta continuam listadas.",
   "portal.search.clear": "Limpar pesquisa",
   "portal.search.status": "{count} encontrados.",
+  "portal.search.ordersHeading": "Seus pedidos",
+  "portal.search.bookingsHeading": "Suas reservas",
+  "portal.search.subscriptionsHeading": "Suas assinaturas",
+  "portal.search.settingsHeading": "Configurações",
+  "portal.search.accountUnavailable": "Não foi possível pesquisar seus pedidos, reservas e assinaturas agora. Os outros resultados continuam listados.",
+  "portal.search.defaultAddress": "Endereço padrão",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "Escrever com IA",
   "blog.ai.dialogTitle": "Escrever uma publicação do blog com IA",

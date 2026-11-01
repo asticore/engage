@@ -2951,6 +2951,12 @@ const de: UiDictionary = {
   "portal.search.siteUnavailable": "Die Website-Suche ist gerade nicht verfügbar. Deine Kontobereiche werden trotzdem angezeigt.",
   "portal.search.clear": "Suche leeren",
   "portal.search.status": "{count} gefunden.",
+  "portal.search.ordersHeading": "Ihre Bestellungen",
+  "portal.search.bookingsHeading": "Ihre Buchungen",
+  "portal.search.subscriptionsHeading": "Ihre Abonnements",
+  "portal.search.settingsHeading": "Einstellungen",
+  "portal.search.accountUnavailable": "Ihre Bestellungen, Buchungen und Abonnements konnten gerade nicht durchsucht werden. Die übrigen Ergebnisse werden weiterhin angezeigt.",
+  "portal.search.defaultAddress": "Standardadresse",
   // Blog builder: Write with AI (task 2a, added 31 Oct 2026)
   "blog.ai.open": "Mit KI schreiben",
   "blog.ai.dialogTitle": "Blogbeitrag mit KI schreiben",
