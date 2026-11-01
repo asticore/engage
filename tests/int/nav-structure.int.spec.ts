@@ -25,11 +25,13 @@ describe('navStructure', () => {
     }
   })
 
-  it('Settings group should have the 7 settings views, Theming and then the Roles view, in order', () => {
+  it('Settings group lists the hub, the settings pages, Theming, Roles and Interface languages, in order', () => {
     const settingsGroup = NAV_STRUCTURE.find((g) => g.label === 'Settings')
     expect(settingsGroup).toBeDefined()
 
     const expectedSlugs = [
+      'all-settings',
+      'settings-tracking',
       'settings-site',
       'settings-domains',
       'settings-content',
@@ -40,6 +42,7 @@ describe('navStructure', () => {
       'settings-data-system',
       'theme-styles',
       'roles',
+      'interface-languages',
     ]
 
     const viewEntities = (settingsGroup?.entities || []).filter((e) => e.type === 'view')
@@ -47,7 +50,7 @@ describe('navStructure', () => {
     expect(actualSlugs).toEqual(expectedSlugs)
 
     // Roles is the last Settings entry and opens the /roles screen, not the plain collection list.
-    expect(settingsGroup?.entities.at(-1)).toEqual({ slug: 'roles', type: 'view', href: '/roles', label: 'Roles' })
+    expect(settingsGroup?.entities.at(-1)).toEqual({ slug: 'interface-languages', type: 'view', href: '/interface-languages', label: 'Interface languages' })
 
     // All settings views should be type 'view'
     for (const entity of viewEntities) {
@@ -62,6 +65,9 @@ describe('navStructure', () => {
     const entries = (settingsGroup?.entities || []).filter((e) => e.type === 'view')
 
     const expectedMapping: Record<string, { href: string; label: string }> = {
+      'all-settings': { href: '/settings', label: 'All settings' },
+      'settings-tracking': { href: '/settings/tracking', label: 'Tracking' },
+      'interface-languages': { href: '/interface-languages', label: 'Interface languages' },
       'settings-site': { href: '/settings/site', label: 'General' },
       'settings-domains': { href: '/settings/domains', label: 'Domains' },
       'settings-content': { href: '/settings/content', label: 'Content' },

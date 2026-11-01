@@ -549,6 +549,7 @@ import {
   findProductVersionByID,
   findProductVersions,
 } from '@/cms/db'
+import { auditGlobalAfterChange } from '@/features/security/hooks'
 import type { CollectionDbOps, GlobalDbOps } from './operations'
 import type { CollectionReadEntry, GlobalReadEntry, ReadRegistry } from './read-operations'
 
@@ -802,4 +803,14 @@ export const versionsRegistry: Record<string, VersionsRegistryEntry> = {
 
 export const collectionConfigs = [ProductTags, ProductBrands, TrackingEvents, ProductSubscriptions, Faqs, EventRSVPs, MembershipTiers, AuditLog, EmailLog, ErrorLog, Backups, Translations, FieldGroups, FormSubmissions, ABTests, Media, Memberships, PageTemplates, ReusableSections, SiteTemplates, Forms, Enrolments, Lessons, LessonProgress, Pages, Events, Courses, Posts, Users, Redirects, ShippingZones, TaxRates, Coupons, OrderRefunds, ProductAttributes, ShippingClasses, ProductReviews, StockSubscriptions, GiftCards, StoreCredits, CreditLedger, ShippingManifests, ReviewEvents, ApprovalWorkflows, Roles, AdUnits, AdPlacements, DataViews, FormDrafts]
 
-export const globalConfigs = [DomainSettings, FaqSettings, BlogSettings, Integrations, PaymentSettings, ShippingSettings, FormSettings, SiteSettings, MemberSettings, EmailSettings, EmailTemplates, EmailBrand, EmailSchedule, GoogleConnection, ShopSettings, ShopExtraSettings, SiteDetails, SitePages, SecuritySettings,Header, Footer, BackupSettings, LanguageSettings, SeoSettings, SpeedSettings, MediaSettings, AdSettings, TemplateLibraries]
+/**
+ * Every settings save is written to the audit log (action `settings.update`, with
+ * the saver), which the settings pages read for "Last changed by". The hook
+ * never throws, so it cannot fail a save.
+ */
+const withSettingsAudit = <T extends { hooks?: object }>(config: T): T => {
+  const hooks = (config.hooks ?? {}) as { afterChange?: unknown[] }
+  return { ...config, hooks: { ...hooks, afterChange: [...(hooks.afterChange ?? []), auditGlobalAfterChange] } }
+}
+
+export const globalConfigs = [DomainSettings, FaqSettings, BlogSettings, Integrations, PaymentSettings, ShippingSettings, FormSettings, SiteSettings, MemberSettings, EmailSettings, EmailTemplates, EmailBrand, EmailSchedule, GoogleConnection, ShopSettings, ShopExtraSettings, SiteDetails, SitePages, SecuritySettings,Header, Footer, BackupSettings, LanguageSettings, SeoSettings, SpeedSettings, MediaSettings, AdSettings, TemplateLibraries].map(withSettingsAudit)

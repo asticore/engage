@@ -17,6 +17,7 @@ import { AsticoreIcon } from '@/components/branding/AsticoreIcon'
 import { AsticoreLogo } from '@/components/branding/AsticoreLogo'
 import { Dashboard } from '@/views/dashboard/Dashboard'
 import { SETTINGS_PAGE_VIEWS } from '@/admin/views/SettingsPageView'
+import { SettingsHubView } from '@/admin/views/SettingsHubView'
 import { HeaderFooterView } from '@/admin/views/HeaderFooterView'
 import { TranslationsView } from '@/features/multilingual/views/TranslationsView'
 import { DatabaseView } from '@/features/cleanup/DatabaseView'
@@ -70,6 +71,12 @@ export { AdminNav, ExtensionDomSafetyProvider, AsticoreIcon, AsticoreLogo }
 
 export const CUSTOM_ADMIN_VIEWS = [
   ...SETTINGS_PAGE_VIEWS,
+  {
+    key: 'settingsHub',
+    Component: SettingsHubView,
+    path: '/settings',
+    meta: { title: 'Settings', description: 'Every settings screen in one place, with search.' },
+  },
   {
     key: 'templates',
     Component: TemplatesHubView,
