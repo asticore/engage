@@ -30,12 +30,15 @@ export const REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
 /** Every Google call gives up after this many milliseconds. */
 export const GOOGLE_TIMEOUT_MS = 10_000
 
-/** Scopes asked for at sign-in: read-only access to each service the dashboards show. */
+/**
+ * Scopes asked for at sign-in: read access to each service the dashboards show. Search Console
+ * is the full webmasters scope (it includes reading) so the sitemap can be submitted too.
+ */
 export const GOOGLE_SCOPES: readonly string[] = [
   'openid',
   'email',
   'https://www.googleapis.com/auth/analytics.readonly',
-  'https://www.googleapis.com/auth/webmasters.readonly',
+  'https://www.googleapis.com/auth/webmasters',
   'https://www.googleapis.com/auth/tagmanager.readonly',
   'https://www.googleapis.com/auth/adsense.readonly',
 ]

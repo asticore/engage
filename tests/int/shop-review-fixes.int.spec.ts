@@ -286,6 +286,8 @@ describe('shop review fixes (real engine and database)', () => {
       const prior = (await e().findGlobal({ slug: 'shop-settings', depth: 0, overrideAccess: true })) as Doc
       await e().updateGlobal({ slug: 'shop-settings', data: { abandonedCart: { ...(prior.abandonedCart ?? {}), enabled: true, firstDelayHours: 1, secondDelayHours: 24, maxReminders: 2 } }, overrideAccess: true })
       vi.stubEnv('ENGAGE_SECRET', 'test-secret')
+      // Reminders need the public address for their links; without it they wait (see abandoned.ts).
+      vi.stubEnv('SITE_URL', 'https://shop.test')
       try {
         const long = new Date(Date.now() - 3 * 3_600_000).toISOString()
         const cart = async (email: string) => {

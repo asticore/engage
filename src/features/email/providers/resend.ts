@@ -20,6 +20,7 @@ export const sendViaResend: EmailAdapter<ResendConfig> = (message, config) =>
         ...(message.html ? { html: message.html } : {}),
         ...(message.text ? { text: message.text } : {}),
         ...(message.replyTo ? { reply_to: message.replyTo } : {}),
+        ...(message.headers ? { headers: message.headers } : {}),
       }),
     })
 

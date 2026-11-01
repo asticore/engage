@@ -28,6 +28,15 @@ export type SendEmailArgs = {
   template?: string
   /** Set when this message is a resend of an earlier log entry. */
   resentFrom?: number
+  /**
+   * Reminder or marketing mail. Each recipient is sent separately, addresses on
+   * the suppression list are skipped, and the message carries a one-click
+   * unsubscribe (List-Unsubscribe header plus a link in the body). Needs the
+   * site's public address (SITE_URL) and ENGAGE_SECRET; without them it is refused.
+   */
+  bulk?: boolean
+  /** For bulk mail that already has its own unsubscribe link (such as a cart reminder): used instead of a generated one. */
+  unsubscribeUrl?: string
 }
 
 /**
@@ -44,6 +53,8 @@ export type SendEmailFailure =
   | 'provider-rejected'
   /** The email's switch is off in When emails are sent. Logged as skipped; nothing was attempted. */
   | 'turned-off'
+  /** Every recipient is on the suppression list (unsubscribed, bounced or complained). Nothing was attempted. */
+  | 'suppressed'
 
 /**
  * Flat rather than a discriminated union on purpose: this project compiles with
@@ -72,6 +83,8 @@ export type OutgoingEmail = {
   replyTo?: string
   fromEmail: string
   fromName?: string
+  /** Extra message headers (such as List-Unsubscribe). Adapters that cannot send them ignore them. */
+  headers?: Record<string, string>
 }
 
 export type ProviderResponse = { ok: boolean; id?: string; error?: string; status?: number }

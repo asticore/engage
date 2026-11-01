@@ -25,6 +25,7 @@ import * as apiKeysSchema from '@/cms/db/schema/apiKeys'
 import * as organizationsSchema from '@/cms/db/schema/organizations'
 import * as emailVerificationsSchema from '@/cms/db/schema/emailVerifications'
 import * as rateLimitsSchema from '@/cms/db/schema/rateLimits'
+import * as emailSuppressionsSchema from '@/cms/db/schema/emailSuppressions'
 import * as twoFactorEmailCodesSchema from '@/cms/db/schema/twoFactorEmailCodes'
 import * as trustedDevicesSchema from '@/cms/db/schema/trustedDevices'
 import * as productSubscriptionsSchema from '@/cms/db/schema/productSubscriptions'
@@ -276,6 +277,10 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
         drizzleTables.push({ name: exportName, table: exportValue })
       }
       for (const [exportName, exportValue] of Object.entries(rateLimitsSchema)) {
+        drizzleTables.push({ name: exportName, table: exportValue })
+      }
+      // Suppression list for reminder and marketing mail: one plain drizzle table in its own schema file
+      for (const [exportName, exportValue] of Object.entries(emailSuppressionsSchema)) {
         drizzleTables.push({ name: exportName, table: exportValue })
       }
 
@@ -767,6 +772,12 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
     await proxy.env.D1.prepare("DELETE FROM `eg_impersonations` WHERE id = 'keep-me-imp'").run()
   })
 
+  it('creates eg_email_suppressions with its columns and a single-row address key', async () => {
+    const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_email_suppressions`)').all()).results as { name: string; pk: number }[]
+    expect(info.map((c) => c.name)).toEqual(expect.arrayContaining(['email', 'reason', 'source', 'created_at']))
+    expect(info.find((c) => c.name === 'email')?.pk).toBe(1)
+  })
+
   it('adds the email verification settings, off by default, and creates eg_email_verifications and eg_rate_limits', async () => {
     const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_security_settings`)').all()).results as { name: string; dflt_value: string | null }[]
     const byName = new Map(info.map((c) => [c.name, c.dflt_value]))
@@ -859,7 +870,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
 
   it('password groups migration is registered before organizations and is safe to run twice, keeping existing rows', async () => {
     const { migrations } = await import('@/migrations/index')
-    expect(migrations.map((x) => x.name).slice(-18)).toEqual([
+    expect(migrations.map((x) => x.name).slice(-19)).toEqual([
       '20261130_110000_admin_path',
       '20261201_100000_content_domains',
       '20261208_100000_user_domains',
@@ -878,6 +889,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
       '20270126_100000_design_grouped',
       '20270127_100000_template_library_token',
       '20270128_100000_blog_builder_settings',
+      '20270129_100000_email_suppressions',
     ])
     const mod = await import('@/migrations/20261123_100000_password_groups')
     const { drizzle } = await import('drizzle-orm/d1')

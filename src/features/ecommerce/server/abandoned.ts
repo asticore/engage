@@ -85,9 +85,10 @@ export async function runAbandonedCartReminders(engine: Engine, now = new Date()
     const intro = cfg.bodyTemplate ? cfg.bodyTemplate.replace(/\{\{\s*site_name\s*\}\}/g, name) : t('email.abandonedCart.body', locale, { site_name: name })
     const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5"><p>${escapeHtml(intro).replace(/\n/g, '<br>')}</p><p><a href="${escapeHtml(recover)}">Return to your cart</a></p><p style="font-size:12px;color:#666"><a href="${escapeHtml(unsub)}">Unsubscribe from cart reminders</a></p></div>`
     const text = `${intro}\n\nReturn to your cart: ${recover}\n\nUnsubscribe: ${unsub}`
-    const result = await sendEmail({ to: row.email, template: 'cart.abandoned', subject: (cfg.subject === ABANDONED_DEFAULT_SUBJECT ? t('email.abandonedCart.subject', locale) : cfg.subject).replace(/[\r\n]+/g, ' '), html, text })
+    const result = await sendEmail({ to: row.email, template: 'cart.abandoned', subject: (cfg.subject === ABANDONED_DEFAULT_SUBJECT ? t('email.abandonedCart.subject', locale) : cfg.subject).replace(/[\r\n]+/g, ' '), html, text, bulk: true, unsubscribeUrl: unsub })
     if (result.ok) sent += 1
-    else await runChanges(d1, SQL.cartReminded, row.id, due - 1, row.last_reminder_at) // release so a later run retries
+    // A suppressed address keeps its claim: it will never be sent to, so retrying it every run would only log skips.
+    else if (result.reason !== 'suppressed') await runChanges(d1, SQL.cartReminded, row.id, due - 1, row.last_reminder_at) // release so a later run retries
   }
   return { sent }
 }

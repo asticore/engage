@@ -33,6 +33,37 @@ export function SearchConsoleCard() {
   )
 }
 
+/** Asks Google to read this site's sitemap. The server builds the address and checks the account. */
+function SubmitSitemapButton({ site }: { site: string }) {
+  const [busy, setBusy] = React.useState(false)
+  const [notice, setNotice] = React.useState<string | null>(null)
+  const submit = async () => {
+    setBusy(true)
+    setNotice(null)
+    try {
+      const response = await fetch('/api/admin-google-sitemap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ site }),
+      })
+      const json = (await response.json().catch((): null => null)) as { ok?: boolean; message?: string; error?: string } | null
+      setNotice(json?.ok ? json.message ?? 'Sitemap submitted.' : json?.error ?? 'The sitemap could not be submitted. Try again later.')
+    } catch {
+      setNotice('The sitemap could not be submitted. Check the connection and try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <p>
+      <button type="button" className="btn btn--style-secondary" disabled={busy} onClick={submit}>
+        {busy ? 'Submitting...' : 'Submit sitemap'}
+      </button>
+      {notice ? <span className="gd-muted" role="status"> {notice}</span> : null}
+    </p>
+  )
+}
+
 function SearchBody({ result }: { result: WidgetState<SearchConsoleData> }) {
   if (result.state !== 'ok') return <StateNotice result={result} />
   const data = result.data
@@ -40,6 +71,7 @@ function SearchBody({ result }: { result: WidgetState<SearchConsoleData> }) {
   return (
     <>
       <p className="gd-muted">Compared with the 28 days before. Google reports data about three days late. Property: {data.site}</p>
+      <SubmitSitemapButton site={data.site} />
       <div className="gd-tiles">
         <Tile label="Clicks" value={formatInt(current.clicks)} change={changeText(current.clicks, previous.clicks)} help="Clicks from Google results in the last 28 days." />
         <Tile label="Impressions" value={formatInt(current.impressions)} change={changeText(current.impressions, previous.impressions)} help="Times a page from this site was shown in Google results." />

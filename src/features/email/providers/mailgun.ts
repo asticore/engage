@@ -24,6 +24,7 @@ export const sendViaMailgun: EmailAdapter<MailgunConfig> = (message, config) =>
     if (message.html) form.set('html', message.html)
     if (message.text) form.set('text', message.text)
     if (message.replyTo) form.set('h:Reply-To', message.replyTo)
+    for (const [name, value] of Object.entries(message.headers ?? {})) form.set(`h:${name}`, value)
 
     const response = await fetch(`https://${host}/v3/${encodeURIComponent(config.domain)}/messages`, {
       method: 'POST',

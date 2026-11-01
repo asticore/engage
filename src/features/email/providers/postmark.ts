@@ -26,6 +26,7 @@ export const sendViaPostmark: EmailAdapter<PostmarkConfig> = (message, config) =
         ...(message.html ? { HtmlBody: message.html } : {}),
         ...(message.text ? { TextBody: message.text } : {}),
         ...(message.replyTo ? { ReplyTo: message.replyTo } : {}),
+        ...(message.headers ? { Headers: Object.entries(message.headers).map(([Name, Value]) => ({ Name, Value })) } : {}),
         MessageStream: config.messageStream || 'outbound',
       }),
     })
