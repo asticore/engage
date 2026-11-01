@@ -9,6 +9,7 @@ import { formatBytes } from '@/features/cleanup/size'
 import { gatherSiteHealth, type SiteHealthReport } from '@/features/health/collect'
 import { formatAgo, formatDuration, formatPercent, formatWhen } from '@/features/health/format'
 import './site-health.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * Server wrapper for the Site health screen at /admin/site-health. Admin only.
@@ -75,9 +76,9 @@ function StorageBlock({ report }: { report: SiteHealthReport }) {
   return (
     <>
       <dl className="sh-facts">
-        <dt title={t('sh.lit.total_size_of_the_site_database_the_limi')}>{t('sh.lit.database_size')}</dt>
+        <dt><Tooltip text={t('sh.lit.total_size_of_the_site_database_the_limi')}><span>{t('sh.lit.database_size')}</span></Tooltip></dt>
         <dd>{databaseText}</dd>
-        <dt title={t('sh.lit.files_stored_in_the_media_bucket_r2')}>{t('sh.lit.media_bucket')}</dt>
+        <dt><Tooltip text={t('sh.lit.files_stored_in_the_media_bucket_r2')}><span>{t('sh.lit.media_bucket')}</span></Tooltip></dt>
         <dd>
           {storage.r2 === null
             ? 'Not available'
@@ -156,7 +157,7 @@ function VersionsBlock({ report }: { report: SiteHealthReport }) {
       <dd>{report.versions.app}</dd>
       <dt>Next.js</dt>
       <dd>{report.versions.next}</dd>
-      <dt title={t('sh.lit.the_software_the_site_runs_on')}>{t('sh.lit.runtime')}</dt>
+      <dt><Tooltip text={t('sh.lit.the_software_the_site_runs_on')}><span>{t('sh.lit.runtime')}</span></Tooltip></dt>
       <dd>{report.versions.runtime}</dd>
     </dl>
   )

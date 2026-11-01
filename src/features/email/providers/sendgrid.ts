@@ -30,6 +30,7 @@ export const sendViaSendGrid: EmailAdapter<SendGridConfig> = (message, config) =
           ...(message.fromName ? { name: message.fromName } : {}),
         },
         ...(message.replyTo ? { reply_to: { email: message.replyTo } } : {}),
+        ...(message.headers ? { headers: message.headers } : {}),
         subject: message.subject,
         content,
       }),

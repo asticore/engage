@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import { useField } from '@/engine/ui'
 import type { Field } from '@/engine'
 import { fieldLabel } from './shared'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 type RepeaterFieldRendererProps = {
   field: Field
@@ -16,6 +18,7 @@ type RepeaterFieldRendererProps = {
  * Each column corresponds to a field in field.repeater.fields.
  */
 export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ field, path, readOnly }) => {
+  const t = useAdminT()
   const { setValue, value } = useField<unknown>({ path })
   const [expandedRow, setExpandedRow] = useState<number | null>(null)
 
@@ -113,11 +116,10 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
                   ))}
                   <td style={{ padding: '0.5rem', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                      <button
+                      <Tooltip text={t('tip.addRowAfterThis')}><button
                         type="button"
                         onClick={() => addRow(rowIndex)}
                         disabled={readOnly}
-                        title="Add row after this"
                         style={{
                           padding: '0.3rem 0.6rem',
                           fontSize: '0.8rem',
@@ -130,12 +132,11 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
                         }}
                       >
                         +
-                      </button>
-                      <button
+                      </button></Tooltip>
+                      <Tooltip text={t('tip.moveUp')}><button
                         type="button"
                         onClick={() => moveRow(rowIndex, 'up')}
                         disabled={readOnly || rowIndex === 0}
-                        title="Move up"
                         style={{
                           padding: '0.3rem 0.6rem',
                           fontSize: '0.8rem',
@@ -148,12 +149,11 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
                         }}
                       >
                         ↑
-                      </button>
-                      <button
+                      </button></Tooltip>
+                      <Tooltip text={t('tip.moveDown')}><button
                         type="button"
                         onClick={() => moveRow(rowIndex, 'down')}
                         disabled={readOnly || rowIndex === rows.length - 1}
-                        title="Move down"
                         style={{
                           padding: '0.3rem 0.6rem',
                           fontSize: '0.8rem',
@@ -166,12 +166,11 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
                         }}
                       >
                         ↓
-                      </button>
-                      <button
+                      </button></Tooltip>
+                      <Tooltip text={t('tip.deleteRow')}><button
                         type="button"
                         onClick={() => deleteRow(rowIndex)}
                         disabled={readOnly}
-                        title="Delete row"
                         style={{
                           padding: '0.3rem 0.6rem',
                           fontSize: '0.8rem',
@@ -184,7 +183,7 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
                         }}
                       >
                         ×
-                      </button>
+                      </button></Tooltip>
                     </div>
                   </td>
                 </tr>

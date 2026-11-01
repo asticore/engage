@@ -2,6 +2,7 @@
 
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import React from 'react'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * Shared pieces for the dashboard cards: one number tile, one plain table, and the honest message for
@@ -10,11 +11,11 @@ import React from 'react'
 
 export function Tile({ label, value, change, help }: { label: string; value: string; change?: string; help: string }) {
   return (
-    <div className="gd-tile" title={help}>
+    <Tooltip text={help}><div className="gd-tile">
       <span className="gd-tile__label">{label}</span>
       <span className="gd-tile__value">{value}</span>
       {change ? <span className="gd-tile__change">{change}</span> : null}
-    </div>
+    </div></Tooltip>
   )
 }
 
@@ -28,9 +29,9 @@ export function DataTable<T>({ rows, columns, empty, rowKey }: { rows: T[]; colu
         <thead>
           <tr>
             {columns.map((c) => (
-              <th key={c.head} scope="col" title={c.help} className={c.align === 'right' ? 'gd-num' : undefined}>
+              <th key={c.head} scope="col" className={c.align === 'right' ? 'gd-num' : undefined}><Tooltip text={c.help}><span>
                 {c.head}
-              </th>
+              </span></Tooltip></th>
             ))}
           </tr>
         </thead>

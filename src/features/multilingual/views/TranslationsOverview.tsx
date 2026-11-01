@@ -8,6 +8,7 @@ import type { UiStringKey } from '@/features/uiStrings'
 
 import { TranslationStatusBadge, errorMessageFrom } from './TranslationStatusBadge'
 import type { TranslationStatus } from '../translationStatus'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * The overview table, with the bulk bar.
@@ -194,14 +195,13 @@ export function TranslationsOverview(props: TranslationsOverviewProps) {
       case 'title':
         return (
           <div className="flex flex-col gap-[2px]">
-            <a
+            <Tooltip text={row.mode === 'builder' ? t('translations.openBuilder') : t('translations.openEditor')}><a
               className="list-link"
               href={row.editHref}
-              title={row.mode === 'builder' ? t('translations.openBuilder') : t('translations.openEditor')}
               aria-current={props.selectedKey === row.key ? 'true' : undefined}
             >
               {row.title}
-            </a>
+            </a></Tooltip>
             {row.inactive.length > 0 ? (
               <details className="text-[12px]">
                 <summary className="cursor-pointer text-[var(--theme-elevation-600)]">
@@ -259,33 +259,30 @@ export function TranslationsOverview(props: TranslationsOverviewProps) {
         <button type="button" className="btn" disabled={busy || keys.length === 0} onClick={() => send({ action: 'approve', items: keys }, t('translations.statusApproved'))}>
           {t('translations.markApproved')}
         </button>
-        <button
+        <Tooltip text={t('translations.clearInactiveHint')}><button
           type="button"
           className="btn"
           disabled={busy || keys.length === 0 || !props.clearApi}
-          title={t('translations.clearInactiveHint')}
           onClick={() => clearInactive({ scope: 'items', items: keys })}
         >
           {t('translations.clearInactive')}
-        </button>
-        <button
+        </button></Tooltip>
+        <Tooltip text={t('translations.clearAllInactiveHint')}><button
           type="button"
           className="btn"
           disabled={busy || !props.clearApi}
-          title={t('translations.clearAllInactiveHint')}
           onClick={() => clearInactive({ scope: 'all' })}
         >
           {t('translations.clearAllInactive')}
-        </button>
-        <button
+        </button></Tooltip>
+        <Tooltip text={t('translations.translateMachineHint')}><button
           type="button"
           className="btn"
           disabled={busy || keys.length === 0}
-          title={t('translations.translateMachineHint')}
           onClick={() => send({ action: 'translate', items: keys, overwrite }, t('translations.doneTranslated'))}
         >
           {t('translations.translateMachine')}
-        </button>
+        </button></Tooltip>
         <label className="flex items-center gap-[4px]">
           <input type="checkbox" checked={overwrite} onChange={(event) => setOverwrite(event.target.checked)} />
           {t('translations.overwrite')}
@@ -390,10 +387,9 @@ export function TranslationsOverview(props: TranslationsOverviewProps) {
                     return (
                       <td key={code} className="list-td">
                         {entry ? (
-                          <a
+                          <Tooltip text={t('translations.entryApproved', { approved: entry.approved, total: entry.total, hint: entry.mode === 'builder' ? t('translations.hintOpenPage') : t('translations.hintOpenEditor') })}><a
                             href={entry.href}
                             className="inline-flex no-underline"
-                            title={t('translations.entryApproved', { approved: entry.approved, total: entry.total, hint: entry.mode === 'builder' ? t('translations.hintOpenPage') : t('translations.hintOpenEditor') })}
                           >
                             <span className="whitespace-nowrap">
                               <TranslationStatusBadge status={entry.status} label={entry.statusLabel} />
@@ -401,7 +397,7 @@ export function TranslationsOverview(props: TranslationsOverviewProps) {
                                 {entry.approved}/{entry.total}
                               </span>
                             </span>
-                          </a>
+                          </a></Tooltip>
                         ) : null}
                       </td>
                     )

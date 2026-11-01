@@ -67,7 +67,7 @@
   border: 1px solid var(--fm-accent);
   border-radius: 4px;
   background: var(--fm-accent);
-  color: #fff;
+  color: var(--lit-fff, #fff);
   font: inherit;
   font-size: 13px;
   cursor: pointer;

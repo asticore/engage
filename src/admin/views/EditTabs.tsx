@@ -4,6 +4,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { RESULTS_HASH, tabFromHash } from './results/resultsTabs'
 import './edit-tabs.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type TabKey = 'edit' | 'results'
 
@@ -94,7 +95,7 @@ export function EditTabs({
         >
           {editLabel}
         </button>
-        <button
+        <Tooltip text={deniedReason}><button
           aria-controls="et-panel-results"
           aria-disabled={deniedReason ? true : undefined}
           aria-selected={active === 'results'}
@@ -105,12 +106,11 @@ export function EditTabs({
           ref={resultsTab}
           role="tab"
           tabIndex={active === 'results' ? 0 : -1}
-          title={deniedReason}
           type="button"
         >
           {resultsLabel}
           {deniedReason ? <span className="et-tab__lock"> (no access)</span> : null}
-        </button>
+        </button></Tooltip>
       </div>
 
       <div aria-labelledby="et-tab-edit" className="et-panel" hidden={active !== 'edit'} id="et-panel-edit" role="tabpanel">

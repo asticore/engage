@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { OrdersManifestPicker } from './OrdersManifestPicker'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type Made = { number: string; totals: { orders: number; parcels: number }; htmlUrl: string; csvUrl: string }
 type Options = { carriers: { id: string; label: string }[]; orders: { id: number; orderNumber: string; name: string }[] }
@@ -53,16 +54,16 @@ export function OrdersManifestAction() {
 
   return (
     <span className="list-toolbar-manifest">
-      <select value={carrier} onChange={(e) => setCarrier(e.target.value)} aria-label={t('orders.manifest.carrierLabel')} className="list-filter-value-input" title={t('orders.manifest.carrierTip')}>
+      <Tooltip text={t('orders.manifest.carrierTip')} block><select value={carrier} onChange={(e) => setCarrier(e.target.value)} aria-label={t('orders.manifest.carrierLabel')} className="list-filter-value-input">
         <option value="">{t('orders.manifest.allCarriers')}</option>
         {options.carriers.map((c) => (
           <option key={c.id} value={c.id}>{c.label}</option>
         ))}
-      </select>
+      </select></Tooltip>
       <OrdersManifestPicker orders={options.orders} picked={picked} onChange={setPicked} />
-      <button type="button" className="list-toolbar-btn" disabled={busy} onClick={create} title={t('orders.manifest.createTip')}>
+      <Tooltip text={t('orders.manifest.createTip')}><button type="button" className="list-toolbar-btn" disabled={busy} onClick={create}>
         {busy ? t('orders.manifest.creating') : picked.length > 0 ? t('orders.manifest.createCount', { count: picked.length }) : t('orders.manifest.create')}
-      </button>
+      </button></Tooltip>
       {made && (
         <span role="status">
           {made.number}: {made.totals.parcels} {t('orders.manifest.parcels')} -{' '}

@@ -10,7 +10,7 @@
   display: flex;
   gap: 4px;
   margin: 0 0 16px 0;
-  border-bottom: 1px solid #e2e2e2;
+  border-bottom: 1px solid var(--lit-e2e2e2, #e2e2e2);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -28,7 +28,7 @@
   border-bottom: 2px solid transparent;
   border-radius: 4px 4px 0 0;
   background: transparent;
-  color: #555;
+  color: var(--lit-555, #555);
   font: inherit;
   font-size: 14px;
   font-weight: 500;
@@ -37,7 +37,7 @@
 }
 
 .et-tab:hover {
-  color: #1a1a1a;
+  color: var(--lit-1a1a1a, #1a1a1a);
 }
 
 .et-tab:focus-visible {
@@ -46,12 +46,12 @@
 }
 
 .et-tab--active {
-  color: #1a1a1a;
-  border-bottom-color: #1a1a1a;
+  color: var(--lit-1a1a1a, #1a1a1a);
+  border-bottom-color: var(--lit-1a1a1a, #1a1a1a);
 }
 
 .et-tab--disabled {
-  color: #777;
+  color: var(--lit-777, #777);
   font-weight: 400;
   cursor: help;
 }
@@ -73,7 +73,7 @@
   flex-direction: column;
   gap: 12px;
   min-width: 0;
-  color: #1a1a1a;
+  color: var(--lit-1a1a1a, #1a1a1a);
   font-size: 14px;
 }
 
@@ -104,7 +104,7 @@
 
 .et-stat__label {
   font-size: 12px;
-  color: #666;
+  color: var(--lit-666, #666);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -112,10 +112,10 @@
 .et-button {
   display: inline-block;
   padding: 6px 12px;
-  border: 1px solid #c8c8c8;
+  border: 1px solid var(--lit-c8c8c8, #c8c8c8);
   border-radius: 4px;
-  background: #fff;
-  color: #1a1a1a;
+  background: var(--lit-fff, #fff);
+  color: var(--lit-1a1a1a, #1a1a1a);
   font: inherit;
   font-size: 13px;
   text-decoration: none;
@@ -123,7 +123,7 @@
 }
 
 .et-button:hover:not(:disabled) {
-  background: #f3f3f3;
+  background: var(--lit-f3f3f3, #f3f3f3);
 }
 
 .et-button:disabled {
@@ -139,7 +139,7 @@
 .et-table-wrap {
   width: 100%;
   overflow-x: auto;
-  border: 1px solid #e2e2e2;
+  border: 1px solid var(--lit-e2e2e2, #e2e2e2);
   border-radius: 4px;
 }
 
@@ -152,15 +152,15 @@
 .et-table th,
 .et-table td {
   padding: 8px 10px;
-  border-bottom: 1px solid #ececec;
+  border-bottom: 1px solid var(--lit-ececec, #ececec);
   text-align: left;
   vertical-align: top;
 }
 
 .et-table th {
-  background: #fafafa;
+  background: var(--lit-fafafa, #fafafa);
   font-weight: 600;
-  color: #444;
+  color: var(--lit-444, #444);
 }
 
 .et-table tr:last-child td {
@@ -193,22 +193,22 @@
 
 .et-muted {
   margin: 0;
-  color: #666;
+  color: var(--lit-666, #666);
 }
 
 .et-warning {
   margin: 0;
   padding: 8px 10px;
   border-left: 3px solid #b58900;
-  background: #fbf7e8;
+  background: var(--lit-fbf7e8, #fbf7e8);
 }
 
 .et-error {
   margin: 0;
   padding: 8px 10px;
   border-left: 3px solid #b3261e;
-  background: #fbeceb;
-  color: #7a1b15;
+  background: var(--lit-fbeceb, #fbeceb);
+  color: var(--lit-7a1b15, #7a1b15);
 }
 
 .et-sr {

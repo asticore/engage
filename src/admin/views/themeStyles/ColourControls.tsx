@@ -6,6 +6,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { LIMITS, type ThemeColour } from '@/features/themeStyles/types'
 
 import { addColour, contrastRatio, meetsAA, moveColour, parseHex, removeColour, updateColour } from './editorLogic'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type Props = { colours: ThemeColour[]; onChange: (colours: ThemeColour[]) => void }
 
@@ -42,9 +43,9 @@ function Contrast({ value, against, label }: { value: string; against: string; l
   if (ratio === null) return null
   const pass = meetsAA(ratio)
   return (
-    <span className={`ts-badge ts-badge--${pass ? 'pass' : 'fail'}`} title={tt('theme.contrastAgainst', { label, ratio: ratio.toFixed(2) })}>
+    <Tooltip text={tt('theme.contrastAgainst', { label, ratio: ratio.toFixed(2) })}><span className={`ts-badge ts-badge--${pass ? 'pass' : 'fail'}`}>
       {label} {ratio.toFixed(1)} {pass ? 'AA pass' : 'AA fail'}
-    </span>
+    </span></Tooltip>
   )
 }
 

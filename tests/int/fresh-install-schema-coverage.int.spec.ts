@@ -25,6 +25,7 @@ import * as apiKeysSchema from '@/cms/db/schema/apiKeys'
 import * as organizationsSchema from '@/cms/db/schema/organizations'
 import * as emailVerificationsSchema from '@/cms/db/schema/emailVerifications'
 import * as rateLimitsSchema from '@/cms/db/schema/rateLimits'
+import * as emailSuppressionsSchema from '@/cms/db/schema/emailSuppressions'
 import * as twoFactorEmailCodesSchema from '@/cms/db/schema/twoFactorEmailCodes'
 import * as trustedDevicesSchema from '@/cms/db/schema/trustedDevices'
 import * as productSubscriptionsSchema from '@/cms/db/schema/productSubscriptions'
@@ -276,6 +277,10 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
         drizzleTables.push({ name: exportName, table: exportValue })
       }
       for (const [exportName, exportValue] of Object.entries(rateLimitsSchema)) {
+        drizzleTables.push({ name: exportName, table: exportValue })
+      }
+      // Suppression list for reminder and marketing mail: one plain drizzle table in its own schema file
+      for (const [exportName, exportValue] of Object.entries(emailSuppressionsSchema)) {
         drizzleTables.push({ name: exportName, table: exportValue })
       }
 
@@ -767,6 +772,12 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
     await proxy.env.D1.prepare("DELETE FROM `eg_impersonations` WHERE id = 'keep-me-imp'").run()
   })
 
+  it('creates eg_email_suppressions with its columns and a single-row address key', async () => {
+    const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_email_suppressions`)').all()).results as { name: string; pk: number }[]
+    expect(info.map((c) => c.name)).toEqual(expect.arrayContaining(['email', 'reason', 'source', 'created_at']))
+    expect(info.find((c) => c.name === 'email')?.pk).toBe(1)
+  })
+
   it('adds the email verification settings, off by default, and creates eg_email_verifications and eg_rate_limits', async () => {
     const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_security_settings`)').all()).results as { name: string; dflt_value: string | null }[]
     const byName = new Map(info.map((c) => [c.name, c.dflt_value]))
@@ -862,7 +873,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
     // Relative order only: later migrations may be appended without touching this list.
     const order = migrations.map((x) => x.name)
     let last = -1
-    for (const name of ['20261130_110000_admin_path', '20261201_100000_content_domains', '20261208_100000_user_domains', '20261215_100000_domain_overrides', '20261220_100000_site_scoped_slugs', '20261229_100000_tracking_events', '20261230_100000_tracking_switches', '20261231_100000_tracking_categories', '20270102_100000_tracking_connections', '20270103_100000_tracking_value_source', '20270110_100000_api_endpoints', '20270117_100000_webhooks', '20270118_100000_ai_usage_estimated', '20270124_100000_privacy_requests', '20270125_100000_template_libraries', '20270126_100000_design_grouped', '20270127_100000_template_library_token', '20270128_100000_blog_builder_settings', '20270129_100000_shop_organise_offline']) {
+    for (const name of ['20261130_110000_admin_path', '20261201_100000_content_domains', '20261208_100000_user_domains', '20261215_100000_domain_overrides', '20261220_100000_site_scoped_slugs', '20261229_100000_tracking_events', '20261230_100000_tracking_switches', '20261231_100000_tracking_categories', '20270102_100000_tracking_connections', '20270103_100000_tracking_value_source', '20270110_100000_api_endpoints', '20270117_100000_webhooks', '20270118_100000_ai_usage_estimated', '20270124_100000_privacy_requests', '20270125_100000_template_libraries', '20270126_100000_design_grouped', '20270127_100000_template_library_token', '20270128_100000_blog_builder_settings', '20270129_100000_email_suppressions', '20270129_100000_shop_organise_offline', '20270130_100000_sms_shipped_text']) {
       const at = order.indexOf(name)
       expect(at, name).toBeGreaterThan(last)
       last = at

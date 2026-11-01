@@ -245,7 +245,7 @@ th[aria-sort='descending'] .dv-sort-mark::after {
   font-weight: 600;
 }
 .dv-data-label--on {
-  fill: #fff;
+  fill: var(--lit-fff, #fff);
   font-weight: 600;
 }
 .dv-donut-total {
@@ -305,7 +305,7 @@ th[aria-sort='descending'] .dv-sort-mark::after {
 }
 .dv-missing {
   padding: 0.8rem;
-  border: 1px dashed var(--dv-line, rgba(127, 127, 127, 0.5));
+  border: 1px dashed var(--dv-line, var(--lit-rgba-127-127-127-0p5, rgba(127, 127, 127, 0.5)));
   border-radius: 6px;
   opacity: 0.75;
   font-size: 0.9rem;

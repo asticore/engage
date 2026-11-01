@@ -4,6 +4,7 @@ import { carrierDef } from '../shipping/catalogue'
 import { packItems } from '../shipping/packing'
 import { getAdapter, normaliseShippingConfig, parseLiveOptionId } from '../shipping/registry'
 import type { CarrierId } from '../shipping/types'
+import { sendShippedOrderText } from '@/features/sms/shippedText'
 import { sendOrderEmail } from './emails'
 
 type Doc = Record<string, unknown>
@@ -93,6 +94,8 @@ export async function buyLabel(engine: ShipEngine, orderId: number, pick: { carr
   }
   const updated = await engine.update({ collection: 'orders', id: orderId, data: patch, overrideAccess: true })
   const emailed = firstTracking ? await sendOrderEmail(engine as never, { ...order, ...updated, ...patch }, 'shipped') : false
+  // The optional shipped text (Integrations > Text messages, off by default). Never fails the label.
+  if (firstTracking) await sendShippedOrderText(engine as never, { ...order, ...updated, ...patch }).catch((): null => null)
   return { shipment, emailed }
 }
 

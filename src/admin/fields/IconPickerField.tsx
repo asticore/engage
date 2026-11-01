@@ -4,6 +4,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useMemo, useState } from 'react'
 
 import { Icon, ICON_NAMES } from '@/components/blocks/elements/icons'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 type IconValue = {
   icon?: string
@@ -268,11 +269,9 @@ const FontAwesomePicker: React.FC<{
               }}
             >
               {filteredIcons.map((icon) => (
-                <button
-                  key={icon}
+                <Tooltip text={icon} key={icon}><button
                   type="button"
                   onClick={() => handleSelect(icon)}
-                  title={icon}
                   style={{
                     padding: '0.5rem',
                     background: 'none',
@@ -300,7 +299,7 @@ const FontAwesomePicker: React.FC<{
                       fontSize: '1.5rem',
                     }}
                   />
-                </button>
+                </button></Tooltip>
               ))}
             </div>
             {filteredIcons.length === 0 && (
@@ -403,10 +402,8 @@ const BuiltinIconPicker: React.FC<{
               {shown.map((name) => {
                 const isSelected = name === selected
                 return (
-                  <button
-                    key={name}
+                  <Tooltip text={name} key={name}><button
                     type="button"
-                    title={name}
                     aria-label={name}
                     aria-pressed={isSelected}
                     onClick={() => handleSelect(name)}
@@ -424,7 +421,7 @@ const BuiltinIconPicker: React.FC<{
                     }}
                   >
                     <Icon name={name} size={24} />
-                  </button>
+                  </button></Tooltip>
                 )
               })}
             </div>

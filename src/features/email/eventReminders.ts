@@ -106,6 +106,7 @@ export async function sendEventReminders(
         subject: mail.subject,
         text: mail.text,
         html: mail.html,
+        bulk: true,
       })
       if (result.ok) sweep.sent += 1
       else sweep.skipped += 1

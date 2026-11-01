@@ -20,6 +20,7 @@ import { scanPage, type ScanRow } from './scan'
 import { TAG_OPTIONS, optionForRow, tagOptionDef } from './options'
 import { tagPagePath } from './tagPage'
 import type { Suggestion, TagOption } from './suggest'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
  * The visual tag editor: the live site in a same-origin frame, with a page finder, Navigate and Select modes, the tags
@@ -619,18 +620,18 @@ export function TagEditor({ onClose, initialEventId = null, domains, currentHost
           ) : null}
         </div>
         <div role="group" aria-label={t('tracking.tags.modeLabel')} style={{ display: 'flex' }}>
-          <button type="button" aria-pressed={mode === 'browse'} title={t('tracking.tags.modeNavigateTip')} onClick={() => changeMode('browse')} style={segment(mode === 'browse')}>{t('tracking.tags.modeNavigate')}</button>
-          <button type="button" aria-pressed={mode === 'select'} title={t('tracking.tags.modeSelectTip')} onClick={() => changeMode('select')} style={segment(mode === 'select')}>{t('tracking.tags.modeSelect')}</button>
+          <Tooltip text={t('tracking.tags.modeNavigateTip')}><button type="button" aria-pressed={mode === 'browse'} onClick={() => changeMode('browse')} style={segment(mode === 'browse')}>{t('tracking.tags.modeNavigate')}</button></Tooltip>
+          <Tooltip text={t('tracking.tags.modeSelectTip')}><button type="button" aria-pressed={mode === 'select'} onClick={() => changeMode('select')} style={segment(mode === 'select')}>{t('tracking.tags.modeSelect')}</button></Tooltip>
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }} title={t('tracking.tags.testHint')}>
+        <Tooltip text={t('tracking.tags.testHint')}><label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <input type="checkbox" checked={testMode} onChange={(e) => setTestMode(e.target.checked)} /> {t('tracking.tags.testMode')}
-        </label>
-        <button type="button" className="btn btn--style-secondary" aria-pressed={panel === 'suggest'} onClick={() => { setPanel(panel === 'suggest' ? null : 'suggest'); rescanRef.current() }} title={t('tracking.tags.suggestionsTip')}>
+        </label></Tooltip>
+        <Tooltip text={t('tracking.tags.suggestionsTip')}><button type="button" className="btn btn--style-secondary" aria-pressed={panel === 'suggest'} onClick={() => { setPanel(panel === 'suggest' ? null : 'suggest'); rescanRef.current() }}>
           {t('tracking.tags.suggestions')}{scanRows.length ? ` (${scanRows.length})` : ''}
-        </button>
-        <button type="button" className="btn btn--style-secondary" aria-pressed={panel === 'tags'} onClick={() => setPanel(panel === 'tags' ? null : 'tags')} title={t('tracking.tags.tagsPanelTip')}>
+        </button></Tooltip>
+        <Tooltip text={t('tracking.tags.tagsPanelTip')}><button type="button" className="btn btn--style-secondary" aria-pressed={panel === 'tags'} onClick={() => setPanel(panel === 'tags' ? null : 'tags')}>
           {t('tracking.tags.tagsPanel')} <span style={{ marginLeft: 4, padding: '0 6px', borderRadius: 10, background: '#1d4ed8', color: '#fff', fontSize: 12 }}>{onThisPageTags.length}</span>
-        </button>
+        </button></Tooltip>
         <span style={{ marginLeft: 'auto', fontWeight: 600 }}>
           {onThisPageTags.length ? t('tracking.tags.tagsOnPage', { count: onThisPageTags.length }) : t('tracking.tags.noTags')}
         </span>
@@ -664,15 +665,13 @@ export function TagEditor({ onClose, initialEventId = null, domains, currentHost
             <div key={b.key} aria-hidden="true" style={{ position: 'absolute', left: b.left, top: b.top, width: b.width, height: b.height, outline: `${b.tag.id === highlightId ? 4 : 2}px solid ${b.tag.enabled ? '#16a34a' : '#9ca3af'}`, pointerEvents: 'none' }} />
           ))}
           {badges.map((b) => (
-            <button
-              key={`badge-${b.key}`}
+            <Tooltip text={t('tracking.tags.badgeHint')} key={`badge-${b.key}`}><button
               type="button"
-              title={t('tracking.tags.badgeHint')}
               onClick={() => focusTag(b.tag)}
               style={{ position: 'absolute', left: b.left, top: Math.max(0, b.top - 20), padding: '1px 6px', fontSize: 12, lineHeight: '18px', color: '#fff', background: b.tag.enabled ? '#16a34a' : '#6b7280', border: 0, borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               {b.tag.name}
-            </button>
+            </button></Tooltip>
           ))}
           {previewBox ? (
             <div aria-hidden="true" style={{ position: 'absolute', left: previewBox.left, top: previewBox.top, width: previewBox.width, height: previewBox.height, outline: '3px dashed #f59e0b', background: 'rgba(245,158,11,.1)', pointerEvents: 'none' }} />
@@ -793,9 +792,9 @@ export function TagEditor({ onClose, initialEventId = null, domains, currentHost
               </button>
               <button type="button" className="btn btn--style-secondary" onClick={() => { setPicked(null); setEditing(null); setForm(null); setRepicking(null); repickRef.current = null }}>{t('tracking.tags.cancel')}</button>
               {editing ? (
-                <button type="button" className="btn btn--style-secondary" onClick={() => { setRepicking(editing.id); repickRef.current = editing.id; changeMode('select') }} title={t('tracking.tags.repickTip')}>
+                <Tooltip text={t('tracking.tags.repickTip')}><button type="button" className="btn btn--style-secondary" onClick={() => { setRepicking(editing.id); repickRef.current = editing.id; changeMode('select') }}>
                   {t('tracking.tags.repick')}
-                </button>
+                </button></Tooltip>
               ) : null}
               {editing ? (
                 <button type="button" className="btn btn--style-secondary" onClick={() => void remove()}>

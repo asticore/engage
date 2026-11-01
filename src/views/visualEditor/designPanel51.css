@@ -8,7 +8,7 @@
 .ve-d51-reset:hover { opacity: 1; }
 .ve-d51-tokbtn { font-size: 11px; padding: 2px 6px; border: 1px solid currentColor; border-radius: 4px; background: transparent; color: inherit; cursor: pointer; }
 .ve-d51-tokens { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.ve-d51-swatch { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 1px solid rgba(128, 128, 128, 0.6); cursor: pointer; }
+.ve-d51-swatch { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 1px solid var(--lit-rgba-128-128-128-0p6, rgba(128, 128, 128, 0.6)); cursor: pointer; }
 .ve-d51-swatch--on { outline: 2px solid #2563eb; outline-offset: 1px; }
 .ve-d51-devbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 0 8px; }
 .ve-d51-badge { font-size: 11px; opacity: .8; }

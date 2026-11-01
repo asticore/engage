@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { DISPLAY_CURRENCY_COOKIE } from '@/features/ecommerce/lib/displayCurrency'
 import { useDisplayCurrencyState } from '@/components/DisplayCurrencyContext'
 import './currency-switcher.css'
+import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const YEAR_SECONDS = 31_536_000
 
@@ -28,7 +29,7 @@ export function CurrencySwitcher() {
 
   return (
     <div className="currency-switcher">
-      <label className="currency-switcher__label" title="Prices in other currencies are approximate. You always pay in the shop currency.">
+      <Tooltip text={t('tip.pricesInOtherCurrenciesAre')}><label className="currency-switcher__label">
         <span>{t('store.pricesIn')}</span>
         <select value={state.selected ?? ''} onChange={(e) => choose(e.target.value)} aria-label="Show prices in">
           <option value="">{state.base} (shop currency)</option>
@@ -38,7 +39,7 @@ export function CurrencySwitcher() {
             </option>
           ))}
         </select>
-      </label>
+      </label></Tooltip>
       {state.selected ? (
         <p className="currency-switcher__note">
           Converted prices are approximate. You pay in {state.base} at checkout.
