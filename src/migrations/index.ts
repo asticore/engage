@@ -1,3 +1,4 @@
+
 import * as migration_20250929_111647 from './20250929_111647';
 import * as migration_20260819_043357_ecommerce_and_events from './20260819_043357_ecommerce_and_events';
 import * as migration_20260819_070238_site_settings_pages_and_nav from './20260819_070238_site_settings_pages_and_nav';
@@ -47,6 +48,7 @@ import * as migration_20261014_300000_pagespeed from './20261014_300000_pagespee
 import * as migration_20261014_400000_data_views from './20261014_400000_data_views';
 import * as migration_20261014_500000_forms_builder from './20261014_500000_forms_builder';
 import * as migration_20261015_200000_shop_numbering from './20261015_200000_shop_numbering';
+import * as migration_20261016_100000_product_qty_price_limits from './20261016_100000_product_qty_price_limits';
 import * as migration_20261016_200000_stock_subscriptions from './20261016_200000_stock_subscriptions';
 import * as migration_20261017_200000_form_drafts from './20261017_200000_form_drafts';
 import * as migration_20261018_100000_paypal_payments from './20261018_100000_paypal_payments';
@@ -58,35 +60,34 @@ import * as migration_20261021_100000_reusable_sections from './20261021_100000_
 import * as migration_20261022_100000_seo_focus_keyphrase from './20261022_100000_seo_focus_keyphrase';
 import * as migration_20261022_200000_seo_templates from './20261022_200000_seo_templates';
 import * as migration_20261023_100000_seo_indexnow from './20261023_100000_seo_indexnow';
+import * as migration_20261024_100000_site_details from './20261024_100000_site_details';
 import * as migration_20261024_200000_site_pages from './20261024_200000_site_pages';
+import * as migration_20261024_300000_email_log from './20261024_300000_email_log';
 import * as migration_20261024_400000_email_templates from './20261024_400000_email_templates';
 import * as migration_20261025_100000_communication_connections from './20261025_100000_communication_connections';
 import * as migration_20261025_200000_email_schedule from './20261025_200000_email_schedule';
 import * as migration_20261025_300000_email_designs from './20261025_300000_email_designs';
 import * as migration_20261026_100000_speed_extras from './20261026_100000_speed_extras';
+import * as migration_20261026_200000_speed_cache_rules from './20261026_200000_speed_cache_rules';
+import * as migration_20261026_300000_cron_runs from './20261026_300000_cron_runs';
 import * as migration_20261026_400000_error_log from './20261026_400000_error_log';
 import * as migration_20261027_100000_google_connection from './20261027_100000_google_connection';
-import * as migration_20261026_300000_cron_runs from './20261026_300000_cron_runs';
-import * as migration_20261026_200000_speed_cache_rules from './20261026_200000_speed_cache_rules';
 import * as migration_20261027_300000_refund_lines from './20261027_300000_refund_lines';
-import * as migration_20261028_300000_product_subscriptions from './20261028_300000_product_subscriptions';
-import * as migration_20261028_200000_product_bundles_recommendations from './20261028_200000_product_bundles_recommendations';
-import * as migration_20261024_100000_site_details from './20261024_100000_site_details';
-import * as migration_20261024_300000_email_log from './20261024_300000_email_log';
-import * as migration_20261016_100000_product_qty_price_limits from './20261016_100000_product_qty_price_limits';
 import * as migration_20261028_100000_add_ons_pricing_rules from './20261028_100000_add_ons_pricing_rules';
+import * as migration_20261028_200000_product_bundles_recommendations from './20261028_200000_product_bundles_recommendations';
+import * as migration_20261028_300000_product_subscriptions from './20261028_300000_product_subscriptions';
+import * as migration_20261028_400000_display_currencies from './20261028_400000_display_currencies';
 import * as migration_20261101_100000_theme_styles from './20261101_100000_theme_styles';
 import * as migration_20261102_100000_site_templates from './20261102_100000_site_templates';
 import * as migration_20261103_100000_template_repos from './20261103_100000_template_repos';
 import * as migration_20261104_100000_template_kind_category from './20261104_100000_template_kind_category';
 import * as migration_20261105_100000_ai_builder_usage from './20261105_100000_ai_builder_usage';
-import * as migration_20261028_400000_display_currencies from './20261028_400000_display_currencies';
-import * as migration_20261110_100000_cursor_hide from './20261110_100000_cursor_hide';
-import * as migration_20261110_110000_post_audio from './20261110_110000_post_audio';
 import * as migration_20261106_100000_site_page_effects from './20261106_100000_site_page_effects';
 import * as migration_20261107_100000_page_audio from './20261107_100000_page_audio';
 import * as migration_20261108_100000_social_connections from './20261108_100000_social_connections';
 import * as migration_20261109_100000_blog_tags_authors from './20261109_100000_blog_tags_authors';
+import * as migration_20261110_100000_cursor_hide from './20261110_100000_cursor_hide';
+import * as migration_20261110_110000_post_audio from './20261110_110000_post_audio';
 import * as migration_20261111_100000_blog_author_tag_switches from './20261111_100000_blog_author_tag_switches';
 import * as migration_20261112_100000_users_email_verification from './20261112_100000_users_email_verification';
 import * as migration_20261113_100000_two_factor_backup_codes from './20261113_100000_two_factor_backup_codes';
@@ -120,6 +121,7 @@ import * as migration_20270103_100000_tracking_value_source from './20270103_100
 import * as migration_20270110_100000_api_endpoints from './20270110_100000_api_endpoints';
 import * as migration_20270117_100000_webhooks from './20270117_100000_webhooks';
 import * as migration_20270118_100000_ai_usage_estimated from './20270118_100000_ai_usage_estimated';
+import * as migration_20270124_100000_privacy_requests from './20270124_100000_privacy_requests';
 import * as migration_20270125_100000_template_libraries from './20270125_100000_template_libraries';
 import * as migration_20270126_100000_design_grouped from './20270126_100000_design_grouped';
 import * as migration_20270127_100000_template_library_token from './20270127_100000_template_library_token';
@@ -135,8 +137,8 @@ import * as migration_20270220_110000_domain_scoped_content from './20270220_110
 import * as migration_20270223_100000_not_found_log from './20270223_100000_not_found_log';
 import * as migration_20270223_110000_coupon_reservations from './20270223_110000_coupon_reservations';
 import * as migration_20270223_120000_consent_logo from './20270223_120000_consent_logo';
+import * as migration_20270224_100000_block_form_id from './20270224_100000_block_form_id';
 
-import * as migration_20270124_100000_privacy_requests from './20270124_100000_privacy_requests';
 export const migrations = [
   {
     up: migration_20250929_111647.up,
@@ -181,7 +183,7 @@ export const migrations = [
   {
     up: migration_20260824_020721_settings_globals_and_features.up,
     down: migration_20260824_020721_settings_globals_and_features.down,
-    name: '20260824_020721_settings_globals_and_features'
+    name: '20260824_020721_settings_globals_and_features',
   },
   {
     up: migration_20260825_033000_rename_tables_eg_prefix.up,
@@ -827,5 +829,10 @@ export const migrations = [
     up: migration_20270223_120000_consent_logo.up,
     down: migration_20270223_120000_consent_logo.down,
     name: '20270223_120000_consent_logo',
+  },
+  {
+    up: migration_20270224_100000_block_form_id.up,
+    down: migration_20270224_100000_block_form_id.down,
+    name: '20270224_100000_block_form_id',
   },
 ];

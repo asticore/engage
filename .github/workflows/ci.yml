@@ -51,14 +51,14 @@ jobs:
         # Load error (needs a built `.open-next/worker.js`): cloudflare-worker.
         # Skipped or failing on the local D1 migration helper ("no such table", 45 errors in admin-pages-tree): admin-list-prefs-real-engine,
         # admin-pages-tree, cms-db-carts-orders-transactions, page-delete-after-children, pages-homepage-switch, pages-sort-order,
-        # product-addons-db, redirects-collection, schedule-admin-route, shop-catalogue-db, shop-review-fixes, social-login-settings-real-engine,
-        # version-delete-real-engine.
-        # Assertion failures, not investigated yet: AdminNavClient, authorship-fields, cookie-consent, cross-sells-currency-wave7, custom-fields,
-        # ecommerce-cart-hooks, heading-effects, nav-structure (expects "translations" in HIDDEN_FROM_NAV), own-scope-routes,
-        # product-addons-pricing-rules, schedule-publish-due, seo-metadata (Task 10 owns it), shop-recommendations-wave19, wishlist-wave7.
+        # product-addons-db, redirects-collection, schedule-admin-route, shop-catalogue-db, shop-review-fixes, social-login-settings-real-engine.
+        # Fixed 1 Nov, back in the run: version-delete-real-engine and schedule-publish-due (they build their own D1 now).
+        # Fixed 1 Nov, back in the run: AdminNavClient, nav-structure, heading-effects (stale expectations updated; the server-only alias in vitest.config.mts).
+        # Assertion failures, not investigated yet: authorship-fields, cookie-consent (the SEO-off consent banner: a timeout and a non-null bodyEnd render), cross-sells-currency-wave7, custom-fields,
+        # ecommerce-cart-hooks, own-scope-routes, product-addons-pricing-rules, seo-metadata (Task 10 owns it), shop-recommendations-wave19, wishlist-wave7.
         # Real-D1 specs (miniflare) can fail with an "internal error" or SQLITE_BUSY under parallel load; retries absorb some of it.
         run: |
-          EXCLUDE='admin-list-prefs-real-engine|admin-pages-tree|settings-pages|schedule-admin-route|wishlist-wave7|authorship-fields|custom-fields|cookie-consent|seo-page-jsonld|AdminNavClient|cloudflare-worker|ecommerce-cart-hooks|heading-effects|own-scope-routes|page-delete-after-children|pages-sort-order|product-addons-db|product-addons-pricing-rules|redirects-collection|schedule-publish-due|shop-catalogue-db|shop-review-fixes|cms-db-carts-orders-transactions|pages-homepage-switch|social-login-settings-real-engine|version-delete-real-engine|cross-sells-currency-wave7|nav-structure|shop-recommendations-wave19|seo-metadata'
+          EXCLUDE='admin-list-prefs-real-engine|admin-pages-tree|settings-pages|schedule-admin-route|wishlist-wave7|authorship-fields|custom-fields|cookie-consent|seo-page-jsonld|cloudflare-worker|ecommerce-cart-hooks|own-scope-routes|page-delete-after-children|pages-sort-order|product-addons-db|product-addons-pricing-rules|redirects-collection|shop-catalogue-db|shop-review-fixes|cms-db-carts-orders-transactions|pages-homepage-switch|social-login-settings-real-engine|cross-sells-currency-wave7|shop-recommendations-wave19|seo-metadata'
           FILES=$(ls tests/int/*.int.spec.ts | grep -Ev "/(${EXCLUDE})\.int\.spec\.ts$")
           echo "Running $(echo "$FILES" | wc -l) spec files"
           pnpm exec vitest run --config ./vitest.config.mts --retry=2 $FILES

@@ -296,7 +296,7 @@ const postsBlockDefs = generateBlockTables(Posts.slug, postsGenerated.tableName,
 export const postsBlocks = Object.fromEntries(postsBlockDefs.map((block) => [block.slug, block.table]))
 
 const postsRelsFields = [...postsGenerated.relsFields, ...postsBlockDefs.flatMap((block) => block.relsFields)]
-const postsRelsGenerated = generateRelsTable(postsGenerated.tableName, postsRelsFields, resolveTargetTable)
+const postsRelsGenerated = generateRelsTable(postsGenerated.tableName, postsRelsFields, resolveTargetTable, { bareTargetColumns: true })
 export const postsRels = postsRelsGenerated.table
 
 export const postsBlockTypes = Object.fromEntries(
@@ -318,7 +318,7 @@ const postsVersionsBlockDefs = generateBlockTables(Posts.slug, postsVersionsGene
 export const postsVersionsBlocks = Object.fromEntries(postsVersionsBlockDefs.map((block) => [block.slug, block.table]))
 
 const postsVersionsRelsFields = [...postsVersionsGenerated.relsFields, ...postsVersionsBlockDefs.flatMap((block) => block.relsFields)]
-const postsVersionsRelsGenerated = generateRelsTable(postsVersionsGenerated.tableName, postsVersionsRelsFields, resolveTargetTable)
+const postsVersionsRelsGenerated = generateRelsTable(postsVersionsGenerated.tableName, postsVersionsRelsFields, resolveTargetTable, { bareTargetColumns: true })
 export const postsVersionsRels = postsVersionsRelsGenerated.table
 
 export const postsVersionsBlockTypes = Object.fromEntries(
@@ -639,11 +639,9 @@ export const formsFieldsConditionalRules = formsFieldsGenerated.nestedArrayField
  * reach (Faq's `faqs`, Gallery's `images`) - already covered by
  * `resolveTargetTable`, no new target needed.
  *
- * NOT modeled: the page-builder Form block's `form` field remains the same
- * dormant, pre-existing gap noted on generate.ts's isHasManyRelational (a
- * `form_id` column this data layer would generate but the real
- * `eg_faq_settings_blocks_form` table does not have) - untouched by this
- * global, exactly as untouched for Pages/Posts/PageTemplates before it.
+ * The page-builder Form block's `form` field is a plain `form_id` column here,
+ * the same as on Pages and Posts (migration 20270224_100000_block_form_id adds it
+ * to eg_faq_settings_blocks_form and the other block tables).
  */
 export const faqSettingsGenerated = generateTable(FaqSettings)
 export const faqSettings = faqSettingsGenerated.table
@@ -653,7 +651,7 @@ const faqSettingsBlockDefs = generateBlockTables(FaqSettings.slug, faqSettingsGe
 export const faqSettingsBlocks = Object.fromEntries(faqSettingsBlockDefs.map((block) => [block.slug, block.table]))
 
 const faqSettingsRelsFields = [...faqSettingsGenerated.relsFields, ...faqSettingsBlockDefs.flatMap((block) => block.relsFields)]
-const faqSettingsRelsGenerated = generateRelsTable(faqSettingsGenerated.tableName, faqSettingsRelsFields, resolveTargetTable)
+const faqSettingsRelsGenerated = generateRelsTable(faqSettingsGenerated.tableName, faqSettingsRelsFields, resolveTargetTable, { bareTargetColumns: true })
 export const faqSettingsRels = faqSettingsRelsGenerated.table
 
 export const faqSettingsBlockTypes = Object.fromEntries(
@@ -687,7 +685,7 @@ const blogSettingsBlockDefs = generateBlockTables(BlogSettings.slug, blogSetting
 export const blogSettingsBlocks = Object.fromEntries(blogSettingsBlockDefs.map((block) => [block.slug, block.table]))
 
 const blogSettingsRelsFields = [...blogSettingsGenerated.relsFields, ...blogSettingsBlockDefs.flatMap((block) => block.relsFields)]
-const blogSettingsRelsGenerated = generateRelsTable(blogSettingsGenerated.tableName, blogSettingsRelsFields, resolveTargetTable)
+const blogSettingsRelsGenerated = generateRelsTable(blogSettingsGenerated.tableName, blogSettingsRelsFields, resolveTargetTable, { bareTargetColumns: true })
 export const blogSettingsRels = blogSettingsRelsGenerated.table
 
 export const blogSettingsBlockTypes = Object.fromEntries(
@@ -751,7 +749,7 @@ const shopSettingsBlockDefs = generateBlockTables(ShopSettings.slug, shopSetting
 export const shopSettingsBlocks = Object.fromEntries(shopSettingsBlockDefs.map((block) => [block.slug, block.table]))
 
 const shopSettingsRelsFields = [...shopSettingsGenerated.relsFields, ...shopSettingsBlockDefs.flatMap((block) => block.relsFields)]
-const shopSettingsRelsGenerated = generateRelsTable(shopSettingsGenerated.tableName, shopSettingsRelsFields, resolveTargetTable)
+const shopSettingsRelsGenerated = generateRelsTable(shopSettingsGenerated.tableName, shopSettingsRelsFields, resolveTargetTable, { bareTargetColumns: true })
 export const shopSettingsRels = shopSettingsRelsGenerated.table
 
 export const shopSettingsBlockTypes = Object.fromEntries(

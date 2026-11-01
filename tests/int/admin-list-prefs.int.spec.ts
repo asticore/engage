@@ -376,3 +376,14 @@ describe('loadListPrefs, saveListPrefs, resetListPrefs', () => {
     })
   })
 })
+
+describe('sanitizeListPrefs getting-started ticks', () => {
+  it('keeps checklist item ids, including an empty list so the last untick saves', () => {
+    expect(sanitizeListPrefs({ doneIds: ['site-name-logo', 'header'] }).doneIds).toEqual(['site-name-logo', 'header'])
+    expect(sanitizeListPrefs({ doneIds: [] }).doneIds).toEqual([])
+  })
+
+  it('drops ids that are not lowercase words or dashes, and non-strings', () => {
+    expect(sanitizeListPrefs({ doneIds: ['header', 'Bad Id', '../x', 7, 'ok-1'] }).doneIds).toEqual(['header', 'ok-1'])
+  })
+})

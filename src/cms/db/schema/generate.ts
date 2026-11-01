@@ -725,7 +725,20 @@ export function generateBlockTables(collectionSlug: string, parentTableName: str
  * this module does not import every collection config, only the ones a given
  * schema/index.ts entry actually needs.
  */
-export function generateRelsTable(parentTableName: string, relsFields: NamedField[], resolveTargetTable: (slug: string) => string) {
+/**
+ * Options for generateRelsTable.
+ *
+ * `bareTargetColumns`: name each target column `<bare>_id` (`media_id`,
+ * `faqs_id`) instead of `eg_<table>_id`. Only the five rels tables the early
+ * migrations created under the bare names need it: eg_posts_rels,
+ * _eg_posts_v_rels, eg_faq_settings_rels, eg_blog_settings_rels and
+ * eg_shop_settings_rels (checked against a fresh install's real columns). Every
+ * other _rels table, including the ones made after the eg_ rename, has
+ * `eg_media_id`/`eg_faqs_id`, so it keeps the default.
+ */
+export type RelsTableOptions = { bareTargetColumns?: boolean }
+
+export function generateRelsTable(parentTableName: string, relsFields: NamedField[], resolveTargetTable: (slug: string) => string, options: RelsTableOptions = {}) {
   const targetColumns: Record<string, string> = {}
   const columns: Record<string, SQLiteColumnBuilderBase> = {
     id: integer('id').primaryKey({ autoIncrement: true }),
@@ -739,7 +752,8 @@ export function generateRelsTable(parentTableName: string, relsFields: NamedFiel
       if (targetColumns[slug]) continue
       const targetTable = resolveTargetTable(slug)
       const columnKey = `${targetTable}Id`
-      columns[columnKey] = integer(`${targetTable}_id`)
+      const sqlColumn = options.bareTargetColumns ? `${targetTable.replace(/^eg_/, '')}_id` : `${targetTable}_id`
+      columns[columnKey] = integer(sqlColumn)
       targetColumns[slug] = columnKey
     }
   }
@@ -762,24 +776,10 @@ export function relationTargetSlugs(field: NamedField): string[] {
  * column - hasMany (a list) or polymorphic (relationTo is an array) - and so
  * must be bucketed into a shared `_rels` table instead.
  *
- * KNOWN GAP, deliberately NOT modeled here: the page-builder Form block's own
- * `form` field (src/features/forms/block.ts - single-target, non-hasMany
- * `relationship`) would be a plain `form_id` column by this rule, but the
- * real `eg_*_blocks_form`/`_eg_*_v_blocks_form` tables have no such column on
- * several parents (confirmed via `pragma table_info` against
- * eg_pages_blocks_form and eg_faq_settings_blocks_form - both lack it), while
- * `eg_pages_rels`/`eg_faq_settings_rels` DO have an `eg_forms_id` column.
- * Tried routing this field through the rels table to match - confirmed that
- * ALSO does not fully work: the original engine's own real `engine.create()` crashes
- * with "no such column: form_id" trying to create a Form block through the
- * live app today (this app's OWN config still expects the plain column), so
- * the feature is already broken independent of this data layer, and
- * reconstructing the document shape from the rels table needs unwrapping a
- * hasMany-shaped array back into a single value - a second, separate gap.
- * Left as the plain-column default (dormant/untested either way, like every
- * other collection's blocksFields before this comment) rather than papering
- * over a live production bug with an incomplete data-layer patch - flag to
- * whoever owns the Form block feature rather than fixing here.
+ * The page-builder Form block's own `form` field (src/features/forms/block.ts) is a
+ * single-target relationship, so it is a plain `form_id` column here, the same as any
+ * other single relation. Migration 20270224_100000_block_form_id adds that column to
+ * every block table that holds the block, so this shape matches the database.
  */
 function isHasManyRelational(field: NamedField): boolean {
   if (field.type !== 'relationship' && field.type !== 'upload') return false

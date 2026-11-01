@@ -24,19 +24,23 @@ describe('AdminNavClient with flat rendering', () => {
     const settingsGroup = NAV_STRUCTURE.find((g) => g.label === 'Settings')
     expect(settingsGroup).toBeDefined()
     expect(Object.keys(settingsGroup || {}).includes('section')).toBe(false)
-    expect(settingsGroup?.entities.length).toBe(10)
+    expect(settingsGroup?.entities.length).toBe(13)
   })
 
-  it('Settings group should render 7 page links, Theming and the Roles view link', () => {
+  it('Settings group should list the settings hub links, Theming and the Roles view link', () => {
     const settingsGroup = NAV_STRUCTURE.find((g) => g.label === 'Settings')
-    expect(settingsGroup?.entities.length).toBe(10)
+    expect(settingsGroup?.entities.length).toBe(13)
     const viewEntities = settingsGroup?.entities.filter((e) => e.type === 'view') || []
-    expect(viewEntities.length).toBe(10)
+    expect(viewEntities.length).toBe(13)
     expect(settingsGroup?.entities.at(-2)).toEqual({ slug: 'roles', type: 'view', href: '/roles', label: 'Roles' })
     expect(settingsGroup?.entities.at(-1)).toEqual({ slug: 'interface-languages', type: 'view', href: '/interface-languages', label: 'Interface languages' })
 
+    // The settings hub (#196) lists All settings, Tracking and Domains as well as the sections.
     const expectedLabels = [
+      'All settings',
+      'Tracking',
       'General',
+      'Domains',
       'Content',
       'Commerce',
       'Communication',
