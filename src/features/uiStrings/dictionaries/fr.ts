@@ -2392,6 +2392,15 @@ const fr: UiDictionary = {
   // --- site-scoped content (Available on domains picker) ---
   'domains.site.shared': 'Tous les domaines (partagé)',
   'domains.site.scoped': 'Propre au site : affiché uniquement sur {domains}. Un autre domaine peut utiliser le même slug avec son propre contenu.',
+  'sites.switcherLabel': 'Site',
+  'sites.allSites': 'All sites',
+  'sites.switcherError': 'Could not change the site. Try again.',
+  'dns.connect': 'Connect domain',
+  'dns.connecting': 'Connecting...',
+  'dns.connectDone': 'Attached to the Worker. DNS may take a few minutes to start answering.',
+  'dns.connectFailed': 'Cloudflare did not attach this domain: {message}',
+  'dns.connectManual': 'Connect in Cloudflare by hand: follow the steps above. Add a Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare to connect from here.',
+  'dns.connectNeedsSetup': 'Not set up yet: add the Cloudflare account ID, Worker name and API token under Settings > Integrations > Cloudflare.',
   // --- Task 3 Languages: admin leftovers (final pass) ---
   'st.title': 'Exporter et importer',
   'st.intro': 'Transférez les réglages, le contenu et les utilisateurs entre des sites, ou gardez une copie. Seuls les administrateurs peuvent utiliser cette page.',

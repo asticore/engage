@@ -402,6 +402,23 @@ export const Integrations: GlobalConfig = {
           admin: { description: 'Found in Cloudflare > Account > Websites > Zone ID.' },
         },
         {
+          name: 'accountId',
+          type: 'text',
+          label: 'Account ID',
+          admin: {
+            description:
+              'Optional. Needed only for Settings > Domains > Connect domain, which attaches a domain to the Worker through the Cloudflare API. Found on the Cloudflare dashboard home page.',
+          },
+        },
+        {
+          name: 'workerName',
+          type: 'text',
+          label: 'Worker name',
+          admin: {
+            description: 'Optional. The name of this site\'s Worker in Cloudflare (Workers & Pages). Used by Connect domain.',
+          },
+        },
+        {
           name: 'apiToken',
           type: 'text',
           label: 'API token',

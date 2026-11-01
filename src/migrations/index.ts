@@ -130,6 +130,8 @@ import * as migration_20270130_100000_sms_shipped_text from './20270130_100000_s
 import * as migration_20270131_100000_seo_cornerstone from './20270131_100000_seo_cornerstone';
 import * as migration_20270201_100000_error_alert_settings from './20270201_100000_error_alert_settings';
 import * as migration_20270210_100000_media_formats_video_links from './20270210_100000_media_formats_video_links';
+import * as migration_20270220_100000_cloudflare_worker_domains from './20270220_100000_cloudflare_worker_domains';
+import * as migration_20270220_110000_domain_scoped_content from './20270220_110000_domain_scoped_content';
 import * as migration_20270223_100000_not_found_log from './20270223_100000_not_found_log';
 import * as migration_20270223_110000_coupon_reservations from './20270223_110000_coupon_reservations';
 import * as migration_20270223_120000_consent_logo from './20270223_120000_consent_logo';
@@ -800,6 +802,16 @@ export const migrations = [
     up: migration_20270210_100000_media_formats_video_links.up,
     down: migration_20270210_100000_media_formats_video_links.down,
     name: '20270210_100000_media_formats_video_links',
+  },
+  {
+    up: migration_20270220_100000_cloudflare_worker_domains.up,
+    down: migration_20270220_100000_cloudflare_worker_domains.down,
+    name: '20270220_100000_cloudflare_worker_domains',
+  },
+  {
+    up: migration_20270220_110000_domain_scoped_content.up,
+    down: migration_20270220_110000_domain_scoped_content.down,
+    name: '20270220_110000_domain_scoped_content',
   },
   {
     up: migration_20270223_100000_not_found_log.up,

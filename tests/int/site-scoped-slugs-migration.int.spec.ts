@@ -40,10 +40,12 @@ describe('site-scoped slugs migration', () => {
     expect(second.errorCount).toBe(0)
   })
 
-  it('posts and products have no unique index on the slug, so a slug can repeat across domains', async () => {
+  it('posts and products have no unique index on the slug alone, so a slug can repeat across domains', async () => {
+    // The 20270220_110000 migration adds a unique index on (domain scope, slug): the same slug is still allowed on two
+    // domains, and only one document per scope and slug can exist. So only a unique index on the slug by itself is wrong.
     for (const table of ['eg_posts', 'eg_products']) {
       const indexes = await slugIndexes(table)
-      expect(indexes.filter((i) => i.unique === 1), table).toEqual([])
+      expect(indexes.filter((i) => i.unique === 1 && i.name !== `${table}_scope_slug_uidx`), table).toEqual([])
     }
   })
 
