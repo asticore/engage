@@ -1,7 +1,7 @@
 import type { D1Like } from '@/features/apiKeys'
 import { buildExportDocument, type ExportInput } from './core'
 import { canSeeBookingsByEmail } from '@/features/accounts/access'
-import { asEngine, customerRecords } from './data'
+import { asEngine, commerceRecords, customerRecords } from './data'
 
 /** The customer's data document for the signed-in customer. The caller passes the session user only. */
 export async function exportCustomerData(
@@ -10,7 +10,9 @@ export async function exportCustomerData(
   user: { id: number; email: string } & Record<string, unknown>,
   now: Date = new Date(),
 ): Promise<Record<string, unknown>> {
-  const records = await customerRecords(asEngine(engine), d1, Number(user.id), String(user.email ?? ''))
+  const email = String(user.email ?? '')
+  const records = await customerRecords(asEngine(engine), d1, Number(user.id), email)
+  const commerce = await commerceRecords(asEngine(engine), Number(user.id), email)
   const input: ExportInput = {
     user,
     addresses: records.addresses,
@@ -18,6 +20,10 @@ export async function exportCustomerData(
     // Guest bookings are matched by address, so they are exported only once the address is verified.
     bookings: canSeeBookingsByEmail(user) ? records.bookings : [],
     submissions: records.submissions.map((s) => ({ form: s.form, submittedAt: s.submittedAt, values: s.values })),
+    storeCredit: commerce.storeCredit,
+    creditMovements: commerce.movements,
+    carts: commerce.carts,
+    reviews: commerce.reviews,
     requestedAt: now.toISOString(),
   }
   return buildExportDocument(input)

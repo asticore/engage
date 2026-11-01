@@ -11,6 +11,7 @@ const pt: UiDictionary = {
   'portal.nav.addresses': 'Endereços',
   'portal.nav.bookings': 'Reservas de eventos',
   'portal.nav.profile': 'Perfil',
+  'portal.nav.privacy': 'Privacidade',
   'portal.nav.organizations': 'Organizações',
   'portal.profile.language': 'Idioma',
   'portal.profile.languageAuto': 'Automático (igual ao meu navegador)',

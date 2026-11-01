@@ -11,6 +11,7 @@ const ru: UiDictionary = {
   'portal.nav.addresses': 'Адреса',
   'portal.nav.bookings': 'Бронирования мероприятий',
   'portal.nav.profile': 'Профиль',
+  'portal.nav.privacy': 'Конфиденциальность',
   'portal.nav.organizations': 'Организации',
   'portal.profile.language': 'Язык',
   'portal.profile.languageAuto': 'Автоматически (как в моём браузере)',
