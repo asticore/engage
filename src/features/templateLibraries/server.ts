@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
+import { audit, auditContext } from '@/features/security/auditLog'
+import { getSecuritySettings } from '@/features/security/settings'
 import { readUploadPolicy, type MediaEngine } from '@/features/media/store'
 import { insertTemplateAssets, sha256Hex, type UploadFileLike } from '@/features/templateRepos/insertAssets'
 import { NO_STORE } from '@/features/templateRepos/routeAuth'
@@ -50,6 +52,30 @@ export async function librarySettingsAccess(): Promise<Allowed | Refusal> {
 }
 
 export { json as libraryJson }
+
+/**
+ * One audit entry for a library change or a token check. The detail names the library and the change; it never
+ * holds a token. Best effort: the audit trail logs its own failures, and a change is never blocked by it.
+ */
+export async function recordLibraryAudit(context: AdminContext, request: Request, detail: string): Promise<void> {
+  try {
+    const settings = await getSecuritySettings(context.engine as unknown as Parameters<typeof getSecuritySettings>[0])
+    const user = context.user as { id?: number | string; email?: string } | null
+    await audit(
+      {
+        action: 'settings.update',
+        actorId: user?.id ?? null,
+        actorEmail: user?.email ?? null,
+        collectionSlug: 'template-libraries',
+        detail: detail.slice(0, 300),
+        ...auditContext(request),
+      },
+      settings,
+    )
+  } catch {
+    // The audit write logs its own failures; the change has already been saved.
+  }
+}
 
 /** The engine as the library store sees it. */
 export function storeEngine(context: AdminContext): LibraryStoreEngine {

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
+import { EMPTY_LIBRARY_FILTER, filterLibraryItems, isLibraryFilterActive, libraryCategories, type LibraryItemFilter } from '../filter'
 import type { LibraryItemRow, LibrarySummary } from '../types'
 
 type Listing = { ok?: boolean; error?: string; libraries?: LibrarySummary[]; items?: LibraryItemRow[] }
@@ -16,7 +17,7 @@ type Listing = { ok?: boolean; error?: string; libraries?: LibrarySummary[]; ite
 export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ settingsHref }) => {
   const t = useAdminT()
   const [listing, setListing] = useState<Listing | null>(null)
-  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<LibraryItemFilter>(EMPTY_LIBRARY_FILTER)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -37,12 +38,11 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
     }
   }, [t])
 
-  const items = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    const all = listing?.items ?? []
-    if (!needle) return all
-    return all.filter((item) => [item.title, item.slug, item.category, item.libraryLabel, ...item.tags].some((value) => value.toLowerCase().includes(needle)))
-  }, [listing, query])
+  const allItems = useMemo(() => listing?.items ?? [], [listing])
+  const items = useMemo(() => filterLibraryItems(allItems, filter), [allItems, filter])
+  const categories = useMemo(() => libraryCategories(allItems), [allItems])
+  const usableLibraries = (listing?.libraries ?? []).filter((library) => library.enabled && !library.error)
+  const filterActive = isLibraryFilterActive(filter)
 
   const createPage = async (item: LibraryItemRow) => {
     setBusy(item.key)
@@ -72,17 +72,63 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
 
   return (
     <div className="lst-panel" style={{ padding: 16 }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', margin: '0 0 12px' }}>
-        <input
-          type="search"
-          value={query}
-          aria-label={t('templateLibraries.filter')}
-          placeholder={t('templateLibraries.filter')}
-          onChange={(event) => setQuery(event.target.value)}
-          style={{ padding: '6px 8px', minWidth: 240 }}
-        />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', margin: '0 0 12px' }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span>{t('templateLibraries.filter')}</span>
+          <input
+            type="search"
+            value={filter.query}
+            placeholder={t('templateLibraries.filter')}
+            onChange={(event) => setFilter({ ...filter, query: event.target.value })}
+            style={{ padding: '6px 8px', minWidth: 220 }}
+          />
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span>{t('templateLibraries.filterLibrary')}</span>
+          <select value={filter.libraryId} onChange={(event) => setFilter({ ...filter, libraryId: event.target.value })} style={{ padding: '6px 8px' }}>
+            <option value="">{t('templateLibraries.filterAll')}</option>
+            {usableLibraries.map((library) => (
+              <option key={library.id} value={library.id}>
+                {library.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span>{t('templateLibraries.filterKind')}</span>
+          <select
+            value={filter.kind}
+            onChange={(event) => setFilter({ ...filter, kind: event.target.value as LibraryItemFilter['kind'] })}
+            style={{ padding: '6px 8px' }}
+          >
+            <option value="">{t('templateLibraries.filterAll')}</option>
+            <option value="page">{t('templateLibraries.kindPage')}</option>
+            <option value="section">{t('templateLibraries.kindSection')}</option>
+          </select>
+        </label>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span>{t('templateLibraries.filterCategory')}</span>
+          <select value={filter.category} onChange={(event) => setFilter({ ...filter, category: event.target.value })} style={{ padding: '6px 8px' }}>
+            <option value="">{t('templateLibraries.filterAll')}</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </label>
+        {filterActive ? (
+          <button type="button" className="btn btn--style-secondary btn--size-small" onClick={() => setFilter(EMPTY_LIBRARY_FILTER)}>
+            {t('templateLibraries.clearFilters')}
+          </button>
+        ) : null}
         <a href={settingsHref}>{t('templateLibraries.title')}</a>
       </div>
+      {listing && listing.ok !== false && filterActive ? (
+        <p role="status" style={{ margin: '0 0 12px', fontSize: 13 }}>
+          {t('templateLibraries.resultCount', { shown: items.length, total: allItems.length })}
+        </p>
+      ) : null}
 
       {error ? <p role="alert">{error}</p> : null}
       {listing && listing.ok === false ? <p role="alert">{listing.error}</p> : null}

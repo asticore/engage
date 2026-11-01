@@ -1,5 +1,5 @@
 import { checkLibraryAccess } from '@/features/templateLibraries/loader'
-import { libraryJson, librarySettingsAccess, storeEngine } from '@/features/templateLibraries/server'
+import { libraryJson, librarySettingsAccess, recordLibraryAudit, storeEngine } from '@/features/templateLibraries/server'
 import { readLibraryState } from '@/features/templateLibraries/store'
 import { clientKey, hit } from '@/features/security/rateLimit'
 
@@ -29,6 +29,8 @@ export async function POST(request: Request): Promise<Response> {
         return { libraryId: check.libraryId, libraryLabel: check.libraryLabel, ok: checked.ok, message: checked.ok ? checked.value : checked.error }
       }),
     )
+    const failed = results.filter((result) => !result.ok).length
+    await recordLibraryAudit(access.context, request, `Template library token tested: ${results.length} libraries, ${failed} failed`)
     return libraryJson({ ok: true, hasToken: Boolean(state.token), results })
   } catch (error) {
     console.error('template-libraries test-token error:', error instanceof Error ? error.name : 'unknown')

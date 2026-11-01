@@ -88,6 +88,22 @@ export const Integrations: GlobalConfig = {
       },
     },
     {
+      name: 'blogBrandVoice',
+      type: 'textarea',
+      label: 'Blog builder: brand voice',
+      maxLength: 600,
+      admin: {
+        description:
+          'Up to 600 characters on how the site sounds (tone, what to avoid, how to address readers). Sent with every Write with AI request. Leave empty for none.',
+      },
+    },
+    {
+      // Saved prompts for Write with AI: a JSON list kept by /api/admin-blog-builder/prompts. Not edited here.
+      name: 'blogSavedPrompts',
+      type: 'text',
+      admin: { hidden: true },
+    },
+    {
       type: 'group',
       name: 'translation',
       label: 'Machine translation (Google Cloud, DeepL)',

@@ -7,15 +7,28 @@ import { adminCollectionPath } from '@/admin/adminPaths'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings'
 import {
+  BLOG_CALL_LIMITS,
   BLOG_LENGTH_WORDS,
+  DEFAULT_CALL_LIMIT,
+  MAX_SOURCES,
   parseKeywords,
   type BlogLength,
   type BlogMeta,
   type BlogOutlineItem,
   type BlogTone,
 } from '../request'
+import type { SavedPrompt } from '../savedPrompts'
 
-import { BlogBuilderError, postBlogStep, type BlogStepBody, type BlogUsage } from './api'
+import {
+  BlogBuilderError,
+  fetchMediaMatches,
+  postBlogStep,
+  postSavedPrompt,
+  type BlogMediaMatch,
+  type BlogSavedPrompt,
+  type BlogStepBody,
+  type BlogUsage,
+} from './api'
 
 type Step = 'brief' | 'titles' | 'outline' | 'write' | 'details' | 'done'
 const STEP_ORDER: Step[] = ['brief', 'titles', 'outline', 'write', 'details']
@@ -47,14 +60,44 @@ type Props = {
   usage: BlogUsage | null
   onUsage: (usage: BlogUsage | null) => void
   onClose: () => void
+  savedPrompts: BlogSavedPrompt[]
+  onSavedPrompts: (prompts: BlogSavedPrompt[]) => void
 }
 
 const usd = (value: number): string => `$${value.toFixed(2)}`
 
+/** A random id for this post's draft. The server counts its AI calls under it. */
+const newDraftKey = (): string =>
+  globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
+
+/** One link per line, as the server reads them. Empty lines are dropped. */
+const sourceLines = (text: string): string[] =>
+  text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, MAX_SOURCES)
+
+/** The message for a failed step. A post that used its AI calls gets the translated text. */
+const failureMessage = (caught: unknown, fallback: string, postLimit: string): string => {
+  if (!(caught instanceof BlogBuilderError)) return fallback
+  return caught.code === 'post_limit' ? postLimit : caught.message
+}
+
 /** The guided flow: brief, title, outline, sections, details, then a saved draft. Nothing is published here. */
-export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
+export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, onSavedPrompts }: Props) {
   const t = useAdminT()
   const [step, setStep] = useState<Step>('brief')
+  const [draftKey, setDraftKey] = useState<string>(newDraftKey)
+  const [callLimit, setCallLimit] = useState<number>(DEFAULT_CALL_LIMIT)
+  const [sourcesText, setSourcesText] = useState('')
+  const [promptChoice, setPromptChoice] = useState('')
+  const [promptName, setPromptName] = useState('')
+  const [featuredPrompt, setFeaturedPrompt] = useState('')
+  const [mediaMatches, setMediaMatches] = useState<BlogMediaMatch[]>([])
+  const [mediaSearched, setMediaSearched] = useState(false)
+  const [mediaBusy, setMediaBusy] = useState(false)
+  const [featuredImageId, setFeaturedImageId] = useState<number | null>(null)
   const [topic, setTopic] = useState('')
   const [audience, setAudience] = useState('')
   const [tone, setTone] = useState<BlogTone>('friendly')
@@ -96,6 +139,9 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
     callToAction: callToAction.trim(),
   })
 
+  /** The fields every AI step carries: the sources, and this post's key and call limit. */
+  const common = () => ({ sources: sourceLines(sourcesText), draftKey, callLimit })
+
   /** One AI step. Shows the progress count, records the usage, and reports errors in the dialog. */
   const run = async <T,>(
     label: string,
@@ -109,7 +155,7 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
     setProgress(0)
     setError(null)
     try {
-      const data = await postBlogStep(body, {
+      const data = await postBlogStep({ ...common(), ...body } as BlogStepBody, {
         signal: ctrl.signal,
         onProgress: (chars) => mounted.current && setProgress(chars),
       })
@@ -118,7 +164,7 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
       return pick(data)
     } catch (caught) {
       if (!mounted.current || ctrl.signal.aborted) return null
-      setError(caught instanceof BlogBuilderError ? caught.message : t('blog.ai.failed'))
+      setError(failureMessage(caught, t('blog.ai.failed'), t('blog.ai.postLimit')))
       return null
     } finally {
       if (mounted.current) {
@@ -197,9 +243,74 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
     const found = await run(
       'details',
       { action: 'details', brief: brief(), title: title.trim(), outline, sections },
-      (d) => d.meta as BlogMeta,
+      (d) => ({ meta: d.meta as BlogMeta, featuredImagePrompt: String(d.featuredImagePrompt ?? '') }),
     )
-    if (found) setMeta({ ...found, tags: found.tags.join(', ') })
+    if (found) {
+      setMeta({ ...found.meta, tags: found.meta.tags.join(', ') })
+      setFeaturedPrompt(found.featuredImagePrompt)
+      setMediaMatches([])
+      setMediaSearched(false)
+      setFeaturedImageId(null)
+    }
+  }
+
+  /** Looks for pictures already in the gallery that match the title and keywords. Nothing is uploaded here. */
+  const findMedia = async () => {
+    setMediaBusy(true)
+    setError(null)
+    try {
+      const found = await fetchMediaMatches(`${title} ${parseKeywords(keywords).join(' ')}`)
+      if (!mounted.current) return
+      setMediaMatches(found)
+      setMediaSearched(true)
+      setFeaturedImageId(null)
+    } catch (caught) {
+      if (mounted.current) setError(caught instanceof BlogBuilderError ? caught.message : t('blog.ai.failed'))
+    } finally {
+      if (mounted.current) setMediaBusy(false)
+    }
+  }
+
+  const usePrompt = () => {
+    const prompt: SavedPrompt | undefined = savedPrompts.find((candidate) => candidate.id === promptChoice)
+    if (!prompt) return
+    setTopic(prompt.brief.topic)
+    setAudience(prompt.brief.audience)
+    setTone(prompt.brief.tone)
+    setLength(prompt.brief.length)
+    setKeywords(prompt.brief.keywords.join(', '))
+    setCallToAction(prompt.brief.callToAction)
+  }
+
+  const savePrompt = async () => {
+    setBusy('prompt')
+    setError(null)
+    try {
+      const list = await postSavedPrompt({ action: 'save', name: promptName.trim(), brief: brief() })
+      if (!mounted.current) return
+      onSavedPrompts(list)
+      setPromptName('')
+    } catch (caught) {
+      if (mounted.current) setError(caught instanceof BlogBuilderError ? caught.message : t('blog.ai.failed'))
+    } finally {
+      if (mounted.current) setBusy(null)
+    }
+  }
+
+  const deletePrompt = async () => {
+    if (!promptChoice) return
+    setBusy('prompt')
+    setError(null)
+    try {
+      const list = await postSavedPrompt({ action: 'delete', id: promptChoice })
+      if (!mounted.current) return
+      onSavedPrompts(list)
+      setPromptChoice('')
+    } catch (caught) {
+      if (mounted.current) setError(caught instanceof BlogBuilderError ? caught.message : t('blog.ai.failed'))
+    } finally {
+      if (mounted.current) setBusy(null)
+    }
   }
 
   const createDraft = async () => {
@@ -209,9 +320,11 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
     try {
       const data = await postBlogStep({
         action: 'create',
+        ...common(),
         title: title.trim(),
         outline,
         sections,
+        featuredImageId,
         meta: {
           metaTitle: meta.metaTitle.trim(),
           metaDescription: meta.metaDescription.trim(),
@@ -224,8 +337,7 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
       setCreated({ id: String(data.id), slug: String(data.slug) })
       setStep('done')
     } catch (caught) {
-      if (mounted.current)
-        setError(caught instanceof BlogBuilderError ? caught.message : t('blog.ai.failed'))
+      if (mounted.current) setError(failureMessage(caught, t('blog.ai.failed'), t('blog.ai.postLimit')))
     } finally {
       if (mounted.current) setBusy(null)
     }
@@ -276,6 +388,29 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
           void goTitles()
         }}
       >
+        <div className="blog-ai__field">
+          <label>
+            <span>{t('blog.ai.savedPrompts')}</span>
+            <select value={promptChoice} onChange={(e) => setPromptChoice(e.target.value)}>
+              <option value="">
+                {savedPrompts.length > 0 ? t('blog.ai.choosePrompt') : t('blog.ai.noSavedPrompts')}
+              </option>
+              {savedPrompts.map((prompt) => (
+                <option key={prompt.id} value={prompt.id}>
+                  {prompt.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="blog-ai__row">
+            <button type="button" className="btn" disabled={!promptChoice || busyNow} onClick={usePrompt}>
+              {t('blog.ai.usePrompt')}
+            </button>
+            <button type="button" className="btn" disabled={!promptChoice || busyNow} onClick={() => void deletePrompt()}>
+              {t('blog.ai.deletePrompt')}
+            </button>
+          </div>
+        </div>
         <label className="blog-ai__field">
           <span>{t('blog.ai.topic')}</span>
           <small>{t('blog.ai.topicHint')}</small>
@@ -339,6 +474,45 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
             onChange={(e) => setCallToAction(e.target.value)}
           />
         </label>
+        <label className="blog-ai__field">
+          <span>{t('blog.ai.sources')}</span>
+          <small>{t('blog.ai.sourcesHint', { max: MAX_SOURCES })}</small>
+          <textarea
+            rows={3}
+            value={sourcesText}
+            onChange={(e) => setSourcesText(e.target.value)}
+          />
+        </label>
+        <label className="blog-ai__field">
+          <span>{t('blog.ai.callLimit')}</span>
+          <small>{t('blog.ai.callLimitHint')}</small>
+          <select value={callLimit} onChange={(e) => setCallLimit(Number(e.target.value))}>
+            {BLOG_CALL_LIMITS.map((value) => (
+              <option key={value} value={value}>
+                {t('blog.ai.callLimitOption', { count: value })}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="blog-ai__row">
+          <label className="blog-ai__field">
+            <span>{t('blog.ai.promptName')}</span>
+            <input
+              type="text"
+              maxLength={60}
+              value={promptName}
+              onChange={(e) => setPromptName(e.target.value)}
+            />
+          </label>
+          <button
+            type="button"
+            className="btn"
+            disabled={busyNow || !promptName.trim() || !topic.trim()}
+            onClick={() => void savePrompt()}
+          >
+            {t('blog.ai.savePrompt')}
+          </button>
+        </div>
       </form>
     )
   } else if (step === 'titles') {
@@ -466,6 +640,50 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
           void createDraft()
         }}
       >
+        <h3>{t('blog.ai.featuredHeading')}</h3>
+        <label className="blog-ai__field">
+          <span>{t('blog.ai.featuredPrompt')}</span>
+          <small>{t('blog.ai.featuredHint')}</small>
+          <textarea
+            rows={2}
+            maxLength={300}
+            value={featuredPrompt}
+            onChange={(e) => setFeaturedPrompt(e.target.value)}
+          />
+        </label>
+        <div>
+          <button type="button" className="btn" onClick={() => void findMedia()} disabled={busyNow || mediaBusy || !title.trim()}>
+            {mediaBusy ? t('blog.ai.mediaSearching') : t('blog.ai.findMedia')}
+          </button>
+        </div>
+        {mediaSearched && mediaMatches.length === 0 ? <p className="blog-ai__hint">{t('blog.ai.mediaNone')}</p> : null}
+        {mediaMatches.length > 0 ? (
+          <fieldset className="blog-ai__form">
+            <legend>{t('blog.ai.mediaResults')}</legend>
+            <label className="blog-ai__choice">
+              <input
+                type="radio"
+                name="blog-ai-featured"
+                checked={featuredImageId === null}
+                onChange={() => setFeaturedImageId(null)}
+              />
+              <span>{t('blog.ai.noFeatured')}</span>
+            </label>
+            {mediaMatches.map((match) => (
+              <label key={match.id} className="blog-ai__choice">
+                <input
+                  type="radio"
+                  name="blog-ai-featured"
+                  checked={featuredImageId === match.id}
+                  onChange={() => setFeaturedImageId(match.id)}
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={match.url} alt="" width={64} height={64} loading="lazy" style={{ objectFit: 'cover', borderRadius: 4 }} />
+                <span>{match.alt || match.filename}</span>
+              </label>
+            ))}
+          </fieldset>
+        ) : null}
         <h3>{t('blog.ai.detailsHeading')}</h3>
         <label className="blog-ai__field">
           <span>{t('blog.ai.metaTitle')}</span>
@@ -541,6 +759,11 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose }: Props) {
     setSections([])
     setCreated(null)
     setError(null)
+    setDraftKey(newDraftKey())
+    setFeaturedPrompt('')
+    setMediaMatches([])
+    setMediaSearched(false)
+    setFeaturedImageId(null)
   }
 
   return (

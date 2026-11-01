@@ -36,19 +36,25 @@ export type DraftInput = {
   outline: BlogOutlineItem[]
   sections: string[]
   meta: BlogMeta
+  /** The admin's sources, numbered as the text cites them. */
+  sources?: string[]
+  /** The gallery picture chosen as the featured image, when one was. */
+  featuredImageId?: number | null
 }
 
 /** The posts data for a new draft. Pure, so the shape is easy to assert. */
 export function draftData(input: DraftInput, slug: string): Record<string, unknown> {
-  return {
+  const data: Record<string, unknown> = {
     title: input.title,
     slug,
     excerpt: input.meta.metaDescription,
-    content: postContent(input.outline, input.sections),
+    content: postContent(input.outline, input.sections, input.sources ?? []),
     categories: input.meta.category ? [{ name: input.meta.category }] : [],
     tags: input.meta.tags.map((name) => ({ name })),
     seo: { metaTitle: input.meta.metaTitle, metaDescription: input.meta.metaDescription },
   }
+  if (typeof input.featuredImageId === 'number') data.featuredImage = input.featuredImageId
+  return data
 }
 
 /** Creates the draft as the signed-in user, so the collection's own access rules apply. */

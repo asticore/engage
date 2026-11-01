@@ -124,6 +124,7 @@ export const TemplateLibrariesManager: React.FC = () => {
               onChange={(event) => setUrl(event.target.value)}
               style={{ padding: '6px 8px' }}
             />
+            <small style={{ opacity: 0.8 }}>{t('templateLibraries.pinHint')}</small>
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 160px' }}>
             <span>{t('templateLibraries.nameLabel')}</span>

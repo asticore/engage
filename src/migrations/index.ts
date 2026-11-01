@@ -123,6 +123,7 @@ import * as migration_20270118_100000_ai_usage_estimated from './20270118_100000
 import * as migration_20270125_100000_template_libraries from './20270125_100000_template_libraries';
 import * as migration_20270126_100000_design_grouped from './20270126_100000_design_grouped';
 import * as migration_20270127_100000_template_library_token from './20270127_100000_template_library_token';
+import * as migration_20270128_100000_blog_builder_settings from './20270128_100000_blog_builder_settings';
 
 import * as migration_20270124_100000_privacy_requests from './20270124_100000_privacy_requests';
 export const migrations = [
@@ -755,5 +756,10 @@ export const migrations = [
     up: migration_20270127_100000_template_library_token.up,
     down: migration_20270127_100000_template_library_token.down,
     name: '20270127_100000_template_library_token',
+  },
+  {
+    up: migration_20270128_100000_blog_builder_settings.up,
+    down: migration_20270128_100000_blog_builder_settings.down,
+    name: '20270128_100000_blog_builder_settings',
   },
 ];
