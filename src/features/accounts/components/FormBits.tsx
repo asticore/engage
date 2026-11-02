@@ -35,8 +35,8 @@ export const Note: React.FC<{ state: ActionState }> = ({ state }) => {
       className={`account-note account-note--${state.status}`}
       // Announced when it appears, so someone using a screen reader hears the
       // outcome of a submit instead of having to go looking for it.
-      role="status"
-      aria-live="polite"
+      role={state.status === 'error' ? 'alert' : 'status'}
+      aria-live={state.status === 'error' ? 'assertive' : 'polite'}
     >
       {state.message}
     </p>

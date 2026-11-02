@@ -167,6 +167,11 @@ export type PasskeySettings = {
   /** Shown in the device prompt. Empty means the site name. */
   rpName: string
   userVerification: 'preferred' | 'required'
+  /**
+   * A passkey sign-in that confirmed the PIN or biometric skips the authenticator-app code.
+   * Off by default: the code is still asked for. A passkey that did not confirm it always asks.
+   */
+  skipTwoFactor: boolean
 }
 
 export const DEFAULT_PASSKEY_SETTINGS: PasskeySettings = {
@@ -174,6 +179,7 @@ export const DEFAULT_PASSKEY_SETTINGS: PasskeySettings = {
   allowAdmins: false,
   rpName: '',
   userVerification: 'preferred',
+  skipTwoFactor: false,
 }
 
 export type PasswordlessSettings = {
@@ -275,7 +281,7 @@ export const passwordPolicyFrom = (get: (key: string) => unknown): PasswordPolic
   }
 }
 
-/** Reads the four passkey fields; `get` takes the camelCase name the engine uses. */
+/** Reads the passkey fields; `get` takes the camelCase name the engine uses. */
 export const passkeysFrom = (get: (key: string) => unknown): PasskeySettings => {
   const base = DEFAULT_PASSKEY_SETTINGS
   const rp = get('passkeys_rp_name')
@@ -285,6 +291,7 @@ export const passkeysFrom = (get: (key: string) => unknown): PasskeySettings => 
     allowAdmins: asBool(get('passkeys_allow_admins'), base.allowAdmins),
     rpName: typeof rp === 'string' ? rp.trim().slice(0, 80) : base.rpName,
     userVerification: uv === 'required' ? 'required' : 'preferred',
+    skipTwoFactor: asBool(get('passkeys_skip_two_factor'), base.skipTwoFactor),
   }
 }
 

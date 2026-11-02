@@ -28,10 +28,10 @@ import {
  *   2. A ceremony signs a fresh challenge that was issued to this browser (signed cookie,
  *      five minutes). The origin and rpId come from the site, never from the request body.
  *   3. Sign-in ends in the engine's own `loginAsUser`, so a locked account is refused and a
- *      two-step account is still asked for its code - EXCEPT when the passkey itself proved
- *      the user (user verification performed). Then the TOTP step is skipped, because a
- *      device PIN or biometric plus the possession of the key is already a strong factor.
- *      A passkey signed in without user verification still gets the TOTP step if enrolled.
+ *      two-step account is still asked for its code. The one exception is an owner who has
+ *      switched on "a passkey that verified the user skips the authenticator-app code" (off
+ *      by default): then a passkey that performed user verification skips the TOTP step.
+ *      A passkey signed in without user verification always gets the TOTP step if enrolled.
  *      The skip is decided here, nowhere else, and recorded in the audit detail.
  *   4. Registration and removal re-check the person: a password or a two-step code when the
  *      account has a password. A stolen session alone cannot add a passkey.
@@ -286,13 +286,15 @@ export async function loginWithPasskey(
     }
 
     await deps.store.recordUse(row.id, auth.signCount, new Date(now).toISOString())
-    const result = await deps.loginAsUser(userId, uv)
+    // The two-step code is skipped only when the owner allowed it AND the device confirmed the PIN or biometric.
+    const skipTwoFactor = uv && deps.settings.skipTwoFactor
+    const result = await deps.loginAsUser(userId, skipTwoFactor)
     if (result.twoFactorRequired && result.pendingToken) {
       await deps.audit('passkey.login', `${uv ? 'user verified' : 'user not verified'}: two-step code next`, userId)
       return { status: 'two-factor', pendingToken: result.pendingToken }
     }
     if (!result.token) return refusedFor('no session issued', userId)
-    await deps.audit('passkey.login', uv ? 'user verified' : 'user not verified', userId)
+    await deps.audit('passkey.login', `${uv ? 'user verified' : 'user not verified'}${skipTwoFactor ? ', two-step code skipped' : ''}`, userId)
     return { status: 'ok', token: result.token }
   } catch (error) {
     return refusedFor(error instanceof WebAuthnError ? error.message : 'lock or session error', row?.userId)
