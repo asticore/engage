@@ -9,7 +9,7 @@ import { ValidationError } from '@/localapi/operations'
 import type { CustomFieldDef, FieldGroupDoc } from '@/fields/customFields/types'
 
 import { normalizeFieldGroup, normalizeDefinition, legacyFieldsToDefinition, effectiveDefinition, effectiveLocation, defaultValueFor, findDuplicateNames, MAX_FIELD_DEPTH } from '@/features/customFields/normalize'
-import { matchesLocation, couldApplyToCollection } from '@/features/customFields/location'
+import { matchesLocation, couldApplyToCollection, optionsPageContext } from '@/features/customFields/location'
 import { evaluateConditions, pruneHiddenValues } from '@/features/customFields/conditions'
 import { validateFieldValues, definitionsFor, applyDefaults, isAllowedOembedUrl } from '@/features/customFields/validate'
 import { buildCustomFieldContext, buildGuessedCustomContext, collectMediaIds, stringifyFieldValue } from '@/features/customFields/stringify'
@@ -41,7 +41,7 @@ vi.mock('@/features/customFields/server', async (importOriginal) => {
 })
 vi.mock('@/admin/auth', () => ({ getAdminContext: adminMock.getAdminContext }))
 vi.mock('@/lib/engine', () => ({ getEngine: engineMock.getEngine }))
-vi.mock('next/headers', () => ({ cookies: async (): Promise<unknown> => ({ get: (): undefined => undefined }) }))
+vi.mock('next/headers', () => ({ cookies: async (): Promise<unknown> => ({ get: (): undefined => undefined }), headers: async (): Promise<Headers> => new Headers() }))
 vi.mock('@/features/visibility/gate', () => ({ getPasswordGateState: async (): Promise<string> => 'open' }))
 vi.mock('@/utilities/seo', () => ({ buildMetadata: (args: unknown) => args }))
 vi.mock('@/features/seo', () => ({ PageJsonLd: (): null => null }))
@@ -161,6 +161,31 @@ describe('location matching', () => {
     const opts = [[{ param: 'optionsPage' as const, operator: 'equals' as const, value: 'contact' }]]
     expect(matchesLocation(opts, { optionsPage: 'contact' })).toBe(true)
     expect(couldApplyToCollection(opts, 'pages')).toBe(false)
+  })
+
+  it('matches options pages by user role and by a field value, not only by slug', () => {
+    const byRole = [[{ param: 'userRole' as const, operator: 'equals' as const, value: 'editor' }]]
+    expect(matchesLocation(byRole, optionsPageContext('contact', {}, ['editor']))).toBe(true)
+    expect(matchesLocation(byRole, optionsPageContext('contact', {}, ['viewer']))).toBe(false)
+    // Public pages do not know the viewer's roles, so a role rule never adds a tag.
+    expect(matchesLocation(byRole, optionsPageContext('contact', {}))).toBe(false)
+
+    const byValue = [[{ param: 'fieldValue' as const, field: 'kind', operator: 'equals' as const, value: 'shop' }]]
+    expect(matchesLocation(byValue, optionsPageContext('contact', { kind: 'shop' }))).toBe(true)
+    expect(matchesLocation(byValue, optionsPageContext('contact', { kind: 'cafe' }))).toBe(false)
+    expect(matchesLocation(byValue, optionsPageContext('contact', { kind: ['cafe', 'shop'] }))).toBe(true)
+    expect(matchesLocation(byValue, optionsPageContext('contact', {}))).toBe(false)
+    // A collection context has no options values, so a field value rule never matches there.
+    expect(matchesLocation(byValue, { collection: 'pages' })).toBe(false)
+    // Listing the groups that could show on a page ignores the values.
+    expect(matchesLocation(byValue, optionsPageContext('contact', {}), { ignoreFieldValues: true })).toBe(true)
+  })
+
+  it('keeps the field name of a field value rule and drops one without a field', () => {
+    expect(normalizeLocation([[{ param: 'fieldValue', field: 'kind', operator: 'equals', value: 'shop' }]])).toEqual([
+      [{ param: 'fieldValue', field: 'kind', operator: 'equals', value: 'shop' }],
+    ])
+    expect(normalizeLocation([[{ param: 'fieldValue', operator: 'equals', value: 'shop' }]])).toEqual([])
   })
 })
 

@@ -4,6 +4,8 @@ import React from 'react'
 import { loadFieldGroups, fetchMediaUrls } from '../server'
 import { getOptionValues, isValidOptionSlug } from '../options'
 import { collectMediaIds } from '../stringify'
+import { editorRoles } from '../adminRoles'
+import { matchesLocation, optionsPageContext } from '../location'
 import { OptionsForm } from './OptionsForm'
 import type { FieldGroupDoc } from '@/fields/customFields/types'
 
@@ -43,8 +45,10 @@ export async function OptionsView({ searchParams }: { searchParams?: Record<stri
     )
   }
 
-  const pageGroups = groups.filter((g) => g.location.some((rules) => rules.some((r) => r.param === 'optionsPage' && r.value === current)))
+  const userRoles = await editorRoles()
   const stored = await getOptionValues(current)
+  // Groups that could show on this page; the form checks field value rules as the values change.
+  const pageGroups = groups.filter((g) => matchesLocation(g.location, optionsPageContext(current, stored.values, userRoles), { ignoreFieldValues: true }))
   const mediaUrls = await fetchMediaUrls(collectMediaIds(pageGroups.flatMap((g) => g.fields), stored.values))
 
   return (
@@ -68,6 +72,7 @@ export async function OptionsView({ searchParams }: { searchParams?: Record<stri
         key={current}
         slug={current}
         groups={pageGroups}
+        userRoles={userRoles}
         initialValues={stored.values}
         initialUpdatedAt={stored.updatedAt}
         initialMediaUrls={Object.fromEntries(mediaUrls)}

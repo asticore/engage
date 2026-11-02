@@ -5,6 +5,8 @@ import { isValidOptionSlug, getOptionValues, saveOptionValues } from '@/features
 import { pruneHiddenValues } from '@/features/customFields/conditions'
 import { loadFieldGroups } from '@/features/customFields/server'
 import { definitionsFor, definedValueKeys, validateFieldValues } from '@/features/customFields/validate'
+import { editorRoles } from '@/features/customFields/adminRoles'
+import { matchesLocation, optionsPageContext } from '@/features/customFields/location'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,9 +40,11 @@ export async function GET(_request: Request, { params }: Ctx): Promise<Response>
     const { slug } = await params
     if (!isValidOptionSlug(slug)) return NextResponse.json({ error: 'Invalid options page' }, { status: 400 })
 
-    const [{ values, updatedAt }, groups] = await Promise.all([getOptionValues(slug), loadFieldGroups()])
-    const applicable = groups.filter((g) => g.location.some((rules) => rules.some((r) => r.param === 'optionsPage' && r.value === slug)))
-    return NextResponse.json({ slug, values, updatedAt, groups: applicable }, { headers: { 'Cache-Control': 'no-store' } })
+    const [{ values, updatedAt }, groups, userRoles] = await Promise.all([getOptionValues(slug), loadFieldGroups(), editorRoles()])
+    // Every group whose rules could hold for this page. Field value rules are checked as the page is edited.
+    const ctx = optionsPageContext(slug, values, userRoles)
+    const applicable = groups.filter((g) => matchesLocation(g.location, ctx, { ignoreFieldValues: true }))
+    return NextResponse.json({ slug, values, updatedAt, groups: applicable, userRoles }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('admin-field-options GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -72,7 +76,8 @@ export async function POST(request: Request, { params }: Ctx): Promise<Response>
     }
 
     const groups = await loadFieldGroups()
-    const defs = definitionsFor(groups, { optionsPage: slug })
+    // The values sent are the ones the form shows, so a field value rule is checked against them.
+    const defs = definitionsFor(groups, optionsPageContext(slug, incoming, await editorRoles()))
     // Only keys this options page's groups define are kept. Anything else is ignored, not stored.
     const defined = definedValueKeys(defs)
     const known = Object.fromEntries(Object.entries(incoming).filter(([key]) => defined.has(key)))

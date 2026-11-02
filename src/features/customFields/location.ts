@@ -30,6 +30,8 @@ export type LocationContext = {
   audience?: 'members' | 'guests' | null
   /** Site template page scoping: the id of the published page the request is for, as a string. Undefined = not known here. */
   pageId?: string | null
+  /** Options pages: the page's values (a field value rule reads one by name). Undefined = not an options page context. */
+  fieldValues?: Record<string, unknown> | null
 }
 
 /** Like `includes`, but the context value may be a single string or a list; a rule matches when any equals it. */
@@ -37,9 +39,23 @@ const anyEquals = (raw: string | string[] | null, value: string): boolean => (Ar
 
 const asId = (value: string | number | null | undefined): string => (value === null || value === undefined ? '' : String(value))
 
-function ruleMatches(rule: LocationRule, ctx: LocationContext): boolean {
+/** Compares one stored value with the rule value. A list matches when any item equals it. Empty values never match. */
+function fieldValueMatches(values: Record<string, unknown>, field: string | undefined, expected: string): boolean {
+  if (!field) return false
+  const current = values[field]
+  if (Array.isArray(current)) return current.some((item) => item !== null && item !== undefined && String(item) === expected)
+  if (current === null || current === undefined || typeof current === 'object') return false
+  return String(current) === expected
+}
+
+function ruleMatches(rule: LocationRule, ctx: LocationContext, options: MatchOptions): boolean {
   let hit: boolean
+  if (rule.param === 'fieldValue' && options.ignoreFieldValues) return true
   switch (rule.param) {
+    case 'fieldValue':
+      if (ctx.fieldValues === undefined) return false
+      hit = fieldValueMatches(ctx.fieldValues ?? {}, rule.field, rule.value)
+      break
     case 'collection':
       if (ctx.collection === undefined) return false
       hit = ctx.collection === rule.value
@@ -113,11 +129,27 @@ function ruleMatches(rule: LocationRule, ctx: LocationContext): boolean {
   return rule.operator === 'notEquals' ? !hit : hit
 }
 
+export type MatchOptions = {
+  /**
+   * Treat field value rules as matching. Used to list the groups that could
+   * show on an Options page before its values are known; the page then checks
+   * the values as they are edited.
+   */
+  ignoreFieldValues?: boolean
+}
+
+/** The context of an Options page: its slug, its values and the roles of the person looking at it (undefined when not known). */
+export function optionsPageContext(slug: string, values: Record<string, unknown>, userRoles?: string[] | null): LocationContext {
+  const ctx: LocationContext = { optionsPage: slug, fieldValues: values }
+  if (userRoles !== undefined) ctx.userRoles = userRoles
+  return ctx
+}
+
 /** True when the location groups (OR of AND-rules) match the context. No groups = matches nothing. */
-export function matchesLocation(location: LocationGroups | { location: LocationGroups }, ctx: LocationContext): boolean {
+export function matchesLocation(location: LocationGroups | { location: LocationGroups }, ctx: LocationContext, options: MatchOptions = {}): boolean {
   const groups = Array.isArray(location) ? location : location.location
   if (!groups || groups.length === 0) return false
-  return groups.some((rules) => rules.length > 0 && rules.every((rule) => ruleMatches(rule, ctx)))
+  return groups.some((rules) => rules.length > 0 && rules.every((rule) => ruleMatches(rule, ctx, options)))
 }
 
 /** Groups that could apply to a collection: they name it, or they name no collection at all. Options-page-only groups are excluded. */

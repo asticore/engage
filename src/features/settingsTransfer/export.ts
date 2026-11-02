@@ -1,6 +1,7 @@
 import type { Engine } from '@/engine'
 
 import { encryptJson } from './crypto'
+import { nameRelationsForExport } from './relations'
 import {
   ADMIN_PANEL_ROLES,
   DOC_NOISE_KEYS,
@@ -188,9 +189,8 @@ export async function buildExport(engine: Engine, options: ExportOptions): Promi
   ]
   for (const [key, collection, enabled] of contentDocs) {
     if (!enabled) continue
-    file.content[key] = (await listAll(engine, collection)).map((doc) =>
-      withoutKeys(doc, [...DOC_NOISE_KEYS, ...RELATION_KEYS]),
-    )
+    // Relation fields (parent, featured image, author, images and so on) are written as names, see relations.ts.
+    file.content[key] = await nameRelationsForExport(engine, collection, await listAll(engine, collection), warnings)
   }
 
   // Picture details keep the source id, so an import can match a picture by id and remap the
