@@ -1,4 +1,3 @@
-import { normaliseFormConfig } from './config'
 import {
   cleanDraftEmail,
   cleanDraftPage,
@@ -13,7 +12,8 @@ import {
   serialiseDraftValues,
 } from './drafts'
 import { findDraftByToken, replaceDraft, type DraftEngine } from './draftStore'
-import { checkOrigin, corsHeaders } from './origin'
+import { findEmbedByKey, type EmbedRecord } from './embeds'
+import { checkOrigin, checkSiteOrigin, corsHeaders, type OriginDecision } from './origin'
 import { withResolvedFields } from './layout'
 import { loadPublishedForm, type LookupEngine } from './server'
 import { formsEnabled } from './settings'
@@ -51,13 +51,28 @@ export type DraftRouteEngine = DraftEngine &
     logger?: { warn: (...args: unknown[]) => void }
   }
 
+/**
+ * The form a request names: an embed's own key takes that embed (its form, and its websites are checked), any
+ * other key is the form on this site. Same rule as the submit route (submitRequest.ts).
+ */
+async function formForKey(engine: DraftRouteEngine, key: string): Promise<{ form: Awaited<ReturnType<typeof loadPublishedForm>>; embed: EmbedRecord | null }> {
+  const embed = await findEmbedByKey(key).catch((): null => null)
+  if (embed && !embed.enabled) return { form: null, embed: null }
+  const form = await loadPublishedForm(engine, embed ? embed.formId : key)
+  return { form, embed }
+}
+
+function originFor(request: Request, url: URL, embed: EmbedRecord | null): OriginDecision {
+  const origin = request.headers.get('origin')
+  return embed ? checkOrigin(origin, embed.allowedOrigins, url.origin) : checkSiteOrigin(origin, url.origin)
+}
+
 export async function handleDraftRequest(request: Request, engine: DraftRouteEngine): Promise<Response> {
   const url = new URL(request.url)
 
   if (request.method === 'OPTIONS') {
-    const form = await loadPublishedForm(engine, url.searchParams.get('form') || '')
-    const allowed = form ? normaliseFormConfig((form as { formConfig?: unknown }).formConfig).embed?.allowedOrigins || [] : []
-    const decision = checkOrigin(request.headers.get('origin'), allowed, url.origin)
+    const { form, embed } = await formForKey(engine, url.searchParams.get('form') || '')
+    const decision = form ? originFor(request, url, embed) : checkSiteOrigin(request.headers.get('origin'), url.origin)
     return decision.allowed ? new Response(null, { status: 204, headers: corsHeaders(decision.origin) }) : json({ ok: false, message: 'This website may not use this form.' }, 403)
   }
 
@@ -74,12 +89,11 @@ export async function handleDraftRequest(request: Request, engine: DraftRouteEng
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return json({ ok: false, message: 'That request could not be read.' }, 400)
   const body = parsed as Record<string, unknown>
 
-  const form = await loadPublishedForm(engine, typeof body.form === 'string' || typeof body.form === 'number' ? body.form : '')
+  const { form, embed } = await formForKey(engine, typeof body.form === 'string' || typeof body.form === 'number' ? String(body.form) : '')
   const formRecord = form as (typeof form & { allowSaveForLater?: unknown }) | null
   if (!form || formRecord?.allowSaveForLater !== true) return json(NOT_FOUND, 404)
 
-  const config = normaliseFormConfig(form.formConfig)
-  const decision = checkOrigin(request.headers.get('origin'), config.embed?.allowedOrigins || [], url.origin)
+  const decision = originFor(request, url, embed)
   const cors = corsHeaders(decision.allowed ? decision.origin : null)
   if (!decision.allowed) return json({ ok: false, message: 'This website may not use this form.' }, 403, cors)
 

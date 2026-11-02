@@ -1,42 +1,37 @@
-import { normaliseFormConfig } from './config'
-import { frameAncestors } from './origin'
-
 /**
  * Letting the embed page - and only the embed page - be shown in another
  * website's iframe.
  *
  * Every other path keeps the site-wide `X-Frame-Options` (usually SAMEORIGIN)
- * untouched; this is applied to `/embed/forms/<key>` alone. The allow-list is
- * the form's own, expressed as `frame-ancestors` (which also covers browsers
- * that ignore X-Frame-Options when both are present, so removing the old header
- * is safe).
+ * untouched; this is applied to an embed page alone: /embed/<key> (the hosted
+ * page of one embed) and the older /embed/forms/<key>, which shows the same
+ * page. The allow-list is the embed's own, expressed as `frame-ancestors`
+ * (which also covers browsers that ignore X-Frame-Options when both are
+ * present, so removing the old header is safe).
  */
 
-/** Matches `/embed/forms/<id-or-key>` and returns the key. A trailing slash is allowed, nothing else is. */
+import { cleanEmbedOrigins, RESERVED_EMBED_KEYS } from './embeds'
+import { frameAncestors } from './origin'
+
+/** Matches an embed page address and returns the embed's key, or null. A trailing slash is allowed, nothing else is. */
 export function embedPathKey(pathname: string): string | null {
-  const match = /^\/embed\/forms\/([A-Za-z0-9_-]{1,60})\/?$/.exec(pathname)
-  return match ? match[1] : null
+  const legacy = /^\/embed\/forms\/([A-Za-z0-9_-]{1,60})\/?$/.exec(pathname)
+  if (legacy) return legacy[1]
+  const hosted = /^\/embed\/([A-Za-z0-9_-]{1,60})\/?$/.exec(pathname)
+  if (hosted && !RESERVED_EMBED_KEYS.has(hosted[1])) return hosted[1]
+  return null
 }
 
 export type EmbedFrameDecision =
   | { frameable: false }
   | { frameable: true; contentSecurityPolicy: string }
 
-/** From the stored form config (a JSON string or object) and its status. */
-export function decideEmbedFrame(input: { formConfig: unknown; formStatus?: string | null } | null): EmbedFrameDecision {
+/** From one embed's switch and websites, and the status of its form. Pure. */
+export function decideEmbedFrame(input: { enabled: boolean; allowedOrigins: unknown; formStatus?: string | null } | null): EmbedFrameDecision {
   if (!input) return { frameable: false }
   if (input.formStatus === 'draft') return { frameable: false }
-  let raw = input.formConfig
-  if (typeof raw === 'string') {
-    try {
-      raw = JSON.parse(raw)
-    } catch {
-      raw = null
-    }
-  }
-  const config = normaliseFormConfig(raw)
-  if (config.embed?.enabled === false) return { frameable: false }
-  return { frameable: true, contentSecurityPolicy: `frame-ancestors ${frameAncestors(config.embed?.allowedOrigins || [])}` }
+  if (!input.enabled) return { frameable: false }
+  return { frameable: true, contentSecurityPolicy: `frame-ancestors ${frameAncestors(cleanEmbedOrigins(input.allowedOrigins))}` }
 }
 
 /**

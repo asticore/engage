@@ -29,28 +29,40 @@ export async function pageLiveHref(engine: EngineLike, doc: Record<string, unkno
 }
 
 /**
- * Every page that puts a form on it, keyed by form id. Reads drafts too, because a draft page with a form is
- * still a place the form is used. Only pages the viewer may read are scanned.
+ * Every page that puts a form on it, keyed by form id. Reads drafts too: a form used only in an unpublished
+ * draft is still a use, listed with the draft status. Only pages the viewer may read are scanned.
+ *
+ * Two reads: the live versions (drafts off, which skips pages never published) and the latest version of every
+ * page (drafts on, which includes them). The live row decides the status and the public address.
  */
 export async function loadFormUsage(engine: EngineLike, user: FindUser, forms: Array<{ id: number | string; embedKey?: string | null }>): Promise<Record<string, PageUse[]>> {
   // The usage list is an extra on the Forms screens: if the pages cannot be read, the screen still works without it.
   if (!engine || typeof engine.find !== 'function') return {}
-  const found = await engine.find({ collection: 'pages', depth: 0, limit: 2000, user }).catch(() => ({ docs: [] as unknown[] }))
+  const [live, latest] = await Promise.all([
+    engine.find({ collection: 'pages', depth: 0, limit: 2000, user }).catch(() => ({ docs: [] as unknown[] })),
+    engine.find({ collection: 'pages', depth: 0, limit: 2000, user, draft: true } as never).catch(() => ({ docs: [] as unknown[] })),
+  ])
+  const liveById = new Map<string, Record<string, unknown>>()
+  for (const raw of live.docs) {
+    const doc = raw as Record<string, unknown>
+    const id = idOf(doc.id)
+    if (id !== undefined) liveById.set(String(id), doc)
+  }
   const pages: PageUsePage[] = []
-  for (const raw of found.docs) {
+  for (const raw of latest.docs) {
     const doc = raw as Record<string, unknown>
     const id = idOf(doc.id)
     if (id === undefined) continue
-    const status = doc._status === 'draft' ? 'draft' : 'published'
-    // The live row and the latest draft version can differ. A form used only in an unpublished draft still counts.
-    const latest = typeof engine.findByID !== 'function' ? null : (await engine.findByID({ collection: 'pages', depth: 0, id: id as number, draft: true, overrideAccess: true }).catch((): null => null)) as Record<string, unknown> | null
+    const published = liveById.get(String(id))
+    const source = published ?? doc
     pages.push({
       id,
-      title: typeof doc.title === 'string' ? doc.title : undefined,
-      slug: typeof doc.slug === 'string' ? doc.slug : undefined,
-      status,
-      blocks: [doc.blocks, latest?.blocks],
-      liveHref: status === 'published' ? await pageLiveHref(engine, doc) : undefined,
+      title: typeof source.title === 'string' ? source.title : undefined,
+      slug: typeof source.slug === 'string' ? source.slug : undefined,
+      status: published ? 'published' : 'draft',
+      blocks: published?.blocks,
+      draftBlocks: doc.blocks,
+      liveHref: published ? await pageLiveHref(engine, published) : undefined,
     })
   }
   return Object.fromEntries(pagesUsingForms(forms, pages))
