@@ -195,3 +195,38 @@ export async function installFont(
   }
   return { ok: true, font: { ...planned.plan.font, files } }
 }
+
+/**
+ * Fonts installed before versions were recorded have no `version`, so their
+ * files load from jsDelivr's unpinned `@latest` path. This gives each remote
+ * Fontsource entry that has none the version jsDelivr reports as latest, the
+ * same version a new install pins. `lookup` returns null when the version cannot
+ * be read; that entry is left as it was. Entries that need nothing, and
+ * everything else in the list, are returned unchanged.
+ */
+export async function pinLegacyFontEntries(
+  entries: readonly unknown[],
+  lookup: (id: string) => Promise<string | null>,
+): Promise<{ entries: unknown[]; pinned: number }> {
+  const versions = new Map<string, string | null>()
+  let pinned = 0
+  const out: unknown[] = []
+  for (const entry of entries) {
+    const e = entry && typeof entry === 'object' ? (entry as Record<string, unknown>) : null
+    const id = e ? sanitizeFontId(e.id) : null
+    const needsPin = e !== null && id !== null && e.source === 'fontsource' && e.local !== true && sanitizeVersion(e.version) === null
+    if (!e || !id || !needsPin) {
+      out.push(entry)
+      continue
+    }
+    if (!versions.has(id)) versions.set(id, await lookup(id).catch((): null => null))
+    const version = versions.get(id) ?? null
+    if (!version) {
+      out.push(entry)
+      continue
+    }
+    pinned += 1
+    out.push({ ...e, version })
+  }
+  return { entries: out, pinned }
+}
