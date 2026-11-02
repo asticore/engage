@@ -1,4 +1,4 @@
-import { resolveD1Binding } from '@/cms/db/connect'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
 
 import { decideEmbedFrame, type EmbedFrameDecision } from './embedFrame'
 
@@ -16,7 +16,9 @@ export async function readEmbedFrameDecision(key: string): Promise<EmbedFrameDec
   if (hit && now - hit.at < TTL_MS) return hit.value
   let value: EmbedFrameDecision = { frameable: false }
   try {
-    const d1 = await resolveD1Binding()
+    const { env } = await getCloudflareContext({ async: true })
+    const d1 = (env as { D1?: D1Database }).D1
+    if (!d1) throw new Error('no D1 binding')
     const row = await d1
       .prepare(
         'SELECT e.enabled AS enabled, e.allowed_origins AS allowed_origins, f.form_status AS form_status FROM `eg_form_embeds` e JOIN `eg_forms` f ON f.id = e.form_id WHERE e.embed_key = ? LIMIT 1',
