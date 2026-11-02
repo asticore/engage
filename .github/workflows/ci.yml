@@ -34,8 +34,16 @@ jobs:
           # package.json engines.node requires 24.
           node-version: 24
 
+      # No lockfile is committed, so the cache is keyed on package.json; a miss just installs as before.
+      - name: Cache the pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile --prefer-offline
 
       - name: Type check
         run: pnpm exec tsc --noEmit
@@ -65,8 +73,16 @@ jobs:
           # package.json engines.node requires 24.
           node-version: 24
 
+      # No lockfile is committed, so the cache is keyed on package.json; a miss just installs as before.
+      - name: Cache the pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('package.json') }}
+          restore-keys: pnpm-store-${{ runner.os }}-
+
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile --prefer-offline
 
       - name: Integration specs (safe subset)
         # Specs left out until they are fixed. Checked on 1 Nov 2026 with Node 22 (CI uses 24) in one parallel run:
