@@ -8,7 +8,7 @@ import { ResultsMessage, ResultsPager, ResultsStat } from './ResultsChrome'
 import { formatWhen, type AllRsvpRow, type PageInfo } from './rows'
 import { useResultsPage } from './useResultsPage'
 
-type Page = PageInfo & { docs: AllRsvpRow[] }
+type Page = PageInfo & { docs: AllRsvpRow[]; guestDetailsHidden?: boolean }
 
 /**
  * The RSVPs tab on the Events list page: RSVPs of every event in one table,
@@ -37,16 +37,22 @@ export function AllRsvpsTab({ events }: { events: OwnerOption[] }) {
         <div className="et-stats">
           <ResultsStat label="RSVPs" value={data ? data.totalDocs.toLocaleString() : '-'} />
         </div>
-        <a className="et-button" download href={`/api/admin-event-rsvps?all=1&format=csv${query ? `&${query}` : ''}`}>
-          Export CSV
-        </a>
+        {data?.guestDetailsHidden !== true && (
+          <a className="et-button" download href={`/api/admin-event-rsvps?all=1&format=csv${query ? `&${query}` : ''}`}>
+            Export CSV
+          </a>
+        )}
       </div>
 
       {error && <ResultsMessage kind="error">The RSVPs could not be loaded. Reload the page to try again.</ResultsMessage>}
       {!error && loading && <ResultsMessage kind="muted">Loading RSVPs...</ResultsMessage>}
-      {data && !error && data.docs.length === 0 && <ResultsMessage kind="muted">No RSVPs match.</ResultsMessage>}
+      {data && !error && data.guestDetailsHidden && (
+        <ResultsMessage kind="muted">Guest names and emails are hidden. Ask an administrator for the View guest details permission on your role to see them.</ResultsMessage>
+      )}
 
-      {data && !error && data.docs.length > 0 && (
+      {data && !error && !data.guestDetailsHidden && data.docs.length === 0 && <ResultsMessage kind="muted">No RSVPs match.</ResultsMessage>}
+
+      {data && !error && !data.guestDetailsHidden && data.docs.length > 0 && (
         <>
           <div className="et-table-wrap">
             <table className="et-table">
