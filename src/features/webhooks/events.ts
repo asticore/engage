@@ -13,6 +13,7 @@ export const WEBHOOK_EVENTS = [
   'order.paid',
   'order.refunded',
   'form.submitted',
+  'booking.made',
   'user.registered',
   'tracking-event.saved',
 ] as const
@@ -34,6 +35,7 @@ export const EVENT_LABEL_KEYS: Record<WebhookEvent, string> = {
   'order.paid': 'webhooks.event.order.paid',
   'order.refunded': 'webhooks.event.order.refunded',
   'form.submitted': 'webhooks.event.form.submitted',
+  'booking.made': 'webhooks.event.booking.made',
   'user.registered': 'webhooks.event.user.registered',
   'tracking-event.saved': 'webhooks.event.tracking-event.saved',
 }
@@ -48,6 +50,7 @@ export const EVENT_FIELDS: Record<WebhookEvent, readonly string[]> = {
   'order.paid': ['id', 'status', 'amount', 'customerEmail', 'createdAt'],
   'order.refunded': ['id', 'orderId', 'amount', 'reason', 'createdAt'],
   'form.submitted': ['id', 'formId', 'formTitle', 'submittedAt', 'values'],
+  'booking.made': ['id', 'source', 'eventId', 'formId', 'guestCount', 'status', 'createdAt'],
   'user.registered': ['id', 'createdAt'],
   'tracking-event.saved': ['id', 'name', 'platformEvent', 'triggerType', 'enabled', 'createdAt', 'updatedAt'],
 }

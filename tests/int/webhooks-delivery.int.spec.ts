@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 
 import { createWebhookRecord, deleteWebhookRecord, setWebhookEnabledRecord, updateWebhookRecord } from '@/features/webhooks/admin'
 import { REQUEST_TIMEOUT_MS, verifySignature, type WebhookConfig } from '@/features/webhooks/core'
-import { alertIfFailing, attemptDelivery, processDue, queueEvent, replayDelivery, sendTest, TEST_DATA, type DeliveryDeps } from '@/features/webhooks/delivery'
+import { alertIfFailing, attemptDelivery, processDue, purgeOldLogs, queueEvent, replayDelivery, sendTest, TEST_DATA, type DeliveryDeps } from '@/features/webhooks/delivery'
 import { dispatchEvent } from '@/features/webhooks/emit'
 import { sealSecret } from '@/features/webhooks/secret'
 import type { DeliveryPatch, DeliveryRecord, NewDelivery, WebhookRecord, WebhookStore } from '@/features/webhooks/store'
@@ -14,6 +14,7 @@ function memoryStore() {
   const rows = new Map<number, DeliveryRecord>()
   let hookSeq = 0
   let rowSeq = 0
+  const retention = { days: 30 }
   const store: WebhookStore = {
     list: async () => [...hooks.values()],
     findById: async (id) => hooks.get(id) ?? null,
@@ -38,7 +39,7 @@ function memoryStore() {
     },
     insertDelivery: async (row: NewDelivery, at) => {
       const id = ++rowSeq
-      rows.set(id, { ...row, id, createdAt: at, updatedAt: at })
+      rows.set(id, { ...row, redacted: row.redacted ?? false, id, createdAt: at, updatedAt: at })
       return id
     },
     updateDelivery: async (id, patch: DeliveryPatch, at) => {
@@ -64,8 +65,12 @@ function memoryStore() {
     pruneDeliveries: async (beforeIso) => {
       for (const [rid, r] of rows) if (r.createdAt < beforeIso) rows.delete(rid)
     },
+    getRetentionDays: async () => retention.days,
+    setRetentionDays: async (days) => {
+      retention.days = days
+    },
   }
-  return { store, hooks, rows }
+  return { store, hooks, rows, retention }
 }
 
 const SECRET = 'whsec_unit_test_secret'
@@ -75,7 +80,8 @@ function fixture(now = Date.UTC(2026, 9, 30, 12, 0, 0), fetcher: typeof fetch = 
   const { store, hooks, rows } = memoryStore()
   let clock = now
   let seq = 0
-  const deps: DeliveryDeps = { store, fetcher, now: () => clock, newId: () => `dlv_test_${++seq}` }
+  // The DNS guard resolves to a public address in these tests, so no test reaches a real resolver.
+  const deps: DeliveryDeps = { store, fetcher, now: () => clock, newId: () => `dlv_test_${++seq}`, resolveHost: async () => ['93.184.216.34'] }
   return { deps, store, hooks, rows, setClock: (t: number) => (clock = t), advance: (ms: number) => (clock += ms) }
 }
 
@@ -306,5 +312,98 @@ describe('webhook delivery', () => {
     const f = fixture()
     const outcome = await sendTest(f.deps, 999)
     expect(outcome.status).toBe('failed')
+  })
+})
+
+describe('webhook log redaction, DNS guard and retention', () => {
+  beforeAll(() => {
+    process.env.ENGAGE_SECRET = 'engage-secret-for-webhook-tests'
+  })
+  afterAll(() => {
+    delete process.env.ENGAGE_SECRET
+  })
+
+  const formValues = { id: 7, formId: 2, formTitle: 'Sign up', submittedAt: '2026-10-30T12:00:00.000Z', values: { name: 'Ana', password: 'hunter2', apiKey: 'k_live_123' } }
+
+  it('redacts secret-looking content in the stored body once the delivery has finished, but sends the original', async () => {
+    const sent: string[] = []
+    const { deps, store, rows } = fixture(Date.UTC(2026, 9, 30, 12, 0, 0), async (_url, init) => {
+      sent.push(String((init as RequestInit).body))
+      return new Response('ok', { status: 200 })
+    })
+    await addHook(deps, store, { events: ['form.submitted'] })
+    await dispatchEvent(deps, 'form.submitted', formValues)
+    const row = [...rows.values()][0]
+    expect(sent[0]).toContain('hunter2')
+    expect(row.status).toBe('ok')
+    expect(row.body).not.toContain('hunter2')
+    expect(row.body).not.toContain('k_live_123')
+    expect(row.body).toContain('"name":"Ana"')
+    expect(row.redacted).toBe(true)
+  })
+
+  it('keeps the exact body while the delivery is still waiting to be sent', async () => {
+    const { deps, store, rows } = fixture(Date.UTC(2026, 9, 30, 12, 0, 0), async () => new Response('down', { status: 500 }))
+    const hook = await addHook(deps, store, { events: ['form.submitted'] })
+    await queueEvent(deps, 'form.submitted', formValues)
+    const pending = [...rows.values()].find((r) => r.webhookId === hook.id)!
+    expect(pending.status).toBe('pending')
+    expect(pending.body).toContain('hunter2')
+    expect(pending.redacted).toBe(false)
+  })
+
+  it('refuses to replay a delivery whose stored body was redacted, and says why', async () => {
+    const { deps, store, rows } = fixture(Date.UTC(2026, 9, 30, 12, 0, 0), async () => new Response('ok', { status: 200 }))
+    await addHook(deps, store, { events: ['form.submitted'] })
+    await dispatchEvent(deps, 'form.submitted', formValues)
+    const row = [...rows.values()][0]
+    const outcome = await replayDelivery(deps, row.id)
+    expect(outcome.status).toBe('failed')
+    expect(outcome.error).toMatch(/redacted/)
+  })
+
+  it('does not send to a host name that resolves to a private address, and does not call the receiver', async () => {
+    let called = false
+    const { deps, store, rows } = fixture(Date.UTC(2026, 9, 30, 12, 0, 0), async () => {
+      called = true
+      return new Response('ok', { status: 200 })
+    })
+    deps.resolveHost = async () => ['93.184.216.34', '10.0.0.5']
+    await addHook(deps, store, { events: ['content.published'] })
+    await dispatchEvent(deps, 'content.published', { id: 1, collection: 'pages', title: 'Hi' })
+    const row = [...rows.values()][0]
+    expect(called).toBe(false)
+    expect(row.status).toBe('failed')
+    expect(row.lastError).toMatch(/private or internal/)
+  })
+
+  it('treats a host name that does not resolve as a failure to retry, not a permanent one', async () => {
+    let called = false
+    const { deps, store, rows } = fixture(Date.UTC(2026, 9, 30, 12, 0, 0), async () => {
+      called = true
+      return new Response('ok', { status: 200 })
+    })
+    deps.resolveHost = async () => {
+      throw new Error('lookup down')
+    }
+    await addHook(deps, store, { events: ['content.published'] })
+    await dispatchEvent(deps, 'content.published', { id: 1, collection: 'pages', title: 'Hi' })
+    const row = [...rows.values()][0]
+    expect(called).toBe(false)
+    expect(row.status).toBe('pending')
+    expect(row.nextAttemptAt).not.toBeNull()
+  })
+
+  it('purges the log at the retention the site chose, not the default', async () => {
+    const now = Date.UTC(2026, 9, 30, 12, 0, 0)
+    const { deps, store, rows } = fixture(now)
+    const hook = await addHook(deps, store, { events: ['content.published'] })
+    const day = 86_400_000
+    await store.insertDelivery({ webhookId: hook.id, deliveryId: 'old', event: 'content.published', body: '{}', redacted: false, status: 'ok', attempts: 1, nextAttemptAt: null, lastStatusCode: 200, lastError: null }, new Date(now - 10 * day).toISOString())
+    await store.insertDelivery({ webhookId: hook.id, deliveryId: 'recent', event: 'content.published', body: '{}', redacted: false, status: 'ok', attempts: 1, nextAttemptAt: null, lastStatusCode: 200, lastError: null }, new Date(now - 3 * day).toISOString())
+    const result = await purgeOldLogs({ ...deps, retentionDays: async () => 7 })
+    expect(result.days).toBe(7)
+    const kept = [...rows.values()].map((r) => r.deliveryId)
+    expect(kept).toEqual(['recent'])
   })
 })

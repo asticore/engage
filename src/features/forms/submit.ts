@@ -256,6 +256,8 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
 
   const emails = await sendSubmissionEmails(form, values, settings, pricing, { entryId: submissionID, submittedAt })
   if (submissionID) void emitWebhookEvent('form.submitted', { id: submissionID, formId: form.id, formTitle: form.title, submittedAt, values })
+  // An appointment field that was booked is also a booking (the booking.made event).
+  if (submissionID && slotClaims.length > 0) void emitWebhookEvent('booking.made', { id: submissionID, source: 'appointment', formId: form.id, status: 'new', createdAt: submittedAt })
 
   // In parallel so one slow endpoint does not hold the visitor up for the sum
   // of them all. A failed delivery is recorded and retried by the cron.
