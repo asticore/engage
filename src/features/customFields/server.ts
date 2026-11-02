@@ -4,7 +4,7 @@ import { getEngine } from '@/engine'
 import type { FieldGroupDoc } from '@/fields/customFields/types'
 import { buildMergeContext, resolveDocumentBlocks } from '@/lib/mergeTags'
 
-import { matchesLocation, type LocationContext } from './location'
+import { matchesLocation, optionsPageContext, type LocationContext } from './location'
 import { normalizeFieldGroup } from './normalize'
 import { definitionsFor } from './validate'
 import { buildCustomFieldContext, collectMediaIds, type MediaUrls } from './stringify'
@@ -113,7 +113,8 @@ export async function loadOptionContext(groups?: FieldGroupDoc[]): Promise<Recor
   const out: Record<string, string> = {}
   const all = await getAllOptionValues()
   const allGroups = groups ?? (await loadFieldGroups())
-  const perPage = Object.entries(all).map(([slug, values]) => ({ slug, values, defs: definitionsFor(allGroups, { optionsPage: slug }) }))
+  // Public pages: the viewer's roles are not known here, so a user role rule never adds a tag.
+  const perPage = Object.entries(all).map(([slug, values]) => ({ slug, values, defs: definitionsFor(allGroups, optionsPageContext(slug, values)) }))
   const mediaUrls = await fetchMediaUrls([...new Set(perPage.flatMap((p) => collectMediaIds(p.defs, p.values)))])
   for (const { slug, values, defs } of perPage) {
     for (const [key, tagValue] of Object.entries(buildCustomFieldContext(defs, values, { mediaUrls }))) {

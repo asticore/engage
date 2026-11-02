@@ -13,7 +13,7 @@ vi.mock('@/features/email', () => ({ sendEmail }))
 import { decryptJson, encryptJson, isEncryptedEnvelope } from '@/features/settingsTransfer/crypto'
 import { parseExportOptions, renderExport, buildExport } from '@/features/settingsTransfer/export'
 import { EXPORT_FORMAT_VERSION, ExportFormatError, type ExportOptions } from '@/features/settingsTransfer/format'
-import { applyImport, planImport, readExportFile } from '@/features/settingsTransfer/import'
+import { applyImport, planImport, readExportFile, type ImportOptions } from '@/features/settingsTransfer/import'
 import { POST as exportPOST } from '@/app/(engage)/api/admin-settings-export/route'
 import { POST as importPOST } from '@/app/(engage)/api/admin-settings-import/route'
 
@@ -110,7 +110,10 @@ function sourceSite(): FakeState {
       ],
       roles: [{ id: 3, name: 'Editor', slug: 'editor', builtIn: true, permissions: { pages: { read: true } } }],
       redirects: [{ id: 4, fromPath: '/old', toPath: '/new', redirectType: '301', enabled: true, hitCount: 12 }],
-      pages: [{ id: 5, title: 'About', slug: 'about', parent: 9, _status: 'published', createdAt: 'x' }],
+      pages: [
+        { id: 5, title: 'About', slug: 'about', parent: 9, _status: 'published', createdAt: 'x' },
+        { id: 9, title: 'Home', slug: 'home', _status: 'published', createdAt: 'x' },
+      ],
       media: [{ id: 6, filename: 'hero.jpg', alt: 'Hero', mimeType: 'image/jpeg' }],
     },
   }
@@ -187,6 +190,20 @@ describe('settings export', () => {
     vi.clearAllMocks()
   })
 
+  it('writes relation fields as slug, file name and email, never as ids, and warns about a relation with no name', async () => {
+    const state = sourceSite()
+    state.collections.posts = [{ id: 7, title: 'News', slug: 'news', author: 1, featuredImage: 6, createdBy: 1 }]
+    state.collections.products = [{ id: 8, title: 'Mug', slug: 'mug', images: [6, 99] }]
+    const file = await buildExport(asEngine(makeEngine(state)), {
+      ...ALL_OFF,
+      content: { ...ALL_OFF.content, posts: true, products: true },
+    })
+
+    expect(file.content.posts).toEqual([{ title: 'News', slug: 'news', author: 'admin@example.com', featuredImage: 'hero.jpg' }])
+    expect(file.content.products).toEqual([{ title: 'Mug', slug: 'mug', images: ['hero.jpg'] }])
+    expect(file.warnings).toEqual([expect.stringContaining('mug: images points to a record with no filename')])
+  })
+
   it('strips secrets and password material by default', async () => {
     const engine = makeEngine(sourceSite())
     const file = await buildExport(asEngine(engine), {
@@ -210,9 +227,12 @@ describe('settings export', () => {
     expect(file.users).toEqual([{ email: 'admin@example.com', roles: ['admin'] }])
     expect(serialised).not.toMatch(/scrypt-hash|salt-value|reset-token|JBSWY3DPEHPK3PXP|customer-hash/)
 
-    // Noise and relation ids are removed from documents.
+    // Noise and ids are removed from documents. A parent page is written as its slug.
     expect(file.redirects).toEqual([{ fromPath: '/old', toPath: '/new', redirectType: '301', enabled: true }])
-    expect(file.content.pages).toEqual([{ title: 'About', slug: 'about' }])
+    expect(file.content.pages).toEqual([
+      { title: 'About', slug: 'about', parent: 'home' },
+      { title: 'Home', slug: 'home' },
+    ])
     expect(file.version).toBe(EXPORT_FORMAT_VERSION)
     expect(file.app).toBe('gracengatsby')
   })
@@ -296,6 +316,37 @@ describe('settings export', () => {
 describe('settings import', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  it('links relation fields back by slug, file name and email, and warns about a name not on this site', async () => {
+    const state = targetSite()
+    state.collections.media = [{ id: 6, filename: 'hero.jpg', alt: 'Hero', mimeType: 'image/jpeg' }]
+    const file = {
+      ...incomingFile(),
+      content: {
+        // The child comes first in the file; its parent is written before it.
+        pages: [
+          { title: 'Child', slug: 'child', parent: 'contact' },
+          { title: 'Contact', slug: 'contact', parent: 'nowhere' },
+        ],
+        posts: [{ title: 'News', slug: 'news', author: 'admin@example.com', featuredImage: 'hero.jpg' }],
+        products: [] as Record<string, unknown>[],
+        mediaMetadata: [] as Record<string, unknown>[],
+      },
+    }
+    const options: ImportOptions = { sections: ['pages', 'posts'] }
+
+    const plan = await planImport(asEngine(makeEngine(targetSite())), file, { ...options })
+    expect(plan.sections.find((item) => item.section === 'pages')?.warnings).toEqual([expect.stringContaining('"nowhere"')])
+
+    const engine = makeEngine(state)
+    const report = await applyImport(asEngine(engine), file, { ...options })
+    const contact = state.collections.pages.find((row) => row.slug === 'contact')
+    const child = state.collections.pages.find((row) => row.slug === 'child')
+    expect(child?.parent).toBe(contact?.id)
+    expect(contact?.parent).toBeUndefined()
+    expect(state.collections.posts).toEqual([expect.objectContaining({ slug: 'news', author: 1, featuredImage: 6 })])
+    expect(report.sections.find((item) => item.section === 'pages')?.warnings).toEqual([expect.stringContaining('"nowhere"')])
   })
 
   it('dry run reports counts and writes nothing', async () => {

@@ -6,6 +6,7 @@ import { CustomFieldInput, CustomFieldMediaContext, useMediaUrlsFor, type MediaU
 import type { CustomFieldDef, FieldGroupDoc } from '@/fields/customFields/types'
 import { isFieldVisible } from '../conditions'
 import { collectMediaIds } from '../stringify'
+import { matchesLocation, optionsPageContext } from '../location'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 
 /**
@@ -17,6 +18,7 @@ import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 type Props = {
   slug: string
   groups: FieldGroupDoc[]
+  userRoles: string[]
   initialValues: Record<string, unknown>
   initialUpdatedAt: string | null
   initialMediaUrls: MediaUrlMap
@@ -25,7 +27,7 @@ type Props = {
 const btnClass =
   'cursor-pointer rounded-[5px] border border-[#2e3192] bg-[#2e3192] px-[14px] py-[7px] text-[13px] font-semibold text-white disabled:opacity-50'
 
-export function OptionsForm({ slug, groups, initialValues, initialUpdatedAt, initialMediaUrls }: Props) {
+export function OptionsForm({ slug, groups, userRoles, initialValues, initialUpdatedAt, initialMediaUrls }: Props) {
   const [values, setValues] = useState<Record<string, unknown>>(initialValues)
   const [updatedAt, setUpdatedAt] = useState<string | null>(initialUpdatedAt)
   const [mediaUrls, setMediaUrls] = useState<MediaUrlMap>(initialMediaUrls)
@@ -39,6 +41,8 @@ export function OptionsForm({ slug, groups, initialValues, initialUpdatedAt, ini
 
   const allDefs: CustomFieldDef[] = groups.flatMap((g) => g.fields)
   useMediaUrlsFor(collectMediaIds(allDefs, values), remember)
+  // Field value rules are checked against the values on the form as they are now.
+  const shownGroups = groups.filter((group) => matchesLocation(group.location, optionsPageContext(slug, values, userRoles)))
 
   const setField = (name: string, next: unknown) => {
     setValues((prev) => {
@@ -86,7 +90,7 @@ export function OptionsForm({ slug, groups, initialValues, initialUpdatedAt, ini
   return (
     <CustomFieldMediaContext.Provider value={{ urls: mediaUrls, remember }}>
       <div className="flex flex-col gap-[20px]">
-        {groups.map((group) => (
+        {shownGroups.map((group) => (
           <CollapsibleCard
             key={group.id}
             id={`opt:${slug.replace(/[^A-Za-z0-9_.-]/g, '-').slice(0, 30)}:${group.id}`}

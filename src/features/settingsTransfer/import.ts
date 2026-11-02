@@ -4,6 +4,7 @@ import { LOCAL_FONT_PATH_PREFIX } from '@/features/fonts/installed'
 import { getMediaBucket } from '@/localapi/storage'
 
 import { decryptJson, DecryptionError, isEncryptedEnvelope } from './crypto'
+import { LINK_META_KEYS, linkRelationsForImport, parentsFirst, type LinkContext } from './relations'
 import {
   ALL_GLOBAL_SLUGS,
   DOC_NOISE_KEYS,
@@ -102,6 +103,8 @@ type RunContext = {
   allowAdminUsers: boolean
   /** Picture ids in the file mapped to the ids they have on this site (see resolveMediaIds). */
   mediaIds: Map<number, number>
+  /** Names in the file (slug, file name, email) looked up on this site for relation fields. */
+  links: LinkContext
 }
 
 /**
@@ -145,6 +148,7 @@ async function runImport(
     allowAdminUsers: options.allowAdminUsers === true,
     // Only read the site's pictures when a section that uses them is being imported.
     mediaIds: requested.some((section) => section === 'mediaMetadata' || section === 'settings' || section === 'headerFooter') ? await resolveMediaIds(engine, file) : new Map<number, number>(),
+    links: { engine, file, mode: options.mode, sections: requested, found: new Map<string, number>() },
   }
   const sections: SectionReport[] = []
   for (const section of requested) {
@@ -237,7 +241,8 @@ async function runSection(ctx: RunContext, section: ImportSection, report: Secti
         prepare: (item) => withoutKeys(item, [...DOC_NOISE_KEYS, ...RELATION_KEYS]),
       })
     case 'pages':
-      return importUpserts(ctx, report, file.content.pages, slugSpec('pages'))
+      // A child page is written after its parent, so the parent link resolves in the same run.
+      return importUpserts(ctx, report, parentsFirst(file.content.pages, slugOf, (item) => textOf(item.parent) || null), slugSpec('pages'))
     case 'posts':
       return importUpserts(ctx, report, file.content.posts, slugSpec('posts'))
     case 'products':
@@ -247,12 +252,16 @@ async function runSection(ctx: RunContext, section: ImportSection, report: Secti
   }
 }
 
+const slugOf = (item: JsonObject): string | null => textOf(item.slug) || null
+
+/** Pages, posts and products keep their relation fields: names are linked back to this site's records. */
 function slugSpec(collection: string): UpsertSpec {
   return {
     collection,
     matchField: 'slug',
-    keyOf: (item) => textOf(item.slug) || null,
-    prepare: (item) => withoutKeys(item, [...DOC_NOISE_KEYS, ...RELATION_KEYS]),
+    keyOf: slugOf,
+    prepare: (item) => withoutKeys(item, [...DOC_NOISE_KEYS, ...LINK_META_KEYS]),
+    links: true,
   }
 }
 
@@ -373,6 +382,8 @@ type UpsertSpec = {
   noteOf?: (item: JsonObject) => string | undefined
   /** Runs after a create in apply mode. Returns a note to show, if any. */
   afterCreate?: (doc: JsonObject, key: string) => Promise<string | undefined>
+  /** Link the relation fields of the collection (by name) before writing. */
+  links?: boolean
 }
 
 async function findOne(engine: Engine, collection: string, field: string, value: string): Promise<JsonObject | null> {
@@ -411,7 +422,10 @@ async function importUpserts(
         }
       }
 
-      const data = cloneJson(spec.prepare(item))
+      const prepared = cloneJson(spec.prepare(item))
+      const data = spec.links
+        ? await linkRelationsForImport(ctx.links, spec.collection, prepared, (message) => report.warnings.push(`${key}: ${message}`))
+        : prepared
       const planNote = existing ? undefined : spec.noteOf?.(item)
       if (mode === 'plan') {
         record(report, key, existing ? 'updated' : 'created', planNote)

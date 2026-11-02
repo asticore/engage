@@ -205,11 +205,17 @@ export function normalizeLocation(raw: unknown): LocationGroups {
       const r = rule && typeof rule === 'object' ? (rule as Record<string, unknown>) : null
       const param = r ? str(r.param) : null
       const value = r ? (str(r.value) ?? (num(r.value) !== null ? String(r.value) : null)) : null
-      if (!r || !param || !PARAM_SET.has(param) || value === null || value === '') {
+      const field = r && param === 'fieldValue' ? (str(r.field) ?? '').trim() : ''
+      if (!r || !param || !PARAM_SET.has(param) || value === null || value === '' || (param === 'fieldValue' && !field)) {
         valid = false
         break
       }
-      rules.push({ param: param as LocationRule['param'], operator: r.operator === 'notEquals' ? 'notEquals' : 'equals', value })
+      rules.push({
+        param: param as LocationRule['param'],
+        operator: r.operator === 'notEquals' ? 'notEquals' : 'equals',
+        value,
+        ...(param === 'fieldValue' ? { field } : {}),
+      })
     }
     if (valid && rules.length) out.push(rules)
   }
@@ -297,6 +303,7 @@ export function rawLocationGroups(value: unknown): LocationGroups {
           param: (str(rule.param) ?? 'collection') as LocationRule['param'],
           operator: rule.operator === 'notEquals' ? ('notEquals' as const) : ('equals' as const),
           value: str(rule.value) ?? (num(rule.value) !== null ? String(rule.value) : ''),
+          ...(typeof rule.field === 'string' ? { field: rule.field } : {}),
         })),
     )
 }

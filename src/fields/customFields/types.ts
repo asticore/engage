@@ -101,8 +101,9 @@ export const LOCATION_PARAMS = [
   'postTag',
   'userRole',
   'status',
+  'fieldValue',
 ] as const
-/** Params the Field Group builder offers. */
+/** Params the Field Group builder offers. `fieldValue` compares one field's stored value (its name is in `field`) and works on Options pages. */
 export type FieldGroupLocationParam = (typeof LOCATION_PARAMS)[number]
 
 /** Extra params used by Site Templates (src/features/siteTemplates). Not offered by the Field Group builder. */
@@ -114,7 +115,13 @@ export type TemplateLocationParam = (typeof TEMPLATE_LOCATION_PARAMS)[number]
 
 export type LocationParam = FieldGroupLocationParam | TemplateLocationParam
 
-export type LocationRule = { param: LocationParam; operator: 'equals' | 'notEquals'; value: string }
+export type LocationRule = {
+  param: LocationParam
+  operator: 'equals' | 'notEquals'
+  value: string
+  /** fieldValue only: the name of the field whose stored value is compared with `value`. */
+  field?: string
+}
 
 /** Outer array = OR, inner = AND. `pageParent` / `pageTemplate` value "none" matches a page with no parent / template. */
 export type LocationGroups = LocationRule[][]
