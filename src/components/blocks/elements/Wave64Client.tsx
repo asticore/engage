@@ -35,7 +35,6 @@ export const ImageAccordion: React.FC<{ panels: Panel[]; height: number }> = ({ 
       {panels.map((p, i) => {
         const body = (
           <>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img decoding="async" src={p.url} alt={p.alt} loading="lazy" />
             {p.title && <span className="be-el-64-acc__title">{p.title}</span>}
           </>

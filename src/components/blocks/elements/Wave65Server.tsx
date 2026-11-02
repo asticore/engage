@@ -24,7 +24,6 @@ export async function AuthorBoxElement(props: P): Promise<React.ReactElement | n
   if (!name && !bio) return null
   return (
     <aside className="be-el-65-author">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       {avatar?.url ? <img decoding="async" src={avatar.url} alt="" /> : null}
       <div>
         {str(props.label) ? <p className="be-el-65-author__label">{str(props.label)}</p> : null}

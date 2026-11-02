@@ -208,7 +208,6 @@ function MediaThumb({ id }: { id: number | null }): React.ReactElement {
   const url = id !== null ? urls[String(id)] : undefined
   if (url) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={url}
         alt=""

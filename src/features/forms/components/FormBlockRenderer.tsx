@@ -6,7 +6,7 @@ import { isPublished } from '../layout'
 import { formsEnabled, getFormSettings, resolveForForm, toPublicConfig } from '../settings'
 import { readPlacesBrowserKey } from '../placesKey'
 import { loadForm } from '../server'
-import { FormRenderer } from './FormRenderer'
+import { FormRendererLazy } from './FormRendererLazy'
 
 /**
  * The server half of the Form block: loads the form, resolves its settings
@@ -60,7 +60,7 @@ export async function FormBlockRenderer({
       <div className="page-shell built-block__inner">
         {title ? <h2>{title}</h2> : null}
         {intro ? <p className="form-intro">{intro}</p> : null}
-        <FormRenderer config={config} />
+        <FormRendererLazy config={config} />
       </div>
     </section>
   )

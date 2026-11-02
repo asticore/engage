@@ -4,13 +4,22 @@
  * never block admins, like the other guards in src/features/roles.
  */
 
-import type { CollectionBeforeChangeHook } from '@/engine'
+import type { CollectionBeforeChangeHook, EngineRequest } from '@/engine'
 import { can } from '@/features/roles/permissions'
 
 /** Throws the engine's ValidationError so REST answers 400 with the message. */
 async function throwValidation(path: string, message: string): Promise<never> {
   const { ValidationError } = await import('@/localapi/operations')
   throw new ValidationError([{ path, message }])
+}
+
+/** The parts of a collection beforeChange hook's arguments these guards read. */
+type GuardArgs = {
+  data?: Record<string, unknown>
+  originalDoc?: Record<string, unknown>
+  req?: EngineRequest
+  collection?: { slug?: string }
+  operation?: string
 }
 
 const isAdminUser = (user: { roles?: string[] } | undefined): boolean => Boolean(user?.roles?.includes('admin'))
@@ -23,7 +32,7 @@ const isAdminUser = (user: { roles?: string[] } | undefined): boolean => Boolean
  *    (a role that can only edit cannot change the trash flag by sending it directly).
  */
 export const trashGuard: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
-  const { data, originalDoc, req, collection } = args as any
+  const { data, originalDoc, req, collection } = args as GuardArgs
   if (!data) return
 
   const effectiveTrashed = 'trashedAt' in data ? data.trashedAt : originalDoc?.trashedAt
@@ -72,8 +81,8 @@ export function storedSeo(seo: unknown): Record<string, unknown> | undefined {
  * restores rather than rejects), and a new document starts with none.
  */
 export const seoEditGuard: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
-  const { data, originalDoc, req, operation } = args as any
-  const args_collection = (a: any) => a?.collection?.slug
+  const { data, originalDoc, req, operation } = args as GuardArgs
+  const args_collection = (a: unknown) => (a as GuardArgs | undefined)?.collection?.slug
   if (!req?.user || !data) return
   if (isAdminUser(req.user)) return
   if (can(req.user, 'content.editSeo', 'update')) return
@@ -85,14 +94,14 @@ export const seoEditGuard: CollectionBeforeChangeHook = async (args: unknown): P
   if ('seo' in data) {
     // Baseline is the latest draft, not the published doc, so a draft save or a
     // version restore cannot reset or smuggle SEO changes.
-    let baseline: any = originalDoc
+    let baseline: Record<string, unknown> | undefined = originalDoc
     const id = originalDoc?.id
     const slug = String(args_collection(args) ?? '')
     if (id != null && slug) {
       try {
         const { getEngine } = await import('@/engine')
         const engine = await getEngine()
-        const latest = await (engine as any).findByID({ collection: slug, id, depth: 0, draft: true, overrideAccess: true })
+        const latest = await (engine as unknown as { findByID: (a: Record<string, unknown>) => Promise<Record<string, unknown> | null> }).findByID({ collection: slug, id, depth: 0, draft: true, overrideAccess: true })
         if (latest) baseline = latest
       } catch {
         // keep the original doc

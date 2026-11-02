@@ -29,10 +29,10 @@ export function GenerateVariationsField() {
 
   const rows = attributes.value ?? []
   const wanted = rows.map((row) => (typeof row.attribute === 'number' ? row.attribute : null)).filter((id): id is number => id !== null)
-  const missing = wanted.filter((id) => !globals[id])
+  const missingKey = wanted.filter((id) => !globals[id]).join(',')
 
   useEffect((): void | (() => void) => {
-    if (missing.length === 0) return
+    if (missingKey === '') return
     let cancelled = false
     void fetch(`/api/product-attributes?limit=100&depth=0`, { credentials: 'include' })
       .then((res) => (res.ok ? res.json() : null))
@@ -44,7 +44,7 @@ export function GenerateVariationsField() {
     return () => {
       cancelled = true
     }
-  }, [missing.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [missingKey])
 
   const resolved = resolveAttributes(rows.map((row) => ({ ...row, attribute: typeof row.attribute === 'number' ? (globals[row.attribute] ?? null) : row.attribute })))
   const combos = countCombinations(resolved)
