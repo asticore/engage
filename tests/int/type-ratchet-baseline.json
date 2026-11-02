@@ -1,4 +1,19 @@
 {
-  "any": 83,
-  "eslintDisable": 43
+  "any": 9,
+  "eslintDisable": 15,
+  "justified": {
+    "src/engage-types.ts": "Hand-kept content types in generated-file style; the file-level eslint-disable is its header.",
+    "src/engine/types.ts": "Loose: the one named default for collection documents whose shape is only known per collection (give a collection a real shape with Access<Page> etc.).",
+    "src/localapi/richtext.tsx": "Editor-authored Lexical JSON is arbitrary by nature (LexicalNode and the populated upload doc); narrowing happens per converter.",
+    "src/localapi/access.ts": "AccessFn req: only `any` keeps the app's existing access functions assignable without importing the engine's internal request type (see the doc comment there).",
+    "src/cms/db/schema/generate.ts": "Drizzle column builders: each column type returns a different concrete builder subtype; the code is inherently dynamic.",
+    "src/admin/componentRegistry.ts": "A registry of components with different prop types is ComponentType<any> by definition.",
+    "src/admin/views/GoogleConnectionClient.tsx": "OAuth redirect to an API route needs a full page load, not next/link.",
+    "src/admin/views/TrackingConnectionsClient.tsx": "OAuth redirect to an API route needs a full page load, not next/link.",
+    "src/admin/views/PagesTreeClient.tsx": "A tree row needs role=treeitem on an li-like element whose required ARIA props are set by the parent group.",
+    "src/admin/fields/FieldRenderer.tsx": "The override component comes from the field config and is stable across renders; the lint rule cannot see that.",
+    "src/views/visualEditor/CanvasFrame.tsx": "dangerouslySetInnerHTML of a static string constant, no user input.",
+    "src/features/backups/workerEntry.ts": "Imports the built OpenNext output, which does not exist until the build has run (ts-ignore, not ts-expect-error).",
+    "src/features/members/billing.ts": "Stripe's apiVersion type is a single literal; the pinned older version needs a ts-ignore."
+  }
 }

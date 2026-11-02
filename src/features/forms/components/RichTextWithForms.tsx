@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { AdRichText } from '@/features/ads/components/AdRichText'
+import { AdRichText, type RichTextContent } from '@/features/ads/components/AdRichText'
 
 import { hasFormShortcode, splitFormShortcodes } from '../shortcode'
 import { FormBlockRenderer } from './FormBlockRenderer'
@@ -10,7 +10,7 @@ import { FormBlockRenderer } from './FormBlockRenderer'
  * shortcode goes straight to the ordinary rich-text renderer, so pages without
  * one are unchanged.
  */
-export const RichTextWithForms = async ({ content }: { content: any }): Promise<React.ReactElement | null> => {
+export const RichTextWithForms = async ({ content }: { content: RichTextContent }): Promise<React.ReactElement | null> => {
   const root = content?.root
   const nodes: unknown[] = Array.isArray(root?.children) ? root.children : []
   if (!hasFormShortcode(nodes)) return <AdRichText content={content} />

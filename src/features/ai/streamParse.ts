@@ -58,6 +58,17 @@ export type ProviderStreamStep = {
   error?: string
 }
 
+type TokenUsage = { input_tokens?: unknown; output_tokens?: unknown; prompt_tokens?: unknown; completion_tokens?: unknown }
+/** The fields read from a Claude or OpenAI stream event; everything else in the payload is ignored. */
+type ProviderEvent = {
+  type?: unknown
+  delta?: { type?: unknown; text?: unknown }
+  message?: { usage?: TokenUsage }
+  usage?: TokenUsage
+  error?: unknown
+  choices?: Array<{ delta?: { content?: unknown } } | undefined>
+}
+
 const num = (value: unknown): number | undefined =>
   typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.round(value)) : undefined
 
@@ -71,7 +82,7 @@ export function parseProviderEvent(provider: 'claude' | 'openai', message: SseMe
     return {}
   }
   if (!payload || typeof payload !== 'object') return {}
-  const p = payload as Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
+  const p = payload as ProviderEvent
   if (provider === 'claude') {
     switch (p.type) {
       case 'content_block_delta':

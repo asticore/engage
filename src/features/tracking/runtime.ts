@@ -11,7 +11,9 @@ import { domainMatches, PLATFORM_CATEGORY, platformCalls, dedupeKey, urlMatches,
 import { valueForFiring } from './valueSources'
 import type { PublicTrackingEvent } from './publicEvent'
 
-type Win = Window & Record<string, any>
+type TrackerFn = (...args: unknown[]) => void
+/** The window plus the globals the tracking scripts define once they have loaded. */
+type Win = Window & { fbq?: unknown; gtag?: unknown; dataLayer?: unknown; ttq?: Record<string, TrackerFn> } & Record<string, unknown>
 
 export type TrackingRuntimeOptions = {
   events: PublicTrackingEvent[]

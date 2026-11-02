@@ -31,11 +31,41 @@ import { gdprApplies, planScripts, type SlotNeeds } from './loader'
 import { AD_TRACK_PATH } from './slugs'
 import type { ConsentChoices } from '@/features/consent/consent'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/** The parts of the ad libraries (Google Publisher Tag, Prebid, Amazon TAM) this file calls; the libraries load themselves later. */
+type GptSlot = { addService(pubads: GptPubads): unknown; setTargeting(key: string, values: string[]): unknown }
+type GptPubads = {
+  disableInitialLoad(): void
+  collapseEmptyDivs(collapse: boolean): void
+  addEventListener(name: string, listener: (event: GptSlotRenderEvent) => void): void
+  setPrivacySettings(settings: { nonPersonalizedAds: boolean }): void
+  enableSingleRequest(): void
+  refresh(slots: GptSlot[]): void
+}
+type GptSlotRenderEvent = { isEmpty?: boolean; slot?: { getSlotElementId?: () => string } }
+type Googletag = {
+  cmd: Array<() => void>
+  pubads(): GptPubads
+  enableServices(): void
+  defineSlot(path: string, sizes: unknown, divId: string): GptSlot | null
+  display(divId: string): void
+}
+type Prebid = {
+  que: Array<() => void>
+  setConfig(config: unknown): void
+  removeAdUnit?(code: string): void
+  addAdUnits(units: unknown): void
+  requestBids(options: Record<string, unknown>): void
+  setTargetingForGPTAsync(codes: string[]): void
+}
+type Apstag = {
+  init(options: Record<string, unknown>): void
+  fetchBids(options: Record<string, unknown>, done: () => void): void
+  setDisplayBids(): void
+}
 type AdWindow = Window & {
-  googletag?: any
-  pbjs?: any
-  apstag?: any
+  googletag?: Googletag
+  pbjs?: Prebid
+  apstag?: Apstag
   adsbygoogle?: unknown[]
   __tcfapi?: unknown
 }
@@ -52,7 +82,7 @@ type SlotState = {
   el: HTMLElement
   unit: PublicUnit
   divId: string
-  gptSlot?: any
+  gptSlot?: GptSlot
   filled: boolean
   viewable: boolean
   visible: boolean
@@ -204,14 +234,14 @@ function configureGpt(config: PublicConfig, gdpr: boolean, hasTcf: boolean): voi
   if (gptConfigured) return
   gptConfigured = true
   const win = w()
-  win.googletag = win.googletag || { cmd: [] }
+  win.googletag = win.googletag || ({ cmd: [] } as unknown as Googletag)
   win.googletag.cmd.push(() => {
     const pubads = win.googletag.pubads()
     // Every slot is requested by hand after bidding (or at once when it has no bidders).
     pubads.disableInitialLoad()
     // Never collapse an empty slot: that is a layout shift.
     pubads.collapseEmptyDivs(false)
-    pubads.addEventListener('slotRenderEnded', (event: any) => {
+    pubads.addEventListener('slotRenderEnded', (event) => {
       const id = event?.slot?.getSlotElementId?.()
       const el = id ? document.getElementById(id)?.closest<HTMLElement>(SLOT_SELECTOR) : null
       if (!el) return
@@ -233,7 +263,7 @@ function configurePrebid(config: PublicConfig, gdpr: boolean, hasTcf: boolean): 
   if (prebidConfigured || !config.prebid) return
   prebidConfigured = true
   const win = w()
-  win.pbjs = win.pbjs || { que: [] }
+  win.pbjs = win.pbjs || ({ que: [] } as unknown as Prebid)
   const prebid = config.prebid
   const units = Object.values(config.units).filter((u) => u.bids.length > 0)
   win.pbjs.que.push(() => {
@@ -262,7 +292,7 @@ function auctionAndFetch(state: SlotState, config: PublicConfig): void {
 
   if (unit.bids.length > 0 && config.prebid) {
     pending += 1
-    win.pbjs = win.pbjs || { que: [] }
+    win.pbjs = win.pbjs || ({ que: [] } as unknown as Prebid)
     win.pbjs.que.push(() => {
       win.pbjs.removeAdUnit?.(divId)
       win.pbjs.addAdUnits(buildPrebidAdUnit(unit, divId, sizes))
@@ -315,7 +345,7 @@ function renderGam(state: SlotState, config: PublicConfig): void {
   if (sizes.length === 0 || !state.unit.path) return
   mountContainer(state)
   const spec = buildGptSlot(state.unit, state.divId, sizes)
-  win.googletag = win.googletag || { cmd: [] }
+  win.googletag = win.googletag || ({ cmd: [] } as unknown as Googletag)
   win.googletag.cmd.push(() => {
     const slot = win.googletag.defineSlot(spec.path, spec.sizes, spec.divId)
     if (!slot) return

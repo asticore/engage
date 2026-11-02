@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useReducer, useRef } from 'react'
+import React, { useEffect, useEffectEvent, useReducer, useRef } from 'react'
 
 import { ALL_MARKS, applyFormat, clearFormat, sanitizeInlineHtml, shortcutMark, type Mark } from './inlineFormat'
 import { inlineReducer, inlineResult, startInline } from './inlineEdit'
@@ -210,18 +210,23 @@ const RichInlineEditor: React.FC<Pick<InlineEditorProps, 'value' | 'multiline' |
     setBar({ top: Math.max(-40, box.top - host.top - 40), left: Math.max(0, box.left - host.left) })
   }
 
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
+  // Read the latest props and handlers from inside the mount-only effect below.
+  const setupEditor = useEffectEvent((el: HTMLDivElement) => {
     el.innerHTML = sanitizeInlineHtml(value, formats)
     el.focus()
     const r = document.createRange()
     r.selectNodeContents(el)
     window.getSelection()?.removeAllRanges()
     window.getSelection()?.addRange(r)
-    document.addEventListener('selectionchange', updateBar)
-    return () => document.removeEventListener('selectionchange', updateBar)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  })
+  const onSelectionChange = useEffectEvent(() => updateBar())
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    setupEditor(el)
+    const listener = () => onSelectionChange()
+    document.addEventListener('selectionchange', listener)
+    return () => document.removeEventListener('selectionchange', listener)
   }, [])
 
   useEffect(() => {

@@ -5,7 +5,14 @@
 
 import { normalizePath, type RedirectType } from './validate'
 
-type D1Database = any
+type D1Statement = {
+  bind(...values: unknown[]): D1Statement
+  run(): Promise<unknown>
+  first<T = Record<string, unknown>>(): Promise<T | null>
+  all<T = Record<string, unknown>>(): Promise<{ results?: T[] }>
+}
+/** The slice of Cloudflare's D1 binding this file uses. */
+type D1Database = { prepare(query: string): D1Statement }
 
 export interface ResolvedRedirect {
   id: number

@@ -1002,6 +1002,23 @@ export function createVersionsOps(
  * like Users' `roles: ['customer']`, has to go through the exact same
  * split/write path any other value for that field does.
  */
+/** The page of documents a paginated find returns. */
+export type PagedResult<D> = {
+  docs: D[]
+  totalDocs: number
+  limit: number
+  totalPages: number
+  page: number
+  pagingCounter: number
+  hasPrevPage: boolean
+  hasNextPage: boolean
+  prevPage: number | null
+  nextPage: number | null
+}
+
+/** A paginated find as the feature collections re-export it. */
+export type PagedFind<D> = (args?: { where?: Where; sort?: Sort; limit?: number; page?: number; pagination?: boolean }) => Promise<PagedResult<D>>
+
 export function createCollectionOps(
   table: AnySQLiteTable,
   collection: CollectionConfig,

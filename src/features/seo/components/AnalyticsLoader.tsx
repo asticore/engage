@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useEffectEvent, useSyncExternalStore } from 'react'
 
 import { effectiveChoices, type ConsentChoices } from '@/features/consent/consent'
 import { consentDefaultSnippet, consentUpdateSnippet } from '@/features/consent/googleConsentMode'
@@ -199,10 +199,10 @@ export const AnalyticsLoader = ({ optIn, policyVersion, consentModeV2, ...ids }:
   const choices = effectiveChoices(consent.record, policyVersion, !optIn)
   const signalKey = JSON.stringify(choices)
 
+  // The ids are primitives; the choice is passed as its key, so the effect runs once per real change.
+  const sync = useEffectEvent(() => syncAnalyticsTags(ids, consentModeV2, JSON.parse(signalKey) as ConsentChoices))
   useEffect(() => {
-    syncAnalyticsTags(ids, consentModeV2, JSON.parse(signalKey) as ConsentChoices)
-    // The ids are primitives; the choice is passed as its key, so this runs once per real change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    sync()
   }, [signalKey, consentModeV2, ids.gtmContainerId, ids.ga4MeasurementId, ids.metaPixelId, ids.tiktokPixelId, ids.metaCategory, ids.tiktokCategory, ids.clarityProjectId])
 
   return null

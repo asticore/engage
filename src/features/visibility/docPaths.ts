@@ -6,7 +6,7 @@ import { purgeCache } from '@/features/speed/purge'
  * events under /events (their archive lists change too), pages by slug chain or '/' for the homepage.
  */
 
-type EngineLike = { findByID: (args: any) => Promise<any> }
+type EngineLike = { findByID(args: Record<string, unknown>): Promise<unknown> }
 type Doc = { slug?: string | null; parent?: unknown; isHomepage?: boolean | null } | null
 
 export async function documentPaths(engine: EngineLike, collection: string, id: number): Promise<string[]> {

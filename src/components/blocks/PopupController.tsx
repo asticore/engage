@@ -55,7 +55,10 @@ function writeSeen(key: string) {
  * scroll lock, '#popup-<id>' links and the automatic triggers (timer, scroll, exit intent).
  */
 export default function PopupController({ toggleId, anchorId, triggers, frequency, days }: Props): null {
+  // The trigger object is rebuilt each render; its values are primitives, so the effect depends on those.
+  const { delaySec, scrollPct, exit } = triggers
   useEffect(() => {
+    const autoTriggers: AutoTriggers = { delaySec, scrollPct, exit }
     const toggle = document.getElementById(toggleId) as HTMLInputElement | null
     if (!toggle) return
     const panel = toggle.parentElement?.querySelector<HTMLElement>('.be-modal__panel') ?? null
@@ -140,7 +143,7 @@ export default function PopupController({ toggleId, anchorId, triggers, frequenc
     }
 
     // Automatic triggers: never for crawlers / automation, one per page view, and subject to frequency.
-    if (hasAutoTrigger(triggers) && !isLikelyBot(navigator.userAgent, navigator.webdriver)) {
+    if (hasAutoTrigger(autoTriggers) && !isLikelyBot(navigator.userAgent, navigator.webdriver)) {
       const w = window as unknown as Record<string, unknown>
       let done = false
       const fire = () => {
@@ -151,11 +154,11 @@ export default function PopupController({ toggleId, anchorId, triggers, frequenc
         writeSeen(storageKey)
         setOpen(true)
       }
-      if (triggers.delaySec !== undefined) {
-        const timer = window.setTimeout(fire, triggers.delaySec * 1000)
+      if (delaySec !== undefined) {
+        const timer = window.setTimeout(fire, delaySec * 1000)
         cleanups.push(() => window.clearTimeout(timer))
       }
-      const pct = triggers.scrollPct
+      const pct = scrollPct
       if (pct !== undefined) {
         const onScroll = () => {
           const doc = document.documentElement
@@ -164,7 +167,7 @@ export default function PopupController({ toggleId, anchorId, triggers, frequenc
         window.addEventListener('scroll', onScroll, { passive: true })
         cleanups.push(() => window.removeEventListener('scroll', onScroll))
       }
-      if (triggers.exit && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+      if (exit && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
         const onLeave = (event: MouseEvent) => {
           if (isExitIntent(event.clientY, event.relatedTarget === null)) fire()
         }
@@ -174,9 +177,7 @@ export default function PopupController({ toggleId, anchorId, triggers, frequenc
     }
 
     return () => cleanups.forEach((fn) => fn())
-    // The trigger object is rebuilt each render; its values are primitives, so depend on those.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toggleId, anchorId, triggers.delaySec, triggers.scrollPct, triggers.exit, frequency, days])
+  }, [toggleId, anchorId, delaySec, scrollPct, exit, frequency, days])
 
   return null
 }

@@ -86,29 +86,30 @@ export function VersionsList({
   const authorIds = versions.map((v) => (v.version as Record<string, unknown>).updatedBy)
   const resolveName_ = useAuthorNames(authorIds)
 
-  const fetchVersions = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await fetch(`/api/${collectionSlug}/versions?where[parent][equals]=${id}&limit=50&sort=-updatedAt&depth=0`, {
-        credentials: 'include',
+  // Loads the list on mount (and when the document changes). State is only set from the request's own callbacks.
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/${collectionSlug}/versions?where[parent][equals]=${id}&limit=50&sort=-updatedAt&depth=0`, {
+      credentials: 'include',
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const data: VersionsResponse = await response.json()
+        if (!cancelled) {
+          setError(null)
+          setVersions(data.docs)
+        }
       })
-      if (!response.ok) throw new Error(`HTTP ${response.status}`)
-      const data: VersionsResponse = await response.json()
-      setVersions(data.docs)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load versions')
-    } finally {
-      setLoading(false)
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load versions')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
   }, [id, collectionSlug])
-
-  // Fetch on mount
-  useEffect(() => {
-    // Loads the list from the REST API; the state it sets is the result of that request, not derived state.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchVersions()
-  }, [fetchVersions])
 
   // Declared after the versions fetch so the versions request is still the first one on mount.
   const review = useReviewState(collectionSlug, id, undefined)

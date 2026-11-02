@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 
-type DimensionValue = {
+export type DimensionValue = {
   top?: string
   right?: string
   bottom?: string

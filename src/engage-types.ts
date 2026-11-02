@@ -297,7 +297,7 @@ export interface Event {
     root: {
       type: string;
       children: {
-        type: any;
+        type: string;
         version: number;
         [k: string]: unknown;
       }[];
@@ -392,7 +392,7 @@ export interface Product {
     root: {
       type: string;
       children: {
-        type: any;
+        type: string;
         version: number;
         [k: string]: unknown;
       }[];
@@ -465,7 +465,7 @@ export interface Product {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -498,7 +498,7 @@ export interface Product {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -827,7 +827,7 @@ export interface Faq {
     root: {
       type: string;
       children: {
-        type: any;
+        type: string;
         version: number;
         [k: string]: unknown;
       }[];
@@ -931,7 +931,7 @@ export interface PageTemplate {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -964,7 +964,7 @@ export interface PageTemplate {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -1553,7 +1553,7 @@ export interface Page {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -1586,7 +1586,7 @@ export interface Page {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -1965,7 +1965,7 @@ export interface Post {
     root: {
       type: string;
       children: {
-        type: any;
+        type: string;
         version: number;
         [k: string]: unknown;
       }[];
@@ -2039,7 +2039,7 @@ export interface Post {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -2072,7 +2072,7 @@ export interface Post {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -2827,7 +2827,7 @@ export interface Lesson {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -2860,7 +2860,7 @@ export interface Lesson {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -4977,7 +4977,7 @@ export interface BlogSetting {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -5010,7 +5010,7 @@ export interface BlogSetting {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -5328,7 +5328,7 @@ export interface FaqSetting {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -5361,7 +5361,7 @@ export interface FaqSetting {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -5674,7 +5674,7 @@ export interface ShopSetting {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];
@@ -5707,7 +5707,7 @@ export interface ShopSetting {
               root: {
                 type: string;
                 children: {
-                  type: any;
+                  type: string;
                   version: number;
                   [k: string]: unknown;
                 }[];

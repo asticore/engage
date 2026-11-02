@@ -366,9 +366,9 @@ function HeaderDialog({
   const [edits, setEdits] = useState<Record<number, { skip?: boolean; type?: SniffedType; label?: string }>>({})
 
   const target: HeaderTarget = targetKey === 'fields' ? { kind: 'fields' } : targetKey === 'new' ? { kind: 'new-repeater', label: tableLabel } : { kind: 'repeater', index: Number(targetKey.slice(2)) }
-  const taken = existingNames(target)
-  const takenKey = taken.join('|')
-  const sniffed = useMemo(() => (loaded ? fieldsFromHeader(loaded.rows, taken) : []), [loaded, takenKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const takenKey = existingNames(target).join('|')
+  const taken = useMemo(() => (takenKey ? takenKey.split('|') : []), [takenKey])
+  const sniffed = useMemo(() => (loaded ? fieldsFromHeader(loaded.rows, taken) : []), [loaded, taken])
 
   const final = useMemo(() => {
     const kept: SniffedField[] = []

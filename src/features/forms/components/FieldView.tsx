@@ -435,6 +435,8 @@ const AppointmentInput: React.FC<{
 const SignaturePad: React.FC<{ value: string; onChange: (value: string) => void; inert?: boolean }> = ({ value, onChange, inert }) => {
   const canvas = useRef<HTMLCanvasElement | null>(null)
   const drawing = useRef(false)
+  // Only the value at mount is redrawn: later changes come from this canvas itself.
+  const [storedAtMount] = useState(value)
 
   const point = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -452,14 +454,12 @@ const SignaturePad: React.FC<{ value: string; onChange: (value: string) => void;
     ctx.lineCap = 'round'
     ctx.strokeStyle = '#111'
     // Redraw a stored signature when the field mounts again (a step change).
-    if (value) {
+    if (storedAtMount) {
       const image = new Image()
       image.onload = () => ctx.drawImage(image, 0, 0)
-      image.src = value
+      image.src = storedAtMount
     }
-    // Only on mount: later changes come from this canvas itself.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [storedAtMount])
 
   const down = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (inert) return

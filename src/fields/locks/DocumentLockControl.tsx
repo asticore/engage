@@ -6,6 +6,8 @@ import { useDocumentInfo } from '@/engine/ui'
 import { parseLocks, serializeLocks, type LockMode } from '@/features/roles/locks'
 import { can } from '@/features/roles/permissions'
 
+type MeUser = NonNullable<Parameters<typeof can>[0]>
+
 /**
  * Lock / unlock a whole template or page from its edit screen. Shows the lock to everyone; the select
  * is only enabled for admins and holders of the "locks" permission (or roles named on the lock).
@@ -21,10 +23,10 @@ export const DocumentLockControl: React.FC = () => {
   useEffect(() => {
     if (!id || !collectionSlug) return
     Promise.all([
-      fetch(`/api/${collectionSlug}/${id}?depth=0`, { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)),
-      fetch('/api/users/me', { credentials: 'include' }).then((r) => (r.ok ? r.json() : null)),
+      fetch(`/api/${collectionSlug}/${id}?depth=0`, { credentials: 'include' }).then((r): Promise<{ locks?: unknown } | null> => (r.ok ? r.json() : null)),
+      fetch('/api/users/me', { credentials: 'include' }).then((r): Promise<{ user?: MeUser | null } | null> => (r.ok ? r.json() : null)),
     ])
-      .then(([doc, me]: any[]) => {
+      .then(([doc, me]) => {
         const locks = parseLocks(doc?.locks)
         setMode(locks.document?.mode ?? 'none')
         setRoles((locks.document?.unlockRoles ?? []).join(', '))
@@ -37,7 +39,7 @@ export const DocumentLockControl: React.FC = () => {
   if (!id || !collectionSlug) return null
 
   const save = async (nextMode: LockMode | 'none', nextRoles: string) => {
-    const current = await fetch(`/api/${collectionSlug}/${id}?depth=0`, { credentials: 'include' }).then((r) => r.json() as Promise<any>)
+    const current = await fetch(`/api/${collectionSlug}/${id}?depth=0`, { credentials: 'include' }).then((r) => r.json() as Promise<{ locks?: unknown }>)
     const locks = parseLocks(current.locks)
     if (nextMode === 'none') delete locks.document
     else locks.document = { mode: nextMode, unlockRoles: nextRoles.split(',').map((r) => r.trim()).filter(Boolean), editableProps: locks.document?.editableProps ?? [] }

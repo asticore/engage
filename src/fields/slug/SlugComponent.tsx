@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useEffectEvent, useState } from 'react'
 import { FieldLabel, TextInput, useField, useFormFields } from '@/engine/ui'
 import type { TextFieldClientProps } from '@/engine'
 import { humanizeName } from '@/admin/fields/shared'
@@ -26,13 +26,15 @@ export const SlugComponent: React.FC<SlugComponentProps> = ({ field, path, field
   // (Without this, merely opening a page whose slug differs from its title rewrote the slug and marked the form changed.)
   const [hasEdited, setHasEdited] = useState(() => typeof value === 'string' && value.length > 0)
 
+  // Only the source field and `hasEdited` re-run this; the latest `value`/`setValue` are read through an effect event.
+  const followSource = useEffectEvent((source: string) => {
+    const next = slugify(source)
+    if (next && next !== value) setValue(next)
+  })
   useEffect(() => {
     if (hasEdited) return
     if (typeof sourceValue !== 'string' || sourceValue.length === 0) return
-    const next = slugify(sourceValue)
-    if (next && next !== value) setValue(next)
-    // Only re-run when the source field changes - not when `value`/`setValue` change identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    followSource(sourceValue)
   }, [sourceValue, hasEdited])
 
   return (

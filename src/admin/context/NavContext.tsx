@@ -33,6 +33,7 @@
  */
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createStorageStore, useHydrated, useMediaQuery, useStoredString } from '@/lib/clientStore'
 
 type NavContextValue = {
   collapsed: boolean
@@ -51,61 +52,28 @@ const NavContext = createContext<NavContextValue | null>(null)
 const MOBILE_QUERY = '(max-width: 768px)'
 const COLLAPSED_STORAGE_KEY = 'ac-nav-collapsed'
 
-function getInitialNavOpen(): boolean {
-  if (typeof window === 'undefined') return true
-  return !window.matchMedia(MOBILE_QUERY).matches
-}
-
-function getInitialIsMobile(): boolean {
-  if (typeof window === 'undefined') return false
-  return window.matchMedia(MOBILE_QUERY).matches
-}
-
-function getInitialCollapsed(): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    return window.localStorage.getItem(COLLAPSED_STORAGE_KEY) === '1'
-  } catch {
-    // Private browsing / storage disabled - fall back to expanded.
-    return false
-  }
-}
+const collapsedStore = createStorageStore(COLLAPSED_STORAGE_KEY)
 
 export const NavProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [navOpen, setNavOpenState] = useState(true)
-  const [collapsed, setCollapsedState] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const [hydrated, setHydrated] = useState(false)
+  // Window-derived values read through useSyncExternalStore: the server and first client render use the
+  // defaults (open, expanded, desktop, not hydrated), then React re-renders with the real values.
+  const hydrated = useHydrated()
+  const isMobile = useMediaQuery(MOBILE_QUERY)
+  const collapsed = useStoredString(collapsedStore) === '1'
+  // The mobile drawer follows the viewport until the user opens or closes it; then their choice stands.
+  const [navOpenChoice, setNavOpenChoice] = useState<boolean | null>(null)
   const [shouldAnimate, setShouldAnimate] = useState(false)
   const navRef = useRef<HTMLDivElement>(null)
-
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    setHydrated(true)
-    setNavOpenState(getInitialNavOpen())
-    setIsMobile(getInitialIsMobile())
-    setCollapsedState(getInitialCollapsed())
-
-    const mql = window.matchMedia(MOBILE_QUERY)
-    const onChange = (event: MediaQueryListEvent) => setIsMobile(event.matches)
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const navOpen = navOpenChoice ?? !isMobile
 
   const setNavOpen = useCallback((open: boolean) => {
     setShouldAnimate(true)
-    setNavOpenState(open)
+    setNavOpenChoice(open)
   }, [])
 
   const setCollapsed = useCallback((next: boolean) => {
     setShouldAnimate(true)
-    setCollapsedState(next)
-    try {
-      window.localStorage.setItem(COLLAPSED_STORAGE_KEY, next ? '1' : '0')
-    } catch {
-      // Nothing to persist to - the in-memory state above still works for this session.
-    }
+    collapsedStore.set(next ? '1' : '0')
   }, [])
 
   const toggleSidebar = useCallback(() => {

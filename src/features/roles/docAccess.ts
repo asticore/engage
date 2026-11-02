@@ -15,7 +15,7 @@ import { OWNABLE_RESOURCES, resolveAccess } from './permissions'
 export type DocAccessContext = {
   isAdmin?: boolean
   user?: unknown
-  engine?: { findByID: (args: any) => Promise<any> }
+  engine?: { findByID(args: Record<string, unknown>): Promise<unknown> }
 }
 
 export type DocAccessResult = { ok: true } | { ok: false; status: 403 | 404 }
@@ -48,7 +48,7 @@ export async function assertDocAccess(
 
   let doc: { createdBy?: unknown } | null = null
   try {
-    doc = await context.engine.findByID({ collection, id, depth: 0, overrideAccess: true })
+    doc = (await context.engine.findByID({ collection, id, depth: 0, overrideAccess: true })) as { createdBy?: unknown } | null
   } catch {
     return { ok: false, status: 404 }
   }

@@ -18,15 +18,26 @@ const fetchJson: JsonFetcher = async (url) => {
   return response.json()
 }
 
+/** The page fields the picker reads from the pages list. */
+type PageDoc = {
+  id: number | string
+  title?: string
+  slug?: string
+  parent?: number | string | { id: number | string } | null
+  isHomepage?: boolean
+  _status?: string
+  trashedAt?: string | null
+}
+
 /** Every page (all pagination pages), without trashed ones, in the tree's shape. */
 async function loadAllPages(): Promise<TreePage[]> {
-  const list = (await fetchAllPages(fetchJson, PAGES_URL, PAGES_LIMIT)) as any[]
+  const list = (await fetchAllPages(fetchJson, PAGES_URL, PAGES_LIMIT)) as PageDoc[]
   return list
-    .filter((page: any) => !page.trashedAt)
-    .map((page: any) => ({
+    .filter((page) => !page.trashedAt)
+    .map((page) => ({
       id: Number(page.id),
-      title: page.title,
-      slug: page.slug,
+      title: page.title ?? '',
+      slug: page.slug ?? '',
       parent:
         page.parent && typeof page.parent === 'object'
           ? Number(page.parent.id)

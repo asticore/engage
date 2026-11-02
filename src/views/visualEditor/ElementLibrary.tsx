@@ -11,12 +11,19 @@ import { globalCards, globalNode, type GlobalCard } from './libraryGlobals'
 import { commercePresetCards, commercePresetNode, filterCommercePresetCards } from './libraryCommercePresets'
 import { createFormFromPreset, filterFormPresetCards, formPresetCards } from './libraryFormPresets'
 import { TemplateBrowser } from './TemplateBrowser'
-import { FAVS_KEY, RECENTS_KEY, loadList, pushRecent, saveList, toggleFavourite } from './libraryRecents'
+import { createStorageStore, useStoredString } from '@/lib/clientStore'
+import { FAVS_KEY, RECENTS_KEY, pushRecent, sanitiseList, toggleFavourite } from './libraryRecents'
 import './navLibraryPresets.css'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const CATEGORY_KEY = 've-library-category'
 const DENSITY_KEY = 've-library-density'
+
+// Stored choices are read through useSyncExternalStore so the first client render equals the server render.
+const categoryStore = createStorageStore(CATEGORY_KEY)
+const densityStore = createStorageStore(DENSITY_KEY)
+const recentsStore = createStorageStore(RECENTS_KEY)
+const favsStore = createStorageStore(FAVS_KEY)
 
 type Source = 'blocks' | 'templates'
 
@@ -41,59 +48,27 @@ export const ElementLibrary: React.FC<{
   const t = useAdminT()
   const [source, setSource] = useState<Source>('blocks')
   const [query, setQuery] = useState('')
-  const [category, setCategory] = useState<string>('all')
-  const changeCategory = (key: string) => {
-    setCategory(key)
-    try {
-      window.localStorage.setItem(CATEGORY_KEY, key)
-    } catch {
-      /* storage unavailable */
-    }
-  }
-  const [density, setDensity] = useState<'compact' | 'comfortable'>('compact')
-  const toggleDensity = () => {
-    const next = density === 'compact' ? 'comfortable' : 'compact'
-    setDensity(next)
-    try {
-      window.localStorage.setItem(DENSITY_KEY, next)
-    } catch {
-      /* storage unavailable */
-    }
-  }
-  const [recents, setRecents] = useState<string[]>([])
-  const [favs, setFavs] = useState<string[]>([])
-  // Stored values are read after mount so the first client render equals the server render.
-  useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- one-time sync with localStorage after mount */
-    try {
-      const saved = window.localStorage.getItem(CATEGORY_KEY)
-      if (saved && BLOCK_CATEGORIES.some((c) => c.key === saved)) setCategory(saved)
-    } catch {
-      /* storage unavailable */
-    }
-    try {
-      if (window.localStorage.getItem(DENSITY_KEY) === 'comfortable') setDensity('comfortable')
-    } catch {
-      /* storage unavailable */
-    }
-    setRecents(loadList(RECENTS_KEY))
-    setFavs(loadList(FAVS_KEY))
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [])
+  const savedCategory = useStoredString(categoryStore)
+  const category = savedCategory && BLOCK_CATEGORIES.some((c) => c.key === savedCategory) ? savedCategory : 'all'
+  const changeCategory = (key: string) => categoryStore.set(key)
+  const density: 'compact' | 'comfortable' = useStoredString(densityStore) === 'comfortable' ? 'comfortable' : 'compact'
+  const toggleDensity = () => densityStore.set(density === 'compact' ? 'comfortable' : 'compact')
+  const recentsRaw = useStoredString(recentsStore)
+  const favsRaw = useStoredString(favsStore)
+  const recents = useMemo(() => sanitiseList(recentsRaw), [recentsRaw])
+  const favs = useMemo(() => sanitiseList(favsRaw), [favsRaw])
 
   const pick = useCallback(
     (slug: string) => {
       const next = pushRecent(recents, slug)
-      setRecents(next)
-      saveList(RECENTS_KEY, next)
+      recentsStore.set(JSON.stringify(next))
       onPickBlock(slug)
     },
     [recents, onPickBlock],
   )
   const toggleFav = (slug: string) => {
     const next = toggleFavourite(favs, slug)
-    setFavs(next)
-    saveList(FAVS_KEY, next)
+    favsStore.set(JSON.stringify(next))
   }
 
   const [globals, setGlobals] = useState<GlobalCard[]>([])

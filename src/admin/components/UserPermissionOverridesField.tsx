@@ -81,7 +81,7 @@ export function UserPermissionOverridesField({ field, path, readOnly }: UserPerm
   // Compute the inherited effective matrix (without overrides)
    
   const inherited = React.useMemo(() => {
-    const user: any = {
+    const user: Parameters<typeof effectiveMatrix>[0] = {
       roles: userRoles,
       id: 1, // placeholder
       permissionOverrides: undefined,

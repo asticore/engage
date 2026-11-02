@@ -14,6 +14,7 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url))
 const BASELINE = JSON.parse(readFileSync(join(ROOT, 'tests/int/type-ratchet-baseline.json'), 'utf8')) as {
   any: number
   eslintDisable: number
+  justified: Record<string, string>
 }
 
 const sourceFiles = (dir: string): string[] =>
@@ -46,6 +47,16 @@ const measure = (): { any: number; eslintDisable: number; perFile: Record<string
 
 describe('type ratchet: src/ may not gain any or eslint-disable', () => {
   const current = measure()
+
+  it('has a one-line reason in the baseline for every file that still has an any or an eslint-disable', () => {
+    const missing = Object.keys(current.perFile).filter((file) => !BASELINE.justified[file])
+    expect(missing, 'add a one-line reason under "justified" in tests/int/type-ratchet-baseline.json, or fix the occurrence').toEqual([])
+  })
+
+  it('does not list files that no longer need a reason', () => {
+    const stale = Object.keys(BASELINE.justified).filter((file) => !current.perFile[file])
+    expect(stale, 'remove these from "justified" in tests/int/type-ratchet-baseline.json').toEqual([])
+  })
 
   it('has no more `any` types than the baseline', () => {
     if (current.any < BASELINE.any) {

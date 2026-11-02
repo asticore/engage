@@ -27,6 +27,18 @@ export function parentId(raw: unknown): number | null {
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
+/** The page fields the tree reads from the list query. */
+type PageDoc = {
+  id: number | string
+  title?: string
+  slug?: string
+  parent?: unknown
+  sortOrder?: number
+  isHomepage?: boolean
+  trashedAt?: string | null
+  _status?: string
+}
+
 export async function PagesTreeView(props: PagesTreeViewProps) {
   const { engine, hasCreatePermission = false, newDocumentURL = '' } = props
 
@@ -43,7 +55,7 @@ export async function PagesTreeView(props: PagesTreeViewProps) {
 
       if (result.docs && Array.isArray(result.docs)) {
         // Trashed pages are hidden from the tree (they live in the trash).
-        pages = result.docs.filter((doc: any) => !doc.trashedAt).map((doc: any) => ({
+        pages = (result.docs as PageDoc[]).filter((doc) => !doc.trashedAt).map((doc) => ({
           id: Number(doc.id),
           title: String(doc.title || ''),
           slug: String(doc.slug || ''),

@@ -2,11 +2,11 @@ import { AdPlacements } from '@/features/ads/collections/AdPlacements'
 import { AdUnits } from '@/features/ads/collections/AdUnits'
 import { AdSettings } from '@/features/ads/settings'
 
-import { createCollectionOps, createGlobalOps } from '../generic'
+import { type PagedFind, createCollectionOps, createGlobalOps } from '../generic'
 import { adPlacements, adSettings, adSettingsGenerated, adUnits } from '../schema/ads'
 
 type Doc = Record<string, unknown> & { id: number; updatedAt: string; createdAt: string }
-type Paged = (args?: { where?: import('@/engine').Where; sort?: import('@/engine').Sort; limit?: number; page?: number; pagination?: boolean }) => Promise<any>
+type Paged = PagedFind<Doc>
 
 const unitOps = createCollectionOps(adUnits, AdUnits)
 export const findAdUnitsPaginated = unitOps.findPaginated as unknown as Paged

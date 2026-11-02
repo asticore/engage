@@ -22,12 +22,12 @@ export type TrackingRuntimeProps = Omit<TrackingRuntimeOptions, 'events'> & {
  * one connected platform. Tracking is suppressed on preview and admin paths.
  */
 export function TrackingRuntime({ events, platforms, policyVersion, optIn, adminPath = '/admin', suppressed = false, categories, siteCurrency = null }: TrackingRuntimeProps): null {
+  // The categories object is built per render; its values are primitives, so compare them as a key.
+  const categoriesKey = JSON.stringify(categories ?? {})
   useEffect(() => {
     if (suppressed || !events.length || !platforms.length) return
     if (trackingSuppressed(window.location.pathname, adminPath)) return
-    return startTracking(window as unknown as Window & Record<string, unknown>, { events, platforms: platforms as TrackingPlatform[], policyVersion, optIn, categories, siteCurrency })
-    // The categories object is built per render; its values are primitives, so compare them as a key.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events, platforms, policyVersion, optIn, adminPath, suppressed, siteCurrency, JSON.stringify(categories ?? {})])
+    return startTracking(window as unknown as Window & Record<string, unknown>, { events, platforms: platforms as TrackingPlatform[], policyVersion, optIn, categories: JSON.parse(categoriesKey) as typeof categories, siteCurrency })
+  }, [events, platforms, policyVersion, optIn, adminPath, suppressed, siteCurrency, categoriesKey])
   return null
 }
