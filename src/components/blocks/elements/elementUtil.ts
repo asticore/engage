@@ -25,6 +25,19 @@ export function safeSrcSet(value: unknown): string | undefined {
   return ok ? value : undefined
 }
 
+/**
+ * The `sizes` attribute for a picture in a block that has a srcset: `desktop` above 720px, `mobile` below. Without
+ * sizes the browser assumes 100vw and fetches a larger file than the picture needs, so every srcset gets one.
+ */
+export function pictureSizes(desktop: string, mobile = '100vw'): string {
+  return `(max-width: 720px) ${mobile}, ${desktop}`
+}
+
+/** `sizes` for a grid or carousel of `cols` pictures per row: two per row on phones, one per row when there is only one column. */
+export function gridSizes(cols: number): string {
+  return pictureSizes(`${Math.ceil(100 / cols)}vw`, `${Math.ceil(100 / Math.min(cols, 2))}vw`)
+}
+
 export const str = (v: unknown, fallback = ''): string => (typeof v === 'string' ? v : typeof v === 'number' ? String(v) : fallback)
 
 export const num = (v: unknown, fallback: number, min = -Infinity, max = Infinity): number => {

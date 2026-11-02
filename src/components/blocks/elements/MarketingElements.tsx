@@ -8,7 +8,7 @@ import { safeUrl } from '@/lib/mergeTags'
 import { Icon, SocialGlyph } from './icons'
 import { StarsRow } from './InteractiveElements'
 import { alignClass } from './TextElements'
-import { cells, flag, iconName, linkAttrs, linkHref, lines, mediaOf, num, pick, str } from './elementUtil'
+import { cells, flag, iconName, linkAttrs, linkHref, lines, mediaOf, num, pick, pictureSizes, str } from './elementUtil'
 
 type P = Record<string, unknown>
 
@@ -108,7 +108,7 @@ export const TeamMemberElement: React.FC<P> = (p) => {
   const social = cells(p.social, 2)
   return (
     <article className={`el-team ${alignClass(p.align ?? 'center')}`}>
-      {m?.url ? <img decoding="async" className="el-team__photo" src={m.url} alt={str(p.alt) || name} loading="lazy" /> : <div className="el-placeholder el-team__photo">Photo</div>}
+      {m?.url ? <img decoding="async" className="el-team__photo" src={m.url} srcSet={m.srcSet} sizes={m.srcSet ? 'min(100vw, 280px)' : undefined} alt={str(p.alt) || name} loading="lazy" /> : <div className="el-placeholder el-team__photo">Photo</div>}
       <h3>{name}</h3>
       {str(p.role) && <p className="el-team__role">{str(p.role)}</p>}
       {str(p.bio) && <p>{str(p.bio)}</p>}
@@ -203,7 +203,7 @@ export const ImageBoxElement: React.FC<P> = (p) => {
   const m = mediaOf(p.image) || mediaOf(p.url)
   return (
     <div className={`el-box el-box--image ${alignClass(p.align)}`}>
-      {m?.url ? <img decoding="async" src={m.url} alt={str(p.alt) || str(m.alt)} loading="lazy" className="el-box__img" /> : <div className="el-placeholder">Choose an image</div>}
+      {m?.url ? <img decoding="async" src={m.url} srcSet={m.srcSet} sizes={m.srcSet ? pictureSizes('50vw') : undefined} alt={str(p.alt) || str(m.alt)} loading="lazy" className="el-box__img" /> : <div className="el-placeholder">Choose an image</div>}
       <div className="el-box__body">
         <Titled tag={p.tag} link={p.link}>
           {str(p.title, 'Image box')}

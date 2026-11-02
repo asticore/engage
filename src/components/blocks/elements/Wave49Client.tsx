@@ -12,7 +12,7 @@ import React, { useEffect, useId, useRef, useState } from 'react'
  */
 
 /** A picture the lightbox can show. Plain data, so it crosses from the server render. */
-export type GalleryItem = { url: string; alt: string }
+export type GalleryItem = { url: string; alt: string; srcSet?: string }
 
 const REDUCED_QUERY = '(prefers-reduced-motion: reduce)'
 const AUTOPLAY_MS = 6000

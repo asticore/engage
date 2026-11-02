@@ -10,6 +10,9 @@ import { isServableMediaFilename, MULTIPART_PART_BYTES, MULTIPART_THRESHOLD_BYTE
 import { readLimitedText } from '@/lib/limitedBody'
 import { readOds, parseSpreadsheetBytes } from '@/lib/spreadsheet'
 import { localFontFileName, sanitizeInstalledFonts } from '@/features/fonts/installed'
+import { renderToStaticMarkup } from 'react-dom/server'
+import React from 'react'
+import { renderElement as renderElementNode } from '@/components/blocks/elements/renderElement'
 import { isBuiltInFontFile } from '@/features/fonts/selfHost'
 import { mediaOf, safeSrcSet } from '@/components/blocks/elements/elementUtil'
 import { buildBuiltInFontCss } from '@/features/fonts/builtIn'
@@ -174,6 +177,8 @@ describe('font subsets and versions', () => {
   })
 })
 
+const renderElement = (type: string, props: Record<string, unknown>) => renderToStaticMarkup(React.createElement(React.Fragment, null, renderElementNode(type, props)))
+
 describe('self-hosted built-in fonts and block srcset', () => {
   it('serves only the pinned built-in files, and only names it could have been asked for', () => {
     expect(isBuiltInFontFile('inter@5.3.0', 'inter-latin-400-normal.woff2')).toBe(true)
@@ -193,6 +198,27 @@ describe('self-hosted built-in fonts and block srcset', () => {
     expect(safeSrcSet('javascript:alert(1) 1w')).toBeUndefined()
     expect(mediaOf({ id: 1, url: '/media/a.jpg', srcSet: '/media/a.jpg 640w' })?.srcSet).toBe('/media/a.jpg 640w')
     expect(mediaOf({ id: 1, url: '/media/a.jpg', srcSet: 'javascript:1 1w' })?.srcSet).toBeUndefined()
+  })
+
+  it('gives every block picture with a srcset a sizes attribute, and none without one', () => {
+    const srcSet = '/media/a.jpg 640w, /media/a.jpg 1280w'
+    const photo = { id: 1, url: '/media/a.jpg', alt: 'Ada', srcSet }
+    const card = renderElement('card', { title: 'Card', media: 'image', imageRatio: 'auto', image: photo })
+    const team = renderElement('team-member', { name: 'Ada', photo })
+    const box = renderElement('image-box', { title: 'Box', image: photo })
+    const grid = renderElement('gallery', { images: [photo, photo], columns: 3 })
+    const carousel = renderElement('image-carousel', { images: [photo], visible: 2 })
+    const plain = renderElement('team-member', { name: 'Ada', photo: { id: 1, url: '/media/a.jpg' } })
+    for (const markup of [card, box, grid, carousel]) {
+      expect(markup).toContain(`srcSet="${srcSet}"`)
+      expect(markup).toMatch(/sizes="\(max-width: 720px\) [^"]+, [^"]+"/)
+    }
+    expect(team).toContain(`srcSet="${srcSet}"`)
+    expect(team).toContain('sizes="min(100vw, 280px)"')
+    expect(grid).toContain('sizes="(max-width: 720px) 50vw, 34vw"')
+    expect(carousel).toContain('sizes="(max-width: 720px) 100vw, 50vw"')
+    expect(plain).not.toContain('srcSet=')
+    expect(plain).not.toContain('sizes=')
   })
 })
 
