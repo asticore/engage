@@ -1,5 +1,5 @@
 import type { Access, FieldAccess } from '@/engine'
-import { resolveAccess, OWNABLE_RESOURCES, type Action, type Resource } from '@/features/roles/permissions'
+import { resolveAccess, OWNABLE_RESOURCES, type Action, type PermissionUser, type Resource } from '@/features/roles/permissions'
 
 const checkRole = (roles: string[], user: { roles?: string[] } | null | undefined) =>
   Boolean(user?.roles?.some((role) => roles.includes(role)))
@@ -94,10 +94,10 @@ export function roleOrPublished(slug: Resource): Access {
   return ({ req }) => {
     // Admin always has access
     if (checkRole(['admin'], req.user)) return true
-    const level = resolveAccess(req.user as any, slug, 'read')
+    const level = resolveAccess(req.user as PermissionUser, slug, 'read')
     if (level === 'all') return true
     if (level === 'own') {
-      const own = ownWhere(slug, req.user as any)
+      const own = ownWhere(slug, req.user as PermissionUser)
       return own ? { or: [own, { _status: { equals: 'published' } }] } : { _status: { equals: 'published' } }
     }
     // Otherwise restrict to published documents
@@ -109,9 +109,9 @@ export function roleAccess(slug: Resource, action: Action): Access {
   return ({ req }) => {
     // Admin always has access
     if (checkRole(['admin'], req.user)) return true
-    const level = resolveAccess(req.user as any, slug, action)
+    const level = resolveAccess(req.user as PermissionUser, slug, action)
     if (level === 'all') return true
-    if (level === 'own') return ownWhere(slug, req.user as any)
+    if (level === 'own') return ownWhere(slug, req.user as PermissionUser)
     return false
   }
 }

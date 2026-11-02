@@ -22,7 +22,7 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
   const { setValue, value } = useField<unknown>({ path })
   const [expandedRow, setExpandedRow] = useState<number | null>(null)
 
-  const repeaterDef = (field.repeater as any) || { fields: [] }
+  const repeaterDef = (field.repeater as { fields: Array<{ name: string; label?: string; type?: string }> } | undefined) || { fields: [] }
   const rows = Array.isArray(value) ? value : []
 
   const addRow = (insertIndex: number) => {
@@ -70,7 +70,7 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
             <thead>
               <tr style={{ backgroundColor: '#f5f5f5', borderBottom: '1px solid #ddd' }}>
                 <th style={{ padding: '0.5rem', textAlign: 'left', width: '50px', fontWeight: 600 }}>#</th>
-                {repeaterDef.fields.map((f: any) => (
+                {repeaterDef.fields.map((f) => (
                   <th key={f.name} style={{ padding: '0.5rem', textAlign: 'left', fontWeight: 600 }}>
                     {f.label}
                   </th>
@@ -84,12 +84,12 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
                   <td style={{ padding: '0.5rem', backgroundColor: '#fafafa', textAlign: 'center', fontWeight: 500 }}>
                     {rowIndex + 1}
                   </td>
-                  {repeaterDef.fields.map((f: any) => (
+                  {repeaterDef.fields.map((f) => (
                     <td key={f.name} style={{ padding: '0.5rem' }}>
                       {f.type === 'text' || f.type === 'number' ? (
                         <input
                           type={f.type === 'number' ? 'number' : 'text'}
-                          value={String((row as any)?.[f.name] ?? '')}
+                          value={String((row as Record<string, unknown> | null | undefined)?.[f.name] ?? '')}
                           onChange={(e) => updateCell(rowIndex, f.name, f.type === 'number' ? Number(e.target.value) : e.target.value)}
                           disabled={readOnly}
                           style={{
@@ -104,7 +104,7 @@ export const RepeaterFieldRenderer: React.FC<RepeaterFieldRendererProps> = ({ fi
                       ) : f.type === 'checkbox' ? (
                         <input
                           type="checkbox"
-                          checked={Boolean((row as any)?.[f.name])}
+                          checked={Boolean((row as Record<string, unknown> | null | undefined)?.[f.name])}
                           onChange={(e) => updateCell(rowIndex, f.name, e.target.checked)}
                           disabled={readOnly}
                           style={{ cursor: readOnly ? 'not-allowed' : 'pointer' }}
