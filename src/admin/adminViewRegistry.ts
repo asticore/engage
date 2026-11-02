@@ -21,6 +21,7 @@ import { SettingsHubView } from '@/admin/views/SettingsHubView'
 import { HeaderFooterView } from '@/admin/views/HeaderFooterView'
 import { TranslationsView } from '@/features/multilingual/views/TranslationsView'
 import { DatabaseView } from '@/features/cleanup/DatabaseView'
+import { UnusedTablesView } from '@/features/cleanup/UnusedTablesView'
 import { ABResultsView } from '@/features/abTesting/components/ABResultsView'
 import { VisualEditorView } from '@/views/VisualEditor'
 import { RolesView } from '@/admin/views/RolesView'
@@ -138,6 +139,15 @@ export const CUSTOM_ADMIN_VIEWS = [
     meta: {
       title: 'Database',
       description: 'Per-feature table usage and cleanup.',
+    },
+  },
+  {
+    key: 'unusedTables',
+    Component: UnusedTablesView,
+    path: '/unused-tables',
+    meta: {
+      title: 'Unused tables',
+      description: 'Tables of sections that are switched off, with export and delete.',
     },
   },
   {

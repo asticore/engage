@@ -52,7 +52,7 @@ describe('schedule/runDue - publish and unpublish execution', () => {
 
       // Build the schema the way a fresh install does: base tables first, then every migration.
       // Running only the migration list on an empty D1 left base tables such as eg_users missing.
-      const outcome = await runInternalMigrate(d1, consoleLogger)
+      const outcome = await runInternalMigrate(d1, consoleLogger, { provisionAll: true })
       expect(outcome.errorCount).toBe(0)
 
       engine = createEngine()

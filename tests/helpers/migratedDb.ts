@@ -12,7 +12,7 @@ let ready: Promise<void> | null = null
 export function ensureMigratedLocalDb(): Promise<void> {
   ready ??= (async () => {
     const db = await resolveD1Binding()
-    const { errorCount } = await runInternalMigrate(db, consoleLogger)
+    const { errorCount } = await runInternalMigrate(db, consoleLogger, { provisionAll: true })
     if (errorCount > 0) throw new Error(`Local D1 migration finished with ${errorCount} error(s).`)
   })()
   return ready

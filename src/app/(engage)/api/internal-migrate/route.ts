@@ -38,7 +38,10 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ error: 'No D1 binding available.' }, { status: 500 })
   }
 
-  const { results, errorCount } = await runInternalMigrate(db, consoleLogger)
+  // A fresh database gets core tables and the sections that are on by default; the rest are created when a
+  // section is switched on. `?provision=all` (operators, scripted setups) creates every section's tables now.
+  const provisionAll = new URL(request.url).searchParams.get('provision') === 'all'
+  const { results, errorCount } = await runInternalMigrate(db, consoleLogger, { provisionAll })
 
   return NextResponse.json({ ok: errorCount === 0, ...results }, { status: errorCount === 0 ? 200 : 500 })
 }

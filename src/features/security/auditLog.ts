@@ -88,6 +88,7 @@ export type AuditAction =
   | 'password-group.unlock'
   | 'password-group.unlock-failed'
   | 'password-group.refused'
+  | 'database.table-dropped'
 
 /**
  * Every action an account-security event can write. The admin review screen
@@ -153,6 +154,7 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'password-group.unlock',
   'password-group.unlock-failed',
   'password-group.refused',
+  'database.table-dropped',
 ]
 
 export type AuditEntry = {

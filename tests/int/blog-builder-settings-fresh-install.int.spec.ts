@@ -19,8 +19,8 @@ describe('blog builder settings - fresh install on an empty D1', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    first = await runInternalMigrate(proxy.env.D1, consoleLogger)
-    second = await runInternalMigrate(proxy.env.D1, consoleLogger)
+    first = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    second = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
   }, 300_000)
 
   afterAll(async () => {

@@ -70,7 +70,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: ['products', 'product-attributes', 'product-tags', 'product-brands', 'shipping-classes', 'product-reviews', 'stock-subscriptions', 'product-subscriptions', 'gift-cards', 'store-credits', 'credit-ledger', 'shipping-manifests', 'orders', 'order-refunds', 'coupons', 'shipping-zones', 'tax-rates', 'transactions', 'carts', 'addresses'],
     globals: ['shop-settings', 'shop-extra-settings', 'shipping-settings'],
-    tables: ['products', 'product_attributes', 'shipping_classes', 'product_reviews', 'stock_subscriptions', 'product_subscriptions', 'gift_cards', 'store_credits', 'credit_ledger', 'shipping_manifests', 'orders', 'order_refunds', 'coupons', 'shipping_zones', 'tax_rates', 'transactions', 'carts', 'addresses'],
+    tables: ['products', 'product_attributes', 'product_tags', 'product_brands', 'shop_display_currencies', 'coupon_reservations', 'shipping_classes', 'product_reviews', 'stock_subscriptions', 'product_subscriptions', 'gift_cards', 'store_credits', 'credit_ledger', 'shipping_manifests', 'orders', 'order_refunds', 'coupons', 'shipping_zones', 'tax_rates', 'transactions', 'carts', 'addresses'],
     implemented: true,
   },
   {
@@ -110,7 +110,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: ['forms', 'form-submissions', 'form-drafts'],
     globals: [],
-    tables: ['forms', 'form_submissions', 'form_drafts'],
+    tables: ['forms', 'form_submissions', 'form_drafts', 'form_embeds'],
     implemented: true,
   },
   {
@@ -180,7 +180,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: ['ab-tests'],
     globals: [],
-    tables: ['ab_tests'],
+    tables: ['ab_tests', 'ab_events', 'ab_stats'],
     implemented: true,
   },
   {
@@ -190,7 +190,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: ['membership-tiers', 'memberships'],
     globals: ['security-settings'],
-    tables: ['membership_tiers', 'memberships'],
+    tables: [],
     implemented: true,
   },
   {
@@ -210,7 +210,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: [],
     globals: [],
-    tables: ['ab_tests', 'ab_events', 'ab_stats'],
+    tables: [],
     implemented: true,
   },
   {
@@ -240,7 +240,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: ['ad-units', 'ad-placements'],
     globals: ['ad-settings'],
-    tables: ['ad_units', 'ad_placements', 'ad_settings', 'ad_stats'],
+    tables: ['ad_units', 'ad_placements', 'ad_stats'],
     implemented: true,
   },
   {

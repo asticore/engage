@@ -116,7 +116,12 @@ import { migrations as ALL_MIGRATIONS } from '@/migrations'
 import { renameTables } from './schema/applyRenames'
 import { applySchemaAdditions } from './schema/applySchema'
 import { BLOCKS_RELS_STATEMENTS } from './schema/blocksRelsTables'
+import type { FeatureKey } from '@/features/registry'
+
+import { deferTables, type DeferMode } from './schema/deferredTables'
 import { bootstrapEngineTables, type EngineDb } from './schema/engineBootstrap'
+import { initialiseFreshState, readDeferredFeatures, readTouchedMigrations, recordTouchedMigrations, stateTableExists } from './schema/featureTablesState'
+import { ownerOfTable } from '@/features/featureTables'
 import { SCHEMA_SETS, withoutRenamedTables } from './schema/freshInstallSchemaSets'
 import { TABLE_RENAMES } from './schema/tableRenames'
 
@@ -140,9 +145,66 @@ export type InternalMigrateResult = {
  * the standard `D1Database` interface). See this file's header comment for
  * the sequence and why each step is ordered where it is.
  */
-export async function runInternalMigrate(rawDb: D1Database, logger: EngineLogger): Promise<InternalMigrateResult> {
+export type InternalMigrateOptions = {
+  /**
+   * Create every feature's tables now (the old everything-at-once install).
+   * Without it a FRESH database only gets core tables and the tables of
+   * features that are on by default; the rest are created when the feature is
+   * switched on (see ./provisioning.ts). Existing databases are unaffected.
+   */
+  provisionAll?: boolean
+  /**
+   * Provision this one feature: replay the whole sequence letting only its
+   * statements through, ignoring and not recording the migration history.
+   */
+  onlyFeature?: FeatureKey
+}
+
+/** A database is fresh when nothing has ever been migrated: no history rows and no pages table. */
+async function looksFresh(db: D1Database): Promise<boolean> {
+  const tables = await db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name IN ('eg_pages','pages','eg_users','users')`).all()
+  if ((tables.results?.length ?? 0) > 0) return false
+  const history = await db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='eg_migrations'`).all()
+  if ((history.results?.length ?? 0) === 0) return true
+  const row = await db.prepare(`SELECT COUNT(*) AS n FROM eg_migrations`).first<{ n: number }>()
+  return !row || row.n === 0
+}
+
+export async function runInternalMigrate(
+  realDb: D1Database,
+  logger: EngineLogger,
+  options: InternalMigrateOptions = {},
+): Promise<InternalMigrateResult> {
   const results: Record<string, unknown> = {}
   let errorCount = 0
+
+  // Everything below goes through this handle. Until `mode` is set it passes
+  // every statement straight through, so a database that is not lazily
+  // provisioned (production, any install from before this) runs exactly as before.
+  let mode: DeferMode | null = null
+  let currentMigration: string | null = null
+  const touched = new Map<FeatureKey, Set<string>>()
+  let renamedAway = new Set<string>()
+  const { db: rawDb, report: deferReport } = deferTables(realDb, () => mode, { current: () => currentMigration, touched }, () => renamedAway)
+  const only = options.onlyFeature ?? null
+  /** Providing one feature: only its own entries of a schema step are applied. */
+  const mine = (table: string): boolean => only === null || ownerOfTable(table) === only
+  /** Names each migration while it runs, so held-back features can note which ones looked at their tables. */
+  const named = (list: MigrationEntry[], replayOnly: Set<string> | null): MigrationEntry[] =>
+    list
+      .filter((entry) => replayOnly === null || replayOnly.has(entry.name))
+      .map((entry) => ({
+        ...entry,
+        up: async (args) => {
+          currentMigration = entry.name === '20270310_100000_feature_tables_state' ? null : entry.name
+          try {
+            await entry.up(args)
+          } finally {
+            currentMigration = null
+          }
+        },
+      }))
+  const replaySet = only ? await readTouchedMigrations(realDb, only) : null
 
   const db = drizzle(rawDb) as unknown as Drizzle
 
@@ -174,13 +236,33 @@ export async function runInternalMigrate(rawDb: D1Database, logger: EngineLogger
   }
 
   // Step 1: engine bookkeeping bootstrap, 1st pass - see header comment.
-  const engineReportPassA = await bootstrapEngineTables(engineDb)
-  errorCount += engineReportPassA.columns.errors.length
-  results['engine-tables'] = engineReportPassA
+  // Not when providing one feature: the engine tables were settled by the install, and running the
+  // column renames now, with every parent table present, would rename columns a fresh install keeps.
+  if (!options.onlyFeature) {
+    const engineReportPassA = await bootstrapEngineTables(engineDb)
+    errorCount += engineReportPassA.columns.errors.length
+    results['engine-tables'] = engineReportPassA
+  }
+
+  // Lazy provisioning: decide which features' tables this run leaves out. A
+  // fresh database records its choice FIRST (so a run that stops half way
+  // resumes with the same choice); an existing one has no record yet and
+  // creates everything, and the 20270310 migration then marks it provisioned.
+  if (options.onlyFeature) {
+    const present = new Set((await realDb.prepare(`SELECT name FROM sqlite_master WHERE type='table'`).all()).results.map((row) => (row as { name: string }).name))
+    renamedAway = new Set(TABLE_RENAMES.filter((entry) => present.has(entry.to)).map((entry) => entry.from))
+    mode = { mode: 'only', feature: options.onlyFeature }
+  } else {
+    if (!(await stateTableExists(realDb)) && (await looksFresh(realDb))) {
+      await initialiseFreshState(realDb, options.provisionAll === true)
+    }
+    const deferred = await readDeferredFeatures(realDb)
+    if (deferred.size > 0) mode = { mode: 'skip', features: deferred }
+  }
 
   // Step 2: the foundation migrations.
   try {
-    const early = await runMigrations({ db, engineDb, logger, migrations: EARLY_MIGRATIONS })
+    const early = await runMigrations({ db, engineDb, logger, migrations: named(EARLY_MIGRATIONS, replaySet), replay: Boolean(options.onlyFeature) })
     results['foundation-migrations'] = { applied: early.ran, alreadyApplied: early.skipped.length }
   } catch (err) {
     errorCount += 1
@@ -191,9 +273,15 @@ export async function runInternalMigrate(rawDb: D1Database, logger: EngineLogger
   // only at the top, so `eg_locked_documents_rels` (needed by the
   // `locked-documents-rels` schema set next) exists on a fresh install. See
   // header comment.
-  const engineReportPassB = await bootstrapEngineTables(engineDb)
-  errorCount += engineReportPassB.columns.errors.length
-  results['engine-tables-second-pass'] = engineReportPassB
+  // When providing one feature this pass is limited to that feature's own tables: the foundation
+  // migrations create e.g. `orders_rels` with bare `transactions_id` columns that this pass renames,
+  // exactly as it does on an all-at-once install, and no other table is touched.
+  {
+    const scoped: EngineDb = only ? { ...engineDb, listTables: async () => (await engineDb.listTables()).filter(mine) } : engineDb
+    const engineReportPassB = await bootstrapEngineTables(scoped)
+    errorCount += engineReportPassB.columns.errors.length
+    results['engine-tables-second-pass'] = engineReportPassB
+  }
 
   // Step 4: additive schema sets, computed against the database as it stands
   // right now (pre-content-rename on a fresh install; already-renamed
@@ -213,6 +301,7 @@ export async function runInternalMigrate(rawDb: D1Database, logger: EngineLogger
     const target = statement.match(/^CREATE (?:UNIQUE )?(?:TABLE|INDEX) IF NOT EXISTS `[^`]+`(?: ON `([^`]+)`)?/)
     const table = statement.startsWith('CREATE TABLE') ? statement.match(/^CREATE TABLE IF NOT EXISTS `([^`]+)`/)?.[1] : target?.[1]
     if (table && renamedAwayBeforeRename.has(table)) continue
+    if (table && !mine(table)) continue
     try {
       await rawDb.prepare(statement).run()
       blocksApplied += 1
@@ -224,7 +313,14 @@ export async function runInternalMigrate(rawDb: D1Database, logger: EngineLogger
   results['blocks-tables'] = { applied: blocksApplied, errors: blocksErrors }
 
   for (const rawSet of SCHEMA_SETS) {
-    const set = withoutRenamedTables(rawSet, renamedAwayBeforeRename)
+    const unfiltered = withoutRenamedTables(rawSet, renamedAwayBeforeRename)
+    const set = only
+      ? {
+          tables: unfiltered.tables.filter((entry) => mine(entry.table)),
+          columns: unfiltered.columns.filter((entry) => mine(entry.table)),
+          indexes: unfiltered.indexes.filter((entry) => mine(entry.sql.match(/\sON\s+`([^`]+)`/)?.[1] ?? '')),
+        }
+      : unfiltered
     const report = await applySchemaAdditions({
       tables: set.tables,
       columns: set.columns,
@@ -239,7 +335,7 @@ export async function runInternalMigrate(rawDb: D1Database, logger: EngineLogger
   // Step 5: rename the content tables to the `eg_` prefix - has to run AFTER
   // `SCHEMA_SETS` so it carries those additions over under the new names.
   const renameReport = await renameTables({
-    renames: TABLE_RENAMES,
+    renames: TABLE_RENAMES.filter((entry) => mine(entry.from)),
     exists: tableExists,
     rename: (from, to) => rawDb.prepare(`ALTER TABLE \`${from}\` RENAME TO \`${to}\``).run(),
   })
@@ -250,12 +346,15 @@ export async function runInternalMigrate(rawDb: D1Database, logger: EngineLogger
   // migrations (forms, multilingual, backups, members, courses, A/B testing,
   // security audit log) - unchanged from the previous `RUNNABLE_MIGRATIONS`.
   try {
-    const late = await runMigrations({ db, engineDb, logger, migrations: LATE_MIGRATIONS })
+    const late = await runMigrations({ db, engineDb, logger, migrations: named(LATE_MIGRATIONS, replaySet), replay: Boolean(options.onlyFeature) })
     results['feature-migrations'] = { applied: late.ran, alreadyApplied: late.skipped.length }
   } catch (err) {
     errorCount += 1
     results['feature-migrations'] = { error: err instanceof Error ? err.message : String(err) }
   }
+
+  if (mode?.mode === 'skip') await recordTouchedMigrations(realDb, touched)
+  if (mode?.mode === 'skip') results['deferred-features'] = { features: [...mode.features], statementsHeld: deferReport.held }
 
   return { results, errorCount }
 }
