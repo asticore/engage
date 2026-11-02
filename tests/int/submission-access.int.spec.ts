@@ -77,13 +77,13 @@ describe('who can read event RSVPs (bookings)', () => {
     expect(rsvpRead(admin)).toBe(true)
   })
 
-  it('a staff role with event-rsvps read sees every booking, not just its own', () => {
+  it('a staff role with View guest details sees every booking; a viewer (RSVP read only) with no verified address sees none', () => {
     expect(rsvpRead(editor)).toBe(true)
-    expect(rsvpRead(viewer)).toBe(true)
+    expect(rsvpRead(viewer)).toBe(false)
   })
 
-  it('an editor whose event-rsvps read is denied sees only bookings under its own address', () => {
-    const denied = { ...editor, permissionOverrides: { deny: { 'event-rsvps': { read: true } } } }
+  it('an editor whose View guest details is denied sees only bookings under its own address', () => {
+    const denied = { ...editor, permissionOverrides: { deny: { 'rsvp-guests': { read: true } } } }
     expect(rsvpRead(denied)).toEqual({ email: { equals: 'editor@example.com' } })
   })
 
@@ -111,9 +111,14 @@ describe('who can read event RSVPs (bookings)', () => {
     expect(isAdminOrRsvpOwner({ req: { user: own } } as never)).toEqual({ email: { equals: ANA } })
   })
 
-  it('a custom role with event-rsvps read sees every booking', () => {
-    const grant = { id: 9, email: 'x@example.com', roles: ['customer'], emailVerifiedAt: VERIFIED, customRolePermissions: { 'event-rsvps': { read: true } } }
+  it('a custom role with View guest details sees every booking', () => {
+    const grant = { id: 9, email: 'x@example.com', roles: ['customer'], emailVerifiedAt: VERIFIED, customRolePermissions: { 'rsvp-guests': { read: true } } }
     expect(rsvpRead(grant)).toBe(true)
+  })
+
+  it('a custom role with event-rsvps read alone sees only its own address', () => {
+    const counts = { id: 9, email: 'x@example.com', roles: ['customer'], emailVerifiedAt: VERIFIED, customRolePermissions: { 'event-rsvps': { read: true } } }
+    expect(rsvpRead(counts)).toEqual({ email: { equals: 'x@example.com' } })
   })
 })
 

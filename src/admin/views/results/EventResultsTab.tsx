@@ -8,7 +8,7 @@ import { ResultsMessage, ResultsPager, ResultsStat } from './ResultsChrome'
 import { formatWhen, type PageInfo, type RsvpRow } from './rows'
 import { useResultsPage } from './useResultsPage'
 
-type RsvpPage = PageInfo & { docs: RsvpRow[]; totalGuests: number; guestsTruncated: boolean }
+type RsvpPage = PageInfo & { docs: RsvpRow[]; totalGuests: number; guestsTruncated: boolean; guestDetailsHidden?: boolean }
 
 /**
  * The RSVPs tab on an event's edit page: counts, a CSV export, and one page of
@@ -33,18 +33,24 @@ export function EventResultsTab({ eventId, capacity }: { eventId: number; capaci
           {capacity !== null && <ResultsStat label="Capacity" value={capacity.toLocaleString()} />}
         </div>
         <EventCheckInButton eventId={eventId} />
-        <a className="et-button" download href={`/api/admin-event-rsvps?event=${eventId}&format=csv`}>
-          Export CSV
-        </a>
+        {data?.guestDetailsHidden !== true && (
+          <a className="et-button" download href={`/api/admin-event-rsvps?event=${eventId}&format=csv`}>
+            Export CSV
+          </a>
+        )}
       </div>
 
       {overCapacity && <ResultsMessage kind="warning">There are more guests than the capacity set on this event.</ResultsMessage>}
       {error && <ResultsMessage kind="error">The RSVPs could not be loaded. Reload the page to try again.</ResultsMessage>}
       {!error && loading && <ResultsMessage kind="muted">Loading RSVPs...</ResultsMessage>}
 
-      {data && !error && data.docs.length === 0 && <ResultsMessage kind="muted">No RSVPs yet.</ResultsMessage>}
+      {data && !error && data.guestDetailsHidden && (
+        <ResultsMessage kind="muted">Guest names and emails are hidden. Ask an administrator for the View guest details permission on your role to see them.</ResultsMessage>
+      )}
 
-      {data && !error && data.docs.length > 0 && (
+      {data && !error && !data.guestDetailsHidden && data.docs.length === 0 && <ResultsMessage kind="muted">No RSVPs yet.</ResultsMessage>}
+
+      {data && !error && !data.guestDetailsHidden && data.docs.length > 0 && (
         <>
           <div className="et-table-wrap">
             <table className="et-table">

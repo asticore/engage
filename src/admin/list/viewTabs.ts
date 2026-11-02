@@ -59,8 +59,6 @@ export type SectionTab = {
   label: string
   /** The collection whose read permission opens the tab. Omit for the list itself. */
   collection?: string
-  /** The tab also needs admin or update permission on this collection (the RSVPs list is every event's RSVPs). */
-  updateOf?: string
   /** Shown instead of the panel (and as the tab's tooltip) when the signed-in user may not open it. */
   deniedReason: string
 }
@@ -81,8 +79,7 @@ export const SECTION_TABS: Record<string, SectionTab[]> = {
       key: 'rsvps',
       label: 'RSVPs',
       collection: 'event-rsvps',
-      updateOf: 'events',
-      deniedReason: 'Seeing every RSVP needs an administrator, or a role that can read RSVPs and edit events.',
+      deniedReason: 'Seeing RSVPs needs the Event RSVPs read permission on your role. Guest names and emails also need View guest details.',
     },
   ],
   redirects: [
@@ -127,7 +124,6 @@ export function resolveSectionTabs(slug: string, access: SectionAccess): Resolve
     let allowed = true
     if (!access.isAdmin) {
       if (tab.collection && !access.canRead(tab.collection)) allowed = false
-      if (tab.updateOf && !access.canUpdate(tab.updateOf)) allowed = false
     }
     return { ...tab, allowed, primary: index === 0 }
   })

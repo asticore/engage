@@ -36,6 +36,7 @@ export const RESOURCES = [
   'field-groups',
   'data-views',
   'event-rsvps',
+  'rsvp-guests',
   'page-templates',
   'reusable-sections',
   'site-templates',
@@ -182,6 +183,8 @@ export const BUILT_IN_ROLES: Record<string, PermissionMatrix> = {
     'field-groups': { read: true, create: true, update: true, delete: true },
     'data-views': { read: true, create: true, update: true, delete: true },
     'event-rsvps': { read: true },
+    // Editors already manage events and see guest details; the built-in role keeps that. Viewers and custom roles do not.
+    'rsvp-guests': { read: true },
     preferences: { read: true },
     translations: { read: true, create: true, update: true, delete: true },
     'admin-schedule': { read: true, create: true, update: true, delete: true },
@@ -590,7 +593,8 @@ export const PERMISSION_CATEGORIES: Array<{
       { resource: 'lessons', label: 'Lessons', actions: ['read', 'create', 'update', 'delete'] },
       { resource: 'enrolments', label: 'Enrolments', actions: ['read', 'create', 'update', 'delete'] },
       { resource: 'lesson-progress', label: 'Lesson progress', actions: ['read', 'create', 'update', 'delete'] },
-      { resource: 'event-rsvps', label: 'Event RSVPs', actions: ['read', 'create', 'update', 'delete'] },
+      { resource: 'event-rsvps', label: 'Event RSVPs', description: 'Read means the RSVP counts on an event (the RSVPs tab) without guest names or emails, unless View guest details is also granted.', actions: ['read', 'create', 'update', 'delete'] },
+      { resource: 'rsvp-guests', label: 'View guest details', description: 'See guest names, emails and the RSVP list (and export it) on the RSVPs tab and on each RSVP. Off by default for roles other than Administrator and Editor.', actions: ['read'] },
     ],
   },
   {

@@ -54,6 +54,7 @@ const ascii = (value: string, at = 0, total = 64) => {
 const samples: Record<string, Uint8Array> = {
   jpg: pad([0xff, 0xd8, 0xff, 0xe0]),
   jpeg: pad([0xff, 0xd8, 0xff, 0xe0]),
+  svg: text('<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1"/></svg>'),
   png,
   gif: ascii('GIF89a'),
   webp: Uint8Array.from([...text('RIFF'), 0, 0, 0, 0, ...text('WEBP'), ...new Uint8Array(40)]),
@@ -102,8 +103,9 @@ describe('accepted file types', () => {
 
   it.each(Object.keys(samples))('accepts a real .%s and stores the type found from its bytes', (extension) => {
     const entry = ACCEPTED_TYPES.find((type) => type.extension === extension)!
-    // The declared type is deliberately wrong: it must be ignored.
-    const result = inspectUpload(file(`Sample File.${extension.toUpperCase()}`, 'application/octet-stream', samples[extension]))
+    // The declared type is deliberately wrong: it must be ignored. SVG is accepted only with its switch on.
+    const policy = resolveUploadPolicy({ uploads: { allowSvg: true } })
+    const result = inspectUpload(file(`Sample File.${extension.toUpperCase()}`, 'application/octet-stream', samples[extension]), policy)
     expect(result.mimeType).toBe(entry.mimeType)
     expect(result.name).toBe(`Sample File.${extension}`)
   })
@@ -215,7 +217,8 @@ describe('hostile uploads', () => {
     header.set([0x50, 0x4b, 0x03, 0x04], 0)
     new DataView(header.buffer).setUint32(22, 0xffffffff, true)
     const upload = file('bomb.zip', 'application/zip', header)
-    const prepared = await prepareUploadFile(upload)
+    // Injected dependencies: the test never needs the engine, and reading settings from it is slow here.
+    const prepared = await prepareUploadFile(upload, { readSettings: async () => ({}) as never, binding: async () => null, readPolicy: async () => DEFAULT_UPLOAD_POLICY })
     expect(prepared.file.data).toBe(header)
     expect(prepared.file.size).toBe(64)
     const fields = await generateUploadFields({ file: prepared.file, filenameExists: async () => false, optimisation: prepared })
@@ -316,7 +319,7 @@ describe('serving headers', () => {
   }
 
   it('sends nosniff and an attachment disposition for anything that is not a plain picture', () => {
-    for (const type of ['application/zip', 'text/plain', 'audio/mpeg', 'video/mp4', 'text/html', 'image/svg+xml', '']) {
+    for (const type of ['application/zip', 'text/plain', 'audio/mpeg', 'video/mp4', 'text/html', '']) {
       const headers = headersFor(type)
       expect(headers.get('X-Content-Type-Options')).toBe('nosniff')
       expect(headers.get('Content-Disposition')).toMatch(/^attachment; filename="report.pdf"/)

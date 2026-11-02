@@ -37,19 +37,20 @@ const pagedFind = (docs: Doc[]) =>
   })
 
 const adminContext = (
-  overrides: Partial<{ roles: string[]; collections: Record<string, { read?: boolean; update?: boolean }>; engine: unknown }> = {},
+  overrides: Partial<{ roles: string[]; collections: Record<string, { read?: boolean; update?: boolean }>; engine: unknown; guests: boolean }> = {},
 ) => {
   const roles = overrides.roles ?? ['admin']
+  const collections = overrides.collections ?? {
+    'event-rsvps': { read: true },
+    'form-submissions': { read: true },
+    events: { read: true, update: true },
+  }
   return {
     user: { roles },
     isAdmin: roles.includes('admin'),
-    permissions: {
-      collections: overrides.collections ?? {
-        'event-rsvps': { read: true },
-        'form-submissions': { read: true },
-        events: { read: true, update: true },
-      },
-    },
+    permissions: { collections },
+    // Role check for the routes' own permissions. View guest details is off unless a test turns it on.
+    can: (resource: string, action: string) => (resource === 'rsvp-guests' ? Boolean(overrides.guests) : Boolean(collections[resource]?.[action as 'read'])),
     engine: overrides.engine,
   }
 }
@@ -84,27 +85,50 @@ describe('GET /api/admin-event-rsvps', () => {
     expect(response.status).toBe(403)
   })
 
-  it('refuses a non-admin who owns one RSVP but cannot update the event, even with RSVP read', async () => {
-    const find = pagedFind([rsvp(1)])
+  it('gives a role with RSVP read but no View guest details the counts only, and no guest rows or CSV', async () => {
+    const find = pagedFind([rsvp(1), rsvp(2, { guestCount: 3 })])
     getAdminContext.mockResolvedValue(
       adminContext({
-        roles: ['editor'],
-        collections: { 'event-rsvps': { read: true }, events: { read: true, update: false } },
+        roles: ['viewer'],
+        collections: { 'event-rsvps': { read: true }, events: { read: true } },
         engine: { find, findByID: vi.fn(async () => ({ id: 3, title: 'Gala' })) },
       }),
     )
     const response = await rsvpGET(eventRequest('event=3'))
-    expect(response.status).toBe(403)
-    expect(find).not.toHaveBeenCalled()
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as EventBody & { guestDetailsHidden: boolean }
+    expect(body.docs).toEqual([])
+    expect(body.guestDetailsHidden).toBe(true)
+    expect(body.totalDocs).toBe(2)
+    expect(body.totalGuests).toBe(4)
+    // The counts are read with overrideAccess, because the collection rule shows documents only to View guest details.
+    expect(find.mock.calls.every((call) => (call[0] as { overrideAccess?: boolean }).overrideAccess === true)).toBe(true)
     const csv = await rsvpGET(eventRequest('event=3&format=csv'))
     expect(csv.status).toBe(403)
   })
 
-  it('answers a non-admin who can update the event', async () => {
+  it('gives guest rows to a role with View guest details', async () => {
+    getAdminContext.mockResolvedValue(
+      adminContext({
+        roles: ['viewer'],
+        collections: { 'event-rsvps': { read: true }, events: { read: true } },
+        guests: true,
+        engine: { find: pagedFind([rsvp(1)]), findByID: vi.fn(async () => ({ id: 3, title: 'Gala' })) },
+      }),
+    )
+    const response = await rsvpGET(eventRequest('event=3'))
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as EventBody & { guestDetailsHidden: boolean }
+    expect(body.guestDetailsHidden).toBe(false)
+    expect(body.docs[0]).toMatchObject({ name: 'Guest 1' })
+  })
+
+  it('answers an editor (events update and RSVP read) with guest rows', async () => {
     getAdminContext.mockResolvedValue(
       adminContext({
         roles: ['editor'],
         collections: { 'event-rsvps': { read: true }, events: { read: true, update: true } },
+        guests: true,
         engine: { find: pagedFind([rsvp(1)]), findByID: vi.fn(async () => ({ id: 3, title: 'Gala' })) },
       }),
     )
@@ -143,11 +167,11 @@ describe('GET /api/admin-event-rsvps', () => {
     expect(body.guestsTruncated).toBe(false)
     expect(body.docs[0]).toMatchObject({ id: 1, name: 'Guest 1', email: 'guest1@example.com', guestCount: 2 })
 
-    const firstCall = find.mock.calls[0][0] as { collection: string; where: unknown; sort: string; user: unknown }
+    const firstCall = find.mock.calls[0][0] as { collection: string; where: unknown; sort: string; overrideAccess: boolean }
     expect(firstCall.collection).toBe('event-rsvps')
     expect(firstCall.where).toEqual({ event: { equals: 3 } })
     expect(firstCall.sort).toBe('-createdAt')
-    expect(firstCall.user).toEqual({ roles: ['admin'] })
+    expect(firstCall.overrideAccess).toBe(true)
   })
 
   it('exports a CSV with the event title in the filename and formula text neutralised', async () => {
@@ -250,12 +274,23 @@ describe('across every event and every form (all=1)', () => {
     expect(call.where.and).toHaveLength(4)
   })
 
-  it('still needs event update rights for the all-RSVPs list', async () => {
+  it('the all-RSVPs list gives counts without guest rows, and refuses search and CSV without View guest details', async () => {
     getAdminContext.mockResolvedValue(
-      adminContext({ roles: ['editor'], collections: { 'event-rsvps': { read: true }, events: { read: true, update: false } }, engine: { find: vi.fn() } }),
+      adminContext({ roles: ['viewer'], collections: { 'event-rsvps': { read: true }, events: { read: true } }, engine: { find: pagedFind([rsvp(1)]) } }),
     )
-    expect((await rsvpGET(eventRequest('all=1'))).status).toBe(403)
+    const counts = await rsvpGET(eventRequest('all=1'))
+    expect(counts.status).toBe(200)
+    const body = (await counts.json()) as { docs: unknown[]; totalDocs: number; guestDetailsHidden: boolean }
+    expect(body.docs).toEqual([])
+    expect(body.totalDocs).toBe(1)
+    expect(body.guestDetailsHidden).toBe(true)
+    expect((await rsvpGET(eventRequest('all=1&q=ada'))).status).toBe(403)
     expect((await rsvpGET(eventRequest('all=1&format=csv'))).status).toBe(403)
+  })
+
+  it('refuses the all-RSVPs list to a role without Event RSVPs read', async () => {
+    getAdminContext.mockResolvedValue(adminContext({ roles: ['editor'], collections: {}, engine: { find: vi.fn() } }))
+    expect((await rsvpGET(eventRequest('all=1'))).status).toBe(403)
   })
 
   it('exports the filtered RSVPs as CSV', async () => {

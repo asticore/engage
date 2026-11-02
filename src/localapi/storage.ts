@@ -179,8 +179,9 @@ export function isServableMediaFilename(filename: string): boolean {
 }
 
 /**
- * Pictures a browser may display inline from this origin. SVG is deliberately absent: it can carry script.
- * ICO, HEIC, BMP and TIFF are served with their own type but as downloads, since most browsers cannot show them and none should render them here.
+ * Pictures a browser may display inline from this origin. ICO, HEIC, BMP and TIFF are served with their own type but as downloads,
+ * since most browsers cannot show them and none should render them here. SVG is handled on its own below: it is inline only because
+ * it was cleaned on upload (see features/media/svgSanitise.ts), and it is sandboxed.
  */
 const INLINE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'])
 
@@ -200,6 +201,10 @@ export function applySafeServingHeaders(headers: Headers, filename: string): voi
     // with this site's origin; nosniff (above) stops the browser treating the bytes as something else.
     headers.set('Content-Disposition', 'inline')
     headers.set('Content-Security-Policy', 'sandbox')
+  } else if (type === 'image/svg+xml') {
+    // A cleaned SVG (see features/media/svgSanitise.ts). Sandboxed, so even a script that somehow got through could not run with this
+    // site's origin, and it may load nothing from outside (no network, no images, no fonts).
+    headers.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; sandbox")
   } else if (!INLINE_TYPES.has(type)) {
     const safeName = filename.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_')
     headers.set('Content-Disposition', `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(filename)}`)

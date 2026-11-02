@@ -4,8 +4,8 @@ import { CUSTOM_ADMIN_VIEWS } from '@/admin/adminViewRegistry'
 
 describe('Settings Pages Configuration', () => {
   describe('SETTINGS_PAGES structure', () => {
-    it('exports exactly 8 pages', () => {
-      expect(SETTINGS_PAGES).toHaveLength(8)
+    it('exports exactly 10 pages', () => {
+      expect(SETTINGS_PAGES).toHaveLength(10)
     })
 
     it('has unique keys for each page', () => {
@@ -149,9 +149,9 @@ describe('Settings Pages Configuration', () => {
   })
 
   describe('Admin view registry', () => {
-    it('registers all 8 settings pages', () => {
+    it('registers all 10 settings pages', () => {
       const settingsViews = CUSTOM_ADMIN_VIEWS.filter((v) => v.key.startsWith('settings-'))
-      expect(settingsViews).toHaveLength(8)
+      expect(settingsViews).toHaveLength(10)
     })
 
     it('settings views have correct paths', () => {

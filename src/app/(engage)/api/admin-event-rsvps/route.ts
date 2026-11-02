@@ -31,6 +31,8 @@ const GUEST_SCAN_MAX_ROWS = 10000
 const json = (body: unknown, status = 200): Response =>
   NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
 
+const GUEST_DETAILS_NEEDED = 'Guest names and emails need the View guest details permission.'
+
 /**
  * GET /api/admin-event-rsvps?event=<id>&page=<n>
  *   JSON: one page of that event's RSVPs (newest first) plus totals.
@@ -42,24 +44,32 @@ const json = (body: unknown, status = 200): Response =>
  *   title on each row. `event` narrows it to one event, `q` searches name and email, `from` and `to`
  *   bound the day it was sent.
  *
- * Admin panel access is required, and so is either admin or update permission on events: the
- * list is the whole event's RSVPs, so someone who only owns one RSVP is refused. The event-rsvps
- * read permission is required too. The reads pass the signed-in user, so the collection's own
- * access rule still applies on top of the permission check.
+ * Who may use it: admin panel access and the Event RSVPs read permission (the counts). Guest details (the
+ * rows, the names and emails, the CSV export and the name search) also need View guest details (rsvp-guests).
+ * Without it the JSON still carries the counts and an empty `docs` list with `guestDetailsHidden: true`.
+ *
+ * The counts are read with overrideAccess, because the collection's own rule shows the documents only to
+ * a role with View guest details. The route has already checked its permission, so counting is safe.
+ * Someone who only owns one RSVP is still refused: the admin panel is not open to them.
  */
 export async function GET(request: Request): Promise<Response> {
   try {
     const context = await getAdminContext()
     if (!hasAdminPanelAccess(context.user)) return json({ error: 'Unauthorised' }, 401)
-    if (!context.isAdmin && !context.permissions.collections?.events?.update) return json({ error: 'Forbidden' }, 403)
-    if (!context.permissions.collections?.['event-rsvps']?.read) return json({ error: 'Forbidden' }, 403)
+    if (!context.isAdmin && !context.can('event-rsvps', 'read')) return json({ error: 'Forbidden' }, 403)
+    const guests = context.isAdmin || context.can('rsvp-guests', 'read')
 
     const url = new URL(request.url)
+    const csv = url.searchParams.get('format') === 'csv'
 
     if (url.searchParams.get('all') === '1') {
+      const q = parseSearch(url.searchParams.get('q'))
+      if (q && !guests) return json({ error: GUEST_DETAILS_NEEDED }, 403)
+      if (csv && !guests) return json({ error: GUEST_DETAILS_NEEDED }, 403)
+
       let where = buildRsvpsWhere({
         event: parseId(url.searchParams.get('event')),
-        q: parseSearch(url.searchParams.get('q')),
+        q,
         from: url.searchParams.get('from'),
         to: url.searchParams.get('to'),
       })
@@ -70,14 +80,14 @@ export async function GET(request: Request): Promise<Response> {
       }
       const allEngine = context.engine as unknown as FindEngine
 
-      if (url.searchParams.get('format') === 'csv') {
+      if (csv) {
         const { docs, truncated } = await collectRows(
           allEngine,
-          { collection: 'event-rsvps', where, sort: '-createdAt', depth: 1, user: context.user },
+          { collection: 'event-rsvps', where, sort: '-createdAt', depth: 1, overrideAccess: true },
           CSV_MAX_ROWS,
         )
-        const csv = `${BOM}${buildAllRsvpsCsv(docs.map(mapAllRsvpRow))}`
-        return new Response(csv, {
+        const body = `${BOM}${buildAllRsvpsCsv(docs.map(mapAllRsvpRow))}`
+        return new Response(body, {
           status: 200,
           headers: {
             'Content-Type': 'text/csv; charset=utf-8',
@@ -96,11 +106,12 @@ export async function GET(request: Request): Promise<Response> {
         page: allPage,
         limit: RESULTS_PAGE_SIZE,
         depth: 1,
-        user: context.user,
-      })
+        overrideAccess: true,
+      } as never)
       return json({
         ...pageInfo(allPage, RESULTS_PAGE_SIZE, found.totalDocs),
-        docs: (found.docs as Record<string, unknown>[]).map(mapAllRsvpRow),
+        docs: guests ? (found.docs as Record<string, unknown>[]).map(mapAllRsvpRow) : [],
+        guestDetailsHidden: !guests,
       })
     }
 
@@ -108,6 +119,7 @@ export async function GET(request: Request): Promise<Response> {
     if (eventId === null) return json({ error: 'Add ?event=<id> to choose an event.' }, 400)
 
     const engine = context.engine as unknown as FindEngine
+    // The event itself is read as the user, so the event's own access rules still apply.
     const event = (await context.engine
       .findByID({ collection: 'events', id: eventId, depth: 0, user: context.user })
       .catch((): null => null)) as Record<string, unknown> | null
@@ -115,14 +127,15 @@ export async function GET(request: Request): Promise<Response> {
 
     const where = { event: { equals: eventId } }
 
-    if (url.searchParams.get('format') === 'csv') {
+    if (csv) {
+      if (!guests) return json({ error: GUEST_DETAILS_NEEDED }, 403)
       const { docs, truncated } = await collectRows(
         engine,
-        { collection: 'event-rsvps', where, sort: 'createdAt', depth: 0, user: context.user },
+        { collection: 'event-rsvps', where, sort: 'createdAt', depth: 0, overrideAccess: true },
         CSV_MAX_ROWS,
       )
-      const csv = `${BOM}${buildRsvpCsv(docs.map(mapRsvpRow))}`
-      return new Response(csv, {
+      const body = `${BOM}${buildRsvpCsv(docs.map(mapRsvpRow))}`
+      return new Response(body, {
         status: 200,
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
@@ -141,18 +154,19 @@ export async function GET(request: Request): Promise<Response> {
       page,
       limit: RESULTS_PAGE_SIZE,
       depth: 0,
-      user: context.user,
-    })
+      overrideAccess: true,
+    } as never)
 
     const { docs: everyRsvp, truncated } = await collectRows(
       engine,
-      { collection: 'event-rsvps', where, sort: 'createdAt', depth: 0, user: context.user },
+      { collection: 'event-rsvps', where, sort: 'createdAt', depth: 0, overrideAccess: true },
       GUEST_SCAN_MAX_ROWS,
     )
 
     return json({
       ...pageInfo(page, RESULTS_PAGE_SIZE, result.totalDocs),
-      docs: (result.docs as Record<string, unknown>[]).map(mapRsvpRow),
+      docs: guests ? (result.docs as Record<string, unknown>[]).map(mapRsvpRow) : [],
+      guestDetailsHidden: !guests,
       totalGuests: sumGuests(everyRsvp.map(mapRsvpRow)),
       guestsTruncated: truncated,
     })

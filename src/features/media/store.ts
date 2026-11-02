@@ -8,7 +8,7 @@ import type { StoredMedia } from './library'
 import { parseId } from './access'
 import { resolveUploadPolicy, type UploadPolicy } from './fileTypes'
 import { resolveOptimiseSettings, type OptimiseSettings } from './optimise'
-import type { KeyedProvider, StockKeys } from './stock'
+import { resolveOpenverseHosts, type KeyedProvider, type StockKeys } from './stock'
 
 /** The engine methods the media routes use. The real Engine satisfies this structurally. */
 export type MediaEngine = {
@@ -67,6 +67,13 @@ export async function readStockKeys(engine: MediaEngine): Promise<StockKeys> {
     pixabay: pick(stock.pixabayApiKey),
   }
   return keys
+}
+
+/** The Openverse picture hosts from Media settings (the built-in list when none are set). */
+export async function readOpenverseHosts(engine: MediaEngine): Promise<string[]> {
+  const settings = await readMediaSettings(engine)
+  const stock = (settings?.stock ?? {}) as Record<string, unknown>
+  return resolveOpenverseHosts(stock.openverseHosts)
 }
 
 /** Presence of each stock key, for the browser. Reports whether a key exists, never its value. */

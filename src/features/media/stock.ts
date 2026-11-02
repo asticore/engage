@@ -286,7 +286,7 @@ export const PROVIDER_IMAGE_HOSTS: Record<KeyedProvider, string[]> = {
  * An entry beginning `*.` matches any subdomain of the rest of the name. Hosts
  * such as i.pinimg.com are deliberately not listed.
  */
-export const OPENVERSE_IMAGE_HOSTS = [
+export const OPENVERSE_IMAGE_HOSTS: readonly string[] = [
   'upload.wikimedia.org',
   'live.staticflickr.com',
   '*.staticflickr.com',
@@ -447,6 +447,7 @@ export async function resolveImportUrl(
   request: ImportRequest,
   keys: StockKeys,
   fetchImpl: typeof fetch = fetch,
+  openverseHosts: readonly string[] = OPENVERSE_IMAGE_HOSTS,
 ): Promise<URL> {
   if (!/^[A-Za-z0-9_-]{1,80}$/.test(request.id)) throw new StockError('That picture id is not valid.', 400)
 
@@ -459,7 +460,7 @@ export async function resolveImportUrl(
       const body = response?.ok ? ((await response.json().catch((): null => null)) as { url?: unknown } | null) : null
       const url = safeHttpsUrl(body?.url)
       if (!url) throw new StockError('That picture could not be found in Openverse.', 404)
-      return validateImportUrl(url, OPENVERSE_IMAGE_HOSTS)
+      return validateImportUrl(url, openverseHosts)
     }
     case 'unsplash': {
       const key = keys.unsplash?.trim()
@@ -481,9 +482,27 @@ export async function resolveImportUrl(
 }
 
 /** The allow-list that applies to the bytes download step, per provider. */
-export function importAllowList(provider: StockProvider): readonly string[] {
-  if (provider === 'openverse') return OPENVERSE_IMAGE_HOSTS
+export function importAllowList(provider: StockProvider, openverseHosts: readonly string[] = OPENVERSE_IMAGE_HOSTS): readonly string[] {
+  if (provider === 'openverse') return openverseHosts
   return PROVIDER_IMAGE_HOSTS[provider]
+}
+
+/** A host name, or `*.` plus a domain, with at least one dot. */
+const HOST_ENTRY = /^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/
+
+/**
+ * The Openverse host list from Media settings: one host per line (commas and spaces work too). Entries that are
+ * not a plain host name are dropped, and a list with nothing usable left is the built-in list, so a blank
+ * setting never opens Openverse imports to every address.
+ */
+export function resolveOpenverseHosts(raw: unknown): string[] {
+  if (typeof raw !== 'string') return [...OPENVERSE_IMAGE_HOSTS]
+  const hosts = raw
+    .split(/[\s,;]+/)
+    .map((item) => item.trim().toLowerCase().replace(/\.$/, ''))
+    .filter((item) => HOST_ENTRY.test(item) && !isPrivateHostname(item.replace(/^\*\./, '')))
+  const unique = Array.from(new Set(hosts))
+  return unique.length > 0 ? unique : [...OPENVERSE_IMAGE_HOSTS]
 }
 
 /** A stored file name for an imported picture, such as `unsplash-abc123.jpg`. */

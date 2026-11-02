@@ -41,7 +41,9 @@ export function canSeeBookingsByEmail(user: { email?: string | null; emailVerifi
 export const isAdminOrRsvpOwner: Access = ({ req }) => {
   const user = req.user as (PermissionUser & { email?: string | null; emailVerifiedAt?: string | null }) | null | undefined
   if (user?.roles?.includes('admin')) return true
-  if (user && resolveAccess(user, 'event-rsvps', 'read') === 'all') return true
+  // Guest details (names, emails, every RSVP) need View guest details. A role with only Event RSVPs read gets its counts from the
+  // RSVP route, which checks that permission itself and reads with overrideAccess, so this rule never shows it the documents.
+  if (user && resolveAccess(user, 'rsvp-guests', 'read') === 'all') return true
   if (!canSeeBookingsByEmail(user)) return false
   return { email: { equals: user!.email as string } }
 }

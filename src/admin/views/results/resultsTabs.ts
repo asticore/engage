@@ -11,11 +11,6 @@ export type ResultsTab = {
   label: string
   /** The collection whose read permission gates the tab. */
   collection: string
-  /**
-   * When set, the tab also needs admin or update permission on this collection. The RSVPs list is
-   * the event's full list, so an owner of one RSVP (who can read it but not the event) must not see it.
-   */
-  updateOf?: string
   /** Shown on the disabled tab when the user may not open it. */
   deniedReason: string
 }
@@ -24,8 +19,7 @@ const RESULTS_TABS: Record<string, ResultsTab> = {
   events: {
     label: 'RSVPs',
     collection: 'event-rsvps',
-    updateOf: 'events',
-    deniedReason: 'Seeing the RSVPs needs an administrator, or a role that can read RSVPs and edit events.',
+    deniedReason: 'Seeing RSVPs needs the Event RSVPs read permission on your role. Guest names and emails also need View guest details.',
   },
   forms: {
     label: 'Submissions',
@@ -58,7 +52,6 @@ export function resultsTabFor(slug: string, id: number | undefined, access: Resu
   const tab = Object.prototype.hasOwnProperty.call(RESULTS_TABS, slug) ? RESULTS_TABS[slug] : undefined
   if (!tab) return null
   if (!access.canRead(tab.collection)) return null
-  if (tab.updateOf && !access.isAdmin && !access.canUpdate(tab.updateOf)) return null
   return tab
 }
 

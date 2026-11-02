@@ -41,7 +41,7 @@ export function fieldPolicy(field: FormFieldDef, site: UploadPolicy): UploadPoli
     .filter(Boolean)
   const allowedExtensions = own.length > 0 ? site.allowedExtensions.filter((extension) => own.includes(extension)) : site.allowedExtensions
   const mb = typeof field.maxFileMb === 'number' && field.maxFileMb > 0 ? field.maxFileMb : Infinity
-  return { allowedExtensions, maxBytes: Math.min(site.maxBytes, Math.floor(mb * 1024 * 1024)) }
+  return { allowedExtensions, maxBytes: Math.min(site.maxBytes, Math.floor(mb * 1024 * 1024)), allowSvg: site.allowSvg }
 }
 
 export type InspectedFile = { file: PendingFile; name: string; type: string }
@@ -62,7 +62,8 @@ export function inspectFiles(
   for (const file of files) {
     try {
       const inspected = inspectUpload({ name: file.name, mimetype: file.type, data: file.data }, policy)
-      ok.push({ file, name: inspected.name, type: inspected.mimeType })
+      // The stored bytes are the inspected ones: a cleaned copy for an SVG, otherwise the file as sent.
+      ok.push({ file: { ...file, data: inspected.data }, name: inspected.name, type: inspected.mimeType })
     } catch (error) {
       if (error instanceof UploadRefusal) return { error: error.message }
       return { error: 'That file could not be read.' }
