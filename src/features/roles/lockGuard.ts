@@ -10,7 +10,7 @@
  * Only the `blocks` tree is compared. Other fields (title, SEO, status) are not locked.
  */
 
-import type { CollectionBeforeChangeHook } from '@/engine'
+import type { CollectionBeforeChangeHook, Engine, EngineRequest } from '@/engine'
 import { can } from './permissions'
 import { checkLockChanges, checkLockedTree, hasAnyLock, isAdminSession, parseLocks, type LockUser } from './locks'
 
@@ -25,14 +25,22 @@ async function throwForbidden(message: string): Promise<never> {
   throw new Forbidden(message)
 }
 
-type Doc = Record<string, any> | null | undefined
+type Doc = Record<string, unknown> | null | undefined
+
+type LockHookArgs = {
+  data?: Record<string, unknown>
+  originalDoc?: Doc
+  req?: (EngineRequest & { engine?: Engine }) | null
+  operation?: string
+  collection?: { slug?: string; versions?: { drafts?: unknown } }
+}
 
 /**
  * The document the editor is actually changing: the latest draft version for a collection with
  * versions.drafts (one cheap findByID with draft: true), otherwise the live row. If the lookup fails
  * or finds nothing, the live row is used.
  */
-async function loadBaseline({ collection, originalDoc, req, id }: { collection: any; originalDoc: Doc; req: any; id: unknown }): Promise<Doc> {
+async function loadBaseline({ collection, originalDoc, req, id }: { collection: LockHookArgs['collection']; originalDoc: Doc; req: LockHookArgs['req']; id: unknown }): Promise<Doc> {
   const drafts = collection?.versions?.drafts
   if (!drafts || typeof id !== 'number' || typeof req?.engine?.findByID !== 'function') return originalDoc
   try {
@@ -45,7 +53,7 @@ async function loadBaseline({ collection, originalDoc, req, id }: { collection: 
 }
 
 export const lockGuard: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
-  const { data, originalDoc, req, operation, collection } = args as any
+  const { data, originalDoc, req, operation, collection } = args as LockHookArgs
 
   if (!req?.user) return
   if (isAdminSession(req.user)) return

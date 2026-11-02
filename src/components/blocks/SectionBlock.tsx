@@ -16,7 +16,7 @@ import { columnWidthVars, parseColumns, type SectionColumn, type SectionNode } f
 
 import { autoTriggersOf } from '@/lib/popupTriggers'
 
-import PopupController from './PopupController'
+import PopupController from './PopupControllerLazy'
 import { safeScope, StyledBlock } from './StyledBlock'
 import './tabs.css'
 

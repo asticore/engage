@@ -380,7 +380,6 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
                     <td className="px-[calc(var(--base)*0.6)] py-[calc(var(--base)*0.4)]">
                       <Link href={editHref} className="flex h-[calc(var(--base)*2.2)] w-[calc(var(--base)*2.2)] items-center justify-center overflow-hidden rounded-[3px] bg-[var(--theme-elevation-50)]">
                         {url && mimeType?.startsWith('image/') ? (
-                          // eslint-disable-next-line @next/next/no-img-element -- thumbnail, sized via CSS (see doc comment above)
                           <img src={url} alt={typeof doc.alt === 'string' ? doc.alt : ''} loading="lazy" className="h-full w-full object-cover" />
                         ) : (
                           <FileIcon mimeType={mimeType} filename={typeof doc.filename === 'string' ? doc.filename : undefined} size={22} />

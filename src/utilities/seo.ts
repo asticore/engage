@@ -117,8 +117,7 @@ export const buildMetadata = async (opts: {
   const resolved = context.enabled
     ? resolveSeo(context, {
         title: opts.title,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        seo: opts.seo as any,
+        seo: opts.seo as Parameters<typeof resolveSeo>[1]['seo'],
         path: opts.path,
         featuredImage: opts.featuredImage,
         kind: opts.kind,

@@ -40,7 +40,6 @@ export function SocialFeedView({ posts, props }: { posts: SocialPost[]; props: P
         <li key={p.id || p.url} className="be-social-feed__item">
           <a className="be-social-feed__card" href={p.url} target={newTab ? '_blank' : undefined} rel={rel}>
             {p.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img className="be-social-feed__img" src={p.imageUrl} alt={p.caption.slice(0, 100)} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
             ) : (
               <span className="be-social-feed__img be-social-feed__img--empty" aria-hidden="true" />

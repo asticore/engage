@@ -40,9 +40,8 @@ import { DocumentInfoProvider, FormProvider } from '@/admin/context'
 import { FieldRenderer } from '@/admin/fields/FieldRenderer'
 import { flattenDoc, fieldLabel, humanizeName } from '@/admin/fields/shared'
 import { DocumentPanel, type DocumentPanelInfo } from './DocumentPanel'
-import { PageSpeedCard } from '@/features/pagespeed/ui/PageSpeedCard'
-import { PageGoogleStatsCard } from '@/features/google/dashboard/PageGoogleStatsCard'
 import { isPageSpeedCollection } from '@/features/pagespeed/types'
+import dynamic from 'next/dynamic'
 import { SeoCard } from './SeoCard'
 import { TrashBanner } from '@/features/editScreens/admin/TrashBanner'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
@@ -51,6 +50,10 @@ import { SectionOutline } from '@/admin/components/SectionOutline'
 import { useDocumentSave, type SaveTarget } from './useDocumentSave'
 import { LocalDraftRecovery } from '@/admin/edit/useLocalDraft'
 import { SettingsResetDefaults } from './SettingsResetDefaults'
+
+// Only pages, posts and the other audited collections show these cards, so their code loads on demand.
+const PageSpeedCard = dynamic(() => import('@/features/pagespeed/ui/PageSpeedCard').then((mod) => mod.PageSpeedCard))
+const PageGoogleStatsCard = dynamic(() => import('@/features/google/dashboard/PageGoogleStatsCard').then((mod) => mod.PageGoogleStatsCard))
 
 export type EditFormProps = {
   collectionSlug?: string

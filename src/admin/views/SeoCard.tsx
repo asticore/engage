@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useSyncExternalStore } from 'react'
 import type { Field } from '@/engine'
 import { FieldRenderer } from '@/admin/fields/FieldRenderer'
 import { useFormFields } from '@/admin/context'
@@ -32,13 +32,13 @@ export type SeoCardProps = {
 }
 
 function SnippetPreview({ liveHref }: { liveHref?: string }) {
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    // Avoid hydration mismatch: render the hostname only when mounted on the client.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsMounted(true)
-  }, [])
+  // Avoid hydration mismatch: render the hostname only when mounted on the client
+  // (false during server render and hydration, true afterwards).
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
 
   const { metaTitle, metaDescription } = useFormFields(([fields]) => ({
     metaTitle: fields['seo.metaTitle']?.value as string | undefined,

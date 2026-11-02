@@ -395,7 +395,6 @@ export function MediaGalleryGrid({
               <Link href={doc.editHref} className="flex flex-col no-underline">
                 <div className="flex aspect-square items-center justify-center overflow-hidden bg-[var(--theme-elevation-50)]">
                   {doc.url && doc.mimeType && INLINE_IMAGE_TYPES.has(doc.mimeType) ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- external/proxied original, sized on-screen via CSS rather than a fixed next/image variant (see MediaGalleryView doc comment)
                     <img
                       src={doc.url}
                       alt={doc.alt ?? doc.filename ?? ''}

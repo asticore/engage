@@ -62,7 +62,6 @@ export const Header: React.FC<{
   const logo =
     showLogo && logoUrl ? (
       // Explicit size keeps the header from jumping when the logo arrives. Falls back to a typical logo shape for old media.
-      // eslint-disable-next-line @next/next/no-img-element
       <img decoding="async" fetchPriority="high" src={logoUrl} alt={siteName} width={logoWidth || 160} height={logoHeight || 40} className="max-h-10 w-auto" />
     ) : (
       siteName

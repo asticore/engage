@@ -311,7 +311,6 @@ function convertUpload({ node }: ConverterArgs): ReactNode {
 
   const sizes = doc.sizes as Record<string, any> | undefined // eslint-disable-line @typescript-eslint/no-explicit-any -- see LexicalNode doc comment above
   if (!sizes || !Object.keys(sizes).length) {
-    // eslint-disable-next-line @next/next/no-img-element -- parity with the reference engine's UploadJSXConverter, which always renders a plain <img>
     return <img alt={alt} decoding="async" height={doc.height} loading="lazy" src={url} width={doc.width} />
   }
 
@@ -321,7 +320,6 @@ function convertUpload({ node }: ConverterArgs): ReactNode {
     if (!size || !size.width || !size.height || !size.mimeType || !size.filesize || !size.filename || !size.url) continue
     sources.push(<source key={sizeName} media={`(max-width: ${size.width}px)`} srcSet={size.url} type={size.mimeType} />)
   }
-  // eslint-disable-next-line @next/next/no-img-element -- parity with the reference engine's UploadJSXConverter, which always renders a plain <img>
   sources.push(<img alt={alt} decoding="async" height={doc.height} key="image" loading="lazy" src={url} width={doc.width} />)
   return <picture>{sources}</picture>
 }

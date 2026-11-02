@@ -14,7 +14,8 @@ import { getPrivacyPolicyPath } from '@/features/site/pages'
 import { getSeoContext } from '../settings'
 import { getPublicTrackingEvents } from '@/features/tracking/server'
 import { pickConsentCategories } from '@/features/integrations/publicIds'
-import { TrackingPicker, type PickerLabels } from '@/features/tracking/picker/TrackingPicker'
+import type { PickerLabels } from '@/features/tracking/picker/TrackingPicker'
+import { TrackingPickerLazy } from '@/features/tracking/picker/TrackingPickerLazy'
 import { collectionRoute } from '@/admin/adminPaths'
 import { TrackingRuntime } from '@/features/tracking/TrackingRuntime'
 import { PLATFORM_CATEGORY, type TrackingPlatform } from '@/features/tracking/events'
@@ -167,7 +168,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
         policyVersion={consent.policyVersion}
         consentModeV2={consent.consentModeV2}
       />
-      {adminSignedIn ? <TrackingPicker adminSignedIn={adminSignedIn} adminPath={adminPath} eventsRoute={collectionRoute('tracking-events')} saveEndpoint="/api/admin-tracking-events" labels={await pickerLabels()} /> : null}
+      {adminSignedIn ? <TrackingPickerLazy adminSignedIn={adminSignedIn} adminPath={adminPath} eventsRoute={collectionRoute('tracking-events')} saveEndpoint="/api/admin-tracking-events" labels={await pickerLabels()} /> : null}
       {trackingEvents.length && platforms.length ? (
         <TrackingRuntime events={trackingEvents} platforms={platforms} siteCurrency={siteCurrency} policyVersion={consent.policyVersion} optIn={optIn} adminPath={adminPath} suppressed={adminSignedIn} categories={{ meta: categories.meta, tiktok: categories.tiktok, ga4: PLATFORM_CATEGORY.ga4, gtm: PLATFORM_CATEGORY.gtm }} />
       ) : null}

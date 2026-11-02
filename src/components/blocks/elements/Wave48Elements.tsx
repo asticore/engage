@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import React from 'react'
 
 import { EMBED_NAME, EMBED_PROVIDERS, embedLayout, resolveEmbed, type EmbedProvider } from '@/lib/embedProviders'

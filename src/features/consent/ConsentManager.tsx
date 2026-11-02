@@ -258,7 +258,6 @@ export const ConsentManager = ({
       {!decided ? (
         <section className={`engage-consent engage-consent--${config.position}`} role="region" aria-label={copy.bannerTitle}>
           {config.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img decoding="async" className="engage-consent__logo" src={config.logoUrl} alt="" width={40} height={40} />
           ) : null}
           <div className="engage-consent__text">

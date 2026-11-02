@@ -6,6 +6,9 @@ const eslintConfig = [
   ...nextTypescript,
   {
     rules: {
+      // Pictures go through the site's own image pipeline (EngageImage, srcset, R2 variants); next/image
+      // is not used on Workers, and admin previews and stock thumbnails are plain <img> on purpose.
+      '@next/next/no-img-element': 'off',
       '@typescript-eslint/ban-ts-comment': 'warn',
       '@typescript-eslint/no-empty-object-type': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',

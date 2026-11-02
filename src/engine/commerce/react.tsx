@@ -179,10 +179,9 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
     return () => {
       cancelled = true
     }
-    // defaultCurrency comes from the one call site (Providers.tsx) and is
-    // never expected to change across the provider's lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // defaultCurrency comes from the one call site (Providers.tsx) and does not change
+    // across the provider's lifetime, so the cart is still loaded once.
+  }, [defaultCurrency])
 
   // Saved addresses - only ever populated for a signed-in customer
   // (Addresses.ts's own access: isAdmin || isDocumentOwner). A guest

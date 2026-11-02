@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { requestDomain } from '@/features/domains/request'
 import { domainTagline } from '@/features/domains/brand'
 import Link from 'next/link'
