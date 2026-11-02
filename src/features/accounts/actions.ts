@@ -16,6 +16,7 @@ import {
   requestPasswordReset,
   resendCooldownSeconds,
   resendVerification,
+  sendOwnConfirmation,
   signIn,
   signInWithCode,
 } from './auth'
@@ -66,6 +67,7 @@ import { localiseMessage } from './messages'
  */
 
 const FEATURE_OFF = failed('Accounts are not available on this site.')
+const CONFIRM_SENT = 'We have sent a link to your email address. Open it to confirm the address.'
 const PORTAL_LANGUAGE_INVALID = 'That language is not available on this site.'
 const SIGNED_OUT = failed('Your session has ended. Sign in and try again.')
 
@@ -365,6 +367,29 @@ async function setDefaultAddressActionImpl(
 
 // --- Profile ----------------------------------------------------------------
 
+/**
+ * The signed-in customer asks for a link to confirm their own address. Needed when verification is off:
+ * guest bookings are shown only for a confirmed address (see `sendOwnConfirmation`).
+ */
+async function sendOwnConfirmationActionImpl(): Promise<ActionState> {
+  const context = await openContext()
+  if (!context) return FEATURE_OFF
+  if (!context.user) return SIGNED_OUT
+
+  const guard = await guardAttempt(context.engine, 'verify', `user:${String(context.user.id)}`)
+  if (!guard.allowed) return failed(tooManyAttempts(guard.retryAfterSeconds ?? 60))
+
+  const origin = await siteOrigin()
+  await sendOwnConfirmation(
+    context.engine,
+    context.user,
+    (token) => `${origin}/account/verify-email?token=${encodeURIComponent(token)}`,
+  )
+  revalidatePath('/account/profile')
+  revalidatePath('/account/bookings')
+  return succeeded(CONFIRM_SENT)
+}
+
 async function saveNameActionImpl(_state: ActionState, form: FormData): Promise<ActionState> {
   const context = await openContext()
   if (!context) return FEATURE_OFF
@@ -593,6 +618,10 @@ export async function requestLoginAction(state: ActionState, form: FormData): Pr
 
 export async function verifyCodeAction(state: ActionState, form: FormData): Promise<ActionState> {
   return localisedState(await verifyCodeActionImpl(state, form))
+}
+
+export async function sendOwnConfirmationAction(_state: ActionState, _form: FormData): Promise<ActionState> {
+  return localisedState(await sendOwnConfirmationActionImpl())
 }
 
 export async function confirmLinkAction(state: ActionState, form: FormData): Promise<ActionState> {

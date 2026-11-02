@@ -449,20 +449,20 @@ export function sanitizeOverrides(input: unknown): PermissionOverrides {
     return {}
   }
 
-  const obj = input as any
+  const obj = input as { grant?: unknown; deny?: unknown }
   const sanitized: PermissionOverrides = {}
 
   // Process grant
   if (obj.grant && typeof obj.grant === 'object') {
     const grant: Partial<PermissionMatrix> = {}
-    for (const [resource, perms] of Object.entries(obj.grant) as [string, any][]) {
+    for (const [resource, perms] of Object.entries(obj.grant) as [string, unknown][]) {
       if (!RESOURCES.includes(resource as Resource)) continue
       // Don't allow granting secret resources
       if (SECRET_RESOURCES.includes(resource as Resource)) continue
 
       const sanitizedPerms: Partial<Record<Action, boolean>> = {}
       if (typeof perms === 'object' && perms !== null) {
-        for (const [action, value] of Object.entries(perms) as [string, any][]) {
+        for (const [action, value] of Object.entries(perms) as [string, unknown][]) {
           if (!ALL_ACTIONS.includes(action as Action)) continue
           if (typeof value === 'boolean') {
             sanitizedPerms[action as Action] = value
@@ -481,12 +481,12 @@ export function sanitizeOverrides(input: unknown): PermissionOverrides {
   // Process deny
   if (obj.deny && typeof obj.deny === 'object') {
     const deny: Partial<PermissionMatrix> = {}
-    for (const [resource, perms] of Object.entries(obj.deny) as [string, any][]) {
+    for (const [resource, perms] of Object.entries(obj.deny) as [string, unknown][]) {
       if (!RESOURCES.includes(resource as Resource)) continue
 
       const sanitizedPerms: Partial<Record<Action, boolean>> = {}
       if (typeof perms === 'object' && perms !== null) {
-        for (const [action, value] of Object.entries(perms) as [string, any][]) {
+        for (const [action, value] of Object.entries(perms) as [string, unknown][]) {
           if (!ALL_ACTIONS.includes(action as Action)) continue
           if (typeof value === 'boolean') {
             sanitizedPerms[action as Action] = value

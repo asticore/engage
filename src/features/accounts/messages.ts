@@ -32,6 +32,7 @@ const EXACT: Record<string, PortalStringKey> = {
   'That does not look like an email address.': 'msg.notEmail',
   'If that address has an account, we have sent it an email. Check your inbox, and your spam folder.': 'msg.neutralEmail',
   'Thanks. If that address could be used, your account is ready - check your inbox, then sign in.': 'msg.registered',
+  'We have sent a link to your email address. Open it to confirm the address.': 'msg.confirmSent',
   'Your email address is confirmed. You can sign in now.': 'msg.emailVerified',
   'That way of signing in is not turned on for this site.': 'msg.passwordlessOff',
   'That sign-in link or code is not valid. It may have expired or been used already. Ask for a new one.': 'msg.linkRefused',

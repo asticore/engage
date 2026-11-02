@@ -207,7 +207,17 @@ export const SecuritySettings: GlobalConfig = {
       ],
       admin: {
         description:
-          'Required makes every passkey sign-in confirm the device PIN or biometric. A passkey signed in this way also skips the authenticator-app code, if the account has one.',
+          'Required makes every passkey sign-in confirm the device PIN or biometric. Whether that also skips the authenticator-app code is set by the next option.',
+      },
+    },
+    {
+      name: 'passkeysSkipTwoFactor',
+      type: 'checkbox',
+      defaultValue: false,
+      label: 'A passkey that verified the user skips the authenticator-app code',
+      admin: {
+        description:
+          'Off (the stricter choice, and the default): a passkey sign-in on an account with two-step sign-in still asks for the authenticator-app code or a backup code. On: a passkey sign-in that confirmed the PIN or biometric skips that code. A passkey that did not confirm it always asks for the code.',
       },
     },
     // API keys (bearer tokens for the REST API). Flat, like the fields above. Column names are

@@ -1184,6 +1184,19 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(cols).toEqual(expect.arrayContaining(['user_id', 'credential_id', 'public_key', 'sign_count', 'last_used_at']))
   })
 
+  it('adds the passkey two-step setting to security settings, off by default, and runs twice safely', async () => {
+    const mod = await import('@/migrations/20270308_100000_passkey_skip_two_factor')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    const engine = { logger: consoleLogger } as never
+    await mod.up({ db, engine } as never)
+    await mod.up({ db, engine } as never)
+    const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_security_settings`)').all()).results as { name: string; dflt_value: string | null }[]
+    const matches = info.filter((c) => c.name === 'passkeys_skip_two_factor')
+    expect(matches).toHaveLength(1)
+    expect(matches[0].dflt_value).toBe('0')
+  })
+
   it('passkey migration is safe to run a second time and leaves the columns and table single', async () => {
     const mod = await import('@/migrations/20261118_100000_passkeys')
     const { drizzle } = await import('drizzle-orm/d1')

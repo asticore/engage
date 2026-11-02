@@ -20,7 +20,7 @@ import {
 } from '@/features/passkeys'
 import { decodeCbor, decodeCborAt, CborError, type CborValue } from '@/features/passkeys/cbor'
 import { fromBase64Url, sha256, toBase64Url, utf8 } from '@/features/passkeys/encoding'
-import { DEFAULT_PASSKEY_SETTINGS, type PasskeySettings } from '@/features/security/settings'
+import { DEFAULT_PASSKEY_SETTINGS, passkeysFrom, type PasskeySettings } from '@/features/security/settings'
 
 // --- Test authenticator ------------------------------------------------------
 
@@ -533,13 +533,39 @@ describe('passkeys: roles, locks and two-step accounts', () => {
     expect(fx.loginCalls).toHaveLength(0)
   })
 
-  it('skips the authenticator-app code when the passkey was user-verified', async () => {
-    const fx = makeFixture()
+  it('skips the authenticator-app code when the owner allowed it and the passkey was user-verified', async () => {
+    const fx = makeFixture({ skipTwoFactor: true })
     fx.users.get(1)!.twoFactor = true
     const auth = await freshAuthenticatorAndRegister(fx)
     const { body, cookie } = await signIn(fx, auth, { flags: { up: true, uv: true } })
     expect(await loginWithPasskey(fx.deps, body as never, cookie)).toEqual({ status: 'ok', token: 'session-1' })
     expect(fx.loginCalls).toEqual([{ userId: 1, skip: true }])
+    expect(fx.audit.at(-1)?.detail).toBe('user verified, two-step code skipped')
+  })
+
+  it('still asks for the authenticator-app code when user-verified, by default (the setting is off)', async () => {
+    const fx = makeFixture()
+    expect(fx.deps.settings.skipTwoFactor).toBe(false)
+    fx.users.get(1)!.twoFactor = true
+    const auth = await freshAuthenticatorAndRegister(fx)
+    const { body, cookie } = await signIn(fx, auth, { flags: { up: true, uv: true } })
+    expect(await loginWithPasskey(fx.deps, body as never, cookie)).toEqual({ status: 'two-factor', pendingToken: 'pending-1' })
+    expect(fx.loginCalls).toEqual([{ userId: 1, skip: false }])
+  })
+
+  it('still asks for the authenticator-app code when the setting is on but the passkey was not user-verified', async () => {
+    const fx = makeFixture({ skipTwoFactor: true })
+    fx.users.get(1)!.twoFactor = true
+    const auth = await freshAuthenticatorAndRegister(fx)
+    const { body, cookie } = await signIn(fx, auth, { flags: { up: true, uv: false } })
+    expect(await loginWithPasskey(fx.deps, body as never, cookie)).toEqual({ status: 'two-factor', pendingToken: 'pending-1' })
+    expect(fx.loginCalls).toEqual([{ userId: 1, skip: false }])
+  })
+
+  it('reads the two-step setting from its column, and it is off when the column is missing or not a yes', () => {
+    expect(passkeysFrom(() => undefined).skipTwoFactor).toBe(false)
+    expect(passkeysFrom((key) => (key === 'passkeys_skip_two_factor' ? true : undefined)).skipTwoFactor).toBe(true)
+    expect(passkeysFrom((key) => (key === 'passkeys_skip_two_factor' ? 0 : undefined)).skipTwoFactor).toBe(false)
   })
 
   it('still asks for the authenticator-app code when the passkey was not user-verified', async () => {

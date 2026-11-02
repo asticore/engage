@@ -34,8 +34,10 @@ import {
   issueVerification,
   registerCustomer,
   resendVerification,
+  sendOwnConfirmation,
   signIn,
 } from '@/features/accounts/auth'
+import { canSeeBookingsByEmail } from '@/features/accounts/access'
 
 type Row = Record<string, unknown> & { id: number }
 
@@ -185,5 +187,38 @@ describe('sign-in gate', () => {
     const result = await signIn(engine as never, 'c@b.co', 'wrong')
     expect(result.needsVerification).toBeUndefined()
     expect(result.message).toBe('Those details do not match an account.')
+  })
+})
+
+describe('a customer confirms their own address when verification is off', () => {
+  // With the setting off, nothing sends a verification link on register or sign-in. Guest bookings are
+  // shown only for a confirmed address (canSeeBookingsByEmail), so the customer asks for the link.
+  it('is sent the link and can confirm, even though the site does not require verification', async () => {
+    const engine = makeEngine(false)
+    const user = await engine.create({ data: { email: 'pat@b.co', password: 'pw', roles: ['customer'] } })
+    expect(sent).toHaveLength(0)
+    expect(canSeeBookingsByEmail(user as never)).toBe(false)
+
+    await sendOwnConfirmation(engine as never, user as never, urlFor)
+    expect(sent).toHaveLength(1)
+    expect(sent[0].to).toBe('pat@b.co')
+
+    expect((await completeVerification(engine as never, tokenFromLastEmail())).ok).toBe(true)
+    expect(canSeeBookingsByEmail(engine.users[0] as never)).toBe(true)
+  })
+
+  it('sends nothing to an already confirmed customer, an admin, or a staff account', async () => {
+    const engine = makeEngine(false)
+    const confirmed = await engine.create({ data: { email: 'v@b.co', password: 'pw', roles: ['customer'], emailVerifiedAt: '2026-10-01T00:00:00.000Z' } })
+    const admin = await engine.create({ data: { email: 'ad@b.co', password: 'pw', roles: ['admin'] } })
+    await sendOwnConfirmation(engine as never, confirmed as never, urlFor)
+    await sendOwnConfirmation(engine as never, admin as never, urlFor)
+    expect(sent).toHaveLength(0)
+  })
+
+  it('sends nothing when the account has no address on file', async () => {
+    const engine = makeEngine(false)
+    await sendOwnConfirmation(engine as never, { id: 9, email: '', roles: ['customer'] } as never, urlFor)
+    expect(sent).toHaveLength(0)
   })
 })

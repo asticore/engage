@@ -23,6 +23,25 @@ export const toBase64Url = (buffer: ArrayBuffer): string => {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
+/** The creation options the server sends (base64url fields are decoded before use). Only the fields this client reads. */
+type WireCreationOptions = {
+  challenge: string
+  rp: PublicKeyCredentialRpEntity
+  user: { id: string; name: string; displayName: string }
+  pubKeyCredParams: PublicKeyCredentialParameters[]
+  timeout?: number
+  authenticatorSelection?: AuthenticatorSelectionCriteria
+  excludeCredentials?: Array<{ id: string; transports?: AuthenticatorTransport[] }>
+}
+
+/** The request options the server sends for a sign-in. */
+type WireRequestOptions = {
+  challenge: string
+  rpId?: string
+  timeout?: number
+  userVerification?: UserVerificationRequirement
+}
+
 export type ApiResult = { ok: boolean; message?: string; redirect?: string; twoFactorRequired?: boolean; pendingToken?: string; [key: string]: unknown }
 
 const postJson = async (url: string, body: unknown): Promise<ApiResult> => {
@@ -48,8 +67,7 @@ export async function addPasskey(confirm: string, label: string): Promise<ApiRes
   const started = await postJson('/api/passkeys/register-options', {})
   if (!started.ok || !started.options) return started
   // Wire-format options from our own server; field types are documented in webauthn.ts.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const o = started.options as Record<string, any>
+  const o = started.options as WireCreationOptions
   let credential: PublicKeyCredential | null
   try {
     credential = (await navigator.credentials.create({
@@ -61,7 +79,7 @@ export async function addPasskey(confirm: string, label: string): Promise<ApiRes
         timeout: o.timeout,
         attestation: 'none',
         authenticatorSelection: o.authenticatorSelection,
-        excludeCredentials: (o.excludeCredentials ?? []).map((c: { id: string; transports?: AuthenticatorTransport[] }) => ({
+        excludeCredentials: (o.excludeCredentials ?? []).map((c) => ({
           type: 'public-key' as const,
           id: fromBase64Url(c.id),
           transports: c.transports,
@@ -93,8 +111,7 @@ export async function signInWithPasskey(next: string, area: 'account' | 'admin' 
   if (!passkeysSupported()) return { ok: false, message: 'This browser cannot use passkeys.' }
   const started = await postJson('/api/passkeys/login-options', {})
   if (!started.ok || !started.options) return started
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const o = started.options as Record<string, any>
+  const o = started.options as WireRequestOptions
   let credential: PublicKeyCredential | null
   try {
     credential = (await navigator.credentials.get({

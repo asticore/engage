@@ -1,3 +1,4 @@
+import type { Where } from '@/engine'
 import { can } from '@/features/roles/permissions'
 
 import { parseHostList } from './scope'
@@ -38,16 +39,18 @@ export function domainScopeWhere(hosts: readonly string[]): Record<string, unkno
  * Wraps a collection access function so a domain-limited user only gets the documents in scope. Works for
  * read, update and delete: a `where` returned from an access function limits which documents the action reaches.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function domainScopedAccess(base: (args: any) => any) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return async (args: any) => {
-    const result = await base(args)
-    const hosts = allowedHostsFor((args as { req?: { user?: Actor } })?.req?.user)
+/** Access arguments as this wrapper reads them: the request's user only. Every access rule takes an object with `req`. */
+type ScopedAccessArgs = { req?: { user?: Actor } } & Record<string, unknown>
+type ScopedAccessResult = boolean | Where
+
+export function domainScopedAccess(base: (args: never) => ScopedAccessResult | Promise<ScopedAccessResult>) {
+  return async (args: ScopedAccessArgs): Promise<ScopedAccessResult> => {
+    const result = await base(args as never)
+    const hosts = allowedHostsFor(args?.req?.user)
     if (hosts === null || result === false) return result
     const scope = domainScopeWhere(hosts)
-    if (result === true) return scope
-    return { and: [result, scope] }
+    if (result === true) return scope as Where
+    return { and: [result, scope] } as Where
   }
 }
 
@@ -67,16 +70,14 @@ export function domainWriteError(
 }
 
 /** Collection beforeChange: the content write guard. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function domainWriteGuard({ data, req, originalDoc }: { data?: any; req?: { user?: Actor }; originalDoc?: any }) {
+export function domainWriteGuard({ data, req, originalDoc }: { data?: Record<string, unknown>; req?: { user?: Actor }; originalDoc?: Record<string, unknown> }) {
   const error = domainWriteError(req?.user, data?.availableDomains, originalDoc?.availableDomains)
   if (error) throw new Error(error)
   return data
 }
 
 /** Users beforeChange: changing someone's Allowed domains needs the `domains` permission. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function allowedDomainsGuard({ data, req, originalDoc }: { data?: any; req?: { user?: Actor & { roles?: string[] } }; originalDoc?: any }) {
+export function allowedDomainsGuard({ data, req, originalDoc }: { data?: Record<string, unknown>; req?: { user?: Actor & { roles?: string[] } }; originalDoc?: Record<string, unknown> }) {
   if (!data || data.allowedDomains === undefined) return data
   const before = parseHostList(originalDoc?.allowedDomains).join(',')
   const after = parseHostList(data.allowedDomains).join(',')

@@ -145,6 +145,7 @@ import * as migration_20270302_100000_font_versions_pinned from './20270302_1000
 import * as migration_20270303_100000_svg_and_openverse_hosts from './20270303_100000_svg_and_openverse_hosts';
 import * as migration_20270304_100000_webhook_redaction_inbound from './20270304_100000_webhook_redaction_inbound';
 import * as migration_20270306_100000_form_embeds from './20270306_100000_form_embeds';
+import * as migration_20270308_100000_passkey_skip_two_factor from './20270308_100000_passkey_skip_two_factor';
 
 export const migrations = [
   {
@@ -876,5 +877,10 @@ export const migrations = [
     up: migration_20270306_100000_form_embeds.up,
     down: migration_20270306_100000_form_embeds.down,
     name: '20270306_100000_form_embeds',
+  },
+  {
+    up: migration_20270308_100000_passkey_skip_two_factor.up,
+    down: migration_20270308_100000_passkey_skip_two_factor.down,
+    name: '20270308_100000_passkey_skip_two_factor',
   },
 ];

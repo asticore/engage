@@ -11,6 +11,7 @@ import {
   saveAddressAction,
   saveLanguageAction,
   saveNameAction,
+  sendOwnConfirmationAction,
   setDefaultAddressAction,
   signOutAction,
 } from '../actions'
@@ -38,6 +39,18 @@ export const SignOutButton: React.FC = () => {
   )
 }
 
+/** Asks for a link to confirm the signed-in customer's own address. Shown until the address is confirmed. */
+export const SendConfirmationForm: React.FC = () => {
+  const [state, action] = useActionState<ActionState, FormData>(sendOwnConfirmationAction, IDLE)
+  const tx = usePortalText()
+  return (
+    <form action={action} className="account-form">
+      <Note state={state} />
+      <SubmitButton variant="ghost">{tx('profile.sendConfirmation')}</SubmitButton>
+    </form>
+  )
+}
+
 export const AddressForm: React.FC<{ address?: (AddressInput & { id?: number }) | null }> = ({
   address,
 }) => {
@@ -54,39 +67,39 @@ export const AddressForm: React.FC<{ address?: (AddressInput & { id?: number }) 
       <div className="account-form__row">
         <label>
           {tx('addresses.firstName')}
-          <input name="firstName" defaultValue={address?.firstName ?? ''} required />
+          <input name="firstName" defaultValue={address?.firstName ?? ''} autoComplete="given-name" required />
         </label>
         <label>
           {tx('addresses.lastName')}
-          <input name="lastName" defaultValue={address?.lastName ?? ''} required />
+          <input name="lastName" defaultValue={address?.lastName ?? ''} autoComplete="family-name" required />
         </label>
       </div>
       <label>
         {tx('addresses.company')}
-        <input name="company" defaultValue={address?.company ?? ''} />
+        <input name="company" defaultValue={address?.company ?? ''} autoComplete="organization" />
       </label>
       <label>
         {tx('addresses.street')}
-        <input name="addressLine1" defaultValue={address?.addressLine1 ?? ''} required />
+        <input name="addressLine1" defaultValue={address?.addressLine1 ?? ''} autoComplete="address-line1" required />
       </label>
       <label>
         {tx('addresses.apartment')}
-        <input name="addressLine2" defaultValue={address?.addressLine2 ?? ''} />
+        <input name="addressLine2" defaultValue={address?.addressLine2 ?? ''} autoComplete="address-line2" />
       </label>
       <div className="account-form__row">
         <label>
           {tx('addresses.city')}
-          <input name="city" defaultValue={address?.city ?? ''} required />
+          <input name="city" defaultValue={address?.city ?? ''} autoComplete="address-level2" required />
         </label>
         <label>
           {tx('addresses.state')}
-          <input name="state" defaultValue={address?.state ?? ''} />
+          <input name="state" defaultValue={address?.state ?? ''} autoComplete="address-level1" />
         </label>
       </div>
       <div className="account-form__row">
         <label>
           {tx('addresses.postcode')}
-          <input name="postalCode" defaultValue={address?.postalCode ?? ''} />
+          <input name="postalCode" defaultValue={address?.postalCode ?? ''} autoComplete="postal-code" />
         </label>
         <label>
           {tx('addresses.country')}
@@ -100,7 +113,7 @@ export const AddressForm: React.FC<{ address?: (AddressInput & { id?: number }) 
       </div>
       <label>
         {tx('addresses.phone')}
-        <input name="phone" type="tel" defaultValue={address?.phone ?? ''} />
+        <input name="phone" type="tel" defaultValue={address?.phone ?? ''} autoComplete="tel" />
       </label>
       <Note state={state} />
       <SubmitButton>{address?.id ? tx('addresses.saveChanges') : tx('addresses.addButton')}</SubmitButton>
@@ -131,7 +144,13 @@ export const AddressRowActions: React.FC<{ id: number; isDefault: boolean }> = (
             <SubmitButton variant="ghost">{tx('addresses.makeDefault')}</SubmitButton>
           </form>
         )}
-        <form action={remove}>
+        <form
+          action={remove}
+          onSubmit={(event) => {
+            // Removing an address cannot be undone, so the customer confirms it first.
+            if (!window.confirm(tx('addresses.removeConfirm'))) event.preventDefault()
+          }}
+        >
           <input type="hidden" name="id" value={id} />
           <SubmitButton variant="ghost">{tx('addresses.remove')}</SubmitButton>
         </form>
