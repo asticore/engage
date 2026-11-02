@@ -10,8 +10,8 @@ const PRODUCTION_BRANCH = process.env.PRODUCTION_BRANCH || 'main'
 const onWorkersBuilds = process.env.WORKERS_CI === '1' || process.env.WORKERS_CI === 'true'
 const onProductionBranch = process.env.WORKERS_CI_BRANCH === PRODUCTION_BRANCH
 const args = onWorkersBuilds && onProductionBranch
-  ? ['opennextjs-cloudflare', 'build', '--dangerouslyUseUnsupportedNextVersion']
-  : ['next', 'build']
+  ? ['opennextjs-cloudflare', 'build']
+  : ['next', 'build', '--webpack']
 
 const result = spawnSync('npx', ['--no-install', ...args], {
   stdio: 'inherit',
