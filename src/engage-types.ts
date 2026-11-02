@@ -2496,6 +2496,14 @@ export interface FormSubmission {
    */
   paymentStatus?: ('none' | 'unpaid' | 'paid') | null;
   /**
+   * The external embed this entry came through, if any.
+   */
+  embedId?: number | null;
+  /**
+   * The website the embed was shown on, if any.
+   */
+  embedSource?: string | null;
+  /**
    * The priced rows this entry produced.
    */
   lineItems?:
@@ -4112,6 +4120,8 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   total?: T;
   currency?: T;
   paymentStatus?: T;
+  embedId?: T;
+  embedSource?: T;
   lineItems?: T;
   notificationStatus?: T;
   updatedAt?: T;
