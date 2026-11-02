@@ -1,5 +1,5 @@
 import type { D1Like } from '@/features/apiKeys'
-import type { DeliveryStatus, WebhookConfig } from './core'
+import { DEFAULT_RETENTION_DAYS, isRetentionChoice, type DeliveryStatus, type WebhookConfig } from './core'
 import type { WebhookEvent } from './events'
 
 /**
@@ -21,8 +21,10 @@ export type DeliveryRecord = {
   webhookId: number
   deliveryId: string
   event: string
-  /** The exact body sent (or to be sent). Kept for replay; holds no signing secret. */
+  /** The body sent, or to be sent. Once the delivery has finished it is the redacted copy (see redact.ts). Holds no signing secret. */
   body: string
+  /** True when secret-looking content was replaced in `body`. A redacted delivery cannot be replayed. */
+  redacted: boolean
   status: DeliveryStatus
   attempts: number
   nextAttemptAt: string | null
@@ -32,9 +34,9 @@ export type DeliveryRecord = {
   updatedAt: string
 }
 
-export type NewDelivery = Pick<DeliveryRecord, 'webhookId' | 'deliveryId' | 'event' | 'body' | 'status' | 'attempts' | 'nextAttemptAt' | 'lastStatusCode' | 'lastError'>
+export type NewDelivery = Pick<DeliveryRecord, 'webhookId' | 'deliveryId' | 'event' | 'body' | 'status' | 'attempts' | 'nextAttemptAt' | 'lastStatusCode' | 'lastError'> & { redacted?: boolean }
 
-export type DeliveryPatch = Partial<Pick<DeliveryRecord, 'status' | 'attempts' | 'nextAttemptAt' | 'lastStatusCode' | 'lastError'>>
+export type DeliveryPatch = Partial<Pick<DeliveryRecord, 'status' | 'attempts' | 'nextAttemptAt' | 'lastStatusCode' | 'lastError' | 'body' | 'redacted'>>
 
 export type WebhookStore = {
   list(): Promise<WebhookRecord[]>
@@ -59,13 +61,16 @@ export type WebhookStore = {
   /** Statuses of the newest finished deliveries (ok or failed), newest first. Feeds the failure alert. */
   recentOutcomes(webhookId: number, limit: number): Promise<string[]>
   pruneDeliveries(beforeIso: string): Promise<void>
+  /** The log retention in days (one of RETENTION_CHOICES). The default when nothing is saved. */
+  getRetentionDays(): Promise<number>
+  setRetentionDays(days: number, at: string): Promise<void>
 }
 
 type RawWebhook = { id: number; name: string; description: string; url: string; events: string; template: string | null; secret: string; enabled: number; rate_per_minute: number; created_at: string; updated_at: string }
-type RawDelivery = { id: number; webhook_id: number; delivery_id: string; event: string; body: string; status: string; attempts: number; next_attempt_at: string | null; last_status_code: number | null; last_error: string | null; created_at: string; updated_at: string }
+type RawDelivery = { id: number; webhook_id: number; delivery_id: string; event: string; body: string; redacted: number; status: string; attempts: number; next_attempt_at: string | null; last_status_code: number | null; last_error: string | null; created_at: string; updated_at: string }
 
 const WEBHOOK_COLUMNS = 'id, name, description, url, events, template, secret, enabled, rate_per_minute, created_at, updated_at'
-const DELIVERY_COLUMNS = 'id, webhook_id, delivery_id, event, body, status, attempts, next_attempt_at, last_status_code, last_error, created_at, updated_at'
+const DELIVERY_COLUMNS = 'id, webhook_id, delivery_id, event, body, redacted, status, attempts, next_attempt_at, last_status_code, last_error, created_at, updated_at'
 const WEBHOOKS = '`eg_webhooks`'
 const DELIVERIES = '`eg_webhook_deliveries`'
 
@@ -99,6 +104,7 @@ const toDelivery = (r: RawDelivery): DeliveryRecord => ({
   deliveryId: r.delivery_id,
   event: r.event,
   body: r.body,
+  redacted: Number(r.redacted) === 1,
   status: r.status as DeliveryStatus,
   attempts: Number(r.attempts),
   nextAttemptAt: r.next_attempt_at,
@@ -176,8 +182,8 @@ export function createD1WebhookStore(getDb: () => Promise<D1Like>): WebhookStore
     async insertDelivery(row, at) {
       const db = await getDb()
       const result = (await db
-        .prepare(`INSERT INTO ${DELIVERIES} (webhook_id, delivery_id, event, body, status, attempts, next_attempt_at, last_status_code, last_error, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .bind(row.webhookId, row.deliveryId, row.event, row.body, row.status, row.attempts, row.nextAttemptAt, row.lastStatusCode, row.lastError, at, at)
+        .prepare(`INSERT INTO ${DELIVERIES} (webhook_id, delivery_id, event, body, redacted, status, attempts, next_attempt_at, last_status_code, last_error, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(row.webhookId, row.deliveryId, row.event, row.body, row.redacted ? 1 : 0, row.status, row.attempts, row.nextAttemptAt, row.lastStatusCode, row.lastError, at, at)
         .run()) as { meta?: { last_row_id?: number } }
       return Number(result.meta?.last_row_id ?? 0)
     },
@@ -186,7 +192,9 @@ export function createD1WebhookStore(getDb: () => Promise<D1Like>): WebhookStore
       if (!current) return
       const next = { ...toDelivery(current), ...patch }
       await run(
-        `UPDATE ${DELIVERIES} SET status = ?, attempts = ?, next_attempt_at = ?, last_status_code = ?, last_error = ?, updated_at = ? WHERE id = ?`,
+        `UPDATE ${DELIVERIES} SET body = ?, redacted = ?, status = ?, attempts = ?, next_attempt_at = ?, last_status_code = ?, last_error = ?, updated_at = ? WHERE id = ?`,
+        next.body,
+        next.redacted ? 1 : 0,
         next.status,
         next.attempts,
         next.nextAttemptAt,
@@ -226,6 +234,14 @@ export function createD1WebhookStore(getDb: () => Promise<D1Like>): WebhookStore
     },
     async pruneDeliveries(beforeIso) {
       await run(`DELETE FROM ${DELIVERIES} WHERE created_at < ?`, beforeIso)
+    },
+    async getRetentionDays() {
+      const row = await first<{ retention_days: number }>('SELECT retention_days FROM `eg_webhook_settings` WHERE id = 1')
+      const days = row ? Number(row.retention_days) : DEFAULT_RETENTION_DAYS
+      return isRetentionChoice(days) ? days : DEFAULT_RETENTION_DAYS
+    },
+    async setRetentionDays(days, at) {
+      await run('INSERT INTO `eg_webhook_settings` (id, retention_days, updated_at) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET retention_days = excluded.retention_days, updated_at = excluded.updated_at', days, at)
     },
   }
 }

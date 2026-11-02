@@ -29,6 +29,10 @@ export const RETRY_DELAYS_SECONDS = [60, 300, 1800, 7200, 21600] as const
 export const REQUEST_TIMEOUT_MS = 8000
 /** Delivery rows older than this are removed by the cron job. */
 export const DELIVERY_RETENTION_DAYS = 30
+/** The days the delivery log and the inbound log are kept. The admin picks one of these. */
+export const RETENTION_CHOICES = [7, 14, 30, 60, 90, 180, 365] as const
+export const DEFAULT_RETENTION_DAYS = 30
+export const isRetentionChoice = (value: unknown): value is (typeof RETENTION_CHOICES)[number] => (RETENTION_CHOICES as readonly unknown[]).includes(value)
 /** This many finished deliveries in a row that failed switch the webhook off and tell the admin. */
 export const FAILURE_ALERT_THRESHOLD = 5
 export const SIGNATURE_HEADER = 'X-Engage-Signature'
