@@ -1117,7 +1117,6 @@ const ImageRow: React.FC<{
     <Row label={label} applied={Boolean(url)}>
       <div className="ve-media-field">
         {url ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={url} alt="" className="ve-media-field__thumb" />
         ) : (
           <div className="ve-media-field__empty">{t('dp.noImage')}</div>

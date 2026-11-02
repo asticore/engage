@@ -11,56 +11,73 @@
  * client'` file (`FieldRenderer.tsx` and everything under it).
  */
 
+import { createElement, type ComponentType } from 'react'
+import type { AdminViewServerProps } from '@/engine'
 import { AdminNav } from '@/components/admin/nav/AdminNav'
 import { ExtensionDomSafetyProvider } from '@/components/admin/ExtensionDomSafety'
 import { AsticoreIcon } from '@/components/branding/AsticoreIcon'
 import { AsticoreLogo } from '@/components/branding/AsticoreLogo'
-import { Dashboard } from '@/views/dashboard/Dashboard'
 import { SETTINGS_PAGE_VIEWS } from '@/admin/views/SettingsPageView'
-import { SettingsHubView } from '@/admin/views/SettingsHubView'
-import { HeaderFooterView } from '@/admin/views/HeaderFooterView'
-import { TranslationsView } from '@/features/multilingual/views/TranslationsView'
-import { DatabaseView } from '@/features/cleanup/DatabaseView'
-import { ABResultsView } from '@/features/abTesting/components/ABResultsView'
-import { VisualEditorView } from '@/views/VisualEditor'
-import { RolesView } from '@/admin/views/RolesView'
-import { SettingsTransferView } from '@/admin/views/SettingsTransferView'
-import { InterfaceLanguagesView } from '@/admin/views/InterfaceLanguagesView'
-import { FindReplaceView } from '@/admin/views/FindReplaceView'
-import { SeoAuditView } from '@/admin/views/SeoAuditView'
-import { ImportContentView } from '@/admin/views/ImportContentView'
-import { SiteHealthView } from '@/admin/views/SiteHealthView'
-import { ScheduledTasksView } from '@/admin/views/ScheduledTasksView'
-import { CacheToolsView } from '@/admin/views/CacheToolsView'
-import { GoogleConnectionView } from '@/admin/views/GoogleConnectionView'
-import { ThemeStylesView } from '@/admin/views/ThemeStylesView'
-import { EmailTestingView } from '@/admin/views/EmailTestingView'
-import { EmailSuppressionsView } from '@/admin/views/EmailSuppressionsView'
-import { EmailDesignerView } from '@/admin/views/EmailDesignerView'
-import { CookieConsentView } from '@/admin/views/CookieConsentView'
-import { ShopSettingsView } from '@/admin/views/ShopSettingsView'
-import { StoreCreditView } from '@/admin/views/StoreCreditView'
-import { ShopReportsView } from '@/admin/views/ShopReportsView'
-import { DisplayCurrenciesView } from '@/admin/views/DisplayCurrenciesView'
-import { AdsOverviewView, AdsReportView } from '@/features/ads/admin/AdsViews'
-import { OptionsView } from '@/features/customFields/admin/OptionsView'
-import { TwoFactorView } from '@/admin/views/TwoFactorView'
-import { SessionsView } from '@/admin/views/SessionsView'
-import { PasskeysView } from '@/admin/views/PasskeysView'
-import { ApiKeysView } from '@/admin/views/ApiKeysView'
-import { ApiBuilderView } from '@/admin/views/ApiBuilderView'
-import { WebhooksView } from '@/admin/views/WebhooksView'
-import { ExternalEmbedsView } from '@/admin/views/ExternalEmbedsView'
-import { PrivacyView } from '@/admin/views/PrivacyView'
-import { ImpersonationView } from '@/admin/views/ImpersonationView'
-import { OrganizationsView } from '@/admin/views/OrganizationsView'
-import { PasswordGroupsView } from '@/admin/views/PasswordGroupsView'
-import { SecurityAuditView } from '@/admin/views/SecurityAuditView'
-import { SocialView } from '@/admin/views/SocialView'
-import { TemplatesHubView } from '@/admin/views/TemplatesHubView'
-import { TemplateLibrariesView } from '@/admin/views/TemplateLibrariesView'
-import { GoogleDashboardView } from '@/features/google/dashboard/GoogleDashboardView'
-import { TrackingConnectionsView } from './views/TrackingConnectionsView'
+
+/**
+ * Each screen is loaded when its route is opened, so the admin page's first-load JavaScript holds the
+ * client code of the open screen only, not of every screen. The wrapper is a server component, so a
+ * view renders exactly as before.
+ */
+function lazyView(load: () => Promise<unknown>): ComponentType<AdminViewServerProps> {
+  const LazyView = async (props: AdminViewServerProps) => {
+    const View = (await load()) as ComponentType<AdminViewServerProps>
+    return createElement(View, props)
+  }
+  return LazyView as unknown as ComponentType<AdminViewServerProps>
+}
+
+const Dashboard = lazyView(() => import('@/views/dashboard/Dashboard').then((mod) => mod.Dashboard))
+const SettingsHubView = lazyView(() => import('@/admin/views/SettingsHubView').then((mod) => mod.SettingsHubView))
+const HeaderFooterView = lazyView(() => import('@/admin/views/HeaderFooterView').then((mod) => mod.HeaderFooterView))
+const TranslationsView = lazyView(() => import('@/features/multilingual/views/TranslationsView').then((mod) => mod.TranslationsView))
+const DatabaseView = lazyView(() => import('@/features/cleanup/DatabaseView').then((mod) => mod.DatabaseView))
+const ABResultsView = lazyView(() => import('@/features/abTesting/components/ABResultsView').then((mod) => mod.ABResultsView))
+const VisualEditorView = lazyView(() => import('@/views/VisualEditor').then((mod) => mod.VisualEditorView))
+const RolesView = lazyView(() => import('@/admin/views/RolesView').then((mod) => mod.RolesView))
+const SettingsTransferView = lazyView(() => import('@/admin/views/SettingsTransferView').then((mod) => mod.SettingsTransferView))
+const InterfaceLanguagesView = lazyView(() => import('@/admin/views/InterfaceLanguagesView').then((mod) => mod.InterfaceLanguagesView))
+const FindReplaceView = lazyView(() => import('@/admin/views/FindReplaceView').then((mod) => mod.FindReplaceView))
+const SeoAuditView = lazyView(() => import('@/admin/views/SeoAuditView').then((mod) => mod.SeoAuditView))
+const ImportContentView = lazyView(() => import('@/admin/views/ImportContentView').then((mod) => mod.ImportContentView))
+const SiteHealthView = lazyView(() => import('@/admin/views/SiteHealthView').then((mod) => mod.SiteHealthView))
+const ScheduledTasksView = lazyView(() => import('@/admin/views/ScheduledTasksView').then((mod) => mod.ScheduledTasksView))
+const CacheToolsView = lazyView(() => import('@/admin/views/CacheToolsView').then((mod) => mod.CacheToolsView))
+const GoogleConnectionView = lazyView(() => import('@/admin/views/GoogleConnectionView').then((mod) => mod.GoogleConnectionView))
+const ThemeStylesView = lazyView(() => import('@/admin/views/ThemeStylesView').then((mod) => mod.ThemeStylesView))
+const EmailTestingView = lazyView(() => import('@/admin/views/EmailTestingView').then((mod) => mod.EmailTestingView))
+const EmailSuppressionsView = lazyView(() => import('@/admin/views/EmailSuppressionsView').then((mod) => mod.EmailSuppressionsView))
+const EmailDesignerView = lazyView(() => import('@/admin/views/EmailDesignerView').then((mod) => mod.EmailDesignerView))
+const CookieConsentView = lazyView(() => import('@/admin/views/CookieConsentView').then((mod) => mod.CookieConsentView))
+const ShopSettingsView = lazyView(() => import('@/admin/views/ShopSettingsView').then((mod) => mod.ShopSettingsView))
+const StoreCreditView = lazyView(() => import('@/admin/views/StoreCreditView').then((mod) => mod.StoreCreditView))
+const ShopReportsView = lazyView(() => import('@/admin/views/ShopReportsView').then((mod) => mod.ShopReportsView))
+const DisplayCurrenciesView = lazyView(() => import('@/admin/views/DisplayCurrenciesView').then((mod) => mod.DisplayCurrenciesView))
+const AdsOverviewView = lazyView(() => import('@/features/ads/admin/AdsViews').then((mod) => mod.AdsOverviewView))
+const AdsReportView = lazyView(() => import('@/features/ads/admin/AdsViews').then((mod) => mod.AdsReportView))
+const OptionsView = lazyView(() => import('@/features/customFields/admin/OptionsView').then((mod) => mod.OptionsView))
+const TwoFactorView = lazyView(() => import('@/admin/views/TwoFactorView').then((mod) => mod.TwoFactorView))
+const SessionsView = lazyView(() => import('@/admin/views/SessionsView').then((mod) => mod.SessionsView))
+const PasskeysView = lazyView(() => import('@/admin/views/PasskeysView').then((mod) => mod.PasskeysView))
+const ApiKeysView = lazyView(() => import('@/admin/views/ApiKeysView').then((mod) => mod.ApiKeysView))
+const ApiBuilderView = lazyView(() => import('@/admin/views/ApiBuilderView').then((mod) => mod.ApiBuilderView))
+const WebhooksView = lazyView(() => import('@/admin/views/WebhooksView').then((mod) => mod.WebhooksView))
+const ExternalEmbedsView = lazyView(() => import('@/admin/views/ExternalEmbedsView').then((mod) => mod.ExternalEmbedsView))
+const PrivacyView = lazyView(() => import('@/admin/views/PrivacyView').then((mod) => mod.PrivacyView))
+const ImpersonationView = lazyView(() => import('@/admin/views/ImpersonationView').then((mod) => mod.ImpersonationView))
+const OrganizationsView = lazyView(() => import('@/admin/views/OrganizationsView').then((mod) => mod.OrganizationsView))
+const PasswordGroupsView = lazyView(() => import('@/admin/views/PasswordGroupsView').then((mod) => mod.PasswordGroupsView))
+const SecurityAuditView = lazyView(() => import('@/admin/views/SecurityAuditView').then((mod) => mod.SecurityAuditView))
+const SocialView = lazyView(() => import('@/admin/views/SocialView').then((mod) => mod.SocialView))
+const TemplatesHubView = lazyView(() => import('@/admin/views/TemplatesHubView').then((mod) => mod.TemplatesHubView))
+const TemplateLibrariesView = lazyView(() => import('@/admin/views/TemplateLibrariesView').then((mod) => mod.TemplateLibrariesView))
+const GoogleDashboardView = lazyView(() => import('@/features/google/dashboard/GoogleDashboardView').then((mod) => mod.GoogleDashboardView))
+const TrackingConnectionsView = lazyView(() => import('./views/TrackingConnectionsView').then((mod) => mod.TrackingConnectionsView))
 
 // Kept for parity with what `engage.config.ts`'s `admin.components` block
 // still declares (Nav/providers/graphics overrides) even though nothing yet

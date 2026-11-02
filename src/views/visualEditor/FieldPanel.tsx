@@ -1250,7 +1250,6 @@ const FieldInput: React.FC<{ field: EditorField; value: unknown; onChange: (v: u
           <span>{field.label}</span>
           <div className="ve-media-field">
             {thumb?.url ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={thumb.url} alt={thumb.alt || ''} className="ve-media-field__thumb" />
             ) : (
               <div className="ve-media-field__empty">{t('ve.fp.noImage')}</div>
@@ -1494,7 +1493,6 @@ const MultiThumb: React.FC<{ id: number; onRemove: () => void }> = ({ id, onRemo
   return (
     <div className="ve-media-multi__item">
       {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={url} alt="" />
       ) : (
         <span>&#8230;</span>

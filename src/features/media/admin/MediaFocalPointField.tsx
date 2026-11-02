@@ -63,7 +63,6 @@ export function MediaFocalPointField({ path, readOnly }: FocalPointFieldProps) {
           onClick={onPreviewClick}
           className="relative max-h-[260px] w-full max-w-[420px] cursor-crosshair overflow-hidden rounded-[4px] border border-[var(--theme-elevation-150)] bg-[var(--theme-elevation-50)]"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element -- admin preview of the stored file */}
           <img src={src} alt="" className="block max-h-[260px] w-full object-contain" draggable={false} />
           <span
             aria-hidden="true"

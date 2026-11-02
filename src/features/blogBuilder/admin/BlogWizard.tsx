@@ -677,7 +677,6 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, on
                   checked={featuredImageId === match.id}
                   onChange={() => setFeaturedImageId(match.id)}
                 />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={match.url} alt="" width={64} height={64} loading="lazy" style={{ objectFit: 'cover', borderRadius: 4 }} />
                 <span>{match.alt || match.filename}</span>
               </label>

@@ -67,8 +67,7 @@ export function ListRowActions({
   // Fetch pages for parent picker
   useEffect(() => {
     if (collectionSlug === 'pages' && showQuickEdit) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchPages()
+      void Promise.resolve().then(fetchPages)
     }
   }, [collectionSlug, showQuickEdit, fetchPages])
 

@@ -43,8 +43,8 @@ export const PasswordGroupsClient: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data load
-    void load()
+    // Initial data load.
+    void Promise.resolve().then(load)
   }, [load])
 
   const call = async (init: RequestInit, url = '/api/admin-password-groups', ok: string): Promise<boolean> => {

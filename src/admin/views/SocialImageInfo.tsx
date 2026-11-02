@@ -101,11 +101,8 @@ export const SocialImageInfo: React.FC = () => {
 
   // Fetch og image data
   useEffect(() => {
-    if (!ogImage) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing cache when image unset is safe
-      setOgImageData(null)
-      return
-    }
+    // With no image set the stored data is ignored at render (see displayOgImage), so there is nothing to clear.
+    if (!ogImage) return
 
     const mediaId = typeof ogImage === 'object' && ogImage !== null && 'id' in ogImage ? String((ogImage as MediaObject).id) : String(ogImage)
 
@@ -128,11 +125,8 @@ export const SocialImageInfo: React.FC = () => {
 
   // Fetch x image data
   useEffect(() => {
-    if (!xImage) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing cache when image unset is safe
-      setXImageData(null)
-      return
-    }
+    // With no image set the stored data is ignored at render (see displayXImage), so there is nothing to clear.
+    if (!xImage) return
 
     const mediaId = typeof xImage === 'object' && xImage !== null && 'id' in xImage ? String((xImage as MediaObject).id) : String(xImage)
 
@@ -156,8 +150,8 @@ export const SocialImageInfo: React.FC = () => {
   const ogImageSource = pickImageSource(ogImage, xImage, featuredImage, false)
   const xImageSource = pickImageSource(ogImage, xImage, featuredImage, true)
 
-  const displayOgImage = ogImageData || (ogImage && typeof ogImage === 'object' ? (ogImage as MediaObject) : null)
-  const displayXImage = xImageData || (xImage && typeof xImage === 'object' ? (xImage as MediaObject) : null)
+  const displayOgImage = (ogImage ? ogImageData : null) || (ogImage && typeof ogImage === 'object' ? (ogImage as MediaObject) : null)
+  const displayXImage = (xImage ? xImageData : null) || (xImage && typeof xImage === 'object' ? (xImage as MediaObject) : null)
 
   return (
     <div className="seo-image-info">
@@ -211,7 +205,6 @@ function ImagePreview({ media }: ImagePreviewProps) {
   return (
     <div className="seo-image-preview">
       {url && (
-        // eslint-disable-next-line @next/next/no-img-element -- small admin preview doesn't need Image optimization
         <img
           src={url}
           alt={media.alt || media.filename || 'Social preview image'}

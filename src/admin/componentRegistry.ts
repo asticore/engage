@@ -22,39 +22,50 @@
  */
 
 import type { ComponentType } from 'react'
-import { SlugComponent } from '@/fields/slug/SlugComponent'
-import { OpenVisualEditorButton } from '@/fields/visualEditor/OpenVisualEditorButton'
-import { DocumentLockControl } from '@/fields/locks/DocumentLockControl'
-import { CustomFieldsPanel } from '@/fields/customFields/CustomFieldsPanel'
-import { FieldGroupBuilderField } from '@/features/customFields/admin/FieldGroupBuilderField'
-import { FieldGroupLocationField } from '@/features/customFields/admin/FieldGroupLocationField'
-import { BackupPanel } from '@/features/backups/admin/BackupPanel'
-import { SendTestEmailButton } from '@/features/email/admin/SendTestEmailButton'
-import { ParentPicker } from '@/fields/parentPicker/ParentPicker'
-import { OrderNotesPanel, OrderRefundsPanel, OrderInvoicePanel, OrderShippingPanel } from '@/features/ecommerce/admin/OrderPanels'
-import { StoreCreditPanel } from '@/features/ecommerce/admin/StoreCreditPanel'
-import { PriceInput } from '@/features/ecommerce/admin/PriceInput'
-import { WeightInput, DimensionInput } from '@/features/ecommerce/admin/UnitInput'
-import { GenerateVariationsField } from '@/features/ecommerce/admin/GenerateVariationsField'
-import { CloudflarePurgeOnPublishField } from '@/admin/components/CloudflarePurgeOnPublishField'
-import { ColorPickerField } from '@/admin/components/ColorPickerField'
-import { DomainPicker } from '@/features/domains/admin/DomainPicker'
-import { DnsChecklist } from '@/features/domains/admin/DnsChecklist'
-import { UserPermissionOverridesField } from '@/admin/components/UserPermissionOverridesField'
-import { FontPickerField } from '@/admin/components/FontPickerField'
-import { FontsManagerField } from '@/admin/components/FontsManagerField'
-import { MediaFocalPointField } from '@/features/media/admin/MediaFocalPointField'
-import { MediaCropField } from '@/features/media/admin/MediaCropField'
-import { MediaEditPanel } from '@/features/media/admin/MediaEditPanel'
-import { BiddersField } from '@/features/ads/admin/BiddersField'
-import { SiteFilesField } from '@/features/seo/admin/SiteFilesField'
-import { TicketTiersField } from '@/features/editScreens/admin/TicketTiersField'
-import { ExportTemplateLink } from '@/features/siteTemplates/admin/ExportTemplateLink'
-import { TrackingEventsListActions } from '@/features/tracking/editor/TrackingEventsListActions'
-import { ConditionsField } from '@/features/siteTemplates/admin/ConditionsField'
-import { TestConnectionField } from '@/features/socialFeeds/admin/TestConnectionField'
-import { DataViewEditorField } from '@/features/dataViews/admin/DataViewEditorField'
-import { WriteWithAiPanel } from '@/features/blogBuilder/admin/WriteWithAiPanel'
+import dynamic from 'next/dynamic'
+
+/**
+ * Every widget is loaded on first use (next/dynamic keeps server rendering), so the admin shell ships only
+ * the field widgets of the screen that is open, not all of them. The lookup below still returns one stable
+ * reference per path.
+ */
+const SlugComponent = dynamic(() => import('@/fields/slug/SlugComponent').then((mod) => mod.SlugComponent))
+const OpenVisualEditorButton = dynamic(() => import('@/fields/visualEditor/OpenVisualEditorButton').then((mod) => mod.OpenVisualEditorButton))
+const DocumentLockControl = dynamic(() => import('@/fields/locks/DocumentLockControl').then((mod) => mod.DocumentLockControl))
+const CustomFieldsPanel = dynamic(() => import('@/fields/customFields/CustomFieldsPanel').then((mod) => mod.CustomFieldsPanel))
+const FieldGroupBuilderField = dynamic(() => import('@/features/customFields/admin/FieldGroupBuilderField').then((mod) => mod.FieldGroupBuilderField))
+const FieldGroupLocationField = dynamic(() => import('@/features/customFields/admin/FieldGroupLocationField').then((mod) => mod.FieldGroupLocationField))
+const BackupPanel = dynamic(() => import('@/features/backups/admin/BackupPanel').then((mod) => mod.BackupPanel))
+const SendTestEmailButton = dynamic(() => import('@/features/email/admin/SendTestEmailButton').then((mod) => mod.SendTestEmailButton))
+const ParentPicker = dynamic(() => import('@/fields/parentPicker/ParentPicker').then((mod) => mod.ParentPicker))
+const OrderNotesPanel = dynamic(() => import('@/features/ecommerce/admin/OrderPanels').then((mod) => mod.OrderNotesPanel))
+const OrderRefundsPanel = dynamic(() => import('@/features/ecommerce/admin/OrderPanels').then((mod) => mod.OrderRefundsPanel))
+const OrderInvoicePanel = dynamic(() => import('@/features/ecommerce/admin/OrderPanels').then((mod) => mod.OrderInvoicePanel))
+const OrderShippingPanel = dynamic(() => import('@/features/ecommerce/admin/OrderPanels').then((mod) => mod.OrderShippingPanel))
+const StoreCreditPanel = dynamic(() => import('@/features/ecommerce/admin/StoreCreditPanel').then((mod) => mod.StoreCreditPanel))
+const PriceInput = dynamic(() => import('@/features/ecommerce/admin/PriceInput').then((mod) => mod.PriceInput))
+const WeightInput = dynamic(() => import('@/features/ecommerce/admin/UnitInput').then((mod) => mod.WeightInput))
+const DimensionInput = dynamic(() => import('@/features/ecommerce/admin/UnitInput').then((mod) => mod.DimensionInput))
+const GenerateVariationsField = dynamic(() => import('@/features/ecommerce/admin/GenerateVariationsField').then((mod) => mod.GenerateVariationsField))
+const CloudflarePurgeOnPublishField = dynamic(() => import('@/admin/components/CloudflarePurgeOnPublishField').then((mod) => mod.CloudflarePurgeOnPublishField))
+const ColorPickerField = dynamic(() => import('@/admin/components/ColorPickerField').then((mod) => mod.ColorPickerField))
+const DomainPicker = dynamic(() => import('@/features/domains/admin/DomainPicker').then((mod) => mod.DomainPicker))
+const DnsChecklist = dynamic(() => import('@/features/domains/admin/DnsChecklist').then((mod) => mod.DnsChecklist))
+const UserPermissionOverridesField = dynamic(() => import('@/admin/components/UserPermissionOverridesField').then((mod) => mod.UserPermissionOverridesField))
+const FontPickerField = dynamic(() => import('@/admin/components/FontPickerField').then((mod) => mod.FontPickerField))
+const FontsManagerField = dynamic(() => import('@/admin/components/FontsManagerField').then((mod) => mod.FontsManagerField))
+const MediaFocalPointField = dynamic(() => import('@/features/media/admin/MediaFocalPointField').then((mod) => mod.MediaFocalPointField))
+const MediaCropField = dynamic(() => import('@/features/media/admin/MediaCropField').then((mod) => mod.MediaCropField))
+const MediaEditPanel = dynamic(() => import('@/features/media/admin/MediaEditPanel').then((mod) => mod.MediaEditPanel))
+const BiddersField = dynamic(() => import('@/features/ads/admin/BiddersField').then((mod) => mod.BiddersField))
+const SiteFilesField = dynamic(() => import('@/features/seo/admin/SiteFilesField').then((mod) => mod.SiteFilesField))
+const TicketTiersField = dynamic(() => import('@/features/editScreens/admin/TicketTiersField').then((mod) => mod.TicketTiersField))
+const ExportTemplateLink = dynamic(() => import('@/features/siteTemplates/admin/ExportTemplateLink').then((mod) => mod.ExportTemplateLink))
+const TrackingEventsListActions = dynamic(() => import('@/features/tracking/editor/TrackingEventsListActions').then((mod) => mod.TrackingEventsListActions))
+const ConditionsField = dynamic(() => import('@/features/siteTemplates/admin/ConditionsField').then((mod) => mod.ConditionsField))
+const TestConnectionField = dynamic(() => import('@/features/socialFeeds/admin/TestConnectionField').then((mod) => mod.TestConnectionField))
+const DataViewEditorField = dynamic(() => import('@/features/dataViews/admin/DataViewEditorField').then((mod) => mod.DataViewEditorField))
+const WriteWithAiPanel = dynamic(() => import('@/features/blogBuilder/admin/WriteWithAiPanel').then((mod) => mod.WriteWithAiPanel))
 
 export const COMPONENT_REGISTRY: Record<string, ComponentType<any>> = {
   '@/features/blogBuilder/admin/WriteWithAiPanel#WriteWithAiPanel': WriteWithAiPanel,

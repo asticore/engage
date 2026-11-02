@@ -185,7 +185,6 @@ export function StockPhotoDialog({ onClose, onImported }: { onClose: () => void;
                 const done = imported[key]
                 return (
                   <li key={key} className="flex flex-col overflow-hidden rounded-[4px] border border-[var(--theme-elevation-150)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- third-party thumbnail, sized by the grid */}
                     <img src={photo.thumb} alt={photo.title || 'Stock photo'} loading="lazy" className="aspect-[4/3] w-full object-cover" />
                     <div className="flex flex-1 flex-col gap-[4px] p-[8px]">
                       <span className="text-[11px] text-[var(--theme-elevation-700)]">

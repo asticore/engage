@@ -57,7 +57,6 @@ export async function EngageImage({
   const mergedStyle: CSSProperties | undefined = objectPosition || style ? { ...(objectPosition ? { objectPosition } : {}), ...style } : undefined
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element -- see the note above
     <img
       src={resolved.src}
       srcSet={resolved.srcSet}

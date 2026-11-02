@@ -370,7 +370,6 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
               >
                 <span className="ve-tpl__thumb">
                   {showImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={card.image}
                       alt=""
