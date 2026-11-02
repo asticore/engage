@@ -5,7 +5,7 @@ import { Icon } from './icons'
 import { GalleryLightbox } from './Wave49Client'
 import './wave49.css'
 import { ALIGNS, alignClass } from './TextElements'
-import { flag, iconName, linkAttrs, linkHref, mediaListOf, mediaOf, num, parseVideoUrl, pick, ratioCss, str } from './elementUtil'
+import { flag, gridSizes, iconName, linkAttrs, linkHref, mediaListOf, mediaOf, num, parseVideoUrl, pick, pictureSizes, ratioCss, str } from './elementUtil'
 
 type P = Record<string, unknown>
 
@@ -90,7 +90,7 @@ export const ImageGalleryElement: React.FC<P> = (p) => {
     <ul className="el-gallery" style={{ ['--el-cols' as string]: String(cols) }}>
       {items.map((m, i) => (
         <li key={i}>
-          <img decoding="async" src={m.url || ''} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '1 / 1' : ratio }} />
+          <img decoding="async" src={m.url || ''} srcSet={m.srcSet} sizes={m.srcSet ? gridSizes(cols) : undefined} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '1 / 1' : ratio }} />
         </li>
       ))}
     </ul>
@@ -107,7 +107,7 @@ export const ImageCarouselElement: React.FC<P> = (p) => {
     <div className="el-carousel" role="region" aria-label={str(p.label, 'Image carousel')} tabIndex={0} style={{ ['--el-visible' as string]: String(visible) }}>
       {items.map((m, i) => (
         <div className="el-carousel__slide" key={i}>
-          <img decoding="async" src={m.url || ''} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '16 / 9' : ratio }} />
+          <img decoding="async" src={m.url || ''} srcSet={m.srcSet} sizes={m.srcSet ? pictureSizes(`${Math.ceil(100 / visible)}vw`) : undefined} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '16 / 9' : ratio }} />
         </div>
       ))}
     </div>

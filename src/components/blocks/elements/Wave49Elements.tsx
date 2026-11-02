@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react'
 
-import { flag, mediaListOf, num, pick, ratioCss, str } from './elementUtil'
+import { flag, gridSizes, mediaListOf, num, pick, ratioCss, str } from './elementUtil'
 import type { MediaRef } from './elementUtil'
 import { GalleryCarousel, GalleryLightbox } from './Wave49Client'
 import type { GalleryItem } from './Wave49Client'
@@ -26,7 +26,7 @@ const GREYS = ['auto', 'on', 'off'] as const
 export const GalleryElement: React.FC<P> = (p) => {
   const items: GalleryItem[] = mediaListOf(p.images, p.urls)
     .filter((m): m is MediaRef & { url: string } => Boolean(m.url))
-    .map((m) => ({ url: m.url, alt: str(m.alt) }))
+    .map((m) => ({ url: m.url, alt: str(m.alt), srcSet: m.srcSet }))
   if (items.length === 0) return <div className="el-placeholder">Add pictures to the gallery</div>
 
   const layout = pick(p.layout, LAYOUTS, 'grid')
@@ -47,7 +47,7 @@ export const GalleryElement: React.FC<P> = (p) => {
   const vars = { '--be-el-49-cols': String(cols), '--be-el-49-gap': `${gap}px` } as React.CSSProperties
 
   const figure = (m: GalleryItem, i: number) => {
-    const img = <img decoding="async" className="be-el-49-gallery__img" src={m.url} alt={m.alt} loading="lazy" style={{ aspectRatio: shape, objectFit: imgFit }} />
+    const img = <img decoding="async" className="be-el-49-gallery__img" src={m.url} srcSet={m.srcSet} sizes={m.srcSet ? gridSizes(cols) : undefined} alt={m.alt} loading="lazy" style={{ aspectRatio: shape, objectFit: imgFit }} />
     return (
       <figure className="be-el-49-gallery__item">
         {lightbox ? (

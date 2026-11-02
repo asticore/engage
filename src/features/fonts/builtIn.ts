@@ -27,15 +27,23 @@ export type BuiltInFace = {
 
 export type BuiltInSubset = FontSubset
 
-const ALL_SUBSETS: readonly BuiltInSubset[] = ['latin', 'latin-ext', 'cyrillic']
+const LATIN_CYRILLIC: readonly BuiltInSubset[] = ['latin', 'latin-ext', 'cyrillic']
+const LATIN_CYRILLIC_VIETNAMESE: readonly BuiltInSubset[] = [...LATIN_CYRILLIC, 'vietnamese']
+
+/*
+ * The subsets each face ships in @fontsource 5.3.0 (checked against the package
+ * files). A subset a face does not ship has no file, so it is left out here.
+ * Greek is only shipped by Inter; Vietnamese by Cormorant Garamond, Playfair
+ * Display, Montserrat and Inter; Cinzel has Latin only, Jost no Vietnamese.
+ */
 
 export const BUILT_IN_FACES: Readonly<Record<string, BuiltInFace>> = {
-  cormorant: { family: 'Cormorant Garamond', id: 'cormorant-garamond', version: '5.3.0', weights: [400, 500, 600, 700], subsets: ALL_SUBSETS },
-  playfair: { family: 'Playfair Display', id: 'playfair-display', version: '5.3.0', weights: [400, 600, 700], subsets: ALL_SUBSETS },
+  cormorant: { family: 'Cormorant Garamond', id: 'cormorant-garamond', version: '5.3.0', weights: [400, 500, 600, 700], subsets: LATIN_CYRILLIC_VIETNAMESE },
+  playfair: { family: 'Playfair Display', id: 'playfair-display', version: '5.3.0', weights: [400, 600, 700], subsets: LATIN_CYRILLIC_VIETNAMESE },
   cinzel: { family: 'Cinzel', id: 'cinzel', version: '5.3.0', weights: [400, 600], subsets: ['latin', 'latin-ext'] },
-  jost: { family: 'Jost', id: 'jost', version: '5.3.0', weights: [300, 400, 500, 600], subsets: ALL_SUBSETS },
-  montserrat: { family: 'Montserrat', id: 'montserrat', version: '5.3.0', weights: [400, 500, 600], subsets: ALL_SUBSETS },
-  inter: { family: 'Inter', id: 'inter', version: '5.3.0', weights: [400, 500, 600], subsets: ALL_SUBSETS },
+  jost: { family: 'Jost', id: 'jost', version: '5.3.0', weights: [300, 400, 500, 600], subsets: LATIN_CYRILLIC },
+  montserrat: { family: 'Montserrat', id: 'montserrat', version: '5.3.0', weights: [400, 500, 600], subsets: LATIN_CYRILLIC_VIETNAMESE },
+  inter: { family: 'Inter', id: 'inter', version: '5.3.0', weights: [400, 500, 600], subsets: ['latin', 'latin-ext', 'cyrillic', 'greek', 'vietnamese'] },
 }
 
 /** Built-in face keys that appear in the list, de-duplicated; unknown keys are ignored. */
