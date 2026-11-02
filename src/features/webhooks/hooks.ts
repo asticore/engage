@@ -81,3 +81,18 @@ export const webhookUserAfterChange: CollectionAfterChangeHook = async (args) =>
   }
   return args.doc
 }
+
+/** Event RSVPs (the bookings a customer sees on the account page): `booking.made` on each new one. */
+export const webhookRsvpAfterChange: CollectionAfterChangeHook = async (args) => {
+  try {
+    const { doc, operation } = args as unknown as { doc: Doc | null; operation: string }
+    if (doc && operation === 'create') {
+      const event = doc.event
+      const eventId = event && typeof event === 'object' ? (event as { id?: unknown }).id : event
+      void emitWebhookEvent('booking.made', { id: doc.id, source: 'event-rsvp', eventId, guestCount: doc.guestCount, status: doc.status, createdAt: doc.createdAt })
+    }
+  } catch {
+    // Events are best effort.
+  }
+  return args.doc
+}

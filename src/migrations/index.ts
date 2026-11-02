@@ -143,6 +143,7 @@ import * as migration_20270223_120000_consent_logo from './20270223_120000_conse
 import * as migration_20270224_100000_block_form_id from './20270224_100000_block_form_id';
 import * as migration_20270302_100000_font_versions_pinned from './20270302_100000_font_versions_pinned';
 import * as migration_20270303_100000_svg_and_openverse_hosts from './20270303_100000_svg_and_openverse_hosts';
+import * as migration_20270304_100000_webhook_redaction_inbound from './20270304_100000_webhook_redaction_inbound';
 
 export const migrations = [
   {
@@ -864,5 +865,10 @@ export const migrations = [
     up: migration_20270303_100000_svg_and_openverse_hosts.up,
     down: migration_20270303_100000_svg_and_openverse_hosts.down,
     name: '20270303_100000_svg_and_openverse_hosts',
+  },
+  {
+    up: migration_20270304_100000_webhook_redaction_inbound.up,
+    down: migration_20270304_100000_webhook_redaction_inbound.down,
+    name: '20270304_100000_webhook_redaction_inbound',
   },
 ];

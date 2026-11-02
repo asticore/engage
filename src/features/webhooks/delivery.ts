@@ -1,6 +1,9 @@
 import { checkWebhookUrl, DELIVERY_RETENTION_DAYS, FAILURE_ALERT_THRESHOLD, isFailingStreak, isOverRate, nextAttemptAt, REQUEST_TIMEOUT_MS, renderBody, signatureHeader, SIGNATURE_HEADER, type DeliveryStatus } from './core'
 import { pickEventFields, TEST_EVENT, type WebhookEvent } from './events'
+import { checkDeliveryTarget } from './outbound'
+import { redactBody } from './redact'
 import { openSecret } from './secret'
+import type { InboundStore } from './inboundStore'
 import type { DeliveryRecord, WebhookRecord, WebhookStore } from './store'
 
 /**
@@ -12,6 +15,9 @@ import type { DeliveryRecord, WebhookRecord, WebhookStore } from './store'
  * Headers sent: X-Engage-Event, X-Engage-Delivery (stable across retries and replays, so a receiver
  * can de-duplicate) and X-Engage-Signature (t=<unix>,v1=<hex HMAC-SHA256 of "<t>.<body>">). Redirects
  * are not followed: a 3xx counts as a failed attempt.
+ *
+ * Before each send the host name is checked against the blocked address ranges (./outbound.ts, the
+ * DNS rebinding guard). Once a row has finished, its stored body is the redacted copy (./redact.ts).
  */
 
 export type DeliveryDeps = {
@@ -21,6 +27,12 @@ export type DeliveryDeps = {
   newId?: () => string
   /** Tells the site's admins that a webhook was switched off. Never throws; the emit layer supplies it. */
   notifyAdmins?: (subject: string, text: string) => Promise<void>
+  /** Resolves a host name to its addresses (the DNS rebinding guard). Defaults to DNS over HTTPS. */
+  resolveHost?: (host: string) => Promise<string[]>
+  /** The log retention in days, read on each purge. Defaults to DELIVERY_RETENTION_DAYS. */
+  retentionDays?: () => Promise<number>
+  /** The inbound log, purged with the same retention. */
+  inbound?: InboundStore
 }
 
 export type AttemptOutcome = { status: DeliveryStatus; statusCode: number | null; error: string | null }
@@ -57,18 +69,19 @@ export async function queueFor(deps: DeliveryDeps, hook: WebhookRecord, event: W
   const payload = event === TEST_EVENT ? data : pickEventFields(event, data)
   const rendered = renderBody(hook.template, { event, id: deliveryId, occurredAt: at, data: payload })
   if (rendered.ok === false) {
-    return deps.store.insertDelivery({ webhookId: hook.id, deliveryId, event, body: '', status: 'skipped', attempts: 0, nextAttemptAt: null, lastStatusCode: null, lastError: rendered.error }, at)
+    return deps.store.insertDelivery({ webhookId: hook.id, deliveryId, event, body: '', redacted: false, status: 'skipped', attempts: 0, nextAttemptAt: null, lastStatusCode: null, lastError: rendered.error }, at)
   }
   if (!options.test) {
     const sent = await deps.store.queuedSince(hook.id, new Date(nowMs - 60_000).toISOString())
     if (isOverRate(sent, hook.ratePerMinute)) {
+      const kept = finishedBody(rendered.value)
       return deps.store.insertDelivery(
-        { webhookId: hook.id, deliveryId, event, body: rendered.value, status: 'skipped', attempts: 0, nextAttemptAt: null, lastStatusCode: null, lastError: `Rate limit reached: ${hook.ratePerMinute} deliveries a minute.` },
+        { webhookId: hook.id, deliveryId, event, body: kept.body, redacted: kept.redacted, status: 'skipped', attempts: 0, nextAttemptAt: null, lastStatusCode: null, lastError: `Rate limit reached: ${hook.ratePerMinute} deliveries a minute.` },
         at,
       )
     }
   }
-  return deps.store.insertDelivery({ webhookId: hook.id, deliveryId, event, body: rendered.value, status: 'pending', attempts: 0, nextAttemptAt: at, lastStatusCode: null, lastError: null }, at)
+  return deps.store.insertDelivery({ webhookId: hook.id, deliveryId, event, body: rendered.value, redacted: false, status: 'pending', attempts: 0, nextAttemptAt: at, lastStatusCode: null, lastError: null }, at)
 }
 
 /** Queues one delivery for each enabled webhook subscribed to the event. Returns the new row ids. */
@@ -100,6 +113,9 @@ export async function alertIfFailing(deps: DeliveryDeps, hook: WebhookRecord, at
 
 const DONE = (row: DeliveryRecord): AttemptOutcome => ({ status: row.status, statusCode: row.lastStatusCode, error: row.lastError })
 
+/** The body a finished row keeps: redacted. A pending row keeps the exact body, because a retry must send it. */
+const finishedBody = (body: string): { body: string; redacted: boolean } => redactBody(body)
+
 /** Sends one pending row now, or records why it cannot be sent. Never throws. */
 export async function attemptDelivery(deps: DeliveryDeps, rowId: number): Promise<AttemptOutcome> {
   const { store } = deps
@@ -113,20 +129,30 @@ export async function attemptDelivery(deps: DeliveryDeps, rowId: number): Promis
 
     const hook = await store.findById(row.webhookId)
     if (!hook || !hook.enabled) {
-      await store.updateDelivery(rowId, { status: 'skipped', nextAttemptAt: null, lastError: 'The webhook is off or was deleted.' }, at)
+      const kept = finishedBody(row.body)
+      await store.updateDelivery(rowId, { status: 'skipped', nextAttemptAt: null, lastError: 'The webhook is off or was deleted.', body: kept.body, redacted: kept.redacted }, at)
       return { status: 'skipped', statusCode: null, error: 'The webhook is off or was deleted.' }
     }
 
-    const permanent = async (error: string): Promise<AttemptOutcome> => {
-      await store.updateDelivery(rowId, { status: 'failed', nextAttemptAt: null, lastError: error }, at)
-      await alertIfFailing(deps, hook, at)
-      return { status: 'failed', statusCode: null, error }
+    // A permanent failure ends the row now. A failure that may clear (the name did not resolve, the
+    // lookup failed) is one failed attempt, retried like a network failure.
+    const endAttempt = async (patch: { error: string; statusCode: number | null; attempts: number; permanent: boolean }): Promise<AttemptOutcome> => {
+      const retryAt = patch.permanent ? null : nextAttemptAt(patch.attempts, nowMs)
+      const status: DeliveryStatus = retryAt ? 'pending' : 'failed'
+      const kept = status === 'pending' ? { body: row.body, redacted: row.redacted } : finishedBody(row.body)
+      await store.updateDelivery(rowId, { status, attempts: patch.attempts, nextAttemptAt: retryAt, lastStatusCode: patch.statusCode, lastError: patch.error, body: kept.body, redacted: kept.redacted }, at)
+      if (status === 'failed') await alertIfFailing(deps, hook, at)
+      return { status, statusCode: patch.statusCode, error: patch.error }
     }
+
     // The address is checked again on every try, in case it was changed or the rules tightened.
     const address = checkWebhookUrl(hook.url)
-    if (address.ok === false) return permanent(address.error)
+    if (address.ok === false) return endAttempt({ error: address.error, statusCode: null, attempts: row.attempts, permanent: true })
+    // The DNS rebinding guard: the name must resolve only to public addresses right now.
+    const target = await checkDeliveryTarget(address.value, deps.resolveHost)
+    if (target.ok === false) return endAttempt({ error: target.error, statusCode: null, attempts: row.attempts + 1, permanent: target.permanent })
     const secret = openSecret(hook.secret)
-    if (!secret) return permanent('The signing secret cannot be read. Rotate the secret on this webhook.')
+    if (!secret) return endAttempt({ error: 'The signing secret cannot be read. Rotate the secret on this webhook.', statusCode: null, attempts: row.attempts, permanent: true })
 
     // Lease the row for one request, so another run does not send it at the same time.
     await store.updateDelivery(rowId, { nextAttemptAt: new Date(nowMs + REQUEST_TIMEOUT_MS * 2).toISOString() }, at)
@@ -156,7 +182,8 @@ export async function attemptDelivery(deps: DeliveryDeps, rowId: number): Promis
     }
 
     if (statusCode !== null && statusCode >= 200 && statusCode < 300) {
-      await store.updateDelivery(rowId, { status: 'ok', attempts, nextAttemptAt: null, lastStatusCode: statusCode, lastError: null }, at)
+      const kept = finishedBody(row.body)
+      await store.updateDelivery(rowId, { status: 'ok', attempts, nextAttemptAt: null, lastStatusCode: statusCode, lastError: null, body: kept.body, redacted: kept.redacted }, at)
       return { status: 'ok', statusCode, error: null }
     }
 
@@ -164,14 +191,19 @@ export async function attemptDelivery(deps: DeliveryDeps, rowId: number): Promis
     if (statusCode !== null) error = statusCode >= 300 && statusCode < 400 ? `The receiver redirected (${statusCode}). Redirects are not followed.` : `The receiver answered ${statusCode}.`
     else error = transport ?? 'Could not connect.'
 
-    const retryAt = nextAttemptAt(attempts, nowMs)
-    const status: DeliveryStatus = retryAt ? 'pending' : 'failed'
-    await store.updateDelivery(rowId, { status, attempts, nextAttemptAt: retryAt, lastStatusCode: statusCode, lastError: error }, at)
-    if (status === 'failed') await alertIfFailing(deps, hook, at)
-    return { status, statusCode, error }
+    return endAttempt({ error, statusCode, attempts, permanent: false })
   } catch {
     return { status: 'failed', statusCode: null, error: 'The delivery could not be recorded.' }
   }
+}
+
+/** Removes log entries older than the retention (deliveries and, when given, inbound requests). */
+export async function purgeOldLogs(deps: DeliveryDeps): Promise<{ cutoff: string; days: number }> {
+  const days = deps.retentionDays ? await deps.retentionDays() : DELIVERY_RETENTION_DAYS
+  const cutoff = new Date(clock(deps) - days * 86_400_000).toISOString()
+  await deps.store.pruneDeliveries(cutoff)
+  if (deps.inbound) await deps.inbound.pruneReceipts(cutoff)
+  return { cutoff, days }
 }
 
 /** Sends the rows that are due, a few at a time, and removes log rows past the retention. */
@@ -187,7 +219,7 @@ export async function processDue(deps: DeliveryDeps, limit = 20): Promise<{ atte
       else if (result.error) failed += 1
     }
   }
-  await deps.store.pruneDeliveries(new Date(nowMs - DELIVERY_RETENTION_DAYS * 86_400_000).toISOString())
+  await purgeOldLogs(deps)
   return { attempted: rows.length, ok, failed }
 }
 
@@ -204,16 +236,19 @@ export async function sendTest(deps: DeliveryDeps, webhookId: number): Promise<A
 /**
  * Replay: sends a logged delivery again with its original body and delivery id, under a fresh
  * signature. Receivers that de-duplicate on X-Engage-Delivery will treat it as the same event.
+ * A delivery whose body was redacted when it finished cannot be replayed: the stored copy no longer
+ * has the values the receiver needs, so the event has to happen again instead.
  */
 export async function replayDelivery(deps: DeliveryDeps, deliveryRowId: number): Promise<AttemptOutcome> {
   const original = await deps.store.findDelivery(deliveryRowId)
   if (!original) return { status: 'failed', statusCode: null, error: 'That delivery no longer exists.' }
   if (original.body === '') return { status: 'failed', statusCode: null, error: 'Nothing was prepared for this delivery, so there is nothing to send again.' }
+  if (original.redacted) return { status: 'failed', statusCode: null, error: 'The body of this delivery was redacted when it finished, so it cannot be sent again. Make the event happen again instead.' }
   const hook = await deps.store.findById(original.webhookId)
   if (!hook) return { status: 'failed', statusCode: null, error: 'That webhook no longer exists.' }
   const at = new Date(clock(deps)).toISOString()
   const rowId = await deps.store.insertDelivery(
-    { webhookId: hook.id, deliveryId: original.deliveryId, event: original.event, body: original.body, status: 'pending', attempts: 0, nextAttemptAt: at, lastStatusCode: null, lastError: null },
+    { webhookId: hook.id, deliveryId: original.deliveryId, event: original.event, body: original.body, redacted: false, status: 'pending', attempts: 0, nextAttemptAt: at, lastStatusCode: null, lastError: null },
     at,
   )
   return attemptDelivery(deps, rowId)
