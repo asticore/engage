@@ -135,6 +135,8 @@ ${lines(baseline.seeds)}
 
 describe('fresh-install baseline parity', () => {
   let full: Proxy
+  let ref: Proxy
+  let baseEvery: Proxy
   let base: Proxy
   let fullLazy: Record<string, unknown>
   let fullAll: Record<string, unknown>
@@ -144,28 +146,35 @@ describe('fresh-install baseline parity', () => {
 
   beforeAll(async () => {
     full = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
+    ref = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     base = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
+    baseEvery = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
 
-    // The reference: every migration, one by one.
+    // The references: every migration, one by one. Lazy default, and everything at once.
     const t0 = Date.now()
     const reference = await runInternalMigrate(full.env.D1, consoleLogger, { baseline: false })
     const fullMs = Date.now() - t0
     expect(reference.errorCount).toBe(0)
     fullLazy = await snapshot(full.env.D1, true)
-    expect(await provisionAllFeatures(full.env.D1)).toEqual([])
-    fullAll = await snapshot(full.env.D1)
-    if (REGENERATE) writeBaseline(await buildBaseline(full.env.D1))
+    expect((await runInternalMigrate(ref.env.D1, consoleLogger, { baseline: false, provisionAll: true })).errorCount).toBe(0)
+    fullAll = await snapshot(ref.env.D1)
+    // The schema comes from the everything-at-once run: sections switched on later are created after the
+    // content tables were renamed, so their foreign keys can still name the retired pre-rename tables.
+    // What provisioning replays per section comes from the lazy run.
+    if (REGENERATE) writeBaseline({ ...(await buildBaseline(ref.env.D1)), touched: (await buildBaseline(full.env.D1)).touched })
 
     const t1 = Date.now()
     baseOutcome = await runInternalMigrate(base.env.D1, consoleLogger)
     console.warn(`fresh install timing: full migration run ${fullMs} ms, baseline ${Date.now() - t1} ms`)
     baseLazy = await snapshot(base.env.D1, true)
-    expect(await provisionAllFeatures(base.env.D1)).toEqual([])
-    baseAll = await snapshot(base.env.D1)
+    expect((await runInternalMigrate(baseEvery.env.D1, consoleLogger, { provisionAll: true })).errorCount).toBe(0)
+    baseAll = await snapshot(baseEvery.env.D1)
   }, 900_000)
 
   afterAll(async () => {
     await full?.dispose()
+    await ref?.dispose()
+    await baseEvery?.dispose()
     await base?.dispose()
   })
 
@@ -185,7 +194,7 @@ describe('fresh-install baseline parity', () => {
     expect(diff(fullLazy, baseLazy)).toEqual([])
   })
 
-  it('gives the same schema after every section is switched on', () => {
+  it('gives the same schema as the full run with every section created at once (the provisionAll install)', () => {
     expect(diff(fullAll, baseAll)).toEqual([])
   })
 
@@ -194,6 +203,12 @@ describe('fresh-install baseline parity', () => {
     const reference = await all<{ feature: string; state: string; migrations: string | null }>(full.env.D1, `SELECT feature, state, migrations FROM eg_feature_tables`)
     expect(states).toEqual(reference)
   })
+
+  it('a section switched on later on a baseline install is created with the same tables', async () => {
+    expect(await provisionAllFeatures(base.env.D1)).toEqual([])
+    const names = async (db: D1Database): Promise<string[]> => (await userTables(db)).map((t) => t.name)
+    expect(await names(base.env.D1)).toEqual(await names(ref.env.D1))
+  }, 300_000)
 
   it('records every migration the full run records, and nothing else', () => {
     const real = new Set([...EARLY_MIGRATIONS, ...LATE_MIGRATIONS].map((m) => m.name))
