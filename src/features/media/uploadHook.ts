@@ -86,10 +86,11 @@ export async function prepareUploadFile(input: UploadFile, deps: PrepareDeps = d
   try {
     const inspected = inspectUpload(input, policy)
     // The same object when the checked name and type match what was sent, so callers can tell nothing was changed.
+    // The bytes are the cleaned copy for an SVG (see inspectUpload), otherwise the same bytes as sent.
     file =
-      inspected.name === input.name && inspected.mimeType === input.mimetype && input.size === input.data.byteLength
+      inspected.name === input.name && inspected.mimeType === input.mimetype && input.size === input.data.byteLength && inspected.data === input.data
         ? input
-        : { data: input.data, mimetype: inspected.mimeType, name: inspected.name, size: input.data.byteLength }
+        : { data: inspected.data, mimetype: inspected.mimeType, name: inspected.name, size: inspected.data.byteLength }
   } catch (error) {
     if (error instanceof UploadRefusal) throw new ValidationError([{ path: 'file', message: error.message }])
     throw error

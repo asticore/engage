@@ -82,13 +82,12 @@ describe('resultsTabFor', () => {
     expect(resultsTabFor('forms', 4, readEventsOnly)).toBeNull()
   })
 
-  it('shows the RSVPs tab only to admins or people who can update the event', () => {
-    // An owner of one RSVP can read the RSVP but not update the event: no tab, since the list is every RSVP.
-    const rsvpOwner = access({ canRead: () => true, canUpdate: () => false })
-    expect(resultsTabFor('events', 4, rsvpOwner)).toBeNull()
-    const eventEditor = access({ canRead: () => true, canUpdate: (collection) => collection === 'events' })
-    expect(resultsTabFor('events', 4, eventEditor)?.label).toBe('RSVPs')
-    // An admin sees it without an explicit update grant.
+  it('shows the RSVPs tab to anyone with Event RSVPs read (counts); guest details are separate', () => {
+    // Without the read permission there is no tab at all.
+    expect(resultsTabFor('events', 4, access({ canRead: () => false, canUpdate: () => true }))).toBeNull()
+    // Read alone gives the counts tab, even without update on events.
+    const countsOnly = access({ canRead: () => true, canUpdate: () => false })
+    expect(resultsTabFor('events', 4, countsOnly)?.label).toBe('RSVPs')
     expect(resultsTabFor('events', 4, { isAdmin: true, canRead: () => true, canUpdate: () => false })?.label).toBe('RSVPs')
   })
 

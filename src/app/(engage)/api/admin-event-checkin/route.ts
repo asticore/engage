@@ -25,7 +25,7 @@ async function guard(mode: 'read' | 'write') {
   if (!hasAdminPanelAccess(context.user)) return { response: json({ error: 'Unauthorised' }, 401) }
   const collections = context.permissions.collections ?? {}
   if (!context.isAdmin && !collections.events?.update) return { response: json({ error: 'Forbidden' }, 403) }
-  if (mode === 'read' && !collections['event-rsvps']?.read) return { response: json({ error: 'Forbidden' }, 403) }
+  if (mode === 'read' && !context.isAdmin && !context.can('event-rsvps', 'read')) return { response: json({ error: 'Forbidden' }, 403) }
   if (mode === 'write' && !context.isAdmin && !collections['event-rsvps']?.update) return { response: json({ error: 'Forbidden' }, 403) }
   return { context }
 }
@@ -56,7 +56,9 @@ export async function GET(request: Request): Promise<Response> {
 
     const { docs, truncated } = await collectRows(
       context.engine as unknown as FindEngine,
-      { collection: 'event-rsvps', where: { event: { equals: eventId } }, sort: 'createdAt', depth: 0, user: context.user },
+      // The check-in screen has its own guard above (events update and Event RSVPs read), so the list is read without the
+      // collection rule that now reserves guest details for View guest details. Changes below still go through the user.
+      { collection: 'event-rsvps', where: { event: { equals: eventId } }, sort: 'createdAt', depth: 0, overrideAccess: true },
       CHECKIN_MAX_ROWS,
     )
     const attendees: CheckInAttendee[] = []

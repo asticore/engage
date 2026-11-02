@@ -470,7 +470,7 @@ describe('notifications', () => {
 })
 
 describe('file uploads', () => {
-  const site = { allowedExtensions: ['pdf', 'png'], maxBytes: 1024 }
+  const site = { allowedExtensions: ['pdf', 'png'], maxBytes: 1024, allowSvg: false }
   const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0])
 
   it('accepts an allowed type whose bytes match', () => {
