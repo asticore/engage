@@ -113,32 +113,26 @@ import { canInsertInto, effectiveLock, lockedKeySet, lockKeyOf, lockMapForCanvas
 import { canConvertLegacy, convertLegacyBlock } from './visualEditor/convertLegacy'
 import type { LockUi } from './visualEditor/LockControls'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { useHydrated } from '@/lib/clientStore'
+
+type TranslationPayload = DocumentTranslations & { title: string; users: { id: number; label: string }[] }
+type TranslationResponse = (TranslationPayload & { enabled?: boolean }) | null
+/** The signed-in user as /api/users/me returns it. */
+type MeUser = LockUser & NonNullable<Parameters<typeof can>[0]>
 
 export const VisualEditorView: React.FC = () => {
-  // The URL is read after mount so the server render and first client render match (no window on the server).
-  const [route, setRoute] = useState<ReturnType<typeof parsePath>>(null)
-  const [routeReady, setRouteReady] = useState(false)
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync with window.location after mount
-    setRoute(parsePath())
-    setRouteReady(true)
-  }, [])
+  // The URL is read once hydrated so the server render and first client render match (no window on the server).
+  const routeReady = useHydrated()
+  const route = useMemo(() => (routeReady ? parsePath() : null), [routeReady])
   const surface = route ? VISUAL_EDITOR_SURFACES[route.slug] : undefined
+  const unknownTarget = routeReady && !(route && surface)
 
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  useEffect(() => {
-    if (routeReady && !(route && surface)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- route is only known after mount
-      setError('Unknown editor target.')
-      setLoading(false)
-    }
-  }, [routeReady, route, surface])
-  const [modLabel, setModLabel] = useState('Ctrl')
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- navigator is client-only; default matches the server render
-    if (/Mac|iPhone|iPad/i.test(navigator.platform || '')) setModLabel('Cmd')
-  }, [])
+  const [loadingState, setLoading] = useState(true)
+  const [errorState, setError] = useState<string | null>(null)
+  const loading = loadingState && !unknownTarget
+  const error = errorState ?? (unknownTarget ? 'Unknown editor target.' : null)
+  // Navigator is client-only; the default matches the server render.
+  const modLabel = routeReady && /Mac|iPhone|iPad/i.test(navigator.platform || '') ? 'Cmd' : 'Ctrl'
   const [blocks, setBlocks] = useState<SectionNode[]>([])
   const [docTitle, setDocTitle] = useState('')
   const [status, setStatus] = useState<string | null>(null)
@@ -147,7 +141,11 @@ export const VisualEditorView: React.FC = () => {
   /** When the last successful save (draft or publish) finished; feeds the save status chip. */
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
-  const [tourOpen, setTourOpen] = useState(false)
+  // First-use tips open on their own once the editor has loaded, unless this browser already saw them
+  // (read once hydrated, so the server render and first client render stay identical). The help menu can reopen them.
+  const [tourRequested, setTourOpen] = useState(false)
+  const [tourDismissed, setTourDismissed] = useState(false)
+  const tourOpen = tourRequested || (routeReady && !tourDismissed && !coachMarksSeen())
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
   const [templateKind, setTemplateKind] = useState<unknown>(null)
   const [previewCtx, setPreviewCtx] = useState<BlockContext | null>(null)
@@ -189,7 +187,7 @@ export const VisualEditorView: React.FC = () => {
   const [pageSettings, setPageSettings] = useState<PageSettings | null>(null)
   // Translate mode: the document's translations (null when multilingual is off or the collection has none),
   // and the language being edited (null = the default language, the normal builder).
-  const [translation, setTranslation] = useState<(DocumentTranslations & { title: string; users: { id: number; label: string }[] }) | null>(null)
+  const [translation, setTranslation] = useState<TranslationPayload | null>(null)
   const [editLocale, setEditLocale] = useState<string | null>(null)
   // The canvas's view of the translations while translating: the field the panel should show (a click on the
   // page), and the text typed but not yet saved, so the canvas reads in it live.
@@ -253,10 +251,12 @@ export const VisualEditorView: React.FC = () => {
   useEffect(() => {
     if (!apiUrl || !surface) return
     Promise.all([
-      fetch(`${apiUrl}?depth=0`, { credentials: 'include' }).then(r => r.ok ? r.json() : null),
-      fetch('/api/users/me', { credentials: 'include' }).then(r => r.ok ? r.json() : null).then((r: any) => r?.user ?? null),
+      fetch(`${apiUrl}?depth=0`, { credentials: 'include' }).then((r): Promise<Record<string, unknown> | null> => (r.ok ? r.json() : null)),
+      fetch('/api/users/me', { credentials: 'include' })
+        .then((r): Promise<{ user?: MeUser | null } | null> => (r.ok ? r.json() : null))
+        .then((r) => r?.user ?? null),
     ])
-      .then(([doc, user]: any[]) => {
+      .then(([doc, user]) => {
         if (doc && typeof doc === 'object') {
           let raw = (doc[surface.blocksField] as SectionNode[] | undefined) || []
           if (surface.formMode) {
@@ -305,16 +305,28 @@ export const VisualEditorView: React.FC = () => {
       })
   }, [apiUrl, surface])
 
+  const appliedTranslateParams = useRef(false)
   const surfaceSlug = surface?.slug
   const surfaceKind = surface?.kind
   const routeId = route?.id
   const loadTranslations = useCallback(() => {
     if (surfaceKind !== 'collection' || !surfaceSlug || !routeId || !translatableSource(surfaceSlug)) return
     fetch(`/api/admin-translations?collection=${encodeURIComponent(surfaceSlug)}&id=${encodeURIComponent(routeId)}`, { credentials: 'include' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: any) => {
+      .then((r): Promise<TranslationResponse> => (r.ok ? r.json() : null))
+      .then((data) => {
         setDrafts({})
         setTranslation(data?.enabled ? data : null)
+        // Deep link from the Translations table: ?lang=<locale>&translate=1 opens the page in that language.
+        // Applied once, when the document's translations first load, so a later reload does not reset the choice.
+        if (data?.enabled && !appliedTranslateParams.current) {
+          appliedTranslateParams.current = true
+          const deepLink = resolveTranslateParams(
+            window.location.search,
+            data.locales.map((group) => group.locale),
+            data.defaultLocale,
+          )
+          if (deepLink.locale) setEditLocale(deepLink.locale)
+        }
       })
       .catch(() => setTranslation(null))
   }, [surfaceKind, surfaceSlug, routeId])
@@ -322,37 +334,15 @@ export const VisualEditorView: React.FC = () => {
     loadTranslations()
   }, [loadTranslations])
 
-  // Deep link from the Translations table: ?lang=<locale>&translate=1 opens the page in that language.
-  // Applied once, when the document's translations first load, so a later reload does not reset the choice.
-  const appliedTranslateParams = useRef(false)
-  useEffect(() => {
-    if (!translation || appliedTranslateParams.current) return
-    appliedTranslateParams.current = true
-    const deepLink = resolveTranslateParams(
-      window.location.search,
-      translation.locales.map((group) => group.locale),
-      translation.defaultLocale,
-    )
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync with the deep link once translations load
-    if (deepLink.locale) setEditLocale(deepLink.locale)
-  }, [translation])
-
   useEffect(() => {
     fetch('/api/roles?depth=0&limit=100', { credentials: 'include' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((res: any) => {
-        const slugs = (res?.docs ?? []).map((d: any) => d.slug).filter((x: unknown): x is string => typeof x === 'string' && x !== 'admin' && x !== 'customer')
+      .then((res: { docs?: Array<{ slug?: unknown }> } | null) => {
+        const slugs = (res?.docs ?? []).map((d) => d.slug).filter((x: unknown): x is string => typeof x === 'string' && x !== 'admin' && x !== 'customer')
         if (slugs.length) setRoleChoices(Array.from(new Set(['editor', 'viewer', ...slugs])))
       })
       .catch(() => {})
   }, [])
-
-  // First-use tips: shown once the editor has loaded, unless this browser already saw them.
-  // Client-only read after mount, so the server render and first client render stay identical.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync with localStorage after mount
-    if (!loading && !coachMarksSeen()) setTourOpen(true)
-  }, [loading])
 
   // Warns before a tab close/refresh discards unsaved edits.
   useEffect(() => {
@@ -436,9 +426,7 @@ export const VisualEditorView: React.FC = () => {
           loadTranslations()
         })
     },
-    // loadTranslations is stable for the document; the rest are refs or setters.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [notifyTranslate, t],
+    [notifyTranslate, t, loadTranslations],
   )
   // Alt+Left / Alt+Right on the parent document step through the untranslated texts (the frame forwards them too).
   useEffect(() => {
@@ -1757,7 +1745,7 @@ export const VisualEditorView: React.FC = () => {
       {importOpen && (
         <ImportExportModal blocks={blocks} title={docTitle} onClose={closeImport} onAppend={importAppend} onReplace={importReplace} />
       )}
-      <CoachMarks open={tourOpen && !loading} onClose={() => setTourOpen(false)} />
+      <CoachMarks open={tourOpen && !loading} onClose={() => { setTourOpen(false); setTourDismissed(true) }} />
       {templateToast && (
         <div className="ve-tpl__toast" role="status">
           {templateToast}

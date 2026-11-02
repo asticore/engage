@@ -23,7 +23,8 @@
  * sidebar's collapsed state.
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect } from 'react'
+import { createStorageStore, useStoredString } from '@/lib/clientStore'
 import { THEME_STORAGE_KEY as STORAGE_KEY } from './themeScript'
 
 export type ThemePref = 'auto' | 'dark' | 'light'
@@ -39,24 +40,11 @@ function isThemePref(value: unknown): value is ThemePref {
   return value === 'light' || value === 'dark' || value === 'auto'
 }
 
-function getInitialTheme(): ThemePref {
-  if (typeof window === 'undefined') return 'auto'
-  try {
-    const stored = window.localStorage.getItem(STORAGE_KEY)
-    if (isThemePref(stored)) return stored
-  } catch {
-    // localStorage unavailable (private browsing, etc.) - default to auto.
-  }
-  return 'auto'
-}
+const themeStore = createStorageStore(STORAGE_KEY)
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<ThemePref>('auto')
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync with localStorage after mount (server and first client render both use 'auto')
-    setThemeState(getInitialTheme())
-  }, [])
+  const stored = useStoredString(themeStore)
+  const theme: ThemePref = isThemePref(stored) ? stored : 'auto'
 
   useEffect(() => {
     if (theme === 'auto') {
@@ -66,14 +54,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [theme])
 
-  const setTheme = (next: ThemePref) => {
-    setThemeState(next)
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next)
-    } catch {
-      // ignore - localStorage may be unavailable.
-    }
-  }
+  const setTheme = (next: ThemePref) => themeStore.set(next)
 
   return <ThemeContext.Provider value={{ setTheme, theme }}>{children}</ThemeContext.Provider>
 }

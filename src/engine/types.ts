@@ -104,7 +104,7 @@ export type CollectionBeforeChangeHook<T = Loose> = (args: {
   operation: 'create' | 'update'
   req: EngineRequest
   context: Record<string, unknown>
-  collection?: Loose
+  collection?: CollectionConfig
   [key: string]: unknown
 }) => unknown
 
@@ -115,7 +115,7 @@ export type CollectionAfterChangeHook<T = Loose> = (args: {
   req: EngineRequest
   context: Record<string, unknown>
   data?: Partial<T>
-  collection?: Loose
+  collection?: CollectionConfig
   [key: string]: unknown
 }) => unknown
 
@@ -124,7 +124,7 @@ export type CollectionAfterDeleteHook<T = Loose> = (args: {
   id: number | string
   req: EngineRequest
   context: Record<string, unknown>
-  collection?: Loose
+  collection?: CollectionConfig
   [key: string]: unknown
 }) => unknown
 
@@ -134,7 +134,7 @@ export type GlobalAfterChangeHook<T = Loose> = (args: {
   req: EngineRequest
   context: Record<string, unknown>
   data?: Partial<T>
-  global?: Loose
+  global?: GlobalConfig
   [key: string]: unknown
 }) => unknown
 
@@ -149,10 +149,26 @@ export type Endpoint = {
 /* Fields                                                                      */
 /* -------------------------------------------------------------------------- */
 
-type Label = string | Record<string, string> | ((args: Loose) => string) | false
+/** Arguments handed to label/description/hidden callbacks. */
+export type LabelArgs = { t: (key: string) => string; i18n?: unknown; [key: string]: unknown }
+/** Arguments handed to collection/global lifecycle hooks that do not need a typed document. */
+export type HookArgs = {
+  req: EngineRequest
+  operation?: 'create' | 'update' | 'read' | 'delete'
+  context?: Record<string, unknown>
+  collection?: CollectionConfig
+  /** The document parts differ per hook and per collection: Loose until a collection types them. */
+  data?: Loose
+  doc?: Loose
+  originalDoc?: Loose
+  value?: Loose
+  [key: string]: Loose
+}
+
+type Label = string | Record<string, string> | ((args: LabelArgs) => string) | false
 
 export type FieldAdmin = {
-  description?: string | Record<string, string> | ((args: Loose) => string)
+  description?: string | Record<string, string> | ((args: LabelArgs) => string)
   condition?: (data: Loose, siblingData: Loose, ctx?: Loose) => boolean
   components?: Record<string, unknown>
   hidden?: boolean
@@ -285,8 +301,8 @@ type EntityAdmin = {
   useAsTitle?: string
   group?: string | Record<string, string> | false
   defaultColumns?: string[]
-  description?: string | Record<string, string> | ((args: Loose) => string)
-  hidden?: boolean | ((args: Loose) => boolean)
+  description?: string | Record<string, string> | ((args: LabelArgs) => string)
+  hidden?: boolean | ((args: LabelArgs) => boolean)
   listSearchableFields?: string[]
   components?: Record<string, unknown>
   livePreview?: unknown
@@ -320,20 +336,20 @@ export type CollectionConfig = {
   disableDuplicate?: boolean
   endpoints?: Endpoint[] | false
   hooks?: {
-    beforeValidate?: Array<(args: Loose) => unknown>
+    beforeValidate?: Array<(args: HookArgs) => unknown>
     beforeChange?: CollectionBeforeChangeHook[]
     afterChange?: CollectionAfterChangeHook[]
-    beforeRead?: Array<(args: Loose) => unknown>
-    afterRead?: Array<(args: Loose) => unknown>
-    beforeDelete?: Array<(args: Loose) => unknown>
+    beforeRead?: Array<(args: HookArgs) => unknown>
+    afterRead?: Array<(args: HookArgs) => unknown>
+    beforeDelete?: Array<(args: HookArgs) => unknown>
     afterDelete?: CollectionAfterDeleteHook[]
-    beforeOperation?: Array<(args: Loose) => unknown>
-    beforeLogin?: Array<(args: Loose) => unknown>
-    afterLogin?: Array<(args: Loose) => unknown>
-    afterLogout?: Array<(args: Loose) => unknown>
-    afterMe?: Array<(args: Loose) => unknown>
-    afterRefresh?: Array<(args: Loose) => unknown>
-    afterForgotPassword?: Array<(args: Loose) => unknown>
+    beforeOperation?: Array<(args: HookArgs) => unknown>
+    beforeLogin?: Array<(args: HookArgs) => unknown>
+    afterLogin?: Array<(args: HookArgs) => unknown>
+    afterLogout?: Array<(args: HookArgs) => unknown>
+    afterMe?: Array<(args: HookArgs) => unknown>
+    afterRefresh?: Array<(args: HookArgs) => unknown>
+    afterForgotPassword?: Array<(args: HookArgs) => unknown>
     [key: string]: unknown
   }
   indexes?: unknown[]
@@ -356,11 +372,11 @@ export type GlobalConfig = {
   versions?: boolean | Record<string, unknown>
   endpoints?: Endpoint[] | false
   hooks?: {
-    beforeValidate?: Array<(args: Loose) => unknown>
-    beforeChange?: Array<(args: Loose) => unknown>
+    beforeValidate?: Array<(args: HookArgs) => unknown>
+    beforeChange?: Array<(args: HookArgs) => unknown>
     afterChange?: GlobalAfterChangeHook[]
-    beforeRead?: Array<(args: Loose) => unknown>
-    afterRead?: Array<(args: Loose) => unknown>
+    beforeRead?: Array<(args: HookArgs) => unknown>
+    afterRead?: Array<(args: HookArgs) => unknown>
     [key: string]: unknown
   }
   custom?: Record<string, unknown>

@@ -33,7 +33,7 @@ import { LockControls, type LockUi } from './LockControls'
 import { canConvertLegacy } from './convertLegacy'
 import { FormLogicInput, FormOptionsInput } from './formInputs'
 import { RangeSliderField } from '@/admin/fields/RangeSliderField'
-import { DimensionsField } from '@/admin/fields/DimensionsField'
+import { DimensionsField, type DimensionValue } from '@/admin/fields/DimensionsField'
 import { LinkField } from '@/admin/fields/LinkField'
 import { IconPickerField } from '@/admin/fields/IconPickerField'
 import { ColorPickerField } from '@/admin/fields/ColorPickerField'
@@ -906,7 +906,7 @@ const RepeaterCards: React.FC<{ field: EditorField; value: unknown; onChange: (v
   onChange,
 }) => {
   const t = useAdminT()
-  const defFields: RepeaterField[] = ((field.repeater as any)?.fields as RepeaterField[]) || []
+  const defFields: RepeaterField[] = (field.repeater?.fields as RepeaterField[] | undefined) || []
   const rows: Record<string, unknown>[] = Array.isArray(value)
     ? (value as Record<string, unknown>[])
     : typeof value === 'string'
@@ -1066,14 +1066,14 @@ const FieldInput: React.FC<{ field: EditorField; value: unknown; onChange: (v: u
   const [formError, setFormError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
 
+  const mediaId = field.type === 'media' && typeof value === 'number' ? value : undefined
   useEffect(() => {
-    if (field.type !== 'media' || typeof value !== 'number') return
-    fetch(`/api/media/${value}?depth=0`, { credentials: 'include' })
+    if (mediaId === undefined) return
+    fetch(`/api/media/${mediaId}?depth=0`, { credentials: 'include' })
       .then((r) => r.json() as Promise<MediaThumb>)
       .then((doc) => setFetchedThumb(doc))
       .catch(() => {})
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [field.type, typeof value === 'number' ? value : undefined])
+  }, [mediaId])
 
   const thumb: MediaThumb | null =
     field.type === 'media'
@@ -1440,7 +1440,7 @@ const FieldInput: React.FC<{ field: EditorField; value: unknown; onChange: (v: u
         <div className={`ve-field ${widthClass}`}>
           <DimensionsField
             label={field.label}
-            value={value as any}
+            value={value as DimensionValue | undefined}
             onChange={onChange}
           />
           {field.helpText && <span className="ve-field__help">{field.helpText}</span>}

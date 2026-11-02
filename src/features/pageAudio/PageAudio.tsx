@@ -1,5 +1,6 @@
 'use client'
 
+import { useHydrated } from '@/lib/clientStore'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { shouldSkipForReducedData, type PageAudioConfig } from './config'
@@ -27,20 +28,18 @@ const writeMuted = (muted: boolean): void => {
 export function PageAudio({ config }: { config: PageAudioConfig }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const gestureRef = useRef(false)
-  const [skip, setSkip] = useState(false)
   const [muted, setMuted] = useState(true)
   const [playing, setPlaying] = useState(false)
 
+  // Client-only capability check: it cannot be known during render on the server, so it waits for hydration.
+  const hydrated = useHydrated()
+  const conn = hydrated
+    ? (navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+    : undefined
+  const skip = config.respectReducedData && shouldSkipForReducedData(conn)
+
   useEffect(() => {
-    if (config.respectReducedData) {
-      const conn = (navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } }).connection
-      if (shouldSkipForReducedData(conn)) {
-        // Client-only capability check: it cannot be known during render.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSkip(true)
-        return
-      }
-    }
+    if (!hydrated || skip) return
     const audio = new Audio()
     audio.preload = 'none'
     audio.loop = config.loop
@@ -50,8 +49,11 @@ export function PageAudio({ config }: { config: PageAudioConfig }) {
     const saved = readMuted()
     const startMuted = saved ?? config.startMuted
     audio.muted = startMuted
-    setMuted(startMuted)
-    audio.addEventListener('play', () => setPlaying(true))
+    // The control mirrors the element's muted state once it starts playing (the initial state is only read then).
+    audio.addEventListener('play', () => {
+      setMuted(audio.muted)
+      setPlaying(true)
+    })
     audio.addEventListener('pause', () => setPlaying(false))
 
     const tryPlay = () => {
@@ -87,7 +89,7 @@ export function PageAudio({ config }: { config: PageAudioConfig }) {
       audio.load()
       audioRef.current = null
     }
-  }, [config])
+  }, [config, skip, hydrated])
 
   const toggle = useCallback(() => {
     const audio = audioRef.current

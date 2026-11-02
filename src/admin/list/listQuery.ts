@@ -229,7 +229,7 @@ export function deriveColumns(fields: Field[], opts: { drafts: boolean; collecti
       })
     } else if (field.type === 'select') {
       const options =
-        (field as any).options?.map((o: any) =>
+        (field as { options?: Array<string | { label?: string; value: string }> }).options?.map((o) =>
           typeof o === 'string' ? { label: o, value: o } : { label: o.label || o.value, value: o.value },
         ) || []
       columns.push({
@@ -248,7 +248,7 @@ export function deriveColumns(fields: Field[], opts: { drafts: boolean; collecti
         sortable: true,
         filterable: true,
       })
-    } else if ((field.type === 'relationship' || field.type === 'upload') && !(field as any).hasMany) {
+    } else if ((field.type === 'relationship' || field.type === 'upload') && !(field as { hasMany?: boolean }).hasMany) {
       // Single relationship/upload - label by field name, not sortable, not filterable
       columns.push({
         name: field.name,

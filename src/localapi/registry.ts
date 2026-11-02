@@ -556,18 +556,19 @@ import type { CollectionReadEntry, GlobalReadEntry, ReadRegistry } from './read-
 /** Type-erased doc shape every `CollectionDbOps`/`GlobalDbOps` map entry is cast to - see this file's header "TYPE-ERASURE NOTE". */
 export type AnyDoc = Record<string, unknown> & { id: number }
 
- 
+// Contravariance workaround: each entity's functions take their own narrower data type, so the parameters are
+// `never` (every function's parameter accepts it) and the results `unknown`; the map entry is then cast to AnyDoc.
 function collectionOps(
-  create: (data: any) => Promise<any>,
-  updateByID: (id: number, data: any, opts?: { draft?: boolean }) => Promise<any>,
+  create: (data: never) => Promise<unknown>,
+  updateByID: (id: number, data: never, opts?: { draft?: boolean }) => Promise<unknown>,
   deleteByID: (id: number) => Promise<boolean>,
-  findByID: (id: number, opts?: { draft?: boolean }) => Promise<any>,
+  findByID: (id: number, opts?: { draft?: boolean }) => Promise<unknown>,
 ): CollectionDbOps<AnyDoc> {
   return { create, updateByID, deleteByID, findByID } as unknown as CollectionDbOps<AnyDoc>
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- same contravariance workaround as collectionOps above, for globals' narrower per-entity `update` param types.
-function globalOps(find: () => Promise<any>, update: (data: any) => Promise<any>): GlobalDbOps<AnyDoc> {
+// Same contravariance workaround as collectionOps above, for globals' narrower per-entity `update` param types.
+function globalOps(find: () => Promise<unknown>, update: (data: never) => Promise<unknown>): GlobalDbOps<AnyDoc> {
   return { find, update } as unknown as GlobalDbOps<AnyDoc>
 }
 

@@ -20,7 +20,8 @@ describe('editor first render is hydration safe', () => {
   }
   it('VisualEditor reads the URL only after mount', () => {
     const src = readFileSync(join(process.cwd(), FILES[0]), 'utf8')
-    expect(src).toContain('setRoute(parsePath())')
-    expect(src).not.toMatch(/const route = useMemo/)
+    // The URL is only parsed once hydrated (useSyncExternalStore server snapshot is false).
+    expect(src).toContain('const routeReady = useHydrated()')
+    expect(src).toContain('routeReady ? parsePath() : null')
   })
 })

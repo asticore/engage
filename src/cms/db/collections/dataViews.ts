@@ -1,10 +1,10 @@
 import { DataViews } from '@/features/dataViews/collections/DataViews'
 
-import { createCollectionOps } from '../generic'
+import { type PagedFind, createCollectionOps } from '../generic'
 import { dataViews } from '../schema/dataViews'
 
 type Doc = Record<string, unknown> & { id: number; updatedAt: string; createdAt: string }
-type Paged = (args?: { where?: import('@/engine').Where; sort?: import('@/engine').Sort; limit?: number; page?: number; pagination?: boolean }) => Promise<any>
+type Paged = PagedFind<Doc>
 
 const ops = createCollectionOps(dataViews, DataViews)
 export const findDataViewsPaginated = ops.findPaginated as unknown as Paged

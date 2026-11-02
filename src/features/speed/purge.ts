@@ -132,6 +132,9 @@ export type CloudflareResult = {
   errors: string[]
 }
 
+/** The part of the Integrations global the purge reads. */
+type IntegrationsDoc = { cloudflare?: { zoneId?: string; apiToken?: string; purgeOnPublish?: boolean } }
+
 /**
  * Purge all cached pages from Cloudflare. Requires integrations.cloudflare.zoneId
  * and integrations.cloudflare.apiToken to be set. Best effort - never throws.
@@ -147,7 +150,7 @@ export async function purgeCloudflareCache(): Promise<CloudflareResult> {
       slug: 'integrations',
       depth: 0,
       overrideAccess: true,
-    }).catch((): null => null)) as any | null
+    }).catch((): null => null)) as IntegrationsDoc | null
 
     if (!integrations?.cloudflare?.zoneId || !integrations?.cloudflare?.apiToken) {
       return result
@@ -196,7 +199,7 @@ export async function purgeCloudflareByUrls(urls: string[], options: { onPublish
       slug: 'integrations',
       depth: 0,
       overrideAccess: true,
-    }).catch((): null => null)) as any | null
+    }).catch((): null => null)) as IntegrationsDoc | null
 
     if (!integrations?.cloudflare?.zoneId || !integrations?.cloudflare?.apiToken) {
       return result

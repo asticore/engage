@@ -176,7 +176,7 @@ export const Pages: CollectionConfig = {
         if (operation === 'create' && data?.template && (!data.blocks || data.blocks.length === 0)) {
           const templateId = typeof data.template === 'object' ? data.template.id : data.template
           try {
-            const template = await req.engine.findByID({ collection: 'page-templates', id: templateId })
+            const template = (await req.engine.findByID({ collection: 'page-templates', id: templateId })) as { blocks?: unknown[] } | null
             if (template?.blocks?.length) {
               data.blocks = template.blocks
             }

@@ -59,8 +59,8 @@ import { consumeStoredValue, quoteStoredValue } from '../server/storedValue'
 // '2025-03-31.basil') - confirmed by reading both directly, an apparent
 // inconsistency in the real plugin's own source rather than something
 // meaningful to reproduce. Consolidated to one version here.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Stripe's own apiVersion type only accepts its single current literal; casting matches the real plugin's own `@ts-ignore` on this exact line.
-const STRIPE_API_VERSION = '2025-03-31.basil' as any
+// Stripe's own apiVersion type only accepts its single current literal; this older one is kept on purpose.
+const STRIPE_API_VERSION = '2025-03-31.basil' as unknown as Stripe.StripeConfig['apiVersion']
 
 export function getStripeClient(secretKey: string): Stripe {
   return new Stripe(secretKey, {

@@ -3,7 +3,7 @@
  * Wraps the pure permissions logic in permissions.ts with database lookup.
  */
 
-import type { Engine } from '@/engine'
+import type { Engine, TypedUser } from '@/engine'
 import type { PermissionMatrix, Resource, Action } from './permissions'
 import { can, parseCustomMatrix } from './permissions'
 
@@ -55,7 +55,7 @@ export async function loadCustomMatrix(
     const role = await engine.findByID({
       collection: 'roles',
       id: roleId,
-      user: (user as unknown) as any,
+      user: user as unknown as TypedUser,
       overrideAccess: true,
     })
     if (!role || typeof role.permissions !== 'object') {
