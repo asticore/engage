@@ -161,7 +161,7 @@ export async function EditView({ collectionSlug, id }: { collectionSlug: string;
   // Existing documents only: a results tab, if the user may read what it shows.
   const resultsTab = resultsTabState(collectionSlug, id, {
     isAdmin: context.isAdmin,
-    canRead: (slug) => Boolean(context.permissions.collections?.[slug]?.read),
+    canRead: (slug) => (slug === 'event-rsvps' ? context.isAdmin || context.can('event-rsvps', 'read') : Boolean(context.permissions.collections?.[slug]?.read)),
     canUpdate: (slug) => Boolean(context.permissions.collections?.[slug]?.update),
   })
   const resultsPanel = resultsTab?.allowed && id !== undefined ? resultsPanelFor(collectionSlug, id, docRecord) : null

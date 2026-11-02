@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { zipSync, strToU8 } from 'fflate'
-import { ACCEPTED_TYPES, inspectUpload, UploadRefusal } from '@/features/media/fileTypes'
+import { ACCEPTED_TYPES, DEFAULT_UPLOAD_POLICY, inspectUpload, UploadRefusal } from '@/features/media/fileTypes'
 import { chooseOutputMimeType, hasAlpha, buildOptimiseOptions, resolveOptimiseSettings } from '@/features/media/optimise'
 import { isServableMediaFilename, MULTIPART_PART_BYTES, MULTIPART_THRESHOLD_BYTES } from '@/localapi/storage'
 import { readLimitedText } from '@/lib/limitedBody'
@@ -61,9 +61,10 @@ describe('new file types', () => {
     expect(() => inspectUpload({ name: 'bad.json', mimetype: 'application/json', data: text('<html>'), size: 6 })).toThrow(UploadRefusal)
   })
 
-  it('still refuses SVG and HTML, which have no server-side sanitiser', () => {
+  it('refuses SVG while its switch is off, and HTML always', () => {
     expect(() => inspectUpload({ name: 'logo.svg', mimetype: 'image/svg+xml', data: text('<svg></svg>'), size: 11 })).toThrow(UploadRefusal)
-    expect(ACCEPTED_TYPES.map((type) => type.extension)).not.toContain('svg')
+    expect(DEFAULT_UPLOAD_POLICY.allowedExtensions).not.toContain('svg')
+    expect(() => inspectUpload({ name: 'page.html', mimetype: 'text/html', data: text('<p>x</p>'), size: 8 })).toThrow(UploadRefusal)
   })
 })
 
