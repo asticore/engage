@@ -140,6 +140,7 @@ import { combineQueries, executeAccess, executeFieldAccess } from './access'
 import type { AfterReadFieldHookArgs } from './hooks'
 import { runFieldHook } from './hooks'
 import { ValidationError } from './operations'
+import { readOrEmptyWhenFeatureTableMissing } from './missingFeatureTable'
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                       */
@@ -738,7 +739,7 @@ async function findByIDInternal(entry: CollectionReadEntry, id: number, ctx: Omi
   const accessResult: AccessResult = ctx.overrideAccess ? true : await executeAccess(entry.config.access?.read, { req: ctx.req, id, disableErrors: ctx.disableErrors })
   if (accessResult === false) return null
 
-  const rawDoc = await entry.findByID(id, { draft: ctx.draft })
+  const rawDoc = await readOrEmptyWhenFeatureTableMissing(() => entry.findByID(id, { draft: ctx.draft }), (): null => null)
   const matchesAccess = rawDoc !== null && (!isWhereResult(accessResult) || matchesWhere(rawDoc, accessResult))
 
   // Confirmed by reading `collections/operations/findByID.js` line by line
@@ -823,7 +824,10 @@ export async function find(registry: ReadRegistry, collection: string, args: Fin
   }
 
   const fullWhere = combineQueries(where, accessResult)
-  const result = await entry.findPaginated({ where: fullWhere, sort, limit, page, pagination })
+  const result = await readOrEmptyWhenFeatureTableMissing(
+    () => entry.findPaginated({ where: fullWhere, sort, limit, page, pagination }),
+    (): PaginatedDocs => ({ docs: [], totalDocs: 0, limit: (limit as number) ?? 10, totalPages: 1, page: 1, pagingCounter: 1, hasPrevPage: false, hasNextPage: false, prevPage: null, nextPage: null }),
+  )
 
   const docs = await Promise.all(
     result.docs.map(async (rawDoc) => {
@@ -877,7 +881,7 @@ export async function count(registry: ReadRegistry, collection: string, args: Co
   }
 
   const fullWhere = combineQueries(where, accessResult)
-  const totalDocs = await entry.count({ where: fullWhere })
+  const totalDocs = await readOrEmptyWhenFeatureTableMissing(() => entry.count({ where: fullWhere }), () => 0)
   return { totalDocs }
 }
 

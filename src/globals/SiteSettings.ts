@@ -2,6 +2,7 @@ import type { GlobalConfig } from '@/engine'
 
 import { isAdmin } from '../access/ecommerceAccess'
 import { featureToggleField } from '../features/featureToggleField'
+import { provisionFeaturesBeforeChange } from '../features/provisionOnEnable'
 import { DEFAULT_SITE_NAME } from '../features/brand/siteName'
 
 /**
@@ -25,6 +26,8 @@ export const SiteSettings: GlobalConfig = {
   dbName: 'eg_site_settings',
   label: 'General',
   hooks: {
+    // A feature switched on for the first time gets its database tables before the save lands.
+    beforeChange: [provisionFeaturesBeforeChange],
     afterChange: [
       async ({ req }) => {
         await revalidateAdmin(req?.engine?.config?.routes?.admin ?? '/admin')

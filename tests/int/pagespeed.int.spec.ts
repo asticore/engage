@@ -259,7 +259,7 @@ describe('results store and after-publish queue (real D1)', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    await runInternalMigrate(proxy.env.D1, consoleLogger)
+    await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
     db = drizzle(proxy.env.D1) as unknown as Drizzle
     await proxy.env.D1.prepare("INSERT INTO eg_posts (id, title, slug, _status) VALUES (7, 'Hello', 'hello', 'published')").run()
   }, 300_000)

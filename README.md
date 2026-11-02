@@ -113,6 +113,8 @@ pnpm run deploy
 3. **`deploy:migrate`**: `POST /api/internal-migrate` against the live deployment. This is what lands additive schema changes on production D1 (see [How migrations work here](#how-migrations-work-here)).
 4. **`deploy:seed`**: `POST /api/internal-seed`. Creates the starter Home page and page templates if they are missing.
 
+**Sections are created when you switch them on.** On a fresh database `deploy:migrate` creates the core tables (pages, media, users, settings, navigation) and the tables of sections that are on by default; the tables of every other section (shop, events, blog, forms, courses, members, A/B tests, ads, backups, redirects, translations, content approval, FAQs) are created the first time you tick that section in Settings > General > Features, and its starter templates are added then. Switching a section off keeps its data and tables. `POST /api/internal-migrate?provision=all` creates every section's tables at once. An existing site is unaffected: its migration marks every section that already has tables as provisioned. Settings > Data and System > Unused tables (super admin) lists the tables of sections that are off and can export and delete them one at a time.
+
 Steps 3 and 4 are `curl -sf ... || echo` — a failure is reported but does not fail the deploy, because both endpoints are idempotent and safe to retry by hand.
 
 Both endpoints are guarded by an `x-seed-key` header, checked against `INTERNAL_ROUTE_KEY` (falling back to a retired default if that's unset). That is **not** a security boundary — neither endpoint can drop or modify data, so the header only keeps crawlers and stray requests out.

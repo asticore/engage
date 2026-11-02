@@ -285,7 +285,7 @@ describe('password policy - database, hooks and first admin (migrated D1)', () =
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     ;(globalThis as unknown as { __passwordPolicyD1: D1Database }).__passwordPolicyD1 = proxy.env.D1
-    await runInternalMigrate(proxy.env.D1, consoleLogger)
+    await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
     const now = new Date().toISOString()
     await proxy.env.D1.prepare("INSERT INTO `eg_users` (email, created_at, updated_at) VALUES ('owner@example.com', ?, ?)").bind(now, now).run()
     userId = Number(((await proxy.env.D1.prepare("SELECT id FROM `eg_users` WHERE email = 'owner@example.com'").first()) as { id: number }).id)

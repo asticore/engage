@@ -8,14 +8,23 @@ import { getPlatformProxy } from 'wrangler'
 import { consoleLogger } from '@/localapi/logger'
 import { runInternalMigrate, type InternalMigrateResult } from '@/migrations/runInternalMigrate'
 
+import { provisionAllFeatures } from '../helpers/provisionAll'
+
 describe('runInternalMigrate - fresh install on an empty D1', () => {
   let proxy: Awaited<ReturnType<typeof getPlatformProxy<{ D1: D1Database }>>>
   let outcome: InternalMigrateResult
   let tables: string[]
+  let lazyTables: string[]
+  let provisionErrors: string[]
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
+    // The default install is lazy: core tables and default-on features only.
     outcome = await runInternalMigrate(proxy.env.D1, consoleLogger)
+    const lazyRows = await proxy.env.D1.prepare(`SELECT name FROM sqlite_master WHERE type='table'`).all()
+    lazyTables = (lazyRows.results as { name: string }[]).map((r) => r.name)
+    // Every assertion below is about the complete schema, which is what switching each section on produces.
+    provisionErrors = await provisionAllFeatures(proxy.env.D1)
     const rows = await proxy.env.D1.prepare(`SELECT name FROM sqlite_master WHERE type='table'`).all()
     tables = (rows.results as { name: string }[]).map((r) => r.name)
   }, 300_000)
@@ -26,6 +35,14 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
 
   it('finishes with zero errors', () => {
     expect(outcome.errorCount).toBe(0)
+  })
+
+  it('a fresh install leaves the tables of sections that are off out, and switching them on creates them', () => {
+    for (const table of ['eg_users', 'eg_pages', 'eg_site_settings', 'eg_feature_tables', 'eg_tracking_events']) expect(lazyTables, table).toContain(table)
+    for (const table of ['eg_products', 'eg_orders', 'eg_events', 'eg_posts', 'eg_forms', 'eg_ad_units', 'eg_redirects']) expect(lazyTables, table).not.toContain(table)
+    expect(lazyTables.length).toBeLessThan(tables.length)
+    expect(provisionErrors).toEqual([])
+    for (const table of ['eg_products', 'eg_orders', 'eg_events', 'eg_posts', 'eg_forms', 'eg_ad_units', 'eg_redirects']) expect(tables, table).toContain(table)
   })
 
   it('creates foundation, block, feature and engine tables', () => {
