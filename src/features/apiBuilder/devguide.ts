@@ -1,5 +1,5 @@
 import { SOURCE_COLLECTIONS, type FieldInfo } from '@/features/dataViews/catalogue'
-import { ENGINE_OPERATOR, endpointParamNames, endpointPath, isSecretLikeField, type ApiEndpoint, type FilterOperator } from './core'
+import { CUSTOM_KEY_PREFIX, ENGINE_OPERATOR, TRASHABLE_COLLECTIONS, endpointParamNames, endpointPath, isCustomKey, isSecretLikeField, type ApiEndpoint, type CustomKind, type FilterOperator } from './core'
 import { markdownSectionToHtml, webhookSectionMarkdown } from '@/features/webhooks/docs'
 
 /**
@@ -24,7 +24,13 @@ export function fieldKind(collection: string, key: string): FieldInfo['kind'] {
   return source?.fields.find((f) => f.key === key)?.kind ?? 'text'
 }
 
-const label = (collection: string, key: string): string => SOURCE_COLLECTIONS.find((c) => c.slug === collection)?.fields.find((f) => f.key === key)?.label ?? key
+const label = (collection: string, key: string): string => {
+  if (isCustomKey(key)) return key.slice(CUSTOM_KEY_PREFIX.length)
+  return SOURCE_COLLECTIONS.find((c) => c.slug === collection)?.fields.find((f) => f.key === key)?.label ?? key
+}
+
+/** The schema kind of a field: a custom field's kind as saved on the endpoint, a built-in field's from the catalogue. */
+const kindOf = (e: ApiEndpoint, key: string): CustomKind => (isCustomKey(key) ? (e.customKinds?.[key] ?? 'text') : fieldKind(e.collection, key))
 
 const schemaName = (e: ApiEndpoint): string => `${e.version}_${e.slug.replace(/[^a-zA-Z0-9]/g, '_')}`
 
@@ -38,9 +44,14 @@ function recordSchema(e: ApiEndpoint, forWrite: boolean): Record<string, unknown
   const properties: Record<string, unknown> = {}
   if (!forWrite) properties.id = { type: 'integer', description: 'Record id.' }
   for (const field of e.fields) {
-    properties[field] = { ...KIND_SCHEMA[fieldKind(e.collection, field)], description: label(e.collection, field) }
+    properties[field] = { ...KIND_SCHEMA[kindOf(e, field)], description: label(e.collection, field) }
   }
   return { type: 'object', properties, additionalProperties: false }
+}
+
+const DELETED_SCHEMA = {
+  type: 'object',
+  properties: { data: { type: 'object', properties: { id: { type: 'integer' }, deleted: { type: 'boolean' }, mode: { type: 'string', enum: ['trash', 'deleted'] } } } },
 }
 
 const errorResponse = (description: string): Record<string, unknown> => ({
@@ -133,6 +144,20 @@ export function buildOpenApi(endpoints: readonly ApiEndpoint[], options: GuideOp
         security: [{ ApiKey: [] }],
         requestBody: { required: true, content: { 'application/json': { schema: { $ref: `#/components/schemas/${name}_input` } } } },
         responses: { '200': { description: 'OK', content: { 'application/json': { schema: single } } }, ...errorsFor([['404', 'No record with that id.']]), ...common },
+        ...rate,
+      }
+    }
+    if (e.allowDelete) {
+      one.delete = {
+        operationId: `delete_${name}`,
+        summary: `Delete one ${e.name}`,
+        description: TRASHABLE_COLLECTIONS.has(e.collection)
+          ? 'Moves the record to the trash (mode trash). The owner needs delete permission for the collection. Audited.'
+          : 'Deletes the record for good (mode deleted). The owner needs delete permission for the collection. Audited.',
+        tags: [e.name],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } }],
+        security: [{ ApiKey: [] }],
+        responses: { '200': { description: 'Deleted or moved to the trash', content: { 'application/json': { schema: DELETED_SCHEMA } } }, ...errorsFor([['404', 'No record with that id.']]), ...common },
         ...rate,
       }
     }
@@ -247,7 +272,7 @@ function buildApiGuideMarkdown(endpoints: readonly ApiEndpoint[], options: Guide
   for (const e of enabled) {
     const path = endpointPath(e.version, e.slug)
     out.push(`## ${e.name}`, '', e.description ? `${e.description}` : '', '')
-    out.push(`- Address: \`${base}${path}\``, `- Rate limit: ${e.rateLimitPerMinute} requests a minute per key`, `- Fields: ${e.fields.map((f) => `\`${f}\``).join(', ')}`, `- Required role of the key's owner: ${e.requiredRole}`, `- Creating: ${e.allowCreate ? 'POST' : 'not offered'}`, `- Updating: ${e.allowUpdate ? 'PATCH' : 'not offered'}`, '')
+    out.push(`- Address: \`${base}${path}\``, `- Rate limit: ${e.rateLimitPerMinute} requests a minute per key`, `- Fields: ${e.fields.map((f) => `\`${f}\``).join(', ')}`, `- Required role of the key's owner: ${e.requiredRole}`, `- Creating: ${e.allowCreate ? 'POST' : 'not offered'}`, `- Updating: ${e.allowUpdate ? 'PATCH' : 'not offered'}`, `- Deleting: ${e.allowDelete ? (TRASHABLE_COLLECTIONS.has(e.collection) ? 'DELETE (moves the record to the trash)' : 'DELETE (deletes the record)') : 'not offered'}`, '')
     out.push('### Parameters', '', '| Name | Where | Description |', '| --- | --- | --- |')
     for (const p of endpointParamNames(e)) out.push(`| \`${p.name}\` | query | ${p.description} |`)
     out.push('')
@@ -265,6 +290,11 @@ function buildApiGuideMarkdown(endpoints: readonly ApiEndpoint[], options: Guide
     if (e.allowUpdate) {
       const patch = examplesFor(e, 'PATCH', base, 1)
       out.push('### Update', '', `\`PATCH ${path}/{id}\` with the fields to change. Returns 200 with \`{ "data": {...} }\`.`, '', '```bash', patch.curl, '```', '')
+    }
+    if (e.allowDelete) {
+      const del = `curl -X DELETE '${base}${path}/1' \\\n  -H 'Authorization: Bearer YOUR_API_KEY'`
+      const how = TRASHABLE_COLLECTIONS.has(e.collection) ? 'moves the record to the trash (`"mode": "trash"`)' : 'deletes the record for good (`"mode": "deleted"`)'
+      out.push('### Delete', '', `\`DELETE ${path}/{id}\` ${how}. Returns 200 with \`{ "data": { "id": 1, "deleted": true, "mode": "..." } }\`. The key's owner needs delete permission for the collection; every call is written to the site's audit log.`, '', '```bash', del, '```', '')
     }
   }
   if (enabled.length === 0) out.push('No endpoints are enabled yet.', '')
