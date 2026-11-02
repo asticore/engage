@@ -45,10 +45,10 @@ describe('lazy sections', () => {
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     d1 = proxy.env.D1
-    const outcome = await runInternalMigrate(d1, consoleLogger)
+    const outcome = await runInternalMigrate(d1, consoleLogger, { baseline: false })
     expect(outcome.errorCount).toBe(0)
     lazyFirst = await names()
-    expect((await runInternalMigrate(d1, consoleLogger)).errorCount).toBe(0)
+    expect((await runInternalMigrate(d1, consoleLogger, { baseline: false })).errorCount).toBe(0)
     lazySecond = await names()
   }, 400_000)
 
@@ -175,7 +175,7 @@ describe('lazy sections', () => {
     const everything = await names()
     await d1.prepare('DROP TABLE `eg_feature_tables`').run()
     await d1.prepare("DELETE FROM eg_migrations WHERE name = '20270310_100000_feature_tables_state'").run()
-    const outcome = await runInternalMigrate(d1, consoleLogger)
+    const outcome = await runInternalMigrate(d1, consoleLogger, { baseline: false })
     expect(outcome.errorCount).toBe(0)
     const states = await readFeatureTableStates(d1)
     expect(states.events).toBe('provisioned')

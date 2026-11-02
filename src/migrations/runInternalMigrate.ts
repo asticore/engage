@@ -109,6 +109,8 @@
  */
 import { drizzle } from 'drizzle-orm/d1'
 
+import { applyFreshBaseline, baselineEligible } from './baseline/applyBaseline'
+
 import { runMigrations, type Drizzle, type MigrationEntry } from '@/localapi/migrate'
 import type { EngineLogger } from '@/localapi/logger'
 import { migrations as ALL_MIGRATIONS } from '@/migrations'
@@ -119,7 +121,7 @@ import { BLOCKS_RELS_STATEMENTS } from './schema/blocksRelsTables'
 import type { FeatureKey } from '@/features/registry'
 
 import { deferTables, type DeferMode } from './schema/deferredTables'
-import { bootstrapEngineTables, type EngineDb } from './schema/engineBootstrap'
+import { bootstrapEngineTables, ensureMigrationsTable, type EngineDb } from './schema/engineBootstrap'
 import { initialiseFreshState, readDeferredFeatures, readTouchedMigrations, recordTouchedMigrations, stateTableExists } from './schema/featureTablesState'
 import { ownerOfTable } from '@/features/featureTables'
 import { SCHEMA_SETS, withoutRenamedTables } from './schema/freshInstallSchemaSets'
@@ -158,6 +160,14 @@ export type InternalMigrateOptions = {
    * statements through, ignoring and not recording the migration history.
    */
   onlyFeature?: FeatureKey
+  /**
+   * A fresh database gets the precomputed final schema instead of running every
+   * migration (see ./baseline/applyBaseline.ts). `false` runs the full migration
+   * sequence, which the specs that test the migrations themselves need.
+   */
+  baseline?: boolean
+  /** Extra migrations run after the real ones (tests: proves a migration newer than the baseline still runs). */
+  appendMigrations?: MigrationEntry[]
 }
 
 /** A database is fresh when nothing has ever been migrated: no history rows and no pages table. */
@@ -177,6 +187,8 @@ export async function runInternalMigrate(
 ): Promise<InternalMigrateResult> {
   const results: Record<string, unknown> = {}
   let errorCount = 0
+  /** True when the precomputed baseline replaced the foundation, rename and schema-set steps. */
+  let baselined = false
 
   // Everything below goes through this handle. Until `mode` is set it passes
   // every statement straight through, so a database that is not lazily
@@ -205,6 +217,7 @@ export async function runInternalMigrate(
         },
       }))
   const replaySet = only ? await readTouchedMigrations(realDb, only) : null
+  const lateMigrations = [...LATE_MIGRATIONS, ...(options.appendMigrations ?? [])]
 
   const db = drizzle(rawDb) as unknown as Drizzle
 
@@ -253,11 +266,25 @@ export async function runInternalMigrate(
     renamedAway = new Set(TABLE_RENAMES.filter((entry) => present.has(entry.to)).map((entry) => entry.from))
     mode = { mode: 'only', feature: options.onlyFeature }
   } else {
-    if (!(await stateTableExists(realDb)) && (await looksFresh(realDb))) {
+    const stateExisted = await stateTableExists(realDb)
+    const freshStart = !stateExisted && (await looksFresh(realDb))
+    if (freshStart) {
       await initialiseFreshState(realDb, options.provisionAll === true)
     }
     const deferred = await readDeferredFeatures(realDb)
     if (deferred.size > 0) mode = { mode: 'skip', features: deferred }
+
+    // Fresh database: lay down the final schema in one go and record the migrations it stands for as run.
+    if (options.baseline !== false && (await baselineEligible(realDb, { freshStart, resuming: stateExisted }))) {
+      try {
+        await ensureMigrationsTable(engineDb)
+        results['fresh-baseline'] = await applyFreshBaseline(realDb, deferred)
+        baselined = true
+      } catch (err) {
+        errorCount += 1
+        results['fresh-baseline'] = { error: err instanceof Error ? err.message : String(err) }
+      }
+    }
   }
 
   // Step 2: the foundation migrations.
@@ -269,84 +296,89 @@ export async function runInternalMigrate(
     results['foundation-migrations'] = { error: err instanceof Error ? err.message : String(err) }
   }
 
-  // Step 3: engine bookkeeping bootstrap, 2nd pass - has to happen here, not
-  // only at the top, so `eg_locked_documents_rels` (needed by the
-  // `locked-documents-rels` schema set next) exists on a fresh install. See
-  // header comment.
-  // When providing one feature this pass is limited to that feature's own tables: the foundation
-  // migrations create e.g. `orders_rels` with bare `transactions_id` columns that this pass renames,
-  // exactly as it does on an all-at-once install, and no other table is touched.
-  {
-    const scoped: EngineDb = only ? { ...engineDb, listTables: async () => (await engineDb.listTables()).filter(mine) } : engineDb
-    const engineReportPassB = await bootstrapEngineTables(scoped)
-    errorCount += engineReportPassB.columns.errors.length
-    results['engine-tables-second-pass'] = engineReportPassB
-  }
-
-  // Step 4: additive schema sets, computed against the database as it stands
-  // right now (pre-content-rename on a fresh install; already-renamed
-  // everywhere else) - see `withoutRenamedTables`'s own doc comment.
-  const presentBeforeRename = new Set(await listTables())
-  const renamedAwayBeforeRename = new Set(
-    TABLE_RENAMES.filter((entry) => presentBeforeRename.has(entry.to)).map((entry) => entry.from),
-  )
-
-  // Step 3b: per-block child tables (formerly the hand-run `deploy:database`
-  // SQL files). Idempotent; statements aimed at a table that has already been
-  // renamed to its `eg_` name are skipped so a migrated database never grows
-  // empty duplicates under the retired names.
-  const blocksErrors: { statement: string; error: string }[] = []
-  let blocksApplied = 0
-  for (const statement of BLOCKS_RELS_STATEMENTS) {
-    const target = statement.match(/^CREATE (?:UNIQUE )?(?:TABLE|INDEX) IF NOT EXISTS `[^`]+`(?: ON `([^`]+)`)?/)
-    const table = statement.startsWith('CREATE TABLE') ? statement.match(/^CREATE TABLE IF NOT EXISTS `([^`]+)`/)?.[1] : target?.[1]
-    if (table && renamedAwayBeforeRename.has(table)) continue
-    if (table && !mine(table)) continue
-    try {
-      await rawDb.prepare(statement).run()
-      blocksApplied += 1
-    } catch (err) {
-      blocksErrors.push({ statement: statement.slice(0, 80), error: err instanceof Error ? err.message : String(err) })
+  // The baseline already holds the result of steps 3 to 5 (second bootstrap pass, per-block tables, schema sets, renames).
+  if (!baselined) {
+    // Step 3: engine bookkeeping bootstrap, 2nd pass - has to happen here, not
+    // only at the top, so `eg_locked_documents_rels` (needed by the
+    // `locked-documents-rels` schema set next) exists on a fresh install. See
+    // header comment.
+    // When providing one feature this pass is limited to that feature's own tables: the foundation
+    // migrations create e.g. `orders_rels` with bare `transactions_id` columns that this pass renames,
+    // exactly as it does on an all-at-once install, and no other table is touched.
+    {
+      const scoped: EngineDb = only ? { ...engineDb, listTables: async () => (await engineDb.listTables()).filter(mine) } : engineDb
+      const engineReportPassB = await bootstrapEngineTables(scoped)
+      errorCount += engineReportPassB.columns.errors.length
+      results['engine-tables-second-pass'] = engineReportPassB
     }
-  }
-  errorCount += blocksErrors.length
-  results['blocks-tables'] = { applied: blocksApplied, errors: blocksErrors }
 
-  for (const rawSet of SCHEMA_SETS) {
-    const unfiltered = withoutRenamedTables(rawSet, renamedAwayBeforeRename)
-    const set = only
-      ? {
-          tables: unfiltered.tables.filter((entry) => mine(entry.table)),
-          columns: unfiltered.columns.filter((entry) => mine(entry.table)),
-          indexes: unfiltered.indexes.filter((entry) => mine(entry.sql.match(/\sON\s+`([^`]+)`/)?.[1] ?? '')),
-        }
-      : unfiltered
-    const report = await applySchemaAdditions({
-      tables: set.tables,
-      columns: set.columns,
-      indexes: set.indexes,
-      run: (statement) => rawDb.prepare(statement).run(),
-      columnsOf,
+    // Step 4: additive schema sets, computed against the database as it stands
+    // right now (pre-content-rename on a fresh install; already-renamed
+    // everywhere else) - see `withoutRenamedTables`'s own doc comment.
+    const presentBeforeRename = new Set(await listTables())
+    const renamedAwayBeforeRename = new Set(
+      TABLE_RENAMES.filter((entry) => presentBeforeRename.has(entry.to)).map((entry) => entry.from),
+    )
+
+    // Step 3b: per-block child tables (formerly the hand-run `deploy:database`
+    // SQL files). Idempotent; statements aimed at a table that has already been
+    // renamed to its `eg_` name are skipped so a migrated database never grows
+    // empty duplicates under the retired names.
+    const blocksErrors: { statement: string; error: string }[] = []
+    let blocksApplied = 0
+    for (const statement of BLOCKS_RELS_STATEMENTS) {
+      const target = statement.match(/^CREATE (?:UNIQUE )?(?:TABLE|INDEX) IF NOT EXISTS `[^`]+`(?: ON `([^`]+)`)?/)
+      const table = statement.startsWith('CREATE TABLE') ? statement.match(/^CREATE TABLE IF NOT EXISTS `([^`]+)`/)?.[1] : target?.[1]
+      if (table && renamedAwayBeforeRename.has(table)) continue
+      if (table && !mine(table)) continue
+      try {
+        await rawDb.prepare(statement).run()
+        blocksApplied += 1
+      } catch (err) {
+        blocksErrors.push({ statement: statement.slice(0, 80), error: err instanceof Error ? err.message : String(err) })
+      }
+    }
+    errorCount += blocksErrors.length
+    results['blocks-tables'] = { applied: blocksApplied, errors: blocksErrors }
+
+    for (const rawSet of SCHEMA_SETS) {
+      const unfiltered = withoutRenamedTables(rawSet, renamedAwayBeforeRename)
+      const set = only
+        ? {
+            tables: unfiltered.tables.filter((entry) => mine(entry.table)),
+            columns: unfiltered.columns.filter((entry) => mine(entry.table)),
+            indexes: unfiltered.indexes.filter((entry) => mine(entry.sql.match(/\sON\s+`([^`]+)`/)?.[1] ?? '')),
+          }
+        : unfiltered
+      const report = await applySchemaAdditions({
+        tables: set.tables,
+        columns: set.columns,
+        indexes: set.indexes,
+        run: (statement) => rawDb.prepare(statement).run(),
+        columnsOf,
+      })
+      errorCount += report.errors.length
+      results[rawSet.name] = report
+    }
+
+    // Step 5: rename the content tables to the `eg_` prefix - has to run AFTER
+    // `SCHEMA_SETS` so it carries those additions over under the new names.
+    const renameReport = await renameTables({
+      renames: TABLE_RENAMES.filter((entry) => mine(entry.from)),
+      exists: tableExists,
+      rename: (from, to) => rawDb.prepare(`ALTER TABLE \`${from}\` RENAME TO \`${to}\``).run(),
     })
-    errorCount += report.errors.length
-    results[rawSet.name] = report
-  }
+    errorCount += renameReport.errors.length
+    results['table-renames'] = renameReport
 
-  // Step 5: rename the content tables to the `eg_` prefix - has to run AFTER
-  // `SCHEMA_SETS` so it carries those additions over under the new names.
-  const renameReport = await renameTables({
-    renames: TABLE_RENAMES.filter((entry) => mine(entry.from)),
-    exists: tableExists,
-    rename: (from, to) => rawDb.prepare(`ALTER TABLE \`${from}\` RENAME TO \`${to}\``).run(),
-  })
-  errorCount += renameReport.errors.length
-  results['table-renames'] = renameReport
+
+  }
 
   // Step 6: the hand-written, already-idempotent, already-`eg_`-prefixed
   // migrations (forms, multilingual, backups, members, courses, A/B testing,
   // security audit log) - unchanged from the previous `RUNNABLE_MIGRATIONS`.
   try {
-    const late = await runMigrations({ db, engineDb, logger, migrations: named(LATE_MIGRATIONS, replaySet), replay: Boolean(options.onlyFeature) })
+    const late = await runMigrations({ db, engineDb, logger, migrations: named(lateMigrations, replaySet), replay: Boolean(options.onlyFeature) })
     results['feature-migrations'] = { applied: late.ran, alreadyApplied: late.skipped.length }
   } catch (err) {
     errorCount += 1
