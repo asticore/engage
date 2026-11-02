@@ -68,7 +68,7 @@ describe('design grouped migration - D1', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    const result = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    const result = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
     expect(result.errorCount).toBe(0)
     await proxy.env.D1.prepare("INSERT OR IGNORE INTO `eg_pages` (`id`, `title`, `slug`) VALUES (1, 'Design fixture', 'design-fixture')").run()
   }, 300_000)
@@ -130,7 +130,7 @@ describe('design grouped migration - D1', () => {
   }, 300_000)
 
   it('a second internal migrate run after the conversion has zero errors', async () => {
-    const again = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    const again = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
     expect(again.errorCount).toBe(0)
   }, 300_000)
 })

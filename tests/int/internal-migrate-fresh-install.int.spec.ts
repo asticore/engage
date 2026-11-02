@@ -20,7 +20,7 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     // The default install is lazy: core tables and default-on features only.
-    outcome = await runInternalMigrate(proxy.env.D1, consoleLogger)
+    outcome = await runInternalMigrate(proxy.env.D1, consoleLogger, { baseline: false })
     const lazyRows = await proxy.env.D1.prepare(`SELECT name FROM sqlite_master WHERE type='table'`).all()
     lazyTables = (lazyRows.results as { name: string }[]).map((r) => r.name)
     // Every assertion below is about the complete schema, which is what switching each section on produces.
@@ -599,7 +599,7 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     for (const type of blockTypes) expect(tables, `eg_site_templates_blocks_${type}`).toContain(`eg_site_templates_blocks_${type}`)
 
     const before = await proxy.env.D1.prepare(`SELECT name FROM sqlite_master ORDER BY name`).all()
-    const second = await runInternalMigrate(proxy.env.D1, consoleLogger)
+    const second = await runInternalMigrate(proxy.env.D1, consoleLogger, { baseline: false })
     expect(second.errorCount).toBe(0)
     const after = await proxy.env.D1.prepare(`SELECT name FROM sqlite_master ORDER BY name`).all()
     expect(after.results).toEqual(before.results)
@@ -1153,7 +1153,7 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
   })
 
   it('is safe to run a second time', async () => {
-    const again = await runInternalMigrate(proxy.env.D1, consoleLogger)
+    const again = await runInternalMigrate(proxy.env.D1, consoleLogger, { baseline: false })
     expect(again.errorCount).toBe(0)
   }, 300_000)
 

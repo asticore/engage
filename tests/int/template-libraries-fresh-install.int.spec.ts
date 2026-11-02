@@ -25,8 +25,8 @@ describe('template libraries - fresh install on an empty D1', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    first = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
-    second = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    first = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
+    second = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
   }, 300_000)
 
   afterAll(async () => {
@@ -71,7 +71,7 @@ describe('template libraries - fresh install on an empty D1', () => {
     await proxy.env.D1.prepare(`DELETE FROM eg_template_libraries_libraries`).run()
     await proxy.env.D1.prepare(`DELETE FROM eg_migrations WHERE name = ?`).bind(MIGRATION).run()
 
-    const again = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    const again = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
     expect(again.errorCount).toBe(0)
     const rows = (await proxy.env.D1.prepare(`SELECT id, url, enabled FROM eg_template_libraries_libraries ORDER BY _order`).all()).results as Array<{
       id: string
@@ -85,7 +85,7 @@ describe('template libraries - fresh install on an empty D1', () => {
 
     // Running the migration again (the list is no longer empty) copies nothing more.
     await proxy.env.D1.prepare(`DELETE FROM eg_migrations WHERE name = ?`).bind(MIGRATION).run()
-    await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
     const count = await proxy.env.D1.prepare(`SELECT COUNT(*) AS n FROM eg_template_libraries_libraries`).first<{ n: number }>()
     expect(count!.n).toBe(2)
   }, 300_000)
@@ -94,7 +94,7 @@ describe('template libraries - fresh install on an empty D1', () => {
     await proxy.env.D1.prepare(`UPDATE eg_integrations SET template_repos_enabled = 0`).run()
     await proxy.env.D1.prepare(`DELETE FROM eg_template_libraries_libraries`).run()
     await proxy.env.D1.prepare(`DELETE FROM eg_migrations WHERE name = ?`).bind(MIGRATION).run()
-    await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
     const row = await proxy.env.D1.prepare(`SELECT enabled FROM eg_template_libraries_libraries WHERE id = 'legacy1'`).first<{ enabled: number }>()
     expect(row!.enabled).toBe(0)
   }, 300_000)
