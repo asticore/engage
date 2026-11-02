@@ -1,7 +1,6 @@
 import type { Engine } from '@/engine'
 
 import { siteNameOf } from '@/features/brand/siteName'
-import { getSiteSnapshot } from '@/features/speed/siteSnapshot'
 
 // Shared, idempotent seed logic for the starter Home page + Page Templates.
 // Used by BOTH:
@@ -54,7 +53,7 @@ export async function seedHomeAndTemplates(
   if (homepageCount === 0) {
     // The starter hero names the site from Site Settings. Read only when the Home page is created (once per install),
     // through the shared snapshot; a blank or missing name falls back to the neutral default.
-    const siteName = siteNameOf((await getSiteSnapshot()).settings)
+    const siteName = siteNameOf((await (await import('@/features/speed/siteSnapshot')).getSiteSnapshot()).settings)
     await engine.create({
       collection: 'pages',
       overrideAccess: true,
