@@ -61,6 +61,19 @@ export function checkOrigin(originHeader: string | null | undefined, allowedOrig
   return { allowed: list.some((pattern) => hostMatches(pattern, origin)), open, origin }
 }
 
+/**
+ * A post that is not from an embed (the form on this site's own pages, or a server call with no Origin). Only
+ * this site may post that way: a website that wants the form posts through one of the form's embeds, so its
+ * website is checked against that embed's own list.
+ */
+export function checkSiteOrigin(originHeader: string | null | undefined, selfOrigin: string): OriginDecision {
+  const origin = originHeader ? cleanOrigin(originHeader) : null
+  if (originHeader && !origin) return { allowed: false, open: false, origin: null }
+  if (!origin) return { allowed: true, open: false, origin: null }
+  const allowed = origin === cleanOrigin(selfOrigin)
+  return { allowed, open: false, origin: allowed ? origin : null }
+}
+
 /** CORS headers for an allowed origin. Never `*`, never credentials. */
 export function corsHeaders(origin: string | null): Record<string, string> {
   const headers: Record<string, string> = { Vary: 'Origin' }

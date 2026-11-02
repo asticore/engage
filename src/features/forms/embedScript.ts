@@ -2,7 +2,7 @@
  * The embed snippets and the loader script they use.
  *
  * Script snippet: one line the site owner pastes where the form should appear.
- * It loads /embed/forms.js from this site, which builds the iframe next to the
+ * It loads /embed/forms.js from this site, which builds the iframe (/embed/<key>) next to the
  * script tag and sizes it from the height the form reports with postMessage.
  *
  * Iframe snippet: the plain alternative, with a fixed height and no script on
@@ -11,7 +11,7 @@
 
 const KEY = /^[A-Za-z0-9_-]{1,60}$/
 
-export const embedUrl = (origin: string, key: string): string => `${origin.replace(/\/$/, '')}/embed/forms/${encodeURIComponent(key)}`
+export const embedUrl = (origin: string, key: string): string => `${origin.replace(/\/$/, '')}/embed/${encodeURIComponent(key)}`
 
 export function scriptSnippet(origin: string, key: string): string {
   const base = origin.replace(/\/$/, '')
@@ -40,7 +40,7 @@ Array.prototype.forEach.call(scripts,function(script){
   script.setAttribute('data-eg-done','1');
   var frame=document.createElement('iframe');
   var query=location.search?location.search.slice(1):'';
-  frame.src=ORIGIN+'/embed/forms/'+encodeURIComponent(key)+(query?'?'+query:'');
+  frame.src=ORIGIN+'/embed/'+encodeURIComponent(key)+(query?'?'+query:'');
   frame.title='Form';
   frame.setAttribute('loading','lazy');
   frame.style.cssText='border:0;width:100%;max-width:100%;display:block;height:'+(script.getAttribute('data-height')||'640')+'px';

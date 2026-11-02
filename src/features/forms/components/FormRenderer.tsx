@@ -409,7 +409,8 @@ export const FormRenderer: React.FC<{
   const scope = scopeClass(config.id)
   const css = scopeCustomCss(config.customCss, config.id)
   const presetClass = config.stylePreset && config.stylePreset !== 'theme' ? ` engage-form--${config.stylePreset}` : ''
-  const accentStyle = config.accent ? ({ '--eg-accent': config.accent } as React.CSSProperties) : undefined
+  // The form's accent, then an embed's own theme on top of it (an embed's colour, radius and font win).
+  const accentStyle = (config.accent || config.embedStyle ? { ...(config.accent ? { '--eg-accent': config.accent } : {}), ...(config.embedStyle ?? {}) } : undefined) as React.CSSProperties | undefined
 
   if (status === 'success') {
     return (

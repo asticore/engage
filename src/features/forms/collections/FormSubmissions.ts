@@ -28,7 +28,7 @@ export const FormSubmissions: CollectionConfig = {
   admin: {
     useAsTitle: 'summary',
     group: 'Content',
-    defaultColumns: ['summary', 'form', 'status', 'assignee', 'createdAt'],
+    defaultColumns: ['summary', 'form', 'embedSource', 'status', 'assignee', 'createdAt'],
     description:
       'Entries people have sent through your forms. Download them as a spreadsheet from /api/form-submissions/export?form=<id>.',
   },
@@ -158,6 +158,16 @@ export const FormSubmissions: CollectionConfig = {
       name: 'sourceUrl',
       type: 'text',
       admin: { readOnly: true, description: 'The page the form was sent from, or the website that embeds it.' },
+    },
+    {
+      name: 'embedId',
+      type: 'number',
+      admin: { readOnly: true, description: 'The embed this entry came through (Forms > External embeds), blank for this site.' },
+    },
+    {
+      name: 'embedSource',
+      type: 'text',
+      admin: { readOnly: true, description: 'Source label: the name of the embed it came through, blank for this site.' },
     },
     {
       name: 'consent',

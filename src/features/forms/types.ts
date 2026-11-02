@@ -306,6 +306,8 @@ export type PublicFormConfig = {
   layout?: unknown[]
   stylePreset?: FormStylePreset
   accent?: string
+  /** An embed's theme as CSS custom properties for the form root (see embedThemeStyle). Set on an embed page only. */
+  embedStyle?: Record<string, string>
   customCss?: string
   steps?: { showProgress: boolean; progressStyle: 'bar' | 'steps' | 'text'; nextLabel: string; backLabel: string; titles: string[] }
   prefill?: Record<string, string>

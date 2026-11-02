@@ -1,7 +1,17 @@
 // @vitest-environment node
 import React from 'react'
 import { renderToString } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// The embed lookup is a D1 read; these tests pass an embed by key through this fixture and leave every other key unknown.
+const embedFixture = vi.hoisted(() => ({ embed: null as null | Record<string, unknown> }))
+vi.mock('@/features/forms/embeds', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/features/forms/embeds')>()
+  return {
+    ...actual,
+    findEmbedByKey: async (key: string) => (embedFixture.embed && embedFixture.embed.embedKey === key ? embedFixture.embed : null),
+  }
+})
 
 import { FormRenderer } from '@/features/forms/components/FormRenderer'
 import { cleanOrigin, generateEmbedKey, normaliseFormConfig } from '@/features/forms/config'
@@ -303,10 +313,27 @@ describe('submit endpoint: origin checks on preflight and POST', () => {
       body,
     })
 
-  it('answers a preflight from an allowed origin with CORS headers', async () => {
-    const response = await handleSubmitRequest(request('OPTIONS', 'https://good.example'), stubEngine(publishedForm(['https://good.example'])) as never, '5')
-    expect(response.status).toBe(204)
-    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://good.example')
+  it('answers a preflight for an embed from one of its websites with CORS headers, and refuses another', async () => {
+    embedFixture.embed = { id: 2, formId: 5, name: 'Partner blog', embedKey: 'partnerkey0001', enabled: true, allowedOrigins: ['https://good.example'], theme: {}, createdAt: '', updatedAt: '' }
+    try {
+      const engine = stubEngine(publishedForm([])) as never
+      const response = await handleSubmitRequest(request('OPTIONS', 'https://good.example'), engine, 'partnerkey0001')
+      expect(response.status).toBe(204)
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://good.example')
+      expect((await handleSubmitRequest(request('OPTIONS', 'https://evil.example'), engine, 'partnerkey0001')).status).toBe(403)
+    } finally {
+      embedFixture.embed = null
+    }
+  })
+
+  it('refuses a switched-off embed, and a post by form id from another website', async () => {
+    embedFixture.embed = { id: 3, formId: 5, name: 'Off', embedKey: 'offkey00000001', enabled: false, allowedOrigins: [], theme: {}, createdAt: '', updatedAt: '' }
+    try {
+      expect((await handleSubmitRequest(request('POST', 'https://good.example', '{}'), stubEngine(publishedForm([])) as never, 'offkey00000001')).status).toBe(404)
+    } finally {
+      embedFixture.embed = null
+    }
+    expect((await handleSubmitRequest(request('POST', 'https://good.example', '{}'), stubEngine(publishedForm([])) as never, '5')).status).toBe(403)
   })
 
   it('refuses a preflight and a POST from a website that is not allowed', async () => {
@@ -340,9 +367,9 @@ describe('embed route: framing and snippets', () => {
 
   it('frames only for a form that has embedding on and is not a draft', () => {
     expect(decideEmbedFrame(null).frameable).toBe(false)
-    expect(decideEmbedFrame({ formConfig: '{}', formStatus: 'draft' }).frameable).toBe(false)
-    expect(decideEmbedFrame({ formConfig: JSON.stringify({ embed: { enabled: false } }), formStatus: 'published' }).frameable).toBe(false)
-    const decision = decideEmbedFrame({ formConfig: JSON.stringify({ embed: { allowedOrigins: ['https://good.example'] } }), formStatus: null })
+    expect(decideEmbedFrame({ enabled: true, allowedOrigins: [], formStatus: 'draft' }).frameable).toBe(false)
+    expect(decideEmbedFrame({ enabled: false, allowedOrigins: [], formStatus: 'published' }).frameable).toBe(false)
+    const decision = decideEmbedFrame({ enabled: true, allowedOrigins: ['https://good.example'], formStatus: null })
     expect(decision).toEqual({ frameable: true, contentSecurityPolicy: "frame-ancestors 'self' https://good.example" })
   })
 
@@ -359,7 +386,7 @@ describe('embed route: framing and snippets', () => {
 
   it('writes snippets and a loader that only trusts its own origin', () => {
     expect(scriptSnippet('https://site.example/', 'abc')).toBe('<script src="https://site.example/embed/forms.js" data-form="abc" async></script>')
-    expect(iframeSnippet('https://site.example', 'abc')).toContain('src="https://site.example/embed/forms/abc"')
+    expect(iframeSnippet('https://site.example', 'abc')).toContain('src="https://site.example/embed/abc"')
     const script = loaderScript('https://site.example')
     expect(script).toContain('event.origin!==ORIGIN')
     expect(script).toContain('"https://site.example"')

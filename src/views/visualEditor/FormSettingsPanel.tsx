@@ -1,11 +1,10 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { STYLE_PRESETS } from '@/features/forms/config'
-import { iframeSnippet, scriptSnippet } from '@/features/forms/embedScript'
 import type { FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from '@/features/forms/types'
 
 /**
@@ -38,27 +37,13 @@ const uid = (): string => `x${Math.random().toString(36).slice(2, 8)}`
 
 export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, embedKey, formStatus, hasUnpublishedChanges, isAdmin, busy, onPublish, onUnpublish }) => {
   const t = useAdminT()
-  const [copied, setCopied] = useState<string | null>(null)
   const set = <K extends keyof FormConfig>(key: K, value: FormConfig[K]) => onChange({ ...config, [key]: value })
   const style = config.style || {}
   const steps = config.steps || {}
   const success = config.success || {}
-  const embed = config.embed || {}
   const rules = config.notifications || []
   const hooks = config.webhooks || []
-  const origins = embed.allowedOrigins || []
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const key = embedKey || formId || ''
-
-  const copy = async (label: string, text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(label)
-      setTimeout(() => setCopied(null), 1500)
-    } catch {
-      setCopied(null)
-    }
-  }
 
   const setRule = (index: number, patch: Partial<FormNotificationRule>) => set('notifications', rules.map((rule, i) => (i === index ? { ...rule, ...patch } : rule)))
   const setHook = (index: number, patch: Partial<FormWebhook>) => set('webhooks', hooks.map((hook, i) => (i === index ? { ...hook, ...patch } : hook)))
@@ -257,50 +242,8 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
         )}
 
         <Section title={t('ve.form.sectionEmbed')}>
-          <label className="ve-field ve-field--checkbox">
-            <input type="checkbox" checked={embed.enabled !== false} onChange={(event) => set('embed', { ...embed, enabled: event.target.checked })} />
-            <span>{t('ve.fsp.allowEmbed')}</span>
-          </label>
-          {isAdmin ? (
-            <label className="ve-field ve-field--full">
-              <span>{t('ve.fsp.embedSites')}</span>
-              <textarea
-                rows={3}
-                placeholder="https://example.com"
-                value={origins.join('\n')}
-                onChange={(event) => set('embed', { ...embed, allowedOrigins: event.target.value.split(/\n+/).map((entry) => entry.trim()).filter(Boolean) })}
-              />
-            </label>
-          ) : null}
-          {origins.length === 0 && (
-            <p className="ve-error" role="note">
-              Any website can embed this form. List the websites that may, to restrict it.
-            </p>
-          )}
-          {formStatus !== 'published' && <p className="ve-panel__hint">{t('ve.form.publishFirst')}</p>}
-          {key ? (
-            <>
-              <label className="ve-field ve-field--full">
-                <span>{t('ve.fsp.scriptSnippet')}</span>
-                <textarea readOnly rows={2} value={scriptSnippet(origin, key)} onFocus={(event) => event.currentTarget.select()} />
-                <button type="button" className="ve-btn ve-btn--ghost" onClick={() => copy('script', scriptSnippet(origin, key))}>
-                  {copied === 'script' ? t('ve.nav.copied') : t('ve.form.copy')}
-                </button>
-              </label>
-              <label className="ve-field ve-field--full">
-                <span>{t('ve.fsp.iframeSnippet')}</span>
-                <textarea readOnly rows={3} value={iframeSnippet(origin, key)} onFocus={(event) => event.currentTarget.select()} />
-                <button type="button" className="ve-btn ve-btn--ghost" onClick={() => copy('iframe', iframeSnippet(origin, key))}>
-                  {copied === 'iframe' ? t('ve.nav.copied') : t('ve.form.copy')}
-                </button>
-              </label>
-              <p className="ve-panel__hint">
-                {t('ve.form.embedPlace', { shortcode: `[form id="${key}"]` })}
-              </p>
-            </>
-          ) : (
-            <p className="ve-panel__hint">{t('ve.form.saveForEmbed')}</p>
-          )}
+          <p className="ve-panel__hint">{t('ve.fsp.embedsElsewhere')}</p>
+          {key ? <p className="ve-panel__hint">{t('ve.form.embedPlace', { shortcode: `[form id="${key}"]` })}</p> : null}
         </Section>
       </div>
     </div>

@@ -3,10 +3,9 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { decideEmbedFrame, type EmbedFrameDecision } from './embedFrame'
 
 /**
- * One small read for the middleware, which has no engine: the form's config and
- * status by public key or numeric id. Held in isolate memory for a minute per
- * key. Fails closed (not frameable), so a database problem never opens a form
- * to be framed anywhere.
+ * One small read for the middleware, which has no engine: the embed's switch and websites, and its form's
+ * status, by the embed's public key. Held in isolate memory for a minute per key. Fails closed (not
+ * frameable), so a database problem never opens an embed to be framed anywhere.
  */
 const TTL_MS = 60_000
 const cache = new Map<string, { at: number; value: EmbedFrameDecision }>()
@@ -18,19 +17,32 @@ export async function readEmbedFrameDecision(key: string): Promise<EmbedFrameDec
   let value: EmbedFrameDecision = { frameable: false }
   try {
     const { env } = await getCloudflareContext({ async: true })
-    const db = (env as { D1?: D1Database }).D1
-    if (db) {
-      const numeric = /^\d{1,12}$/.test(key)
-      const statement = numeric
-        ? db.prepare('SELECT form_config, form_status FROM `eg_forms` WHERE `id` = ? LIMIT 1').bind(Number(key))
-        : db.prepare('SELECT form_config, form_status FROM `eg_forms` WHERE `embed_key` = ? LIMIT 1').bind(key)
-      const row = (await statement.all()).results?.[0] as { form_config?: unknown; form_status?: string | null } | undefined
-      value = decideEmbedFrame(row ? { formConfig: row.form_config, formStatus: row.form_status } : null)
-    }
+    const d1 = (env as { D1?: D1Database }).D1
+    if (!d1) throw new Error('no D1 binding')
+    const row = await d1
+      .prepare(
+        'SELECT e.enabled AS enabled, e.allowed_origins AS allowed_origins, f.form_status AS form_status FROM `eg_form_embeds` e JOIN `eg_forms` f ON f.id = e.form_id WHERE e.embed_key = ? LIMIT 1',
+      )
+      .bind(key)
+      .first<{ enabled: number; allowed_origins: string | null; form_status: string | null }>()
+    value = decideEmbedFrame(
+      row
+        ? { enabled: row.enabled === 1, allowedOrigins: parseOrigins(row.allowed_origins), formStatus: row.form_status }
+        : null,
+    )
   } catch {
     value = { frameable: false }
   }
   if (cache.size > 200) cache.clear()
   cache.set(key, { at: now, value })
   return value
+}
+
+function parseOrigins(text: string | null): unknown {
+  if (!text) return []
+  try {
+    return JSON.parse(text)
+  } catch {
+    return []
+  }
 }

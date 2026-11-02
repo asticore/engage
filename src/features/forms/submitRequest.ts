@@ -1,8 +1,8 @@
 import { HONEYPOT_FIELD, RECAPTCHA_FIELD, RENDERED_AT_FIELD, TURNSTILE_FIELD } from './spam'
 import { RESUME_FIELD, isDraftToken } from './drafts'
-import { normaliseFormConfig } from './config'
 import { isPublished } from './layout'
-import { checkOrigin, corsHeaders } from './origin'
+import { findEmbedByKey } from './embeds'
+import { checkOrigin, checkSiteOrigin, corsHeaders } from './origin'
 import { loadForm } from './server'
 import type { PendingFile } from './upload'
 import { MAX_FILES_PER_FIELD } from './upload'
@@ -127,12 +127,16 @@ export async function handleSubmitRequest(request: Request, engine: Engine, idOr
   if (!idOrKey) return json({ ok: false, message: 'Not found' }, 404)
   if (!(await formsEnabled(engine))) return json({ ok: false, message: 'Not found' }, 404)
 
-  const form = await loadForm(engine, idOrKey)
+  // An embed's own key sends the entry through that embed: its websites are checked against its own list and
+  // the entry is labelled with its source. Any other key is the form on this site, which only this site may post to.
+  const embed = await findEmbedByKey(idOrKey).catch((): null => null)
+  if (embed && !embed.enabled) return json({ ok: false, message: 'Not found' }, 404)
+  const form = await loadForm(engine, embed ? embed.formId : idOrKey)
   if (!form || !isPublished(form)) return json({ ok: false, message: 'Not found' }, 404)
 
-  const config = normaliseFormConfig(form.formConfig)
   const url = new URL(request.url)
-  const decision = checkOrigin(request.headers.get('origin'), config.embed?.allowedOrigins || [], url.origin)
+  const origin = request.headers.get('origin')
+  const decision = embed ? checkOrigin(origin, embed.allowedOrigins, url.origin) : checkSiteOrigin(origin, url.origin)
   const cors = corsHeaders(decision.allowed ? decision.origin : null)
 
   if (request.method === 'OPTIONS') {
@@ -180,6 +184,7 @@ export async function handleSubmitRequest(request: Request, engine: Engine, idOr
     ip: clientIp(request),
     userAgent: request.headers.get('user-agent') || undefined,
     sourceUrl: decision.origin || request.headers.get('referer') || (typeof source === 'string' ? source : undefined) || undefined,
+    embed: embed ? { id: embed.id, name: embed.name } : undefined,
   })
 
   // A send that finishes a resumed draft removes it, so its emailed link stops working.
