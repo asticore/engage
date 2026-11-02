@@ -81,11 +81,9 @@ if (!source) {
 
   const engine = { logger: { info: () => undefined } }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await up({ db, engine, req: {} } as any)
+  await up({ db, engine, req: {} } as unknown as Parameters<typeof up>[0])
   const firstRun = statements.length
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await up({ db, engine, req: {} } as any)
+  await up({ db, engine, req: {} } as unknown as Parameters<typeof up>[0])
 
   check('up() runs twice without error', statements.length === firstRun * 2)
 

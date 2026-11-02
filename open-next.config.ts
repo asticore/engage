@@ -6,5 +6,5 @@ import { defineCloudflareConfig } from '@opennextjs/cloudflare/config'
 // defineCloudflareConfig drops unknown keys, hence the spread.
 export default {
   ...defineCloudflareConfig({}),
-  buildCommand: 'next build',
+  buildCommand: 'next build --webpack',
 }

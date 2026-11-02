@@ -24,7 +24,7 @@ describe('element library layout', () => {
     expect(rule('.ve-library__controls')).toMatch(/position:\s*sticky/)
   })
   it('compact is the default density with labels exposed', () => {
-    expect(lib).toContain("useState<'compact' | 'comfortable'>('compact')")
+    expect(lib).toContain("useStoredString(densityStore) === 'comfortable' ? 'comfortable' : 'compact'")
     expect(lib).toContain('ve-library--${density}')
     expect(lib).toContain('aria-label={`${block.label}: ${block.description}`}')
     expect(lib).toContain('<Tooltip text={`${block.label}: ${block.description}`}')

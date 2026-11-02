@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import { collectionRoute } from '@/admin/adminPaths'
@@ -218,15 +218,14 @@ export function TagEditor({ onClose, initialEventId = null, domains, currentHost
     return () => window.clearTimeout(timer)
   }, [toast])
 
-  useEffect(() => {
-    let alive = true
+  const bootstrap = useEffectEvent((isAlive: () => boolean) => {
     void (async () => {
       try {
         const [eventsRes, pagesRes] = await Promise.all([
           fetch('/api/admin-tracking-events', { credentials: 'same-origin' }),
           fetch('/api/admin-tracking-pages', { credentials: 'same-origin' }),
         ])
-        if (!alive) return
+        if (!isAlive()) return
         if (eventsRes.ok) {
           const events = ((await eventsRes.json()) as { events: TagRow[] }).events
           setTags(events)
@@ -241,11 +240,17 @@ export function TagEditor({ onClose, initialEventId = null, domains, currentHost
         }
         if (pagesRes.ok) setPages(((await pagesRes.json()) as { pages: FinderPage[] }).pages)
       } catch {
-        if (alive) setStatus({ kind: 'error', message: t('tracking.tags.loadFailed') })
+        if (isAlive()) setStatus({ kind: 'error', message: t('tracking.tags.loadFailed') })
       }
     })()
+  })
+  const closeOnEscape = useEffectEvent(() => onClose())
+  // Loaded once when the editor opens; the lists are refreshed after each save.
+  useEffect(() => {
+    let alive = true
+    bootstrap(() => alive)
     const onKey = (ev: KeyboardEvent) => {
-      if (ev.key === 'Escape') onClose()
+      if (ev.key === 'Escape') closeOnEscape()
     }
     const onResize = () => refreshRef.current()
     window.addEventListener('keydown', onKey)
@@ -255,8 +260,6 @@ export function TagEditor({ onClose, initialEventId = null, domains, currentHost
       window.removeEventListener('keydown', onKey)
       window.removeEventListener('resize', onResize)
     }
-    // Loaded once when the editor opens; the lists are refreshed after each save.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const reloadTags = async () => {

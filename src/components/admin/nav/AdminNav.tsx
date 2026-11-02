@@ -19,6 +19,7 @@ import {
 } from './AdminNavClient'
 import { readFeatureFlags, resolveEntityGroups } from '@/components/admin/shared/resolveEntities'
 import { getAdminUi } from '@/admin/i18n/serverUi'
+import type { LocalReq } from '@/localapi/access'
 import { SettingsRefresh } from '@/components/admin/shared/SettingsRefresh'
 import { getMultilingualSettings } from '@/features/multilingual/settings'
 import { countItemsNeedingTranslation } from '@/features/multilingual/views/translationsData'
@@ -80,8 +81,7 @@ async function getNavPreferences(req: AdminNavProps['req']): Promise<NavPreferen
       depth: 0,
       limit: 1000,
       pagination: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      req: req as any,
+      req: req as unknown as LocalReq,
       where: {
         key: { equals: PREFERENCE_KEYS.NAV },
       },

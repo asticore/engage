@@ -46,7 +46,7 @@ export const ColorPickerField: React.FC<{
   const colorObj: ColorValue = (() => {
     if (!value) return { value: '#000000' }
     if (typeof value === 'string') return { value }
-    if (typeof value === 'object' && (value as any).value) return value as ColorValue
+    if (typeof value === 'object' && (value as { value?: unknown }).value) return value as ColorValue
     return { value: '#000000' }
   })()
 
