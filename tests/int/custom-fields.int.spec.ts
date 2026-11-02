@@ -537,7 +537,7 @@ describe('options storage', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    await runInternalMigrate(proxy.env.D1, consoleLogger)
+    await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
     holder.db = drizzle(proxy.env.D1) as unknown
   }, 300_000)
 
@@ -700,7 +700,7 @@ describe('options route: only defined keys, and size caps', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    await runInternalMigrate(proxy.env.D1, consoleLogger)
+    await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
     holder.db = drizzle(proxy.env.D1) as unknown
   }, 300_000)
 

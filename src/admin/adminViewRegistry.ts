@@ -37,6 +37,7 @@ const SettingsHubView = lazyView(() => import('@/admin/views/SettingsHubView').t
 const HeaderFooterView = lazyView(() => import('@/admin/views/HeaderFooterView').then((mod) => mod.HeaderFooterView))
 const TranslationsView = lazyView(() => import('@/features/multilingual/views/TranslationsView').then((mod) => mod.TranslationsView))
 const DatabaseView = lazyView(() => import('@/features/cleanup/DatabaseView').then((mod) => mod.DatabaseView))
+const UnusedTablesView = lazyView(() => import('@/features/cleanup/UnusedTablesView').then((mod) => mod.UnusedTablesView))
 const ABResultsView = lazyView(() => import('@/features/abTesting/components/ABResultsView').then((mod) => mod.ABResultsView))
 const VisualEditorView = lazyView(() => import('@/views/VisualEditor').then((mod) => mod.VisualEditorView))
 const RolesView = lazyView(() => import('@/admin/views/RolesView').then((mod) => mod.RolesView))
@@ -155,6 +156,15 @@ export const CUSTOM_ADMIN_VIEWS = [
     meta: {
       title: 'Database',
       description: 'Per-feature table usage and cleanup.',
+    },
+  },
+  {
+    key: 'unusedTables',
+    Component: UnusedTablesView,
+    path: '/unused-tables',
+    meta: {
+      title: 'Unused tables',
+      description: 'Tables of sections that are switched off, with export and delete.',
     },
   },
   {

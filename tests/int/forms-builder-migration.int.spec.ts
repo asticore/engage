@@ -18,7 +18,7 @@ describe('forms builder migration', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    const outcome = await runInternalMigrate(proxy.env.D1, consoleLogger)
+    const outcome = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
     expect(outcome.errorCount).toBe(0)
   }, 300_000)
 

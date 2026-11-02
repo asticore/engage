@@ -1,4 +1,5 @@
 import { resolveD1Binding } from '@/cms/db/connect'
+import { isMissingFeatureTable } from '@/localapi/missingFeatureTable'
 import { suppressAddress } from '@/features/email/suppression'
 import { verifyUnsubscribeToken } from '@/features/email/unsubscribe'
 
@@ -37,7 +38,10 @@ async function handle(request: Request): Promise<Response> {
   await suppressAddress(email, 'unsubscribed', 'link')
   const d1 = await resolveD1Binding()
   // Keep the abandoned-cart switch in step, so cart reminders stop for this address too.
-  await d1.prepare('UPDATE eg_carts SET unsubscribed = 1 WHERE lower(email) = ?').bind(email).run()
+  // No shop tables on a site where the shop has never been switched on: nothing to keep in step.
+  await d1.prepare('UPDATE eg_carts SET unsubscribed = 1 WHERE lower(email) = ?').bind(email).run().catch((error: unknown) => {
+    if (!isMissingFeatureTable(error)) throw error
+  })
   return page('You are unsubscribed', 'You will not get any more reminder or marketing emails from this site. Emails about orders, bookings and sign-in still arrive.')
 }
 

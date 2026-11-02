@@ -30,7 +30,7 @@ describe('shop reports and display currencies on a migrated D1', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    outcome = await runInternalMigrate(proxy.env.D1, consoleLogger)
+    outcome = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
     db = proxy.env.D1 as unknown as Db
 
     await run(`INSERT INTO eg_products (id, title, category, manage_stock, stock_qty, sku, updated_at, created_at) VALUES (1, 'Mug', 'physical', 1, 1, 'MUG-1', '2026-09-01', '2026-09-01')`)

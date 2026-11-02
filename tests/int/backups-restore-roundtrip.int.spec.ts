@@ -64,7 +64,7 @@ describe('backup and restore round trip (real D1, in memory)', () => {
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     db = proxy.env.D1
-    await runInternalMigrate(db, consoleLogger)
+    await runInternalMigrate(db, consoleLogger, { provisionAll: true })
     await db
       .prepare(
         `INSERT INTO eg_posts (id, title, slug, _status) VALUES

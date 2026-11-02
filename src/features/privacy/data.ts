@@ -1,5 +1,6 @@
 import type { D1Like } from '@/features/apiKeys'
 import { valuesMentionEmail, stripSecrets } from './core'
+import { isMissingFeatureTable } from '@/localapi/missingFeatureTable'
 
 /**
  * Reads and writes a customer's records across the site. Shared by the export and the erasure, so
@@ -64,6 +65,11 @@ export async function matchingSubmissions(d1: D1Like, email: string): Promise<Ma
     .prepare('SELECT id, form_id, "values", submitted_at FROM eg_form_submissions WHERE "values" LIKE ? ESCAPE ? LIMIT ?')
     .bind(pattern, '\\', LIMIT)
     .all<{ id: number; form_id: number; values: string; submitted_at: string | null }>()
+    // Forms never switched on: there is no submissions table, so nothing to find.
+    .catch((error: unknown) => {
+      if (isMissingFeatureTable(error)) return { results: [] as { id: number; form_id: number; values: string; submitted_at: string | null }[] }
+      throw error
+    })
   const out: MatchedSubmission[] = []
   for (const row of rows.results ?? []) {
     let values: unknown = null

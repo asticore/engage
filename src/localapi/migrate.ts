@@ -117,6 +117,13 @@ export type RunMigrationsArgs = {
   engineDb: EngineDb
   logger: EngineLogger
   migrations: MigrationEntry[]
+  /**
+   * Runs every migration whether or not it is recorded, and records nothing.
+   * Used to provision one feature's tables later (see migrations/provisioning.ts):
+   * the migrations are idempotent and the db handed in only lets that feature's
+   * statements through.
+   */
+  replay?: boolean
 }
 
 export type RunMigrationsResult = {
@@ -161,12 +168,12 @@ async function recordMigration(db: Drizzle, entry: { name: string; batch: number
  * itself.
  */
 export async function runMigrations(args: RunMigrationsArgs): Promise<RunMigrationsResult> {
-  const { db, engineDb, logger, migrations } = args
+  const { db, engineDb, logger, migrations, replay = false } = args
 
   await ensureMigrationsTable(engineDb)
 
-  const applied = await readAppliedMigrationNames(db)
-  const batch = await nextBatchNumber(db)
+  const applied = replay ? new Set<string>() : await readAppliedMigrationNames(db)
+  const batch = replay ? 0 : await nextBatchNumber(db)
 
   const ran: string[] = []
   const skipped: string[] = []
@@ -185,10 +192,10 @@ export async function runMigrations(args: RunMigrationsArgs): Promise<RunMigrati
       throw err instanceof Error ? err : new Error(`Migration "${migration.name}" failed: ${String(err)}`)
     }
 
-    await recordMigration(db, { name: migration.name, batch })
+    if (!replay) await recordMigration(db, { name: migration.name, batch })
     logger.info(`[migrate] Migrated:  ${migration.name}`)
     ran.push(migration.name)
   }
 
-  return { ran, skipped, batch: ran.length > 0 ? batch : null }
+  return { ran, skipped, batch: ran.length > 0 && !replay ? batch : null }
 }

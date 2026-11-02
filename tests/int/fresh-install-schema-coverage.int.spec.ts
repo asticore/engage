@@ -38,6 +38,8 @@ import * as templateLibrariesSchema from '@/cms/db/schema/templateLibraries'
 import * as privacyRequestsSchema from '@/cms/db/schema/privacyRequests'
 import * as apiEndpointsSchema from '@/cms/db/schema/apiEndpoints'
 
+import { provisionAllFeatures } from '../helpers/provisionAll'
+
 // Intentionally unmigrated tables/columns - add here ONLY if confirmed that migrations
 // deliberately do not create them, with a reason for each.
 // Empty: the rels target columns (media_id/faqs_id on the five legacy rels tables, eg_media_id
@@ -55,7 +57,10 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
     async () => {
       // Build fresh empty D1 and run migrations
       proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
+      // The default install is lazy; switching every section on must then give the complete schema.
       outcome = await runInternalMigrate(proxy.env.D1, consoleLogger)
+      const provisionErrors = await provisionAllFeatures(proxy.env.D1)
+      if (provisionErrors.length > 0) throw new Error(provisionErrors.join('; '))
 
       // Get list of all created tables
       const rows = await proxy.env.D1.prepare(`SELECT name FROM sqlite_master WHERE type='table'`).all()

@@ -14,9 +14,9 @@ describe('shop atomic SQL (real D1)', () => {
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     d1 = proxy.env.D1
-    await runInternalMigrate(d1, consoleLogger)
+    await runInternalMigrate(d1, consoleLogger, { provisionAll: true })
     // running the migration set again must stay a no-op (idempotent)
-    const second = await runInternalMigrate(d1, consoleLogger)
+    const second = await runInternalMigrate(d1, consoleLogger, { provisionAll: true })
     expect(second.errorCount).toBe(0)
   }, 300_000)
   afterAll(async () => proxy.dispose())

@@ -20,7 +20,7 @@ describe('social login settings on a real engine', () => {
     process.env.ENGAGE_SECRET = 'real-engine-social-secret'
     // The engine reads the app's own D1 binding, so migrate that one (idempotent).
     d1 = await resolveD1Binding()
-    const outcome = await runInternalMigrate(d1, consoleLogger)
+    const outcome = await runInternalMigrate(d1, consoleLogger, { provisionAll: true })
     expect(outcome.errorCount).toBe(0)
     engine = createEngine()
     // The local D1 persists between runs: start from a clean, switched-off state.

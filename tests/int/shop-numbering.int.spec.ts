@@ -75,7 +75,7 @@ describe('order and invoice numbers on a real D1', () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     d1 = proxy.env.D1
     hoisted.d1 = d1
-    const outcome = await runInternalMigrate(d1, consoleLogger)
+    const outcome = await runInternalMigrate(d1, consoleLogger, { provisionAll: true })
     expect(outcome.errorCount).toBe(0)
   }, 300_000)
 
