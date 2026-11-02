@@ -5,6 +5,7 @@ import Link from 'next/link'
 import React, { useState } from 'react'
 
 import { CurrencySwitcher } from '@/components/CurrencySwitcher'
+import { DEFAULT_SITE_NAME } from '@/features/brand/siteName'
 
 export type NavLink = {
   href: string
@@ -36,7 +37,7 @@ export const Header: React.FC<{
   homeHref?: string
   cartHref?: string
 }> = ({
-  siteName = 'Grace & Gatsby',
+  siteName = DEFAULT_SITE_NAME,
   logoUrl,
   logoWidth,
   logoHeight,

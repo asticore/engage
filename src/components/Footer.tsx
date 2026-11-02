@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { DEFAULT_SITE_NAME } from '@/features/brand/siteName'
+
 type FooterLink = { href: string; label: string }
 type FooterColumn = { title: string; links: FooterLink[] }
 type SocialLink = { platform?: string | null; url?: string | null }
@@ -20,7 +22,7 @@ export const Footer: React.FC<{
   layout?: 'columns-3' | 'columns-4' | 'stacked'
   copyrightText?: string | null
 }> = ({
-  siteName = 'Grace & Gatsby',
+  siteName = DEFAULT_SITE_NAME,
   logoUrl,
   logoWidth,
   logoHeight,

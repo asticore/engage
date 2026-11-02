@@ -6,7 +6,7 @@ Editors sign in at `/admin` to build pages, run the shop, publish events and pos
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/gracengatsby)
 
-Cloudflare provisions the Worker, D1 database and R2 bucket from `wrangler.jsonc` and, per the `cloudflare.bindings` block in `package.json`, prompts for the secrets/vars listed in [Environment variables](#environment-variables) below. `wrangler.jsonc` currently carries this project's own live database ID and bucket name - a new deploy on a different Cloudflare account provisions its own D1/R2 resources with new IDs, per Cloudflare's standard Deploy-to-Workers behavior, but that path has not been exercised end-to-end from this repo, so treat it as unverified until someone runs it. The button's build runs `pnpm run deploy` (OpenNext build + deploy). It needs no manual follow-up: the first request to the new site detects the empty database and runs the full schema migration and starter-content seed by itself (`src/migrations/ensureInitialised.ts`), then `/admin` lets you create the first admin user. Use `pnpm run deploy:full` for later upgrades to an existing database.
+The deploy button builds the Worker from `wrangler.jsonc` and asks for the variables listed under `cloudflare.bindings` in `package.json` (see [Environment variables](#environment-variables)). `wrangler.jsonc` holds this project's own live D1 database ID and R2 bucket name, so a deploy to another Cloudflare account needs those replaced first: run `pnpm run setup:cloudflare` (see [Fresh Cloudflare account](#fresh-cloudflare-account-or-restoring-a-deploy)). The button alone on a new account has not been verified from this repo. Once a deploy is live, the first request to the new site detects the empty database and runs the full schema migration and starter-content seed by itself (`src/migrations/ensureInitialised.ts`), then `/admin` lets you create the first admin user. Use `pnpm run deploy:full` for later upgrades to an existing database.
 
 ---
 
@@ -23,7 +23,7 @@ Cloudflare provisions the Worker, D1 database and R2 bucket from `wrangler.jsonc
 Two route groups live under `src/app/`:
 
 - `(frontend)` — the public site: home, pages, blog, shop, events, FAQ, cart, checkout.
-- `(engage)` — the portal: the admin UI at `/admin`, the content API under `/api`, and two internal deploy endpoints.
+- `(engage)` — the portal: the admin UI at `/admin`, the content API under `/api`, and the internal maintenance endpoints (`/api/internal-*`, guarded by `INTERNAL_ROUTE_KEY`).
 
 Neither group name appears in a URL — parentheses make them organisational only.
 
@@ -33,7 +33,8 @@ Neither group name appears in a URL — parentheses make them organisational onl
 
 ```
 src/
-  engage-types.ts     content types for collections and globals (committed, edited by hand)
+  engage-types.ts     content types for collections and globals (committed, edited by hand; a test checks it against cms/db/schema)
+  cms/db/schema/      the generated database schema: the source of truth for what each collection and global stores
   lib/engine.ts       getEngine(): the initialised CMS client used server-side
   collections/        Pages, Posts, Faqs, Events, EventRSVPs, PageTemplates,
                       FieldGroups, Media, Users
@@ -71,7 +72,7 @@ Wrangler creates local emulated D1 and R2 bindings automatically — no connecti
 
 | Variable | Required | Notes |
 | -------- | -------- | ----- |
-| `ENGAGE_SECRET` | yes | Signs sessions and encrypts secret settings fields. Generate with `openssl rand -base64 32`. This is the only secret the Cloudflare deploy button asks for. |
+| `ENGAGE_SECRET` | yes | Signs sessions and encrypts secret settings fields. Generate with `openssl rand -base64 32`. The deploy button asks for it with the other variables under `cloudflare.bindings` in `package.json`. |
 | `SITE_URL` | for prod | Used by `sitemap.xml`, `robots.txt` and canonical/OG URLs. |
 | `STRIPE_*` | shop only | Leave blank to deploy with the Shop feature off. |
 | `INTERNAL_ROUTE_KEY` | recommended | Guards the four internal maintenance routes (`/api/internal-migrate`, `/api/internal-seed`, `/api/internal-backup-run`, `/api/internal-backup-restore`). Not a hard security boundary — none of those routes can drop or modify data — but worth setting so a stray request can't run up unbounded D1 work. Falls back to a retired default if unset, so an install that hasn't set it yet still works. Generate with `openssl rand -hex 32`. |
@@ -84,16 +85,18 @@ Wrangler creates local emulated D1 and R2 bindings automatically — no connecti
 | Command | Does |
 | ------- | ---- |
 | `pnpm dev` | Local dev server |
-| `pnpm build` | `next build` |
+| `pnpm build` | `node scripts/build.mjs`: `next build`, or the OpenNext build on the production branch of Workers Builds |
 | `pnpm generate:types` | Regenerates `cloudflare-env.d.ts` (Worker binding types) |
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest integration tests + Playwright e2e |
 | `pnpm deploy` | OpenNext build + deploy to Cloudflare (what the deploy button runs) |
-| `pnpm deploy:full` | Owner flow: hand-built SQL, deploy, then `/api/internal-migrate` and `/api/internal-seed` against `SITE_URL` |
+| `pnpm deploy:full` | Owner flow: `deploy:database`, `deploy:app`, `deploy:migrate` (`/api/internal-migrate`) and `deploy:seed` (`/api/internal-seed`) against `SITE_URL` |
+| `pnpm run setup:cloudflare` | Creates or reuses the D1 database and R2 bucket with the wrangler CLI and writes their names and ID into `wrangler.jsonc`. Options: `--worker`, `--d1`, `--bucket`, `--dry-run`, `--replace` (see [Fresh Cloudflare account](#fresh-cloudflare-account-or-restoring-a-deploy)) |
+| `pnpm run bundle:size` | Measures the JavaScript each route loads from the `.next` build and checks it against `bundle-budget.json`. Skips with a message when there is no build (see [JavaScript bundle size](#javascript-bundle-size)) |
 | `pnpm db:local` | Prepare and migrate a local standalone database |
 | `pnpm preview` | Builds and serves the real Worker bundle locally |
 
-`src/engage-types.ts` holds the content types (collections and globals) and is committed. Nothing regenerates it any more, so update it by hand when you add or change a collection field.
+`src/engage-types.ts` holds the content types (collections and globals) and is committed. Nothing regenerates it any more, so update it by hand when you add or change a collection field. `tests/int/content-types-drift.int.spec.ts` fails when it disagrees with the generated schema in `src/cms/db/schema`, which is the source of truth: change both in the same commit, and the failure lists each difference.
 
 ---
 
@@ -103,12 +106,12 @@ Wrangler creates local emulated D1 and R2 bindings automatically — no connecti
 pnpm run deploy
 ```
 
-That runs four steps in order, and the order matters:
+`pnpm run deploy` is the OpenNext build and deploy only. `pnpm run deploy:full` runs four steps, and the order matters:
 
-1. **`deploy:database`** — applies migrations, then pushes four hand-built SQL files to real D1 with `wrangler d1 execute --remote`, then `PRAGMA optimize`. This step exists because the CLI's `migrate` cannot reach production D1 from CI (see below).
-2. **`deploy:app`** — `opennextjs-cloudflare build` then `deploy`. Builds the Worker bundle and ships it.
-3. **`deploy:migrate`** — `POST /api/internal-migrate` against the live deployment. This is what actually lands schema changes on production D1.
-4. **`deploy:seed`** — `POST /api/internal-seed`. Creates the starter Home page and page templates if they are missing.
+1. **`deploy:database`**: `wrangler d1 execute D1 --command 'PRAGMA optimize' --remote`, run against the production D1. No schema change happens in this step.
+2. **`deploy:app`**: `opennextjs-cloudflare build` then `deploy`. Builds the Worker bundle and ships it.
+3. **`deploy:migrate`**: `POST /api/internal-migrate` against the live deployment. This is what lands additive schema changes on production D1 (see [How migrations work here](#how-migrations-work-here)).
+4. **`deploy:seed`**: `POST /api/internal-seed`. Creates the starter Home page and page templates if they are missing.
 
 Steps 3 and 4 are `curl -sf ... || echo` — a failure is reported but does not fail the deploy, because both endpoints are idempotent and safe to retry by hand.
 
@@ -118,16 +121,25 @@ Both endpoints are guarded by an `x-seed-key` header, checked against `INTERNAL_
 
 `wrangler.jsonc` declares the bindings the Worker needs. A new account or a restored Worker needs all of them before the first deploy:
 
-- **D1 database** (`d1_databases`, binding `D1`). The `database_id` must exist in the target account. Create it or point the config at the restored one, then run `deploy:database` so every migration and the hand-built SQL reach it.
+- **D1 database** (`d1_databases`, binding `D1`). The `database_id` must exist in the target account. `pnpm run setup:cloudflare` creates it (or reuses one with the same name) and writes the ID into the config. Migrations reach it through `/api/internal-migrate` during `deploy:migrate`.
 - **Images binding** (`images`, binding `IMAGES`). It is used by media optimisation (`src/features/media/optimise.ts`), so it needs Images transformations enabled on the account.
 - **Cron trigger** (`triggers.crons`, `*/5 * * * *`, entry `cloudflare-worker.ts`). Scheduled publishing runs on this trigger every 5 minutes, so the Worker's scheduled handler publishes and unpublishes due pages from it. Confirm the trigger in the Cloudflare dashboard under the Worker's Triggers tab after the first deploy.
 - **Secrets and variables**: `INTERNAL_ROUTE_KEY` (used by the internal endpoints) and any integration keys. Set them before `deploy:migrate` so the endpoints can be reached.
+
+`pnpm run setup:cloudflare` does the resource step with the wrangler CLI. Sign in with `npx wrangler login`, or set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`:
+
+```bash
+pnpm run setup:cloudflare -- --dry-run                    # show the plan, change nothing
+pnpm run setup:cloudflare -- --replace --worker my-shop     # fork or new account
+```
+
+`--worker` names the Worker, the D1 database and the bucket; `--d1` and `--bucket` name those separately. With no names, the script keeps the names already in `wrangler.jsonc`. It is idempotent: a database or bucket that already has the name is reused, and a second run changes nothing. If the database ID in the file would change, the script stops unless `--replace` is given, so the production values are not rewritten by accident. Comments in `wrangler.jsonc` are kept. Run it on a fork or a new account, not on the production account. It is not run by the deploy button or CI.
 
 Restore or first-deploy checklist:
 
 1. Confirm the D1 database and the Images binding exist in the target account, and the `database_id` in `wrangler.jsonc` matches.
 2. Set `INTERNAL_ROUTE_KEY` and the other secrets.
-3. Run `pnpm run deploy`, or run the four steps by hand in the order above.
+3. Run `pnpm run deploy:full`, or run the steps by hand in the order above.
 4. Check that `/api/internal-migrate` reported success and that the Home page exists (`deploy:seed`).
 5. Confirm the cron trigger is listed on the Worker.
 6. Open the admin, save one page, and load it on the public site.
@@ -186,13 +198,13 @@ Each entry declares its label, description, default state, the collections and g
 - **Site Settings** renders one checkbox per entry (`featureToggleField.ts`), three per row.
 - **The portal sidebar** hides a feature's collections and globals while it is off (`isCollectionEnabled` / `isGlobalEnabled`).
 - **Public routes** call `getFeatureFlags()` and `notFound()` when their feature is off — so `/blog` 404s with Blog disabled.
-- **Database Cleanup** is designed to use `tables` to purge a disabled feature's data on request. The registry side is in place; the tool itself is not built yet.
+- **Database cleanup** (`src/features/cleanup`) uses each feature's `tables` to find its data, and can purge it on request or on the scheduled cleanup (Speed settings). Turning a feature off hides it and never deletes its data; the cleanup deletes only when asked.
 
 Adding a feature means adding one registry entry and nothing else structural.
 
 Two details worth knowing:
 
-- **`implemented: false`** means the settings screen exists and saves, but the behaviour behind it is still being built. The toggle's own description says so rather than silently doing nothing. Currently shipped end-to-end: Shop, Events, Blog, FAQs. Everything else (Forms, SEO & Analytics, Speed, Media, Email, Backups, Members, A/B testing, Security, Multilingual, Customer accounts, Courses) is settings-only for now.
+- **`implemented: false`** marks a feature whose screen saves but whose behaviour is not built yet; the toggle's own description says so. Every feature in the registry is `implemented: true` today (Shop, Events, Blog, FAQs, Forms, SEO & Analytics, Speed, Media optimisation, Email, Backups, Members, A/B testing, Security, Multilingual, Customer accounts, Courses, Content approval, Ads, Tracking events).
 - **`tables` lists BASE table names only.** The cleanup tool expands each into its real family at runtime — the SQLite adapter also generates `<table>_rels`, `_<table>_v`, `<table>_locales` and one `<table>_blocks_<block>` child per block type. That expansion changes as blocks are added, so it is never written out by hand.
 
 Turning a feature off **hides**; it never deletes.
@@ -209,26 +221,11 @@ Limits for now: there is no search results route yet, so there is no `search` ki
 
 ---
 
-## Template repositories
+## Template libraries
 
-Template repositories (code in `src/features/templateRepos`) let an agency keep page and section templates for the visual editor in GitHub. An admin turns them on under Settings > General > Integrations > **Template repositories**, adds each repository (name, GitHub user or organisation, repository, branch, optional folder) and, for a private repository, one read-only access token ("Fine-grained read-only token. Leave blank for public repos."). The token is stored encrypted like the other keys and is never sent to a browser.
+Page and section templates for the visual editor come from template libraries: Settings > Template libraries, code in `src/features/templateLibraries` and `src/features/templateRepos`, routes under `/api/template-libraries`. The older template-repository list (Settings > Integrations, `/api/template-repos`) was removed in PR #189; its repositories were moved to template libraries. See [docs/template-libraries.md](docs/template-libraries.md) for the folder layout, limits and troubleshooting.
 
-Repository layout (inside the optional folder):
-
-```
-manifest.json                    { "schemaVersion": 1, "name": "...", "categories": [{ "key", "label" }],
-                                   "templates": [{ "slug", "title", "kind": "page"|"section", "category", "tags"?,
-                                                   "preview": "templates/<slug>/preview.png",
-                                                   "file": "templates/<slug>/template.json" }] }
-templates/<slug>/template.json   { "format": "engage-template", "schemaVersion": 1, "kind", "tree": [...], "assets"?: [], "requires"?: {} }
-templates/<slug>/preview.png     png, jpeg or webp, up to 2 MB
-```
-
-API (administrators and editors only, same session check as the other admin routes): `GET /api/template-repos` lists templates from every enabled repository (`repoIndex`, `repoLabel`, `slug`, `title`, `kind`, `category`, `tags`, `previewUrl`) plus one plain-English error per repository that failed; `GET /api/template-repos/template?repo=<n>&slug=<slug>` returns one validated template; `GET /api/template-repos/preview?repo=<n>&slug=<slug>` streams the preview picture from this site, so the browser never talks to GitHub.
-
-Safety: the browser never supplies a URL. Addresses are built on the server from validated owner / repository / branch / folder, and only for `raw.githubusercontent.com` (public) or `api.github.com` contents (when a token is set, which applies to every repository in the list). Redirects are refused, each request times out after 8 seconds, and results are cached in memory for 5 minutes. Limits: manifest 500 KB, template 1 MB, 500 templates, slugs `^[a-z0-9][a-z0-9-]{0,63}$`, no `..` or absolute paths, only files the manifest lists can be fetched. Templates are treated as data: items of type html, code, script, embed, iframe, style and similar (compared ignoring case, dashes and underscores), any `dangerouslySetInnerHTML` field, and any text containing a script or frame tag or a `javascript:` link are refused. This deny list is a first line of defence for now; it also refuses legitimate "code" items inside rich text.
-
-Limits for now: one token is shared by all repositories; the editor-side picker is built separately and uses these routes.
+---
 
 ## Connect Google
 
@@ -270,6 +267,14 @@ The short version: `--color-base-0 … --color-base-1000` is **one** ramp runnin
 Override documented CSS custom properties, not class names, and declare overrides in a later cascade layer so nothing needs `!important`.
 
 Brand marks live in `src/components/branding/`, and the browser-tab identity (title, description, favicon) is set explicitly in the admin `RootLayout` metadata.
+
+---
+
+## JavaScript bundle size
+
+`pnpm run bundle:size` (`scripts/bundle-size.mjs`) reads the `.next` build after `pnpm run build`. For each route it adds up the JavaScript files that route's first visit loads, from `.next/app-build-manifest.json` (or the pages section of `build-manifest.json` on older builds). A chunk shared by several routes counts once per route, and CSS is left out. It reports raw and gzip sizes (gzip level 9) and exits 1 when a route is over its limit in `bundle-budget.json`.
+
+`bundle-budget.json` has `defaultRouteGzipKB` for every route and optional `routes` entries for a route with its own limit. The committed default is a starting value, not a measurement: set it from the first live build (see Task 6 in `claude/remaining-work.md`). With no `.next` folder the script says so and exits 0; pass `--require` to make that an error. The reader is covered by `tests/int/bundle-size-reader.int.spec.ts` on a small fixture in `tests/fixtures/bundle-size`.
 
 ---
 

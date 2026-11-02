@@ -2,6 +2,7 @@ import type { GlobalConfig } from '@/engine'
 
 import { isAdmin } from '../access/ecommerceAccess'
 import { featureToggleField } from '../features/featureToggleField'
+import { DEFAULT_SITE_NAME } from '../features/brand/siteName'
 
 /**
  * The sidebar and dashboard are server-rendered from these feature flags, so a
@@ -50,7 +51,7 @@ export const SiteSettings: GlobalConfig = {
     {
       name: 'siteName',
       type: 'text',
-      defaultValue: 'Grace & Gatsby',
+      defaultValue: DEFAULT_SITE_NAME,
     },
     {
       name: 'tagline',
@@ -199,7 +200,7 @@ export const SiteSettings: GlobalConfig = {
         {
           name: 'titleTemplate',
           type: 'text',
-          defaultValue: '%s | Grace & Gatsby',
+          defaultValue: `%s | ${DEFAULT_SITE_NAME}`,
           admin: { description: 'Use %s where the page title should go.' },
         },
         { name: 'defaultDescription', type: 'textarea' },

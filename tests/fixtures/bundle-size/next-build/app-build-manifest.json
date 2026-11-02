@@ -1,0 +1,18 @@
+{
+  "pages": {
+    "/(frontend)/page": [
+      "static/chunks/shared.js",
+      "static/chunks/page-a.js",
+      "static/chunks/shared.js",
+      "static/css/site.css"
+    ],
+    "/(frontend)/shop/page": [
+      "static/chunks/shared.js",
+      "static/chunks/page-b.js",
+      "static/chunks/gone.js"
+    ],
+    "/_not-found/page": [
+      "static/chunks/shared.js"
+    ]
+  }
+}

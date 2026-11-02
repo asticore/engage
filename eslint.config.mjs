@@ -26,7 +26,7 @@ const eslintConfig = [
   {
     // Generated on every build from the CMS config - never hand-edited, and
     // large enough that linting it is pure noise.
-    ignores: ['.next/', 'src/engage-types.ts'],
+    ignores: ['.next/', 'src/engage-types.ts', 'tests/fixtures/bundle-size/'],
   },
 ]
 
