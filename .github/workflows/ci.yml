@@ -16,9 +16,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  static:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     env:
       CI: true
       NODE_OPTIONS: --no-deprecation
@@ -43,6 +43,31 @@ jobs:
       - name: Lint
         run: pnpm exec eslint .
 
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    timeout-minutes: 45
+    env:
+      CI: true
+      NODE_OPTIONS: --no-deprecation
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm-lock.yaml is gitignored, so there is no lockfile to cache or freeze against.
+      # pnpm version comes from the packageManager field in package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # package.json engines.node requires 24.
+          node-version: 24
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
       - name: Integration specs (safe subset)
         # Specs left out until they are fixed. Checked on 1 Nov 2026 with Node 22 (CI uses 24) in one parallel run:
         # these 7 passed and came back in: admin-dom-hydration, ai-builder-v2, auth-slice-2-store, media-read-body,
@@ -61,4 +86,15 @@ jobs:
           EXCLUDE='admin-list-prefs-real-engine|admin-pages-tree|settings-pages|schedule-admin-route|wishlist-wave7|authorship-fields|custom-fields|cookie-consent|seo-page-jsonld|cloudflare-worker|ecommerce-cart-hooks|own-scope-routes|page-delete-after-children|pages-sort-order|product-addons-db|product-addons-pricing-rules|redirects-collection|shop-catalogue-db|shop-review-fixes|cms-db-carts-orders-transactions|pages-homepage-switch|social-login-settings-real-engine|cross-sells-currency-wave7|shop-recommendations-wave19|seo-metadata'
           FILES=$(ls tests/int/*.int.spec.ts | grep -Ev "/(${EXCLUDE})\.int\.spec\.ts$")
           echo "Running $(echo "$FILES" | wc -l) spec files"
-          pnpm exec vitest run --config ./vitest.config.mts --retry=2 $FILES
+          pnpm exec vitest run --config ./vitest.config.mts --retry=2 --shard=${{ matrix.shard }}/${{ strategy.job-total }} $FILES
+
+  # One stable check name for branch protection: green only when type check, lint and every shard passed.
+  test:
+    runs-on: ubuntu-latest
+    needs: [static, tests]
+    if: always()
+    steps:
+      - name: All checks passed
+        run: |
+          echo "static: ${{ needs.static.result }}, tests: ${{ needs.tests.result }}"
+          test "${{ needs.static.result }}" = "success" && test "${{ needs.tests.result }}" = "success"
