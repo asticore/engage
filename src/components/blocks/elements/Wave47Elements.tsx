@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from 'react'
 
-import { iconName, linkAttrs, linkHref, mediaOf, num, pick, str } from './elementUtil'
+import { iconName, linkAttrs, linkHref, mediaOf, num, pick, pictureSizes, str } from './elementUtil'
 import { Icon } from './icons'
 import './wave47.css'
 
@@ -110,7 +110,7 @@ export const CardElement: React.FC<P> = (p) => {
   } else if (image?.url) {
     mediaNode = (
       <figure className="be-el-47-card__media be-el-47-card__media--image" style={ratio === 'auto' ? undefined : { aspectRatio: RATIO_CSS[ratio] }}>
-        <img decoding="async" className={`be-el-47-card__img be-el-47-card__img--${fit}`} src={image.url} alt={str(image.alt)} loading="lazy" />
+        <img decoding="async" className={`be-el-47-card__img be-el-47-card__img--${fit}`} src={image.url} srcSet={image.srcSet} sizes={image.srcSet ? pictureSizes(layout === 'top' ? '50vw' : '25vw') : undefined} alt={str(image.alt)} loading="lazy" />
       </figure>
     )
   }

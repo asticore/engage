@@ -12,10 +12,10 @@ export const AccountStyles: React.FC = () => (
   <style>{`
     .account { display: grid; gap: 2rem; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); align-items: start; }
     @media (max-width: 720px) { .account { grid-template-columns: 1fr; } }
-    .account-nav { list-style: none; margin: 0; padding: 0; border: 1px solid rgba(0,0,0,.12); border-radius: 8px; overflow: hidden; }
-    .account-nav li + li { border-top: 1px solid rgba(0,0,0,.1); }
+    .account-nav { list-style: none; margin: 0; padding: 0; border: 1px solid color-mix(in srgb, var(--eg-c-text) 12%, transparent); border-radius: 8px; overflow: hidden; }
+    .account-nav li + li { border-top: 1px solid color-mix(in srgb, var(--eg-c-text) 10%, transparent); }
     .account-nav a { display: block; padding: .7rem 1rem; text-decoration: none; color: inherit; }
-    .account-nav a[aria-current='page'] { font-weight: 600; background: rgba(0,0,0,.04); }
+    .account-nav a[aria-current='page'] { font-weight: 600; background: color-mix(in srgb, var(--eg-c-text) 4%, transparent); }
     .account-panel { min-width: 0; }
     /* Off-canvas drawer, mobile only (added 2026-09-26 - see AccountNav.tsx's
        header comment). Desktop keeps the plain always-visible sidebar this
@@ -26,45 +26,45 @@ export const AccountStyles: React.FC = () => (
     .account-nav-toggle { display: none; }
     @media (max-width: 720px) {
       .account-nav-wrap { position: relative; z-index: 100; }
-      .account-nav-toggle { display: inline-flex; align-items: center; gap: .6rem; margin-bottom: 1rem; padding: .6rem 1rem; border: 1px solid rgba(0,0,0,.25); border-radius: 6px; background: #fff; font: inherit; cursor: pointer; }
+      .account-nav-toggle { display: inline-flex; align-items: center; gap: .6rem; margin-bottom: 1rem; padding: .6rem 1rem; border: 1px solid color-mix(in srgb, var(--eg-c-text) 25%, transparent); border-radius: 6px; background: var(--eg-c-surface); font: inherit; cursor: pointer; }
       .account-nav-toggle__bars, .account-nav-toggle__bars::before, .account-nav-toggle__bars::after { display: block; width: 1.1rem; height: 2px; background: currentColor; border-radius: 1px; }
       .account-nav-toggle__bars { position: relative; }
       .account-nav-toggle__bars::before, .account-nav-toggle__bars::after { content: ''; position: absolute; left: 0; }
       .account-nav-toggle__bars::before { top: -.35rem; }
       .account-nav-toggle__bars::after { top: .35rem; }
-      .account-nav-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 99; }
-      .account-nav-drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 16rem; max-width: 82vw; background: #fff; z-index: 100; padding: 1.5rem 1.25rem; overflow-y: auto; box-shadow: 2px 0 16px rgba(0,0,0,.18); transform: translateX(-100%); transition: transform .25s ease; }
+      .account-nav-backdrop { position: fixed; inset: 0; background: color-mix(in srgb, var(--eg-c-background) 70%, transparent); z-index: 99; }
+      .account-nav-drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 16rem; max-width: 82vw; background: var(--eg-c-surface); z-index: 100; padding: 1.5rem 1.25rem; overflow-y: auto; box-shadow: 2px 0 16px color-mix(in srgb, var(--eg-c-text) 18%, transparent); transform: translateX(-100%); transition: transform .25s ease; }
       .account-nav-drawer--open { transform: translateX(0); }
     }
 .portal-search { margin: 0 0 1.5rem; max-width: 40rem; }
     .portal-search__label { display: block; font-weight: 600; margin-bottom: .35rem; }
     .portal-search__field { display: flex; gap: .5rem; align-items: center; }
-    .portal-search__field input { flex: 1; min-width: 0; padding: .6rem .8rem; border: 1px solid rgba(0,0,0,.2); border-radius: 8px; font: inherit; }
-    .portal-search__field button { padding: .4rem .7rem; border: 1px solid rgba(0,0,0,.2); border-radius: 8px; background: #fff; font: inherit; cursor: pointer; }
-    .portal-search__hint { margin: .5rem 0 0; color: rgba(0,0,0,.65); font-size: .9em; }
-    .portal-search__results { margin-top: .75rem; border: 1px solid rgba(0,0,0,.12); border-radius: 8px; padding: .75rem 1rem; }
+    .portal-search__field input { flex: 1; min-width: 0; padding: .6rem .8rem; border: 1px solid color-mix(in srgb, var(--eg-c-text) 20%, transparent); border-radius: 8px; font: inherit; }
+    .portal-search__field button { padding: .4rem .7rem; border: 1px solid color-mix(in srgb, var(--eg-c-text) 20%, transparent); border-radius: 8px; background: var(--eg-c-surface); font: inherit; cursor: pointer; }
+    .portal-search__hint { margin: .5rem 0 0; color: color-mix(in srgb, var(--eg-c-text) 65%, transparent); font-size: .9em; }
+    .portal-search__results { margin-top: .75rem; border: 1px solid color-mix(in srgb, var(--eg-c-text) 12%, transparent); border-radius: 8px; padding: .75rem 1rem; }
     .portal-search__results ul { list-style: none; margin: 0 0 .75rem; padding: 0; }
     .portal-search__results li { padding: .2rem 0; }
     .portal-search__results p { margin: .25rem 0; }
     .portal-search__heading { font-size: .95rem; margin: .25rem 0; }
-    .portal-search__type { color: rgba(0,0,0,.6); font-size: .85em; }
-    .portal-search__status { color: rgba(0,0,0,.6); font-size: .85em; }
+    .portal-search__type { color: color-mix(in srgb, var(--eg-c-text) 60%, transparent); font-size: .85em; }
+    .portal-search__status { color: color-mix(in srgb, var(--eg-c-text) 60%, transparent); font-size: .85em; }
         .account-form { display: grid; gap: .9rem; max-width: 30rem; }
     .account-form label { display: grid; gap: .3rem; font-size: .9rem; }
-    .account-form input, .account-form select { padding: .55rem .7rem; border: 1px solid rgba(0,0,0,.25); border-radius: 6px; font: inherit; }
+    .account-form input, .account-form select { padding: .55rem .7rem; border: 1px solid color-mix(in srgb, var(--eg-c-text) 25%, transparent); border-radius: 6px; font: inherit; }
     .account-form .account-form__row { display: grid; gap: .9rem; grid-template-columns: 1fr 1fr; }
     @media (max-width: 520px) { .account-form .account-form__row { grid-template-columns: 1fr; } }
     .account-note { font-size: .9rem; margin: .25rem 0 0; }
-    .account-note--error { color: #b3261e; }
-    .account-note--success { color: #2e7d32; }
-    .account-card { border: 1px solid rgba(0,0,0,.12); border-radius: 8px; padding: 1rem 1.25rem; margin: 0 0 1rem; }
+    .account-note--error { color: var(--eg-c-error); }
+    .account-note--success { color: var(--eg-c-success); }
+    .account-card { border: 1px solid color-mix(in srgb, var(--eg-c-text) 12%, transparent); border-radius: 8px; padding: 1rem 1.25rem; margin: 0 0 1rem; }
     .account-card h3 { margin: 0 0 .35rem; font-size: 1rem; }
     .account-card p { margin: 0 0 .25rem; }
     .account-card__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
     .account-card__actions button, .account-card__actions a { font-size: .85rem; }
     .account-badge { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 999px; padding: .1rem .5rem; opacity: .8; }
     .account-table { width: 100%; border-collapse: collapse; }
-    .account-table th, .account-table td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid rgba(0,0,0,.1); font-size: .92rem; }
+    .account-table th, .account-table td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid color-mix(in srgb, var(--eg-c-text) 10%, transparent); font-size: .92rem; }
     .account-empty { opacity: .7; }
     .account-section { margin: 0 0 2.5rem; }
     .account-section h2 { margin: 0 0 .75rem; font-size: 1.15rem; }
