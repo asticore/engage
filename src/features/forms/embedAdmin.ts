@@ -1,26 +1,28 @@
 /**
  * External embeds, the admin side: pure helpers shared by the screen and its tests.
  *
- * An embed is a form that may be shown on other websites. The mechanism already exists per form (the public
- * embed key, the hosted /embed/forms/<key> page, the loader script, and `formConfig.embed` for the switch and
- * the website allow-list). This module only turns that into what the admin shows: the hosted address, the two
- * snippets, and a reading of the allow-list typed into a box.
+ * An embed is one way of showing a form on other websites (see ./embeds.ts). Each has its own hosted address
+ * (/embed/<key>), its two snippets, a source name for its submissions, the websites allowed, and a theme. This
+ * module turns stored embeds into what the screen shows, and reads the websites box.
  */
 
 import { cleanOrigin } from './config'
 import { embedUrl, iframeSnippet, scriptSnippet } from './embedScript'
-import type { FormConfig } from './types'
+import type { EmbedRecord, EmbedTheme } from './embeds'
 
-export type EmbedRow = {
-  id: number | string
-  title: string
-  published: boolean
-  embedKey: string | null
+export type EmbedAdminRow = {
+  id: number
+  formId: number
+  formTitle: string
+  formPublished: boolean
+  name: string
+  embedKey: string
   enabled: boolean
   allowedOrigins: string[]
+  theme: EmbedTheme
 }
 
-/** Reads the allow-list box. One website per line; a bare host such as example.com is taken as https. */
+/** Reads the websites box. One website per line; a bare host such as example.com is taken as https. */
 export function parseAllowedOrigins(text: string): { origins: string[]; invalid: string[] } {
   const origins: string[] = []
   const invalid: string[] = []
@@ -35,16 +37,18 @@ export function parseAllowedOrigins(text: string): { origins: string[]; invalid:
   return { origins, invalid }
 }
 
-/** The embed state of a form, from its stored config. Never carries webhook data. */
-export function embedRowFrom(form: { id: number | string; title?: unknown; formStatus?: unknown; embedKey?: unknown; formConfig?: FormConfig | null }): EmbedRow {
-  const embed = form.formConfig?.embed ?? {}
+/** One embed as the screen shows it, with the title and status of the form it shows. */
+export function embedAdminRow(embed: EmbedRecord, form: { title?: unknown; formStatus?: unknown }): EmbedAdminRow {
   return {
-    id: form.id,
-    title: typeof form.title === 'string' && form.title ? form.title : `Form #${form.id}`,
-    published: form.formStatus !== 'draft',
-    embedKey: typeof form.embedKey === 'string' && form.embedKey ? form.embedKey : null,
-    enabled: embed.enabled !== false,
-    allowedOrigins: embed.allowedOrigins ?? [],
+    id: embed.id,
+    formId: embed.formId,
+    formTitle: typeof form.title === 'string' && form.title ? form.title : `Form #${embed.formId}`,
+    formPublished: form.formStatus !== 'draft',
+    name: embed.name,
+    embedKey: embed.embedKey,
+    enabled: embed.enabled,
+    allowedOrigins: embed.allowedOrigins,
+    theme: embed.theme,
   }
 }
 

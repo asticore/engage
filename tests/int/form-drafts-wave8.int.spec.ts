@@ -294,8 +294,9 @@ describe('form-draft handler', () => {
     )
     expect(preflight.status).toBe(403)
 
-    const allowed = await handleDraftRequest(post({ form: 7, email: 'a@example.com', data: {} }, { ip: '198.51.100.17', origin: 'https://allowed.example' }), engine)
-    expect(allowed.status).toBe(200)
+    // A post by form id is for this site only; another website goes through its embed (see external-embeds).
+    const own = await handleDraftRequest(post({ form: 7, email: 'a@example.com', data: {} }, { ip: '198.51.100.17', origin: 'https://site.example' }), engine)
+    expect(own.status).toBe(200)
   })
 
   it('removes the draft a finished send came from, so its link stops working', async () => {

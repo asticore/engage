@@ -1247,6 +1247,46 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     await proxy.env.D1.prepare("DELETE FROM `eg_email_suppressions` WHERE email = 'keep-me@x.co'").run()
   })
 
+  it('creates eg_form_embeds (one row per embed of a form) and the embed columns on submissions, after the font migration, and is safe to run a second time', async () => {
+    expect(tables).toContain('eg_form_embeds')
+    const cols = ((await proxy.env.D1.prepare('PRAGMA table_info(`eg_form_embeds`)').all()).results as { name: string }[]).map((c) => c.name)
+    expect(cols).toEqual(expect.arrayContaining(['form_id', 'name', 'embed_key', 'enabled', 'allowed_origins', 'theme', 'created_at', 'updated_at']))
+    const subs = ((await proxy.env.D1.prepare('PRAGMA table_info(`eg_form_submissions`)').all()).results as { name: string }[]).map((c) => c.name)
+    expect(subs).toEqual(expect.arrayContaining(['embed_id', 'embed_source']))
+    const { migrations } = await import('@/migrations/index')
+    const names = migrations.map((x) => x.name)
+    expect(names.indexOf('20270306_100000_form_embeds')).toBeGreaterThan(names.indexOf('20270302_100000_font_versions_pinned'))
+    const mod = await import('@/migrations/20270306_100000_form_embeds')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    const engine = { logger: consoleLogger } as never
+    await mod.up({ db, engine } as never)
+    await mod.up({ db, engine } as never)
+  })
+
+  it('carries an existing form embed key over as an embed row, keeps its switch and websites, and does not copy it twice', async () => {
+    const d1 = proxy.env.D1
+    await d1.prepare("DELETE FROM `eg_form_embeds` WHERE embed_key = 'legacykey0001a'").run()
+    await d1.prepare("DELETE FROM `eg_forms` WHERE embed_key = 'legacykey0001a'").run()
+    const now = '2026-01-01T00:00:00.000Z'
+    await d1
+      .prepare("INSERT INTO `eg_forms` (`title`, `embed_key`, `form_config`, `created_at`, `updated_at`) VALUES ('Legacy embed', 'legacykey0001a', ?, ?, ?)")
+      .bind(JSON.stringify({ embed: { enabled: false, allowedOrigins: ['https://old.example'] } }), now, now)
+      .run()
+    const mod = await import('@/migrations/20270306_100000_form_embeds')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(d1) as never
+    const engine = { logger: consoleLogger } as never
+    await mod.up({ db, engine } as never)
+    await mod.up({ db, engine } as never)
+    const rows = (await d1.prepare("SELECT name, enabled, allowed_origins FROM `eg_form_embeds` WHERE embed_key = 'legacykey0001a'").all()).results as { name: string; enabled: number; allowed_origins: string }[]
+    expect(rows).toHaveLength(1)
+    expect(rows[0]).toMatchObject({ name: 'Legacy embed', enabled: 0 })
+    expect(JSON.parse(rows[0].allowed_origins)).toEqual(['https://old.example'])
+    await d1.prepare("DELETE FROM `eg_form_embeds` WHERE embed_key = 'legacykey0001a'").run()
+    await d1.prepare("DELETE FROM `eg_forms` WHERE embed_key = 'legacykey0001a'").run()
+  })
+
   it('shipped-order text switch is on the Integrations row, off by default, registered after the suppressions migration, and safe to run a second time', async () => {
     const { migrations } = await import('@/migrations/index')
     const names = migrations.map((x) => x.name)

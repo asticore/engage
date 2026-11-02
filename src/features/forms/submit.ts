@@ -83,6 +83,8 @@ export type SubmitInput = {
   userAgent?: string
   /** Where the form was sent from: the embedding site's origin or the page URL. */
   sourceUrl?: string
+  /** The embed the entry came through, when it was sent with an embed's key. Labels the entry with its source. */
+  embed?: { id: number; name: string }
   now?: Date
   /** Test seam: replaces the R2 binding. */
   bucket?: Parameters<typeof storeFiles>[0]
@@ -217,6 +219,8 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
           ip: input.ip,
           userAgent: input.userAgent,
           sourceUrl: input.sourceUrl ? input.sourceUrl.slice(0, 500) : undefined,
+          embedId: input.embed?.id,
+          embedSource: input.embed?.name,
           consent: consent.length ? consent : undefined,
           status: 'new',
           total: pricing.total || undefined,

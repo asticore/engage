@@ -42,14 +42,29 @@ describe('pagesUsingForms', () => {
   it('lists each page once per form, with its status and link', () => {
     const map = pagesUsingForms(forms, [
       { id: 10, title: 'Contact', status: 'published', liveHref: '/contact', blocks: [{ blockType: 'form', form: 1 }, { blockType: 'form', form: '1' }] },
-      { id: 11, title: 'Draft page', status: 'draft', blocks: [{ blockType: 'section', columns: [{ blocks: [{ blockType: 'form', form: 1 }] }] }] },
-      { id: 12, title: 'Shortcode', status: 'published', blocks: [{ blockType: 'text', content: [{ type: 'paragraph', children: [{ text: '[form key="keytwo"]' }] }] }] },
+      { id: 11, title: 'Draft page', status: 'draft', draftBlocks: [{ blockType: 'section', columns: [{ blocks: [{ blockType: 'form', form: 1 }] }] }] },
+      { id: 12, title: 'Shortcode', status: 'published', liveHref: '/shortcode', blocks: [{ blockType: 'text', content: [{ type: 'paragraph', children: [{ text: '[form key="keytwo"]' }] }] }] },
     ])
     expect(map.get('1')).toEqual([
       { id: 10, title: 'Contact', status: 'published', liveHref: '/contact' },
       { id: 11, title: 'Draft page', status: 'draft', liveHref: undefined },
     ])
-    expect(map.get('2')).toEqual([{ id: 12, title: 'Shortcode', status: 'published', liveHref: undefined }])
+    expect(map.get('2')).toEqual([{ id: 12, title: 'Shortcode', status: 'published', liveHref: '/shortcode' }])
+  })
+
+  it('lists a form used only in an unpublished draft as a draft use, with no public address', () => {
+    const map = pagesUsingForms(forms, [
+      // Live page: no form. Its latest draft adds the form.
+      { id: 20, title: 'Live page', status: 'published', liveHref: '/live', blocks: [{ blockType: 'text' }], draftBlocks: [{ blockType: 'form', form: 2 }] },
+    ])
+    expect(map.get('2')).toEqual([{ id: 20, title: 'Live page', status: 'draft', liveHref: undefined }])
+  })
+
+  it('shows a published use as published when the live version has the form, even if the draft changed it', () => {
+    const map = pagesUsingForms(forms, [
+      { id: 21, title: 'Edited', status: 'published', liveHref: '/edited', blocks: [{ blockType: 'form', form: 1 }], draftBlocks: [{ blockType: 'text' }] },
+    ])
+    expect(map.get('1')).toEqual([{ id: 21, title: 'Edited', status: 'published', liveHref: '/edited' }])
   })
 
   it('returns nothing for a form no page uses', () => {
