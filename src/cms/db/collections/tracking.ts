@@ -1,10 +1,10 @@
 import { TrackingEvents } from '@/features/tracking/collections/TrackingEvents'
 
-import { createCollectionOps } from '../generic'
+import { type PagedFind, createCollectionOps } from '../generic'
 import { trackingEvents } from '../schema/tracking'
 
 type Doc = Record<string, unknown> & { id: number; updatedAt: string; createdAt: string }
-type Paged = (args?: { where?: import('@/engine').Where; sort?: import('@/engine').Sort; limit?: number; page?: number; pagination?: boolean }) => Promise<any>
+type Paged = PagedFind<Doc>
 
 const eventOps = createCollectionOps(trackingEvents, TrackingEvents)
 export const findTrackingEventsPaginated = eventOps.findPaginated as unknown as Paged

@@ -166,8 +166,8 @@ export async function loadApprovalSettings(
   engine:
     | {
         findGlobal: (args: { slug: string; depth?: number; overrideAccess?: boolean }) => Promise<unknown>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the real engine's find has a typed argument; only `collection`, `where` etc. are passed
-        find?: (args: any) => Promise<{ docs: any[] }>
+        // Method syntax: the real engine's find has a typed argument; only `collection`, `where` etc. are passed.
+        find?(args: Record<string, unknown>): Promise<{ docs: Array<Record<string, unknown>> }>
       }
     | null
     | undefined,

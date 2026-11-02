@@ -7,8 +7,11 @@ import { AdSlot } from './AdSlot'
 import { DataViewBlock } from '@/features/dataViews/components/DataViewBlock'
 import { hasViewShortcode, splitViewShortcodes } from '@/features/dataViews/shortcode'
 
+/** Editor-authored rich text JSON: only the root's children are read here. */
+export type RichTextContent = { root?: ({ children?: unknown[] } & Record<string, unknown>) | null } | null | undefined
+
 /** Rich text with "after paragraph N" placements inserted. Identical to plain RichText when none apply. */
-export const AdRichText = async ({ content }: { content: any }): Promise<React.ReactElement | null> => {
+export const AdRichText = async ({ content }: { content: RichTextContent }): Promise<React.ReactElement | null> => {
   const ctx = await getAdsContext()
   const state = getAdsPageState()
   const root = content?.root

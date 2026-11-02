@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type { Where } from '@/engine'
 import { getAdminContext, getCollectionConfig, hasAdminPanelAccess } from '@/admin/auth'
 import { resolveCellFormatter } from '@/admin/cellRegistry'
 import {
@@ -79,7 +80,7 @@ export async function GET(request: Request): Promise<Response> {
     for (let page = 1; ; page += 1) {
       const result = await context.engine.find({
         collection: collectionSlug,
-        where: where as any,
+        where: where as Where,
         sort: findArgs.sort,
         page,
         limit: CSV_PAGE_SIZE,
