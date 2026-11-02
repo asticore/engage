@@ -66,11 +66,11 @@ describe('resolveSectionTabs', () => {
     expect(tabs[1].allowed).toBe(true)
   })
 
-  it('needs event update as well as RSVP read for the RSVPs tab', () => {
-    const readOnly = resolveSectionTabs('events', noAdmin({ canRead: () => true, canUpdate: () => false }))
-    expect(readOnly[1].allowed).toBe(false)
-    const editor = resolveSectionTabs('events', noAdmin({ canRead: () => true, canUpdate: (slug) => slug === 'events' }))
-    expect(editor[1].allowed).toBe(true)
+  it('needs Event RSVPs read for the RSVPs tab (counts); event update is not needed', () => {
+    const noRead = resolveSectionTabs('events', noAdmin({ canRead: () => false, canUpdate: () => false }))
+    expect(noRead[1].allowed).toBe(false)
+    const countsOnly = resolveSectionTabs('events', noAdmin({ canRead: () => true, canUpdate: () => false }))
+    expect(countsOnly[1].allowed).toBe(true)
   })
 
   it('picks the tab named in ?tab= and falls back to the first', () => {
@@ -171,8 +171,9 @@ describe('resultsTabState (item page)', () => {
     const state = resultsTabState('forms', 4, nonAdmin({ canRead: () => false }))
     expect(state?.allowed).toBe(false)
     expect(state?.deniedReason).toContain('cannot read form submissions')
-    const rsvps = resultsTabState('events', 4, nonAdmin({ canRead: () => true, canUpdate: () => false }))
+    const rsvps = resultsTabState('events', 4, nonAdmin({ canRead: () => false, canUpdate: () => true }))
     expect(rsvps?.allowed).toBe(false)
+    expect(rsvps?.deniedReason).toContain('Event RSVPs read')
   })
 
   it('is still absent on the create page and for other collections', () => {

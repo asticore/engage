@@ -1,6 +1,7 @@
 import type { GlobalConfig } from '@/engine'
 
 import { adminOnlyFieldAccess, isAdmin } from '../access/ecommerceAccess'
+import { OPENVERSE_IMAGE_HOSTS } from '../features/media/stock'
 import { decryptSecretHook, encryptSecretHook } from '../utilities/secretField'
 
 /**
@@ -38,7 +39,7 @@ export const MediaSettings: GlobalConfig = {
       label: 'Uploads',
       admin: {
         description:
-          'Which files can be uploaded to the library and how large they may be. Every file is checked by its contents, not just its name or the type the browser reports. HTML, SVG, scripts and programs are always refused and cannot be switched on here.',
+          'Which files can be uploaded to the library and how large they may be. Every file is checked by its contents, not just its name or the type the browser reports. HTML, XML, scripts and programs are always refused. SVG pictures are refused unless Allow SVG uploads is on.',
       },
       fields: [
         {
@@ -48,7 +49,17 @@ export const MediaSettings: GlobalConfig = {
           defaultValue: 'jpg, jpeg, png, gif, webp, avif, heic, bmp, tiff, ico, pdf, doc, docx, xls, xlsx, ods, ppt, pptx, csv, txt, json, rtf, zip, mp3, wav, ogg, m4a, mp4, webm, mov',
           admin: {
             description:
-              'File extensions separated by commas. Remove any you do not want editors to upload. Only the types in the default list are understood: anything else typed here (for example svg, html or exe) is ignored. Leave blank to allow the whole default list.',
+              'File extensions separated by commas. Remove any you do not want editors to upload. Only the types in the default list are understood: anything else typed here (for example html or exe) is ignored. svg is used only when Allow SVG uploads is on. Leave blank to allow the whole default list.',
+          },
+        },
+        {
+          name: 'allowSvg',
+          type: 'checkbox',
+          label: 'Allow SVG uploads',
+          defaultValue: false,
+          admin: {
+            description:
+              'Off by default. When on, SVG pictures can be uploaded. Each one is cleaned on upload against an allow-list: scripts, style sheets, event handlers, links and imports to other addresses, and any element or attribute not on the list are removed. A file with a DOCTYPE, an entity or a processing instruction is refused. Switching this off does not change SVGs already in the library.',
           },
         },
         {
@@ -297,6 +308,16 @@ export const MediaSettings: GlobalConfig = {
           access: { read: adminOnlyFieldAccess, update: adminOnlyFieldAccess },
           hooks: { beforeChange: [encryptSecretHook], afterRead: [decryptSecretHook] },
           admin: { description: 'Found on your Pixabay account page under API.' },
+        },
+        {
+          name: 'openverseHosts',
+          type: 'textarea',
+          label: 'Openverse picture hosts',
+          defaultValue: OPENVERSE_IMAGE_HOSTS.join('\n'),
+          admin: {
+            description:
+              'The sites a picture may be imported from when it comes from Openverse, one per line (https only). Openverse links to creators’ own sites, so the list is yours to extend: add a host when a real import needs it. Start a line with *. to allow every subdomain of a name. Blank means the built-in list.',
+          },
         },
       ],
     },

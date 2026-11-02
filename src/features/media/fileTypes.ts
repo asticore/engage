@@ -20,6 +20,8 @@
  * exactly the same rules.
  */
 
+import { sanitiseSvg } from './svgSanitise'
+
 export type FileKind = 'image' | 'pdf' | 'document' | 'spreadsheet' | 'presentation' | 'text' | 'archive' | 'audio' | 'video' | 'other'
 
 export type AcceptedType = {
@@ -87,6 +89,9 @@ const isIco = (b: Uint8Array): boolean => startsWith(b, [0x00, 0x00, 0x01, 0x00]
 const isTiff = (b: Uint8Array): boolean => startsWith(b, [0x49, 0x49, 0x2a, 0x00]) || startsWith(b, [0x4d, 0x4d, 0x00, 0x2a])
 /** HEIF still pictures carry one of these brands in the `ftyp` box. */
 const isHeic = (b: Uint8Array): boolean => ascii(b, 4, 'ftyp') && ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'].some((brand) => ascii(b, 8, brand))
+/** An SVG picture: optional XML declaration and comments, then an svg root. Its contents are checked by svgSanitise.ts. */
+const SVG_OPENING = /^\uFEFF?\s*(?:<\?xml[^>]*\?>\s*)?(?:<!--[\s\S]*?-->\s*)*<svg[\s>]/i
+const isSvg = (b: Uint8Array): boolean => SVG_OPENING.test(new TextDecoder('utf-8').decode(b.subarray(0, 4096)))
 const isOgg = (b: Uint8Array): boolean => ascii(b, 0, 'OggS')
 const isM4a = (b: Uint8Array): boolean => ascii(b, 4, 'ftypM4A') || ascii(b, 4, 'ftypM4B')
 const isRtf = (b: Uint8Array): boolean => ascii(b, 0, '{\\rtf')
@@ -114,6 +119,8 @@ export const ACCEPTED_TYPES: AcceptedType[] = [
   { extension: 'bmp', mimeType: 'image/bmp', kind: 'image', label: 'BMP picture', sniff: (b) => ascii(b, 0, 'BM') },
   { extension: 'tiff', mimeType: 'image/tiff', kind: 'image', label: 'TIFF picture', sniff: isTiff },
   { extension: 'ico', mimeType: 'image/x-icon', kind: 'image', label: 'Icon (.ico)', sniff: isIco },
+  // Off unless Media settings "Allow SVG uploads" is on (see SETTING_GATED_EXTENSIONS). Stored only after cleaning.
+  { extension: 'svg', mimeType: 'image/svg+xml', kind: 'image', label: 'SVG picture', sniff: isSvg },
   { extension: 'pdf', mimeType: 'application/pdf', kind: 'pdf', label: 'PDF', sniff: (b) => containsAscii(b.subarray(0, 1024), '%PDF-') },
   { extension: 'doc', mimeType: 'application/msword', kind: 'document', label: 'Word document (.doc)', sniff: isOle },
   { extension: 'docx', mimeType: `${OOXML}.wordprocessingml.document`, kind: 'document', label: 'Word document', sniff: isOoxml },
@@ -141,17 +148,23 @@ const BY_EXTENSION = new Map(ACCEPTED_TYPES.map((type) => [type.extension, type]
 /** Every extension the library knows how to check, in menu order. */
 export const ACCEPTABLE_EXTENSIONS: string[] = ACCEPTED_TYPES.map((type) => type.extension)
 
-/** The allow-list used until an admin edits it: everything on the menu. */
-export const DEFAULT_ALLOWED_EXTENSIONS: string[] = [...ACCEPTABLE_EXTENSIONS]
+/** Types that are accepted only when their own Media settings switch is on. */
+export const SETTING_GATED_EXTENSIONS: string[] = ['svg']
+
+/** The allow-list used until an admin edits it: everything on the menu except the switched types. */
+export const DEFAULT_ALLOWED_EXTENSIONS: string[] = ACCEPTABLE_EXTENSIONS.filter((extension) => !SETTING_GATED_EXTENSIONS.includes(extension))
 
 export type UploadPolicy = {
   allowedExtensions: string[]
   maxBytes: number
+  /** Media settings > Uploads > Allow SVG uploads. Off by default. */
+  allowSvg: boolean
 }
 
 export const DEFAULT_UPLOAD_POLICY: UploadPolicy = {
   allowedExtensions: DEFAULT_ALLOWED_EXTENSIONS,
   maxBytes: DEFAULT_MAX_UPLOAD_MB * 1024 * 1024,
+  allowSvg: false,
 }
 
 /**
@@ -163,15 +176,18 @@ export const DEFAULT_UPLOAD_POLICY: UploadPolicy = {
 export function resolveUploadPolicy(settings: unknown): UploadPolicy {
   const uploads = ((settings ?? {}) as { uploads?: Record<string, unknown> }).uploads ?? {}
   const entered = typeof uploads.allowedExtensions === 'string' ? uploads.allowedExtensions : ''
-  const extensions = entered
+  // SVG is controlled by its own switch alone: on means svg is allowed whatever the list says, off means it is never allowed.
+  const allowSvg = uploads.allowSvg === true || uploads.allowSvg === 'true'
+  const listed = entered
     .split(/[\s,;]+/)
     .map((item) => item.replace(/^\*?\./, '').trim().toLowerCase())
-    .filter((item) => BY_EXTENSION.has(item))
-  const allowedExtensions = extensions.length > 0 ? Array.from(new Set(extensions)) : DEFAULT_ALLOWED_EXTENSIONS
+    .filter((item) => BY_EXTENSION.has(item) && !SETTING_GATED_EXTENSIONS.includes(item))
+  const allowedExtensions = listed.length > 0 ? Array.from(new Set(listed)) : [...DEFAULT_ALLOWED_EXTENSIONS]
+  if (allowSvg) allowedExtensions.push(...SETTING_GATED_EXTENSIONS)
 
   const rawMb = typeof uploads.maxUploadMb === 'number' ? uploads.maxUploadMb : Number(uploads.maxUploadMb)
   const mb = Number.isFinite(rawMb) && rawMb > 0 ? Math.min(rawMb, MAX_UPLOAD_MB_CEILING) : DEFAULT_MAX_UPLOAD_MB
-  return { allowedExtensions, maxBytes: Math.floor(mb * 1024 * 1024) }
+  return { allowedExtensions, maxBytes: Math.floor(mb * 1024 * 1024), allowSvg }
 }
 
 export class UploadRefusal extends Error {
@@ -189,15 +205,18 @@ const DANGEROUS_EXTENSIONS = new Set([
   'exe', 'dll', 'bat', 'cmd', 'msi', 'scr', 'cpl', 'lnk', 'pif', 'jar', 'war', 'ear',
   'dmg', 'deb', 'rpm', 'apk', 'reg', 'hta', 'gadget',
   'js', 'jse', 'mjs', 'cjs', 'vbs', 'vbe', 'ws', 'wsc', 'wsf', 'wsh', 'ps1', 'psc1', 'psd1', 'psm1', 'psh', 'sh', 'bash', 'zsh', 'py', 'rb', 'pl', 'php', 'phtml', 'phar', 'jsp', 'asp', 'aspx', 'cgi',
-  'html', 'htm', 'xhtml', 'shtml', 'xml', 'xsl', 'xslt', 'svg', 'svgz', 'swf',
+  'html', 'htm', 'xhtml', 'shtml', 'xml', 'xsl', 'xslt', 'svgz', 'swf',
 ])
 
 /** Declared types that are refused whatever the extension says. */
 const DENIED_DECLARED_TYPES = new Set([
-  'text/html', 'application/xhtml+xml', 'text/xml', 'application/xml', 'image/svg+xml', 'text/javascript', 'application/javascript',
+  'text/html', 'application/xhtml+xml', 'text/xml', 'application/xml', 'text/javascript', 'application/javascript',
   'application/x-msdownload', 'application/x-executable', 'application/x-msdos-program', 'application/x-ms-dos-executable',
   'application/vnd.microsoft.portable-executable', 'application/x-sh', 'application/x-httpd-php', 'application/java-archive',
 ])
+
+/** The SVG switch is off, so an SVG is refused with this message. */
+const SVG_OFF_MESSAGE = 'SVG pictures are not allowed on this site. An administrator can allow them in Media settings (Allow SVG uploads); each one is then cleaned before it is stored.'
 
 /** Lowercases a declared type and drops its parameters. */
 export function normaliseDeclaredType(value: string | null | undefined): string {
@@ -225,6 +244,8 @@ export function cleanFileName(name: string): { base: string; extension: string }
 export type InspectedUpload = {
   /** Safe name to store under (before collision handling). */
   name: string
+  /** The bytes to store. The same bytes as sent, except an SVG, which is the cleaned copy (see svgSanitise.ts). */
+  data: Uint8Array
   /** The type worked out from the bytes. Use this, never the declared one. */
   mimeType: string
   kind: FileKind
@@ -249,6 +270,7 @@ export function inspectUpload(
   if (originalName.includes('\0')) throw new UploadRefusal('That file name contains a hidden character and was refused.', 400)
 
   const declared = normaliseDeclaredType(file.mimetype)
+  if (declared === 'image/svg+xml' && !policy.allowSvg) throw new UploadRefusal(SVG_OFF_MESSAGE)
   if (DENIED_DECLARED_TYPES.has(declared)) {
     throw new UploadRefusal(`This kind of file (${declared}) is not allowed. HTML, SVG, XML, scripts and programs cannot be uploaded.`)
   }
@@ -271,6 +293,7 @@ export function inspectUpload(
 
   let match: AcceptedType | undefined
   let finalExtension = extension
+  if (extension === 'svg' && !policy.allowSvg) throw new UploadRefusal(SVG_OFF_MESSAGE)
   if (extension) {
     const byName = BY_EXTENSION.get(extension)
     if (!byName || (enforce && !allowed.has(extension))) {
@@ -294,7 +317,16 @@ export function inspectUpload(
   }
 
   if (!base) throw new UploadRefusal('This file needs a name that uses letters or numbers.', 400)
-  return { name: `${base}.${finalExtension}`, mimeType: match.mimeType, kind: match.kind, extension: finalExtension }
+
+  // An SVG (named .svg, or a picture whose bytes are SVG) is stored only as the cleaned copy, and only when the switch is on.
+  let data = file.data
+  if (match.extension === 'svg') {
+    if (!policy.allowSvg) throw new UploadRefusal(SVG_OFF_MESSAGE)
+    const cleaned = sanitiseSvg(file.data)
+    if (cleaned.ok === false) throw new UploadRefusal(cleaned.reason)
+    data = cleaned.bytes
+  }
+  return { name: `${base}.${finalExtension}`, data, mimeType: match.mimeType, kind: match.kind, extension: finalExtension }
 }
 
 /** Which family a stored type belongs to, for icons and for deciding what is shown inline. Works on any declared or stored type. */
@@ -327,5 +359,5 @@ export const FILE_KIND_LABELS: Record<FileKind, string> = {
   other: 'File',
 }
 
-/** The picture types a browser may show inline. SVG is deliberately absent. */
+/** The picture types the gallery previews inline and opens. SVG is left out, so the gallery offers it as a download. */
 export const INLINE_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'])

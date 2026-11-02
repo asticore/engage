@@ -80,7 +80,7 @@ export async function ListView({
   // Section tabs (Forms | Submissions, Events | RSVPs, Tests | Results): the tab bar sits above everything.
   const sectionTabs = resolveSectionTabs(collectionSlug, {
     isAdmin: context.isAdmin,
-    canRead: (slug) => Boolean(context.permissions.collections?.[slug]?.read),
+    canRead: (slug) => (slug === 'event-rsvps' ? context.isAdmin || context.can('event-rsvps', 'read') : Boolean(context.permissions.collections?.[slug]?.read)),
     canUpdate: (slug) => Boolean(context.permissions.collections?.[slug]?.update),
   })
   const requestedTab = typeof searchParams.tab === 'string' ? searchParams.tab : null

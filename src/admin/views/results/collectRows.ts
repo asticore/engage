@@ -13,6 +13,8 @@ export type FindArgs = {
   limit?: number
   depth?: number
   user?: unknown
+  /** Read every matching document without the collection's own access rule. Only for a route that has already checked its own permission. */
+  overrideAccess?: boolean
 }
 
 export type FindEngine = {

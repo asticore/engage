@@ -141,6 +141,7 @@ import * as migration_20270223_100000_not_found_log from './20270223_100000_not_
 import * as migration_20270223_110000_coupon_reservations from './20270223_110000_coupon_reservations';
 import * as migration_20270223_120000_consent_logo from './20270223_120000_consent_logo';
 import * as migration_20270224_100000_block_form_id from './20270224_100000_block_form_id';
+import * as migration_20270303_100000_svg_and_openverse_hosts from './20270303_100000_svg_and_openverse_hosts';
 
 export const migrations = [
   {
@@ -852,5 +853,10 @@ export const migrations = [
     up: migration_20270224_100000_block_form_id.up,
     down: migration_20270224_100000_block_form_id.down,
     name: '20270224_100000_block_form_id',
+  },
+  {
+    up: migration_20270303_100000_svg_and_openverse_hosts.up,
+    down: migration_20270303_100000_svg_and_openverse_hosts.down,
+    name: '20270303_100000_svg_and_openverse_hosts',
   },
 ];

@@ -12,7 +12,7 @@ import {
   StockError,
   type StockProvider,
 } from '@/features/media/stock'
-import { readJsonBody, readStockKeys, type MediaEngine } from '@/features/media/store'
+import { readJsonBody, readOpenverseHosts, readStockKeys, type MediaEngine } from '@/features/media/store'
 import type { UploadFile } from '@/localapi/uploads'
 
 const PROVIDER_LABELS: Record<StockProvider, string> = {
@@ -51,11 +51,14 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const keys = await readStockKeys(engine)
+    const openverseHosts = await readOpenverseHosts(engine)
     const address = await resolveImportUrl(
       { provider, id, full: text(body.full, 2048), downloadLocation: text(body.downloadLocation, 2048) },
       keys,
+      undefined,
+      openverseHosts,
     )
-    const { data, mimeType } = await fetchImportBytes(address, importAllowList(provider))
+    const { data, mimeType } = await fetchImportBytes(address, importAllowList(provider, openverseHosts))
 
     const file: UploadFile = {
       data,
