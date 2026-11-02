@@ -35,7 +35,7 @@ describe('runInternalMigrate - media library upgrade on an empty D1', () => {
 
   beforeAll(async () => {
     proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    outcome = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    outcome = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
   }, 300_000)
 
   afterAll(async () => {
@@ -68,7 +68,7 @@ describe('runInternalMigrate - media library upgrade on an empty D1', () => {
   })
 
   it('is safe to run a second time and does not duplicate columns', async () => {
-    const again = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true })
+    const again = await runInternalMigrate(proxy.env.D1, consoleLogger, { provisionAll: true, baseline: false })
     expect(again.errorCount).toBe(0)
     const columns = await columnsOf('eg_media')
     expect(columns.filter((column) => column === 'folder')).toHaveLength(1)
