@@ -120,3 +120,19 @@ export async function applyFreshBaseline(
   )
   return { tables: tables.length, indexes: indexes.length, seeds, migrations: baseline.migrations.length }
 }
+
+/**
+ * Creates one section's tables and indexes from the baseline DDL, ahead of the migration replay that
+ * provisions it. A section switched on later would otherwise be created after the content tables were
+ * renamed to `eg_`, and its foreign keys would keep naming the retired tables (`users`, `media`), which
+ * makes every insert fail. The replay that follows is idempotent, and its statements aimed at retired
+ * names are held back once the `eg_` tables exist (see `deferTables`), so it only adds what is missing.
+ * Tables the baseline does not know (a section added after it was generated) are left to the replay.
+ */
+export async function applyFeatureBaseline(db: D1Database, feature: FeatureKey, baseline: FreshBaseline = FRESH_BASELINE): Promise<number> {
+  const tables = baseline.tables.filter((entry) => ownerOfTable(entry.table) === feature)
+  const indexes = baseline.indexes.filter((entry) => ownerOfTable(entry.table) === feature)
+  await runBatched(db, tables.map((entry) => db.prepare(idempotent(entry.sql))))
+  await runBatched(db, indexes.map((entry) => db.prepare(idempotent(entry.sql))))
+  return tables.length
+}

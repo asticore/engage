@@ -14,6 +14,7 @@ import { FEATURES, type FeatureKey } from '@/features/registry'
 import { FEATURES_WITH_TABLES } from '@/features/featureTables'
 import type { EngineLogger } from '@/localapi/logger'
 
+import { applyFeatureBaseline } from './baseline/applyBaseline'
 import { runInternalMigrate } from './runInternalMigrate'
 import { readFeatureTableStates, setFeatureState } from './schema/featureTablesState'
 
@@ -29,6 +30,11 @@ export async function isFeatureDeferred(db: D1Database, key: FeatureKey): Promis
 export async function provisionFeature(db: D1Database, logger: EngineLogger, key: FeatureKey): Promise<ProvisionResult> {
   if (!(await isFeatureDeferred(db, key))) return { ok: true, alreadyProvisioned: true, errors: [] }
 
+  try {
+    await applyFeatureBaseline(db, key)
+  } catch (error) {
+    return { ok: false, alreadyProvisioned: false, errors: [`Creating the ${key} tables failed: ${error instanceof Error ? error.message : String(error)}`] }
+  }
   const run = await runInternalMigrate(db, logger, { onlyFeature: key })
   if (run.errorCount > 0) {
     return { ok: false, alreadyProvisioned: false, errors: [`Creating the ${key} tables failed (${run.errorCount} error(s)); nothing was switched on.`] }
