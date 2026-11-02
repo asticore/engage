@@ -45,6 +45,8 @@ const blankDraft = (choices: CollectionChoice[]): Draft => {
     maxLimit: 100,
     allowCreate: false,
     allowUpdate: false,
+    allowDelete: false,
+    customKinds: {},
     requiredRole: 'staff',
     allowedKeyIds: null,
     rateLimitPerMinute: 60,
@@ -68,6 +70,8 @@ const draftFrom = (e: ApiEndpoint): Draft => ({
   maxLimit: e.maxLimit,
   allowCreate: e.allowCreate,
   allowUpdate: e.allowUpdate,
+  allowDelete: e.allowDelete === true,
+  customKinds: e.customKinds ?? {},
   requiredRole: e.requiredRole,
   allowedKeyIds: e.allowedKeyIds,
   rateLimitPerMinute: e.rateLimitPerMinute,
@@ -75,13 +79,38 @@ const draftFrom = (e: ApiEndpoint): Draft => ({
   responseFormat: e.responseFormat,
 })
 
-const GUIDE_DOWNLOADS: Array<{ format: string; label: 'apiBuilder.guide.format.openapiJson' | 'apiBuilder.guide.format.openapiYaml' | 'apiBuilder.guide.format.markdown' | 'apiBuilder.guide.format.html' | 'apiBuilder.guide.format.postman' }> = [
+const GUIDE_DOWNLOADS: Array<{ format: string; label: 'apiBuilder.guide.format.openapiJson' | 'apiBuilder.guide.format.openapiYaml' | 'apiBuilder.guide.format.markdown' | 'apiBuilder.guide.format.html' | 'apiBuilder.guide.format.pdf' | 'apiBuilder.guide.format.postman' }> = [
   { format: 'openapi.json', label: 'apiBuilder.guide.format.openapiJson' },
   { format: 'openapi.yaml', label: 'apiBuilder.guide.format.openapiYaml' },
   { format: 'guide.md', label: 'apiBuilder.guide.format.markdown' },
   { format: 'guide.html', label: 'apiBuilder.guide.format.html' },
+  { format: 'guide.pdf', label: 'apiBuilder.guide.format.pdf' },
   { format: 'postman.json', label: 'apiBuilder.guide.format.postman' },
 ]
+
+/** The read-only guide link, with a mailto and a copy action. The message has no API key in it. */
+const SendToDeveloper: React.FC<{ siteName: string; link: string }> = ({ siteName, link }) => {
+  const t = useAdminT()
+  const [copied, setCopied] = useState(false)
+  const pdf = `${link}?format=guide.pdf`
+  const subject = t('apiBuilder.send.subject', { site: siteName })
+  const message = t('apiBuilder.send.body', { site: siteName, link, pdf })
+  const mailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
+  return (
+    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+      <a href={mailto}>{t('apiBuilder.send.email')}</a>
+      <button
+        type="button"
+        onClick={async () => {
+          await navigator.clipboard.writeText(`${subject}\n\n${message}`).catch((): undefined => undefined)
+          setCopied(true)
+        }}
+      >
+        {copied ? t('apiBuilder.send.copied') : t('apiBuilder.send.copyMessage')}
+      </button>
+    </div>
+  )
+}
 
 const toggle = <T,>(list: T[], item: T): T[] => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item])
 
@@ -346,7 +375,10 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
             <label>
               <input type="checkbox" checked={draft.allowUpdate} onChange={(ev) => set('allowUpdate', ev.target.checked)} /> {t('apiBuilder.field.allowUpdate')}
             </label>
-            <small>{t('apiBuilder.field.deleteNever')}</small>
+            <label>
+              <input type="checkbox" checked={draft.allowDelete} onChange={(ev) => set('allowDelete', ev.target.checked)} /> {t('apiBuilder.field.allowDelete')}
+            </label>
+            <small>{t('apiBuilder.field.allowDeleteHelp')}</small>
           </fieldset>
 
           <fieldset style={{ display: 'grid', gap: '0.5rem' }}>
@@ -509,6 +541,16 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
       </section>
 
       <section style={{ display: 'grid', gap: '0.5rem' }}>
+        <h2>{t('apiBuilder.send.title')}</h2>
+        <p>{t('apiBuilder.send.intro')}</p>
+        {publicOn && publicPath ? (
+          <SendToDeveloper siteName={initial.siteName} link={`${window.location.origin}${publicPath}`} />
+        ) : (
+          <small>{t('apiBuilder.send.needLink')}</small>
+        )}
+      </section>
+
+      <section style={{ display: 'grid', gap: '0.5rem' }}>
         <h2>{t('apiBuilder.keys.title')}</h2>
         <p>{t('apiBuilder.keys.intro')}</p>
         <ApiKeysPanel initial={initial.keys} showOwner />
@@ -524,7 +566,7 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
 const TryIt: React.FC<{ endpoint: ApiEndpoint | null }> = ({ endpoint }) => {
   const t = useAdminT()
   const [pasted, setPasted] = useState('')
-  const [method, setMethod] = useState<'GET' | 'POST' | 'PATCH'>('GET')
+  const [method, setMethod] = useState<'GET' | 'POST' | 'PATCH' | 'DELETE'>('GET')
   const [query, setQuery] = useState('')
   const [recordId, setRecordId] = useState('')
   const [body, setBody] = useState('{}')
@@ -538,7 +580,7 @@ const TryIt: React.FC<{ endpoint: ApiEndpoint | null }> = ({ endpoint }) => {
   const send = async (key: string) => {
     const url = `${path}${query ? `?${query.replace(/^\?/, '')}` : ''}`
     const init: RequestInit = { method, headers: { Authorization: `Bearer ${key}` } }
-    if (method !== 'GET') {
+    if (method === 'POST' || method === 'PATCH') {
       init.body = body
       ;(init.headers as Record<string, string>)['Content-Type'] = 'application/json'
     }
@@ -595,10 +637,11 @@ const TryIt: React.FC<{ endpoint: ApiEndpoint | null }> = ({ endpoint }) => {
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
         <label>
           {t('apiBuilder.tryIt.method')}
-          <select value={method} onChange={(ev) => setMethod(ev.target.value as 'GET' | 'POST' | 'PATCH')}>
+          <select value={method} onChange={(ev) => setMethod(ev.target.value as 'GET' | 'POST' | 'PATCH' | 'DELETE')}>
             <option value="GET">GET</option>
             {endpoint.allowCreate && <option value="POST">POST</option>}
             {endpoint.allowUpdate && <option value="PATCH">PATCH</option>}
+            {endpoint.allowDelete && <option value="DELETE">DELETE</option>}
           </select>
         </label>
         <label>
@@ -612,7 +655,7 @@ const TryIt: React.FC<{ endpoint: ApiEndpoint | null }> = ({ endpoint }) => {
           </label>
         )}
       </div>
-      {method !== 'GET' && (
+      {(method === 'POST' || method === 'PATCH') && (
         <label>
           {t('apiBuilder.tryIt.body')}
           <textarea rows={5} value={body} onChange={(ev) => setBody(ev.target.value)} />

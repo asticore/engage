@@ -8,6 +8,7 @@ import type { ApiEndpoint } from '@/features/apiBuilder/core'
 import type { EndpointStore } from '@/features/apiBuilder/store'
 
 const endpoint = (over: Partial<ApiEndpoint> = {}): ApiEndpoint => ({
+  allowDelete: false, customKinds: {},
   id: 1, name: 'Products lite', description: 'Public product list', version: 'v1', slug: 'products-lite', collection: 'products',
   fields: ['title', 'price'], filters: [{ field: 'title', operators: ['eq', 'contains'] }], sortable: ['price'], defaultSort: '-price',
   defaultLimit: 20, maxLimit: 50, allowCreate: true, allowUpdate: true, requiredRole: 'any', allowedKeyIds: null,
