@@ -101,12 +101,18 @@ describe('buildMetadata', () => {
   })
 
   it('sets canonical URL from seo.canonicalUrl (path)', async () => {
-    const metadata = await buildMetadata({
-      title: 'Test',
-      path: '/blog/post',
-      seo: { canonicalUrl: '/other-path' },
-    })
-    expect(metadata.alternates?.canonical).toMatch(/https:\/\/.*\/other-path$/)
+    // A relative canonical needs an origin: SITE_URL (there is no built-in domain since Task 15).
+    vi.stubEnv('SITE_URL', 'https://example.test')
+    try {
+      const metadata = await buildMetadata({
+        title: 'Test',
+        path: '/blog/post',
+        seo: { canonicalUrl: '/other-path' },
+      })
+      expect(metadata.alternates?.canonical).toBe('https://example.test/other-path')
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 
   it('uses X card type from seo.xCard', async () => {

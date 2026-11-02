@@ -9,6 +9,8 @@ import { EventCard } from '@/components/EventCard'
 import { ProductCard } from '@/components/ProductCard'
 import { getEngine } from '@/lib/engine'
 import { getHomepage } from '@/utilities/pagePaths'
+import { siteNameOf } from '@/features/brand/siteName'
+import { getSiteSnapshot } from '@/features/speed/siteSnapshot'
 import { buildMetadata } from '@/utilities/seo'
 import { PageJsonLd } from '@/features/seo'
 import { PasswordGate } from '@/components/PasswordGate'
@@ -39,7 +41,8 @@ export async function generateMetadata(): Promise<Metadata> {
     }
   }
 
-  return buildMetadata({ title: homepage?.title || 'Grace & Gatsby', seo: homepage?.seo, path: '/' })
+  const siteName = siteNameOf((await getSiteSnapshot()).settings)
+  return buildMetadata({ title: homepage?.title || siteName, seo: homepage?.seo, path: '/' })
 }
 
 export default async function HomePage({
@@ -80,6 +83,7 @@ export default async function HomePage({
 }
 
 async function DefaultHomepage() {
+  const siteName = siteNameOf((await getSiteSnapshot()).settings)
   const engine = await getEngine()
   const now = new Date().toISOString()
 
@@ -107,7 +111,7 @@ async function DefaultHomepage() {
       <section className="hero">
         <div className="hero__inner">
           <p className="hero__eyebrow">Brisbane, Australia</p>
-          <h1>Grace &amp; Gatsby</h1>
+          <h1>{siteName}</h1>
           <p className="hero__tagline">
             A curated boutique for the modern romantic - considered pieces, small-batch goods, and
             evenings worth dressing up for.
@@ -170,7 +174,7 @@ async function DefaultHomepage() {
         <div className="page-shell about-section__inner">
           <h2>Our story</h2>
           <p>
-            Grace &amp; Gatsby began as a love letter to considered style - Art Deco glamour reimagined
+            {siteName} began as a love letter to considered style - Art Deco glamour reimagined
             for everyday wear. Every piece in the shop is chosen for the way it makes you feel, and
             every event on our calendar is an excuse to wear it.
           </p>
