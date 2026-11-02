@@ -1,5 +1,7 @@
 import type { Engine } from '@/engine'
 
+import { siteNameOf } from '@/features/brand/siteName'
+
 // Shared, idempotent seed logic for the starter Home page + Page Templates.
 // Used by BOTH:
 //  - the dev/local migration (src/migrations/20260822_120000_seed_home_and_templates.ts),
@@ -49,6 +51,9 @@ export async function seedHomeAndTemplates(
   })
 
   if (homepageCount === 0) {
+    // The starter hero names the site from Site Settings. Read only when the Home page is created (once per install),
+    // through the shared snapshot; a blank or missing name falls back to the neutral default.
+    const siteName = siteNameOf((await (await import('@/features/speed/siteSnapshot')).getSiteSnapshot()).settings)
     await engine.create({
       collection: 'pages',
       overrideAccess: true,
@@ -60,7 +65,7 @@ export async function seedHomeAndTemplates(
         blocks: [
           {
             blockType: 'hero',
-            heading: 'Grace & Gatsby',
+            heading: siteName,
             subheading:
               'A curated boutique for the modern romantic - considered pieces, small-batch goods, and evenings worth dressing up for.',
             primaryCtaLabel: 'Shop the collection',

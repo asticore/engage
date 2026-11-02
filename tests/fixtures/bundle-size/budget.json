@@ -1,0 +1,6 @@
+{
+  "defaultRouteGzipKB": 0.5,
+  "routes": {
+    "/(frontend)/page": 0.75
+  }
+}

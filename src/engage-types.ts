@@ -231,7 +231,20 @@ export interface User {
       }[]
     | null;
   password?: string | null;
-  collection: 'users';
+  allowedDomains?: string | null;
+  createdBy?: number | null;
+  updatedBy?: number | null;
+  emailVerifiedAt?: string | null;
+  emailVerifyTokenHash?: string | null;
+  emailVerifyExpiresAt?: string | null;
+  twoFactorBackupHashes?: string | null;
+  adminLanguage?: string | null;
+  customRole?: number | null;
+  permissionOverrides?: unknown;
+  twoFactorEnabled?: boolean | null;
+  twoFactorSecret?: string | null;
+  twoFactorConfirmedAt?: string | null;
+  twoFactorLastUsedStep?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -249,6 +262,21 @@ export interface Media {
   filesize?: number | null;
   width?: number | null;
   height?: number | null;
+  caption?: string | null;
+  folder?: string | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  crop?: unknown;
+  credit?: string | null;
+  license?: string | null;
+  sourceUrl?: string | null;
+  source?: string | null;
+  originalSize?: number | null;
+  optimizedSize?: number | null;
+  outputFormat?: string | null;
+  poster?: number | null;
+  streamUid?: string | null;
+  conversionStatus?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -318,6 +346,37 @@ export interface Event {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+  recurrenceFrequency?: string | null;
+  recurrenceInterval?: number | null;
+  recurrenceWeekdays?: string | null;
+  recurrenceMonthlyBy?: string | null;
+  recurrenceCount?: number | null;
+  recurrenceUntil?: string | null;
+  recurrenceExceptions?: string | null;
+  seriesOf?: number | null;
+  ticketTiers?: unknown;
+  seoFocusKeyphrase?: string | null;
+  seoMetaTitle?: string | null;
+  seoMetaDescription?: string | null;
+  seoCanonicalUrl?: string | null;
+  seoNoIndex?: boolean | null;
+  seoNoFollow?: boolean | null;
+  seoSocialTitle?: string | null;
+  seoSocialDescription?: string | null;
+  seoOgImage?: number | null;
+  seoXCard?: string | null;
+  seoXImage?: number | null;
+  createdBy?: number | null;
+  updatedBy?: number | null;
+  reviewStatus?: string | null;
+  reviewRequestedBy?: number | null;
+  reviewRequestedAt?: string | null;
+  reviewApprovals?: unknown;
+  reviewStep?: number | null;
+  schemaType?: string | null;
+  pagespeedScore?: number | null;
+  pagespeedAt?: string | null;
+  trashedAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -681,6 +740,13 @@ export interface Product {
     metaDescription?: string | null;
     ogImage?: (number | null) | Media;
     noIndex?: boolean | null;
+    focusKeyphrase?: string | null;
+    canonicalUrl?: string | null;
+    noFollow?: boolean | null;
+    socialTitle?: string | null;
+    socialDescription?: string | null;
+    xCard?: ('summary' | 'summary_large_image') | null;
+    xImage?: number | null;
   };
   customFields?:
     | {
@@ -696,8 +762,57 @@ export interface Product {
   priceInAUD?: number | null;
   updatedAt: string;
   createdAt: string;
-  deletedAt?: string | null;
   _status?: ('draft' | 'published') | null;
+  availableDomains?: string | null;
+  productType?: string | null;
+  brand?: number | null;
+  sku?: string | null;
+  gtin?: string | null;
+  salePrice?: number | null;
+  saleFrom?: string | null;
+  saleTo?: string | null;
+  manageStock?: boolean | null;
+  stockQty?: number | null;
+  backorders?: string | null;
+  lowStockThreshold?: number | null;
+  stockStatus?: string | null;
+  minQty?: number | null;
+  maxQty?: number | null;
+  nameYourPrice?: boolean | null;
+  suggestedPrice?: number | null;
+  minPrice?: number | null;
+  isVirtual?: boolean | null;
+  isDownloadable?: boolean | null;
+  weight?: number | null;
+  length?: number | null;
+  width?: number | null;
+  height?: number | null;
+  shippingClass?: number | null;
+  taxClass?: string | null;
+  taxClassOther?: string | null;
+  downloadLimit?: number | null;
+  downloadExpiryDays?: number | null;
+  externalUrl?: string | null;
+  buttonText?: string | null;
+  preorder?: boolean | null;
+  preorderReleaseDate?: string | null;
+  preorderNote?: string | null;
+  bundlePricing?: string | null;
+  bundleDiscountPercent?: number | null;
+  subscription?: unknown;
+  ratingAverage?: number | null;
+  ratingCount?: number | null;
+  createdBy?: number | null;
+  updatedBy?: number | null;
+  reviewStatus?: string | null;
+  reviewRequestedBy?: number | null;
+  reviewRequestedAt?: string | null;
+  reviewApprovals?: unknown;
+  reviewStep?: number | null;
+  schemaType?: string | null;
+  noAds?: boolean | null;
+  pagespeedScore?: number | null;
+  pagespeedAt?: string | null;
 }
 /**
  * Reusable Q&A entries. Show them on the site FAQ page, or drop the FAQ block into any page/product.
@@ -1088,6 +1203,10 @@ export interface PageTemplate {
     | null;
   updatedAt: string;
   createdAt: string;
+  kind?: string | null;
+  category?: string | null;
+  previewImage?: number | null;
+  locks?: unknown;
 }
 /**
  * Build a form, then drop it onto any page with the Form block. Entries appear under Form Submissions.
@@ -1304,6 +1423,12 @@ export interface Form {
   };
   updatedAt: string;
   createdAt: string;
+  formStatus?: string | null;
+  allowSaveForLater?: boolean | null;
+  embedKey?: string | null;
+  layout?: unknown;
+  publishedLayout?: unknown;
+  formConfig?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1318,6 +1443,10 @@ export interface EventRsvp {
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
+  ticketTier?: string | null;
+  checkedIn?: boolean | null;
+  checkedInAt?: string | null;
+  reminderSentAt?: string | null;
 }
 /**
  * Every page on the site, including the homepage. Build sections from the block library (drag the ⚿ handle to reorder), set a Parent to nest it under another page, and add it to the menu under Header. Click "Edit visually" above to lay it out on a drag-and-drop canvas instead.
@@ -1355,6 +1484,14 @@ export interface Page {
      * Ask search engines not to index this page.
      */
     noIndex?: boolean | null;
+    focusKeyphrase?: string | null;
+    cornerstone?: boolean | null;
+    canonicalUrl?: string | null;
+    noFollow?: boolean | null;
+    socialTitle?: string | null;
+    socialDescription?: string | null;
+    xCard?: ('summary' | 'summary_large_image') | null;
+    xImage?: number | null;
   };
   blocks?:
     | (
@@ -1711,6 +1848,33 @@ export interface Page {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+  availableDomains?: string | null;
+  sortOrder?: number | null;
+  featuredImage?: number | null;
+  excerpt?: string | null;
+  locks?: unknown;
+  createdBy?: number | null;
+  updatedBy?: number | null;
+  reviewStatus?: string | null;
+  reviewRequestedBy?: number | null;
+  reviewRequestedAt?: string | null;
+  reviewApprovals?: unknown;
+  reviewStep?: number | null;
+  schemaType?: string | null;
+  noAds?: boolean | null;
+  pageAudioEnabled?: boolean | null;
+  pageAudioSourceType?: string | null;
+  pageAudioMedia?: number | null;
+  pageAudioUrl?: string | null;
+  pageAudioLoop?: boolean | null;
+  pageAudioVolume?: number | null;
+  pageAudioStartMuted?: boolean | null;
+  pageAudioShowControls?: boolean | null;
+  pageAudioStartOnFirstInteraction?: boolean | null;
+  pageAudioRespectReducedData?: boolean | null;
+  pagespeedScore?: number | null;
+  pagespeedAt?: string | null;
+  trashedAt?: string | null;
 }
 /**
  * The levels people can join at, what each costs, and what each unlocks.
@@ -2156,6 +2320,14 @@ export interface Post {
      * Ask search engines not to index this page.
      */
     noIndex?: boolean | null;
+    focusKeyphrase?: string | null;
+    cornerstone?: boolean | null;
+    canonicalUrl?: string | null;
+    noFollow?: boolean | null;
+    socialTitle?: string | null;
+    socialDescription?: string | null;
+    xCard?: ('summary' | 'summary_large_image') | null;
+    xImage?: number | null;
   };
   customFields?:
     | {
@@ -2182,6 +2354,32 @@ export interface Post {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+  availableDomains?: string | null;
+  pageAudioEnabled?: boolean | null;
+  pageAudioSourceType?: string | null;
+  pageAudioMedia?: number | null;
+  pageAudioUrl?: string | null;
+  pageAudioLoop?: boolean | null;
+  pageAudioVolume?: number | null;
+  pageAudioStartMuted?: boolean | null;
+  pageAudioShowControls?: boolean | null;
+  pageAudioStartOnFirstInteraction?: boolean | null;
+  pageAudioRespectReducedData?: boolean | null;
+  hideAuthor?: boolean | null;
+  createdBy?: number | null;
+  updatedBy?: number | null;
+  reviewStatus?: string | null;
+  reviewRequestedBy?: number | null;
+  reviewRequestedAt?: string | null;
+  reviewApprovals?: unknown;
+  reviewStep?: number | null;
+  schemaType?: string | null;
+  noAds?: boolean | null;
+  pagespeedScore?: number | null;
+  pagespeedAt?: string | null;
+  sticky?: boolean | null;
+  readingTime?: number | null;
+  trashedAt?: string | null;
 }
 /**
  * Define extra fields for your content - like Advanced Custom Fields. Pick which collections they appear on, and they show up as real inputs when editing those items. Use them in templates as {{field:the_field_name}}.
@@ -2232,6 +2430,8 @@ export interface FieldGroup {
     | null;
   updatedAt: string;
   createdAt: string;
+  definition?: unknown;
+  location?: unknown;
 }
 /**
  * A record of sign-ins and changes. Entries cannot be edited or removed here - they age out on their own once past the retention period set on the Security screen.
@@ -2313,6 +2513,14 @@ export interface FormSubmission {
   notificationStatus?: string | null;
   updatedAt: string;
   createdAt: string;
+  status?: string | null;
+  assignee?: number | null;
+  notes?: string | null;
+  sourceUrl?: string | null;
+  consent?: unknown;
+  webhookDeliveries?: unknown;
+  webhookState?: string | null;
+  webhookRetryAt?: string | null;
 }
 /**
  * Every backup that has been attempted, and how it went. A run still showing as "running" long after it started did not finish - take another one before relying on it.
@@ -2493,6 +2701,13 @@ export interface Course {
      * Ask search engines not to index this page.
      */
     noIndex?: boolean | null;
+    focusKeyphrase?: string | null;
+    canonicalUrl?: string | null;
+    noFollow?: boolean | null;
+    socialTitle?: string | null;
+    socialDescription?: string | null;
+    xCard?: ('summary' | 'summary_large_image') | null;
+    xImage?: number | null;
   };
   /**
    * Lessons in this course, in order. Add lessons from the Lessons screen and set their Order there.
@@ -2505,6 +2720,14 @@ export interface Course {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+  createdBy?: number | null;
+  updatedBy?: number | null;
+  reviewStatus?: string | null;
+  reviewRequestedBy?: number | null;
+  reviewRequestedAt?: string | null;
+  reviewApprovals?: unknown;
+  reviewStep?: number | null;
+  schemaType?: string | null;
 }
 /**
  * One lesson inside a course. Build the body from the same section library as a page, so the visual editor works here too.
