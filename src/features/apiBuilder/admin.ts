@@ -1,5 +1,5 @@
 import { SOURCE_COLLECTIONS, type FieldInfo, type SourceCollection } from '@/features/dataViews/catalogue'
-import { MAX_ENDPOINTS, isEndpointCollectionAllowed, isSecretLikeField, validateEndpoint, type ApiEndpoint, type ApiEndpointConfig, type ValidationResult } from './core'
+import { MAX_ENDPOINTS, isCustomKey, isEndpointCollectionAllowed, isSecretLikeField, validateEndpoint, type ApiEndpoint, type ApiEndpointConfig, type ValidationResult } from './core'
 import type { EndpointStore } from './store'
 
 /**
@@ -35,11 +35,13 @@ export function checkEndpointInput(input: unknown, context: EndpointInputContext
   const source = sources.find((c) => c.slug === raw.collection)
   if (!source) return { ok: false, error: 'Choose a collection this API may read.' }
   const exposable = new Set(source.fields.map((f) => f.key).filter((k) => !isSecretLikeField(k)))
+  const customKinds = Object.fromEntries(source.fields.filter((f) => isCustomKey(f.key)).map((f) => [f.key, f.kind]))
   return validateEndpoint(input, {
     exposable,
     collectionFields: new Set(source.fields.map((f) => f.key)),
     reserved: context.reserved,
     keyIds: context.keyIds,
+    customKinds,
   })
 }
 

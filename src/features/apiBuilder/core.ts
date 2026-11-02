@@ -1,3 +1,6 @@
+import { problem, englishOf } from './messages'
+import type { ApiProblem } from './messages'
+
 /**
  * API builder: the pure rules for custom endpoints. No database, no request
  * object, no engine, so every rule is unit-testable on its own.
@@ -22,6 +25,16 @@ export const DEFAULT_PAGE_SIZE = 20
 export const MAX_RATE_PER_MINUTE = 600
 export const DEFAULT_RATE_PER_MINUTE = 60
 export const MAX_ALLOWED_KEYS = 100
+
+/** Prefix of a custom field key in an endpoint's field list, for example `cf:size`. */
+export const CUSTOM_KEY_PREFIX = 'cf:'
+export const isCustomKey = (key: string): boolean => key.startsWith(CUSTOM_KEY_PREFIX)
+
+/** The kinds a custom field can show in a guide schema. */
+export type CustomKind = 'text' | 'number' | 'date' | 'boolean'
+
+/** Collections whose DELETE moves the record to the trash (the trash guard applies); every other collection deletes for good. */
+export const TRASHABLE_COLLECTIONS: ReadonlySet<string> = new Set(['pages', 'posts', 'events'])
 
 /** Words a custom endpoint name or version may never be, on top of every collection and global slug. */
 export const RESERVED_ENDPOINT_WORDS: ReadonlySet<string> = new Set([
@@ -92,9 +105,13 @@ export type ApiEndpointConfig = {
   defaultSort: string | null
   defaultLimit: number
   maxLimit: number
-  /** Create (POST) and update (PATCH) are opt-in. Reads are always on. Delete is never offered. */
+  /** Create (POST), update (PATCH) and delete (DELETE) are opt-in. Reads are always on. */
   allowCreate: boolean
   allowUpdate: boolean
+  /** Off by default. The owner must hold delete permission for the collection; audited on every call. */
+  allowDelete: boolean
+  /** The kind of each custom field the endpoint exposes, keyed by `cf:<name>`. Used by the guides. */
+  customKinds: Record<string, CustomKind>
   /** The role the key's owner must hold. */
   requiredRole: RequiredRole
   /** Keys (by id) allowed to call the endpoint. Null means any valid key whose scopes allow it. */
@@ -111,6 +128,7 @@ export type ApiEndpoint = ApiEndpointConfig & {
 }
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; error: string }
+export type ProblemResult<T> = { ok: true; value: T } | { ok: false; error: string; problem: ApiProblem }
 
 /**
  * Field names that are never exposed, never filtered, never sorted and never written by an endpoint.
@@ -158,7 +176,7 @@ export function parseFilterKey(key: string): { field: string; operator: FilterOp
 
 const SORT_KEY = /^-?([a-z0-9_]{1,64})$/
 
-export function validateEndpoint(input: unknown, context: { exposable: ReadonlySet<string>; collectionFields: ReadonlySet<string>; reserved?: ReadonlySet<string>; keyIds?: ReadonlySet<number> }): ValidationResult<ApiEndpointConfig> {
+export function validateEndpoint(input: unknown, context: { exposable: ReadonlySet<string>; collectionFields: ReadonlySet<string>; reserved?: ReadonlySet<string>; keyIds?: ReadonlySet<number>; customKinds?: Readonly<Record<string, CustomKind>> }): ValidationResult<ApiEndpointConfig> {
   if (!input || typeof input !== 'object') return { ok: false, error: 'The endpoint is missing its details.' }
   const raw = input as Record<string, unknown>
   const str = (value: unknown, max: number): string | null => (typeof value === 'string' && value.trim().length > 0 && value.trim().length <= max ? value.trim() : null)
@@ -191,6 +209,7 @@ export function validateEndpoint(input: unknown, context: { exposable: ReadonlyS
   for (const item of rawFilters) {
     const f = (item ?? {}) as Record<string, unknown>
     if (typeof f.field !== 'string' || !fields.includes(f.field)) return { ok: false, error: 'A filter must use one of the exposed fields.' }
+    if (isCustomKey(f.field)) return { ok: false, error: 'Custom fields can be shown and written, not filtered yet.' }
     const operators = (Array.isArray(f.operators) ? f.operators : []).filter((op): op is FilterOperator => (FILTER_OPERATORS as readonly string[]).includes(op as string))
     if (operators.length === 0) return { ok: false, error: `Choose at least one filter operator for ${f.field}.` }
     filters.push({ field: f.field, operators: [...new Set(operators)] })
@@ -199,6 +218,7 @@ export function validateEndpoint(input: unknown, context: { exposable: ReadonlyS
   const sortable: string[] = []
   for (const item of Array.isArray(raw.sortable) ? raw.sortable : []) {
     if (typeof item !== 'string' || !fields.includes(item)) return { ok: false, error: 'Sortable fields must be exposed fields.' }
+    if (isCustomKey(item)) return { ok: false, error: 'Custom fields can be shown and written, not sorted yet.' }
     if (!sortable.includes(item)) sortable.push(item)
   }
   let defaultSort: string | null = null
@@ -234,6 +254,11 @@ export function validateEndpoint(input: unknown, context: { exposable: ReadonlyS
 
   const responseFormat = (RESPONSE_FORMATS as readonly string[]).includes(raw.responseFormat as string) ? (raw.responseFormat as ResponseFormat) : 'envelope'
 
+  const customKinds: Record<string, CustomKind> = {}
+  for (const key of fields) {
+    if (isCustomKey(key)) customKinds[key] = context.customKinds?.[key] ?? 'text'
+  }
+
   return {
     ok: true,
     value: {
@@ -250,6 +275,8 @@ export function validateEndpoint(input: unknown, context: { exposable: ReadonlyS
       maxLimit,
       allowCreate: raw.allowCreate === true,
       allowUpdate: raw.allowUpdate === true,
+      allowDelete: raw.allowDelete === true,
+      customKinds,
       requiredRole,
       allowedKeyIds,
       rateLimitPerMinute,
@@ -267,10 +294,16 @@ function intIn(value: unknown, fallback: number, min: number, max: number): numb
 }
 
 /** Keeps only the exposed, non-secret keys of a document. The id is always kept. */
-export function projectDocument(doc: Record<string, unknown>, fields: readonly string[]): Record<string, unknown> {
+export function projectDocument(doc: Record<string, unknown>, fields: readonly string[], custom: Readonly<Record<string, unknown>> = {}): Record<string, unknown> {
   const out: Record<string, unknown> = { id: doc.id }
   for (const field of fields) {
     if (isSecretLikeField(field)) continue
+    if (isCustomKey(field)) {
+      // A custom field is read from the values this account may see on this record (see customValues.ts).
+      const name = field.slice(CUSTOM_KEY_PREFIX.length)
+      if (Object.prototype.hasOwnProperty.call(custom, name)) out[field] = custom[name]
+      continue
+    }
     if (Object.prototype.hasOwnProperty.call(doc, field)) out[field] = doc[field]
   }
   return out
@@ -295,7 +328,8 @@ export type ParsedQuery = {
  * Reads a request's query string against an endpoint. Unknown parameters are an error, so a
  * typo cannot silently return everything. `limit` is clamped to the endpoint's maximum.
  */
-export function parseEndpointQuery(endpoint: Pick<ApiEndpointConfig, 'fields' | 'filters' | 'sortable' | 'defaultSort' | 'defaultLimit' | 'maxLimit'>, params: URLSearchParams): ValidationResult<ParsedQuery> {
+export function parseEndpointQuery(endpoint: Pick<ApiEndpointConfig, 'fields' | 'filters' | 'sortable' | 'defaultSort' | 'defaultLimit' | 'maxLimit'>, params: URLSearchParams): ProblemResult<ParsedQuery> {
+  const fail = (p: ApiProblem): { ok: false; error: string; problem: ApiProblem } => ({ ok: false, error: englishOf(p), problem: p })
   const where: Record<string, Record<string, unknown>> = {}
   let sort: string | undefined = endpoint.defaultSort ?? undefined
   let limit = endpoint.defaultLimit
@@ -303,26 +337,26 @@ export function parseEndpointQuery(endpoint: Pick<ApiEndpointConfig, 'fields' | 
   for (const [key, value] of params.entries()) {
     if (key === 'limit') {
       const n = Number(value)
-      if (!Number.isInteger(n) || n < 1) return { ok: false, error: 'limit must be a whole number of 1 or more.' }
+      if (!Number.isInteger(n) || n < 1) return fail(problem('api.query.limitInvalid'))
       limit = Math.min(n, endpoint.maxLimit)
       continue
     }
     if (key === 'page') {
       const n = Number(value)
-      if (!Number.isInteger(n) || n < 1) return { ok: false, error: 'page must be a whole number of 1 or more.' }
+      if (!Number.isInteger(n) || n < 1) return fail(problem('api.query.pageInvalid'))
       page = n
       continue
     }
     if (key === 'sort') {
       const m = SORT_KEY.exec(value)
-      if (!m || !endpoint.sortable.includes(m[1])) return { ok: false, error: `You cannot sort by "${value}".` }
+      if (!m || !endpoint.sortable.includes(m[1])) return fail(problem('api.query.sortNotAllowed', { value }))
       sort = value
       continue
     }
     const parsed = parseFilterKey(key)
-    if (!parsed) return { ok: false, error: `Unknown parameter "${key}".` }
+    if (!parsed) return fail(problem('api.query.unknownParam', { key }))
     const filter = endpoint.filters.find((f) => f.field === parsed.field)
-    if (!filter || !filter.operators.includes(parsed.operator)) return { ok: false, error: `You cannot filter by "${key}".` }
+    if (!filter || !filter.operators.includes(parsed.operator)) return fail(problem('api.query.filterNotAllowed', { key }))
     where[parsed.field] = { ...(where[parsed.field] ?? {}), [ENGINE_OPERATOR[parsed.operator]]: value }
   }
   return { ok: true, value: { where, sort, limit, page } }

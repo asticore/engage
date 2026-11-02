@@ -4,9 +4,11 @@ import { collectionConfigs, globalConfigs } from '@/localapi/registry'
 import { createApiKey, listApiKeys, revokeApiKey, isActive, type ApiKeyRow, type ApiKeyDeps } from '@/features/apiKeys'
 import type { ApiKeyView } from '@/features/apiKeys/actions'
 import { audit } from '@/features/security/auditLog'
-import { SOURCE_COLLECTIONS } from '@/features/dataViews/catalogue'
+import { SOURCE_COLLECTIONS, buildCatalogue, type SourceCollection } from '@/features/dataViews/catalogue'
+import { loadFieldGroups } from '@/features/customFields/server'
 import { collectionChoices, createEndpoint, deleteEndpoint, setEndpointEnabled, updateEndpoint, type CollectionChoice } from './admin'
 import { RESERVED_ENDPOINT_WORDS, endpointPath, type ApiEndpoint, type ApiEndpointConfig } from './core'
+import { siteNameFor } from './guideResponse'
 import { gate, type Gate } from './gate'
 import { type CallLogEntry } from './store'
 
@@ -24,6 +26,7 @@ export type BuilderData = {
   reserved: string[]
   canEdit: boolean
   publicDocs: { enabled: boolean; path: string | null }
+  siteName: string
 }
 
 export type BuilderResult<T = undefined> = { ok: true; value?: T } | { ok: false; error: string }
@@ -36,6 +39,15 @@ const reservedWords = (): string[] => {
 }
 
 const reservedSet = (): ReadonlySet<string> => new Set(reservedWords())
+
+/** The collections an endpoint may point at, with each collection's custom fields that apply to it (cf:<name>). */
+async function sourcesWithCustom(): Promise<SourceCollection[]> {
+  const groups = await loadFieldGroups().catch((): never[] => [])
+  return SOURCE_COLLECTIONS.map((c) => {
+    const custom = buildCatalogue(c.slug, groups).filter((f) => f.origin === 'custom')
+    return { ...c, fields: [...c.fields, ...custom.map((f) => ({ ...f, path: `customFields.${f.key.slice(3)}` }))] }
+  })
+}
 
 const toKeyView = (row: ApiKeyRow, owners: Map<number, string>, now: number): ApiKeyView => ({
   id: row.id,
@@ -73,12 +85,13 @@ export async function loadBuilderAction(): Promise<BuilderResult<BuilderData>> {
     ok: true,
     value: {
       endpoints: await g.store.list(),
-      choices: collectionChoices(SOURCE_COLLECTIONS),
+      choices: collectionChoices(await sourcesWithCustom()),
       keys,
       keysEnabled: g.settings.apiKeys.enabled,
       reserved: reservedWords(),
       canEdit: true,
       publicDocs: { enabled: docs.docsPublic, path: docs.docsPublic ? `/api/x/docs/${docs.docsToken}` : null },
+      siteName: await siteNameFor(g.engine),
     },
   }
 }
@@ -88,7 +101,7 @@ export async function saveEndpointAction(id: number | null, input: unknown): Pro
   const g = await gate(id === null ? 'create' : 'update')
   if (g.ok === false) return g
   const keyIds = (await keyViews(g)).keyIds
-  const context = { reserved: reservedSet(), keyIds, sources: SOURCE_COLLECTIONS }
+  const context = { reserved: reservedSet(), keyIds, sources: await sourcesWithCustom() }
   const at = new Date().toISOString()
   const result = id === null ? await createEndpoint(g.store, input, context, at) : await updateEndpoint(g.store, id, input, context, at)
   if (result.ok === false) return { ok: false, error: result.error }
@@ -133,7 +146,7 @@ export async function createTryItKeyAction(endpointId: number): Promise<BuilderR
   const endpoint = await g.store.findById(endpointId)
   if (!endpoint) return { ok: false, error: 'That endpoint no longer exists.' }
   const scopes = [`${endpoint.collection}:read`]
-  if (endpoint.allowCreate || endpoint.allowUpdate) scopes.push(`${endpoint.collection}:write`)
+  if (endpoint.allowCreate || endpoint.allowUpdate || endpoint.allowDelete) scopes.push(`${endpoint.collection}:write`)
   const created = await createApiKey(g.deps, g.owner, { name: `Try it: ${endpoint.name}`.slice(0, 80), scopes, expiresInDays: 1 }, g.settings.apiKeys, { id: g.userId, email: g.email })
   if (created.ok === false) return { ok: false, error: created.error }
   return { ok: true, value: { key: created.value.key, keyId: created.value.row.id } }

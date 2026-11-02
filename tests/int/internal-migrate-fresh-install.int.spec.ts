@@ -794,7 +794,7 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     await mod.up({ db, engine } as never)
     const { createD1EndpointStore } = await import('@/features/apiBuilder/store')
     const store = createD1EndpointStore(async () => proxy.env.D1 as never)
-    const config = { name: 'Products', description: '', version: 'v1', slug: 'products-api', collection: 'products', fields: ['title'], filters: [] as never[], sortable: [] as string[], defaultSort: null as string | null, defaultLimit: 20, maxLimit: 50, allowCreate: false, allowUpdate: false, requiredRole: 'staff' as const, allowedKeyIds: null as number[] | null, rateLimitPerMinute: 60, enabled: true, responseFormat: 'envelope' as const }
+    const config = { name: 'Products', description: '', version: 'v1', slug: 'products-api', collection: 'products', fields: ['title'], filters: [] as never[], sortable: [] as string[], defaultSort: null as string | null, defaultLimit: 20, maxLimit: 50, allowCreate: false, allowUpdate: false, allowDelete: false, customKinds: {} as Record<string, 'text'>, requiredRole: 'staff' as const, allowedKeyIds: null as number[] | null, rateLimitPerMinute: 60, enabled: true, responseFormat: 'envelope' as const }
     const id = await store.insert(config, '2026-10-30T00:00:00.000Z')
     const found = await store.findByPath('v1', 'products-api')
     expect(found).toMatchObject({ id, name: 'Products', fields: ['title'], enabled: true })

@@ -1,5 +1,6 @@
 import type { ApiEndpoint } from './core'
 import { buildHtmlGuide, buildMarkdownGuide, buildOpenApi, buildPostman, toYaml, type GuideOptions } from './devguide'
+import { buildPdf, markdownToPdfLines } from './pdf'
 
 /**
  * The developer guide as an HTTP response. One place maps a format name to a body and headers, so the
@@ -7,7 +8,7 @@ import { buildHtmlGuide, buildMarkdownGuide, buildOpenApi, buildPostman, toYaml,
  * is marked noindex, and so is every /api response (src/features/security/noindex.ts).
  */
 
-export const GUIDE_FORMATS = ['openapi.json', 'openapi.yaml', 'guide.md', 'guide.html', 'postman.json'] as const
+export const GUIDE_FORMATS = ['openapi.json', 'openapi.yaml', 'guide.md', 'guide.html', 'guide.pdf', 'postman.json'] as const
 export type GuideFormat = (typeof GUIDE_FORMATS)[number]
 
 export const isGuideFormat = (value: string | null): value is GuideFormat => value !== null && (GUIDE_FORMATS as readonly string[]).includes(value)
@@ -17,6 +18,7 @@ const TYPES: Record<GuideFormat, string> = {
   'openapi.yaml': 'application/yaml; charset=utf-8',
   'guide.md': 'text/markdown; charset=utf-8',
   'guide.html': 'text/html; charset=utf-8',
+  'guide.pdf': 'application/pdf',
   'postman.json': 'application/json; charset=utf-8',
 }
 
@@ -25,15 +27,17 @@ const FILE_NAMES: Record<GuideFormat, string> = {
   'openapi.yaml': 'openapi.yaml',
   'guide.md': 'api-guide.md',
   'guide.html': 'api-guide.html',
+  'guide.pdf': 'api-guide.pdf',
   'postman.json': 'postman-collection.json',
 }
 
 export function renderGuide(format: GuideFormat, endpoints: readonly ApiEndpoint[], options: GuideOptions, mode: 'download' | 'page'): Response {
-  let body: string
+  let body: string | Uint8Array<ArrayBuffer>
   if (format === 'openapi.json') body = JSON.stringify(buildOpenApi(endpoints, options), null, 2)
   else if (format === 'openapi.yaml') body = toYaml(buildOpenApi(endpoints, options)) + '\n'
   else if (format === 'guide.md') body = buildMarkdownGuide(endpoints, options)
   else if (format === 'guide.html') body = buildHtmlGuide(endpoints, options)
+  else if (format === 'guide.pdf') body = buildPdf(markdownToPdfLines(buildMarkdownGuide(endpoints, options)), `${options.siteName} API`)
   else body = JSON.stringify(buildPostman(endpoints, options), null, 2)
 
   const headers: Record<string, string> = {
