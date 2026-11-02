@@ -9,7 +9,6 @@ import { PREFERENCE_KEYS, formatAdminURL } from '@/engine/shared'
 import type { Engine, TypedUser } from '@/engine'
 import { can, type Resource } from '@/features/roles/permissions'
 
-import { AsticoreSaasComingSoon } from '@/components/branding/AsticoreSaasComingSoon'
 
 import {
   AdminNavClient,
@@ -163,7 +162,6 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
         ) : null}
         <AdminNavDashboardLink href={formatAdminURL({ adminRoute, path: '' })} />
         <AdminNavClient groups={groups} openGroups={openGroups} badges={badges} />
-        <AsticoreSaasComingSoon />
         <div className={`${baseClass}__controls`}>
           <AdminLanguagePicker userId={(user as { id?: number | string } | null)?.id} current={(user as { adminLanguage?: string | null } | null)?.adminLanguage} />
           <Logout />

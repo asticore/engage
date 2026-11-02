@@ -152,9 +152,9 @@ export type FieldConfigLike = {
   /** `richText` only. Typed `unknown` and cast to `LexicalEditorLike | undefined` where read. */
   editor?: unknown
   hooks?: {
-    beforeValidate?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
-    beforeChange?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
-    afterRead?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
+    beforeValidate?: Array<(args: never) => unknown>
+    beforeChange?: Array<(args: never) => unknown>
+    afterRead?: Array<(args: never) => unknown>
   }
   access?: {
     create?: FieldAccessFn
@@ -162,8 +162,8 @@ export type FieldConfigLike = {
     update?: FieldAccessFn
   }
   admin?: {
-    /** Only `user` is ever supplied as the third argument; typed with rest args to stay assignable from the real `Condition`. */
-    condition?: (...args: any[]) => boolean // eslint-disable-line @typescript-eslint/no-explicit-any -- see comment above
+    /** Only `user` is ever supplied as the third argument; typed with rest args to stay assignable from the real `Condition`. Hooks take `never` arguments so any real hook (whatever its argument shape) is assignable; the call sites cast to the argument shape they pass. */
+    condition?: (...args: never[]) => boolean
   }
 }
 
@@ -178,10 +178,10 @@ export type CollectionConfigLike = {
     delete?: AccessFn
   }
   hooks?: {
-    beforeValidate?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
-    beforeChange?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
-    afterChange?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
-    afterDelete?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
+    beforeValidate?: Array<(args: never) => unknown>
+    beforeChange?: Array<(args: never) => unknown>
+    afterChange?: Array<(args: never) => unknown>
+    afterDelete?: Array<(args: never) => unknown>
   }
   /** Only `versions.drafts` (boolean or `{validate?: boolean}`) is read. A bare `false` is valid and carries no `.drafts`. */
   versions?: boolean | { drafts?: boolean | { validate?: boolean } }
@@ -203,9 +203,9 @@ export type GlobalConfigLike = {
     update?: AccessFn
   }
   hooks?: {
-    beforeValidate?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
-    beforeChange?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
-    afterChange?: Array<(args: any) => unknown> // eslint-disable-line @typescript-eslint/no-explicit-any -- real hook-arg shapes differ per hook type; forwarded unmodified, see AccessFn in access.ts
+    beforeValidate?: Array<(args: never) => unknown>
+    beforeChange?: Array<(args: never) => unknown>
+    afterChange?: Array<(args: never) => unknown>
   }
 }
 
@@ -503,7 +503,7 @@ async function visitBeforeChangeField(
 ): Promise<boolean> {
   const { data, doc, docWithLocales, collection, global, context, operation, req, skipValidation, errors } = ctx
 
-  const passesCondition = field.admin?.condition ? Boolean(field.admin.condition(data, siblingData, { user: req.user })) : true
+  const passesCondition = field.admin?.condition ? Boolean((field.admin.condition as (...args: unknown[]) => boolean)(data, siblingData, { user: req.user })) : true
   const effectiveSkip = skipValidation || !passesCondition
 
   const hooks = field.hooks?.beforeChange

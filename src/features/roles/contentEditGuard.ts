@@ -4,6 +4,7 @@
  */
 
 import type { CollectionBeforeChangeHook } from '@/engine'
+import type { PermissionUser, Resource } from './permissions'
 import { can } from './permissions'
 import { ensureCustomRoleOnUser } from './customRoleCache'
 import { elementStyleKeys, restoreStyleProps } from './elementStyleKeys'
@@ -37,11 +38,11 @@ export function applyContentOnlyEdit({
   blocksField,
 }: {
   original: unknown
-  incoming: Record<string, any>
+  incoming: Record<string, unknown>
   canStyle: boolean
   canLayout: boolean
   blocksField: string
-}): { data: Record<string, any>; error?: string } {
+}): { data: Record<string, unknown>; error?: string } {
   // Ensure original is an array
   if (!Array.isArray(original)) {
     return { data: incoming }
@@ -57,8 +58,8 @@ export function applyContentOnlyEdit({
 
   // Layout restriction: blocks must have same ids, order, and blockType (only if !canLayout)
   if (!canLayout) {
-    const originalIds = original.map((b: any) => b.id)
-    const incomingIds = incomingBlocks.map((b: any) => b.id)
+    const originalIds = original.map((b: { id?: unknown }) => b.id)
+    const incomingIds = incomingBlocks.map((b: { id?: unknown }) => b.id)
 
     if (originalIds.length !== incomingIds.length || !originalIds.every((id, i) => id === incomingIds[i])) {
       return { data: incoming, error: 'Your role can edit the text in sections but cannot add, remove or reorder them.' }
@@ -134,8 +135,23 @@ async function throwValidation(path: string, message: string): Promise<never> {
  * - Layout changes (add/remove/reorder) when !canLayout
  * - Style changes (design, imageSide, etc.) when !canStyle
  */
+/** What the engine passes a before-change hook, as far as the guards below read it. */
+type GuardRequest = {
+  user?: (PermissionUser & { roles?: string[] | null; customRolePermissions?: unknown; customRole?: unknown }) | null
+  engine?: Parameters<typeof ensureCustomRoleOnUser>[0] & Parameters<typeof loadApprovalSettings>[0]
+  draftOnlySave?: boolean
+  reviewReset?: unknown
+}
+type GuardArgs = {
+  data: Record<string, unknown>
+  originalDoc?: Record<string, unknown>
+  req?: GuardRequest
+  operation?: string
+  collection?: { slug?: unknown }
+}
+
 export const contentEditGuard: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
-  const { data, originalDoc, req, operation, collection } = args as any
+  const { data, originalDoc, req, operation, collection } = args as GuardArgs
 
   // System writes (cron, scheduled publish, scripts) have no user: never guard them.
   if (!req?.user) return
@@ -204,7 +220,7 @@ const relationId = (value: unknown): number | null => {
  * whose content changed keeps its place in review but loses its approvals, for the same reason.
  * "Changed" is judged by a hash of the reviewed content, stored with the approvals.
  */
-function applyReviewFieldRules(data: Record<string, any>, originalDoc: Record<string, any> | undefined, operation: string, req?: Record<string, any>): void {
+function applyReviewFieldRules(data: Record<string, unknown>, originalDoc: Record<string, unknown> | undefined, operation: string, req?: GuardRequest): void {
   if (operation === 'create' || !originalDoc) {
     data.reviewStatus = 'none'
     data.reviewRequestedBy = null
@@ -264,7 +280,7 @@ function applyReviewFieldRules(data: Record<string, any>, originalDoc: Record<st
  * - Admins skip the publish checks but not the review field rules.
  */
 export const publishGuard: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
-  const { data, originalDoc, req, operation, collection } = args as any
+  const { data, originalDoc, req, operation, collection } = args as GuardArgs
 
   // System writes (cron, scheduled publish, scripts) have no user: never guard them.
   if (!req?.user) return
@@ -278,7 +294,7 @@ export const publishGuard: CollectionBeforeChangeHook = async (args: unknown): P
 
   if (!isAdmin) {
     // Check if user has publish permission
-    const canPublish = can(req.user, slug as any, 'publish')
+    const canPublish = can(req.user, slug as Resource, 'publish')
 
     if (operation === 'create') {
       // Always draft on create for non-publishers

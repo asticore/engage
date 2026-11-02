@@ -15,7 +15,12 @@ import { ADMIN_UI_LOCALES, ADMIN_UI_LOCALE_LABELS } from '@/features/uiStrings/l
  * Validates role changes to prevent removing the last admin or self-lockout.
  */
 const validateUserRoleChange: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
-  const { data, originalDoc, req, operation } = args as any
+  const { data, originalDoc, req, operation } = args as {
+    data: { roles?: unknown }
+    originalDoc?: { id?: number; roles?: string[] | null }
+    req: { user?: Parameters<typeof validateRoleChange>[0]['actor']; engine: { find: (args: Record<string, unknown>) => Promise<{ docs: unknown[] }> } }
+    operation?: string
+  }
 
   // Only validate updates
   if (operation !== 'update') return
@@ -33,7 +38,7 @@ const validateUserRoleChange: CollectionBeforeChangeHook = async (args: unknown)
     overrideAccess: true,
   })
 
-  const adminCount = (adminDocs as any[]).length
+  const adminCount = (adminDocs as unknown[]).length
   const isRemovingAdmin = originalDoc.roles?.includes('admin') && !newRoles.includes('admin')
   const newAdminCount = isRemovingAdmin ? adminCount - 1 : adminCount
 
@@ -47,7 +52,7 @@ const validateUserRoleChange: CollectionBeforeChangeHook = async (args: unknown)
 
   if (!validation.ok) {
     const error = new Error(validation.reason || 'Invalid role change')
-    ;(error as any).statusCode = 400
+    Object.assign(error, { statusCode: 400 })
     throw error
   }
 }
@@ -56,7 +61,7 @@ const validateUserRoleChange: CollectionBeforeChangeHook = async (args: unknown)
  * Sanitizes permission overrides to remove invalid resources/actions and ensure safe storage.
  */
 const sanitizePermissionOverrides: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
-  const { data } = args as any
+  const { data } = args as { data: { permissionOverrides?: unknown } }
 
   if (data.permissionOverrides !== undefined) {
     data.permissionOverrides = JSON.stringify(sanitizeOverrides(data.permissionOverrides))

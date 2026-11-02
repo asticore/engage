@@ -20,6 +20,7 @@ export const SECURITY_SENSITIVE_FIELDS: Watch[] = [
   { key: 'adminPath', label: 'Admin URL' },
   { key: 'allowPasswordlessForAdmins', label: 'Passwordless sign-in for admins' },
   { key: 'passkeysAllowAdmins', label: 'Passkeys for admins' },
+  { key: 'passkeysSkipTwoFactor', label: 'Passkeys skip the authenticator code' },
   { key: 'requireTwoFactorForAdmins', label: 'Two-factor required for admins' },
   { key: 'requireTwoFactorForMembers', label: 'Two-factor required for customers' },
   { key: 'twoFactorRequiredRoles', label: 'Roles that must use two-factor' },

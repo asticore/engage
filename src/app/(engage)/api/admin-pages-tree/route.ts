@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { createEngine } from '@/localapi/engine'
 import { assertDocAccess, docAccessDenied } from '@/features/roles/docAccess'
-import { planMoves, type TreePage, type MoveInput } from '@/features/pagesTree/plan'
+import { planMoves, type TreePage, type MoveInput, type PlanError, type PlannedMove } from '@/features/pagesTree/plan'
 import { purgeCache } from '@/features/speed/purge'
 import { invalidateRedirectsCache } from '@/features/redirects'
-import type { TypedUser } from '@/engine'
+import type { Engine, TypedUser } from '@/engine'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic'
  * Admin only.
  */
 
-async function loadAllPages(engine: any): Promise<TreePage[]> {
+async function loadAllPages(engine: Engine): Promise<TreePage[]> {
   const { docs } = await engine.find({
     collection: 'pages',
     limit: 0,
@@ -31,7 +31,18 @@ async function loadAllPages(engine: any): Promise<TreePage[]> {
   })
 
   // Trashed pages are left out of the tree and the parent picker.
-  return (docs as any[]).filter((doc) => !doc.trashedAt).map((doc) => ({
+  // The raw row: `parent` is an id, or the populated page when the read asks for depth.
+  type PageRow = {
+    id: number
+    title: string
+    slug: string
+    parent?: number | { id: number } | null
+    sortOrder?: number | null
+    isHomepage?: boolean | null
+    _status?: TreePage['status'] | null
+    trashedAt?: unknown
+  }
+  return (docs as PageRow[]).filter((doc) => !doc.trashedAt).map((doc) => ({
     id: doc.id,
     title: doc.title,
     slug: doc.slug,
@@ -91,7 +102,7 @@ export async function POST(request: Request): Promise<Response> {
       if (typeof move !== 'object' || move === null) {
         return NextResponse.json({ error: 'Each move must be an object' }, { status: 400 })
       }
-      const m = move as any
+      const m = move as { id: number; parent: number | null; sortOrder: number }
       if (!Number.isInteger(m.id) || m.id <= 0) {
         return NextResponse.json({ error: 'move.id must be a positive integer' }, { status: 400 })
       }
@@ -119,7 +130,7 @@ export async function POST(request: Request): Promise<Response> {
     const pages = await loadAllPages(engine)
 
     // Plan moves
-    const typedMoves: MoveInput[] = moves.map((m: any) => ({
+    const typedMoves: MoveInput[] = (moves as Array<{ id: number; parent?: number | null; sortOrder?: number }>).map((m) => ({
       id: m.id,
       parent: m.parent ?? null,
       sortOrder: m.sortOrder ?? 0,
@@ -128,11 +139,11 @@ export async function POST(request: Request): Promise<Response> {
     const planResult = planMoves(pages, typedMoves)
 
     if (!planResult.ok) {
-      const errorResult = planResult as { ok: false; errors: any[] }
+      const errorResult = planResult as { ok: false; errors: PlanError[] }
       return NextResponse.json({ errors: errorResult.errors }, { status: 400 })
     }
 
-    const okResult = planResult as { ok: true; moves: any[]; changedCount: number }
+    const okResult = planResult as { ok: true; moves: PlannedMove[]; changedCount: number }
 
     // Create a map of page status for later
     const pageStatusMap = new Map(pages.map((p) => [p.id, p.status]))
@@ -178,14 +189,14 @@ export async function POST(request: Request): Promise<Response> {
             user,
           })
           appliedMoves.push(move.id)
-        } catch (err: any) {
+        } catch (err: unknown) {
           // If it fails, keep it in the queue for retry
           remainingMoves.push(move)
           if (passes === maxPasses) {
             // Final attempt failed
             failures.push({
               id: move.id,
-              message: err?.message || 'Failed to apply move',
+              message: (err as Error | undefined)?.message || 'Failed to apply move',
             })
           }
         }
@@ -221,7 +232,7 @@ export async function POST(request: Request): Promise<Response> {
               overrideAccess: true,
               user,
             })
-          } catch (err: any) {
+          } catch (err: unknown) {
             rollbackRemaining.push(moveId)
             if (passes === maxPasses) {
               // Log but don't fail - we tried
@@ -297,10 +308,10 @@ export async function POST(request: Request): Promise<Response> {
                   user,
                 })
                 redirectsCreated++
-              } catch (err: any) {
+              } catch (err: unknown) {
                 redirectsSkipped.push({
                   path: move.oldPath,
-                  reason: err?.message || 'Failed to create redirect',
+                  reason: (err as Error | undefined)?.message || 'Failed to create redirect',
                 })
               }
             }
@@ -324,10 +335,10 @@ export async function POST(request: Request): Promise<Response> {
                       user,
                     })
                     redirectsCreated++
-                  } catch (err: any) {
+                  } catch (err: unknown) {
                     redirectsSkipped.push({
                       path: desc.oldPath,
-                      reason: err?.message || 'Failed to create redirect',
+                      reason: (err as Error | undefined)?.message || 'Failed to create redirect',
                     })
                   }
                 }

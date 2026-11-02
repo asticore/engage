@@ -210,7 +210,7 @@ export type ReadFieldConfig = {
    * `./hooks.ts`'s real `AfterReadFieldHookArgs` shape - only the STATIC
    * type here is loosened, not the runtime call.
    */
-  hooks?: { afterRead?: Array<(args: any) => unknown> } // eslint-disable-line @typescript-eslint/no-explicit-any -- see doc comment above
+  hooks?: { afterRead?: Array<(args: never) => unknown> }
 }
 
 /** The subset of a the reference engine `CollectionConfig`/`GlobalConfig` this module needs: its own `slug`, `fields`, and `access.read` - loose for the same reason as `ReadFieldConfig`. */
@@ -565,7 +565,7 @@ async function traverseField(field: ReadFieldConfig, siblingData: Record<string,
           siblingFields: [],
           value: siblingData[name],
         }
-        siblingData[name] = await runFieldHook(hook, hookArgs)
+        siblingData[name] = await runFieldHook(hook as unknown as (args: typeof hookArgs) => unknown, hookArgs)
       }
     }
 

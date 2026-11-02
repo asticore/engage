@@ -35,7 +35,7 @@ describe('applyContentOnlyEdit', () => {
       blocksField: 'blocks',
     })
     expect(result.error).toBeUndefined()
-    expect(result.data.blocks[0].id).toBe('block2')
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].id).toBe('block2')
   })
 
   it('rejects reordering when canLayout is false', () => {
@@ -103,7 +103,7 @@ describe('applyContentOnlyEdit', () => {
       blocksField: 'blocks',
     })
     expect(result.error).toBeUndefined()
-    expect(result.data.blocks[0].design).toEqual({ backgroundColor: '#000' })
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].design).toEqual({ backgroundColor: '#000' })
   })
 
   it('restores imageSide for imageText blocks when canStyle is false', () => {
@@ -122,7 +122,7 @@ describe('applyContentOnlyEdit', () => {
       canLayout: true,
       blocksField: 'blocks',
     })
-    expect(result.data.blocks[0].imageSide).toBe('left')
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].imageSide).toBe('left')
   })
 
   it('restores style for ctaBanner blocks when canStyle is false', () => {
@@ -151,7 +151,7 @@ describe('applyContentOnlyEdit', () => {
       canLayout: true,
       blocksField: 'blocks',
     })
-    expect(result.data.blocks[0].style).toBe('dark')
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].style).toBe('dark')
   })
 
   it('restores columns for loop blocks when canStyle is false', () => {
@@ -178,7 +178,7 @@ describe('applyContentOnlyEdit', () => {
       canLayout: true,
       blocksField: 'blocks',
     })
-    expect(result.data.blocks[0].columns).toBe(3)
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].columns).toBe(3)
   })
 
   it('keeps content changes when canStyle is false', () => {
@@ -197,7 +197,7 @@ describe('applyContentOnlyEdit', () => {
       canLayout: true,
       blocksField: 'blocks',
     })
-    expect(result.data.blocks[0].content).toBe('<p>New content</p>')
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].content).toBe('<p>New content</p>')
   })
 
   it('handles blocks field with different name', () => {
@@ -233,8 +233,8 @@ describe('applyContentOnlyEdit', () => {
       blocksField: 'blocks',
     })
     expect(result.error).toBeUndefined()
-    expect(result.data.blocks[0].id).toBe('block2') // layout allowed
-    expect(result.data.blocks[0].design.backgroundColor).toBe('#fff') // style allowed
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].id).toBe('block2') // layout allowed
+    expect(((result.data.blocks as Array<Record<string, unknown>>)[0].design as { backgroundColor: string }).backgroundColor).toBe('#fff') // style allowed
   })
 
   it('returns data unchanged when incoming blocks is not an array', () => {
@@ -274,7 +274,7 @@ describe('applyContentOnlyEdit', () => {
       canLayout: true,
       blocksField: 'blocks',
     })
-    expect(result.data.blocks[0].design).toEqual({ color: '#000' })
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].design).toEqual({ color: '#000' })
   })
 
   it('restores section columns layout when canStyle is false', () => {
@@ -307,7 +307,7 @@ describe('applyContentOnlyEdit', () => {
       canLayout: true,
       blocksField: 'blocks',
     })
-    expect(result.data.blocks[0].columns).toEqual({
+    expect((result.data.blocks as Array<Record<string, unknown>>)[0].columns).toEqual({
       layout: '2',
       gap: '20px',
     })

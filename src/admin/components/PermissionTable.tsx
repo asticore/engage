@@ -22,12 +22,11 @@ import {
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface PermissionTableProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onChange: (next: any) => void
+  /** A matrix (role) or an overrides object (user), read by `mode`. */
+  value: Partial<PermissionMatrix> | PermissionOverrides | null | undefined
+  // Method syntax so a callback typed for one of the two shapes (role matrix or user overrides) is accepted.
+  onChange(next: Partial<PermissionMatrix> | PermissionOverrides): void
   readOnly?: boolean
   secretLocked?: boolean
   mode?: 'matrix' | 'override'

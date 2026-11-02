@@ -6,7 +6,6 @@ export async function load() {
     const { ThemeToggler } = await import('@/admin/ui/ThemeToggler')
     const { SessionWatch } = await import('@/admin/SessionWatch')
     const nav = await import('@/components/admin/nav/AdminNavClient')
-    const { AsticoreSaasComingSoon } = await import('@/components/branding/AsticoreSaasComingSoon')
     const { Logout } = await import('@/admin/ui/Logout')
     const { VisualEditorView } = await import('@/views/VisualEditor')
     const { THEME_SCRIPT } = await import('@/admin/context/themeScript')
@@ -18,7 +17,7 @@ export async function load() {
           <nav.AdminNavShell>
             <nav><nav.AdminNavDashboardLink href="/admin" />
             <nav.AdminNavClient groups={[{ label: 'Content', entities: [{ slug: 'pages', label: 'Pages', href: '/admin/content/pages', id: 'nav-pages' }] } as any]} openGroups={{}} />
-            <AsticoreSaasComingSoon /><Logout /></nav>
+            <Logout /></nav>
             <nav.AdminNavHamburger />
           </nav.AdminNavShell>
           <div className="admin-shell__main"><main><VisualEditorView /></main></div>

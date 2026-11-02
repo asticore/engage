@@ -19,7 +19,7 @@ import {
   DragMoveEvent,
 } from '@dnd-kit/core'
 
-import type { TreePage, TreeNode } from '@/features/pagesTree/plan'
+import type { TreePage, TreeNode, PlannedMove, PlanError } from '@/features/pagesTree/plan'
 import { buildTree, planMoves, pagePath } from '@/features/pagesTree/plan'
 import { applyDrop, dropZone, type ArrangementEntry } from './pagesTreeArrangement'
 
@@ -47,7 +47,7 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
   )
   const [draggedId, setDraggedId] = useState<number | null>(null)
   const [showDialog, setShowDialog] = useState(false)
-  const [dialogMoves, setDialogMoves] = useState<any[]>([])
+  const [dialogMoves, setDialogMoves] = useState<PlannedMove[]>([])
   const [createRedirects, setCreateRedirects] = useState(true)
   const [savingState, setSavingState] = useState<'idle' | 'preview' | 'confirm'>('idle')
   const [anyMoveHasPathChange, setAnyMoveHasPathChange] = useState(false)
@@ -110,7 +110,7 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
       const result = planMoves(pages, moves)
 
       if (!result.ok) {
-        setErrors((result as any).errors.map((e: any) => ({ id: e.id, message: e.message })))
+        setErrors((result as { errors: PlanError[] }).errors.map((e) => ({ id: e.id, message: e.message })))
         return
       }
 
@@ -194,7 +194,7 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
         body: JSON.stringify({ moves, mode: 'preview' }),
       })
 
-      const data: any = await response.json()
+      const data = (await response.json()) as { errors?: PlanError[]; plan?: { ok?: boolean; errors?: PlanError[]; moves: PlannedMove[] } }
 
       if (!response.ok) {
         setErrors(data.errors || [{ message: 'Failed to preview changes' }])
@@ -209,7 +209,7 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
       }
 
       setDialogMoves(data.plan.moves)
-      setAnyMoveHasPathChange(data.plan.moves.some((m: any) => m.pathChanged))
+      setAnyMoveHasPathChange(data.plan!.moves.some((m) => m.pathChanged))
       setCreateRedirects(true)
       setSavingState('confirm')
       setShowDialog(true)
@@ -236,7 +236,7 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
         body: JSON.stringify({ moves, mode: 'commit', createRedirects }),
       })
 
-      const data: any = await response.json()
+      const data = (await response.json()) as { error?: string }
 
       if (!response.ok) {
         setErrors([{ message: data.error || 'Failed to save changes' }])
@@ -282,7 +282,8 @@ export function PagesTreeClient({ pages, canEdit, newDocumentURL }: PagesTreeCli
   }, [showDialog])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { distance: 5 } as any),
+    // Was `{ distance: 5 }` passed as `any`: dnd-kit reads that option under `activationConstraint`, so it was never applied. Kept as it was.
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor)
   )
 
@@ -589,7 +590,7 @@ function TreeNodeItem({
 }
 
 interface ConfirmDialogProps {
-  moves: any[]
+  moves: PlannedMove[]
   showRedirectsCheckbox: boolean
   createRedirects: boolean
   onCreateRedirectsChange: (value: boolean) => void
@@ -632,7 +633,7 @@ function ConfirmDialog({
                     +{move.descendantCount} sub-page{move.descendantCount === 1 ? '' : 's'} move{move.descendantCount === 1 ? 's' : ''} with it
                   </summary>
                   <ul>
-                    {move.descendants.map((desc: any) => (
+                    {move.descendants.map((desc) => (
                       <li key={desc.id}>
                         {desc.title}: {desc.oldPath} → {desc.newPath}
                       </li>

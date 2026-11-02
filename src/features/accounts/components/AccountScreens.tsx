@@ -5,6 +5,7 @@ import type { Product } from '@/engage-types'
 
 import { addressForCustomer, addressesForCustomer } from '../addresses'
 import { bookingsForCustomer } from '../bookings'
+import { canSeeBookingsByEmail } from '../access'
 import { ORDERS_SLUG } from '../types'
 import { requireCustomer } from '../guards'
 import { formatAmount, formatDate, orderForCustomer, ordersForCustomer, portalFormatLocale } from '../orders'
@@ -32,7 +33,7 @@ import { ConnectedAccountsPanel } from '@/features/socialLogin/components/Connec
 import { viewConnections } from '@/features/socialLogin/connections'
 import { passwordHintSay, socialMessageText } from '../messages'
 import { accountTexts } from '../portalCopy'
-import { AddressForm, AddressRowActions, EmailForm, LanguageForm, NameForm, PasswordForm, type LanguageOption } from './AccountForms'
+import { AddressForm, AddressRowActions, EmailForm, LanguageForm, NameForm, PasswordForm, SendConfirmationForm, type LanguageOption } from './AccountForms'
 import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
 import { isLocaleRoutable } from '@/features/multilingual/routing'
 import { localeNativeName } from '@/features/multilingual/locales'
@@ -85,7 +86,7 @@ export const AccountHomeScreen: React.FC = async () => {
               {orders.map((order) => (
                 <tr key={order.id}>
                   <td>
-                    <Link href={`/account/orders/${order.id}`}>Order #{order.id}</Link>
+                    <Link href={`/account/orders/${order.id}`}>{tx('account.orderLink', { id: order.id })}</Link>
                   </td>
                   <td>{formatDate(order.createdAt)}</td>
                   <td>{formatAmount(order.amount, order.currency)}</td>
@@ -100,9 +101,9 @@ export const AccountHomeScreen: React.FC = async () => {
       </section>
 
       <section className="account-section">
-        <h2>{tx('account.upcomingBookings')}</h2>
+        <h2>{tx('bookings.title')}</h2>
         {bookings.length === 0 ? (
-          <p className="account-empty">{tx('account.noBookings')}</p>
+          <p className="account-empty">{canSeeBookingsByEmail(user) ? tx('account.noBookings') : tx('bookings.unverified')}</p>
         ) : (
           <p>
             {tx('account.bookingsCount', { count: bookings.length })} <Link href="/account/bookings">{tx('account.seeThem')}</Link>.
@@ -209,7 +210,7 @@ export const OrderScreen: React.FC<{ id: string }> = async ({ id }) => {
                 const product = line.product
                 const title =
                   product && typeof product === 'object'
-                    ? ((product as Product).title ?? tx('orders.itemFallback'))
+                    ? ((product as Product).title || tx('orders.itemFallback'))
                     : tx('orders.itemFallback')
                 return (
                   <tr key={line.id ?? index}>
@@ -356,11 +357,19 @@ export const BookingsScreen: React.FC = async () => {
   const tx = portalTextFor(portalLocale)
   const dateLocale = portalFormatLocale(portalLocale)
 
+  // Guest bookings are matched to the address, so until it is confirmed the list is empty for a reason the customer can fix.
+  const confirmed = canSeeBookingsByEmail(user)
   return (
     <AccountShell title={tx('bookings.title')} current="/account/bookings">
-      {bookings.length === 0 ? (
+      {!confirmed ? (
+        <section className="account-section">
+          <p className="account-note">{tx('bookings.unverified')}</p>
+          <SendConfirmationForm />
+        </section>
+      ) : null}
+      {confirmed && bookings.length === 0 ? (
         <p className="account-empty">{tx('bookings.empty')}</p>
-      ) : (
+      ) : confirmed ? (
         bookings.map((booking) => (
           <article className="account-card" key={booking.id}>
             <h3>
@@ -374,7 +383,7 @@ export const BookingsScreen: React.FC = async () => {
             <p>{tx('bookings.guests', { count: booking.guestCount ?? 1, date: formatDate(booking.createdAt, dateLocale) })}</p>
           </article>
         ))
-      )}
+      ) : null}
     </AccountShell>
   )
 }
@@ -429,6 +438,14 @@ export const ProfileScreen: React.FC<{ socialError?: string; passwordDue?: boole
       <section className="account-section" id="email">
         <h2>{tx('profile.emailHeading')}</h2>
         <p>{tx('profile.emailNote')}</p>
+        {canSeeBookingsByEmail(user) ? (
+          <p className="account-hint">{tx('profile.emailConfirmed')}</p>
+        ) : (
+          <>
+            <p className="account-note">{tx('profile.emailUnconfirmed')}</p>
+            <SendConfirmationForm />
+          </>
+        )}
         <EmailForm email={email} />
       </section>
 

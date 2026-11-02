@@ -556,6 +556,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
     expect(byName.get('passkeys_enabled')).toBe('0')
     expect(byName.get('passkeys_allow_admins')).toBe('0')
     expect(byName.get('passkeys_user_verification')).toBe("'preferred'")
+    expect(byName.get('passkeys_skip_two_factor')).toBe('0')
     expect(byName.has('passkeys_rp_name')).toBe(true)
     const cols = ((await proxy.env.D1.prepare('PRAGMA table_info(`eg_passkeys`)').all()).results as { name: string }[]).map((c) => c.name)
     expect(cols).toEqual(expect.arrayContaining(['id', 'user_id', 'credential_id', 'public_key', 'sign_count', 'transports', 'device_label', 'backed_up', 'created_at', 'last_used_at']))

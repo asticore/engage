@@ -1,3 +1,4 @@
+import type { Where } from '@/engine'
 import { adminHref } from '@/features/security/adminPath'
 import { domainScopeWhere } from '@/features/domains/access'
 import { resolveAdminSite } from '@/features/domains/adminSite'
@@ -174,7 +175,7 @@ export async function ListView({
   const trashClause = hasTrash ? { trashedAt: { exists: trashView } } : null
   const listWhere = trashClause ? (findArgs.where ? { and: [findArgs.where, trashClause] } : trashClause) : findArgs.where
   const trashCount = hasTrash
-    ? await context.engine.count({ collection: collectionSlug, where: { trashedAt: { exists: true } } as any, user: context.user }).then((r) => r.totalDocs).catch(() => 0)
+    ? await context.engine.count({ collection: collectionSlug, where: { trashedAt: { exists: true } } as Where, user: context.user }).then((r) => r.totalDocs).catch(() => 0)
     : 0
 
   // Site switcher: pages, posts and products show the chosen site plus shared content (features/domains/adminSite.ts).
@@ -185,7 +186,7 @@ export async function ListView({
   // Execute find
   const result = await context.engine.find({
     collection: collectionSlug,
-    where: scopedWhere as any,
+    where: scopedWhere as Where,
     sort: findArgs.sort,
     page: findArgs.page,
     limit: findArgs.limit,
@@ -197,20 +198,20 @@ export async function ListView({
   const parentsByPageId: Record<number | string, { title?: string; parent?: number | string | null } | undefined> = {}
   if (collectionSlug === 'pages' && visibleColumns.some((c) => c.name === 'title')) {
     const pageIds = result.docs
-      .map((doc) => (doc as any)?.id)
+      .map((doc) => (doc as { id?: unknown } | null)?.id)
       .filter((id): id is number | string => typeof id === 'number' || typeof id === 'string')
 
     if (pageIds.length > 0) {
       try {
         const parentPages = await context.engine.find({
           collection: 'pages',
-          where: {} as any,
+          where: {} as Where,
           user: context.user,
           depth: 0,
           limit: 1000,
         })
         for (const page of parentPages.docs || []) {
-          const p = page as any
+          const p = page as { id: number | string; title?: string; parent?: number | string | null }
           parentsByPageId[p.id] = { title: p.title, parent: p.parent }
         }
       } catch (err) {
@@ -393,9 +394,7 @@ export async function ListView({
                         <a
                           href={`?${new URLSearchParams({
                             ...Object.fromEntries(
-                              Object.entries(effectiveState).filter(
-                                ([k]) => k !== 'sort' && k !== 'page'
-                              ) as [string, any][]
+                              Object.entries(effectiveState).filter(([k]) => k !== 'sort' && k !== 'page').map(([k, v]) => [k, String(v)] as [string, string])
                             ),
                             sort: effectiveState.sort === column.name
                               ? `-${column.name}`
@@ -441,13 +440,13 @@ export async function ListView({
 
                         // For pages list title column with depth > 0, show breadcrumb
                         if (collectionSlug === 'pages' && column.name === 'title' && index === 0) {
-                          const docDepth = (doc as any)?.depth
+                          const docDepth = (doc as { depth?: number } | null)?.depth
                           if (docDepth && docDepth > 0) {
                             const breadcrumb = breadcrumbTitle(
                               {
-                                id: (doc as any).id,
-                                title: (doc as any).title,
-                                parent: (doc as any).parent,
+                                id: (doc as { id: number | string }).id,
+                                title: (doc as { title?: string }).title,
+                                parent: (doc as { parent?: number | string | null }).parent,
                               },
                               parentsByPageId,
                             )
@@ -519,9 +518,7 @@ export async function ListView({
                 <a
                   href={`?${new URLSearchParams({
                     ...Object.fromEntries(
-                      Object.entries(effectiveState).filter(
-                        ([k]) => k !== 'page'
-                      ) as [string, any][]
+                      Object.entries(effectiveState).filter(([k]) => k !== 'page').map(([k, v]) => [k, String(v)] as [string, string])
                     ),
                     page: String(effectiveState.page - 1),
                     ...trashQs,
@@ -538,9 +535,7 @@ export async function ListView({
                 <a
                   href={`?${new URLSearchParams({
                     ...Object.fromEntries(
-                      Object.entries(effectiveState).filter(
-                        ([k]) => k !== 'page'
-                      ) as [string, any][]
+                      Object.entries(effectiveState).filter(([k]) => k !== 'page').map(([k, v]) => [k, String(v)] as [string, string])
                     ),
                     page: String(effectiveState.page + 1),
                     ...trashQs,

@@ -225,14 +225,36 @@ export const resendVerification = async (
   if (!user || user.emailVerifiedAt || !isCustomerOnly(user.roles)) return
 
   // Inside the cooldown nothing is sent. The caller's answer is the same either way.
-  const cooldown = await resendCooldownSeconds(engine)
-  if (cooldown > 0) {
-    const last = await latestVerificationSentAt(Number(user.id)).catch((): null => null)
-    const sentAt = last ? Date.parse(last) : NaN
-    if (Number.isFinite(sentAt) && Date.now() - sentAt < cooldown * 1000) return
-  }
+  if (await inVerificationCooldown(engine, user.id)) return
 
   await issueVerification(engine, user.id, address, verifyUrlFor)
+}
+
+/** True while the last verification email to this account is inside the resend cooldown. */
+const inVerificationCooldown = async (engine: Engine, userId: number | string): Promise<boolean> => {
+  const cooldown = await resendCooldownSeconds(engine)
+  if (cooldown <= 0) return false
+  const last = await latestVerificationSentAt(Number(userId)).catch((): null => null)
+  const sentAt = last ? Date.parse(last) : NaN
+  return Number.isFinite(sentAt) && Date.now() - sentAt < cooldown * 1000
+}
+
+/**
+ * A signed-in customer asks for a link to confirm their own address.
+ *
+ * This works whether or not the site requires verification. A confirmed address is what shows guest
+ * event bookings (see `canSeeBookingsByEmail`), and with verification off nothing else ever sends the
+ * link, so without this the bookings could never appear. Same cooldown and same silence as
+ * `resendVerification`. Only customer-only accounts; the caller has already proven the session.
+ */
+export const sendOwnConfirmation = async (
+  engine: Engine,
+  user: { id: number | string; email?: string | null; roles?: unknown; emailVerifiedAt?: string | null },
+  verifyUrlFor: (token: string) => string,
+): Promise<void> => {
+  if (!user.email || user.emailVerifiedAt || !isCustomerOnly(user.roles)) return
+  if (await inVerificationCooldown(engine, user.id)) return
+  await issueVerification(engine, user.id, user.email, verifyUrlFor)
 }
 
 /** Customers who have not confirmed their address are held back, when the setting asks for it. */
