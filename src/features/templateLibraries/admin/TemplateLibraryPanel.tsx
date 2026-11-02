@@ -149,7 +149,6 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
         {items.map((item) => (
           <li key={item.key} style={{ border: '1px solid var(--theme-elevation-150, #ccc)', borderRadius: 6, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {item.previewUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
               <img src={item.previewUrl} alt="" loading="lazy" style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 4, background: '#f3f3f3' }} />
             ) : null}
             <div>

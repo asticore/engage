@@ -32,8 +32,9 @@ export function useResolvedMedia(id: number | null | undefined): MediaDoc | null
 export function useResolvedMediaList(ids: (number | null | undefined)[]): MediaDoc[] {
   const [docs, setDocs] = useState<MediaDoc[]>([])
 
+  const idsKey = JSON.stringify(ids)
   useEffect(() => {
-    const validIds = ids.filter((id): id is number => typeof id === 'number')
+    const validIds = (JSON.parse(idsKey) as unknown[]).filter((id): id is number => typeof id === 'number')
     if (validIds.length === 0) return
     let cancelled = false
     Promise.all(
@@ -53,8 +54,7 @@ export function useResolvedMediaList(ids: (number | null | undefined)[]): MediaD
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(ids)])
+  }, [idsKey])
 
   return ids.some((id) => typeof id === 'number') ? docs : []
 }

@@ -13,13 +13,23 @@
  *
  * No `engine` import anywhere.
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import type { Config, User } from '@/engage-types'
 import type { Where } from '@/localapi/access'
 import type { Engine } from '@/localapi/engine'
 
 export type { Where }
+
+/**
+ * The one deliberately loose type of the engine seam. Collections, hooks and
+ * access rules are written against documents whose shape the engine cannot
+ * know here (it is generated per collection in `@/engage-types`), so the
+ * defaults of the generics below stay loose; a collection that wants a real
+ * shape passes it (`Access<Page>`, `CollectionBeforeChangeHook<Post>`).
+ * Everything else in this file is typed: hook results are `unknown`,
+ * records are `Record<string, unknown>`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Loose = any
 export type Sort = string | string[]
 
 /** Slug union of every collection in the generated `Config`. */
@@ -48,7 +58,7 @@ export type EngineRequest = Request & {
   [key: string]: unknown
 }
 
-export type AccessArgs<TData = any> = {
+export type AccessArgs<TData = Loose> = {
   req: EngineRequest
   id?: number | string
   data?: TData
@@ -57,9 +67,9 @@ export type AccessArgs<TData = any> = {
 }
 
 /** Collection/global-level access rule: a boolean, or a `Where` constraint that narrows what the caller may touch. */
-export type Access<TData = any> = (args: AccessArgs<TData>) => boolean | Where | Promise<boolean | Where>
+export type Access<TData = Loose> = (args: AccessArgs<TData>) => boolean | Where | Promise<boolean | Where>
 
-export type FieldAccessArgs<TData = any, TSibling = any> = {
+export type FieldAccessArgs<TData = Loose, TSibling = Loose> = {
   req: EngineRequest
   id?: number | string
   data?: TData
@@ -69,16 +79,16 @@ export type FieldAccessArgs<TData = any, TSibling = any> = {
 }
 
 /** Field-level access rule: allow or deny (no `Where`). */
-export type FieldAccess<TData = any, TSibling = any> = (
+export type FieldAccess<TData = Loose, TSibling = Loose> = (
   args: FieldAccessArgs<TData, TSibling>,
 ) => boolean | Promise<boolean>
 
 export type FieldHookArgs = {
-  value?: any
-  previousValue?: any
-  data?: Record<string, any>
-  originalDoc?: Record<string, any>
-  siblingData?: Record<string, any>
+  value?: Loose
+  previousValue?: Loose
+  data?: Record<string, unknown>
+  originalDoc?: Record<string, unknown>
+  siblingData?: Record<string, unknown>
   operation?: 'create' | 'update' | 'read' | 'delete'
   req: EngineRequest
   field: Field
@@ -86,47 +96,47 @@ export type FieldHookArgs = {
   [key: string]: unknown
 }
 
-export type FieldHook = (args: FieldHookArgs) => any
+export type FieldHook = (args: FieldHookArgs) => unknown
 
-export type CollectionBeforeChangeHook<T = any> = (args: {
+export type CollectionBeforeChangeHook<T = Loose> = (args: {
   data: Partial<T>
   originalDoc?: T
   operation: 'create' | 'update'
   req: EngineRequest
   context: Record<string, unknown>
-  collection?: any
+  collection?: Loose
   [key: string]: unknown
-}) => any
+}) => unknown
 
-export type CollectionAfterChangeHook<T = any> = (args: {
+export type CollectionAfterChangeHook<T = Loose> = (args: {
   doc: T
   previousDoc: T
   operation: 'create' | 'update'
   req: EngineRequest
   context: Record<string, unknown>
   data?: Partial<T>
-  collection?: any
+  collection?: Loose
   [key: string]: unknown
-}) => any
+}) => unknown
 
-export type CollectionAfterDeleteHook<T = any> = (args: {
+export type CollectionAfterDeleteHook<T = Loose> = (args: {
   doc: T
   id: number | string
   req: EngineRequest
   context: Record<string, unknown>
-  collection?: any
+  collection?: Loose
   [key: string]: unknown
-}) => any
+}) => unknown
 
-export type GlobalAfterChangeHook<T = any> = (args: {
+export type GlobalAfterChangeHook<T = Loose> = (args: {
   doc: T
   previousDoc: T
   req: EngineRequest
   context: Record<string, unknown>
   data?: Partial<T>
-  global?: any
+  global?: Loose
   [key: string]: unknown
-}) => any
+}) => unknown
 
 export type Endpoint = {
   path: string
@@ -139,12 +149,12 @@ export type Endpoint = {
 /* Fields                                                                      */
 /* -------------------------------------------------------------------------- */
 
-type Label = string | Record<string, string> | ((args: any) => string) | false
+type Label = string | Record<string, string> | ((args: Loose) => string) | false
 
 export type FieldAdmin = {
-  description?: string | Record<string, string> | ((args: any) => string)
-  condition?: (data: any, siblingData: any, ctx?: any) => boolean
-  components?: Record<string, any>
+  description?: string | Record<string, string> | ((args: Loose) => string)
+  condition?: (data: Loose, siblingData: Loose, ctx?: Loose) => boolean
+  components?: Record<string, unknown>
   hidden?: boolean
   disabled?: boolean
   readOnly?: boolean
@@ -185,7 +195,7 @@ export type FieldBase = {
     afterRead?: FieldHook[]
     [key: string]: unknown
   }
-  validate?: (value: any, options: any) => true | string | Promise<true | string>
+  validate?: (value: Loose, options: Loose) => true | string | Promise<true | string>
   custom?: Record<string, unknown>
   [key: string]: unknown
 }
@@ -275,10 +285,10 @@ type EntityAdmin = {
   useAsTitle?: string
   group?: string | Record<string, string> | false
   defaultColumns?: string[]
-  description?: string | Record<string, string> | ((args: any) => string)
-  hidden?: boolean | ((args: any) => boolean)
+  description?: string | Record<string, string> | ((args: Loose) => string)
+  hidden?: boolean | ((args: Loose) => boolean)
   listSearchableFields?: string[]
-  components?: Record<string, any>
+  components?: Record<string, unknown>
   livePreview?: unknown
   preview?: unknown
   disableCopyToLocale?: boolean
@@ -310,20 +320,20 @@ export type CollectionConfig = {
   disableDuplicate?: boolean
   endpoints?: Endpoint[] | false
   hooks?: {
-    beforeValidate?: Array<(args: any) => any>
+    beforeValidate?: Array<(args: Loose) => unknown>
     beforeChange?: CollectionBeforeChangeHook[]
     afterChange?: CollectionAfterChangeHook[]
-    beforeRead?: Array<(args: any) => any>
-    afterRead?: Array<(args: any) => any>
-    beforeDelete?: Array<(args: any) => any>
+    beforeRead?: Array<(args: Loose) => unknown>
+    afterRead?: Array<(args: Loose) => unknown>
+    beforeDelete?: Array<(args: Loose) => unknown>
     afterDelete?: CollectionAfterDeleteHook[]
-    beforeOperation?: Array<(args: any) => any>
-    beforeLogin?: Array<(args: any) => any>
-    afterLogin?: Array<(args: any) => any>
-    afterLogout?: Array<(args: any) => any>
-    afterMe?: Array<(args: any) => any>
-    afterRefresh?: Array<(args: any) => any>
-    afterForgotPassword?: Array<(args: any) => any>
+    beforeOperation?: Array<(args: Loose) => unknown>
+    beforeLogin?: Array<(args: Loose) => unknown>
+    afterLogin?: Array<(args: Loose) => unknown>
+    afterLogout?: Array<(args: Loose) => unknown>
+    afterMe?: Array<(args: Loose) => unknown>
+    afterRefresh?: Array<(args: Loose) => unknown>
+    afterForgotPassword?: Array<(args: Loose) => unknown>
     [key: string]: unknown
   }
   indexes?: unknown[]
@@ -346,11 +356,11 @@ export type GlobalConfig = {
   versions?: boolean | Record<string, unknown>
   endpoints?: Endpoint[] | false
   hooks?: {
-    beforeValidate?: Array<(args: any) => any>
-    beforeChange?: Array<(args: any) => any>
+    beforeValidate?: Array<(args: Loose) => unknown>
+    beforeChange?: Array<(args: Loose) => unknown>
     afterChange?: GlobalAfterChangeHook[]
-    beforeRead?: Array<(args: any) => any>
-    afterRead?: Array<(args: any) => any>
+    beforeRead?: Array<(args: Loose) => unknown>
+    afterRead?: Array<(args: Loose) => unknown>
     [key: string]: unknown
   }
   custom?: Record<string, unknown>
@@ -358,25 +368,25 @@ export type GlobalConfig = {
 }
 
 /** The shapes the admin nav/dashboard read (`labels`, `admin.group`, ...) once a config has been through this app's own label defaults (`@/localapi/config`). */
-export type SanitizedCollectionConfig = CollectionConfig & { labels: { singular: any; plural: any } }
+export type SanitizedCollectionConfig = CollectionConfig & { labels: { singular: Loose; plural: Loose } }
 export type SanitizedGlobalConfig = GlobalConfig
 
 /** Props handed to a custom admin view component. The admin resolves its own context (`getAdminContext`); views read `user`, `searchParams` and `initPageResult` at most. */
 export type AdminViewServerProps = {
-  i18n?: any
-  engine?: any
-  permissions?: any
-  user?: any
-  visibleEntities?: any
-  initPageResult?: any
-  params?: Record<string, any>
+  i18n?: Loose
+  engine?: Loose
+  permissions?: Loose
+  user?: Loose
+  visibleEntities?: Loose
+  initPageResult?: Loose
+  params?: Record<string, unknown>
   searchParams?: Record<string, string | string[] | undefined>
   [key: string]: unknown
 }
 
 /** Props of a field component wired via `admin.components.Field` on a text field. */
 export type TextFieldClientProps = {
-  field: Record<string, any>
+  field: { label?: string | Record<string, string>; required?: boolean; name?: string; admin?: FieldAdmin; [key: string]: unknown }
   path?: string
   readOnly?: boolean
   [key: string]: unknown

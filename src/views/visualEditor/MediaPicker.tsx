@@ -191,7 +191,6 @@ export const MediaPicker: React.FC<{
                 onClick={() => onSelect(item.id, item)}
               >
                 {item.url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={item.url} alt={item.alt || ''} />
                 ) : (
                   <span>{t('ve.media.noPreview')}</span>
