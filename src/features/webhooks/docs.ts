@@ -131,7 +131,7 @@ A failed delivery is tried again after ${RETRY_LIST}, up to ${MAX_ATTEMPTS} atte
 
 - A body can be at most ${MAX_PAYLOAD_BYTES.toLocaleString('en-US')} bytes. A larger payload is not sent.
 - Each webhook has a rate limit (deliveries a minute) set in the builder. Deliveries over the limit are logged as skipped.
-- The delivery log keeps each entry for ${DELIVERY_RETENTION_DAYS} days.
+- The delivery log keeps each entry for the retention the site admin chose (${DELIVERY_RETENTION_DAYS} days by default). A delivery body is redacted once the delivery has finished: values under secret-looking keys (password, token, secret, api key, authorization and similar) are replaced, and such a delivery cannot be replayed.
 `
 }
 

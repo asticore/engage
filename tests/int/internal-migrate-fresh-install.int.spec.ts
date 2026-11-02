@@ -832,6 +832,51 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(await store.findDelivery(row)).toBeNull()
   })
 
+  it('creates the webhook redaction column, the retention setting and the inbound tables, is safe to run twice, and the inbound store round-trips', async () => {
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    const indexesOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA index_list(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((i) => i.name)
+    }
+    const mod = await import('@/migrations/20270304_100000_webhook_redaction_inbound')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    const engine = { logger: consoleLogger } as never
+    await mod.up({ db, engine } as never)
+    await mod.up({ db, engine } as never)
+    expect(await columnsOf('eg_webhook_deliveries')).toContain('redacted')
+    expect(await columnsOf('eg_webhook_settings')).toEqual(expect.arrayContaining(['id', 'retention_days', 'updated_at']))
+    expect(await columnsOf('eg_webhook_inbound')).toEqual(expect.arrayContaining(['token', 'secret', 'action', 'title_path', 'window_seconds']))
+    expect(await columnsOf('eg_webhook_inbound_log')).toEqual(expect.arrayContaining(['endpoint_id', 'idempotency_key', 'outcome']))
+    expect(await indexesOf('eg_webhook_inbound_log')).toEqual(expect.arrayContaining(['eg_webhook_inbound_log_key_idx']))
+
+    const { createD1WebhookStore } = await import('@/features/webhooks/store')
+    const { createD1InboundStore } = await import('@/features/webhooks/inboundStore')
+    const store = createD1WebhookStore(async () => proxy.env.D1 as never)
+    const inbound = createD1InboundStore(async () => proxy.env.D1 as never)
+    const at = '2026-11-02T00:00:00.000Z'
+    expect(await store.getRetentionDays()).toBe(30)
+    await store.setRetentionDays(90, at)
+    expect(await store.getRetentionDays()).toBe(90)
+    await store.setRetentionDays(60, at)
+    expect(await store.getRetentionDays()).toBe(60)
+
+    const id = await inbound.insert({ name: 'Desk', description: '', action: 'content', collection: 'pages', titlePath: 'title', status: 'draft', event: null, windowSeconds: 300, enabled: true }, 'wh_in_fresh', 'enc:v1:00:00:00', at)
+    expect(await inbound.findByToken('wh_in_fresh')).toMatchObject({ id, titlePath: 'title', windowSeconds: 300, enabled: true })
+    const first = await inbound.claim(id, 'key-1', at)
+    expect(first.claimed).toBe(true)
+    expect((await inbound.claim(id, 'key-1', at)).claimed).toBe(false)
+    if (first.claimed) await inbound.finish(first.id, 'failed', 'db down', null, at)
+    expect((await inbound.claim(id, 'key-1', at)).claimed).toBe(true)
+    await inbound.logRejected(id, null, 'bad signature', at)
+    expect((await inbound.listReceipts(id, 10)).map((r) => r.outcome)).toEqual(['rejected', 'pending'])
+    await inbound.remove(id)
+    expect(await inbound.findByToken('wh_in_fresh')).toBeNull()
+  })
+
   it('creates the email design columns and the email design brand table', async () => {
     const designColumnsOf = async (table: string): Promise<string[]> => {
       const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
