@@ -27,15 +27,21 @@ export async function isFeatureDeferred(db: D1Database, key: FeatureKey): Promis
   return states[key] === 'deferred'
 }
 
-export async function provisionFeature(db: D1Database, logger: EngineLogger, key: FeatureKey): Promise<ProvisionResult> {
+export type ProvisionOptions = {
+  /** Replay the migrations only, without creating the tables from the baseline first (how the baseline itself is generated). */
+  replayOnly?: boolean
+}
+
+export async function provisionFeature(db: D1Database, logger: EngineLogger, key: FeatureKey, options: ProvisionOptions = {}): Promise<ProvisionResult> {
   if (!(await isFeatureDeferred(db, key))) return { ok: true, alreadyProvisioned: true, errors: [] }
 
+  let fromBaseline = false
   try {
-    await applyFeatureBaseline(db, key)
+    if (!options.replayOnly) fromBaseline = (await applyFeatureBaseline(db, key)) > 0
   } catch (error) {
     return { ok: false, alreadyProvisioned: false, errors: [`Creating the ${key} tables failed: ${error instanceof Error ? error.message : String(error)}`] }
   }
-  const run = await runInternalMigrate(db, logger, { onlyFeature: key })
+  const run = await runInternalMigrate(db, logger, { onlyFeature: key, tablesFromBaseline: fromBaseline })
   if (run.errorCount > 0) {
     return { ok: false, alreadyProvisioned: false, errors: [`Creating the ${key} tables failed (${run.errorCount} error(s)); nothing was switched on.`] }
   }

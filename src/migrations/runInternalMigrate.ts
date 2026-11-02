@@ -166,6 +166,8 @@ export type InternalMigrateOptions = {
    * sequence, which the specs that test the migrations themselves need.
    */
   baseline?: boolean
+  /** With `onlyFeature`: the feature's tables were just created from the baseline DDL (see provisioning.ts). */
+  tablesFromBaseline?: boolean
   /** Extra migrations run after the real ones (tests: proves a migration newer than the baseline still runs). */
   appendMigrations?: MigrationEntry[]
 }
@@ -305,7 +307,9 @@ export async function runInternalMigrate(
     // When providing one feature this pass is limited to that feature's own tables: the foundation
     // migrations create e.g. `orders_rels` with bare `transactions_id` columns that this pass renames,
     // exactly as it does on an all-at-once install, and no other table is touched.
-    {
+    // Not when the tables were just created from the baseline: they already have their final column names,
+    // and this pass would rename the media and FAQ relationship columns the baseline keeps as they are.
+    if (!options.tablesFromBaseline) {
       const scoped: EngineDb = only ? { ...engineDb, listTables: async () => (await engineDb.listTables()).filter(mine) } : engineDb
       const engineReportPassB = await bootstrapEngineTables(scoped)
       errorCount += engineReportPassB.columns.errors.length

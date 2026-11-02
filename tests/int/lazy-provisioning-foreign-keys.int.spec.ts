@@ -64,3 +64,26 @@ describe('sections switched on after a lazy install', () => {
     expect((await all<{ n: number }>(d1, `SELECT COUNT(*) AS n FROM eg_posts`))[0]!.n).toBe(1)
   }, 300_000)
 })
+
+describe('sections switched on in any order', () => {
+  const columnsOf = async (db: D1Database, table: string): Promise<string[]> => (await all<{ name: string }>(db, `PRAGMA table_info(\`${table}\`)`)).map((c) => c.name)
+
+  for (const order of [['blog', 'faq'], ['faq', 'blog']] as const) {
+    it(`${order.join(' then ')}: posts relationships keep their media and FAQ columns`, async () => {
+      const proxy = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
+      try {
+        expect((await runInternalMigrate(proxy.env.D1, consoleLogger)).errorCount).toBe(0)
+        for (const key of order) expect((await provisionFeature(proxy.env.D1, consoleLogger, key)).ok).toBe(true)
+        for (const table of ['eg_posts_rels', '_eg_posts_v_rels']) {
+          const columns = await columnsOf(proxy.env.D1, table)
+          expect(columns.some((c) => /^(eg_)?media_id$/.test(c)), `${table} media column`).toBe(true)
+          expect(columns.some((c) => /^(eg_)?faqs_id$/.test(c)), `${table} faqs column`).toBe(true)
+        }
+        await insertMinimal(proxy.env.D1, 'eg_posts')
+        await insertMinimal(proxy.env.D1, 'eg_faqs')
+      } finally {
+        await proxy.dispose()
+      }
+    }, 300_000)
+  }
+})

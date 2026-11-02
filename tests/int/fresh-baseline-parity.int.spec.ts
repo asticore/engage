@@ -18,6 +18,7 @@ import { consoleLogger } from '@/localapi/logger'
 import type { MigrationEntry } from '@/localapi/migrate'
 import { FRESH_BASELINE } from '@/migrations/baseline/freshBaseline.generated'
 import type { BaselineSeed, FreshBaseline } from '@/migrations/baseline/applyBaseline'
+import { TABLE_RENAMES } from '@/migrations/schema/tableRenames'
 import { EARLY_MIGRATIONS, LATE_MIGRATIONS, runInternalMigrate } from '@/migrations/runInternalMigrate'
 
 import { provisionAllFeatures } from '../helpers/provisionAll'
@@ -43,17 +44,22 @@ const userTables = async (db: D1Database): Promise<{ name: string; sql: string }
  * when the section is switched on); the target is masked there. After a section is switched on
  * nothing is masked.
  */
-async function snapshot(db: D1Database, maskDangling = false): Promise<Record<string, unknown>> {
+async function snapshot(db: D1Database, maskDangling = false, fixRetired = false): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = {}
   const present = new Set((await userTables(db)).map((t) => t.name))
-  const mask = (name: string): string => (present.has(name) ? name : '<missing table>')
+  const retired = new Map(TABLE_RENAMES.map((entry) => [entry.from, entry.to]))
+  /** A section switched on later via migration replay can keep a foreign key to a retired name; the baseline names the eg_ table. */
+  const current = (name: string): string => (fixRetired && !present.has(name) && retired.has(name) ? retired.get(name)! : name)
+  const mask = (name: string): string => (present.has(current(name)) ? current(name) : '<missing table>')
   for (const table of await userTables(db)) {
-    out[`table ${table.name}`] = maskDangling
-      ? table.sql.replace(/REFERENCES\s+(["`]?)([A-Za-z0-9_]+)\1\s*\(/g, (_all, _q: string, target: string) => `REFERENCES ${mask(target)}(`)
-      : table.sql
+    // Renaming a table makes SQLite quote the references to it; the quoting is not part of the schema.
+    out[`table ${table.name}`] = table.sql.replace(/REFERENCES\s+(["`]?)([A-Za-z0-9_]+)\1\s*\(/g, (_all, _q: string, target: string) => {
+      const name = maskDangling ? mask(target) : current(target)
+      return `REFERENCES ${name}(`
+    })
     out[`columns ${table.name}`] = await all(db, `PRAGMA table_info(\`${table.name}\`)`)
     const foreignKeys = await all<{ table: string }>(db, `PRAGMA foreign_key_list(\`${table.name}\`)`)
-    out[`foreign keys ${table.name}`] = maskDangling ? foreignKeys.map((fk) => ({ ...fk, table: mask(fk.table) })) : foreignKeys
+    out[`foreign keys ${table.name}`] = maskDangling || fixRetired ? foreignKeys.map((fk) => ({ ...fk, table: maskDangling ? mask(fk.table) : current(fk.table) })) : foreignKeys
     const columns = (await all<{ name: string }>(db, `PRAGMA table_info(\`${table.name}\`)`)).map((c) => c.name).filter((c) => !TIMESTAMPS.has(c))
     if (columns.length > 0 && table.name !== 'eg_migrations') {
       out[`rows ${table.name}`] = await all(db, `SELECT ${columns.map((c) => `\`${c}\``).join(', ')} FROM \`${table.name}\` ORDER BY rowid`)
@@ -97,9 +103,16 @@ async function buildBaseline(db: D1Database): Promise<FreshBaseline> {
     if (row.migrations) touched[row.feature] = JSON.parse(row.migrations) as string[]
   }
   const migrations = await all<{ name: string; batch: number }>(db, `SELECT name, batch FROM eg_migrations ORDER BY id`)
+  // Sections provisioned after the content rename keep foreign keys to the retired names; name the eg_ tables.
+  const present = new Set(tables.map((t) => t.name))
+  const renamed = new Map(TABLE_RENAMES.map((entry) => [entry.from, entry.to]))
+  const fixTargets = (sql: string): string =>
+    sql.replace(/REFERENCES\s+(["`]?)([A-Za-z0-9_]+)\1\s*\(/g, (all, q: string, target: string) =>
+      !present.has(target) && renamed.has(target) ? `REFERENCES ${q}${renamed.get(target)}${q}(` : all,
+    )
   return {
     migrations,
-    tables: tables.map((t) => ({ table: t.name, sql: t.sql })),
+    tables: tables.map((t) => ({ table: t.name, sql: fixTargets(t.sql) })),
     indexes: indexes.map((i) => ({ table: i.tbl_name, sql: i.sql })),
     seeds,
     touched,
@@ -135,45 +148,42 @@ ${lines(baseline.seeds)}
 
 describe('fresh-install baseline parity', () => {
   let full: Proxy
-  let ref: Proxy
   let baseEvery: Proxy
   let base: Proxy
   let fullLazy: Record<string, unknown>
   let fullAll: Record<string, unknown>
   let baseLazy: Record<string, unknown>
   let baseAll: Record<string, unknown>
+  let baseEveryAll: Record<string, unknown>
   let baseOutcome: Awaited<ReturnType<typeof runInternalMigrate>>
 
   beforeAll(async () => {
     full = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
-    ref = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     base = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
     baseEvery = await getPlatformProxy<{ D1: D1Database }>({ persist: false })
 
-    // The references: every migration, one by one. Lazy default, and everything at once.
+    // The reference: every migration, one by one, then every section switched on the way the app does it.
     const t0 = Date.now()
     const reference = await runInternalMigrate(full.env.D1, consoleLogger, { baseline: false })
     const fullMs = Date.now() - t0
     expect(reference.errorCount).toBe(0)
     fullLazy = await snapshot(full.env.D1, true)
-    expect((await runInternalMigrate(ref.env.D1, consoleLogger, { baseline: false, provisionAll: true })).errorCount).toBe(0)
-    fullAll = await snapshot(ref.env.D1)
-    // The schema comes from the everything-at-once run: sections switched on later are created after the
-    // content tables were renamed, so their foreign keys can still name the retired pre-rename tables.
-    // What provisioning replays per section comes from the lazy run.
-    if (REGENERATE) writeBaseline({ ...(await buildBaseline(ref.env.D1)), touched: (await buildBaseline(full.env.D1)).touched })
+    expect(await provisionAllFeatures(full.env.D1, { replayOnly: true })).toEqual([])
+    fullAll = await snapshot(full.env.D1, false, true)
+    if (REGENERATE) writeBaseline(await buildBaseline(full.env.D1))
 
     const t1 = Date.now()
     baseOutcome = await runInternalMigrate(base.env.D1, consoleLogger)
     console.warn(`fresh install timing: full migration run ${fullMs} ms, baseline ${Date.now() - t1} ms`)
     baseLazy = await snapshot(base.env.D1, true)
+    expect(await provisionAllFeatures(base.env.D1)).toEqual([])
+    baseAll = await snapshot(base.env.D1)
     expect((await runInternalMigrate(baseEvery.env.D1, consoleLogger, { provisionAll: true })).errorCount).toBe(0)
-    baseAll = await snapshot(baseEvery.env.D1)
+    baseEveryAll = await snapshot(baseEvery.env.D1)
   }, 900_000)
 
   afterAll(async () => {
     await full?.dispose()
-    await ref?.dispose()
     await baseEvery?.dispose()
     await base?.dispose()
   })
@@ -194,7 +204,7 @@ describe('fresh-install baseline parity', () => {
     expect(diff(fullLazy, baseLazy)).toEqual([])
   })
 
-  it('gives the same schema as the full run with every section created at once (the provisionAll install)', () => {
+  it('gives the same schema as the full run once every section is switched on (foreign keys named by their eg_ tables)', () => {
     expect(diff(fullAll, baseAll)).toEqual([])
   })
 
@@ -204,11 +214,10 @@ describe('fresh-install baseline parity', () => {
     expect(states).toEqual(reference)
   })
 
-  it('a section switched on later on a baseline install is created with the same tables', async () => {
-    expect(await provisionAllFeatures(base.env.D1)).toEqual([])
-    const names = async (db: D1Database): Promise<string[]> => (await userTables(db)).map((t) => t.name)
-    expect(await names(base.env.D1)).toEqual(await names(ref.env.D1))
-  }, 300_000)
+  it('creating every section at install gives the same schema as switching them on one by one', () => {
+    // (`eg_feature_tables.migrations` differs on purpose: the replay lists exist only for sections switched on later.)
+    expect(diff(baseAll, baseEveryAll).filter((line) => !line.includes('rows eg_feature_tables'))).toEqual([])
+  })
 
   it('records every migration the full run records, and nothing else', () => {
     const real = new Set([...EARLY_MIGRATIONS, ...LATE_MIGRATIONS].map((m) => m.name))
