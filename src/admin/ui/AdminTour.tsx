@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { usePathname } from 'next/navigation'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
+import { useHydrated } from '@/lib/clientStore'
 import {
   ADMIN_TOUR_START_EVENT,
   TOUR_BLOCKED_PATH,
@@ -61,7 +62,10 @@ const clamp = (value: number, min: number, max: number) => Math.max(min, Math.mi
 export function AdminTour({ autoStart }: { autoStart: boolean }) {
   const t = useAdminT()
   const pathname = usePathname() ?? ''
-  const [active, setActive] = useState(false)
+  const hydrated = useHydrated()
+  // `requested`: opened by the Help button. `dismissed`: closed in this page view.
+  const [requested, setRequested] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
   const [index, setIndex] = useState(0)
   const [layout, setLayout] = useState<{ box: Box; top: number; left: number } | null>(null)
 
@@ -74,21 +78,16 @@ export function AdminTour({ autoStart }: { autoStart: boolean }) {
   const total = TOUR_STEPS.length
   const isLast = index === total - 1
 
+  // Starts by itself only for a user who has never seen it (autoStart comes from the server), never on sign-in,
+  // two-factor or visual editor routes. Browser-only state (session flag) is read only once hydrated, so the
+  // server render and the first client render match.
+  const autoActive = hydrated && autoStart && !dismissed && !TOUR_BLOCKED_PATH.test(pathname) && !seenThisSession()
+  const active = requested || autoActive
+
   const start = useCallback(() => {
     setIndex(0)
-    setActive(true)
+    setRequested(true)
   }, [])
-
-  // Start by itself: only for a user who has never seen it, and not on sign-in, two-factor or visual editor routes.
-  useEffect(() => {
-    if (!autoStart || active || seenRef.current || seenThisSession()) return
-    if (TOUR_BLOCKED_PATH.test(pathname)) return
-    // Reads browser-only state (session flag, route), so it cannot be decided during render without a hydration mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    start()
-    // Only the first eligible render may start it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart, pathname])
 
   // Replay from the Help button.
   useEffect(() => {
@@ -97,7 +96,8 @@ export function AdminTour({ autoStart }: { autoStart: boolean }) {
   }, [start])
 
   const close = useCallback((status: TourStatus) => {
-    setActive(false)
+    setRequested(false)
+    setDismissed(true)
     if (seenRef.current || seenThisSession()) return
     seenRef.current = true
     markSeenThisSession()
