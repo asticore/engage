@@ -1291,22 +1291,23 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
 export function blockStyleCss(style: BlockStyle, scopeId: string, options: { editor?: boolean } = {}): string {
   const rules: string[] = []
   const sel = `#${scopeId}`
+  // Editor canvas: a hidden block is faded, not removed, so it stays selectable.
+  const hidden = options.editor ? 'opacity:0.3 !important' : 'display:none !important'
 
   const mobileDecls: string[] = []
   if (isNum(style.paddingTopMobile)) mobileDecls.push(`padding-top:${style.paddingTopMobile}px`)
   if (isNum(style.paddingBottomMobile)) mobileDecls.push(`padding-bottom:${style.paddingBottomMobile}px`)
-  if (style.hideOnMobile) mobileDecls.push('display:none')
+  if (style.hideOnMobile) mobileDecls.push(options.editor ? hidden : 'display:none')
 
   if (mobileDecls.length > 0) {
     rules.push(`@media (max-width:768px){${sel}{${mobileDecls.join(';')}}}`)
   }
 
   if (style.hideOnDesktop) {
-    rules.push(`@media (min-width:769px){${sel}{display:none}}`)
+    rules.push(`@media (min-width:769px){${sel}{${options.editor ? hidden : 'display:none'}}}`)
   }
 
   // Per-device overrides: tablet first so mobile (declared later) wins where both apply.
-  const hidden = options.editor ? 'opacity:0.3 !important' : 'display:none !important'
   for (const device of ['tablet', 'mobile'] as const) {
     const decls = deviceOverrideDecls(style, device)
     if (decls.length > 0) rules.push(`@media ${deviceQueries(device).cascade}{${sel}{${decls.join(';')}}}`)

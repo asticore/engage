@@ -169,6 +169,14 @@ describe('tablet / mobile style overrides', () => {
     expect(resolveDeviceOverride(legacy, 'tablet')).toEqual({})
   })
 
+  it('legacy hide toggles fade in the editor and remove on the live site', () => {
+    expect(blockStyleCss({ hideOnDesktop: true }, 'x', { editor: true })).toContain('opacity:0.3')
+    expect(blockStyleCss({ hideOnDesktop: true }, 'x', { editor: true })).not.toContain('display:none')
+    expect(blockStyleCss({ hideOnMobile: true }, 'x', { editor: true })).toContain('opacity:0.3')
+    expect(blockStyleCss({ hideOnDesktop: true }, 'x')).toContain('display:none')
+    expect(blockStyleCss({ hideOnMobile: true }, 'x')).toContain('display:none')
+  })
+
   it('renders per-column overrides on the public section', () => {
     const html = renderToString(
       React.createElement(SectionBlock, {
