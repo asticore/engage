@@ -79,7 +79,7 @@ import { ShortcutsHelp } from './visualEditor/ShortcutsHelp'
 import { SaveStatusChip } from './visualEditor/SaveStatusChip'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
-import { clientToFrame, isLibraryDragTypes, resolveDropSlotInDoc, VE_BLOCK_MIME, VE_TEMPLATE_MIME } from './visualEditor/dropSlot'
+import { clientToFrame, isLibraryDragTypes, resolveDropSlotInDoc, trackLibraryDrag, VE_BLOCK_MIME, VE_TEMPLATE_MIME } from './visualEditor/dropSlot'
 import { VE_TEMPLATE_LOCKS_MIME } from './visualEditor/TemplateBrowser'
 
 let idCounter = 0
@@ -1129,23 +1129,14 @@ export const VisualEditorView: React.FC = () => {
   // dragged the frame is made pointer-transparent (CSS: .ve-canvas--lib-drag) and the wrapper
   // receives dragover/drop instead. Tracked from document-level drag events.
   const [libDrag, setLibDrag] = useState(false)
-  useEffect(() => {
-    const onStart = (e: DragEvent) => {
-      if (isLibraryDragTypes(e.dataTransfer?.types)) setLibDrag(true)
-    }
-    const onEnd = () => {
-      setLibDrag(false)
-      sendDragHover(null)
-    }
-    document.addEventListener('dragstart', onStart, true)
-    document.addEventListener('dragend', onEnd, true)
-    document.addEventListener('drop', onEnd, true)
-    return () => {
-      document.removeEventListener('dragstart', onStart, true)
-      document.removeEventListener('dragend', onEnd, true)
-      document.removeEventListener('drop', onEnd, true)
-    }
-  }, [sendDragHover])
+  useEffect(
+    () =>
+      trackLibraryDrag(document, (active) => {
+        setLibDrag(active)
+        if (!active) sendDragHover(null)
+      }),
+    [sendDragHover],
+  )
 
   const onCanvasDragOver = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
