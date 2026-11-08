@@ -259,6 +259,13 @@ export const SiteSettings: GlobalConfig = {
         },
       ],
     },
+    {
+      // System record of the fresh-install questionnaire (see src/features/setup/questionnaire.ts).
+      // Empty means the owner has not been asked yet. Hidden from the form; a save sends it back unchanged.
+      name: 'setupQuestionnaire',
+      type: 'json',
+      admin: { hidden: true },
+    },
     featureToggleField,
   ],
 }

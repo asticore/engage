@@ -1214,6 +1214,35 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(matches[0].dflt_value).toBe('0')
   })
 
+  it('adds the setup questionnaire column, leaves a fresh install NULL, backfills an existing install as skipped, and runs twice safely', async () => {
+    const mod = await import('@/migrations/20270311_100000_setup_questionnaire')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    const engine = { logger: consoleLogger } as never
+    const value = async (): Promise<string | null> =>
+      ((await proxy.env.D1.prepare('SELECT setup_questionnaire AS v FROM eg_site_settings LIMIT 1').first<{ v: string | null }>())?.v ?? null)
+    // Fresh install: no Site Settings row yet, so the owner has not been asked and sees the questions.
+    await mod.up({ db, engine } as never)
+    const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_site_settings`)').all()).results as { name: string }[]
+    expect(info.filter((c) => c.name === 'setup_questionnaire')).toHaveLength(1)
+    expect(await proxy.env.D1.prepare('SELECT COUNT(*) AS n FROM eg_site_settings').first<{ n: number }>()).toEqual({ n: 0 })
+    // A row that exists with a NULL value (an install that predates the questions) is marked skipped.
+    const now = new Date().toISOString()
+    await proxy.env.D1.prepare('INSERT INTO eg_site_settings (updated_at, created_at) VALUES (?, ?)').bind(now, now).run()
+    expect(await value()).toBeNull()
+    await mod.up({ db, engine } as never)
+    await mod.up({ db, engine } as never)
+    const record = JSON.parse((await value()) ?? 'null') as { status: string; reason: string; completedAt: string }
+    expect(record).toMatchObject({ status: 'skipped', reason: 'existing-install' })
+    expect(Number.isNaN(Date.parse(record.completedAt))).toBe(false)
+    // An answer already given is never overwritten.
+    const completed = JSON.stringify({ status: 'completed', completedAt: now })
+    await proxy.env.D1.prepare('UPDATE eg_site_settings SET setup_questionnaire = ?').bind(completed).run()
+    await mod.up({ db, engine } as never)
+    expect(await value()).toBe(completed)
+    await proxy.env.D1.prepare('DELETE FROM eg_site_settings').run()
+  })
+
   it('passkey migration is safe to run a second time and leaves the columns and table single', async () => {
     const mod = await import('@/migrations/20261118_100000_passkeys')
     const { drizzle } = await import('drizzle-orm/d1')

@@ -1,4 +1,5 @@
 import type { FeatureKey } from '@/features/registry'
+import type { SetupQuestionnaireState } from '@/features/setup/questionnaire'
 import type { InstalledFont } from '@/features/fonts/types'
 
 import { SiteSettings } from '@/globals/SiteSettings'
@@ -65,6 +66,8 @@ export type SiteSettingsDoc = {
   } | null
   accountSettings?: { requireEmailVerification?: boolean | null } | null
   features?: Partial<Record<FeatureKey, boolean | null>> | null
+  /** Fresh-install questionnaire record (json column setup_questionnaire); null until the owner answers or skips. */
+  setupQuestionnaire?: SetupQuestionnaireState | null
   updatedAt: string
   createdAt: string
 }
