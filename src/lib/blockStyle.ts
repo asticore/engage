@@ -404,6 +404,8 @@ export type BlockStyle = {
   cssClasses?: string
   /** Scoped CSS; `selector` means this block. Validated by sanitizeCustomCss(). */
   customCss?: string
+  /** Extra wrapper attributes, one `name|value` per line (max 10); validated by sanitizeCustomAttrs(). */
+  customAttrs?: string
 }
 
 export type BlockPosition = 'relative' | 'absolute' | 'fixed' | 'sticky'
@@ -635,6 +637,11 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
     if (classes) out.cssClasses = classes
     else drop('cssClasses')
   }
+  if (raw.customAttrs !== undefined) {
+    const attrs = serializeCustomAttrs(raw.customAttrs)
+    if (attrs) out.customAttrs = attrs
+    else drop('customAttrs')
+  }
   if (raw.customCss !== undefined) {
     const css = sanitizeCustomCss(raw.customCss)
     if (css) out.customCss = css
@@ -764,7 +771,7 @@ const FX_KEYS = [
   'pointerFx', 'pointerFxStrength', 'spotlightColor', 'kenBurns', 'kenBurnsDuration',
   'borderFx', 'borderFxColor', 'borderFxColor2', 'borderFxWidth', 'borderFxSpeed',
   'overlayType', 'overlayColor', 'overlayColor2', 'overlayAngle', 'overlayOpacity', 'overlayBlend',
-  'position', 'blendMode', 'cssClasses', 'customCss', 'maskShape',
+  'position', 'blendMode', 'cssClasses', 'customCss', 'customAttrs', 'maskShape',
   'slideInterval', 'slideTransition', 'blobMorphSpeed', 'noise',
   'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
   'hoverOpacity', 'hoverTransform', 'focusRing',
@@ -784,6 +791,75 @@ const HOVER_TRANSITION_PROPS_KEYS = ['hoverBgColor', 'hoverTextColor', 'hoverBor
 
 function hasHoverState(style: BlockStyle): boolean {
   return HOVER_STATE_KEYS.some((k) => style[k] !== undefined)
+}
+
+export const CUSTOM_ATTRS_MAX_LINES = 10
+export const CUSTOM_ATTR_VALUE_MAX = 200
+const ATTR_NAME = /^[a-z][a-z0-9-]{0,39}$/
+/** Attributes the markup or the visibility / popup scripts own: a user pair may never touch them. */
+const ATTR_RESERVED_PREFIX = ['data-eg-', 'data-be-', 'data-popup', 'data-ve-']
+const ATTR_PLAIN = new Set(['role', 'title', 'tabindex', 'lang', 'rel'])
+const ATTR_BLOCKED = new Set(['style', 'class', 'id', 'href', 'src', 'srcdoc', 'formaction', 'target'])
+const ARIA_ROLES = new Set([
+  'alert', 'alertdialog', 'application', 'article', 'banner', 'button', 'cell', 'checkbox', 'complementary', 'contentinfo',
+  'definition', 'dialog', 'directory', 'document', 'feed', 'figure', 'form', 'grid', 'gridcell', 'group', 'heading', 'img',
+  'link', 'list', 'listbox', 'listitem', 'log', 'main', 'marquee', 'math', 'menu', 'menubar', 'menuitem', 'navigation', 'none',
+  'note', 'option', 'presentation', 'progressbar', 'radio', 'radiogroup', 'region', 'row', 'rowgroup', 'search', 'searchbox',
+  'separator', 'slider', 'spinbutton', 'status', 'switch', 'tab', 'table', 'tablist', 'tabpanel', 'term', 'textbox', 'timer',
+  'toolbar', 'tooltip', 'tree', 'treegrid', 'treeitem',
+])
+const REL_TOKENS = new Set(['nofollow', 'noopener', 'noreferrer', 'sponsored', 'ugc', 'external', 'author', 'help', 'license', 'tag'])
+const LANG_ATTR = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,3}$/
+
+/**
+ * Parses the `name|value` lines of BlockStyle.customAttrs into safe wrapper attributes. Shared by the server render and
+ * the editor. Allowed names: data-*, aria-*, role (known ARIA roles), title, tabindex (-1 or 0), lang, rel (known tokens).
+ * Everything else (on*, style, class, id, href, src, srcdoc, formaction, target, ...) is dropped, as are the attributes
+ * the page scripts own. At most 10 lines are read; first occurrence of a name wins.
+ */
+export function sanitizeCustomAttrs(text: unknown): { name: string; value: string }[] {
+  if (typeof text !== 'string') return []
+  const out: { name: string; value: string }[] = []
+  for (const line of text.split(/\r?\n/).slice(0, CUSTOM_ATTRS_MAX_LINES)) {
+    const bar = line.indexOf('|')
+    const name = (bar < 0 ? line : line.slice(0, bar)).trim().toLowerCase()
+    let value = ''
+    for (const ch of bar < 0 ? '' : line.slice(bar + 1)) {
+      const c = ch.charCodeAt(0)
+      if (c < 32 || c === 127) continue
+      value += ch
+    }
+    value = value.trim().slice(0, CUSTOM_ATTR_VALUE_MAX)
+    if (!ATTR_NAME.test(name) || name.startsWith('on') || ATTR_BLOCKED.has(name)) continue
+    if (ATTR_RESERVED_PREFIX.some((p) => name.startsWith(p))) continue
+    if (out.some((a) => a.name === name)) continue
+    const isData = name.startsWith('data-') && name.length > 5
+    const isAria = name.startsWith('aria-') && name.length > 5
+    if (!isData && !isAria && !ATTR_PLAIN.has(name)) continue
+    if (value === '' && !isData) continue
+    if (name === 'tabindex' && value !== '-1' && value !== '0') continue
+    if (name === 'role' && !ARIA_ROLES.has(value.toLowerCase())) continue
+    if (name === 'lang' && !LANG_ATTR.test(value)) continue
+    if (name === 'rel') {
+      const tokens = value.toLowerCase().split(/\s+/).filter(Boolean)
+      if (tokens.length === 0 || !tokens.every((t) => REL_TOKENS.has(t))) continue
+      value = tokens.join(' ')
+    }
+    if (name === 'role') value = value.toLowerCase()
+    out.push({ name, value })
+  }
+  return out
+}
+
+/** The sanitised pairs written back as the stored `name|value` lines ('' when none survive). */
+export const serializeCustomAttrs = (text: unknown): string =>
+  sanitizeCustomAttrs(text).map((a) => `${a.name}|${a.value}`).join('\n')
+
+/** The sanitised pairs as a props object to spread onto the wrapper element (React escapes the values). */
+export function customAttrProps(style: BlockStyle): Record<string, string> {
+  const props: Record<string, string> = {}
+  for (const a of sanitizeCustomAttrs(style.customAttrs)) props[a.name] = a.value
+  return props
 }
 
 const CSS_CLASS_TOKEN = /^[A-Za-z_][A-Za-z0-9_-]{0,60}$/

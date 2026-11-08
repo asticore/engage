@@ -62,7 +62,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   advanced: [
     ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom',
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
-    'filterGrayscale', 'filterHue', 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss',
+    'filterGrayscale', 'filterHue', 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],
   conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang'],
   visibility: ['hide', 'hideOnMobile', 'hideOnDesktop', 'anchorId', 'customClass'],

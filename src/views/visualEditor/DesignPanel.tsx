@@ -1907,7 +1907,7 @@ const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   ...TRANSFORM_ROWS.map((r) => tfKey('tf', r.suffix)),
   ...TRANSFORM_ROWS.map((r) => tfKey('tfh', r.suffix)),
   'tfDuration', 'position', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
-  'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss',
+  'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
 
 const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void }> = ({ value, onChange }) => {
@@ -2003,6 +2003,21 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
             maxLength={4000}
             value={value.customCss ?? ''}
             onChange={(e) => set('customCss', e.target.value || undefined)}
+          />
+        </Row>
+        <Row
+          label="Custom attributes"
+          applied={Boolean(value.customAttrs)}
+          onReset={() => set('customAttrs', undefined)}
+          help="One name|value per line, up to 10. Allowed: data-*, aria-*, role, title, tabindex (-1 or 0), lang, rel. Anything else is ignored."
+        >
+          <textarea
+            rows={4}
+            maxLength={2400}
+            spellCheck={false}
+            placeholder={'aria-label|Open menu\ndata-track|cta'}
+            value={value.customAttrs ?? ''}
+            onChange={(e) => set('customAttrs', e.target.value || undefined)}
           />
         </Row>
       </div>

@@ -201,4 +201,5 @@ export const V1_GROUP_OF = {
   filterHue: 'transform',
   cssClasses: 'meta',
   customCss: 'meta',
+  customAttrs: 'meta',
 } as const satisfies Record<keyof BlockStyle, V1Group>
