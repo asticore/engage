@@ -79,6 +79,8 @@ import { useEditorShortcuts } from './visualEditor/useEditorShortcuts'
 import { ContextMenu, type ContextMenuItem } from './visualEditor/ContextMenu'
 import { ShortcutsHelp } from './visualEditor/ShortcutsHelp'
 import { SaveStatusChip } from './visualEditor/SaveStatusChip'
+import { EditLockBanner } from '@/admin/views/EditLockBanner'
+import { savedByAnotherSince, updatedAtFromSave } from './visualEditor/saveConflict'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
 import { clientToFrame, isLibraryDragTypes, resolveDropSlotInDoc, trackLibraryDrag, VE_BLOCK_MIME, VE_TEMPLATE_MIME } from './visualEditor/dropSlot'
@@ -164,6 +166,10 @@ export const VisualEditorView: React.FC = () => {
   /** Where a "Select your structure" pick will insert the new section; null while the picker is closed. */
   const [structureTarget, setStructureTarget] = useState<{ containerPath: NodePath; at: number } | null>(null)
   const [dirty, setDirty] = useState(false)
+  /** Another user holds the edit lock on this document (and this user has not taken it over): saving is off. */
+  const [lockedByOther, setLockedByOther] = useState(false)
+  /** The document's updatedAt as of load / our last save; save() compares it with the server's before it writes. */
+  const loadedUpdatedAtRef = useRef<string | null>(null)
   // Local draft recovery: an unsaved copy of the tree kept in this browser. Offered back on the next open, never applied on its own.
   const [draftOffer, setDraftOffer] = useState<BlockDraft | null>(null)
   const draftKeyRef = useRef<string | null>(null)
@@ -278,6 +284,7 @@ export const VisualEditorView: React.FC = () => {
           setHistoryFlags({ undo: false, redo: false })
           setBlocks(withStableIds)
           savedTreeRef.current = comparableTree(withStableIds)
+          loadedUpdatedAtRef.current = typeof doc.updatedAt === 'string' ? doc.updatedAt : null
           const key = draftKeyRef.current
           const stored = key ? readBlockDraft(key) : null
           if (key && stored && draftNeedsOffer(stored, withStableIds, doc.updatedAt as string | undefined)) setDraftOffer(stored)
@@ -1221,6 +1228,10 @@ export const VisualEditorView: React.FC = () => {
   const lockable = surface?.slug === 'pages' || surface?.slug === 'page-templates' || surface?.slug === 'site-templates' || surface?.slug === 'reusable-sections'
   const save = async (publish: boolean, options: { unpublish?: boolean } = {}) => {
     if (!apiUrl || !surface) return
+    if (lockedByOther) {
+      flashNotice(t('ve.editLock.saveBlocked'))
+      return
+    }
     setSaving(publish ? 'publishing' : 'saving')
     // What this request carries. Edits made while it is in flight keep the dirty flag set.
     const sent = { blocks, locks, formConfig, pageSettings }
@@ -1242,6 +1253,16 @@ export const VisualEditorView: React.FC = () => {
         if (publish) body._status = 'published'
       }
 
+      // Someone else may have saved since this editor loaded: ask before overwriting their work.
+      if (loadedUpdatedAtRef.current) {
+        const current = await fetch(`${apiUrl}?depth=0`, { credentials: 'include' }).catch((): Response | null => null)
+        const latest = current && current.ok ? ((await current.json().catch((): null => null)) as { updatedAt?: unknown } | null) : null
+        if (savedByAnotherSince(latest?.updatedAt, loadedUpdatedAtRef.current) && !window.confirm(t('ve.save.overwriteConfirm'))) {
+          setSaving('idle')
+          return
+        }
+      }
+
       const res = await fetch(apiUrl, {
         method: 'PATCH',
         credentials: 'include',
@@ -1252,8 +1273,18 @@ export const VisualEditorView: React.FC = () => {
 
       setSaving(publish ? 'published' : 'saved')
       setSavedAt(Date.now())
+      // The response body is read once: the form branch and the updatedAt bookkeeping both use it.
+      const saved = (await res.json().catch((): null => null)) as { doc?: { embedKey?: string; publishedLayout?: unknown; formStatus?: string } } | null
+      const serverStamp = updatedAtFromSave(saved)
+      if (serverStamp) {
+        loadedUpdatedAtRef.current = serverStamp
+      } else {
+        // The response did not carry the document: read the stamp back so the next save compares against this one.
+        const again = await fetch(`${apiUrl}?depth=0`, { credentials: 'include' }).catch((): Response | null => null)
+        const fresh = again && again.ok ? ((await again.json().catch((): null => null)) as { updatedAt?: unknown } | null) : null
+        if (typeof fresh?.updatedAt === 'string') loadedUpdatedAtRef.current = fresh.updatedAt
+      }
       if (surface.formMode) {
-        const saved = (await res.json().catch((): null => null)) as { doc?: { embedKey?: string; publishedLayout?: unknown; formStatus?: string } } | null
         if (saved?.doc?.embedKey) setEmbedKey(saved.doc.embedKey)
         if (publish) {
           setFormStatus('published')
@@ -1554,19 +1585,22 @@ export const VisualEditorView: React.FC = () => {
             </button></Tooltip>
           )}
           <SaveStatusChip status={saving} dirty={dirty} savedAt={savedAt} onRetry={() => save(false)} />
-          <button type="button" className="ve-btn" onClick={() => save(false)} disabled={saving === 'saving' || !dirty}>
+          <button type="button" className="ve-btn" onClick={() => save(false)} disabled={saving === 'saving' || !dirty || lockedByOther}>
             {saving === 'saving' ? t('ve.top.saving') : saving === 'saved' ? t('status.saved') : t('common.saveDraft')}
           </button>
           <button
             type="button"
             className={`ve-btn ve-btn--primary${dirty || status !== 'published' ? ' ve-btn--dirty' : ''}`}
             onClick={() => save(true)}
-            disabled={saving === 'publishing'}
+            disabled={saving === 'publishing' || lockedByOther}
           >
             {saving === 'publishing' ? t('ve.top.publishing') : saving === 'published' ? t('status.published') : t('common.publish')}
           </button>
         </div>
       </div>
+      {surface?.kind === 'collection' && route?.id && Number.isFinite(Number(route.id)) && (
+        <EditLockBanner collectionSlug={surface.slug} id={Number(route.id)} onLockedByOther={setLockedByOther} />
+      )}
 
       <FormEditorContext.Provider value={{ fields: formFieldChoices }}>
       <div className="ve-body">

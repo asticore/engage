@@ -973,6 +973,8 @@ const fr: UiDictionary = {
   've.save.publishing': 'Publication…',
   've.save.unsaved': 'Modifications non enregistrées',
   've.save.justNow': 'Enregistré à l\'instant',
+  've.save.overwriteConfirm': "Cette page a été modifiée par quelqu'un d'autre depuis son ouverture. Écraser ses modifications ?",
+  've.editLock.saveBlocked': "Quelqu'un d'autre modifie cette page. Reprenez la main pour enregistrer.",
   've.save.minutesAgo': 'Enregistré il y a {minutes} min',
   've.media.noFiles': 'Aucun fichier n\'a été importé.',
   've.media.uploadFailed': 'Échec de l\'importation.',

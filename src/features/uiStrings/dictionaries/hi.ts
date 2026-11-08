@@ -973,6 +973,8 @@ const hi: UiDictionary = {
   've.save.publishing': 'प्रकाशित किया जा रहा है…',
   've.save.unsaved': 'असहेजे बदलाव',
   've.save.justNow': 'अभी-अभी सहेजा गया',
+  've.save.overwriteConfirm': "आपके इस पेज को खोलने के बाद किसी और ने इसे बदला है। क्या उनके बदलाव ओवरराइट करें?",
+  've.editLock.saveBlocked': "कोई और इस पेज को संपादित कर रहा है। सहेजने के लिए संपादन अपने हाथ में लें।",
   've.save.minutesAgo': '{minutes} मिनट पहले सहेजा गया',
   've.media.noFiles': 'कोई फ़ाइल अपलोड नहीं हुई।',
   've.media.uploadFailed': 'अपलोड विफल रहा।',

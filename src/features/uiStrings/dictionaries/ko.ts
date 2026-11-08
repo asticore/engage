@@ -973,6 +973,8 @@ const ko: UiDictionary = {
   've.save.publishing': '게시 중…',
   've.save.unsaved': '저장되지 않은 변경 사항',
   've.save.justNow': '방금 저장됨',
+  've.save.overwriteConfirm': "이 페이지를 연 이후 다른 사용자가 변경했습니다. 그 변경 사항을 덮어쓰시겠습니까?",
+  've.editLock.saveBlocked': "다른 사용자가 이 페이지를 편집 중입니다. 저장하려면 편집 권한을 가져오세요.",
   've.save.minutesAgo': '{minutes}분 전에 저장됨',
   've.media.noFiles': '업로드된 파일이 없습니다.',
   've.media.uploadFailed': '업로드에 실패했습니다.',

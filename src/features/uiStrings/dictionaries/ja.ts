@@ -973,6 +973,8 @@ const ja: UiDictionary = {
   've.save.publishing': '公開中…',
   've.save.unsaved': '未保存の変更',
   've.save.justNow': 'たった今保存しました',
+  've.save.overwriteConfirm': "このページは開いた後に他のユーザーによって変更されました。その変更を上書きしますか?",
+  've.editLock.saveBlocked': "他のユーザーがこのページを編集中です。保存するには編集を引き継いでください。",
   've.save.minutesAgo': '{minutes}分前に保存',
   've.media.noFiles': 'ファイルはアップロードされませんでした。',
   've.media.uploadFailed': 'アップロードに失敗しました。',

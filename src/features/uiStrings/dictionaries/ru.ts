@@ -973,6 +973,8 @@ const ru: UiDictionary = {
   've.save.publishing': 'Публикация…',
   've.save.unsaved': 'Несохранённые изменения',
   've.save.justNow': 'Сохранено только что',
+  've.save.overwriteConfirm': "Эту страницу изменил другой пользователь с момента, как вы её открыли. Перезаписать его изменения?",
+  've.editLock.saveBlocked': "Эту страницу редактирует другой пользователь. Перехватите редактирование, чтобы сохранить.",
   've.save.minutesAgo': 'Сохранено {minutes} мин назад',
   've.media.noFiles': 'Файлы не были загружены.',
   've.media.uploadFailed': 'Не удалось загрузить.',

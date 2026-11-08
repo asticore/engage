@@ -972,6 +972,8 @@ const zhHans: UiDictionary = {
   've.save.publishing': '发布中…',
   've.save.unsaved': '未保存的更改',
   've.save.justNow': '刚刚保存',
+  've.save.overwriteConfirm': "自你打开此页面后,其他人已对其进行了更改。要覆盖他们的更改吗?",
+  've.editLock.saveBlocked': "其他人正在编辑此页面。请接管编辑后再保存。",
   've.save.minutesAgo': '{minutes} 分钟前保存',
   've.media.noFiles': '没有上传任何文件。',
   've.media.uploadFailed': '上传失败。',

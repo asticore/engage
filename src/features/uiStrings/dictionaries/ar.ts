@@ -973,6 +973,8 @@ const ar: UiDictionary = {
   've.save.publishing': 'جارٍ النشر…',
   've.save.unsaved': 'تغييرات غير محفوظة',
   've.save.justNow': 'تم الحفظ للتو',
+  've.save.overwriteConfirm': "تم تغيير هذه الصفحة بواسطة شخص آخر منذ فتحتها. هل تريد استبدال تغييراته؟",
+  've.editLock.saveBlocked': "شخص آخر يحرر هذه الصفحة. استلم التحرير لتتمكن من الحفظ.",
   've.save.minutesAgo': 'تم الحفظ قبل {minutes} د',
   've.media.noFiles': 'لم يتم رفع أي ملفات.',
   've.media.uploadFailed': 'فشل الرفع.',

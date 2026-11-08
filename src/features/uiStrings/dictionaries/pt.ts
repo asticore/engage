@@ -973,6 +973,8 @@ const pt: UiDictionary = {
   've.save.publishing': 'A publicar…',
   've.save.unsaved': 'Alterações não guardadas',
   've.save.justNow': 'Guardado agora mesmo',
+  've.save.overwriteConfirm': "Esta página foi alterada por outra pessoa desde que você a abriu. Substituir as alterações dela?",
+  've.editLock.saveBlocked': "Outra pessoa está editando esta página. Assuma a edição para salvar.",
   've.save.minutesAgo': 'Guardado há {minutes} min',
   've.media.noFiles': 'Nenhum ficheiro foi carregado.',
   've.media.uploadFailed': 'Falha no carregamento.',

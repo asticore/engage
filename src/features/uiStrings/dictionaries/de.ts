@@ -974,6 +974,8 @@ const de: UiDictionary = {
   've.save.publishing': 'Wird veröffentlicht…',
   've.save.unsaved': 'Nicht gespeicherte Änderungen',
   've.save.justNow': 'Gerade gespeichert',
+  've.save.overwriteConfirm': "Diese Seite wurde seit dem Öffnen von jemand anderem geändert. Deren Änderungen überschreiben?",
+  've.editLock.saveBlocked': "Jemand anderes bearbeitet diese Seite. Übernimm die Bearbeitung, um zu speichern.",
   've.save.minutesAgo': 'Vor {minutes} Min. gespeichert',
   've.media.noFiles': 'Es wurden keine Dateien hochgeladen.',
   've.media.uploadFailed': 'Hochladen fehlgeschlagen.',

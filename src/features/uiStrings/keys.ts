@@ -1014,6 +1014,8 @@ export const UI_STRING_SOURCE = {
   've.save.publishing': 'Publishing...',
   've.save.unsaved': 'Unsaved changes',
   've.save.justNow': 'Saved just now',
+  've.save.overwriteConfirm': "This page was changed by someone else since you opened it. Overwrite their changes?",
+  've.editLock.saveBlocked': "Someone else is editing this page. Take over editing to save.",
   've.save.minutesAgo': 'Saved {minutes} min ago',
   've.media.noFiles': 'No files were uploaded.',
   've.media.uploadFailed': 'Upload failed.',

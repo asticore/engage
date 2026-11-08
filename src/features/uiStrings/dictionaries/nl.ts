@@ -973,6 +973,8 @@ const nl: UiDictionary = {
   've.save.publishing': 'Publiceren…',
   've.save.unsaved': 'Niet-opgeslagen wijzigingen',
   've.save.justNow': 'Zojuist opgeslagen',
+  've.save.overwriteConfirm': "Deze pagina is door iemand anders gewijzigd sinds je hem opende. Hun wijzigingen overschrijven?",
+  've.editLock.saveBlocked': "Iemand anders bewerkt deze pagina. Neem het bewerken over om op te slaan.",
   've.save.minutesAgo': '{minutes} min geleden opgeslagen',
   've.media.noFiles': 'Er zijn geen bestanden geüpload.',
   've.media.uploadFailed': 'Uploaden mislukt.',
