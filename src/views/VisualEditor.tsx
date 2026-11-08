@@ -68,7 +68,9 @@ import { pageAvailability, pageSettingsPatch, readPageSettings, validatePageSett
 import { SaveAsTemplateDialog } from './visualEditor/SaveAsTemplate'
 import { VISUAL_EDITOR_CSS } from './visualEditor/visualEditor.styles'
 import { NAVIGATOR_CSS } from './visualEditor/navigator.styles'
-import { canRedo, canUndo, clampPath, createHistory, pushHistory, redoHistory, undoHistory, type History } from './visualEditor/history'
+import { HISTORY_PANEL_CSS } from './visualEditor/historyPanel.styles'
+import { canRedo, canUndo, clampPath, createHistory, historyRows, jumpHistory, pushHistory, redoHistory, undoHistory, type History, type HistoryRow } from './visualEditor/history'
+import { HistoryPanel } from './visualEditor/HistoryPanel'
 import { applyPastedStyle, resetStyleKeepingAnchor, planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
 import type { BlockStyle } from '@/lib/blockStyle'
 import { ImportExportModal } from './visualEditor/ImportExportModal'
@@ -124,6 +126,16 @@ type TranslationResponse = (TranslationPayload & { enabled?: boolean }) | null
 /** The signed-in user as /api/users/me returns it. */
 type MeUser = LockUser & NonNullable<Parameters<typeof can>[0]>
 
+/** Name of a node's type for the History panel ("Heading", "Section"). */
+function typeLabel(node: { blockType?: string; elementType?: string } | null | undefined): string {
+  if (!node?.blockType) return 'block'
+  if (node.blockType === 'element' && node.elementType) {
+    const elementDef = getElementDef(node.elementType)
+    if (elementDef) return elementDef.label
+  }
+  return getBlockDef(node.blockType)?.label ?? node.blockType
+}
+
 export const VisualEditorView: React.FC = () => {
   // The URL is read once hydrated so the server render and first client render match (no window on the server).
   const routeReady = useHydrated()
@@ -154,6 +166,9 @@ export const VisualEditorView: React.FC = () => {
   const [templateKind, setTemplateKind] = useState<unknown>(null)
   const [previewCtx, setPreviewCtx] = useState<BlockContext | null>(null)
   const [dockTab, setDockTab] = useState<DockTab>('elements')
+  const showDockTab = useCallback((tab: DockTab) => {
+    setDockTab(tab)
+  }, [])
   const [userPermissions, setUserPermissions] = useState<{ canEditStyle: boolean; canEditLayout: boolean } | null>(null)
   // Where the next element/template pick lands. Always defined (unlike the
   // old popup's open/closed state) since the dock is always visible now -
@@ -216,8 +231,11 @@ export const VisualEditorView: React.FC = () => {
   // several edits in one event still chain correctly.
   const historyRef = useRef<History>(createHistory())
   const [historyFlags, setHistoryFlags] = useState({ undo: false, redo: false })
+  /** What the History panel lists; rebuilt whenever the history changes. */
+  const [historyList, setHistoryList] = useState<HistoryRow[]>(() => historyRows(createHistory()))
   const syncHistory = useCallback(() => {
     setHistoryFlags({ undo: canUndo(historyRef.current), redo: canRedo(historyRef.current) })
+    setHistoryList(historyRows(historyRef.current))
   }, [])
   const handleKeyRef = useRef<(k: { key: string; ctrl: boolean; meta: boolean; shift: boolean; alt: boolean }) => boolean>(() => false)
   const blocksRef = useRef<SectionNode[]>([])
@@ -282,6 +300,7 @@ export const VisualEditorView: React.FC = () => {
           blocksRef.current = withStableIds
           historyRef.current = createHistory()
           setHistoryFlags({ undo: false, redo: false })
+          setHistoryList(historyRows(historyRef.current))
           setBlocks(withStableIds)
           savedTreeRef.current = comparableTree(withStableIds)
           loadedUpdatedAtRef.current = typeof doc.updatedAt === 'string' ? doc.updatedAt : null
@@ -505,7 +524,7 @@ export const VisualEditorView: React.FC = () => {
    * The one way the tree changes: records the old tree for undo, then applies the change.
    * `key` merges rapid repeat edits (typing in one field) into a single undo step.
    */
-  const applyBlocks = useCallback((change: (prev: SectionNode[]) => SectionNode[], key?: string) => {
+  const applyBlocks = useCallback((change: (prev: SectionNode[]) => SectionNode[], key?: string, label?: string) => {
     // Translate mode: the default language's structure and properties are read-only (text is edited in the translations).
     if (translateRef.current.translating) {
       setLockNotice(translateRef.current.lockedText)
@@ -515,7 +534,7 @@ export const VisualEditorView: React.FC = () => {
     const prev = blocksRef.current
     const next = change(prev)
     if (next === prev) return false
-    historyRef.current = pushHistory(historyRef.current, { blocks: prev, selectedPath: selectedRef.current }, { key })
+    historyRef.current = pushHistory(historyRef.current, { blocks: prev, selectedPath: selectedRef.current }, { key, label })
     blocksRef.current = next
     setBlocks(next)
     syncHistory()
@@ -546,6 +565,8 @@ export const VisualEditorView: React.FC = () => {
             const { label: _old, ...rest } = n
             return (label ? { ...rest, label } : rest) as SectionNode
           }),
+      undefined,
+      'Renamed',
     )
   }, [applyBlocks])
 
@@ -559,6 +580,8 @@ export const VisualEditorView: React.FC = () => {
       path.length % 2 === 0
         ? updateColumnAt(prev, path, (c) => ({ ...c, design: set(c.design as Record<string, unknown> | undefined) as typeof c.design }))
         : updateNode(prev, path, (n) => ({ ...n, design: set(n.design as Record<string, unknown> | undefined) as typeof n.design })),
+      undefined,
+      'CSS ID changed',
     )
   }, [applyBlocks])
 
@@ -573,6 +596,15 @@ export const VisualEditorView: React.FC = () => {
     syncHistory()
     setDirty(true)
   }, [syncHistory])
+
+  /** History panel: jump straight to a listed state (negative = back, positive = forward). */
+  const jumpTo = useCallback((steps: number) => {
+    if (translateRef.current.translating) return
+    const result = jumpHistory(historyRef.current, { blocks: blocksRef.current, selectedPath: selectedRef.current }, steps)
+    if (!result) return
+    historyRef.current = result.history
+    restoreSnapshot(result.snapshot)
+  }, [restoreSnapshot])
 
   const undo = useCallback(() => {
     if (translateRef.current.translating) return
@@ -646,7 +678,7 @@ export const VisualEditorView: React.FC = () => {
       const { containerPath, at } = insertTarget
       if (insertBlocked(containerPath)) return
 
-      applyBlocks((prev) => insertNode(prev, containerPath, at, node))
+      applyBlocks((prev) => insertNode(prev, containerPath, at, node), undefined, `Added ${typeLabel(node)}`)
       setSelectedPath([...containerPath, at])
       setDockTab('settings')
     },
@@ -661,7 +693,7 @@ export const VisualEditorView: React.FC = () => {
       if (!node) return
       if (insertBlocked(containerPath)) return
 
-      applyBlocks((prev) => insertNode(prev, containerPath, at, node))
+      applyBlocks((prev) => insertNode(prev, containerPath, at, node), undefined, `Added ${typeLabel(node)}`)
       setSelectedPath([...containerPath, at])
       setInsertTarget({ containerPath, at: at + 1 })
       setDockTab('settings')
@@ -676,7 +708,7 @@ export const VisualEditorView: React.FC = () => {
       setStructureTarget(null)
       if (!target || insertBlocked(target.containerPath)) return
       const node = buildSectionNode(structure.widths, nextId)
-      applyBlocks((prev) => insertNode(prev, target.containerPath, target.at, node))
+      applyBlocks((prev) => insertNode(prev, target.containerPath, target.at, node), undefined, 'Added Section')
       setSelectedPath([...target.containerPath, target.at])
       setInsertTarget({ containerPath: target.containerPath, at: target.at + 1 })
       setDockTab('settings')
@@ -686,12 +718,12 @@ export const VisualEditorView: React.FC = () => {
 
   /** Templates (a curated preset or a saved Page Template) insert several blocks at once. */
   const insertTemplateAt = useCallback(
-    (templateBlocks: SectionNode[], containerPath: NodePath, at: number, templateLocks?: Locks) => {
+    (templateBlocks: SectionNode[], containerPath: NodePath, at: number, templateLocks?: Locks, label = 'Template inserted') => {
       if (templateBlocks.length === 0) return
       if (insertBlocked(containerPath)) return
       const withFreshIds = templateBlocks.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
 
-      applyBlocks((prev) => insertNodes(prev, containerPath, at, uniquifyAnchors(prev, withFreshIds)))
+      applyBlocks((prev) => insertNodes(prev, containerPath, at, uniquifyAnchors(prev, withFreshIds)), undefined, label)
       // The template's section locks go with its sections (only for someone who may set locks; the server checks too).
       if (templateLocks && lockUser?.canManageLocks && Object.keys(templateLocks.nodes).length > 0) {
         const pairs = pairLockKeys(templateBlocks, withFreshIds)
@@ -710,7 +742,7 @@ export const VisualEditorView: React.FC = () => {
 
   const deleteBlock = useCallback((path: NodePath) => {
     if (lockedOut(path)) return
-    applyBlocks((prev) => updateNode(prev, path, () => null))
+    applyBlocks((prev) => updateNode(prev, path, () => null), undefined, `Deleted ${typeLabel(getNode(blocksRef.current, path))}`)
     setSelectedPath(null)
   }, [lockedOut, applyBlocks])
 
@@ -722,7 +754,7 @@ export const VisualEditorView: React.FC = () => {
       if (!original) return prev
       const [copy] = uniquifyAnchors(prev, [cloneNode(original, nextId)])
       return insertNode(prev, containerPath, index + 1, copy)
-    })
+    }, undefined, 'Duplicated')
   }, [lockedOut, applyBlocks])
 
   const moveBlock = useCallback((path: NodePath, direction: -1 | 1) => {
@@ -731,7 +763,7 @@ export const VisualEditorView: React.FC = () => {
     const { containerPath, index } = splitPath(path)
     const list = getList(blocksRef.current, containerPath)
     if (!list || index + direction < 0 || index + direction >= list.length) return
-    applyBlocks((prev) => reorderWithin(prev, containerPath, index, index + direction))
+    applyBlocks((prev) => reorderWithin(prev, containerPath, index, index + direction), undefined, 'Moved')
     setSelectedPath([...containerPath, index + direction])
   }, [lockedOut, applyBlocks])
 
@@ -740,7 +772,7 @@ export const VisualEditorView: React.FC = () => {
       if (!selectedPath) return
       const lock = effectiveLock(lockCtx.current.blocks, selectedPath, lockCtx.current.locks, lockCtx.current.lockUser)
       if (lock?.blocked && lock.mode === 'full') return
-      applyBlocks((prev) => updateNode(prev, selectedPath, (node) => ({ ...(next as SectionNode), _id: node._id })), `edit:${pathKey(selectedPath)}`)
+      applyBlocks((prev) => updateNode(prev, selectedPath, (node) => ({ ...(next as SectionNode), _id: node._id })), `edit:${pathKey(selectedPath)}`, `Edited ${typeLabel(getNode(blocksRef.current, selectedPath))}`)
     },
     [selectedPath, applyBlocks],
   )
@@ -751,7 +783,7 @@ export const VisualEditorView: React.FC = () => {
     const { blocks: current } = lockCtx.current
     const landed = movedNodePath(current, from, containerPath, at)
     if (!landed) return
-    applyBlocks((prev) => moveNode(prev, from, containerPath, at))
+    applyBlocks((prev) => moveNode(prev, from, containerPath, at), undefined, 'Moved')
     setSelectedPath(landed)
   }, [lockedOut, insertBlocked, applyBlocks])
 
@@ -765,7 +797,7 @@ export const VisualEditorView: React.FC = () => {
     }
     const result = applyColumnOp(blocksRef.current, path, op, nextId)
     if (!result) return
-    applyBlocks(() => result.blocks)
+    applyBlocks(() => result.blocks, undefined, 'Column change')
     setSelectedPath(result.selectedPath)
     setDockTab('settings')
   }, [lockedOut, requestSection, applyBlocks])
@@ -774,14 +806,14 @@ export const VisualEditorView: React.FC = () => {
   const updateSelectedColumn = useCallback((path: NodePath, column: SectionColumn) => {
     const lock = effectiveLock(lockCtx.current.blocks, path.slice(0, -1), lockCtx.current.locks, lockCtx.current.lockUser)
     if (lock?.blocked && lock.mode === 'full') return
-    applyBlocks((prev) => updateColumnAt(prev, path, () => column), `column:${pathKey(path)}`)
+    applyBlocks((prev) => updateColumnAt(prev, path, () => column), `column:${pathKey(path)}`, 'Column change')
   }, [applyBlocks])
 
   /** Canvas drag-resize of two neighbouring columns: one edit (one undo step) for the device shown. Same lock rule as the panel. */
   const setColumnWidths = useCallback((sectionPath: NodePath, widths: number[], target: ColumnDevice) => {
     const lock = effectiveLock(lockCtx.current.blocks, sectionPath, lockCtx.current.locks, lockCtx.current.lockUser)
     if (lock?.blocked && lock.mode === 'full') return
-    applyBlocks((prev) => applyColumnWidths(prev, sectionPath, widths, target))
+    applyBlocks((prev) => applyColumnWidths(prev, sectionPath, widths, target), undefined, 'Column change')
   }, [applyBlocks])
 
   /** Legacy block (hero, CTA banner, image + text, gallery) -> editable section tree, in place: one undo step, then the section is selected. */
@@ -795,7 +827,7 @@ export const VisualEditorView: React.FC = () => {
     const [fresh] = withFreshIds([converted as SectionNode], nextId)
     // Keep the replaced block's id so a lock on it stays attached to the new section.
     const section: SectionNode = current._id ? { ...fresh, _id: current._id } : fresh
-    applyBlocks((prev) => updateNode(prev, selectedPath, () => section))
+    applyBlocks((prev) => updateNode(prev, selectedPath, () => section), undefined, 'Converted to section')
     setSelectedPath(selectedPath)
     setDockTab('settings')
   }, [selectedPath, lockedOut, applyBlocks])
@@ -814,7 +846,7 @@ export const VisualEditorView: React.FC = () => {
   const importAppend = useCallback(
     (nodes: SectionNode[]): boolean => {
       if (insertBlocked([])) return false
-      insertTemplateAt(nodes, [], blocksRef.current.length)
+      insertTemplateAt(nodes, [], blocksRef.current.length, undefined, 'Imported')
       flashNotice(`Imported ${nodes.length} top-level ${nodes.length === 1 ? 'block' : 'blocks'}`, 2500)
       return true
     },
@@ -829,7 +861,7 @@ export const VisualEditorView: React.FC = () => {
         return false
       }
       const fresh = withFreshIds(nodes, nextId)
-      applyBlocks(() => fresh)
+      applyBlocks(() => fresh, undefined, 'Imported')
       setSelectedPath(null)
       setInsertTarget({ containerPath: [], at: fresh.length })
       flashNotice(`Replaced the page with ${fresh.length} top-level ${fresh.length === 1 ? 'block' : 'blocks'}`, 2500)
@@ -842,7 +874,7 @@ export const VisualEditorView: React.FC = () => {
   const aiInsertAtEnd = useCallback(
     (sections: SectionNode[]): boolean => {
       if (sections.length === 0 || insertBlocked([])) return false
-      insertTemplateAt(sections, [], blocksRef.current.length)
+      insertTemplateAt(sections, [], blocksRef.current.length, undefined, 'AI insert')
       flashNotice(`Added ${sections.length} ${sections.length === 1 ? 'section' : 'sections'} with AI`, 2500)
       return true
     },
@@ -868,7 +900,7 @@ export const VisualEditorView: React.FC = () => {
         return false
       }
       const fresh = sections.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
-      applyBlocks((prev) => [...prev.slice(0, index), ...fresh, ...prev.slice(index + 1)])
+      applyBlocks((prev) => [...prev.slice(0, index), ...fresh, ...prev.slice(index + 1)], undefined, 'AI insert')
       setSelectedPath([index])
       setInsertTarget({ containerPath: [], at: index + 1 })
       flashNotice(`Replaced the section with ${fresh.length} ${fresh.length === 1 ? 'section' : 'sections'} from AI`, 2500)
@@ -900,7 +932,7 @@ export const VisualEditorView: React.FC = () => {
       return
     }
     const { containerPath, at } = planPaste(blocksRef.current, target)
-    insertTemplateAt(result.nodes, containerPath, at)
+    insertTemplateAt(result.nodes, containerPath, at, undefined, 'Pasted')
   }, [flashNotice, insertTemplateAt])
 
   const copyStyle = useCallback(async (path: NodePath) => {
@@ -935,6 +967,8 @@ export const VisualEditorView: React.FC = () => {
     // Every breakpoint comes with the copied design; the clipboard device is not needed.
     const changed = applyBlocks((prev) =>
       updateNode(prev, path, (node) => ({ ...node, design: applyPastedStyle(node.design, source as BlockStyle) })),
+      undefined,
+      'Style pasted',
     )
     if (changed) flashNotice('Style pasted')
   }, [userPermissions, lockedOut, flashNotice, applyBlocks])
@@ -947,7 +981,7 @@ export const VisualEditorView: React.FC = () => {
         return
       }
       if (lockedOut(path)) return
-      const changed = applyBlocks((prev) => updateNode(prev, path, resetStyleKeepingAnchor))
+      const changed = applyBlocks((prev) => updateNode(prev, path, resetStyleKeepingAnchor), undefined, 'Style reset')
       if (changed) flashNotice('Style reset')
     },
     [userPermissions, lockedOut, flashNotice, applyBlocks],
@@ -1016,7 +1050,7 @@ export const VisualEditorView: React.FC = () => {
             if (Array.isArray(path)) saveCanvasText(path, field, value)
             break
           }
-          if (Array.isArray(path) && !lockedOut(path)) applyBlocks((prev) => applyInlineEdit(prev, path, { field, itemIndex }, value))
+          if (Array.isArray(path) && !lockedOut(path)) applyBlocks((prev) => applyInlineEdit(prev, path, { field, itemIndex }, value), undefined, 'Text edited')
           break
         }
         case 'quickInsert':
@@ -1091,6 +1125,10 @@ export const VisualEditorView: React.FC = () => {
       navigator: () => setDockTab((t) => (t === 'navigator' ? 'elements' : 'navigator')),
       cycleDevice: () => setDevice((d) => (d === 'desktop' ? 'tablet' : d === 'tablet' ? 'mobile' : 'desktop')),
       togglePanel: () => setDockCollapsed((c) => !c),
+      history: () => {
+        setDockCollapsed(false)
+        showDockTab(dockTab === 'history' ? 'elements' : 'history')
+      },
     },
   })
   useEffect(() => {
@@ -1455,7 +1493,7 @@ export const VisualEditorView: React.FC = () => {
       { }
       <style dangerouslySetInnerHTML={{ __html: VISUAL_EDITOR_CSS }} />
       <style dangerouslySetInnerHTML={{ __html: TRANSLATION_BAR_CSS + TRANSLATE_PANEL_CSS + TRANSLATE_BANNER_CSS + TRANSLATE_ACTIONS_CSS }} />
-      <style dangerouslySetInnerHTML={{ __html: NAVIGATOR_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: NAVIGATOR_CSS + HISTORY_PANEL_CSS }} />
       <style dangerouslySetInnerHTML={{ __html: IMPORT_EXPORT_CSS }} />
       <style dangerouslySetInnerHTML={{ __html: AI_BUILDER_CSS }} />
       <div className="ve-topbar">
@@ -1625,7 +1663,7 @@ export const VisualEditorView: React.FC = () => {
               </>
             ) : undefined
           }
-          onTabChange={setDockTab}
+          onTabChange={showDockTab}
           targetLabel={insertTarget.containerPath.length === 0 ? 'the page' : 'this column'}
           onPickBlock={addBlock}
           onPickTemplate={addTemplateBlocks}
@@ -1659,6 +1697,7 @@ export const VisualEditorView: React.FC = () => {
               <FormBlockFieldsPanel key={String(selectedFormRef)} formId={selectedFormRef} editorHref={`${adminRoot}${formEditorPath(selectedFormRef)}`} />
             ) : undefined
           }
+          historyPanel={<HistoryPanel rows={historyList} onJump={jumpTo} />}
           navigatorPanel={
             <NavigatorPanel
               nodes={blocks}
@@ -1670,7 +1709,7 @@ export const VisualEditorView: React.FC = () => {
               onExpandedStateChange={setNavigatorExpandedState}
               onMove={moveBlockTo}
               onDesignChange={(path, design) =>
-                applyBlocks((prev) => updateNode(prev, path, (n) => ({ ...n, design: design as typeof n.design })), `design:${pathKey(path)}`)
+                applyBlocks((prev) => updateNode(prev, path, (n) => ({ ...n, design: design as typeof n.design })), `design:${pathKey(path)}`, 'Style edited')
               }
               isLocked={(path) => {
                 const lock = effectiveLock(lockCtx.current.blocks, path, lockCtx.current.locks, lockCtx.current.lockUser)
@@ -1734,7 +1773,7 @@ export const VisualEditorView: React.FC = () => {
                 onClick={() => {
                   const restored = withIds(draftOffer.blocks)
                   setDraftOffer(null)
-                  applyBlocks(() => restored)
+                  applyBlocks(() => restored, undefined, 'Draft restored')
                 }}
               >
                 {t('common.restore')}

@@ -576,7 +576,9 @@ html[data-theme='dark'] .ve-root {
   border: none;
   background: none;
   color: var(--ve-text-muted);
-  padding: 13px 8px;
+  padding: 13px 4px;
+  min-width: 0;
+  white-space: nowrap;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -584,7 +586,7 @@ html[data-theme='dark'] .ve-root {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .ve-dock__tab--active {
