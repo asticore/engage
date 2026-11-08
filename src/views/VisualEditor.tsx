@@ -29,6 +29,7 @@ import {
   reorderWithin,
   splitPath,
   stripEditorIds,
+  uniquifyAnchors,
   updateNode,
   type NodePath,
 } from './visualEditor/treeOps'
@@ -68,7 +69,8 @@ import { SaveAsTemplateDialog } from './visualEditor/SaveAsTemplate'
 import { VISUAL_EDITOR_CSS } from './visualEditor/visualEditor.styles'
 import { NAVIGATOR_CSS } from './visualEditor/navigator.styles'
 import { canRedo, canUndo, clampPath, createHistory, pushHistory, redoHistory, undoHistory, type History } from './visualEditor/history'
-import { planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
+import { applyPastedStyle, resetStyleKeepingAnchor, planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
+import type { BlockStyle } from '@/lib/blockStyle'
 import { ImportExportModal } from './visualEditor/ImportExportModal'
 import { IMPORT_EXPORT_CSS } from './visualEditor/importExport.styles'
 import { AI_BUILDER_CSS } from './visualEditor/aiBuilder.styles'
@@ -185,6 +187,8 @@ export const VisualEditorView: React.FC = () => {
   const formMode = surface?.formMode === true
   // Page-level settings (title/slug/status/SEO): edited in the Settings tab, saved in the same PATCH.
   const [pageSettings, setPageSettings] = useState<PageSettings | null>(null)
+  /** What the public address needs from the page document (see openPreview). */
+  const pageLinkInfo = useRef<{ isHomepage: boolean; parent: unknown } | null>(null)
   // Translate mode: the document's translations (null when multilingual is off or the collection has none),
   // and the language being edited (null = the default language, the normal builder).
   const [translation, setTranslation] = useState<TranslationPayload | null>(null)
@@ -288,6 +292,7 @@ export const VisualEditorView: React.FC = () => {
             setPageSettings(loaded)
             setPageInitial(loaded)
             setPageAvail(pageAvailability(doc))
+            pageLinkInfo.current = { isHomepage: doc.isHomepage === true, parent: doc.parent }
           }
         }
         if (user) {
@@ -679,7 +684,7 @@ export const VisualEditorView: React.FC = () => {
       if (insertBlocked(containerPath)) return
       const withFreshIds = templateBlocks.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
 
-      applyBlocks((prev) => insertNodes(prev, containerPath, at, withFreshIds))
+      applyBlocks((prev) => insertNodes(prev, containerPath, at, uniquifyAnchors(prev, withFreshIds)))
       // The template's section locks go with its sections (only for someone who may set locks; the server checks too).
       if (templateLocks && lockUser?.canManageLocks && Object.keys(templateLocks.nodes).length > 0) {
         const pairs = pairLockKeys(templateBlocks, withFreshIds)
@@ -708,7 +713,8 @@ export const VisualEditorView: React.FC = () => {
     applyBlocks((prev) => {
       const original = getNode(prev, path)
       if (!original) return prev
-      return insertNode(prev, containerPath, index + 1, cloneNode(original, nextId))
+      const [copy] = uniquifyAnchors(prev, [cloneNode(original, nextId)])
+      return insertNode(prev, containerPath, index + 1, copy)
     })
   }, [lockedOut, applyBlocks])
 
@@ -904,40 +910,41 @@ export const VisualEditorView: React.FC = () => {
 
   const pasteStyle = useCallback(async (path: NodePath | null) => {
     if (!path || path.length === 0) return
+    if (!userPermissions?.canEditStyle) {
+      flashNotice('Your role cannot edit styles.')
+      return
+    }
+    if (lockedOut(path)) return
     const result = await readStyleClipboard()
     if (result.ok === false) {
       flashNotice(result.error)
       return
     }
-    const { design: sourceDesign, device: sourceDevice } = result
-    const targetNode = getNode(blocksRef.current, path)
-    if (!targetNode) return
-
-    let updatedNode: SectionNode
-    if (sourceDevice === device) {
-      // Same device: replace the design object
-      updatedNode = { ...targetNode, design: sourceDesign }
-    } else {
-      // Different device: set device override in the existing design object
-      const existingDesign = (targetNode.design || {}) as Record<string, unknown>
-      updatedNode = {
-        ...targetNode,
-        design: {
-          ...existingDesign,
-          [sourceDevice]: sourceDesign,
-        },
-      }
+    const source = result.design
+    if (!source || typeof source !== 'object' || Array.isArray(source)) {
+      flashNotice('The copied content has no design.')
+      return
     }
+    // Every breakpoint comes with the copied design; the clipboard device is not needed.
+    const changed = applyBlocks((prev) =>
+      updateNode(prev, path, (node) => ({ ...node, design: applyPastedStyle(node.design, source as BlockStyle) })),
+    )
+    if (changed) flashNotice('Style pasted')
+  }, [userPermissions, lockedOut, flashNotice, applyBlocks])
 
-    const editedBlocks = updateNode(blocksRef.current, path, () => updatedNode)
-    const before = { blocks: blocksRef.current, selectedPath: selectedRef.current }
-    blocksRef.current = editedBlocks
-    setBlocks(editedBlocks)
-    historyRef.current = pushHistory(historyRef.current, before, { key: 'pasteStyle' })
-    syncHistory()
-    setDirty(true)
-    flashNotice('Style pasted')
-  }, [device, flashNotice, syncHistory])
+  /** Context menu: drops the block's style but keeps its CSS id. One undo step. */
+  const resetStyle = useCallback(
+    (path: NodePath) => {
+      if (!userPermissions?.canEditStyle) {
+        flashNotice('Your role cannot edit styles.')
+        return
+      }
+      if (lockedOut(path)) return
+      const changed = applyBlocks((prev) => updateNode(prev, path, resetStyleKeepingAnchor))
+      if (changed) flashNotice('Style reset')
+    },
+    [userPermissions, lockedOut, flashNotice, applyBlocks],
+  )
 
   // Check style clipboard when context menu opens
   useEffect(() => {
@@ -1049,6 +1056,7 @@ export const VisualEditorView: React.FC = () => {
     return () => window.removeEventListener('message', onMessage)
   }, [deleteBlock, duplicateBlock, moveBlock, moveBlockTo, columnOp, renameNode, setColumnWidths, lockedOut, applyBlocks, addBlockAt, saveCanvasText, notifyTranslate, navigateUntranslated, t])
 
+  const saveRef = useRef<((publish: boolean) => unknown) | null>(null)
   // Keyboard shortcuts: the parent's own key presses and the ones forwarded from the frame share this handler.
   const { handleKey } = useEditorShortcuts({
     enabled: !loading && !saveTemplateOpen && !importOpen && !menu,
@@ -1070,6 +1078,12 @@ export const VisualEditorView: React.FC = () => {
       moveUp: () => selectedPath && moveBlock(selectedPath, -1),
       moveDown: () => selectedPath && moveBlock(selectedPath, 1),
       help: () => setHelpOpen((open) => !open),
+      save: () => void saveRef.current?.(false),
+      copyStyle: () => selectedPath && void copyStyle(selectedPath),
+      pasteStyle: () => void pasteStyle(selectedPath),
+      navigator: () => setDockTab((t) => (t === 'navigator' ? 'elements' : 'navigator')),
+      cycleDevice: () => setDevice((d) => (d === 'desktop' ? 'tablet' : d === 'tablet' ? 'mobile' : 'desktop')),
+      togglePanel: () => setDockCollapsed((c) => !c),
     },
   })
   useEffect(() => {
@@ -1204,6 +1218,7 @@ export const VisualEditorView: React.FC = () => {
     pageRef.current = pageSettings
   }, [pageSettings])
 
+  const lockable = surface?.slug === 'pages' || surface?.slug === 'page-templates' || surface?.slug === 'site-templates' || surface?.slug === 'reusable-sections'
   const save = async (publish: boolean, options: { unpublish?: boolean } = {}) => {
     if (!apiUrl || !surface) return
     setSaving(publish ? 'publishing' : 'saving')
@@ -1274,8 +1289,41 @@ export const VisualEditorView: React.FC = () => {
       setError(String((err as Error).message || err))
     }
   }
+  // Keyboard shortcuts are wired before `save` exists; they reach it through this ref.
+  useEffect(() => {
+    saveRef.current = (publish: boolean) => save(publish)
+  })
 
-  const lockable = surface?.slug === 'pages' || surface?.slug === 'page-templates' || surface?.slug === 'site-templates' || surface?.slug === 'reusable-sections'
+  /**
+   * Preview page: saves a dirty page first, then opens its public address. The frontend serves the page marked
+   * as homepage at "/", and any other page at its slug under its parents' slugs (the same rule as pagePaths.ts).
+   */
+  const openPreview = async () => {
+    if (dirty) await save(false)
+    const page = pageRef.current
+    if (!page || !surface) return
+    let path: string
+    if (pageLinkInfo.current?.isHomepage) {
+      path = '/'
+    } else {
+      const segments = [page.slug]
+      let parent: unknown = pageLinkInfo.current?.parent
+      for (let hops = 0; parent && hops < 8; hops += 1) {
+        const id = typeof parent === 'object' ? (parent as { id?: unknown }).id : parent
+        const res = await fetch(`/api/${surface.slug}/${String(id)}?depth=0`, { credentials: 'include' }).catch((): Response | null => null)
+        const doc = res && res.ok ? ((await res.json()) as Record<string, unknown>) : null
+        if (!doc || typeof doc.slug !== 'string') {
+          flashNotice(t('ve.top.previewFailed'))
+          return
+        }
+        segments.unshift(doc.slug)
+        parent = doc.parent
+      }
+      path = `/${segments.join('/')}`
+    }
+    window.open(path, '_blank', 'noopener')
+  }
+
   const selectedLock = selectedPath ? effectiveLock(blocks, selectedPath, locks, lockUser) : null
   const selectedKey = selectedPath ? lockKeyOf(selectedNode, selectedPath) : undefined
   const ownEntry = selectedKey ? locks.nodes[selectedKey] : undefined
@@ -1322,13 +1370,17 @@ export const VisualEditorView: React.FC = () => {
     const { containerPath, index } = splitPath(path)
     const list = getList(blocks, containerPath) ?? []
     const locked = Boolean(effectiveLock(blocks, path, locks, lockUser)?.blocked)
+    const canEditStyle = Boolean(userPermissions?.canEditStyle)
     return [
+      { id: 'edit', label: 'Edit' },
       { id: 'copy', label: 'Copy', hint: `${modLabel}+C` },
       { id: 'cut', label: 'Cut', hint: `${modLabel}+X`, disabled: locked },
       { id: 'paste', label: 'Paste after', hint: `${modLabel}+V` },
       { id: 'duplicate', label: 'Duplicate', hint: `${modLabel}+D`, disabled: locked },
-      { id: 'copy-style', label: 'Copy style', divider: true },
-      { id: 'paste-style', label: 'Paste style', disabled: !hasStyleClipboard },
+      { id: 'copy-style', label: 'Copy style', hint: `${modLabel}+Shift+C`, divider: true },
+      { id: 'paste-style', label: 'Paste style', hint: `${modLabel}+Shift+V`, disabled: !hasStyleClipboard || !canEditStyle || locked },
+      { id: 'reset-style', label: 'Reset style', disabled: locked || !canEditStyle },
+      { id: 'navigator', label: 'Show in Navigator' },
       { id: 'up', label: 'Move up', hint: 'Alt+Up', disabled: locked || index <= 0 },
       { id: 'down', label: 'Move down', hint: 'Alt+Down', disabled: locked || index >= list.length - 1 },
       ...(formMode ? [] : [{ id: 'template', label: 'Save as template' }]),
@@ -1488,13 +1540,26 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.top.saveAsTemplate')}
             </button></Tooltip>
           )}
+          {pageSettings && surface?.slug === 'pages' && (
+            <Tooltip text={status !== 'published' ? t('ve.top.previewDraft') : t('ve.top.preview')}><button
+              type="button"
+              className="ve-btn ve-btn--icon"
+              onClick={() => void openPreview()}
+              aria-label={t('ve.top.preview')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button></Tooltip>
+          )}
           <SaveStatusChip status={saving} dirty={dirty} savedAt={savedAt} onRetry={() => save(false)} />
-          <button type="button" className="ve-btn" onClick={() => save(false)} disabled={saving === 'saving'}>
+          <button type="button" className="ve-btn" onClick={() => save(false)} disabled={saving === 'saving' || !dirty}>
             {saving === 'saving' ? t('ve.top.saving') : saving === 'saved' ? t('status.saved') : t('common.saveDraft')}
           </button>
           <button
             type="button"
-            className="ve-btn ve-btn--primary"
+            className={`ve-btn ve-btn--primary${dirty || status !== 'published' ? ' ve-btn--dirty' : ''}`}
             onClick={() => save(true)}
             disabled={saving === 'publishing'}
           >
@@ -1704,8 +1769,15 @@ export const VisualEditorView: React.FC = () => {
             if (id === 'copy') void copyNode(path)
             else if (id === 'cut') void cutNode(path)
             else if (id === 'paste') void pasteAt(path)
-            else if (id === 'copy-style') void copyStyle(path)
+            else if (id === 'edit') {
+              setSelectedPath(path)
+              setDockTab('settings')
+            } else if (id === 'navigator') {
+              setSelectedPath(path)
+              setDockTab('navigator')
+            } else if (id === 'copy-style') void copyStyle(path)
             else if (id === 'paste-style') void pasteStyle(path)
+            else if (id === 'reset-style') resetStyle(path)
             else if (id === 'duplicate') duplicateBlock(path)
             else if (id === 'delete') deleteBlock(path)
             else if (id === 'up') moveBlock(path, -1)

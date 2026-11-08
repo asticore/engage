@@ -12,10 +12,12 @@ import {
   type Snapshot,
 } from '@/views/visualEditor/history'
 import {
+  applyPastedStyle,
   parseClipboardText,
   planPaste,
   readClipboard,
   resetClipboardMemory,
+  resetStyleKeepingAnchor,
   serializeSelection,
   writeClipboard,
 } from '@/views/visualEditor/editorClipboard'
@@ -151,7 +153,20 @@ describe('shortcuts', () => {
     expect(resolveShortcut(k('ArrowDown', { alt: true }))).toBe('moveDown')
     expect(resolveShortcut(k('a'))).toBeNull()
     expect(resolveShortcut(k('Delete', { ctrl: true }))).toBeNull()
-    expect(resolveShortcut(k('c', { ctrl: true, shift: true }))).toBeNull()
+    expect(resolveShortcut(k('Z', { ctrl: true, shift: true }))).toBe('redo')
+  })
+
+  it('resolves the Elementor shortcuts (VE-05)', () => {
+    expect(resolveShortcut(k('s', { ctrl: true }))).toBe('save')
+    expect(resolveShortcut(k('S', { meta: true }))).toBe('save')
+    expect(resolveShortcut(k('s', { ctrl: true, shift: true }))).toBeNull()
+    expect(resolveShortcut(k('c', { ctrl: true, shift: true }))).toBe('copyStyle')
+    expect(resolveShortcut(k('v', { ctrl: true, shift: true }))).toBe('pasteStyle')
+    expect(resolveShortcut(k('m', { ctrl: true, shift: true }))).toBe('cycleDevice')
+    expect(resolveShortcut(k('i', { ctrl: true }))).toBe('navigator')
+    expect(resolveShortcut(k('p', { ctrl: true }))).toBe('togglePanel')
+    expect(resolveShortcut(k('c', { ctrl: true }))).toBe('copy')
+    expect(resolveShortcut(k('v', { ctrl: true }))).toBe('paste')
   })
 
   it('treats form fields as editable', () => {
@@ -159,5 +174,38 @@ describe('shortcuts', () => {
     expect(isEditableTarget({ tagName: 'DIV', isContentEditable: true } as unknown as EventTarget)).toBe(true)
     expect(isEditableTarget({ tagName: 'DIV' } as unknown as EventTarget)).toBe(false)
     expect(isEditableTarget(null)).toBe(false)
+  })
+})
+
+describe('applyPastedStyle (VE-01)', () => {
+  it('replaces the design with the source design and keeps the target anchor id', () => {
+    const source = { paddingTop: 10, tablet: { paddingTop: 4 }, mobile: { paddingTop: 2 }, anchorId: 'copied' }
+    const out = applyPastedStyle({ anchorId: 'mine', color: 'red' } as never, source as never)
+    expect(out).toEqual({ paddingTop: 10, tablet: { paddingTop: 4 }, mobile: { paddingTop: 2 }, anchorId: 'mine' })
+  })
+
+  it('drops the source anchor id when the target has none', () => {
+    const out = applyPastedStyle(undefined, { paddingTop: 10, anchorId: 'copied' } as never)
+    expect(out).toEqual({ paddingTop: 10 })
+    expect(Object.prototype.hasOwnProperty.call(out, 'anchorId')).toBe(false)
+  })
+
+  it('does not nest a whole design under a device key', () => {
+    const out = applyPastedStyle({ color: 'blue' } as never, { paddingTop: 1, tablet: { paddingTop: 3 } } as never)
+    expect(Object.keys(out).sort()).toEqual(['paddingTop', 'tablet'])
+  })
+})
+
+describe('resetStyleKeepingAnchor (VE-06)', () => {
+  it('removes the design but keeps the CSS id', () => {
+    const node = { blockType: 'section', _id: 'n', design: { paddingTop: 10, tablet: { paddingTop: 2 }, anchorId: 'contact' } } as never
+    const out = resetStyleKeepingAnchor(node)
+    expect(out).toEqual({ blockType: 'section', _id: 'n', design: { anchorId: 'contact' } })
+  })
+
+  it('removes the design key entirely when there is no CSS id', () => {
+    const node = { blockType: 'section', _id: 'n', design: { paddingTop: 10 } } as never
+    const out = resetStyleKeepingAnchor(node)
+    expect(Object.prototype.hasOwnProperty.call(out, 'design')).toBe(false)
   })
 })

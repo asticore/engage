@@ -258,3 +258,75 @@ export function stripEditorIds(nodes: SectionNode[], keep?: ReadonlySet<string>,
     return cleaned
   })
 }
+
+/* ------------------------------------------------------------------ */
+/* CSS ids (design.anchorId) must stay unique on the page              */
+/* ------------------------------------------------------------------ */
+
+const anchorOf = (design: unknown): string | null => {
+  const id = (design as { anchorId?: unknown } | undefined)?.anchorId
+  return typeof id === 'string' && id ? id : null
+}
+
+/** Every anchor id used by a block or column, nested ones included. */
+function collectAnchorIds(nodes: SectionNode[], into: Set<string>): void {
+  for (const node of nodes) {
+    const own = anchorOf(node.design)
+    if (own) into.add(own)
+    for (const column of node.columns ?? []) {
+      const colAnchor = anchorOf(column.design)
+      if (colAnchor) into.add(colAnchor)
+      collectAnchorIds(column.blocks ?? [], into)
+    }
+  }
+}
+
+/** Returns `id` if free, otherwise the first free `id-2`, `id-3`, ... (kept within the 64-char id limit). Marks it taken. */
+function claimAnchorId(id: string, taken: Set<string>): string {
+  if (!taken.has(id)) {
+    taken.add(id)
+    return id
+  }
+  for (let n = 2; ; n += 1) {
+    const suffix = `-${n}`
+    const candidate = `${id.slice(0, 64 - suffix.length)}${suffix}`
+    if (!taken.has(candidate)) {
+      taken.add(candidate)
+      return candidate
+    }
+  }
+}
+
+function claimDesignAnchor<T extends { design?: unknown }>(item: T, taken: Set<string>): T {
+  const id = anchorOf(item.design)
+  if (!id) return item
+  const next = claimAnchorId(id, taken)
+  return next === id ? item : { ...item, design: { ...(item.design as object), anchorId: next } }
+}
+
+function renameIncomingAnchors(nodes: SectionNode[], taken: Set<string>): SectionNode[] {
+  return nodes.map((node) => {
+    let next = claimDesignAnchor(node, taken)
+    if (Array.isArray(node.columns)) {
+      next = {
+        ...next,
+        columns: node.columns.map((column) => {
+          const claimed = claimDesignAnchor(column, taken)
+          return column.blocks ? { ...claimed, blocks: renameIncomingAnchors(column.blocks, taken) } : claimed
+        }),
+      }
+    }
+    return next
+  })
+}
+
+/**
+ * Gives incoming blocks (a duplicate, a paste, a template) CSS ids that do not clash with the page
+ * or with each other: the first copy keeps its id, later clashes become `id-2`, `id-3`, ...
+ * `existing` is the current page tree. Pure: returns new objects and never mutates its input.
+ */
+export function uniquifyAnchors(existing: SectionNode[], incoming: SectionNode[]): SectionNode[] {
+  const taken = new Set<string>()
+  collectAnchorIds(existing, taken)
+  return renameIncomingAnchors(incoming, taken)
+}
