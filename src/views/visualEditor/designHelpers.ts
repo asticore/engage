@@ -44,7 +44,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   border: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow'],
   layout: ['width', 'textAlign', 'textColor'],
   typography: [
-    'fontFamily', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit', 'textTransform',
+    'typePreset', 'fontFamily', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit', 'textTransform',
     'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow', 'textFx', 'textFxColor', 'textFxColor2', 'textFxAngle',
     'textFxStroke', 'textFxAnimated',
   ],

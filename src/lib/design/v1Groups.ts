@@ -52,6 +52,7 @@ export const V1_GROUP_OF = {
   radiusBl: 'border',
   radiusLinked: 'border',
   boxShadow: 'border',
+  typePreset: 'typography',
   fontFamily: 'typography',
   textColor: 'typography',
   textAlign: 'typography',

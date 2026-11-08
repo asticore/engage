@@ -3612,6 +3612,18 @@ const zhHans: UiDictionary = {
   'tour.close': '关闭导览',
   'tour.help': '帮助',
   'tour.replay': '帮助：开始导览',
+  'tp.title': "Text styles",
+  'tp.help': "Global text styles, like Elementor Global Fonts. Pick one for a block in the visual editor (Design, Typography); changing it here updates every block that uses it. Values a block sets itself still win. The preview on the right shows each style.",
+  'tp.empty': "No text styles yet. Add one below.",
+  'tp.size': "Size",
+  'tp.unit': "Size unit",
+  'tp.add': "Add text style",
+  'tp.transform_none': "None",
+  'tp.transform_upper': "Uppercase",
+  'tp.transform_lower': "Lowercase",
+  'tp.transform_capitalize': "Capitalise",
+  'dp.typePreset.label': "Text style",
+  'dp.typePreset.custom': "Custom",
 }
 
 export default zhHans

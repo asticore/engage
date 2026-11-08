@@ -7,6 +7,7 @@ import {
   DEFAULT_COLOURS,
   DEFAULT_GLOBALS,
   DEFAULT_TABLES,
+  DEFAULT_TYPE_PRESETS,
   DEFAULT_TYPOGRAPHY,
   LIMITS,
   type ButtonStyle,
@@ -16,6 +17,7 @@ import {
   type ThemePreset,
   type ThemePresetData,
   type ThemeStyles,
+  type TypePreset,
   type TypeStyle,
 } from '@/features/themeStyles/types'
 
@@ -92,6 +94,33 @@ export function removeTypeStyle(list: TypeStyle[], id: string): TypeStyle[] {
   return list.filter((t) => !(t.id === id && !t.system))
 }
 
+// ---------- Global typography presets (Text styles) ----------
+
+export function addTypePreset(list: TypePreset[], name = 'Text style'): TypePreset[] {
+  if (list.length >= LIMITS.typePresets) return list
+  const cleanName = clampName(name.trim() || 'Text style')
+  const id = uniqueSlug(cleanName, list.map((p) => p.id))
+  return [...list, { id, name: cleanName, fontFamily: 'body' }]
+}
+
+export function removeTypePreset(list: TypePreset[], id: string): TypePreset[] {
+  return list.filter((p) => p.id !== id)
+}
+
+/** Patch one preset; a key set to undefined is removed (the field is unset). Renaming never changes the id. */
+export function patchTypePreset(list: TypePreset[], id: string, patch: Partial<Record<keyof TypePreset, unknown>>): TypePreset[] {
+  return list.map((p) => {
+    if (p.id !== id) return p
+    const next: Record<string, unknown> = { ...p }
+    for (const [k, v] of Object.entries(patch)) {
+      if (k === 'id') continue
+      if (v === undefined || v === '') delete next[k]
+      else next[k] = v
+    }
+    return next as TypePreset
+  })
+}
+
 // ---------- Buttons ----------
 
 export function addButton(list: ButtonStyle[], name: string): ButtonStyle[] {
@@ -139,7 +168,7 @@ export function resetTab(styles: ThemeStyles, tab: TabKey): ThemeStyles {
     case 'colours':
       return { ...styles, colours: clone(DEFAULT_COLOURS) }
     case 'typography':
-      return { ...styles, typography: clone(DEFAULT_TYPOGRAPHY) }
+      return { ...styles, typography: clone(DEFAULT_TYPOGRAPHY), typePresets: clone(DEFAULT_TYPE_PRESETS) }
     case 'buttons':
       return { ...styles, buttons: clone(DEFAULT_BUTTONS) }
     case 'tables':
