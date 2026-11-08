@@ -204,6 +204,8 @@ export const EditorDock: React.FC<{
   onSelectPath?: (path: NodePath | null) => void
   /** Shown under the selected block's settings (a Form block lists its fields here). */
   selectedExtraPanel?: React.ReactNode
+  /** Multi-selection: replaces the settings body with the bulk actions. */
+  multiPanel?: React.ReactNode
 }> = ({
   collapsed,
   tab,
@@ -233,6 +235,7 @@ export const EditorDock: React.FC<{
   selectedPath = null,
   onSelectPath,
   selectedExtraPanel,
+  multiPanel,
 }) => {
   const t = useAdminT()
   const [aiOpen, setAiOpen] = useState(false)
@@ -357,6 +360,8 @@ export const EditorDock: React.FC<{
             )}
             <ElementLibrary targetLabel={targetLabel} onPickBlock={onPickBlock} onPickTemplate={onPickTemplate} formMode={Boolean(formPanel)} />
           </>
+        ) : multiPanel ? (
+          multiPanel
         ) : columnPanel ? (
           columnPanel
         ) : selectedNode && selectedDef ? (

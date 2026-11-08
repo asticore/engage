@@ -31,9 +31,11 @@ export type CanvasHandlers = {
   /** The in-place editor currently open: `key` is the pathKey of its node. */
   inlineEdit?: (InlineEditorProps & { key: string }) | null
   selectedKey: string | null
+  /** Path keys of every block in an active multi-selection (the primary one is selectedKey). */
+  multiKeys?: readonly string[]
   /** Lock state by node path key (see lockState.ts). A blocked node has its move/duplicate/delete disabled. */
   locks?: Record<string, { mode: 'structure' | 'full'; blocked: boolean }>
-  onSelect: (path: NodePath) => void
+  onSelect: (path: NodePath, additive?: boolean) => void
   onAdd: (containerPath: NodePath, at: number) => void
   onDelete: (path: NodePath) => void
   onDuplicate: (path: NodePath) => void
@@ -122,7 +124,7 @@ const CanvasNode: React.FC<{
 }> = ({ node, path, handlers, depth, index, total }) => {
   const t = useAdminT()
   const key = pathKey(path)
-  const isSelected = handlers.selectedKey === key
+  const isSelected = handlers.selectedKey === key || Boolean(handlers.multiKeys?.includes(key))
   const def = getBlockDef(node.blockType)
   const design = asBlockStyle(node.design)
   const lock = handlers.locks?.[key]
@@ -170,7 +172,7 @@ const CanvasNode: React.FC<{
         // Stop the click bubbling to an ancestor section, so clicking a nested
         // block selects that block rather than its container.
         event.stopPropagation()
-        handlers.onSelect(path)
+        handlers.onSelect(path, event.ctrlKey || event.metaKey)
       }}
     >
       {deviceCss && <style dangerouslySetInnerHTML={{ __html: deviceCss }} />}

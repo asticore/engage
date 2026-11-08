@@ -68,6 +68,19 @@ export function serializeSelection(blocks: SectionNode[], path: NodePath | null)
   return { kind, text: JSON.stringify(payload), count: nodes.length }
 }
 
+/** Several blocks at once (multi-select): `nodes` are the top-level selected blocks in document order. */
+export function serializeNodes(nodes: SectionNode[]): Serialized | null {
+  if (nodes.length === 0) return null
+  const kind: ClipboardKind = nodes.every((n) => n.blockType === 'section') ? 'section' : 'block'
+  const payload: ClipboardPayload = {
+    format: CLIPBOARD_FORMAT,
+    schemaVersion: CLIPBOARD_SCHEMA_VERSION,
+    kind,
+    tree: stripEditorIds(nodes),
+  }
+  return { kind, text: JSON.stringify(payload), count: nodes.length }
+}
+
 const DANGEROUS_TEXT = /<\s*(script|iframe|object|embed)\b|javascript\s*:|data\s*:\s*text\/html|vbscript\s*:/i
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype', 'dangerouslySetInnerHTML'])
 const TYPE_KEYS = ['type', 'blockType', 'elementType']

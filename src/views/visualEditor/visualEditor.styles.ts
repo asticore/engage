@@ -2041,6 +2041,9 @@ html[data-theme='dark'] .ve-root {
 /* Drag-resize handle between two side-by-side columns (Canvas.tsx ColumnResizeHandle). Shown while
    the section or its selection is hovered; not drawn at all where the section stacks on this device. */
 .ve-section:has(> .ve-col-resize) { position: relative; }
+.ve-multi { padding: 16px; }
+.ve-multi__count { margin: 0; font-size: 14px; font-weight: 600; }
+.ve-multi__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .ve-pad-handle {
   position: absolute;
   left: 0;

@@ -30,7 +30,7 @@ const SOURCE = 've-canvas' as const
 export type CanvasDevice = 'desktop' | 'tablet' | 'mobile'
 
 export type ParentToFrameMessage =
-  | { source: typeof SOURCE; type: 'init'; blocks: SectionNode[]; selectedPath: NodePath | null; locks?: Record<string, { mode: 'structure' | 'full'; blocked: boolean }>; device?: CanvasDevice }
+  | { source: typeof SOURCE; type: 'init'; blocks: SectionNode[]; selectedPath: NodePath | null; /** Every block of an active multi-selection (empty or absent when none). */ selectedPaths?: NodePath[]; locks?: Record<string, { mode: 'structure' | 'full'; blocked: boolean }>; device?: CanvasDevice }
   | { source: typeof SOURCE; type: 'selected'; selectedPath: NodePath | null }
   /** Site templates "Preview as": sample data the canvas shows in the template widgets' placeholders (null clears it). */
   | { source: typeof SOURCE; type: 'previewContext'; context: BlockContext | null }
@@ -44,7 +44,8 @@ export type ParentToFrameMessage =
 
 export type FrameToParentMessage =
   | { source: typeof SOURCE; type: 'ready' }
-  | { source: typeof SOURCE; type: 'select'; path: NodePath | null }
+  /** `additive`: Ctrl/Cmd-click, toggle the block in a multi-selection instead of replacing the selection. */
+  | { source: typeof SOURCE; type: 'select'; path: NodePath | null; additive?: boolean }
   | { source: typeof SOURCE; type: 'add'; containerPath: NodePath; at: number }
   | { source: typeof SOURCE; type: 'delete'; path: NodePath }
   | { source: typeof SOURCE; type: 'duplicate'; path: NodePath }
