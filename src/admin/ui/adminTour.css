@@ -1,0 +1,142 @@
+/* Admin walkthrough (Task 4). Sits above the admin chrome and the progress bar. */
+.admin-tour {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+}
+
+/* Blocks clicks behind the dialog (it is modal). */
+.admin-tour__backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+}
+
+.admin-tour__backdrop--dim {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Highlight around the target; its huge shadow dims everything else. */
+.admin-tour__ring {
+  position: fixed;
+  border-radius: 8px;
+  outline: 2px solid var(--ac-gold, #c9a227);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.admin-tour__card {
+  position: fixed;
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 16px));
+  padding: 16px 18px 14px;
+  border-radius: 10px;
+  background: var(--theme-bg, #fff);
+  color: var(--theme-text, #1a1a1a);
+  border: 1px solid var(--theme-elevation-150, #d4d4d4);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.admin-tour__card--centred {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.admin-tour__card:focus,
+.admin-tour__title:focus {
+  outline: none;
+}
+
+.admin-tour__count {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--theme-elevation-600, #555);
+}
+
+.admin-tour__title {
+  margin: 0 28px 8px 0;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.admin-tour__body {
+  margin: 0 0 14px;
+}
+
+.admin-tour__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-tour__btn {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  border: 1px solid var(--theme-elevation-250, #bbb);
+  background: var(--theme-elevation-50, #f4f4f4);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-tour__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-tour__btn--primary {
+  background: var(--ac-gold, #c9a227);
+  border-color: var(--ac-gold, #c9a227);
+  color: #1a1a1a;
+}
+
+.admin-tour__btn--link {
+  margin-inline-start: auto;
+  border-color: transparent;
+  background: none;
+  text-decoration: underline;
+}
+
+.admin-tour__close {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-tour__btn:hover:not(:disabled),
+.admin-tour__close:hover {
+  background-color: var(--theme-elevation-100, #e8e8e8);
+}
+
+.admin-tour__btn--primary:hover:not(:disabled) {
+  background: var(--ac-gold, #c9a227);
+  filter: brightness(0.95);
+}
+
+.admin-tour__btn:focus-visible,
+.admin-tour__close:focus-visible {
+  outline: 2px solid var(--ac-gold, #c9a227);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .admin-tour__ring,
+  .admin-tour__card {
+    transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+  }
+}
