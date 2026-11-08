@@ -34,9 +34,30 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20261003_100000_visibility_schedule_lock_events_seo`, `20261005_100000_redirects`, `20261005_110000_pages_sort_order`, `20261006_100000_roles`, `20261007_100000_users_authorship`, `20261008_100000_integrations_expand`, `20261009_100000_user_permission_overrides`, `20261010_100000_site_fonts`, `20261011_100000_site_files`, `20261011_110000_cookie_consent`, `20261011_120000_media_library`, `20261011_130000_content_approval`, `20261011_140000_custom_fields_v2`; the `images` binding in `wrangler.jsonc` (Cloudflare Images transformations must be on the account, otherwise upload optimisation is skipped with a message); the cron trigger (`triggers.crons` in `wrangler.jsonc`, entry `cloudflare-worker.ts`).
 
 ## Tasks (in order)
-Open: Tasks 20 (portal walkthrough), 21 (fresh-install questionnaire), 22 (bookings research and plan), then Tasks 23 to 42 (reference file, templates, visual builder, shop and pricing, regions and domains, API, cron, email, theming, member groups, admin updates, activity log), Task 43 (speed up the portal and shrink the Worker bundle) and Task 44 (Matt's live checklist; was "Task 6"), then Task 45 (rename the repo to engage, very last, Matt does it later) remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 23. Tasks 1 to 5 are Done; Done entries keep the task numbers they had when they closed.
+Open: Task 1 (visual editor Elementor-parity tweaks, new 8 Nov 2026; first in order), then Tasks 20 (portal walkthrough), 21 (fresh-install questionnaire), 22 (bookings research and plan), then Tasks 23 to 42 (reference file, templates, visual builder, shop and pricing, regions and domains, API, cron, email, theming, member groups, admin updates, activity log), Task 43 (speed up the portal and shrink the Worker bundle) and Task 44 (Matt's live checklist; was "Task 6"), then Task 45 (rename the repo to engage, very last, Matt does it later) remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 23. Tasks 1 to 5 are Done; Done entries keep the task numbers they had when they closed.
 
-Order: 20, 21, 22, 23 to 42 (features, in listed order), (new verify tasks), 43 Speed up, 44 Live checks (ends with the fresh-account deploy check), 45 Repo rename.
+Order: 1, 20, 21, 22, 23 to 42 (features, in listed order), (new verify tasks), 43 Speed up, 44 Live checks (ends with the fresh-account deploy check), 45 Repo rename.
+
+### Task 1. Visual editor: Elementor-parity tweaks (new, 8 Nov 2026; first in order)
+Reuses the number 1: the closed Task 1 in Done keeps its own entry. Full spec per item (files, line numbers, steps, acceptance, tests, model hint): `docs/visual-editor-elementor-tweaks.md`; read its "Conventions for every task" first. Builds part of Task 26's gap list (Task 26 keeps widgets, templates, dynamic data, theme builder, motion). Do P0 first, then P1, then P2; tick each item with its PR number.
+- P0 bugs:
+  - [ ] VE-01 Paste style skips lock, translate-mode and style-permission checks, nests the design under the wrong device key when pasted on another device, copies the CSS ID, and merges quick pastes into one undo step. Haiku. Effort S.
+  - [ ] VE-02 Duplicate, paste, template insert, import and AI insert copy the CSS ID (`design.anchorId`), so anchor links break; rename copies (`contact-2`) and warn on duplicates. Haiku. Effort S.
+  - [ ] VE-03 Legacy "hide on desktop / hide on mobile" removes the block from the canvas (cannot be clicked); show it faded like the per-device hide. Haiku. Effort S.
+  - [ ] VE-04 No concurrent-edit protection: mount the existing edit lock (`EditLockBanner`, `/api/admin-edit-lock`) and ask before a save overwrites newer changes (`updatedAt` check). Sonnet. Effort M.
+- P1 Elementor parity:
+  - [ ] VE-05 Shortcuts: Ctrl/Cmd+S save (today opens the browser "Save page as"), Ctrl+Shift+C/V copy/paste style, Ctrl+I Navigator, Ctrl+Shift+M device, Ctrl+P panel. Haiku. Effort S.
+  - [ ] VE-06 Right-click menu: add Edit, Show in Navigator, Reset style. Haiku. Effort S.
+  - [ ] VE-07 History panel listing named actions, click to jump (Ctrl+Shift+H). Sonnet. Effort M.
+  - [ ] VE-08 Revisions tab from the saved versions API; Apply is an undoable edit. After VE-07. Sonnet. Effort M.
+  - [ ] VE-09 More per-device settings: position and offsets, z-index, opacity, font weight, word spacing, transforms. Sonnet. Effort M.
+- P2 polish:
+  - [ ] VE-10 Preview button (opens the live page; drafts cannot be previewed yet). Haiku. Effort S.
+  - [ ] VE-11 Save buttons show unsaved state (Save draft disabled when nothing changed, dot on Publish). Haiku. Effort S.
+  - [ ] VE-12 Finder (Ctrl+E): jump to elements, commands, other pages. Sonnet. Effort M.
+  - [ ] VE-13 Drag section padding on the canvas. Sonnet. Effort M.
+  - [ ] VE-14 Multi-select for delete, duplicate, copy, paste style (one undo step). Sonnet. Effort L.
+  - [ ] VE-15 Site-wide font presets like Elementor Global Fonts. Needs Matt's decision on the data model first. Sonnet. Effort L.
 
 ### Task 20. Portal walkthrough (new, 7 Nov 2026)
 - Add a guided walkthrough for the admin portal: a first-login tour of the sidebar, Pages, the visual editor, Templates, Settings and Features, skippable, replayable from a Help entry, translated through uiStrings, keyboard and screen-reader friendly, and remembered per user. Effort M.
