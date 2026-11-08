@@ -10,7 +10,7 @@
  */
 
 import { BUILT_IN_FONTS, fontStack, sanitizeFamily } from '@/features/fonts/installed'
-import { cleanRoles, cleanUrlText, isIsoDate, rulesFromStyle } from '@/lib/visibilityRules'
+import { cleanDays, cleanLangs, cleanRoles, cleanTime, cleanUrlText, isIsoDate, rulesFromStyle } from '@/lib/visibilityRules'
 
 import { isDesignV2Raw, readFlatDesign } from '@/lib/design/upgrade'
 import { DEFAULT_BREAKPOINTS, type SectionLayout } from '@/lib/sectionLayout'
@@ -334,6 +334,14 @@ export type BlockStyle = {
   showRoles?: string
   /** Text the page path or query must contain. */
   showUrl?: string
+  /** Comma list of weekday numbers 0-6 (Sunday = 0), the visitor's local time. */
+  showDays?: string
+  /** Daily window start HH:MM (visitor's local time). */
+  showFromTime?: string
+  /** Daily window end HH:MM; earlier than the start means overnight. */
+  showUntilTime?: string
+  /** Comma list of language codes the page must be in (html lang). */
+  showLang?: string
 
   // Visibility
   hideOnMobile?: boolean
@@ -495,7 +503,7 @@ export function cornerRadiusValue(s: BlockStyle): string | undefined {
   return RADIUS_CORNER_KEYS.map((k) => `${isNum(s[k]) ? s[k] : base}px`).join(' ')
 }
 
-const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl'] as const
+const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang'] as const
 
 /** Validates the Display conditions keys: ISO dates, in/out, slug-shaped roles, short clean URL text. */
 function sanitizeVisibility(style: BlockStyle): BlockStyle {
@@ -510,6 +518,14 @@ function sanitizeVisibility(style: BlockStyle): BlockStyle {
   if (roles.length > 0) out.showRoles = roles.join(',')
   const url = cleanUrlText(raw.showUrl)
   if (url) out.showUrl = url
+  const days = cleanDays(raw.showDays)
+  if (days.length > 0) out.showDays = days.join(',')
+  const tf = cleanTime(raw.showFromTime)
+  if (tf) out.showFromTime = tf
+  const tu = cleanTime(raw.showUntilTime)
+  if (tu) out.showUntilTime = tu
+  const langs = cleanLangs(raw.showLang)
+  if (langs.length > 0) out.showLang = langs.join(',')
   return out as BlockStyle
 }
 

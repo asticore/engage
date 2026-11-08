@@ -64,7 +64,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
     'filterGrayscale', 'filterHue', 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss',
   ],
-  conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl'],
+  conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang'],
   visibility: ['hide', 'hideOnMobile', 'hideOnDesktop', 'anchorId', 'customClass'],
 }
 
