@@ -20,19 +20,19 @@ import {
  * through an override in the config. Adding either means a schema change and a
  * migration for what is, in both cases, one small per-customer choice.
  *
- * The engine already keeps a per-user key/value store, with read and delete
- * access restricted to the owning user, and it needs nothing added to it. So
+ * The engine already keeps a per-user key/value store, with access restricted
+ * to the owning user, and it needs nothing added to it. So
  * one row per customer holds both. The cost is honest and worth stating: these
  * two values are not visible in the admin area next to the customer, and the
  * default-address marker is not seen by anything outside these screens.
  *
  * WHY THE WRITES LOOK LIKE THIS
  *
- * The store defines access for `read` and `delete` only, so `update` falls
- * back to the engine's default - any signed-in user - which would let one
- * customer overwrite another's row by id. Every write below therefore locates
- * the row through an access-enforced read first and only then updates that id,
- * and a create never carries a user id from anywhere but the session.
+ * The store's access is owner-only for read/update/delete (admins see all),
+ * and a create is stamped with the session user (see
+ * `src/collections/Preferences.ts`). Every write below still locates the row
+ * through an access-enforced read first and only then updates that id, and a
+ * create never carries a user id from anywhere but the session.
  */
 
 const asPreferences = (value: unknown): AccountPreferences => {
