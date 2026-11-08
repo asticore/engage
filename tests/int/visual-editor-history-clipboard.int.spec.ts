@@ -152,7 +152,20 @@ describe('shortcuts', () => {
     expect(resolveShortcut(k('ArrowDown', { alt: true }))).toBe('moveDown')
     expect(resolveShortcut(k('a'))).toBeNull()
     expect(resolveShortcut(k('Delete', { ctrl: true }))).toBeNull()
-    expect(resolveShortcut(k('c', { ctrl: true, shift: true }))).toBeNull()
+    expect(resolveShortcut(k('Z', { ctrl: true, shift: true }))).toBe('redo')
+  })
+
+  it('resolves the Elementor shortcuts (VE-05)', () => {
+    expect(resolveShortcut(k('s', { ctrl: true }))).toBe('save')
+    expect(resolveShortcut(k('S', { meta: true }))).toBe('save')
+    expect(resolveShortcut(k('s', { ctrl: true, shift: true }))).toBeNull()
+    expect(resolveShortcut(k('c', { ctrl: true, shift: true }))).toBe('copyStyle')
+    expect(resolveShortcut(k('v', { ctrl: true, shift: true }))).toBe('pasteStyle')
+    expect(resolveShortcut(k('m', { ctrl: true, shift: true }))).toBe('cycleDevice')
+    expect(resolveShortcut(k('i', { ctrl: true }))).toBe('navigator')
+    expect(resolveShortcut(k('p', { ctrl: true }))).toBe('togglePanel')
+    expect(resolveShortcut(k('c', { ctrl: true }))).toBe('copy')
+    expect(resolveShortcut(k('v', { ctrl: true }))).toBe('paste')
   })
 
   it('treats form fields as editable', () => {

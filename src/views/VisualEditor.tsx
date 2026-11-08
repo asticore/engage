@@ -1039,6 +1039,7 @@ export const VisualEditorView: React.FC = () => {
     return () => window.removeEventListener('message', onMessage)
   }, [deleteBlock, duplicateBlock, moveBlock, moveBlockTo, columnOp, renameNode, setColumnWidths, lockedOut, applyBlocks, addBlockAt, saveCanvasText, notifyTranslate, navigateUntranslated, t])
 
+  const saveRef = useRef<((publish: boolean) => unknown) | null>(null)
   // Keyboard shortcuts: the parent's own key presses and the ones forwarded from the frame share this handler.
   const { handleKey } = useEditorShortcuts({
     enabled: !loading && !saveTemplateOpen && !importOpen && !menu,
@@ -1060,6 +1061,12 @@ export const VisualEditorView: React.FC = () => {
       moveUp: () => selectedPath && moveBlock(selectedPath, -1),
       moveDown: () => selectedPath && moveBlock(selectedPath, 1),
       help: () => setHelpOpen((open) => !open),
+      save: () => void saveRef.current?.(false),
+      copyStyle: () => selectedPath && void copyStyle(selectedPath),
+      pasteStyle: () => void pasteStyle(selectedPath),
+      navigator: () => setDockTab((t) => (t === 'navigator' ? 'elements' : 'navigator')),
+      cycleDevice: () => setDevice((d) => (d === 'desktop' ? 'tablet' : d === 'tablet' ? 'mobile' : 'desktop')),
+      togglePanel: () => setDockCollapsed((c) => !c),
     },
   })
   useEffect(() => {
@@ -1203,6 +1210,7 @@ export const VisualEditorView: React.FC = () => {
     pageRef.current = pageSettings
   }, [pageSettings])
 
+  const lockable = surface?.slug === 'pages' || surface?.slug === 'page-templates' || surface?.slug === 'site-templates' || surface?.slug === 'reusable-sections'
   const save = async (publish: boolean, options: { unpublish?: boolean } = {}) => {
     if (!apiUrl || !surface) return
     setSaving(publish ? 'publishing' : 'saving')
@@ -1273,8 +1281,11 @@ export const VisualEditorView: React.FC = () => {
       setError(String((err as Error).message || err))
     }
   }
+  // Keyboard shortcuts are wired before `save` exists; they reach it through this ref.
+  useEffect(() => {
+    saveRef.current = (publish: boolean) => save(publish)
+  })
 
-  const lockable = surface?.slug === 'pages' || surface?.slug === 'page-templates' || surface?.slug === 'site-templates' || surface?.slug === 'reusable-sections'
   const selectedLock = selectedPath ? effectiveLock(blocks, selectedPath, locks, lockUser) : null
   const selectedKey = selectedPath ? lockKeyOf(selectedNode, selectedPath) : undefined
   const ownEntry = selectedKey ? locks.nodes[selectedKey] : undefined
@@ -1326,8 +1337,8 @@ export const VisualEditorView: React.FC = () => {
       { id: 'cut', label: 'Cut', hint: `${modLabel}+X`, disabled: locked },
       { id: 'paste', label: 'Paste after', hint: `${modLabel}+V` },
       { id: 'duplicate', label: 'Duplicate', hint: `${modLabel}+D`, disabled: locked },
-      { id: 'copy-style', label: 'Copy style', divider: true },
-      { id: 'paste-style', label: 'Paste style', disabled: !hasStyleClipboard },
+      { id: 'copy-style', label: 'Copy style', hint: `${modLabel}+Shift+C`, divider: true },
+      { id: 'paste-style', label: 'Paste style', hint: `${modLabel}+Shift+V`, disabled: !hasStyleClipboard },
       { id: 'up', label: 'Move up', hint: 'Alt+Up', disabled: locked || index <= 0 },
       { id: 'down', label: 'Move down', hint: 'Alt+Down', disabled: locked || index >= list.length - 1 },
       ...(formMode ? [] : [{ id: 'template', label: 'Save as template' }]),
