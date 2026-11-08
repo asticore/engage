@@ -147,6 +147,7 @@ import * as migration_20270304_100000_webhook_redaction_inbound from './20270304
 import * as migration_20270306_100000_form_embeds from './20270306_100000_form_embeds';
 import * as migration_20270308_100000_passkey_skip_two_factor from './20270308_100000_passkey_skip_two_factor';
 import * as migration_20270310_100000_feature_tables_state from './20270310_100000_feature_tables_state';
+import * as migration_20270311_100000_setup_questionnaire from './20270311_100000_setup_questionnaire';
 
 export const migrations = [
   {
@@ -888,5 +889,10 @@ export const migrations = [
     up: migration_20270310_100000_feature_tables_state.up,
     down: migration_20270310_100000_feature_tables_state.down,
     name: '20270310_100000_feature_tables_state',
+  },
+  {
+    up: migration_20270311_100000_setup_questionnaire.up,
+    down: migration_20270311_100000_setup_questionnaire.down,
+    name: '20270311_100000_setup_questionnaire',
   },
 ];
