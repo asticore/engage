@@ -24,6 +24,7 @@ export type ShortcutAction =
   | 'navigator'
   | 'cycleDevice'
   | 'togglePanel'
+  | 'history'
 
 /** Which actions need a selected node (the rest work with nothing selected). */
 const NEEDS_SELECTION: ReadonlySet<ShortcutAction> = new Set([
@@ -49,6 +50,7 @@ export function resolveShortcut(k: KeyInfo): ShortcutAction | null {
     if (k.shift && key === 'c') return 'copyStyle'
     if (k.shift && key === 'v') return 'pasteStyle'
     if (k.shift && key === 'm') return 'cycleDevice'
+    if (k.shift && key === 'h') return 'history'
     if (k.shift) return null
     if (key === 'c') return 'copy'
     if (key === 'x') return 'cut'
@@ -96,6 +98,7 @@ export const SHORTCUT_LIST: { keys: string; labelKey: UiStringKey }[] = [
   { keys: 'Mod+I', labelKey: 've.shortcut.navigator' },
   { keys: 'Mod+Shift+M', labelKey: 've.shortcut.device' },
   { keys: 'Mod+P', labelKey: 've.shortcut.panel' },
+  { keys: 'Mod+Shift+H', labelKey: 've.shortcut.history' },
   { keys: 'Alt+Up / Alt+Down', labelKey: 've.shortcut.move' },
   { keys: '/', labelKey: 've.shortcut.quickInsert' },
   { keys: 'Double-click text', labelKey: 've.shortcut.inlineEdit' },

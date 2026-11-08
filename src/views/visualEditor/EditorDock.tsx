@@ -20,10 +20,11 @@ import { SelectionPath } from './SelectionPath'
 import type { NodePath } from './treeOps'
 import './editorWarnings.css'
 
-export type DockTab = 'elements' | 'settings' | 'form' | 'navigator'
+export type DockTab = 'elements' | 'settings' | 'form' | 'navigator' | 'history'
 
 const GEAR = String.fromCharCode(0x2699)
 const PAGE_ICON = String.fromCodePoint(0x1f4c4)
+const CLOCK_ICON = String.fromCodePoint(0x1f552)
 const SPARKLE = String.fromCharCode(0x2728)
 
 const FOCUSABLE =
@@ -186,6 +187,8 @@ export const EditorDock: React.FC<{
   onSelectColumn?: (index: number) => void
   /** Navigator panel showing all pages/posts/products/events/FAQs in tree view. */
   navigatorPanel?: React.ReactNode
+  /** History panel (this session's actions and the saved revisions). Omit to hide the History tab. */
+  historyPanel?: React.ReactNode
   /** Converts the selected legacy block into editable sections (shown in its settings). */
   onConvertLegacy?: () => void
   /**
@@ -223,6 +226,7 @@ export const EditorDock: React.FC<{
   columnPanel,
   onSelectColumn,
   navigatorPanel,
+  historyPanel,
   onConvertLegacy,
   aiBuilder,
   tree,
@@ -297,6 +301,17 @@ export const EditorDock: React.FC<{
         >
           {PAGE_ICON} {t('ve.tab.navigator')}
         </button>
+        {historyPanel && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'history'}
+            className={`ve-dock__tab ${tab === 'history' ? 've-dock__tab--active' : ''}`}
+            onClick={() => onTabChange('history')}
+          >
+            {CLOCK_ICON} {t('ve.tab.history')}
+          </button>
+        )}
         {formPanel && (
           <button
             type="button"
@@ -315,6 +330,8 @@ export const EditorDock: React.FC<{
           translatePanel
         ) : tab === 'form' && formPanel ? (
           formPanel
+        ) : tab === 'history' && historyPanel ? (
+          historyPanel
         ) : tab === 'navigator' ? (
           <>
             {navigatorPanel || <p className="ve-dock__empty">{t('ve.dock.navigatorUnavailable')}</p>}
