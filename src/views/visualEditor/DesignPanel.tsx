@@ -27,7 +27,6 @@ import {
   resolveDeviceOverride,
   TEXT_FX_OPTIONS,
   type BlendMode,
-  type BlockPosition,
   type BlockStyle,
   type HoverTransformPreset,
   type DeviceOverride,
@@ -446,7 +445,7 @@ export const DesignPanel: React.FC<{
       )}
 
       <Acc g="advanced" title={t('dp.section.advanced')}>
-        <AdvancedControls value={value} onChange={onChange} />
+        <AdvancedControls value={value} onChange={onChange} ctl={resp} />
       </Acc>
 
       <Acc g="conditions" title={t('dp.section.visibilityRules')}>
@@ -1360,11 +1359,20 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
       />
       <SelectRow
         label={t('dp.field.weight')}
-        value={value.fontWeight !== undefined ? String(value.fontWeight) : ''}
-        options={[{ label: t('dp.opt.default'), value: '' }, ...WEIGHT_OPTIONS]}
-        applied={value.fontWeight !== undefined}
-        onReset={() => patch({ fontWeight: undefined })}
-        onChange={(v) => patch({ fontWeight: v ? Number(v) : undefined })}
+        value={typeof ctl.own('fontWeight') === 'number' ? String(ctl.own('fontWeight')) : ''}
+        options={[
+          {
+            label: ctl.device === 'desktop' || typeof ctl.inherited('fontWeight') !== 'number'
+              ? t('dp.opt.default')
+              : t('dp.lit.inherited_from_device_value', { device: t(inheritNote(ctl.device) === 'tablet' ? 'dp.lit.tablet' : 'dp.lit.desktop'), value: String(ctl.inherited('fontWeight')) }),
+            value: '',
+          },
+          ...WEIGHT_OPTIONS,
+        ]}
+        resp={ctl.resp('fontWeight')}
+        applied={ctl.own('fontWeight') !== undefined}
+        onReset={() => ctl.reset('fontWeight')}
+        onChange={(v) => ctl.set('fontWeight', v ? Number(v) : undefined)}
       />
       <ToggleRow
         label={t('dp.field.transform')}
@@ -1416,7 +1424,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
           </select>
         }
       />
-      <FxRange k="wordSpacing" label={t('dp.field.word_spacing')} unit="px" value={value} onChange={onChange} def={0} min={-10} max={50} />
+      <TypoRange ctl={ctl} k="wordSpacing" label={`${t('dp.field.word_spacing')} (px)`} def={0} min={-10} max={50} step={1} />
       <SelectRow
         label={t('dp.field.text_shadow')}
         value={value.textShadow || 'none'}
@@ -1862,10 +1870,10 @@ const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss',
 ]
 
-const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void }> = ({ value, onChange }) => {
+const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; ctl: ResponsiveCtl }> = ({ value, onChange, ctl }) => {
   const t = useAdminT()
   const { set, resetBtn } = makeFxEditing(value, onChange)
-  const positioned = value.position !== undefined
+  const positioned = ctl.effective('position') !== undefined
 
   return (
     <>
@@ -1873,7 +1881,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
       <div className="ve-divider-group">
         <p className="ve-row__label">{t('dp.state.normal')}</p>
         {TRANSFORM_ROWS.map((r) => (
-          <FxRange key={r.suffix} k={tfKey('tf', r.suffix)} label={t(r.labelKey)} unit={r.unit} value={value} onChange={onChange} def={r.def} min={r.min} max={r.max} />
+          <TypoRange key={r.suffix} ctl={ctl} k={tfKey('tf', r.suffix) as RespKey} label={r.unit ? `${t(r.labelKey)} (${r.unit})` : t(r.labelKey)} def={r.def} min={r.min} max={r.max} step={1} />
         ))}
       </div>
       <div className="ve-divider-group">
@@ -1886,26 +1894,27 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
 
       <p className="ve-row__label">{t('dp.field.position')}</p>
       <div className="ve-divider-group">
-        <SelectRow
+        <RespSelect
+          ctl={ctl}
+          k="position"
           label={t('dp.field.position')}
-          value={value.position ?? 'default'}
-          options={[{ label: t('dp.opt.default'), value: 'default' }, ...POSITION_OPTIONS]}
-          applied={value.position !== undefined} onReset={() => set('position', undefined)} onChange={(v) => set('position', v === 'default' ? undefined : (v as BlockPosition))}
+          options={POSITION_OPTIONS}
+          defaultLabel={t('dp.opt.default')}
         />
         {positioned && (
           <>
-            <FxRange k="posTop" label={t('dp.field.top')} unit="px" value={value} onChange={onChange} def={0} min={-2000} max={2000} />
-            <FxRange k="posRight" label={t('dp.lit.right')} unit="px" value={value} onChange={onChange} def={0} min={-2000} max={2000} />
-            <FxRange k="posBottom" label={t('dp.field.bottom')} unit="px" value={value} onChange={onChange} def={0} min={-2000} max={2000} />
-            <FxRange k="posLeft" label={t('dp.lit.left')} unit="px" value={value} onChange={onChange} def={0} min={-2000} max={2000} />
+            <TypoRange ctl={ctl} k="posTop" label={`${t('dp.field.top')} (px)`} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posRight" label={`${t('dp.lit.right')} (px)`} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posBottom" label={`${t('dp.field.bottom')} (px)`} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posLeft" label={`${t('dp.lit.left')} (px)`} def={0} min={-2000} max={2000} step={1} />
           </>
         )}
-        <NumberRow label={t('dp.lit.z_index')} value={value.zIndex} min={-10} max={9999} onChange={(v) => set('zIndex', v)} />
+        <RespNumber ctl={ctl} k="zIndex" label={t('dp.lit.z_index')} min={-10} max={9999} />
       </div>
 
       <p className="ve-row__label">{t('dp.field.appearance')}</p>
       <div className="ve-divider-group">
-        <FxRange k="opacity" label={t('dp.field.opacity')} unit="%" value={value} onChange={onChange} def={100} min={0} max={100} />
+        <TypoRange ctl={ctl} k="opacity" label={`${t('dp.field.opacity')} (%)`} def={100} min={0} max={100} step={1} />
         <SelectRow
           label={t('dp.field.blend_mode')}
           value={value.blendMode ?? 'normal'}
