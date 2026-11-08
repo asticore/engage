@@ -27,6 +27,13 @@ export type SectionDisplay = 'columns' | 'tabs' | 'accordion' | 'carousel' | 'gr
 export type PopupFrequency = 'always' | 'session' | 'days'
 export const POPUP_FREQUENCIES: readonly PopupFrequency[] = ['always', 'session', 'days']
 
+export type PopupAnim = 'none' | 'fade' | 'slide-up' | 'zoom'
+export const POPUP_ANIMS: readonly PopupAnim[] = ['none', 'fade', 'slide-up', 'zoom']
+export type PopupPosition = 'center' | 'top' | 'bottom' | 'right'
+export const POPUP_POSITIONS: readonly PopupPosition[] = ['center', 'top', 'bottom', 'right']
+/** Overlay darkness in percent when popupOverlay is unset (the original rgba(17,24,39,.6)). */
+export const POPUP_OVERLAY_DEFAULT = 60
+
 export type SectionLayout = {
   /** Flow per device. Tablet falls back to desktop and mobile to tablet when unset. */
   direction?: PerDevice<FlowDirection>
@@ -98,6 +105,18 @@ export type SectionLayout = {
   popupFrequency?: PopupFrequency
   /** Popup: days between automatic opens when popupFrequency is 'days' (1..365). */
   popupDays?: number
+  /** Popup: open after this many seconds without pointer, key, scroll or touch input (5..600). Unset = off. */
+  popupIdle?: number
+  /** Popup: overlay darkness in percent (0..90). Unset = 60. */
+  popupOverlay?: number
+  /** Popup: false stops a click on the overlay from closing it. Unset = closes. Ignored while the close button is hidden. */
+  popupCloseOnOverlay?: boolean
+  /** Popup: false hides the close button (Escape and overlay click then always close). Unset = shown. */
+  popupShowClose?: boolean
+  /** Popup: entrance animation. Unset = none. Off under prefers-reduced-motion. */
+  popupAnim?: PopupAnim
+  /** Popup: where the dialog sits. Unset = centre. */
+  popupPosition?: PopupPosition
   /** Stack: distance of the first card from the top of the viewport, px (0..200). Unset = 24. */
   stackTop?: number
   /** Stack: extra distance per card, px (0..60), so each card peeks out above the next. Unset = 16. */
@@ -221,6 +240,16 @@ export function parseSectionLayout(raw: unknown): SectionLayout | undefined {
   if (popupFrequency && popupFrequency !== 'always') out.popupFrequency = popupFrequency
   const popupDays = strictInt(raw.popupDays, 1, 365)
   if (popupDays !== undefined) out.popupDays = popupDays
+  const popupIdle = strictInt(raw.popupIdle, 5, 600)
+  if (popupIdle !== undefined) out.popupIdle = popupIdle
+  const popupOverlay = strictInt(raw.popupOverlay, 0, 90)
+  if (popupOverlay !== undefined && popupOverlay !== POPUP_OVERLAY_DEFAULT) out.popupOverlay = popupOverlay
+  if (raw.popupCloseOnOverlay === false) out.popupCloseOnOverlay = false
+  if (raw.popupShowClose === false) out.popupShowClose = false
+  const popupAnim = pick(raw.popupAnim, POPUP_ANIMS)
+  if (popupAnim && popupAnim !== 'none') out.popupAnim = popupAnim
+  const popupPosition = pick(raw.popupPosition, POPUP_POSITIONS)
+  if (popupPosition && popupPosition !== 'center') out.popupPosition = popupPosition
   const stackTop = clampInt(raw.stackTop, 0, 200)
   if (stackTop !== undefined) out.stackTop = stackTop
   const stackOffset = clampInt(raw.stackOffset, 0, 60)
@@ -441,7 +470,19 @@ export function stickyStepsClass(rawLayout: unknown): string {
 export function modalStyleVars(rawLayout: unknown): Record<string, string> {
   const layout = parseSectionLayout(rawLayout)
   if (layout?.display !== 'modal') return {}
-  return { '--be-modal-width': `${layout.modalWidth ?? 640}px` }
+  const vars: Record<string, string> = { '--be-modal-width': `${layout.modalWidth ?? 640}px` }
+  if (layout.popupOverlay !== undefined) vars['--be-modal-overlay'] = String(layout.popupOverlay / 100)
+  return vars
+}
+
+/** data-anim / data-pos for the popup wrapper (popup.css reads them). Empty for the defaults and for other display modes. */
+export function modalDataAttrs(rawLayout: unknown): Record<string, string> {
+  const layout = parseSectionLayout(rawLayout)
+  if (layout?.display !== 'modal') return {}
+  const attrs: Record<string, string> = {}
+  if (layout.popupAnim) attrs['data-anim'] = layout.popupAnim
+  if (layout.popupPosition) attrs['data-pos'] = layout.popupPosition
+  return attrs
 }
 
 /** Inline style for a column's own layout settings (kept separate from its width vars). */

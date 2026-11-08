@@ -36,7 +36,7 @@ import {
   type ResponsiveKey,
   isSafeMediaUrl,
 } from '@/lib/blockStyle'
-import { isIsoDate } from '@/lib/visibilityRules'
+import { cleanDays, cleanTime, isIsoDate } from '@/lib/visibilityRules'
 import { BUILT_IN_FONTS } from '@/features/fonts/installed'
 import { useSiteFonts } from './useSiteFonts'
 
@@ -621,6 +621,8 @@ const Row: React.FC<{ label: string; help?: string; resp?: RowResp; applied?: bo
   )
 }
 
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
 const ConditionControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void }> = ({ value, onChange }) => {
   const t = useAdminT()
   const set = (patch: Partial<BlockStyle>) => onChange({ ...value, ...patch })
@@ -629,7 +631,7 @@ const ConditionControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSty
       <p className="ve-row__help">
         Show this block only when every rule below passes. Rules about who is viewing (logged in or out, roles, URL) are checked in the
         browser, so the block stays hidden for visitors without JavaScript and for crawlers. A date window alone is shown without
-        JavaScript. To hide by screen size use Hide on device below.
+        JavaScript. Weekday and time of day use the visitor&apos;s own clock and time zone, not the site&apos;s. To hide by screen size use Hide on device below.
       </p>
       <TextRow
         label={t('dp.lit.show_from')}
@@ -668,6 +670,52 @@ const ConditionControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSty
         placeholder="/pricing or ?ref=news"
         help={t('dp.lit.text_the_page_path_or_query_string_must')}
         onChange={(v) => set({ showUrl: v ? v.slice(0, 120) : undefined })}
+      />
+      <div className="ve-row" role="group" aria-label="Weekdays">
+        <span className="ve-row__label">Weekdays</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {WEEKDAYS.map((name, i) => {
+            const on = cleanDays(value.showDays).includes(i)
+            return (
+              <button
+                key={name}
+                type="button"
+                className="ve-btn ve-btn--ghost"
+                aria-pressed={on}
+                style={on ? { outline: '2px solid currentColor', fontWeight: 700 } : undefined}
+                onClick={() => {
+                  const cur = cleanDays(value.showDays)
+                  const next = on ? cur.filter((d) => d !== i) : [...cur, i]
+                  set({ showDays: next.length > 0 && next.length < 7 ? next.sort((a, b) => a - b).join(',') : undefined })
+                }}
+              >
+                {name}
+              </button>
+            )
+          })}
+        </div>
+        <span className="ve-row__help">None selected = every day. Uses the visitor&apos;s own clock and time zone.</span>
+      </div>
+      <TextRow
+        label="Show from time"
+        value={value.showFromTime}
+        placeholder="HH:MM"
+        help={value.showFromTime && !cleanTime(value.showFromTime) ? 'Use 24 hour HH:MM, e.g. 09:00. Ignored until valid.' : "Daily start, visitor's local time (24 h). If this is later than the end time the window runs overnight."}
+        onChange={(v) => set({ showFromTime: v ? v.slice(0, 5) : undefined })}
+      />
+      <TextRow
+        label="Show until time"
+        value={value.showUntilTime}
+        placeholder="HH:MM"
+        help={value.showUntilTime && !cleanTime(value.showUntilTime) ? 'Use 24 hour HH:MM, e.g. 17:00. Ignored until valid.' : "Daily end, visitor's local time (24 h). The block is hidden from this minute."}
+        onChange={(v) => set({ showUntilTime: v ? v.slice(0, 5) : undefined })}
+      />
+      <TextRow
+        label="Page language"
+        value={value.showLang}
+        placeholder="en, fr, pt-br"
+        help="Comma list of language codes. Shown only when the page is in one of them (en also matches en-GB). Up to 10."
+        onChange={(v) => set({ showLang: v ? v.slice(0, 120) : undefined })}
       />
     </>
   )
@@ -749,13 +797,14 @@ export const CheckRow: React.FC<{
   /** Shows the applied dot (defaults to checked) and, with onReset, a per-setting reset. */
   applied?: boolean
   onReset?: () => void
+  disabled?: boolean
   onChange: (v: boolean) => void
-}> = ({ label, checked, help, resp, applied, onReset, onChange }) => {
+}> = ({ label, checked, help, resp, applied, onReset, disabled, onChange }) => {
   const t = useAdminT()
   const showApplied = applied ?? checked
   return (
   <label className="ve-row ve-row--check">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
     <span className="ve-row__label">
       {label}
       {showApplied && <Tooltip text={t('dp.changed')}><span className="ve-d51-dot" aria-label={t('dp.changed')} role="img" /></Tooltip>}
@@ -1867,7 +1916,7 @@ const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   ...TRANSFORM_ROWS.map((r) => tfKey('tf', r.suffix)),
   ...TRANSFORM_ROWS.map((r) => tfKey('tfh', r.suffix)),
   'tfDuration', 'position', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
-  'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss',
+  'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
 
 const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; ctl: ResponsiveCtl }> = ({ value, onChange, ctl }) => {
@@ -1964,6 +2013,21 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
             maxLength={4000}
             value={value.customCss ?? ''}
             onChange={(e) => set('customCss', e.target.value || undefined)}
+          />
+        </Row>
+        <Row
+          label="Custom attributes"
+          applied={Boolean(value.customAttrs)}
+          onReset={() => set('customAttrs', undefined)}
+          help="One name|value per line, up to 10. Allowed: data-*, aria-*, role, title, tabindex (-1 or 0), lang, rel. Anything else is ignored."
+        >
+          <textarea
+            rows={4}
+            maxLength={2400}
+            spellCheck={false}
+            placeholder={'aria-label|Open menu\ndata-track|cta'}
+            value={value.customAttrs ?? ''}
+            onChange={(e) => set('customAttrs', e.target.value || undefined)}
           />
         </Row>
       </div>

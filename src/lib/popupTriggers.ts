@@ -58,13 +58,28 @@ export function isLikelyBot(userAgent: string | undefined, webdriver?: boolean):
   return /bot|crawl|spider|slurp|headless|lighthouse|prerender|facebookexternalhit|bingpreview/i.test(userAgent || '')
 }
 
-export type AutoTriggers = { delaySec?: number; scrollPct?: number; exit: boolean }
+/** True once the visitor has been idle (no input) for at least `seconds`. */
+export function idleElapsed(lastActivityMs: number, nowMs: number, seconds: number): boolean {
+  if (!Number.isFinite(lastActivityMs) || !Number.isFinite(nowMs) || !(seconds > 0)) return false
+  return nowMs - lastActivityMs >= seconds * 1000
+}
+
+/**
+ * How the popup may be closed. A popup can never be made impossible to close: Escape always works, and
+ * when the close button is hidden a click on the overlay closes it whatever popupCloseOnOverlay says.
+ */
+export function popupCloseRules(layout: SectionLayout | undefined): { showClose: boolean; closeOnOverlay: boolean } {
+  const showClose = layout?.popupShowClose !== false
+  return { showClose, closeOnOverlay: !showClose || layout?.popupCloseOnOverlay !== false }
+}
+
+export type AutoTriggers = { delaySec?: number; scrollPct?: number; idleSec?: number; exit: boolean }
 
 /** The automatic triggers configured on a section layout (click triggers need none). */
 export function autoTriggersOf(layout: SectionLayout | undefined): AutoTriggers {
-  return { delaySec: layout?.popupDelay, scrollPct: layout?.popupScroll, exit: layout?.popupExit === true }
+  return { delaySec: layout?.popupDelay, scrollPct: layout?.popupScroll, idleSec: layout?.popupIdle, exit: layout?.popupExit === true }
 }
 
 export function hasAutoTrigger(t: AutoTriggers): boolean {
-  return t.delaySec !== undefined || t.scrollPct !== undefined || t.exit
+  return t.delaySec !== undefined || t.scrollPct !== undefined || t.idleSec !== undefined || t.exit
 }
