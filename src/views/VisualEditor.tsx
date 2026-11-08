@@ -17,7 +17,9 @@ import { applyColumnOp, applyColumnWidths, buildSectionNode, getColumn, getColum
 import { ColumnPanel } from './visualEditor/ColumnPanel'
 import { StructurePicker } from './visualEditor/StructurePicker'
 import { EditorDock, type DockTab } from './visualEditor/EditorDock'
-import { NavigatorPanel } from './visualEditor/NavigatorPanel'
+import { flattenNavigatorNames, NavigatorPanel } from './visualEditor/NavigatorPanel'
+import { FinderPalette } from './visualEditor/FinderPalette'
+import { commandEntries, nodeEntries, pageEditorHref, type FinderCommandId, type FinderEntry } from './visualEditor/finder'
 import {
   cloneNode,
   getList,
@@ -205,6 +207,7 @@ export const VisualEditorView: React.FC = () => {
   const [lockNotice, setLockNotice] = useState<string | null>(null)
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [finderOpen, setFinderOpen] = useState(false)
   const [templateToast, setTemplateToast] = useState<string | null>(null)
   const [frameReady, setFrameReady] = useState(false)
   // Form builder state (only used when the surface is the Forms collection).
@@ -1170,6 +1173,7 @@ export const VisualEditorView: React.FC = () => {
       navigator: () => setDockTab((t) => (t === 'navigator' ? 'elements' : 'navigator')),
       cycleDevice: () => setDevice((d) => (d === 'desktop' ? 'tablet' : d === 'tablet' ? 'mobile' : 'desktop')),
       togglePanel: () => setDockCollapsed((c) => !c),
+      finder: () => setFinderOpen((open) => !open),
       history: () => {
         setDockCollapsed(false)
         showDockTab(dockTab === 'history' ? 'elements' : 'history')
@@ -1408,6 +1412,74 @@ export const VisualEditorView: React.FC = () => {
   useEffect(() => {
     saveRef.current = (publish: boolean) => save(publish)
   })
+
+  /** Finder (Mod+E): nodes of this page by navigator name, plus the editor's commands. Pages are searched by the palette itself. */
+  const finderEntries = useMemo<FinderEntry[]>(() => {
+    if (!finderOpen) return []
+    const cmd = (command: FinderCommandId, label: string) => ({ command, label, hint: t('ve.finder.command') })
+    return [
+      ...commandEntries([
+        cmd('save', t('common.saveDraft')),
+        cmd('publish', t('common.publish')),
+        cmd('pageSettings', t('ve.finder.pageSettings')),
+        cmd('navigator', t('ve.tab.navigator')),
+        cmd('history', t('ve.tab.history')),
+        cmd('desktop', t('ve.top.desktop')),
+        cmd('tablet', t('ve.top.tablet')),
+        cmd('mobile', t('ve.top.mobile')),
+        cmd('importExport', t('ve.top.importExport')),
+        cmd('shortcuts', t('ve.shortcuts.title')),
+      ]),
+      ...nodeEntries(flattenNavigatorNames(blocks, t)),
+    ]
+  }, [finderOpen, blocks, t])
+
+  const pickFinderEntry = (entry: FinderEntry) => {
+    setFinderOpen(false)
+    if (entry.kind === 'node') {
+      selectFromNavigator(entry.path)
+      // The frame scrolls the node into view when it is told about the selection.
+      iframeRef.current?.contentWindow?.postMessage({ source: 've-canvas', type: 'selected', selectedPath: entry.path }, CANVAS_ORIGIN())
+      return
+    }
+    if (entry.kind === 'page') {
+      if (dirty && !window.confirm(t('ve.finder.leaveConfirm'))) return
+      window.location.assign(pageEditorHref(adminRoot, entry.pageId))
+      return
+    }
+    switch (entry.command) {
+      case 'save':
+        void save(false)
+        break
+      case 'publish':
+        void save(true)
+        break
+      case 'pageSettings':
+        setSelectedPath(null)
+        setDockCollapsed(false)
+        showDockTab('settings')
+        break
+      case 'navigator':
+        setDockCollapsed(false)
+        showDockTab('navigator')
+        break
+      case 'history':
+        setDockCollapsed(false)
+        showDockTab('history')
+        break
+      case 'desktop':
+      case 'tablet':
+      case 'mobile':
+        setDevice(entry.command)
+        break
+      case 'importExport':
+        setImportOpen(true)
+        break
+      case 'shortcuts':
+        setHelpOpen(true)
+        break
+    }
+  }
 
   /**
    * Preview page: saves a dirty page first, then opens its public address. The frontend serves the page marked
@@ -1922,6 +1994,14 @@ export const VisualEditorView: React.FC = () => {
             setTemplateToast('Saved to My templates')
             setTimeout(() => setTemplateToast(null), 4000)
           }}
+        />
+      )}
+      {finderOpen && (
+        <FinderPalette
+          entries={finderEntries}
+          currentId={route?.id}
+          onPick={pickFinderEntry}
+          onClose={() => setFinderOpen(false)}
         />
       )}
       {importOpen && (

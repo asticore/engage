@@ -117,6 +117,13 @@ export const CanvasFrame: React.FC = () => {
         setOpenInsertKey(null)
       } else if (msg.type === 'selected') {
         setSelectedPath(msg.selectedPath)
+        // Picked from the Finder: bring the node into view once it has rendered.
+        const target = msg.selectedPath
+        if (target) {
+          setTimeout(() => {
+            document.querySelector(`[data-ve-node="${CSS.escape(JSON.stringify(target))}"],[data-ve-column="${CSS.escape(JSON.stringify(target))}"]`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+          }, 50)
+        }
       } else if (msg.type === 'previewContext') {
         setPreviewCtx(msg.context)
       } else if (msg.type === 'dragHover') {

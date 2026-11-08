@@ -188,6 +188,19 @@ function buildRows(nodes: SectionNode[], base: NodePath, depth: number, t: Tr): 
   })
 }
 
+/** Every real node and column of the tree in navigator order, with the name the Navigator shows (the Finder searches these). */
+export function flattenNavigatorNames(nodes: SectionNode[], t: Tr): { path: NodePath; name: string; typeLabel: string; icon: string }[] {
+  const out: { path: NodePath; name: string; typeLabel: string; icon: string }[] = []
+  const walk = (rows: Row[]) => {
+    for (const row of rows) {
+      if (row.kind !== 'virtual') out.push({ path: row.path, name: row.name, typeLabel: row.typeLabel, icon: row.icon })
+      walk(row.children)
+    }
+  }
+  walk(buildRows(nodes, [], 0, t))
+  return out
+}
+
 /** A selected column of a single-column section is shown as the section row. */
 function resolveSelectedKey(nodes: SectionNode[], sel: NodePath | null): string | null {
   if (!sel || !sel.length) return null
