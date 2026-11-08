@@ -798,13 +798,14 @@ export const CheckRow: React.FC<{
   /** Shows the applied dot (defaults to checked) and, with onReset, a per-setting reset. */
   applied?: boolean
   onReset?: () => void
+  disabled?: boolean
   onChange: (v: boolean) => void
-}> = ({ label, checked, help, resp, applied, onReset, onChange }) => {
+}> = ({ label, checked, help, resp, applied, onReset, disabled, onChange }) => {
   const t = useAdminT()
   const showApplied = applied ?? checked
   return (
   <label className="ve-row ve-row--check">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
     <span className="ve-row__label">
       {label}
       {showApplied && <Tooltip text={t('dp.changed')}><span className="ve-d51-dot" aria-label={t('dp.changed')} role="img" /></Tooltip>}

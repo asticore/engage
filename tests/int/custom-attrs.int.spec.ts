@@ -62,9 +62,8 @@ describe('customAttrs in the block style', () => {
     expect(readFlatDesign(toStoredDesign(style)).customAttrs).toBe('aria-label|Menu\ndata-track|cta')
   })
   it('reaches the wrapper element, escaped, and cannot override script attributes', () => {
-    const html = renderToStaticMarkup(
-      createElement(StyledBlock, { style: { customAttrs: 'aria-label|a"b<c\ndata-eg-cond|{}\nonclick|x\nid|evil' }, index: 0 }, 'x'),
-    )
+    const props = { style: { customAttrs: 'aria-label|a"b<c\ndata-eg-cond|{}\nonclick|x\nid|evil' }, index: 0, children: 'x' }
+    const html = renderToStaticMarkup(createElement(StyledBlock, props))
     expect(html).toContain('aria-label="a&quot;b&lt;c"')
     expect(html).not.toContain('onclick')
     expect(html).not.toContain('data-eg-cond')
