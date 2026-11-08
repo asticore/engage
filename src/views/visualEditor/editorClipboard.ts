@@ -1,3 +1,4 @@
+import type { BlockStyle } from '@/lib/blockStyle'
 import type { SectionNode } from '@/lib/sectionTree'
 import { getElementDef } from '@/lib/elements/registry'
 import { collectAssets } from '@/features/templateRepos/assets'
@@ -58,6 +59,19 @@ export function serializeSelection(blocks: SectionNode[], path: NodePath | null)
     nodes = list
     kind = 'block'
   }
+  const payload: ClipboardPayload = {
+    format: CLIPBOARD_FORMAT,
+    schemaVersion: CLIPBOARD_SCHEMA_VERSION,
+    kind,
+    tree: stripEditorIds(nodes),
+  }
+  return { kind, text: JSON.stringify(payload), count: nodes.length }
+}
+
+/** Several blocks at once (multi-select): `nodes` are the top-level selected blocks in document order. */
+export function serializeNodes(nodes: SectionNode[]): Serialized | null {
+  if (nodes.length === 0) return null
+  const kind: ClipboardKind = nodes.every((n) => n.blockType === 'section') ? 'section' : 'block'
   const payload: ClipboardPayload = {
     format: CLIPBOARD_FORMAT,
     schemaVersion: CLIPBOARD_SCHEMA_VERSION,
@@ -193,6 +207,23 @@ export function parseStyleClipboardText(text: unknown): StyleParseResult {
   const designProblem = checkValue(design, 0)
   if (designProblem) return { ok: false, error: designProblem }
   return { ok: true, design, device }
+}
+
+/**
+ * Paste Style result: the copied design replaces the target's, across every breakpoint.
+ * The target keeps its own CSS id (`anchorId`) so pasting never duplicates an id.
+ */
+export function applyPastedStyle(target: BlockStyle | undefined, source: BlockStyle): BlockStyle {
+  const next: BlockStyle = { ...source, anchorId: target?.anchorId }
+  if (next.anchorId === undefined) delete next.anchorId
+  return next
+}
+
+/** Reset Style: drops the block's design (every breakpoint) but keeps its CSS id. */
+export function resetStyleKeepingAnchor(node: SectionNode): SectionNode {
+  const anchorId = node.design?.anchorId
+  const { design: _old, ...rest } = node
+  return (anchorId ? { ...rest, design: { anchorId } } : rest) as SectionNode
 }
 
 /**

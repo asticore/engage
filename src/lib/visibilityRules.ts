@@ -20,6 +20,14 @@ export type VisRules = {
   r?: string[]
   /** The path + query must contain this text (case-insensitive). */
   q?: string
+  /** Weekdays (0-6, Sunday = 0) in the visitor's local time. */
+  d?: number[]
+  /** Daily window start, HH:MM, visitor's local time. */
+  tf?: string
+  /** Daily window end (exclusive), HH:MM, visitor's local time. From later than until means overnight. */
+  tu?: string
+  /** Page languages (BCP 47 codes, lower case); a bare code such as "pt" also matches "pt-br". */
+  l?: string[]
 }
 
 export type VisContext = {
@@ -30,10 +38,19 @@ export type VisContext = {
   roles: readonly string[]
   /** pathname + search of the page. */
   href: string
+  /** Visitor's local weekday 0-6 (Sunday = 0). Derived from `now` when absent. */
+  day?: number
+  /** Visitor's local minutes since midnight. Derived from `now` when absent. */
+  minutes?: number
+  /** The page's current language (html lang). Empty/absent = unknown, language rules then fail closed. */
+  lang?: string
 }
 
 export const VIS_MAX_ROLES = 10
 export const VIS_MAX_URL = 120
+export const VIS_MAX_LANGS = 10
+const LANG_CODE = /^[a-z]{2,3}(?:-[a-z0-9]{2,8}){0,2}$/
+const HHMM = /^([01]\d|2[0-3]):([0-5]\d)$/
 const ROLE_SLUG = /^[a-z0-9][a-z0-9_-]{0,31}$/
 const ISO = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?(?:\.\d{1,3})?(Z|[+-]\d{2}:\d{2})?)?$/
 
@@ -86,12 +103,44 @@ export function cleanUrlText(v: unknown): string {
   return out
 }
 
+/** Cleans a comma list of weekday numbers 0-6: unique, sorted, at most 7. */
+export function cleanDays(v: unknown): number[] {
+  const parts = Array.isArray(v) ? v : typeof v === 'string' ? v.split(',') : []
+  const out: number[] = []
+  for (const part of parts) {
+    const t = typeof part === 'number' ? String(part) : typeof part === 'string' ? part.trim() : ''
+    if (/^[0-6]$/.test(t) && !out.includes(Number(t))) out.push(Number(t))
+  }
+  return out.sort((a, b) => a - b)
+}
+
+/** HH:MM (24 h) or ''. */
+export const cleanTime = (v: unknown): string => (typeof v === 'string' && HHMM.test(v.trim()) ? v.trim() : '')
+
+/** Cleans a comma list of language codes: lower case, BCP 47 shaped, unique, at most VIS_MAX_LANGS. */
+export function cleanLangs(v: unknown): string[] {
+  const parts = Array.isArray(v) ? v : typeof v === 'string' ? v.split(',') : []
+  const out: string[] = []
+  for (const part of parts) {
+    const t = typeof part === 'string' ? part.trim().toLowerCase().replace(/_/g, '-') : ''
+    if (LANG_CODE.test(t) && !out.includes(t)) out.push(t)
+    if (out.length >= VIS_MAX_LANGS) break
+  }
+  return out
+}
+
+const toMinutes = (hhmm: string): number => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5))
+
 type VisKeys = {
   showFrom?: unknown
   showUntil?: unknown
   showAuth?: unknown
   showRoles?: unknown
   showUrl?: unknown
+  showDays?: unknown
+  showFromTime?: unknown
+  showUntilTime?: unknown
+  showLang?: unknown
 }
 
 /** Builds the compact rule set from (already sanitised) style keys; null when no rule is set. */
@@ -104,11 +153,19 @@ export function rulesFromStyle(style: VisKeys): VisRules | null {
   if (roles.length > 0) r.r = roles
   const q = cleanUrlText(style.showUrl)
   if (q) r.q = q
+  const d = cleanDays(style.showDays)
+  if (d.length > 0) r.d = d
+  const tf = cleanTime(style.showFromTime)
+  if (tf) r.tf = tf
+  const tu = cleanTime(style.showUntilTime)
+  if (tu) r.tu = tu
+  const l = cleanLangs(style.showLang)
+  if (l.length > 0) r.l = l
   return Object.keys(r).length > 0 ? r : null
 }
 
 /** True when the rules need the visitor (login, role, URL): those start hidden until the script decides. */
-export const needsClientGate = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || r.q)
+export const needsClientGate = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || r.q || (r.d && r.d.length > 0) || r.tf || r.tu || (r.l && r.l.length > 0))
 
 /** True when the rules need to know who is signed in. */
 export const needsAuthState = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0))
@@ -129,6 +186,14 @@ export function parseRules(json: string | null | undefined): VisRules | null {
     }
     const q = cleanUrlText(raw.q)
     if (q) r.q = q
+    const d = cleanDays(raw.d)
+    if (d.length > 0) r.d = d
+    const tf = cleanTime(raw.tf)
+    if (tf) r.tf = tf
+    const tu = cleanTime(raw.tu)
+    if (tu) r.tu = tu
+    const l = cleanLangs(raw.l)
+    if (l.length > 0) r.l = l
     return Object.keys(r).length > 0 ? r : null
   } catch {
     return null
@@ -147,5 +212,33 @@ export function evaluateRules(rules: VisRules, ctx: VisContext): boolean {
     if (!rules.r.some((x) => have.includes(x))) return false
   }
   if (rules.q && !ctx.href.toLowerCase().includes(rules.q.toLowerCase())) return false
+  if (rules.d && rules.d.length > 0) {
+    const day = ctx.day ?? new Date(ctx.now).getDay()
+    if (!rules.d.includes(day)) return false
+  }
+  if (rules.tf || rules.tu) {
+    const m = ctx.minutes ?? new Date(ctx.now).getHours() * 60 + new Date(ctx.now).getMinutes()
+    const from = rules.tf ? toMinutes(rules.tf) : null
+    const until = rules.tu ? toMinutes(rules.tu) : null
+    if (from !== null && until !== null) {
+      if (from < until) {
+        if (m < from || m >= until) return false
+      } else if (from > until) {
+        // Overnight window, e.g. 22:00 to 06:00.
+        if (m < from && m >= until) return false
+      }
+    } else if (from !== null) {
+      if (m < from) return false
+    } else if (until !== null && m >= until) return false
+  }
+  if (rules.l && rules.l.length > 0 && !langMatches(rules.l, ctx.lang)) return false
   return true
+}
+
+/** True when the page language is one of the listed codes (a bare code also covers its regional variants). */
+export function langMatches(codes: readonly string[], lang: string | undefined): boolean {
+  const page = (lang || '').trim().toLowerCase().replace(/_/g, '-')
+  if (!page) return false
+  const primary = page.split('-')[0]
+  return codes.some((c) => c === page || (!c.includes('-') && c === primary))
 }

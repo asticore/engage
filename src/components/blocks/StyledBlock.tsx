@@ -12,6 +12,7 @@ import {
   blockStyleClasses,
   blockStyleCss,
   blockStyleToCss,
+  customAttrProps,
   dividerBackPath,
   dividerPath,
   hasFxLayer,
@@ -67,6 +68,7 @@ export const StyledBlock: React.FC<{
 
   return (
     <div
+      {...customAttrProps(parsed)}
       id={scopeId}
       className={[blockStyleClasses(parsed), blockFxClasses(parsed)].filter(Boolean).join(' ')}
       style={{ ...blockStyleToCss(parsed), ...blockFxVars(parsed) }}

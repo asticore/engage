@@ -44,7 +44,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   border: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow'],
   layout: ['width', 'textAlign', 'textColor'],
   typography: [
-    'fontFamily', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit', 'textTransform',
+    'typePreset', 'fontFamily', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit', 'textTransform',
     'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow', 'textFx', 'textFxColor', 'textFxColor2', 'textFxAngle',
     'textFxStroke', 'textFxAnimated',
   ],
@@ -62,9 +62,9 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   advanced: [
     ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom',
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
-    'filterGrayscale', 'filterHue', 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss',
+    'filterGrayscale', 'filterHue', 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],
-  conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl'],
+  conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang'],
   visibility: ['hide', 'hideOnMobile', 'hideOnDesktop', 'anchorId', 'customClass'],
 }
 

@@ -66,3 +66,39 @@ describe('drop slot resolution', () => {
     expect(resolveDropSlotInDoc({ elementFromPoint: (): null => null } as unknown as Document, 1, 1)).toBeNull()
   })
 })
+
+describe('library drag tracking', () => {
+  const dragEvent = (type: string, types: string[]) => {
+    const e = new Event(type, { bubbles: true, cancelable: true }) as Event & { dataTransfer: unknown }
+    e.dataTransfer = { types }
+    return e
+  }
+
+  it('sees the card types set by a root-level (React-style) dragstart listener', async () => {
+    const { trackLibraryDrag } = await import('@/views/visualEditor/dropSlot')
+    document.body.innerHTML = '<div id="root"><div id="card"></div></div>'
+    const state: boolean[] = []
+    const off = trackLibraryDrag(document, (a) => state.push(a))
+    const types: string[] = []
+    // Mimics React: the card's onDragStart runs from the root container and calls setData.
+    document.getElementById('root')!.addEventListener('dragstart', () => types.push('application/x-ve-block'))
+    const start = new Event('dragstart', { bubbles: true }) as Event & { dataTransfer: unknown }
+    start.dataTransfer = { types }
+    document.getElementById('card')!.dispatchEvent(start)
+    expect(state).toEqual([true])
+    document.getElementById('card')!.dispatchEvent(dragEvent('dragend', types))
+    expect(state).toEqual([true, false])
+    off()
+  })
+
+  it('ignores non-library drags and unbinds', async () => {
+    const { trackLibraryDrag } = await import('@/views/visualEditor/dropSlot')
+    const state: boolean[] = []
+    const off = trackLibraryDrag(document, (a) => state.push(a))
+    document.body.dispatchEvent(dragEvent('dragstart', ['Files']))
+    expect(state).toEqual([])
+    off()
+    document.body.dispatchEvent(dragEvent('drop', []))
+    expect(state).toEqual([])
+  })
+})

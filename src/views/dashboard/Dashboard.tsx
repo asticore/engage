@@ -31,6 +31,8 @@ import { getAdminUi } from '@/admin/i18n/serverUi'
 import { GettingStartedCard } from '@/features/gettingStarted/GettingStartedCard'
 import { policyReviewCanShow } from '@/features/privacy/notice/policyReview'
 import { PolicyReviewNotice } from '@/features/privacy/notice/PolicyReviewNotice'
+import { SetupQuestionnaireHost } from '@/admin/views/setup/SetupQuestionnaireHost'
+import { setupQuestionnairePending } from '@/features/setup/load'
 
 /**
  * The portal's landing page.
@@ -137,6 +139,11 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
       ? await loadReviewQueue({ engine: engine as unknown as ReviewEngine, viewer: reviewViewer, settings: reviewSettings, limit: 6 })
       : null
 
+  // Fresh-install questions: admins only. Pending until answered or skipped; ?setup=1 runs them again.
+  const showSetup = Boolean(reviewContext.isAdmin)
+  const setupPending = showSetup ? await setupQuestionnairePending(engine as never) : false
+  const setupRequested = String(props.searchParams?.setup ?? '') === '1'
+
   const now = new Date()
 
   // The 30-day trend exists only while its feature is on, and is left out when the read is refused.
@@ -180,6 +187,8 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
       </header>
 
       <PolicyReviewNotice visible={policyReviewVisible} />
+
+      {showSetup && <SetupQuestionnaireHost currentFlags={flags} pending={setupPending} requested={setupRequested} />}
 
       <GettingStartedCard progress={gettingStartedProgress} initialDoneIds={manualDoneIds} />
 

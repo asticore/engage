@@ -63,7 +63,17 @@ function apply(): void {
   if (items.length === 0) return
   const href = window.location.pathname + window.location.search
   const finish = (auth: AuthState) => {
-    const ctx: VisContext = { now: Date.now(), loggedIn: auth.loggedIn, roles: auth.roles, href }
+    const now = new Date()
+    const ctx: VisContext = {
+      now: now.getTime(),
+      loggedIn: auth.loggedIn,
+      roles: auth.roles,
+      href,
+      // Weekday and time of day are the visitor's own clock; language is the page's current language.
+      day: now.getDay(),
+      minutes: now.getHours() * 60 + now.getMinutes(),
+      lang: document.documentElement.lang || '',
+    }
     for (const { el, rules } of items) {
       if (evaluateRules(rules, ctx)) {
         el.setAttribute('data-eg-ok', '')

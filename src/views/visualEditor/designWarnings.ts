@@ -10,6 +10,7 @@ import { readFlatDesign } from '@/lib/design/upgrade'
  *   - image with no alt text
  *   - more than 3 heavy effects on one block (particles, parallax, pointer effect, animated background, Ken Burns)
  *   - a button or CTA with a label but no link
+ *   - a CSS id (anchor) used by more than one block or column (the warning sits on the owning block)
  */
 
 import type { SectionNode } from '@/lib/sectionTree'
@@ -167,6 +168,22 @@ function imageIssues(node: SectionNode): ImageIssue[] {
   return issues
 }
 
+/** Anchor ids that more than one block or column uses, with the block that owns each use. */
+function duplicateAnchors(tree: SectionNode[]): Array<{ nodeId: string; anchor: string }> {
+  const uses: Array<{ nodeId: string; anchor: string }> = []
+  const note = (design: unknown, nodeId: string) => {
+    const anchor = (design as { anchorId?: unknown } | undefined)?.anchorId
+    if (typeof anchor === 'string' && anchor.trim()) uses.push({ nodeId, anchor: anchor.trim() })
+  }
+  visitAll(tree, [], ({ node, nodeId }) => {
+    note(node.design, nodeId)
+    node.columns?.forEach((column) => note(column.design, nodeId))
+  })
+  const counts = new Map<string, number>()
+  for (const use of uses) counts.set(use.anchor, (counts.get(use.anchor) ?? 0) + 1)
+  return uses.filter((use) => (counts.get(use.anchor) ?? 0) > 1)
+}
+
 /** Runs every design check over the page tree. Results are in document order. */
 export function collectWarnings(tree: SectionNode[]): DesignWarning[] {
   const warnings: DesignWarning[] = []
@@ -176,7 +193,17 @@ export function collectWarnings(tree: SectionNode[]): DesignWarning[] {
 
   let previousHeading: number | null = null
 
+  const dupesByNode = new Map<string, string[]>()
+  for (const { nodeId, anchor } of duplicateAnchors(tree)) {
+    dupesByNode.set(nodeId, [...(dupesByNode.get(nodeId) ?? []), anchor])
+  }
+
   visitAll(tree, [], ({ node, nodeId }) => {
+    const dupAnchors = dupesByNode.get(nodeId) ?? []
+    dupAnchors.forEach((anchor, index) => {
+      add('warn', nodeId, 'dup-anchor', `Duplicate CSS ID “${anchor}”`, index)
+    })
+
     const contrast = contrastWarning(node)
     if (contrast) add('warn', nodeId, 'contrast', contrast)
 

@@ -1,0 +1,54 @@
+.card {
+  padding: 16px 20px;
+  border: 1px solid var(--ac-gold, #8a6d1d);
+  border-radius: 8px;
+  background: var(--ac-surface, transparent);
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+}
+
+.text {
+  margin: 0 0 10px;
+}
+
+.quiet {
+  font-size: 0.85rem;
+  color: var(--theme-elevation-600, #666666);
+}
+
+.quiet .text {
+  margin: 0;
+}
+
+.note {
+  margin-left: 4px;
+}
+
+.button {
+  padding: 8px 14px;
+  border: 1px solid var(--ac-gold, #8a6d1d);
+  border-radius: 4px;
+  background: var(--ac-gold, #8a6d1d);
+  color: var(--theme-elevation-0, #ffffff);
+  font: inherit;
+  cursor: pointer;
+}
+
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.button:focus-visible,
+.linkButton:focus-visible {
+  outline: 2px solid var(--ac-gold, #8a6d1d);
+  outline-offset: 2px;
+}

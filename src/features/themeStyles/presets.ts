@@ -91,5 +91,6 @@ export function applyPreset(styles: ThemeStyles, presetData: ThemePresetData): T
     defaultTableId: d.defaultTableId,
     globals: d.globals,
     presets: styles.presets,
+    typePresets: styles.typePresets,
   }
 }

@@ -654,6 +654,15 @@ const SectionLayoutFields: React.FC<{
               placeholder={t('ve.fp.off')}
               onChange={(v) => setLayout({ popupScroll: v === undefined ? undefined : Math.min(100, Math.max(1, Math.round(v))) })}
             />
+            <NumberRow
+              label="Open when idle (seconds)"
+              help="Opens after this many seconds with no mouse, key, scroll or touch input (5 to 600)."
+              value={layout.popupIdle}
+              min={5}
+              max={600}
+              placeholder={t('ve.fp.off')}
+              onChange={(v) => setLayout({ popupIdle: v === undefined ? undefined : Math.min(600, Math.max(5, Math.round(v))) })}
+            />
             <CheckRow
               label={t('ve.fp.exitIntent')}
               help={t('ve.fp.exitIntentHelp')}
@@ -681,6 +690,50 @@ const SectionLayoutFields: React.FC<{
                 onChange={(v) => setLayout({ popupDays: v === undefined ? undefined : Math.min(365, Math.max(1, Math.round(v))) })}
               />
             )}
+            <SelectRow
+              label="Position"
+              value={layout.popupPosition || 'center'}
+              options={[
+                { label: 'Centre', value: 'center' },
+                { label: 'Top', value: 'top' },
+                { label: 'Bottom', value: 'bottom' },
+                { label: 'Right side', value: 'right' },
+              ]}
+              onChange={(v) => setLayout({ popupPosition: v === 'center' ? undefined : (v as SectionLayout['popupPosition']) })}
+            />
+            <SelectRow
+              label="Entrance animation"
+              help="Not played for visitors who prefer reduced motion."
+              value={layout.popupAnim || 'none'}
+              options={[
+                { label: 'None', value: 'none' },
+                { label: 'Fade', value: 'fade' },
+                { label: 'Slide up', value: 'slide-up' },
+                { label: 'Zoom', value: 'zoom' },
+              ]}
+              onChange={(v) => setLayout({ popupAnim: v === 'none' ? undefined : (v as SectionLayout['popupAnim']) })}
+            />
+            <NumberRow
+              label="Overlay darkness (%)"
+              help="0 to 90. Default 60."
+              value={layout.popupOverlay}
+              min={0}
+              max={90}
+              placeholder="60"
+              onChange={(v) => setLayout({ popupOverlay: v === undefined ? undefined : Math.min(90, Math.max(0, Math.round(v))) })}
+            />
+            <CheckRow
+              label="Show close button"
+              checked={layout.popupShowClose !== false}
+              onChange={(v) => setLayout({ popupShowClose: v ? undefined : false })}
+            />
+            <CheckRow
+              label="Close on overlay click"
+              help={layout.popupShowClose === false ? 'Always on while the close button is hidden, so the popup can never get stuck open.' : 'Escape always closes the popup.'}
+              checked={layout.popupShowClose === false ? true : layout.popupCloseOnOverlay !== false}
+              disabled={layout.popupShowClose === false}
+              onChange={(v) => setLayout({ popupCloseOnOverlay: v ? undefined : false })}
+            />
           </>
         )}
         {layout.display === 'stack' && (

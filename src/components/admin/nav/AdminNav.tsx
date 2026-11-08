@@ -3,6 +3,7 @@ import { adminLabel } from '@/features/uiStrings'
 import React from 'react'
 import { Logout } from '@/engine/ui'
 import { AdminLanguagePicker } from '@/admin/ui/AdminLanguagePicker'
+import { TourHelpButton } from '@/admin/ui/TourHelpButton'
 import { AdminSiteSwitcher } from '@/features/domains/admin/AdminSiteSwitcher'
 import { ALL_SITES, resolveAdminSite } from '@/features/domains/adminSite'
 import { PREFERENCE_KEYS, formatAdminURL } from '@/engine/shared'
@@ -164,6 +165,7 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
         <AdminNavClient groups={groups} openGroups={openGroups} badges={badges} />
         <div className={`${baseClass}__controls`}>
           <AdminLanguagePicker userId={(user as { id?: number | string } | null)?.id} current={(user as { adminLanguage?: string | null } | null)?.adminLanguage} />
+          <TourHelpButton />
           <Logout />
         </div>
       </nav>

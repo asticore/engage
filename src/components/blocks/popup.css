@@ -1,0 +1,23 @@
+/* Popup presentation options (animation, position, inert backdrop). The base popup rules live in tabs.css. */
+.be-modal__backdrop--inert{cursor:default}
+
+/* Position: the wrapper carries data-pos, the overlay is the flex container. */
+.be-modal[data-pos="top"] .be-modal__overlay{align-items:flex-start}
+.be-modal[data-pos="bottom"] .be-modal__overlay{align-items:flex-end}
+.be-modal[data-pos="right"] .be-modal__overlay{justify-content:flex-end;align-items:stretch;padding:0}
+.be-modal[data-pos="right"] .be-modal__panel{max-height:100vh;border-radius:12px 0 0 12px}
+
+/* Entrance animation: runs each time the checkbox opens the overlay. */
+@keyframes be-popup-fade{from{opacity:0}to{opacity:1}}
+@keyframes be-popup-slide-up{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+@keyframes be-popup-zoom{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes be-popup-slide-in{from{opacity:0;transform:translateX(48px)}to{opacity:1;transform:none}}
+.be-modal[data-anim="fade"] .be-modal__toggle:checked~.be-modal__overlay{animation:be-popup-fade .25s ease-out both}
+.be-modal[data-anim="slide-up"] .be-modal__toggle:checked~.be-modal__overlay .be-modal__panel{animation:be-popup-slide-up .3s ease-out both}
+.be-modal[data-anim="zoom"] .be-modal__toggle:checked~.be-modal__overlay .be-modal__panel{animation:be-popup-zoom .25s ease-out both}
+.be-modal[data-anim="slide-up"][data-pos="right"] .be-modal__toggle:checked~.be-modal__overlay .be-modal__panel{animation-name:be-popup-slide-in}
+
+@media (prefers-reduced-motion:reduce){
+  .be-modal[data-anim] .be-modal__toggle:checked~.be-modal__overlay,
+  .be-modal[data-anim] .be-modal__toggle:checked~.be-modal__overlay .be-modal__panel{animation:none}
+}

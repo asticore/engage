@@ -5,6 +5,7 @@ import {
   carouselStyle,
   gridStyle,
   hscrollStyle,
+  modalDataAttrs,
   modalStyleVars,
   parseSectionLayout,
   sectionLayoutProps,
@@ -14,11 +15,12 @@ import {
 } from '@/lib/sectionLayout'
 import { columnWidthVars, parseColumns, type SectionColumn, type SectionNode } from '@/lib/sectionTree'
 
-import { autoTriggersOf } from '@/lib/popupTriggers'
+import { autoTriggersOf, popupCloseRules } from '@/lib/popupTriggers'
 
 import PopupController from './PopupControllerLazy'
 import { safeScope, StyledBlock } from './StyledBlock'
 import './tabs.css'
+import './popup.css'
 
 /**
  * Renders a Section: a row of columns, each holding its own stack of blocks.
@@ -164,8 +166,9 @@ export const SectionBlock: React.FC<{
     const label = parsedLayout?.modalLabel || 'Open'
     const triggerClass = parsedLayout?.modalStyle === 'link' ? 'be-modal__trigger be-modal__trigger--link' : 'be-modal__trigger be-modal__trigger--button'
     const colorVars = parsedLayout?.tabsColor ? { '--be-tab-color': parsedLayout.tabsColor } : {}
+    const { showClose, closeOnOverlay } = popupCloseRules(parsedLayout)
     return (
-      <div className="be-modal" data-depth={depth} style={{ ...modalStyleVars(rawLayout), ...colorVars } as React.CSSProperties}>
+      <div className="be-modal" data-depth={depth} {...modalDataAttrs(rawLayout)} style={{ ...modalStyleVars(rawLayout), ...colorVars } as React.CSSProperties}>
         <PopupController
           toggleId={toggleId}
           anchorId={asBlockStyle(design).anchorId || undefined}
@@ -178,11 +181,17 @@ export const SectionBlock: React.FC<{
           {label}
         </label>
         <div className="be-modal__overlay">
-          <label htmlFor={toggleId} className="be-modal__backdrop" aria-hidden="true" />
+          {closeOnOverlay ? (
+            <label htmlFor={toggleId} className="be-modal__backdrop" aria-hidden="true" />
+          ) : (
+            <div className="be-modal__backdrop be-modal__backdrop--inert" aria-hidden="true" />
+          )}
           <div className="be-modal__panel" role="dialog" aria-modal="true" aria-label={label}>
-            <label htmlFor={toggleId} className="be-modal__close" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </label>
+            {showClose && (
+              <label htmlFor={toggleId} className="be-modal__close" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </label>
+            )}
             <div className="be-modal__body">
               {parsed.map((column, index) => (
                 <SectionColumnView key={column._id || index} column={column} index={index} renderNode={renderNode} depth={depth} scope={scope} />

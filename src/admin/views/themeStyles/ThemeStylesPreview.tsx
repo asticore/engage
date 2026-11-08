@@ -42,6 +42,12 @@ function swatches(styles: ThemeStyles, tr: PreviewT): string {
 <div class="group"><h6 class="label">${tr('tsp.sampleCard')}</h6><div class="sw" style="padding:12px;font-size:14px"><h3 style="margin:0 0 6px">${tr('tsp.headingOnSurface')}</h3><p style="margin:0 0 8px">${tr('tsp.bodyOnSurface', { link: `<a href="#">${tr('tsp.linkWord')}</a>` })}</p><a class="btn btn--primary" href="#">${tr('tsp.primary')}</a></div></div>`
 }
 
+function typePresetSamples(styles: ThemeStyles): string {
+  const items = styles.typePresets.filter((p) => /^[a-z0-9-]{1,32}$/.test(p.id))
+  if (items.length === 0) return ''
+  return `<div class="group">${items.map((p) => `<p class="tp-${p.id}">${esc(p.name)}: The quick brown fox jumps over the lazy dog.</p>`).join('')}</div>`
+}
+
 function typography(styles: ThemeStyles): string {
   const tag = (id: string) => (/^h[1-6]$/.test(id) ? id : 'p')
   return `<div class="group">${styles.typography
@@ -54,7 +60,7 @@ function typography(styles: ThemeStyles): string {
       if (t.id === 'caption') return `<p><span class="caption" style="font-size:${t.size}px;line-height:${t.lineHeight};letter-spacing:${t.letterSpacing}px">${text}</span></p>`
       return `<p style="font-family:var(--font-body);font-size:${t.size}px;font-weight:${t.weight};line-height:${t.lineHeight};letter-spacing:${t.letterSpacing}px;text-transform:${t.transform}">${text}</p>`
     })
-    .join('')}</div>`
+    .join('')}</div>${typePresetSamples(styles)}`
 }
 
 function buttons(styles: ThemeStyles, tr: PreviewT): string {

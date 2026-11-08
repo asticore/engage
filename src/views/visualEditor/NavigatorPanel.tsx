@@ -19,10 +19,15 @@ import { toStoredDesign } from '@/lib/design/storeDesign'
 import './navLibraryPresets.css'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
+export type SelectMods = { additive?: boolean; range?: boolean }
+
 interface NavigatorPanelProps {
   nodes: SectionNode[]
   selectedPath: NodePath | null
-  onSelect: (path: NodePath) => void
+  /** `mods`: Ctrl/Cmd-click toggles the row in a multi-selection, Shift-click selects the range from the selected row (same container). */
+  onSelect: (path: NodePath, mods?: SelectMods) => void
+  /** Rows highlighted as part of a multi-selection (empty when none). */
+  multiPaths?: readonly NodePath[]
   onRename: (path: NodePath, name: string) => void
   onSetAnchor: (path: NodePath, anchor: string) => void
   /** Expanded state keyed by pathKey; a node is expanded unless its entry is false. */
@@ -40,6 +45,7 @@ type Dnd = {
   onMove?: NavigatorPanelProps['onMove']
   onDesignChange?: NavigatorPanelProps['onDesignChange']
   isLocked?: NavigatorPanelProps['isLocked']
+  multiKeys?: ReadonlySet<string>
   dragFrom: NodePath | null
   setDragFrom: (p: NodePath | null) => void
   listLength: (path: NodePath) => number
@@ -188,6 +194,19 @@ function buildRows(nodes: SectionNode[], base: NodePath, depth: number, t: Tr): 
   })
 }
 
+/** Every real node and column of the tree in navigator order, with the name the Navigator shows (the Finder searches these). */
+export function flattenNavigatorNames(nodes: SectionNode[], t: Tr): { path: NodePath; name: string; typeLabel: string; icon: string }[] {
+  const out: { path: NodePath; name: string; typeLabel: string; icon: string }[] = []
+  const walk = (rows: Row[]) => {
+    for (const row of rows) {
+      if (row.kind !== 'virtual') out.push({ path: row.path, name: row.name, typeLabel: row.typeLabel, icon: row.icon })
+      walk(row.children)
+    }
+  }
+  walk(buildRows(nodes, [], 0, t))
+  return out
+}
+
 /** A selected column of a single-column section is shown as the section row. */
 function resolveSelectedKey(nodes: SectionNode[], sel: NodePath | null): string | null {
   if (!sel || !sel.length) return null
@@ -229,7 +248,7 @@ const NavRow: React.FC<{
   forceOpen: boolean
   selectedKey: string | null
   onToggle: (key: string) => void
-  onSelect: (path: NodePath) => void
+  onSelect: (path: NodePath, mods?: SelectMods) => void
   onRename: (path: NodePath, name: string) => void
   onSetAnchor: (path: NodePath, anchor: string) => void
   dnd: Dnd
@@ -245,9 +264,10 @@ const NavRow: React.FC<{
   const hidden = !isColumn && !readOnlyKind(row) && isHiddenEverywhere(row.design)
   const canDrag = Boolean(dnd.onMove) && !readOnlyKind(row) && !isColumn && !locked
   const rowRef = useRef<HTMLDivElement>(null)
-  const selected = selectedKey === row.key
+  const selected = selectedKey === row.key || Boolean(dnd.multiKeys?.has(row.key))
   const readOnly = row.kind === 'virtual'
-  const activate = () => onSelect(row.path)
+  const activate = (e?: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean }) =>
+    onSelect(row.path, e && (e.ctrlKey || e.metaKey || e.shiftKey) ? { additive: Boolean(e.ctrlKey || e.metaKey), range: Boolean(e.shiftKey) && !(e.ctrlKey || e.metaKey) } : undefined)
   const open = forceOpen || expanded[row.key] !== false
 
   useEffect(() => {
@@ -289,7 +309,7 @@ const NavRow: React.FC<{
     }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      activate()
+      activate(e)
     } else if (e.key === 'F2') {
       e.preventDefault()
       startRename()
@@ -351,7 +371,7 @@ const NavRow: React.FC<{
           e.preventDefault()
           dnd.onMove(from, plan.containerPath, plan.at)
         }}
-        onClick={activate}
+        onClick={(e) => activate(e)}
         onDoubleClick={startRename}
         onKeyDown={onRowKey}
       >
@@ -469,6 +489,7 @@ export const NavigatorPanel: React.FC<NavigatorPanelProps> = ({
   nodes,
   selectedPath,
   onSelect,
+  multiPaths,
   onRename,
   onSetAnchor,
   expandedState = {},
@@ -484,6 +505,7 @@ export const NavigatorPanel: React.FC<NavigatorPanelProps> = ({
   const allRows = useMemo(() => buildRows(nodes, [], 0, t), [nodes, t])
   const rows = useMemo(() => (q ? filterRows(allRows, q) : allRows), [allRows, q])
   const selectedKey = useMemo(() => resolveSelectedKey(nodes, selectedPath), [nodes, selectedPath])
+  const multiKeys = useMemo(() => new Set((multiPaths ?? []).map((p) => pathKey(p))), [multiPaths])
 
   // Selecting on the canvas opens every ancestor so the row is visible.
   const selectedRef = useRef<string | null>(null)
@@ -507,6 +529,7 @@ export const NavigatorPanel: React.FC<NavigatorPanelProps> = ({
       onMove,
       onDesignChange,
       isLocked,
+      multiKeys: multiKeys.size > 0 ? multiKeys : undefined,
       dragFrom,
       setDragFrom,
       listLength: (path: NodePath) => {
@@ -515,7 +538,7 @@ export const NavigatorPanel: React.FC<NavigatorPanelProps> = ({
         return list.length
       },
     }),
-    [onMove, onDesignChange, isLocked, dragFrom, nodes],
+    [onMove, onDesignChange, isLocked, multiKeys, dragFrom, nodes],
   )
   const expandAll = () => onExpandedStateChange?.({})
   const collapseAll = () =>

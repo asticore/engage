@@ -27,7 +27,6 @@ import {
   resolveDeviceOverride,
   TEXT_FX_OPTIONS,
   type BlendMode,
-  type BlockPosition,
   type BlockStyle,
   type HoverTransformPreset,
   type DeviceOverride,
@@ -37,9 +36,10 @@ import {
   type ResponsiveKey,
   isSafeMediaUrl,
 } from '@/lib/blockStyle'
-import { isIsoDate } from '@/lib/visibilityRules'
+import { cleanDays, cleanTime, isIsoDate } from '@/lib/visibilityRules'
 import { BUILT_IN_FONTS } from '@/features/fonts/installed'
 import { useSiteFonts } from './useSiteFonts'
+import { useTypePresets } from './useTypePresets'
 
 import { MediaPicker } from './MediaPicker'
 import { DESIGN_STATES, HOVER_TRANSFORM_OPTIONS, STATE_KEYS, stateModified, type DesignState } from './designStates'
@@ -446,7 +446,7 @@ export const DesignPanel: React.FC<{
       )}
 
       <Acc g="advanced" title={t('dp.section.advanced')}>
-        <AdvancedControls value={value} onChange={onChange} />
+        <AdvancedControls value={value} onChange={onChange} ctl={resp} />
       </Acc>
 
       <Acc g="conditions" title={t('dp.section.visibilityRules')}>
@@ -622,6 +622,8 @@ const Row: React.FC<{ label: string; help?: string; resp?: RowResp; applied?: bo
   )
 }
 
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
 const ConditionControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void }> = ({ value, onChange }) => {
   const t = useAdminT()
   const set = (patch: Partial<BlockStyle>) => onChange({ ...value, ...patch })
@@ -630,7 +632,7 @@ const ConditionControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSty
       <p className="ve-row__help">
         Show this block only when every rule below passes. Rules about who is viewing (logged in or out, roles, URL) are checked in the
         browser, so the block stays hidden for visitors without JavaScript and for crawlers. A date window alone is shown without
-        JavaScript. To hide by screen size use Hide on device below.
+        JavaScript. Weekday and time of day use the visitor&apos;s own clock and time zone, not the site&apos;s. To hide by screen size use Hide on device below.
       </p>
       <TextRow
         label={t('dp.lit.show_from')}
@@ -669,6 +671,52 @@ const ConditionControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSty
         placeholder="/pricing or ?ref=news"
         help={t('dp.lit.text_the_page_path_or_query_string_must')}
         onChange={(v) => set({ showUrl: v ? v.slice(0, 120) : undefined })}
+      />
+      <div className="ve-row" role="group" aria-label="Weekdays">
+        <span className="ve-row__label">Weekdays</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {WEEKDAYS.map((name, i) => {
+            const on = cleanDays(value.showDays).includes(i)
+            return (
+              <button
+                key={name}
+                type="button"
+                className="ve-btn ve-btn--ghost"
+                aria-pressed={on}
+                style={on ? { outline: '2px solid currentColor', fontWeight: 700 } : undefined}
+                onClick={() => {
+                  const cur = cleanDays(value.showDays)
+                  const next = on ? cur.filter((d) => d !== i) : [...cur, i]
+                  set({ showDays: next.length > 0 && next.length < 7 ? next.sort((a, b) => a - b).join(',') : undefined })
+                }}
+              >
+                {name}
+              </button>
+            )
+          })}
+        </div>
+        <span className="ve-row__help">None selected = every day. Uses the visitor&apos;s own clock and time zone.</span>
+      </div>
+      <TextRow
+        label="Show from time"
+        value={value.showFromTime}
+        placeholder="HH:MM"
+        help={value.showFromTime && !cleanTime(value.showFromTime) ? 'Use 24 hour HH:MM, e.g. 09:00. Ignored until valid.' : "Daily start, visitor's local time (24 h). If this is later than the end time the window runs overnight."}
+        onChange={(v) => set({ showFromTime: v ? v.slice(0, 5) : undefined })}
+      />
+      <TextRow
+        label="Show until time"
+        value={value.showUntilTime}
+        placeholder="HH:MM"
+        help={value.showUntilTime && !cleanTime(value.showUntilTime) ? 'Use 24 hour HH:MM, e.g. 17:00. Ignored until valid.' : "Daily end, visitor's local time (24 h). The block is hidden from this minute."}
+        onChange={(v) => set({ showUntilTime: v ? v.slice(0, 5) : undefined })}
+      />
+      <TextRow
+        label="Page language"
+        value={value.showLang}
+        placeholder="en, fr, pt-br"
+        help="Comma list of language codes. Shown only when the page is in one of them (en also matches en-GB). Up to 10."
+        onChange={(v) => set({ showLang: v ? v.slice(0, 120) : undefined })}
       />
     </>
   )
@@ -750,13 +798,14 @@ export const CheckRow: React.FC<{
   /** Shows the applied dot (defaults to checked) and, with onReset, a per-setting reset. */
   applied?: boolean
   onReset?: () => void
+  disabled?: boolean
   onChange: (v: boolean) => void
-}> = ({ label, checked, help, resp, applied, onReset, onChange }) => {
+}> = ({ label, checked, help, resp, applied, onReset, disabled, onChange }) => {
   const t = useAdminT()
   const showApplied = applied ?? checked
   return (
   <label className="ve-row ve-row--check">
-    <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+    <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
     <span className="ve-row__label">
       {label}
       {showApplied && <Tooltip text={t('dp.changed')}><span className="ve-d51-dot" aria-label={t('dp.changed')} role="img" /></Tooltip>}
@@ -1307,6 +1356,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
 }) => {
   const t = useAdminT()
   const siteFonts = useSiteFonts()
+  const typePresets = useTypePresets()
   const patch = (changes: Partial<Record<keyof BlockStyle, unknown>>) => {
     const updated: Record<string, unknown> = { ...value }
     for (const [name, next] of Object.entries(changes)) {
@@ -1319,11 +1369,25 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
   const sizeRange = FONT_SIZE_RANGE[sizeUnit] ?? FONT_SIZE_RANGE.px
   const lsUnit = value.letterSpacingUnit === 'em' ? 'em' : 'px'
   const lsRange = LETTER_SPACING_RANGE[lsUnit]
-  const touched = (['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow', 'textFx'] as const).some(
+  const touched = (['typePreset', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow', 'textFx'] as const).some(
     (k) => value[k] !== undefined,
   )
+  // A saved id that no longer exists in the theme stays selectable so it is not silently dropped.
+  const presetOptions = [
+    { label: t('dp.typePreset.custom'), value: '' },
+    ...typePresets.map((p) => ({ label: p.name, value: p.id })),
+    ...(value.typePreset && !typePresets.some((p) => p.id === value.typePreset) ? [{ label: value.typePreset, value: value.typePreset }] : []),
+  ]
   return (
     <>
+      <SelectRow
+        label={t('dp.typePreset.label')}
+        value={value.typePreset || ''}
+        options={presetOptions}
+        applied={value.typePreset !== undefined}
+        onReset={() => patch({ typePreset: undefined })}
+        onChange={(v) => patch({ typePreset: v || undefined })}
+      />
       <SelectRow
         label={t('dp.field.family')}
         value={value.fontFamily || ''}
@@ -1360,11 +1424,20 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
       />
       <SelectRow
         label={t('dp.field.weight')}
-        value={value.fontWeight !== undefined ? String(value.fontWeight) : ''}
-        options={[{ label: t('dp.opt.default'), value: '' }, ...WEIGHT_OPTIONS]}
-        applied={value.fontWeight !== undefined}
-        onReset={() => patch({ fontWeight: undefined })}
-        onChange={(v) => patch({ fontWeight: v ? Number(v) : undefined })}
+        value={typeof ctl.own('fontWeight') === 'number' ? String(ctl.own('fontWeight')) : ''}
+        options={[
+          {
+            label: ctl.device === 'desktop' || typeof ctl.inherited('fontWeight') !== 'number'
+              ? t('dp.opt.default')
+              : t('dp.lit.inherited_from_device_value', { device: t(inheritNote(ctl.device) === 'tablet' ? 'dp.lit.tablet' : 'dp.lit.desktop'), value: String(ctl.inherited('fontWeight')) }),
+            value: '',
+          },
+          ...WEIGHT_OPTIONS,
+        ]}
+        resp={ctl.resp('fontWeight')}
+        applied={ctl.own('fontWeight') !== undefined}
+        onReset={() => ctl.reset('fontWeight')}
+        onChange={(v) => ctl.set('fontWeight', v ? Number(v) : undefined)}
       />
       <ToggleRow
         label={t('dp.field.transform')}
@@ -1416,7 +1489,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
           </select>
         }
       />
-      <FxRange k="wordSpacing" label={t('dp.field.word_spacing')} unit="px" value={value} onChange={onChange} def={0} min={-10} max={50} />
+      <TypoRange ctl={ctl} k="wordSpacing" label={`${t('dp.field.word_spacing')} (px)`} def={0} min={-10} max={50} step={1} />
       <SelectRow
         label={t('dp.field.text_shadow')}
         value={value.textShadow || 'none'}
@@ -1462,7 +1535,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
           className="ve-btn ve-btn--ghost"
           onClick={() =>
             patch({
-              fontFamily: undefined, fontSize: undefined, fontSizeUnit: undefined, fontWeight: undefined, lineHeight: undefined,
+              typePreset: undefined, fontFamily: undefined, fontSize: undefined, fontSizeUnit: undefined, fontWeight: undefined, lineHeight: undefined,
               letterSpacing: undefined, letterSpacingUnit: undefined, textTransform: undefined, fontStyle: undefined,
               textDecoration: undefined, wordSpacing: undefined, textShadow: undefined,
               textFx: undefined, textFxColor: undefined, textFxColor2: undefined, textFxAngle: undefined,
@@ -1859,13 +1932,13 @@ const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   ...TRANSFORM_ROWS.map((r) => tfKey('tf', r.suffix)),
   ...TRANSFORM_ROWS.map((r) => tfKey('tfh', r.suffix)),
   'tfDuration', 'position', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
-  'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss',
+  'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
 
-const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void }> = ({ value, onChange }) => {
+const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; ctl: ResponsiveCtl }> = ({ value, onChange, ctl }) => {
   const t = useAdminT()
   const { set, resetBtn } = makeFxEditing(value, onChange)
-  const positioned = value.position !== undefined
+  const positioned = ctl.effective('position') !== undefined
 
   return (
     <>
@@ -1873,7 +1946,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
       <div className="ve-divider-group">
         <p className="ve-row__label">{t('dp.state.normal')}</p>
         {TRANSFORM_ROWS.map((r) => (
-          <FxRange key={r.suffix} k={tfKey('tf', r.suffix)} label={t(r.labelKey)} unit={r.unit} value={value} onChange={onChange} def={r.def} min={r.min} max={r.max} />
+          <TypoRange key={r.suffix} ctl={ctl} k={tfKey('tf', r.suffix) as RespKey} label={r.unit ? `${t(r.labelKey)} (${r.unit})` : t(r.labelKey)} def={r.def} min={r.min} max={r.max} step={1} />
         ))}
       </div>
       <div className="ve-divider-group">
@@ -1886,26 +1959,27 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
 
       <p className="ve-row__label">{t('dp.field.position')}</p>
       <div className="ve-divider-group">
-        <SelectRow
+        <RespSelect
+          ctl={ctl}
+          k="position"
           label={t('dp.field.position')}
-          value={value.position ?? 'default'}
-          options={[{ label: t('dp.opt.default'), value: 'default' }, ...POSITION_OPTIONS]}
-          applied={value.position !== undefined} onReset={() => set('position', undefined)} onChange={(v) => set('position', v === 'default' ? undefined : (v as BlockPosition))}
+          options={POSITION_OPTIONS}
+          defaultLabel={t('dp.opt.default')}
         />
         {positioned && (
           <>
-            <FxRange k="posTop" label={t('dp.field.top')} unit="px" value={value} onChange={onChange} def={0} min={-2000} max={2000} />
-            <FxRange k="posRight" label={t('dp.lit.right')} unit="px" value={value} onChange={onChange} def={0} min={-2000} max={2000} />
-            <FxRange k="posBottom" label={t('dp.field.bottom')} unit="px" value={value} onChange={onChange} def={0} min={-2000} max={2000} />
-            <FxRange k="posLeft" label={t('dp.lit.left')} unit="px" value={value} onChange={onChange} def={0} min={-2000} max={2000} />
+            <TypoRange ctl={ctl} k="posTop" label={`${t('dp.field.top')} (px)`} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posRight" label={`${t('dp.lit.right')} (px)`} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posBottom" label={`${t('dp.field.bottom')} (px)`} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posLeft" label={`${t('dp.lit.left')} (px)`} def={0} min={-2000} max={2000} step={1} />
           </>
         )}
-        <NumberRow label={t('dp.lit.z_index')} value={value.zIndex} min={-10} max={9999} onChange={(v) => set('zIndex', v)} />
+        <RespNumber ctl={ctl} k="zIndex" label={t('dp.lit.z_index')} min={-10} max={9999} />
       </div>
 
       <p className="ve-row__label">{t('dp.field.appearance')}</p>
       <div className="ve-divider-group">
-        <FxRange k="opacity" label={t('dp.field.opacity')} unit="%" value={value} onChange={onChange} def={100} min={0} max={100} />
+        <TypoRange ctl={ctl} k="opacity" label={`${t('dp.field.opacity')} (%)`} def={100} min={0} max={100} step={1} />
         <SelectRow
           label={t('dp.field.blend_mode')}
           value={value.blendMode ?? 'normal'}
@@ -1955,6 +2029,21 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
             maxLength={4000}
             value={value.customCss ?? ''}
             onChange={(e) => set('customCss', e.target.value || undefined)}
+          />
+        </Row>
+        <Row
+          label="Custom attributes"
+          applied={Boolean(value.customAttrs)}
+          onReset={() => set('customAttrs', undefined)}
+          help="One name|value per line, up to 10. Allowed: data-*, aria-*, role, title, tabindex (-1 or 0), lang, rel. Anything else is ignored."
+        >
+          <textarea
+            rows={4}
+            maxLength={2400}
+            spellCheck={false}
+            placeholder={'aria-label|Open menu\ndata-track|cta'}
+            value={value.customAttrs ?? ''}
+            onChange={(e) => set('customAttrs', e.target.value || undefined)}
           />
         </Row>
       </div>

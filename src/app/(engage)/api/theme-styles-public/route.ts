@@ -13,6 +13,7 @@ export async function GET(): Promise<Response> {
       tables: styles.tables.map((t) => ({ id: t.id, name: t.name })),
       colours: styles.colours.map((c) => ({ id: c.id, name: c.name, value: c.value })),
       typography: styles.typography.map((t) => ({ id: t.id, name: t.name })),
+      typePresets: styles.typePresets.map((p) => ({ id: p.id, name: p.name })),
     },
     { headers: { 'Cache-Control': 'public, max-age=60' } },
   )

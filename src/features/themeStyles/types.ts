@@ -17,6 +17,7 @@ export const SYSTEM_BUTTON_IDS = ['primary', 'secondary'] as const
 
 export const LIMITS = {
   presets: 12,
+  typePresets: 12,
   customCss: 20000,
   colours: 40,
   typography: 30,
@@ -57,6 +58,28 @@ export type TypeStyle = {
   transform: TextTransform
   /** Colour reference, '' = inherit. */
   colour: string
+}
+
+/**
+ * Global typography preset (Elementor "Global Fonts"). A block picks one with BlockStyle.typePreset and its
+ * wrapper gets class `tp-<id>`. Every field is optional: an unset field leaves the inherited value alone.
+ */
+export type TypePreset = {
+  /** Slug, ^[a-z0-9-]{1,32}$. */
+  id: string
+  name: string
+  /** 'heading', 'body' or an installed font id from Site fonts. Unset = inherit. */
+  fontFamily?: string
+  /** Size in fontSizeUnit, 0.1 to 400. */
+  fontSize?: number
+  fontSizeUnit?: 'px' | 'em' | 'rem' | 'vw'
+  /** 100 to 900 in steps of 100. */
+  fontWeight?: number
+  /** Unitless multiplier, 0.5 to 5. */
+  lineHeight?: number
+  /** Pixels, -20 to 50. */
+  letterSpacing?: number
+  textTransform?: TextTransform
 }
 
 export type ShadowLevel = 'none' | 'soft' | 'medium' | 'strong'
@@ -222,6 +245,8 @@ export type ThemeStyles = {
   globals: ThemeGlobals
   /** Saved snapshots the admin can apply again. Max LIMITS.presets. */
   presets: ThemePreset[]
+  /** Global typography presets, max LIMITS.typePresets. Seeded with DEFAULT_TYPE_PRESETS when the key is absent. */
+  typePresets: TypePreset[]
 }
 
 const colour = (id: SystemColourId, name: string, value: string, darkValue = ''): ThemeColour => ({ id, name, value, darkValue, system: true })
@@ -376,6 +401,14 @@ export const DEFAULT_GLOBALS: ThemeGlobals = {
   customCss: '',
 }
 
+/** Seeds: each only names a current theme font, so nothing changes visually until a preset is edited. */
+export const DEFAULT_TYPE_PRESETS: TypePreset[] = [
+  { id: 'primary', name: 'Primary', fontFamily: 'heading' },
+  { id: 'secondary', name: 'Secondary', fontFamily: 'body' },
+  { id: 'text', name: 'Text', fontFamily: 'body' },
+  { id: 'accent', name: 'Accent', fontFamily: 'heading' },
+]
+
 export const DEFAULT_THEME_STYLES: ThemeStyles = {
   version: 1,
   colours: DEFAULT_COLOURS,
@@ -385,4 +418,5 @@ export const DEFAULT_THEME_STYLES: ThemeStyles = {
   defaultTableId: 'default',
   globals: DEFAULT_GLOBALS,
   presets: [],
+  typePresets: DEFAULT_TYPE_PRESETS,
 }
