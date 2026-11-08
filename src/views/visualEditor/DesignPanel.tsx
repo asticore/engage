@@ -40,6 +40,7 @@ import {
 import { isIsoDate } from '@/lib/visibilityRules'
 import { BUILT_IN_FONTS } from '@/features/fonts/installed'
 import { useSiteFonts } from './useSiteFonts'
+import { useTypePresets } from './useTypePresets'
 
 import { MediaPicker } from './MediaPicker'
 import { DESIGN_STATES, HOVER_TRANSFORM_OPTIONS, STATE_KEYS, stateModified, type DesignState } from './designStates'
@@ -1307,6 +1308,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
 }) => {
   const t = useAdminT()
   const siteFonts = useSiteFonts()
+  const typePresets = useTypePresets()
   const patch = (changes: Partial<Record<keyof BlockStyle, unknown>>) => {
     const updated: Record<string, unknown> = { ...value }
     for (const [name, next] of Object.entries(changes)) {
@@ -1319,11 +1321,25 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
   const sizeRange = FONT_SIZE_RANGE[sizeUnit] ?? FONT_SIZE_RANGE.px
   const lsUnit = value.letterSpacingUnit === 'em' ? 'em' : 'px'
   const lsRange = LETTER_SPACING_RANGE[lsUnit]
-  const touched = (['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow', 'textFx'] as const).some(
+  const touched = (['typePreset', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow', 'textFx'] as const).some(
     (k) => value[k] !== undefined,
   )
+  // A saved id that no longer exists in the theme stays selectable so it is not silently dropped.
+  const presetOptions = [
+    { label: t('dp.typePreset.custom'), value: '' },
+    ...typePresets.map((p) => ({ label: p.name, value: p.id })),
+    ...(value.typePreset && !typePresets.some((p) => p.id === value.typePreset) ? [{ label: value.typePreset, value: value.typePreset }] : []),
+  ]
   return (
     <>
+      <SelectRow
+        label={t('dp.typePreset.label')}
+        value={value.typePreset || ''}
+        options={presetOptions}
+        applied={value.typePreset !== undefined}
+        onReset={() => patch({ typePreset: undefined })}
+        onChange={(v) => patch({ typePreset: v || undefined })}
+      />
       <SelectRow
         label={t('dp.field.family')}
         value={value.fontFamily || ''}
@@ -1462,7 +1478,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
           className="ve-btn ve-btn--ghost"
           onClick={() =>
             patch({
-              fontFamily: undefined, fontSize: undefined, fontSizeUnit: undefined, fontWeight: undefined, lineHeight: undefined,
+              typePreset: undefined, fontFamily: undefined, fontSize: undefined, fontSizeUnit: undefined, fontWeight: undefined, lineHeight: undefined,
               letterSpacing: undefined, letterSpacingUnit: undefined, textTransform: undefined, fontStyle: undefined,
               textDecoration: undefined, wordSpacing: undefined, textShadow: undefined,
               textFx: undefined, textFxColor: undefined, textFxColor2: undefined, textFxAngle: undefined,

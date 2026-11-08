@@ -341,6 +341,8 @@ export type BlockStyle = {
 
   // Advanced
   customClass?: string
+  /** Global typography preset id (theme styles, ^[a-z0-9-]{1,32}$). The wrapper gets class tp-<id>. */
+  typePreset?: string
   anchorId?: string
 
   // Advanced (Elementor-style). All optional; unset emits no CSS.
@@ -627,8 +629,10 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
   return out as BlockStyle
 }
 
+const TYPE_PRESET_ID = /^[a-z0-9-]{1,32}$/
+
 const TYPO_KEYS = [
-  'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit',
+  'typePreset', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit',
   'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow',
 ] as const
 
@@ -664,6 +668,7 @@ function sanitizeTypography(style: BlockStyle): BlockStyle {
   en('textDecoration', TEXT_DECORATIONS)
   num('wordSpacing', -20, 100)
   en('textShadow', TEXT_SHADOWS)
+  if (raw.typePreset !== undefined && !(typeof raw.typePreset === 'string' && TYPE_PRESET_ID.test(raw.typePreset))) delete out.typePreset
   return out as BlockStyle
 }
 
@@ -1386,6 +1391,7 @@ export function blockStyleClasses(style: BlockStyle): string {
     style.width ? `be-block--${style.width}` : 'be-block--contained',
     style.bgType === 'image' ? 'be-block--has-bg-image' : null,
     isNum(style.minHeight) || isNum(style.tablet?.minHeight) || isNum(style.mobile?.minHeight) ? 'be-block--minh' : null,
+    style.typePreset && TYPE_PRESET_ID.test(style.typePreset) ? `tp-${style.typePreset}` : null,
     style.customClass || null,
   ]
     .filter(Boolean)
