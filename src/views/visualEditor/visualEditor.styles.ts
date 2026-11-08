@@ -211,6 +211,14 @@ html[data-theme='dark'] .ve-root {
   color: var(--ve-danger);
 }
 
+/* Icon-only top bar button (preview). */
+.ve-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+}
+
 /* Ghost buttons deliberately set no color of their own - they show up on the
    dark topbar AND inside light/dark panels, and inheriting --ve-text (or the
    topbar's own white) is what keeps them readable in both instead of a

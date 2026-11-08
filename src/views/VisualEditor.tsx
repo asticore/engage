@@ -187,6 +187,8 @@ export const VisualEditorView: React.FC = () => {
   const formMode = surface?.formMode === true
   // Page-level settings (title/slug/status/SEO): edited in the Settings tab, saved in the same PATCH.
   const [pageSettings, setPageSettings] = useState<PageSettings | null>(null)
+  /** What the public address needs from the page document (see openPreview). */
+  const pageLinkInfo = useRef<{ isHomepage: boolean; parent: unknown } | null>(null)
   // Translate mode: the document's translations (null when multilingual is off or the collection has none),
   // and the language being edited (null = the default language, the normal builder).
   const [translation, setTranslation] = useState<TranslationPayload | null>(null)
@@ -290,6 +292,7 @@ export const VisualEditorView: React.FC = () => {
             setPageSettings(loaded)
             setPageInitial(loaded)
             setPageAvail(pageAvailability(doc))
+            pageLinkInfo.current = { isHomepage: doc.isHomepage === true, parent: doc.parent }
           }
         }
         if (user) {
@@ -1300,6 +1303,36 @@ export const VisualEditorView: React.FC = () => {
     saveRef.current = (publish: boolean) => save(publish)
   })
 
+  /**
+   * Preview page: saves a dirty page first, then opens its public address. The frontend serves the page marked
+   * as homepage at "/", and any other page at its slug under its parents' slugs (the same rule as pagePaths.ts).
+   */
+  const openPreview = async () => {
+    if (dirty) await save(false)
+    const page = pageRef.current
+    if (!page || !surface) return
+    let path: string
+    if (pageLinkInfo.current?.isHomepage) {
+      path = '/'
+    } else {
+      const segments = [page.slug]
+      let parent: unknown = pageLinkInfo.current?.parent
+      for (let hops = 0; parent && hops < 8; hops += 1) {
+        const id = typeof parent === 'object' ? (parent as { id?: unknown }).id : parent
+        const res = await fetch(`/api/${surface.slug}/${String(id)}?depth=0`, { credentials: 'include' }).catch((): Response | null => null)
+        const doc = res && res.ok ? ((await res.json()) as Record<string, unknown>) : null
+        if (!doc || typeof doc.slug !== 'string') {
+          flashNotice(t('ve.top.previewFailed'))
+          return
+        }
+        segments.unshift(doc.slug)
+        parent = doc.parent
+      }
+      path = `/${segments.join('/')}`
+    }
+    window.open(path, '_blank', 'noopener')
+  }
+
   const selectedLock = selectedPath ? effectiveLock(blocks, selectedPath, locks, lockUser) : null
   const selectedKey = selectedPath ? lockKeyOf(selectedNode, selectedPath) : undefined
   const ownEntry = selectedKey ? locks.nodes[selectedKey] : undefined
@@ -1514,6 +1547,19 @@ export const VisualEditorView: React.FC = () => {
               disabled={blocks.length === 0}
             >
               {t('ve.top.saveAsTemplate')}
+            </button></Tooltip>
+          )}
+          {pageSettings && surface?.slug === 'pages' && (
+            <Tooltip text={status !== 'published' ? t('ve.top.previewDraft') : t('ve.top.preview')}><button
+              type="button"
+              className="ve-btn ve-btn--icon"
+              onClick={() => void openPreview()}
+              aria-label={t('ve.top.preview')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
             </button></Tooltip>
           )}
           <SaveStatusChip status={saving} dirty={dirty} savedAt={savedAt} onRetry={() => save(false)} />
