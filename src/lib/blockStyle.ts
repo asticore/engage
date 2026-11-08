@@ -80,6 +80,19 @@ export const RESPONSIVE_KEYS = [
   'radiusTr',
   'radiusBr',
   'radiusBl',
+  'position',
+  'posTop',
+  'posRight',
+  'posBottom',
+  'posLeft',
+  'zIndex',
+  'opacity',
+  'fontWeight',
+  'wordSpacing',
+  'tfRotate',
+  'tfScale',
+  'tfTranslateX',
+  'tfTranslateY',
 ] as const
 export type ResponsiveKey = (typeof RESPONSIVE_KEYS)[number]
 export type ResponsiveDevice = 'tablet' | 'mobile'
@@ -966,6 +979,17 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const n = clampNum(r[key], 0, RADIUS_MAX)
     if (n !== undefined) out[key] = n
   }
+  if (typeof r.position === 'string' && POSITION_OPTIONS.some((o) => o.value === r.position)) out.position = r.position as BlockPosition
+  for (const [key, min, max] of [
+    ['posTop', -2000, 2000], ['posRight', -2000, 2000], ['posBottom', -2000, 2000], ['posLeft', -2000, 2000],
+    ['zIndex', -10, 9999], ['opacity', 0, 100], ['wordSpacing', -20, 100],
+    ['tfRotate', -360, 360], ['tfScale', 10, 300], ['tfTranslateX', -600, 600], ['tfTranslateY', -600, 600],
+  ] as const) {
+    const n = clampNum(r[key], min, max)
+    if (n !== undefined) out[key] = n
+  }
+  const fw = clampNum(r.fontWeight, 100, 900)
+  if (fw !== undefined) out.fontWeight = Math.round(fw / 100) * 100
   if (r.hide === true) out.hide = true
   return Object.keys(out).length > 0 ? out : undefined
 }
@@ -1259,6 +1283,22 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
     if (size) decls.push(`font-size:${size} !important`)
   }
   if (isNum(own.lineHeight)) decls.push(`line-height:${own.lineHeight} !important`)
+  if (isNum(own.fontWeight)) decls.push(`font-weight:${own.fontWeight} !important`)
+  if (isNum(own.wordSpacing)) decls.push(`word-spacing:${own.wordSpacing}px !important`)
+  if (own.position && POSITION_OPTIONS.some((o) => o.value === own.position)) decls.push(`position:${own.position} !important`)
+  const offsets = [['top', 'posTop'], ['right', 'posRight'], ['bottom', 'posBottom'], ['left', 'posLeft']] as const
+  if (mergedU.position && POSITION_OPTIONS.some((o) => o.value === mergedU.position)) {
+    // A changed position type also re-emits inherited offsets: the base ones are only inline when the base had a position.
+    for (const [prop, key] of offsets) {
+      const v = own.position !== undefined ? mergedU[key] : own[key]
+      if (isNum(v)) decls.push(`${prop}:${v}px !important`)
+    }
+  }
+  if (isNum(own.zIndex)) decls.push(`z-index:${own.zIndex} !important`)
+  if (isNum(own.opacity)) decls.push(`opacity:${own.opacity / 100} !important`)
+  if (own.tfRotate !== undefined || own.tfScale !== undefined || own.tfTranslateX !== undefined || own.tfTranslateY !== undefined) {
+    decls.push(`transform:${transformValue(mergedU, 'tf') || 'none'} !important`)
+  }
   if (own.letterSpacing !== undefined) {
     const merged: BlockStyle = { ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }
     const ls = letterSpacingValue(merged)
