@@ -69,6 +69,8 @@ import { SaveAsTemplateDialog } from './visualEditor/SaveAsTemplate'
 import { VISUAL_EDITOR_CSS } from './visualEditor/visualEditor.styles'
 import { NAVIGATOR_CSS } from './visualEditor/navigator.styles'
 import { HISTORY_PANEL_CSS } from './visualEditor/historyPanel.styles'
+import { revisionsUrl, type RevisionRow } from './visualEditor/revisions'
+import { useRevisions } from './visualEditor/useRevisions'
 import { canRedo, canUndo, clampPath, createHistory, historyRows, jumpHistory, pushHistory, redoHistory, undoHistory, type History, type HistoryRow } from './visualEditor/history'
 import { HistoryPanel } from './visualEditor/HistoryPanel'
 import { applyPastedStyle, resetStyleKeepingAnchor, planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
@@ -166,7 +168,11 @@ export const VisualEditorView: React.FC = () => {
   const [templateKind, setTemplateKind] = useState<unknown>(null)
   const [previewCtx, setPreviewCtx] = useState<BlockContext | null>(null)
   const [dockTab, setDockTab] = useState<DockTab>('elements')
+  // Revisions are only requested once the History tab has been opened, and reloaded after each save.
+  const [historySeen, setHistorySeen] = useState(false)
+  const [revisionsKey, setRevisionsKey] = useState(0)
   const showDockTab = useCallback((tab: DockTab) => {
+    if (tab === 'history') setHistorySeen(true)
     setDockTab(tab)
   }, [])
   const [userPermissions, setUserPermissions] = useState<{ canEditStyle: boolean; canEditLayout: boolean } | null>(null)
@@ -606,6 +612,8 @@ export const VisualEditorView: React.FC = () => {
     restoreSnapshot(result.snapshot)
   }, [restoreSnapshot])
 
+  const revisions = useRevisions(surface && route ? revisionsUrl(surface.kind, surface.slug, route.id) : null, surface?.blocksField ?? '', historySeen, revisionsKey)
+
   const undo = useCallback(() => {
     if (translateRef.current.translating) return
     const result = undoHistory(historyRef.current, { blocks: blocksRef.current, selectedPath: selectedRef.current })
@@ -840,6 +848,26 @@ export const VisualEditorView: React.FC = () => {
     setTemplateToast(text)
     setTimeout(() => setTemplateToast(null), ms)
   }, [])
+
+  /** Revisions tab: puts a saved version's content on the canvas as one undoable edit. Nothing is saved until Save. */
+  const applyRevision = useCallback((revision: RevisionRow) => {
+    if (!Array.isArray(revision.blocks)) {
+      flashNotice(t('ve.revisions.noContent'))
+      return
+    }
+    if (insertBlocked([])) return
+    if (Object.keys(lockCtx.current.locks.nodes).length > 0) {
+      setLockNotice(t('ve.revisions.locked'))
+      setTimeout(() => setLockNotice(null), 5000)
+      return
+    }
+    const fresh = withIds(revision.blocks as SectionNode[])
+    if (applyBlocks(() => fresh, undefined, 'Revision restored')) {
+      setSelectedPath(null)
+      setInsertTarget({ containerPath: [], at: fresh.length })
+      flashNotice(t('ve.revisions.applied'), 2500)
+    }
+  }, [applyBlocks, insertBlocked, flashNotice, t])
 
   /* Import / Export: same insert and lock rules as paste; replace goes through applyBlocks so undo restores it. */
   const closeImport = useCallback(() => setImportOpen(false), [])
@@ -1352,6 +1380,7 @@ export const VisualEditorView: React.FC = () => {
       // The server now holds the tree that was sent. Edits made while the request was in flight keep a draft.
       savedTreeRef.current = comparableTree(sent.blocks)
       if (draftKeyRef.current && comparableTree(blocksRef.current) === savedTreeRef.current) clearBlockDraft(draftKeyRef.current)
+      setRevisionsKey((k) => k + 1)
       setTimeout(() => setSaving('idle'), 2000)
     } catch (err) {
       setSaving('error')
@@ -1697,7 +1726,7 @@ export const VisualEditorView: React.FC = () => {
               <FormBlockFieldsPanel key={String(selectedFormRef)} formId={selectedFormRef} editorHref={`${adminRoot}${formEditorPath(selectedFormRef)}`} />
             ) : undefined
           }
-          historyPanel={<HistoryPanel rows={historyList} onJump={jumpTo} />}
+          historyPanel={<HistoryPanel rows={historyList} onJump={jumpTo} revisions={revisions} onApplyRevision={applyRevision} />}
           navigatorPanel={
             <NavigatorPanel
               nodes={blocks}
