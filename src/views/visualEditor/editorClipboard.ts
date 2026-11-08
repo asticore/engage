@@ -206,6 +206,13 @@ export function applyPastedStyle(target: BlockStyle | undefined, source: BlockSt
   return next
 }
 
+/** Reset Style: drops the block's design (every breakpoint) but keeps its CSS id. */
+export function resetStyleKeepingAnchor(node: SectionNode): SectionNode {
+  const anchorId = node.design?.anchorId
+  const { design: _old, ...rest } = node
+  return (anchorId ? { ...rest, design: { anchorId } } : rest) as SectionNode
+}
+
 /**
  * Where a paste lands. A selected column receives it at the end; a selected block gets it
  * right after it (same list); with nothing selected (or a stale path) it goes at the page end.

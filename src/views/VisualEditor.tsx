@@ -69,7 +69,7 @@ import { SaveAsTemplateDialog } from './visualEditor/SaveAsTemplate'
 import { VISUAL_EDITOR_CSS } from './visualEditor/visualEditor.styles'
 import { NAVIGATOR_CSS } from './visualEditor/navigator.styles'
 import { canRedo, canUndo, clampPath, createHistory, pushHistory, redoHistory, undoHistory, type History } from './visualEditor/history'
-import { applyPastedStyle, planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
+import { applyPastedStyle, resetStyleKeepingAnchor, planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
 import type { BlockStyle } from '@/lib/blockStyle'
 import { ImportExportModal } from './visualEditor/ImportExportModal'
 import { IMPORT_EXPORT_CSS } from './visualEditor/importExport.styles'
@@ -929,6 +929,20 @@ export const VisualEditorView: React.FC = () => {
     if (changed) flashNotice('Style pasted')
   }, [userPermissions, lockedOut, flashNotice, applyBlocks])
 
+  /** Context menu: drops the block's style but keeps its CSS id. One undo step. */
+  const resetStyle = useCallback(
+    (path: NodePath) => {
+      if (!userPermissions?.canEditStyle) {
+        flashNotice('Your role cannot edit styles.')
+        return
+      }
+      if (lockedOut(path)) return
+      const changed = applyBlocks((prev) => updateNode(prev, path, resetStyleKeepingAnchor))
+      if (changed) flashNotice('Style reset')
+    },
+    [userPermissions, lockedOut, flashNotice, applyBlocks],
+  )
+
   // Check style clipboard when context menu opens
   useEffect(() => {
     if (!menu) return
@@ -1332,13 +1346,17 @@ export const VisualEditorView: React.FC = () => {
     const { containerPath, index } = splitPath(path)
     const list = getList(blocks, containerPath) ?? []
     const locked = Boolean(effectiveLock(blocks, path, locks, lockUser)?.blocked)
+    const canEditStyle = Boolean(userPermissions?.canEditStyle)
     return [
+      { id: 'edit', label: 'Edit' },
       { id: 'copy', label: 'Copy', hint: `${modLabel}+C` },
       { id: 'cut', label: 'Cut', hint: `${modLabel}+X`, disabled: locked },
       { id: 'paste', label: 'Paste after', hint: `${modLabel}+V` },
       { id: 'duplicate', label: 'Duplicate', hint: `${modLabel}+D`, disabled: locked },
       { id: 'copy-style', label: 'Copy style', hint: `${modLabel}+Shift+C`, divider: true },
-      { id: 'paste-style', label: 'Paste style', hint: `${modLabel}+Shift+V`, disabled: !hasStyleClipboard },
+      { id: 'paste-style', label: 'Paste style', hint: `${modLabel}+Shift+V`, disabled: !hasStyleClipboard || !canEditStyle || locked },
+      { id: 'reset-style', label: 'Reset style', disabled: locked || !canEditStyle },
+      { id: 'navigator', label: 'Show in Navigator' },
       { id: 'up', label: 'Move up', hint: 'Alt+Up', disabled: locked || index <= 0 },
       { id: 'down', label: 'Move down', hint: 'Alt+Down', disabled: locked || index >= list.length - 1 },
       ...(formMode ? [] : [{ id: 'template', label: 'Save as template' }]),
@@ -1714,8 +1732,15 @@ export const VisualEditorView: React.FC = () => {
             if (id === 'copy') void copyNode(path)
             else if (id === 'cut') void cutNode(path)
             else if (id === 'paste') void pasteAt(path)
-            else if (id === 'copy-style') void copyStyle(path)
+            else if (id === 'edit') {
+              setSelectedPath(path)
+              setDockTab('settings')
+            } else if (id === 'navigator') {
+              setSelectedPath(path)
+              setDockTab('navigator')
+            } else if (id === 'copy-style') void copyStyle(path)
             else if (id === 'paste-style') void pasteStyle(path)
+            else if (id === 'reset-style') resetStyle(path)
             else if (id === 'duplicate') duplicateBlock(path)
             else if (id === 'delete') deleteBlock(path)
             else if (id === 'up') moveBlock(path, -1)

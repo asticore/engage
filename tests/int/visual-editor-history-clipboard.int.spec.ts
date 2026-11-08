@@ -17,6 +17,7 @@ import {
   planPaste,
   readClipboard,
   resetClipboardMemory,
+  resetStyleKeepingAnchor,
   serializeSelection,
   writeClipboard,
 } from '@/views/visualEditor/editorClipboard'
@@ -192,5 +193,19 @@ describe('applyPastedStyle (VE-01)', () => {
   it('does not nest a whole design under a device key', () => {
     const out = applyPastedStyle({ color: 'blue' } as never, { paddingTop: 1, tablet: { paddingTop: 3 } } as never)
     expect(Object.keys(out).sort()).toEqual(['paddingTop', 'tablet'])
+  })
+})
+
+describe('resetStyleKeepingAnchor (VE-06)', () => {
+  it('removes the design but keeps the CSS id', () => {
+    const node = { blockType: 'section', _id: 'n', design: { paddingTop: 10, tablet: { paddingTop: 2 }, anchorId: 'contact' } } as never
+    const out = resetStyleKeepingAnchor(node)
+    expect(out).toEqual({ blockType: 'section', _id: 'n', design: { anchorId: 'contact' } })
+  })
+
+  it('removes the design key entirely when there is no CSS id', () => {
+    const node = { blockType: 'section', _id: 'n', design: { paddingTop: 10 } } as never
+    const out = resetStyleKeepingAnchor(node)
+    expect(Object.prototype.hasOwnProperty.call(out, 'design')).toBe(false)
   })
 })
