@@ -11,12 +11,17 @@ import { getElementDef } from '@/lib/elements/registry'
 import { can } from '@/features/roles/permissions'
 
 import { getBlockDef, INNER_SECTION_SLUG } from './visualEditor/blockSchemas'
-import { CANVAS_ORIGIN, isBridgeMessage, isColumnOpMessage, isColumnWidthsMessage, isRenameColumnMessage, type ColumnOp, type FrameToParentMessage } from './visualEditor/canvasBridge'
+import { applyPaddingDrag, canDragPadding } from './visualEditor/paddingDrag'
+import { CANVAS_ORIGIN, isBridgeMessage, isColumnOpMessage, isColumnWidthsMessage, isPaddingMessage, isRenameColumnMessage, type ColumnOp, type FrameToParentMessage } from './visualEditor/canvasBridge'
 import { applyColumnOp, applyColumnWidths, buildSectionNode, getColumn, getColumnOwner, isColumnPath, updateColumnAt, type ColumnDevice, type Structure } from './visualEditor/columnOps'
 import { ColumnPanel } from './visualEditor/ColumnPanel'
 import { StructurePicker } from './visualEditor/StructurePicker'
 import { EditorDock, type DockTab } from './visualEditor/EditorDock'
-import { NavigatorPanel } from './visualEditor/NavigatorPanel'
+import { flattenNavigatorNames, NavigatorPanel, type SelectMods } from './visualEditor/NavigatorPanel'
+import { MultiSelectPanel } from './visualEditor/MultiSelectPanel'
+import { deleteNodes, duplicateNodes, nodesForCopy, pasteStyleToNodes, rangeInContainer, splitLocked, toggleInSelection, topLevelPaths } from './visualEditor/multiSelect'
+import { FinderPalette } from './visualEditor/FinderPalette'
+import { commandEntries, nodeEntries, pageEditorHref, type FinderCommandId, type FinderEntry } from './visualEditor/finder'
 import {
   cloneNode,
   getList,
@@ -73,7 +78,7 @@ import { revisionsUrl, type RevisionRow } from './visualEditor/revisions'
 import { useRevisions } from './visualEditor/useRevisions'
 import { canRedo, canUndo, clampPath, createHistory, historyRows, jumpHistory, pushHistory, redoHistory, undoHistory, type History, type HistoryRow } from './visualEditor/history'
 import { HistoryPanel } from './visualEditor/HistoryPanel'
-import { applyPastedStyle, resetStyleKeepingAnchor, planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
+import { applyPastedStyle, resetStyleKeepingAnchor, planPaste, readClipboard, readStyleClipboard, serializeNodes, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
 import type { BlockStyle } from '@/lib/blockStyle'
 import { ImportExportModal } from './visualEditor/ImportExportModal'
 import { IMPORT_EXPORT_CSS } from './visualEditor/importExport.styles'
@@ -204,6 +209,7 @@ export const VisualEditorView: React.FC = () => {
   const [lockNotice, setLockNotice] = useState<string | null>(null)
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [finderOpen, setFinderOpen] = useState(false)
   const [templateToast, setTemplateToast] = useState<string | null>(null)
   const [frameReady, setFrameReady] = useState(false)
   // Form builder state (only used when the surface is the Forms collection).
@@ -393,6 +399,19 @@ export const VisualEditorView: React.FC = () => {
   }, [dirty])
 
   const selectedNode = selectedPath ? getNode(blocks, selectedPath) : undefined
+  // Multi-selection (blocks only). It is tied to the tree it was made on, so any edit, undo or redo
+  // drops it, and it only counts while the primary selection is one of its members.
+  const [multi, setMulti] = useState<{ paths: NodePath[]; blocks: SectionNode[] } | null>(null)
+  const multiPaths = useMemo<NodePath[]>(() => {
+    if (!multi || multi.blocks !== blocks || multi.paths.length < 2 || !selectedPath) return []
+    const key = pathKey(selectedPath)
+    return multi.paths.some((p) => pathKey(p) === key) ? multi.paths : []
+  }, [multi, blocks, selectedPath])
+  const multiRef = useRef<NodePath[]>([])
+  const toggleMultiRef = useRef<(path: NodePath) => void>(() => undefined)
+  useEffect(() => {
+    multiRef.current = multiPaths
+  }, [multiPaths])
   // A Form block on a page: the form it points at (id or {id}) gets its fields panel in the Settings tab.
   const selectedFormRef = (() => {
     if (formMode || selectedNode?.blockType !== 'form') return undefined
@@ -549,14 +568,28 @@ export const VisualEditorView: React.FC = () => {
   }, [syncHistory])
 
   /** Navigator: select a node exactly like a canvas click does. */
-  const selectFromNavigator = useCallback((path: NodePath) => {
+  const selectFromNavigator = useCallback((path: NodePath, mods?: SelectMods) => {
+    if (mods?.additive && path.length % 2 === 1) {
+      toggleMultiRef.current(path)
+      return
+    }
+    if (mods?.range && path.length % 2 === 1) {
+      const range = rangeInContainer(selectedRef.current, path)
+      if (range.length > 1) {
+        setMulti({ paths: range, blocks: blocksRef.current })
+        setSelectedPath(path)
+        setDockTab('settings')
+        return
+      }
+    }
+    setMulti(null)
     setSelectedPath(path)
     setDockTab('settings')
     if (isColumnPath(path)) {
       const column = getColumn(blocksRef.current, path)
       if (column) setInsertTarget({ containerPath: path, at: (column.blocks || []).length })
     }
-  }, [])
+  }, [setMulti])
 
   /** Navigator: editor-only name for a block (odd path) or column (even path). */
   const renameNode = useCallback((path: NodePath, name: string) => {
@@ -849,6 +882,18 @@ export const VisualEditorView: React.FC = () => {
     setTimeout(() => setTemplateToast(null), ms)
   }, [])
 
+  /** Canvas drag of a section's top / bottom padding bar: one undo step, written for the device shown. Same rules as the Design panel. */
+  const setPadding = useCallback((path: NodePath, side: 'top' | 'bottom', value: number, target: 'desktop' | 'tablet' | 'mobile') => {
+    if (!userPermissions?.canEditStyle) {
+      flashNotice('Your role cannot edit styles.')
+      return
+    }
+    if (lockedOut(path)) return
+    const node = getNode(lockCtx.current.blocks, path)
+    if (!node || !canDragPadding(node.design as { paddingUnit?: unknown } | undefined)) return
+    applyBlocks((prev) => updateNode(prev, path, (n) => ({ ...n, design: applyPaddingDrag(n.design, side, value, target) })), `pad:${pathKey(path)}`, 'Padding changed')
+  }, [userPermissions, lockedOut, flashNotice, applyBlocks])
+
   /** Revisions tab: puts a saved version's content on the canvas as one undoable edit. Nothing is saved until Save. */
   const applyRevision = useCallback((revision: RevisionRow) => {
     if (!Array.isArray(revision.blocks)) {
@@ -1001,6 +1046,102 @@ export const VisualEditorView: React.FC = () => {
     if (changed) flashNotice('Style pasted')
   }, [userPermissions, lockedOut, flashNotice, applyBlocks])
 
+  /* ---------------------------------------------------------------------- */
+  /* Multi-select bulk actions: each is one applyBlocks call (one undo step)  */
+  /* ---------------------------------------------------------------------- */
+
+  /** Ctrl/Cmd-click (canvas or Navigator): adds the block to the selection or removes it. A plain selection counts as the first member. */
+  const toggleMulti = useCallback((path: NodePath) => {
+    const sel = selectedRef.current
+    const current = multiRef.current.length > 0 ? multiRef.current : sel && sel.length % 2 === 1 ? [sel] : []
+    const next = toggleInSelection(current, path)
+    setDockTab('settings')
+    if (next.length === 0) {
+      setMulti(null)
+      setSelectedPath(null)
+    } else if (next.length === 1) {
+      setMulti(null)
+      setSelectedPath(next[0])
+    } else {
+      setMulti({ paths: next, blocks: blocksRef.current })
+      const stillIn = next.some((p) => pathKey(p) === pathKey(path))
+      setSelectedPath(stillIn ? path : next[next.length - 1])
+    }
+  }, [setMulti])
+  useEffect(() => {
+    toggleMultiRef.current = toggleMulti
+  }, [toggleMulti])
+
+  /** The selected blocks a lock does not stop (top-level only); tells the person how many were skipped. */
+  const editableMulti = useCallback((): NodePath[] => {
+    const { allowed, skipped } = splitLocked(topLevelPaths(multiRef.current), (path) => {
+      const lock = effectiveLock(lockCtx.current.blocks, path, lockCtx.current.locks, lockCtx.current.lockUser)
+      return Boolean(lock?.blocked)
+    })
+    if (skipped.length > 0) {
+      setLockNotice(t('ve.multi.skipped', { n: skipped.length }))
+      setTimeout(() => setLockNotice(null), 5000)
+    }
+    return allowed
+  }, [t])
+
+  const deleteMulti = useCallback(() => {
+    const paths = editableMulti()
+    if (paths.length === 0) return
+    const changed = applyBlocks((prev) => deleteNodes(prev, paths), undefined, `Deleted ${paths.length} elements`)
+    if (changed) {
+      setMulti(null)
+      setSelectedPath(null)
+    }
+  }, [editableMulti, applyBlocks, setMulti])
+
+  const duplicateMulti = useCallback(() => {
+    const paths = editableMulti()
+    if (paths.length === 0) return
+    const changed = applyBlocks((prev) => duplicateNodes(prev, paths, nextId), undefined, `Duplicated ${paths.length} elements`)
+    if (changed) setMulti(null)
+  }, [editableMulti, applyBlocks, setMulti])
+
+  /** Copies every selected block (locked ones too: copying changes nothing). Returns false when nothing was copied. */
+  const copyMulti = useCallback(async (): Promise<boolean> => {
+    const nodes = nodesForCopy(blocksRef.current, multiRef.current)
+    const serialized = serializeNodes(nodes)
+    if (!serialized) return false
+    const where = await writeClipboard(serialized.text)
+    flashNotice(where === 'system' ? t('ve.multi.copied', { n: serialized.count }) : 'Copied (kept inside the editor only; the browser blocked the clipboard)', 2500)
+    return true
+  }, [flashNotice, t])
+
+  const cutMulti = useCallback(async () => {
+    if (translateRef.current.translating) {
+      setLockNotice(translateRef.current.lockedText)
+      setTimeout(() => setLockNotice(null), 5000)
+      return
+    }
+    if (await copyMulti()) deleteMulti()
+  }, [copyMulti, deleteMulti])
+
+  const pasteStyleMulti = useCallback(async () => {
+    if (!userPermissions?.canEditStyle) {
+      flashNotice('Your role cannot edit styles.')
+      return
+    }
+    const paths = editableMulti()
+    if (paths.length === 0) return
+    const result = await readStyleClipboard()
+    if (result.ok === false) {
+      flashNotice(result.error)
+      return
+    }
+    const source = result.design
+    if (!source || typeof source !== 'object' || Array.isArray(source)) {
+      flashNotice('The copied content has no design.')
+      return
+    }
+    const changed = applyBlocks((prev) => pasteStyleToNodes(prev, paths, source as BlockStyle), undefined, 'Style pasted')
+    if (changed) flashNotice('Style pasted')
+  }, [userPermissions, editableMulti, flashNotice, applyBlocks])
+
   /** Context menu: drops the block's style but keeps its CSS id. One undo step. */
   const resetStyle = useCallback(
     (path: NodePath) => {
@@ -1048,6 +1189,10 @@ export const VisualEditorView: React.FC = () => {
         setColumnWidths(data.path, data.widths, data.device)
         return
       }
+      if (isPaddingMessage(data)) {
+        setPadding(data.path, data.side, data.value, data.device)
+        return
+      }
       if (!isBridgeMessage(data)) return
       const msg = data as FrameToParentMessage
       switch (msg.type) {
@@ -1055,6 +1200,11 @@ export const VisualEditorView: React.FC = () => {
           setFrameReady(true)
           break
         case 'select':
+          if (msg.additive && Array.isArray(msg.path) && msg.path.length % 2 === 1) {
+            toggleMulti(msg.path)
+            break
+          }
+          setMulti(null)
           if (translateRef.current.translating && Array.isArray(msg.path) && msg.path.length % 2 === 1) {
             // A click on a block in translate mode focuses its first translatable row in the panel.
             const node = getNode(translateRef.current.blocks, msg.path)
@@ -1123,7 +1273,7 @@ export const VisualEditorView: React.FC = () => {
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [deleteBlock, duplicateBlock, moveBlock, moveBlockTo, columnOp, renameNode, setColumnWidths, lockedOut, applyBlocks, addBlockAt, saveCanvasText, notifyTranslate, navigateUntranslated, t])
+  }, [deleteBlock, duplicateBlock, moveBlock, moveBlockTo, columnOp, renameNode, setColumnWidths, setPadding, toggleMulti, lockedOut, applyBlocks, addBlockAt, saveCanvasText, notifyTranslate, navigateUntranslated, t])
 
   const saveRef = useRef<((publish: boolean) => unknown) | null>(null)
   // Keyboard shortcuts: the parent's own key presses and the ones forwarded from the frame share this handler.
@@ -1133,14 +1283,19 @@ export const VisualEditorView: React.FC = () => {
     handlers: {
       undo,
       redo,
-      copy: () => selectedPath && void copyNode(selectedPath),
-      cut: () => selectedPath && void cutNode(selectedPath),
+      copy: () => (multiPaths.length > 0 ? void copyMulti() : selectedPath && void copyNode(selectedPath)),
+      cut: () => (multiPaths.length > 0 ? void cutMulti() : selectedPath && void cutNode(selectedPath)),
       paste: () => void pasteAt(selectedPath),
-      duplicate: () => selectedPath && selectedPath.length % 2 === 1 && duplicateBlock(selectedPath),
-      delete: () => selectedPath && selectedPath.length % 2 === 1 && deleteBlock(selectedPath),
+      duplicate: () => (multiPaths.length > 0 ? duplicateMulti() : selectedPath && selectedPath.length % 2 === 1 && duplicateBlock(selectedPath)),
+      delete: () => (multiPaths.length > 0 ? deleteMulti() : selectedPath && selectedPath.length % 2 === 1 && deleteBlock(selectedPath)),
       clear: () => {
         // While the shortcuts popover is open, Escape only closes it and keeps the selection.
         if (helpOpen) return
+        // Escape first drops a multi-selection (the primary block stays selected); the next one deselects.
+        if (multiPaths.length > 0) {
+          setMulti(null)
+          return
+        }
         setSelectedPath(null)
         setDockTab('elements')
       },
@@ -1149,10 +1304,11 @@ export const VisualEditorView: React.FC = () => {
       help: () => setHelpOpen((open) => !open),
       save: () => void saveRef.current?.(false),
       copyStyle: () => selectedPath && void copyStyle(selectedPath),
-      pasteStyle: () => void pasteStyle(selectedPath),
+      pasteStyle: () => (multiPaths.length > 0 ? void pasteStyleMulti() : void pasteStyle(selectedPath)),
       navigator: () => setDockTab((t) => (t === 'navigator' ? 'elements' : 'navigator')),
       cycleDevice: () => setDevice((d) => (d === 'desktop' ? 'tablet' : d === 'tablet' ? 'mobile' : 'desktop')),
       togglePanel: () => setDockCollapsed((c) => !c),
+      finder: () => setFinderOpen((open) => !open),
       history: () => {
         setDockCollapsed(false)
         showDockTab(dockTab === 'history' ? 'elements' : 'history')
@@ -1169,10 +1325,10 @@ export const VisualEditorView: React.FC = () => {
   useEffect(() => {
     if (!frameReady) return
     iframeRef.current?.contentWindow?.postMessage(
-      { source: 've-canvas', type: 'init', blocks: canvasBlocks, selectedPath, locks: lockMapForCanvas(blocks, locks, lockUser), device },
+      { source: 've-canvas', type: 'init', blocks: canvasBlocks, selectedPath, selectedPaths: multiPaths, locks: lockMapForCanvas(blocks, locks, lockUser), device },
       CANVAS_ORIGIN(),
     )
-  }, [frameReady, canvasBlocks, blocks, selectedPath, locks, lockUser, device])
+  }, [frameReady, canvasBlocks, blocks, selectedPath, multiPaths, locks, lockUser, device])
 
   // Translate mode marks for the frame (the language's status per block, the source tooltip, and whether it may be edited).
   useEffect(() => {
@@ -1391,6 +1547,74 @@ export const VisualEditorView: React.FC = () => {
   useEffect(() => {
     saveRef.current = (publish: boolean) => save(publish)
   })
+
+  /** Finder (Mod+E): nodes of this page by navigator name, plus the editor's commands. Pages are searched by the palette itself. */
+  const finderEntries = useMemo<FinderEntry[]>(() => {
+    if (!finderOpen) return []
+    const cmd = (command: FinderCommandId, label: string) => ({ command, label, hint: t('ve.finder.command') })
+    return [
+      ...commandEntries([
+        cmd('save', t('common.saveDraft')),
+        cmd('publish', t('common.publish')),
+        cmd('pageSettings', t('ve.finder.pageSettings')),
+        cmd('navigator', t('ve.tab.navigator')),
+        cmd('history', t('ve.tab.history')),
+        cmd('desktop', t('ve.top.desktop')),
+        cmd('tablet', t('ve.top.tablet')),
+        cmd('mobile', t('ve.top.mobile')),
+        cmd('importExport', t('ve.top.importExport')),
+        cmd('shortcuts', t('ve.shortcuts.title')),
+      ]),
+      ...nodeEntries(flattenNavigatorNames(blocks, t)),
+    ]
+  }, [finderOpen, blocks, t])
+
+  const pickFinderEntry = (entry: FinderEntry) => {
+    setFinderOpen(false)
+    if (entry.kind === 'node') {
+      selectFromNavigator(entry.path)
+      // The frame scrolls the node into view when it is told about the selection.
+      iframeRef.current?.contentWindow?.postMessage({ source: 've-canvas', type: 'selected', selectedPath: entry.path }, CANVAS_ORIGIN())
+      return
+    }
+    if (entry.kind === 'page') {
+      if (dirty && !window.confirm(t('ve.finder.leaveConfirm'))) return
+      window.location.assign(pageEditorHref(adminRoot, entry.pageId))
+      return
+    }
+    switch (entry.command) {
+      case 'save':
+        void save(false)
+        break
+      case 'publish':
+        void save(true)
+        break
+      case 'pageSettings':
+        setSelectedPath(null)
+        setDockCollapsed(false)
+        showDockTab('settings')
+        break
+      case 'navigator':
+        setDockCollapsed(false)
+        showDockTab('navigator')
+        break
+      case 'history':
+        setDockCollapsed(false)
+        showDockTab('history')
+        break
+      case 'desktop':
+      case 'tablet':
+      case 'mobile':
+        setDevice(entry.command)
+        break
+      case 'importExport':
+        setImportOpen(true)
+        break
+      case 'shortcuts':
+        setHelpOpen(true)
+        break
+    }
+  }
 
   /**
    * Preview page: saves a dirty page first, then opens its public address. The frontend serves the page marked
@@ -1726,11 +1950,25 @@ export const VisualEditorView: React.FC = () => {
               <FormBlockFieldsPanel key={String(selectedFormRef)} formId={selectedFormRef} editorHref={`${adminRoot}${formEditorPath(selectedFormRef)}`} />
             ) : undefined
           }
+          multiPanel={
+            multiPaths.length > 0 ? (
+              <MultiSelectPanel
+                count={multiPaths.length}
+                canEditStyle={Boolean(userPermissions?.canEditStyle)}
+                onDelete={deleteMulti}
+                onDuplicate={duplicateMulti}
+                onCopy={() => void copyMulti()}
+                onPasteStyle={() => void pasteStyleMulti()}
+                onClear={() => setMulti(null)}
+              />
+            ) : undefined
+          }
           historyPanel={<HistoryPanel rows={historyList} onJump={jumpTo} revisions={revisions} onApplyRevision={applyRevision} />}
           navigatorPanel={
             <NavigatorPanel
               nodes={blocks}
               selectedPath={selectedPath}
+              multiPaths={multiPaths}
               onSelect={selectFromNavigator}
               onRename={renameNode}
               onSetAnchor={setNodeAnchor}
@@ -1905,6 +2143,14 @@ export const VisualEditorView: React.FC = () => {
             setTemplateToast('Saved to My templates')
             setTimeout(() => setTemplateToast(null), 4000)
           }}
+        />
+      )}
+      {finderOpen && (
+        <FinderPalette
+          entries={finderEntries}
+          currentId={route?.id}
+          onPick={pickFinderEntry}
+          onClose={() => setFinderOpen(false)}
         />
       )}
       {importOpen && (

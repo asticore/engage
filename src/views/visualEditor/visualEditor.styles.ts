@@ -2041,6 +2041,39 @@ html[data-theme='dark'] .ve-root {
 /* Drag-resize handle between two side-by-side columns (Canvas.tsx ColumnResizeHandle). Shown while
    the section or its selection is hovered; not drawn at all where the section stacks on this device. */
 .ve-section:has(> .ve-col-resize) { position: relative; }
+.ve-multi { padding: 16px; }
+.ve-multi__count { margin: 0; font-size: 14px; font-weight: 600; }
+.ve-multi__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ve-pad-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  z-index: 9;
+  cursor: ns-resize;
+  opacity: 0;
+  background: color-mix(in srgb, var(--ve-accent) 35%, transparent);
+  touch-action: none;
+  transition: opacity 0.1s;
+}
+.ve-pad-handle--top { top: 0; }
+.ve-pad-handle--bottom { bottom: 0; }
+.ve-node:hover > .ve-pad-handle,
+.ve-node--selected > .ve-pad-handle,
+.ve-pad-handle--active { opacity: 1; }
+.ve-pad-handle[aria-disabled='true'] { display: none; }
+.ve-pad-handle__tip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  background: #111;
+  color: #fff;
+  pointer-events: none;
+}
 .ve-col-resize {
   position: absolute;
   top: 0;
