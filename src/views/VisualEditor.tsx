@@ -1563,12 +1563,12 @@ export const VisualEditorView: React.FC = () => {
             </button></Tooltip>
           )}
           <SaveStatusChip status={saving} dirty={dirty} savedAt={savedAt} onRetry={() => save(false)} />
-          <button type="button" className="ve-btn" onClick={() => save(false)} disabled={saving === 'saving'}>
+          <button type="button" className="ve-btn" onClick={() => save(false)} disabled={saving === 'saving' || !dirty}>
             {saving === 'saving' ? t('ve.top.saving') : saving === 'saved' ? t('status.saved') : t('common.saveDraft')}
           </button>
           <button
             type="button"
-            className="ve-btn ve-btn--primary"
+            className={`ve-btn ve-btn--primary${dirty || status !== 'published' ? ' ve-btn--dirty' : ''}`}
             onClick={() => save(true)}
             disabled={saving === 'publishing'}
           >

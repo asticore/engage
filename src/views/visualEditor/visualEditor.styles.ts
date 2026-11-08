@@ -211,6 +211,22 @@ html[data-theme='dark'] .ve-root {
   color: var(--ve-danger);
 }
 
+/* Publish has changes to publish: a small dot on the button. */
+.ve-btn--dirty {
+  position: relative;
+}
+
+.ve-btn--dirty::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ve-accent-contrast);
+}
+
 /* Icon-only top bar button (preview). */
 .ve-btn--icon {
   display: inline-flex;
