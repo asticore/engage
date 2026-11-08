@@ -12,6 +12,7 @@ import {
   type Snapshot,
 } from '@/views/visualEditor/history'
 import {
+  applyPastedStyle,
   parseClipboardText,
   planPaste,
   readClipboard,
@@ -159,5 +160,24 @@ describe('shortcuts', () => {
     expect(isEditableTarget({ tagName: 'DIV', isContentEditable: true } as unknown as EventTarget)).toBe(true)
     expect(isEditableTarget({ tagName: 'DIV' } as unknown as EventTarget)).toBe(false)
     expect(isEditableTarget(null)).toBe(false)
+  })
+})
+
+describe('applyPastedStyle (VE-01)', () => {
+  it('replaces the design with the source design and keeps the target anchor id', () => {
+    const source = { paddingTop: 10, tablet: { paddingTop: 4 }, mobile: { paddingTop: 2 }, anchorId: 'copied' }
+    const out = applyPastedStyle({ anchorId: 'mine', color: 'red' } as never, source as never)
+    expect(out).toEqual({ paddingTop: 10, tablet: { paddingTop: 4 }, mobile: { paddingTop: 2 }, anchorId: 'mine' })
+  })
+
+  it('drops the source anchor id when the target has none', () => {
+    const out = applyPastedStyle(undefined, { paddingTop: 10, anchorId: 'copied' } as never)
+    expect(out).toEqual({ paddingTop: 10 })
+    expect(Object.prototype.hasOwnProperty.call(out, 'anchorId')).toBe(false)
+  })
+
+  it('does not nest a whole design under a device key', () => {
+    const out = applyPastedStyle({ color: 'blue' } as never, { paddingTop: 1, tablet: { paddingTop: 3 } } as never)
+    expect(Object.keys(out).sort()).toEqual(['paddingTop', 'tablet'])
   })
 })

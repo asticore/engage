@@ -68,7 +68,8 @@ import { SaveAsTemplateDialog } from './visualEditor/SaveAsTemplate'
 import { VISUAL_EDITOR_CSS } from './visualEditor/visualEditor.styles'
 import { NAVIGATOR_CSS } from './visualEditor/navigator.styles'
 import { canRedo, canUndo, clampPath, createHistory, pushHistory, redoHistory, undoHistory, type History } from './visualEditor/history'
-import { planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
+import { applyPastedStyle, planPaste, readClipboard, readStyleClipboard, serializeSelection, serializeStyle, withFreshIds, writeClipboard, writeStyleClipboard } from './visualEditor/editorClipboard'
+import type { BlockStyle } from '@/lib/blockStyle'
 import { ImportExportModal } from './visualEditor/ImportExportModal'
 import { IMPORT_EXPORT_CSS } from './visualEditor/importExport.styles'
 import { AI_BUILDER_CSS } from './visualEditor/aiBuilder.styles'
@@ -904,40 +905,27 @@ export const VisualEditorView: React.FC = () => {
 
   const pasteStyle = useCallback(async (path: NodePath | null) => {
     if (!path || path.length === 0) return
+    if (!userPermissions?.canEditStyle) {
+      flashNotice('Your role cannot edit styles.')
+      return
+    }
+    if (lockedOut(path)) return
     const result = await readStyleClipboard()
     if (result.ok === false) {
       flashNotice(result.error)
       return
     }
-    const { design: sourceDesign, device: sourceDevice } = result
-    const targetNode = getNode(blocksRef.current, path)
-    if (!targetNode) return
-
-    let updatedNode: SectionNode
-    if (sourceDevice === device) {
-      // Same device: replace the design object
-      updatedNode = { ...targetNode, design: sourceDesign }
-    } else {
-      // Different device: set device override in the existing design object
-      const existingDesign = (targetNode.design || {}) as Record<string, unknown>
-      updatedNode = {
-        ...targetNode,
-        design: {
-          ...existingDesign,
-          [sourceDevice]: sourceDesign,
-        },
-      }
+    const source = result.design
+    if (!source || typeof source !== 'object' || Array.isArray(source)) {
+      flashNotice('The copied content has no design.')
+      return
     }
-
-    const editedBlocks = updateNode(blocksRef.current, path, () => updatedNode)
-    const before = { blocks: blocksRef.current, selectedPath: selectedRef.current }
-    blocksRef.current = editedBlocks
-    setBlocks(editedBlocks)
-    historyRef.current = pushHistory(historyRef.current, before, { key: 'pasteStyle' })
-    syncHistory()
-    setDirty(true)
-    flashNotice('Style pasted')
-  }, [device, flashNotice, syncHistory])
+    // Every breakpoint comes with the copied design; the clipboard device is not needed.
+    const changed = applyBlocks((prev) =>
+      updateNode(prev, path, (node) => ({ ...node, design: applyPastedStyle(node.design, source as BlockStyle) })),
+    )
+    if (changed) flashNotice('Style pasted')
+  }, [userPermissions, lockedOut, flashNotice, applyBlocks])
 
   // Check style clipboard when context menu opens
   useEffect(() => {
