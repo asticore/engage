@@ -15,7 +15,7 @@ import {
 import type { SectionNode } from '@/lib/sectionTree'
 
 import { CanvasNodeList, slotKey, type CanvasHandlers } from './Canvas'
-import type { CanvasDevice, ColumnToParentMessage, ColumnWidthsToParentMessage, FrameToParentMessage, ParentToFrameMessage, RenameColumnToParentMessage } from './canvasBridge'
+import type { CanvasDevice, ColumnToParentMessage, ColumnWidthsToParentMessage, FrameToParentMessage, PaddingToParentMessage, ParentToFrameMessage, RenameColumnToParentMessage } from './canvasBridge'
 import { CANVAS_ORIGIN, isBridgeMessage } from './canvasBridge'
 import { getNode, pathKey, type NodePath } from './treeOps'
 import { isEditableTarget, resolveShortcut } from './useEditorShortcuts'
@@ -58,7 +58,7 @@ const nearestSlot: CollisionDetection = ({ droppableContainers, droppableRects, 
   return best ? [{ id: best.id, data: { droppableContainer: best.data, value: best.d } }] : []
 }
 
-const post = (message: FrameToParentMessage | ColumnToParentMessage | RenameColumnToParentMessage | ColumnWidthsToParentMessage) => {
+const post = (message: FrameToParentMessage | ColumnToParentMessage | RenameColumnToParentMessage | ColumnWidthsToParentMessage | PaddingToParentMessage) => {
   window.parent.postMessage(message, CANVAS_ORIGIN())
 }
 
@@ -73,6 +73,7 @@ const post = (message: FrameToParentMessage | ColumnToParentMessage | RenameColu
 export const CanvasFrame: React.FC = () => {
   const [blocks, setBlocks] = useState<SectionNode[]>([])
   const [selectedPath, setSelectedPath] = useState<NodePath | null>(null)
+  const [multiPaths, setMultiPaths] = useState<NodePath[]>([])
   const [locks, setLocks] = useState<NonNullable<CanvasHandlers['locks']>>({})
   // The device preview the parent is showing; column widths are read and written for it.
   const [device, setDevice] = useState<CanvasDevice>('desktop')
@@ -113,10 +114,18 @@ export const CanvasFrame: React.FC = () => {
         setBlocks(msg.blocks)
         setLocks(msg.locks ?? {})
         setSelectedPath(msg.selectedPath)
+        setMultiPaths(msg.selectedPaths ?? [])
         if (msg.device) setDevice(msg.device)
         setOpenInsertKey(null)
       } else if (msg.type === 'selected') {
         setSelectedPath(msg.selectedPath)
+        // Picked from the Finder: bring the node into view once it has rendered.
+        const target = msg.selectedPath
+        if (target) {
+          setTimeout(() => {
+            document.querySelector(`[data-ve-node="${CSS.escape(JSON.stringify(target))}"],[data-ve-column="${CSS.escape(JSON.stringify(target))}"]`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+          }, 50)
+        }
       } else if (msg.type === 'previewContext') {
         setPreviewCtx(msg.context)
       } else if (msg.type === 'dragHover') {
@@ -241,13 +250,20 @@ export const CanvasFrame: React.FC = () => {
     translate: translate ?? undefined,
     inlineEdit,
     selectedKey: selectedPath ? pathKey(selectedPath) : null,
+    multiKeys: multiPaths.map((p) => pathKey(p)),
     locks,
     dragHoverKey,
     openInsertKey,
     dragPath: drag?.path ?? null,
-    onSelect: (path) => {
-      setSelectedPath(path)
+    onSelect: (path, additive) => {
       setOpenInsertKey(null)
+      // Ctrl/Cmd-click toggles in a multi-selection: the parent owns it and pushes the result back down.
+      if (additive && path.length % 2 === 1) {
+        post({ source: 've-canvas', type: 'select', path, additive: true })
+        return
+      }
+      setSelectedPath(path)
+      setMultiPaths([])
       post({ source: 've-canvas', type: 'select', path })
     },
     onAdd: (containerPath, at) => {
@@ -264,6 +280,7 @@ export const CanvasFrame: React.FC = () => {
     onRenameColumn: (path, label) => post({ source: 've-canvas', type: 'renameColumn', path, label }),
     device,
     onColumnWidths: (path, widths) => post({ source: 've-canvas', type: 'columnWidths', path, widths, device }),
+    onPadding: (path, side, value) => post({ source: 've-canvas', type: 'padding', path, side, value, device }),
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -290,6 +307,7 @@ export const CanvasFrame: React.FC = () => {
 
   const deselect = () => {
     setSelectedPath(null)
+    setMultiPaths([])
     setOpenInsertKey(null)
     post({ source: 've-canvas', type: 'select', path: null })
   }

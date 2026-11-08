@@ -211,6 +211,30 @@ html[data-theme='dark'] .ve-root {
   color: var(--ve-danger);
 }
 
+/* Publish has changes to publish: a small dot on the button. */
+.ve-btn--dirty {
+  position: relative;
+}
+
+.ve-btn--dirty::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ve-accent-contrast);
+}
+
+/* Icon-only top bar button (preview). */
+.ve-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 10px;
+}
+
 /* Ghost buttons deliberately set no color of their own - they show up on the
    dark topbar AND inside light/dark panels, and inheriting --ve-text (or the
    topbar's own white) is what keeps them readable in both instead of a
@@ -552,7 +576,9 @@ html[data-theme='dark'] .ve-root {
   border: none;
   background: none;
   color: var(--ve-text-muted);
-  padding: 13px 8px;
+  padding: 13px 4px;
+  min-width: 0;
+  white-space: nowrap;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -560,7 +586,7 @@ html[data-theme='dark'] .ve-root {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .ve-dock__tab--active {
@@ -2015,6 +2041,39 @@ html[data-theme='dark'] .ve-root {
 /* Drag-resize handle between two side-by-side columns (Canvas.tsx ColumnResizeHandle). Shown while
    the section or its selection is hovered; not drawn at all where the section stacks on this device. */
 .ve-section:has(> .ve-col-resize) { position: relative; }
+.ve-multi { padding: 16px; }
+.ve-multi__count { margin: 0; font-size: 14px; font-weight: 600; }
+.ve-multi__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ve-pad-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  z-index: 9;
+  cursor: ns-resize;
+  opacity: 0;
+  background: color-mix(in srgb, var(--ve-accent) 35%, transparent);
+  touch-action: none;
+  transition: opacity 0.1s;
+}
+.ve-pad-handle--top { top: 0; }
+.ve-pad-handle--bottom { bottom: 0; }
+.ve-node:hover > .ve-pad-handle,
+.ve-node--selected > .ve-pad-handle,
+.ve-pad-handle--active { opacity: 1; }
+.ve-pad-handle[aria-disabled='true'] { display: none; }
+.ve-pad-handle__tip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  background: #111;
+  color: #fff;
+  pointer-events: none;
+}
 .ve-col-resize {
   position: absolute;
   top: 0;

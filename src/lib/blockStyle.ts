@@ -10,7 +10,7 @@
  */
 
 import { BUILT_IN_FONTS, fontStack, sanitizeFamily } from '@/features/fonts/installed'
-import { cleanRoles, cleanUrlText, isIsoDate, rulesFromStyle } from '@/lib/visibilityRules'
+import { cleanDays, cleanLangs, cleanRoles, cleanTime, cleanUrlText, isIsoDate, rulesFromStyle } from '@/lib/visibilityRules'
 
 import { isDesignV2Raw, readFlatDesign } from '@/lib/design/upgrade'
 import { DEFAULT_BREAKPOINTS, type SectionLayout } from '@/lib/sectionLayout'
@@ -80,6 +80,19 @@ export const RESPONSIVE_KEYS = [
   'radiusTr',
   'radiusBr',
   'radiusBl',
+  'position',
+  'posTop',
+  'posRight',
+  'posBottom',
+  'posLeft',
+  'zIndex',
+  'opacity',
+  'fontWeight',
+  'wordSpacing',
+  'tfRotate',
+  'tfScale',
+  'tfTranslateX',
+  'tfTranslateY',
 ] as const
 export type ResponsiveKey = (typeof RESPONSIVE_KEYS)[number]
 export type ResponsiveDevice = 'tablet' | 'mobile'
@@ -334,6 +347,14 @@ export type BlockStyle = {
   showRoles?: string
   /** Text the page path or query must contain. */
   showUrl?: string
+  /** Comma list of weekday numbers 0-6 (Sunday = 0), the visitor's local time. */
+  showDays?: string
+  /** Daily window start HH:MM (visitor's local time). */
+  showFromTime?: string
+  /** Daily window end HH:MM; earlier than the start means overnight. */
+  showUntilTime?: string
+  /** Comma list of language codes the page must be in (html lang). */
+  showLang?: string
 
   // Visibility
   hideOnMobile?: boolean
@@ -341,6 +362,8 @@ export type BlockStyle = {
 
   // Advanced
   customClass?: string
+  /** Global typography preset id (theme styles, ^[a-z0-9-]{1,32}$). The wrapper gets class tp-<id>. */
+  typePreset?: string
   anchorId?: string
 
   // Advanced (Elementor-style). All optional; unset emits no CSS.
@@ -396,6 +419,8 @@ export type BlockStyle = {
   cssClasses?: string
   /** Scoped CSS; `selector` means this block. Validated by sanitizeCustomCss(). */
   customCss?: string
+  /** Extra wrapper attributes, one `name|value` per line (max 10); validated by sanitizeCustomAttrs(). */
+  customAttrs?: string
 }
 
 export type BlockPosition = 'relative' | 'absolute' | 'fixed' | 'sticky'
@@ -495,7 +520,7 @@ export function cornerRadiusValue(s: BlockStyle): string | undefined {
   return RADIUS_CORNER_KEYS.map((k) => `${isNum(s[k]) ? s[k] : base}px`).join(' ')
 }
 
-const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl'] as const
+const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang'] as const
 
 /** Validates the Display conditions keys: ISO dates, in/out, slug-shaped roles, short clean URL text. */
 function sanitizeVisibility(style: BlockStyle): BlockStyle {
@@ -510,6 +535,14 @@ function sanitizeVisibility(style: BlockStyle): BlockStyle {
   if (roles.length > 0) out.showRoles = roles.join(',')
   const url = cleanUrlText(raw.showUrl)
   if (url) out.showUrl = url
+  const days = cleanDays(raw.showDays)
+  if (days.length > 0) out.showDays = days.join(',')
+  const tf = cleanTime(raw.showFromTime)
+  if (tf) out.showFromTime = tf
+  const tu = cleanTime(raw.showUntilTime)
+  if (tu) out.showUntilTime = tu
+  const langs = cleanLangs(raw.showLang)
+  if (langs.length > 0) out.showLang = langs.join(',')
   return out as BlockStyle
 }
 
@@ -619,6 +652,11 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
     if (classes) out.cssClasses = classes
     else drop('cssClasses')
   }
+  if (raw.customAttrs !== undefined) {
+    const attrs = serializeCustomAttrs(raw.customAttrs)
+    if (attrs) out.customAttrs = attrs
+    else drop('customAttrs')
+  }
   if (raw.customCss !== undefined) {
     const css = sanitizeCustomCss(raw.customCss)
     if (css) out.customCss = css
@@ -627,8 +665,10 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
   return out as BlockStyle
 }
 
+const TYPE_PRESET_ID = /^[a-z0-9-]{1,32}$/
+
 const TYPO_KEYS = [
-  'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit',
+  'typePreset', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit',
   'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow',
 ] as const
 
@@ -664,6 +704,7 @@ function sanitizeTypography(style: BlockStyle): BlockStyle {
   en('textDecoration', TEXT_DECORATIONS)
   num('wordSpacing', -20, 100)
   en('textShadow', TEXT_SHADOWS)
+  if (raw.typePreset !== undefined && !(typeof raw.typePreset === 'string' && TYPE_PRESET_ID.test(raw.typePreset))) delete out.typePreset
   return out as BlockStyle
 }
 
@@ -748,7 +789,7 @@ const FX_KEYS = [
   'pointerFx', 'pointerFxStrength', 'spotlightColor', 'kenBurns', 'kenBurnsDuration',
   'borderFx', 'borderFxColor', 'borderFxColor2', 'borderFxWidth', 'borderFxSpeed',
   'overlayType', 'overlayColor', 'overlayColor2', 'overlayAngle', 'overlayOpacity', 'overlayBlend',
-  'position', 'blendMode', 'cssClasses', 'customCss', 'maskShape',
+  'position', 'blendMode', 'cssClasses', 'customCss', 'customAttrs', 'maskShape',
   'slideInterval', 'slideTransition', 'blobMorphSpeed', 'noise',
   'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
   'hoverOpacity', 'hoverTransform', 'focusRing',
@@ -768,6 +809,75 @@ const HOVER_TRANSITION_PROPS_KEYS = ['hoverBgColor', 'hoverTextColor', 'hoverBor
 
 function hasHoverState(style: BlockStyle): boolean {
   return HOVER_STATE_KEYS.some((k) => style[k] !== undefined)
+}
+
+export const CUSTOM_ATTRS_MAX_LINES = 10
+export const CUSTOM_ATTR_VALUE_MAX = 200
+const ATTR_NAME = /^[a-z][a-z0-9-]{0,39}$/
+/** Attributes the markup or the visibility / popup scripts own: a user pair may never touch them. */
+const ATTR_RESERVED_PREFIX = ['data-eg-', 'data-be-', 'data-popup', 'data-ve-']
+const ATTR_PLAIN = new Set(['role', 'title', 'tabindex', 'lang', 'rel'])
+const ATTR_BLOCKED = new Set(['style', 'class', 'id', 'href', 'src', 'srcdoc', 'formaction', 'target'])
+const ARIA_ROLES = new Set([
+  'alert', 'alertdialog', 'application', 'article', 'banner', 'button', 'cell', 'checkbox', 'complementary', 'contentinfo',
+  'definition', 'dialog', 'directory', 'document', 'feed', 'figure', 'form', 'grid', 'gridcell', 'group', 'heading', 'img',
+  'link', 'list', 'listbox', 'listitem', 'log', 'main', 'marquee', 'math', 'menu', 'menubar', 'menuitem', 'navigation', 'none',
+  'note', 'option', 'presentation', 'progressbar', 'radio', 'radiogroup', 'region', 'row', 'rowgroup', 'search', 'searchbox',
+  'separator', 'slider', 'spinbutton', 'status', 'switch', 'tab', 'table', 'tablist', 'tabpanel', 'term', 'textbox', 'timer',
+  'toolbar', 'tooltip', 'tree', 'treegrid', 'treeitem',
+])
+const REL_TOKENS = new Set(['nofollow', 'noopener', 'noreferrer', 'sponsored', 'ugc', 'external', 'author', 'help', 'license', 'tag'])
+const LANG_ATTR = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,3}$/
+
+/**
+ * Parses the `name|value` lines of BlockStyle.customAttrs into safe wrapper attributes. Shared by the server render and
+ * the editor. Allowed names: data-*, aria-*, role (known ARIA roles), title, tabindex (-1 or 0), lang, rel (known tokens).
+ * Everything else (on*, style, class, id, href, src, srcdoc, formaction, target, ...) is dropped, as are the attributes
+ * the page scripts own. At most 10 lines are read; first occurrence of a name wins.
+ */
+export function sanitizeCustomAttrs(text: unknown): { name: string; value: string }[] {
+  if (typeof text !== 'string') return []
+  const out: { name: string; value: string }[] = []
+  for (const line of text.split(/\r?\n/).slice(0, CUSTOM_ATTRS_MAX_LINES)) {
+    const bar = line.indexOf('|')
+    const name = (bar < 0 ? line : line.slice(0, bar)).trim().toLowerCase()
+    let value = ''
+    for (const ch of bar < 0 ? '' : line.slice(bar + 1)) {
+      const c = ch.charCodeAt(0)
+      if (c < 32 || c === 127) continue
+      value += ch
+    }
+    value = value.trim().slice(0, CUSTOM_ATTR_VALUE_MAX)
+    if (!ATTR_NAME.test(name) || name.startsWith('on') || ATTR_BLOCKED.has(name)) continue
+    if (ATTR_RESERVED_PREFIX.some((p) => name.startsWith(p))) continue
+    if (out.some((a) => a.name === name)) continue
+    const isData = name.startsWith('data-') && name.length > 5
+    const isAria = name.startsWith('aria-') && name.length > 5
+    if (!isData && !isAria && !ATTR_PLAIN.has(name)) continue
+    if (value === '' && !isData) continue
+    if (name === 'tabindex' && value !== '-1' && value !== '0') continue
+    if (name === 'role' && !ARIA_ROLES.has(value.toLowerCase())) continue
+    if (name === 'lang' && !LANG_ATTR.test(value)) continue
+    if (name === 'rel') {
+      const tokens = value.toLowerCase().split(/\s+/).filter(Boolean)
+      if (tokens.length === 0 || !tokens.every((t) => REL_TOKENS.has(t))) continue
+      value = tokens.join(' ')
+    }
+    if (name === 'role') value = value.toLowerCase()
+    out.push({ name, value })
+  }
+  return out
+}
+
+/** The sanitised pairs written back as the stored `name|value` lines ('' when none survive). */
+export const serializeCustomAttrs = (text: unknown): string =>
+  sanitizeCustomAttrs(text).map((a) => `${a.name}|${a.value}`).join('\n')
+
+/** The sanitised pairs as a props object to spread onto the wrapper element (React escapes the values). */
+export function customAttrProps(style: BlockStyle): Record<string, string> {
+  const props: Record<string, string> = {}
+  for (const a of sanitizeCustomAttrs(style.customAttrs)) props[a.name] = a.value
+  return props
 }
 
 const CSS_CLASS_TOKEN = /^[A-Za-z_][A-Za-z0-9_-]{0,60}$/
@@ -966,6 +1076,17 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const n = clampNum(r[key], 0, RADIUS_MAX)
     if (n !== undefined) out[key] = n
   }
+  if (typeof r.position === 'string' && POSITION_OPTIONS.some((o) => o.value === r.position)) out.position = r.position as BlockPosition
+  for (const [key, min, max] of [
+    ['posTop', -2000, 2000], ['posRight', -2000, 2000], ['posBottom', -2000, 2000], ['posLeft', -2000, 2000],
+    ['zIndex', -10, 9999], ['opacity', 0, 100], ['wordSpacing', -20, 100],
+    ['tfRotate', -360, 360], ['tfScale', 10, 300], ['tfTranslateX', -600, 600], ['tfTranslateY', -600, 600],
+  ] as const) {
+    const n = clampNum(r[key], min, max)
+    if (n !== undefined) out[key] = n
+  }
+  const fw = clampNum(r.fontWeight, 100, 900)
+  if (fw !== undefined) out.fontWeight = Math.round(fw / 100) * 100
   if (r.hide === true) out.hide = true
   return Object.keys(out).length > 0 ? out : undefined
 }
@@ -1259,6 +1380,22 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
     if (size) decls.push(`font-size:${size} !important`)
   }
   if (isNum(own.lineHeight)) decls.push(`line-height:${own.lineHeight} !important`)
+  if (isNum(own.fontWeight)) decls.push(`font-weight:${own.fontWeight} !important`)
+  if (isNum(own.wordSpacing)) decls.push(`word-spacing:${own.wordSpacing}px !important`)
+  if (own.position && POSITION_OPTIONS.some((o) => o.value === own.position)) decls.push(`position:${own.position} !important`)
+  const offsets = [['top', 'posTop'], ['right', 'posRight'], ['bottom', 'posBottom'], ['left', 'posLeft']] as const
+  if (mergedU.position && POSITION_OPTIONS.some((o) => o.value === mergedU.position)) {
+    // A changed position type also re-emits inherited offsets: the base ones are only inline when the base had a position.
+    for (const [prop, key] of offsets) {
+      const v = own.position !== undefined ? mergedU[key] : own[key]
+      if (isNum(v)) decls.push(`${prop}:${v}px !important`)
+    }
+  }
+  if (isNum(own.zIndex)) decls.push(`z-index:${own.zIndex} !important`)
+  if (isNum(own.opacity)) decls.push(`opacity:${own.opacity / 100} !important`)
+  if (own.tfRotate !== undefined || own.tfScale !== undefined || own.tfTranslateX !== undefined || own.tfTranslateY !== undefined) {
+    decls.push(`transform:${transformValue(mergedU, 'tf') || 'none'} !important`)
+  }
   if (own.letterSpacing !== undefined) {
     const merged: BlockStyle = { ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }
     const ls = letterSpacingValue(merged)
@@ -1291,22 +1428,23 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
 export function blockStyleCss(style: BlockStyle, scopeId: string, options: { editor?: boolean } = {}): string {
   const rules: string[] = []
   const sel = `#${scopeId}`
+  // Editor canvas: a hidden block is faded, not removed, so it stays selectable.
+  const hidden = options.editor ? 'opacity:0.3 !important' : 'display:none !important'
 
   const mobileDecls: string[] = []
   if (isNum(style.paddingTopMobile)) mobileDecls.push(`padding-top:${style.paddingTopMobile}px`)
   if (isNum(style.paddingBottomMobile)) mobileDecls.push(`padding-bottom:${style.paddingBottomMobile}px`)
-  if (style.hideOnMobile) mobileDecls.push('display:none')
+  if (style.hideOnMobile) mobileDecls.push(options.editor ? hidden : 'display:none')
 
   if (mobileDecls.length > 0) {
     rules.push(`@media (max-width:768px){${sel}{${mobileDecls.join(';')}}}`)
   }
 
   if (style.hideOnDesktop) {
-    rules.push(`@media (min-width:769px){${sel}{display:none}}`)
+    rules.push(`@media (min-width:769px){${sel}{${options.editor ? hidden : 'display:none'}}}`)
   }
 
   // Per-device overrides: tablet first so mobile (declared later) wins where both apply.
-  const hidden = options.editor ? 'opacity:0.3 !important' : 'display:none !important'
   for (const device of ['tablet', 'mobile'] as const) {
     const decls = deviceOverrideDecls(style, device)
     if (decls.length > 0) rules.push(`@media ${deviceQueries(device).cascade}{${sel}{${decls.join(';')}}}`)
@@ -1386,6 +1524,7 @@ export function blockStyleClasses(style: BlockStyle): string {
     style.width ? `be-block--${style.width}` : 'be-block--contained',
     style.bgType === 'image' ? 'be-block--has-bg-image' : null,
     isNum(style.minHeight) || isNum(style.tablet?.minHeight) || isNum(style.mobile?.minHeight) ? 'be-block--minh' : null,
+    style.typePreset && TYPE_PRESET_ID.test(style.typePreset) ? `tp-${style.typePreset}` : null,
     style.customClass || null,
   ]
     .filter(Boolean)

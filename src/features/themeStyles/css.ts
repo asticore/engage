@@ -7,7 +7,7 @@ import { fontStack } from '@/features/fonts/installed'
 import type { InstalledFont } from '@/features/fonts/types'
 
 import { sanitizeColourValue, sanitizeCustomCss, sanitizeThemeStyles } from './sanitize'
-import type { BreakpointGlobals, ButtonStyle, ShadowLevel, TableStyle, ThemeGlobals, TypeStyle } from './types'
+import type { BreakpointGlobals, ButtonStyle, ShadowLevel, TableStyle, ThemeGlobals, TypePreset, TypeStyle } from './types'
 
 type FontMap = ReadonlyMap<string, string>
 
@@ -99,6 +99,35 @@ function buildTypography(typography: TypeStyle[], saved: boolean, fonts: FontMap
   const out = [...base]
   if (tablet.length) out.push(`@media (max-width: ${bp.tablet}px){${tablet.join('')}}`)
   if (mobile.length) out.push(`@media (max-width: ${bp.mobile}px){${mobile.join('')}}`)
+  return out.join('\n')
+}
+
+/**
+ * `.tp-<id>` rules for the global typography presets. Headings and buttons carry their own global font
+ * rules, so each property a preset sets is also passed down to them with `inherit` (a block's own inline or
+ * scoped typography still wins on its wrapper, and nested wrappers win for their own content).
+ * The inherit rule outranks `:where(h1)` but not the per-block scoped rules, which add an attribute selector.
+ */
+export function buildTypePresetsCss(presets: TypePreset[], fonts: FontMap): string {
+  const out: string[] = []
+  for (const p of presets) {
+    if (!/^[a-z0-9-]{1,32}$/.test(p.id)) continue
+    const installed = p.fontFamily ? fonts.get(p.fontFamily) : undefined
+    const family = p.fontFamily === undefined ? '' : (installed ?? (p.fontFamily === 'heading' ? 'var(--font-display)' : 'var(--font-body)'))
+    const unit = p.fontSizeUnit ?? 'px'
+    const props: [string, string][] = [
+      ['font-family', family],
+      ['font-size', p.fontSize !== undefined ? `${p.fontSize}${unit}` : ''],
+      ['font-weight', p.fontWeight !== undefined ? String(p.fontWeight) : ''],
+      ['line-height', p.lineHeight !== undefined ? String(p.lineHeight) : ''],
+      ['letter-spacing', p.letterSpacing !== undefined ? `${p.letterSpacing}px` : ''],
+      ['text-transform', p.textTransform ?? ''],
+    ]
+    const set = props.filter(([, v]) => v !== '')
+    if (set.length === 0) continue
+    out.push(`.tp-${p.id}{${set.map(([k, v]) => `${k}:${v};`).join('')}}`)
+    out.push(`.tp-${p.id} :is(h1,h2,h3,h4,h5,h6,button){${set.map(([k]) => `${k}:inherit;`).join('')}}`)
+  }
   return out.join('\n')
 }
 
@@ -282,6 +311,8 @@ export function buildThemeStylesCss(input: unknown, opts: ThemeStylesCssOptions,
 
   // (b) typography
   parts.push(buildTypography(styles.typography, saved, fonts, styles.globals.breakpoints))
+
+  parts.push(buildTypePresetsCss(styles.typePresets, fonts))
 
   // (c) buttons
   parts.push('.btn--block{display:block;width:100%;text-align:center}')

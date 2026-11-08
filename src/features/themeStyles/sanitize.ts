@@ -8,6 +8,7 @@ import {
   DEFAULT_COLOURS,
   DEFAULT_GLOBALS,
   DEFAULT_TABLES,
+  DEFAULT_TYPE_PRESETS,
   DEFAULT_TYPOGRAPHY,
   LIMITS,
   SYSTEM_BUTTON_IDS,
@@ -24,6 +25,7 @@ import {
   type TextTransform,
   type ThemeColour,
   type ThemeStyles,
+  type TypePreset,
   type TypeStyle,
 } from './types'
 
@@ -391,11 +393,55 @@ function sanitizePresets(input: unknown): ThemePreset[] {
   return out
 }
 
+const SIZE_UNITS = ['px', 'em', 'rem', 'vw'] as const
+
+/** Validates one typography preset. Unset or invalid fields are left out. Same ranges as BlockStyle typography. */
+function sanitizeTypePreset(rec: Record<string, unknown>, id: string): TypePreset {
+  const out: TypePreset = { id, name: cleanName(rec.name, id) }
+  const fam = rec.fontFamily
+  if (typeof fam === 'string' && (fam === 'heading' || fam === 'body' || FONT_ID.test(fam))) out.fontFamily = fam
+  if (typeof rec.fontSize === 'number' || typeof rec.fontSize === 'string') {
+    const n = sanitizeNumber(rec.fontSize, 0.1, 400, 0)
+    if (n > 0) out.fontSize = n
+  }
+  if (typeof rec.fontSizeUnit === 'string' && (SIZE_UNITS as readonly string[]).includes(rec.fontSizeUnit)) out.fontSizeUnit = rec.fontSizeUnit as TypePreset['fontSizeUnit']
+  if (typeof rec.fontWeight === 'number' || typeof rec.fontWeight === 'string') {
+    const n = sanitizeNumber(rec.fontWeight, 100, 900, 0)
+    if (n > 0) out.fontWeight = Math.round(n / 100) * 100
+  }
+  if (typeof rec.lineHeight === 'number' || typeof rec.lineHeight === 'string') {
+    const n = sanitizeNumber(rec.lineHeight, 0.5, 5, 0)
+    if (n > 0) out.lineHeight = n
+  }
+  if ((typeof rec.letterSpacing === 'number' || typeof rec.letterSpacing === 'string') && String(rec.letterSpacing).trim() !== '') {
+    const n = sanitizeNumber(rec.letterSpacing, -20, 50, Number.NaN)
+    if (Number.isFinite(n)) out.letterSpacing = n
+  }
+  if (typeof rec.textTransform === 'string' && (TRANSFORMS as readonly string[]).includes(rec.textTransform)) out.textTransform = rec.textTransform as TextTransform
+  return out
+}
+
+/** An absent or non-array value gives the seeds; an explicit empty array stays empty (the admin deleted them all). */
+export function sanitizeTypePresets(input: unknown): TypePreset[] {
+  if (!Array.isArray(input)) return structuredClone(DEFAULT_TYPE_PRESETS)
+  const out: TypePreset[] = []
+  const seen = new Set<string>()
+  for (const raw of input) {
+    if (out.length >= LIMITS.typePresets) break
+    const rec = asRecord(raw)
+    const id = typeof rec.id === 'string' && SLUG.test(rec.id) ? rec.id : ''
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    out.push(sanitizeTypePreset(rec, id))
+  }
+  return out
+}
+
 /** Rebuilds the whole document field by field. Never throws. */
 export function sanitizeThemeStyles(input: unknown): ThemeStyles {
   try {
     const root = asRecord(input)
-    return { version: 1, ...sanitizePresetData(root), presets: sanitizePresets(root.presets) }
+    return { version: 1, ...sanitizePresetData(root), presets: sanitizePresets(root.presets), typePresets: sanitizeTypePresets(root.typePresets) }
   } catch {
     return structuredClone({
       version: 1,
@@ -406,6 +452,7 @@ export function sanitizeThemeStyles(input: unknown): ThemeStyles {
       defaultTableId: 'default',
       globals: DEFAULT_GLOBALS,
       presets: [],
+      typePresets: DEFAULT_TYPE_PRESETS,
     }) as ThemeStyles
   }
 }

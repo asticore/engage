@@ -81,3 +81,26 @@ export function resolveSlotFromElement(el: Element | null, y: number): DropSlot 
 export function resolveDropSlotInDoc(doc: Document, x: number, y: number): DropSlot | null {
   return resolveSlotFromElement(doc.elementFromPoint(x, y), y)
 }
+
+/**
+ * Tracks whether a library card (block or template) is being dragged, from document-level drag
+ * events. `dragstart` MUST be listened to in the bubble phase: React runs the card's onDragStart
+ * (which calls setData) from its root container, i.e. after a document *capture* listener, so a
+ * capture listener sees an empty `dataTransfer.types` and never recognises the drag (the cause of
+ * "can't drag from the Elements bar": the canvas iframe then stays pointer-active and swallows
+ * dragover/drop). Returns an unbind function.
+ */
+export function trackLibraryDrag(doc: Document, onActive: (active: boolean) => void): () => void {
+  const onStart = (e: DragEvent) => {
+    if (isLibraryDragTypes(e.dataTransfer?.types)) onActive(true)
+  }
+  const onEnd = () => onActive(false)
+  doc.addEventListener('dragstart', onStart)
+  doc.addEventListener('dragend', onEnd, true)
+  doc.addEventListener('drop', onEnd, true)
+  return () => {
+    doc.removeEventListener('dragstart', onStart)
+    doc.removeEventListener('dragend', onEnd, true)
+    doc.removeEventListener('drop', onEnd, true)
+  }
+}

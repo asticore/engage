@@ -569,6 +569,17 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
     expect(indexes).toEqual(expect.arrayContaining(['eg_passkeys_credential_idx', 'eg_passkeys_user_idx']))
   })
 
+  it('has the setup questionnaire column on site settings after a fresh install, empty so the owner is asked', async () => {
+    const info = (await proxy.env.D1.prepare('PRAGMA table_info(`eg_site_settings`)').all()).results as { name: string; dflt_value: string | null }[]
+    const column = info.find((c) => c.name === 'setup_questionnaire')
+    expect(column).toBeTruthy()
+    expect(column?.dflt_value ?? null).toBeNull()
+    const row = await proxy.env.D1.prepare('SELECT COUNT(*) AS n FROM eg_site_settings WHERE setup_questionnaire IS NOT NULL').first<{ n: number }>()
+    expect(row?.n).toBe(0)
+    const recorded = await proxy.env.D1.prepare(`SELECT COUNT(*) AS n FROM eg_migrations WHERE name = '20270311_100000_setup_questionnaire'`).first<{ n: number }>()
+    expect(recorded?.n).toBe(1)
+  })
+
   it('passkey migration is safe to run twice and leaves existing passkey rows alone', async () => {
     const mod = await import('@/migrations/20261118_100000_passkeys')
     const { drizzle } = await import('drizzle-orm/d1')

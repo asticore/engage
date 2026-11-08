@@ -17,6 +17,7 @@ import { columnLayoutStyle, parseSectionLayout, PUBLIC_SECTION_CSS_OPTIONS, sect
 import { columnWidthVars } from '@/lib/sectionTree'
 import { applyColumnOp, buildSectionNode, getColumn, STRUCTURES, structureRects, updateColumnAt } from '@/views/visualEditor/columnOps'
 import { makeResponsive } from '@/views/visualEditor/DesignPanel'
+import { GROUP_KEYS, resetGroup } from '@/views/visualEditor/designHelpers'
 
 const squash = (css: string) => css.replace(/\s+/g, '').replace(/;}/g, '}')
 const ids = () => {
@@ -169,6 +170,14 @@ describe('tablet / mobile style overrides', () => {
     expect(resolveDeviceOverride(legacy, 'tablet')).toEqual({})
   })
 
+  it('legacy hide toggles fade in the editor and remove on the live site', () => {
+    expect(blockStyleCss({ hideOnDesktop: true }, 'x', { editor: true })).toContain('opacity:0.3')
+    expect(blockStyleCss({ hideOnDesktop: true }, 'x', { editor: true })).not.toContain('display:none')
+    expect(blockStyleCss({ hideOnMobile: true }, 'x', { editor: true })).toContain('opacity:0.3')
+    expect(blockStyleCss({ hideOnDesktop: true }, 'x')).toContain('display:none')
+    expect(blockStyleCss({ hideOnMobile: true }, 'x')).toContain('display:none')
+  })
+
   it('renders per-column overrides on the public section', () => {
     const html = renderToString(
       React.createElement(SectionBlock, {
@@ -300,5 +309,47 @@ describe('structure presets and column operations', () => {
     const next = updateColumnAt(tree() as never, [0, 1], (c) => ({ ...c, layout: { grow: 1 } }))
     expect(getColumn(next, [0, 1])?.layout).toEqual({ grow: 1 })
     expect(getColumn(next, [0, 0])?.layout).toBeUndefined()
+  })
+})
+
+describe('more responsive properties (VE-09)', () => {
+  it('z-index, opacity, weight, word spacing and position emit per device', () => {
+    const style: BlockStyle = {
+      zIndex: 5,
+      position: 'relative',
+      posTop: 4,
+      mobile: { zIndex: 10, opacity: 50, fontWeight: 700, wordSpacing: 3, position: 'absolute', posLeft: 8 },
+    }
+    const css = blockStyleCss(style, 'x')
+    expect(css).toContain('@media (max-width:600px){#x{')
+    expect(css).toContain('z-index:10 !important')
+    expect(css).toContain('opacity:0.5 !important')
+    expect(css).toContain('font-weight:700 !important')
+    expect(css).toContain('word-spacing:3px !important')
+    expect(css).toContain('position:absolute !important')
+    expect(css).toContain('left:8px !important')
+    expect(css).toContain('top:4px !important')
+    expect(blockStyleToCss(style).zIndex).toBe(5)
+  })
+
+  it('transform is rebuilt from the merged style when any tf key is overridden', () => {
+    const css = blockStyleCss({ tfRotate: 10, tfScale: 120, mobile: { tfRotate: 45 } }, 'x')
+    expect(css).toContain('transform:rotate(45deg) scale(1.2) !important')
+  })
+
+  it('new keys survive sanitising and bad values are dropped', () => {
+    const out = asBlockStyle({ mobile: { zIndex: 3, tfTranslateX: 20, position: 'fixed', fontWeight: 640, opacity: 'x' } })
+    expect(out.mobile).toEqual({ zIndex: 3, tfTranslateX: 20, position: 'fixed', fontWeight: 600 })
+    expect(sanitizeDeviceOverride({ position: 'nope' })).toBeUndefined()
+  })
+
+  it('device set/reset keeps stored data minimal and group reset clears both devices', () => {
+    let result: BlockStyle = { zIndex: 5 }
+    const mobile = makeResponsive(result, (n) => (result = n), 'mobile')
+    mobile.set('zIndex', 10)
+    expect(result).toEqual({ zIndex: 5, mobile: { zIndex: 10 } })
+    expect(blockStyleCss(result, 'x')).toContain('z-index:10 !important')
+    const cleared = resetGroup({ ...result, tablet: { opacity: 40 } }, GROUP_KEYS.advanced)
+    expect(cleared).toEqual({})
   })
 })

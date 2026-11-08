@@ -33,6 +33,8 @@ import { ThemeToggler } from '@/admin/ui/ThemeToggler'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { SessionWatch } from '@/admin/SessionWatch'
 import { AdminProgressBar } from '@/admin/ui/AdminProgressBar'
+import { AdminTour } from '@/admin/ui/AdminTour'
+import { resolveTourAutoStart } from '@/features/adminTour/preference'
 import { THEME_SCRIPT } from '@/admin/context/themeScript'
 import { ImpersonationBanner } from '@/features/impersonation/components/ImpersonationBanner'
 import { AdminUiProvider } from './i18n/AdminUiProvider'
@@ -46,6 +48,8 @@ export async function RootLayout({ children }: { children: ReactNode; config?: u
   // The admin's own language (user choice, else browser, else English). Sets <html lang/dir>.
   const ui = await getAdminUi()
   const adminRoot = await getAdminRoot()
+  // Walkthrough: starts by itself only for a user with no saved tour preference (once per account).
+  const tourAutoStart = hasAdminAccess ? await resolveTourAutoStart(context.engine, context.user) : false
 
   return (
     <html lang={ui.locale} dir={ui.dir} suppressHydrationWarning>
@@ -67,6 +71,7 @@ export async function RootLayout({ children }: { children: ReactNode; config?: u
                 <>
                   <SessionWatch />
                   <AdminProgressBar />
+                  <AdminTour autoStart={tourAutoStart} />
                   <AdminShell>
                     <NavToggler />
                     <ThemeToggler />

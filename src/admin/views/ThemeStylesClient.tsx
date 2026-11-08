@@ -14,6 +14,7 @@ import { LayoutControls } from './themeStyles/LayoutControls'
 import { PresetControls } from './themeStyles/PresetControls'
 import { TableControls } from './themeStyles/TableControls'
 import { ThemeStylesPreview } from './themeStyles/ThemeStylesPreview'
+import { TypePresetControls } from './themeStyles/TypePresetControls'
 import { TypographyControls, type InstalledFontOption } from './themeStyles/TypographyControls'
 import { parseImport, resetTab, type TabKey } from './themeStyles/editorLogic'
 
@@ -129,7 +130,12 @@ export function ThemeStylesClient({ initialStyles, saved, fonts }: Props) {
           <div id="ts-panel" role="tabpanel" aria-labelledby={`ts-tab-${tab}`}>
             <CollapsibleCard id={`theme-styles-${tab}`} title={TABS.find((t) => t.key === tab)?.label ?? ''}>
               {tab === 'colours' && <ColourControls colours={styles.colours} onChange={(colours) => setStyles({ ...styles, colours })} />}
-              {tab === 'typography' && <TypographyControls typography={styles.typography} colours={styles.colours} fonts={fonts} onChange={(typography) => setStyles({ ...styles, typography })} />}
+              {tab === 'typography' && (
+                <>
+                  <TypePresetControls presets={styles.typePresets} fonts={fonts} onChange={(typePresets) => setStyles({ ...styles, typePresets })} />
+                  <TypographyControls typography={styles.typography} colours={styles.colours} fonts={fonts} onChange={(typography) => setStyles({ ...styles, typography })} />
+                </>
+              )}
               {tab === 'buttons' && <ButtonControls buttons={styles.buttons} colours={styles.colours} onChange={(buttons) => setStyles({ ...styles, buttons })} />}
               {tab === 'tables' && <TableControls styles={styles} colours={styles.colours} onChange={setStyles} />}
               {tab === 'layout' && <LayoutControls styles={styles} onChange={setStyles} />}

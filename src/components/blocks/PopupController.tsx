@@ -6,6 +6,7 @@ import {
   frequencyAllows,
   hasAutoTrigger,
   hrefOpensPopup,
+  idleElapsed,
   isExitIntent,
   isLikelyBot,
   scrollThresholdReached,
@@ -56,9 +57,9 @@ function writeSeen(key: string) {
  */
 export default function PopupController({ toggleId, anchorId, triggers, frequency, days }: Props): null {
   // The trigger object is rebuilt each render; its values are primitives, so the effect depends on those.
-  const { delaySec, scrollPct, exit } = triggers
+  const { delaySec, scrollPct, idleSec, exit } = triggers
   useEffect(() => {
-    const autoTriggers: AutoTriggers = { delaySec, scrollPct, exit }
+    const autoTriggers: AutoTriggers = { delaySec, scrollPct, idleSec, exit }
     const toggle = document.getElementById(toggleId) as HTMLInputElement | null
     if (!toggle) return
     const panel = toggle.parentElement?.querySelector<HTMLElement>('.be-modal__panel') ?? null
@@ -167,6 +168,27 @@ export default function PopupController({ toggleId, anchorId, triggers, frequenc
         window.addEventListener('scroll', onScroll, { passive: true })
         cleanups.push(() => window.removeEventListener('scroll', onScroll))
       }
+      if (idleSec !== undefined) {
+        // Any pointer, key, scroll or touch input counts as activity. The timer only checks the clock, so
+        // input events just store a timestamp and never touch the timer.
+        let last = Date.now()
+        let timer = 0
+        const mark = () => {
+          last = Date.now()
+        }
+        const check = () => {
+          if (done || w[AUTO_FLAG] || toggle.checked) return
+          if (idleElapsed(last, Date.now(), idleSec)) fire()
+          else timer = window.setTimeout(check, Math.max(250, last + idleSec * 1000 - Date.now()))
+        }
+        const events = ['pointermove', 'pointerdown', 'keydown', 'scroll', 'touchstart', 'wheel'] as const
+        for (const name of events) window.addEventListener(name, mark, { passive: true })
+        timer = window.setTimeout(check, idleSec * 1000)
+        cleanups.push(() => {
+          window.clearTimeout(timer)
+          for (const name of events) window.removeEventListener(name, mark)
+        })
+      }
       if (exit && window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
         const onLeave = (event: MouseEvent) => {
           if (isExitIntent(event.clientY, event.relatedTarget === null)) fire()
@@ -177,7 +199,7 @@ export default function PopupController({ toggleId, anchorId, triggers, frequenc
     }
 
     return () => cleanups.forEach((fn) => fn())
-  }, [toggleId, anchorId, delaySec, scrollPct, exit, frequency, days])
+  }, [toggleId, anchorId, delaySec, scrollPct, idleSec, exit, frequency, days])
 
   return null
 }
