@@ -29,6 +29,7 @@ import {
   reorderWithin,
   splitPath,
   stripEditorIds,
+  uniquifyAnchors,
   updateNode,
   type NodePath,
 } from './visualEditor/treeOps'
@@ -680,7 +681,7 @@ export const VisualEditorView: React.FC = () => {
       if (insertBlocked(containerPath)) return
       const withFreshIds = templateBlocks.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
 
-      applyBlocks((prev) => insertNodes(prev, containerPath, at, withFreshIds))
+      applyBlocks((prev) => insertNodes(prev, containerPath, at, uniquifyAnchors(prev, withFreshIds)))
       // The template's section locks go with its sections (only for someone who may set locks; the server checks too).
       if (templateLocks && lockUser?.canManageLocks && Object.keys(templateLocks.nodes).length > 0) {
         const pairs = pairLockKeys(templateBlocks, withFreshIds)
@@ -709,7 +710,8 @@ export const VisualEditorView: React.FC = () => {
     applyBlocks((prev) => {
       const original = getNode(prev, path)
       if (!original) return prev
-      return insertNode(prev, containerPath, index + 1, cloneNode(original, nextId))
+      const [copy] = uniquifyAnchors(prev, [cloneNode(original, nextId)])
+      return insertNode(prev, containerPath, index + 1, copy)
     })
   }, [lockedOut, applyBlocks])
 
