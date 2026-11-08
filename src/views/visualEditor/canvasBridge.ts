@@ -101,6 +101,37 @@ export const isRenameColumnMessage = (data: unknown): data is RenameColumnToPare
   return msg.type === 'renameColumn' && Array.isArray(msg.path) && msg.path.length > 0 && msg.path.length % 2 === 0 && typeof msg.label === 'string'
 }
 
+/**
+ * Drag of a section's top / bottom padding bar on the canvas (see Canvas.tsx's PaddingHandle).
+ * `value` is whole pixels for `device`; the parent writes it in one undo step.
+ */
+export type PaddingToParentMessage = {
+  source: typeof SOURCE
+  type: 'padding'
+  path: NodePath
+  side: 'top' | 'bottom'
+  value: number
+  device: CanvasDevice
+}
+
+/** Narrows an incoming message to a padding drag: an odd-length path (a block), a finite non-negative pixel value. */
+export const isPaddingMessage = (data: unknown): data is PaddingToParentMessage => {
+  if (!isBridgeMessage(data)) return false
+  const msg = data as { type?: unknown; path?: unknown; side?: unknown; value?: unknown; device?: unknown }
+  const devices: unknown[] = ['desktop', 'tablet', 'mobile']
+  return (
+    msg.type === 'padding' &&
+    Array.isArray(msg.path) &&
+    msg.path.length % 2 === 1 &&
+    msg.path.every((n) => Number.isInteger(n) && n >= 0) &&
+    (msg.side === 'top' || msg.side === 'bottom') &&
+    typeof msg.value === 'number' &&
+    Number.isFinite(msg.value) &&
+    msg.value >= 0 &&
+    devices.includes(msg.device)
+  )
+}
+
 /** Narrows an incoming message to a column-width change: an odd-length path (a section), one finite percent per column. */
 export const isColumnWidthsMessage = (data: unknown): data is ColumnWidthsToParentMessage => {
   if (!isBridgeMessage(data)) return false

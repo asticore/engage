@@ -967,6 +967,8 @@ const de: UiDictionary = {
   've.shortcut.device': 'Vorschaugerät wechseln (Desktop, Tablet, Mobil)',
   've.shortcut.panel': 'Seitenleiste ein- oder ausblenden',
   've.shortcut.history': "Verlaufsbereich ein- oder ausblenden",
+  've.padding.top': "Ziehen, um den oberen Innenabstand zu ändern",
+  've.padding.bottom': "Ziehen, um den unteren Innenabstand zu ändern",
   've.shortcuts.button': 'Tastenkürzel',
   've.shortcuts.title': 'Tastenkürzel',
   've.shortcuts.buttonTitle': 'Tastenkürzel (? drücken zum Ein- und Ausblenden)',

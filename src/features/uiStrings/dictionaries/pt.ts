@@ -966,6 +966,8 @@ const pt: UiDictionary = {
   've.shortcut.device': 'Alternar o dispositivo de pré-visualização (desktop, tablet, celular)',
   've.shortcut.panel': 'Mostrar ou ocultar o painel lateral',
   've.shortcut.history': "Mostrar ou ocultar o painel Histórico",
+  've.padding.top': "Arraste para alterar o preenchimento superior",
+  've.padding.bottom': "Arraste para alterar o preenchimento inferior",
   've.shortcuts.button': 'Atalhos',
   've.shortcuts.title': 'Atalhos de teclado',
   've.shortcuts.buttonTitle': 'Atalhos de teclado (prima ? para alternar)',

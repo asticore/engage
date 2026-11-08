@@ -966,6 +966,8 @@ const ko: UiDictionary = {
   've.shortcut.device': '미리보기 기기 전환 (데스크톱, 태블릿, 모바일)',
   've.shortcut.panel': '사이드 패널 표시 또는 숨기기',
   've.shortcut.history': "기록 패널 표시/숨기기",
+  've.padding.top': "드래그하여 위쪽 패딩 변경",
+  've.padding.bottom': "드래그하여 아래쪽 패딩 변경",
   've.shortcuts.button': '단축키',
   've.shortcuts.title': '키보드 단축키',
   've.shortcuts.buttonTitle': '키보드 단축키 (? 키로 전환)',

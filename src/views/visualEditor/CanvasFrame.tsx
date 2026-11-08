@@ -15,7 +15,7 @@ import {
 import type { SectionNode } from '@/lib/sectionTree'
 
 import { CanvasNodeList, slotKey, type CanvasHandlers } from './Canvas'
-import type { CanvasDevice, ColumnToParentMessage, ColumnWidthsToParentMessage, FrameToParentMessage, ParentToFrameMessage, RenameColumnToParentMessage } from './canvasBridge'
+import type { CanvasDevice, ColumnToParentMessage, ColumnWidthsToParentMessage, FrameToParentMessage, PaddingToParentMessage, ParentToFrameMessage, RenameColumnToParentMessage } from './canvasBridge'
 import { CANVAS_ORIGIN, isBridgeMessage } from './canvasBridge'
 import { getNode, pathKey, type NodePath } from './treeOps'
 import { isEditableTarget, resolveShortcut } from './useEditorShortcuts'
@@ -58,7 +58,7 @@ const nearestSlot: CollisionDetection = ({ droppableContainers, droppableRects, 
   return best ? [{ id: best.id, data: { droppableContainer: best.data, value: best.d } }] : []
 }
 
-const post = (message: FrameToParentMessage | ColumnToParentMessage | RenameColumnToParentMessage | ColumnWidthsToParentMessage) => {
+const post = (message: FrameToParentMessage | ColumnToParentMessage | RenameColumnToParentMessage | ColumnWidthsToParentMessage | PaddingToParentMessage) => {
   window.parent.postMessage(message, CANVAS_ORIGIN())
 }
 
@@ -264,6 +264,7 @@ export const CanvasFrame: React.FC = () => {
     onRenameColumn: (path, label) => post({ source: 've-canvas', type: 'renameColumn', path, label }),
     device,
     onColumnWidths: (path, widths) => post({ source: 've-canvas', type: 'columnWidths', path, widths, device }),
+    onPadding: (path, side, value) => post({ source: 've-canvas', type: 'padding', path, side, value, device }),
   }
 
   const handleDragStart = (event: DragStartEvent) => {

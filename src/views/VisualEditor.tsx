@@ -11,7 +11,8 @@ import { getElementDef } from '@/lib/elements/registry'
 import { can } from '@/features/roles/permissions'
 
 import { getBlockDef, INNER_SECTION_SLUG } from './visualEditor/blockSchemas'
-import { CANVAS_ORIGIN, isBridgeMessage, isColumnOpMessage, isColumnWidthsMessage, isRenameColumnMessage, type ColumnOp, type FrameToParentMessage } from './visualEditor/canvasBridge'
+import { applyPaddingDrag, canDragPadding } from './visualEditor/paddingDrag'
+import { CANVAS_ORIGIN, isBridgeMessage, isColumnOpMessage, isColumnWidthsMessage, isPaddingMessage, isRenameColumnMessage, type ColumnOp, type FrameToParentMessage } from './visualEditor/canvasBridge'
 import { applyColumnOp, applyColumnWidths, buildSectionNode, getColumn, getColumnOwner, isColumnPath, updateColumnAt, type ColumnDevice, type Structure } from './visualEditor/columnOps'
 import { ColumnPanel } from './visualEditor/ColumnPanel'
 import { StructurePicker } from './visualEditor/StructurePicker'
@@ -849,6 +850,18 @@ export const VisualEditorView: React.FC = () => {
     setTimeout(() => setTemplateToast(null), ms)
   }, [])
 
+  /** Canvas drag of a section's top / bottom padding bar: one undo step, written for the device shown. Same rules as the Design panel. */
+  const setPadding = useCallback((path: NodePath, side: 'top' | 'bottom', value: number, target: 'desktop' | 'tablet' | 'mobile') => {
+    if (!userPermissions?.canEditStyle) {
+      flashNotice('Your role cannot edit styles.')
+      return
+    }
+    if (lockedOut(path)) return
+    const node = getNode(lockCtx.current.blocks, path)
+    if (!node || !canDragPadding(node.design as { paddingUnit?: unknown } | undefined)) return
+    applyBlocks((prev) => updateNode(prev, path, (n) => ({ ...n, design: applyPaddingDrag(n.design, side, value, target) })), `pad:${pathKey(path)}`, 'Padding changed')
+  }, [userPermissions, lockedOut, flashNotice, applyBlocks])
+
   /** Revisions tab: puts a saved version's content on the canvas as one undoable edit. Nothing is saved until Save. */
   const applyRevision = useCallback((revision: RevisionRow) => {
     if (!Array.isArray(revision.blocks)) {
@@ -1048,6 +1061,10 @@ export const VisualEditorView: React.FC = () => {
         setColumnWidths(data.path, data.widths, data.device)
         return
       }
+      if (isPaddingMessage(data)) {
+        setPadding(data.path, data.side, data.value, data.device)
+        return
+      }
       if (!isBridgeMessage(data)) return
       const msg = data as FrameToParentMessage
       switch (msg.type) {
@@ -1123,7 +1140,7 @@ export const VisualEditorView: React.FC = () => {
     }
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
-  }, [deleteBlock, duplicateBlock, moveBlock, moveBlockTo, columnOp, renameNode, setColumnWidths, lockedOut, applyBlocks, addBlockAt, saveCanvasText, notifyTranslate, navigateUntranslated, t])
+  }, [deleteBlock, duplicateBlock, moveBlock, moveBlockTo, columnOp, renameNode, setColumnWidths, setPadding, lockedOut, applyBlocks, addBlockAt, saveCanvasText, notifyTranslate, navigateUntranslated, t])
 
   const saveRef = useRef<((publish: boolean) => unknown) | null>(null)
   // Keyboard shortcuts: the parent's own key presses and the ones forwarded from the frame share this handler.

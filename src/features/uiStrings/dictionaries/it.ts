@@ -966,6 +966,8 @@ const it: UiDictionary = {
   've.shortcut.device': 'Cambia il dispositivo di anteprima (desktop, tablet, mobile)',
   've.shortcut.panel': 'Mostra o nascondi il pannello laterale',
   've.shortcut.history': "Mostra o nascondi il pannello Cronologia",
+  've.padding.top': "Trascina per cambiare il riempimento superiore",
+  've.padding.bottom': "Trascina per cambiare il riempimento inferiore",
   've.shortcuts.button': 'Scorciatoie',
   've.shortcuts.title': 'Scorciatoie da tastiera',
   've.shortcuts.buttonTitle': 'Scorciatoie da tastiera (premi ? per attivare o disattivare)',

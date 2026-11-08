@@ -966,6 +966,8 @@ const hi: UiDictionary = {
   've.shortcut.device': 'पूर्वावलोकन उपकरण बदलें (डेस्कटॉप, टैबलेट, मोबाइल)',
   've.shortcut.panel': 'साइड पैनल दिखाएँ या छिपाएँ',
   've.shortcut.history': "इतिहास पैनल दिखाएँ या छिपाएँ",
+  've.padding.top': "ऊपरी पैडिंग बदलने के लिए खींचें",
+  've.padding.bottom': "निचली पैडिंग बदलने के लिए खींचें",
   've.shortcuts.button': 'शॉर्टकट',
   've.shortcuts.title': 'कीबोर्ड शॉर्टकट',
   've.shortcuts.buttonTitle': 'कीबोर्ड शॉर्टकट (टॉगल करने के लिए ? दबाएँ)',

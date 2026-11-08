@@ -21,6 +21,7 @@ import { columnPercentFor, resizeAdjacent } from './columnOps'
 import { pathKey, type NodePath } from './treeOps'
 import { CanvasInlineEditor, type InlineEditorProps } from './CanvasInlineEditor'
 import { inlineCandidate } from './inlineEdit'
+import { canDragPadding, clampPadding, type PaddingSide } from './paddingDrag'
 import type { CanvasBlockMark } from './translateCanvas'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
@@ -47,6 +48,8 @@ export type CanvasHandlers = {
   device?: CanvasDevice
   /** Drag-resize of a column boundary: `widths` is the percent width of every column of the section at `sectionPath`, for `device`. */
   onColumnWidths?: (sectionPath: NodePath, widths: number[]) => void
+  /** Drag of a section's top / bottom padding bar: whole pixels for `device`, one call per drag. */
+  onPadding?: (path: NodePath, side: PaddingSide, value: number) => void
   /** Key (see slotKey below) of the insert slot a library-card drag is currently over, or null.
    *  Driven by the parent's 'dragHover' bridge message - the parent resolves drop targets
    *  itself via elementFromPoint, so this is purely for visual feedback. */
@@ -145,6 +148,7 @@ const CanvasNode: React.FC<{
   // media rules the live page uses apply here (hidden-on-this-device blocks are faded, not removed).
   const scopeId = `ve-n-${path.join('_')}`
   const deviceCss = blockStyleCss(design, scopeId, { editor: true })
+  const padHandles = node.blockType === 'section' && !handlers.translate && Boolean(handlers.onPadding) && canDragPadding(design)
   const hasMinHeight = [design.minHeight, design.tablet?.minHeight, design.mobile?.minHeight].some((v) => typeof v === 'number')
 
   return (
@@ -281,6 +285,12 @@ const CanvasNode: React.FC<{
         >
           Has visibility rules
         </span></Tooltip>
+      )}
+      {padHandles && (
+        <>
+          <PaddingHandle side="top" disabled={blocked} onCommit={(value) => handlers.onPadding?.(path, 'top', value)} />
+          <PaddingHandle side="bottom" disabled={blocked} onCommit={(value) => handlers.onPadding?.(path, 'bottom', value)} />
+        </>
       )}
       <div className="ve-node__body">
         {node.blockType === 'section' ? (
@@ -483,6 +493,76 @@ const ColumnResizeHandle: React.FC<{
     >
       {tip && <span className="ve-col-resize__tip" role="status">{`${tip[0]}% / ${tip[1]}%`}</span>}
     </div></Tooltip>
+  )
+}
+
+/**
+ * The thin bar on a section's top / bottom edge (Elementor-style padding drag). The node's inline
+ * padding is changed live for the preview and one `onCommit` on release turns the drag into one
+ * tree update (one undo step). Module level so it keeps its identity across renders.
+ */
+const PaddingHandle: React.FC<{
+  side: PaddingSide
+  disabled: boolean
+  onCommit: (value: number) => void
+}> = ({ side, disabled, onCommit }) => {
+  const t = useAdminT()
+  const [tip, setTip] = React.useState<number | null>(null)
+  const drag = React.useRef<{ startY: number; start: number; node: HTMLElement; saved: string; last: number; moved: boolean } | null>(null)
+  const prop = side === 'top' ? 'paddingTop' : 'paddingBottom'
+
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.stopPropagation()
+    if (disabled || event.button !== 0) return
+    const node = event.currentTarget.parentElement
+    if (!node) return
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    const start = parseFloat(getComputedStyle(node)[prop]) || 0
+    drag.current = { startY: event.clientY, start, node, saved: node.style[prop], last: start, moved: false }
+    setTip(Math.round(start))
+  }
+
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current
+    if (!d) return
+    const delta = event.clientY - d.startY
+    const next = clampPadding(d.start + (side === 'top' ? delta : -delta))
+    d.last = next
+    d.moved = next !== Math.round(d.start)
+    d.node.style[prop] = `${next}px`
+    setTip(next)
+  }
+
+  const finish = (event: React.PointerEvent<HTMLDivElement>, commit: boolean) => {
+    const d = drag.current
+    drag.current = null
+    setTip(null)
+    if (!d) return
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+    if (commit && d.moved) {
+      // Keep the preview on the node: the tree update arrives with the same value.
+      onCommit(d.last)
+      return
+    }
+    d.node.style[prop] = d.saved
+  }
+
+  return (
+    <div
+      className={`ve-pad-handle ve-pad-handle--${side}${tip !== null ? ' ve-pad-handle--active' : ''}`}
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label={side === 'top' ? t('ve.padding.top') : t('ve.padding.bottom')}
+      aria-disabled={disabled || undefined}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={(event) => finish(event, true)}
+      onPointerCancel={(event) => finish(event, false)}
+      onClick={(event) => event.stopPropagation()}
+    >
+      {tip !== null && <span className="ve-pad-handle__tip" role="status">{`${tip}px`}</span>}
+    </div>
   )
 }
 

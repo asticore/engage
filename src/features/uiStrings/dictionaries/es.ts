@@ -966,6 +966,8 @@ const es: UiDictionary = {
   've.shortcut.device': 'Cambiar el dispositivo de vista previa (escritorio, tableta, móvil)',
   've.shortcut.panel': 'Mostrar u ocultar el panel lateral',
   've.shortcut.history': "Mostrar u ocultar el panel de historial",
+  've.padding.top': "Arrastra para cambiar el relleno superior",
+  've.padding.bottom': "Arrastra para cambiar el relleno inferior",
   've.shortcuts.button': 'Atajos',
   've.shortcuts.title': 'Atajos de teclado',
   've.shortcuts.buttonTitle': 'Atajos de teclado (pulsa ? para alternar)',

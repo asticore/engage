@@ -1007,6 +1007,8 @@ export const UI_STRING_SOURCE = {
   've.shortcut.device': 'Cycle the preview device (desktop, tablet, mobile)',
   've.shortcut.panel': 'Show or hide the side panel',
   've.shortcut.history': "Show or hide the History panel",
+  've.padding.top': "Drag to change top padding",
+  've.padding.bottom': "Drag to change bottom padding",
   've.shortcuts.button': 'Shortcuts',
   've.shortcuts.title': 'Keyboard shortcuts',
   've.shortcuts.buttonTitle': 'Keyboard shortcuts (press ? to toggle)',

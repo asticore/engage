@@ -965,6 +965,8 @@ const zhHans: UiDictionary = {
   've.shortcut.device': '切换预览设备（桌面、平板、手机）',
   've.shortcut.panel': '显示或隐藏侧边栏',
   've.shortcut.history': "显示或隐藏历史面板",
+  've.padding.top': "拖动以更改上内边距",
+  've.padding.bottom': "拖动以更改下内边距",
   've.shortcuts.button': '快捷键',
   've.shortcuts.title': '键盘快捷键',
   've.shortcuts.buttonTitle': '键盘快捷键（按 ? 切换）',

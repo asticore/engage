@@ -966,6 +966,8 @@ const nl: UiDictionary = {
   've.shortcut.device': 'Voorbeeldapparaat wisselen (desktop, tablet, mobiel)',
   've.shortcut.panel': 'Zijpaneel tonen of verbergen',
   've.shortcut.history': "Het geschiedenispaneel tonen of verbergen",
+  've.padding.top': "Sleep om de bovenste padding te wijzigen",
+  've.padding.bottom': "Sleep om de onderste padding te wijzigen",
   've.shortcuts.button': 'Sneltoetsen',
   've.shortcuts.title': 'Sneltoetsen',
   've.shortcuts.buttonTitle': 'Sneltoetsen (druk op ? om te wisselen)',

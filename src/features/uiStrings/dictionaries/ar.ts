@@ -966,6 +966,8 @@ const ar: UiDictionary = {
   've.shortcut.device': 'تبديل جهاز المعاينة (سطح المكتب، الجهاز اللوحي، الجوال)',
   've.shortcut.panel': 'إظهار أو إخفاء اللوحة الجانبية',
   've.shortcut.history': "إظهار لوحة السجل أو إخفاؤها",
+  've.padding.top': "اسحب لتغيير الحشو العلوي",
+  've.padding.bottom': "اسحب لتغيير الحشو السفلي",
   've.shortcuts.button': 'الاختصارات',
   've.shortcuts.title': 'اختصارات لوحة المفاتيح',
   've.shortcuts.buttonTitle': 'اختصارات لوحة المفاتيح (اضغط ? للتبديل)',

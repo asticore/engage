@@ -966,6 +966,8 @@ const fr: UiDictionary = {
   've.shortcut.device': 'Changer l\'appareil d\'aperçu (ordinateur, tablette, mobile)',
   've.shortcut.panel': 'Afficher ou masquer le panneau latéral',
   've.shortcut.history': "Afficher ou masquer le panneau Historique",
+  've.padding.top': "Faites glisser pour modifier le remplissage du haut",
+  've.padding.bottom': "Faites glisser pour modifier le remplissage du bas",
   've.shortcuts.button': 'Raccourcis',
   've.shortcuts.title': 'Raccourcis clavier',
   've.shortcuts.buttonTitle': 'Raccourcis clavier (appuyez sur ? pour afficher ou masquer)',

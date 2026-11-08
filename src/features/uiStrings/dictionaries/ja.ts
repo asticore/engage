@@ -966,6 +966,8 @@ const ja: UiDictionary = {
   've.shortcut.device': 'プレビューの端末を切り替え（デスクトップ・タブレット・モバイル）',
   've.shortcut.panel': 'サイドパネルを表示／非表示',
   've.shortcut.history': "履歴パネルを表示/非表示",
+  've.padding.top': "ドラッグして上の余白を変更",
+  've.padding.bottom': "ドラッグして下の余白を変更",
   've.shortcuts.button': 'ショートカット',
   've.shortcuts.title': 'キーボードショートカット',
   've.shortcuts.buttonTitle': 'キーボードショートカット（? キーで切り替え）',
