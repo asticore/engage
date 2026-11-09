@@ -8,14 +8,15 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 1. Read this doc (`docs/remaining-work.md` in the repo; Done list in `docs/remaining-work-done.md`) before starting work; the task numbers below are the order of work.
 2. Update it ONCE per finished task (or at the end of a working session), never mid-task: the project tool has no patch, so each update is a full rewrite.
 3. On each update: move the finished task into "Done" as one line with its PR numbers; for a partly done task, move its shipped history to "Done" and keep only its open items under "Tasks"; delete anything done or no longer needed; renumber the remaining tasks and fix the "task N" cross-references.
-4. Anything built but not checked live goes into "Task 16" (not silently dropped). Known limits go into "Open now". Decisions made by you are written into the task they affect.
+4. Anything built but not checked live goes into "Task 14" (not silently dropped). Known limits go into "Open now". Decisions made by you are written into the task they affect.
 5. New requests become a numbered task in the right place (or appended at the bottom if you say "later"), with what exists today, what to build and what needs your decision.
 6. Every feature, past and future, must work on a brand new single-click install: each new table or column is created by an idempotent migration registered in `src/migrations/index.ts` and covered by `tests/int/internal-migrate-fresh-install.int.spec.ts` and `tests/int/fresh-install-schema-coverage.int.spec.ts`, so the install builds the schema itself and nobody runs SQL by hand. Features already covered: site files, cookie consent (and banner settings), media library and file upload, ads, custom role rules and locks, shop catalogue and orders, extra fields import, content approval and approval workflows, custom fields v2, site fonts, redirects, roles, visibility and schedule, backups, forms, A/B tests.
 7. Keep the Process and Lessons sections current; remove a lesson once it is enforced by a test.
 
 ## Open now (as of 2 Nov 2026)
 - Fresh-account deploy not verified: Deploy button on a second Cloudflare account (see detail below).
-- Known limits (what is left after the 1 Nov sweep: each is either "Permanent" with the reason, or waits on a live check in Task 16; everything fixable was fixed or moved into closed tasks 1 to 5):
+- Activity log (closed Task 18): export audit covers the activity log, products, redirects and list CSV downloads; the event RSVP, form submission, shop report, manifest, data view and consent log downloads are not yet written to the log (add `auditExport` from `src/features/security/exportAudit.ts` to each). Shop orders and other records with their own history are left out of edit logging on purpose (see `ACTIVITY_LOGGED` in `src/localapi/registry.ts`).
+- Known limits (what is left after the 1 Nov sweep: each is either "Permanent" with the reason, or waits on a live check in Task 14; everything fixable was fixed or moved into closed tasks 1 to 5):
   - Ads: Permanent: AdSense auto ads cannot be unloaded on client navigation (Google tag, vendor); Prebid price floors need the Price Floors module (Prebid vendor setup).
   - Media: Permanent: old binary .xls is not read (save as .xlsx or .ods); Permanent: re-optimising a picture keeps its file name because pages link to it (uploads take the right extension); Permanent: Cloudflare Stream makes MP4 only and Cloudflare Images cannot write JPEG XL, so a WebM or JPEG XL choice keeps the file as it is, and a video link is a URL with nothing to convert; Permanent: the Worker reads each request into memory once, so the 100 MB cap is the ceiling (larger files are written to R2 in parts).
   - Shop: Permanent: customer bulk actions and custom order statuses are not built (decided in closed Task 8: personal data, privacy request flow).
@@ -34,7 +35,7 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20261003_100000_visibility_schedule_lock_events_seo`, `20261005_100000_redirects`, `20261005_110000_pages_sort_order`, `20261006_100000_roles`, `20261007_100000_users_authorship`, `20261008_100000_integrations_expand`, `20261009_100000_user_permission_overrides`, `20261010_100000_site_fonts`, `20261011_100000_site_files`, `20261011_110000_cookie_consent`, `20261011_120000_media_library`, `20261011_130000_content_approval`, `20261011_140000_custom_fields_v2`; the `images` binding in `wrangler.jsonc` (Cloudflare Images transformations must be on the account, otherwise upload optimisation is skipped with a message); the cron trigger (`triggers.crons` in `wrangler.jsonc`, entry `cloudflare-worker.ts`).
 
 ## Tasks (in order)
-Open: Tasks 1 to 4 (follow-ups from the 9 Nov 2026 work on old tasks 1 to 7), then Tasks 5 to 14 (regions and domains, API, cron, email, theming, company downloads, admin updates, activity log), Task 15 (speed up the portal and shrink the Worker bundle) and Task 16 (Matt's live checklist), remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered on 9 Nov 2026 after the old tasks 1 to 7 closed. Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
+Open: Tasks 1 to 4 (follow-ups from the 9 Nov 2026 work on old tasks 1 to 7), then Tasks 5 to 12 (regions and domains, cron, email, theming, company downloads, admin settings, update popup), Task 13 (speed up the portal and shrink the Worker bundle) and Task 14 (Matt's live checklist), remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered on 9 Nov 2026 after the old tasks 1 to 7 closed. Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
 
 Order: 1 to 4 (follow-ups), 5 to 15 (features, in listed order), (new verify tasks), 16 Speed up, 17 Live checks (ends with the fresh-account deploy check).
 
@@ -49,7 +50,7 @@ Audit is in `docs/events-tickets-audit.md`. The "Sold out" state is done. Still 
 ### Task 2. Shine and Effix follow-ups (new, 9 Nov 2026)
 Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated utility file `src/styles/engage-utilities.css` (`node scripts/generate-utilities.mjs`, checked by a test), `reference/references.json`, Effix loader on the public site.
 - [ ] Effects picker for Effix in the visual editor (pick an effect, it adds the `efx-` class and data attributes; charts and diagrams too). Today `efx-` classes work wherever they appear (custom class field) but there is no picker.
-- [ ] Admin screen and super admin notice for the reference file: show each source, its pinned version and the result of `checkReferenceUpdates` (already built and tested, not yet shown anywhere); tie it into the update popup (Task 13).
+- [ ] Admin screen and super admin notice for the reference file: show each source, its pinned version and the result of `checkReferenceUpdates` (already built and tested, not yet shown anywhere); tie it into the update popup (Task 12).
 - [ ] Bring the remaining Tailwind-era look-alike classes onto Shine tokens over time (compare dark mode and density knobs); vendor an offline copy of Effix if a site must run with no CDN.
 
 ### Task 3. Translation pass for the new admin and public text (new, 9 Nov 2026)
@@ -66,31 +67,25 @@ Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated
 ### Task 6. Multi domain support check (new, 7 Nov 2026)
 - [ ] Check multi domain support end to end: several domains on one install, per domain content, the Available on domains field and slug check, cookies and sign-in per domain, sitemap, robots, canonical and hreflang, email sender and Cloudflare routes. Output: report with gaps, then tasks. Effort S to M.
 
-### Task 7. Easy API creation, API keys and data feeds (new, 7 Nov 2026)
-- [ ] Let admins create an API or data feed by drag and drop (pick collections and fields, filters, format), or a webhook. Access works by category: admins define user categories (for example partner, customer, internal) and select in Settings what each person or group can reach. Admins can generate API keys for customers, and customers can generate their own keys in the members portal; the key is tied to that person's account and limited by their category. Add rate limits, key revoke and rotate, usage log, and docs shown to the customer. Builds on the API and webhooks work already done (Done: closed Task 19). Effort L.
-
-### Task 8. Scheduled jobs (cron) in the portal (new, 7 Nov 2026)
+### Task 7. Scheduled jobs (cron) in the portal (new, 7 Nov 2026)
 - [ ] Find out whether the portal has easy cron jobs, for example scheduled pages, scheduled publish and unpublish, and recurring tasks. Check what the Worker cron trigger already runs. If there is no admin view, add a Scheduled jobs screen: list of jobs, last run, next run, run now, enable or disable, and logs. Effort M.
 
-### Task 9. Email notifications on actions, push and Cloudflare sending (new, 7 Nov 2026)
+### Task 8. Email notifications on actions, push and Cloudflare sending (new, 7 Nov 2026)
 - [ ] In Email, let admins set up notifications triggered by actions (order receipt, sign-up, form submit, booking, comment and others): choose the trigger, recipient, template, and channel (email through the connected tools, or push). Add push notifications (web push) as a channel. In Settings, allow connecting and sending email through Cloudflare (Cloudflare Email, see Known limits) as well as the third party email platforms already connectable. Effort L.
 
-### Task 10. Style guide and theming: style preferences and uniqueness (new, 7 Nov 2026)
+### Task 9. Style guide and theming: style preferences and uniqueness (new, 7 Nov 2026)
 - [ ] In the style guide and theming screen, let owners pick website styles they like (for example from example sites or style cards), explain why each style suits (reasoning shown to the user), and use the picks to choose or generate a unique theme. Keeps one style system only (no v1 or v2) and effects chosen from pickers. Effort M to L.
 
-### Task 11. Company-protected downloads (follow-up to closed Task 14, 9 Nov 2026)
+### Task 10. Company-protected downloads (follow-up to closed Task 14, 9 Nov 2026)
 - [ ] Companies (organisations) and company admin narrowing of pages, posts, products and events are built (see Done). Left: files. A media file or download linked from a company-only page is still reachable by its direct URL, because media is served as a public file. Add a gated download: a media file can be limited to a company (and narrowed to members or teams with the same grant table `eg_content_org_grants`, collection `media`), served through a route that checks the session with `viewerMayRead` and streams from R2 (private path), with the public URL never exposed in markup. Needs a decision on whether existing public media can be switched to private without breaking links (suggest: only newly flagged files move). Admin side: a "Visible to company" picker in the media edit panel, same pattern as `OrganizationVisibilitySection`. Effort M.
 
-### Task 12. Admin settings: clean tables and install only when enabled (new, 7 Nov 2026)
+### Task 11. Admin settings: clean tables and install only when enabled (new, 7 Nov 2026)
 - [ ] In admin settings, add a way to clean the tables of a section (delete its data after a confirmation and export offer) and make sure each section's tables are created only when its switch is turned on (builds on the lazy sections in PR #218). Add a migration and fresh-install tests for each. Effort M.
 
-### Task 13. Update popup for super admins (new, 7 Nov 2026)
+### Task 12. Update popup for super admins (new, 7 Nov 2026)
 - [ ] A popup in the admin portal that checks the current version against the repo and tells super admins when their copy needs updating. Super admins click it to start the update, then it opens the repo changelog. Other admins see nothing. Decide update method (Deploy button sync, GitHub sync, or a pull request) and handle forks. Repo URL is now asticore/engage. Effort M to L.
 
-### Task 14. Activity log with clear (new, 7 Nov 2026)
-- [ ] An activity log of what people do (sign-in, edits, publishes, setting changes, exports), viewable per person and filterable, with a clear or purge option (with retention setting and a record that a clear happened). Check against the privacy rules and the existing audit and approval history first. Effort M.
-
-### Task 15. Speed up the portal and shrink the Worker bundle (right before the live checks)
+### Task 13. Speed up the portal and shrink the Worker bundle (right before the live checks)
 **Goals (Matt, 7 Nov 2026):**
 1. Get the Cloudflare Worker bundle under the 3 MB limit of the Workers free plan (compressed size), so anyone can install the site for free with the Deploy button.
 2. Make pages load faster (public pages and the admin and signed-in portal).
@@ -159,7 +154,7 @@ Finished work is listed in `remaining-work-done.md` (same folder), one line per 
 
 Lessons: migration-order specs use `migrations.length - N` offsets, so every new migration moves them: update the offsets in the same PR (or prefer name lookups). Agents alter files when copying (quotes, glyphs, regex escapes, trailing spaces and final newlines), push wrong files, create routes in a literal `src/app/(engage)` folder: cmp everything. Keep new CSS in its own file; avoid edits to `src/cms/db/schema/generate.ts` and `schema/index.ts` (both near 60KB); do not edit `src/engage-types.ts` (230KB, cannot be pushed through the tool: cast locally instead); no `ui` field in a global modelled by `src/cms/db`; never two agents on one file at once; the cloud session cannot `git push` this repo (GitHub MCP only); do not `pkill -f vitest`; the browser tool cannot type; mock `getAdminContext()` needs `can`; hooks must skip when there is no `req.user`; Next layouts cannot export extra names. Cloudflare Builds clones within seconds of the first push, so after a multi-file push, push one last marker commit. Haiku push agents turn backslash-u escapes into raw characters: keep source ASCII (use String.fromCharCode).
 
-## Task 16. Matt's live checklist (FINAL: only live checks remain; all need Matt's own accounts)
+## Task 14. Matt's live checklist (FINAL: only live checks remain; all need Matt's own accounts)
 
 **Live run 31 Oct 2026 (Claude, Brave, read-only):** PASS: Forms list has no Create; form page has Edit in visual editor and pages-using-form table; Templates has Header and footer tab; no separate Header/Footer admin pages; Pages list has Export CSV and sortable headers; Settings has no 404 picker; visual editor canvas loads. OPEN from this run: (a) dashboard Forms tile "+" links to /admin/content/forms/create (remove, forms are made in the visual editor); (b) form edit page shows Title/Submit label/Success message fields (confirm no field editing, decide if summary should be read-only); (c) External embeds not in any sidebar group, find route /external-embeds and add nav item; (d) audience and page-picker conditions not seen (need a draft row, test on a scratch template); (e) style panel applied dot/Reset not reached (hover selection shifted); (f) not yet run: short links, privacy, CSV with filter, revenue chart, migration, SITE_URL/ENGAGE_SECRET.
 
@@ -308,13 +303,13 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Tables and charts (#171 to #174): CSV download from pages and orders with a filter applied, opened in a spreadsheet; shop revenue chart axis fits a phone width; sort buttons work by keyboard.
 - [ ] Tables and charts (#188): Dashboard shows the 30-day Orders and Form submissions cards with Shop and Forms on, and hides them when each is off. A list export of 5000 or more rows shows Exporting… while it loads and then the truncation message. The PageSpeed trend and the consent acceptance chart show their axis labels on a phone width.
 - [ ] Account colours and srcset (PR #208): dark theme, sign in, open `/account` and the nav on a phone width, and search: no white cards, dark text readable, nav drawer fades to the background. A page with a gallery or team card: view source shows `srcset` and `sizes` on its pictures. Light theme: unchanged.
-- [ ] Task 16 colour sweep (#192): in dark theme open Settings, Shop orders, SEO audit, Theme styles, Visibility, Find and replace, Edit tabs, Email testing and the Visual editor chrome: no white or light cards, no dark text on dark surfaces, every status badge readable. Light theme: nothing visibly changed.
-- [ ] Task 16 dark mode (#192): dark theme, check each for readable text and no white-on-dark: Password groups (banner, error, form, badge), Visibility > Access (label, input, OK and error), Blog builder "Write with AI" error, Pages tree (Draft and Homepage badges, alert), API keys scopes, Orders filter bar, Order refunds, Two-factor trusted devices list, Ads placeholder on a public page with ads on.
-- [ ] Task 16 tree keys (#192): Pages tree, keyboard only (no mouse): Tab to a row, Down and Up move between rows, Home and End jump, Right expands a parent, Left collapses it or goes to the parent row, Alt+Down moves a page. Screen reader announces the expanded state and the tooltip text on the toggle and handle.
-- [ ] Feedback button (closed Task 17): sign in as an admin, click Feedback in the sidebar (under Help): GitHub new issue page opens in a new tab with the version, admin page and language in the body. Sign in as a non-admin role: no Feedback button.
-- [ ] Task 16 tooltips (#192): touch device: tap a column arrow in the list toolbar and the tree drag handle; the tooltip appears and goes away on the next tap elsewhere. Desktop: hover and Tab to the save-default button; tooltip shows.
-- [ ] Task 16 SEO dots (#192): SEO audit and SEO analysis in light and dark: good circle, ok diamond, bad square are told apart at a glance.
-- [ ] Task 16 company content access (closed Task 14): turn on Customer organisations in Security settings, create a company with two members and a team, limit a page to it in the page's visibility panel, then as the company owner open the account's company page, Company content access: tick one member, save; that member and the owner read the page, the other member sees the locked screen, an outsider and a signed-out visitor see the locked screen; untick all and every member reads it again.
+- [ ] Task 14 colour sweep (#192): in dark theme open Settings, Shop orders, SEO audit, Theme styles, Visibility, Find and replace, Edit tabs, Email testing and the Visual editor chrome: no white or light cards, no dark text on dark surfaces, every status badge readable. Light theme: nothing visibly changed.
+- [ ] Task 14 dark mode (#192): dark theme, check each for readable text and no white-on-dark: Password groups (banner, error, form, badge), Visibility > Access (label, input, OK and error), Blog builder "Write with AI" error, Pages tree (Draft and Homepage badges, alert), API keys scopes, Orders filter bar, Order refunds, Two-factor trusted devices list, Ads placeholder on a public page with ads on.
+- [ ] Task 14 tree keys (#192): Pages tree, keyboard only (no mouse): Tab to a row, Down and Up move between rows, Home and End jump, Right expands a parent, Left collapses it or goes to the parent row, Alt+Down moves a page. Screen reader announces the expanded state and the tooltip text on the toggle and handle.
+- [ ] Feedback button (closed Task 17): sign in as an admin, click Feedback in the sidebar (under Help): a popup offers Bug or Feature request; picking one opens that GitHub new issue form in a new tab (matching template and label) with the version, admin page and language in the body. Sign in as a non-admin role: no Feedback button.
+- [ ] Task 14 tooltips (#192): touch device: tap a column arrow in the list toolbar and the tree drag handle; the tooltip appears and goes away on the next tap elsewhere. Desktop: hover and Tab to the save-default button; tooltip shows.
+- [ ] Task 14 SEO dots (#192): SEO audit and SEO analysis in light and dark: good circle, ok diamond, bad square are told apart at a glance.
+- [ ] Task 14 company content access (closed Task 14): turn on Customer organisations in Security settings, create a company with two members and a team, limit a page to it in the page's visibility panel, then as the company owner open the account's company page, Company content access: tick one member, save; that member and the owner read the page, the other member sees the locked screen, an outsider and a signed-out visitor see the locked screen; untick all and every member reads it again.
 
 ### Languages and tracking (#54, #134, #135 to #145, #151)
 - [ ] Languages: Settings > Languages: enable a language, add Google or DeepL key, Test connection. Translations page: one row per page, filters, bulk approve. Builder: language switch and translate mode. `/fr/` loads in French with correct hreflang. Clear inactive works. Admin language picker changes admin text. Email arrives in the customer's language. Storefront override table changes storefront text.
@@ -415,6 +410,14 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Last changed: save any setting on General. Reload /settings/site as an admin: the line "Last changed by <your email> on <date> UTC" shows under the description. Sign in as an editor who is not an admin: the line does not show.
 - [ ] Reset this section: on Blog (Content), change a field that has a default (for example Posts Per Page), press Reset this section, then Reset to defaults. Pass = the field returns to its default on screen and the page does not save until Save is pressed. Cancel on the confirm leaves values as they were.
 
+### Closed Task 10 API (categories, keys and feeds) (PR pending)
+- [ ] Categories: API keys screen as admin, Access categories, New category (name Partner, Read everything, 30 requests a minute, 1 key). Add a customer by email. Sign in as that customer: profile shows "Your access category is Partner" and the API guide lists only endpoints they can call. A customer outside any category sees the "not in an API access category" note and cannot create a key.
+- [ ] Rotate: as that customer create a key, enter the password, press Rotate. Pass = new key shown once, old key returns 401, the audit log has api-key.rotated.
+- [ ] Usage: call the REST API with the key a few times, press Usage on the key. Pass = today's row counts the requests and the refused ones (a 429 or a denied route).
+- [ ] Admin key for a customer: Create a key for a customer, with your password. Pass = key shown once, listed under that customer, limited by their category.
+- [ ] Feeds: API builder, drag fields into Exposed fields and reorder them, set format to CSV data feed, save, call the endpoint with a key. Pass = CSV with the fields in that order and an X-Total-Count header; add ?format=json and ?format=xml and check each. Open the CSV in Excel: a cell starting with = shows as text.
+- [ ] Endpoint by category: tick one category on an endpoint. Pass = a key from another category gets 403 and the endpoint is missing from that customer's guide.
+
 ### Closed Task 10 SEO (PR #200)
 - [ ] Cornerstone: open a published page, tick Cornerstone content on the SEO card, Save. Pass = the SEO audit row shows "Cornerstone", and the Cornerstone only filter keeps it. Untick and Save. Pass = it drops out.
 - [ ] Bulk SEO edit: SEO audit, change the SEO title of two rows and the meta description of a third, press Save. Pass = "Saved 3 rows." and the new values are on the pages. Then sign in as an editor with no update rights on pages, change one row. Pass = "You cannot edit this." on that row.
@@ -492,5 +495,10 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 ## Shipped (reference)
 Waves 43 to 48 and waves 30 and 31: see "Done". The visual editor reference and the design model inventory above are the reference for code paths.
 
+### Activity log (closed Task 18, PR pending)
+- [ ] Settings, Security, Activity log (`/admin/security/activity`): edit and publish a page, delete a post, save a setting, download a list CSV; each shows with your email and the right event (publish, update, delete, settings.update, export). Click a person's name: only their rows remain. Use From and To dates and the Collection filter.
+- [ ] Same screen, Clear activity log: pick "older than 90 days", Count entries, type CLEAR, Clear now; the old rows go and one `activity.cleared` row names you and the count. Cookie consent entries and privacy records stay. The CSV link downloads the current view.
+- [ ] Erase a test customer through the privacy flow; their activity rows keep the event but lose email, address and browser.
+
 ### Fresh-account deploy and setup script (last live check)
-- [ ] Fresh-account deploy check and the setup script on a new Cloudflare account (the "Fresh-account deploy check (detail)" section and the Setup script item under "Architecture (closed Task 4, PR #215)"). Runs after Task 16, so it also proves the free-plan size limit on a fresh account.
+- [ ] Fresh-account deploy check and the setup script on a new Cloudflare account (the "Fresh-account deploy check (detail)" section and the Setup script item under "Architecture (closed Task 4, PR #215)"). Runs after Task 14, so it also proves the free-plan size limit on a fresh account.

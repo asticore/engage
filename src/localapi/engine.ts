@@ -112,6 +112,7 @@ import { defaultUserSessionStore } from '@/features/security/userSessionStore'
 import { audit } from '@/features/security/auditLog'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
 import { emailOtpOps, trustedDeviceOps } from '@/features/security/twoFactorRuntime'
+import { createD1CategoryStore } from '@/features/apiKeys/categoryStore'
 import { authenticateApiKey, createD1ApiKeyStore, presentedApiKey, type ApiKeyContext, type ApiKeyDeps, type D1Like } from '@/features/apiKeys'
 import { resolveD1Binding } from '@/cms/db/connect'
 import type { SessionClient } from '@/features/security/userSessions'
@@ -183,9 +184,12 @@ function deriveSecret(): string {
  * same best-effort writer the rest of the security code uses.
  */
 function apiKeyDeps(authDb: AuthDbOps): ApiKeyDeps {
+  const categories = createD1CategoryStore(async () => (await resolveD1Binding()) as unknown as D1Like)
   return {
     store: createD1ApiKeyStore(async () => (await resolveD1Binding()) as unknown as D1Like),
     now: () => Date.now(),
+    loadCategory: (userId) => categories.categoryForUser(userId),
+    categoriesExist: async () => (await categories.count()) > 0,
     audit: async (entry) => {
       const settings = await readSecuritySettingsFromD1()
       await audit({ ...entry, collectionSlug: 'api-keys' }, settings)

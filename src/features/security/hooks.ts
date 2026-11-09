@@ -4,7 +4,7 @@ import type {
   GlobalAfterChangeHook,
 } from '@/engine'
 
-import { audit, auditContext, impersonatorTag, type AuditEntry } from './auditLog'
+import { audit, auditContext, impersonatorTag, type AuditAction, type AuditEntry } from './auditLog'
 import { getSecuritySettings, invalidateSecuritySettingsCache } from './settings'
 import { assertTwoFactorSatisfied, type TwoFactorUser } from './twoFactor'
 
@@ -57,10 +57,36 @@ async function write(req: ReqLike, entry: AuditEntry): Promise<void> {
   }
 }
 
+/** A save that moves a document to or from published is a publish or unpublish, not a plain update. */
+function changeAction(operation: 'create' | 'update', doc: unknown, previousDoc: unknown): AuditAction {
+  if (operation === 'create') return 'create'
+  const now = (doc as { _status?: unknown } | null)?._status
+  const before = (previousDoc as { _status?: unknown } | null)?._status
+  if (now === 'published' && before !== 'published') return 'publish'
+  if (before === 'published' && now === 'draft') return 'unpublish'
+  return 'update'
+}
+
+/** Exported for tests only. */
+export const changeActionForTest = changeAction
+
+/** Records creates only. For collections whose updates are mostly system writes (users: sign-in counters). */
+export const auditAfterCreate: CollectionAfterChangeHook = ({ doc, req, operation, collection }) => {
+  if (operation === 'create') {
+    void write(req as ReqLike, {
+      action: 'create',
+      collectionSlug: collection?.slug ?? null,
+      documentId: (doc as { id?: number | string })?.id ?? null,
+      detail: describe(doc),
+    })
+  }
+  return doc
+}
+
 /** Records creates and updates on one collection. */
-export const auditAfterChange: CollectionAfterChangeHook = ({ doc, req, operation, collection }) => {
+export const auditAfterChange: CollectionAfterChangeHook = ({ doc, previousDoc, req, operation, collection }) => {
   void write(req as ReqLike, {
-    action: operation === 'create' ? 'create' : 'update',
+    action: changeAction(operation, doc, previousDoc),
     collectionSlug: collection?.slug ?? null,
     documentId: (doc as { id?: number | string })?.id ?? null,
     detail: describe(doc),

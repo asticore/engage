@@ -92,7 +92,7 @@ export function ownerOfTable(table: string): TableOwner {
  * table (always created, see the header) and engine bookkeeping.
  */
 export const CORE_TABLE_BASES = [
-  'ad_settings', 'ai_builder_usage', 'api_builder_settings', 'api_endpoint_log', 'api_endpoints', 'api_keys', 'audit_log',
+  'ad_settings', 'ai_builder_usage', 'api_builder_settings', 'api_categories', 'api_category_members', 'api_endpoint_log', 'api_endpoints', 'api_key_usage', 'api_keys', 'audit_log',
   'backup_settings', 'blog_settings', 'categories', 'category_links', 'content_access', 'content_org_grants', 'content_org_visibility', 'content_passwords', 'cron_runs',
   'custom_field_options', 'data_views', 'domain_settings', 'edit_locks', 'email_brand', 'email_log', 'email_schedule',
   'email_settings', 'email_suppressions', 'email_templates', 'email_verifications', 'error_log', 'faq_settings',

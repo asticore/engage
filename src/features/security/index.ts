@@ -87,6 +87,7 @@ export { AuditLog } from './auditLogCollection'
 
 export {
   auditAfterChange,
+  auditAfterCreate,
   auditAfterDelete,
   auditAfterLogin,
   auditGlobalAfterChange,

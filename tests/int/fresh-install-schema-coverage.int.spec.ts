@@ -38,6 +38,7 @@ import * as templateLibrariesSchema from '@/cms/db/schema/templateLibraries'
 import * as privacyRequestsSchema from '@/cms/db/schema/privacyRequests'
 import * as apiEndpointsSchema from '@/cms/db/schema/apiEndpoints'
 import * as categoriesSchema from '@/cms/db/schema/categories'
+import * as apiCategoriesSchema from '@/cms/db/schema/apiCategories'
 
 import { provisionAllFeatures } from '../helpers/provisionAll'
 
@@ -108,7 +109,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
       }
 
       // Webhooks builder, API builder and privacy request tables live in their own schema files
-      for (const schemaFile of [webhooksSchema, apiEndpointsSchema, privacyRequestsSchema]) {
+      for (const schemaFile of [webhooksSchema, apiEndpointsSchema, apiCategoriesSchema, privacyRequestsSchema]) {
         for (const [exportName, exportValue] of Object.entries(schemaFile)) drizzleTables.push({ name: exportName, table: exportValue })
       }
 

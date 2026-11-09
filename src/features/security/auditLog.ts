@@ -54,6 +54,8 @@ export type AuditAction =
   | 'passkey.removed'
   | 'passkey.refused'
   | 'api-key.created'
+  | 'api-category.changed'
+  | 'api-key.rotated'
   | 'api-key.revoked'
   | 'api-key.used'
   | 'api-key.refused'
@@ -89,6 +91,10 @@ export type AuditAction =
   | 'password-group.unlock-failed'
   | 'password-group.refused'
   | 'database.table-dropped'
+  | 'publish'
+  | 'unpublish'
+  | 'export'
+  | 'activity.cleared'
 
 /**
  * Every action an account-security event can write. The admin review screen
@@ -128,6 +134,8 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'passkey.removed',
   'passkey.refused',
   'api-key.created',
+  'api-category.changed',
+  'api-key.rotated',
   'api-key.revoked',
   'api-key.used',
   'api-key.refused',
@@ -311,3 +319,21 @@ export function auditContext(request: Request): Pick<AuditEntry, 'ip' | 'userAge
     cookie: request.headers.get('cookie'),
   }
 }
+
+/**
+ * Entries the activity log's clear never removes: consent decisions are the
+ * proof a visitor agreed (kept for the cookie consent screen and its own
+ * retention), privacy requests and erasures are the proof a request was
+ * handled, and a clear record is the proof that a clear happened.
+ */
+export const PROTECTED_AUDIT_ACTIONS: readonly AuditAction[] = [
+  'consent.update',
+  'privacy.request',
+  'privacy.decide',
+  'privacy.erase',
+  'privacy.export',
+  'activity.cleared',
+]
+
+/** Noise kept out of the activity screen (blocked probes and rate limits fill it fast). They still live in the table and the retention rule covers them. */
+export const ACTIVITY_HIDDEN_ACTIONS: readonly AuditAction[] = ['consent.update', 'rate-limit.blocked', 'probe.blocked', 'api-key.used']

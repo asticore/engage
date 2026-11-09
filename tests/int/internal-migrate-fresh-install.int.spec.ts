@@ -841,6 +841,37 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(await store.findById(id)).toBeNull()
   })
 
+  it('creates the API category tables, is safe to run twice, and the stores round-trip a category, a member and usage', async () => {
+    const mod = await import('@/migrations/20270314_100000_api_categories')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    const engine = { logger: consoleLogger } as never
+    await mod.up({ db, engine } as never)
+    await mod.up({ db, engine } as never)
+    const { createD1CategoryStore, createD1UsageStore } = await import('@/features/apiKeys/categoryStore')
+    const store = createD1CategoryStore(async () => proxy.env.D1 as never)
+    const at = '2026-11-09T00:00:00.000Z'
+    const config = { name: 'Partner', description: '', scopes: ['pages:read'], ratePerMinute: 30, maxKeys: 2 }
+    const id = await store.insert(config, at)
+    await expect(store.insert({ ...config, name: 'partner' }, at)).rejects.toThrow()
+    expect(await store.count()).toBe(1)
+    await store.assign(id, 'user', '42', at)
+    await store.assign(id, 'user', '42', at)
+    expect((await store.members(id)).length).toBe(1)
+    expect(await store.categoryForUser(42)).toMatchObject({ id, name: 'Partner', scopes: ['pages:read'], ratePerMinute: 30, maxKeys: 2 })
+    expect(await store.categoryForUser(43)).toBeNull()
+    await store.update(id, { ...config, name: 'Partners' }, at)
+    expect((await store.findById(id))?.name).toBe('Partners')
+    const usage = createD1UsageStore(async () => proxy.env.D1 as never)
+    await usage.record(9, '2026-11-09', false)
+    await usage.record(9, '2026-11-09', true)
+    expect(await usage.forKey(9, '2026-11-01')).toEqual([{ day: '2026-11-09', requests: 2, errors: 1 }])
+    await usage.pruneBefore('2026-12-01')
+    expect(await usage.forKey(9, '2026-11-01')).toEqual([])
+    await store.remove(id)
+    expect(await store.categoryForUser(42)).toBeNull()
+  })
+
   it('creates the webhook tables and indexes, is safe to run twice, and the store round-trips a webhook and its delivery', async () => {
     const indexesOf = async (table: string): Promise<string[]> => {
       const result = await proxy.env.D1.prepare(`PRAGMA index_list(\`${table}\`)`).all()
