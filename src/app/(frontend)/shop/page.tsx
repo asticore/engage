@@ -24,6 +24,9 @@ import { archiveQueryString, filterArchiveItems, parseArchiveFilters, sortArchiv
 import { archivePageHref } from '@/lib/templateWidgets'
 import { brandOptionsOf, tagOptionsOf, tagNames } from '@/features/ecommerce/lib/productTaxonomy'
 import { brandIdsForSlug, brandIn, tagIdsForSlug, tagIn } from '@/features/ecommerce/server/taxonomyFilters'
+import { docIdsForSlug, listCategoriesSafe } from '@/features/categories/store'
+import { categoryUrl } from '@/features/categories/frontend'
+import { childrenOf, findBySlug } from '@/features/categories/tree'
 import { slugify } from '@/utilities/formatSlug'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
 import { productArchiveItems } from '@/lib/blockContextFrom'
@@ -61,7 +64,15 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const tagIds = archiveFilters.tag ? await tagIdsForSlug(engine, archiveFilters.tag) : null
   const search = archiveFilters.q.trim()
 
-  const baseClauses = [{ _status: { equals: 'published' } }, ...(category ? [{ category: { equals: category } }] : [])]
+  // A category that is in the nested tree filters by its products and every sub category below it. Any other value
+  // keeps the old behaviour (the product's own category field), so existing flat links still work.
+  const treeRows = await listCategoriesSafe('shop')
+  const treeCategory = category ? findBySlug(treeRows, category) : null
+  const treeIds = category && treeCategory ? await docIdsForSlug('shop', category) : null
+  const baseClauses = [
+    { _status: { equals: 'published' } },
+    ...(category ? [treeIds ? { id: { in: treeIds.length ? treeIds : [-1] } } : { category: { equals: category } }] : []),
+  ]
   const narrowed = Boolean(brandIds || tagIds || search)
   const [settings, { docs: scanned }, facetResult] = (await Promise.all([
     engine.findGlobal({ slug: 'shop-settings' }).catch((): null => null),
@@ -153,12 +164,15 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           <Link href="/shop" className={filterLinkClassName(!category)}>
             All
           </Link>
-          {CATEGORIES.map((cat) => (
-            <Link
-              key={cat.value}
-              href={`/shop?category=${cat.value}`}
-              className={filterLinkClassName(category === cat.value)}
-            >
+          {(treeRows.length > 0
+            ? [
+                // Top level, then the sub categories of the chosen category (so a visitor can drill down).
+                ...childrenOf(treeRows, null).map((r) => ({ label: r.name, value: r.slug, href: categoryUrl('shop', treeRows, r.id) })),
+                ...(treeCategory ? childrenOf(treeRows, treeCategory.id).map((r) => ({ label: r.name, value: r.slug, href: categoryUrl('shop', treeRows, r.id) })) : []),
+              ]
+            : CATEGORIES.map((cat) => ({ ...cat, href: `/shop?category=${cat.value}` }))
+          ).map((cat) => (
+            <Link key={cat.value} href={cat.href} className={filterLinkClassName(category === cat.value)}>
               {cat.label}
             </Link>
           ))}
@@ -229,7 +243,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       )}
     </div>
   )
-  const shopCategories = CATEGORIES.map((c) => ({ slug: c.value, name: c.label }))
+  const shopCategories = treeRows.length > 0 ? treeRows.map((r) => ({ slug: r.slug, name: r.name })) : CATEGORIES.map((c) => ({ slug: c.value, name: c.label }))
   setBlockContext({
     path: '/shop',
     archive: {

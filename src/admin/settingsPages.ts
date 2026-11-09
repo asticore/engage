@@ -123,6 +123,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
     description: 'Shop, payments and membership settings.',
     sections: [
       { kind: 'link', label: 'Shop settings', href: '/shop-settings', description: 'Units, payments, shipping, invoices, gift cards, checkout and emails', type: 'view' },
+      { kind: 'link', label: 'Categories', href: '/categories', description: 'Nested categories for the shop and the blog: add, move and reorder.', type: 'view' },
       { kind: 'link', label: 'Display currencies', href: '/display-currencies', description: 'Show prices in other currencies. Shoppers always pay in the shop currency.', type: 'view' },
       { kind: 'global', slug: 'shop-settings' },
       { kind: 'global', slug: 'payment-settings' },
