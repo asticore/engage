@@ -14,6 +14,7 @@ import {
   adminDeleteOrganizationAction,
   cancelInviteAction,
   changeMemberRoleAction,
+  companyContentAccessAction,
   createOrganizationAction,
   createTeamAction,
   declineInviteAction,
@@ -269,6 +270,29 @@ export const AdminDeleteOrganizationForm: React.FC<{ organizationId: string; nam
       <button type="submit" className="btn btn--ghost">
         {t('cu.lit.delete')}
       </button>
+    </form>
+  )
+}
+
+/** Who may read one company document: checked members and teams, or nobody checked = every member. */
+export const ContentAccessForm: React.FC<{ organizationId: string; collection: string; docId: number; subjects: { value: string; label: string; checked: boolean }[] }> = ({ organizationId, collection, docId, subjects }) => {
+  const [state, action] = useForm(companyContentAccessAction)
+  const t = usePortalText()
+  return (
+    <form action={action} className="account-form">
+      <input type="hidden" name="organizationId" value={organizationId} />
+      <input type="hidden" name="collection" value={collection} />
+      <input type="hidden" name="docId" value={String(docId)} />
+      <fieldset>
+        <legend className="org-muted">{t('orgs.contentWho')}</legend>
+        {subjects.map((s) => (
+          <label key={s.value}>
+            <input type="checkbox" name="grant" value={s.value} defaultChecked={s.checked} /> {s.label}
+          </label>
+        ))}
+      </fieldset>
+      <SubmitButton>{t('orgs.contentSave')}</SubmitButton>
+      <Note state={state} />
     </form>
   )
 }

@@ -23,6 +23,7 @@ import {
   removeMember,
   resendInvite,
   saveCustomRole,
+  setCompanyContentAccess,
   setTeamMembership,
   transferOwnership,
   updateOrganization,
@@ -190,6 +191,18 @@ export async function teamMembershipAction(_state: ActionState, form: FormData):
   const result = await setTeamMembership(runtime.deps, runtime.actor, text(form, 'organizationId'), text(form, 'teamId'), Number(text(form, 'userId')), text(form, 'present') === 'yes')
   revalidatePath(`/account/organizations/${text(form, 'organizationId')}`)
   return toState(result, 'Team updated.')
+}
+
+export async function companyContentAccessAction(_state: ActionState, form: FormData): Promise<ActionState> {
+  const { runtime, refusal } = await open()
+  if (refusal) return refusal
+  const grants = form.getAll('grant').flatMap((raw) => {
+    const [subjectType, subjectId] = String(raw).split(':')
+    return subjectType && subjectId ? [{ subjectType, subjectId }] : []
+  })
+  const result = await setCompanyContentAccess(runtime.deps, runtime.actor, text(form, 'organizationId'), text(form, 'collection'), Number(text(form, 'docId')), grants)
+  revalidatePath(`/account/organizations/${text(form, 'organizationId')}`)
+  return toState(result, 'Access saved.')
 }
 
 export async function saveRoleAction(_state: ActionState, form: FormData): Promise<ActionState> {

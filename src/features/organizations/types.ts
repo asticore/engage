@@ -35,6 +35,13 @@ export type InviteRow = {
   lastSentAt: string
 }
 
+export type GrantSubjectType = 'member' | 'team'
+
+export type GrantRow = { subjectType: GrantSubjectType; subjectId: string }
+
+/** A document limited to one company, with its current narrowing (empty = every member). */
+export type CompanyDocRow = { collection: string; docId: number; title: string; grants: GrantRow[] }
+
 export type OrgSummary = OrgRow & { memberCount: number }
 
 export type OrgStore = {
@@ -72,6 +79,13 @@ export type OrgStore = {
   upsertRole: (row: RoleRow) => Promise<void>
   deleteRole: (orgId: string, name: string) => Promise<void>
   countMembersWithRoleName: (orgId: string, name: string) => Promise<number>
+
+  /** Documents limited to this company, newest first, with their titles. Only the collections in ORG_VISIBLE_COLLECTIONS. */
+  listCompanyDocs: (orgId: string, limit: number) => Promise<CompanyDocRow[]>
+  /** True when `docId` is limited to exactly this company. */
+  docBelongsToOrg: (orgId: string, collection: string, docId: number) => Promise<boolean>
+  /** Replaces the grants of one document. An empty list opens it to every member again. */
+  setGrants: (orgId: string, collection: string, docId: number, grants: GrantRow[], at: string) => Promise<void>
 
   insertInvite: (row: InviteRow) => Promise<void>
   getInvite: (id: string) => Promise<InviteRow | null>
