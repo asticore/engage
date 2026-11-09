@@ -65,7 +65,7 @@ const STRIPE_API_VERSION = '2025-03-31.basil' as unknown as Stripe.StripeConfig[
 export function getStripeClient(secretKey: string): Stripe {
   return new Stripe(secretKey, {
     apiVersion: STRIPE_API_VERSION,
-    appInfo: { name: 'Gracengatsby Shop', url: 'https://github.com/asticore/gracengatsby' },
+    appInfo: { name: 'Gracengatsby Shop', url: 'https://github.com/asticore/engage' },
   })
 }
 

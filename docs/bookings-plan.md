@@ -1,6 +1,6 @@
 # Bookings and scheduling: gap list and phased plan (Task 6)
 
-Written 8 Nov 2026. Research only: no code was changed. Every "exists" claim cites a path under `/home/user/gracengatsby`. Paths below are relative to the repo root.
+Written 8 Nov 2026. Research only: no code was changed. Every "exists" claim cites a path under `/home/user/engage`. Paths below are relative to the repo root.
 
 ## Summary
 

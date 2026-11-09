@@ -4,7 +4,7 @@ The public **Grace & Gatsby** website and the **Asticore Engage** content portal
 
 Editors sign in at `/admin` to build pages, run the shop, publish events and posts, and configure the site. Visitors get the storefront rendered from the same content.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/gracengatsby)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/engage)
 
 The deploy button builds the Worker from `wrangler.jsonc` and asks for the variables listed under `cloudflare.bindings` in `package.json` (see [Environment variables](#environment-variables)). `wrangler.jsonc` holds this project's own live D1 database ID and R2 bucket name, so a deploy to another Cloudflare account needs those replaced first: run `pnpm run setup:cloudflare` (see [Fresh Cloudflare account](#fresh-cloudflare-account-or-restoring-a-deploy)). The button alone on a new account has not been verified from this repo. Once a deploy is live, the first request to the new site detects the empty database and runs the full schema migration and starter-content seed by itself (`src/migrations/ensureInitialised.ts`), then `/admin` lets you create the first admin user. Use `pnpm run deploy:full` for later upgrades to an existing database.
 

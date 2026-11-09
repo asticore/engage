@@ -34,9 +34,9 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20261003_100000_visibility_schedule_lock_events_seo`, `20261005_100000_redirects`, `20261005_110000_pages_sort_order`, `20261006_100000_roles`, `20261007_100000_users_authorship`, `20261008_100000_integrations_expand`, `20261009_100000_user_permission_overrides`, `20261010_100000_site_fonts`, `20261011_100000_site_files`, `20261011_110000_cookie_consent`, `20261011_120000_media_library`, `20261011_130000_content_approval`, `20261011_140000_custom_fields_v2`; the `images` binding in `wrangler.jsonc` (Cloudflare Images transformations must be on the account, otherwise upload optimisation is skipped with a message); the cron trigger (`triggers.crons` in `wrangler.jsonc`, entry `cloudflare-worker.ts`).
 
 ## Tasks (in order)
-Open: Tasks 1 and 2 (reference file, engage-templates library), then Tasks 3 to 18 (shop and pricing, regions and domains, API, cron, email, theming, member groups, admin updates, activity log), Task 19 (speed up the portal and shrink the Worker bundle) and Task 20 (Matt's live checklist), then Task 21 (rename the repo to engage, very last, Matt does it later) remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered from 1 on 8 Nov 2026 and again after the 8 Nov tasks 1 to 6 closed (PR #226). Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
+Open: Tasks 1 and 2 (reference file, engage-templates library), then Tasks 3 to 18 (shop and pricing, regions and domains, API, cron, email, theming, member groups, admin updates, activity log), Task 19 (speed up the portal and shrink the Worker bundle) and Task 20 (Matt's live checklist), remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered from 1 on 8 Nov 2026 and again after the 8 Nov tasks 1 to 6 closed (PR #226). Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
 
-Order: 1, 2, 3 to 18 (features, in listed order), (new verify tasks), 19 Speed up, 20 Live checks (ends with the fresh-account deploy check), 21 Repo rename.
+Order: 1, 2, 3 to 18 (features, in listed order), (new verify tasks), 19 Speed up, 20 Live checks (ends with the fresh-account deploy check).
 
 ### Task 1. Reference file for installs (shine and effix)
 - [ ] Ship a reference file with every install (for example `reference.json` or `references.md` in the repo root) that the portal follows. Repos (Matt, 7 Nov 2026): https://github.com/asticore/shine and https://github.com/asticore/effix (default branch) to find shared reference material. It points to Matt's GitHub repositories "shine" and "effix" so portals use our reference files, alongside third-party references such as Tailwind. Design points: list each source with name, URL, type and version or branch; the portal reads the file on install and when updating; works on a fresh install with no setup (see Process item 8); fails safe when GitHub is unreachable. Effort M. (Added 7 Nov 2026.)
@@ -84,10 +84,10 @@ Order: 1, 2, 3 to 18 (features, in listed order), (new verify tasks), 19 Speed u
 - [ ] In admin settings, add a way to clean the tables of a section (delete its data after a confirmation and export offer) and make sure each section's tables are created only when its switch is turned on (builds on the lazy sections in PR #218). Add a migration and fresh-install tests for each. Effort M.
 
 ### Task 16. Update popup for super admins (new, 7 Nov 2026)
-- [ ] A popup in the admin portal that checks the current version against the repo and tells super admins when their copy needs updating. Super admins click it to start the update, then it opens the repo changelog. Other admins see nothing. Decide update method (Deploy button sync, GitHub sync, or a pull request) and handle forks. Task 21 updates the repo URL after the rename. Effort M to L.
+- [ ] A popup in the admin portal that checks the current version against the repo and tells super admins when their copy needs updating. Super admins click it to start the update, then it opens the repo changelog. Other admins see nothing. Decide update method (Deploy button sync, GitHub sync, or a pull request) and handle forks. Repo URL is now asticore/engage. Effort M to L.
 
 ### Task 17. Feedback button for super admins (new, 7 Nov 2026)
-- [ ] A button in the admin portal that lets super admins submit feedback: it opens the repo's new issue page (pre-filled with version and page). Uses the current repo URL; Task 21 updates it after the rename. Effort S.
+- [ ] A button in the admin portal that lets super admins submit feedback: it opens the repo's new issue page (pre-filled with version and page). Uses the repo URL asticore/engage; repo is now asticore/engage. Effort S.
 
 ### Task 18. Activity log with clear (new, 7 Nov 2026)
 - [ ] An activity log of what people do (sign-in, edits, publishes, setting changes, exports), viewable per person and filterable, with a clear or purge option (with retention setting and a record that a clear happened). Check against the privacy rules and the existing audit and approval history first. Effort M.
@@ -167,6 +167,12 @@ Lessons: migration-order specs use `migrations.length - N` offsets, so every new
 
 Only items not yet verified. Tick each, report failures. Grouped by area, each with how to check.
 
+### Repo rename follow-ups (9 Nov 2026, Matt)
+- [ ] Cloudflare dashboard > Workers & Pages > the worker > Settings > Builds: reconnect the Git repository to `asticore/engage` if it shows disconnected; confirm build and deploy commands unchanged. Pass = next push to `main` deploys.
+- [ ] GitHub > Settings > Branches: confirm the `main` rule and required `test` check still apply on `engage`.
+- [ ] Local clone: `git remote set-url origin https://github.com/asticore/engage` (folder rename optional).
+- [ ] Claude project repo setting and any webhooks or GitHub App access: point at `asticore/engage`.
+
 ### Visual editor, walkthrough and setup (PR #226, 8 Nov 2026)
 - [ ] Drag a card from the Elements bar onto the canvas (Chrome and Safari): it lands where the blue line shows. Templates drag too.
 - [ ] Walkthrough: a new admin account sees it once on first sign-in; Skip, then sign in on another browser: it does not show again. Sidebar Help replays it.
@@ -226,7 +232,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Remove an address: pass = "Remove this address?" appears, Cancel keeps it, OK removes it.
 
 ### Operations (PR #199)
-- [ ] Branch protection: GitHub, asticore/gracengatsby > Settings > Branches > rule for `main` > "Require status checks to pass before merging" > add the `test` check (the CI job) > save. Pass = a PR whose `test` job fails shows "Merging is blocked".
+- [ ] Branch protection: GitHub, asticore/engage > Settings > Branches > rule for `main` > "Require status checks to pass before merging" > add the `test` check (the CI job) > save. Pass = a PR whose `test` job fails shows "Merging is blocked".
 - [ ] Uptime: Cloudflare dashboard > Notifications > add a health check on the live home page with an email alert to you. Pass = pausing the site or pointing the check at a wrong path sends you an alert email.
 - [ ] Error alert: after the deploy, Settings > Speed > Error alerts is on with threshold 10. Cause 10 new errors on a test site. Pass = one admin email arrives; a second burst within the hour sends none.
 - [ ] Restore drill (monthly): Settings > Backups > run a backup now; restore that backup onto a copy (a scratch install or a copy of the D1 database) following the Backups screen; compare a page, a product and an order. Pass = the copy shows the same content.
@@ -477,7 +483,3 @@ Waves 43 to 48 and waves 30 and 31: see "Done". The visual editor reference and 
 
 ### Fresh-account deploy and setup script (last live check)
 - [ ] Fresh-account deploy check and the setup script on a new Cloudflare account (the "Fresh-account deploy check (detail)" section and the Setup script item under "Architecture (closed Task 4, PR #215)"). Runs after Task 19, so it also proves the free-plan size limit on a fresh account.
-
-## Task 21. Rename the repository to engage (new, 7 Nov 2026)
-- [ ] Rename the GitHub repo to `engage` (Matt owns the rename). Then update every reference: README and Deploy button URL, `wrangler.jsonc` and worker name if tied to the repo name, package name, update checker and feedback links (Tasks 16 and 17), template library and reference file URLs (Tasks 1 and 2), docs and tests with the old name. GitHub redirects the old URL, but fix links anyway. New name confirmed: `engage` (Matt, 7 Nov 2026). LAST task, after the live checklist; Matt will do it later. Effort S.
-
