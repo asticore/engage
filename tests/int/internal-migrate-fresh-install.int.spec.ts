@@ -1520,7 +1520,7 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     const byName = new Map(info.map((c) => [c.name, c.dflt_value]))
     expect(byName.get('organizations_enabled')).toBe('0')
     expect(byName.get('organizations_max_per_account')).toBe('5')
-    for (const table of ['eg_organizations', 'eg_organization_members', 'eg_organization_roles', 'eg_organization_teams', 'eg_organization_team_members', 'eg_organization_invitations', 'eg_content_org_visibility']) {
+    for (const table of ['eg_organizations', 'eg_organization_members', 'eg_organization_roles', 'eg_organization_teams', 'eg_organization_team_members', 'eg_organization_invitations', 'eg_content_org_visibility', 'eg_content_org_grants']) {
       expect(tables, table).toContain(table)
     }
   })

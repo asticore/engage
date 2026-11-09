@@ -11,13 +11,14 @@ import { portalTextFor } from '@/features/multilingual/portalStrings'
 import { switchOrganizationAction } from '../actions'
 import { ORG_ACTIONS, BUILT_IN_ROLES, isBuiltInRole } from '../permissions'
 import { parseMetadata } from '../policy'
-import { getOrganization, listMyOrganizations, previewInvite } from '../service'
+import { getOrganization, listCompanyContent, listMyOrganizations, previewInvite } from '../service'
 import { refusalText } from '../refusalText'
 import { activeOrganization, memberEmails, orgRuntime } from '../wiring'
 import {
   CancelInviteForm,
   ChangeRoleForm,
   CreateOrganizationForm,
+  ContentAccessForm,
   CreateTeamForm,
   DeleteOrganizationForm,
   DeleteRoleForm,
@@ -128,6 +129,7 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
   const detail = result.value
   const { org } = detail
   const can = (action: (typeof ORG_ACTIONS)[number]) => detail.permissions.includes(action)
+  const companyDocs = can('content:manage') ? ((await listCompanyContent(runtime.deps, runtime.actor, id)).value ?? []) : []
   const emails = await memberEmails(runtime.context.engine, detail.members.map((m) => m.userId))
   const portalLocale = await currentPortalLocale()
   const tx = portalTextFor(portalLocale)
@@ -198,6 +200,33 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
             })}
           </ul>
           {can('team:manage') ? <CreateTeamForm organizationId={org.id} /> : null}
+        </section>
+      ) : null}
+
+      {can('content:manage') ? (
+        <section className="org-section">
+          <h2>{tx('orgs.content')}</h2>
+          <p className="org-muted">{tx('orgs.contentHelp')}</p>
+          {companyDocs.length === 0 ? <p className="account-empty">{tx('orgs.noContent')}</p> : null}
+          <ul className="org-list">
+            {companyDocs.map((d) => (
+              <li key={`${d.collection}-${d.docId}`} className="org-row">
+                <div className="org-row__main">
+                  <strong>{d.title}</strong> <span className="org-badge">{d.collection}</span>
+                  <div className="org-muted">{d.grants.length === 0 ? tx('orgs.contentEveryone') : tx('orgs.contentSelected', { count: d.grants.length })}</div>
+                </div>
+                <ContentAccessForm
+                  organizationId={org.id}
+                  collection={d.collection}
+                  docId={d.docId}
+                  subjects={[
+                    ...detail.members.map((m) => ({ value: `member:${m.userId}`, label: labelOf(m.userId), checked: d.grants.some((g) => g.subjectType === 'member' && g.subjectId === String(m.userId)) })),
+                    ...detail.teams.map((tm) => ({ value: `team:${tm.id}`, label: tx('orgs.contentTeam', { name: tm.name }), checked: d.grants.some((g) => g.subjectType === 'team' && g.subjectId === tm.id) })),
+                  ]}
+                />
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 

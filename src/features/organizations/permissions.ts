@@ -23,6 +23,7 @@ export const ORG_ACTIONS = [
   'team:manage',
   'role:manage',
   'content:read',
+  'content:manage',
 ] as const
 
 export type OrgAction = (typeof ORG_ACTIONS)[number]

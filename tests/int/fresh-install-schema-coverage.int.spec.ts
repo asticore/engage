@@ -823,6 +823,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
       expect.arrayContaining(['id', 'organization_id', 'email', 'role', 'team_id', 'token_hash', 'status', 'inviter_id', 'expires_at', 'resolved_at', 'last_sent_at']),
     )
     expect(await colsOf('eg_content_org_visibility')).toEqual(expect.arrayContaining(['collection', 'doc_id', 'organization_id']))
+    expect(await colsOf('eg_content_org_grants')).toEqual(expect.arrayContaining(['organization_id', 'collection', 'doc_id', 'subject_type', 'subject_id']))
     const indexes = ((await proxy.env.D1.prepare('PRAGMA index_list(`eg_organization_invitations`)').all()).results as { name: string; unique: number }[])
     expect(indexes.find((i) => i.name === 'eg_organization_invitations_token_idx')?.unique).toBe(1)
   })
