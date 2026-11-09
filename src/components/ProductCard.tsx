@@ -6,6 +6,8 @@ import { priceRange, type CatalogueProduct } from '@/features/ecommerce/catalogu
 import { priceInfo } from '@/features/ecommerce/pricing'
 import { computeStockStatus } from '@/features/ecommerce/stock'
 import { ProductCardPrice } from '@/components/ProductCardPrice'
+import { PromoBadges } from '@/components/PromoBadges'
+import { badgesFor, type PromoBadge } from '@/features/ecommerce/lib/promoBadges'
 import type { Media, Product } from '@/engage-types'
 
 const getImageURL = (product: Product): string | null => {
@@ -20,13 +22,26 @@ export const ProductCard: React.FC<{
   product: Product
   showShortDescription?: boolean
   aspect?: 'portrait' | 'square'
-}> = ({ product, showShortDescription = false, aspect = 'portrait' }) => {
+  /** The shop's promo badges (loadPromoBadges); the ones whose rule matches this product are laid over the picture. */
+  promoBadges?: PromoBadge[]
+}> = ({ product, showShortDescription = false, aspect = 'portrait', promoBadges }) => {
   const imageURL = getImageURL(product)
   const catalogue = product as unknown as CatalogueProduct
   const range = priceRange(catalogue)
   const info = priceInfo(catalogue)
   const variable = catalogue.productType === 'variable' && range.min !== null && range.max !== null && range.min !== range.max
   const soldOut = (catalogue.productType ?? 'simple') === 'simple' && computeStockStatus(catalogue) === 'outofstock'
+
+  const badges = promoBadges?.length
+    ? badgesFor(promoBadges, {
+        slug: product.slug,
+        category: product.category,
+        tags: (product as unknown as { tags?: unknown }).tags,
+        createdAt: product.createdAt,
+        onSale: info.onSale,
+        soldOut,
+      })
+    : []
 
   return (
     <Link
@@ -48,6 +63,7 @@ export const ProductCard: React.FC<{
             aria-hidden
           />
         )}
+        <PromoBadges badges={badges} />
       </div>
       <div className="p-5">
         <span className="text-[0.7rem] uppercase tracking-[0.1em] text-[var(--color-gold)]">

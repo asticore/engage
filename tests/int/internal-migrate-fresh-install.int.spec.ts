@@ -345,6 +345,18 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     )
   })
 
+  it('creates the promo badge table and the promo badge switch (the second-run check below covers idempotence)', async () => {
+    expect(tables).toContain('eg_shop_extra_settings_promo_badges')
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    expect(await columnsOf('eg_shop_extra_settings')).toContain('promo_badges_enabled')
+    expect(await columnsOf('eg_shop_extra_settings_promo_badges')).toEqual(
+      expect.arrayContaining(['_order', '_parent_id', 'text', 'enabled', 'icon', 'colour', 'text_colour', 'position', 'style', 'shape', 'effect', 'applies_to', 'new_days', 'tag', 'category', 'product_slugs', 'priority', 'starts_at', 'ends_at']),
+    )
+  })
+
   it('creates the back-in-stock sign-up table and its lock link column', async () => {
     expect(tables).toContain('eg_stock_subscriptions')
     const result = await proxy.env.D1.prepare('PRAGMA table_info(`eg_stock_subscriptions`)').all()

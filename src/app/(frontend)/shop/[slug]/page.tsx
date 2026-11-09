@@ -44,6 +44,7 @@ import { PasswordGate } from '@/components/PasswordGate'
 import { getPasswordGateState } from '@/features/visibility/gate'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { getEngine } from '@/lib/engine'
+import { loadPromoBadges } from '@/features/ecommerce/lib/promoBadges'
 import { getFeatureFlags } from '@/utilities/features'
 import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
 import { sourceSlugFor } from '@/features/multilingual/slugIndex'
@@ -108,6 +109,7 @@ export default async function ProductPage({
 
   const { slug: requested } = await params
   const engine = await getEngine()
+  const promoBadges = await loadPromoBadges(engine)
   const requestLocale = await currentRequestLocale()
   // A source slug with a translation is redirected to the translated URL; a translated slug answers for its product.
   const slug = await sourceSlugFor(requestLocale, 'shop', requested, { redirect: true })
@@ -286,7 +288,7 @@ export default async function ProductPage({
           </div>
           <div className="product-grid">
             {upsells.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <ProductCard key={item.id} product={item} promoBadges={promoBadges} />
             ))}
           </div>
         </div>
@@ -301,7 +303,7 @@ export default async function ProductPage({
           </div>
           <div className="product-grid">
             {related.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <ProductCard key={item.id} product={item} promoBadges={promoBadges} />
             ))}
           </div>
         </div>

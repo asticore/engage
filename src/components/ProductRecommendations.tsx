@@ -2,6 +2,7 @@ import React from 'react'
 
 import { ProductCard } from '@/components/ProductCard'
 import { getEngine } from '@/lib/engine'
+import { loadPromoBadges } from '@/features/ecommerce/lib/promoBadges'
 import { loadRecommendationSettings, recommendedProducts, type RecommendEngine } from '@/features/ecommerce/server/recommendations'
 import type { Product } from '@/engage-types'
 
@@ -15,6 +16,7 @@ export async function ProductRecommendations({ productId, category }: { productI
   if (!settings.enabled) return null
   const docs = await recommendedProducts(engine, { anchorIds: [productId], categories: category ? [category] : [], limit: settings.max })
   if (docs.length === 0) return null
+  const promoBadges = await loadPromoBadges(engine)
   return (
     <div className="page-shell col-span-full mt-16">
       <div className="section-heading">
@@ -22,7 +24,7 @@ export async function ProductRecommendations({ productId, category }: { productI
       </div>
       <div className="product-grid">
         {docs.map((item) => (
-          <ProductCard key={item.id} product={item as unknown as Product} />
+          <ProductCard key={item.id} product={item as unknown as Product} promoBadges={promoBadges} />
         ))}
       </div>
     </div>
