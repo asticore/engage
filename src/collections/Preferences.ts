@@ -1,5 +1,6 @@
 import type { CollectionConfig } from '@/engine'
 
+import { forceOwnerBeforeChange, preferenceAccess } from '@/access/preferenceAccess'
 import { PREFERENCES_SLUG } from '@/features/accounts/types'
 
 /**
@@ -30,19 +31,18 @@ import { PREFERENCES_SLUG } from '@/features/accounts/types'
  * exactly (id, key, value, updated_at, created_at - confirmed, no other
  * columns exist).
  *
- * No `access` block is declared: the reference engine restricts read/update/delete
- * to the owning user and leaves create to any logged-in user via a
- * dedicated access function this app has no caller that depends on (see
- * `preferences.ts`'s own header - every write already locates its row
- * through an access-enforced read first). Omitting `access` here falls back
- * to this app's own `/api/access` reproduction's documented default
- * (`isLoggedIn` for every operation - see `src/localapi/rest.ts`'s
- * `callAccessFn`), a safe, documented approximation rather than a fabricated
- * per-row ownership rule nothing in this app currently needs.
+ * Access: read/update/delete are admin or the row's owner, create is any
+ * signed-in user with the owner forced to the caller, anonymous gets nothing
+ * (see `src/access/preferenceAccess.ts`). Before this the collection fell back
+ * to the "any signed-in user" default, so one user could list, read, edit and
+ * delete another's rows over `/api/preferences`. Server helpers pass
+ * `overrideAccess: true` and keep filtering to the session user themselves.
  */
 export const Preferences: CollectionConfig = {
   slug: PREFERENCES_SLUG,
   dbName: 'eg_preferences',
+  access: preferenceAccess,
+  hooks: { beforeChange: [forceOwnerBeforeChange] },
   fields: [
     { name: 'user', type: 'relationship', relationTo: ['users'], required: true },
     { name: 'key', type: 'text' },
