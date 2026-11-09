@@ -39,6 +39,7 @@ import { BODY_FONT_VARS, FONT_FACE_VARS, HEADING_FONT_VARS } from '@/features/fo
 import { buildThemeStylesCss } from '@/features/themeStyles/css'
 import { loadThemeStyles } from '@/features/themeStyles/store'
 import { SiteEffects } from '@/components/site/SiteEffects'
+import { EffixLoader } from '@/components/site/EffixLoader'
 import { siteEffectsFor } from '@/components/site/siteEffectsConfig'
 import { renderChromeTemplates, renderSidebarTemplates, requestPathOf, type ChromeScope } from '@/features/siteTemplates/chrome'
 import { SidebarLayout } from '@/features/siteTemplates/SidebarLayout'
@@ -321,6 +322,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         </DisplayCurrencyProvider>
         </ShopCurrencyProvider>
         {siteEffects && <SiteEffects config={siteEffects} />}
+        <EffixLoader />
         <SeoBodyScripts />
       </body>
     </html>

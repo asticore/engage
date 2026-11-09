@@ -45,7 +45,6 @@
     "@opennextjs/cloudflare": "~1.18.1",
     "@stripe/react-stripe-js": "^6.9.0",
     "@stripe/stripe-js": "^9.15.0",
-    "@tailwindcss/postcss": "^4.3.3",
     "cross-env": "10.1.0",
     "drizzle-orm": "0.45.2",
     "fflate": "^0.8.3",
@@ -55,7 +54,6 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "stripe": "^22.6.1",
-    "tailwindcss": "^4.3.3",
     "to-snake-case": "1.0.0"
   },
   "devDependencies": {
