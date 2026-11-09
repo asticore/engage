@@ -124,6 +124,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
     sections: [
       { kind: 'link', label: 'Shop settings', href: '/shop-settings', description: 'Units, payments, shipping, invoices, gift cards, checkout and emails', type: 'view' },
       { kind: 'link', label: 'Display currencies', href: '/display-currencies', description: 'Show prices in other currencies. Shoppers always pay in the shop currency.', type: 'view' },
+      { kind: 'link', label: 'Price tiers', href: '/price-tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.', type: 'view' },
       { kind: 'global', slug: 'shop-settings' },
       { kind: 'global', slug: 'payment-settings' },
       { kind: 'global', slug: 'shipping-settings' },

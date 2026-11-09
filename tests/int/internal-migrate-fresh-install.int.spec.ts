@@ -925,8 +925,22 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
     expect(tables).toContain('eg_shop_display_currencies')
     expect(await columnsOf('eg_shop_display_currencies')).toEqual(
-      expect.arrayContaining(['code', 'enabled', 'sort_order', 'rate_mode', 'manual_rate', 'auto_rate', 'auto_rate_base', 'auto_rate_at', 'updated_at', 'created_at']),
+      expect.arrayContaining(['code', 'enabled', 'sort_order', 'rate_mode', 'manual_rate', 'auto_rate', 'auto_rate_base', 'auto_rate_at', 'rounding', 'updated_at', 'created_at']),
     )
+  })
+
+  it('creates the price tiers table with its unique index, and the display currency rounding column', async () => {
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    expect(tables).toContain('eg_shop_price_tiers')
+    const before = await columnsOf('eg_shop_price_tiers')
+    expect(before).toEqual(expect.arrayContaining(['id', 'product_id', 'variation_id', 'customer_type', 'min_qty', 'price', 'updated_at', 'created_at']))
+    const idx = await proxy.env.D1.prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='eg_shop_price_tiers_unique_idx'").all()
+    expect(idx.results).toHaveLength(1)
+    expect(await columnsOf('eg_shop_display_currencies')).toContain('rounding')
+    // The second run is asserted once for the whole schema above (idempotent).
   })
 
   it('creates the AI builder usage table and the model and cap columns', async () => {

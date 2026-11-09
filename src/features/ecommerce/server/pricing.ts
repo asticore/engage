@@ -16,6 +16,8 @@ import { addOnSummary, parseAddOnInputs, priceAddOns, normaliseAddOnDefs, type A
 import { applyPricingRules } from '../lib/pricingRules'
 import { loadShopRulesConfig } from './pricingRules'
 import { resolveBundle } from './bundles'
+import { resolveTierPrice, type PriceTier } from '../lib/priceTiers'
+import { listPriceTiers } from './priceTiers'
 
 type Doc = Record<string, unknown>
 export type PricingEngine = {
@@ -115,7 +117,21 @@ export function giftCardLine(product: Doc, item: CartItemInput, key: string, qua
 }
 
 /** Loads each cart line from the database and prices it. Nothing here comes from the browser except ids and quantities. */
-export async function loadPricedLines(engine: PricingEngine, items: CartItemInput[], now = new Date(), addOnsOn = true): Promise<PricedLine[]> {
+export type TierContext = { tiers: PriceTier[]; customerTypes: string[] }
+
+/** Loads the quantity and customer-type tiers for the products in a cart. Never throws: no table means no tiers. */
+export async function loadTierContext(items: CartItemInput[], customerTypes: string[] | null | undefined): Promise<TierContext> {
+  const ids = [...new Set(items.map((i) => idOf(i.product)).filter((id): id is number => id !== null).map(String))]
+  if (ids.length === 0) return { tiers: [], customerTypes: [] }
+  try {
+    const db = await import('@/cms/db/connect').then((m) => m.resolveD1Binding())
+    return { tiers: db ? await listPriceTiers(db as never, ids) : [], customerTypes: Array.isArray(customerTypes) ? customerTypes : [] }
+  } catch {
+    return { tiers: [], customerTypes: [] }
+  }
+}
+
+export async function loadPricedLines(engine: PricingEngine, items: CartItemInput[], now = new Date(), addOnsOn = true, tierCtx?: TierContext): Promise<PricedLine[]> {
   const lines: PricedLine[] = []
   let giftSettings: ReturnType<typeof normaliseGiftCardSettings> | null = null
   const inCart = new Map<string, number>() // the same product listed twice must be available for the sum
@@ -178,6 +194,15 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
     } else {
       throw new CheckoutError((resolved as { error: string }).error)
     }
+    // Quantity breaks and customer-type (wholesale) prices. Never for name-your-price lines; never above the normal price.
+    let tierNote: { minQty: number; customerType: string | null } | null = null
+    if (tierCtx && tierCtx.tiers.length > 0 && !(typeof item.priceCents === 'number')) {
+      const tiered = resolveTierPrice(tierCtx.tiers, { productId: String(productId), variationId, quantity: Number(quantity), customerTypes: tierCtx.customerTypes, basePrice: unitPrice })
+      if (tiered.tier) {
+        unitPrice = tiered.price
+        tierNote = { minQty: tiered.tier.minQty, customerType: tiered.tier.customerType }
+      }
+    }
     // Product add-ons: the buyer's answers are checked against the product's own questions and priced here.
     // With the shop switch off, add-on answers are ignored and the product sells as before.
     const addOnPriced = priceAddOns(addOnsOn ? normaliseAddOnDefs((product as Doc | null)?.addOns) : [], addOnsOn ? parseAddOnInputs(item.addOns) : [])
@@ -200,7 +225,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       quantity,
       taxClass,
       categories,
-      onSale: typeof p.salePrice === 'number' && unitPrice === p.salePrice,
+      onSale: !tierNote && typeof p.salePrice === 'number' && unitPrice === p.salePrice,
       weightGrams: Math.round(weight * 1000),
       lengthCm: typeof p.length === 'number' ? p.length : null,
       widthCm: typeof p.width === 'number' ? p.width : null,
@@ -208,7 +233,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       shippingClass: idOf(p.shippingClass),
       requiresShipping: !virtual,
       // carried for the order snapshot
-      ...({ variationId, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices } as object),
+      ...({ variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices } as object),
     } as PricedLine)
   }
   return lines
@@ -308,7 +333,8 @@ async function liveShippingOptions(engine: PricingEngine, lines: PricedLine[], a
 export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: ShopConfig): Promise<{ totals: OrderTotals; config: ShopConfig; lines: PricedLine[] }> {
   const config = cfg ?? (await loadShopConfig(engine))
   const shopRules = await loadShopRulesConfig(engine) // one read per checkout: add-on switch and pricing rules
-  const lines = await loadPricedLines(engine, input.items, undefined, shopRules.addOnsOn)
+  const tierCtx = await loadTierContext(input.items, input.customerRoles)
+  const lines = await loadPricedLines(engine, input.items, undefined, shopRules.addOnsOn, tierCtx)
   // Dynamic pricing rules run before coupons (see lib/totals.ts). Gift cards are never discounted.
   const ruleResult =
     shopRules.rulesOn && shopRules.rules.length > 0
