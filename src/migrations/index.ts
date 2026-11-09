@@ -151,6 +151,7 @@ import * as migration_20270311_100000_setup_questionnaire from './20270311_10000
 import * as migration_20270312_100000_user_photo from './20270312_100000_user_photo';
 import * as migration_20270313_100000_price_tiers_currency_rounding from './20270313_100000_price_tiers_currency_rounding';
 import * as migration_20270313_100000_promo_badges from './20270313_100000_promo_badges';
+import * as migration_20270313_100000_categories from './20270313_100000_categories';
 
 export const migrations = [
   {
@@ -912,5 +913,10 @@ export const migrations = [
     up: migration_20270313_100000_promo_badges.up,
     down: migration_20270313_100000_promo_badges.down,
     name: '20270313_100000_promo_badges',
+  },
+  {
+    up: migration_20270313_100000_categories.up,
+    down: migration_20270313_100000_categories.down,
+    name: '20270313_100000_categories',
   },
 ];

@@ -51,6 +51,15 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
   })
 
+  it('creates the nested category tables with their columns and indexes', async () => {
+    for (const table of ['eg_categories', 'eg_category_links']) expect(tables, table).toContain(table)
+    const cols = async (t: string) => ((await proxy.env.D1.prepare(`PRAGMA table_info(\`${t}\`)`).all()).results as { name: string }[]).map((r) => r.name)
+    expect(await cols('eg_categories')).toEqual(expect.arrayContaining(['scope', 'name', 'slug', 'parent_id', 'sort_order']))
+    expect(await cols('eg_category_links')).toEqual(expect.arrayContaining(['category_id', 'scope', 'doc_id']))
+    const idx = ((await proxy.env.D1.prepare(`SELECT name FROM sqlite_master WHERE type='index'`).all()).results as { name: string }[]).map((r) => r.name)
+    expect(idx).toContain('eg_categories_scope_slug_idx')
+  })
+
   it('adds SEO and social media columns to pages, posts, and courses', async () => {
     const checkColumns = async (table: string, expectedColumns: string[]): Promise<void> => {
       const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()

@@ -53,6 +53,7 @@ const GoogleConnectionView = lazyView(() => import('@/admin/views/GoogleConnecti
 const ThemeStylesView = lazyView(() => import('@/admin/views/ThemeStylesView').then((mod) => mod.ThemeStylesView))
 const EmailTestingView = lazyView(() => import('@/admin/views/EmailTestingView').then((mod) => mod.EmailTestingView))
 const EmailSuppressionsView = lazyView(() => import('@/admin/views/EmailSuppressionsView').then((mod) => mod.EmailSuppressionsView))
+const CategoriesView = lazyView(() => import('@/admin/views/CategoriesView').then((mod) => mod.CategoriesView))
 const EmailDesignerView = lazyView(() => import('@/admin/views/EmailDesignerView').then((mod) => mod.EmailDesignerView))
 const CookieConsentView = lazyView(() => import('@/admin/views/CookieConsentView').then((mod) => mod.CookieConsentView))
 const ShopSettingsView = lazyView(() => import('@/admin/views/ShopSettingsView').then((mod) => mod.ShopSettingsView))
@@ -288,6 +289,12 @@ export const CUSTOM_ADMIN_VIEWS = [
     Component: EmailTestingView,
     path: '/email-testing',
     meta: { title: 'Email testing', description: 'Check the email connection, send test emails and check the sending domain.' },
+  },
+  {
+    key: 'categories',
+    Component: CategoriesView,
+    path: '/categories',
+    meta: { title: 'Categories', description: 'Nested categories for the shop and the blog: add, move and reorder.' },
   },
   {
     key: 'emailSuppressions',

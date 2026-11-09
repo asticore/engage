@@ -209,7 +209,7 @@ const VISUAL_BLOCKS: BlockDef[] = [
           { label: 'Pages', value: 'pages' },
         ],
       },
-      { name: 'category', label: 'Category (blank = all)', type: 'text' },
+      { name: 'category', label: 'Category name or slug (blank = all, includes sub categories)', type: 'text' },
       { name: 'limit', label: 'How many items', type: 'number', width: 'half' },
       { name: 'columns', label: 'Columns', type: 'number', width: 'half' },
       {

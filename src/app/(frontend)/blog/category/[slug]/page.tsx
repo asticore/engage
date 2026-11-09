@@ -7,9 +7,14 @@ import type { Metadata } from 'next'
 import { orderBlogPosts } from '@/features/editScreens/blogOrder'
 import { readingTimeLabel } from '@/features/editScreens/readingTime'
 import { ARCHIVE_PAGE_SIZE, categoryIndex, categoryPath, paginate, parsePage, postsInCategory, termSlug, archivePostFacets, filterArchivePosts } from '@/features/siteTemplates/archiveQueries'
+import { BreadcrumbsElement } from '@/components/blocks/elements/Wave36Elements'
+import { categoryCrumbs, subCategoryLinks } from '@/features/categories/frontend'
+import { listCategoriesSafe } from '@/features/categories/store'
+import { findBySlug, subtreeNames } from '@/features/categories/tree'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
 import { archiveQueryString, parseArchiveFilters } from '@/features/siteTemplates/archiveFilter'
 import { archivePageHref } from '@/lib/templateWidgets'
+import { slugify } from '@/utilities/formatSlug'
 import { getEngine } from '@/lib/engine'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
@@ -36,9 +41,17 @@ async function load(rawSlug: string) {
     depth: 1,
   })) as unknown as { docs: Row[] }
   const docs = await applyTranslationsToDocs(await excludeProtected('posts', allDocs), 'posts', await currentRequestLocale())
+  // A category in the nested tree also lists the posts of its sub categories. A name with no tree row stays flat.
+  const tree = await listCategoriesSafe('blog')
+  const node = findBySlug(tree, slug)
+  if (node) {
+    const names = new Set(subtreeNames(tree, node.id).map((n) => slugify(n)))
+    const posts = docs.filter((p) => (p.categories ?? []).some((c) => names.has(slugify((c?.name ?? '').trim()))))
+    return { slug, name: node.name, posts: orderBlogPosts(posts) as Row[], tree, nodeId: node.id }
+  }
   const name = categoryIndex(docs).get(slug)
   if (!name) return null
-  return { slug, name, posts: orderBlogPosts(postsInCategory(docs, slug)) as Row[] }
+  return { slug, name, posts: orderBlogPosts(postsInCategory(docs, slug)) as Row[], tree: [] as Awaited<ReturnType<typeof listCategoriesSafe>>, nodeId: null as number | null }
 }
 
 export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
@@ -76,9 +89,15 @@ export default async function CategoryArchivePage({ params, searchParams }: Para
 
   const body = (
     <div className="page-shell">
+      {term.nodeId !== null && <BreadcrumbsElement items={categoryCrumbs('blog', term.tree, term.nodeId)} separator=">" />}
       <div className="section-heading">
         <h1>{term.name}</h1>
       </div>
+      {term.nodeId !== null && subCategoryLinks('blog', term.tree, term.nodeId).length > 0 && (
+        <nav aria-label="Sub categories" className="mb-6 flex flex-wrap gap-4">
+          {subCategoryLinks('blog', term.tree, term.nodeId).map((s) => <Link key={s.href} href={s.href}>{s.name}</Link>)}
+        </nav>
+      )}
       <div className={`blog-archive__${settings?.archiveLayout || 'grid'}`}>
         {paged.items.map((post) => {
           const image = post.featuredImage && typeof post.featuredImage === 'object' ? (post.featuredImage as Media) : null

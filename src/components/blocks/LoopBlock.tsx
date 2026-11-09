@@ -1,5 +1,7 @@
 import React from 'react'
 
+import { listCategoriesSafe, linkedDocIds } from '@/features/categories/store'
+import { descendantIds, findBySlug, subtreeNames } from '@/features/categories/tree'
 import { getEngine } from '@/lib/engine'
 import { formatPriceInAUD } from '@/lib/formatCurrency'
 import { loadShopCurrency } from '@/features/ecommerce/lib/shopCurrency'
@@ -70,6 +72,20 @@ export async function LoopBlock({
   // Anything with drafts: only published items are listed, so an unpublished event never shows.
   const hasDraftStatus = collection === 'products' || collection === 'posts' || collection === 'pages' || collection === 'events'
 
+  // A category that is in the nested tree includes its sub categories: products by their category links, posts
+  // by the names of the whole subtree. Any other value keeps the old field match, so flat categories still work.
+  let treeIds: number[] | null = null
+  let treeNames: string[] | null = null
+  if (category && (collection === 'products' || collection === 'posts')) {
+    const scope = collection === 'products' ? 'shop' : 'blog'
+    const rows = await listCategoriesSafe(scope)
+    const hit = findBySlug(rows, category) ?? rows.find((r) => r.name.toLowerCase() === category.trim().toLowerCase()) ?? null
+    if (hit) {
+      if (scope === 'shop') treeIds = await linkedDocIds(descendantIds(rows, hit.id)).catch((): number[] => [])
+      else treeNames = subtreeNames(rows, hit.id)
+    }
+  }
+
   let items: Record<string, unknown>[] = []
   try {
     const result = await engine.find({
@@ -77,14 +93,19 @@ export async function LoopBlock({
       where: {
         and: [
           ...(hasDraftStatus ? [{ _status: { equals: 'published' } }] : []),
-          ...(category && supportsCategory ? [{ category: { equals: category } }] : []),
+          ...(category && supportsCategory && !treeIds && !treeNames ? [{ category: { equals: category } }] : []),
+          ...(treeIds ? [{ id: { in: treeIds.length ? treeIds : [-1] } }] : []),
         ],
       },
       sort: SORTS[sortBy || 'newest'] || '-createdAt',
-      limit: limit || 6,
+      limit: treeNames ? 300 : limit || 6,
       depth: 1,
     })
     items = result.docs as unknown as Record<string, unknown>[]
+    if (treeNames) {
+      const wanted = new Set(treeNames.map((n) => n.toLowerCase()))
+      items = items.filter((item) => ((item.categories as { name?: string }[] | undefined) ?? []).some((c) => wanted.has(String(c?.name ?? '').trim().toLowerCase()))).slice(0, limit || 6)
+    }
   } catch {
     return null
   }

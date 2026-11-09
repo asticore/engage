@@ -62,6 +62,12 @@ export const HUB_SCREENS: HubScreen[] = [
     description: 'Switches for shop features such as pre-orders and subscriptions.',
   },
   {
+    key: 'categories',
+    label: 'Categories',
+    href: '/categories',
+    description: 'Nested categories for the shop and the blog: add, move and reorder.',
+  },
+  {
     key: 'template-libraries',
     label: 'Template libraries',
     href: '/settings/template-libraries',
