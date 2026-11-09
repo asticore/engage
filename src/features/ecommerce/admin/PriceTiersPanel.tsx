@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import '@/features/shopReports/shop-reports.css'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
@@ -31,7 +31,8 @@ export function PriceTiersPanel() {
   const [rules, setRules] = useState<Rule[]>([{ minQty: '10', customerType: '', percentOff: '10' }])
   const [scopeAll, setScopeAll] = useState(true)
 
-  const load = (id: string) =>
+  const load = useCallback(
+    (id: string) =>
     fetch(`${API}${id ? `?productId=${encodeURIComponent(id)}` : ''}`, { credentials: 'include' })
       .then(async (res) => {
         const body = (await res.json().catch(() => ({}))) as Loaded & { error?: string }
@@ -40,13 +41,13 @@ export function PriceTiersPanel() {
         setDrafts(body.tiers.map(toDraft))
         setError('')
       })
-      .catch(() => setError(t('shop.tiers.loadError')))
+      .catch(() => setError(t('shop.tiers.loadError'))),
+    [t],
+  )
 
-  const loadRef = useRef(load)
-  loadRef.current = load
   useEffect(() => {
-    void loadRef.current('')
-  }, [])
+    void load('')
+  }, [load])
 
   const choose = (id: string) => {
     setProductId(id)
