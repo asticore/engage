@@ -90,11 +90,15 @@ export const NavProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (event.key.toLowerCase() === 'b' && (event.metaKey || event.ctrlKey)) {
         event.preventDefault()
         toggleSidebar()
+      } else if (event.key === 'Escape' && isMobile && navOpen) {
+        // Close the mobile drawer and hand focus back to the top bar's hamburger.
+        setNavOpen(false)
+        document.querySelector<HTMLElement>('.admin-topbar__menu')?.focus()
       }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [toggleSidebar])
+  }, [isMobile, navOpen, setNavOpen, toggleSidebar])
 
   const value = useMemo(
     () => ({ collapsed, hydrated, isMobile, navOpen, navRef, setCollapsed, setNavOpen, shouldAnimate, toggleSidebar }),

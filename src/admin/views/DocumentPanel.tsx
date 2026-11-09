@@ -17,6 +17,7 @@ import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 import type { Field } from '@/engine'
 import { useFormModified } from '@/admin/context'
+import { useHydrated } from '@/lib/clientStore'
 import { FieldRenderer } from '@/admin/fields/FieldRenderer'
 import { resolveName } from './authorName'
 import { useAuthorNames } from './useAuthorNames'
@@ -101,11 +102,17 @@ const Box: React.FC<{ id: string; title: string; children: React.ReactNode; alwa
   )
 }
 
-function formatDate(value?: string): string {
+/**
+ * Server render and hydration use a fixed locale and UTC (the server's own locale and zone differ from the
+ * browser's, which is a text mismatch, React #418); once hydrated, the viewer's locale and zone apply.
+ */
+function formatDate(value: string | undefined, local: boolean): string {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  return local
+    ? date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+    : date.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' })
 }
 
 const ConfirmButton: React.FC<{
@@ -208,7 +215,7 @@ const RevisionsBox: React.FC<{ collectionSlug: string; id: number; updatedAt?: s
           <p className="doc-line">
             <strong>{state.total}</strong> {state.total === 1 ? 'version' : 'versions'}
           </p>
-          {state.latest && <p className="doc-muted">Last saved {formatDate(state.latest)} by {resolveName_(state.updatedBy)}</p>}
+          {state.latest && <p className="doc-muted">Last saved {formatDate(state.latest, true)} by {resolveName_(state.updatedBy)}</p>}
           <Link className="doc-link" href={`${adminCollectionPath(collectionSlug)}/${id}/versions`}>
             View past drafts
           </Link>
@@ -218,9 +225,10 @@ const RevisionsBox: React.FC<{ collectionSlug: string; id: number; updatedAt?: s
   )
 }
 
-const DetailsBox: React.FC<{ info: DocumentPanelInfo }> = ({ info }) => {
+export const DetailsBox: React.FC<{ info: DocumentPanelInfo }> = ({ info }) => {
   const t = useAdminT()
   const [copied, setCopied] = useState(false)
+  const hydrated = useHydrated()
   const apiPath = info.id ? `/api/${info.collectionSlug}/${info.id}` : undefined
   return (
     <Box id="details" title={t('edit.details')}>
@@ -230,15 +238,15 @@ const DetailsBox: React.FC<{ info: DocumentPanelInfo }> = ({ info }) => {
         {info.trackAuthorship && (
           <>
             <dt>{t('edit.lastEditedBy')}</dt>
-            <dd>{t('edit.editedOn', { name: info.updatedByName || t('edit.unknown'), date: formatDate(info.updatedAt) })}</dd>
+            <dd>{t('edit.editedOn', { name: info.updatedByName || t('edit.unknown'), date: formatDate(info.updatedAt, hydrated) })}</dd>
             <dt>{t('edit.createdBy')}</dt>
             <dd>{info.createdByName || t('edit.unknown')}</dd>
           </>
         )}
         <dt>{t('edit.lastModified')}</dt>
-        <dd>{formatDate(info.updatedAt)}</dd>
+        <dd>{formatDate(info.updatedAt, hydrated)}</dd>
         <dt>{t('edit.created')}</dt>
-        <dd>{formatDate(info.createdAt)}</dd>
+        <dd>{formatDate(info.createdAt, hydrated)}</dd>
         {apiPath && (
           <>
             <dt>API URL</dt>
