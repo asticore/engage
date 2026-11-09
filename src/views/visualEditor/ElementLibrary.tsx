@@ -15,6 +15,8 @@ import { createStorageStore, useStoredString } from '@/lib/clientStore'
 import { FAVS_KEY, RECENTS_KEY, pushRecent, sanitiseList, toggleFavourite } from './libraryRecents'
 import './navLibraryPresets.css'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { startLibraryDrag } from './dropSlot'
+import { libraryCategories, rankCards } from './libraryModel'
 
 const CATEGORY_KEY = 've-library-category'
 const DENSITY_KEY = 've-library-density'
@@ -49,7 +51,10 @@ export const ElementLibrary: React.FC<{
   const [source, setSource] = useState<Source>('blocks')
   const [query, setQuery] = useState('')
   const savedCategory = useStoredString(categoryStore)
-  const category = savedCategory && BLOCK_CATEGORIES.some((c) => c.key === savedCategory) ? savedCategory : 'all'
+  const allCards = useMemo(() => libraryCards({ formMode }), [formMode])
+  // Same-named categories merged ("Layout" + "Layout elements") and empty ones (e.g. Form fields outside forms) dropped.
+  const categories = useMemo(() => libraryCategories(BLOCK_CATEGORIES, allCards), [allCards])
+  const category = savedCategory && categories.some((c) => c.key === savedCategory) ? savedCategory : 'all'
   const changeCategory = (key: string) => categoryStore.set(key)
   const density: 'compact' | 'comfortable' = useStoredString(densityStore) === 'comfortable' ? 'comfortable' : 'compact'
   const toggleDensity = () => densityStore.set(density === 'compact' ? 'comfortable' : 'compact')
@@ -100,41 +105,16 @@ export const ElementLibrary: React.FC<{
   const shopCards = useMemo(() => filterCommercePresetCards(commercePresetCards(), query), [query])
 
   const results = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    return libraryCards({ formMode }).filter((block) => {
-      if (category !== 'all' && block.category !== category) return false
-      if (!needle) return true
-      return (
-        block.label.toLowerCase().includes(needle) ||
-        block.description.toLowerCase().includes(needle) ||
-        block.slug.toLowerCase().includes(needle)
-      )
-    })
-  }, [query, category, formMode])
-
-  const allCards = useMemo(() => libraryCards({ formMode }), [formMode])
-  const counts = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const b of allCards) m.set(b.category, (m.get(b.category) || 0) + 1)
-    return m
-  }, [allCards])
+    const keys = categories.find((c) => c.key === category)?.keys
+    return rankCards(allCards, query).filter((block) => category === 'all' || Boolean(keys?.includes(block.category)))
+  }, [query, category, categories, allCards])
 
   const bySlug = useMemo(() => new Map(libraryCards({ formMode }).map((b) => [b.slug, b])), [formMode])
   const recentBlocks = recents.map((s) => bySlug.get(s)).filter((b): b is BlockDef => Boolean(b))
   const favBlocks = favs.map((s) => bySlug.get(s)).filter((b): b is BlockDef => Boolean(b))
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, BlockDef[]>()
-    for (const block of results) {
-      const list = map.get(block.category) || []
-      list.push(block)
-      map.set(block.category, list)
-    }
-    return map
-  }, [results])
-
   const renderCard = (block: BlockDef) => (
-                                          <Tooltip text={`${block.label}: ${block.description}`} key={block.slug}><div
+                                          <Tooltip text={`${block.label}: ${block.description}`} key={block.slug} placement="bottom"><div
                         role="button"
                         tabIndex={0}
                         className="ve-library__card"
@@ -145,8 +125,7 @@ export const ElementLibrary: React.FC<{
                           // dataTransfer belongs to the browser's drag session rather
                           // than either document. Cards are divs, not buttons: Firefox/Safari don't start a drag
                           // from a <button>. The drop is handled in VisualEditor.tsx.
-                          e.dataTransfer.setData('application/x-ve-block', block.slug)
-                          e.dataTransfer.effectAllowed = 'copy'
+                          startLibraryDrag(e.dataTransfer, { kind: 'block', slug: block.slug })
                         }}
                         onClick={() => pick(block.slug)}
                         onKeyDown={(e) => {
@@ -220,9 +199,9 @@ export const ElementLibrary: React.FC<{
               onChange={(e) => changeCategory(e.target.value)}
             >
               <option value="all">All categories ({allCards.length})</option>
-              {BLOCK_CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <option key={cat.key} value={cat.key}>
-                  {cat.label} ({counts.get(cat.key) || 0})
+                  {cat.label} ({cat.count})
                 </option>
               ))}
             </select>
@@ -354,18 +333,23 @@ export const ElementLibrary: React.FC<{
               </div>
             )}
 
-            {BLOCK_CATEGORIES.map((cat) => {
-              const blocks = grouped.get(cat.key)
-              if (!blocks || blocks.length === 0) return null
-              return (
-                <div className="ve-library__group" key={cat.key}>
-                  <h4 className="ve-library__group-title">{cat.label}</h4>
-                  <div className="ve-library__grid">
-                    {blocks.map((block) => renderCard(block))}
+            {/* Searching: one flat list, best match first. Otherwise grouped by (merged) category. */}
+            {query.trim() && results.length > 0 && (
+              <div className="ve-library__group">
+                <div className="ve-library__grid">{results.map((block) => renderCard(block))}</div>
+              </div>
+            )}
+            {!query.trim() &&
+              categories.map((cat) => {
+                const blocks = results.filter((b) => cat.keys.includes(b.category))
+                if (blocks.length === 0) return null
+                return (
+                  <div className="ve-library__group" key={cat.key}>
+                    <h4 className="ve-library__group-title">{cat.label}</h4>
+                    <div className="ve-library__grid">{blocks.map((block) => renderCard(block))}</div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
           </>
         ) : (
           <TemplateBrowser onPickTemplate={onPickTemplate} />

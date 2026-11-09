@@ -3723,6 +3723,8 @@ const it: UiDictionary = {
   'setup.q.summary.notesTitle': "Da sapere",
   'setup.q.note.domains': "Più domini o regioni: configurali in Impostazioni > Domini.",
   'setup.q.note.bookings': "Le prenotazioni online sono in programma. Ti avviseremo quando saranno pronte.",
+  'cv.empty.editable': "Testo vuoto - fai doppio clic per modificare",
+  'cv.empty.select': "Elemento vuoto - selezionalo per aggiungere contenuto",
 }
 
 export default it

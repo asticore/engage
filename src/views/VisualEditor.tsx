@@ -92,8 +92,7 @@ import { EditLockBanner } from '@/admin/views/EditLockBanner'
 import { savedByAnotherSince, updatedAtFromSave } from './visualEditor/saveConflict'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
-import { clientToFrame, isLibraryDragTypes, resolveDropSlotInDoc, trackLibraryDrag, VE_BLOCK_MIME, VE_TEMPLATE_MIME } from './visualEditor/dropSlot'
-import { VE_TEMPLATE_LOCKS_MIME } from './visualEditor/TemplateBrowser'
+import { clientToFrame, createDragFallback, currentLibraryDrag, endLibraryDrag, isLibraryDragTypes, readLibraryDrag, resolveDropSlotInDoc, trackLibraryDrag, type DropSlot, type LibraryDragPayload } from './visualEditor/dropSlot'
 
 let idCounter = 0
 const nextId = () => `ve-${Date.now()}-${idCounter++}`
@@ -121,7 +120,7 @@ function withIds(nodes: SectionNode[]): SectionNode[] {
 }
 
 import { copyNodeLocks, nodeKey, pairLockKeys, parseLocks, serializeLocks, type LockEntry, type Locks, type LockUser } from '@/features/roles/locks'
-import { applyInlineEdit } from './visualEditor/inlineEdit'
+import { applyInlineEdit, inlineCandidate } from './visualEditor/inlineEdit'
 import { canInsertInto, effectiveLock, lockedKeySet, lockKeyOf, lockMapForCanvas, withNodeLock } from './visualEditor/lockState'
 import { canConvertLegacy, convertLegacyBlock } from './visualEditor/convertLegacy'
 import type { LockUi } from './visualEditor/LockControls'
@@ -1357,7 +1356,10 @@ export const VisualEditorView: React.FC = () => {
    * that started in the parent document. Handling it here instead, on the wrapper that sits
    * over the iframe in the parent document, sidesteps that entirely; elementFromPoint (above)
    * finds which insert slot the pointer is actually over inside the frame. */
-  const isLibraryDrag = (event: React.DragEvent<HTMLDivElement>) => isLibraryDragTypes(event.dataTransfer.types)
+  // Safari can hide custom types during dragover, so the card's in-memory registration counts as well.
+  const isLibraryDrag = (event: React.DragEvent<HTMLDivElement>) => isLibraryDragTypes(event.dataTransfer.types) || currentLibraryDrag() !== null
+  // Last slot a library drag hovered: inserted on dragend when the browser never fires `drop` (see dropSlot.ts).
+  const [dragFallback] = useState(createDragFallback)
 
   const resolveAt = useCallback((clientX: number, clientY: number) => {
     const iframe = iframeRef.current
@@ -1376,9 +1378,10 @@ export const VisualEditorView: React.FC = () => {
     () =>
       trackLibraryDrag(document, (active) => {
         setLibDrag(active)
-        if (!active) sendDragHover(null)
+        if (active) dragFallback.start(currentLibraryDrag())
+        else sendDragHover(null)
       }),
-    [sendDragHover],
+    [sendDragHover, dragFallback],
   )
 
   const onCanvasDragOver = useCallback(
@@ -1397,8 +1400,9 @@ export const VisualEditorView: React.FC = () => {
       const allowed = Boolean(slot) && canInsertInto(lockCtx.current.blocks, slot!.containerPath, lockCtx.current.locks, lockCtx.current.lockUser)
       event.dataTransfer.dropEffect = allowed ? 'copy' : 'none'
       sendDragHover(allowed ? slot!.key : null)
+      dragFallback.hover(allowed ? slot : null)
     },
-    [sendDragHover, resolveAt],
+    [sendDragHover, resolveAt, dragFallback],
   )
 
   const onCanvasDragLeave = useCallback(
@@ -1407,40 +1411,61 @@ export const VisualEditorView: React.FC = () => {
       // child), otherwise the highlight flickers off between adjacent slots.
       if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
       sendDragHover(null)
+      dragFallback.leave()
     },
-    [sendDragHover],
+    [sendDragHover, dragFallback],
   )
 
-  const onCanvasDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      const blockType = event.dataTransfer.getData(VE_BLOCK_MIME)
-      const templateRaw = event.dataTransfer.getData(VE_TEMPLATE_MIME)
-      const slot = resolveAt(event.clientX, event.clientY)
-      sendDragHover(null)
-      setLibDrag(false)
-      if (!blockType && !templateRaw) return
-      event.preventDefault()
-      if (!slot) {
-        setLockNotice('Drop it between blocks, on a block, or in an empty column.')
-        setTimeout(() => setLockNotice(null), 4000)
-        return
-      }
-      if (blockType) {
-        addBlockAt(blockType, slot.containerPath, slot.at)
+  const insertDragPayload = useCallback(
+    (payload: LibraryDragPayload, slot: DropSlot) => {
+      if (payload.kind === 'block') {
+        addBlockAt(payload.slug, slot.containerPath, slot.at)
         return
       }
       try {
-        const parsed: unknown = JSON.parse(templateRaw)
-        const lockRaw = event.dataTransfer.getData(VE_TEMPLATE_LOCKS_MIME)
-        const templateLocks = lockRaw ? parseLocks(JSON.parse(lockRaw)) : undefined
+        const parsed: unknown = JSON.parse(payload.blocksJson)
+        const templateLocks = payload.locksJson ? parseLocks(JSON.parse(payload.locksJson)) : undefined
         if (Array.isArray(parsed)) insertTemplateAt(parsed as SectionNode[], slot.containerPath, slot.at, templateLocks)
       } catch {
         setLockNotice('That template could not be dropped.')
         setTimeout(() => setLockNotice(null), 4000)
       }
     },
-    [addBlockAt, insertTemplateAt, sendDragHover, resolveAt],
+    [addBlockAt, insertTemplateAt],
   )
+
+  const onCanvasDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      const payload = readLibraryDrag(event.dataTransfer)
+      const slot = resolveAt(event.clientX, event.clientY)
+      sendDragHover(null)
+      setLibDrag(false)
+      if (!payload) return
+      event.preventDefault()
+      dragFallback.drop()
+      if (!slot) {
+        setLockNotice('Drop it between blocks, on a block, or in an empty column.')
+        setTimeout(() => setLockNotice(null), 4000)
+        return
+      }
+      insertDragPayload(payload, slot)
+    },
+    [insertDragPayload, sendDragHover, resolveAt, dragFallback],
+  )
+
+  // dragend always fires on the card, in every browser. When it ends over the canvas with no `drop` having
+  // been handled (Safari / Firefox cross-frame drags), insert at the last slot the pointer hovered.
+  useEffect(() => {
+    const onEnd = () => {
+      const pending = dragFallback.end()
+      endLibraryDrag()
+      setLibDrag(false)
+      sendDragHover(null)
+      if (pending) insertDragPayload(pending.payload, pending.slot)
+    }
+    document.addEventListener('dragend', onEnd)
+    return () => document.removeEventListener('dragend', onEnd)
+  }, [dragFallback, insertDragPayload, sendDragHover])
 
   const pageRef = useRef(pageSettings)
   useEffect(() => {
@@ -2105,13 +2130,17 @@ export const VisualEditorView: React.FC = () => {
           onClose={() => setMenu(null)}
           onChoose={(id) => {
             const path = menu.path
+            const locked = Boolean(effectiveLock(blocks, path, locks, lockUser)?.blocked)
             setMenu(null)
             if (id === 'copy') void copyNode(path)
             else if (id === 'cut') void cutNode(path)
             else if (id === 'paste') void pasteAt(path)
             else if (id === 'edit') {
               setSelectedPath(path)
-              setDockTab('settings')
+              // Text blocks open the in-place editor on the canvas; everything else opens its Settings.
+              if (!locked && inlineCandidate(getNode(blocks, path), 0)) {
+                iframeRef.current?.contentWindow?.postMessage({ source: 've-canvas', type: 'editText', path }, CANVAS_ORIGIN())
+              } else setDockTab('settings')
             } else if (id === 'navigator') {
               setSelectedPath(path)
               setDockTab('navigator')

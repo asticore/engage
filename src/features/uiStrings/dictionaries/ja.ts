@@ -3723,6 +3723,8 @@ const ja: UiDictionary = {
   'setup.q.summary.notesTitle': "ご参考",
   'setup.q.note.domains': "複数のドメインまたは地域: 「設定 > ドメイン」で設定してください。",
   'setup.q.note.bookings': "オンライン予約は準備中です。利用可能になったらお知らせします。",
+  'cv.empty.editable': "空のテキスト - ダブルクリックで編集",
+  'cv.empty.select': "空の要素 - 選択してコンテンツを追加",
 }
 
 export default ja

@@ -6,6 +6,7 @@ export type DropSlot = { containerPath: NodePath; at: number; key: string }
 /** Native drag MIME types set by ElementLibrary.tsx / TemplateBrowser.tsx. */
 export const VE_BLOCK_MIME = 'application/x-ve-block'
 export const VE_TEMPLATE_MIME = 'application/x-ve-template'
+export const VE_TEMPLATE_LOCKS_TYPE = 'application/x-ve-template-locks'
 
 /** True when a drag's `types` list (the only thing readable during dragover) is a library card. */
 export const isLibraryDragTypes = (types: ArrayLike<string> | null | undefined): boolean => {
@@ -92,7 +93,8 @@ export function resolveDropSlotInDoc(doc: Document, x: number, y: number): DropS
  */
 export function trackLibraryDrag(doc: Document, onActive: (active: boolean) => void): () => void {
   const onStart = (e: DragEvent) => {
-    if (isLibraryDragTypes(e.dataTransfer?.types)) onActive(true)
+    // Types are readable here in every browser; the in-memory payload covers a card that registered itself first.
+    if (isLibraryDragTypes(e.dataTransfer?.types) || activeDrag) onActive(true)
   }
   const onEnd = () => onActive(false)
   doc.addEventListener('dragstart', onStart)
@@ -102,5 +104,100 @@ export function trackLibraryDrag(doc: Document, onActive: (active: boolean) => v
     doc.removeEventListener('dragstart', onStart)
     doc.removeEventListener('dragend', onEnd, true)
     doc.removeEventListener('drop', onEnd, true)
+  }
+}
+
+/** What a library card carries while it is dragged. Kept in memory as well as in the DataTransfer. */
+export type LibraryDragPayload =
+  | { kind: 'block'; slug: string }
+  | { kind: 'template'; blocksJson: string; locksJson?: string }
+
+/**
+ * The drag in flight, held in module memory. Safari hides custom types (and getData) from dragover and, in
+ * some versions, drop; Firefox returns '' from getData for a drag that crossed into another document. The
+ * drag source and the canvas wrapper live in the same JS realm, so they agree on the payload through here
+ * instead. Cleared on dragend.
+ */
+let activeDrag: LibraryDragPayload | null = null
+
+export const beginLibraryDrag = (payload: LibraryDragPayload): void => {
+  activeDrag = payload
+}
+export const endLibraryDrag = (): void => {
+  activeDrag = null
+}
+export const currentLibraryDrag = (): LibraryDragPayload | null => activeDrag
+
+/**
+ * Called from a card's dragstart. Writes the payload with the custom types (what the canvas wrapper
+ * recognises), sets effectAllowed so Firefox and Safari offer a copy cursor, and registers the in-memory
+ * copy. Firefox only starts a drag when setData was called with something during dragstart, which this does.
+ */
+export const startLibraryDrag = (dt: DataTransfer | null, payload: LibraryDragPayload): void => {
+  beginLibraryDrag(payload)
+  if (!dt) return
+  try {
+    if (payload.kind === 'block') dt.setData(VE_BLOCK_MIME, payload.slug)
+    else {
+      dt.setData(VE_TEMPLATE_MIME, payload.blocksJson)
+      if (payload.locksJson) dt.setData(VE_TEMPLATE_LOCKS_TYPE, payload.locksJson)
+    }
+    dt.effectAllowed = 'copy'
+  } catch {
+    // A browser that refuses setData here still has the in-memory payload.
+  }
+}
+
+/** The payload for a drop: from the DataTransfer when readable, else from the in-memory copy. */
+export const readLibraryDrag = (dt: Pick<DataTransfer, 'getData'> | null | undefined): LibraryDragPayload | null => {
+  let block = ''
+  let template = ''
+  let locks = ''
+  try {
+    block = dt?.getData(VE_BLOCK_MIME) ?? ''
+    template = dt?.getData(VE_TEMPLATE_MIME) ?? ''
+    locks = dt?.getData(VE_TEMPLATE_LOCKS_TYPE) ?? ''
+  } catch {
+    // Protected mode (Safari during dragover): fall through to the in-memory payload.
+  }
+  if (block) return { kind: 'block', slug: block }
+  if (template) return { kind: 'template', blocksJson: template, locksJson: locks || undefined }
+  return activeDrag
+}
+
+/**
+ * Remembers the last slot a library drag hovered, so a drag that ends over the canvas without a `drop`
+ * event (some Safari / Firefox cross-frame drags) can still insert there. Pure state: no DOM.
+ */
+export const createDragFallback = () => {
+  let payload: LibraryDragPayload | null = null
+  let slot: DropSlot | null = null
+  let dropped = false
+  return {
+    start(p: LibraryDragPayload | null) {
+      payload = p
+      slot = null
+      dropped = false
+    },
+    /** The last dragover result: a slot the drop would be accepted at, or null (outside, locked). */
+    hover(next: DropSlot | null) {
+      slot = next
+    },
+    /** The pointer left the canvas wrapper. */
+    leave() {
+      slot = null
+    },
+    /** A real drop event was handled. */
+    drop() {
+      dropped = true
+    },
+    /** dragend: the insert to perform, or null (it dropped normally, left the canvas, or nothing was hovered). */
+    end(): { payload: LibraryDragPayload; slot: DropSlot } | null {
+      const out = !dropped && payload && slot ? { payload, slot } : null
+      payload = null
+      slot = null
+      dropped = false
+      return out
+    },
   }
 }

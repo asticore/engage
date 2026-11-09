@@ -3723,6 +3723,8 @@ const hi: UiDictionary = {
   'setup.q.summary.notesTitle': "जानने योग्य बातें",
   'setup.q.note.domains': "कई डोमेन या क्षेत्र: इन्हें सेटिंग्स > डोमेन में सेट करें।",
   'setup.q.note.bookings': "ऑनलाइन बुकिंग की योजना है; तैयार होने पर हम आपको बताएँगे।",
+  'cv.empty.editable': "खाली टेक्स्ट - संपादित करने के लिए डबल-क्लिक करें",
+  'cv.empty.select': "खाली तत्व - सामग्री जोड़ने के लिए इसे चुनें",
 }
 
 export default hi
