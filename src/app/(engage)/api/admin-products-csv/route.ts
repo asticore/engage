@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { auditExport } from '@/features/security/exportAudit'
 import { getAdminContext } from '@/admin/auth'
 import { CSV_MAX_BYTES } from '@/features/ecommerce/csv'
 import { exportCatalogueCsv, runProductImport } from '@/features/ecommerce/server/csvImport'
@@ -17,10 +18,11 @@ async function authorize() {
 }
 
 /** GET - every product as CSV (variations as extra rows with a Parent SKU). */
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   const auth = await authorize()
   if (!auth.ok) return auth.response
   const csv = await exportCatalogueCsv(auth.engine)
+  await auditExport(request, (await getAdminContext()).user, 'products CSV')
   return new Response(csv, {
     status: 200,
     headers: {

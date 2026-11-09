@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { auditExport } from '@/features/security/exportAudit'
 import { getAdminContext } from '@/admin/auth'
 import { CLEAR_CONFIRM_WORD, activityRowsToCsv, parseActivityFilter, parseClearScope } from '@/features/security/activityQuery'
 import { clearActivity, countClearable, exportActivityRows } from '@/features/security/activityStore'
@@ -20,6 +21,7 @@ export async function GET(request: Request): Promise<Response> {
   if (!context.isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const params = Object.fromEntries(new URL(request.url).searchParams)
   const rows = await exportActivityRows(parseActivityFilter(params))
+  await auditExport(request, context.user, 'activity log CSV')
   return new Response(activityRowsToCsv(rows), {
     headers: {
       'content-type': 'text/csv; charset=utf-8',
