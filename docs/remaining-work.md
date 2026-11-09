@@ -15,6 +15,7 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 
 ## Open now (as of 2 Nov 2026)
 - Fresh-account deploy not verified: Deploy button on a second Cloudflare account (see detail below).
+- Activity log (closed Task 18): export audit covers the activity log, products, redirects and list CSV downloads; the event RSVP, form submission, shop report, manifest, data view and consent log downloads are not yet written to the log (add `auditExport` from `src/features/security/exportAudit.ts` to each). Shop orders and other records with their own history are left out of edit logging on purpose (see `ACTIVITY_LOGGED` in `src/localapi/registry.ts`).
 - Known limits (what is left after the 1 Nov sweep: each is either "Permanent" with the reason, or waits on a live check in Task 20; everything fixable was fixed or moved into closed tasks 1 to 5):
   - Ads: Permanent: AdSense auto ads cannot be unloaded on client navigation (Google tag, vendor); Prebid price floors need the Price Floors module (Prebid vendor setup).
   - Media: Permanent: old binary .xls is not read (save as .xlsx or .ods); Permanent: re-optimising a picture keeps its file name because pages link to it (uploads take the right extension); Permanent: Cloudflare Stream makes MP4 only and Cloudflare Images cannot write JPEG XL, so a WebM or JPEG XL choice keeps the file as it is, and a video link is a URL with nothing to convert; Permanent: the Worker reads each request into memory once, so the 100 MB cap is the ceiling (larger files are written to R2 in parts).
@@ -34,7 +35,7 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20261003_100000_visibility_schedule_lock_events_seo`, `20261005_100000_redirects`, `20261005_110000_pages_sort_order`, `20261006_100000_roles`, `20261007_100000_users_authorship`, `20261008_100000_integrations_expand`, `20261009_100000_user_permission_overrides`, `20261010_100000_site_fonts`, `20261011_100000_site_files`, `20261011_110000_cookie_consent`, `20261011_120000_media_library`, `20261011_130000_content_approval`, `20261011_140000_custom_fields_v2`; the `images` binding in `wrangler.jsonc` (Cloudflare Images transformations must be on the account, otherwise upload optimisation is skipped with a message); the cron trigger (`triggers.crons` in `wrangler.jsonc`, entry `cloudflare-worker.ts`).
 
 ## Tasks (in order)
-Open: Tasks 1 and 2 (reference file, engage-templates library), then Tasks 3 to 16 and 18 (Task 17 is closed, numbers not shifted so parallel threads do not clash; renumber at the next sweep) (shop and pricing, regions and domains, API, cron, email, theming, company downloads, admin updates, activity log), Task 19 (speed up the portal and shrink the Worker bundle) and Task 20 (Matt's live checklist), remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered from 1 on 8 Nov 2026 and again after the 8 Nov tasks 1 to 6 closed (PR #226). Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
+Open: Tasks 1 and 2 (reference file, engage-templates library), then Tasks 3 to 16 (Task 17 is closed, numbers not shifted so parallel threads do not clash; renumber at the next sweep) (shop and pricing, regions and domains, API, cron, email, theming, company downloads, admin updates), Task 19 (speed up the portal and shrink the Worker bundle) and Task 20 (Matt's live checklist), remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered from 1 on 8 Nov 2026 and again after the 8 Nov tasks 1 to 6 closed (PR #226). Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
 
 Order: 1, 2, 3 to 18 (features, in listed order), (new verify tasks), 19 Speed up, 20 Live checks (ends with the fresh-account deploy check).
 
@@ -85,9 +86,6 @@ Order: 1, 2, 3 to 18 (features, in listed order), (new verify tasks), 19 Speed u
 
 ### Task 16. Update popup for super admins (new, 7 Nov 2026)
 - [ ] A popup in the admin portal that checks the current version against the repo and tells super admins when their copy needs updating. Super admins click it to start the update, then it opens the repo changelog. Other admins see nothing. Decide update method (Deploy button sync, GitHub sync, or a pull request) and handle forks. Repo URL is now asticore/engage. Effort M to L.
-
-### Task 18. Activity log with clear (new, 7 Nov 2026)
-- [ ] An activity log of what people do (sign-in, edits, publishes, setting changes, exports), viewable per person and filterable, with a clear or purge option (with retention setting and a record that a clear happened). Check against the privacy rules and the existing audit and approval history first. Effort M.
 
 ### Task 19. Speed up the portal and shrink the Worker bundle (right before the live checks)
 **Goals (Matt, 7 Nov 2026):**
@@ -479,6 +477,11 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 
 ## Shipped (reference)
 Waves 43 to 48 and waves 30 and 31: see "Done". The visual editor reference and the design model inventory above are the reference for code paths.
+
+### Activity log (closed Task 18, PR pending)
+- [ ] Settings, Security, Activity log (`/admin/security/activity`): edit and publish a page, delete a post, save a setting, download a list CSV; each shows with your email and the right event (publish, update, delete, settings.update, export). Click a person's name: only their rows remain. Use From and To dates and the Collection filter.
+- [ ] Same screen, Clear activity log: pick "older than 90 days", Count entries, type CLEAR, Clear now; the old rows go and one `activity.cleared` row names you and the count. Cookie consent entries and privacy records stay. The CSV link downloads the current view.
+- [ ] Erase a test customer through the privacy flow; their activity rows keep the event but lose email, address and browser.
 
 ### Fresh-account deploy and setup script (last live check)
 - [ ] Fresh-account deploy check and the setup script on a new Cloudflare account (the "Fresh-account deploy check (detail)" section and the Setup script item under "Architecture (closed Task 4, PR #215)"). Runs after Task 19, so it also proves the free-plan size limit on a fresh account.

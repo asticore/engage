@@ -33,7 +33,7 @@ export async function eraseCustomerData(engine: unknown, d1: D1Like, userId: num
   const e: EngineLike = asEngine(engine)
   const records = await customerRecords(e, d1, userId, email)
   const commerce = await commerceRecords(e, userId, email)
-  const counts: EraseCounts = { orders: 0, addresses: 0, carts: 0, reviews: 0, sessions: 0, apiKeys: 0, passkeys: 0, trustedDevices: 0, loginTokens: 0, codes: 0, accountRecords: 0 }
+  const counts: EraseCounts = { orders: 0, addresses: 0, carts: 0, reviews: 0, sessions: 0, apiKeys: 0, passkeys: 0, trustedDevices: 0, loginTokens: 0, codes: 0, accountRecords: 0, activityRecords: 0 }
 
   for (const order of records.orders) {
     await e.update({ collection: 'orders', id: order.id, data: anonymisedOrderPatch(), overrideAccess: true })
@@ -58,6 +58,9 @@ export async function eraseCustomerData(engine: unknown, d1: D1Like, userId: num
   counts.trustedDevices += await runCount(d1, 'DELETE FROM eg_trusted_devices WHERE user_id = ?', userId)
   counts.loginTokens += await runCount(d1, 'DELETE FROM eg_login_tokens WHERE user_id = ?', userId)
   counts.codes += await runCount(d1, 'DELETE FROM eg_two_factor_email_codes WHERE user_id = ?', userId)
+
+  // The activity log keeps what happened but loses who and where: address, browser and email go, the numeric id stays.
+  counts.activityRecords += await runCount(d1, "UPDATE eg_audit_log SET actor_email = NULL, ip = NULL, user_agent = NULL WHERE actor_id = ? AND action NOT LIKE 'privacy.%'", userId)
 
   await e.delete({ collection: 'users', id: userId, overrideAccess: true })
   counts.accountRecords = 1

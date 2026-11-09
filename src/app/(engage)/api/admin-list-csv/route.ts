@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auditExport } from '@/features/security/exportAudit'
 import type { Where } from '@/engine'
 import { getAdminContext, getCollectionConfig, hasAdminPanelAccess } from '@/admin/auth'
 import { resolveCellFormatter } from '@/admin/cellRegistry'
@@ -108,6 +109,7 @@ export async function GET(request: Request): Promise<Response> {
     })
 
     const date = new Date().toISOString().slice(0, 10)
+    await auditExport(request, context.user, `${collectionSlug} list CSV`)
     return new NextResponse(csv, {
       status: 200,
       headers: {
