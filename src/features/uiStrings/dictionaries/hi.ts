@@ -3654,6 +3654,8 @@ const hi: UiDictionary = {
   'tour.close': 'टूर बंद करें',
   'tour.help': 'सहायता',
   'tour.replay': 'सहायता: टूर देखें',
+  'feedback.button': 'प्रतिक्रिया',
+  'feedback.open': 'प्रतिक्रिया भेजें (GitHub खुलेगा)',
   'nav.collapseSidebar': 'साइडबार समेटें',
   'nav.expandSidebar': 'साइडबार फैलाएँ',
   'nav.openMenu': 'मेनू खोलें',

@@ -3654,6 +3654,8 @@ const pt: UiDictionary = {
   'tour.close': 'Fechar passeio',
   'tour.help': 'Ajuda',
   'tour.replay': 'Ajuda: fazer o passeio',
+  'feedback.button': 'Feedback',
+  'feedback.open': 'Enviar feedback (abre o GitHub)',
   'nav.collapseSidebar': 'Recolher barra lateral',
   'nav.expandSidebar': 'Expandir barra lateral',
   'nav.openMenu': 'Abrir menu',

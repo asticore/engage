@@ -3654,6 +3654,8 @@ const ar: UiDictionary = {
   'tour.close': 'إغلاق الجولة',
   'tour.help': 'المساعدة',
   'tour.replay': 'المساعدة: ابدأ الجولة',
+  'feedback.button': 'ملاحظات',
+  'feedback.open': 'إرسال ملاحظات (يفتح GitHub)',
   'nav.collapseSidebar': 'طيّ الشريط الجانبي',
   'nav.expandSidebar': 'توسيع الشريط الجانبي',
   'nav.openMenu': 'فتح القائمة',

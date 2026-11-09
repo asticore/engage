@@ -3654,6 +3654,8 @@ const ru: UiDictionary = {
   'tour.close': 'Закрыть тур',
   'tour.help': 'Помощь',
   'tour.replay': 'Помощь: пройти тур',
+  'feedback.button': 'Отзыв',
+  'feedback.open': 'Отправить отзыв (откроется GitHub)',
   'nav.collapseSidebar': 'Свернуть боковую панель',
   'nav.expandSidebar': 'Развернуть боковую панель',
   'nav.openMenu': 'Открыть меню',

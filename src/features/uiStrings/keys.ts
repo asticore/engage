@@ -3703,6 +3703,8 @@ export const UI_STRING_SOURCE = {
   'tour.close': 'Close tour',
   'tour.help': 'Help',
   'tour.replay': 'Help: take the tour',
+  'feedback.button': 'Feedback',
+  'feedback.open': 'Send feedback (opens GitHub)',
   'nav.collapseSidebar': 'Collapse sidebar',
   'nav.expandSidebar': 'Expand sidebar',
   'nav.openMenu': 'Open menu',
