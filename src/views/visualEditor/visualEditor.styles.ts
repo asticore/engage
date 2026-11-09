@@ -49,7 +49,7 @@ export const VISUAL_EDITOR_CSS = `
   --ve-border: #dedce3;
   --ve-border-strong: #cac7d1;
   --ve-text: #201f26;
-  --ve-text-muted: #857c8d;
+  --ve-text-muted: #6b6275;
   --ve-text-faint: #a39da8;
   --ve-accent: #2e3192;
   --ve-accent-hover: #3d40a8;
@@ -61,9 +61,9 @@ export const VISUAL_EDITOR_CSS = `
      from --ve-accent (which still means "primary brand action"). Same value
      in both themes on purpose: a fixed color identity, not something dark
      mode should reinterpret. */
-  --ve-select: #22a35e;
+  --ve-select: #177a40;
   --ve-select-contrast: #ffffff;
-  --ve-select-hover: #1c8a4d;
+  --ve-select-hover: #126b36;
   --ve-checker-a: #eeedf2;
   --ve-checker-b: #e7e5ec;
   --ve-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 12px 30px rgba(0, 0, 0, 0.06);

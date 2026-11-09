@@ -290,8 +290,14 @@ h2 {
   margin: 0 0 calc(var(--base) * 0.4);
 }
 
-a {
-  color: var(--ac-gold);
+/* In `@layer base` (not unlayered): an unlayered `a { color }` beats EVERY
+   Tailwind utility (utilities live in a cascade layer), so any anchor styled
+   with `text-*` / `hover:text-*` silently kept the brand colour - e.g. the
+   dashboard "+ New ..." links went gold-on-gold on hover. See contrast.css. */
+@layer base {
+  a {
+    color: var(--ac-gold);
+  }
 }
 
 input,
@@ -1954,12 +1960,14 @@ button {
 
 .list-filter-apply-btn {
   background-color: var(--ac-gold);
-  color: white;
+  color: var(--ac-gold-contrast);
   border-color: var(--ac-gold);
 }
 
 .list-filter-apply-btn:hover {
-  opacity: 0.9;
+  background-color: var(--ac-gold-soft);
+  border-color: var(--ac-gold-soft);
+  color: var(--ac-gold-soft-contrast);
 }
 
 /* Active Filters Chips */
