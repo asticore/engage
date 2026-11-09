@@ -1213,6 +1213,7 @@ const zhHans: UiDictionary = {
   've.top.previewFailed': '无法获取页面地址，请重试。',
   've.top.redoTitle': "重做 ({mod}+Shift+Z)",
   've.top.importExport': "导入 / 导出",
+  've.top.more': "更多",
   've.top.importTitle': "以 JSON 格式导入或导出此页面",
   've.top.devicePreview': "设备预览",
   've.top.desktop': "桌面",

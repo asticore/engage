@@ -91,6 +91,10 @@ import { SaveStatusChip } from './visualEditor/SaveStatusChip'
 import { EditLockBanner } from '@/admin/views/EditLockBanner'
 import { savedByAnotherSince, updatedAtFromSave } from './visualEditor/saveConflict'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
+import { isDirtyAfterRestore } from './visualEditor/dirtyState'
+import { TopBarMore, useCompactTopBar } from './visualEditor/TopBarMore'
+import './visualEditor/topbar.css'
+import './visualEditor/veShell.css'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
 import { clientToFrame, createDragFallback, currentLibraryDrag, endLibraryDrag, isLibraryDragTypes, readLibraryDrag, resolveDropSlotInDoc, trackLibraryDrag, type DropSlot, type LibraryDragPayload } from './visualEditor/dropSlot'
 
@@ -191,6 +195,10 @@ export const VisualEditorView: React.FC = () => {
   /** Where a "Select your structure" pick will insert the new section; null while the picker is closed. */
   const [structureTarget, setStructureTarget] = useState<{ containerPath: NodePath; at: number } | null>(null)
   const [dirty, setDirty] = useState(false)
+  /** Narrow viewport: Import / Export and Save as template move into the top bar's More menu. */
+  const compactBar = useCompactTopBar()
+  /** Locks, page settings or form config changed since the last save (tree changes are judged against savedTreeRef instead). */
+  const extraDirtyRef = useRef(false)
   /** Another user holds the edit lock on this document (and this user has not taken it over): saving is off. */
   const [lockedByOther, setLockedByOther] = useState(false)
   /** The document's updatedAt as of load / our last save; save() compares it with the server's before it writes. */
@@ -577,13 +585,11 @@ export const VisualEditorView: React.FC = () => {
       if (range.length > 1) {
         setMulti({ paths: range, blocks: blocksRef.current })
         setSelectedPath(path)
-        setDockTab('settings')
         return
       }
     }
     setMulti(null)
     setSelectedPath(path)
-    setDockTab('settings')
     if (isColumnPath(path)) {
       const column = getColumn(blocksRef.current, path)
       if (column) setInsertTarget({ containerPath: path, at: (column.blocks || []).length })
@@ -632,7 +638,8 @@ export const VisualEditorView: React.FC = () => {
     if (!nextPath) setDockTab('elements')
     setInsertTarget({ containerPath: [], at: snapshot.blocks.length })
     syncHistory()
-    setDirty(true)
+    // Undoing back to the saved tree clears the dirty state (unless locks / page settings still differ).
+    setDirty(isDirtyAfterRestore(snapshot.blocks, savedTreeRef.current, extraDirtyRef.current))
   }, [syncHistory])
 
   /** History panel: jump straight to a listed state (negative = back, positive = forward). */
@@ -1557,6 +1564,7 @@ export const VisualEditorView: React.FC = () => {
       if (current.blocks === sent.blocks && current.locks === sent.locks && current.formConfig === sent.formConfig && pageRef.current === sent.pageSettings) {
         setDirty(false)
         setLocksDirty(false)
+        extraDirtyRef.current = false
       }
       // The server now holds the tree that was sent. Edits made while the request was in flight keep a draft.
       savedTreeRef.current = comparableTree(sent.blocks)
@@ -1598,6 +1606,7 @@ export const VisualEditorView: React.FC = () => {
     setFinderOpen(false)
     if (entry.kind === 'node') {
       selectFromNavigator(entry.path)
+      setDockTab('settings')
       // The frame scrolls the node into view when it is told about the selection.
       iframeRef.current?.contentWindow?.postMessage({ source: 've-canvas', type: 'selected', selectedPath: entry.path }, CANVAS_ORIGIN())
       return
@@ -1694,6 +1703,7 @@ export const VisualEditorView: React.FC = () => {
             if (!selectedKey) return
             setLocks((prev) => withNodeLock(prev, selectedKey, entry))
             setLocksDirty(true)
+            extraDirtyRef.current = true
             setDirty(true)
           },
         }
@@ -1842,9 +1852,11 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.shortcut.redo')}
             </button></Tooltip>
           </div>
-          <Tooltip text={t('ve.top.importTitle')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)}>
-            {t('ve.top.importExport')}
-          </button></Tooltip>
+          {!compactBar && (
+            <Tooltip text={t('ve.top.importTitle')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)}>
+              {t('ve.top.importExport')}
+            </button></Tooltip>
+          )}
           <ShortcutsHelp
             modLabel={modLabel}
             open={helpOpen}
@@ -1877,7 +1889,7 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.top.mobile')}
             </button></Tooltip>
           </div>
-          {!formMode && (
+          {!formMode && !compactBar && (
             <Tooltip text={selectedPath && selectedPath.length === 1 ? t('ve.top.templateSection') : t('ve.top.templatePage')}><button
               type="button"
               className="ve-btn"
@@ -1886,6 +1898,14 @@ export const VisualEditorView: React.FC = () => {
             >
               {t('ve.top.saveAsTemplate')}
             </button></Tooltip>
+          )}
+          {compactBar && (
+            <TopBarMore
+              items={[
+                { key: 'import', label: t('ve.top.importExport'), onSelect: () => setImportOpen(true) },
+                ...(formMode ? [] : [{ key: 'template', label: t('ve.top.saveAsTemplate'), onSelect: () => setSaveTemplateOpen(true), disabled: blocks.length === 0 }]),
+              ]}
+            />
           )}
           {pageSettings && surface?.slug === 'pages' && (
             <Tooltip text={status !== 'published' ? t('ve.top.previewDraft') : t('ve.top.preview')}><button
@@ -2027,6 +2047,7 @@ export const VisualEditorView: React.FC = () => {
                 available={pageAvail}
                 onChange={(next) => {
                   setPageSettings(next)
+                  extraDirtyRef.current = true
                   setDirty(true)
                 }}
               />
@@ -2039,6 +2060,7 @@ export const VisualEditorView: React.FC = () => {
                 config={formConfig}
                 onChange={(next) => {
                   setFormConfig(next)
+                  extraDirtyRef.current = true
                   setDirty(true)
                 }}
                 formId={route?.id}

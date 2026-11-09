@@ -1214,6 +1214,7 @@ const ja: UiDictionary = {
   've.top.previewFailed': 'ページのアドレスを取得できませんでした。もう一度お試しください。',
   've.top.redoTitle': "やり直す ({mod}+Shift+Z)",
   've.top.importExport': "インポート / エクスポート",
+  've.top.more': "その他",
   've.top.importTitle': "このページをJSONでインポートまたはエクスポート",
   've.top.devicePreview': "デバイスプレビュー",
   've.top.desktop': "デスクトップ",

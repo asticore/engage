@@ -1214,6 +1214,7 @@ const ru: UiDictionary = {
   've.top.previewFailed': 'Не удалось определить адрес страницы. Попробуйте еще раз.',
   've.top.redoTitle': "Повторить ({mod}+Shift+Z)",
   've.top.importExport': "Импорт / Экспорт",
+  've.top.more': "Ещё",
   've.top.importTitle': "Импортировать или экспортировать эту страницу в JSON",
   've.top.devicePreview': "Предпросмотр устройства",
   've.top.desktop': "Десктоп",

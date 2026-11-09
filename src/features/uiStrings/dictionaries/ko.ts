@@ -1214,6 +1214,7 @@ const ko: UiDictionary = {
   've.top.previewFailed': '페이지 주소를 확인하지 못했습니다. 다시 시도하세요.',
   've.top.redoTitle': "다시 실행 ({mod}+Shift+Z)",
   've.top.importExport': "가져오기 / 내보내기",
+  've.top.more': "더보기",
   've.top.importTitle': "이 페이지를 JSON으로 가져오기 또는 내보내기",
   've.top.devicePreview': "기기 미리보기",
   've.top.desktop': "데스크톱",

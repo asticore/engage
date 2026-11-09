@@ -1,0 +1,54 @@
+/* Page settings panel (Settings tab with nothing selected): same rhythm as the field panel. */
+.ve-page-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+}
+.ve-page-settings h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ve-text);
+}
+.ve-ps__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ve-text-muted);
+}
+.ve-ps__field input[type='text'],
+.ve-ps__field textarea,
+.ve-ps__field select {
+  box-sizing: border-box;
+  width: 100%;
+  font-weight: 400;
+  font-size: 13px;
+  padding: 7px 9px;
+  border: 1px solid var(--ve-border-strong);
+  border-radius: 5px;
+  font-family: inherit;
+  background: var(--ve-surface);
+  color: var(--ve-text);
+}
+.ve-ps__hint {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--ve-text-faint);
+}
+.ve-ps__hint--long {
+  color: #b45309;
+}
+.ve-ps__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ve-text-muted);
+}
+.ve-ps__row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
