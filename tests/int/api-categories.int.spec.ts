@@ -192,7 +192,7 @@ describe('field picker moves', () => {
 })
 
 describe('category rules on endpoints', () => {
-  const endpoint = { enabled: true, collection: 'pages', allowCreate: false, allowUpdate: false, allowDelete: false, allowedKeyIds: null, allowedCategoryIds: [7], requiredRole: 'any' as const }
+  const endpoint = { enabled: true, collection: 'pages', allowCreate: false, allowUpdate: false, allowDelete: false, allowedKeyIds: null as number[] | null, allowedCategoryIds: [7], requiredRole: 'any' as const }
   it('lets only listed categories call an endpoint', () => {
     const call = (categoryId: number | null) => decideEndpointAccess({ endpoint, method: 'GET', keyId: 1, keyScopes: ['*:read'], roles: [], categoryId })
     expect(call(7).ok).toBe(true)
