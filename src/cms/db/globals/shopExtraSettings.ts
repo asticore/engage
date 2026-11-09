@@ -1,7 +1,7 @@
 import { ShopExtraSettings } from '@/globals/ShopExtraSettings'
 
 import { createGlobalOps } from '../generic'
-import { shopExtraSettings, shopExtraSettingsPricingRules } from '../schema'
+import { shopExtraSettings, shopExtraSettingsPricingRules, shopExtraSettingsPromoBadges } from '../schema'
 
 /**
  * The `shop-extra-settings` global (src/globals/ShopExtraSettings.ts): one row, flat scalar fields only.
@@ -17,11 +17,14 @@ export type ShopExtraSettingsDoc = {
   addOnsEnabled?: boolean | null
   pricingRulesEnabled?: boolean | null
   pricingRules?: Record<string, unknown>[] | null
+  /** Promo badges on product cards (lib/promoBadges.ts). A missing switch means on. */
+  promoBadgesEnabled?: boolean | null
+  promoBadges?: Record<string, unknown>[] | null
   updatedAt: string
   createdAt: string
 }
 
-const ops = createGlobalOps(shopExtraSettings, ShopExtraSettings, { pricingRules: shopExtraSettingsPricingRules }, {})
+const ops = createGlobalOps(shopExtraSettings, ShopExtraSettings, { pricingRules: shopExtraSettingsPricingRules, shopExtraSettingsPromoBadges }, {})
 
 export const findShopExtraSettings = ops.find as unknown as () => Promise<ShopExtraSettingsDoc | null>
 export const updateShopExtraSettings = ops.update as unknown as (

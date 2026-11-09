@@ -1,7 +1,7 @@
 /**
  * Validates the admin's list of extra display currencies before anything is saved. Pure.
  */
-import { MAX_DISPLAY_CURRENCIES, normaliseDisplayCode, parseRate, type RateMode } from './displayCurrency'
+import { MAX_DISPLAY_CURRENCIES, normaliseDisplayCode, normaliseRounding, parseRate, type RateMode, type RoundingRule } from './displayCurrency'
 
 export type DisplayCurrencyInput = {
   code: string
@@ -9,6 +9,7 @@ export type DisplayCurrencyInput = {
   rateMode: RateMode
   /** Display units per one shop unit. Null in auto mode when the admin has not typed one. */
   manualRate: number | null
+  rounding: RoundingRule
 }
 
 /** `error` is null when the list is fine. */
@@ -37,7 +38,7 @@ export function validateDisplayCurrencies(input: unknown, base: string): Validat
     if (enabled && rateMode === 'manual' && manualRate === null) {
       return fail(`Type the exchange rate for ${code}, or switch it to automatic rates.`)
     }
-    rows.push({ code, enabled, rateMode, manualRate })
+    rows.push({ code, enabled, rateMode, manualRate, rounding: normaliseRounding(raw.rounding) })
   }
   return { rows, error: null }
 }

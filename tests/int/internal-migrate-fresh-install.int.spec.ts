@@ -51,6 +51,15 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
   })
 
+  it('creates the nested category tables with their columns and indexes', async () => {
+    for (const table of ['eg_categories', 'eg_category_links']) expect(tables, table).toContain(table)
+    const cols = async (t: string) => ((await proxy.env.D1.prepare(`PRAGMA table_info(\`${t}\`)`).all()).results as { name: string }[]).map((r) => r.name)
+    expect(await cols('eg_categories')).toEqual(expect.arrayContaining(['scope', 'name', 'slug', 'parent_id', 'sort_order']))
+    expect(await cols('eg_category_links')).toEqual(expect.arrayContaining(['category_id', 'scope', 'doc_id']))
+    const idx = ((await proxy.env.D1.prepare(`SELECT name FROM sqlite_master WHERE type='index'`).all()).results as { name: string }[]).map((r) => r.name)
+    expect(idx).toContain('eg_categories_scope_slug_idx')
+  })
+
   it('adds SEO and social media columns to pages, posts, and courses', async () => {
     const checkColumns = async (table: string, expectedColumns: string[]): Promise<void> => {
       const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
@@ -342,6 +351,18 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(await columnsOf('eg_shop_extra_settings')).toEqual(expect.arrayContaining(['add_ons_enabled', 'pricing_rules_enabled']))
     expect(await columnsOf('eg_shop_extra_settings_pricing_rules')).toEqual(
       expect.arrayContaining(['_parent_id', 'name', 'enabled', 'discount_type', 'amount', 'applies_when', 'min_quantity', 'customer_role', 'min_subtotal', 'category', 'starts_at', 'ends_at', 'priority', 'exclusive', 'show_on_product']),
+    )
+  })
+
+  it('creates the promo badge table and the promo badge switch (the second-run check below covers idempotence)', async () => {
+    expect(tables).toContain('eg_shop_extra_settings_promo_badges')
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    expect(await columnsOf('eg_shop_extra_settings')).toContain('promo_badges_enabled')
+    expect(await columnsOf('eg_shop_extra_settings_promo_badges')).toEqual(
+      expect.arrayContaining(['_order', '_parent_id', 'text', 'enabled', 'icon', 'colour', 'text_colour', 'position', 'style', 'shape', 'effect', 'applies_to', 'new_days', 'tag', 'category', 'product_slugs', 'priority', 'starts_at', 'ends_at']),
     )
   })
 
@@ -956,8 +977,22 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
     expect(tables).toContain('eg_shop_display_currencies')
     expect(await columnsOf('eg_shop_display_currencies')).toEqual(
-      expect.arrayContaining(['code', 'enabled', 'sort_order', 'rate_mode', 'manual_rate', 'auto_rate', 'auto_rate_base', 'auto_rate_at', 'updated_at', 'created_at']),
+      expect.arrayContaining(['code', 'enabled', 'sort_order', 'rate_mode', 'manual_rate', 'auto_rate', 'auto_rate_base', 'auto_rate_at', 'rounding', 'updated_at', 'created_at']),
     )
+  })
+
+  it('creates the price tiers table with its unique index, and the display currency rounding column', async () => {
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    expect(tables).toContain('eg_shop_price_tiers')
+    const before = await columnsOf('eg_shop_price_tiers')
+    expect(before).toEqual(expect.arrayContaining(['id', 'product_id', 'variation_id', 'customer_type', 'min_qty', 'price', 'updated_at', 'created_at']))
+    const idx = await proxy.env.D1.prepare("SELECT name FROM sqlite_master WHERE type='index' AND name='eg_shop_price_tiers_unique_idx'").all()
+    expect(idx.results).toHaveLength(1)
+    expect(await columnsOf('eg_shop_display_currencies')).toContain('rounding')
+    // The second run is asserted once for the whole schema above (idempotent).
   })
 
   it('creates the AI builder usage table and the model and cap columns', async () => {

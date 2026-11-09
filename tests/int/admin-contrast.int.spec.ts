@@ -5,7 +5,7 @@
  * Loads the real custom.css + contrast.css (+ edit-lock.css) into headless
  * Chromium (so cascade layers behave exactly as in the app), hovers each
  * button type and asserts the resolved foreground/background ratio is >= 4.5.
- * Tailwind utilities are not compiled here, so the two utility classes the
+ * Shine and generated utilities are not compiled here, so the two utility classes the
  * dashboard create buttons use are mimicked inside `@layer utilities`, which
  * is what reproduces the original gold-on-gold bug (an unlayered `a { color }`
  * beating a layered `hover:text-*`).

@@ -1,0 +1,56 @@
+/* Promo badges on product cards (src/components/PromoBadges.tsx). Colours arrive as --eg-badge-bg and --eg-badge-fg. */
+
+.eg-badges {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--sh-space, 4px) * 1);
+  padding: calc(var(--sh-space, 4px) * 2);
+  pointer-events: none;
+}
+.eg-badges--top-left { top: 0; left: 0; align-items: flex-start; }
+.eg-badges--top-right { top: 0; right: 0; align-items: flex-end; }
+.eg-badges--bottom-left { bottom: 0; left: 0; align-items: flex-start; flex-direction: column-reverse; }
+.eg-badges--bottom-right { bottom: 0; right: 0; align-items: flex-end; flex-direction: column-reverse; }
+
+.eg-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  padding: 3px 9px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--eg-badge-bg, #b3261e);
+}
+.eg-badge--solid { background: var(--eg-badge-bg, #b3261e); color: var(--eg-badge-fg, #fff); }
+.eg-badge--outline { background: transparent; color: var(--eg-badge-bg, #b3261e); background-color: rgba(255, 255, 255, 0.85); }
+.eg-badge--soft { background: color-mix(in srgb, var(--eg-badge-bg, #b3261e) 18%, #fff); color: var(--eg-badge-bg, #b3261e); border-color: transparent; }
+
+.eg-badge--rounded { border-radius: 4px; }
+.eg-badge--pill { border-radius: 999px; }
+.eg-badge--square { border-radius: 0; }
+
+.eg-badge--fx-pulse { animation: eg-badge-pulse 1.8s ease-in-out infinite; }
+.eg-badge--fx-bounce { animation: eg-badge-bounce 1.6s ease-in-out infinite; }
+.eg-badge--fx-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.65) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: eg-badge-shine 2.6s ease-in-out infinite;
+}
+
+@keyframes eg-badge-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes eg-badge-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes eg-badge-shine { 0%, 60% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .eg-badge--fx-pulse, .eg-badge--fx-bounce, .eg-badge--fx-shine::after { animation: none; }
+}

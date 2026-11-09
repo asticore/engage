@@ -1,6 +1,6 @@
 import { TEMPLATE_LIBRARIES_SLUG } from './settings'
 import { parseLibraryUrl } from './url'
-import { LIBRARY_LIMITS, type LibraryRow } from './types'
+import { DEFAULT_LIBRARY_ID, DEFAULT_LIBRARY_LABEL, DEFAULT_LIBRARY_URL, LIBRARY_LIMITS, type LibraryRow } from './types'
 
 /**
  * Reads and writes the `template-libraries` global. Server side only. The engine is passed in, so the
@@ -37,6 +37,17 @@ export function normaliseLibraryState(raw: unknown): LibraryState {
     if (parsed.ok) return { id, label: parsed.value.config.label, url: parsed.value.url, enabled, config: parsed.value.config, error: null }
     return { id, label: label || url || `Library ${index + 1}`, url, enabled, config: null, error: (parsed as { error: string }).error }
   })
+  // Every install lists the Engage templates library with no setup. It is a normal row once saved (so a switch-off
+  // sticks), but it can never be removed: a missing row is added back enabled.
+  const defaultIndex = rows.findIndex((row) => row.id === DEFAULT_LIBRARY_ID || row.url.toLowerCase() === DEFAULT_LIBRARY_URL)
+  if (defaultIndex >= 0) {
+    rows[defaultIndex] = { ...rows[defaultIndex], builtIn: true }
+  } else {
+    const parsed = parseLibraryUrl(DEFAULT_LIBRARY_URL, DEFAULT_LIBRARY_LABEL)
+    if (parsed.ok) {
+      rows.push({ id: DEFAULT_LIBRARY_ID, label: DEFAULT_LIBRARY_LABEL, url: parsed.value.url, enabled: true, config: parsed.value.config, error: null, builtIn: true })
+    }
+  }
   const imports = Array.isArray(doc.imports)
     ? doc.imports
         .map((item) => {

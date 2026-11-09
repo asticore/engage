@@ -18,8 +18,23 @@ export const MAX_RATE = 100000
 
 export type RateMode = 'manual' | 'auto'
 
+/**
+ * Rounding rules for converted display prices (Task 3):
+ * none = the currency's own decimals, whole = nearest whole unit, nearest5 = nearest 0.05,
+ * ends99 = round up to a whole unit, minus 0.01 (a "charm price" such as 6.99).
+ */
+export const ROUNDING_RULES = ['none', 'whole', 'nearest5', 'ends99'] as const
+export type RoundingRule = (typeof ROUNDING_RULES)[number]
+
+/** A stored or typed rule, or 'none' when it is not a known one. */
+export function normaliseRounding(value: unknown): RoundingRule {
+  return (ROUNDING_RULES as readonly string[]).includes(value as string) ? (value as RoundingRule) : 'none'
+}
+
 export type DisplayCurrencyOption = {
   code: string
+  /** Optional rounding rule applied after conversion. Missing means none. */
+  rounding?: RoundingRule
   /** Display units per one shop unit. Always a positive number. */
   rate: number
   /** Decimal places this currency is shown with (JPY 0, most 2, KWD 3). */
@@ -54,13 +69,24 @@ export function parseRate(value: unknown): number | null {
  * Converts a whole-unit shop amount (29.99 AUD) to the display currency, rounded to that
  * currency's own decimal places (half away from zero). `null` in, `null` out.
  */
-export function convertForDisplay(units: number | null | undefined, rate: number, digits: number): number | null {
+export function convertForDisplay(units: number | null | undefined, rate: number, digits: number, rounding: RoundingRule = 'none'): number | null {
   if (typeof units !== 'number' || !Number.isFinite(units)) return null
   const factor = 10 ** digits
   const scaled = units * rate * factor
   // A tiny nudge makes 2.675-style float errors round the way a human expects.
   const rounded = Math.sign(scaled) * Math.round(Math.abs(scaled) + 1e-9)
-  return rounded / factor
+  return applyRounding(rounded / factor, rounding, digits)
+}
+
+/** Applies a rounding rule to an amount already rounded to `digits` places. Zero and negatives are left alone. */
+export function applyRounding(value: number, rule: RoundingRule, digits: number): number {
+  if (!(value > 0) || rule === 'none') return value
+  const factor = 10 ** digits
+  const clean = (n: number) => Math.round(n * factor) / factor
+  if (rule === 'whole') return Math.max(1, Math.round(value + 1e-9))
+  if (rule === 'nearest5') return digits >= 2 ? clean(Math.max(0.05, Math.round(value * 20 + 1e-9) / 20)) : value
+  // ends99: only where the currency has cents; at least 0.99 so a small price never becomes zero
+  return digits >= 2 ? clean(Math.max(1, Math.ceil(value - 1e-9)) - 0.01) : value
 }
 
 /** The effective rate for a row: the manual rate, or the automatic one in auto mode. */

@@ -225,7 +225,7 @@ export const TemplateLibrariesManager: React.FC = () => {
                 </td>
                 {canManage ? (
                   <td>
-                    <button
+                    {library.builtIn ? null : <button
                       type="button"
                       className="btn btn--style-secondary btn--size-small"
                       disabled={busy !== null}
@@ -234,7 +234,7 @@ export const TemplateLibrariesManager: React.FC = () => {
                       }}
                     >
                       {t('templateLibraries.remove')}
-                    </button>
+                    </button>}
                   </td>
                 ) : null}
               </tr>

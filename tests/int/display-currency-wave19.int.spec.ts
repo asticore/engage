@@ -154,6 +154,6 @@ describe('storefrontOptions', () => {
     const options = storefrontOptions([row({ code: 'USD', rate_mode: 'auto', manual_rate: null, auto_rate: 0.7, auto_rate_base: 'NZD' })], 'AUD')
     expect(options).toEqual([])
     const fresh = storefrontOptions([row({ code: 'USD', rate_mode: 'auto', manual_rate: null, auto_rate: 0.7, auto_rate_base: 'AUD' })], 'AUD')
-    expect(fresh).toEqual([{ code: 'USD', rate: 0.7, digits: 2 }])
+    expect(fresh).toEqual([{ code: 'USD', rate: 0.7, digits: 2, rounding: 'none' }])
   })
 })

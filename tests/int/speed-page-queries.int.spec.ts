@@ -172,6 +172,7 @@ describe('database reads per public page', () => {
 })
 
 // Upper bounds: the measured counts after Task 12 (the layout's 7 reads, then the page's own).
-const MAX_HOME_READS = 11
+// Home and product pages gained one read each (the shop-extra-settings global that holds the promo badges, Task 6).
+const MAX_HOME_READS = 12
 const MAX_POST_READS = 9
-const MAX_PRODUCT_READS = 9
+const MAX_PRODUCT_READS = 10

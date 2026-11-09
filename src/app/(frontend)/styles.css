@@ -1,4 +1,5 @@
-@import 'tailwindcss';
+@import url('../../styles/shine/shine.css');
+@import url('../../styles/engage-utilities.css');
 
 :root {
   --color-ink: #1f2230;
@@ -54,30 +55,35 @@ a {
 /*
  * page-shell, page-header, empty-state (below) and several other classes in
  * this file are shared verbatim across a couple dozen page/component files
- * with no per-instance variation - the exact case Tailwind's own docs point
- * at `@apply` for. Rewriting them as one-off inline utility classNames in
- * every consuming file would mean touching 20+ files for zero visual change
- * and real risk of one of them drifting from the rest; @apply keeps them on
- * the same utilities/tokens as everything else while leaving one definition
- * to update. Styling that's actually specific to one component (Header,
- * Footer, forms, cards, detail pages, ...) is inline utility classNames
+ * with no per-instance variation, so each has one definition here (spacing
+ * uses Shine's --sh-space unit). Styling specific to one component (Header,
+ * Footer, forms, cards, detail pages, ...) is Shine utility classNames
  * directly in its JSX instead - see those files.
  */
 
 .page-shell {
-  @apply mx-auto max-w-[var(--max-width)] px-6 py-16;
+  margin-left:auto;margin-right:auto;
+  max-width:var(--max-width);
+  padding-left:calc(var(--sh-space) * 6);padding-right:calc(var(--sh-space) * 6);
+  padding-top:calc(var(--sh-space) * 16);padding-bottom:calc(var(--sh-space) * 16);
 }
 
 .page-header {
-  @apply mb-12 text-center;
+  margin-bottom:calc(var(--sh-space) * 12);
+  text-align:center;
 }
 
 .page-header h1 {
-  @apply text-[3rem];
+  font-size:3rem;
 }
 
 .empty-state {
-  @apply border border-dashed border-[var(--color-line)] p-8 text-center text-[rgba(20,17,15,0.6)];
+  border-width:1px;border-style:solid;
+  border-style:dashed;
+  border-color:var(--color-line);
+  padding:calc(var(--sh-space) * 8);
+  text-align:center;
+  color:rgba(20,17,15,0.6);
 }
 
 /* Buttons */
@@ -152,28 +158,43 @@ a {
 /* Hero */
 
 .hero {
-  @apply bg-[var(--color-ink)] px-6 py-[120px] text-center text-[var(--color-cream)];
-  @apply bg-[image:radial-gradient(circle_at_50%_0%,rgba(185,146,75,0.18),transparent_60%)];
+  background-color:var(--color-ink);
+  padding-left:calc(var(--sh-space) * 6);padding-right:calc(var(--sh-space) * 6);
+  padding-top:120px;padding-bottom:120px;
+  text-align:center;
+  color:var(--color-cream);
+  background-image:radial-gradient(circle at 50% 0%,rgba(185,146,75,0.18),transparent 60%);
 }
 
 .hero__inner {
-  @apply mx-auto max-w-[720px];
+  margin-left:auto;margin-right:auto;
+  max-width:720px;
 }
 
 .hero__eyebrow {
-  @apply mb-6 text-[0.75rem] uppercase tracking-[0.3em] text-[var(--color-gold-light)];
+  margin-bottom:calc(var(--sh-space) * 6);
+  font-size:0.75rem;
+  text-transform:uppercase;
+  letter-spacing:0.3em;
+  color:var(--color-gold-light);
 }
 
 .hero h1 {
-  @apply mb-6 text-[clamp(3rem,7vw,5rem)];
+  margin-bottom:calc(var(--sh-space) * 6);
+  font-size:clamp(3rem,7vw,5rem);
 }
 
 .hero__tagline {
-  @apply mb-10 text-[1.15rem] text-[rgba(246,241,231,0.8)];
+  margin-bottom:calc(var(--sh-space) * 10);
+  font-size:1.15rem;
+  color:rgba(246,241,231,0.8);
 }
 
 .hero__actions {
-  @apply flex flex-wrap justify-center gap-4;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:calc(var(--sh-space) * 4);
 }
 
 .hero .btn--primary {
@@ -195,42 +216,55 @@ a {
 /* Home sections */
 
 .home-section {
-  @apply pb-10 pt-6;
+  padding-bottom:calc(var(--sh-space) * 10);
+  padding-top:calc(var(--sh-space) * 6);
 }
 
 .home-section--dark {
-  @apply bg-[var(--color-cream-dim)];
+  background-color:var(--color-cream-dim);
 }
 
 .section-heading {
-  @apply mb-8 flex items-baseline justify-between;
+  margin-bottom:calc(var(--sh-space) * 8);
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
 }
 
 .section-heading h2 {
-  @apply text-[2.25rem];
+  font-size:2.25rem;
 }
 
 .section-heading a {
-  @apply border-b border-[var(--color-gold)] text-[0.8rem] uppercase tracking-[0.08em];
+  border-bottom-width:1px;border-style:solid;
+  border-color:var(--color-gold);
+  font-size:0.8rem;
+  text-transform:uppercase;
+  letter-spacing:0.08em;
 }
 
 .section-subheading {
-  @apply mb-6 mt-14 text-[1.5rem];
+  margin-bottom:calc(var(--sh-space) * 6);
+  margin-top:calc(var(--sh-space) * 14);
+  font-size:1.5rem;
 }
 
 .about-section__inner {
-  @apply max-w-[720px] text-center;
+  max-width:720px;
+  text-align:center;
 }
 
 .about-section h2 {
-  @apply text-[2.25rem];
+  font-size:2.25rem;
 }
 
 /* Product grid / card */
 
 .product-grid,
 .event-grid {
-  @apply grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-8;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:calc(var(--sh-space) * 8);
 }
 
 /*
@@ -247,7 +281,8 @@ a {
 /* Forms */
 
 .form-error {
-  @apply text-[0.9rem] text-[#a3352a];
+  font-size:0.9rem;
+  color:#a3352a;
 }
 
 /* Neutral rich-text table look; zero specificity so saved theme table styles always win. */

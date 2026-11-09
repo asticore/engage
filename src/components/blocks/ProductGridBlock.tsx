@@ -1,6 +1,7 @@
 import { ProductCard } from '@/components/ProductCard'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { getEngine } from '@/lib/engine'
+import { loadPromoBadges } from '@/features/ecommerce/lib/promoBadges'
 import type { Product } from '@/engage-types'
 
 export async function ProductGridBlock({
@@ -28,6 +29,7 @@ export async function ProductGridBlock({
   const products = await excludeProtected('products', found)
 
   if (products.length === 0) return null
+  const promoBadges = await loadPromoBadges(engine)
 
   return (
     <section className="home-section built-block built-block--productgrid">
@@ -39,7 +41,7 @@ export async function ProductGridBlock({
         )}
         <div className="product-grid">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard key={product.id} product={product} promoBadges={promoBadges} />
           ))}
         </div>
       </div>

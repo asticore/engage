@@ -32,5 +32,5 @@ export function useDisplayMoney(): (units: number | null | undefined) => string 
   const state = useContext(DisplayCurrencyContext)
   const locale = priceLocale(useStoreLocale())
   const option = state.selected ? state.options.find((o) => o.code === state.selected) : undefined
-  return (units) => (option ? formatDisplayAmount(units, option.code, option.rate, option.digits, locale) : formatPriceInAUD(units, state.base, locale))
+  return (units) => (option ? formatDisplayAmount(units, option.code, option.rate, option.digits, locale, option.rounding ?? 'none') : formatPriceInAUD(units, state.base, locale))
 }

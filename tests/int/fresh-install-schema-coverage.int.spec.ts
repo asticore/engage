@@ -37,6 +37,7 @@ import * as webhooksSchema from '@/cms/db/schema/webhooks'
 import * as templateLibrariesSchema from '@/cms/db/schema/templateLibraries'
 import * as privacyRequestsSchema from '@/cms/db/schema/privacyRequests'
 import * as apiEndpointsSchema from '@/cms/db/schema/apiEndpoints'
+import * as categoriesSchema from '@/cms/db/schema/categories'
 import * as apiCategoriesSchema from '@/cms/db/schema/apiCategories'
 
 import { provisionAllFeatures } from '../helpers/provisionAll'
@@ -85,7 +86,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
         'seoSettings', 'seoSettingsSchemaSameAs', 'speedSettings', 'speedSettingsAdvancedPreconnectOrigins', 'speedSettingsAdvancedPrefetchDns',
         'mediaSettings', 'mediaSettingsResizingResponsiveWidths', 'backupSettings', 'shopExtraSettings', 'siteDetails', 'sitePages', 'domainSettings', 'domainSettingsDomains', 'emailTemplates', 'emailBrand', 'emailSchedule', 'googleConnection', 'trackingConnections',
         'addresses', 'carts', 'cartsItems', 'orders', 'ordersItems', 'ordersRels', 'transactions', 'transactionsItems', 'products', 'productsRels', 'productsVersions', 'productsVersionsRels', 'productsAttributes', 'productsVariations', 'productsVersionsAttributes', 'productsVersionsVariations', 'productsBundleItems', 'productsVersionsBundleItems', 'cartsItems',
-        'productsAddOns', 'productsVersionsAddOns', 'shopExtraSettingsPricingRules',
+        'productsAddOns', 'productsVersionsAddOns', 'shopExtraSettingsPricingRules', 'shopExtraSettingsPromoBadges',
         'preferences', 'preferencesRels', 'lockedDocuments', 'lockedDocumentsRels',
       ]
 
@@ -172,6 +173,10 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
         drizzleTables.push({ name: exportName, table: exportValue })
       }
       for (const [exportName, exportValue] of Object.entries(rateLimitsSchema)) {
+        drizzleTables.push({ name: exportName, table: exportValue })
+      }
+      // Nested categories and their document links: plain drizzle tables in their own schema file
+      for (const [exportName, exportValue] of Object.entries(categoriesSchema)) {
         drizzleTables.push({ name: exportName, table: exportValue })
       }
       // Suppression list for reminder and marketing mail: one plain drizzle table in its own schema file

@@ -145,6 +145,7 @@ describe('saved library rows', () => {
       ['a', true, true],
       ['b', false, true],
       ['c', true, false],
+      ['engage-templates', true, true],
     ])
     expect(state.rows[1].error).toMatch(/github.com/)
     expect(state.imports).toEqual([{ sha256: 'a'.repeat(64), mediaId: 7, sourceUrl: 'u' }])
@@ -352,5 +353,19 @@ describe('routes refuse people who should not see or change libraries', () => {
     const res = await settingsPOST(new Request('https://site.test/api/template-libraries/settings', { method: 'POST', body: JSON.stringify({ action: 'add', url: 'https://evil.example/x' }) }))
     expect(res.status).toBe(400)
     expect(updateGlobal).not.toHaveBeenCalled()
+  })
+})
+
+describe('default library (engage-templates)', () => {
+  it('is listed on an empty install, enabled and built in', () => {
+    const state = normaliseLibraryState(null)
+    expect(state.rows).toHaveLength(1)
+    expect(state.rows[0]).toMatchObject({ id: 'engage-templates', url: 'https://github.com/asticore/engage-templates', enabled: true, builtIn: true })
+  })
+
+  it('keeps a saved switch-off and never adds a second copy', () => {
+    const state = normaliseLibraryState({ libraries: [{ id: 'engage-templates', label: 'x', url: 'https://github.com/asticore/engage-templates', enabled: false }] })
+    expect(state.rows).toHaveLength(1)
+    expect(state.rows[0]).toMatchObject({ enabled: false, builtIn: true })
   })
 })

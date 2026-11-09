@@ -6,11 +6,11 @@ import '@/features/shopReports/shop-reports.css'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
-type ApiRow = { code: string; enabled: boolean; rateMode: 'manual' | 'auto'; manualRate: number | null; autoRate: number | null; autoRateAt: string | null; shownRate: number | null }
+type ApiRow = { code: string; enabled: boolean; rateMode: 'manual' | 'auto'; manualRate: number | null; rounding?: string; autoRate: number | null; autoRateAt: string | null; shownRate: number | null }
 type Loaded = { base: string; attribution: string; maxCurrencies: number; currencies: ApiRow[] }
-type Draft = { code: string; enabled: boolean; rateMode: 'manual' | 'auto'; manualRate: string }
+type Draft = { code: string; enabled: boolean; rateMode: 'manual' | 'auto'; manualRate: string; rounding: string }
 
-const toDraft = (r: ApiRow): Draft => ({ code: r.code, enabled: r.enabled, rateMode: r.rateMode, manualRate: r.manualRate === null ? '' : String(r.manualRate) })
+const toDraft = (r: ApiRow): Draft => ({ code: r.code, enabled: r.enabled, rateMode: r.rateMode, manualRate: r.manualRate === null ? '' : String(r.manualRate), rounding: r.rounding ?? 'none' })
 
 /** The list of extra display currencies: which ones shoppers can pick, and how their rates are set. */
 export function DisplayCurrenciesPanel() {
@@ -61,7 +61,7 @@ export function DisplayCurrenciesPanel() {
     if (!/^[A-Z]{3}$/.test(code)) return setMessage('Currency codes are three letters, such as USD or EUR.')
     if (code === base) return setMessage(`${code} is already the shop currency.`)
     if (drafts.some((d) => d.code === code)) return setMessage(`${code} is already listed.`)
-    setDrafts((d) => [...d, { code, enabled: true, rateMode: 'auto', manualRate: '' }])
+    setDrafts((d) => [...d, { code, enabled: true, rateMode: 'auto', manualRate: '', rounding: 'none' }])
     setNewCode('')
     setMessage('')
   }
@@ -74,7 +74,7 @@ export function DisplayCurrenciesPanel() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ currencies: drafts.map((d) => ({ code: d.code, enabled: d.enabled, rateMode: d.rateMode, manualRate: d.manualRate === '' ? null : d.manualRate })) }),
+        body: JSON.stringify({ currencies: drafts.map((d) => ({ code: d.code, enabled: d.enabled, rateMode: d.rateMode, manualRate: d.manualRate === '' ? null : d.manualRate, rounding: d.rounding })) }),
       })
       const body = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) setMessage(body.error || 'The list could not be saved.')
@@ -156,6 +156,15 @@ export function DisplayCurrenciesPanel() {
                     <input type="number" min="0" step="any" value={d.manualRate} onChange={(e) => update(i, { manualRate: e.target.value })} />
                   </label></Tooltip>
                 ) : null}
+                <label style={{ display: 'grid', gap: 4 }}>
+                  <span>{t('shop.currency.rounding')}</span>
+                  <select value={d.rounding} onChange={(e) => update(i, { rounding: e.target.value })}>
+                    <option value="none">{t('shop.currency.rounding.none')}</option>
+                    <option value="whole">{t('shop.currency.rounding.whole')}</option>
+                    <option value="nearest5">{t('shop.currency.rounding.nearest5')}</option>
+                    <option value="ends99">{t('shop.currency.rounding.ends99')}</option>
+                  </select>
+                </label>
                 <Tooltip text={t('tip.theExchangeRateShoppersSee')}><span className="shop-reports__range">
                   {saved && saved.shownRate !== null ? `Rate in use: 1 ${base} = ${saved.shownRate} ${d.code}` : 'No rate yet. Save, then fetch automatic rates, or type a rate.'}
                 </span></Tooltip>

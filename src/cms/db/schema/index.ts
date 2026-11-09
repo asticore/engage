@@ -715,6 +715,11 @@ const shopExtraPricingRulesField = shopExtraSettingsGenerated.arrayFields.find((
 if (!shopExtraPricingRulesField) throw new Error('shop-extra-settings: the pricingRules array is missing.')
 export const shopExtraSettingsPricingRules = generateArrayTable(ShopExtraSettings.slug, shopExtraSettingsGenerated.tableName, shopExtraPricingRulesField).table
 
+/** Promo badges: the rows of the promoBadges array on the shop-extra-settings global (lib/promoBadges.ts). */
+const shopExtraPromoBadgesField = shopExtraSettingsGenerated.arrayFields.find((f) => f.name === 'promoBadges')
+if (!shopExtraPromoBadgesField) throw new Error('shop-extra-settings: the promoBadges array is missing.')
+export const shopExtraSettingsPromoBadges = generateArrayTable(ShopExtraSettings.slug, shopExtraSettingsGenerated.tableName, shopExtraPromoBadgesField).table
+
 /** Special pages and maintenance mode (src/globals/SitePages.ts): flat scalar fields plus the maintenance group. */
 export const sitePagesGenerated = generateTable(SitePages)
 export const sitePages = sitePagesGenerated.table

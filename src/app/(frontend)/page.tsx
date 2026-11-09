@@ -8,6 +8,7 @@ import { annotatePage } from '@/features/editScreens/toc'
 import { EventCard } from '@/components/EventCard'
 import { ProductCard } from '@/components/ProductCard'
 import { getEngine } from '@/lib/engine'
+import { loadPromoBadges } from '@/features/ecommerce/lib/promoBadges'
 import { getHomepage } from '@/utilities/pagePaths'
 import { siteNameOf } from '@/features/brand/siteName'
 import { getSiteSnapshot } from '@/features/speed/siteSnapshot'
@@ -85,6 +86,7 @@ export default async function HomePage({
 async function DefaultHomepage() {
   const siteName = siteNameOf((await getSiteSnapshot()).settings)
   const engine = await getEngine()
+  const promoBadges = await loadPromoBadges(engine)
   const now = new Date().toISOString()
 
   const [{ docs: allProducts }, { docs: allEvents }] = (await Promise.all([
@@ -141,7 +143,7 @@ async function DefaultHomepage() {
           ) : (
             <div className="product-grid">
               {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} promoBadges={promoBadges} />
               ))}
             </div>
           )}
