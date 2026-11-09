@@ -946,8 +946,51 @@ button {
     border: 1px solid var(--theme-elevation-200);
     border-radius: var(--style-radius-m);
     background-color: var(--ac-surface);
-    color: var(--theme-elevation-700);
+    color: var(--theme-elevation-900);
     cursor: pointer;
+  }
+
+  .admin-topbar__menu:focus-visible {
+    outline: 2px solid var(--ac-gold);
+    outline-offset: 2px;
+  }
+
+  .admin-topbar__menu .hamburger {
+    position: relative;
+    width: 18px;
+    height: 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .admin-topbar__menu .hamburger__line {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: currentColor;
+    transition:
+      transform 0.18s ease,
+      opacity 0.18s ease;
+  }
+
+  .admin-topbar__menu .hamburger--active .hamburger__line:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .admin-topbar__menu .hamburger--active .hamburger__line:nth-child(2) {
+    opacity: 0;
+  }
+
+  .admin-topbar__menu .hamburger--active .hamburger__line:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .admin-topbar__menu .hamburger__line {
+      transition: none;
+    }
   }
 }
 
@@ -1833,7 +1876,7 @@ button {
   :root:not([data-theme='light']) .list-column-picker-btn,
   :root:not([data-theme='light']) .list-toolbar-btn {
     background-color: var(--ac-surface);
-    color: var(--theme-elevation-100);
+    color: var(--theme-elevation-900);
     border-color: var(--theme-elevation-400);
   }
 
@@ -1853,7 +1896,7 @@ button {
 [data-theme='dark'] .list-column-picker-btn,
 [data-theme='dark'] .list-toolbar-btn {
   background-color: var(--ac-surface);
-  color: var(--theme-elevation-100);
+  color: var(--theme-elevation-900);
   border-color: var(--theme-elevation-400);
 }
 
