@@ -18,7 +18,6 @@ import { useRouter } from 'next/navigation'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { useAdminHref } from '@/admin/adminRoute/AdminRouteProvider'
-import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const LogoutIcon: React.FC = () => (
   <svg aria-hidden="true" height="15" viewBox="0 0 16 16" width="15">
@@ -51,10 +50,10 @@ export const Logout: React.FC = () => {
   }
 
   return (
-    <Tooltip text={t('nav.logOut')}><button aria-label={t('nav.logOut')} className="nav__log-out" disabled={loggingOut} onClick={onClick} type="button">
+    <button aria-label={t('nav.logOut')} className="nav__log-out" disabled={loggingOut} onClick={onClick} type="button">
       <LogoutIcon />
       <span>{loggingOut ? t('nav.loggingOut') : t('nav.logOut')}</span>
-    </button></Tooltip>
+    </button>
   )
 }
 

@@ -5,7 +5,6 @@ import { Hamburger, Link, NavGroup, useNav } from '@/engine/ui'
 import { usePathname } from 'next/navigation'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { NAV_GROUP_KEYS } from '@/admin/i18n/navKeys'
-import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const baseClass = 'nav'
 
@@ -75,14 +74,14 @@ export const AdminNavClient: React.FC<{
 
     if (pathname === entity.href) {
       return (
-        <Tooltip text={entity.label} key={entityKey}><div className={`${baseClass}__link`} id={entity.id}>
+        <div className={`${baseClass}__link`} id={entity.id} key={entityKey}>
           {label}
-        </div></Tooltip>
+        </div>
       )
     }
 
     return (
-      <Link className={`${baseClass}__link`} href={entity.href} id={entity.id} key={entityKey} prefetch={false} title={entity.label}>
+      <Link className={`${baseClass}__link`} href={entity.href} id={entity.id} key={entityKey} prefetch={false}>
         {label}
       </Link>
     )
@@ -114,7 +113,6 @@ export const AdminNavDashboardLink: React.FC<{ href: string }> = ({ href }) => {
       href={href}
       id="nav-dashboard"
       prefetch={false}
-      title={t('nav.dashboard')}
     >
       <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.4" stroke="currentColor" strokeWidth="1.4" />

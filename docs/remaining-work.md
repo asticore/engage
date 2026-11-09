@@ -144,6 +144,8 @@ Finished work is listed in `remaining-work-done.md` (same folder), one line per 
 
 **Reply format (Matt, 31 Oct 2026):** every response to Matt has three bullet-point sections: **Done** (what was done), **Need from you** (what Matt must provide or decide), **Suggested next** (what to do next). Keep it short; details go in this document.
 
+**Push and token rule (Matt, 9 Nov 2026):** after finishing the work, push all merges to GitHub in one go and avoid GitHub Actions wherever possible (they cost extra and the limit was hit). Use Haiku subagents as much as possible to save tokens.
+
 **GitHub budget rule (Matt, 9 Nov 2026): one push per request.** Every push and every pull request runs GitHub Actions, so do all the work for one request locally (agents in worktrees, merged locally, all local checks green: tsc, the related specs, lint, and the build when it matters), then push ONCE and open ONE pull request. Never push work in progress, per-agent branches, per-file commits, fix-up commits after CI or "kick CI" commits. Run the full checks locally before the single push so CI passes first time. If CI still fails, batch every fix into one follow-up push. Do not use Codespaces, Git LFS, GitHub Packages or paid AI credit SKUs. Keep each live re-check to one deploy per request.
 
 0. Model routing to save tokens (your instruction 16 Oct): the cheapest model that can do the job. Haiku (Haiku 4.5) for reading and locating code, pushing files, single-file mechanical edits, writing tests from a clear spec and doc updates; Sonnet only for multi-file feature builds and when Haiku is rate-limited; the main session (Opus) plans, writes briefs, reviews diffs and decides. Briefs name files and ownership so agents never edit the same file in parallel.

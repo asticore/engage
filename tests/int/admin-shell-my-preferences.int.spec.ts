@@ -166,7 +166,7 @@ describe('shell wiring', () => {
   it('the sidebar holds the toggles and the language picker is gone from it', () => {
     const navSource = root('src/components/admin/nav/AdminNav.tsx')
     expect(navSource).toContain('<NavToggler')
-    expect(navSource).toContain('<ThemeToggler')
+    expect(navSource).not.toContain('<ThemeToggler')
     expect(navSource).toContain('<MyPreferencesLink')
     expect(navSource).not.toContain('AdminLanguagePicker')
     expect(navSource).toContain('__wrap')

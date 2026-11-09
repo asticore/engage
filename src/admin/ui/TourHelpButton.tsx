@@ -13,7 +13,6 @@ export const TourHelpButton: React.FC = () => {
       aria-label={t('tour.replay')}
       className="nav__log-out nav__help"
       onClick={() => window.dispatchEvent(new CustomEvent(ADMIN_TOUR_START_EVENT))}
-      title={t('tour.replay')}
       type="button"
     >
       <svg aria-hidden="true" height="15" viewBox="0 0 16 16" width="15">

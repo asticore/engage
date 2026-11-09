@@ -239,6 +239,10 @@ export interface User {
   emailVerifyExpiresAt?: string | null;
   twoFactorBackupHashes?: string | null;
   adminLanguage?: string | null;
+  /**
+   * Profile picture shown in the admin sidebar. Set on My preferences.
+   */
+  photo?: (number | null) | Media;
   customRole?: number | null;
   permissionOverrides?: unknown;
   twoFactorEnabled?: boolean | null;

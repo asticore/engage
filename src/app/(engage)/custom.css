@@ -551,10 +551,61 @@ button {
 }
 
 @media (max-width: 768px) {
-  /* The drawer opens below the mobile top bar, so the bar's hamburger stays reachable. */
+  /* The drawer opens below the mobile top bar, so the bar's hamburger stays reachable.
+     It slides in from the right, under the hamburger. */
   .nav {
     inset-block: var(--admin-topbar-h) 0;
+    left: auto;
+    right: 0;
+    border-right: none;
+    border-left: 1px solid var(--theme-elevation-150);
+    transform: translateX(100%);
+    background-color: var(--ac-ground);
+    overflow: hidden;
   }
+
+  .nav--open {
+    transform: translateX(0);
+  }
+
+  /* Scroll the whole link list inside the drawer; never let the wrap shrink to nothing. */
+  .nav__scroll {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav__scroll > .nav__wrap {
+    display: flex;
+    flex: none;
+    min-height: 100%;
+  }
+
+  .nav .nav__link,
+  .nav .nav-group__toggle,
+  .nav .ac-nav-dashboard,
+  .nav .nav__log-out {
+    color: var(--theme-elevation-900);
+  }
+
+  .nav .nav-group__toggle {
+    font-size: 0.78rem;
+    padding: calc(var(--base) * 0.5) calc(var(--base) * 0.3);
+  }
+}
+
+.nav__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.nav__avatar--large {
+  width: 64px;
+  height: 64px;
 }
 
 .nav--hydrated {
