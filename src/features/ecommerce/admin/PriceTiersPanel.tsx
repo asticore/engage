@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import '@/features/shopReports/shop-reports.css'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
@@ -42,9 +42,10 @@ export function PriceTiersPanel() {
       })
       .catch(() => setError(t('shop.tiers.loadError')))
 
+  const loadRef = useRef(load)
+  loadRef.current = load
   useEffect(() => {
-    void load('')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void loadRef.current('')
   }, [])
 
   const choose = (id: string) => {
