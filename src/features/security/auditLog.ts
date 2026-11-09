@@ -54,6 +54,8 @@ export type AuditAction =
   | 'passkey.removed'
   | 'passkey.refused'
   | 'api-key.created'
+  | 'api-category.changed'
+  | 'api-key.rotated'
   | 'api-key.revoked'
   | 'api-key.used'
   | 'api-key.refused'
@@ -132,6 +134,8 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'passkey.removed',
   'passkey.refused',
   'api-key.created',
+  'api-category.changed',
+  'api-key.rotated',
   'api-key.revoked',
   'api-key.used',
   'api-key.refused',

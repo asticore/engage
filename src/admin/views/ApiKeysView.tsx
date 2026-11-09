@@ -3,7 +3,9 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess, isAdminUser } from '@/admin/auth'
-import { listAllApiKeys, listMyApiKeys } from '@/features/apiKeys/actions'
+import { listAllApiKeys, listApiCategoriesAction, listMyApiKeys } from '@/features/apiKeys/actions'
+import { ApiCategoriesPanel } from '@/features/apiKeys/components/ApiCategoriesPanel'
+import { ApiKeyForCustomer } from '@/features/apiKeys/components/ApiKeyForCustomer'
 import { ApiKeysPanel } from '@/features/apiKeys/components/ApiKeysPanel'
 import { getSecuritySettings } from '@/features/security/settings'
 import { getEngine } from '@/lib/engine'
@@ -36,6 +38,12 @@ export async function ApiKeysView() {
         are shown once at creation; only a hash is kept.
       </p>
       <ApiKeysPanel initial={result.ok && result.keys ? result.keys : []} showOwner={admin} />
+      {admin && (
+        <>
+          <ApiCategoriesPanel initial={(await listApiCategoriesAction()).categories ?? []} />
+          <ApiKeyForCustomer />
+        </>
+      )}
     </div>
   )
 }

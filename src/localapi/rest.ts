@@ -159,7 +159,9 @@
 import type { Where } from './access'
 import { Forbidden } from './access'
 import { AuthenticationError, InvalidResetToken, LockedAuth } from './auth'
-import { API_KEY_RATE_PER_MINUTE, ApiKeyRefused, decideRoute, forbiddenFieldIn, presentedApiKey, type ApiKeyContext } from '@/features/apiKeys'
+import { resolveD1Binding } from '@/cms/db/connect'
+import { createD1UsageStore, usageDay } from '@/features/apiKeys/categoryStore'
+import { API_KEY_RATE_PER_MINUTE, ApiKeyRefused, decideRoute, forbiddenFieldIn, presentedApiKey, type ApiKeyContext, type D1Like } from '@/features/apiKeys'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
 import type { Engine } from './engine'
 import { createEngine } from './engine'
@@ -364,6 +366,16 @@ export async function gateTwoFactorEnforcement(engine: Engine, request: Request,
  * (including every request that presents no key). Order: authenticate the key, rate
  * limit it, check the route against its scopes and the deny list, then check the body.
  */
+/** One request counted against a key's daily usage. Best effort: a failed write never changes the answer. */
+async function recordKeyUse(keyId: number, error: boolean): Promise<void> {
+  try {
+    const db = (await resolveD1Binding()) as unknown as D1Like
+    await createD1UsageStore(async () => db).record(keyId, usageDay(Date.now()), error)
+  } catch {
+    // The count is a convenience, not a gate.
+  }
+}
+
 export async function gateApiKeyRequest(engine: Engine, request: Request, slug: string[]): Promise<Response | null> {
   if (!presentedApiKey(request.headers)) return null
   const method = request.method.toUpperCase()
@@ -382,7 +394,8 @@ export async function gateApiKeyRequest(engine: Engine, request: Request, slug: 
   }
   if (!key) return Response.json({ errors: [{ name: 'ApiKeyRefused', message: 'API key is not valid.' }] }, { status: 401 })
 
-  const limit = hit(`api-key:${key.id}`, API_KEY_RATE_PER_MINUTE)
+  const limit = hit(`api-key:${key.id}`, key.ratePerMinute ?? API_KEY_RATE_PER_MINUTE)
+  void recordKeyUse(key.id, limit.limited)
   if (limit.limited) {
     return Response.json({ errors: [{ name: 'RateLimited', message: 'Too many requests for this API key. Try again in a moment.' }] }, { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } })
   }

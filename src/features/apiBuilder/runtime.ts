@@ -7,6 +7,7 @@ import { resolveAccess } from '@/features/roles/permissions'
 import { loadStrings, type UiDictionary } from '@/features/uiStrings'
 import { loadFieldGroups, locationContextFor } from '@/features/customFields/server'
 import { CALL_LOG_RETENTION_MS, createD1EndpointStore, type EndpointStore } from './store'
+import { FEED_CONTENT_TYPES, isFeedFormat, renderFeed, type FeedFormat } from './feeds'
 import { isGuideFormat, renderGuide, sameToken, siteNameFor } from './guideResponse'
 import { readCustomValues, customWriteValues, type CustomDeps } from './customValues'
 import { englishOf, problem, requestedLocale, textFor, type ApiProblem } from './messages'
@@ -86,11 +87,13 @@ const ROLE_RULES: Record<RequiredRole, (roles: readonly string[]) => boolean> = 
  * on the collection's write scope; whether the owner may delete is checked by the runtime.
  */
 export function decideEndpointAccess(input: {
-  endpoint: Pick<ApiEndpoint, 'enabled' | 'collection' | 'allowCreate' | 'allowUpdate' | 'allowDelete' | 'allowedKeyIds' | 'requiredRole'>
+  endpoint: Pick<ApiEndpoint, 'enabled' | 'collection' | 'allowCreate' | 'allowUpdate' | 'allowDelete' | 'allowedKeyIds' | 'allowedCategoryIds' | 'requiredRole'>
   method: string
   keyId: number
   keyScopes: readonly ApiKeyScope[]
   roles: readonly string[]
+  /** The access category governing the key's owner, when there is one. */
+  categoryId?: number | null
 }): EndpointDecision {
   const { endpoint, method, keyId } = input
   const verb = method.toUpperCase()
@@ -112,6 +115,9 @@ export function decideEndpointAccess(input: {
   }
   if (endpoint.allowedKeyIds && !endpoint.allowedKeyIds.includes(keyId)) {
     return deny(403, 'Forbidden', problem('api.key.notAllowed'))
+  }
+  if (endpoint.allowedCategoryIds && endpoint.allowedCategoryIds.length > 0 && !(input.categoryId != null && endpoint.allowedCategoryIds.includes(input.categoryId))) {
+    return deny(403, 'Forbidden', problem('api.category.notAllowed'))
   }
   if (!ROLE_RULES[endpoint.requiredRole](input.roles)) {
     return deny(403, 'Forbidden', problem('api.owner.roleNeeded'))
@@ -191,7 +197,7 @@ export async function serveCustomEndpoint(request: Request, slug: readonly strin
   const roles = owner?.roles ?? []
   const userId = typeof owner?.id === 'number' ? owner.id : key.userId
 
-  const decision = decideEndpointAccess({ endpoint, method, keyId: key.id, keyScopes: key.scopes, roles })
+  const decision = decideEndpointAccess({ endpoint, method, keyId: key.id, keyScopes: key.scopes, roles, categoryId: key.categoryId ?? null })
   if (decision.ok === false) return finish(refusal(decision.status, decision.name, say(decision.problem)), key.id, userId)
 
   const limit = await deps.rateLimit(`api-endpoint:${endpoint.id}:${key.id}`, endpoint.rateLimitPerMinute)
@@ -229,6 +235,17 @@ export async function serveCustomEndpoint(request: Request, slug: readonly strin
         pagination: true,
       })
       const data = await Promise.all(result.docs.map(shape))
+      // A feed endpoint answers in its own format; `?format=json|csv|jsonl|xml` picks another for one call.
+      const asked = new URL(request.url).searchParams.get('format')?.toLowerCase() ?? null
+      const feed: FeedFormat | null = isFeedFormat(asked) ? asked : asked === 'json' ? null : isFeedFormat(endpoint.responseFormat) ? endpoint.responseFormat : null
+      if (feed) {
+        const body = renderFeed(feed, data, endpoint.fields, endpoint.slug)
+        return finish(
+          new Response(body, { status: 200, headers: { 'Content-Type': FEED_CONTENT_TYPES[feed], 'Cache-Control': 'no-store', 'X-Total-Count': String(result.totalDocs ?? data.length), 'X-Content-Type-Options': 'nosniff' } }),
+          key.id,
+          userId,
+        )
+      }
       if (endpoint.responseFormat === 'array') return finish(json(data, 200), key.id, userId)
       return finish(
         json({ data, page: result.page ?? q.page, limit: q.limit, totalDocs: result.totalDocs ?? null, totalPages: result.totalPages ?? null, hasNextPage: result.hasNextPage ?? false }, 200),

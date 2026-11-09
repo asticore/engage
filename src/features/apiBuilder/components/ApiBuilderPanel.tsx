@@ -16,6 +16,7 @@ import {
   type BuilderData,
 } from '../actions'
 import { FILTER_OPERATORS, endpointPath, type ApiEndpoint, type ApiEndpointConfig, type FilterOperator, type RequiredRole } from '../core'
+import { FieldDropPicker } from './FieldDropPicker'
 import type { CallLogEntry } from '../store'
 import type { CollectionChoice } from '../admin'
 
@@ -74,6 +75,7 @@ const draftFrom = (e: ApiEndpoint): Draft => ({
   customKinds: e.customKinds ?? {},
   requiredRole: e.requiredRole,
   allowedKeyIds: e.allowedKeyIds,
+  allowedCategoryIds: e.allowedCategoryIds ?? null,
   rateLimitPerMinute: e.rateLimitPerMinute,
   enabled: e.enabled,
   responseFormat: e.responseFormat,
@@ -188,6 +190,9 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
   return (
     <div style={{ maxWidth: 1040, padding: '1.5rem', display: 'grid', gap: '1.5rem' }}>
       <p>{t('apiBuilder.intro')}</p>
+      <p>
+        <a href="webhooks">{t('apiBuilder.webhookLink')}</a>
+      </p>
       {!initial.keysEnabled && <p role="status">{t('apiBuilder.keysOff')}</p>}
       {notice && (
         <p role="status" style={{ color: notice.tone === 'error' ? 'var(--color-danger, #b00020)' : 'inherit' }}>
@@ -292,11 +297,7 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
             <fieldset>
               <legend>{t('apiBuilder.field.fields')}</legend>
               <small>{t('apiBuilder.field.fieldsHelp')}</small>
-              {(choice?.fields ?? []).map((f) => (
-                <label key={f.key} style={{ display: 'block' }}>
-                  <input type="checkbox" checked={draft.fields.includes(f.key)} onChange={() => set('fields', toggle(draft.fields, f.key))} /> {f.label}
-                </label>
-              ))}
+              <FieldDropPicker fields={choice?.fields ?? []} selected={draft.fields} onChange={(next) => set('fields', next)} />
             </fieldset>
           </fieldset>
 
@@ -392,6 +393,23 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
                 <option value="admin">{t('apiBuilder.role.admin')}</option>
               </select>
             </label>
+            <fieldset>
+              <legend>{t('apiBuilder.field.categories')}</legend>
+              {initial.categories.length === 0 ? (
+                <small>{t('apiBuilder.field.categoriesNone')}</small>
+              ) : (
+                initial.categories.map((c) => (
+                  <label key={c.id} style={{ display: 'block' }}>
+                    <input
+                      type="checkbox"
+                      checked={(draft.allowedCategoryIds ?? []).includes(c.id)}
+                      onChange={() => set('allowedCategoryIds', toggle(draft.allowedCategoryIds ?? [], c.id))}
+                    />{' '}
+                    {c.name}
+                  </label>
+                ))
+              )}
+            </fieldset>
             <label>
               <input type="radio" name="keys-mode" checked={draft.allowedKeyIds === null} onChange={() => set('allowedKeyIds', null)} /> {t('apiBuilder.field.allKeys')}
             </label>
@@ -428,8 +446,12 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
               <select value={draft.responseFormat} onChange={(ev) => set('responseFormat', ev.target.value as ApiEndpointConfig['responseFormat'])}>
                 <option value="envelope">{t('apiBuilder.format.envelope')}</option>
                 <option value="array">{t('apiBuilder.format.array')}</option>
+                <option value="csv">{t('apiBuilder.format.csv')}</option>
+                <option value="jsonl">{t('apiBuilder.format.jsonl')}</option>
+                <option value="xml">{t('apiBuilder.format.xml')}</option>
               </select>
             </label>
+            <small>{t('apiBuilder.format.help')}</small>
             <label>
               <input type="checkbox" checked={draft.enabled} onChange={(ev) => set('enabled', ev.target.checked)} /> {t('apiBuilder.enabledLabel')}
             </label>

@@ -31,6 +31,7 @@ export {
   isActive,
   listApiKeys,
   revokeApiKey,
+  rotateApiKey,
   type ApiKeyAuditEntry,
   type ApiKeyContext,
   type ApiKeyDeps,

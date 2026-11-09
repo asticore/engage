@@ -5,7 +5,9 @@ import React, { useEffect, useState } from 'react'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
-import { apiKeyScopeChoicesAction, createMyApiKey, revokeApiKeyAction, type ApiKeyView } from '../actions'
+import { apiKeyScopeChoicesAction, createMyApiKey, keyUsageAction, myApiCategoryAction, revokeApiKeyAction, rotateApiKeyAction, type ApiKeyView } from '../actions'
+import type { CategoryLimits } from '../categories'
+import type { KeyUsageDay } from '../categoryStore'
 import { buildScopes, type ScopeMode } from '../scopePicker'
 import { SortableTable } from '@/admin/table/SortableTable'
 import type { ScopeCollection } from '../core'
@@ -35,6 +37,9 @@ export const ApiKeysPanel: React.FC<{ initial: ApiKeyView[]; showOwner?: boolean
   const [revealed, setRevealed] = useState<string | null>(null)
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [usageFor, setUsageFor] = useState<number | null>(null)
+  const [usage, setUsage] = useState<KeyUsageDay[]>([])
+  const [category, setCategory] = useState<{ category: CategoryLimits | null; required: boolean } | null>(null)
   const tx = usePortalText()
   const adminT = useAdminT()
   const dateText = (iso: string | null): string => when(iso, tx('panel.never'), tx('panel.unknown'))
@@ -55,6 +60,19 @@ export const ApiKeysPanel: React.FC<{ initial: ApiKeyView[]; showOwner?: boolean
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (showOwner) return
+    let cancelled = false
+    myApiCategoryAction()
+      .then((res) => {
+        if (!cancelled && res.ok) setCategory({ category: res.category, required: res.required })
+      })
+      .catch((): undefined => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [showOwner])
 
   const scopes = buildScopes(mode, picked)
 
@@ -87,6 +105,32 @@ export const ApiKeysPanel: React.FC<{ initial: ApiKeyView[]; showOwner?: boolean
     }
   }
 
+  const rotate = async (id: number) => {
+    setBusy(true)
+    setNotice(null)
+    const result = await rotateApiKeyAction(id, { password, code })
+    setBusy(false)
+    if (result.ok && result.key) {
+      setRevealed(result.key)
+      if (result.keys) setKeys(result.keys)
+      setPassword('')
+      setCode('')
+      setNotice({ tone: 'ok', text: tx('panel.akRotatedNotice') })
+    } else {
+      setNotice({ tone: 'error', text: result.error ?? tx('panel.akRotateFailed') })
+    }
+  }
+
+  const toggleUsage = async (id: number) => {
+    if (usageFor === id) {
+      setUsageFor(null)
+      return
+    }
+    const result = await keyUsageAction(id)
+    setUsage(result.ok && result.days ? result.days : [])
+    setUsageFor(id)
+  }
+
   const copy = async () => {
     if (!revealed) return
     try {
@@ -100,6 +144,11 @@ export const ApiKeysPanel: React.FC<{ initial: ApiKeyView[]; showOwner?: boolean
   return (
     <div className="api-keys-panel">
       {notice && <p className={notice.tone === 'error' ? 'account-note account-note--error' : 'account-note'}>{notice.text}</p>}
+
+      {category?.category && (
+        <p className="account-note">{tx('panel.akCategory', { name: category.category.name, rate: String(category.category.ratePerMinute), keys: String(category.category.maxKeys) })}</p>
+      )}
+      {category?.required && <p className="account-note account-note--error">{tx('panel.akCategoryNone')}</p>}
 
       {revealed && (
         <div className="api-keys-reveal">
@@ -226,14 +275,44 @@ export const ApiKeysPanel: React.FC<{ initial: ApiKeyView[]; showOwner?: boolean
               created: dateText(k.createdAt),
               lastUsed: dateText(k.lastUsedAt),
               expiry: status(k),
-              actions: k.active ? (
-                <button type="button" disabled={busy} onClick={() => void revoke(k.id)}>
-                  {tx('panel.revoke')}
-                </button>
-              ) : null,
+              actions: (
+                <>
+                  {k.active && (
+                    <button type="button" disabled={busy} title={tx('panel.akRotateHint')} onClick={() => void rotate(k.id)}>
+                      {tx('panel.akRotate')}
+                    </button>
+                  )}{' '}
+                  <button type="button" onClick={() => void toggleUsage(k.id)} aria-expanded={usageFor === k.id}>
+                    {usageFor === k.id ? tx('panel.akUsageHide') : tx('panel.akUsage')}
+                  </button>
+                  {k.active && (
+                    <>
+                      {' '}
+                      <button type="button" disabled={busy} onClick={() => void revoke(k.id)}>
+                        {tx('panel.revoke')}
+                      </button>
+                    </>
+                  )}
+                </>
+              ),
             },
           }))}
         />
+      )}
+
+      {usageFor !== null && (
+        <div className="api-keys-usage">
+          <h4>{tx('panel.akUsageHeading')}</h4>
+          {usage.length === 0 ? (
+            <p>{tx('panel.akUsageNone')}</p>
+          ) : (
+            <ul>
+              {usage.map((d) => (
+                <li key={d.day}>{tx('panel.akUsageRow', { day: d.day, requests: String(d.requests), errors: String(d.errors) })}</li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   )

@@ -19,6 +19,7 @@ import { listPasskeys } from '@/features/passkeys'
 import { passkeyDepsFor } from '../passkeysWiring'
 import { listMyApiKeys } from '@/features/apiKeys/actions'
 import { ApiKeysPanel } from '@/features/apiKeys/components/ApiKeysPanel'
+import { ApiGuidePanel } from '@/features/apiBuilder/components/ApiGuidePanel'
 import { SessionsPanel } from '@/features/security/components/SessionsPanel'
 import { viewOwnSessions, type SessionActor } from '@/features/security/userSessionService'
 import { defaultUserSessionStore } from '@/features/security/userSessionStore'
@@ -475,6 +476,9 @@ export const ProfileScreen: React.FC<{ socialError?: string; passwordDue?: boole
             <h3>{tx('profile.apiKeysHeading')}</h3>
             <p>{tx('profile.apiKeysIntro')}</p>
             <ApiKeysPanel initial={(await listMyApiKeys()).keys ?? []} />
+            <h3>{tx('profile.apiGuideHeading')}</h3>
+            <p>{tx('profile.apiGuideIntro')}</p>
+            <ApiGuidePanel />
           </>
         )}
       </section>

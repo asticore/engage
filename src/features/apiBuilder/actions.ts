@@ -11,6 +11,12 @@ import { RESERVED_ENDPOINT_WORDS, endpointPath, type ApiEndpoint, type ApiEndpoi
 import { siteNameFor } from './guideResponse'
 import { gate, type Gate } from './gate'
 import { type CallLogEntry } from './store'
+import { createD1CategoryStore } from '@/features/apiKeys/categoryStore'
+import { resolveD1Binding } from '@/cms/db/connect'
+import type { D1Like } from '@/features/apiKeys'
+
+const categoryChoices = async (): Promise<Array<{ id: number; name: string }>> =>
+  (await createD1CategoryStore(async () => (await resolveD1Binding()) as unknown as D1Like).list()).map((c) => ({ id: c.id, name: c.name }))
 
 /**
  * What the API builder screen calls. Every action first checks that the caller is signed in,
@@ -23,6 +29,7 @@ export type BuilderData = {
   choices: CollectionChoice[]
   keys: ApiKeyView[]
   keysEnabled: boolean
+  categories: Array<{ id: number; name: string }>
   reserved: string[]
   canEdit: boolean
   publicDocs: { enabled: boolean; path: string | null }
@@ -88,6 +95,7 @@ export async function loadBuilderAction(): Promise<BuilderResult<BuilderData>> {
       choices: collectionChoices(await sourcesWithCustom()),
       keys,
       keysEnabled: g.settings.apiKeys.enabled,
+      categories: await categoryChoices(),
       reserved: reservedWords(),
       canEdit: true,
       publicDocs: { enabled: docs.docsPublic, path: docs.docsPublic ? `/api/x/docs/${docs.docsToken}` : null },
@@ -101,7 +109,7 @@ export async function saveEndpointAction(id: number | null, input: unknown): Pro
   const g = await gate(id === null ? 'create' : 'update')
   if (g.ok === false) return g
   const keyIds = (await keyViews(g)).keyIds
-  const context = { reserved: reservedSet(), keyIds, sources: await sourcesWithCustom() }
+  const context = { reserved: reservedSet(), keyIds, categoryIds: new Set((await categoryChoices()).map((c) => c.id)), sources: await sourcesWithCustom() }
   const at = new Date().toISOString()
   const result = id === null ? await createEndpoint(g.store, input, context, at) : await updateEndpoint(g.store, id, input, context, at)
   if (result.ok === false) return { ok: false, error: result.error }

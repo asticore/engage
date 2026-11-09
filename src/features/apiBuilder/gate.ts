@@ -7,6 +7,7 @@ import { createD1ApiKeyStore, type ApiKeyDeps, type D1Like, type LiveOwner } fro
 import { audit, auditContext } from '@/features/security/auditLog'
 import { getSecuritySettings, type SecuritySettings } from '@/features/security/settings'
 import { refuseWhileImpersonating } from '@/features/impersonation/policy'
+import { createD1CategoryStore } from '@/features/apiKeys/categoryStore'
 import { createD1EndpointStore, type EndpointStore } from './store'
 
 /**
@@ -37,6 +38,8 @@ export async function gate(action: keyof typeof ACTION_TO_PERMISSION): Promise<G
   const deps: ApiKeyDeps = {
     store: createD1ApiKeyStore(async () => (await resolveD1Binding()) as unknown as D1Like),
     now: () => Date.now(),
+    loadCategory: (id) => createD1CategoryStore(async () => (await resolveD1Binding()) as unknown as D1Like).categoryForUser(id),
+    categoriesExist: async () => (await createD1CategoryStore(async () => (await resolveD1Binding()) as unknown as D1Like).count()) > 0,
     audit: async (entry) => {
       try {
         await audit({ ...entry, collectionSlug: 'api-keys', ...origin }, settings)
