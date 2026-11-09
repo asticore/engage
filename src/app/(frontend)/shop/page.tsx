@@ -9,6 +9,7 @@ import { wishlistEnabled } from '@/features/ecommerce/lib/wishlist'
 import { availableFilterOptions, filterHref, matchesAttributeFilters, parseAttributeFilters } from '@/features/ecommerce/filters'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { getEngine } from '@/lib/engine'
+import { loadPromoBadges } from '@/features/ecommerce/lib/promoBadges'
 import { getFeatureFlags } from '@/utilities/features'
 import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
 import { buildMetadata } from '@/utilities/seo'
@@ -83,6 +84,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     // narrowed list, so picking one brand does not hide the others. Read only when a filter is on.
     narrowed ? engine.find({ collection: 'products', where: { and: baseClauses }, sort: '-createdAt', limit: 300, depth: 1 }) : null,
   ])) as unknown as [ShopSetting | null, { docs: Product[] }, { docs: Product[] } | null]
+  const promoBadges = await loadPromoBadges(engine)
   const locale = await currentRequestLocale()
   const open = await applyTranslationsToDocs(await excludeProtected('products', scanned), 'products', locale)
   const facetSource = facetResult ? await applyTranslationsToDocs(await excludeProtected('products', facetResult.docs), 'products', locale) : open
@@ -214,7 +216,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         <div className={`product-grid product-grid--${layout}`}>
           {products.map((product) => (
             <div key={product.id} className="relative">
-              <ProductCard product={product} showShortDescription={settings?.showShortDescriptionOnCard || false} aspect={settings?.productImageAspect || 'portrait'} />
+              <ProductCard product={product} promoBadges={promoBadges} showShortDescription={settings?.showShortDescriptionOnCard || false} aspect={settings?.productImageAspect || 'portrait'} />
               {wishlistEnabled(settings) && <div className="absolute right-3 top-3 z-10"><WishlistHeart productId={product.id} /></div>}
             </div>
           ))}

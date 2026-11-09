@@ -84,7 +84,7 @@ describe('Fresh install schema coverage - all drizzle tables created and columns
         'seoSettings', 'seoSettingsSchemaSameAs', 'speedSettings', 'speedSettingsAdvancedPreconnectOrigins', 'speedSettingsAdvancedPrefetchDns',
         'mediaSettings', 'mediaSettingsResizingResponsiveWidths', 'backupSettings', 'shopExtraSettings', 'siteDetails', 'sitePages', 'domainSettings', 'domainSettingsDomains', 'emailTemplates', 'emailBrand', 'emailSchedule', 'googleConnection', 'trackingConnections',
         'addresses', 'carts', 'cartsItems', 'orders', 'ordersItems', 'ordersRels', 'transactions', 'transactionsItems', 'products', 'productsRels', 'productsVersions', 'productsVersionsRels', 'productsAttributes', 'productsVariations', 'productsVersionsAttributes', 'productsVersionsVariations', 'productsBundleItems', 'productsVersionsBundleItems', 'cartsItems',
-        'productsAddOns', 'productsVersionsAddOns', 'shopExtraSettingsPricingRules',
+        'productsAddOns', 'productsVersionsAddOns', 'shopExtraSettingsPricingRules', 'shopExtraSettingsPromoBadges',
         'preferences', 'preferencesRels', 'lockedDocuments', 'lockedDocumentsRels',
       ]
 
