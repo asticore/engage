@@ -63,7 +63,17 @@ describe('drop slot resolution', () => {
     document.body.innerHTML = '<div id="x"></div>'
     expect(resolveSlotFromElement(document.getElementById('x'), 0)).toBeNull()
     expect(resolveSlotFromElement(null, 0)).toBeNull()
-    expect(resolveDropSlotInDoc({ elementFromPoint: (): null => null } as unknown as Document, 1, 1)).toBeNull()
+    expect(resolveDropSlotInDoc({ elementFromPoint: (): null => null, querySelector: (): null => null } as unknown as Document, 1, 1)).toBeNull()
+  })
+
+  it('sends a drop outside the page body (template header/footer) to the start or end of the page', () => {
+    build()
+    const root = document.querySelector<HTMLElement>('[data-ve-root]')!
+    root.getBoundingClientRect = () => rectOf(100, 400)
+    document.body.insertAdjacentHTML('beforeend', '<footer id="foot"></footer>')
+    const doc = { elementFromPoint: () => document.getElementById('foot'), querySelector: (s: string) => document.querySelector(s) } as unknown as Document
+    expect(resolveDropSlotInDoc(doc, 10, 700)).toEqual({ containerPath: [], at: 1, key: '|1' })
+    expect(resolveDropSlotInDoc(doc, 10, 20)).toEqual({ containerPath: [], at: 0, key: '|0' })
   })
 })
 
