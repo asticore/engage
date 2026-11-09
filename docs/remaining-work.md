@@ -66,9 +66,6 @@ Order: 1, 2, 3 to 18 (features, in listed order), (new verify tasks), 19 Speed u
 ### Task 9. Multi domain support check (new, 7 Nov 2026)
 - [ ] Check multi domain support end to end: several domains on one install, per domain content, the Available on domains field and slug check, cookies and sign-in per domain, sitemap, robots, canonical and hreflang, email sender and Cloudflare routes. Output: report with gaps, then tasks. Effort S to M.
 
-### Task 10. Easy API creation, API keys and data feeds (new, 7 Nov 2026)
-- [ ] Let admins create an API or data feed by drag and drop (pick collections and fields, filters, format), or a webhook. Access works by category: admins define user categories (for example partner, customer, internal) and select in Settings what each person or group can reach. Admins can generate API keys for customers, and customers can generate their own keys in the members portal; the key is tied to that person's account and limited by their category. Add rate limits, key revoke and rotate, usage log, and docs shown to the customer. Builds on the API and webhooks work already done (Done: closed Task 19). Effort L.
-
 ### Task 11. Scheduled jobs (cron) in the portal (new, 7 Nov 2026)
 - [ ] Find out whether the portal has easy cron jobs, for example scheduled pages, scheduled publish and unpublish, and recurring tasks. Check what the Worker cron trigger already runs. If there is no admin view, add a Scheduled jobs screen: list of jobs, last run, next run, run now, enable or disable, and logs. Effort M.
 
@@ -400,6 +397,14 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Hub and search: Settings > All settings lists every settings page and screen. Type "cookie banner" in the search: results such as "Banner title" show under General > Integrations (and Tracking > Integrations), and each opens its page and section. Pass = the links land on the field's section.
 - [ ] Last changed: save any setting on General. Reload /settings/site as an admin: the line "Last changed by <your email> on <date> UTC" shows under the description. Sign in as an editor who is not an admin: the line does not show.
 - [ ] Reset this section: on Blog (Content), change a field that has a default (for example Posts Per Page), press Reset this section, then Reset to defaults. Pass = the field returns to its default on screen and the page does not save until Save is pressed. Cancel on the confirm leaves values as they were.
+
+### Closed Task 10 API (categories, keys and feeds) (PR pending)
+- [ ] Categories: API keys screen as admin, Access categories, New category (name Partner, Read everything, 30 requests a minute, 1 key). Add a customer by email. Sign in as that customer: profile shows "Your access category is Partner" and the API guide lists only endpoints they can call. A customer outside any category sees the "not in an API access category" note and cannot create a key.
+- [ ] Rotate: as that customer create a key, enter the password, press Rotate. Pass = new key shown once, old key returns 401, the audit log has api-key.rotated.
+- [ ] Usage: call the REST API with the key a few times, press Usage on the key. Pass = today's row counts the requests and the refused ones (a 429 or a denied route).
+- [ ] Admin key for a customer: Create a key for a customer, with your password. Pass = key shown once, listed under that customer, limited by their category.
+- [ ] Feeds: API builder, drag fields into Exposed fields and reorder them, set format to CSV data feed, save, call the endpoint with a key. Pass = CSV with the fields in that order and an X-Total-Count header; add ?format=json and ?format=xml and check each. Open the CSV in Excel: a cell starting with = shows as text.
+- [ ] Endpoint by category: tick one category on an endpoint. Pass = a key from another category gets 403 and the endpoint is missing from that customer's guide.
 
 ### Closed Task 10 SEO (PR #200)
 - [ ] Cornerstone: open a published page, tick Cornerstone content on the SEO card, Save. Pass = the SEO audit row shows "Cornerstone", and the Cornerstone only filter keeps it. Untick and Save. Pass = it drops out.

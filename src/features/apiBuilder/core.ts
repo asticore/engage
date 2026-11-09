@@ -82,7 +82,8 @@ export type FilterOperator = (typeof FILTER_OPERATORS)[number]
 export const REQUIRED_ROLES = ['any', 'staff', 'editor', 'admin'] as const
 export type RequiredRole = (typeof REQUIRED_ROLES)[number]
 
-export const RESPONSE_FORMATS = ['envelope', 'array'] as const
+/** `envelope` and `array` are JSON; `csv`, `jsonl` and `xml` make the endpoint a data feed (see ./feeds.ts). */
+export const RESPONSE_FORMATS = ['envelope', 'array', 'csv', 'jsonl', 'xml'] as const
 export type ResponseFormat = (typeof RESPONSE_FORMATS)[number]
 
 export type EndpointFilter = { field: string; operators: FilterOperator[] }
@@ -116,6 +117,8 @@ export type ApiEndpointConfig = {
   requiredRole: RequiredRole
   /** Keys (by id) allowed to call the endpoint. Null means any valid key whose scopes allow it. */
   allowedKeyIds: number[] | null
+  /** Access categories (by id) whose keys may call the endpoint. Null or missing means any category. A key whose owner is in no category never matches a list. */
+  allowedCategoryIds?: number[] | null
   rateLimitPerMinute: number
   enabled: boolean
   responseFormat: ResponseFormat
@@ -176,7 +179,7 @@ export function parseFilterKey(key: string): { field: string; operator: FilterOp
 
 const SORT_KEY = /^-?([a-z0-9_]{1,64})$/
 
-export function validateEndpoint(input: unknown, context: { exposable: ReadonlySet<string>; collectionFields: ReadonlySet<string>; reserved?: ReadonlySet<string>; keyIds?: ReadonlySet<number>; customKinds?: Readonly<Record<string, CustomKind>> }): ValidationResult<ApiEndpointConfig> {
+export function validateEndpoint(input: unknown, context: { exposable: ReadonlySet<string>; collectionFields: ReadonlySet<string>; reserved?: ReadonlySet<string>; keyIds?: ReadonlySet<number>; categoryIds?: ReadonlySet<number>; customKinds?: Readonly<Record<string, CustomKind>> }): ValidationResult<ApiEndpointConfig> {
   if (!input || typeof input !== 'object') return { ok: false, error: 'The endpoint is missing its details.' }
   const raw = input as Record<string, unknown>
   const str = (value: unknown, max: number): string | null => (typeof value === 'string' && value.trim().length > 0 && value.trim().length <= max ? value.trim() : null)
@@ -249,6 +252,20 @@ export function validateEndpoint(input: unknown, context: { exposable: ReadonlyS
     }
   }
 
+  let allowedCategoryIds: number[] | null = null
+  if (raw.allowedCategoryIds !== null && raw.allowedCategoryIds !== undefined) {
+    if (!Array.isArray(raw.allowedCategoryIds)) return { ok: false, error: 'Choose which access categories may call this endpoint.' }
+    if (raw.allowedCategoryIds.length > MAX_ALLOWED_KEYS) return { ok: false, error: `At most ${MAX_ALLOWED_KEYS} categories can be listed.` }
+    allowedCategoryIds = []
+    for (const item of raw.allowedCategoryIds) {
+      const id = Number(item)
+      if (!Number.isInteger(id) || id < 1) return { ok: false, error: 'Choose which access categories may call this endpoint.' }
+      if (context.categoryIds && !context.categoryIds.has(id)) return { ok: false, error: `Access category ${id} does not exist.` }
+      if (!allowedCategoryIds.includes(id)) allowedCategoryIds.push(id)
+    }
+    if (allowedCategoryIds.length === 0) allowedCategoryIds = null
+  }
+
   const rateLimitPerMinute = intIn(raw.rateLimitPerMinute, DEFAULT_RATE_PER_MINUTE, 1, MAX_RATE_PER_MINUTE)
   if (rateLimitPerMinute === null) return { ok: false, error: `The rate limit must be between 1 and ${MAX_RATE_PER_MINUTE} requests a minute.` }
 
@@ -279,6 +296,7 @@ export function validateEndpoint(input: unknown, context: { exposable: ReadonlyS
       customKinds,
       requiredRole,
       allowedKeyIds,
+      allowedCategoryIds,
       rateLimitPerMinute,
       enabled: raw.enabled !== false,
       responseFormat,
