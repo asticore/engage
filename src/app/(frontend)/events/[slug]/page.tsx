@@ -10,6 +10,7 @@ import { EventSeries } from '@/components/EventSeries'
 import { EventTiers } from '@/components/EventTiers'
 import { RsvpForm, type RsvpTierOption } from '@/components/RsvpForm'
 import { loadTierViews } from '@/features/editScreens/tierLoad'
+import { eventSaleMode } from '@/features/editScreens/eventSales'
 import { tierOptionLabel } from '@/features/editScreens/tierSales'
 import { formatPriceInAUD } from '@/lib/formatCurrency'
 import { priceLocale } from '@/features/uiStrings/publicFormat'
@@ -112,6 +113,12 @@ export default async function EventPage({
 
   const tierViews = await loadTierViews(engine, event)
   const isPaid = event.eventType === 'paid'
+  const saleMode = eventSaleMode({
+    eventType: event.eventType,
+    externalRegistrationUrl: event.externalRegistrationUrl,
+    spotsRemaining,
+    hasTicketProduct: Boolean(ticket),
+  })
   const tierOptions: RsvpTierOption[] = isPaid
     ? []
     : tierViews.map((view) => ({ name: view.name, label: tierOptionLabel(view), soldOut: view.soldOut }))
@@ -153,6 +160,8 @@ export default async function EventPage({
             >
               Register
             </a>
+          ) : saleMode === 'sold-out' ? (
+            <p className="empty-state">Sold out.</p>
           ) : event.eventType === 'paid' ? (
             ticket ? (
               <div>
