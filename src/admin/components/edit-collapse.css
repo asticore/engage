@@ -24,6 +24,8 @@
 .ec-card__heading {
   margin: 0;
   font-size: inherit;
+  /* Card titles use the theme text token so they flip with the admin theme. */
+  color: var(--theme-text, inherit);
 }
 
 .ec-card__toggle {
