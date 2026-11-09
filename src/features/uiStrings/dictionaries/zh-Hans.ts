@@ -1213,6 +1213,7 @@ const zhHans: UiDictionary = {
   've.top.previewFailed': '无法获取页面地址，请重试。',
   've.top.redoTitle': "重做 ({mod}+Shift+Z)",
   've.top.importExport': "导入 / 导出",
+  've.top.more': "更多",
   've.top.importTitle': "以 JSON 格式导入或导出此页面",
   've.top.devicePreview': "设备预览",
   've.top.desktop': "桌面",
@@ -3722,6 +3723,8 @@ const zhHans: UiDictionary = {
   'setup.q.summary.notesTitle': "须知",
   'setup.q.note.domains': "多个域名或地区：请在「设置 > 域名」中进行设置。",
   'setup.q.note.bookings': "在线预约功能正在规划中，就绪后我们会通知您。",
+  'cv.empty.editable': "空文本 - 双击编辑",
+  'cv.empty.select': "空元素 - 选中后添加内容",
 }
 
 export default zhHans

@@ -1214,6 +1214,7 @@ const fr: UiDictionary = {
   've.top.previewFailed': 'Impossible de déterminer l\'adresse de la page. Réessayez.',
   've.top.redoTitle': "Rétablir ({mod}+Maj+Z)",
   've.top.importExport': "Importer / Exporter",
+  've.top.more': "Plus",
   've.top.importTitle': "Importer ou exporter cette page en JSON",
   've.top.devicePreview': "Aperçu de l'appareil",
   've.top.desktop': "Ordinateur",
@@ -3723,6 +3724,8 @@ const fr: UiDictionary = {
   'setup.q.summary.notesTitle': "Bon à savoir",
   'setup.q.note.domains': "Plusieurs domaines ou régions : configurez-les dans Paramètres > Domaines.",
   'setup.q.note.bookings': "Les réservations en ligne sont prévues. Nous vous préviendrons dès qu'elles seront prêtes.",
+  'cv.empty.editable': "Texte vide - double-cliquez pour modifier",
+  'cv.empty.select': "Élément vide - sélectionnez-le pour ajouter du contenu",
 }
 
 export default fr

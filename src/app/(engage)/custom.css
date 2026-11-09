@@ -555,16 +555,18 @@ button {
 }
 
 @media (min-width: 769px) {
-  /* Desktop: the sidebar is a plain flex item of .admin-shell. It has no sticky
-     position, no fixed height and no scroll of its own, so it scrolls with the
-     page. align-self: stretch (the default) makes it as tall as the page row,
-     which keeps its background and border running the full page height. */
+  /* Desktop: the sidebar is a flex item of .admin-shell that stays pinned to the
+     viewport (sticky, exactly viewport height). Its link list (.nav__scroll)
+     scrolls inside it, and the controls at the bottom (language, help, log out)
+     are sticky to the bottom of that scroll area, so they stay visible. */
   .nav {
-    position: relative;
+    position: sticky;
+    top: 0;
     inset: auto;
     flex-shrink: 0;
-    align-self: stretch;
-    height: auto;
+    align-self: flex-start;
+    height: 100vh;
+    height: 100dvh;
     width: var(--nav-width);
     transform: none;
   }
@@ -574,8 +576,22 @@ button {
   }
 
   .nav__scroll {
-    overflow: visible;
-    min-height: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+  }
+
+  /* Full content height, so the sticky controls below have room to stick in. */
+  .nav__scroll > .nav__wrap {
+    flex: none;
+  }
+
+  .nav__controls {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    padding-bottom: calc(var(--base) * 0.4);
+    background-color: var(--ac-ground);
   }
 }
 

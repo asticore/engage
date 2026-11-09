@@ -102,6 +102,9 @@ export const CanvasFrame: React.FC = () => {
     live.current = { blocks, selectedPath, locks, editing, palette, translate }
   })
 
+  // The message listener below is mounted once; this keeps it calling the current render's openEditor.
+  const openEditorRef = useRef<(path: NodePath, itemIndex?: number) => void>(() => {})
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
 
   useEffect(() => {
@@ -130,6 +133,8 @@ export const CanvasFrame: React.FC = () => {
         setPreviewCtx(msg.context)
       } else if (msg.type === 'dragHover') {
         setDragHoverKey(msg.key)
+      } else if (msg.type === 'editText') {
+        openEditorRef.current(msg.path, 0)
       } else if (msg.type === 'translate') {
         setTranslate(msg.active ? { marks: msg.marks, untranslatedLabel: msg.untranslatedLabel } : null)
       }
@@ -216,6 +221,10 @@ export const CanvasFrame: React.FC = () => {
     setSelectedPath(path)
     post({ source: 've-canvas', type: 'select', path })
   }
+
+  useEffect(() => {
+    openEditorRef.current = openEditor
+  })
 
   let inlineEdit: CanvasHandlers['inlineEdit'] = null
   if (editing) {

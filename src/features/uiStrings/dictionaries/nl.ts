@@ -1214,6 +1214,7 @@ const nl: UiDictionary = {
   've.top.previewFailed': 'Het paginaadres kon niet worden bepaald. Probeer het opnieuw.',
   've.top.redoTitle': "Opnieuw ({mod}+Shift+Z)",
   've.top.importExport': "Importeren / Exporteren",
+  've.top.more': "Meer",
   've.top.importTitle': "Deze pagina importeren of exporteren als JSON",
   've.top.devicePreview': "Apparaatvoorbeeld",
   've.top.desktop': "Desktop",
@@ -3723,6 +3724,8 @@ const nl: UiDictionary = {
   'setup.q.summary.notesTitle': "Goed om te weten",
   'setup.q.note.domains': "Meerdere domeinen of regio's: stel ze in onder Instellingen > Domeinen.",
   'setup.q.note.bookings': "Online boekingen zijn gepland. We laten je weten wanneer ze klaar zijn.",
+  'cv.empty.editable': "Lege tekst - dubbelklik om te bewerken",
+  'cv.empty.select': "Leeg element - selecteer het om inhoud toe te voegen",
 }
 
 export default nl

@@ -273,6 +273,8 @@ export const EditorDock: React.FC<{
   // Collapsed = the topbar's "/" toggle hid the whole dock so the canvas can use the full width, same as
   // Elementor's panel-collapse. Only the dock markup is hidden; this component stays mounted, so the
   // Build with AI dialog and its draft survive a collapse.
+  // While the translate panel replaces the dock body, no tab is the active one.
+  const shownTab = translatePanel ? null : tab
   const dock = collapsed ? null : (
     <div className="ve-dock">
       {tree && onSelectPath && <SelectionPath tree={tree} selectedPath={selectedPath} onSelectPath={onSelectPath} />}
@@ -280,8 +282,8 @@ export const EditorDock: React.FC<{
         <button
           type="button"
           role="tab"
-          aria-selected={tab === 'elements'}
-          className={`ve-dock__tab ${tab === 'elements' ? 've-dock__tab--active' : ''}`}
+          aria-selected={shownTab === 'elements'}
+          className={`ve-dock__tab ${shownTab === 'elements' ? 've-dock__tab--active' : ''}`}
           onClick={() => onTabChange('elements')}
         >
           + {t('ve.tab.elements')}
@@ -289,8 +291,8 @@ export const EditorDock: React.FC<{
         <button
           type="button"
           role="tab"
-          aria-selected={tab === 'settings'}
-          className={`ve-dock__tab ${tab === 'settings' ? 've-dock__tab--active' : ''}`}
+          aria-selected={shownTab === 'settings'}
+          className={`ve-dock__tab ${shownTab === 'settings' ? 've-dock__tab--active' : ''}`}
           onClick={() => onTabChange('settings')}
         >
           {GEAR} {t('ve.tab.settings')}
@@ -298,8 +300,8 @@ export const EditorDock: React.FC<{
         <button
           type="button"
           role="tab"
-          aria-selected={tab === 'navigator'}
-          className={`ve-dock__tab ${tab === 'navigator' ? 've-dock__tab--active' : ''}`}
+          aria-selected={shownTab === 'navigator'}
+          className={`ve-dock__tab ${shownTab === 'navigator' ? 've-dock__tab--active' : ''}`}
           onClick={() => onTabChange('navigator')}
         >
           {PAGE_ICON} {t('ve.tab.navigator')}
@@ -308,8 +310,8 @@ export const EditorDock: React.FC<{
           <button
             type="button"
             role="tab"
-            aria-selected={tab === 'history'}
-            className={`ve-dock__tab ${tab === 'history' ? 've-dock__tab--active' : ''}`}
+            aria-selected={shownTab === 'history'}
+            className={`ve-dock__tab ${shownTab === 'history' ? 've-dock__tab--active' : ''}`}
             onClick={() => onTabChange('history')}
           >
             {CLOCK_ICON} {t('ve.tab.history')}
@@ -319,8 +321,8 @@ export const EditorDock: React.FC<{
           <button
             type="button"
             role="tab"
-            aria-selected={tab === 'form'}
-            className={`ve-dock__tab ${tab === 'form' ? 've-dock__tab--active' : ''}`}
+            aria-selected={shownTab === 'form'}
+            className={`ve-dock__tab ${shownTab === 'form' ? 've-dock__tab--active' : ''}`}
             onClick={() => onTabChange('form')}
           >
             {t('ve.tab.form')}

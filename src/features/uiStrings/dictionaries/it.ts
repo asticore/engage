@@ -1214,6 +1214,7 @@ const it: UiDictionary = {
   've.top.previewFailed': 'Impossibile ricavare l\'indirizzo della pagina. Riprova.',
   've.top.redoTitle': "Ripeti ({mod}+Maiusc+Z)",
   've.top.importExport': "Importa / Esporta",
+  've.top.more': "Altro",
   've.top.importTitle': "Importa o esporta questa pagina come JSON",
   've.top.devicePreview': "Anteprima dispositivo",
   've.top.desktop': "Desktop",
@@ -3723,6 +3724,8 @@ const it: UiDictionary = {
   'setup.q.summary.notesTitle': "Da sapere",
   'setup.q.note.domains': "Più domini o regioni: configurali in Impostazioni > Domini.",
   'setup.q.note.bookings': "Le prenotazioni online sono in programma. Ti avviseremo quando saranno pronte.",
+  'cv.empty.editable': "Testo vuoto - fai doppio clic per modificare",
+  'cv.empty.select': "Elemento vuoto - selezionalo per aggiungere contenuto",
 }
 
 export default it

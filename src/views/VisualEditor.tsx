@@ -91,9 +91,12 @@ import { SaveStatusChip } from './visualEditor/SaveStatusChip'
 import { EditLockBanner } from '@/admin/views/EditLockBanner'
 import { savedByAnotherSince, updatedAtFromSave } from './visualEditor/saveConflict'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
+import { isDirtyAfterRestore } from './visualEditor/dirtyState'
+import { TopBarMore, useCompactTopBar } from './visualEditor/TopBarMore'
+import './visualEditor/topbar.css'
+import './visualEditor/veShell.css'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
-import { clientToFrame, isLibraryDragTypes, resolveDropSlotInDoc, trackLibraryDrag, VE_BLOCK_MIME, VE_TEMPLATE_MIME } from './visualEditor/dropSlot'
-import { VE_TEMPLATE_LOCKS_MIME } from './visualEditor/TemplateBrowser'
+import { clientToFrame, createDragFallback, currentLibraryDrag, endLibraryDrag, isLibraryDragTypes, readLibraryDrag, resolveDropSlotInDoc, trackLibraryDrag, type DropSlot, type LibraryDragPayload } from './visualEditor/dropSlot'
 
 let idCounter = 0
 const nextId = () => `ve-${Date.now()}-${idCounter++}`
@@ -121,7 +124,7 @@ function withIds(nodes: SectionNode[]): SectionNode[] {
 }
 
 import { copyNodeLocks, nodeKey, pairLockKeys, parseLocks, serializeLocks, type LockEntry, type Locks, type LockUser } from '@/features/roles/locks'
-import { applyInlineEdit } from './visualEditor/inlineEdit'
+import { applyInlineEdit, inlineCandidate } from './visualEditor/inlineEdit'
 import { canInsertInto, effectiveLock, lockedKeySet, lockKeyOf, lockMapForCanvas, withNodeLock } from './visualEditor/lockState'
 import { canConvertLegacy, convertLegacyBlock } from './visualEditor/convertLegacy'
 import type { LockUi } from './visualEditor/LockControls'
@@ -192,6 +195,10 @@ export const VisualEditorView: React.FC = () => {
   /** Where a "Select your structure" pick will insert the new section; null while the picker is closed. */
   const [structureTarget, setStructureTarget] = useState<{ containerPath: NodePath; at: number } | null>(null)
   const [dirty, setDirty] = useState(false)
+  /** Narrow viewport: Import / Export and Save as template move into the top bar's More menu. */
+  const compactBar = useCompactTopBar()
+  /** Locks, page settings or form config changed since the last save (tree changes are judged against savedTreeRef instead). */
+  const extraDirtyRef = useRef(false)
   /** Another user holds the edit lock on this document (and this user has not taken it over): saving is off. */
   const [lockedByOther, setLockedByOther] = useState(false)
   /** The document's updatedAt as of load / our last save; save() compares it with the server's before it writes. */
@@ -578,13 +585,11 @@ export const VisualEditorView: React.FC = () => {
       if (range.length > 1) {
         setMulti({ paths: range, blocks: blocksRef.current })
         setSelectedPath(path)
-        setDockTab('settings')
         return
       }
     }
     setMulti(null)
     setSelectedPath(path)
-    setDockTab('settings')
     if (isColumnPath(path)) {
       const column = getColumn(blocksRef.current, path)
       if (column) setInsertTarget({ containerPath: path, at: (column.blocks || []).length })
@@ -633,7 +638,8 @@ export const VisualEditorView: React.FC = () => {
     if (!nextPath) setDockTab('elements')
     setInsertTarget({ containerPath: [], at: snapshot.blocks.length })
     syncHistory()
-    setDirty(true)
+    // Undoing back to the saved tree clears the dirty state (unless locks / page settings still differ).
+    setDirty(isDirtyAfterRestore(snapshot.blocks, savedTreeRef.current, extraDirtyRef.current))
   }, [syncHistory])
 
   /** History panel: jump straight to a listed state (negative = back, positive = forward). */
@@ -1357,7 +1363,10 @@ export const VisualEditorView: React.FC = () => {
    * that started in the parent document. Handling it here instead, on the wrapper that sits
    * over the iframe in the parent document, sidesteps that entirely; elementFromPoint (above)
    * finds which insert slot the pointer is actually over inside the frame. */
-  const isLibraryDrag = (event: React.DragEvent<HTMLDivElement>) => isLibraryDragTypes(event.dataTransfer.types)
+  // Safari can hide custom types during dragover, so the card's in-memory registration counts as well.
+  const isLibraryDrag = (event: React.DragEvent<HTMLDivElement>) => isLibraryDragTypes(event.dataTransfer.types) || currentLibraryDrag() !== null
+  // Last slot a library drag hovered: inserted on dragend when the browser never fires `drop` (see dropSlot.ts).
+  const [dragFallback] = useState(createDragFallback)
 
   const resolveAt = useCallback((clientX: number, clientY: number) => {
     const iframe = iframeRef.current
@@ -1376,9 +1385,10 @@ export const VisualEditorView: React.FC = () => {
     () =>
       trackLibraryDrag(document, (active) => {
         setLibDrag(active)
-        if (!active) sendDragHover(null)
+        if (active) dragFallback.start(currentLibraryDrag())
+        else sendDragHover(null)
       }),
-    [sendDragHover],
+    [sendDragHover, dragFallback],
   )
 
   const onCanvasDragOver = useCallback(
@@ -1397,8 +1407,9 @@ export const VisualEditorView: React.FC = () => {
       const allowed = Boolean(slot) && canInsertInto(lockCtx.current.blocks, slot!.containerPath, lockCtx.current.locks, lockCtx.current.lockUser)
       event.dataTransfer.dropEffect = allowed ? 'copy' : 'none'
       sendDragHover(allowed ? slot!.key : null)
+      dragFallback.hover(allowed ? slot : null)
     },
-    [sendDragHover, resolveAt],
+    [sendDragHover, resolveAt, dragFallback],
   )
 
   const onCanvasDragLeave = useCallback(
@@ -1407,40 +1418,61 @@ export const VisualEditorView: React.FC = () => {
       // child), otherwise the highlight flickers off between adjacent slots.
       if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
       sendDragHover(null)
+      dragFallback.leave()
     },
-    [sendDragHover],
+    [sendDragHover, dragFallback],
   )
 
-  const onCanvasDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      const blockType = event.dataTransfer.getData(VE_BLOCK_MIME)
-      const templateRaw = event.dataTransfer.getData(VE_TEMPLATE_MIME)
-      const slot = resolveAt(event.clientX, event.clientY)
-      sendDragHover(null)
-      setLibDrag(false)
-      if (!blockType && !templateRaw) return
-      event.preventDefault()
-      if (!slot) {
-        setLockNotice('Drop it between blocks, on a block, or in an empty column.')
-        setTimeout(() => setLockNotice(null), 4000)
-        return
-      }
-      if (blockType) {
-        addBlockAt(blockType, slot.containerPath, slot.at)
+  const insertDragPayload = useCallback(
+    (payload: LibraryDragPayload, slot: DropSlot) => {
+      if (payload.kind === 'block') {
+        addBlockAt(payload.slug, slot.containerPath, slot.at)
         return
       }
       try {
-        const parsed: unknown = JSON.parse(templateRaw)
-        const lockRaw = event.dataTransfer.getData(VE_TEMPLATE_LOCKS_MIME)
-        const templateLocks = lockRaw ? parseLocks(JSON.parse(lockRaw)) : undefined
+        const parsed: unknown = JSON.parse(payload.blocksJson)
+        const templateLocks = payload.locksJson ? parseLocks(JSON.parse(payload.locksJson)) : undefined
         if (Array.isArray(parsed)) insertTemplateAt(parsed as SectionNode[], slot.containerPath, slot.at, templateLocks)
       } catch {
         setLockNotice('That template could not be dropped.')
         setTimeout(() => setLockNotice(null), 4000)
       }
     },
-    [addBlockAt, insertTemplateAt, sendDragHover, resolveAt],
+    [addBlockAt, insertTemplateAt],
   )
+
+  const onCanvasDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      const payload = readLibraryDrag(event.dataTransfer)
+      const slot = resolveAt(event.clientX, event.clientY)
+      sendDragHover(null)
+      setLibDrag(false)
+      if (!payload) return
+      event.preventDefault()
+      dragFallback.drop()
+      if (!slot) {
+        setLockNotice('Drop it between blocks, on a block, or in an empty column.')
+        setTimeout(() => setLockNotice(null), 4000)
+        return
+      }
+      insertDragPayload(payload, slot)
+    },
+    [insertDragPayload, sendDragHover, resolveAt, dragFallback],
+  )
+
+  // dragend always fires on the card, in every browser. When it ends over the canvas with no `drop` having
+  // been handled (Safari / Firefox cross-frame drags), insert at the last slot the pointer hovered.
+  useEffect(() => {
+    const onEnd = () => {
+      const pending = dragFallback.end()
+      endLibraryDrag()
+      setLibDrag(false)
+      sendDragHover(null)
+      if (pending) insertDragPayload(pending.payload, pending.slot)
+    }
+    document.addEventListener('dragend', onEnd)
+    return () => document.removeEventListener('dragend', onEnd)
+  }, [dragFallback, insertDragPayload, sendDragHover])
 
   const pageRef = useRef(pageSettings)
   useEffect(() => {
@@ -1532,6 +1564,7 @@ export const VisualEditorView: React.FC = () => {
       if (current.blocks === sent.blocks && current.locks === sent.locks && current.formConfig === sent.formConfig && pageRef.current === sent.pageSettings) {
         setDirty(false)
         setLocksDirty(false)
+        extraDirtyRef.current = false
       }
       // The server now holds the tree that was sent. Edits made while the request was in flight keep a draft.
       savedTreeRef.current = comparableTree(sent.blocks)
@@ -1573,6 +1606,7 @@ export const VisualEditorView: React.FC = () => {
     setFinderOpen(false)
     if (entry.kind === 'node') {
       selectFromNavigator(entry.path)
+      setDockTab('settings')
       // The frame scrolls the node into view when it is told about the selection.
       iframeRef.current?.contentWindow?.postMessage({ source: 've-canvas', type: 'selected', selectedPath: entry.path }, CANVAS_ORIGIN())
       return
@@ -1669,6 +1703,7 @@ export const VisualEditorView: React.FC = () => {
             if (!selectedKey) return
             setLocks((prev) => withNodeLock(prev, selectedKey, entry))
             setLocksDirty(true)
+            extraDirtyRef.current = true
             setDirty(true)
           },
         }
@@ -1817,9 +1852,11 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.shortcut.redo')}
             </button></Tooltip>
           </div>
-          <Tooltip text={t('ve.top.importTitle')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)}>
-            {t('ve.top.importExport')}
-          </button></Tooltip>
+          {!compactBar && (
+            <Tooltip text={t('ve.top.importTitle')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)}>
+              {t('ve.top.importExport')}
+            </button></Tooltip>
+          )}
           <ShortcutsHelp
             modLabel={modLabel}
             open={helpOpen}
@@ -1852,7 +1889,7 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.top.mobile')}
             </button></Tooltip>
           </div>
-          {!formMode && (
+          {!formMode && !compactBar && (
             <Tooltip text={selectedPath && selectedPath.length === 1 ? t('ve.top.templateSection') : t('ve.top.templatePage')}><button
               type="button"
               className="ve-btn"
@@ -1861,6 +1898,14 @@ export const VisualEditorView: React.FC = () => {
             >
               {t('ve.top.saveAsTemplate')}
             </button></Tooltip>
+          )}
+          {compactBar && (
+            <TopBarMore
+              items={[
+                { key: 'import', label: t('ve.top.importExport'), onSelect: () => setImportOpen(true) },
+                ...(formMode ? [] : [{ key: 'template', label: t('ve.top.saveAsTemplate'), onSelect: () => setSaveTemplateOpen(true), disabled: blocks.length === 0 }]),
+              ]}
+            />
           )}
           {pageSettings && surface?.slug === 'pages' && (
             <Tooltip text={status !== 'published' ? t('ve.top.previewDraft') : t('ve.top.preview')}><button
@@ -2002,6 +2047,7 @@ export const VisualEditorView: React.FC = () => {
                 available={pageAvail}
                 onChange={(next) => {
                   setPageSettings(next)
+                  extraDirtyRef.current = true
                   setDirty(true)
                 }}
               />
@@ -2014,6 +2060,7 @@ export const VisualEditorView: React.FC = () => {
                 config={formConfig}
                 onChange={(next) => {
                   setFormConfig(next)
+                  extraDirtyRef.current = true
                   setDirty(true)
                 }}
                 formId={route?.id}
@@ -2105,13 +2152,17 @@ export const VisualEditorView: React.FC = () => {
           onClose={() => setMenu(null)}
           onChoose={(id) => {
             const path = menu.path
+            const locked = Boolean(effectiveLock(blocks, path, locks, lockUser)?.blocked)
             setMenu(null)
             if (id === 'copy') void copyNode(path)
             else if (id === 'cut') void cutNode(path)
             else if (id === 'paste') void pasteAt(path)
             else if (id === 'edit') {
               setSelectedPath(path)
-              setDockTab('settings')
+              // Text blocks open the in-place editor on the canvas; everything else opens its Settings.
+              if (!locked && inlineCandidate(getNode(blocks, path), 0)) {
+                iframeRef.current?.contentWindow?.postMessage({ source: 've-canvas', type: 'editText', path }, CANVAS_ORIGIN())
+              } else setDockTab('settings')
             } else if (id === 'navigator') {
               setSelectedPath(path)
               setDockTab('navigator')

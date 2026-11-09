@@ -1256,6 +1256,7 @@ export const UI_STRING_SOURCE = {
   've.top.previewFailed': 'Could not work out the page address. Try again.',
   've.top.redoTitle': "Redo ({mod}+Shift+Z)",
   've.top.importExport': "Import / Export",
+  've.top.more': "More",
   've.top.importTitle': "Import or export this page as JSON",
   've.top.devicePreview': "Preview device",
   've.top.desktop': "Desktop",
@@ -3762,6 +3763,8 @@ export const UI_STRING_SOURCE = {
   'setup.q.summary.notesTitle': 'Good to know',
   'setup.q.note.domains': 'Several domains or regions: set them up in Settings > Domains.',
   'setup.q.note.bookings': 'Online bookings are planned; we will let you know when they are ready.',
+  'cv.empty.editable': "Empty text - double-click to edit",
+  'cv.empty.select': "Empty element - select it to add content",
   // --- global typography presets (VE-15) ---
   'tp.title': "Text styles",
   'tp.help': "Global text styles, like Elementor Global Fonts. Pick one for a block in the visual editor (Design, Typography); changing it here updates every block that uses it. Values a block sets itself still win. The preview on the right shows each style.",

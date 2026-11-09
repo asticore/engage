@@ -19,6 +19,8 @@
  */
 import { sectionLayoutCss } from '@/lib/sectionLayout'
 
+import { CANVAS_POLISH_CSS } from './canvasPolish.styles'
+
 /** Canvas twin of the public site's section rules (same generator, so the editor floats columns the way the page will). */
 export const CANVAS_SECTION_LAYOUT_CSS = sectionLayoutCss({
   section: '.ve-section',
@@ -2554,4 +2556,4 @@ html[data-theme='dark'] .ve-root {
 .ve-colour-token--on { outline: 2px solid var(--ve-accent); outline-offset: 1px; }
 .ve-colour-token__swatch { flex: 0 0 auto; width: 18px; height: 18px; border-radius: 3px; border: 1px solid rgba(128, 128, 128, 0.6); }
 
-` + CANVAS_SECTION_LAYOUT_CSS
+` + CANVAS_SECTION_LAYOUT_CSS + CANVAS_POLISH_CSS
