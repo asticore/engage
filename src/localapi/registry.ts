@@ -817,11 +817,15 @@ const ACTIVITY_LOGGED = new Set([
   'data-views', 'field-groups',
 ])
 
+/** Adds the hooks in place so the config object keeps its identity (other code and tests compare by reference). */
 const withActivityAudit = <T extends { slug?: string; hooks?: object }>(config: T): T => {
-  const hooks = (config.hooks ?? {}) as { afterChange?: unknown[]; afterDelete?: unknown[] }
-  if (config.slug === 'users') return { ...config, hooks: { ...hooks, afterChange: [...(hooks.afterChange ?? []), auditAfterCreate], afterDelete: [...(hooks.afterDelete ?? []), auditAfterDelete] } }
-  if (!config.slug || !ACTIVITY_LOGGED.has(config.slug)) return config
-  return { ...config, hooks: { ...hooks, afterChange: [...(hooks.afterChange ?? []), auditAfterChange], afterDelete: [...(hooks.afterDelete ?? []), auditAfterDelete] } }
+  const target = config as { slug?: string; hooks?: { afterChange?: unknown[]; afterDelete?: unknown[] } }
+  const logged = target.slug === 'users' || (target.slug !== undefined && ACTIVITY_LOGGED.has(target.slug))
+  if (!logged) return config
+  const hooks = (target.hooks ??= {})
+  hooks.afterChange = [...(hooks.afterChange ?? []), target.slug === 'users' ? auditAfterCreate : auditAfterChange]
+  hooks.afterDelete = [...(hooks.afterDelete ?? []), auditAfterDelete]
+  return config
 }
 
 export const collectionConfigs = baseCollectionConfigs.map((config) => withActivityAudit(config as never)) as typeof baseCollectionConfigs
