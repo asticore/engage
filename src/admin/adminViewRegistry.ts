@@ -73,6 +73,7 @@ const PrivacyView = lazyView(() => import('@/admin/views/PrivacyView').then((mod
 const ImpersonationView = lazyView(() => import('@/admin/views/ImpersonationView').then((mod) => mod.ImpersonationView))
 const OrganizationsView = lazyView(() => import('@/admin/views/OrganizationsView').then((mod) => mod.OrganizationsView))
 const PasswordGroupsView = lazyView(() => import('@/admin/views/PasswordGroupsView').then((mod) => mod.PasswordGroupsView))
+const ActivityLogView = lazyView(() => import('@/admin/views/ActivityLogView').then((mod) => mod.ActivityLogView))
 const SecurityAuditView = lazyView(() => import('@/admin/views/SecurityAuditView').then((mod) => mod.SecurityAuditView))
 const SocialView = lazyView(() => import('@/admin/views/SocialView').then((mod) => mod.SocialView))
 const TemplatesHubView = lazyView(() => import('@/admin/views/TemplatesHubView').then((mod) => mod.TemplatesHubView))
@@ -370,6 +371,12 @@ export const CUSTOM_ADMIN_VIEWS = [
     Component: PasswordGroupsView,
     path: '/security/password-groups',
     meta: { title: 'Password groups', description: 'Shared passwords that protect many pages, posts, products and events. Create, rotate, delete and see what each one protects.' },
+  },
+  {
+    key: 'activityLog',
+    Component: ActivityLogView,
+    path: '/security/activity',
+    meta: { title: 'Activity log', description: 'What people do: sign-ins, edits, publishes, setting changes and exports. Filter by person, event, collection and date; download or clear. Administrators only.' },
   },
   {
     key: 'securityAudit',

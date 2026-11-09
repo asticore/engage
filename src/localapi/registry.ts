@@ -549,7 +549,7 @@ import {
   findProductVersionByID,
   findProductVersions,
 } from '@/cms/db'
-import { auditGlobalAfterChange } from '@/features/security/hooks'
+import { auditAfterChange, auditAfterCreate, auditAfterDelete, auditGlobalAfterChange } from '@/features/security/hooks'
 import type { CollectionDbOps, GlobalDbOps } from './operations'
 import type { CollectionReadEntry, GlobalReadEntry, ReadRegistry } from './read-operations'
 
@@ -802,7 +802,30 @@ export const versionsRegistry: Record<string, VersionsRegistryEntry> = {
   products: { findAll: findProductVersions as unknown as VersionsRegistryEntry['findAll'], findByID: findProductVersionByID as unknown as VersionsRegistryEntry['findByID'] },
 }
 
-export const collectionConfigs = [ProductTags, ProductBrands, TrackingEvents, ProductSubscriptions, Faqs, EventRSVPs, MembershipTiers, AuditLog, EmailLog, ErrorLog, Backups, Translations, FieldGroups, FormSubmissions, ABTests, Media, Memberships, PageTemplates, ReusableSections, SiteTemplates, Forms, Enrolments, Lessons, LessonProgress, Pages, Events, Courses, Posts, Users, Redirects, ShippingZones, TaxRates, Coupons, OrderRefunds, ProductAttributes, ShippingClasses, ProductReviews, StockSubscriptions, GiftCards, StoreCredits, CreditLedger, ShippingManifests, ReviewEvents, ApprovalWorkflows, Roles, AdUnits, AdPlacements, DataViews, FormDrafts]
+const baseCollectionConfigs = [ProductTags, ProductBrands, TrackingEvents, ProductSubscriptions, Faqs, EventRSVPs, MembershipTiers, AuditLog, EmailLog, ErrorLog, Backups, Translations, FieldGroups, FormSubmissions, ABTests, Media, Memberships, PageTemplates, ReusableSections, SiteTemplates, Forms, Enrolments, Lessons, LessonProgress, Pages, Events, Courses, Posts, Users, Redirects, ShippingZones, TaxRates, Coupons, OrderRefunds, ProductAttributes, ShippingClasses, ProductReviews, StockSubscriptions, GiftCards, StoreCredits, CreditLedger, ShippingManifests, ReviewEvents, ApprovalWorkflows, Roles, AdUnits, AdPlacements, DataViews, FormDrafts]
+
+/**
+ * Collections whose creates, edits, publishes and deletes go to the activity log. Left out on
+ * purpose: high-volume system writes (logs, tracking, form drafts, lesson progress, submissions,
+ * carts) and records with their own history (orders, refunds, ledgers). Users log creates only,
+ * since their updates are mostly sign-in counters; role and password changes have their own events.
+ */
+const ACTIVITY_LOGGED = new Set([
+  'pages', 'posts', 'events', 'courses', 'lessons', 'faqs', 'media', 'page-templates', 'reusable-sections', 'site-templates',
+  'forms', 'redirects', 'roles', 'approval-workflows', 'coupons', 'shipping-zones', 'tax-rates', 'gift-cards', 'ad-units',
+  'ad-placements', 'membership-tiers', 'product-tags', 'product-brands', 'product-attributes', 'shipping-classes', 'ab-tests',
+  'data-views', 'field-groups',
+])
+
+const withActivityAudit = <T extends { slug?: string; hooks?: object }>(config: T): T => {
+  const hooks = (config.hooks ?? {}) as { afterChange?: unknown[]; afterDelete?: unknown[] }
+  if (config.slug === 'users') return { ...config, hooks: { ...hooks, afterChange: [...(hooks.afterChange ?? []), auditAfterCreate], afterDelete: [...(hooks.afterDelete ?? []), auditAfterDelete] } }
+  if (!config.slug || !ACTIVITY_LOGGED.has(config.slug)) return config
+  return { ...config, hooks: { ...hooks, afterChange: [...(hooks.afterChange ?? []), auditAfterChange], afterDelete: [...(hooks.afterDelete ?? []), auditAfterDelete] } }
+}
+
+export const collectionConfigs = baseCollectionConfigs.map((config) => withActivityAudit(config as never)) as typeof baseCollectionConfigs
+
 
 /**
  * Every settings save is written to the audit log (action `settings.update`, with
