@@ -3723,6 +3723,8 @@ const ar: UiDictionary = {
   'setup.q.summary.notesTitle': "معلومات مفيدة",
   'setup.q.note.domains': "عدة نطاقات أو مناطق: اضبطها من الإعدادات > النطاقات.",
   'setup.q.note.bookings': "الحجوزات عبر الإنترنت مخطط لها؛ سنُعلمك عند جاهزيتها.",
+  'cv.empty.editable': "نص فارغ - انقر نقرًا مزدوجًا للتحرير",
+  'cv.empty.select': "عنصر فارغ - حدده لإضافة محتوى",
 }
 
 export default ar

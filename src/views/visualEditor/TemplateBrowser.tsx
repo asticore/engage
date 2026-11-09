@@ -8,10 +8,11 @@ import { parseLocks, type Locks } from '@/features/roles/locks'
 import { TEMPLATE_CATEGORY_OPTIONS, TEMPLATE_PRESETS, type TemplateKind } from './templatePresets'
 import { renderTemplateThumbnail, type ThumbnailPalette } from './templateThumbnail'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { VE_TEMPLATE_LOCKS_TYPE, startLibraryDrag } from './dropSlot'
 
 /** Fired on `window` after a template is saved so the browser refreshes "My templates". */
 /** Drag payload: the section locks of a template, beside its blocks (see dragTemplate). */
-export const VE_TEMPLATE_LOCKS_MIME = 'application/x-ve-template-locks'
+export const VE_TEMPLATE_LOCKS_MIME = VE_TEMPLATE_LOCKS_TYPE
 
 export const TEMPLATES_CHANGED_EVENT = 've-templates-changed'
 
@@ -67,10 +68,12 @@ const asNodes = (value: unknown): SectionNode[] => (Array.isArray(value) ? (valu
 
 /** Native HTML5 drag payload for a template card: the blocks it would insert, dropped by VisualEditor.tsx. */
 const dragTemplate = (e: React.DragEvent, blocks: SectionNode[], locks?: Locks) => {
-  e.dataTransfer.setData('application/x-ve-template', JSON.stringify(blocks))
   // The template's section locks travel beside its blocks, so a dropped template keeps them too.
-  if (locks && Object.keys(locks.nodes).length > 0) e.dataTransfer.setData(VE_TEMPLATE_LOCKS_MIME, JSON.stringify(locks))
-  e.dataTransfer.effectAllowed = 'copy'
+  startLibraryDrag(e.dataTransfer, {
+    kind: 'template',
+    blocksJson: JSON.stringify(blocks),
+    locksJson: locks && Object.keys(locks.nodes).length > 0 ? JSON.stringify(locks) : undefined,
+  })
 }
 
 const PALETTE_VARS: Array<[keyof ThumbnailPalette, string]> = [
@@ -349,7 +352,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
             const loading = loadingKey === card.key
             const showImage = card.image && !brokenImages[card.key]
             return (
-              <Tooltip text={card.description} key={card.key}><div
+              <Tooltip text={card.description} key={card.key} placement="bottom"><div
                 role="button"
                 tabIndex={card.disabled ? -1 : 0}
                 className="ve-tpl__card"
