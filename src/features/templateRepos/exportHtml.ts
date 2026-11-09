@@ -25,7 +25,7 @@ import { isDeniedNodeType } from './manifest'
  * elements and element types this editor does not know. Block Design CSS is
  * inlined (each block carries its own scoped <style>), plus a small base sheet.
  *
- * Not inlined: the site theme (fonts, colour variables, Tailwind utilities and
+ * Not inlined: the site theme (fonts, colour variables, utility classes and
  * the shared component stylesheets). The file is a faithful copy of structure,
  * content and per-block design, not a pixel-exact copy of the live page.
  * Pictures chosen by media id appear only when `media` supplies their URLs.

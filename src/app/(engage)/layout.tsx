@@ -3,7 +3,7 @@ import { headers } from 'next/headers'
 import React from 'react'
 
 // Stage 12 (full custom rebuild): the admin no longer imports
-// `the vendor package` at all - custom.css + tailwind.css (imported below)
+// `the vendor package` at all - custom.css + admin.css (imported below)
 // are now this admin's entire visual system, built from scratch. Inter is
 // the admin's one single font (self-hosted via @fontsource, same as the
 // frontend's own body text - see (frontend)/layout.tsx for the identical
@@ -13,7 +13,7 @@ import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
 import '@fontsource/inter/600.css'
 import '@fontsource/inter/700.css'
-import './tailwind.css'
+import './admin.css'
 
 export const generateViewport = async () => {
   const headersList = await headers()

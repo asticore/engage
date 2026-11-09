@@ -62,6 +62,9 @@ export async function POST(request: Request): Promise<Response> {
       const index = rows.findIndex((row) => row.id === id)
       if (index < 0) return libraryJson({ ok: false, error: 'That library is not in the list.' }, 404)
       const changed = rows[index]
+      if (action === 'remove' && state.rows[index]?.builtIn) {
+        return libraryJson({ ok: false, error: 'This library comes with every install and cannot be removed. Switch it off instead.' }, 400)
+      }
       if (action === 'remove') {
         rows.splice(index, 1)
       } else {

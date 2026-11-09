@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
-import { effectiveRate, MAX_DISPLAY_CURRENCIES, RATE_ATTRIBUTION } from '@/features/ecommerce/lib/displayCurrency'
+import { effectiveRate, normaliseRounding, MAX_DISPLAY_CURRENCIES, RATE_ATTRIBUTION } from '@/features/ecommerce/lib/displayCurrency'
 import { validateDisplayCurrencies } from '@/features/ecommerce/lib/displayCurrencyRows'
 import { loadShopCurrency } from '@/features/ecommerce/lib/shopCurrency'
 import { listDisplayCurrencyRows, saveDisplayCurrencyRows, type DisplayCurrencyRow } from '@/features/ecommerce/server/displayCurrencies'
@@ -27,6 +27,7 @@ function describe(row: DisplayCurrencyRow) {
     enabled: row.enabled === 1,
     rateMode: auto ? 'auto' : 'manual',
     manualRate: row.manual_rate,
+    rounding: normaliseRounding(row.rounding),
     autoRate: row.auto_rate,
     autoRateAt: row.auto_rate_at,
     // A usable rate: a manual one, or an automatic one fetched for the current shop currency.

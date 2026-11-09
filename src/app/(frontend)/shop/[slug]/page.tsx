@@ -37,10 +37,14 @@ import { buildProductView, offersJsonLd } from '@/features/ecommerce/storefront'
 import { loadPreordersEnabled } from '@/features/ecommerce/server/shopExtra'
 import { loadShopRulesConfig } from '@/features/ecommerce/server/pricingRules'
 import { productPageNotes } from '@/features/ecommerce/lib/pricingRules'
+import { currencyFromShopSettings } from '@/features/ecommerce/lib/shopCurrency'
+import { tierNotes } from '@/features/ecommerce/lib/priceTiers'
+import { loadTierContext } from '@/features/ecommerce/server/pricing'
 import { PasswordGate } from '@/components/PasswordGate'
 import { getPasswordGateState } from '@/features/visibility/gate'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { getEngine } from '@/lib/engine'
+import { loadPromoBadges } from '@/features/ecommerce/lib/promoBadges'
 import { getFeatureFlags } from '@/utilities/features'
 import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
 import { sourceSlugFor } from '@/features/multilingual/slugIndex'
@@ -105,6 +109,7 @@ export default async function ProductPage({
 
   const { slug: requested } = await params
   const engine = await getEngine()
+  const promoBadges = await loadPromoBadges(engine)
   const requestLocale = await currentRequestLocale()
   // A source slug with a translation is redirected to the translated URL; a translated slug answers for its product.
   const slug = await sourceSlugFor(requestLocale, 'shop', requested, { redirect: true })
@@ -149,10 +154,14 @@ export default async function ProductPage({
   // A bundle's price and stock come from the products inside it (server/bundles.ts), so they replace the bundle's own fields here.
   const bundle = catalogue.productType === 'bundle' ? await bundleStorefrontFields(engine as never, product as never, new Date(), preordersOn) : null
   const shopRules = await loadShopRulesConfig(engine)
+  // Public quantity breaks only: this page is the same for everyone, so wholesale (customer-type) prices are never listed here.
+  const tierCtx = await loadTierContext([{ product: product.id }], [])
+  const noteLocale = priceLocale(await publicLocale())
+  const breakNotes = typeof catalogue.priceInAUD === 'number' ? tierNotes(tierCtx.tiers, { productId: String(product.id), variationId: null, customerTypes: [], basePrice: catalogue.priceInAUD }, (units) => formatPriceInAUD(units, currencyFromShopSettings(settings), noteLocale)) : []
   const view = buildProductView(bundle ? { ...catalogue, ...bundle } : catalogue, new Date(), mediaUrls, {
     preorders: preordersOn,
     addOnsOn: shopRules.addOnsOn,
-    pricingNotes: shopRules.rulesOn ? productPageNotes(shopRules.rules) : [],
+    pricingNotes: [...(shopRules.rulesOn ? productPageNotes(shopRules.rules) : []), ...breakNotes],
   })
 
   const asDocs = (value: unknown): Array<Record<string, unknown> & { id: number }> =>
@@ -279,7 +288,7 @@ export default async function ProductPage({
           </div>
           <div className="product-grid">
             {upsells.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <ProductCard key={item.id} product={item} promoBadges={promoBadges} />
             ))}
           </div>
         </div>
@@ -294,7 +303,7 @@ export default async function ProductPage({
           </div>
           <div className="product-grid">
             {related.map((item) => (
-              <ProductCard key={item.id} product={item} />
+              <ProductCard key={item.id} product={item} promoBadges={promoBadges} />
             ))}
           </div>
         </div>

@@ -2,7 +2,7 @@
  * Reads and writes the extra display currencies (table eg_shop_display_currencies). Server only.
  * Every function takes the raw D1 binding and never throws into a page: a missing table means "no extra currencies".
  */
-import { effectiveRate, minorDigits, type DisplayCurrencyOption } from '../lib/displayCurrency'
+import { effectiveRate, minorDigits, normaliseRounding, type DisplayCurrencyOption } from '../lib/displayCurrency'
 import type { DisplayCurrencyInput } from '../lib/displayCurrencyRows'
 
 type D1 = { prepare: (sql: string) => { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T[] }>; run: () => Promise<unknown> } } }
@@ -16,9 +16,10 @@ export type DisplayCurrencyRow = {
   auto_rate: number | null
   auto_rate_base: string | null
   auto_rate_at: string | null
+  rounding?: string | null
 }
 
-const COLUMNS = 'code, enabled, sort_order, rate_mode, manual_rate, auto_rate, auto_rate_base, auto_rate_at'
+const COLUMNS = 'code, enabled, sort_order, rate_mode, manual_rate, auto_rate, auto_rate_base, auto_rate_at, rounding'
 
 export async function listDisplayCurrencyRows(d1: D1): Promise<DisplayCurrencyRow[]> {
   try {
@@ -39,7 +40,7 @@ export function storefrontOptions(rows: DisplayCurrencyRow[], base: string): Dis
     if (row.rate_mode === 'auto' && row.auto_rate_base !== base) continue
     const rate = effectiveRate(row)
     if (rate === null) continue
-    options.push({ code: row.code, rate, digits: minorDigits(row.code) })
+    options.push({ code: row.code, rate, digits: minorDigits(row.code), rounding: normaliseRounding(row.rounding) })
   }
   return options
 }
@@ -55,11 +56,11 @@ export async function saveDisplayCurrencyRows(d1: D1, rows: DisplayCurrencyInput
   for (const [index, row] of rows.entries()) {
     await d1
       .prepare(
-        `INSERT INTO eg_shop_display_currencies (code, enabled, sort_order, rate_mode, manual_rate, updated_at, created_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)
-         ON CONFLICT(code) DO UPDATE SET enabled = ?2, sort_order = ?3, rate_mode = ?4, manual_rate = ?5, updated_at = ?6`,
+        `INSERT INTO eg_shop_display_currencies (code, enabled, sort_order, rate_mode, manual_rate, rounding, updated_at, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?7, ?6, ?6)
+         ON CONFLICT(code) DO UPDATE SET enabled = ?2, sort_order = ?3, rate_mode = ?4, manual_rate = ?5, rounding = ?7, updated_at = ?6`,
       )
-      .bind(row.code, row.enabled ? 1 : 0, index, row.rateMode, row.manualRate, stamp)
+      .bind(row.code, row.enabled ? 1 : 0, index, row.rateMode, row.manualRate, stamp, row.rounding)
       .run()
   }
 }

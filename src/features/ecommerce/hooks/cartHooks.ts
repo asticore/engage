@@ -17,7 +17,8 @@ import crypto from 'crypto'
 
 import { resolveCartLine, type CatalogueProduct } from '../catalogue'
 
-import { giftCardLine, type CartItemInput } from '../server/pricing'
+import { giftCardLine, loadTierContext, type CartItemInput } from '../server/pricing'
+import { resolveTierPrice } from '../lib/priceTiers'
 import { loadPreordersEnabled } from '../server/shopExtra'
 import { loadShopRulesConfig } from '../server/pricingRules'
 import { normaliseAddOnDefs, parseAddOnInputs, priceAddOns, storeAddOnChoices } from '../lib/addOns'
@@ -71,6 +72,8 @@ export const beforeChangeCart = async ({ data, originalDoc, operation, req }: Re
     const errors: Array<{ path: string; message: string }> = []
     const preordersOn = await loadPreordersEnabled(engine)
     const addOnsOn = (await loadShopRulesConfig(engine as never)).addOnsOn
+    // Quantity breaks open to everyone count toward the saved estimate; customer-type prices are applied at checkout.
+    const tierCtx = await loadTierContext(items as CartItemInput[], [])
     for (const [index, item] of items.entries()) {
       const productId = productIdOf(item)
       if (!productId || !item.quantity) continue
@@ -119,7 +122,8 @@ export const beforeChangeCart = async ({ data, originalDoc, operation, req }: Re
           continue
         }
         item.addOns = storeAddOnChoices(addOnPriced.choices)
-        subtotal += line.unitPrice * item.quantity + (addOnPriced.cents * item.quantity) / 100
+        const tiered = typeof item.priceCents === 'number' ? { price: line.unitPrice } : resolveTierPrice(tierCtx.tiers, { productId: String(productId), variationId: line.variationId ?? null, quantity: item.quantity, customerTypes: [], basePrice: line.unitPrice })
+        subtotal += tiered.price * item.quantity + (addOnPriced.cents * item.quantity) / 100
         continue
       }
       const unchanged = before.includes(`${productId}|${item.variation ?? ''}|${item.quantity}`)

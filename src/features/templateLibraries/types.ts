@@ -23,6 +23,8 @@ export type LibraryManifest = {
 
 /** One saved library row, validated. `config` is null when the saved address is not valid. */
 export type LibraryRow = {
+  /** True for the library every install ships with: it can be switched off but not removed. */
+  builtIn?: boolean
   id: string
   label: string
   url: string
@@ -50,6 +52,11 @@ export type LibraryItemRow = {
   tags: string[]
   previewUrl: string
 }
+
+/** The library every install lists by default (reference/references.json, id `engage-templates`). */
+export const DEFAULT_LIBRARY_ID = 'engage-templates'
+export const DEFAULT_LIBRARY_URL = 'https://github.com/asticore/engage-templates'
+export const DEFAULT_LIBRARY_LABEL = 'Engage templates'
 
 export const LIBRARY_LIMITS = {
   maxLibraries: 20,
