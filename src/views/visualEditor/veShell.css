@@ -1,12 +1,14 @@
 /*
- * The visual editor is full screen: the admin shell's floating sidebar toggle and theme toggle
- * would sit on top of the editor top bar, so hide them while the editor (or its loading screen) is mounted.
+ * The visual editor is full screen: the admin shell's sidebar toggle, theme toggle and the mobile
+ * top bar would sit on top of the editor top bar, so hide them while the editor (or its loading screen) is mounted.
  * The nav toggler's button is wrapped in a tooltip span, so it is not a direct child of the shell
  * (the older direct-child rule in custom.css misses it). Both come back when the editor unmounts.
  */
 .admin-shell:has(.ve-root) .nav-toggler,
 .admin-shell:has(.ve-loading-screen) .nav-toggler,
 .admin-shell:has(.ve-root) .theme-toggler,
-.admin-shell:has(.ve-loading-screen) .theme-toggler {
+.admin-shell:has(.ve-loading-screen) .theme-toggler,
+.admin-shell:has(.ve-root) .admin-topbar,
+.admin-shell:has(.ve-loading-screen) .admin-topbar {
   display: none !important;
 }

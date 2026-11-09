@@ -1,8 +1,8 @@
 'use client'
 
 /**
- * The signed-in person's admin language, chosen from their own profile menu in
- * the sidebar. Saves to their user record and refreshes, so the layout re-reads
+ * The signed-in person's admin language, chosen on the My preferences page
+ * (Settings > My preferences). Saves to their user record and refreshes, so the layout re-reads
  * the language and sets <html lang/dir>.
  *
  * Only the user's own admin screens change. Website languages are separate.
@@ -49,10 +49,9 @@ export function AdminLanguagePicker({
 
   return (
     <div
-      className="nav__language"
-      style={{ display: 'grid', gap: 4, padding: '8px 12px', fontSize: 12 }}
+      className="my-prefs__language"
     >
-      <label htmlFor="admin-ui-language" style={{ fontWeight: 600 }}>
+      <label className="my-prefs__sr" htmlFor="admin-ui-language">
         {t('profile.interfaceLanguage')}
       </label>
       <select
@@ -70,7 +69,7 @@ export function AdminLanguagePicker({
           </option>
         ))}
       </select>
-      <button disabled={status === 'saving'} onClick={onSave} type="button">
+      <button className="btn" disabled={status === 'saving'} onClick={onSave} type="button">
         {status === 'saved'
           ? t('profile.interfaceLanguageSaved')
           : t('profile.interfaceLanguageSave')}

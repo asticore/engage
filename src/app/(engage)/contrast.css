@@ -1,0 +1,59 @@
+/*
+ * Contrast guard rails for the admin (WCAG AA, 4.5:1 for text).
+ *
+ * Imported LAST in tailwind.css, unlayered, so it wins over Tailwind's
+ * layered utilities. Every pair below is asserted by
+ * tests/int/admin-contrast.int.spec.ts in both the light and dark theme.
+ *
+ * Root cause this file backstops: several admin views style anchors/buttons
+ * with the Tailwind arbitrary utilities
+ *   hover:bg-[var(--ac-gold)] hover:text-[var(--theme-elevation-0)]
+ * and the base `a { color }` rule used to be unlayered, so it beat the
+ * `hover:text-*` utility and the label stayed brand-blue on a brand-blue fill
+ * (invisible "+ New page" buttons). custom.css now keeps `a` in @layer base;
+ * the selectors here make the foreground token explicit regardless.
+ */
+
+/* Any element filled with the brand colour on hover/focus gets its on-accent
+   foreground (the SVG "+" icons use currentColor, so they follow). */
+[class*='hover:bg-[var(--ac-gold)]']:hover,
+[class*='hover:bg-[var(--ac-gold)]']:focus-visible {
+  background-color: var(--ac-gold);
+  border-color: var(--ac-gold);
+  color: var(--ac-gold-contrast);
+}
+
+/* Secondary/outline buttons: the hover wash must keep body text readable. */
+.btn:hover:not(.btn--primary):not(.btn--style-primary) {
+  color: var(--theme-elevation-900);
+}
+
+.btn--primary:focus-visible,
+.btn--style-primary:focus-visible {
+  background-color: var(--ac-gold-soft);
+  border-color: var(--ac-gold-soft);
+  color: var(--ac-gold-soft-contrast);
+}
+
+.btn--style-primary:hover {
+  background-color: var(--ac-gold-soft);
+  border-color: var(--ac-gold-soft);
+  color: var(--ac-gold-soft-contrast);
+}
+
+/* Pages tree / quick-edit primary actions faded with `opacity` on hover, which
+   lowers the label contrast; swap to the soft accent pair instead. */
+.pages-tree__create-link:hover,
+.pages-tree__btn--primary:hover:not(:disabled),
+.list-quick-edit-save-btn:hover:not(:disabled) {
+  opacity: 1;
+  background: var(--ac-gold-soft);
+  color: var(--ac-gold-soft-contrast);
+}
+
+/* Visual editor chrome: icon buttons on the always-dark toolbar flip to the
+   danger fill on hover; the inherited chrome text is too light for it. */
+.ve-node__act--danger:hover:not(:disabled),
+.ve-column__act--danger:hover:not(:disabled) {
+  color: var(--ve-danger-contrast);
+}

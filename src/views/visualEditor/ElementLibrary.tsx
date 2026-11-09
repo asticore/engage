@@ -20,14 +20,80 @@ import { libraryCategories, rankCards } from './libraryModel'
 
 const CATEGORY_KEY = 've-library-category'
 const DENSITY_KEY = 've-library-density'
+const COLLAPSED_KEY = 've-library-collapsed'
 
 // Stored choices are read through useSyncExternalStore so the first client render equals the server render.
 const categoryStore = createStorageStore(CATEGORY_KEY)
 const densityStore = createStorageStore(DENSITY_KEY)
+const collapsedStore = createStorageStore(COLLAPSED_KEY)
 const recentsStore = createStorageStore(RECENTS_KEY)
 const favsStore = createStorageStore(FAVS_KEY)
 
 type Source = 'blocks' | 'templates'
+type View = 'compact' | 'list'
+
+/** Stored view: only 'list' is kept; the retired 'comfortable' value (and anything else) means compact. */
+export const parseView = (raw: string | null): View => (raw === 'list' ? 'list' : 'compact')
+
+/** Collapsed group ids from storage; any malformed value is treated as nothing collapsed. */
+export function parseCollapsed(raw: string | null): string[] {
+  if (!raw) return []
+  try {
+    const value: unknown = JSON.parse(raw)
+    return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+const GridIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+    <path fill="currentColor" d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z" />
+  </svg>
+)
+const ListIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+    <path fill="currentColor" d="M2 3h12v2H2zM2 7h12v2H2zM2 11h12v2H2z" />
+  </svg>
+)
+const ChevronIcon = () => (
+  <svg className="ve-library__chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+    <path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
+/** A category group with a clickable header; `forceOpen` (an active search) ignores the remembered collapsed state. */
+const Group: React.FC<{
+  id: string
+  title: string
+  collapsed: boolean
+  forceOpen: boolean
+  onToggle: (id: string) => void
+  className?: string
+  testId?: string
+  children: React.ReactNode
+}> = ({ id, title, collapsed, forceOpen, onToggle, className, testId, children }) => {
+  const open = forceOpen || !collapsed
+  return (
+    <div className={`ve-library__group${className ? ` ${className}` : ''}`} data-testid={testId} data-group={id}>
+      <h4 className="ve-library__group-title">
+        <button
+          type="button"
+          className="ve-library__group-toggle"
+          aria-expanded={open}
+          aria-controls={`ve-lib-group-${id}`}
+          onClick={() => onToggle(id)}
+        >
+          <ChevronIcon />
+          <span>{title}</span>
+        </button>
+      </h4>
+      <div id={`ve-lib-group-${id}`} hidden={!open}>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 /**
  * The Elements tab of the editor dock (src/views/VisualEditor.tsx renders it
@@ -56,8 +122,12 @@ export const ElementLibrary: React.FC<{
   const categories = useMemo(() => libraryCategories(BLOCK_CATEGORIES, allCards), [allCards])
   const category = savedCategory && categories.some((c) => c.key === savedCategory) ? savedCategory : 'all'
   const changeCategory = (key: string) => categoryStore.set(key)
-  const density: 'compact' | 'comfortable' = useStoredString(densityStore) === 'comfortable' ? 'comfortable' : 'compact'
-  const toggleDensity = () => densityStore.set(density === 'compact' ? 'comfortable' : 'compact')
+  const density = parseView(useStoredString(densityStore))
+  const collapsedRaw = useStoredString(collapsedStore)
+  const collapsed = useMemo(() => parseCollapsed(collapsedRaw), [collapsedRaw])
+  const toggleGroup = (id: string) =>
+    collapsedStore.set(JSON.stringify(collapsed.includes(id) ? collapsed.filter((c) => c !== id) : [...collapsed, id]))
+  const searching = query.trim() !== ''
   const recentsRaw = useStoredString(recentsStore)
   const favsRaw = useStoredString(favsStore)
   const recents = useMemo(() => sanitiseList(recentsRaw), [recentsRaw])
@@ -138,6 +208,7 @@ export const ElementLibrary: React.FC<{
                       >
                         <span className="ve-library__card-icon">{block.icon}</span>
                         <span className="ve-library__card-label">{block.label}</span>
+                        {density === 'list' && <span className="ve-library__card-desc">{block.description}</span>}
                         <button
                           type="button"
                           className={`ve-lib-star${favs.includes(block.slug) ? ' ve-lib-star--on' : ''}`}
@@ -183,38 +254,54 @@ export const ElementLibrary: React.FC<{
 
         {source === 'blocks' && (
           <>
-            <div className="ve-library__filter-row">
             <input
               type="search"
               className="ve-library__search"
               placeholder={t('ve.lib.search')}
+              aria-label={t('ve.lib.search')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <select
-              className="ve-library__filter"
-              aria-label={t('ve.lib.filter')}
-              data-testid="ve-lib-filter"
-              value={category}
-              onChange={(e) => changeCategory(e.target.value)}
-            >
-              <option value="all">All categories ({allCards.length})</option>
-              {categories.map((cat) => (
-                <option key={cat.key} value={cat.key}>
-                  {cat.label} ({cat.count})
-                </option>
-              ))}
-            </select>
+            <div className="ve-library__filter-row">
+              <div className="ve-library__views" role="group" aria-label={t('ve.lib.views')}>
+                <button
+                  type="button"
+                  className="ve-library__view-btn"
+                  data-testid="ve-lib-view-compact"
+                  aria-label={t('ve.lib.viewCompact')}
+                  title={t('ve.lib.viewCompact')}
+                  aria-pressed={density === 'compact'}
+                  onClick={() => densityStore.set('compact')}
+                >
+                  <GridIcon />
+                </button>
+                <button
+                  type="button"
+                  className="ve-library__view-btn"
+                  data-testid="ve-lib-view-list"
+                  aria-label={t('ve.lib.viewList')}
+                  title={t('ve.lib.viewList')}
+                  aria-pressed={density === 'list'}
+                  onClick={() => densityStore.set('list')}
+                >
+                  <ListIcon />
+                </button>
+              </div>
+              <select
+                className="ve-library__filter"
+                aria-label={t('ve.lib.filter')}
+                data-testid="ve-lib-filter"
+                value={category}
+                onChange={(e) => changeCategory(e.target.value)}
+              >
+                <option value="all">All categories ({allCards.length})</option>
+                {categories.map((cat) => (
+                  <option key={cat.key} value={cat.key}>
+                    {cat.label} ({cat.count})
+                  </option>
+                ))}
+              </select>
             </div>
-            <button
-              type="button"
-              className="ve-library__density"
-              data-testid="ve-lib-density"
-              aria-pressed={density === 'comfortable'}
-              onClick={toggleDensity}
-            >
-              {density === 'compact' ? 'Comfortable view' : 'Compact view'}
-            </button>
           </>
         )}
       </div>
@@ -227,21 +314,18 @@ export const ElementLibrary: React.FC<{
             {results.length === 0 && <p className="ve-library__empty">No elements match &quot;{query}&quot;.</p>}
 
             {!query.trim() && category === 'all' && favBlocks.length > 0 && (
-              <div className="ve-library__group ve-lib-recent" data-testid="ve-lib-favs">
-                <h4 className="ve-library__group-title">{t('ve.lib.favourites')}</h4>
+              <Group id="favs" title={t('ve.lib.favourites')} collapsed={collapsed.includes('favs')} forceOpen={searching} onToggle={toggleGroup} className="ve-lib-recent" testId="ve-lib-favs">
                 <div className="ve-library__grid">{favBlocks.map((b) => renderCard(b))}</div>
-              </div>
+              </Group>
             )}
             {!query.trim() && category === 'all' && recentBlocks.length > 0 && (
-              <div className="ve-library__group ve-lib-recent" data-testid="ve-lib-recent">
-                <h4 className="ve-library__group-title">{t('ve.lib.recent')}</h4>
+              <Group id="recent" title={t('ve.lib.recent')} collapsed={collapsed.includes('recent')} forceOpen={searching} onToggle={toggleGroup} className="ve-lib-recent" testId="ve-lib-recent">
                 <div className="ve-library__grid">{recentBlocks.map((b) => renderCard(b))}</div>
-              </div>
+              </Group>
             )}
 
             {category === 'all' && globalMatches.length > 0 && (
-              <div className="ve-library__group" data-testid="ve-lib-globals">
-                <h4 className="ve-library__group-title">{t('ve.lib.global')}</h4>
+              <Group id="global" title={t('ve.lib.global')} collapsed={collapsed.includes('global')} forceOpen={searching} onToggle={toggleGroup} testId="ve-lib-globals">
                 <div className="ve-library__grid">
                   {globalMatches.map((g) => (
                     <Tooltip text={`${g.name}: ${g.description || t('tip.editsGlobalSection')}`} key={g.id}><div
@@ -259,15 +343,15 @@ export const ElementLibrary: React.FC<{
                     >
                       <span className="ve-library__card-icon">{String.fromCodePoint(0x1f310)}</span>
                       <span className="ve-library__card-label">{g.name}</span>
+                      {density === 'list' && g.description && <span className="ve-library__card-desc">{g.description}</span>}
                     </div></Tooltip>
                   ))}
                 </div>
-              </div>
+              </Group>
             )}
 
             {FORM_PRESET_INSERT_READY && !formMode && category === 'all' && formCards.length > 0 && (
-              <div className="ve-library__group" data-testid="ve-lib-forms">
-                <h4 className="ve-library__group-title">{t('ve.lib.forms')}</h4>
+              <Group id="forms" title={t('ve.lib.forms')} collapsed={collapsed.includes('forms')} forceOpen={searching} onToggle={toggleGroup} testId="ve-lib-forms">
                 {formNotice && (
                   <p className="ve-library__empty" role="alert">
                     {formNotice}
@@ -300,16 +384,16 @@ export const ElementLibrary: React.FC<{
                       >
                         <span className="ve-library__card-icon">{String.fromCodePoint(0x1f4dd)}</span>
                         <span className="ve-library__card-label">{f.label}</span>
+                        {density === 'list' && <span className="ve-library__card-desc">{f.description}</span>}
                       </div></Tooltip>
                     )
                   })}
                 </div>
-              </div>
+              </Group>
             )}
 
             {!formMode && category === 'all' && shopCards.length > 0 && (
-              <div className="ve-library__group" data-testid="ve-lib-shop">
-                <h4 className="ve-library__group-title">{t('ve.lib.shop')}</h4>
+              <Group id="shop" title={t('ve.lib.shop')} collapsed={collapsed.includes('shop')} forceOpen={searching} onToggle={toggleGroup} testId="ve-lib-shop">
                 <div className="ve-library__grid">
                   {shopCards.map((c) => (
                     <Tooltip text={`${c.label}: ${c.description}`} key={c.id}><div
@@ -327,10 +411,11 @@ export const ElementLibrary: React.FC<{
                     >
                       <span className="ve-library__card-icon">{String.fromCodePoint(0x1f6d2)}</span>
                       <span className="ve-library__card-label">{c.label}</span>
+                      {density === 'list' && <span className="ve-library__card-desc">{c.description}</span>}
                     </div></Tooltip>
                   ))}
                 </div>
-              </div>
+              </Group>
             )}
 
             {/* Searching: one flat list, best match first. Otherwise grouped by (merged) category. */}
@@ -344,10 +429,9 @@ export const ElementLibrary: React.FC<{
                 const blocks = results.filter((b) => cat.keys.includes(b.category))
                 if (blocks.length === 0) return null
                 return (
-                  <div className="ve-library__group" key={cat.key}>
-                    <h4 className="ve-library__group-title">{cat.label}</h4>
+                  <Group key={cat.key} id={`cat-${cat.key}`} title={cat.label} collapsed={collapsed.includes(`cat-${cat.key}`)} forceOpen={searching} onToggle={toggleGroup}>
                     <div className="ve-library__grid">{blocks.map((block) => renderCard(block))}</div>
-                  </div>
+                  </Group>
                 )
               })}
           </>

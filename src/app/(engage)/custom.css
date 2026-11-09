@@ -290,8 +290,14 @@ h2 {
   margin: 0 0 calc(var(--base) * 0.4);
 }
 
-a {
-  color: var(--ac-gold);
+/* In `@layer base` (not unlayered): an unlayered `a { color }` beats EVERY
+   Tailwind utility (utilities live in a cascade layer), so any anchor styled
+   with `text-*` / `hover:text-*` silently kept the brand colour - e.g. the
+   dashboard "+ New ..." links went gold-on-gold on hover. See contrast.css. */
+@layer base {
+  a {
+    color: var(--ac-gold);
+  }
 }
 
 input,
@@ -544,6 +550,13 @@ button {
   transform: translateX(-100%);
 }
 
+@media (max-width: 768px) {
+  /* The drawer opens below the mobile top bar, so the bar's hamburger stays reachable. */
+  .nav {
+    inset-block: var(--admin-topbar-h) 0;
+  }
+}
+
 .nav--hydrated {
   transition:
     width var(--nav-trans-time) ease,
@@ -645,21 +658,10 @@ button {
   display: none;
 }
 
-/* Mobile-only close button inside the nav itself - rendered after `.nav__wrap`
-   in the DOM (AdminNav.tsx) but pinned to the top visually via flex order,
-   since `.nav__scroll` (its shared flex-column parent) lays children out in
-   source order otherwise. */
+/* Legacy in-drawer close button (AdminNav.tsx): the mobile top bar's hamburger opens and
+   closes the drawer now, so this stays out of sight. */
 .nav__header {
   display: none;
-  order: -1;
-}
-
-@media (max-width: 768px) {
-  .nav__header {
-    display: flex;
-    justify-content: flex-end;
-    padding: calc(var(--base) * 0.6) calc(var(--base) * 0.9) 0;
-  }
 }
 
 .nav__mobile-close {
@@ -844,24 +846,55 @@ button {
 }
 
 /* ---------------------------------------------------------------- *
- * Sidebar trigger (collapse on desktop, open/close on mobile)       *
+ * Sidebar brand row (site name + collapse button), desktop only      *
  * ---------------------------------------------------------------- */
+.nav__brand {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .nav__brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: calc(var(--base) * 0.6);
+    padding: 0 calc(var(--base) * 0.3);
+  }
+
+  .nav__brand-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+    font-size: calc(var(--base) * 0.95);
+    color: var(--theme-elevation-900);
+  }
+
+  .nav--collapsed .nav__brand {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .nav--collapsed .nav__brand-name {
+    display: none;
+  }
+}
+
 .nav-toggler {
-  position: fixed;
-  top: calc(var(--gutter-h) * 0.4);
-  left: calc(var(--gutter-h) * 0.4);
-  z-index: 50;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   border-radius: var(--style-radius-m);
   border: 1px solid var(--theme-elevation-200);
   background-color: var(--ac-surface);
   color: var(--theme-elevation-700);
   cursor: pointer;
-  transition: left var(--nav-trans-time) ease;
 }
 
 .nav-toggler:hover {
@@ -869,18 +902,52 @@ button {
   color: var(--ac-gold);
 }
 
-@media (min-width: 769px) {
-  .nav-toggler {
-    top: calc(var(--gutter-h) * 0.4);
-    left: calc(var(--nav-width) + var(--gutter-h) * 0.4);
+/* ---------------------------------------------------------------- *
+ * Mobile top bar (site name + hamburger), <= 768px only              *
+ * ---------------------------------------------------------------- */
+:root {
+  --admin-topbar-h: 52px;
+}
+
+.admin-topbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 45;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: var(--admin-topbar-h);
+    padding: 0 var(--gutter-h);
+    background-color: var(--ac-ground);
+    border-bottom: 1px solid var(--theme-elevation-150);
   }
 
-  .admin-shell--collapsed .nav-toggler {
-    left: calc(var(--nav-width-collapsed) + var(--gutter-h) * 0.4);
+  .admin-topbar__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+    color: var(--theme-elevation-900);
   }
 
-  .admin-shell--hydrated .nav-toggler {
-    transition: left var(--nav-trans-time) ease;
+  .admin-topbar__menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--theme-elevation-200);
+    border-radius: var(--style-radius-m);
+    background-color: var(--ac-surface);
+    color: var(--theme-elevation-700);
+    cursor: pointer;
   }
 }
 
@@ -925,9 +992,13 @@ button {
    so the canvas gets the full width. Both are direct children of .admin-shell and
    come back on their own when the editor unmounts. */
 .admin-shell:has(.ve-root) > .nav,
-.admin-shell:has(.ve-root) > .nav-toggler,
-.admin-shell:has(.ve-loading-screen) > .nav,
-.admin-shell:has(.ve-loading-screen) > .nav-toggler {
+.admin-shell:has(.ve-loading-screen) > .nav {
+  display: none;
+}
+
+/* The mobile top bar is shell chrome too (it sits inside .admin-shell__main). */
+.admin-shell:has(.ve-root) .admin-topbar,
+.admin-shell:has(.ve-loading-screen) .admin-topbar {
   display: none;
 }
 
@@ -995,66 +1066,74 @@ button {
 }
 
 /* ---------------------------------------------------------------- *
- * Theme (color scheme) switcher                                     *
+ * Theme switch lives in the sidebar controls (.nav__log-out.theme-   *
+ * toggler); this section styles the My preferences page.             *
  * ---------------------------------------------------------------- */
-.theme-toggler {
-  position: fixed;
-  top: calc(var(--gutter-h) * 0.4);
-  right: calc(var(--gutter-h) * 0.4);
-  z-index: 50;
+.nav__prefs {
+  text-decoration: none;
 }
 
-.theme-toggler__trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  border: 1px solid var(--theme-elevation-200);
-  background-color: var(--ac-surface);
-  color: var(--theme-elevation-700);
-  cursor: pointer;
+.nav__prefs span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.theme-toggler__trigger:hover {
-  border-color: var(--ac-gold);
-  color: var(--ac-gold);
+.nav--collapsed .nav__log-out svg {
+  flex-shrink: 0;
 }
 
-.theme-toggler__menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 120px;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--style-radius-m);
+.my-prefs {
+  display: grid;
+  gap: calc(var(--base) * 0.9);
+  max-width: 640px;
+}
+
+.my-prefs__card {
+  padding: calc(var(--base) * 1);
   border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-m);
   background-color: var(--ac-surface);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
-.theme-toggler__option {
-  border: none;
-  background: none;
-  text-align: left;
+.my-prefs__card h2 {
+  margin: 0 0 calc(var(--base) * 0.3);
+  font-size: calc(var(--base) * 1);
+}
+
+.my-prefs__card p {
+  margin: 0 0 calc(var(--base) * 0.6);
+  color: var(--theme-elevation-600);
+}
+
+.my-prefs__language {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--base) * 0.5);
+}
+
+.my-prefs__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--base) * 0.9);
+}
+
+.my-prefs__choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
-  padding: calc(var(--base) * 0.35) calc(var(--base) * 0.5);
-  border-radius: var(--style-radius-s);
-  font-size: 0.85rem;
-  color: var(--theme-elevation-700);
 }
 
-.theme-toggler__option:hover {
-  background-color: var(--theme-elevation-100);
-  color: var(--theme-elevation-1000);
-}
-
-.theme-toggler__option--active {
-  color: var(--ac-gold);
-  font-weight: 600;
+.my-prefs__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* ---------------------------------------------------------------- *
@@ -1881,12 +1960,14 @@ button {
 
 .list-filter-apply-btn {
   background-color: var(--ac-gold);
-  color: white;
+  color: var(--ac-gold-contrast);
   border-color: var(--ac-gold);
 }
 
 .list-filter-apply-btn:hover {
-  opacity: 0.9;
+  background-color: var(--ac-gold-soft);
+  border-color: var(--ac-gold-soft);
+  color: var(--ac-gold-soft-contrast);
 }
 
 /* Active Filters Chips */

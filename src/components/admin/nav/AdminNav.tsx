@@ -2,7 +2,9 @@ import { getAdminRoot } from '@/features/security/settings'
 import { adminLabel } from '@/features/uiStrings'
 import React from 'react'
 import { Logout } from '@/engine/ui'
-import { AdminLanguagePicker } from '@/admin/ui/AdminLanguagePicker'
+import { NavToggler } from '@/admin/ui/NavToggler'
+import { ThemeToggler } from '@/admin/ui/ThemeToggler'
+import { MyPreferencesLink } from '@/admin/ui/MyPreferencesLink'
 import { TourHelpButton } from '@/admin/ui/TourHelpButton'
 import { AdminSiteSwitcher } from '@/features/domains/admin/AdminSiteSwitcher'
 import { ALL_SITES, resolveAdminSite } from '@/features/domains/adminSite'
@@ -48,6 +50,8 @@ type AdminNavProps = {
     globals: string[]
   }
   user?: TypedUser | null
+  /** Shown in the brand row at the top of the sidebar. */
+  siteName?: string
 }
 
 type NavPreferences = { groups?: Record<string, { open?: boolean } | undefined> }
@@ -99,7 +103,7 @@ async function getNavPreferences(req: AdminNavProps['req']): Promise<NavPreferen
 }
 
 export const AdminNav: React.FC<AdminNavProps> = async (props) => {
-  const { i18n, engine, permissions, req, visibleEntities, user } = props
+  const { i18n, engine, permissions, req, visibleEntities, user, siteName } = props
 
   if (!engine?.config) return null
 
@@ -153,7 +157,11 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
   return (
     <AdminNavShell>
       <SettingsRefresh />
-      <nav className={`${baseClass}__wrap`}>
+      <nav className={`${baseClass}__wrap`} id="admin-nav">
+        <div className={`${baseClass}__brand`}>
+          <span className={`${baseClass}__brand-name`}>{siteName}</span>
+          <NavToggler />
+        </div>
         {siteState && switcherSites.length > 1 ? (
           <AdminSiteSwitcher
             current={siteState.host ?? (siteState.visible.unrestricted ? ALL_SITES : null)}
@@ -164,7 +172,8 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
         <AdminNavDashboardLink href={formatAdminURL({ adminRoute, path: '' })} />
         <AdminNavClient groups={groups} openGroups={openGroups} badges={badges} />
         <div className={`${baseClass}__controls`}>
-          <AdminLanguagePicker userId={(user as { id?: number | string } | null)?.id} current={(user as { adminLanguage?: string | null } | null)?.adminLanguage} />
+          <MyPreferencesLink name={(user as { displayName?: string | null } | null)?.displayName || (user as { email?: string | null } | null)?.email} />
+          <ThemeToggler />
           <TourHelpButton />
           <Logout />
         </div>

@@ -28,8 +28,8 @@ import type { ReactNode } from 'react'
 import { AdminNav } from '@/components/admin/nav/AdminNav'
 import { DocumentEventsProvider, NavProvider, ThemeProvider } from '@/admin/context'
 import { AdminShell } from '@/admin/ui/AdminShell'
-import { NavToggler } from '@/admin/ui/NavToggler'
-import { ThemeToggler } from '@/admin/ui/ThemeToggler'
+import { AdminTopBar } from '@/admin/ui/AdminTopBar'
+import { siteNameOf } from '@/features/brand/siteName'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { SessionWatch } from '@/admin/SessionWatch'
 import { AdminProgressBar } from '@/admin/ui/AdminProgressBar'
@@ -50,6 +50,11 @@ export async function RootLayout({ children }: { children: ReactNode; config?: u
   const adminRoot = await getAdminRoot()
   // Walkthrough: starts by itself only for a user with no saved tour preference (once per account).
   const tourAutoStart = hasAdminAccess ? await resolveTourAutoStart(context.engine, context.user) : false
+
+  // The site name for the mobile top bar and the sidebar's brand row.
+  const siteName = hasAdminAccess
+    ? siteNameOf((await context.engine.findGlobal({ slug: 'site-settings', depth: 0 }).catch((): null => null)) as { siteName?: string | null } | null)
+    : ''
 
   return (
     <html lang={ui.locale} dir={ui.dir} suppressHydrationWarning>
@@ -73,10 +78,10 @@ export async function RootLayout({ children }: { children: ReactNode; config?: u
                   <AdminProgressBar />
                   <AdminTour autoStart={tourAutoStart} />
                   <AdminShell>
-                    <NavToggler />
-                    <ThemeToggler />
-                    <AdminNav i18n={context.i18n} engine={context.engine} permissions={context.permissions} visibleEntities={context.visibleEntities} user={context.user} />
+                    <AdminNav i18n={context.i18n} engine={context.engine} permissions={context.permissions} visibleEntities={context.visibleEntities} user={context.user} siteName={siteName} />
                     <div className="admin-shell__main">
+                      {/* Mobile only (CSS): site name + hamburger for the nav drawer. */}
+                      <AdminTopBar siteName={siteName} />
                       {/* Shown on every admin page while signed in as a customer. Renders nothing otherwise. */}
                       <ImpersonationBanner />
                       <main className="admin-shell__content">{children}</main>
