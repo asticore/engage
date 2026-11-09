@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
+import { auditExport } from '@/features/security/exportAudit'
 import { getAdminContext } from '@/admin/auth'
 import { findRedirects, createRedirect } from '@/cms/db/collections/redirects'
 import { toCsv, parseCsv } from '@/features/redirects/csv'
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   const context = await getAdminContext()
 
   // Check permission to read redirects
@@ -24,6 +25,7 @@ export async function GET(): Promise<Response> {
       })),
     )
 
+    await auditExport(request, context.user, 'redirects CSV')
     return new NextResponse(csvData, {
       status: 200,
       headers: {
