@@ -1,21 +1,11 @@
-/* Getting-started card styles matching admin dark theme */
+/* Getting-started card: theme tokens only, so it follows light/dark/auto. */
 
 .card {
-  background: var(--color-admin-bg-secondary, var(--lit-1a1a1a, #1a1a1a));
-  border: 1px solid var(--color-admin-border, var(--lit-333333, #333333));
+  background: var(--ac-surface);
+  border: 1px solid var(--theme-elevation-200);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 24px;
-}
-
-[data-theme='dark'] .card {
-  background: #1a1a1a;
-  border-color: #333333;
-}
-
-[data-theme='light'] .card {
-  background: var(--lit-ffffff, #ffffff);
-  border-color: var(--lit-e0e0e0, #e0e0e0);
 }
 
 .header {
@@ -33,29 +23,13 @@
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 4px 0;
-  color: var(--color-admin-text, var(--lit-ffffff, #ffffff));
-}
-
-[data-theme='dark'] .title {
-  color: #ffffff;
-}
-
-[data-theme='light'] .title {
-  color: var(--lit-000000, #000000);
+  color: var(--theme-text);
 }
 
 .subtitle {
   font-size: 13px;
-  color: var(--color-admin-text-secondary, var(--lit-999999, #999999));
+  color: var(--theme-elevation-700);
   margin: 0;
-}
-
-[data-theme='dark'] .subtitle {
-  color: #999999;
-}
-
-[data-theme='light'] .subtitle {
-  color: var(--lit-666666, #666666);
 }
 
 .controls {
@@ -66,35 +40,13 @@
 .collapseBtn,
 .dismissBtn {
   background: none;
-  border: 1px solid var(--color-admin-border, var(--lit-333333, #333333));
-  color: var(--color-admin-text, var(--lit-ffffff, #ffffff));
+  border: 1px solid var(--theme-elevation-200);
+  color: var(--theme-text);
   cursor: pointer;
   padding: 6px 8px;
   border-radius: 4px;
   font-size: 12px;
   transition: background-color 0.2s;
-}
-
-[data-theme='dark'] .collapseBtn,
-[data-theme='dark'] .dismissBtn {
-  border-color: #333333;
-  color: #ffffff;
-}
-
-[data-theme='dark'] .collapseBtn:hover,
-[data-theme='dark'] .dismissBtn:hover {
-  background-color: #2a2a2a;
-}
-
-[data-theme='light'] .collapseBtn,
-[data-theme='light'] .dismissBtn {
-  border-color: var(--lit-d0d0d0, #d0d0d0);
-  color: var(--lit-000000, #000000);
-}
-
-[data-theme='light'] .collapseBtn:hover,
-[data-theme='light'] .dismissBtn:hover {
-  background-color: var(--lit-f5f5f5, #f5f5f5);
 }
 
 .progressContainer {
@@ -107,39 +59,23 @@
 .progressBar {
   flex: 1;
   height: 8px;
-  background: var(--color-admin-bg-tertiary, var(--lit-2a2a2a, #2a2a2a));
+  background: var(--theme-elevation-100);
   border-radius: 4px;
   overflow: hidden;
 }
 
-[data-theme='dark'] .progressBar {
-  background: #2a2a2a;
-}
-
-[data-theme='light'] .progressBar {
-  background: var(--lit-f0f0f0, #f0f0f0);
-}
-
 .progressFill {
   height: 100%;
-  background: #4a9eff;
+  background: var(--ac-gold);
   transition: width 0.3s ease;
 }
 
 .progressLabel {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-admin-text, var(--lit-ffffff, #ffffff));
+  color: var(--theme-text);
   min-width: 30px;
   text-align: right;
-}
-
-[data-theme='dark'] .progressLabel {
-  color: #ffffff;
-}
-
-[data-theme='light'] .progressLabel {
-  color: var(--lit-000000, #000000);
 }
 
 .content {
@@ -155,32 +91,16 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--color-admin-text-secondary, var(--lit-999999, #999999));
+  color: var(--theme-elevation-700);
   margin: 0 0 12px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-[data-theme='dark'] .categoryTitle {
-  color: #999999;
-}
-
-[data-theme='light'] .categoryTitle {
-  color: var(--lit-666666, #666666);
-}
-
 .categoryCount {
   font-size: 11px;
-  color: var(--color-admin-text-secondary, var(--lit-666666, #666666));
-}
-
-[data-theme='dark'] .categoryCount {
-  color: #666666;
-}
-
-[data-theme='light'] .categoryCount {
-  color: var(--lit-999999, #999999);
+  color: var(--theme-elevation-700);
 }
 
 .items {
@@ -195,25 +115,9 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px;
-  background: var(--color-admin-bg-tertiary, var(--lit-2a2a2a, #2a2a2a));
+  background: var(--theme-elevation-100);
   border-radius: 4px;
   transition: background-color 0.2s;
-}
-
-[data-theme='dark'] .item {
-  background: #2a2a2a;
-}
-
-[data-theme='dark'] .item:hover {
-  background: #333333;
-}
-
-[data-theme='light'] .item {
-  background: var(--lit-f5f5f5, #f5f5f5);
-}
-
-[data-theme='light'] .item:hover {
-  background: var(--lit-eeeeee, #eeeeee);
 }
 
 .itemContent {
@@ -241,36 +145,20 @@
 .itemTitle {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-admin-text, var(--lit-ffffff, #ffffff));
-}
-
-[data-theme='dark'] .itemTitle {
-  color: #ffffff;
-}
-
-[data-theme='light'] .itemTitle {
-  color: var(--lit-000000, #000000);
+  color: var(--theme-text);
 }
 
 .itemHelp {
   font-size: 12px;
-  color: var(--color-admin-text-secondary, var(--lit-999999, #999999));
+  color: var(--theme-elevation-700);
   margin: 0;
-}
-
-[data-theme='dark'] .itemHelp {
-  color: #999999;
-}
-
-[data-theme='light'] .itemHelp {
-  color: var(--lit-666666, #666666);
 }
 
 .itemLink {
   display: inline-flex;
   align-items: center;
   font-size: 12px;
-  color: var(--lit-4a9eff, #4a9eff);
+  color: var(--ac-gold);
   text-decoration: none;
   padding: 4px 8px;
   border-radius: 4px;
