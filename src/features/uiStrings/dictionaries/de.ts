@@ -3655,6 +3655,8 @@ const de: UiDictionary = {
   'tour.close': 'Tour schließen',
   'tour.help': 'Hilfe',
   'tour.replay': 'Hilfe: Tour starten',
+  'feedback.button': 'Feedback',
+  'feedback.open': 'Feedback senden (öffnet GitHub)',
   'nav.collapseSidebar': 'Seitenleiste einklappen',
   'nav.expandSidebar': 'Seitenleiste ausklappen',
   'nav.openMenu': 'Menü öffnen',

@@ -3654,6 +3654,8 @@ const nl: UiDictionary = {
   'tour.close': 'Rondleiding sluiten',
   'tour.help': 'Help',
   'tour.replay': 'Help: rondleiding starten',
+  'feedback.button': 'Feedback',
+  'feedback.open': 'Feedback sturen (opent GitHub)',
   'nav.collapseSidebar': 'Zijbalk invouwen',
   'nav.expandSidebar': 'Zijbalk uitvouwen',
   'nav.openMenu': 'Menu openen',

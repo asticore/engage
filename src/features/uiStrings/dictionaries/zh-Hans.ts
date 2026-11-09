@@ -3653,6 +3653,8 @@ const zhHans: UiDictionary = {
   'tour.close': '关闭导览',
   'tour.help': '帮助',
   'tour.replay': '帮助：开始导览',
+  'feedback.button': '反馈',
+  'feedback.open': '发送反馈（打开 GitHub）',
   'nav.collapseSidebar': '收起侧边栏',
   'nav.expandSidebar': '展开侧边栏',
   'nav.openMenu': '打开菜单',

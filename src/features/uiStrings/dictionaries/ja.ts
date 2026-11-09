@@ -3654,6 +3654,8 @@ const ja: UiDictionary = {
   'tour.close': 'ツアーを閉じる',
   'tour.help': 'ヘルプ',
   'tour.replay': 'ヘルプ: ツアーを見る',
+  'feedback.button': 'フィードバック',
+  'feedback.open': 'フィードバックを送る（GitHub が開きます）',
   'nav.collapseSidebar': 'サイドバーを折りたたむ',
   'nav.expandSidebar': 'サイドバーを展開',
   'nav.openMenu': 'メニューを開く',

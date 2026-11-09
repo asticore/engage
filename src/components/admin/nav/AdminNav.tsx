@@ -5,6 +5,8 @@ import { Logout } from '@/engine/ui'
 import { NavToggler } from '@/admin/ui/NavToggler'
 import { MyPreferencesLink } from '@/admin/ui/MyPreferencesLink'
 import { TourHelpButton } from '@/admin/ui/TourHelpButton'
+import { FeedbackButton } from '@/admin/ui/FeedbackButton'
+import pkg from '../../../../package.json'
 import { AdminSiteSwitcher } from '@/features/domains/admin/AdminSiteSwitcher'
 import { ALL_SITES, resolveAdminSite } from '@/features/domains/adminSite'
 import { PREFERENCE_KEYS, formatAdminURL } from '@/engine/shared'
@@ -181,6 +183,7 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
         <div className={`${baseClass}__controls`}>
           <MyPreferencesLink name={(user as { displayName?: string | null } | null)?.displayName} photoUrl={photoUrl} />
           <TourHelpButton />
+          {isAdmin ? <FeedbackButton version={pkg.version} /> : null}
           <Logout />
         </div>
       </nav>

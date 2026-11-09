@@ -3654,6 +3654,8 @@ const ko: UiDictionary = {
   'tour.close': '투어 닫기',
   'tour.help': '도움말',
   'tour.replay': '도움말: 투어 보기',
+  'feedback.button': '피드백',
+  'feedback.open': '피드백 보내기 (GitHub 열림)',
   'nav.collapseSidebar': '사이드바 접기',
   'nav.expandSidebar': '사이드바 펼치기',
   'nav.openMenu': '메뉴 열기',
