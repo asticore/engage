@@ -1,5 +1,6 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
 
 import {
@@ -80,6 +81,9 @@ export type ConsentManagerProps = {
   reloadOnWithdraw?: { analytics: boolean; marketing: boolean }
 }
 
+/** The visual editor's canvas iframe renders the site layout; the banner must not cover the page being edited there. */
+export const isEditorCanvasPath = (path: string | null | undefined): boolean => Boolean(path && /^\/visual-editor-canvas(\/|$)/.test(path))
+
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
 
 /**
@@ -120,6 +124,7 @@ export const ConsentManager = ({
   logToken = null,
   reloadOnWithdraw = { analytics: true, marketing: true },
 }: ConsentManagerProps) => {
+  const inEditorCanvas = isEditorCanvasPath(usePathname())
   const storeText = useStoreText()
   const copy = consentCopy(config, storeText)
   const preview = previewMode === true
@@ -195,7 +200,8 @@ export const ConsentManager = ({
     if (preview) setDialogOpen(false)
   }
 
-  if (!config.enabled && !preview) return null
+  // Hidden in the editor canvas (behaviour on the public site is unchanged); the effects above still run.
+  if ((!config.enabled && !preview) || (inEditorCanvas && !preview)) return null
 
   const dialogShown = preview ? previewView === 'dialog' || dialogOpen : dialogOpen
 

@@ -91,6 +91,7 @@ import { SaveStatusChip } from './visualEditor/SaveStatusChip'
 import { EditLockBanner } from '@/admin/views/EditLockBanner'
 import { savedByAnotherSince, updatedAtFromSave } from './visualEditor/saveConflict'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
+import { isDirtyAfterRestore } from './visualEditor/dirtyState'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
 import { clientToFrame, isLibraryDragTypes, resolveDropSlotInDoc, trackLibraryDrag, VE_BLOCK_MIME, VE_TEMPLATE_MIME } from './visualEditor/dropSlot'
 import { VE_TEMPLATE_LOCKS_MIME } from './visualEditor/TemplateBrowser'
@@ -192,6 +193,8 @@ export const VisualEditorView: React.FC = () => {
   /** Where a "Select your structure" pick will insert the new section; null while the picker is closed. */
   const [structureTarget, setStructureTarget] = useState<{ containerPath: NodePath; at: number } | null>(null)
   const [dirty, setDirty] = useState(false)
+  /** Locks, page settings or form config changed since the last save (tree changes are judged against savedTreeRef instead). */
+  const extraDirtyRef = useRef(false)
   /** Another user holds the edit lock on this document (and this user has not taken it over): saving is off. */
   const [lockedByOther, setLockedByOther] = useState(false)
   /** The document's updatedAt as of load / our last save; save() compares it with the server's before it writes. */
@@ -578,13 +581,11 @@ export const VisualEditorView: React.FC = () => {
       if (range.length > 1) {
         setMulti({ paths: range, blocks: blocksRef.current })
         setSelectedPath(path)
-        setDockTab('settings')
         return
       }
     }
     setMulti(null)
     setSelectedPath(path)
-    setDockTab('settings')
     if (isColumnPath(path)) {
       const column = getColumn(blocksRef.current, path)
       if (column) setInsertTarget({ containerPath: path, at: (column.blocks || []).length })
@@ -633,7 +634,8 @@ export const VisualEditorView: React.FC = () => {
     if (!nextPath) setDockTab('elements')
     setInsertTarget({ containerPath: [], at: snapshot.blocks.length })
     syncHistory()
-    setDirty(true)
+    // Undoing back to the saved tree clears the dirty state (unless locks / page settings still differ).
+    setDirty(isDirtyAfterRestore(snapshot.blocks, savedTreeRef.current, extraDirtyRef.current))
   }, [syncHistory])
 
   /** History panel: jump straight to a listed state (negative = back, positive = forward). */
@@ -1532,6 +1534,7 @@ export const VisualEditorView: React.FC = () => {
       if (current.blocks === sent.blocks && current.locks === sent.locks && current.formConfig === sent.formConfig && pageRef.current === sent.pageSettings) {
         setDirty(false)
         setLocksDirty(false)
+        extraDirtyRef.current = false
       }
       // The server now holds the tree that was sent. Edits made while the request was in flight keep a draft.
       savedTreeRef.current = comparableTree(sent.blocks)
@@ -1573,6 +1576,7 @@ export const VisualEditorView: React.FC = () => {
     setFinderOpen(false)
     if (entry.kind === 'node') {
       selectFromNavigator(entry.path)
+      setDockTab('settings')
       // The frame scrolls the node into view when it is told about the selection.
       iframeRef.current?.contentWindow?.postMessage({ source: 've-canvas', type: 'selected', selectedPath: entry.path }, CANVAS_ORIGIN())
       return
@@ -1669,6 +1673,7 @@ export const VisualEditorView: React.FC = () => {
             if (!selectedKey) return
             setLocks((prev) => withNodeLock(prev, selectedKey, entry))
             setLocksDirty(true)
+            extraDirtyRef.current = true
             setDirty(true)
           },
         }
@@ -2002,6 +2007,7 @@ export const VisualEditorView: React.FC = () => {
                 available={pageAvail}
                 onChange={(next) => {
                   setPageSettings(next)
+                  extraDirtyRef.current = true
                   setDirty(true)
                 }}
               />
@@ -2014,6 +2020,7 @@ export const VisualEditorView: React.FC = () => {
                 config={formConfig}
                 onChange={(next) => {
                   setFormConfig(next)
+                  extraDirtyRef.current = true
                   setDirty(true)
                 }}
                 formId={route?.id}

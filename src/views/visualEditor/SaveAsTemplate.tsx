@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import type { SectionNode } from '@/lib/sectionTree'
 
@@ -27,6 +27,18 @@ export const SaveAsTemplateDialog: React.FC<{
   const [category, setCategory] = useState<string>('other')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Escape closes the dialog, like the other editor dialogs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', onKey, true)
+    return () => document.removeEventListener('keydown', onKey, true)
+  }, [onClose])
 
   const chooseScope = (next: 'section' | 'page') => {
     setScope(next)
