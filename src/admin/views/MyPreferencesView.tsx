@@ -16,7 +16,14 @@ export async function MyPreferencesView() {
   if (!hasAdminPanelAccess(context.user)) redirect(adminHref('/login', await getAdminRoot()))
 
   const ui = await getAdminUi()
-  const user = context.user as { id?: number | string; adminLanguage?: string | null } | null
+  const user = context.user as { id?: number | string; adminLanguage?: string | null; displayName?: string | null; photo?: number | string | { id?: number | string; url?: string | null } | null } | null
+  let photoUrl: string | null = null
+  const photoRef = user?.photo
+  if (photoRef && typeof photoRef === 'object') photoUrl = photoRef.url ?? null
+  else if (photoRef !== null && photoRef !== undefined && photoRef !== '') {
+    const media = await context.engine.findByID({ collection: 'media', id: photoRef as number, depth: 0, overrideAccess: true }).catch((): null => null)
+    photoUrl = (media as { url?: string | null } | null)?.url ?? null
+  }
 
   return (
     <div className="list-view">
@@ -24,7 +31,7 @@ export async function MyPreferencesView() {
         <h1>{ui.t('profile.title')}</h1>
       </div>
       <p>{ui.t('profile.description')}</p>
-      <MyPreferencesClient adminLanguage={user?.adminLanguage} userId={user?.id} />
+      <MyPreferencesClient adminLanguage={user?.adminLanguage} displayName={user?.displayName} photoUrl={photoUrl} userId={user?.id} />
     </div>
   )
 }

@@ -98,6 +98,13 @@ export const Users: CollectionConfig = {
       admin: { description: 'Public author name shown on blog posts. Optional. Never use an email address. Unused while authors are switched off in Blog settings.' },
     },
     {
+      // Own profile picture, shown beside the name in the admin sidebar. Set on My preferences.
+      name: 'photo',
+      type: 'relationship',
+      relationTo: 'media',
+      admin: { description: 'Profile picture shown in the admin sidebar.' },
+    },
+    {
       name: 'slug',
       type: 'text',
       unique: true,
