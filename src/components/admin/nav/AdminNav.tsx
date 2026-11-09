@@ -3,7 +3,6 @@ import { adminLabel } from '@/features/uiStrings'
 import React from 'react'
 import { Logout } from '@/engine/ui'
 import { NavToggler } from '@/admin/ui/NavToggler'
-import { ThemeToggler } from '@/admin/ui/ThemeToggler'
 import { MyPreferencesLink } from '@/admin/ui/MyPreferencesLink'
 import { TourHelpButton } from '@/admin/ui/TourHelpButton'
 import { AdminSiteSwitcher } from '@/features/domains/admin/AdminSiteSwitcher'
@@ -148,6 +147,14 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
   // The site switcher lists only the sites this account may use. It is shown when there are two or more.
   const siteState = user ? await resolveAdminSite(engine, user as never) : null
   const switcherSites = (siteState?.visible.sites ?? []).map((site) => ({ host: site.host, label: site.label }))
+  // Own display name and photo show in the sidebar instead of the email address.
+  let photoUrl: string | null = null
+  const photoRef = (user as { photo?: number | string | { url?: string | null } | null } | null)?.photo
+  if (photoRef && typeof photoRef === 'object') photoUrl = photoRef.url ?? null
+  else if (photoRef !== null && photoRef !== undefined && photoRef !== '') {
+    const media = await engine.findByID({ collection: 'media', id: photoRef as number, depth: 0, overrideAccess: true }).catch((): null => null)
+    photoUrl = (media as { url?: string | null } | null)?.url ?? null
+  }
   const navPreferences = await getNavPreferences(req)
   const openGroups: Record<string, boolean> = {}
   for (const group of groups) {
@@ -172,8 +179,7 @@ export const AdminNav: React.FC<AdminNavProps> = async (props) => {
         <AdminNavDashboardLink href={formatAdminURL({ adminRoute, path: '' })} />
         <AdminNavClient groups={groups} openGroups={openGroups} badges={badges} />
         <div className={`${baseClass}__controls`}>
-          <MyPreferencesLink name={(user as { displayName?: string | null } | null)?.displayName || (user as { email?: string | null } | null)?.email} />
-          <ThemeToggler />
+          <MyPreferencesLink name={(user as { displayName?: string | null } | null)?.displayName} photoUrl={photoUrl} />
           <TourHelpButton />
           <Logout />
         </div>

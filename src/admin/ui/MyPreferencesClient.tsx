@@ -11,6 +11,7 @@ import React from 'react'
 import { type ThemePref, useTheme } from '@/admin/context/ThemeContext'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { AdminLanguagePicker } from '@/admin/ui/AdminLanguagePicker'
+import { ProfileNamePhoto } from '@/admin/ui/ProfileNamePhoto'
 import { ADMIN_TOUR_START_EVENT } from '@/features/adminTour/steps'
 
 const THEME_CHOICES: { value: ThemePref; labelKey: 'profile.themeLight' | 'profile.themeDark' | 'profile.themeSystem' }[] = [
@@ -22,15 +23,25 @@ const THEME_CHOICES: { value: ThemePref; labelKey: 'profile.themeLight' | 'profi
 export function MyPreferencesClient({
   userId,
   adminLanguage,
+  displayName,
+  photoUrl,
 }: {
   userId: number | string | null | undefined
   adminLanguage: string | null | undefined
+  displayName?: string | null
+  photoUrl?: string | null
 }) {
   const t = useAdminT()
   const { setTheme, theme } = useTheme()
 
   return (
     <div className="my-prefs">
+      <section className="my-prefs__card">
+        <h2>{t('profile.nameTitle')}</h2>
+        <p>{t('profile.nameHelp')}</p>
+        <ProfileNamePhoto displayName={displayName} photoUrl={photoUrl} userId={userId} />
+      </section>
+
       <section className="my-prefs__card">
         <h2>{t('profile.interfaceLanguage')}</h2>
         <p>{t('profile.interfaceLanguageHelp')}</p>
