@@ -66,6 +66,15 @@
   max-width: 180px;
   min-width: 0;
   text-overflow: ellipsis;
+  /* The top bar is dark and its text white; the select inherited white text on the admin's white field. */
+  background: transparent;
+  color: inherit;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.ve-topbar .ve-translation-bar__select option {
+  background: #fff;
+  color: #18181b;
 }
 
 .ve-more,
