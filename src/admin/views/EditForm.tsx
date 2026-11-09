@@ -46,7 +46,6 @@ import { SeoCard } from './SeoCard'
 import { TrashBanner } from '@/features/editScreens/admin/TrashBanner'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { CollapseAllBar } from '@/admin/components/CollapseAllBar'
-import { SectionOutline } from '@/admin/components/SectionOutline'
 import { useDocumentSave, type SaveTarget } from './useDocumentSave'
 import { LocalDraftRecovery } from '@/admin/edit/useLocalDraft'
 import { SettingsResetDefaults } from './SettingsResetDefaults'
@@ -221,7 +220,7 @@ export function splitFields(fields: Field[], visualBlocksField?: string): { main
   return { main, settings, access, seo, pageType }
 }
 
-const PageContentCard: React.FC<{ count?: number; isNew: boolean; blocksField: string }> = ({ count, isNew, blocksField }) => {
+export const PageContentCard: React.FC<{ count?: number; isNew: boolean; href?: string }> = ({ count, isNew, href }) => {
   const t = useAdminT()
   return (
     <CollapsibleCard id="page-content" title={t('edit.pageContent')} className="doc-content-card">
@@ -230,7 +229,11 @@ const PageContentCard: React.FC<{ count?: number; isNew: boolean; blocksField: s
           ? t('edit.saveFirstHint', { button: t('editor.editInVisual') })
           : `${t(count === 1 ? 'edit.sectionsOne' : 'edit.sectionsOther', { count: count ?? 0 })}. ${t('edit.layoutHint')}`}
       </p>
-      <SectionOutline blocksField={blocksField} />
+      {href && !isNew && (
+        <a className="btn btn--primary doc-ve-button" data-testid="page-content-ve-link" href={href}>
+          {t('editor.editInVisual')}
+        </a>
+      )}
     </CollapsibleCard>
   )
 }
@@ -306,7 +309,7 @@ export const EditForm: React.FC<EditFormProps> = ({
                 )}
                 {isPageSpeedCollection(collectionSlug) && <PageSpeedCard collectionSlug={collectionSlug} id={id} />}
                 {isPageSpeedCollection(collectionSlug) && <PageGoogleStatsCard collectionSlug={collectionSlug} id={id} />}
-                {visualBlocksField && <PageContentCard blocksField={visualBlocksField} count={visualBlocksCount} isNew={id === undefined} />}
+                {visualBlocksField && <PageContentCard count={visualBlocksCount} href={panel.visualEditorHref} isNew={id === undefined} />}
               </div>
             </div>
             <aside className="document-edit__side">
