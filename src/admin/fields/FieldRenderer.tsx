@@ -44,6 +44,7 @@ import React from 'react'
 import type { Field } from '@/engine'
 import { resolveComponent } from '@/admin/componentRegistry'
 import { FieldLabel, useField, useFormFields } from '@/engine/ui'
+import { useHydrated } from '@/lib/clientStore'
 import { childPath, fieldLabel, fieldRequired, getAtPath, reviveCondition, unflattenFields } from './shared'
 
 import { FieldHelp } from './FieldHelp'
@@ -77,8 +78,13 @@ export type ScalarFieldRendererProps = {
  */
 function useFieldVisible(field: Field, parentPath: string): boolean {
   const conditionSource = (field as { admin?: { condition?: unknown } }).admin?.condition
+  // The server cannot revive a condition (the Workers runtime refuses `new Function`), so it would show every
+  // conditional field while the browser hides the ones whose condition is false - a hydration mismatch (#418).
+  // Both sides therefore hide a conditional field until the browser has hydrated, then evaluate it.
+  const hydrated = useHydrated()
   return useFormFields(([fields]) => {
     if (typeof conditionSource !== 'string') return true
+    if (!hydrated) return false
     const condition = reviveCondition(conditionSource)
     if (!condition) return true
     const data = unflattenFields(fields)
