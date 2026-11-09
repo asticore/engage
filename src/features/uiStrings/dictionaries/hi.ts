@@ -1214,6 +1214,7 @@ const hi: UiDictionary = {
   've.top.previewFailed': 'पेज का पता नहीं मिल सका। फिर से कोशिश करें।',
   've.top.redoTitle': "फिर से करें ({mod}+Shift+Z)",
   've.top.importExport': "आयात / निर्यात",
+  've.top.more': "और",
   've.top.importTitle': "इस पेज को JSON के रूप में आयात या निर्यात करें",
   've.top.devicePreview': "डिवाइस पूर्वावलोकन",
   've.top.desktop': "डेस्कटॉप",

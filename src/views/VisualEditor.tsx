@@ -92,6 +92,9 @@ import { EditLockBanner } from '@/admin/views/EditLockBanner'
 import { savedByAnotherSince, updatedAtFromSave } from './visualEditor/saveConflict'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
 import { isDirtyAfterRestore } from './visualEditor/dirtyState'
+import { TopBarMore, useCompactTopBar } from './visualEditor/TopBarMore'
+import './visualEditor/topbar.css'
+import './visualEditor/veShell.css'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
 import { clientToFrame, isLibraryDragTypes, resolveDropSlotInDoc, trackLibraryDrag, VE_BLOCK_MIME, VE_TEMPLATE_MIME } from './visualEditor/dropSlot'
 import { VE_TEMPLATE_LOCKS_MIME } from './visualEditor/TemplateBrowser'
@@ -193,6 +196,8 @@ export const VisualEditorView: React.FC = () => {
   /** Where a "Select your structure" pick will insert the new section; null while the picker is closed. */
   const [structureTarget, setStructureTarget] = useState<{ containerPath: NodePath; at: number } | null>(null)
   const [dirty, setDirty] = useState(false)
+  /** Narrow viewport: Import / Export and Save as template move into the top bar's More menu. */
+  const compactBar = useCompactTopBar()
   /** Locks, page settings or form config changed since the last save (tree changes are judged against savedTreeRef instead). */
   const extraDirtyRef = useRef(false)
   /** Another user holds the edit lock on this document (and this user has not taken it over): saving is off. */
@@ -1822,9 +1827,11 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.shortcut.redo')}
             </button></Tooltip>
           </div>
-          <Tooltip text={t('ve.top.importTitle')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)}>
-            {t('ve.top.importExport')}
-          </button></Tooltip>
+          {!compactBar && (
+            <Tooltip text={t('ve.top.importTitle')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)}>
+              {t('ve.top.importExport')}
+            </button></Tooltip>
+          )}
           <ShortcutsHelp
             modLabel={modLabel}
             open={helpOpen}
@@ -1857,7 +1864,7 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.top.mobile')}
             </button></Tooltip>
           </div>
-          {!formMode && (
+          {!formMode && !compactBar && (
             <Tooltip text={selectedPath && selectedPath.length === 1 ? t('ve.top.templateSection') : t('ve.top.templatePage')}><button
               type="button"
               className="ve-btn"
@@ -1866,6 +1873,14 @@ export const VisualEditorView: React.FC = () => {
             >
               {t('ve.top.saveAsTemplate')}
             </button></Tooltip>
+          )}
+          {compactBar && (
+            <TopBarMore
+              items={[
+                { key: 'import', label: t('ve.top.importExport'), onSelect: () => setImportOpen(true) },
+                ...(formMode ? [] : [{ key: 'template', label: t('ve.top.saveAsTemplate'), onSelect: () => setSaveTemplateOpen(true), disabled: blocks.length === 0 }]),
+              ]}
+            />
           )}
           {pageSettings && surface?.slug === 'pages' && (
             <Tooltip text={status !== 'published' ? t('ve.top.previewDraft') : t('ve.top.preview')}><button

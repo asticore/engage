@@ -1214,6 +1214,7 @@ const nl: UiDictionary = {
   've.top.previewFailed': 'Het paginaadres kon niet worden bepaald. Probeer het opnieuw.',
   've.top.redoTitle': "Opnieuw ({mod}+Shift+Z)",
   've.top.importExport': "Importeren / Exporteren",
+  've.top.more': "Meer",
   've.top.importTitle': "Deze pagina importeren of exporteren als JSON",
   've.top.devicePreview': "Apparaatvoorbeeld",
   've.top.desktop': "Desktop",

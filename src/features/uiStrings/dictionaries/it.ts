@@ -1214,6 +1214,7 @@ const it: UiDictionary = {
   've.top.previewFailed': 'Impossibile ricavare l\'indirizzo della pagina. Riprova.',
   've.top.redoTitle': "Ripeti ({mod}+Maiusc+Z)",
   've.top.importExport': "Importa / Esporta",
+  've.top.more': "Altro",
   've.top.importTitle': "Importa o esporta questa pagina come JSON",
   've.top.devicePreview': "Anteprima dispositivo",
   've.top.desktop': "Desktop",

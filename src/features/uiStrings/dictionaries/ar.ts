@@ -1214,6 +1214,7 @@ const ar: UiDictionary = {
   've.top.previewFailed': 'تعذر تحديد عنوان الصفحة. حاول مرة أخرى.',
   've.top.redoTitle': "إعادة ({mod}+Shift+Z)",
   've.top.importExport': "استيراد / تصدير",
+  've.top.more': "المزيد",
   've.top.importTitle': "استيراد هذه الصفحة أو تصديرها بصيغة JSON",
   've.top.devicePreview': "معاينة الجهاز",
   've.top.desktop': "سطح المكتب",

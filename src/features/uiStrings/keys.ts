@@ -1256,6 +1256,7 @@ export const UI_STRING_SOURCE = {
   've.top.previewFailed': 'Could not work out the page address. Try again.',
   've.top.redoTitle': "Redo ({mod}+Shift+Z)",
   've.top.importExport': "Import / Export",
+  've.top.more': "More",
   've.top.importTitle': "Import or export this page as JSON",
   've.top.devicePreview': "Preview device",
   've.top.desktop': "Desktop",

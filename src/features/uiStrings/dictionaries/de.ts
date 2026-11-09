@@ -1215,6 +1215,7 @@ const de: UiDictionary = {
   've.top.previewFailed': 'Die Seitenadresse konnte nicht ermittelt werden. Bitte erneut versuchen.',
   've.top.redoTitle': "Wiederholen ({mod}+Umschalt+Z)",
   've.top.importExport': "Importieren / Exportieren",
+  've.top.more': "Mehr",
   've.top.importTitle': "Diese Seite als JSON importieren oder exportieren",
   've.top.devicePreview': "Gerätevorschau",
   've.top.desktop': "Desktop",
