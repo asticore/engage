@@ -39,6 +39,8 @@ export type ParentToFrameMessage =
    *  native dragover/drop listeners placed inside the iframe's own document don't reliably fire
    *  for a drag that started in the parent document (a known cross-iframe HTML5 DnD limitation). */
   | { source: typeof SOURCE; type: 'dragHover'; key: string | null }
+  /** Context menu "Edit" on a text block: open its in-place text editor (the frame ignores it when the block has none). */
+  | { source: typeof SOURCE; type: 'editText'; path: NodePath }
   /** Translate mode: the canvas shows the page in `marks`' language; `active` false clears it. Keyed by block path (see translateCanvas.ts). */
   | { source: typeof SOURCE; type: 'translate'; active: boolean; marks: Record<string, CanvasBlockMark>; untranslatedLabel: string }
 

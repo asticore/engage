@@ -21,6 +21,8 @@ import { columnPercentFor, resizeAdjacent } from './columnOps'
 import { pathKey, type NodePath } from './treeOps'
 import { CanvasInlineEditor, type InlineEditorProps } from './CanvasInlineEditor'
 import { inlineCandidate } from './inlineEdit'
+import { listItemIndexAt, useEmptyPreview } from './emptyPreview'
+import { getElementDef } from '@/lib/elements/registry'
 import { canDragPadding, clampPadding, type PaddingSide } from './paddingDrag'
 import type { CanvasBlockMark } from './translateCanvas'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -125,7 +127,11 @@ const CanvasNode: React.FC<{
   const t = useAdminT()
   const key = pathKey(path)
   const isSelected = handlers.selectedKey === key || Boolean(handlers.multiKeys?.includes(key))
-  const def = getBlockDef(node.blockType)
+  const blockDef = getBlockDef(node.blockType)
+  // An inserted element is blockType 'element'; its toolbar names the element (Heading, Button, ...), not the generic block.
+  const elementType = node.blockType === 'element' ? String((node as { elementType?: unknown }).elementType || '') : ''
+  const elementDef = elementType ? getElementDef(elementType) : undefined
+  const def = elementDef ? { icon: elementDef.icon, label: elementDef.label } : blockDef
   const design = asBlockStyle(node.design)
   const lock = handlers.locks?.[key]
   const blocked = Boolean(lock?.blocked)
@@ -151,6 +157,9 @@ const CanvasNode: React.FC<{
   const scopeId = `ve-n-${path.join('_')}`
   const deviceCss = blockStyleCss(design, scopeId, { editor: true })
   const padHandles = node.blockType === 'section' && !handlers.translate && Boolean(handlers.onPadding) && canDragPadding(design)
+  const previewRef = React.useRef<HTMLDivElement>(null)
+  const isEmpty = useEmptyPreview(previewRef, node.blockType !== 'section' && !(handlers.inlineEdit && handlers.inlineEdit.key === key))
+  const emptyEditable = Boolean(inlineCandidate(node, 0))
   const hasMinHeight = [design.minHeight, design.tablet?.minHeight, design.mobile?.minHeight].some((v) => typeof v === 'number')
 
   return (
@@ -294,28 +303,40 @@ const CanvasNode: React.FC<{
           <PaddingHandle side="bottom" disabled={blocked} onCommit={(value) => handlers.onPadding?.(path, 'bottom', value)} />
         </>
       )}
-      <div className="ve-node__body">
+      <div
+        className="ve-node__body"
+        onMouseDown={(e) => {
+          // A second press of a double-click would select a word of the preview text behind the editor that is about to open.
+          if (e.detail > 1 && node.blockType !== 'section') e.preventDefault()
+        }}
+        onDoubleClick={(e) => {
+          // The preview is pointer-events:none (so its links and buttons stay inert and clicks select the block),
+          // so a real double-click lands on this body, never on the preview itself.
+          if (node.blockType === 'section') return
+          e.stopPropagation()
+          if (handlers.locks?.[pathKey(path)]?.blocked) return
+          const preview = previewRef.current
+          const itemIndex = preview ? listItemIndexAt(preview, e.clientX, e.clientY) : 0
+          // In translate mode every double-click goes to the frame, which decides (and says why when it cannot edit).
+          if (!handlers.translate && !inlineCandidate(node, itemIndex)) return
+          e.preventDefault()
+          handlers.onEditText?.(path, itemIndex)
+        }}
+      >
         {node.blockType === 'section' ? (
           <SectionColumns columns={node.columns || []} layout={design.layout} path={path} handlers={handlers} depth={depth} />
         ) : (
-          <div
-            className="ve-node__preview"
-            style={{ position: 'relative' }}
-            onDoubleClick={(e) => {
-              e.stopPropagation()
-              if (handlers.locks?.[pathKey(path)]?.blocked) return
-              // List types: the clicked <li> picks the item; everything else edits its one text.
-              const li = (e.target as HTMLElement | null)?.closest?.('li')
-              const itemIndex = li && li.parentElement ? Array.from(li.parentElement.children).filter((c) => c.tagName === 'LI').indexOf(li) : 0
-              // In translate mode every double-click goes to the frame, which decides (and says why when it cannot edit).
-              if (!handlers.translate && !inlineCandidate(node, Math.max(itemIndex, 0))) return
-              e.preventDefault()
-              handlers.onEditText?.(path, Math.max(itemIndex, 0))
-            }}
-          >
-            <CanvasBlockPreview data={node as Record<string, unknown>} />
-            {handlers.inlineEdit && handlers.inlineEdit.key === pathKey(path) && <CanvasInlineEditor {...handlers.inlineEdit} />}
-          </div>
+          <>
+            <div ref={previewRef} className="ve-node__preview" style={{ position: 'relative' }}>
+              <CanvasBlockPreview data={node as Record<string, unknown>} />
+              {handlers.inlineEdit && handlers.inlineEdit.key === pathKey(path) && <CanvasInlineEditor {...handlers.inlineEdit} />}
+            </div>
+            {isEmpty && (
+              <div className="ve-node__empty" role="note">
+                {t(emptyEditable ? 'cv.empty.editable' : 'cv.empty.select')}
+              </div>
+            )}
+          </>
         )}
       </div>
       {design.dividerBottom && (
@@ -480,9 +501,12 @@ const ColumnResizeHandle: React.FC<{
   }
 
   return (
-    <Tooltip text={t('cv.lit.drag_to_resize_these_two_columns')}><div
+    // No Tooltip wrapper: it would sit between the section and the handle, so the handle would no longer be
+    // the section's direct child (the positioning and drag code both rely on that). A title shows the hint.
+    <div
       className={`ve-col-resize${tip ? ' ve-col-resize--active' : ''}`}
       style={{ left: `${left}%` }}
+      title={t('cv.lit.drag_to_resize_these_two_columns')}
       role="separator"
       aria-orientation="vertical"
       aria-label={`Resize columns ${index + 1} and ${index + 2}`}
@@ -494,7 +518,7 @@ const ColumnResizeHandle: React.FC<{
       onClick={(event) => event.stopPropagation()}
     >
       {tip && <span className="ve-col-resize__tip" role="status">{`${tip[0]}% / ${tip[1]}%`}</span>}
-    </div></Tooltip>
+    </div>
   )
 }
 

@@ -1,7 +1,8 @@
 /** Navigator (page structure tree) styles. Injected next to VISUAL_EDITOR_CSS in VisualEditor.tsx. */
 export const NAVIGATOR_CSS = `
 .ve-nav{display:flex;flex-direction:column;gap:6px;font-size:13px;min-height:0}
-.ve-nav__tools{display:flex;gap:6px;align-items:center;position:sticky;top:0;background:var(--ve-panel-bg,#fff);padding-bottom:4px;z-index:1}
+.ve-nav__tools{display:flex;gap:6px;align-items:center;position:sticky;top:0;background:var(--ve-panel-bg,#fff);padding-bottom:4px;z-index:1;padding-left:12px;padding-right:12px}
+.ve-dock__body > .ve-checks{margin-left:12px;margin-right:12px}
 .ve-nav__search{flex:1;min-width:0;padding:5px 8px;border:1px solid rgba(128,128,128,.4);border-radius:6px;font:inherit;background:transparent;color:inherit}
 .ve-nav__btn{border:1px solid rgba(128,128,128,.35);background:transparent;color:inherit;border-radius:6px;padding:4px 8px;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}
 .ve-nav__btn:hover{background:rgba(128,128,128,.15)}

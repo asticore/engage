@@ -1214,6 +1214,7 @@ const ar: UiDictionary = {
   've.top.previewFailed': 'تعذر تحديد عنوان الصفحة. حاول مرة أخرى.',
   've.top.redoTitle': "إعادة ({mod}+Shift+Z)",
   've.top.importExport': "استيراد / تصدير",
+  've.top.more': "المزيد",
   've.top.importTitle': "استيراد هذه الصفحة أو تصديرها بصيغة JSON",
   've.top.devicePreview': "معاينة الجهاز",
   've.top.desktop': "سطح المكتب",
@@ -3723,6 +3724,8 @@ const ar: UiDictionary = {
   'setup.q.summary.notesTitle': "معلومات مفيدة",
   'setup.q.note.domains': "عدة نطاقات أو مناطق: اضبطها من الإعدادات > النطاقات.",
   'setup.q.note.bookings': "الحجوزات عبر الإنترنت مخطط لها؛ سنُعلمك عند جاهزيتها.",
+  'cv.empty.editable': "نص فارغ - انقر نقرًا مزدوجًا للتحرير",
+  'cv.empty.select': "عنصر فارغ - حدده لإضافة محتوى",
 }
 
 export default ar

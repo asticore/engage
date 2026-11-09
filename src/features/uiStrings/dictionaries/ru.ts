@@ -1214,6 +1214,7 @@ const ru: UiDictionary = {
   've.top.previewFailed': 'Не удалось определить адрес страницы. Попробуйте еще раз.',
   've.top.redoTitle': "Повторить ({mod}+Shift+Z)",
   've.top.importExport': "Импорт / Экспорт",
+  've.top.more': "Ещё",
   've.top.importTitle': "Импортировать или экспортировать эту страницу в JSON",
   've.top.devicePreview': "Предпросмотр устройства",
   've.top.desktop': "Десктоп",
@@ -3723,6 +3724,8 @@ const ru: UiDictionary = {
   'setup.q.summary.notesTitle': "Полезно знать",
   'setup.q.note.domains': "Несколько доменов или регионов: настройте их в разделе Настройки > Домены.",
   'setup.q.note.bookings': "Онлайн-бронирование запланировано. Мы сообщим, когда оно будет готово.",
+  'cv.empty.editable': "Пустой текст - дважды щёлкните для редактирования",
+  'cv.empty.select': "Пустой элемент - выберите его, чтобы добавить содержимое",
 }
 
 export default ru

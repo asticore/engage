@@ -1214,6 +1214,7 @@ const es: UiDictionary = {
   've.top.previewFailed': 'No se pudo obtener la dirección de la página. Inténtalo de nuevo.',
   've.top.redoTitle': "Rehacer ({mod}+Shift+Z)",
   've.top.importExport': "Importar / Exportar",
+  've.top.more': "Más",
   've.top.importTitle': "Importar o exportar esta página como JSON",
   've.top.devicePreview': "Vista previa del dispositivo",
   've.top.desktop': "Escritorio",
@@ -3723,6 +3724,8 @@ const es: UiDictionary = {
   'setup.q.summary.notesTitle': "Conviene saber",
   'setup.q.note.domains': "Varios dominios o regiones: configúralos en Ajustes > Dominios.",
   'setup.q.note.bookings': "Las reservas en línea están previstas. Te avisaremos cuando estén listas.",
+  'cv.empty.editable': "Texto vacío - haz doble clic para editar",
+  'cv.empty.select': "Elemento vacío - selecciónalo para añadir contenido",
 }
 
 export default es
