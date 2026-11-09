@@ -80,7 +80,24 @@ export function resolveSlotFromElement(el: Element | null, y: number): DropSlot 
 
 /** Convenience wrapper over the frame document. */
 export function resolveDropSlotInDoc(doc: Document, x: number, y: number): DropSlot | null {
-  return resolveSlotFromElement(doc.elementFromPoint(x, y), y)
+  return resolveSlotFromElement(doc.elementFromPoint(x, y), y) ?? resolveOutsideRoot(doc, y)
+}
+
+/**
+ * A point outside the editable page body (the template header or footer, page margins, empty canvas below the
+ * last block): like Elementor, a drop above the body goes to the start of the page and anything else goes to
+ * the end, so the drop is never silently refused.
+ */
+export function resolveOutsideRoot(doc: Document, y: number): DropSlot | null {
+  const root = doc.querySelector<HTMLElement>('[data-ve-root]')
+  if (!root) return null
+  const pageSlots = Array.from(root.querySelectorAll<HTMLElement>('[data-ve-slot]'))
+    .map(slotOf)
+    .filter((s): s is DropSlot => Boolean(s) && s!.containerPath.length === 0)
+  if (pageSlots.length === 0) return make([], 0)
+  const box = root.getBoundingClientRect()
+  const pick = y < box.top ? (a: DropSlot, b: DropSlot) => (b.at < a.at ? b : a) : (a: DropSlot, b: DropSlot) => (b.at > a.at ? b : a)
+  return pageSlots.reduce(pick)
 }
 
 /**
