@@ -1237,6 +1237,9 @@ const ko: UiDictionary = {
   've.lib.global': "전역",
   've.lib.forms': "양식",
   've.lib.shop': "쇼핑몰",
+  've.lib.views': "보기",
+  've.lib.viewCompact': "간단히 보기",
+  've.lib.viewList': "목록 보기",
   've.translate.hint': "번역",
 
   // --- emails (templates 2) ---

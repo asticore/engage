@@ -1237,6 +1237,9 @@ const ar: UiDictionary = {
   've.lib.global': "عام",
   've.lib.forms': "النماذج",
   've.lib.shop': "المتجر",
+  've.lib.views': "طريقة العرض",
+  've.lib.viewCompact': "عرض مضغوط",
+  've.lib.viewList': "عرض قائمة",
   've.translate.hint': "الترجمة",
 
   // --- emails (templates 2) ---

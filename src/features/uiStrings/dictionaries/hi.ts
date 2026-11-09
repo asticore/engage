@@ -1237,6 +1237,9 @@ const hi: UiDictionary = {
   've.lib.global': "ग्लोबल",
   've.lib.forms': "फ़ॉर्म",
   've.lib.shop': "शॉप",
+  've.lib.views': "दृश्य",
+  've.lib.viewCompact': "संक्षिप्त दृश्य",
+  've.lib.viewList': "सूची दृश्य",
   've.translate.hint': "अनुवाद",
 
   // --- emails (templates 2) ---

@@ -1279,6 +1279,9 @@ export const UI_STRING_SOURCE = {
   've.lib.global': "Global",
   've.lib.forms': "Forms",
   've.lib.shop': "Shop",
+  've.lib.views': "View",
+  've.lib.viewCompact': "Compact view",
+  've.lib.viewList': "List view",
   've.translate.hint': "Translation",
 
   // --- emails (templates 2) ---
