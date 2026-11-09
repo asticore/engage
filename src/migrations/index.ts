@@ -907,6 +907,8 @@ export const migrations = [
     up: migration_20270313_100000_price_tiers_currency_rounding.up,
     down: migration_20270313_100000_price_tiers_currency_rounding.down,
     name: '20270313_100000_price_tiers_currency_rounding',
+  },
+  {
     up: migration_20270313_100000_promo_badges.up,
     down: migration_20270313_100000_promo_badges.down,
     name: '20270313_100000_promo_badges',
