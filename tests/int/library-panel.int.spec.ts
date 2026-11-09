@@ -4,7 +4,7 @@ import React from 'react'
 import { ElementLibrary, parseCollapsed, parseView } from '@/views/visualEditor/ElementLibrary'
 
 const mount = (onPickBlock = vi.fn()) =>
-  render(<ElementLibrary targetLabel="Page" onPickBlock={onPickBlock} onPickTemplate={vi.fn()} formMode />)
+  render(React.createElement(ElementLibrary, { targetLabel: 'Page', onPickBlock, onPickTemplate: vi.fn(), formMode: true }))
 
 describe('Elements panel', () => {
   beforeEach(() => {
