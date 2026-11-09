@@ -8,14 +8,14 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 1. Read this doc (`docs/remaining-work.md` in the repo; Done list in `docs/remaining-work-done.md`) before starting work; the task numbers below are the order of work.
 2. Update it ONCE per finished task (or at the end of a working session), never mid-task: the project tool has no patch, so each update is a full rewrite.
 3. On each update: move the finished task into "Done" as one line with its PR numbers; for a partly done task, move its shipped history to "Done" and keep only its open items under "Tasks"; delete anything done or no longer needed; renumber the remaining tasks and fix the "task N" cross-references.
-4. Anything built but not checked live goes into "Task 20" (not silently dropped). Known limits go into "Open now". Decisions made by you are written into the task they affect.
+4. Anything built but not checked live goes into "Task 17" (not silently dropped). Known limits go into "Open now". Decisions made by you are written into the task they affect.
 5. New requests become a numbered task in the right place (or appended at the bottom if you say "later"), with what exists today, what to build and what needs your decision.
 6. Every feature, past and future, must work on a brand new single-click install: each new table or column is created by an idempotent migration registered in `src/migrations/index.ts` and covered by `tests/int/internal-migrate-fresh-install.int.spec.ts` and `tests/int/fresh-install-schema-coverage.int.spec.ts`, so the install builds the schema itself and nobody runs SQL by hand. Features already covered: site files, cookie consent (and banner settings), media library and file upload, ads, custom role rules and locks, shop catalogue and orders, extra fields import, content approval and approval workflows, custom fields v2, site fonts, redirects, roles, visibility and schedule, backups, forms, A/B tests.
 7. Keep the Process and Lessons sections current; remove a lesson once it is enforced by a test.
 
 ## Open now (as of 2 Nov 2026)
 - Fresh-account deploy not verified: Deploy button on a second Cloudflare account (see detail below).
-- Known limits (what is left after the 1 Nov sweep: each is either "Permanent" with the reason, or waits on a live check in Task 20; everything fixable was fixed or moved into closed tasks 1 to 5):
+- Known limits (what is left after the 1 Nov sweep: each is either "Permanent" with the reason, or waits on a live check in Task 17; everything fixable was fixed or moved into closed tasks 1 to 5):
   - Ads: Permanent: AdSense auto ads cannot be unloaded on client navigation (Google tag, vendor); Prebid price floors need the Price Floors module (Prebid vendor setup).
   - Media: Permanent: old binary .xls is not read (save as .xlsx or .ods); Permanent: re-optimising a picture keeps its file name because pages link to it (uploads take the right extension); Permanent: Cloudflare Stream makes MP4 only and Cloudflare Images cannot write JPEG XL, so a WebM or JPEG XL choice keeps the file as it is, and a video link is a URL with nothing to convert; Permanent: the Worker reads each request into memory once, so the 100 MB cap is the ceiling (larger files are written to R2 in parts).
   - Shop: Permanent: customer bulk actions and custom order statuses are not built (decided in closed Task 8: personal data, privacy request flow).
@@ -34,65 +34,66 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20261003_100000_visibility_schedule_lock_events_seo`, `20261005_100000_redirects`, `20261005_110000_pages_sort_order`, `20261006_100000_roles`, `20261007_100000_users_authorship`, `20261008_100000_integrations_expand`, `20261009_100000_user_permission_overrides`, `20261010_100000_site_fonts`, `20261011_100000_site_files`, `20261011_110000_cookie_consent`, `20261011_120000_media_library`, `20261011_130000_content_approval`, `20261011_140000_custom_fields_v2`; the `images` binding in `wrangler.jsonc` (Cloudflare Images transformations must be on the account, otherwise upload optimisation is skipped with a message); the cron trigger (`triggers.crons` in `wrangler.jsonc`, entry `cloudflare-worker.ts`).
 
 ## Tasks (in order)
-Open: Tasks 1 and 2 (reference file, engage-templates library), then Tasks 3 to 18 (shop and pricing, regions and domains, API, cron, email, theming, member groups, admin updates, activity log), Task 19 (speed up the portal and shrink the Worker bundle) and Task 20 (Matt's live checklist), remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered from 1 on 8 Nov 2026 and again after the 8 Nov tasks 1 to 6 closed (PR #226). Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
+Open: Tasks 1 to 4 (follow-ups from the 9 Nov 2026 work on old tasks 1 to 7), then Tasks 5 to 15 (regions and domains, API, cron, email, theming, member groups, admin updates, activity log), Task 13 (speed up the portal and shrink the Worker bundle) and Task 14 (Matt's live checklist), remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered on 9 Nov 2026 after the old tasks 1 to 7 closed. Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
 
-Order: 1, 2, 3 to 18 (features, in listed order), (new verify tasks), 19 Speed up, 20 Live checks (ends with the fresh-account deploy check).
+Order: 1 to 4 (follow-ups), 5 to 15 (features, in listed order), (new verify tasks), 16 Speed up, 17 Live checks (ends with the fresh-account deploy check).
 
-### Task 1. Reference file for installs (shine and effix)
-- [ ] Ship a reference file with every install (for example `reference.json` or `references.md` in the repo root) that the portal follows. Repos (Matt, 7 Nov 2026): https://github.com/asticore/shine and https://github.com/asticore/effix (default branch) to find shared reference material. It points to Matt's GitHub repositories "shine" and "effix" so portals use our reference files, alongside third-party references such as Tailwind. Design points: list each source with name, URL, type and version or branch; the portal reads the file on install and when updating; works on a fresh install with no setup (see Process item 8); fails safe when GitHub is unreachable. Effort M. (Added 7 Nov 2026.)
+### Task 1. Events and tickets: paid orders, refunds and gaps (new, 9 Nov 2026)
+Audit is in `docs/events-tickets-audit.md`. The "Sold out" state is done. Still open:
+- [ ] A paid order creates no RSVP row today, so paid buyers get no booking email, are missing from check-in and do not count toward capacity. Add an order id column to RSVPs (idempotent migration plus fresh-install tests) and create the RSVP from a paid order. Decision for Matt: sell one product or variant per ticket tier (so tier prices are real on paid events, today they are display only).
+- [ ] A refund should free the RSVP, and add a cancel RSVP action.
+- [ ] Make the capacity check atomic (count then insert lets two simultaneous RSVPs both pass).
+- [ ] Name the ticket type in the confirmation email.
+- [ ] Convert `EventTiers.tsx`, `RsvpForm.tsx` and the event page to Shine classes (one style system) and translate the public event strings (English only today).
 
-### Task 2. Include the engage-templates library by default (new, 7 Nov 2026)
-- [ ] Matt's template library is https://github.com/asticore/engage-templates. Include it as a default library on every install, with no setup: listed in Templates next to the built-in starters, fetched from GitHub, fails safe if GitHub is unreachable, can be switched off in Settings. Check what the existing template library and repo fetch code (see the design inventory: libraries are fetched from GitHub) already does and reuse it. Add the source to the Task 1 reference file. Effort S to M.
+### Task 2. Shine and Effix follow-ups (new, 9 Nov 2026)
+Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated utility file `src/styles/engage-utilities.css` (`node scripts/generate-utilities.mjs`, checked by a test), `reference/references.json`, Effix loader on the public site.
+- [ ] Effects picker for Effix in the visual editor (pick an effect, it adds the `efx-` class and data attributes; charts and diagrams too). Today `efx-` classes work wherever they appear (custom class field) but there is no picker.
+- [ ] Admin screen and super admin notice for the reference file: show each source, its pinned version and the result of `checkReferenceUpdates` (already built and tested, not yet shown anywhere); tie it into the update popup (Task 13).
+- [ ] Bring the remaining Tailwind-era look-alike classes onto Shine tokens over time (compare dark mode and density knobs); vendor an offline copy of Effix if a site must run with no CDN.
 
-### Task 3. Multi-currency support (new, 7 Nov 2026)
-- [ ] Shop shows prices in several currencies with a currency dropdown for visitors. The admin sets the default currency and visitors can change theirs. Decide: manual rates or an automatic rates feed, rounding rules, which currency checkout charges in (payment provider support), and per region or domain defaults. Effort L.
+### Task 3. Translation pass for the new admin and public text (new, 9 Nov 2026)
+- [ ] Price tiers, categories (`cat.*`), promo badges, rounding rules and the default template library text are English in the other twelve languages. Translate them; promo badge field labels use config English fallback and need keys.
 
-### Task 4. Multi-level pricing (wholesale and quantity breaks) (new, 7 Nov 2026)
-- [ ] Allow price tiers: wholesale prices tagged to a customer type or group, and prices by quantity (for example 1 to 9, 10 to 49, 50 plus). Works with products, variants and multi-currency (Task 3), shows correctly in the cart, checkout and orders, and can be set in bulk. Customer types come from member groups (Task 14). Effort L.
+### Task 4. Small gaps left by tasks 3 to 7 (new, 9 Nov 2026)
+- [ ] Variation specific price tiers: show a note on the product page. Per product promo badges are picked by slug text, make it a product picker.
+- [ ] Blog categories: nested URL paths (`/blog/category/parent/child`) and the `{{category}}` merge tag using the tree.
+- [ ] Wholesale pricing: when member groups exist (Task 11), match tiers by group as well as role.
 
-### Task 5. Selling events (tickets) (new, 7 Nov 2026)
-- [ ] Check and make sure events can be sold: ticket types, capacity, price tiers, free and paid, checkout through the shop, order and RSVP link, confirmation email, check-in and refunds. Verify what exists today against the code first and list gaps. Effort M.
-
-### Task 6. Promo icon on the shop archive (new, 7 Nov 2026)
-- [ ] Let admins customise and add a promo icon or badge (for example Sale, New, Best seller) shown on products in the archive and cards; pick from an icon picker, set text, colour, position and rules (per product or by tag or category). Effort S to M.
-
-### Task 7. Categories and sub categories (new, 7 Nov 2026)
-- [ ] Allow categories with sub categories (nested to several levels) for the shop and check the same for blog and other content: admin tree to add, move and reorder, archive pages and breadcrumbs, URL slugs, filters, and the visual editor loops. Effort M.
-
-### Task 8. Multi region and language report (new, 7 Nov 2026)
+### Task 5. Multi region and language report (new, 7 Nov 2026)
 - [ ] Check and report how multi region and multi language work today (regions, locales, translated fields, fallbacks, hreflang, per region content and pricing, admin strings in the thirteen languages). Output: a short report with gaps, saved in this doc, then tasks for the gaps. Effort S to M.
 
-### Task 9. Multi domain support check (new, 7 Nov 2026)
+### Task 6. Multi domain support check (new, 7 Nov 2026)
 - [ ] Check multi domain support end to end: several domains on one install, per domain content, the Available on domains field and slug check, cookies and sign-in per domain, sitemap, robots, canonical and hreflang, email sender and Cloudflare routes. Output: report with gaps, then tasks. Effort S to M.
 
-### Task 10. Easy API creation, API keys and data feeds (new, 7 Nov 2026)
+### Task 7. Easy API creation, API keys and data feeds (new, 7 Nov 2026)
 - [ ] Let admins create an API or data feed by drag and drop (pick collections and fields, filters, format), or a webhook. Access works by category: admins define user categories (for example partner, customer, internal) and select in Settings what each person or group can reach. Admins can generate API keys for customers, and customers can generate their own keys in the members portal; the key is tied to that person's account and limited by their category. Add rate limits, key revoke and rotate, usage log, and docs shown to the customer. Builds on the API and webhooks work already done (Done: closed Task 19). Effort L.
 
-### Task 11. Scheduled jobs (cron) in the portal (new, 7 Nov 2026)
+### Task 8. Scheduled jobs (cron) in the portal (new, 7 Nov 2026)
 - [ ] Find out whether the portal has easy cron jobs, for example scheduled pages, scheduled publish and unpublish, and recurring tasks. Check what the Worker cron trigger already runs. If there is no admin view, add a Scheduled jobs screen: list of jobs, last run, next run, run now, enable or disable, and logs. Effort M.
 
-### Task 12. Email notifications on actions, push and Cloudflare sending (new, 7 Nov 2026)
+### Task 9. Email notifications on actions, push and Cloudflare sending (new, 7 Nov 2026)
 - [ ] In Email, let admins set up notifications triggered by actions (order receipt, sign-up, form submit, booking, comment and others): choose the trigger, recipient, template, and channel (email through the connected tools, or push). Add push notifications (web push) as a channel. In Settings, allow connecting and sending email through Cloudflare (Cloudflare Email, see Known limits) as well as the third party email platforms already connectable. Effort L.
 
-### Task 13. Style guide and theming: style preferences and uniqueness (new, 7 Nov 2026)
+### Task 10. Style guide and theming: style preferences and uniqueness (new, 7 Nov 2026)
 - [ ] In the style guide and theming screen, let owners pick website styles they like (for example from example sites or style cards), explain why each style suits (reasoning shown to the user), and use the picks to choose or generate a unique theme. Keeps one style system only (no v1 or v2) and effects chosen from pickers. Effort M to L.
 
-### Task 14. Member groups and companies (new, 7 Nov 2026)
-- [ ] Members can be part of groups (companies). A company has its own admin members who manage and restrict viewing for the company members, for example which pages and downloads each can see. Ties into customer types for pricing (Task 4) and API access categories (Task 10). Effort L.
+### Task 11. Member groups and companies (new, 7 Nov 2026)
+- [ ] Members can be part of groups (companies). A company has its own admin members who manage and restrict viewing for the company members, for example which pages and downloads each can see. Ties into customer types for pricing (price tiers match roles today, see Task 4) and API access categories (Task 7). Effort L.
 
-### Task 15. Admin settings: clean tables and install only when enabled (new, 7 Nov 2026)
+### Task 12. Admin settings: clean tables and install only when enabled (new, 7 Nov 2026)
 - [ ] In admin settings, add a way to clean the tables of a section (delete its data after a confirmation and export offer) and make sure each section's tables are created only when its switch is turned on (builds on the lazy sections in PR #218). Add a migration and fresh-install tests for each. Effort M.
 
-### Task 16. Update popup for super admins (new, 7 Nov 2026)
+### Task 13. Update popup for super admins (new, 7 Nov 2026)
 - [ ] A popup in the admin portal that checks the current version against the repo and tells super admins when their copy needs updating. Super admins click it to start the update, then it opens the repo changelog. Other admins see nothing. Decide update method (Deploy button sync, GitHub sync, or a pull request) and handle forks. Repo URL is now asticore/engage. Effort M to L.
 
-### Task 17. Feedback button for super admins (new, 7 Nov 2026)
+### Task 14. Feedback button for super admins (new, 7 Nov 2026)
 - [ ] A button in the admin portal that lets super admins submit feedback: it opens the repo's new issue page (pre-filled with version and page). Uses the repo URL asticore/engage; repo is now asticore/engage. Effort S.
 
-### Task 18. Activity log with clear (new, 7 Nov 2026)
+### Task 15. Activity log with clear (new, 7 Nov 2026)
 - [ ] An activity log of what people do (sign-in, edits, publishes, setting changes, exports), viewable per person and filterable, with a clear or purge option (with retention setting and a record that a clear happened). Check against the privacy rules and the existing audit and approval history first. Effort M.
 
-### Task 19. Speed up the portal and shrink the Worker bundle (right before the live checks)
+### Task 16. Speed up the portal and shrink the Worker bundle (right before the live checks)
 **Goals (Matt, 7 Nov 2026):**
 1. Get the Cloudflare Worker bundle under the 3 MB limit of the Workers free plan (compressed size), so anyone can install the site for free with the Deploy button.
 2. Make pages load faster (public pages and the admin and signed-in portal).
@@ -161,11 +162,22 @@ Finished work is listed in `remaining-work-done.md` (same folder), one line per 
 
 Lessons: migration-order specs use `migrations.length - N` offsets, so every new migration moves them: update the offsets in the same PR (or prefer name lookups). Agents alter files when copying (quotes, glyphs, regex escapes, trailing spaces and final newlines), push wrong files, create routes in a literal `src/app/(engage)` folder: cmp everything. Keep new CSS in its own file; avoid edits to `src/cms/db/schema/generate.ts` and `schema/index.ts` (both near 60KB); do not edit `src/engage-types.ts` (230KB, cannot be pushed through the tool: cast locally instead); no `ui` field in a global modelled by `src/cms/db`; never two agents on one file at once; the cloud session cannot `git push` this repo (GitHub MCP only); do not `pkill -f vitest`; the browser tool cannot type; mock `getAdminContext()` needs `can`; hooks must skip when there is no `req.user`; Next layouts cannot export extra names. Cloudflare Builds clones within seconds of the first push, so after a multi-file push, push one last marker commit. Haiku push agents turn backslash-u escapes into raw characters: keep source ASCII (use String.fromCharCode).
 
-## Task 20. Matt's live checklist (FINAL: only live checks remain; all need Matt's own accounts)
+## Task 17. Matt's live checklist (FINAL: only live checks remain; all need Matt's own accounts)
 
 **Live run 31 Oct 2026 (Claude, Brave, read-only):** PASS: Forms list has no Create; form page has Edit in visual editor and pages-using-form table; Templates has Header and footer tab; no separate Header/Footer admin pages; Pages list has Export CSV and sortable headers; Settings has no 404 picker; visual editor canvas loads. OPEN from this run: (a) dashboard Forms tile "+" links to /admin/content/forms/create (remove, forms are made in the visual editor); (b) form edit page shows Title/Submit label/Success message fields (confirm no field editing, decide if summary should be read-only); (c) External embeds not in any sidebar group, find route /external-embeds and add nav item; (d) audience and page-picker conditions not seen (need a draft row, test on a scratch template); (e) style panel applied dot/Reset not reached (hover selection shifted); (f) not yet run: short links, privacy, CSV with filter, revenue chart, migration, SITE_URL/ENGAGE_SECRET.
 
 Only items not yet verified. Tick each, report failures. Grouped by area, each with how to check.
+
+### Shine, reference file, tickets, pricing, badges and categories (9 Nov 2026 PR)
+- [ ] Shine replaced Tailwind: open the admin (dashboard, a list, Settings, Pages tree) and the public site (home, shop, a product, cart, checkout) in light and dark, desktop and phone. Pass = nothing unstyled, no overlapping text, buttons and forms look like before.
+- [ ] Settings and the visual editor after the style change: open a settings page and save, open the visual editor, add a section, change its design, open the template picker, switch preview widths. Pass = all work and the editor canvas matches the live page.
+- [ ] Templates: the "Engage templates" library is listed in Settings > Template libraries (can be switched off, no Remove button) and its items appear in Templates and the editor. Switch it off and confirm the items disappear.
+- [ ] Effix: add class `efx-tilt` to a block (custom class field), view the live page. Pass = the effect runs; with the network blocked to cdn.jsdelivr.net the page still looks normal.
+- [ ] Price tiers: Shop > Price tiers, add quantity breaks and a wholesale price for a role, then check the cart and an order with a normal and a wholesale account. Also check currency rounding on the storefront.
+- [ ] Promo badges: Shop settings > Storefront, add a badge (icon picker, colour pickers), see it on archive and cards at phone width, check the effects respect reduced motion.
+- [ ] Categories: Settings > Categories, build a tree, assign products, open `/shop/category/parent/child` and a blog category with sub categories.
+- [ ] Events: an event with no places left shows "Sold out" (free and paid).
+- [ ] Run `tests/int/internal-migrate-fresh-install.int.spec.ts` and `tests/int/fresh-install-schema-coverage.int.spec.ts` locally (they hang in the cloud sandbox).
 
 ### Repo rename follow-ups (9 Nov 2026, Matt)
 - [ ] Cloudflare dashboard > Workers & Pages > the worker > Settings > Builds: reconnect the Git repository to `asticore/engage` if it shows disconnected; confirm build and deploy commands unchanged. Pass = next push to `main` deploys.
@@ -299,11 +311,11 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Tables and charts (#171 to #174): CSV download from pages and orders with a filter applied, opened in a spreadsheet; shop revenue chart axis fits a phone width; sort buttons work by keyboard.
 - [ ] Tables and charts (#188): Dashboard shows the 30-day Orders and Form submissions cards with Shop and Forms on, and hides them when each is off. A list export of 5000 or more rows shows Exporting… while it loads and then the truncation message. The PageSpeed trend and the consent acceptance chart show their axis labels on a phone width.
 - [ ] Account colours and srcset (PR #208): dark theme, sign in, open `/account` and the nav on a phone width, and search: no white cards, dark text readable, nav drawer fades to the background. A page with a gallery or team card: view source shows `srcset` and `sizes` on its pictures. Light theme: unchanged.
-- [ ] Task 20 colour sweep (#192): in dark theme open Settings, Shop orders, SEO audit, Theme styles, Visibility, Find and replace, Edit tabs, Email testing and the Visual editor chrome: no white or light cards, no dark text on dark surfaces, every status badge readable. Light theme: nothing visibly changed.
-- [ ] Task 20 dark mode (#192): dark theme, check each for readable text and no white-on-dark: Password groups (banner, error, form, badge), Visibility > Access (label, input, OK and error), Blog builder "Write with AI" error, Pages tree (Draft and Homepage badges, alert), API keys scopes, Orders filter bar, Order refunds, Two-factor trusted devices list, Ads placeholder on a public page with ads on.
-- [ ] Task 20 tree keys (#192): Pages tree, keyboard only (no mouse): Tab to a row, Down and Up move between rows, Home and End jump, Right expands a parent, Left collapses it or goes to the parent row, Alt+Down moves a page. Screen reader announces the expanded state and the tooltip text on the toggle and handle.
-- [ ] Task 20 tooltips (#192): touch device: tap a column arrow in the list toolbar and the tree drag handle; the tooltip appears and goes away on the next tap elsewhere. Desktop: hover and Tab to the save-default button; tooltip shows.
-- [ ] Task 20 SEO dots (#192): SEO audit and SEO analysis in light and dark: good circle, ok diamond, bad square are told apart at a glance.
+- [ ] Task 17 colour sweep (#192): in dark theme open Settings, Shop orders, SEO audit, Theme styles, Visibility, Find and replace, Edit tabs, Email testing and the Visual editor chrome: no white or light cards, no dark text on dark surfaces, every status badge readable. Light theme: nothing visibly changed.
+- [ ] Task 17 dark mode (#192): dark theme, check each for readable text and no white-on-dark: Password groups (banner, error, form, badge), Visibility > Access (label, input, OK and error), Blog builder "Write with AI" error, Pages tree (Draft and Homepage badges, alert), API keys scopes, Orders filter bar, Order refunds, Two-factor trusted devices list, Ads placeholder on a public page with ads on.
+- [ ] Task 17 tree keys (#192): Pages tree, keyboard only (no mouse): Tab to a row, Down and Up move between rows, Home and End jump, Right expands a parent, Left collapses it or goes to the parent row, Alt+Down moves a page. Screen reader announces the expanded state and the tooltip text on the toggle and handle.
+- [ ] Task 17 tooltips (#192): touch device: tap a column arrow in the list toolbar and the tree drag handle; the tooltip appears and goes away on the next tap elsewhere. Desktop: hover and Tab to the save-default button; tooltip shows.
+- [ ] Task 17 SEO dots (#192): SEO audit and SEO analysis in light and dark: good circle, ok diamond, bad square are told apart at a glance.
 
 ### Languages and tracking (#54, #134, #135 to #145, #151)
 - [ ] Languages: Settings > Languages: enable a language, add Google or DeepL key, Test connection. Translations page: one row per page, filters, bulk approve. Builder: language switch and translate mode. `/fr/` loads in French with correct hreflang. Clear inactive works. Admin language picker changes admin text. Email arrives in the customer's language. Storefront override table changes storefront text.
@@ -363,7 +375,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 ### Closed Task 9a settings safety (PR #197)
 - [ ] Stale tab: sign in as admin, open Integrations in two browser tabs. In tab A change a field and Save. In tab B change a different field and Save. Pass = tab B shows "These settings changed in another tab or by another admin..." and nothing is overwritten. Reload, and tab A's value is there.
 - [ ] Custom CSP: Security, Headers, Content-Security-Policy, type `img-src https://example.com` and Save. Pass = saved. Then type `scrpt-src 'self'` and Save. Pass = refused with a message naming "scrpt-src". Clear the field and Save. On a public page, DevTools, Network, the page response headers: the policy still contains `fonts.gstatic.com` and the site still loads its fonts.
-- [ ] Admin notice: needs two admin accounts with real inboxes. Security, change Admin URL (or switch "Two-factor required for admins") and Save. Pass = both admins get "Security change on this site: ..." with the old and new values, and Email log shows the send (Task 20 email first). Change it back afterwards.
+- [ ] Admin notice: needs two admin accounts with real inboxes. Security, change Admin URL (or switch "Two-factor required for admins") and Save. Pass = both admins get "Security change on this site: ..." with the old and new values, and Email log shows the send (Task 17 email first). Change it back afterwards.
 - [ ] Domain notice: Domains, switch "Allow admin" on one domain and Save. Pass = both admins get "Security change on this site: Domains and admin access". Switch it back.
 - [ ] Check ID format: Integrations, type `UA-12345-1` as the GA4 measurement ID and press Check ID format. Pass = the message names GA4 measurement ID. Put back the real ID.
 - [ ] Check AI keys: Integrations, save the real Claude and OpenAI keys, press Check AI keys. Pass = "Claude key accepted." and "OpenAI key accepted." A wrong key shows "refused this key (HTTP 401)". Nothing is generated and nothing is charged.
@@ -482,4 +494,4 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 Waves 43 to 48 and waves 30 and 31: see "Done". The visual editor reference and the design model inventory above are the reference for code paths.
 
 ### Fresh-account deploy and setup script (last live check)
-- [ ] Fresh-account deploy check and the setup script on a new Cloudflare account (the "Fresh-account deploy check (detail)" section and the Setup script item under "Architecture (closed Task 4, PR #215)"). Runs after Task 19, so it also proves the free-plan size limit on a fresh account.
+- [ ] Fresh-account deploy check and the setup script on a new Cloudflare account (the "Fresh-account deploy check (detail)" section and the Setup script item under "Architecture (closed Task 4, PR #215)"). Runs after Task 16, so it also proves the free-plan size limit on a fresh account.
