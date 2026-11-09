@@ -59,17 +59,15 @@ export const CANVAS_POLISH_CSS = `
 .ve-tpl__grid > .admin-tip { display: block; min-width: 0; width: 100%; max-width: none; }
 .ve-library__grid > .admin-tip > .ve-library__card,
 .ve-tpl__grid > .admin-tip > .ve-tpl__card { width: 100%; height: 100%; min-width: 0; box-sizing: border-box; }
-.ve-library--comfortable .ve-library__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.ve-library--comfortable .ve-library__card-label { overflow-wrap: anywhere; }
+.ve-library--list .ve-library__grid { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 .ve-library--compact .ve-library__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 /* Tooltips in the panel hug the dock edges instead of being centred over a card and clipped. */
 .ve-library__grid .admin-tip__bubble,
 .ve-tpl__grid .admin-tip__bubble { max-width: min(220px, 70vw); }
-.ve-library--comfortable .ve-library__grid > .admin-tip:nth-child(2n + 1) .admin-tip__bubble,
+.ve-library--list .ve-library__grid > .admin-tip .admin-tip__bubble,
 .ve-library--compact .ve-library__grid > .admin-tip:nth-child(3n + 1) .admin-tip__bubble,
 .ve-tpl__grid > .admin-tip:nth-child(2n + 1) .admin-tip__bubble { left: 0; transform: none; }
-.ve-library--comfortable .ve-library__grid > .admin-tip:nth-child(2n) .admin-tip__bubble,
 .ve-library--compact .ve-library__grid > .admin-tip:nth-child(3n) .admin-tip__bubble,
 .ve-tpl__grid > .admin-tip:nth-child(2n) .admin-tip__bubble { left: auto; right: 0; transform: none; }
 

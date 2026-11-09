@@ -1,23 +1,18 @@
 'use client'
 
 /**
- * The sidebar's one visible trigger - collapses/expands the desktop rail,
- * or opens/closes the mobile off-canvas drawer, depending on viewport (see
- * NavContext.tsx's `toggleSidebar`). Replaces the old open/close-only
- * hamburger this file used to render (a straight port of `the vendor package`'s
- * `NavToggler`) - a single adaptive "panel" icon matches the shadcn sidebar
- * pattern this rebuild is modeled on
- * (https://ui.shadcn.com/docs/components/base/sidebar), where one
- * `SidebarTrigger` button does both jobs.
+ * The desktop sidebar's collapse/expand button. It lives INSIDE the sidebar,
+ * in the brand row at the top of the nav (AdminNav.tsx), so it never overhangs
+ * the page content. On mobile the drawer is opened and closed from the top
+ * bar instead (AdminTopBar.tsx), so this button is hidden there by CSS.
  *
- * Fixed-position, outside the nav/content flow (see custom.css's
- * `.nav-toggler`, which slides itself to sit just past the sidebar's own
- * current width) - there is no AppHeader/toolbar in this admin for a trigger
- * to live inside, so a floating button is the only place for it.
+ * Keeps the `nav-toggler` class: the visual editor hides admin shell chrome by
+ * that name (veShell.css).
  */
 
 import React from 'react'
 import { useNav } from '@/admin/context'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const PanelIcon: React.FC = () => (
@@ -28,21 +23,23 @@ const PanelIcon: React.FC = () => (
 )
 
 export const NavToggler: React.FC = () => {
-  const { collapsed, isMobile, navOpen, toggleSidebar } = useNav()
+  const { collapsed, toggleSidebar } = useNav()
+  const t = useAdminT()
 
-  const isOpenState = isMobile ? navOpen : !collapsed
-  const label = isOpenState ? 'Collapse sidebar' : 'Expand sidebar'
+  const label = collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')
 
   return (
-    <Tooltip text={`${label} (Ctrl/⌘+B)`}><button
-      aria-label={label}
-      className="nav-toggler"
-      onClick={toggleSidebar}
-      suppressHydrationWarning
-      type="button"
-    >
-      <PanelIcon />
-    </button></Tooltip>
+    <Tooltip text={`${label} (Ctrl/⌘+B)`}>
+      <button
+        aria-label={label}
+        className="nav-toggler"
+        onClick={toggleSidebar}
+        suppressHydrationWarning
+        type="button"
+      >
+        <PanelIcon />
+      </button>
+    </Tooltip>
   )
 }
 

@@ -76,6 +76,7 @@ const PasswordGroupsView = lazyView(() => import('@/admin/views/PasswordGroupsVi
 const SecurityAuditView = lazyView(() => import('@/admin/views/SecurityAuditView').then((mod) => mod.SecurityAuditView))
 const SocialView = lazyView(() => import('@/admin/views/SocialView').then((mod) => mod.SocialView))
 const TemplatesHubView = lazyView(() => import('@/admin/views/TemplatesHubView').then((mod) => mod.TemplatesHubView))
+const MyPreferencesView = lazyView(() => import('@/admin/views/MyPreferencesView').then((mod) => mod.MyPreferencesView))
 const TemplateLibrariesView = lazyView(() => import('@/admin/views/TemplateLibrariesView').then((mod) => mod.TemplateLibrariesView))
 const GoogleDashboardView = lazyView(() => import('@/features/google/dashboard/GoogleDashboardView').then((mod) => mod.GoogleDashboardView))
 const TrackingConnectionsView = lazyView(() => import('./views/TrackingConnectionsView').then((mod) => mod.TrackingConnectionsView))
@@ -101,6 +102,12 @@ export const CUSTOM_ADMIN_VIEWS = [
     Component: TemplatesHubView,
     path: '/templates',
     meta: { title: 'Templates', description: 'Site templates, page templates and reusable sections in one list.' },
+  },
+  {
+    key: 'myPreferences',
+    Component: MyPreferencesView,
+    path: '/settings/my-preferences',
+    meta: { title: 'My preferences', description: 'Your own interface language, theme and admin tour.' },
   },
   {
     key: 'templateLibraries',
