@@ -1,5 +1,6 @@
 import type { ApiKeySettings } from '@/features/security/settings'
 
+import { effectiveMaxKeys, intersectScopes, scopesOutsideCategory, type CategoryLimits } from './categories'
 import {
   displayPrefix,
   generateApiKey,
@@ -58,7 +59,7 @@ export type LiveOwner = {
   user: unknown
 }
 
-export type ApiKeyAuditAction = 'api-key.created' | 'api-key.revoked' | 'api-key.used' | 'api-key.refused'
+export type ApiKeyAuditAction = 'api-key.created' | 'api-category.changed' | 'api-key.rotated' | 'api-key.revoked' | 'api-key.used' | 'api-key.refused'
 
 export type ApiKeyAuditEntry = {
   action: ApiKeyAuditAction
@@ -73,10 +74,24 @@ export type ApiKeyDeps = {
   loadOwner: (userId: number) => Promise<LiveOwner | null>
   audit: (entry: ApiKeyAuditEntry) => Promise<void>
   now: () => number
+  /** The category that governs this person, or null. Omitted means categories are not in use. */
+  loadCategory?: (userId: number) => Promise<CategoryLimits | null>
+  /** Whether any category exists. Once one does, a customer needs a category to use or create a key. */
+  categoriesExist?: () => Promise<boolean>
 }
 
 /** What a request learns about the key that authenticated it. */
-export type ApiKeyContext = { id: number; userId: number; name: string; scopes: ApiKeyScope[] }
+export type ApiKeyContext = {
+  id: number
+  userId: number
+  name: string
+  scopes: ApiKeyScope[]
+  /** The owner's category rate per minute, when a category governs the key. */
+  ratePerMinute?: number
+  /** The owner's category name, when one governs the key. */
+  category?: string
+  categoryId?: number
+}
 
 /**
  * Thrown when a presented key cannot be used. `unavailable` (503) means the key
@@ -129,7 +144,17 @@ export async function authenticateApiKey(deps: ApiKeyDeps, token: string, settin
   if (owner.locked) return refuse('owner-locked', `key ${row.id}`)
   if (!isStaffRoles(owner.roles) && !settings.allowCustomers) return refuse('customers-disabled', `key ${row.id}`)
 
-  const scopes = parseScopes(row.scopes)
+  let scopes = parseScopes(row.scopes)
+  let category: CategoryLimits | null = null
+  if (deps.loadCategory) {
+    try {
+      category = await deps.loadCategory(owner.id)
+      if (!category && !isStaffRoles(owner.roles) && deps.categoriesExist && (await deps.categoriesExist())) return refuse('no-category', `key ${row.id}`)
+    } catch {
+      throw new ApiKeyRefused('unavailable', 503)
+    }
+  }
+  if (category) scopes = intersectScopes(scopes, category.scopes)
   if (row.lastUsedAt === null) {
     await deps.audit({ action: 'api-key.used', actorId: owner.id, actorEmail: owner.email, documentId: row.id, detail: 'first use' }).catch((): void => undefined)
   }
@@ -140,7 +165,7 @@ export async function authenticateApiKey(deps: ApiKeyDeps, token: string, settin
       // A missed last-used stamp is harmless; the request itself is still allowed.
     }
   }
-  return { owner, key: { id: row.id, userId: row.userId, name: row.name, scopes } }
+  return { owner, key: { id: row.id, userId: row.userId, name: row.name, scopes, ...(category ? { ratePerMinute: category.ratePerMinute, category: category.name, categoryId: category.id } : {}) } }
 }
 
 export type CreateApiKeyInput = {
@@ -172,13 +197,25 @@ export async function createApiKey(
   if (name.ok === false) return { ok: false, error: name.error }
   const scopes = validateScopes(input.scopes)
   if (scopes.ok === false) return { ok: false, error: scopes.error }
+  let category: CategoryLimits | null = null
+  if (deps.loadCategory) {
+    category = await deps.loadCategory(owner.id)
+    if (!category && !isStaffRoles(owner.roles) && deps.categoriesExist && (await deps.categoriesExist())) {
+      return { ok: false, error: 'Your account is not in an API access category yet. Ask the site admin to add you.' }
+    }
+    if (category) {
+      const outside = scopesOutsideCategory(scopes.value, category.scopes)
+      if (outside.length > 0) return { ok: false, error: `Your access category "${category.name}" does not allow: ${outside.join(', ')}.` }
+    }
+  }
   const now = deps.now()
   const expires = resolveExpiry(now, input.expiresInDays, settings.maxLifetimeDays)
   if (expires.ok === false) return { ok: false, error: expires.error }
 
   const active = (await deps.store.listForUser(owner.id)).filter((row) => isActive(row, now)).length
-  if (active >= settings.maxPerUser) {
-    return { ok: false, error: `You already have ${settings.maxPerUser} active API keys. Revoke one to create another.` }
+  const maxKeys = effectiveMaxKeys(category, settings.maxPerUser)
+  if (active >= maxKeys) {
+    return { ok: false, error: `You already have ${maxKeys} active API keys. Revoke one to create another.` }
   }
 
   const key = generateApiKey()
@@ -195,6 +232,39 @@ export async function createApiKey(
   const id = await deps.store.insert(draft)
   await deps.audit({ action: 'api-key.created', actorId: actor.id, actorEmail: actor.email, documentId: id, detail: `${draft.scopes.join(',')}` }).catch((): void => undefined)
   return { ok: true, value: { key, row: { ...draft, id, lastUsedAt: null, revokedAt: null } } }
+}
+
+export type RotateResult = { ok: true; value: CreatedApiKey } | { ok: false; error: string }
+
+/**
+ * Replaces a key: makes a new key with the same name, scopes and lifetime, then revokes the old one.
+ * The owner may rotate their own; an admin may rotate anyone's (the new key then belongs to the same
+ * owner, and the admin is shown it once to hand over). Audited. The old key stops working at once.
+ */
+export async function rotateApiKey(
+  deps: ApiKeyDeps,
+  owner: LiveOwner,
+  actor: { id: number; email: string; isAdmin: boolean },
+  keyId: number,
+  settings: ApiKeySettings,
+): Promise<RotateResult> {
+  const row = await deps.store.findById(keyId)
+  if (!row || (row.userId !== actor.id && !actor.isAdmin)) return { ok: false, error: 'No such key.' }
+  if (owner.id !== row.userId) return { ok: false, error: 'No such key.' }
+  const now = deps.now()
+  if (!isActive(row, now)) return { ok: false, error: 'Only a live key can be rotated. Create a new key instead.' }
+  // The old key is not counted against the cap while its replacement is made.
+  let days: number | undefined
+  if (row.expiresAt && settings.maxLifetimeDays > 0) {
+    const remaining = Math.ceil((Date.parse(row.expiresAt) - now) / 86_400_000)
+    days = Math.max(1, Math.min(settings.maxLifetimeDays, remaining))
+  }
+  const stand = { ...deps, store: { ...deps.store, listForUser: async (userId: number) => (await deps.store.listForUser(userId)).filter((r) => r.id !== row.id) } }
+  const created = await createApiKey(stand, owner, { name: row.name, scopes: row.scopes, expiresInDays: days }, settings, { id: actor.id, email: actor.email })
+  if (created.ok === false) return created
+  await deps.store.revoke(row.id, new Date(now).toISOString())
+  await deps.audit({ action: 'api-key.rotated', actorId: actor.id, actorEmail: actor.email, documentId: row.id, detail: `replaced by key ${created.value.row.id}` }).catch((): void => undefined)
+  return created
 }
 
 export const isActive = (row: ApiKeyRow, now: number): boolean =>

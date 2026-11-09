@@ -281,7 +281,9 @@ function buildApiGuideMarkdown(endpoints: readonly ApiEndpoint[], options: Guide
     out.push('```http', `GET ${path}?limit=5`, 'Authorization: Bearer YOUR_API_KEY', '```', '')
     const ex = examplesFor(e, 'GET', base)
     out.push('```bash', ex.curl, '```', '', '```javascript', ex.javascript, '```', '', '```python', ex.python, '```', '')
-    out.push(`Response (${e.responseFormat === 'array' ? 'bare array' : 'envelope'}): ${e.responseFormat === 'array' ? '`[{ "id": 1, ... }]`' : '`{ "data": [{ "id": 1, ... }], "page": 1, "limit": 5, "totalDocs": 12, "totalPages": 3, "hasNextPage": true }`'}`, '')
+    if (e.responseFormat === 'csv' || e.responseFormat === 'jsonl' || e.responseFormat === 'xml') {
+      out.push(`Response: a ${e.responseFormat === 'csv' ? 'CSV' : e.responseFormat === 'jsonl' ? 'JSON lines' : 'XML'} data feed. Add \`?format=json\`, \`csv\`, \`jsonl\` or \`xml\` to choose another format for one call. The total is in the \`X-Total-Count\` header.`, '')
+    } else out.push(`Response (${e.responseFormat === 'array' ? 'bare array' : 'envelope'}): ${e.responseFormat === 'array' ? '`[{ "id": 1, ... }]`' : '`{ "data": [{ "id": 1, ... }], "page": 1, "limit": 5, "totalDocs": 12, "totalPages": 3, "hasNextPage": true }`'}`, '')
     out.push('### Get one', '', `\`GET ${path}/{id}\` returns \`{ "data": { "id": 1, ... } }\`, or 404.`, '')
     if (e.allowCreate) {
       const post = examplesFor(e, 'POST', base)

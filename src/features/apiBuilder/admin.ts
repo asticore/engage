@@ -25,6 +25,7 @@ export function collectionChoices(sources: readonly SourceCollection[] = SOURCE_
 export type EndpointInputContext = {
   reserved: ReadonlySet<string>
   keyIds: ReadonlySet<number>
+  categoryIds?: ReadonlySet<number>
   sources?: readonly SourceCollection[]
 }
 
@@ -41,6 +42,7 @@ export function checkEndpointInput(input: unknown, context: EndpointInputContext
     collectionFields: new Set(source.fields.map((f) => f.key)),
     reserved: context.reserved,
     keyIds: context.keyIds,
+    categoryIds: context.categoryIds,
     customKinds,
   })
 }
