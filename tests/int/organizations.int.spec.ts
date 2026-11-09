@@ -8,6 +8,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ORGANIZATION_INDEXES, ORGANIZATION_TABLES } from '@/migrations/20261124_100000_organizations'
+import { ORG_GRANT_INDEXES, ORG_GRANT_TABLES } from '@/migrations/20270313_100000_org_content_grants'
 import { createD1OrgStore, type D1Like } from '@/features/organizations/store'
 import {
   ORG_ACTIONS,
@@ -49,7 +50,9 @@ import {
   removeMember,
   resendInvite,
   resolveActiveOrganization,
+  listCompanyContent,
   saveCustomRole,
+  setCompanyContentAccess,
   setTeamMembership,
   transferOwnership,
   updateOrganization,
@@ -122,7 +125,8 @@ const tokenFrom = (mail: InviteMail): string => mail.link.split('/account/invite
 
 beforeEach(() => {
   db = new DatabaseSync(':memory:')
-  for (const statement of [...ORGANIZATION_TABLES, ...ORGANIZATION_INDEXES]) db.exec(statement)
+  for (const statement of [...ORGANIZATION_TABLES, ...ORGANIZATION_INDEXES, ...ORG_GRANT_TABLES, ...ORG_GRANT_INDEXES]) db.exec(statement)
+  for (const table of ['pages', 'posts', 'products', 'events']) db.exec(`CREATE TABLE eg_${table} (id integer PRIMARY KEY, title text)`)
   d1 = sqliteD1(db)
   clock = Date.parse('2026-11-24T00:00:00.000Z')
   counter = 0
@@ -657,5 +661,69 @@ describe('organisation-only content', () => {
     expect(await viewerMayRead(d1, 'events', 9, CAL.id)).toBe(true)
     await removeMember(deps, ANN, orgId, CAL.id)
     expect(await viewerMayRead(d1, 'events', 9, CAL.id)).toBe(false)
+  })
+})
+
+describe('company content access', () => {
+  const at = '2026-11-24T00:00:00.000Z'
+
+  it('narrows a company document to chosen members and teams, and opens it again when cleared', async () => {
+    const { deps, orgId } = await acme()
+    db.exec("INSERT INTO eg_pages (id, title) VALUES (5, 'Price list')")
+    await setOrgVisibility(d1, 'pages', 5, orgId, at)
+    const team = await createTeam(deps, BOB, orgId, 'Ops')
+    // Everyone in the company reads it until it is narrowed.
+    expect(await viewerMayRead(d1, 'pages', 5, CAL.id)).toBe(true)
+    // Nothing is narrowed to Cal yet, so a team with only Ann in it keeps Cal out.
+    await setTeamMembership(deps, BOB, orgId, team.value.id, ANN.id, true)
+    expect((await setCompanyContentAccess(deps, BOB, orgId, 'pages', 5, [{ subjectType: 'team', subjectId: team.value.id }])).ok).toBe(true)
+    expect(await viewerMayRead(d1, 'pages', 5, CAL.id)).toBe(false)
+    expect(await viewerMayRead(d1, 'pages', 5, ANN.id)).toBe(true)
+    // Company admins keep access; outsiders and signed-out visitors stay out.
+    expect(await viewerMayRead(d1, 'pages', 5, BOB.id)).toBe(true)
+    expect(await viewerMayRead(d1, 'pages', 5, EVE.id)).toBe(false)
+    expect(await viewerMayRead(d1, 'pages', 5, null)).toBe(false)
+    // A named member gets in.
+    expect((await setCompanyContentAccess(deps, BOB, orgId, 'pages', 5, [{ subjectType: 'member', subjectId: String(CAL.id) }])).ok).toBe(true)
+    expect(await viewerMayRead(d1, 'pages', 5, CAL.id)).toBe(true)
+    expect(await viewerMayRead(d1, 'pages', 5, ANN.id)).toBe(true)
+    const listed = await listCompanyContent(deps, BOB, orgId)
+    expect(listed.value).toEqual([{ collection: 'pages', docId: 5, title: 'Price list', grants: [{ subjectType: 'member', subjectId: String(CAL.id) }] }])
+    expect((await setCompanyContentAccess(deps, BOB, orgId, 'pages', 5, [])).ok).toBe(true)
+    expect(await viewerMayRead(d1, 'pages', 5, ANN.id)).toBe(true)
+  })
+
+  it('refuses members without content:manage, other companies documents and foreign subjects', async () => {
+    const { deps, orgId } = await acme()
+    await setOrgVisibility(d1, 'pages', 5, orgId, at)
+    expect((await setCompanyContentAccess(deps, CAL, orgId, 'pages', 5, [])).code).toBe('forbidden')
+    expect((await listCompanyContent(deps, CAL, orgId)).code).toBe('forbidden')
+    const other = await createOrganization(deps, EVE, { name: 'Other Co' })
+    expect((await setCompanyContentAccess(deps, EVE, other.value.id, 'pages', 5, [])).code).toBe('not_found')
+    expect((await setCompanyContentAccess(deps, BOB, orgId, 'pages', 5, [{ subjectType: 'member', subjectId: String(EVE.id) }])).code).toBe('invalid')
+    expect((await setCompanyContentAccess(deps, BOB, orgId, 'media', 5, [])).code).toBe('invalid')
+    expect((await setCompanyContentAccess(deps, BOB, orgId, 'pages', 5, [{ subjectType: 'team', subjectId: 'nope' }])).code).toBe('invalid')
+  })
+
+  it('a custom role with content:manage may manage access and still reads narrowed documents', async () => {
+    const { deps, orgId } = await acme()
+    await setOrgVisibility(d1, 'pages', 5, orgId, at)
+    await saveCustomRole(deps, ANN, orgId, 'editor', ['organization:read', 'member:read', 'team:read', 'content:manage'])
+    await changeMemberRole(deps, ANN, orgId, CAL.id, 'editor')
+    expect((await setCompanyContentAccess(deps, CAL, orgId, 'pages', 5, [{ subjectType: 'member', subjectId: String(ANN.id) }])).ok).toBe(true)
+    expect(await viewerMayRead(d1, 'pages', 5, CAL.id)).toBe(true)
+  })
+
+  it('drops grants when a member leaves, a team is deleted or the company is deleted', async () => {
+    const { deps, orgId } = await acme()
+    await setOrgVisibility(d1, 'pages', 5, orgId, at)
+    const team = await createTeam(deps, BOB, orgId, 'Ops')
+    await setCompanyContentAccess(deps, BOB, orgId, 'pages', 5, [{ subjectType: 'member', subjectId: String(CAL.id) }, { subjectType: 'team', subjectId: team.value.id }])
+    await removeMember(deps, ANN, orgId, CAL.id)
+    await deleteTeam(deps, BOB, orgId, team.value.id)
+    expect((db.prepare('SELECT COUNT(*) AS n FROM eg_content_org_grants').get() as { n: number }).n).toBe(0)
+    await setCompanyContentAccess(deps, BOB, orgId, 'pages', 5, [{ subjectType: 'member', subjectId: String(BOB.id) }])
+    await deleteOrganization(deps, ANN, orgId)
+    expect((db.prepare('SELECT COUNT(*) AS n FROM eg_content_org_grants').get() as { n: number }).n).toBe(0)
   })
 })

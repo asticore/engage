@@ -42,13 +42,31 @@ export async function listOrgRestrictedIds(d1: D1Like, collection: string): Prom
   return new Set(rows.map((row) => Number(row.doc_id)))
 }
 
-/** True when the document has no organisation restriction, or `userId` is a member of the one it names. Throws on a failed lookup; callers lock. */
+/**
+ * True when the document has no organisation restriction, or `userId` may read it. A member of the named
+ * company reads it when the company has not narrowed it (no grant rows), or when a grant names them or a
+ * team they are in. Company owners and admins (anyone holding content:manage) always read it so they
+ * cannot lock themselves out. Throws on a failed lookup; callers lock.
+ */
 export async function viewerMayRead(d1: D1Like, collection: string, docId: number, userId: number | null): Promise<boolean> {
   const orgId = await getOrgVisibility(d1, collection, docId)
   if (!orgId) return true
   if (userId === null || !Number.isFinite(userId)) return false
-  const member = await d1.prepare('SELECT 1 AS ok FROM `eg_organization_members` WHERE organization_id = ? AND user_id = ? LIMIT 1').bind(orgId, userId).first()
-  return Boolean(member)
+  const member = (await d1.prepare('SELECT role FROM `eg_organization_members` WHERE organization_id = ? AND user_id = ? LIMIT 1').bind(orgId, userId).first()) as { role: string } | null
+  if (!member) return false
+  const grants = ((await d1.prepare('SELECT subject_type, subject_id FROM `eg_content_org_grants` WHERE organization_id = ? AND collection = ? AND doc_id = ?').bind(orgId, collection, docId).all()).results ?? []) as { subject_type: string; subject_id: string }[]
+  if (grants.length === 0) return true
+  if (grants.some((g) => g.subject_type === 'member' && g.subject_id === String(userId))) return true
+  const teams = ((await d1.prepare('SELECT team_id FROM `eg_organization_team_members` WHERE user_id = ?').bind(userId).all()).results ?? []) as { team_id: string }[]
+  if (grants.some((g) => g.subject_type === 'team' && teams.some((t) => t.team_id === g.subject_id))) return true
+  // Owners, admins and custom roles holding content:manage keep access.
+  if (member.role === 'owner' || member.role === 'admin') return true
+  const custom = (await d1.prepare('SELECT permissions FROM `eg_organization_roles` WHERE organization_id = ? AND name = ? LIMIT 1').bind(orgId, member.role).first()) as { permissions: string } | null
+  try {
+    return Boolean(custom && (JSON.parse(custom.permissions) as unknown[]).includes('content:manage'))
+  } catch {
+    return false
+  }
 }
 
 const liveD1 = async (): Promise<D1Like> => {

@@ -16,7 +16,8 @@ import {
   normaliseTeamName,
   roleShapeOk,
 } from './policy'
-import type { InviteRow, MemberRow, OrgRow, OrgStore, OrgSummary, RoleRow } from './types'
+import { isOrgVisibleCollection } from './visibility'
+import type { CompanyDocRow, GrantRow, InviteRow, MemberRow, OrgRow, OrgStore, OrgSummary, RoleRow } from './types'
 
 /**
  * Every organisation operation, with every side effect passed in. The server
@@ -430,6 +431,43 @@ export async function setTeamMembership(deps: OrgDeps, actor: Actor | null, orgI
   } else {
     await deps.store.removeTeamMember(teamId, userId)
   }
+  return done()
+}
+
+// --- Company content access -------------------------------------------------
+
+/** Documents limited to this company with who may read each. Needs content:manage. */
+export async function listCompanyContent(deps: OrgDeps, actor: Actor | null, orgId: string): Promise<Result<CompanyDocRow[]>> {
+  const blocked = gate(deps, actor)
+  if (blocked) return blocked as Result<CompanyDocRow[]>
+  const g = await member(deps, actor, orgId, 'content:manage')
+  if (!g.ok) return pass(g)
+  return done(await deps.store.listCompanyDocs(orgId, 200))
+}
+
+/**
+ * Narrows one company document to chosen members and teams (or opens it to every member again with an empty list).
+ * Subjects must belong to this company; the document must be limited to this company by the site admin.
+ */
+export async function setCompanyContentAccess(deps: OrgDeps, actor: Actor | null, orgId: string, collection: unknown, docId: unknown, grantsInput: unknown): Promise<Result> {
+  const blocked = gate(deps, actor)
+  if (blocked) return blocked
+  const g = await member(deps, actor, orgId, 'content:manage')
+  if (!g.ok) return pass(g)
+  if (!isOrgVisibleCollection(collection) || typeof docId !== 'number' || !Number.isInteger(docId) || docId <= 0) return fail('invalid')
+  if (!(await deps.store.docBelongsToOrg(orgId, collection, docId))) return fail('not_found')
+  const wanted = Array.isArray(grantsInput) ? (grantsInput as GrantRow[]) : []
+  const clean: GrantRow[] = []
+  for (const w of wanted.slice(0, 500)) {
+    if (!w || (w.subjectType !== 'member' && w.subjectType !== 'team') || typeof w.subjectId !== 'string') return fail('invalid')
+    if (w.subjectType === 'member') {
+      const userId = Number(w.subjectId)
+      if (!Number.isInteger(userId) || !(await deps.store.getMember(orgId, userId))) return fail('invalid')
+    } else if (!(await teamOf(deps, orgId, w.subjectId))) return fail('invalid')
+    clean.push({ subjectType: w.subjectType, subjectId: w.subjectId })
+  }
+  await deps.store.setGrants(orgId, collection, docId, clean, new Date(deps.now()).toISOString())
+  await deps.audit({ action: 'organization.updated', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: `content access ${collection}/${docId}: ${clean.length === 0 ? 'every member' : `${clean.length} selected`}` })
   return done()
 }
 

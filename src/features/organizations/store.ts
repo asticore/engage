@@ -1,7 +1,8 @@
 import { resolveD1Binding } from '@/cms/db/connect'
 
 import type { OrgPermissionStore } from './permissions'
-import type { InviteRow, MemberRow, OrgRow, OrgStore, RoleRow, TeamRow } from './types'
+import { ORG_VISIBLE_COLLECTIONS } from './visibility'
+import type { CompanyDocRow, GrantRow, InviteRow, MemberRow, OrgRow, OrgStore, RoleRow, TeamRow } from './types'
 
 /**
  * The real organisation tables, behind a D1-shaped handle so tests can run the
@@ -101,7 +102,7 @@ export function createD1OrgStore(getD1: () => Promise<D1Like>): OrgStore {
     },
     async deleteOrg(id) {
       await run('DELETE FROM `eg_organization_team_members` WHERE team_id IN (SELECT id FROM `eg_organization_teams` WHERE organization_id = ?)', id)
-      for (const table of ['eg_organization_teams', 'eg_organization_members', 'eg_organization_invitations', 'eg_organization_roles', 'eg_content_org_visibility']) {
+      for (const table of ['eg_organization_teams', 'eg_organization_members', 'eg_organization_invitations', 'eg_organization_roles', 'eg_content_org_visibility', 'eg_content_org_grants']) {
         await run(`DELETE FROM \`${table}\` WHERE organization_id = ?`, id)
       }
       await run('DELETE FROM `eg_organizations` WHERE id = ?', id)
@@ -157,6 +158,7 @@ export function createD1OrgStore(getD1: () => Promise<D1Like>): OrgStore {
       )
       if (changes(result) === 0) return false
       await run('DELETE FROM `eg_organization_team_members` WHERE user_id = ? AND team_id IN (SELECT id FROM `eg_organization_teams` WHERE organization_id = ?)', userId, orgId)
+      await run("DELETE FROM `eg_content_org_grants` WHERE organization_id = ? AND subject_type = 'member' AND subject_id = ?", orgId, String(userId))
       return true
     },
     async countMembersWithRole(orgId, role) {
@@ -181,6 +183,7 @@ export function createD1OrgStore(getD1: () => Promise<D1Like>): OrgStore {
     },
     async deleteTeam(id) {
       await run('DELETE FROM `eg_organization_team_members` WHERE team_id = ?', id)
+      await run("DELETE FROM `eg_content_org_grants` WHERE subject_type = 'team' AND subject_id = ?", id)
       await run('DELETE FROM `eg_organization_teams` WHERE id = ?', id)
     },
     async addTeamMember(teamId, userId, at) {
@@ -218,6 +221,32 @@ export function createD1OrgStore(getD1: () => Promise<D1Like>): OrgStore {
         orgId, name, orgId, name,
       )
       return Number(r?.n ?? 0)
+    },
+
+    async listCompanyDocs(orgId, limit) {
+      const out: CompanyDocRow[] = []
+      for (const collection of ORG_VISIBLE_COLLECTIONS) {
+        const rows = await all<{ doc_id: number; title: string | null }>(
+          `SELECT v.doc_id AS doc_id, d.title AS title FROM \`eg_content_org_visibility\` v LEFT JOIN \`eg_${collection}\` d ON d.id = v.doc_id WHERE v.collection = ? AND v.organization_id = ? ORDER BY v.updated_at DESC LIMIT ?`,
+          collection,
+          orgId,
+          limit,
+        )
+        for (const r of rows) {
+          const grants = await all<{ subject_type: string; subject_id: string }>('SELECT subject_type, subject_id FROM `eg_content_org_grants` WHERE organization_id = ? AND collection = ? AND doc_id = ?', orgId, collection, Number(r.doc_id))
+          out.push({ collection, docId: Number(r.doc_id), title: r.title || `#${r.doc_id}`, grants: grants.map((g) => ({ subjectType: g.subject_type as GrantRow['subjectType'], subjectId: g.subject_id })) })
+        }
+      }
+      return out.slice(0, limit)
+    },
+    async docBelongsToOrg(orgId, collection, docId) {
+      return Boolean(await first('SELECT 1 AS ok FROM `eg_content_org_visibility` WHERE collection = ? AND doc_id = ? AND organization_id = ? LIMIT 1', collection, docId, orgId))
+    },
+    async setGrants(orgId, collection, docId, grants, at) {
+      await run('DELETE FROM `eg_content_org_grants` WHERE organization_id = ? AND collection = ? AND doc_id = ?', orgId, collection, docId)
+      for (const g of grants) {
+        await run('INSERT OR IGNORE INTO `eg_content_org_grants` (organization_id, collection, doc_id, subject_type, subject_id, created_at) VALUES (?, ?, ?, ?, ?, ?)', orgId, collection, docId, g.subjectType, g.subjectId, at)
+      }
     },
 
     async insertInvite(row) {

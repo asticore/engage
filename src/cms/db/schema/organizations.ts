@@ -100,3 +100,17 @@ export const contentOrgVisibility = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.collection, table.docId] }), index('eg_content_org_visibility_org_idx').on(table.organizationId)],
 )
+
+/** Company admins narrow a company-limited document to chosen members or teams (see src/migrations/20270313_100000_org_content_grants.ts). */
+export const contentOrgGrants = sqliteTable(
+  'eg_content_org_grants',
+  {
+    organizationId: text('organization_id').notNull(),
+    collection: text('collection').notNull(),
+    docId: integer('doc_id').notNull(),
+    subjectType: text('subject_type').notNull(),
+    subjectId: text('subject_id').notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.organizationId, table.collection, table.docId, table.subjectType, table.subjectId] }), index('eg_content_org_grants_doc_idx').on(table.collection, table.docId)],
+)
