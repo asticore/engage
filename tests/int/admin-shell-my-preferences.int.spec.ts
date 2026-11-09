@@ -52,6 +52,37 @@ describe('admin shell chrome', () => {
     expect(nav.state.toggleSidebar).toHaveBeenCalledTimes(1)
   })
 
+  it('hamburger css draws three visible lines and animates to an X, honouring reduced motion', () => {
+    const css = root('src/app/(engage)/custom.css')
+    expect(css).toMatch(/\.admin-topbar__menu \.hamburger__line\s*\{[^}]*height:\s*2px[^}]*background-color:\s*currentColor/)
+    expect(css).toMatch(/\.hamburger--active \.hamburger__line:nth-child\(1\)\s*\{[^}]*rotate\(45deg\)/)
+    expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{\s*\.admin-topbar__menu \.hamburger__line\s*\{\s*transition: none/)
+  })
+
+  it('top bar renders three hamburger lines', () => {
+    const { container } = render(wrap(h(AdminTopBar, { siteName: 'X' })))
+    expect(container.querySelectorAll('.admin-topbar__menu .hamburger__line')).toHaveLength(3)
+  })
+
+  it('Escape closes the mobile drawer and returns focus to the hamburger', async () => {
+    const { NavProvider, useNav } = await vi.importActual<typeof import('@/admin/context/NavContext')>('@/admin/context/NavContext')
+    const originalMatchMedia = window.matchMedia
+    window.matchMedia = ((q: string) => ({ matches: true, media: q, addEventListener() {}, removeEventListener() {} })) as never
+    const Probe = () => {
+      const { navOpen, setNavOpen } = useNav()
+      return h('div', null, h('button', { className: 'admin-topbar__menu', id: 'hb' }, 'menu'), h('button', { id: 'open', onClick: () => setNavOpen(true) }, 'open'), h('span', { 'data-testid': 'state' }, String(navOpen)))
+    }
+    render(h(NavProvider, null, h(Probe)))
+    fireEvent.click(document.getElementById('open') as HTMLElement)
+    expect(screen.getByTestId('state').textContent).toBe('true')
+    act(() => {
+      fireEvent.keyDown(window, { key: 'Escape' })
+    })
+    expect(screen.getByTestId('state').textContent).toBe('false')
+    expect(document.activeElement?.id).toBe('hb')
+    window.matchMedia = originalMatchMedia
+  })
+
   it('top bar offers Close menu while the drawer is open', () => {
     nav.state.navOpen = true
     render(wrap(h(AdminTopBar, { siteName: 'X' })))
