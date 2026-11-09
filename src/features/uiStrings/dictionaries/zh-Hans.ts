@@ -1236,6 +1236,9 @@ const zhHans: UiDictionary = {
   've.lib.global': "全局",
   've.lib.forms': "表单",
   've.lib.shop': "商店",
+  've.lib.views': "视图",
+  've.lib.viewCompact': "紧凑视图",
+  've.lib.viewList': "列表视图",
   've.translate.hint': "翻译",
 
   // --- emails (templates 2) ---

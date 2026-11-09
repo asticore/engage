@@ -1237,6 +1237,9 @@ const nl: UiDictionary = {
   've.lib.global': "Globaal",
   've.lib.forms': "Formulieren",
   've.lib.shop': "Winkel",
+  've.lib.views': "Weergave",
+  've.lib.viewCompact': "Compacte weergave",
+  've.lib.viewList': "Lijstweergave",
   've.translate.hint': "Vertaling",
 
   // --- emails (templates 2) ---

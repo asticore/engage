@@ -1237,6 +1237,9 @@ const ja: UiDictionary = {
   've.lib.global': "グローバル",
   've.lib.forms': "フォーム",
   've.lib.shop': "ショップ",
+  've.lib.views': "表示",
+  've.lib.viewCompact': "コンパクト表示",
+  've.lib.viewList': "リスト表示",
   've.translate.hint': "翻訳",
 
   // --- emails (templates 2) ---

@@ -1238,6 +1238,9 @@ const de: UiDictionary = {
   've.lib.global': "Global",
   've.lib.forms': "Formulare",
   've.lib.shop': "Shop",
+  've.lib.views': "Ansicht",
+  've.lib.viewCompact': "Kompakte Ansicht",
+  've.lib.viewList': "Listenansicht",
   've.translate.hint': "Übersetzung",
 
   // --- emails (templates 2) ---
