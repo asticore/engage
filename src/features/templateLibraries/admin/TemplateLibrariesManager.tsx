@@ -7,7 +7,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { LibrarySummary } from '../types'
 
 /** Where the author guide and the example library live. */
-export const TEMPLATE_LIBRARY_GUIDE_URL = 'https://github.com/asticore/gracengatsby/blob/main/docs/template-libraries.md'
+export const TEMPLATE_LIBRARY_GUIDE_URL = 'https://github.com/asticore/engage/blob/main/docs/template-libraries.md'
 
 type Listing = { ok?: boolean; error?: string; libraries?: LibrarySummary[]; canManage?: boolean; hasToken?: boolean }
 type TokenCheck = { libraryId: string; libraryLabel: string; ok: boolean; message: string }
