@@ -85,6 +85,9 @@ Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated
 ### Task 12. Update popup for super admins (new, 7 Nov 2026)
 - [ ] A popup in the admin portal that checks the current version against the repo and tells super admins when their copy needs updating. Super admins click it to start the update, then it opens the repo changelog. Other admins see nothing. Decide update method (Deploy button sync, GitHub sync, or a pull request) and handle forks. Repo URL is now asticore/engage. Effort M to L.
 
+### Task 15. Taskboard (Kanban) with assignees (new, 11 Nov 2026)
+- [ ] Add a Kanban-style taskboard in the admin portal so people can create tasks and assign them to different users. Scope: boards with columns (To do, In progress, Review, Done; columns editable), drag cards between and within columns, card fields (title, description, assignee, due date, labels, priority), assign to any admin or staff user, "My tasks" filter, comments, per-board access control, activity log entries for moves and assignments, email notification on assignment (uses Task 8), lazy tables created only when the section is switched on (Task 11), English and translated text, mobile-friendly. Built as a feature section with tests; no separate style system (use Shine). Matt's rule: no features removed, one design system only.
+
 ### Task 13. Speed up the portal and shrink the Worker bundle (right before the live checks)
 **Goals (Matt, 7 Nov 2026):**
 1. Get the Cloudflare Worker bundle under the 3 MB limit of the Workers free plan (compressed size), so anyone can install the site for free with the Deploy button.
