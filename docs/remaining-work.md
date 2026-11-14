@@ -37,7 +37,7 @@ Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20
 ## Tasks (in order)
 Open: Tasks 1 to 4 (follow-ups from the 9 Nov 2026 work on old tasks 1 to 7), then Tasks 5 to 12 (regions and domains, cron, email, theming, company downloads, admin settings, update popup), Task 13 (speed up the portal and shrink the Worker bundle) and Task 14 (Matt's live checklist), remain, plus one parked decision for Matt (see "Decisions waiting on Matt"). More tasks from Matt to verify as already implemented go in before Task 1. Open tasks were renumbered on 9 Nov 2026 after the old tasks 1 to 7 closed. Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the Done list (`docs/remaining-work-done.md`), and is not the same as an open task with that number.
 
-Order: 1 to 4 (follow-ups), 5 to 15 (features, in listed order), (new verify tasks), 16 Speed up, 17 Live checks (ends with the fresh-account deploy check).
+Order: 1 to 4 (follow-ups), 5 to 15 (features, in listed order), 16 to 22 (notes audit of 14 Nov), (new verify tasks), 16 Speed up, 17 Live checks (ends with the fresh-account deploy check).
 
 ### Task 1. Events and tickets: paid orders, refunds and gaps (new, 9 Nov 2026)
 Audit is in `docs/events-tickets-audit.md`. The "Sold out" state is done. Still open:
@@ -71,7 +71,7 @@ Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated
 - [ ] Find out whether the portal has easy cron jobs, for example scheduled pages, scheduled publish and unpublish, and recurring tasks. Check what the Worker cron trigger already runs. If there is no admin view, add a Scheduled jobs screen: list of jobs, last run, next run, run now, enable or disable, and logs. Effort M.
 
 ### Task 8. Email notifications on actions, push and Cloudflare sending (new, 7 Nov 2026)
-- [ ] In Email, let admins set up notifications triggered by actions (order receipt, sign-up, form submit, booking, comment and others): choose the trigger, recipient, template, and channel (email through the connected tools, or push). Add push notifications (web push) as a channel. In Settings, allow connecting and sending email through Cloudflare (Cloudflare Email, see Known limits) as well as the third party email platforms already connectable. Effort L.
+- [ ] In Email, let admins set up notifications triggered by actions (order receipt, sign-up, form submit, booking, comment and others): choose the trigger, recipient, template, and channel (email through the connected tools, or push). Add push notifications (web push) as a channel. In Settings, allow connecting and sending email through Cloudflare (Cloudflare Email, see Known limits) as well as the third party email platforms already connectable. Also (14 Nov audit): add an SMTP provider, and let Email settings hold several providers at once with one default and an ordered fallback list (today one fallback, failover only on transient errors). Effort L.
 
 ### Task 9. Style guide and theming: style preferences and uniqueness (new, 7 Nov 2026)
 - [ ] In the style guide and theming screen, let owners pick website styles they like (for example from example sites or style cards), explain why each style suits (reasoning shown to the user), and use the picks to choose or generate a unique theme. Keeps one style system only (no v1 or v2) and effects chosen from pickers. Effort M to L.
@@ -86,7 +86,67 @@ Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated
 - [ ] A popup in the admin portal that checks the current version against the repo and tells super admins when their copy needs updating. Super admins click it to start the update, then it opens the repo changelog. Other admins see nothing. Decide update method (Deploy button sync, GitHub sync, or a pull request) and handle forks. Repo URL is now asticore/engage. Effort M to L.
 
 ### Task 15. Taskboard (Kanban) with assignees (new, 11 Nov 2026)
-- [ ] Add a Kanban-style taskboard in the admin portal so people can create tasks and assign them to different users. Scope: boards with columns (To do, In progress, Review, Done; columns editable), drag cards between and within columns, card fields (title, description, assignee, due date, labels, priority), assign to any admin or staff user, "My tasks" filter, comments, per-board access control, activity log entries for moves and assignments, email notification on assignment (uses Task 8), lazy tables created only when the section is switched on (Task 11), English and translated text, mobile-friendly. Built as a feature section with tests; no separate style system (use Shine). Matt's rule: no features removed, one design system only.
+- [ ] Add a Kanban-style taskboard in the admin portal so people can create tasks and assign them to different users. Scope: boards with columns (To do, In progress, Review, Done; columns editable), drag cards between and within columns, card fields (title, description, assignee, due date, labels, priority), assign to any admin or staff user, "My tasks" filter, comments, per-board access control, activity log entries for moves and assignments, email notification on assignment (uses Task 8), lazy tables created only when the section is switched on (Task 11), English and translated text, mobile-friendly. Built as a feature section with tests; no separate style system (use Shine). Matt's rule: no features removed, one design system only. The same board covers the "project page to assign and view tasks" note.
+
+### Notes audit (14 Nov 2026): what Matt's notes list already has
+Audited about 130 note lines against the code. Already built (details in `docs/remaining-work-done.md` and the live checks in Task 14): PayPal checkout and webhook; Australia Post, DHL, UPS, FedEx, ShipStation and Sendle rates and labels; Resend, SES, Mailgun, Postmark, SendGrid, Cloudflare Email, Brevo and Mailchimp Transactional (as Mandrill) with test buttons and one fallback; visual email designer with merge tags; members and tiers, courses sold through a product; grouped, external, gift card, bundle, variable, downloadable and virtual products; add-ons; subscriptions; SKU and GTIN; stock, backorders, low stock alerts; scheduled sale price; shipping zones, free over, table rates, classes; tax and GST; coupons; cross-sells in the cart; upsells and recommendations; wishlist; back in stock; min and max quantity; name your price; pre-orders; variation image picker; unit-aware weight and dimensions; price tiers and pricing rules; currency switcher with day rates and default currency; Google Merchant and Meta feeds; CSV import and export; line-item refunds; invoices and packing slips; abandoned cart emails; shop reports; checkout field editor; reviews; media folders, upload of pdf, docx and video, convert to WebP or AVIF, click to optimise, Cloudflare Images and Stream; Speed toggles; scheduled and manual backups to R2 and S3; PageSpeed lab report; axe and contrast tests for hover and resting states; ads (placements, ads.txt); custom fields (ACF style); popup sections; offcanvas element; post duplicate; categories, tags, author archives, related posts; structured data (Organization, WebSite, Breadcrumb, FAQ, Article, Product, Image); SEO analysis with traffic lights and internal link suggestions; language switcher element, translate mode, translations table; forms in the visual editor with address search; Google login, 2FA, passkeys, social login; profile editing; portal search and site search; admin noindex; Microsoft Clarity; API builder with roles and categories; XML, CSV and JSON feeds; Unused tables panel; Shine and Effix; features default off for new sections.
+Reminders in the notes, read as: "Look at em dash" = Task 22 (remove em dashes from user-facing text, add a lint check); "lovable features" = Lovable-style prompt-to-site building, covered by the site planner in Task 22; "Put this in after done the other items" = the new Tasks 16 to 22 sit after the existing feature tasks and before the speed task. Duplicate lines (bulk page creation, Google sign-in, PayPal, demos) are merged into one task each.
+
+### Task 16. Commerce gaps: quantities, pricing and feeds (new, 14 Nov 2026)
+- [ ] Carton quantity and pallet quantity per product (sell in multiples, show units per carton and pallet, order and invoice lines). Not built.
+- [ ] Composite products (customer picks one item per component, price from the choices). Bundles, add-ons exist.
+- [ ] Local pickup shipping method in shipping zones (the carriers have pickup, zones do not).
+- [ ] Retail and wholesale modes: a wholesale price per role exists. Add a switch for wholesale-only catalogue or hidden retail prices, and rules by customer variables (company, group, location, order history). Merge with Task 4 item 3 (match by company).
+- [ ] Data feeds: only Google Merchant and Meta exist. Add a Pinterest catalogue feed, and per-feed settings (price list, currency, category filter, field mapping) so a customer can get different pricing per channel. Google Merchant API sync stays a later integration.
+- [ ] Afterpay and Klarna: today only through Stripe methods; add the on-product pay-later message if wanted.
+- [ ] Bulk creation of pages and products: a bulk create screen (paste titles or CSV, pick a template, create drafts). Product CSV import and generate-variations exist; no page equivalent.
+- [ ] Checkout flow handoff: carry form submission data into cart and checkout (prefill name, address, email; add a product from a form step), CartFlows style, including optional order bump and one-click upsell after checkout.
+- [ ] Donations: donation product type (suggested amounts, custom amount, optional recurring, receipt email, tax receipt text). Today only name your price.
+- [ ] Review pass: make the Products admin easier to understand (plain labels, grouped tabs, help text). Verify the storefront defaults: `formatMoney` falls back to AUD, pre-order product page behaviour.
+
+### Task 17. Selling modes: services, quotes, bids, hoarders (new, 14 Nov 2026)
+- [ ] Service product type (no shipping, booking or quote based) so any company type (LMS, services, regular goods) can sell.
+- [ ] Request a quote and request a bid on an item, and request a specific item with details: a form-to-quote flow with admin pricing, customer accept and pay, email updates. Builds on forms.
+- [ ] Block hoarders for events and limited stock: per-person and per-order limits, purchase cooldown, waiting list, bot checks.
+- [ ] Approval flow assigned to a named person (today approval steps are by role).
+- [ ] DocuSign: send a document for signature from an order or form, store the signed copy (needs an account decision from Matt).
+- [ ] Calendly-style booking pages follow `docs/bookings-plan.md` once Matt decides.
+
+### Task 18. Memberships and shipping follow-ups (new, 14 Nov 2026)
+- [ ] Dunning and retry for failed membership payments (`src/features/members/billing.ts` says not built): retry schedule, reminder emails, grace period, then downgrade.
+- [ ] Live order tracking: poll carrier status or take carrier webhooks, show the status on the account order page and email on delivery.
+- [ ] StarTrack, Couriers Please and Shippit are key check only; build rate and label calls when Matt supplies test accounts.
+
+### Task 19. Media: tree, tags and backup destinations (new, 14 Nov 2026)
+- [ ] Media tree view of the folder structure (collapsible, drag files onto folders) beside the gallery. Folders exist as a flat filter.
+- [ ] Media tags and sub-tags (a tag tree) with filters, bulk tagging, plus folders.
+- [ ] Backups to FTP or SFTP (the destination code refuses them today; Workers cannot open raw FTP, so decide between an upload relay, WebDAV or keep R2 and S3 only), like UpdraftPlus.
+- [ ] Decision: third-party image optimisers (ShortPixel, Imagify style) are not planned; Cloudflare Images does it. Confirm with Matt. KV is not bound; use the Cache API as planned unless a need shows.
+
+### Task 20. Accessibility: contrast for every state (new, 14 Nov 2026)
+- [ ] Extend the contrast checks beyond hover and resting: focus, active, disabled and selected states and minimum target sizes, for admin and public components, in light and dark. Add the same checks to the visual editor design warnings (`designWarnings.ts`, hex only today) and a headless test per state.
+
+### Task 21. Content and SEO gaps (new, 14 Nov 2026)
+- [ ] A/B tests: suggestions (what to test, from page analysis) and editing variants in the visual editor (admin collection only today).
+- [ ] AdSense: confirm an AdSense unit type in ads; Pinterest pins to the CMS (import a pin or board into media or a gallery, Pin It button); slider with video slides and transition options (Slider Revolution, Smart Slider and MetaSlider style); breadcrumb styling (separator, labels, home) sitewide.
+- [ ] Permalink names for blog and shop archives, category and tag bases (templates); nested category paths stay in Task 4.
+- [ ] Blog RSS feed; comments (decision: build or skip); knowledgebase (articles, categories, search, helpful votes, built on FAQ).
+- [ ] Structured data: check each type (Event, Recipe, LocalBusiness, JobPosting, VideoObject, Course, Review and rating) and add the missing ones.
+- [ ] SEO: broken link checker (internal and outbound, shown in the audit); Wise style suggestions to show the same content as a table, bullets or description (suggest and convert in the editor).
+- [ ] Coming soon page and staging mode: coming soon variant, staging flag with sitewide noindex and a banner (maintenance mode exists).
+- [ ] Em dashes: remove from user-facing English text (41 places, for example select placeholders and the translate banner) and add a lint or test that blocks new ones.
+- [ ] Languages: language-specific merge tags, language switcher embed look settings, outstanding translations table checked per page.
+- [ ] Site planner: plan the whole site (pages tree), fill in each page, AI suggests extra pages and sections, through the connected AI keys, Elementor and Lovable style. Builds on the AI builder.
+
+### Task 22. Accounts, agencies and integrations gaps (new, 14 Nov 2026)
+- [ ] Account ownership transfer and delegation (acting for another account with limited rights); organisation SSO (SAML or OIDC per organisation).
+- [ ] Company-scoped theming of the portal and site, and company-level admin view personalisation (only as a company). Needs a decision on the data model with Task 10 companies.
+- [ ] Franchising: parent and child sites with shared templates and separate owners (builds on multisite and Tasks 5 and 6).
+- [ ] Connect to an own database (decision: D1 only today; options are Hyperdrive to Postgres or MySQL, read-only).
+- [ ] Reporting dashboard for agencies: one view across sites, agency access role, client-safe reports.
+- [ ] Demos for agencies: create demo sites and accounts, export as HTML and as an importable package (settings export exists).
+- [ ] Google Analytics: send the signed-in customer ID as `user_id`, and a quick link to Google Analytics in the admin.
+- [ ] Zapier app (triggers from webhooks, actions from the API); webhook settings export; XML feed hooks for industries such as car rental; FMCG and food service connectors such as Uber Eats (decision on which).
 
 ### Task 13. Speed up the portal and shrink the Worker bundle (right before the live checks)
 **Goals (Matt, 7 Nov 2026):**
