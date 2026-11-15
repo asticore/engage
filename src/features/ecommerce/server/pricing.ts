@@ -14,6 +14,7 @@ import { DEFAULT_TAX_SETTINGS, type TaxClass, type TaxRate, type TaxSettings } f
 import { fetchLiveRates, normaliseShippingConfig } from '../shipping/registry'
 import { computeOrderTotals, type OrderTotals, type PricedLine } from '../lib/totals'
 import { loadPreordersEnabled } from './shopExtra'
+import { isNonShipping } from '../lib/service'
 import { donationLine, withDonationAddOns } from '../lib/donations'
 import { addOnSummary, parseAddOnInputs, priceAddOns, normaliseAddOnDefs, type AddOnChoice } from '../lib/addOns'
 import { applyPricingRules } from '../lib/pricingRules'
@@ -155,7 +156,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       if (!bundle.ok) throw new CheckoutError((bundle as { error: string }).error)
       inCart.set(bundleKey, (inCart.get(bundleKey) ?? 0) + quantity)
       const b = product as Doc
-      const virtual = b.isVirtual === true || b.category === 'digital'
+      const virtual = isNonShipping(b as never) || b.category === 'digital'
       lines.push({
         key: String(i),
         productId: String(productId),
@@ -218,7 +219,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       .map(String)
     const taxClass = (['standard', 'reduced', 'zero'].includes(String(p.taxClass)) ? p.taxClass : 'standard') as TaxClass
     const weight = typeof p.weight === 'number' ? p.weight : 0 // kilograms
-    const virtual = p.virtual === true || p.isVirtual === true || p.category === 'digital'
+    const virtual = isNonShipping(p as never) || p.category === 'digital'
     lines.push({
       key: String(i),
       productId: String(productId),

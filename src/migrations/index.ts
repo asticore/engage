@@ -165,6 +165,7 @@ import * as migration_20270316_120000_local_pickup from './20270316_120000_local
 import * as migration_20270316_130000_pricing_rule_customer_conditions from './20270316_130000_pricing_rule_customer_conditions';
 import * as migration_20270316_140000_product_feeds from './20270316_140000_product_feeds';
 import * as migration_20270316_150000_product_donations from './20270316_150000_product_donations';
+import * as migration_20270316_160000_service_products from './20270316_160000_service_products';
 
 export const migrations = [
   {
@@ -996,5 +997,10 @@ export const migrations = [
     up: migration_20270316_150000_product_donations.up,
     down: migration_20270316_150000_product_donations.down,
     name: '20270316_150000_product_donations',
+  },
+  {
+    up: migration_20270316_160000_service_products.up,
+    down: migration_20270316_160000_service_products.down,
+    name: '20270316_160000_service_products',
   },
 ];

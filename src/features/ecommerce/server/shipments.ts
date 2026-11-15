@@ -5,6 +5,7 @@ import { packItems } from '../shipping/packing'
 import { getAdapter, normaliseShippingConfig, parseLiveOptionId } from '../shipping/registry'
 import type { CarrierId } from '../shipping/types'
 import { sendShippedOrderText } from '@/features/sms/shippedText'
+import { isNonShipping } from '../lib/service'
 import { sendOrderEmail } from './emails'
 
 type Doc = Record<string, unknown>
@@ -48,7 +49,7 @@ export async function buyLabel(engine: ShipEngine, orderId: number, pick: { carr
   const items: { quantity: number; weightKg: number | null; lengthCm: number | null; widthCm: number | null; heightCm: number | null }[] = []
   for (const l of lines) {
     const p = l.productId ? await engine.findByID({ collection: 'products', id: l.productId, depth: 0, overrideAccess: true }).catch((): Doc | null => null) : null
-    if (p && (p.isVirtual === true || p.virtual === true)) continue
+    if (p && isNonShipping(p as never)) continue
     const n = (v: unknown): number | null => (typeof v === 'number' ? v : null)
     items.push({ quantity: l.quantity ?? 1, weightKg: n(p?.weight), lengthCm: n(p?.length), widthCm: n(p?.width), heightCm: n(p?.height) })
   }
