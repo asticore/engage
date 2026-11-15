@@ -133,3 +133,40 @@ describe('indexNodePaths and buildCrumbs', () => {
     expect(buildCrumbs(tree, [5, 0, 0]).map((c) => c.label)).toEqual(['Page'])
   })
 })
+
+describe('collectWarnings: Task 20c colour checks', () => {
+  const run = (design: Record<string, unknown>) => collectWarnings([{ blockType: 'richText', _id: 'n', design } as SectionNode])
+
+  it('checks named theme tokens in both themes', () => {
+    // --sh-text-muted on white passes, but in the dark theme it is checked against the same hex background.
+    const w = run({ bgType: 'color', bgColor: '#ffffff', textColor: 'var(--sh-text)' })
+    expect(w).toHaveLength(1) // dark text token (#f1f5f9) on a white block is unreadable in the dark theme
+    expect(w[0].message).toContain('Try #000000 text.')
+    expect(run({ bgType: 'color', bgColor: 'var(--sh-bg)', textColor: 'var(--sh-text)' })).toEqual([])
+    expect(run({ bgType: 'color', bgColor: 'var(--sh-surface)', textColor: 'var(--sh-text-muted)' }).map((x) => x.id.split(':')[0])).toEqual([])
+    expect(run({ bgType: 'color', bgColor: '#fff', textColor: 'var(--unknown)' })).toEqual([])
+  })
+  it('checks gradients against every stop', () => {
+    const w = run({ bgType: 'gradient', bgGradientFrom: '#111111', bgGradientTo: '#dddddd', textColor: '#ffffff' })
+    expect(w).toHaveLength(1)
+    expect(w[0].message).toContain('gradient')
+    expect(run({ bgType: 'gradient', bgGradientFrom: '#111111', bgGradientTo: '#222222', textColor: '#ffffff' })).toEqual([])
+    expect(run({ bgType: 'gradient', textColor: '#ffffff' })).toEqual([])
+  })
+  it('asks for an overlay when text sits on a picture', () => {
+    const w = run({ bgType: 'image', textColor: '#ffffff' })
+    expect(w).toHaveLength(1)
+    expect(w[0]).toMatchObject({ level: 'info' })
+    expect(run({ bgType: 'image', textColor: '#ffffff', overlayType: 'color', overlayColor: '#000000', overlayOpacity: 0.5 })).toEqual([])
+    expect(run({ bgType: 'image' })).toEqual([])
+  })
+  it('checks hover colours against the normal ones and the focus ring at 3:1', () => {
+    const hover = run({ bgType: 'color', bgColor: '#ffffff', textColor: '#111111', hoverBgColor: '#eeeeee', hoverTextColor: '#cccccc' })
+    expect(hover.map((x) => x.id.split(':')[0])).toEqual(['contrast-hover'])
+    expect(run({ bgType: 'color', bgColor: '#ffffff', textColor: '#111111', hoverBgColor: '#222222' }).map((x) => x.id.split(':')[0])).toEqual(['contrast-hover'])
+    expect(run({ bgType: 'color', bgColor: '#ffffff', textColor: '#111111', hoverBgColor: '#ffeecc' })).toEqual([])
+    const ring = run({ bgType: 'color', bgColor: '#ffffff', focusRing: '#eeeeee' })
+    expect(ring.map((x) => x.id.split(':')[0])).toEqual(['focus-ring'])
+    expect(run({ bgType: 'color', bgColor: '#ffffff', focusRing: '#1d4ed8' })).toEqual([])
+  })
+})

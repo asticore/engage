@@ -11,6 +11,10 @@ import { readFlatDesign } from '@/lib/design/upgrade'
  *   - more than 3 heavy effects on one block (particles, parallax, pointer effect, animated background, Ken Burns)
  *   - a button or CTA with a label but no link
  *   - a CSS id (anchor) used by more than one block or column (the warning sits on the owning block)
+ *   - Task 20c: contrast also for named theme tokens (checked in the light and the dark theme), gradient backgrounds (against
+ *     every stop), text over a picture, video or slideshow with no overlay (a picture cannot be sampled here, so this is info),
+ *     the hover colours (fallback to the normal colour for the one not set), and the focus ring (3:1 against the background).
+ *     Contrast messages end with a fix suggestion.
  */
 
 import type { SectionNode } from '@/lib/sectionTree'
@@ -99,15 +103,100 @@ function headingLevel(node: SectionNode): number | null {
   return null
 }
 
+export type Rgb = [number, number, number]
+type Mode = 'light' | 'dark'
+
+/** The site theme tokens (Shine) a colour field can name, per theme. Unknown names are not checked. */
+export const THEME_TOKENS: Record<Mode, Record<string, string>> = {
+  light: { '--sh-bg': '#ffffff', '--sh-surface': '#f8fafc', '--sh-text': '#0f172a', '--sh-text-muted': '#5f6e84', '--sh-border': '#e2e8f0', '--sh-primary': '#4f46e5', '--sh-on-primary': '#ffffff' },
+  dark: { '--sh-bg': '#0b0f19', '--sh-surface': '#121826', '--sh-text': '#f1f5f9', '--sh-text-muted': '#94a3b8', '--sh-border': '#263042', '--sh-primary': '#4f46e5', '--sh-on-primary': '#ffffff' },
+}
+
+/** A colour value as RGB: plain hex, rgb(), white and black, or a theme token such as var(--sh-text) in the given theme. Otherwise null. */
+export function resolveColor(value: unknown, mode: Mode = 'light'): Rgb | null {
+  if (typeof value !== 'string') return null
+  const v = value.trim()
+  const hex = parseHex(v)
+  if (hex) return hex
+  const rgb = /^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})\s*\)$/i.exec(v)
+  if (rgb) return [Math.min(255, Number(rgb[1])), Math.min(255, Number(rgb[2])), Math.min(255, Number(rgb[3]))]
+  if (/^white$/i.test(v)) return [255, 255, 255]
+  if (/^black$/i.test(v)) return [0, 0, 0]
+  const token = /^var\(\s*(--[\w-]+)\s*(?:,[^)]*)?\)$/.exec(v)
+  if (token && THEME_TOKENS[mode][token[1]]) return parseHex(THEME_TOKENS[mode][token[1]])
+  return null
+}
+
+const hexOf = (rgb: Rgb): string => `#${rgb.map((c) => c.toString(16).padStart(2, '0')).join('')}`
+
+/** The better of black and white against a background, as a suggestion. */
+function suggestText(background: Rgb, min: number): string {
+  const black = contrastRatio([0, 0, 0], background)
+  const white = contrastRatio([255, 255, 255], background)
+  const best = black >= white ? { hex: '#000000', ratio: black } : { hex: '#ffffff', ratio: white }
+  return best.ratio >= min ? `Try ${best.hex} text.` : 'Change the background colour as well.'
+}
+
+const MODES: Mode[] = ['light', 'dark']
+const worse = <T extends { ratio: number }>(a: T | null, b: T): T => (!a || b.ratio < a.ratio ? b : a)
+
+/** Worst contrast of a text colour against one or more backgrounds (a gradient has two stops), over both themes. */
+function worstContrast(text: unknown, backgrounds: unknown[]): { ratio: number; background: Rgb } | null {
+  let result: { ratio: number; background: Rgb } | null = null
+  for (const mode of MODES) {
+    const t = resolveColor(text, mode)
+    if (!t) continue
+    for (const raw of backgrounds) {
+      const b = resolveColor(raw, mode)
+      if (b) result = worse(result, { ratio: contrastRatio(t, b), background: b })
+    }
+  }
+  return result
+}
+
 function contrastWarning(node: SectionNode): string | null {
   const design = readFlatDesign(node.design)
+  const kind = design.bgType
+  if (kind === 'gradient') {
+    const stops = [design.bgGradientFrom, design.bgGradientTo].filter((x) => resolveColor(x) || resolveColor(x, 'dark'))
+    const found = stops.length ? worstContrast(design.textColor, stops) : null
+    if (!found || found.ratio >= MIN_CONTRAST) return null
+    return `Low text contrast on the gradient (${found.ratio.toFixed(2)}:1 against its weakest stop, needs 4.5:1). ${suggestText(found.background, MIN_CONTRAST)}`
+  }
+  if (kind !== undefined && kind !== 'color') return null
+  const found = worstContrast(design.textColor, [design.bgColor])
+  if (!found || found.ratio >= MIN_CONTRAST) return null
+  return `Low text contrast (${found.ratio.toFixed(2)}:1, needs 4.5:1). ${suggestText(found.background, MIN_CONTRAST)}`
+}
+
+/** Text over a picture, video or slideshow with no overlay: the colour cannot be sampled here, so it is a prompt to check. */
+function pictureWarning(node: SectionNode): string | null {
+  const design = readFlatDesign(node.design)
+  if (design.bgType !== 'image' && design.bgType !== 'video' && design.bgType !== 'slideshow') return null
+  if (!str(design.textColor)) return null
+  const overlayOn = (design.overlayType === 'color' || design.overlayType === 'gradient') && Number(design.overlayOpacity ?? 1) >= 0.3
+  if (overlayOn) return null
+  return 'Text sits on a picture with no overlay, so its contrast cannot be checked. Add a dark or light overlay (30 percent or more) behind the text.'
+}
+
+/** Hover colours: the one not set falls back to the normal colour. Both resting and hover must reach 4.5:1. */
+function hoverWarning(node: SectionNode): string | null {
+  const design = readFlatDesign(node.design)
+  if (!str(design.hoverBgColor) && !str(design.hoverTextColor)) return null
   if (design.bgType !== undefined && design.bgType !== 'color') return null
-  const text = parseHex(design.textColor)
-  const background = parseHex(design.bgColor)
-  if (!text || !background) return null
-  const ratio = contrastRatio(text, background)
-  if (ratio >= MIN_CONTRAST) return null
-  return `Low text contrast (${ratio.toFixed(2)}:1, needs 4.5:1)`
+  const found = worstContrast(str(design.hoverTextColor) || design.textColor, [str(design.hoverBgColor) || design.bgColor])
+  if (!found || found.ratio >= MIN_CONTRAST) return null
+  return `Low text contrast on hover (${found.ratio.toFixed(2)}:1, needs 4.5:1). ${suggestText(found.background, MIN_CONTRAST)}`
+}
+
+/** The focus ring must be 3:1 against the block background (WCAG 1.4.11). Needs a plain background to compare with. */
+function focusWarning(node: SectionNode): string | null {
+  const design = readFlatDesign(node.design)
+  if (!str(design.focusRing)) return null
+  if (design.bgType !== undefined && design.bgType !== 'color') return null
+  const found = worstContrast(design.focusRing, [design.bgColor])
+  if (!found || found.ratio >= 3) return null
+  return `Focus ring is hard to see (${found.ratio.toFixed(2)}:1, needs 3:1). ${suggestText(found.background, 3)}`
 }
 
 function heavyEffects(node: SectionNode): string[] {
@@ -206,6 +295,12 @@ export function collectWarnings(tree: SectionNode[]): DesignWarning[] {
 
     const contrast = contrastWarning(node)
     if (contrast) add('warn', nodeId, 'contrast', contrast)
+    const hover = hoverWarning(node)
+    if (hover) add('warn', nodeId, 'contrast-hover', hover)
+    const focus = focusWarning(node)
+    if (focus) add('warn', nodeId, 'focus-ring', focus)
+    const picture = pictureWarning(node)
+    if (picture) add('info', nodeId, 'picture-text', picture)
 
     const level = headingLevel(node)
     if (level !== null) {
