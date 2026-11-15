@@ -163,6 +163,7 @@ import * as migration_20270316_100000_taskboard from './20270316_100000_taskboar
 import * as migration_20270316_110000_product_packaging from './20270316_110000_product_packaging';
 import * as migration_20270316_120000_local_pickup from './20270316_120000_local_pickup';
 import * as migration_20270316_130000_pricing_rule_customer_conditions from './20270316_130000_pricing_rule_customer_conditions';
+import * as migration_20270316_140000_product_feeds from './20270316_140000_product_feeds';
 
 export const migrations = [
   {
@@ -984,5 +985,10 @@ export const migrations = [
     up: migration_20270316_130000_pricing_rule_customer_conditions.up,
     down: migration_20270316_130000_pricing_rule_customer_conditions.down,
     name: '20270316_130000_pricing_rule_customer_conditions',
+  },
+  {
+    up: migration_20270316_140000_product_feeds.up,
+    down: migration_20270316_140000_product_feeds.down,
+    name: '20270316_140000_product_feeds',
   },
 ];
