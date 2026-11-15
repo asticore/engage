@@ -6,12 +6,13 @@ import { escapeHtml } from '../lib/invoice'
 import { formatCents } from '../lib/money'
 import { ORDER_STATUS_LABELS, isOrderStatus } from '../lib/orderStatus'
 import { preorderSummary } from '../lib/preorder'
+import { pickupLines, type PickupLocation } from '../lib/pickup'
 
 type Engine = {
   findGlobal: (a: unknown) => Promise<Record<string, unknown>>
   find?: (a: unknown) => Promise<{ docs: Array<Record<string, unknown>> }>
 }
-export type EmailKind = 'processing' | 'completed' | 'onHold' | 'cancelled' | 'refunded' | 'failed' | 'customerNote' | 'shipped' | 'reviewRequest' | 'awaitingPayment'
+export type EmailKind = 'processing' | 'completed' | 'onHold' | 'cancelled' | 'refunded' | 'failed' | 'customerNote' | 'shipped' | 'reviewRequest' | 'awaitingPayment' | 'readyForPickup'
 
 const STATUS_TO_KIND: Record<string, EmailKind | undefined> = {
   processing: 'processing',
@@ -62,6 +63,7 @@ const DEFAULTS: Record<EmailKind, { subject: string; body: string }> = {
   customerNote: { subject: 'A note about your order #{{order_id}}', body: 'Hi {{customer_name}},\n\nThere is a note on your order #{{order_id}}:\n\n{{note}}' },
   shipped: { subject: 'Your order #{{order_id}} is on its way', body: 'Hi {{customer_name}},\n\nYour order #{{order_id}} has shipped with {{carrier}}.\nTracking number: {{tracking_number}}\nTrack it here: {{tracking_url}}' },
   reviewRequest: { subject: 'How was your order #{{order_id}}?', body: 'Hi {{customer_name}},\n\nThanks for your order #{{order_id}}. If you have a moment, please tell other shoppers what you think:\n\n{{review_links}}' },
+  readyForPickup: { subject: 'Your order #{{order_id}} is ready for pickup', body: 'Hi {{customer_name}},\n\nYour order #{{order_id}} is ready to collect.\n\n{{pickup_location}}' },
   awaitingPayment: { subject: 'Your order #{{order_id}} is waiting for payment', body: 'Hi {{customer_name}},\n\nThanks for your order #{{order_id}}. Total: {{order_total}}.\n\nPay by {{payment_method}}:\n{{payment_instructions}}\n\nWe will start on your order when the payment arrives.' },
 }
 
@@ -100,7 +102,7 @@ const orderTemplateFor = (kind: EmailKind, locale: string | null | undefined): {
   }
 }
 
-export function renderOrderEmail(kind: EmailKind, order: Record<string, unknown>, opts: { note?: string; siteName?: string; bodyOverride?: string; template?: EmailTemplateOverride; locale?: string | null; paymentInstructions?: string; paymentMethod?: string; reviewLinks?: string }) {
+export function renderOrderEmail(kind: EmailKind, order: Record<string, unknown>, opts: { note?: string; siteName?: string; bodyOverride?: string; template?: EmailTemplateOverride; locale?: string | null; paymentInstructions?: string; paymentMethod?: string; reviewLinks?: string; pickupLocation?: string }) {
   const addr = (order.shippingAddress ?? {}) as Record<string, unknown>
   const name = [addr.firstName, addr.lastName].filter((x) => typeof x === 'string' && x).join(' ') || 'there'
   const status = String(order.status ?? '')
@@ -118,6 +120,7 @@ export function renderOrderEmail(kind: EmailKind, order: Record<string, unknown>
     payment_method: opts.paymentMethod ?? '',
     payment_instructions: opts.paymentInstructions ?? '',
     review_links: opts.reviewLinks ?? '',
+    pickup_location: opts.pickupLocation ?? '',
   }
   const tpl = orderTemplateFor(kind, opts.locale)
   const subject = mergeFields(opts.template?.subject ?? tpl.subject, values, false).replace(/[\r\n]+/g, ' ')
@@ -149,6 +152,12 @@ export async function sendOrderEmail(engine: Engine, order: Record<string, unkno
       if (switches.reviewRequestEmail !== true) return false
       template = { subject: clean(switches.reviewRequestSubject, 300) || undefined, body: clean(switches.reviewRequestBody, 5000) || undefined }
       bodyOverride = undefined
+    } else if (kind === 'readyForPickup') {
+      // Switched and worded on the Shop switches global (the shop-settings row is full). On by default.
+      const switches = ((await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null)) ?? {}) as Record<string, unknown>
+      if (switches.readyPickupEmail === false) return false
+      template = { subject: clean(switches.readyPickupSubject, 300) || undefined, body: clean(switches.readyPickupBody, 5000) || undefined }
+      bodyOverride = undefined
     } else {
       if (kind === 'awaitingPayment') bodyOverride = undefined
       if ((emails[kind] ?? (kind !== 'failed')) === false || emails[kind] === 0) return false
@@ -157,7 +166,7 @@ export async function sendOrderEmail(engine: Engine, order: Record<string, unkno
     // The customer's own language, when they have chosen one. Otherwise English.
     const locale = await localeForRecipient(engine as never, to)
     if (locale) await loadStrings(locale)
-    const msg = renderOrderEmail(kind, order, { note, siteName: site.siteName, locale, template, bodyOverride, ...extra, reviewLinks: kind === 'reviewRequest' ? reviewLinksFor(order, await productsForReview(engine, order)) : undefined })
+    const msg = renderOrderEmail(kind, order, { note, siteName: site.siteName, locale, template, bodyOverride, ...extra, reviewLinks: kind === 'reviewRequest' ? reviewLinksFor(order, await productsForReview(engine, order)) : undefined, pickupLocation: kind === 'readyForPickup' ? pickupLines((order.shippingMethod as { pickup?: Partial<PickupLocation> } | null)?.pickup).join('\n') : undefined })
     const result = await sendEmail({ to, template: `order.${kind}`, ...msg })
     return result.ok
   } catch {

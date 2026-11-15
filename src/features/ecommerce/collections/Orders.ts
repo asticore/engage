@@ -176,6 +176,8 @@ export const Orders: CollectionConfig = {
     { name: 'trackingCarrier', type: 'text', admin: { position: 'sidebar' } },
     { name: 'trackingUrl', type: 'text', admin: { position: 'sidebar' } },
     { name: 'shippedAt', type: 'date', admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } } },
+    { name: 'readyForPickup', type: 'checkbox', defaultValue: false, admin: { position: 'sidebar', description: 'For a local pickup order: tick this when the order can be collected. The customer is emailed once.', condition: (data) => (data?.shippingMethod as { type?: string } | null)?.type === 'local_pickup' } },
+    { name: 'readyForPickupAt', type: 'date', admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' }, condition: (data) => Boolean(data?.readyForPickupAt) } },
     { name: 'couponUsageApplied', type: 'checkbox', defaultValue: false, admin: { hidden: true }, access: { create: staffFieldAccess, read: staffFieldAccess, update: staffFieldAccess } },
     { name: 'stockAdjusted', type: 'checkbox', defaultValue: false, admin: { hidden: true }, access: { create: staffFieldAccess, read: staffFieldAccess, update: staffFieldAccess } },
     {

@@ -1,4 +1,5 @@
 import { toCents } from './money'
+import { parsePickupLocations, type PickupLocation } from './pickup'
 
 export type ShippingAddress = { country?: string | null; state?: string | null; postalCode?: string | null }
 
@@ -25,6 +26,8 @@ export type ShippingMethod = {
   tableBasis?: 'weight' | 'subtotal' | 'item_count' | null
   tableRates?: TableRate[] | null
   classSurcharges?: ClassSurcharge[] | null
+  /** Local pickup: one location per line, Name | Address | Hours | Instructions (lib/pickup.ts). */
+  pickupLocations?: string | null
   enabled?: boolean | null
 }
 
@@ -61,6 +64,8 @@ export type ShippingOption = {
   title: string
   costCents: number
   taxable: boolean
+  /** Local pickup with locations: the place this option collects from. Its id ends in the location number. */
+  pickup?: PickupLocation
 }
 
 const norm = (v: string | null | undefined): string => (v ?? '').trim().toUpperCase()
@@ -189,6 +194,12 @@ export function quoteShipping(cart: ShippingCart, address: ShippingAddress, zone
     }
     if (cost == null) return
     if (cart.freeShipping && method.type !== 'local_pickup') cost = 0
+    const locations = method.type === 'local_pickup' ? parsePickupLocations(method.pickupLocations) : []
+    if (locations.length > 0) {
+      // One option per location; the id is `${zoneId}:${methodIndex}:${locationIndex}` so checkout sends the choice back unchanged.
+      locations.forEach((pickup, at) => options.push({ id: `${zone.id}:${index}:${at}`, zoneId: zone.id, zoneName: zone.name, type: method.type, title: `${method.title}: ${pickup.name}`, costCents: cost as number, taxable: false, pickup }))
+      return
+    }
     options.push({
       id: `${zone.id}:${index}`,
       zoneId: zone.id,
