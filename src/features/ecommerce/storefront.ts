@@ -10,6 +10,7 @@ import { canPurchase, computeStockStatus, stockMessage, type StockFields, type S
 import { decodeAttributeValues, resolveAttributes, splitValues, type ProductAttributeRow, type VariationRow } from './variations'
 import { PREORDER_STOCK_MESSAGE, preorderInfo, type PreorderInfo } from './lib/preorder'
 import { normaliseAddOnDefs, type AddOnView } from './lib/addOns'
+import { serviceDetail } from './lib/service'
 import { donationView, withDonationAddOns, type DonationView } from './lib/donations'
 import { packagingLimits } from './lib/packaging'
 
@@ -131,6 +132,8 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
       values: splitValues(row.values) as string[],
     }))
     .filter((row) => row.name && row.values.length > 0)
+  const serviceRow = serviceDetail(product as never)
+  if (serviceRow) details.unshift(serviceRow)
 
   const price = type === 'variable' && prices.length > 0 ? Math.min(...prices) : own.price
   return {

@@ -96,6 +96,19 @@ export const inventoryFields: Field[] = [
   },
 ]
 
+/** Service products (lib/service.ts): sold without shipping, with an optional duration. */
+export const serviceFields: Field[] = [
+  {
+    type: 'collapsible',
+    label: 'Service',
+    admin: { condition: (data) => data?.productType === 'simple' || data?.productType === 'variable', initCollapsed: true },
+    fields: [
+      { name: 'isService', type: 'checkbox', defaultValue: false, admin: { description: 'This is a service, not a thing in a box. No shipping step at checkout, and it keeps price, options, quantity breaks and add-ons.' } },
+      { name: 'serviceDuration', type: 'number', min: 0, admin: { condition: (data) => Boolean(data?.isService), description: 'How long it takes, in minutes. Shown on the product page.' } },
+    ],
+  },
+]
+
 export const shippingFields: Field[] = [
   {
     type: 'collapsible',
@@ -111,7 +124,7 @@ export const shippingFields: Field[] = [
       },
       {
         type: 'row',
-        admin: { condition: (data) => !data?.isVirtual },
+        admin: { condition: (data) => !data?.isVirtual && !data?.isService },
         fields: [
           { name: 'weight', type: 'number', min: 0, admin: { width: '25%', components: WEIGHT_ADMIN } },
           { name: 'length', type: 'number', min: 0, admin: { width: '25%', components: DIMENSION_ADMIN } },
@@ -119,7 +132,7 @@ export const shippingFields: Field[] = [
           { name: 'height', type: 'number', min: 0, admin: { width: '25%', components: DIMENSION_ADMIN } },
         ],
       },
-      { name: 'shippingClass', type: 'relationship', relationTo: 'shipping-classes', admin: { condition: (data) => !data?.isVirtual, description: 'Used by shipping zones to choose a rate.' } },
+      { name: 'shippingClass', type: 'relationship', relationTo: 'shipping-classes', admin: { condition: (data) => !data?.isVirtual && !data?.isService, description: 'Used by shipping zones to choose a rate.' } },
       {
         type: 'row',
         fields: [
@@ -381,6 +394,7 @@ export const preorderFields: Field[] = [
 export const catalogueFields: Field[] = [
   ...pricingFields,
   ...inventoryFields,
+  ...serviceFields,
   ...limitFields,
   ...donationFields,
   ...packagingFields,
