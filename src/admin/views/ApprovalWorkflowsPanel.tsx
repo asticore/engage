@@ -15,7 +15,9 @@ import {
   moveStep,
   payloadFromDraft,
   roleChoices,
+  setAuthorRoute,
   toggleRole,
+  toggleUser,
   unwrapDoc,
   validateDraft,
   type RoleChoice,
@@ -26,9 +28,13 @@ import './roles-workflows.css'
 
 type RoleRow = { id: number; name: string; slug: string; builtIn?: boolean; permissions?: Record<string, Record<string, boolean | string | undefined>> | null }
 
+export type Person = { id: number; name: string }
+
 type Props = {
   workflows: WorkflowRecord[]
   roles: RoleRow[]
+  /** Staff users who can be named as approvers. */
+  people?: Person[]
   canEdit: boolean
   /** The master switch under Settings > Security. Workflows do nothing while it is off. */
   approvalEnabled: boolean
@@ -67,6 +73,7 @@ function RolePicker({ legend, hint, value, choices, onChange, disabled }: { lege
 function WorkflowForm({
   draft,
   choices,
+  people,
   knownRoles,
   others,
   canEdit,
@@ -81,6 +88,7 @@ function WorkflowForm({
 }: {
   draft: WorkflowDraft
   choices: RoleChoice[]
+  people: Person[]
   knownRoles: string[]
   others: Array<{ id: number; collection: string; active: boolean }>
   canEdit: boolean
@@ -98,6 +106,8 @@ function WorkflowForm({
   const problems = useMemo(() => validateDraft(draft, knownRoles, others), [draft, knownRoles, others])
   const [showProblems, setShowProblems] = useState(false)
   const disabled = !canEdit || busy
+  const [routeAuthor, setRouteAuthor] = useState(0)
+  const [routeApprover, setRouteApprover] = useState(0)
   const roleName = (slug: string) => choices.find((choice) => choice.slug === slug)
 
   const setStep = (index: number, patch: Partial<WorkflowDraft['steps'][number]>) =>
@@ -155,6 +165,38 @@ function WorkflowForm({
         onChange={(next) => onChange({ ...draft, submitterRoles: next })}
       />
 
+      {people.length > 1 && (
+        <fieldset className="rw-roles" disabled={disabled}>
+          <legend>A different approver for an author</legend>
+          <p className="rw-hint">Work submitted by the author is approved by the person named, at every step, instead of the step's usual approvers.</p>
+          {Object.entries(draft.authorRoutes).map(([author, approvers]) => (
+            <p key={author} className="rw-hint">
+              {people.find((p) => p.id === Number(author))?.name ?? `User ${author}`} is approved by {approvers.map((id) => people.find((p) => p.id === id)?.name ?? `User ${id}`).join(', ')}{' '}
+              <button type="button" className={styles.btnSecondary} onClick={() => onChange({ ...draft, authorRoutes: setAuthorRoute(draft.authorRoutes, Number(author), []) })}>Remove</button>
+            </p>
+          ))}
+          <div className="rw-grid">
+            <label className="rw-field" htmlFor={`${idBase}-route-author`}>
+              <span>Author</span>
+              <select id={`${idBase}-route-author`} className={styles.input} value={routeAuthor} onChange={(event) => setRouteAuthor(Number(event.target.value))}>
+                <option value={0}>Pick…</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+            <label className="rw-field" htmlFor={`${idBase}-route-approver`}>
+              <span>Approved by</span>
+              <select id={`${idBase}-route-approver`} className={styles.input} value={routeApprover} onChange={(event) => setRouteApprover(Number(event.target.value))}>
+                <option value={0}>Pick…</option>
+                {people.filter((p) => p.id !== routeAuthor).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+          </div>
+          <button type="button" className={styles.btnSecondary} disabled={!routeAuthor || !routeApprover} onClick={() => { onChange({ ...draft, authorRoutes: setAuthorRoute(draft.authorRoutes, routeAuthor, [...new Set([...(draft.authorRoutes[String(routeAuthor)] ?? []), routeApprover])]) }); setRouteApprover(0) }}>
+            Add
+          </button>
+        </fieldset>
+      )}
+
       <h3 className="rw-steps-title">Steps</h3>
       <p className="rw-hint">Content goes through the steps in order. Admins can approve any step.</p>
       <ol className="rw-steps">
@@ -197,6 +239,26 @@ function WorkflowForm({
                 </label>
               </div>
               <RolePicker legend="Who can approve this step" value={step.approverRoles} choices={choices} disabled={disabled} onChange={(next) => setStep(index, { approverRoles: next })} />
+              {people.length > 0 && (
+                <fieldset className="rw-roles" disabled={disabled}>
+                  <legend>Or name the people who approve this step</legend>
+                  <div className="rw-role-list">
+                    {people.map((person) => (
+                      <label key={person.id} className={`rw-role${step.approverUsers.includes(person.id) ? ' rw-role--on' : ''}`}>
+                        <input type="checkbox" checked={step.approverUsers.includes(person.id)} onChange={() => setStep(index, { approverUsers: toggleUser(step.approverUsers, person.id) })} />
+                        <span>{person.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="rw-hint">When anyone is named here, only they (and admins) can approve this step.</p>
+                  {step.approverUsers.length > 0 && (
+                    <label className="rw-check">
+                      <input type="checkbox" checked={step.alsoRoles} onChange={(event) => setStep(index, { alsoRoles: event.target.checked })} />
+                      <span>The roles above can also approve (a fallback when the named people are away).</span>
+                    </label>
+                  )}
+                </fieldset>
+              )}
               {weakRoles.length > 0 && (
                 <p className="rw-warning" role="note">
                   {weakRoles.map((choice) => choice.name).join(', ')} {weakRoles.length === 1 ? 'does' : 'do'} not have the Review: publish permission yet, so {weakRoles.length === 1 ? 'it' : 'they'} could not approve. Grant it on the Permissions tab.
@@ -249,7 +311,7 @@ function WorkflowForm({
  * Every write goes through /api/approval-workflows, which only admins may write to; the same
  * rules the form checks are checked again on the server.
  */
-export function ApprovalWorkflowsPanel({ workflows: initial, roles, canEdit, approvalEnabled }: Props) {
+export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [], canEdit, approvalEnabled }: Props) {
   const t = useAdminT()
   const [workflows, setWorkflows] = useState<WorkflowRecord[]>(initial)
   const [drafts, setDrafts] = useState<Record<number, WorkflowDraft>>({})
@@ -376,6 +438,7 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, canEdit, app
           <WorkflowForm
             draft={creating}
             choices={choices}
+            people={people}
             knownRoles={knownRoles}
             others={summaries}
             canEdit={canEdit}
@@ -402,6 +465,7 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, canEdit, app
             <WorkflowForm
               draft={draft}
               choices={choices}
+              people={people}
               knownRoles={knownRoles}
               others={summaries}
               canEdit={canEdit}

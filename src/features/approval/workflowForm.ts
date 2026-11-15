@@ -8,7 +8,10 @@ import {
   APPROVAL_COLLECTIONS,
   BUILT_IN_ROLE_SLUGS,
   MAX_WORKFLOW_STEPS,
+  parseAuthorRoutes,
   parseRoleList,
+  parseUserIds,
+  type AuthorRoutes,
   validateWorkflowInput,
   type ApprovalCollection,
 } from './workflows'
@@ -22,7 +25,7 @@ export const COLLECTION_LABELS: Record<ApprovalCollection, string> = {
   products: 'Products',
 }
 
-export type DraftStep = { key: string; name: string; approverRoles: string[]; approvalsNeeded: number }
+export type DraftStep = { key: string; name: string; approverRoles: string[]; approvalsNeeded: number; approverUsers: number[]; alsoRoles: boolean }
 
 export type WorkflowDraft = {
   id: number | null
@@ -32,6 +35,7 @@ export type WorkflowDraft = {
   allowRepeatApprover: boolean
   submitterRoles: string[]
   steps: DraftStep[]
+  authorRoutes: AuthorRoutes
 }
 
 /** A workflow as the REST API returns it. */
@@ -42,7 +46,8 @@ export type WorkflowRecord = {
   active?: boolean | null
   allowRepeatApprover?: boolean | null
   submitterRoles?: unknown
-  steps?: Array<{ id?: string; name?: string | null; approverRoles?: unknown; approvalsNeeded?: number | null }> | null
+  steps?: Array<{ id?: string; name?: string | null; approverRoles?: unknown; approvalsNeeded?: number | null; approverUsers?: unknown; alsoRoles?: boolean | null }> | null
+  authorRoutes?: unknown
 }
 
 export type RoleChoice = { slug: string; name: string; builtIn: boolean; canApprove: boolean }
@@ -50,7 +55,7 @@ export type RoleChoice = { slug: string; name: string; builtIn: boolean; canAppr
 let counter = 0
 export const newStepKey = (): string => `step-${Date.now().toString(36)}-${(counter += 1)}`
 
-export const emptyStep = (): DraftStep => ({ key: newStepKey(), name: '', approverRoles: [], approvalsNeeded: 1 })
+export const emptyStep = (): DraftStep => ({ key: newStepKey(), name: '', approverRoles: [], approvalsNeeded: 1, approverUsers: [], alsoRoles: false })
 
 export const emptyDraft = (collection: ApprovalCollection = 'pages'): WorkflowDraft => ({
   id: null,
@@ -60,6 +65,7 @@ export const emptyDraft = (collection: ApprovalCollection = 'pages'): WorkflowDr
   allowRepeatApprover: false,
   submitterRoles: [],
   steps: [emptyStep()],
+  authorRoutes: {},
 })
 
 export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
@@ -76,7 +82,10 @@ export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
       name: typeof step.name === 'string' ? step.name : '',
       approverRoles: parseRoleList(step.approverRoles),
       approvalsNeeded: Number.isFinite(Number(step.approvalsNeeded)) ? Number(step.approvalsNeeded) : 1,
+      approverUsers: parseUserIds(step.approverUsers),
+      alsoRoles: step.alsoRoles === true,
     })),
+    authorRoutes: parseAuthorRoutes(record.authorRoutes),
   }
 }
 
@@ -92,7 +101,10 @@ export function payloadFromDraft(draft: WorkflowDraft): Record<string, unknown> 
       name: step.name.trim(),
       approverRoles: step.approverRoles,
       approvalsNeeded: step.approvalsNeeded,
+      approverUsers: step.approverUsers,
+      alsoRoles: step.alsoRoles,
     })),
+    authorRoutes: draft.authorRoutes,
   }
 }
 
@@ -116,6 +128,19 @@ export function moveStep(steps: DraftStep[], from: number, to: number): DraftSte
 }
 
 export const canAddStep = (steps: DraftStep[]): boolean => steps.length < MAX_WORKFLOW_STEPS
+
+/** Adds or removes a user id from a list of named people, keeping the order stable. */
+export function toggleUser(ids: number[], id: number): number[] {
+  return ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
+}
+
+/** Sets who approves one author's work. An empty list removes the author's route. */
+export function setAuthorRoute(routes: AuthorRoutes, author: number, approvers: number[]): AuthorRoutes {
+  const next = { ...routes }
+  if (approvers.length === 0) delete next[String(author)]
+  else next[String(author)] = approvers
+  return next
+}
 
 /** Adds or removes a slug from a role list, keeping the order stable. */
 export function toggleRole(roles: string[], slug: string): string[] {
