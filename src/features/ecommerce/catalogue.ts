@@ -10,6 +10,7 @@ import { canPurchase, computeStockStatus, type StockFields, type StockStatus } f
 import { decodeAttributeValues, findVariation, type VariationRow } from './variations'
 import { packagingError } from './lib/packaging'
 import { quantityError, validateNamedPrice } from './lib/qtyLimits'
+import { checkDonationMax } from './lib/donations'
 import { isPreorderActive, type PreorderFields } from './lib/preorder'
 
 export type ProductType = 'simple' | 'variable' | 'grouped' | 'external' | 'giftcard' | 'bundle'
@@ -34,6 +35,9 @@ export type CatalogueProduct = PriceFields &
     minCartons?: number | null
     /** Buyer types their own price (simple products only). minPrice is whole dollars, like priceInAUD. */
     nameYourPrice?: boolean | null
+    /** A donation is name your price with a largest amount (lib/donations.ts). */
+    isDonation?: boolean | null
+    donationMax?: number | null
     minPrice?: number | null
     suggestedPrice?: number | null
   }
@@ -110,10 +114,12 @@ export function resolveCartLine(
   }
 
   if (!canPurchase(product, total) && !preorder) return { ok: false, error: 'This product is out of stock.' }
-  if (product.nameYourPrice && type === 'simple') {
+  if ((product.nameYourPrice || product.isDonation) && type === 'simple') {
     // The buyer's amount is checked here against the shop's minimum; the browser's value is never trusted as is.
     const named = validateNamedPrice(priceCents, { minPrice: product.minPrice != null ? Math.floor(product.minPrice * 100 + 1e-9) : null })
     if (!named.ok || named.cents == null) return { ok: false, error: named.error ?? 'Please enter a valid amount.' }
+    const tooMuch = checkDonationMax(named.cents, product)
+    if (tooMuch) return { ok: false, error: tooMuch }
     return { ok: true, unitPrice: named.cents / 100, title, sku: product.sku || null, variationId: null, variationLabel: null, stockStatus: computeStockStatus(product), preorder }
   }
   const price = effectivePrice(product, now)

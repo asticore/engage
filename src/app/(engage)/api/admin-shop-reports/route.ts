@@ -4,7 +4,7 @@ import { getAdminContext } from '@/admin/auth'
 import { loadShopCurrency } from '@/features/ecommerce/lib/shopCurrency'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { buildShopReport } from '@/features/shopReports/report'
-import { loadCategories, loadCoupons, loadLocations, loadPayments, loadSeries, loadTopProducts, EXPORT_LIMIT } from '@/features/shopReports/queries'
+import { loadCategories, loadCoupons, loadDonations, loadLocations, loadPayments, loadSeries, loadTopProducts, EXPORT_LIMIT } from '@/features/shopReports/queries'
 import { loadLowStock } from '@/features/shopReports/queriesStock'
 import { resolveRange, type ReportRange } from '@/features/shopReports/range'
 import { centsToDecimal, toCsv, type CsvCell } from '@/features/shopReports/csv'
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
 
 type D1 = Parameters<typeof loadSeries>[0]
 
-const CSV_TABLES = ['series', 'products', 'categories', 'coupons', 'payments', 'locations', 'lowstock'] as const
+const CSV_TABLES = ['series', 'products', 'categories', 'coupons', 'donations', 'payments', 'locations', 'lowstock'] as const
 type CsvTable = (typeof CSV_TABLES)[number]
 
 /**
@@ -77,6 +77,10 @@ async function csvFor(table: CsvTable, range: ReportRange, currency: string): Pr
     case 'coupons': {
       const rows = await loadCoupons(d1, range)
       return { body: toCsv(['Coupon code', 'Times used', `Discount given (${currency})`], rows.map((r) => [r.code, r.uses, centsToDecimal(r.discountCents)])) }
+    }
+    case 'donations': {
+      const rows = await loadDonations(d1, range)
+      return { body: toCsv(['Campaign', 'Donations', `Total (${currency})`], rows.map((r) => [r.campaign, r.donations, centsToDecimal(r.totalCents)])) }
     }
     case 'payments': {
       const rows = await loadPayments(d1, range)

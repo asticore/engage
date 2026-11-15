@@ -17,6 +17,7 @@ import { PricingRuleNotes } from './PricingRuleNotes'
 import { PreorderNotice } from './PreorderNotice'
 import { useVariationImage } from './VariationImageProvider'
 import { useDisplayMoney } from '@/components/DisplayCurrencyContext'
+import type { DonationView } from '@/features/ecommerce/lib/donations'
 import type { ProductView, VariationView } from '@/features/ecommerce/storefront'
 
 export type GroupedChild = { id: number; title: string; slug: string | null; view: ProductView }
@@ -47,7 +48,7 @@ type Limits = { min: number; max: number | null; step?: number }
 type BuyerPrice = { enabled: boolean; suggested: number | null; minimum: number | null }
 
 /** Quantity box plus Add to cart. The server re-checks price, stock, limits and the option; it can still say no. */
-function AddControl({ productId, variationId, disabled, label, limits, buyerPrice, addOns = [] }: { productId: number; variationId?: string | null; disabled?: boolean; label?: string; limits?: Limits; buyerPrice?: BuyerPrice; addOns?: AddOnView[] }) {
+function AddControl({ productId, variationId, disabled, label, limits, buyerPrice, addOns = [], donation = null }: { productId: number; variationId?: string | null; disabled?: boolean; label?: string; limits?: Limits; buyerPrice?: BuyerPrice; addOns?: AddOnView[]; donation?: DonationView | null }) {
   const t = useStoreText()
   const { addItem, isLoading } = useCart()
   const min = limits?.min ?? 1
@@ -76,6 +77,10 @@ function AddControl({ productId, variationId, disabled, label, limits, buyerPric
         return
       }
       priceCents = check.cents
+      if (donation?.max != null && check.cents > Math.round(donation.max * 100)) {
+        setMessage(`The largest donation is ${donation.max.toFixed(2)}.`)
+        return
+      }
     }
     // Only the answers the buyer gave go to the server; it checks them against the product and prices them.
     const addOnAnswers = addOns.flatMap((def) => {
@@ -91,6 +96,13 @@ function AddControl({ productId, variationId, disabled, label, limits, buyerPric
   return (
     <div className="mt-3">
       <div className="flex flex-wrap items-end gap-3">
+        {donation && donation.amounts.length > 0 ? (
+          <div className="flex w-full flex-wrap gap-2" role="group" aria-label="Suggested amounts">
+            {donation.amounts.map((amount) => (
+              <button key={amount} type="button" className="btn" aria-pressed={Number(priceText) === amount} onClick={() => setPriceText(amount.toFixed(2))}>{amount.toFixed(2)}</button>
+            ))}
+          </div>
+        ) : null}
         <ProductAddOns defs={addOns} values={answers} onChange={(id, value) => setAnswers((current) => ({ ...current, [id]: value }))} />
         <QtyPriceFields qty={qty} onQty={(value) => setQty(value)} min={min} max={limits?.max ?? null} step={step} buyerPrice={named} priceText={priceText} onPriceText={setPriceText} />
         <button type="button" className="btn btn--primary" onClick={add} disabled={disabled || isLoading}>
@@ -219,7 +231,7 @@ export function ProductPurchase({ productId, view, grouped = [], giftConfig }: {
       {view.sku ? <p className="text-[0.85rem] opacity-70">SKU: {view.sku}</p> : null}
       <PreorderNotice info={view.preorder} />
       <PricingRuleNotes notes={view.pricingNotes} />
-      <AddControl productId={productId} disabled={!view.purchasable} limits={view.qtyLimits} buyerPrice={view.buyerPrice} label={view.preorder.active ? PREORDER_LABEL : undefined} addOns={view.addOns} />
+      <AddControl productId={productId} disabled={!view.purchasable} limits={view.qtyLimits} buyerPrice={view.buyerPrice} label={view.donation ? 'Donate' : view.preorder.active ? PREORDER_LABEL : undefined} addOns={view.addOns} donation={view.donation} />
     </div>
   )
 }
