@@ -1389,6 +1389,8 @@ const de: UiDictionary = {
   'settings.link.site-health.description': "Speicher, Zustand geplanter Aufgaben, Versionen und Warnungen.",
   'settings.link.scheduled-tasks.label': "Geplante Aufgaben",
   'settings.link.scheduled-tasks.description': "Jede zeitgesteuerte Aufgabe, ihr letztes Ergebnis und was auf die Veröffentlichung wartet.",
+  'settings.link.references.label': "Referenzquellen",
+  'settings.link.references.description': "Shine und Effix: festgelegte Versionen und ob es eine neuere gibt.",
   'settings.link.users.label': "Benutzer",
   'settings.link.users.description': "Admin-Benutzerkonten verwalten.",
   'settings.link.audit-log.label': "Audit-Protokoll",

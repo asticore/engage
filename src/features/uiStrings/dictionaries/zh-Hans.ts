@@ -1387,6 +1387,8 @@ const zhHans: UiDictionary = {
   'settings.link.site-health.description': "存储、定时任务状态、版本和警告。",
   'settings.link.scheduled-tasks.label': "定时任务",
   'settings.link.scheduled-tasks.description': "每个定时任务、其上次结果以及等待上线的内容。",
+  'settings.link.references.label': "参考来源",
+  'settings.link.references.description': "Shine 和 Effix：固定版本以及是否有更新版本。",
   'settings.link.users.label': "用户",
   'settings.link.users.description': "管理后台用户账户。",
   'settings.link.audit-log.label': "审计日志",

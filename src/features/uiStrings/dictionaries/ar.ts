@@ -1388,6 +1388,8 @@ const ar: UiDictionary = {
   'settings.link.site-health.description': "التخزين وحالة المهام المجدولة والإصدارات والتحذيرات.",
   'settings.link.scheduled-tasks.label': "المهام المجدولة",
   'settings.link.scheduled-tasks.description': "كل مهمة مؤقتة، وآخر نتيجة لها، وما ينتظر النشر.",
+  'settings.link.references.label': "مصادر المرجع",
+  'settings.link.references.description': "Shine وEffix: الإصدارات المثبتة وهل يوجد إصدار أحدث.",
   'settings.link.users.label': "المستخدمون",
   'settings.link.users.description': "إدارة حسابات مستخدمي الإدارة.",
   'settings.link.audit-log.label': "سجل التدقيق",

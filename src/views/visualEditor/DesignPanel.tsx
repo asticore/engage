@@ -1,5 +1,6 @@
 'use client'
 
+import { EffectsPicker } from './EffectsPicker'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings'
 import React, { createContext, useContext, useState } from 'react'
@@ -2022,6 +2023,11 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
           placeholder="e.g. hero-card shadowed"
           help={t('dp.lit.up_to_8_class_names_separated_by_spaces')}
           onChange={(v) => set('cssClasses', v)}
+        />
+        <EffectsPicker
+          cssClasses={value.cssClasses}
+          customAttrs={value.customAttrs}
+          onChange={(next) => onChange({ ...value, ...next })}
         />
         <Row label={t('dp.lit.custom_css')} applied={Boolean(value.customCss)} onReset={() => set('customCss', undefined)} help="Use selector to target this element, e.g. selector:hover { opacity: .8 }">
           <textarea

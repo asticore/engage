@@ -1388,6 +1388,8 @@ const nl: UiDictionary = {
   'settings.link.site-health.description': "Opslag, status van geplande taken, versies en waarschuwingen.",
   'settings.link.scheduled-tasks.label': "Geplande taken",
   'settings.link.scheduled-tasks.description': "Elke getimede taak, het laatste resultaat en wat wacht om live te gaan.",
+  'settings.link.references.label': "Referentiebronnen",
+  'settings.link.references.description': "Shine en Effix: vastgezette versies en of er een nieuwere is.",
   'settings.link.users.label': "Gebruikers",
   'settings.link.users.description': "Beheer de beheerdersaccounts.",
   'settings.link.audit-log.label': "Auditlogboek",

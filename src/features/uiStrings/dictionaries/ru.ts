@@ -1388,6 +1388,8 @@ const ru: UiDictionary = {
   'settings.link.site-health.description': "Хранилище, состояние плановых задач, версии и предупреждения.",
   'settings.link.scheduled-tasks.label': "Плановые задачи",
   'settings.link.scheduled-tasks.description': "Каждая задача по расписанию, её последний результат и то, что ждёт публикации.",
+  'settings.link.references.label': "Справочные источники",
+  'settings.link.references.description': "Shine и Effix: закреплённые версии и наличие новой.",
   'settings.link.users.label': "Пользователи",
   'settings.link.users.description': "Управление учётными записями администраторов.",
   'settings.link.audit-log.label': "Журнал аудита",

@@ -37,6 +37,7 @@ const SettingsHubView = lazyView(() => import('@/admin/views/SettingsHubView').t
 const HeaderFooterView = lazyView(() => import('@/admin/views/HeaderFooterView').then((mod) => mod.HeaderFooterView))
 const TranslationsView = lazyView(() => import('@/features/multilingual/views/TranslationsView').then((mod) => mod.TranslationsView))
 const DatabaseView = lazyView(() => import('@/features/cleanup/DatabaseView').then((mod) => mod.DatabaseView))
+const ReferencesView = lazyView(() => import('@/features/references/ReferencesView').then((mod) => mod.ReferencesView))
 const UnusedTablesView = lazyView(() => import('@/features/cleanup/UnusedTablesView').then((mod) => mod.UnusedTablesView))
 const ABResultsView = lazyView(() => import('@/features/abTesting/components/ABResultsView').then((mod) => mod.ABResultsView))
 const VisualEditorView = lazyView(() => import('@/views/VisualEditor').then((mod) => mod.VisualEditorView))
@@ -167,6 +168,12 @@ export const CUSTOM_ADMIN_VIEWS = [
       title: 'Database',
       description: 'Per-feature table usage and cleanup.',
     },
+  },
+  {
+    key: 'references',
+    Component: ReferencesView,
+    path: '/references',
+    meta: { title: 'Reference sources', description: 'The shared sources Engage follows (Shine, Effix), their pinned versions and whether a newer one exists.' },
   },
   {
     key: 'unusedTables',
