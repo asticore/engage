@@ -3819,7 +3819,7 @@ const nl: UiDictionary = {
   "shop.tiers.variationId": "Variatie-id",
   "shop.tiers.allVariations": "Alle variaties",
   "shop.tiers.priceEach": "Prijs per stuk ({currency})",
-  "shop.tiers.customerTypeHelp": "Het klanttype wordt vergeleken met de rol van de koper, bijvoorbeeld groothandel. Laat leeg voor iedereen. Zodra ledengroepen beschikbaar zijn, gebruiken ze hetzelfde veld.",
+  "shop.tiers.customerTypeHelp": "Het klanttype wordt vergeleken met de rol van de koper, bijvoorbeeld groothandel, of met de naam van een bedrijf waartoe de koper behoort (of company:slug). Laat leeg voor iedereen.",
   "shop.tiers.remove": "Verwijderen",
   "shop.tiers.addTier": "Staffel toevoegen",
   "shop.tiers.save": "Staffels opslaan",

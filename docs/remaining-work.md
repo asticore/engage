@@ -55,10 +55,10 @@ Done: 150 English-only admin strings translated into the twelve other languages 
 - [ ] The default template library text (`docs/template-library-example`, Engage templates library items) is English: translate it per language, or mark the library English only.
 - [ ] Other English-only admin strings not in the list above (`ut.*` unused tables, `api.*`, `apiBuilder.*`): translate.
 
-### Task 4. Small gaps left by tasks 3 to 7 (new, 9 Nov 2026)
-- [ ] Variation specific price tiers: show a note on the product page. Per product promo badges are picked by slug text, make it a product picker.
-- [ ] Blog categories: nested URL paths (`/blog/category/parent/child`) and the `{{category}}` merge tag using the tree.
-- [ ] Wholesale pricing: when member groups exist (companies are built, see Done), match tiers by company (organisation) as well as role: `listOrgsForUser` in `src/features/organizations/store.ts` gives a member's companies.
+### Task 4. Small gaps left by tasks 3 to 7 (partly done 15 Nov 2026)
+Done: variation specific tier notes on the product page, promo badge product picker (`BadgeProductsField`), nested blog category URLs (`/blog/category/parent/child`, bare slug still works, sitemap uses full paths), `{{category_path}}` and `{{category_url}}` loop merge tags from the tree, wholesale tiers matched by company as well as role (`src/features/ecommerce/server/customerTypes.ts`: a tier's customer type may be a company name or `company:slug`). Still open:
+- [ ] The tree merge tags are filled on the blog index and category archives only; tag and author archives and the single post page still give an empty `{{category_path}}`: pass the tree there too.
+- [ ] A product-picker for the promo badge category and tag rules (they still take typed slugs), and the badge field labels (Task 3).
 
 ### Task 5. Multi region and language report (new, 7 Nov 2026)
 - [ ] Check and report how multi region and multi language work today (regions, locales, translated fields, fallbacks, hreflang, per region content and pricing, admin strings in the thirteen languages). Output: a short report with gaps, saved in this doc, then tasks for the gaps. Effort S to M.
@@ -397,6 +397,7 @@ Lessons: migration-order specs use `migrations.length - N` offsets, so every new
 Only items not yet verified. Tick each, report failures. Grouped by area, each with how to check.
 
 ### Shine, reference file, tickets, pricing, badges and categories (9 Nov 2026 PR)
+- [ ] Task 4 gaps: on a product with a variation tier, the product page lists it with the variation name; a badge set to Chosen products shows the product picker and saves; a nested blog category opens at /blog/category/parent/child and a post card using {{category_path}} shows the trail; a company member sees the company tier price in the cart and at checkout.
 - [ ] Effects picker and Reference sources (Task 2): in the visual editor open a block, Design > Custom, pick an effect (for example Counter), set an option, publish, and confirm the live page runs it and the CSS classes and Custom attributes fields show the `efx-` class and `data-efx-` attribute. Open Settings > Data and System > Reference sources and confirm Shine and Effix show their pinned versions and a status. Check each picker class name actually does something on the live page; fix the catalogue where it does not.
 - [ ] Paid event tickets (Task 1): on a paid event with a ticket product, buy a ticket, confirm a booking row appears (Event RSVPs, with the order number), the booking email names the ticket type, the guest is on the check-in list and the spots count drops; refund the order fully and confirm the booking shows Cancelled and the place is free again. Open a free event in light and dark and a phone width and in another language: ticket types, form and buttons are translated and look right.
 - [ ] Shine replaced Tailwind: open the admin (dashboard, a list, Settings, Pages tree) and the public site (home, shop, a product, cart, checkout) in light and dark, desktop and phone. Pass = nothing unstyled, no overlapping text, buttons and forms look like before.

@@ -88,6 +88,27 @@ export function tierNotes(tiers: PriceTier[], ctx: { productId: string; variatio
   return notes
 }
 
+/**
+ * Notes for tiers that belong to one variation only, for the product page, for example "Red, M: Buy 10 or more: 8.50 each".
+ * `variations` are the product's own variations with their label and price (variation price, or the product price when
+ * it has none). Tiers for all variations are not repeated here: tierNotes already lists them.
+ */
+export function variationTierNotes(
+  tiers: PriceTier[],
+  ctx: { productId: string; customerTypes: string[] },
+  variations: Array<{ id: string; label: string; price: number }>,
+  format: (units: number) => string,
+): string[] {
+  const out: string[] = []
+  for (const v of variations) {
+    const own = tiers.filter((t) => t.variationId === v.id)
+    if (own.length === 0) continue
+    const notes = tierNotes(own, { productId: ctx.productId, variationId: v.id, customerTypes: ctx.customerTypes, basePrice: v.price }, format)
+    for (const note of notes) out.push(`${v.label}: ${note}`)
+  }
+  return out
+}
+
 /** Checks a product's tier list before saving. `error` is null when fine. */
 export function validatePriceTiers(input: unknown): { tiers: PriceTier[]; error: string | null } {
   if (!Array.isArray(input)) return { tiers: [], error: 'The tier list is missing.' }

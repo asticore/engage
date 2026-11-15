@@ -3819,7 +3819,7 @@ const ja: UiDictionary = {
   "shop.tiers.variationId": "バリエーションID",
   "shop.tiers.allVariations": "すべてのバリエーション",
   "shop.tiers.priceEach": "単価（{currency}）",
-  "shop.tiers.customerTypeHelp": "顧客タイプは購入者の役割（例: 卸売）と照合されます。すべての人を対象にする場合は空欄のままにしてください。会員グループを追加すると、同じ項目を使用します。",
+  "shop.tiers.customerTypeHelp": "顧客タイプは購入者のロール（例：卸売）、または所属する会社名（または company:slug）と照合されます。空欄はすべての人が対象です。",
   "shop.tiers.remove": "削除",
   "shop.tiers.addTier": "ティアを追加",
   "shop.tiers.save": "ティアを保存",

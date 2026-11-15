@@ -1402,7 +1402,7 @@ export const UI_STRING_SOURCE = {
   "shop.tiers.variationId": "Variation id",
   "shop.tiers.allVariations": "All variations",
   "shop.tiers.priceEach": "Price each ({currency})",
-  "shop.tiers.customerTypeHelp": "Customer type is matched against the buyer's role, for example wholesale. Leave it empty for everyone. When member groups arrive they will use the same field.",
+  "shop.tiers.customerTypeHelp": "Customer type is matched against the buyer's role, for example wholesale, or the name of a company they belong to (or company:slug). Leave it empty for everyone.",
   "shop.tiers.remove": "Remove",
   "shop.tiers.addTier": "Add tier",
   "shop.tiers.save": "Save tiers",

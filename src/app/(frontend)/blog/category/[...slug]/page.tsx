@@ -10,7 +10,7 @@ import { ARCHIVE_PAGE_SIZE, categoryIndex, categoryPath, paginate, parsePage, po
 import { BreadcrumbsElement } from '@/components/blocks/elements/Wave36Elements'
 import { categoryCrumbs, subCategoryLinks } from '@/features/categories/frontend'
 import { listCategoriesSafe } from '@/features/categories/store'
-import { findBySlug, subtreeNames } from '@/features/categories/tree'
+import { pathSlugs, resolvePath, subtreeNames } from '@/features/categories/tree'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
 import { archiveQueryString, parseArchiveFilters } from '@/features/siteTemplates/archiveFilter'
 import { archivePageHref } from '@/lib/templateWidgets'
@@ -26,12 +26,13 @@ import type { BlogSetting, Media, Post } from '@/engage-types'
 
 export const dynamic = 'force-dynamic'
 
-type Params = { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }
+type Params = { params: Promise<{ slug: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> }
 type Row = Post & { sticky?: boolean | null; readingTime?: number | null }
 
-async function load(rawSlug: string) {
-  const slug = termSlug(rawSlug)
-  if (!slug) return null
+async function load(segments: string[]) {
+  const parts = segments.map(termSlug)
+  const slug = parts[parts.length - 1]
+  if (!slug || parts.some((part) => !part)) return null
   const engine = await getEngine()
   const { docs: allDocs } = (await engine.find({
     collection: 'posts',
@@ -43,12 +44,15 @@ async function load(rawSlug: string) {
   const docs = await applyTranslationsToDocs(await excludeProtected('posts', allDocs), 'posts', await currentRequestLocale())
   // A category in the nested tree also lists the posts of its sub categories. A name with no tree row stays flat.
   const tree = await listCategoriesSafe('blog')
-  const node = findBySlug(tree, slug)
+  // The category named by the path: the last segment names it and earlier segments must be its parents (a bare slug still works).
+  const node = resolvePath(tree, parts)
   if (node) {
     const names = new Set(subtreeNames(tree, node.id).map((n) => slugify(n)))
     const posts = docs.filter((p) => (p.categories ?? []).some((c) => names.has(slugify((c?.name ?? '').trim()))))
-    return { slug, name: node.name, posts: orderBlogPosts(posts) as Row[], tree, nodeId: node.id }
+    return { slug: pathSlugs(tree, node.id).join('/'), name: node.name, posts: orderBlogPosts(posts) as Row[], tree, nodeId: node.id }
   }
+  // A name with no tree row is flat: one segment only.
+  if (parts.length > 1) return null
   const name = categoryIndex(docs).get(slug)
   if (!name) return null
   return { slug, name, posts: orderBlogPosts(postsInCategory(docs, slug)) as Row[], tree: [] as Awaited<ReturnType<typeof listCategoriesSafe>>, nodeId: null as number | null }
@@ -84,7 +88,7 @@ export default async function CategoryArchivePage({ params, searchParams }: Para
   setBlockContext({
     page: { title: term.name },
     path,
-    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(paged.items), kind: 'posts', filters, facets: archivePostFacets(term.posts) },
+    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(paged.items, term.tree), kind: 'posts', filters, facets: archivePostFacets(term.posts) },
   })
 
   const body = (
