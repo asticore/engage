@@ -163,6 +163,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
         description: 'Sent to shoppers who leave items in their cart. Their delays are set under Shop settings > Emails.',
         type: 'view',
       },
+      { kind: 'link', label: 'Notifications', href: '/notifications', description: 'Send an email or push when an order is paid, a form is sent, a booking is made and more.', type: 'view' },
       {
         kind: 'link',
         label: 'Email testing',

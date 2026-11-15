@@ -8,6 +8,7 @@ import { sendViaPostmark } from './postmark'
 import { sendViaResend } from './resend'
 import { sendViaSendGrid } from './sendgrid'
 import { sendViaSesApi } from './sesApi'
+import { sendViaSmtp } from './smtp'
 
 /** `send` is null exactly when `missing` lists what settings are still blank. */
 export type ResolvedProvider = {
@@ -92,6 +93,25 @@ export const resolveProvider = (provider: EmailProviderKey, settings: EmailSetti
       if (!apiKey) return { send: null, missing: ['Mandrill API key'] }
       return { send: (message) => sendViaMandrill(message, { apiKey }), missing: [] }
     }
+
+    case 'smtp': {
+      const host = text(settings.smtp?.host)
+      const port = Number(settings.smtp?.port) || 587
+      const security = text(settings.smtp?.security)
+      const missing = host ? [] : ['SMTP host']
+      if (missing.length > 0) return { send: null, missing }
+      return {
+        send: (message) =>
+          sendViaSmtp(message, {
+            host,
+            port,
+            username: text(settings.smtp?.username),
+            password: text(settings.smtp?.password),
+            security: security === 'tls' || security === 'none' ? security : 'starttls',
+          }),
+        missing: [],
+      }
+    }
   }
 }
 
@@ -105,6 +125,7 @@ export const SUPPORTED_PROVIDERS: EmailProviderKey[] = [
   'cloudflare',
   'brevo',
   'mandrill',
+  'smtp',
 ]
 
 export const isSupportedProvider = (value: unknown): value is EmailProviderKey =>

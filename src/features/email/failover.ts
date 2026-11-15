@@ -27,6 +27,20 @@ export function isTransientFailure(response: ProviderResponse): boolean {
   return status === 429 || status >= 500
 }
 
+/** The fallback providers in the order they are tried: the single fallback first, then the ordered list. Unknown keys and repeats are dropped. */
+export function fallbackKeys(settings: EmailSettingsDoc): EmailProviderKey[] {
+  const raw = [
+    typeof settings.fallbackProvider === 'string' ? settings.fallbackProvider : '',
+    ...(typeof settings.fallbackOrder === 'string' ? settings.fallbackOrder.split(',') : []),
+  ]
+  const out: EmailProviderKey[] = []
+  for (const entry of raw) {
+    const key = entry.trim()
+    if (key && key !== 'none' && isSupportedProvider(key) && !out.includes(key)) out.push(key)
+  }
+  return out
+}
+
 /**
  * The providers to try, in order. The default must be connected; without it
  * nothing is sent and `missing` says what is still blank. The fallback is
@@ -41,10 +55,10 @@ export function planAttempts(settings: EmailSettingsDoc): { attempts: SendAttemp
 
   const attempts: SendAttempt[] = [{ provider: primary, send: first.send }]
 
-  const fallback = typeof settings.fallbackProvider === 'string' ? settings.fallbackProvider.trim() : ''
-  if (fallback && fallback !== 'none' && fallback !== primary && isSupportedProvider(fallback)) {
-    const second = resolveProvider(fallback, settings)
-    if (second.send) attempts.push({ provider: fallback, send: second.send })
+  for (const fallback of fallbackKeys(settings)) {
+    if (fallback === primary || attempts.some((attempt) => attempt.provider === fallback)) continue
+    const next = resolveProvider(fallback, settings)
+    if (next.send) attempts.push({ provider: fallback, send: next.send })
   }
 
   return { attempts, missing: [] }
