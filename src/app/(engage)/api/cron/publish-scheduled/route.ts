@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { drizzle } from 'drizzle-orm/d1'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { getEngine } from '@/engine'
-import { runDueSchedules } from '@/features/schedule/runDue'
+import { CRON_JOBS } from '@/features/cron/registry'
+import { JOB_RUNNERS } from '@/features/cron/jobs'
+import { listDisabledJobs } from '@/features/cron/jobState'
 import { isHourlyTick } from '@/features/cron/model'
 import { runJob } from '@/features/cron/runJob'
 
@@ -56,104 +58,29 @@ async function handleCronRequest(request: Request): Promise<Response> {
     }
 
     // Key is valid - run every job. Each one is recorded in eg_cron_runs by runJob,
-    // and a failing job is reported to the error log without stopping the rest.
+    // and a failing job is reported to the error log without stopping the rest. The bodies are in
+    // src/features/cron/jobs.ts (one per registry name); hourly jobs run on the first tick of the hour and a
+    // job an admin switched off on the Scheduled tasks screen is skipped.
     const engine = await getEngine()
     const { env } = await getCloudflareContext({ async: true })
     const db = drizzle(env.D1)
-    const nowIso = new Date().toISOString()
-    const hourly = isHourlyTick(new Date())
+    const now = new Date()
+    const hourly = isHourlyTick(now)
+    const ctx = { engine, env, db, now }
+    const disabled = await listDisabledJobs(env.D1)
 
-    const scheduled = await runJob('schedules', () => runDueSchedules(engine, db, nowIso))
+    // Scheduled publishing first: it is also the heartbeat, and a failure here stops the tick.
+    const scheduled = await runJob('schedules', () => JOB_RUNNERS.schedules(ctx))
     if (scheduled.status !== 'ok') {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: { 'Cache-Control': 'no-store' } })
     }
 
-    // Abandoned-cart reminders (does nothing unless switched on in Shop settings).
-    await runJob('abandoned-carts', async () => {
-      const { runAbandonedCartReminders } = await import('@/features/ecommerce/server/abandoned')
-      await runAbandonedCartReminders(engine as never)
-    })
-
-    // "Test after publish": runs at most one due PageSpeed test per tick (does nothing unless switched on in Speed settings).
-    await runJob('pagespeed', async () => {
-      const { runDueTests } = await import('@/features/pagespeed/queue')
-      await runDueTests(engine as never, db as never)
-    })
-
-    // Form housekeeping: webhook retries every tick, entries past their retention window hourly.
-    await runJob('webhooks-retry', async () => {
-      const { retryDueWebhooks } = await import('@/features/forms/maintenance')
-      await retryDueWebhooks(engine as never)
-    })
-    // Webhooks builder: due deliveries (first tries and retries), then the log clean-up at the retention the admin chose.
-    await runJob('webhook-deliveries', async () => {
-      const { createD1WebhookStore } = await import('@/features/webhooks/store')
-      const { createD1InboundStore } = await import('@/features/webhooks/inboundStore')
-      const { processDue } = await import('@/features/webhooks/delivery')
-      const d1 = async () => env.D1 as never
-      const store = createD1WebhookStore(d1)
-      await processDue({ store, inbound: createD1InboundStore(d1), retentionDays: () => store.getRetentionDays() })
-    })
-    await runJob(
-      'prune-submissions',
-      async () => {
-        const { pruneSubmissions } = await import('@/features/forms/maintenance')
-        await pruneSubmissions(engine as never)
-      },
-      { due: hourly },
-    )
-
-    // Email log: entries older than the 90-day retention are removed (checked hourly, like form entries).
-    await runJob(
-      'prune-email-log',
-      async () => {
-        const { pruneEmailLog } = await import('@/features/email/emailLogStore')
-        await pruneEmailLog(engine as never)
-      },
-      { due: hourly },
-    )
-
-    // Gift cards whose send date has arrived are emailed to their recipients.
-    await runJob('gift-cards', async () => {
-      const { deliverDueGiftCards } = await import('@/features/ecommerce/server/storedValue')
-      await deliverDueGiftCards(engine as never)
-    })
-
-    // Reminder emails (When emails are sent): membership renewal and event reminders, held during quiet hours.
-    await runJob('scheduled-emails', async () => {
-      const { runScheduledEmails } = await import('@/features/email/scheduledEmails')
-      await runScheduledEmails(engine as never, new Date())
-    })
-
-    // Data clean-up from Data and system settings (old versions, trash, logs). Hourly.
-    await runJob(
-      'cleanup',
-      async () => {
-        const { runScheduledCleanup } = await import('@/features/cleanup/scheduledCleanup')
-        await runScheduledCleanup(engine as never)
-      },
-      { due: hourly },
-    )
-
-    // Error spike alert: emails the admins when many new errors land in 15 minutes (threshold and on/off on the Speed settings).
-    await runJob('error-alert', async () => {
-      const { runErrorSpikeAlert } = await import('@/features/errors/spikeAlert')
-      const report = await runErrorSpikeAlert(engine as never, new Date())
-      if (report.error) throw new Error(report.error)
-    })
-
-    // Automatic exchange rates for the extra display currencies. Checked hourly, refreshed about once a day. Does nothing when none are automatic.
-    await runJob(
-      'display-rates',
-      async () => {
-        const { rawD1 } = await import('@/features/ecommerce/server/db')
-        const { loadShopCurrency } = await import('@/features/ecommerce/lib/shopCurrency')
-        const { refreshDisplayRates } = await import('@/features/ecommerce/server/displayRates')
-        const base = await loadShopCurrency(engine as never)
-        await refreshDisplayRates((await rawD1()) as never, base, new Date())
-      },
-      { due: hourly },
-    )
+    for (const job of CRON_JOBS) {
+      if (job.source !== 'cron' || job.name === 'schedules') continue
+      const runner = JOB_RUNNERS[job.name]
+      if (!runner) continue
+      await runJob(job.name, () => runner(ctx), { due: !disabled.has(job.name) && (job.schedule === 'every 5 minutes' || hourly) })
+    }
 
     return NextResponse.json(scheduled.value, {
       status: 200,

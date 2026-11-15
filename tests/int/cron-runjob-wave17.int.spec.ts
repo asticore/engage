@@ -182,10 +182,11 @@ describe('runJob', () => {
 })
 
 describe('cron registry', () => {
-  it('names every job the cron route runs, and only those', () => {
+  it('has a runner for every job the cron route runs, and only those', async () => {
+    const { JOB_RUNNERS } = await import('@/features/cron/jobs')
+    expect(Object.keys(JOB_RUNNERS).sort()).toEqual([...cronJobNames()].sort())
     const route = readFileSync(join(process.cwd(), 'src/app/(engage)/api/cron/publish-scheduled/route.ts'), 'utf8')
-    const used = [...route.matchAll(/runJob\(\s*'([a-z-]+)'/g)].map((match) => match[1]).sort()
-    expect(used).toEqual([...cronJobNames()].sort())
+    expect(route).toContain('JOB_RUNNERS')
   })
 
   it('gives every job a label, a description and a schedule', () => {

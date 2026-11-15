@@ -155,6 +155,7 @@ import * as migration_20270313_100000_categories from './20270313_100000_categor
 import * as migration_20270313_100000_org_content_grants from './20270313_100000_org_content_grants';
 import * as migration_20270314_100000_api_categories from './20270314_100000_api_categories';
 import * as migration_20270315_100000_event_rsvp_orders from './20270315_100000_event_rsvp_orders';
+import * as migration_20270315_200000_cron_job_state from './20270315_200000_cron_job_state';
 
 export const migrations = [
   {
@@ -936,5 +937,10 @@ export const migrations = [
     up: migration_20270315_100000_event_rsvp_orders.up,
     down: migration_20270315_100000_event_rsvp_orders.down,
     name: '20270315_100000_event_rsvp_orders',
+  },
+  {
+    up: migration_20270315_200000_cron_job_state.up,
+    down: migration_20270315_200000_cron_job_state.down,
+    name: '20270315_200000_cron_job_state',
   },
 ];
