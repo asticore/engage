@@ -43,10 +43,10 @@ Order: 1 to 4 (follow-ups), 5 to 15 (features, in listed order), 16 to 22 (notes
 Done 15 Nov (see `docs/remaining-work-done.md`): paid orders create bookings, refunds and cancelled orders free them, cancel status, race-safe capacity, ticket type in the booking email, Shine classes and translated event page text. Still open:
 - [ ] Decision for Matt: tier prices on paid events are real only when each tier is its own product or variation (a line whose variation label equals the tier name is booked on that tier). Today the event has one `ticketProduct`, so a paid event with several tiers sells one product with variations. Confirm this is how you want it, or ask for a tier-to-product picker on the event.
 
-### Task 2. Shine and Effix follow-ups (new, 9 Nov 2026)
-Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated utility file `src/styles/engage-utilities.css` (`node scripts/generate-utilities.mjs`, checked by a test), `reference/references.json`, Effix loader on the public site.
-- [ ] Effects picker for Effix in the visual editor (pick an effect, it adds the `efx-` class and data attributes; charts and diagrams too). Today `efx-` classes work wherever they appear (custom class field) but there is no picker.
-- [ ] Admin screen and super admin notice for the reference file: show each source, its pinned version and the result of `checkReferenceUpdates` (already built and tested, not yet shown anywhere); tie it into the update popup (Task 12).
+### Task 2. Shine and Effix follow-ups (partly done 15 Nov 2026)
+Done: effects picker in the Design panel (`src/features/effects/catalog.ts`, `src/views/visualEditor/EffectsPicker.tsx`) and the Reference sources screen (`src/features/references/ReferencesView.tsx`, Settings > Data and System). Still open:
+- [ ] The picker list is a seed (shimmer, carousel, counter, countdown, toast, popup, bar and radar chart): the `efx-` class names and option names were taken from the Effix notes, not from the Effix files (the build environment cannot reach the Effix repo or its CDN). Replace `EFFECT_CATALOG` with the list from Effix's `.meta.js` entries (see `docs/repo-issues/effix-spark-missing.md`) once checked against the pinned copy; add diagrams and the other chart types.
+- [ ] Tie the Reference sources check into the update popup (Task 12): show a super admin notice when a source is outdated.
 - [ ] Bring the remaining Tailwind-era look-alike classes onto Shine tokens over time (compare dark mode and density knobs); vendor an offline copy of Effix if a site must run with no CDN.
 
 ### Task 3. Translation pass for the new admin and public text (new, 9 Nov 2026)
@@ -394,6 +394,7 @@ Lessons: migration-order specs use `migrations.length - N` offsets, so every new
 Only items not yet verified. Tick each, report failures. Grouped by area, each with how to check.
 
 ### Shine, reference file, tickets, pricing, badges and categories (9 Nov 2026 PR)
+- [ ] Effects picker and Reference sources (Task 2): in the visual editor open a block, Design > Custom, pick an effect (for example Counter), set an option, publish, and confirm the live page runs it and the CSS classes and Custom attributes fields show the `efx-` class and `data-efx-` attribute. Open Settings > Data and System > Reference sources and confirm Shine and Effix show their pinned versions and a status. Check each picker class name actually does something on the live page; fix the catalogue where it does not.
 - [ ] Paid event tickets (Task 1): on a paid event with a ticket product, buy a ticket, confirm a booking row appears (Event RSVPs, with the order number), the booking email names the ticket type, the guest is on the check-in list and the spots count drops; refund the order fully and confirm the booking shows Cancelled and the place is free again. Open a free event in light and dark and a phone width and in another language: ticket types, form and buttons are translated and look right.
 - [ ] Shine replaced Tailwind: open the admin (dashboard, a list, Settings, Pages tree) and the public site (home, shop, a product, cart, checkout) in light and dark, desktop and phone. Pass = nothing unstyled, no overlapping text, buttons and forms look like before.
 - [ ] Settings and the visual editor after the style change: open a settings page and save, open the visual editor, add a section, change its design, open the template picker, switch preview widths. Pass = all work and the editor canvas matches the live page.

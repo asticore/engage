@@ -1388,6 +1388,8 @@ const ja: UiDictionary = {
   'settings.link.site-health.description': "ストレージ、スケジュールジョブの状態、バージョン、警告。",
   'settings.link.scheduled-tasks.label': "スケジュールタスク",
   'settings.link.scheduled-tasks.description': "定時実行されるすべてのジョブ、その直近の結果、公開待ちの内容。",
+  'settings.link.references.label': "リファレンスソース",
+  'settings.link.references.description': "Shine と Effix：固定バージョンと新しいバージョンの有無。",
   'settings.link.users.label': "ユーザー",
   'settings.link.users.description': "管理画面のユーザーアカウントを管理します。",
   'settings.link.audit-log.label': "監査ログ",

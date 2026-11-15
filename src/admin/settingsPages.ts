@@ -223,6 +223,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
       { kind: 'global', slug: 'backup-settings' },
       { kind: 'link', label: 'Database', href: '/database', description: 'Per-feature table usage and cleanup.', type: 'view' },
       { kind: 'link', label: 'Unused tables', href: '/unused-tables', description: 'Super admin: tables of sections that are switched off, with row counts and size. Export, then delete one at a time.', type: 'view' },
+      { kind: 'link', label: 'Reference sources', href: '/references', description: 'Shine and Effix: pinned versions and whether a newer one exists.', type: 'view' },
       { kind: 'link', label: 'Site health', href: '/site-health', description: 'Storage, scheduled job health, versions and warnings.', type: 'view' },
       { kind: 'link', label: 'Scheduled tasks', href: '/scheduled-tasks', description: 'Every timed job, its last result and what is waiting to go live.', type: 'view' },
       { kind: 'link', label: 'Users', href: collectionRoute('users'), description: 'Manage admin user accounts.', type: 'collection' },

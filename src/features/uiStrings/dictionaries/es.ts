@@ -1388,6 +1388,8 @@ const es: UiDictionary = {
   'settings.link.site-health.description': "Almacenamiento, estado de tareas programadas, versiones y advertencias.",
   'settings.link.scheduled-tasks.label': "Tareas programadas",
   'settings.link.scheduled-tasks.description': "Cada tarea temporizada, su último resultado y lo que espera para publicarse.",
+  'settings.link.references.label': "Fuentes de referencia",
+  'settings.link.references.description': "Shine y Effix: versiones fijadas y si hay una más reciente.",
   'settings.link.users.label': "Usuarios",
   'settings.link.users.description': "Administre las cuentas de usuario del panel.",
   'settings.link.audit-log.label': "Registro de auditoría",
