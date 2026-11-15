@@ -41,6 +41,7 @@ export type FeatureKey =
   | 'ads'
   | 'tracking'
   | 'taskboard'
+  | 'bookings'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -262,6 +263,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['task_boards', 'task_columns', 'task_cards', 'task_comments', 'task_activity'],
+    implemented: true,
+  },
+  {
+    key: 'bookings',
+    label: 'Bookings',
+    description: 'Appointment booking pages: people pick a time from your weekly hours and get a confirmation with a link to cancel.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['booking_resources', 'booking_types', 'booking_hours', 'booking_overrides', 'bookings'],
     implemented: true,
   },
 ]

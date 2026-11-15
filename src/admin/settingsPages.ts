@@ -226,6 +226,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
     sections: [
       { kind: 'global', slug: 'backup-settings' },
       { kind: 'link', label: 'Database', href: '/database', description: 'Per-feature table usage and cleanup.', type: 'view' },
+      { kind: 'link', label: 'Bookings', href: '/bookings', description: 'Appointment booking pages with opening hours and a link for customers to cancel. Switch the feature on in Site Settings.', type: 'view' },
       { kind: 'link', label: 'Taskboard', href: '/taskboard', description: 'Kanban boards where tasks are given to admin and staff users. Switch the feature on in Site Settings.', type: 'view' },
       { kind: 'link', label: 'Unused tables', href: '/unused-tables', description: 'Super admin: tables of sections that are switched off, with row counts and size. Export, then delete one at a time.', type: 'view' },
       { kind: 'link', label: 'Reference sources', href: '/references', description: 'Shine and Effix: pinned versions and whether a newer one exists.', type: 'view' },
