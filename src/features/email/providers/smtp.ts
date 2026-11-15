@@ -22,7 +22,8 @@ const TIMEOUT_MS = 20_000
 
 /** Opens a TCP connection from the Worker. The module only exists on Cloudflare, so it is loaded when first used. */
 async function connect(config: SmtpConfig): Promise<Socket> {
-  const moduleName = 'cloudflare:sockets'
+  // Built at run time (reversed text) so the minifier cannot fold it into a literal that the bundler then fails to resolve.
+  const moduleName = 'stekcos:eralfduolc'.split('').reverse().join('')
   const { connect: open } = (await import(/* webpackIgnore: true */ moduleName)) as {
     connect: (address: { hostname: string; port: number }, options: { secureTransport: string; allowHalfOpen: boolean }) => Socket
   }
