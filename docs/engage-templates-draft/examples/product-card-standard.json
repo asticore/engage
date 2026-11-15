@@ -1,0 +1,35 @@
+{
+  "$comment": "Authoring source: templates/loops/product-card-standard.json. Drawn once per item; merge tags resolve per product.",
+  "meta": {
+    "slug": "product-card-standard",
+    "kind": "loop",
+    "title": "Product card with image, name, price and button",
+    "category": "product-card",
+    "description": "Square image, name, price and an Add to cart button. Image zooms slightly on hover.",
+    "tags": ["product", "card", "price", "button"],
+    "industry": ["ecommerce"],
+    "style": "shine-light",
+    "theme": "light",
+    "colourSet": "shine-light-set",
+    "frameworks": ["shine"],
+    "version": "1.0.0"
+  },
+  "tree": [
+    {
+      "blockType": "section",
+      "design": { "bgType": "color", "bgColor": "var(--sh-surface)", "paddingTop": 0, "paddingBottom": 16, "borderRadius": 12 },
+      "columns": [
+        {
+          "label": "Card",
+          "widthDesktop": { "value": 0, "unit": "fill" },
+          "blocks": [
+            { "blockType": "element", "elementType": "image", "props": { "src": "{{image}}", "alt": "{{title}}", "link": "{{url}}" } },
+            { "blockType": "element", "elementType": "heading", "props": { "text": "{{title}}", "tag": "h3", "link": "{{url}}" } },
+            { "blockType": "element", "elementType": "text-editor", "props": { "text": "{{price}}" } },
+            { "blockType": "element", "elementType": "button", "props": { "label": "View product", "link": "{{url}}" } }
+          ]
+        }
+      ]
+    }
+  ]
+}
