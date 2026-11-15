@@ -48,6 +48,14 @@ export function ShopReportTables({ report, currency, csvQuery, onPage }: Props) 
           rows={report.coupons.map((c) => [c.code, c.uses, money(c.discountCents)])}
         />
       </CollapsibleCard>
+      <CollapsibleCard id="shop-reports-donations" title="Donations by campaign">
+        <Table
+          empty="No donations in this range."
+          csv={`${csvQuery}&format=csv&table=donations`}
+          head={['Campaign', 'Donations', 'Total']}
+          rows={report.donations.map((d) => [d.campaign, d.donations, money(d.totalCents)])}
+        />
+      </CollapsibleCard>
       <CollapsibleCard id="shop-reports-payments" title="Sales by payment method">
         <Table
           empty="No paid orders in this range."

@@ -10,6 +10,7 @@ import { canPurchase, computeStockStatus, stockMessage, type StockFields, type S
 import { decodeAttributeValues, resolveAttributes, splitValues, type ProductAttributeRow, type VariationRow } from './variations'
 import { PREORDER_STOCK_MESSAGE, preorderInfo, type PreorderInfo } from './lib/preorder'
 import { normaliseAddOnDefs, type AddOnView } from './lib/addOns'
+import { donationView, withDonationAddOns, type DonationView } from './lib/donations'
 import { packagingLimits } from './lib/packaging'
 
 export type VariationView = {
@@ -50,6 +51,8 @@ export type ProductView = {
   qtyLimits: { min: number; max: number | null; step: number }
   /** Name your price (simple products): suggested and minimum amounts in whole dollars. */
   buyerPrice: { enabled: boolean; suggested: number | null; minimum: number | null }
+  /** Set for a donation product: suggested amounts, largest amount, campaign, goal and the anonymous option. */
+  donation: DonationView | null
   /** Pre-order state now: the button label, the ships-from date and the note. */
   preorder: PreorderInfo
   /** Questions the buyer answers before adding to the cart (empty when the shop switch is off). */
@@ -142,7 +145,7 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
     stockMessage: type === 'variable' ? '' : preorder.active ? PREORDER_STOCK_MESSAGE : stockMessage(product),
     // A name-your-price product has no fixed price to show, so it is purchasable whenever it is in stock.
     // A pre-order is purchasable while out of stock.
-    purchasable: (type === 'simple' || type === 'bundle') && (own.price !== null || product.nameYourPrice === true) && (canPurchase(product, 1) || preorder.active),
+    purchasable: (type === 'simple' || type === 'bundle') && (own.price !== null || product.nameYourPrice === true || product.isDonation === true) && (canPurchase(product, 1) || preorder.active),
     sku: product.sku || null,
     options: options.filter((option) => option.values.length > 0),
     details,
@@ -150,12 +153,13 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
     external: type === 'external' && safeUrl(product.externalUrl) ? { url: safeUrl(product.externalUrl) as string, label: (product.buttonText || 'Buy').slice(0, 40) } : null,
     qtyLimits: { ...packagingLimits(product, typeof product.minQty === 'number' && product.minQty >= 1 ? Math.floor(product.minQty) : 1), max: typeof product.maxQty === 'number' && product.maxQty >= 1 ? Math.floor(product.maxQty) : null },
     buyerPrice: {
-      enabled: type === 'simple' && product.nameYourPrice === true,
-      suggested: typeof product.suggestedPrice === 'number' ? product.suggestedPrice : null,
+      enabled: type === 'simple' && (product.nameYourPrice === true || product.isDonation === true),
+      suggested: typeof product.suggestedPrice === 'number' ? product.suggestedPrice : (type === 'simple' ? (donationView(product)?.amounts[0] ?? null) : null),
       minimum: typeof product.minPrice === 'number' && product.minPrice > 0 ? product.minPrice : null,
     },
     preorder,
-    addOns: buildOptions.addOnsOn === false ? [] : normaliseAddOnDefs(product.addOns),
+    addOns: withDonationAddOns(product, buildOptions.addOnsOn === false ? [] : normaliseAddOnDefs(product.addOns)),
+    donation: type === 'simple' ? donationView(product) : null,
     pricingNotes: buildOptions.pricingNotes ?? [],
   }
 }

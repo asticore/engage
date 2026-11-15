@@ -22,6 +22,7 @@ import { giftCardLine, loadTierContext, type CartItemInput } from '../server/pri
 import { resolveTierPrice } from '../lib/priceTiers'
 import { loadPreordersEnabled } from '../server/shopExtra'
 import { loadShopRulesConfig } from '../server/pricingRules'
+import { withDonationAddOns } from '../lib/donations'
 import { normaliseAddOnDefs, parseAddOnInputs, priceAddOns, storeAddOnChoices } from '../lib/addOns'
 import { resolveBundle } from '../server/bundles'
 import { normaliseGiftCardSettings } from '../lib/storedValue'
@@ -119,7 +120,7 @@ export const beforeChangeCart = async ({ data, originalDoc, operation, req }: Re
       const line = resolveCartLine(product, item.variation ?? null, item.quantity, new Date(), already, item.priceCents ?? null, preordersOn)
       if (line.ok) {
         // Add-on answers are checked against the product and priced; only the accepted answers are kept on the line.
-        const addOnPriced = priceAddOns(addOnsOn ? normaliseAddOnDefs((product as { addOns?: unknown } | null)?.addOns) : [], addOnsOn ? parseAddOnInputs(item.addOns) : [])
+        const addOnPriced = priceAddOns(withDonationAddOns((product ?? {}) as never, addOnsOn ? normaliseAddOnDefs((product as { addOns?: unknown } | null)?.addOns) : []), addOnsOn ? parseAddOnInputs(item.addOns) : [])
         if (!addOnPriced.ok) {
           errors.push({ path: `items.${index}`, message: addOnPriced.error ?? 'Please check the options you chose.' })
           continue

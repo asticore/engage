@@ -304,6 +304,30 @@ export const limitFields: Field[] = [
   },
 ]
 
+/** Donation products (lib/donations.ts): the buyer sets the amount; a monthly donation is a subscription product that is also a donation. */
+export const donationFields: Field[] = [
+  {
+    type: 'collapsible',
+    label: 'Donation',
+    admin: { condition: (data) => data?.productType === 'simple', initCollapsed: true },
+    fields: [
+      { name: 'isDonation', type: 'checkbox', defaultValue: false, admin: { description: 'The buyer chooses the amount, like name your price, with suggested amounts and an optional campaign. Uses the lowest amount from "name your price" below.' } },
+      {
+        type: 'row',
+        admin: { condition: (data) => Boolean(data?.isDonation) },
+        fields: [
+          { name: 'donationAmounts', type: 'text', admin: { width: '50%', description: 'Suggested amounts as buttons, separated by commas, for example 10, 25, 50, 100.' } },
+          { name: 'donationMax', type: 'number', min: 0, admin: { width: '50%', components: PRICE_ADMIN, description: 'The largest amount accepted. Blank means no limit.' } },
+        ],
+      },
+      { name: 'donationCampaign', type: 'text', admin: { condition: (data) => Boolean(data?.isDonation), description: 'The cause or campaign this donation goes to. Shop reports total donations by campaign.' } },
+      { name: 'donationGoal', type: 'number', min: 0, admin: { condition: (data) => Boolean(data?.isDonation), components: PRICE_ADMIN, description: 'Optional fundraising goal for the campaign, for a progress bar.' } },
+      { name: 'donationAnonymous', type: 'checkbox', defaultValue: false, admin: { condition: (data) => Boolean(data?.isDonation), description: 'Show a "Give anonymously" tick box.' } },
+      { name: 'donationReceiptText', type: 'textarea', admin: { condition: (data) => Boolean(data?.isDonation), description: 'Added to the confirmation email, for example your ABN and "Donations of $2 or more are tax deductible".' } },
+    ],
+  },
+]
+
 /** Carton and pallet quantities (lib/packaging.ts): the cart steps in whole cartons or pallets. */
 export const packagingFields: Field[] = [
   {
@@ -358,6 +382,7 @@ export const catalogueFields: Field[] = [
   ...pricingFields,
   ...inventoryFields,
   ...limitFields,
+  ...donationFields,
   ...packagingFields,
   ...shippingFields,
   ...typeSpecificFields,
