@@ -672,7 +672,7 @@ const de: UiDictionary = {
   'label.singular.events': 'Veranstaltung',
   'label.singular.courses': 'Kurs',
   // --- builder translate ---
-  'builder.translate.banner': 'Übersetzung nach {language} — Struktur ist gesperrt',
+  'builder.translate.banner': 'Übersetzung nach {language}: Struktur ist gesperrt',
   'builder.translate.exit': 'Beenden',
   'builder.translate.approvePage': 'Seite freigeben',
   'builder.translate.requestReview': 'Überprüfung anfordern',

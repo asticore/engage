@@ -671,7 +671,7 @@ const it: UiDictionary = {
   'label.singular.events': 'Evento',
   'label.singular.courses': 'Corso',
   // --- builder translate ---
-  'builder.translate.banner': 'Traduzione in {language} — la struttura è bloccata',
+  'builder.translate.banner': 'Traduzione in {language}: la struttura è bloccata',
   'builder.translate.exit': 'Esci',
   'builder.translate.approvePage': 'Approva pagina',
   'builder.translate.requestReview': 'Richiedi revisione',

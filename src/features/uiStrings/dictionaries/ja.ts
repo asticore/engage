@@ -671,7 +671,7 @@ const ja: UiDictionary = {
   'label.singular.events': 'イベント',
   'label.singular.courses': 'コース',
   // --- builder translate ---
-  'builder.translate.banner': '{language} に翻訳中 — 構造はロックされています',
+  'builder.translate.banner': '{language} に翻訳中: 構造はロックされています',
   'builder.translate.exit': '終了',
   'builder.translate.approvePage': 'ページを承認',
   'builder.translate.requestReview': 'レビューを依頼',

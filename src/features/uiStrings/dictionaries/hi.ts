@@ -671,7 +671,7 @@ const hi: UiDictionary = {
   'label.singular.events': 'इवेंट',
   'label.singular.courses': 'कोर्स',
   // --- builder translate ---
-  'builder.translate.banner': '{language} में अनुवाद — संरचना लॉक है',
+  'builder.translate.banner': '{language} में अनुवाद: संरचना लॉक है',
   'builder.translate.exit': 'बाहर निकलें',
   'builder.translate.approvePage': 'पृष्ठ स्वीकृत करें',
   'builder.translate.requestReview': 'समीक्षा का अनुरोध करें',

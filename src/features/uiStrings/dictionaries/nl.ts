@@ -671,7 +671,7 @@ const nl: UiDictionary = {
   'label.singular.events': 'Evenement',
   'label.singular.courses': 'Cursus',
   // --- builder translate ---
-  'builder.translate.banner': 'Vertalen naar {language} — structuur is vergrendeld',
+  'builder.translate.banner': 'Vertalen naar {language}: structuur is vergrendeld',
   'builder.translate.exit': 'Afsluiten',
   'builder.translate.approvePage': 'Pagina goedkeuren',
   'builder.translate.requestReview': 'Review aanvragen',

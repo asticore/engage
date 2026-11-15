@@ -329,7 +329,7 @@ function RelationshipInput({ id, def, value, onChange }: { id: string; def: Cust
   }
   return (
     <select id={id} className={controlClassName} value={keyOf(value)} onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}>
-      <option value="">—</option>
+      <option value="">None</option>
       {options.map((opt) => (
         <option key={opt.value} value={opt.value.split(':')[1]}>
           {opt.label}
@@ -577,7 +577,7 @@ export const CustomFieldInput: React.FC<{
       }
       return wrap(
         <select id={id} className={controlClassName} value={text} onChange={(e) => onChange(e.target.value || undefined)}>
-          <option value="">—</option>
+          <option value="">None</option>
           {(def.options || []).map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

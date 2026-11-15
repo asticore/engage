@@ -712,7 +712,7 @@ export const UI_STRING_SOURCE = {
   'label.singular.events': 'Event',
   'label.singular.courses': 'Course',
   // --- builder translate ---
-  'builder.translate.banner': 'Translating to {language} — structure is locked',
+  'builder.translate.banner': 'Translating to {language}: structure is locked',
   'builder.translate.exit': 'Exit',
   'builder.translate.approvePage': 'Approve page',
   'builder.translate.requestReview': 'Request review',

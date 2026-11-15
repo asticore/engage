@@ -255,7 +255,7 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
   },
   // ---- layout ----
   {
-    type: 'divider', label: 'Divider', icon: '—', category: 'layout',
+    type: 'divider', label: 'Divider', icon: '─', category: 'layout',
     description: 'A horizontal line, optionally with a word in the middle. Turn the line off and use Space to make it a spacer.',
     fields: [
       { name: 'showLine', label: 'Show line', type: 'checkbox', width: 'half' },
