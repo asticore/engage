@@ -102,6 +102,7 @@ function sizeLabel(doc: GalleryDoc): string {
 export function MediaGalleryGrid({
   docs,
   folders,
+  tags = [],
   currentFolder,
   batchSize,
   optimisationOn,
@@ -110,6 +111,7 @@ export function MediaGalleryGrid({
 }: {
   docs: GalleryDoc[]
   folders: string[]
+  tags?: Array<{ id: number; label: string }>
   currentFolder: string
   batchSize: number
   optimisationOn: boolean
@@ -124,6 +126,7 @@ export function MediaGalleryGrid({
   const [provider, setProvider] = useState<Provider>('claude')
   const [keys, setKeys] = useState<Record<Provider, boolean> | null>(null)
   const [folderInput, setFolderInput] = useState('')
+  const [tagPick, setTagPick] = useState(0)
   const [stockOpen, setStockOpen] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
 
@@ -242,6 +245,16 @@ export function MediaGalleryGrid({
     finish('ok', `Moved ${result.data.moved} to ${folder || 'the top level'}.`)
   }
 
+  const tagIds = async (ids: number[], remove: boolean) => {
+    if (!tagPick) return setNotice({ kind: 'error', text: 'Pick a tag first.' })
+    setBusy('tag')
+    setNotice(null)
+    const result = await postJson<{ ok: boolean }>('/api/admin-media-tags', { action: 'assign', mediaIds: ids, tagIds: [tagPick], remove })
+    if (result.ok === false) return finish('error', result.error)
+    setSelected(new Set())
+    finish('ok', `${remove ? 'Removed the tag from' : 'Tagged'} ${ids.length} file${ids.length === 1 ? '' : 's'}.`)
+  }
+
   const optimiseOne = (id: string) => {
     const doc = docs.find((item) => item.id === id)
     if (doc && isVideoMimeType(doc.mimeType) && !formats.streamReady) {
@@ -324,6 +337,29 @@ export function MediaGalleryGrid({
           <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => writeAlt(selectedIds)}>
             {busy === 'alt' ? 'Writing...' : 'Generate alt text'}
           </button>
+          {tags.length > 0 ? (
+            <span className="flex items-center gap-[6px]">
+              <select
+                value={tagPick}
+                onChange={(event) => setTagPick(Number(event.target.value))}
+                aria-label="Tag"
+                className="rounded-[4px] border border-[var(--theme-elevation-200)] bg-transparent px-[6px] py-[4px] text-[12px]"
+              >
+                <option value={0}>Tag...</option>
+                {tags.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => tagIds(selectedIds, false)}>
+                Add tag
+              </button>
+              <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => tagIds(selectedIds, true)}>
+                Remove tag
+              </button>
+            </span>
+          ) : null}
           <form
             className="flex items-center gap-[6px]"
             onSubmit={(event) => {

@@ -44,6 +44,7 @@ export type FeatureKey =
   | 'bookings'
   | 'quotes'
   | 'limits'
+  | 'mediatags'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -295,6 +296,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['purchase_limit_rules', 'purchase_limit_blocks'],
+    implemented: true,
+  },
+  {
+    key: 'mediatags',
+    label: 'Media tags',
+    description: 'A tree of tags with colours for media files: tag many files at once, filter by a tag and its sub-tags, and import or export tags as CSV.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['media_tags', 'media_tag_links'],
     implemented: true,
   },
 ]
