@@ -159,6 +159,7 @@ import * as migration_20270315_200000_cron_job_state from './20270315_200000_cro
 import * as migration_20270315_210000_email_smtp from './20270315_210000_email_smtp';
 import * as migration_20270315_220000_notification_rules from './20270315_220000_notification_rules';
 import * as migration_20270315_230000_setting_locks from './20270315_230000_setting_locks';
+import * as migration_20270316_100000_taskboard from './20270316_100000_taskboard';
 
 export const migrations = [
   {
@@ -960,5 +961,10 @@ export const migrations = [
     up: migration_20270315_230000_setting_locks.up,
     down: migration_20270315_230000_setting_locks.down,
     name: '20270315_230000_setting_locks',
+  },
+  {
+    up: migration_20270316_100000_taskboard.up,
+    down: migration_20270316_100000_taskboard.down,
+    name: '20270316_100000_taskboard',
   },
 ];
