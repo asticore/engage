@@ -180,6 +180,7 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
       taxCents: l.taxCents,
       ...(l.preorder ? { preorder: { releaseDate: l.preorder.releaseDate ?? null, note: l.preorder.note ?? null } } : {}),
       ...(l.addOns?.length ? { addOns: l.addOns } : {}),
+      ...(l.cartonSize && l.cartonSize > 1 ? { cartonSize: l.cartonSize } : {}),
       ...((l as unknown as { bundleContents?: unknown[] }).bundleContents ? { bundleContents: (l as unknown as { bundleContents: unknown[] }).bundleContents } : {}),
       ...(l.isGiftCard ? { isGiftCard: true, giftAmountCents: (l as unknown as { giftAmountCents?: number }).giftAmountCents, recipient: (l as unknown as { recipient?: unknown }).recipient } : {}),
     })),

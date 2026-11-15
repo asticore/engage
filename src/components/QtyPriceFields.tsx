@@ -12,6 +12,7 @@ export function QtyPriceFields({
   onQty,
   min,
   max,
+  step = 1,
   buyerPrice,
   priceText,
   onPriceText,
@@ -20,6 +21,8 @@ export function QtyPriceFields({
   onQty: (qty: number) => void
   min: number
   max: number | null
+  /** Carton or pallet size: the box moves by this many units. */
+  step?: number
   buyerPrice?: BuyerPriceConfig | null
   priceText: string
   onPriceText: (text: string) => void
@@ -34,17 +37,16 @@ export function QtyPriceFields({
             type="number"
             min={min}
             max={max ?? 99}
+            step={step}
             value={qty}
             aria-label="Quantity"
             onChange={(event) => onQty(Number(event.target.value))}
             className="w-20 border border-[var(--color-line)] p-2"
           />
         </label>
-        {min > 1 || max !== null ? (
+        {min > 1 || max !== null || step > 1 ? (
           <span className="text-[0.85rem] opacity-70">
-            {min > 1 ? `Minimum ${min}` : ''}
-            {min > 1 && max !== null ? ', ' : ''}
-            {max !== null ? `maximum ${max}` : ''}
+            {[step > 1 ? `Sold in multiples of ${step}` : '', min > Math.max(1, step) ? `Minimum ${min}` : '', max !== null ? `Maximum ${max}` : ''].filter(Boolean).join(', ')}
           </span>
         ) : null}
       </div>

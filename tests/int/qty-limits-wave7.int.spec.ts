@@ -78,10 +78,10 @@ describe('resolveCartLine name your price', () => {
 describe('buildProductView limits', () => {
   it('exposes limits and the name-your-price settings to the storefront', () => {
     const view = buildProductView({ ...base, minQty: 2, maxQty: 9, nameYourPrice: true, suggestedPrice: 15, minPrice: 5 })
-    expect(view.qtyLimits).toEqual({ min: 2, max: 9 })
+    expect(view.qtyLimits).toEqual({ min: 2, max: 9, step: 1 })
     expect(view.buyerPrice).toEqual({ enabled: true, suggested: 15, minimum: 5 })
     expect(view.purchasable).toBe(true)
-    expect(buildProductView(base).qtyLimits).toEqual({ min: 1, max: null })
+    expect(buildProductView(base).qtyLimits).toEqual({ min: 1, max: null, step: 1 })
     expect(buildProductView(base).buyerPrice.enabled).toBe(false)
   })
 })
