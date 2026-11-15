@@ -319,6 +319,43 @@ export const SeoSettings: GlobalConfig = {
     },
     {
       type: 'group',
+      name: 'breadcrumbs',
+      label: 'Breadcrumbs',
+      admin: {
+        description: 'How the automatic breadcrumb trail looks on every page, and whether pages describe it to search engines. A Breadcrumbs element can override the separator and the Home label.',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'separator',
+              type: 'select',
+              defaultValue: '/',
+              options: [
+                { label: '/', value: '/' },
+                { label: '>', value: '>' },
+                { label: '\u203a', value: '\u203a' },
+                { label: '|', value: '|' },
+                { label: '-', value: '-' },
+                { label: '\u2022', value: '\u2022' },
+              ],
+              admin: { width: '33%' },
+            },
+            { name: 'homeLabel', type: 'text', defaultValue: 'Home', admin: { width: '33%', description: 'The first crumb, for example Home or Start.' } },
+            { name: 'linkLast', type: 'checkbox', defaultValue: false, admin: { width: '33%', description: 'Make the current page a link too. Off is the usual choice.' } },
+          ],
+        },
+        {
+          name: 'structuredData',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: { description: 'Tell search engines about the trail (BreadcrumbList), so it can show in results.' },
+        },
+      ],
+    },
+    {
+      type: 'group',
       name: 'indexNow',
       label: 'IndexNow',
       admin: {

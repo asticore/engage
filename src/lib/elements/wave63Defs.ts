@@ -57,8 +57,11 @@ export const WAVE63_ELEMENTS: ElementDef[] = [
   },
   {
     type: 'auto-breadcrumbs', label: 'Auto breadcrumbs', icon: String.fromCodePoint(0x1f9ed), category: 'siteMeta',
-    description: 'Home > section > current page trail, built from the page address.',
-    fields: [{ name: 'homeLabel', label: 'Home label', type: 'text', width: 'half' }],
-    defaultProps: () => ({ homeLabel: 'Home' }),
+    description: 'Home > section > current page trail, built from the page address. Separator, Home label, whether the last crumb is a link and structured data are set sitewide in SEO settings, Breadcrumbs; the two fields here override them for this trail.',
+    fields: [
+      { name: 'homeLabel', label: 'Home label', type: 'text', width: 'half', helpText: 'Leave empty to use the sitewide label.' },
+      { name: 'separator', label: 'Separator', type: 'select', width: 'half', options: [{ label: 'Sitewide setting', value: '' }, { label: '/', value: '/' }, { label: '>', value: '>' }, { label: '\u203a', value: '\u203a' }, { label: '|', value: '|' }, { label: '-', value: '-' }, { label: '\u2022', value: '\u2022' }] },
+    ],
+    defaultProps: () => ({ homeLabel: '', separator: '' }),
   },
 ]
