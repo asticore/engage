@@ -1388,6 +1388,8 @@ const hi: UiDictionary = {
   'settings.link.site-health.description': "स्टोरेज, निर्धारित कार्यों की स्थिति, संस्करण और चेतावनियाँ।",
   'settings.link.scheduled-tasks.label': "निर्धारित कार्य",
   'settings.link.scheduled-tasks.description': "हर समयबद्ध कार्य, उसका अंतिम परिणाम और जो लाइव होने की प्रतीक्षा में है।",
+  'settings.link.references.label': "संदर्भ स्रोत",
+  'settings.link.references.description': "Shine और Effix: तय संस्करण और क्या नया संस्करण उपलब्ध है।",
   'settings.link.users.label': "उपयोगकर्ता",
   'settings.link.users.description': "एडमिन उपयोगकर्ता खाते प्रबंधित करें।",
   'settings.link.audit-log.label': "ऑडिट लॉग",

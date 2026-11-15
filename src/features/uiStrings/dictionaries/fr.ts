@@ -1388,6 +1388,8 @@ const fr: UiDictionary = {
   'settings.link.site-health.description': "Stockage, état des tâches planifiées, versions et avertissements.",
   'settings.link.scheduled-tasks.label': "Tâches planifiées",
   'settings.link.scheduled-tasks.description': "Chaque tâche programmée, son dernier résultat et ce qui attend d'être mis en ligne.",
+  'settings.link.references.label': "Sources de référence",
+  'settings.link.references.description': "Shine et Effix : versions épinglées et existence d'une version plus récente.",
   'settings.link.users.label': "Utilisateurs",
   'settings.link.users.description': "Gérez les comptes utilisateurs de l'administration.",
   'settings.link.audit-log.label': "Journal d'audit",
