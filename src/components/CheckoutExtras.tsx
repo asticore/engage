@@ -56,15 +56,15 @@ const ADDRESS_FIELDS: [string, string][] = [
  * Every figure shown comes from /api/shop-quote; the server recomputes it all
  * again when payment starts, so nothing here is trusted.
  */
-export function CheckoutExtras({ cartRef, email, onChange }: { cartRef: { id: number; secret: string } | null; email: string; onChange: (v: CheckoutInput, ready: boolean) => void }) {
+export function CheckoutExtras({ cartRef, email, onChange, initial }: { cartRef: { id: number; secret: string } | null; email: string; onChange: (v: CheckoutInput, ready: boolean) => void; initial?: { address?: Record<string, string>; fields?: Record<string, string> } }) {
   const t = useStoreText()
   const currency = useShopCurrency()
   const money = (c: number) => formatMoney(c, currency)
-  const [address, setAddress] = useState<Record<string, string>>({ country: 'AU' })
+  const [address, setAddress] = useState<Record<string, string>>({ country: 'AU', ...(initial?.address ?? {}) })
   const [coupon, setCoupon] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState('')
   const [shipId, setShipId] = useState('')
-  const [values, setValues] = useState<Record<string, string>>({})
+  const [values, setValues] = useState<Record<string, string>>({ ...(initial?.fields ?? {}) })
   const [giftInput, setGiftInput] = useState('')
   const [giftCodes, setGiftCodes] = useState<string[]>([])
   const [useCredit, setUseCredit] = useState(false)

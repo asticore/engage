@@ -15,6 +15,7 @@ import { FORMS_SLUG, SUBMISSIONS_SLUG, type CreateArgs, type UpdateArgs } from '
 import { SLOT_TAKEN_MESSAGE } from './slots'
 import { firstLostSlot, firstTakenSlot, slotClaimsFor } from './slotGuard'
 import { checkCaptcha, checkFillTime, checkHoneypot } from './spam'
+import { buildHandoff, checkoutHandoffUrl, NO_CHECKOUT } from './checkoutHandoff'
 import { inspectFiles, storeFiles, getUploadBucket, type PendingFile, type StoredFile } from './upload'
 import { validateSubmission } from './validate'
 import { buildPayload, deliver, summariseAttempts, type WebhookAttempt } from './webhooks'
@@ -298,12 +299,15 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
     }
   }
 
+  // "Go to checkout": the form's own settings name the product, so a visitor cannot pick one that was not offered.
+  const handoff = buildHandoff(config.checkout ?? NO_CHECKOUT, values as Record<string, unknown>, submissionID)
+  const handoffUrl = handoff ? checkoutHandoffUrl(handoff) : null
   return {
     ok: true,
     status: 200,
     message: settings.successMessage,
     submissionID,
-    redirectUrl: (config.success?.mode === 'redirect' && config.success.redirectUrl) || form.settings?.redirectUrl || undefined,
+    redirectUrl: handoffUrl ?? ((config.success?.mode === 'redirect' && config.success.redirectUrl) || form.settings?.redirectUrl || undefined),
     checkout: form.payment?.purchasable ? buildCheckoutHandoff(form, pricing, submissionID) : undefined,
   }
 }

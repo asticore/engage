@@ -5,6 +5,7 @@ import React from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { STYLE_PRESETS } from '@/features/forms/config'
+import { CUSTOMER_FIELDS, NO_CHECKOUT, type CustomerField } from '@/features/forms/checkoutHandoff'
 import type { FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from '@/features/forms/types'
 
 /**
@@ -44,6 +45,9 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
   const rules = config.notifications || []
   const hooks = config.webhooks || []
   const key = embedKey || formId || ''
+  const checkout = config.checkout || NO_CHECKOUT
+  const setCheckout = (patch: Partial<typeof NO_CHECKOUT>) => set('checkout', { ...checkout, ...patch })
+  const setMap = (field: CustomerField, name: string) => setCheckout({ map: { ...checkout.map, [field]: name } })
 
   const setRule = (index: number, patch: Partial<FormNotificationRule>) => set('notifications', rules.map((rule, i) => (i === index ? { ...rule, ...patch } : rule)))
   const setHook = (index: number, patch: Partial<FormWebhook>) => set('webhooks', hooks.map((hook, i) => (i === index ? { ...hook, ...patch } : hook)))
@@ -129,6 +133,42 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
               <textarea rows={3} value={success.message || ''} onChange={(event) => set('success', { ...success, message: event.target.value })} />
             </label>
           )}
+        </Section>
+
+        <Section title="Go to checkout">
+          <label className="ve-field ve-field--checkbox">
+            <input type="checkbox" checked={checkout.enabled} onChange={(event) => setCheckout({ enabled: event.target.checked })} />
+            <span>After sending, take the visitor to the checkout with a product in the cart</span>
+          </label>
+          {checkout.enabled ? (
+            <>
+              <p className="ve-panel__hint">This replaces the thank you message or address above. The entry is still saved first.</p>
+              <label className="ve-field ve-field--full">
+                <span>Product number (from the Products list)</span>
+                <input type="number" min={1} value={checkout.productId ?? ''} onChange={(event) => setCheckout({ productId: event.target.value === '' ? null : Number(event.target.value) })} />
+              </label>
+              <label className="ve-field ve-field--full">
+                <span>Variation id (optional)</span>
+                <input type="text" value={checkout.variationId} onChange={(event) => setCheckout({ variationId: event.target.value })} />
+              </label>
+              <label className="ve-field ve-field--full">
+                <span>Quantity</span>
+                <input type="number" min={1} value={checkout.quantity} onChange={(event) => setCheckout({ quantity: Number(event.target.value) || 1 })} />
+              </label>
+              <label className="ve-field ve-field--full">
+                <span>Or choose the product from a field (field name)</span>
+                <input type="text" value={checkout.choiceField} onChange={(event) => setCheckout({ choiceField: event.target.value })} />
+                <span className="ve-field__help">A choice or dropdown field whose option values are product numbers, such as 12, or 12:variationId. It overrides the product above.</span>
+              </label>
+              <p className="ve-panel__hint">Fill the checkout from these fields (type the field name, leave blank to skip):</p>
+              {CUSTOMER_FIELDS.map((field) => (
+                <label className="ve-field ve-field--full" key={field}>
+                  <span>{{ email: 'Email', name: 'Full name', phone: 'Phone', line1: 'Street address', city: 'Suburb or city', state: 'State', postcode: 'Postcode', country: 'Country (2 letter code)', note: 'Order note' }[field]}</span>
+                  <input type="text" value={checkout.map[field] || ''} onChange={(event) => setMap(field, event.target.value)} />
+                </label>
+              ))}
+            </>
+          ) : null}
         </Section>
 
         <Section title={t('ve.form.sectionBehaviour')}>
