@@ -4,6 +4,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { useState } from 'react'
 
 import { STARTER_PRESETS } from '@/features/themeStyles/presets'
+import { generateTheme, STYLE_CARDS } from '@/features/themeStyles/styleCards'
 import { LIMITS, type ThemePreset, type ThemeStyles } from '@/features/themeStyles/types'
 
 import { addPreset, applyPresetData, deletePreset, renamePreset, resolveColour, uniqueSlug } from './editorLogic'
@@ -30,6 +31,10 @@ export function PresetControls({ styles, onChange, onNotice }: Props) {
   const [name, setName] = useState('')
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
+  const [picks, setPicks] = useState<string[]>([])
+  const [shuffle, setShuffle] = useState(0)
+  const [seed, setSeed] = useState('my site')
+  const generated = picks.length > 0 ? generateTheme(picks, `${seed}#${shuffle}`) : null
   const saved = styles.presets ?? []
   const atLimit = saved.length >= LIMITS.presets
   const nextId = name.trim() ? uniqueSlug(name, saved.map((p) => p.id)) : ''
@@ -53,6 +58,50 @@ export function PresetControls({ styles, onChange, onNotice }: Props) {
             </div>
           ))}
         </div>
+      </section>
+
+      <section aria-label="Styles you like">
+        <h3 className="ts-section">Styles you like</h3>
+        <p className="text-muted">Pick the looks you like. We explain why each suits and make a theme for you from your picks. Nothing changes until you apply it and choose Save changes.</p>
+        <div className="ts-cards">
+          {STYLE_CARDS.map((card) => {
+            const on = picks.includes(card.id)
+            return (
+              <label key={card.id} className="ts-item">
+                <h4 className="ts-item__title"><input type="checkbox" checked={on} onChange={() => setPicks(on ? picks.filter((x) => x !== card.id) : [...picks, card.id])} /> {card.name}</h4>
+                <p className="text-muted">{card.look}</p>
+                {on ? <p>{card.suits}</p> : null}
+              </label>
+            )
+          })}
+        </div>
+        {generated ? (
+          <div className="stack">
+            <div className="ts-strip" role="img" aria-label="Colours of the new theme">
+              {STRIP_IDS.map((id) => (
+                <span key={id} style={{ background: resolveColour(`@${id}`, generated.data.colours) || 'transparent' }} />
+              ))}
+            </div>
+            <ul>
+              {generated.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+            </ul>
+            <div className="ts-inline">
+              <label>Make it unique to <input className="ts-input" value={seed} onChange={(e) => setSeed(e.target.value)} /></label>
+              <button type="button" className="ts-btn" onClick={() => setShuffle(shuffle + 1)}>Shuffle</button>
+              <button
+                type="button"
+                className="ts-btn"
+                onClick={() => {
+                  if (!window.confirm('Apply this theme? This replaces your current colours, text, buttons and layout. It is not saved until you choose Save changes.')) return
+                  onChange(applyPresetData(styles, generated.data))
+                  onNotice('The theme made from your picks is applied to the editor. Review it, then choose Save changes.')
+                }}
+              >
+                Use this theme
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section aria-label={tt('ps.lit.saved_presets')}>
