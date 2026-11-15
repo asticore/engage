@@ -3,7 +3,7 @@
 import { EffectsPicker } from './EffectsPicker'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings'
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useMemo, useState } from 'react'
 
 import {
   BLEND_MODE_OPTIONS,
@@ -57,11 +57,12 @@ import {
   MARGIN_SIDE_KEYS,
   PADDING_SIDE_KEYS,
   readColourTokens,
-  resetGroup,
   type ColourToken,
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
+import { useSettingLocks } from './settingLockContext'
+import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 /**
@@ -78,8 +79,15 @@ export const DesignPanel: React.FC<{
   device?: EditDevice
   /** 'column' hides settings that only make sense for a block (position in column, shape dividers). */
   variant?: 'block' | 'column'
-}> = ({ value, onChange, device = 'desktop', variant = 'block' }) => {
+  /** The block type being edited, so a lock set for that kind of block applies. */
+  blockType?: string
+}> = ({ value, onChange: onChangeRaw, device = 'desktop', variant = 'block', blockType }) => {
   const t = useAdminT()
+  const { locks, user, templateId } = useSettingLocks()
+  const locked = useMemo(() => lockedSettings(locks, { blockType, templateId }, user, GROUP_KEYS, ALL_DESIGN_KEYS), [locks, user, blockType, templateId])
+  const blocked = useMemo(() => blockedKeys(locked), [locked])
+  // A locked setting keeps its value through every edit path: typing, presets, copy to device and reset.
+  const onChange = (next: BlockStyle) => onChangeRaw(guardChange(value as Record<string, unknown>, next as Record<string, unknown>, blocked) as BlockStyle)
   const resp = makeResponsive(value, onChange, device)
   const [query, setQuery] = useState('')
   const [only, setOnly] = useState(false)
@@ -94,7 +102,7 @@ export const DesignPanel: React.FC<{
   }
 
   return (
-    <DesignCtx.Provider value={{ value, onChange, query, only }}>
+    <DesignCtx.Provider value={{ value, onChange, query, only, blocked }}>
     <div className="ve-design">
       <StylePresets value={value} onChange={onChange} device={device} />
       <div className="ve-d51-top">
@@ -479,11 +487,13 @@ export const DesignPanel: React.FC<{
   )
 }
 
+const ALL_DESIGN_KEYS: string[] = Array.from(new Set(Object.values(GROUP_KEYS).flat()))
+
 /* -------------------------------------------------------------------------- */
 /* Small control primitives                                                   */
 /* -------------------------------------------------------------------------- */
 
-type DesignCtxValue = { value: BlockStyle; onChange: (next: BlockStyle) => void; query: string; only: boolean }
+type DesignCtxValue = { value: BlockStyle; onChange: (next: BlockStyle) => void; query: string; only: boolean; blocked: string[] }
 const DesignCtx = createContext<DesignCtxValue | null>(null)
 
 /** A top-level Design accordion: modified dot, group Reset, and search / "Only changed" filtering. */
@@ -491,6 +501,7 @@ const Acc: React.FC<{ g: string; title: string; defaultOpen?: boolean; children:
   const ctx = useContext(DesignCtx)
   const keys = GROUP_KEYS[g] ?? []
   const modified = ctx ? groupModified(ctx.value, keys) : false
+  const lockState = ctx && groupFullyBlocked(keys, ctx.blocked) ? 'all' : ctx && keys.some((k) => ctx.blocked.includes(k)) ? 'some' : undefined
   if (ctx) {
     if (!matchesQuery(ctx.query, title, GROUP_SEARCH[g] ?? '')) return null
     if (ctx.only && !modified) return null
@@ -501,7 +512,8 @@ const Acc: React.FC<{ g: string; title: string; defaultOpen?: boolean; children:
       title={title}
       defaultOpen={defaultOpen || searching}
       modified={modified}
-      onReset={ctx ? () => ctx.onChange(resetGroup(ctx.value, keys)) : undefined}
+      locked={lockState}
+      onReset={ctx && lockState !== 'all' ? () => ctx.onChange(resetToTheme(ctx.value as Record<string, unknown>, keys, ctx.blocked) as BlockStyle) : undefined}
     >
       {children}
     </Accordion>
@@ -513,12 +525,15 @@ export const Accordion: React.FC<{
   defaultOpen?: boolean
   modified?: boolean
   onReset?: () => void
+  /** 'all': every setting here is locked for this person (read only). 'some': a few are. */
+  locked?: 'all' | 'some'
   children: React.ReactNode
 }> = ({
   title,
   defaultOpen = false,
   modified = false,
   onReset,
+  locked,
   children,
 }) => {
   const t = useAdminT()
@@ -528,6 +543,7 @@ export const Accordion: React.FC<{
       <button type="button" className="ve-acc__head" onClick={() => setOpen(!open)}>
         <span>
           {title}
+          {locked && <Tooltip text={locked === 'all' ? 'Locked by an admin. You cannot change these settings.' : 'Some settings here are locked by an admin.'}><span role="img" aria-label="Locked" data-testid="ve-setting-lock">{' '}{String.fromCodePoint(0x1f512)}</span></Tooltip>}
           {modified && <Tooltip text={t('dp.changed')}><span className="ve-d51-dot" aria-label={t('dp.changed')} /></Tooltip>}
         </span>
         <span className="ve-acc__chev">{open ? String.fromCodePoint(0x25be) : String.fromCodePoint(0x25b8)}</span>
@@ -537,7 +553,7 @@ export const Accordion: React.FC<{
           Reset
         </button>
       )}
-      {open && <div className="ve-acc__body">{children}</div>}
+      {open && <div className="ve-acc__body">{locked === 'all' ? <fieldset disabled style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>{children}</fieldset> : children}</div>}
     </div>
   )
 }

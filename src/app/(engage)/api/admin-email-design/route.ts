@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
+import { rawD1 } from '@/features/ecommerce/server/db'
+import { emailLockRefusal } from '@/features/roles/settingLocks'
+import { listSettingLocks } from '@/features/roles/settingLocksStore'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { brandPatch, parseDesignSave, resetPatch, templatePatch, type DesignSaveRequest } from '@/features/email/designerSave'
 
@@ -54,6 +57,12 @@ export async function POST(request: Request): Promise<Response> {
     const body: unknown = await request.json().catch((): null => null)
     const parsed = parseDesignSave(body)
     if (parsed.ok === false) return json({ error: parsed.error }, 400)
+
+    // Setting locks apply to the email builder too (admins always pass; the check matters when the designer is opened to other roles).
+    const req = parsed.request
+    const touches = req.kind === 'brand' ? (['brand'] as const) : (['subject', 'blocks'] as const)
+    const lockRefusal = emailLockRefusal(await listSettingLocks((await rawD1()) as never), req.kind === 'brand' ? '' : req.key, context.user as never, touches)
+    if (lockRefusal) return json({ error: lockRefusal }, 403)
 
     await apply(context.engine as unknown as DesignEngine, context.user, parsed.request)
     return json({ ok: true })

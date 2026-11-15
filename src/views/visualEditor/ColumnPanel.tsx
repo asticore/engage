@@ -277,7 +277,7 @@ export const ColumnPanel: React.FC<{
         )}
 
         {tab === 'design' &&
-          (canEditStyle ? <DesignPanel value={design} onChange={setDesign} device={device} variant="column" /> : (
+          (canEditStyle ? <DesignPanel value={design} onChange={setDesign} device={device} variant="column" blockType="column" /> : (
             <div className="ve-panel__hint" style={{ padding: '1rem' }}>
               {t('ve.col.roleTextOnly')}
             </div>

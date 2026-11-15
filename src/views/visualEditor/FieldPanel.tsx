@@ -189,7 +189,7 @@ export const FieldPanel: React.FC<{
             </div>
           ) : (
             <fieldset className="ve-lockset" disabled={blocked}>
-              <DesignPanel value={asBlockStyle(data.design)} onChange={(next: BlockStyle) => setField('design', toStoredDesign(next))} device={device} />
+              <DesignPanel value={asBlockStyle(data.design)} onChange={(next: BlockStyle) => setField('design', toStoredDesign(next))} device={device} blockType={isElement ? String((data as { elementType?: unknown }).elementType ?? 'element') : blockDef.slug} />
             </fieldset>
           )
         )}
