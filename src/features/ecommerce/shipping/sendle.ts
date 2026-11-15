@@ -1,5 +1,5 @@
 import { basicAuth, fetchJson } from './http'
-import type { Address, CarrierAdapter, CarrierCredentials, ConnectionResult, LabelRequest, LabelResult, RateQuote, RateRequest } from './types'
+import type { Address, CarrierAdapter, CarrierCredentials, ConnectionResult, LabelRequest, LabelResult, RateQuote, RateRequest, TrackingLookup } from './types'
 
 const base = (creds: CarrierCredentials): string => (creds.testMode ? 'https://sandbox.sendle.com' : 'https://api.sendle.com')
 
@@ -37,6 +37,15 @@ const party = (a: Address) => ({
  */
 export class SendleAdapter implements CarrierAdapter {
   readonly id = 'sendle' as const
+
+  /** Sendle's tracking endpoint takes the Sendle reference (the tracking number saved with the label). */
+  async track(creds: CarrierCredentials, shipment: TrackingLookup): Promise<{ status?: string; events: { at?: string; text?: string; location?: string }[] } | null> {
+    const res = await fetchJson<{ state?: string; tracking_events?: { event_type?: string; scan_time?: string; description?: string; location?: string; reason?: string }[] }>(`${base(creds)}/api/tracking/${encodeURIComponent(shipment.trackingNumber)}`, { headers: { Authorization: authHeader(creds), Accept: 'application/json' } })
+    if (res.status === 404) return null
+    if (!res.ok || !res.body) throw new Error(`Sendle tracking answered ${res.status}.`)
+    const events = (res.body.tracking_events ?? []).map((e) => ({ at: e.scan_time, text: [e.event_type, e.description, e.reason].filter(Boolean).join(': '), location: e.location }))
+    return { status: res.body.state, events }
+  }
 
   async testConnection(creds: CarrierCredentials): Promise<ConnectionResult> {
     if (!creds.values.sendleId?.trim() || !creds.values.apiKey?.trim()) return { ok: false, message: 'Enter the Sendle ID and API key first.' }

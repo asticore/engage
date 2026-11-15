@@ -40,6 +40,7 @@ import { isLocaleRoutable } from '@/features/multilingual/routing'
 import { localeNativeName } from '@/features/multilingual/locales'
 import { portalText, portalTextFor, type PortalStringKey } from '@/features/multilingual/portalStrings'
 import { currentPortalLocale } from '@/features/multilingual/portalLocaleServer'
+import { TRACKING_LABELS } from '@/features/ecommerce/lib/tracking'
 
 /**
  * The signed-in screens.
@@ -180,6 +181,7 @@ export const OrderScreen: React.FC<{ id: string }> = async ({ id }) => {
     shippingTotal?: number
     taxTotal?: number
     pricesIncludeTax?: boolean
+    shipments?: { carrier?: string; trackingNumber?: string; trackingUrl?: string; tracking?: { status: string; events: { at: string; text: string; location?: string }[] } }[]
   } | null
   const notes = (full?.notes ?? []).filter((n) => n.type === 'customer')
   const portalLocale = await currentPortalLocale()
@@ -224,6 +226,24 @@ export const OrderScreen: React.FC<{ id: string }> = async ({ id }) => {
           </table>
         )}
       </section>
+
+      {(full?.shipments ?? []).filter((s) => s.trackingNumber).map((s, i) => (
+        <section key={s.trackingNumber ?? i} className="account-section">
+          <h2>Tracking{(full?.shipments ?? []).length > 1 ? ` ${i + 1}` : ''}</h2>
+          <p>
+            {s.carrier ? `${s.carrier}: ` : ''}
+            {s.trackingUrl ? <a href={s.trackingUrl}>{s.trackingNumber}</a> : s.trackingNumber}
+            {s.tracking ? <> · <strong>{TRACKING_LABELS[s.tracking.status as keyof typeof TRACKING_LABELS] ?? s.tracking.status}</strong></> : null}
+          </p>
+          {s.tracking && s.tracking.events.length > 0 ? (
+            <ol className="account-timeline">
+              {[...s.tracking.events].reverse().map((e, n) => (
+                <li key={n}>{formatDate(e.at, dateLocale)} · {e.text}{e.location ? ` (${e.location})` : ''}</li>
+              ))}
+            </ol>
+          ) : null}
+        </section>
+      ))}
 
       {shipping?.addressLine1 ? (
         <section className="account-section">

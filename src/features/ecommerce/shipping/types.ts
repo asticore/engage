@@ -60,6 +60,8 @@ export type LabelResult = {
   costCents?: number
 }
 
+export type TrackingLookup = { trackingNumber: string; carrierRef?: string }
+
 export type ConnectionResult = { ok: boolean; message: string }
 
 export type ManifestShipment = { trackingNumber: string; carrierRef?: string; reference: string }
@@ -76,6 +78,8 @@ export interface CarrierAdapter {
   createLabel(creds: CarrierCredentials, request: LabelRequest): Promise<LabelResult>
   /** Optional end-of-day / dispatch manifest with the carrier (Australia Post and Sendle style). */
   endOfDayManifest?(creds: CarrierCredentials, shipments: ManifestShipment[]): Promise<CarrierManifestResult>
+  /** Optional: where a parcel is now. Returns null when the carrier has nothing yet. Throws on a failed call; the poller skips that parcel until next time. */
+  track?(creds: CarrierCredentials, shipment: TrackingLookup): Promise<{ status?: string; events: { at?: string; text?: string; location?: string }[] } | null>
 }
 
 export type CarrierField = {

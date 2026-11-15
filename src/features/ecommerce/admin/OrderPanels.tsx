@@ -118,7 +118,7 @@ export function OrderInvoicePanel() {
 type LabelInfo = {
   carriers: { id: string; label: string; labels: boolean }[]
   chosen: { carrier: string; serviceCode: string } | null
-  shipments: { id?: string; carrier?: string; service?: string; trackingNumber?: string; labelUrl?: string; manifestId?: string | number | null }[]
+  shipments: { id?: string; carrier?: string; service?: string; trackingNumber?: string; labelUrl?: string; manifestId?: string | number | null; tracking?: { status: string; events: { at: string; status: string; text: string; location?: string }[] } }[]
 }
 
 export function OrderShippingPanel() {
@@ -129,6 +129,7 @@ export function OrderShippingPanel() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
+  const [upd, setUpd] = useState<Record<string, { status: string; text: string }>>({})
   useEffect(() => {
     if (!id) return
     call<LabelInfo>(`/api/admin-order-label/${id}`)
@@ -140,6 +141,13 @@ export function OrderShippingPanel() {
       .catch((e) => setError(e instanceof Error ? e.message : 'Could not load shipping.'))
   }, [id])
   if (!id) return <p>Save the order first.</p>
+  const addUpdate = async (trackingNumber: string) => {
+    setBusy(true); setError(''); setNotice('')
+    try {
+      await call(`/api/admin-order-tracking/${id}`, { method: 'POST', body: JSON.stringify({ trackingNumber, status: upd[trackingNumber]?.status ?? 'in-transit', text: upd[trackingNumber]?.text ?? '' }) })
+      window.location.reload()
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed.') } finally { setBusy(false) }
+  }
   const buy = async () => {
     setBusy(true); setError(''); setNotice('')
     try {
@@ -155,6 +163,19 @@ export function OrderShippingPanel() {
           {s.carrier} {s.service ? `- ${s.service}` : ''} - <strong>{s.trackingNumber}</strong>
           {s.labelUrl ? <> - <a href={s.labelUrl} target="_blank" rel="noopener noreferrer">Open label</a></> : null}
           {s.manifestId ? ' - on a manifest' : ''}
+          {s.tracking ? <div style={{ marginTop: 6 }}><strong>{s.tracking.status.replace(/-/g, ' ')}</strong>
+            <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+              {[...s.tracking.events].reverse().map((e, n) => <li key={n}>{e.at.slice(0, 16).replace('T', ' ')} {e.text}{e.location ? ` (${e.location})` : ''}</li>)}
+            </ul></div> : null}
+          {s.trackingNumber ? (
+            <div style={{ marginTop: 6 }}>
+              <select aria-label="Tracking status" value={upd[s.trackingNumber]?.status ?? 'in-transit'} onChange={(e) => setUpd({ ...upd, [s.trackingNumber as string]: { status: e.target.value, text: upd[s.trackingNumber as string]?.text ?? '' } })}>
+                {['in-transit', 'out-for-delivery', 'delivered', 'exception'].map((v) => <option key={v} value={v}>{v.replace(/-/g, ' ')}</option>)}
+              </select>{' '}
+              <input type="text" aria-label="Tracking note" placeholder="Note (optional)" value={upd[s.trackingNumber]?.text ?? ''} onChange={(e) => setUpd({ ...upd, [s.trackingNumber as string]: { status: upd[s.trackingNumber as string]?.status ?? 'in-transit', text: e.target.value } })} />{' '}
+              <button type="button" className="btn btn--style-secondary" disabled={busy} onClick={() => void addUpdate(s.trackingNumber as string)}>Add tracking update</button>
+            </div>
+          ) : null}
         </div>
       ))}
       {info && info.carriers.length === 0 && <p>No carrier is switched on. Add one in Shop settings &gt; Shipping, or type the tracking number into the fields beside this order.</p>}

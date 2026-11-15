@@ -76,6 +76,13 @@ export const ShopExtraSettings: GlobalConfig = {
       admin: { description: 'Leave blank for the built-in wording. Merge fields: {{order_id}}, {{customer_name}}, {{review_links}}, {{site_name}}. Review links need the SITE_URL setting to be full web addresses.' },
     },
     {
+      name: 'trackingEmails',
+      type: 'checkbox',
+      label: 'Email the customer as their parcel moves',
+      defaultValue: true,
+      admin: { description: 'Sent once each when a parcel is out for delivery, delivered, or has a delivery problem (needs tracking updates from a carrier, a webhook or you).' },
+    },
+    {
       name: 'readyPickupEmail',
       type: 'checkbox',
       label: 'Email the customer when a pickup order is ready',
