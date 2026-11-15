@@ -304,6 +304,37 @@ export const limitFields: Field[] = [
   },
 ]
 
+/** Carton and pallet quantities (lib/packaging.ts): the cart steps in whole cartons or pallets. */
+export const packagingFields: Field[] = [
+  {
+    type: 'collapsible',
+    label: 'Packaging (cartons and pallets)',
+    admin: { condition: (data) => data?.productType === 'simple' || data?.productType === 'variable' },
+    fields: [
+      {
+        type: 'row',
+        fields: [
+          { name: 'unitsPerCarton', type: 'number', min: 1, admin: { width: '50%', description: 'How many units are in one carton. Blank means the product is not packed in cartons.' } },
+          { name: 'cartonsPerPallet', type: 'number', min: 1, admin: { width: '50%', description: 'How many cartons make one pallet. Only needed to sell by the pallet.' } },
+        ],
+      },
+      {
+        name: 'sellInMultiplesOf',
+        type: 'select',
+        defaultValue: 'unit',
+        options: [
+          { label: 'Single units', value: 'unit' },
+          { label: 'Whole cartons', value: 'carton' },
+          { label: 'Whole pallets', value: 'pallet' },
+        ],
+        admin: { description: 'Buyers can only order in whole cartons or pallets. The quantity box then moves by the carton or pallet size.' },
+      },
+      { name: 'roundUp', type: 'checkbox', defaultValue: false, admin: { description: 'When a buyer asks for a quantity that is not a full carton or pallet, raise it to the next one instead of refusing it.' } },
+      { name: 'minCartons', type: 'number', min: 1, admin: { description: 'Fewest cartons per order. Needs units per carton. Blank means no carton minimum.' } },
+    ],
+  },
+]
+
 export const ratingFields: Field[] = [
   { name: 'ratingAverage', type: 'number', admin: { readOnly: true, position: 'sidebar', description: 'Average of approved reviews.' } },
   { name: 'ratingCount', type: 'number', defaultValue: 0, admin: { readOnly: true, position: 'sidebar' } },
@@ -327,6 +358,7 @@ export const catalogueFields: Field[] = [
   ...pricingFields,
   ...inventoryFields,
   ...limitFields,
+  ...packagingFields,
   ...shippingFields,
   ...typeSpecificFields,
   ...preorderFields,

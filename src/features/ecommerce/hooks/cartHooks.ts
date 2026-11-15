@@ -13,6 +13,7 @@
  * The original engine.
  */
 
+import { normalizeQuantity } from '../lib/packaging'
 import crypto from 'crypto'
 
 import { resolveCartLine, type CatalogueProduct } from '../catalogue'
@@ -110,6 +111,8 @@ export const beforeChangeCart = async ({ data, originalDoc, operation, req }: Re
         if (!unchangedBundle) errors.push({ path: `items.${index}`, message: (bundle as { error: string }).error })
         continue
       }
+      // A product that rounds up takes the next full carton or pallet instead of refusing the quantity.
+      if (product && (product as { roundUp?: boolean | null }).roundUp) item.quantity = normalizeQuantity(item.quantity, product as never)
       const key = `${productId}|${item.variation ?? ''}`
       const already = seen.get(key) ?? 0
       seen.set(key, already + item.quantity)

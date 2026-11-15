@@ -10,6 +10,7 @@ import { canPurchase, computeStockStatus, stockMessage, type StockFields, type S
 import { decodeAttributeValues, resolveAttributes, splitValues, type ProductAttributeRow, type VariationRow } from './variations'
 import { PREORDER_STOCK_MESSAGE, preorderInfo, type PreorderInfo } from './lib/preorder'
 import { normaliseAddOnDefs, type AddOnView } from './lib/addOns'
+import { packagingLimits } from './lib/packaging'
 
 export type VariationView = {
   id: string
@@ -46,7 +47,7 @@ export type ProductView = {
   variations: VariationView[]
   external: { url: string; label: string } | null
   /** Fewest and most the buyer can order at once (max null means no limit). */
-  qtyLimits: { min: number; max: number | null }
+  qtyLimits: { min: number; max: number | null; step: number }
   /** Name your price (simple products): suggested and minimum amounts in whole dollars. */
   buyerPrice: { enabled: boolean; suggested: number | null; minimum: number | null }
   /** Pre-order state now: the button label, the ships-from date and the note. */
@@ -147,7 +148,7 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
     details,
     variations,
     external: type === 'external' && safeUrl(product.externalUrl) ? { url: safeUrl(product.externalUrl) as string, label: (product.buttonText || 'Buy').slice(0, 40) } : null,
-    qtyLimits: { min: typeof product.minQty === 'number' && product.minQty >= 1 ? Math.floor(product.minQty) : 1, max: typeof product.maxQty === 'number' && product.maxQty >= 1 ? Math.floor(product.maxQty) : null },
+    qtyLimits: { ...packagingLimits(product, typeof product.minQty === 'number' && product.minQty >= 1 ? Math.floor(product.minQty) : 1), max: typeof product.maxQty === 'number' && product.maxQty >= 1 ? Math.floor(product.maxQty) : null },
     buyerPrice: {
       enabled: type === 'simple' && product.nameYourPrice === true,
       suggested: typeof product.suggestedPrice === 'number' ? product.suggestedPrice : null,

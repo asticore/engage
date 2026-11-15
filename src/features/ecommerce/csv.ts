@@ -47,6 +47,11 @@ export type ExportProduct = {
   length?: number | null
   width?: number | null
   height?: number | null
+  unitsPerCarton?: number | null
+  cartonsPerPallet?: number | null
+  sellInMultiplesOf?: string | null
+  roundUp?: boolean | null
+  minCartons?: number | null
   shippingClass?: number | { id: number; slug?: string | null } | null
   taxClass?: string | null
   externalUrl?: string | null
@@ -90,10 +95,15 @@ export const BASE_COLUMNS = [
   'Cross-sells',
   'Upsells',
   'Grouped products',
+  'Units per carton',
+  'Cartons per pallet',
+  'Sell in multiples of',
+  'Round up to full carton',
+  'Minimum cartons',
 ] as const
 
 /** Columns whose cells are numbers or fixed keywords and so are never quoted against formulas. */
-const NUMERIC_COLUMNS = new Set(['Regular price', 'Sale price', 'Stock', 'Low stock threshold', 'Weight', 'Length', 'Width', 'Height', 'Image ID'])
+const NUMERIC_COLUMNS = new Set(['Regular price', 'Sale price', 'Stock', 'Low stock threshold', 'Weight', 'Length', 'Width', 'Height', 'Image ID', 'Units per carton', 'Cartons per pallet', 'Minimum cartons'])
 
 const FORMULA_START = /^[=+\-@\t\r]/
 
@@ -156,6 +166,11 @@ export function productsToRows(products: ExportProduct[]): string[][] {
     set(row, 'Length', num(product.length))
     set(row, 'Width', num(product.width))
     set(row, 'Height', num(product.height))
+    set(row, 'Units per carton', num(product.unitsPerCarton))
+    set(row, 'Cartons per pallet', num(product.cartonsPerPallet))
+    set(row, 'Sell in multiples of', product.sellInMultiplesOf && product.sellInMultiplesOf !== 'unit' ? product.sellInMultiplesOf : '')
+    set(row, 'Round up to full carton', bool(product.roundUp))
+    set(row, 'Minimum cartons', num(product.minCartons))
     const shipping = product.shippingClass
     set(row, 'Shipping class', typeof shipping === 'object' && shipping ? shipping.slug || '' : '')
     set(row, 'Tax class', product.taxClass || '')
@@ -235,6 +250,11 @@ export type ImportedProduct = {
     length?: number | null
     width?: number | null
     height?: number | null
+    unitsPerCarton?: number | null
+    cartonsPerPallet?: number | null
+    sellInMultiplesOf?: string
+    roundUp?: boolean
+    minCartons?: number | null
     taxClass?: string
     externalUrl?: string
     buttonText?: string
@@ -356,6 +376,11 @@ export function parseProductsCsv(text: string): ImportPlan {
     const length = parseNumber(cell(row, 'Length'), 'Length', line, plan.errors)
     const width = parseNumber(cell(row, 'Width'), 'Width', line, plan.errors)
     const height = parseNumber(cell(row, 'Height'), 'Height', line, plan.errors)
+    const perCarton = parseNumber(cell(row, 'Units per carton'), 'Units per carton', line, plan.errors, { integer: true })
+    const perPallet = parseNumber(cell(row, 'Cartons per pallet'), 'Cartons per pallet', line, plan.errors, { integer: true })
+    const minCartons = parseNumber(cell(row, 'Minimum cartons'), 'Minimum cartons', line, plan.errors, { integer: true })
+    const sellIn = cell(row, 'Sell in multiples of').trim().toLowerCase()
+    if (sellIn && !['unit', 'carton', 'pallet'].includes(sellIn)) plan.errors.push({ line, message: 'Sell in multiples of must be unit, carton or pallet.' })
     const from = parseDate(cell(row, 'Sale from'), 'Sale from', line, plan.errors)
     const to = parseDate(cell(row, 'Sale to'), 'Sale to', line, plan.errors)
     if (typeof regular === 'number' && typeof sale === 'number' && sale >= regular) plan.errors.push({ line, message: 'Sale price must be lower than the regular price.' })
@@ -450,6 +475,11 @@ export function parseProductsCsv(text: string): ImportPlan {
         length,
         width,
         height,
+        unitsPerCarton: perCarton,
+        cartonsPerPallet: perPallet,
+        minCartons,
+        sellInMultiplesOf: ['unit', 'carton', 'pallet'].includes(sellIn) ? sellIn : undefined,
+        roundUp: parseFlag(cell(row, 'Round up to full carton')),
         taxClass: taxClass || undefined,
         externalUrl: cell(row, 'External URL').trim() || undefined,
         buttonText: cell(row, 'Button text').trim() || undefined,

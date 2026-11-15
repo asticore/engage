@@ -8,6 +8,7 @@
 import { effectivePrice, type PriceFields } from './pricing'
 import { canPurchase, computeStockStatus, type StockFields, type StockStatus } from './stock'
 import { decodeAttributeValues, findVariation, type VariationRow } from './variations'
+import { packagingError } from './lib/packaging'
 import { quantityError, validateNamedPrice } from './lib/qtyLimits'
 import { isPreorderActive, type PreorderFields } from './lib/preorder'
 
@@ -25,6 +26,12 @@ export type CatalogueProduct = PriceFields &
     /** Quantity limits per order; null or blank means no limit. */
     minQty?: number | null
     maxQty?: number | null
+    /** Carton and pallet quantities (see lib/packaging.ts). */
+    unitsPerCarton?: number | null
+    cartonsPerPallet?: number | null
+    sellInMultiplesOf?: string | null
+    roundUp?: boolean | null
+    minCartons?: number | null
     /** Buyer types their own price (simple products only). minPrice is whole dollars, like priceInAUD. */
     nameYourPrice?: boolean | null
     minPrice?: number | null
@@ -77,6 +84,8 @@ export function resolveCartLine(
   const total = quantity + Math.max(0, alreadyInCart)
   const limitError = quantityError(quantity, product, total)
   if (limitError) return { ok: false, error: limitError }
+  const packError = packagingError(quantity, product)
+  if (packError) return { ok: false, error: packError }
   const title = product.title || 'Item'
   const preorder = isPreorderActive(product, now, preordersOn)
 

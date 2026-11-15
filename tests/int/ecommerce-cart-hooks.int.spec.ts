@@ -5,6 +5,9 @@
 // already uses for pure logic that doesn't need one.
 import { describe, expect, it, vi } from 'vitest'
 
+// The password gate reads the database and fails closed without one, so these pure tests treat every product as open.
+vi.mock('@/features/visibility/gate', () => ({ getPasswordGateStateForHeaders: async () => 'open' }))
+
 import { hasCartSecretAccess, isGuest } from '@/access/ecommerceAccess'
 import { beforeChangeCart, cartStatusAfterRead } from '@/features/ecommerce/hooks/cartHooks'
 
