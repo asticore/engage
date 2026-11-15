@@ -44,7 +44,7 @@ export async function GET(): Promise<Response> {
 export async function POST(request: Request): Promise<Response> {
   try {
     const refusal = adminRequestRefusal(request)
-    if (refusal) return refusal
+    if (refusal) return json({ error: refusal }, 400)
     const context = await getAdminContext()
     if (!hasAdminPanelAccess(context.user) || !context.isAdmin) return json({ error: 'Unauthorised' }, 401)
     const body = (await request.json().catch((): null => null)) as { urls?: unknown; fromPath?: unknown; toPath?: unknown } | null
