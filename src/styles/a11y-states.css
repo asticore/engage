@@ -1,0 +1,29 @@
+/*
+ * Task 20a: state contrast fixes for Shine, applied on top of the vendored copy (src/styles/shine/shine.css stays as
+ * published). Same layer as Shine's components so later source order wins ties, while Shine's hover, focus and invalid
+ * rules (more specific) still win. Guarded by tests/int/state-contrast.int.spec.ts.
+ */
+@layer shine.components {
+  /* Disabled stays readable (3:1; WCAG exempts disabled controls, we do not). */
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.72;
+  }
+  .input:disabled,
+  .select:disabled,
+  .textarea:disabled {
+    opacity: 0.85;
+  }
+
+  /* Field boundary 3:1 against the page (WCAG 1.4.11). Hover, focus and invalid keep their own colours. */
+  .input,
+  .select,
+  .textarea {
+    border-color: color-mix(in oklab, var(--sh-text) 45%, var(--sh-border));
+  }
+}
+
+/* Keyboard focus ring 3:1 against the surface it sits on. */
+:focus-visible {
+  outline-color: var(--sh-ring, color-mix(in oklab, var(--sh-primary) 50%, var(--sh-text)));
+}

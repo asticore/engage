@@ -14,6 +14,7 @@
  * semantic colours, which Shine does not ship).
  */
 @import url('../../styles/shine/shine.css');
+@import url('../../styles/a11y-states.css');
 @layer shine.tokens, shine.reset, shine.base, shine.components, shine.utilities, base, components, utilities;
 @import url('../../styles/engage-utilities.css');
 @import './custom.css';
