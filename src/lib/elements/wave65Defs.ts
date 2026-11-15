@@ -40,10 +40,10 @@ export const WAVE65_ELEMENTS: ElementDef[] = [
   },
   {
     type: 'slides', label: 'Slides', icon: String.fromCodePoint(0x1f3a0), category: 'media',
-    description: 'A hero slider of 2 to 6 slides, each with a heading, text, button and background picture. Arrows, dots and keyboard keys. Autoplay is off by default and stops on hover.',
+    description: 'A hero slider of 2 to 10 slides, each with a heading, text, button and a background picture or video. Animated text, arrows, dots, thumbnails, loop and keyboard keys. Only the slide in view and its neighbours load. Autoplay is off by default and stops on hover.',
     fields: [
       {
-        name: 'items', label: 'Slides (2 to 6)', type: 'repeater',
+        name: 'items', label: 'Slides (2 to 10)', type: 'repeater',
         repeater: { fields: [
           text('heading', 'Heading'),
           area('text', 'Text'),
@@ -51,18 +51,25 @@ export const WAVE65_ELEMENTS: ElementDef[] = [
           text('buttonUrl', 'Button link', { width: 'half' }),
           { name: 'image', label: 'Background picture', type: 'media' },
           text('imageUrl', 'Or picture address', { helpText: 'Used when no picture is chosen above.' }),
+          text('videoUrl', 'Background video (.mp4 or .webm)', { helpText: 'Plays muted and looped behind the text. The picture shows until it loads, and for visitors who prefer reduced motion.' }),
+          { name: 'textAnimation', label: 'Text animation', type: 'select', width: 'half', options: [{ label: 'Fade up', value: 'fade-up' }, { label: 'Slide in', value: 'slide-left' }, { label: 'Zoom', value: 'zoom' }, { label: 'None', value: 'none' }] },
         ] },
       },
+      check('loop', 'Loop', 'Off stops at the first and last slide.'),
+      check('arrows', 'Arrows'),
+      check('dots', 'Dots'),
+      check('thumbnails', 'Thumbnails', 'Small pictures under the slider.'),
       check('autoplay', 'Autoplay', 'Off by default. Always stops on hover, on focus and for visitors who prefer reduced motion.'),
       { name: 'interval', label: 'Seconds per slide', type: 'number', width: 'half' },
       { name: 'height', label: 'Height (px)', type: 'number', width: 'half' },
+      { name: 'heightMobile', label: 'Height on phones (px)', type: 'number', width: 'half' },
     ],
     defaultProps: () => ({
       items: [
         { heading: 'Welcome', text: 'A short line about what you do.', buttonLabel: 'Learn more', buttonUrl: '/about' },
         { heading: 'Our work', text: 'Show off a project or an offer.', buttonLabel: 'See more', buttonUrl: '/contact' },
       ],
-      autoplay: false, interval: 6, height: 420,
+      autoplay: false, interval: 6, height: 420, heightMobile: 320, loop: true, arrows: true, dots: true, thumbnails: false,
     }),
   },
   {
