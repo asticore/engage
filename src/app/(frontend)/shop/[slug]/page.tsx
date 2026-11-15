@@ -202,7 +202,7 @@ export default async function ProductPage({
   const jsonLdExtra: Record<string, unknown> = {
     ...(view.sku ? { sku: view.sku } : {}),
     ...(brandName ? { brand: { '@type': 'Brand', name: brandName } } : {}),
-    ...(offersJsonLd(view, 'AUD', `/shop/${slug}`) ? { offers: offersJsonLd(view, 'AUD') } : {}),
+    ...(offersJsonLd(view, currencyFromShopSettings(settings), `/shop/${slug}`) ? { offers: offersJsonLd(view, currencyFromShopSettings(settings)) } : {}),
     ...(aggregateRatingJsonLd(ratings) ? { aggregateRating: aggregateRatingJsonLd(ratings) } : {}),
   }
 
