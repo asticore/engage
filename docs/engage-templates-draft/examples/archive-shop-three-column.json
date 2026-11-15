@@ -1,0 +1,40 @@
+{
+  "$comment": "Authoring source: templates/site-templates/archive-shop/archive-shop-three-column.json. Element props marked TODO must be confirmed against reference/elements.json when applying.",
+  "meta": {
+    "slug": "archive-shop-three-column",
+    "kind": "site-template",
+    "siteKind": "archive-shop",
+    "title": "Shop archive with filter bar and three column loop",
+    "category": "archive-shop",
+    "description": "Title and filter bar above a three column grid of product cards, a sort control and load more. One column on mobile.",
+    "tags": ["shop", "archive", "grid", "filters", "loop"],
+    "industry": ["ecommerce", "general"],
+    "style": "shine-light",
+    "theme": "both",
+    "pairWith": "archive-shop-three-column-dark",
+    "colourSet": "shine-light-set",
+    "frameworks": ["shine", "effix"],
+    "version": "1.0.0",
+    "parameters": [
+      { "name": "columns", "type": "number", "label": "Columns", "default": 3, "targets": ["tree.0.columns.0.blocks.2.props.columns"] }
+    ]
+  },
+  "tree": [
+    {
+      "blockType": "section",
+      "design": { "bgType": "color", "bgColor": "var(--sh-bg)", "textColor": "var(--sh-text)", "paddingTop": 48, "paddingBottom": 48, "mobile": { "paddingTop": 24, "paddingBottom": 24 }, "layout": { "display": "columns", "contentWidth": "boxed", "boxedWidth": 1200, "direction": { "desktop": "column", "mobile": "column" } } },
+      "columns": [
+        {
+          "label": "Archive",
+          "widthDesktop": { "value": 0, "unit": "fill" },
+          "blocks": [
+            { "blockType": "element", "elementType": "archive-title", "props": {} },
+            { "blockType": "element", "elementType": "archive-filter", "props": {} },
+            { "blockType": "element", "elementType": "loop-grid", "props": { "source": "", "columns": 3, "columnsMobile": 1, "orderBy": "newest", "loadMore": "button" }, "loop": { "$loop": "product-card-standard" } },
+            { "blockType": "element", "elementType": "load-more", "props": { "mode": "button" } }
+          ]
+        }
+      ]
+    }
+  ]
+}
