@@ -2,11 +2,12 @@ import type { CollectionConfig } from '@/engine'
 
 import { isAdmin } from '../access/ecommerceAccess'
 import { isAdminOrRsvpOwner } from '../features/accounts/access'
-import { checkEventCapacity } from '../hooks/checkEventCapacity'
+import { checkEventCapacity, verifyEventCapacity } from '../hooks/checkEventCapacity'
+import { stampCancellation } from '../features/editScreens/rsvpStatus'
 import { rsvpConfirmationAfterChange } from '../features/email/rsvpConfirmation'
 import { webhookRsvpAfterChange } from '../features/webhooks/hooks'
 import { checkRsvpTier } from '../features/editScreens/rsvpTier'
-import { rsvpCheckInFields, rsvpTicketTierField } from '../features/editScreens/fields'
+import { rsvpCheckInFields, rsvpStatusFields, rsvpTicketTierField } from '../features/editScreens/fields'
 
 export const EventRSVPs: CollectionConfig = {
   slug: 'event-rsvps',
@@ -61,13 +62,14 @@ export const EventRSVPs: CollectionConfig = {
       type: 'textarea',
     },
     rsvpTicketTierField,
+    ...rsvpStatusFields,
     ...rsvpCheckInFields,
     // When the event reminder went out for this booking (src/features/email/eventReminders.ts). Set by the cron only.
     { name: 'reminderSentAt', type: 'date', admin: { hidden: true, readOnly: true, description: 'When the event reminder was sent.' } },
   ],
   hooks: {
-    beforeChange: [checkEventCapacity, checkRsvpTier],
-    afterChange: [rsvpConfirmationAfterChange, webhookRsvpAfterChange],
+    beforeChange: [checkEventCapacity, checkRsvpTier, stampCancellation],
+    afterChange: [verifyEventCapacity, rsvpConfirmationAfterChange, webhookRsvpAfterChange],
   },
   timestamps: true,
 }

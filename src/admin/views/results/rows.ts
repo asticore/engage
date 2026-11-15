@@ -19,6 +19,10 @@ export type RsvpRow = {
   ticketTier?: string
   notes: string
   createdAt: string
+  /** 'cancelled' when the booking was cancelled or its order refunded; empty otherwise. */
+  status?: string
+  /** The shop order a paid ticket came from. */
+  orderId?: number | null
 }
 
 export type SubmissionColumn = { name: string; label: string }
@@ -79,11 +83,13 @@ export function mapRsvpRow(doc: Record<string, unknown>): RsvpRow {
     ticketTier: text(doc.ticketTier),
     notes: text(doc.notes),
     createdAt: text(doc.createdAt),
+    status: text(doc.status),
+    orderId: Number.isInteger(Number(doc.orderId)) && Number(doc.orderId) > 0 ? Number(doc.orderId) : null,
   }
 }
 
 export function sumGuests(rows: RsvpRow[]): number {
-  return rows.reduce((total, row) => total + row.guestCount, 0)
+  return rows.filter((row) => row.status !== 'cancelled').reduce((total, row) => total + row.guestCount, 0)
 }
 
 /** Answer fields only: presentational blocks (HTML, section, page break) and unnamed ones are not columns. */

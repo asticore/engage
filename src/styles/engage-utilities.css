@@ -340,6 +340,7 @@
   .text-\[var\(--theme-success-600\,\#2f855a\)\]{color:var(--theme-success-600,#2f855a)}
   .text-\[var\(--theme-warning-500\,\#d97706\)\]{color:var(--theme-warning-500,#d97706)}
   .text-\[var\(--theme-warning-500\,var\(--theme-elevation-600\)\)\]{color:var(--theme-warning-500,var(--theme-elevation-600))}
+  .text-accent{color:var(--ac-gold)}
   .text-inherit{color:inherit}
   .text-ink{color:var(--theme-elevation-900)}
   .text-red-700{color:#b91c1c}

@@ -40,6 +40,8 @@ export const TEST_SAMPLE_VALUES: Record<string, TemplateValues> = {
     eventTitle: 'Summer open evening',
     eventDate: 'Saturday 12 September 2026, 18:30',
     guestCount: 2,
+    ticketType: 'General admission',
+    ticketLine: '\nTicket: General admission',
   },
   eventReminder: {
     name: 'Sam',

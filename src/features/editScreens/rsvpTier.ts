@@ -1,5 +1,6 @@
 import type { CollectionBeforeChangeHook } from '@/engine'
 
+import { activeRsvps } from './rsvpStatus'
 import { parseTiers } from './tiers'
 import { guestsByTier, tierRoomError } from './tierSales'
 
@@ -13,6 +14,9 @@ export const checkRsvpTier: CollectionBeforeChangeHook = async ({ data, req, ope
   if (operation !== 'create' || !data?.event) {
     return data
   }
+
+  // A paid ticket carries the type it was sold as (set by createRsvpsForOrder), and its places are already paid for.
+  if (data.orderId) return data
 
   const eventID = typeof data.event === 'object' ? data.event.id : data.event
   const event = await req.engine.findByID({
@@ -44,7 +48,7 @@ export const checkRsvpTier: CollectionBeforeChangeHook = async ({ data, req, ope
     req,
     overrideAccess: true,
   })
-  const booked = guestsByTier(existing.docs as Array<{ ticketTier?: unknown; guestCount?: unknown }>).get(tier.name) ?? 0
+  const booked = guestsByTier(activeRsvps(existing.docs as Array<{ ticketTier?: unknown; guestCount?: unknown; status?: unknown }>)).get(tier.name) ?? 0
   const incoming = typeof data.guestCount === 'number' ? data.guestCount : 1
 
   const problem = tierRoomError(tier, booked, incoming)

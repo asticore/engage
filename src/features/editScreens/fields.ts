@@ -1,5 +1,7 @@
 import type { Field } from '@/engine'
 
+import { adminOnlyFieldAccess } from '@/access/ecommerceAccess'
+
 /**
  * Fields added by the edit-screens audit (trash, sticky posts, reading time,
  * recurring events, ticket tiers). Column names are what
@@ -161,6 +163,28 @@ export const rsvpTicketTierField: Field = {
   label: 'Ticket type',
   admin: { description: 'The ticket type chosen on the event page. Blank when the event has no ticket types.' },
 }
+
+/**
+ * Booking state and the order a paid ticket came from. A cancelled booking frees its places (it is skipped
+ * by every capacity and ticket type count). `orderId` links a paid booking to its order, so a refund can free it.
+ */
+export const rsvpStatusFields: Field[] = [
+  {
+    name: 'status',
+    type: 'select',
+    defaultValue: 'confirmed',
+    label: 'Booking status',
+    options: [
+      { label: 'Confirmed', value: 'confirmed' },
+      { label: 'Cancelled', value: 'cancelled' },
+    ],
+    // The public RSVP form creates rows, so a visitor must not be able to set these (orderId skips the capacity guards).
+    access: { create: adminOnlyFieldAccess },
+    admin: { description: 'Set to Cancelled to free the places. A refunded order cancels its booking by itself.' },
+  },
+  { name: 'cancelledAt', type: 'date', access: { create: adminOnlyFieldAccess }, admin: { readOnly: true, description: 'When the booking was cancelled.' } },
+  { name: 'orderId', type: 'number', index: true, access: { create: adminOnlyFieldAccess }, admin: { readOnly: true, description: 'The shop order this ticket was bought on. Blank for a free booking.' } },
+]
 
 export const rsvpCheckInFields: Field[] = [
   {

@@ -39,13 +39,9 @@ Open: Tasks 1 to 4 (follow-ups from the 9 Nov 2026 work on old tasks 1 to 7), th
 
 Order: 1 to 4 (follow-ups), 5 to 15 (features, in listed order), 16 to 22 (notes audit of 14 Nov), 23 to 25 (authentication and security), 26 to 32 (spam, comments, cart, DAM, chatbot, affiliates, blog builder), 33 to 39 (visual builder), (new verify tasks), 16 Speed up, 17 Live checks (ends with the fresh-account deploy check).
 
-### Task 1. Events and tickets: paid orders, refunds and gaps (new, 9 Nov 2026)
-Audit is in `docs/events-tickets-audit.md`. The "Sold out" state is done. Still open:
-- [ ] A paid order creates no RSVP row today, so paid buyers get no booking email, are missing from check-in and do not count toward capacity. Add an order id column to RSVPs (idempotent migration plus fresh-install tests) and create the RSVP from a paid order. Decision for Matt: sell one product or variant per ticket tier (so tier prices are real on paid events, today they are display only).
-- [ ] A refund should free the RSVP, and add a cancel RSVP action.
-- [ ] Make the capacity check atomic (count then insert lets two simultaneous RSVPs both pass).
-- [ ] Name the ticket type in the confirmation email.
-- [ ] Convert `EventTiers.tsx`, `RsvpForm.tsx` and the event page to Shine classes (one style system) and translate the public event strings (English only today).
+### Task 1. Events and tickets: ticket tier pricing decision (partly done 15 Nov 2026)
+Done 15 Nov (see `docs/remaining-work-done.md`): paid orders create bookings, refunds and cancelled orders free them, cancel status, race-safe capacity, ticket type in the booking email, Shine classes and translated event page text. Still open:
+- [ ] Decision for Matt: tier prices on paid events are real only when each tier is its own product or variation (a line whose variation label equals the tier name is booked on that tier). Today the event has one `ticketProduct`, so a paid event with several tiers sells one product with variations. Confirm this is how you want it, or ask for a tier-to-product picker on the event.
 
 ### Task 2. Shine and Effix follow-ups (new, 9 Nov 2026)
 Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated utility file `src/styles/engage-utilities.css` (`node scripts/generate-utilities.mjs`, checked by a test), `reference/references.json`, Effix loader on the public site.
@@ -398,6 +394,7 @@ Lessons: migration-order specs use `migrations.length - N` offsets, so every new
 Only items not yet verified. Tick each, report failures. Grouped by area, each with how to check.
 
 ### Shine, reference file, tickets, pricing, badges and categories (9 Nov 2026 PR)
+- [ ] Paid event tickets (Task 1): on a paid event with a ticket product, buy a ticket, confirm a booking row appears (Event RSVPs, with the order number), the booking email names the ticket type, the guest is on the check-in list and the spots count drops; refund the order fully and confirm the booking shows Cancelled and the place is free again. Open a free event in light and dark and a phone width and in another language: ticket types, form and buttons are translated and look right.
 - [ ] Shine replaced Tailwind: open the admin (dashboard, a list, Settings, Pages tree) and the public site (home, shop, a product, cart, checkout) in light and dark, desktop and phone. Pass = nothing unstyled, no overlapping text, buttons and forms look like before.
 - [ ] Settings and the visual editor after the style change: open a settings page and save, open the visual editor, add a section, change its design, open the template picker, switch preview widths. Pass = all work and the editor canvas matches the live page.
 - [ ] Templates: the "Engage templates" library is listed in Settings > Template libraries (can be switched off, no Remove button) and its items appear in Templates and the editor. Switch it off and confirm the items disappear.

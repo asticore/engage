@@ -24,6 +24,10 @@ export async function runOrderAfterChange({ doc, previousDoc, operation, req, co
       const { ensureInvoiceNumber } = await import('../numbering')
       await ensureInvoiceNumber(await rawD1(), Number(doc.id))
     }
+    if (to === 'cancelled' || to === 'refunded') {
+      const { cancelRsvpsForOrder } = await import('@/features/events/orderRsvps')
+      await cancelRsvpsForOrder(engine as never, Number(doc.id))
+    }
     if (to === 'cancelled' && from !== 'pending' && from !== 'failed') await restockOrder(engine, doc, 'Order cancelled')
     const kind = kindForStatus(to)
     if (kind) await sendOrderEmail(engine, doc, kind)
