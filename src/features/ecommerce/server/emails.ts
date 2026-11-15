@@ -183,7 +183,7 @@ export async function sendAdminNewOrderEmail(engine: Engine, order: Record<strin
     const emails = settings.emails ?? {}
     const to = typeof emails.adminEmail === 'string' ? emails.adminEmail : ''
     if (!to || !emails.newOrderAdmin) return
-    await sendEmail({ to, template: 'order.admin-new', subject: `New order #${order.id}`, text: `New order #${order.id}, total ${formatCents(order.amount as number)}.` })
+    await sendEmail({ to, template: 'order.admin-new', subject: `New order #${order.id}`, text: `New order #${order.id}, total ${formatCents(order.amount as number, (order.currency as string) || undefined)}.` })
   } catch {
     /* notification only */
   }

@@ -7,6 +7,7 @@ import React, { useEffect, useState } from 'react'
 
 import type { WishlistCard } from '@/features/ecommerce/lib/wishlistCards'
 import { useWishlist } from '@/features/ecommerce/lib/useWishlist'
+import { useShopCurrency } from '@/components/ShopCurrencyContext'
 import { formatPriceInAUD } from '@/lib/formatCurrency'
 
 type Loaded = { key: string; cards: WishlistCard[] | null }
@@ -14,6 +15,7 @@ type Loaded = { key: string; cards: WishlistCard[] | null }
 /** The saved products. Ids come from this browser; the cards come from the public endpoint. */
 export function WishlistList() {
   const t = useStoreText()
+  const currency = useShopCurrency()
   const { ids, toggle } = useWishlist()
   const key = ids.join(',')
   const [loaded, setLoaded] = useState<Loaded | null>(null)
@@ -64,7 +66,7 @@ export function WishlistList() {
             </div>
             <div className="p-4">
               <h2 className="text-[1.1rem]">{card.title}</h2>
-              {card.price !== null && <p className="m-0 font-[family-name:var(--font-display)]">{formatPriceInAUD(card.price)}</p>}
+              {card.price !== null && <p className="m-0 font-[family-name:var(--font-display)]">{formatPriceInAUD(card.price, currency)}</p>}
             </div>
           </Link>
           <div className="px-4 pb-4">

@@ -87,7 +87,7 @@ export async function loadFaqItems(doc: Raw): Promise<FaqItem[]> {
 }
 
 /** Location, status, organizer and offers for an event. Used only for the events collection. */
-export function eventExtraFor(doc: Raw, url: string, organizerName: string): Raw {
+export function eventExtraFor(doc: Raw, url: string, organizerName: string, currency?: string): Raw {
   const location = isRecord(doc.location) ? doc.location : {}
   const paid = doc.eventType === 'paid' && isRecord(doc.ticketProduct)
   const ticketPrice = paid ? priceInfo(doc.ticketProduct as Parameters<typeof priceInfo>[0]).price : null
@@ -99,5 +99,6 @@ export function eventExtraFor(doc: Raw, url: string, organizerName: string): Raw
     organizerName,
     tiers: parseTiers(doc.ticketTiers),
     ticketPrice,
+    currency,
   })
 }

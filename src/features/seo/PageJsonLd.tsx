@@ -24,6 +24,16 @@ import type { Media } from '@/engage-types'
  *
  * Like SeoJsonLd, the output escapes </ to prevent early script tag closure.
  */
+async function shopCurrencyOrUndefined(): Promise<string | undefined> {
+  try {
+    const { getEngine } = await import('@/lib/engine')
+    const { loadShopCurrency } = await import('@/features/ecommerce/lib/shopCurrency')
+    return await loadShopCurrency((await getEngine()) as never)
+  } catch {
+    return undefined
+  }
+}
+
 export const PageJsonLd = async ({
   collection,
   doc,
@@ -98,7 +108,9 @@ export const PageJsonLd = async ({
   const record = doc as Record<string, unknown>
   const article = articleFacts(record, page?.locale)
   const faqs = await loadFaqItems(record)
-  const eventFields = collection === 'events' ? eventExtraFor(record, url, organizerName) : {}
+  // Tickets are sold through the shop, so the offers use the shop currency.
+  const eventCurrency = collection === 'events' ? await shopCurrencyOrUndefined() : undefined
+  const eventFields = collection === 'events' ? eventExtraFor(record, url, organizerName, eventCurrency) : {}
 
   // Build the JSON-LD object. Dates are kept apart: an end date is never a modified date.
   const jsonLd = buildPageJsonLd({
