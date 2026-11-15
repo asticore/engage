@@ -62,6 +62,7 @@ const StoreCreditView = lazyView(() => import('@/admin/views/StoreCreditView').t
 const ShopReportsView = lazyView(() => import('@/admin/views/ShopReportsView').then((mod) => mod.ShopReportsView))
 const NotificationsView = lazyView(() => import('@/admin/views/NotificationsView').then((mod) => mod.NotificationsView))
 const TaskboardView = lazyView(() => import('@/admin/views/TaskboardView').then((mod) => mod.TaskboardView))
+const PricingPreviewView = lazyView(() => import('@/admin/views/PricingPreviewView').then((mod) => mod.PricingPreviewView))
 const SettingLocksView = lazyView(() => import('@/admin/views/SettingLocksView').then((mod) => mod.SettingLocksView))
 const PriceTiersView = lazyView(() => import('@/admin/views/PriceTiersView').then((mod) => mod.PriceTiersView))
 const DisplayCurrenciesView = lazyView(() => import('@/admin/views/DisplayCurrenciesView').then((mod) => mod.DisplayCurrenciesView))
@@ -234,6 +235,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'notifications', Component: NotificationsView, path: '/notifications', meta: { title: 'Notifications', description: 'Send an email or push when an order is paid, a form is sent, a booking is made and more.' } },
   { key: 'taskboard', Component: TaskboardView, path: '/taskboard', meta: { title: 'Taskboard', description: 'Kanban boards where tasks are given to admin and staff users.' } },
   { key: 'settingLocks', Component: SettingLocksView, path: '/design-locks', meta: { title: 'Design locks', description: 'Lock design settings in the visual builder and the email builder.' } },
+  { key: 'pricingPreview', Component: PricingPreviewView, path: '/pricing-preview', meta: { title: 'Pricing preview', description: 'What a customer would pay for a cart, using the real checkout calculation.' } },
   { key: 'priceTiers', Component: PriceTiersView, path: '/price-tiers', meta: { title: 'Price tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.' } },
   {
     key: 'shopSettings',
