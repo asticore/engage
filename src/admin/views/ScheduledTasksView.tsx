@@ -6,6 +6,8 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { getAdminContext } from '@/admin/auth'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { CRON_JOBS } from '@/features/cron/registry'
+import { canDisableJob, listDisabledJobs, nextRunAt } from '@/features/cron/jobState'
+import { JobControls } from './JobControls'
 import { isCronStale } from '@/features/cron/model'
 import { lastTickAt, latestRunPerJob, loadPendingActions, recentBackupRuns, recentRuns, type CronRunRow } from '@/features/cron/history'
 import { formatAgo, formatDuration, formatWhen } from '@/features/health/format'
@@ -26,9 +28,10 @@ export async function ScheduledTasksView() {
   const { env } = await getCloudflareContext({ async: true })
   const db = env.D1
   const now = new Date()
+  const disabled = await listDisabledJobs(db)
   const [latest, cronRuns, backupRuns, tick, pending, flags, details] = await Promise.all([
     latestRunPerJob(db),
-    recentRuns(db, 20),
+    recentRuns(db, 50),
     recentBackupRuns(db, 20),
     lastTickAt(db),
     loadPendingActions(db),
@@ -39,7 +42,7 @@ export async function ScheduledTasksView() {
   const lastByJob = new Map<string, CronRunRow>(latest.map((run) => [run.job, run]))
   const history = [...cronRuns, ...backupRuns]
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
-    .slice(0, 20)
+    .slice(0, 50)
   const timeZone = details?.timezone ?? null
   const stale = isCronStale(tick, now)
 
@@ -64,7 +67,9 @@ export async function ScheduledTasksView() {
               <th scope="col">{t('st.lit.job')}</th>
               <th scope="col">{t('st.lit.runs')}</th>
               <th scope="col">{t('st.lit.last_run')}</th>
+              <th scope="col">Next run</th>
               <th scope="col">{t('st.lit.result')}</th>
+              <th scope="col">Controls</th>
             </tr>
           </thead>
           <tbody>
@@ -79,13 +84,17 @@ export async function ScheduledTasksView() {
                     <br />
                     <span className="sh-muted">{job.description}</span>
                   </td>
-                  <td>{enabled ? job.schedule : 'Feature off'}</td>
+                  <td>{!enabled ? 'Feature off' : disabled.has(job.name) ? `${job.schedule} (turned off)` : job.schedule}</td>
                   <td>
                     {last ? formatWhen(last.startedAt, timeZone) : 'Never'}
                     {duration ? ` (${duration})` : ''}
                   </td>
+                  <td>{enabled && !disabled.has(job.name) ? formatWhen(nextRunAt(job.schedule, now).toISOString(), timeZone) : '-'}</td>
                   <td>
                     {!last ? '-' : last.ok === null ? t('st.lit.not_finished') : last.ok ? t('st.lit.worked') : <span className="sh-error">{`Failed: ${last.error ?? 'unknown error'}`}</span>}
+                  </td>
+                  <td>
+                    <JobControls job={job.name} enabled={!disabled.has(job.name)} canDisable={canDisableJob(job.name)} />
                   </td>
                 </tr>
               )

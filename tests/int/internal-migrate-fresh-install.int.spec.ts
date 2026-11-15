@@ -1218,6 +1218,15 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     }
   })
 
+  it('creates the scheduled job switch table with its columns (task 7)', async () => {
+    expect(tables).toContain('eg_cron_job_state')
+    const result = await proxy.env.D1.prepare('PRAGMA table_info(`eg_cron_job_state`)').all()
+    const columnNames = (result.results as { name: string }[]).map((r) => r.name)
+    for (const col of ['job', 'enabled', 'updated_at']) {
+      expect(columnNames, `eg_cron_job_state should have column ${col}`).toContain(col)
+    }
+  })
+
   it('is safe to run a second time', async () => {
     const again = await runInternalMigrate(proxy.env.D1, consoleLogger, { baseline: false })
     expect(again.errorCount).toBe(0)
