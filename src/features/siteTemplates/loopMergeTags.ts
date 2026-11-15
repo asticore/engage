@@ -3,17 +3,17 @@ import { formatTagDate, formatTagPrice } from '@/lib/dynamicTags'
 
 /**
  * Per-item merge tags for loop item templates. Inside a Loop grid card, text-like elements (heading, button,
- * rich text) replace {{title}}, {{excerpt}}, {{date}}, {{author}}, {{price}}, {{url}}, {{image}} and {{category}}
+ * rich text) replace {{title}}, {{excerpt}}, {{date}}, {{author}}, {{price}}, {{url}}, {{image}}, {{category}}, {{category_path}} and {{category_url}}
  * with the current item's values. Any other {{...}} stays exactly as typed. Pure: no React, no server imports.
  *
  * Values are plain text. React escapes them when the element draws text; the text-like elements that accept
  * inline markup draw it through their own sanitiser.
  */
 
-export const LOOP_MERGE_TAG_NAMES = ['title', 'excerpt', 'date', 'author', 'price', 'url', 'image', 'category'] as const
+export const LOOP_MERGE_TAG_NAMES = ['title', 'excerpt', 'date', 'author', 'price', 'url', 'image', 'category', 'category_path', 'category_url'] as const
 export type LoopMergeTagName = (typeof LOOP_MERGE_TAG_NAMES)[number]
 
-const TAG = /\{\{\s*([a-z]+)\s*\}\}/gi
+const TAG = /\{\{\s*([a-z_]+)\s*\}\}/gi
 
 /** The value a tag shows for one item. Missing fields give ''. */
 export function loopMergeValue(name: LoopMergeTagName, item: ArchiveItem): string {
@@ -34,6 +34,11 @@ export function loopMergeValue(name: LoopMergeTagName, item: ArchiveItem): strin
       return item.image?.url ?? ''
     case 'category':
       return item.categories?.[0] ?? ''
+    // The category tree: "Parent > Child" and the nested address. Empty when the category is not in the tree.
+    case 'category_path':
+      return item.categoryTrail?.join(' > ') ?? ''
+    case 'category_url':
+      return item.categoryHref ?? ''
   }
 }
 

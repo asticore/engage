@@ -1,8 +1,8 @@
 import { ancestorsOf, childrenOf, pathSlugs, type CategoryRow, type CategoryScope } from './tree'
 
-/** Public address of a category page. Shop pages carry the full path; blog pages use the slug alone (slugs are unique per scope). */
+/** Public address of a category page. Both shop and blog pages carry the full path (/blog/category/parent/child); a bare slug still resolves. */
 export function categoryUrl(scope: CategoryScope, rows: CategoryRow[], id: number): string {
-  if (scope === 'blog') return `/blog/category/${rows.find((r) => r.id === id)?.slug ?? ''}`
+  if (scope === 'blog') return `/blog/category/${pathSlugs(rows, id).join('/')}`
   return `/shop/category/${pathSlugs(rows, id).join('/')}`
 }
 

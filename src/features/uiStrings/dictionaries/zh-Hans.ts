@@ -3818,7 +3818,7 @@ const zhHans: UiDictionary = {
   "shop.tiers.variationId": "变体 ID",
   "shop.tiers.allVariations": "所有变体",
   "shop.tiers.priceEach": "单价（{currency}）",
-  "shop.tiers.customerTypeHelp": "客户类型与买家的角色匹配，例如批发。留空则适用于所有人。会员组推出后将使用同一字段。",
+  "shop.tiers.customerTypeHelp": "客户类型与买家的角色匹配，例如批发，或与其所属公司的名称（或 company:slug）匹配。留空表示所有人。",
   "shop.tiers.remove": "删除",
   "shop.tiers.addTier": "添加分级",
   "shop.tiers.save": "保存分级",

@@ -1,3 +1,4 @@
+import { listCategoriesSafe } from '@/features/categories/store'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -54,6 +55,7 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
   const docs = await applyTranslationsToDocs(await excludeProtected('posts', allDocs), 'posts', await currentRequestLocale())
   // Filter params (?category=&tag=&q=&sort=) narrow the list before paging. With none, the order and pages are unchanged.
   const params = await searchParams
+  const blogTree = await listCategoriesSafe('blog')
   const storeDict = await storeTexts()
   const tx = (key: UiStringKey, vars?: Record<string, string | number>) => translateWith(storeDict, key, vars)
   const locale = await publicLocale()
@@ -74,7 +76,7 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
   const basePath = `/blog${archiveQueryString(filters)}`
   setBlockContext({
     path: '/blog',
-    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(posts), kind: 'posts', filters, facets: archiveFacets(pool) },
+    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(posts, blogTree), kind: 'posts', filters, facets: archiveFacets(pool) },
   })
 
   const layout = settings?.archiveLayout || 'grid'

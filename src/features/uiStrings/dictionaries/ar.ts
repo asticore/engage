@@ -3819,7 +3819,7 @@ const ar: UiDictionary = {
   "shop.tiers.variationId": "معرّف المتغيّر",
   "shop.tiers.allVariations": "جميع المتغيّرات",
   "shop.tiers.priceEach": "السعر للوحدة ({currency})",
-  "shop.tiers.customerTypeHelp": "يُطابَق نوع العميل مع دور المشتري، مثل تاجر الجملة. اتركه فارغاً للجميع. عند إضافة مجموعات الأعضاء سيستخدم الحقل نفسه.",
+  "shop.tiers.customerTypeHelp": "يُطابَق نوع العميل مع دور المشتري، مثل الجملة، أو مع اسم شركة ينتمي إليها (أو company:slug). اتركه فارغًا للجميع.",
   "shop.tiers.remove": "إزالة",
   "shop.tiers.addTier": "إضافة شريحة",
   "shop.tiers.save": "حفظ الشرائح",
