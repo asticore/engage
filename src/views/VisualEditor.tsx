@@ -2002,6 +2002,7 @@ export const VisualEditorView: React.FC = () => {
           columnPanel={columnPanelNode}
           onConvertLegacy={convertSelectedLegacy}
           tree={blocks}
+          abPageId={surface.slug === 'pages' && route?.id && Number(route.id) > 0 ? Number(route.id) : undefined}
           selectedPath={selectedPath}
           onSelectPath={(p) => {
             setSelectedPath(p)
