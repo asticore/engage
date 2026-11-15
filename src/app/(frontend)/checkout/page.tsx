@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 
 import { CheckoutForm } from '@/components/CheckoutForm'
 import { CheckoutCurrencyNote } from '@/components/CheckoutCurrencyNote'
@@ -16,7 +16,9 @@ export default function CheckoutPage() {
     <div className="page-shell checkout-page">
       <h1>Checkout</h1>
       <CheckoutCurrencyNote />
-      <CheckoutForm />
+      <Suspense fallback={null}>
+        <CheckoutForm />
+      </Suspense>
     </div>
   )
 }

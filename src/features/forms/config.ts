@@ -1,3 +1,4 @@
+import { normaliseCheckoutConfig } from './checkoutHandoff'
 import type { ConditionalLogic, FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from './types'
 
 /**
@@ -159,6 +160,7 @@ export function normaliseFormConfig(input: unknown): FormConfig {
     retentionDays: retention,
     saveForLater: bool(raw.saveForLater) === true,
     prefillKeys: Array.from(new Set(prefillKeys)),
+    checkout: normaliseCheckoutConfig(raw.checkout),
   }
 }
 
