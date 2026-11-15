@@ -25,7 +25,7 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
   - SEO: Permanent: a YouTube playlist link has no single video to describe.
   - Consent and tracking: Permanent: a tag with no consent signal or API here (GA4 or GTM with Consent Mode off, TikTok, custom code) is stopped only by a reload; these cannot be unloaded.
   - Admin: Permanent: Workers do not share memory, so the server header, blocked-path and llms.txt rules are held per isolate for up to 60 seconds; a save clears the saving isolate at once. Permanent: check-in keeps its own guard (events update and Event RSVPs read), so a volunteer on the door sees the guest list without View guest details.
-  - Webhooks: Permanent: Workers cannot pin a fetch to the address the DNS check resolved, so a host name that changes its answer between the check and the connect is not caught; the check refuses private answers and narrows the window (the reason is in the header of src/features/webhooks/outbound.ts). Permanent: a redacted delivery cannot be replayed, by design. The inbound endpoint and retention strings (62 keys) are English in the twelve other languages until a translation pass is done.
+  - Webhooks: Permanent: Workers cannot pin a fetch to the address the DNS check resolved, so a host name that changes its answer between the check and the connect is not caught; the check refuses private answers and narrows the window (the reason is in the header of src/features/webhooks/outbound.ts). Permanent: a redacted delivery cannot be replayed, by design.
   - Multi-domain: Permanent: the ecommerce plugin's own Products config is vendor code outside this repo, so it lacks the "Available on domains" field and slug check; the repo's shadow config (src/features/ecommerce/collections/Products.ts) has both.
   - Types: Permanent: 9 `any` and 15 eslint-disable remain (react-hooks fetch-on-mount and localStorage sync whose tests count the first request); the ratchet in tests/int/type-ratchet-baseline.json holds the line.
   - Visual editor limits are in its reference section below.
@@ -49,8 +49,11 @@ Done: effects picker in the Design panel (`src/features/effects/catalog.ts`, `sr
 - [ ] Tie the Reference sources check into the update popup (Task 12): show a super admin notice when a source is outdated.
 - [ ] Bring the remaining Tailwind-era look-alike classes onto Shine tokens over time (compare dark mode and density knobs); vendor an offline copy of Effix if a site must run with no CDN.
 
-### Task 3. Translation pass for the new admin and public text (new, 9 Nov 2026)
-- [ ] Price tiers, categories (`cat.*`), promo badges, rounding rules and the default template library text are English in the other twelve languages. Translate them; promo badge field labels use config English fallback and need keys.
+### Task 3. Translation pass for the new admin and public text (partly done 15 Nov 2026)
+Done: 150 English-only admin strings translated into the twelve other languages (price tiers, rounding rules, categories `cat.*`, text styles, profile, site switcher, webhooks inbound endpoint and retention). Still open:
+- [ ] Promo badge field labels and descriptions in Shop extra settings (`src/globals/ShopExtraSettings.ts`) use English config text: give each a key and translate.
+- [ ] The default template library text (`docs/template-library-example`, Engage templates library items) is English: translate it per language, or mark the library English only.
+- [ ] Other English-only admin strings not in the list above (`ut.*` unused tables, `api.*`, `apiBuilder.*`): translate.
 
 ### Task 4. Small gaps left by tasks 3 to 7 (new, 9 Nov 2026)
 - [ ] Variation specific price tiers: show a note on the product page. Per product promo badges are picked by slug text, make it a product picker.
