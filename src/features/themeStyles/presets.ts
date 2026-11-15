@@ -14,7 +14,7 @@ import {
   type ThemeStyles,
 } from './types'
 
-function base(): ThemePresetData {
+export function base(): ThemePresetData {
   return structuredClone({
     colours: DEFAULT_COLOURS,
     typography: DEFAULT_TYPOGRAPHY,
