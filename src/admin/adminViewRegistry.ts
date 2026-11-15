@@ -64,6 +64,7 @@ const NotificationsView = lazyView(() => import('@/admin/views/NotificationsView
 const TaskboardView = lazyView(() => import('@/admin/views/TaskboardView').then((mod) => mod.TaskboardView))
 const BulkCreateView = lazyView(() => import('@/admin/views/BulkCreateView').then((mod) => mod.BulkCreateView))
 const BookingsView = lazyView(() => import('@/admin/views/BookingsView').then((mod) => mod.BookingsView))
+const QuotesView = lazyView(() => import('@/admin/views/QuotesView').then((mod) => mod.QuotesView))
 const PricingPreviewView = lazyView(() => import('@/admin/views/PricingPreviewView').then((mod) => mod.PricingPreviewView))
 const ProductFeedsView = lazyView(() => import('@/admin/views/ProductFeedsView').then((mod) => mod.ProductFeedsView))
 const SettingLocksView = lazyView(() => import('@/admin/views/SettingLocksView').then((mod) => mod.SettingLocksView))
@@ -241,6 +242,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'productFeeds', Component: ProductFeedsView, path: '/product-feeds', meta: { title: 'Product feeds', description: 'Feeds for Google, Meta, Pinterest and others, each with a secret address.' } },
   { key: 'bulkCreate', Component: BulkCreateView, path: '/bulk-create', meta: { title: 'Bulk create', description: 'Make many draft pages, posts or products from a list or CSV.' } },
   { key: 'bookings', Component: BookingsView, path: '/bookings', meta: { title: 'Bookings', description: 'Booking types, opening hours and the bookings made.' } },
+  { key: 'quotes', Component: QuotesView, path: '/quotes', meta: { title: 'Quotes and requests', description: 'Quote, offer and item requests, and the quotes sent back.' } },
   { key: 'pricingPreview', Component: PricingPreviewView, path: '/pricing-preview', meta: { title: 'Pricing preview', description: 'What a customer would pay for a cart, using the real checkout calculation.' } },
   { key: 'priceTiers', Component: PriceTiersView, path: '/price-tiers', meta: { title: 'Price tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.' } },
   {

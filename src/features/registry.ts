@@ -42,6 +42,7 @@ export type FeatureKey =
   | 'tracking'
   | 'taskboard'
   | 'bookings'
+  | 'quotes'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -273,6 +274,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['booking_resources', 'booking_types', 'booking_hours', 'booking_overrides', 'bookings'],
+    implemented: true,
+  },
+  {
+    key: 'quotes',
+    label: 'Quotes and requests',
+    description: 'Customers ask for a quote, make an offer or request an item; you reply with a priced quote they can accept and pay.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['quote_requests'],
     implemented: true,
   },
 ]
