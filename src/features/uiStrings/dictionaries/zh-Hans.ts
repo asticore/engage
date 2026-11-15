@@ -670,7 +670,7 @@ const zhHans: UiDictionary = {
   'label.singular.events': '活动',
   'label.singular.courses': '课程',
   // --- builder translate ---
-  'builder.translate.banner': '正在翻译为{language} — 结构已锁定',
+  'builder.translate.banner': '正在翻译为{language}: 结构已锁定',
   'builder.translate.exit': '退出',
   'builder.translate.approvePage': '批准页面',
   'builder.translate.requestReview': '请求审核',

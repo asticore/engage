@@ -671,7 +671,7 @@ const ko: UiDictionary = {
   'label.singular.events': '이벤트',
   'label.singular.courses': '강좌',
   // --- builder translate ---
-  'builder.translate.banner': '{language}(으)로 번역 중 — 구조가 잠겨 있습니다',
+  'builder.translate.banner': '{language}(으)로 번역 중: 구조가 잠겨 있습니다',
   'builder.translate.exit': '나가기',
   'builder.translate.approvePage': '페이지 승인',
   'builder.translate.requestReview': '검토 요청',

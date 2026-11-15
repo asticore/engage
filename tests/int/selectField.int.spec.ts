@@ -20,7 +20,7 @@ describe('SelectField placeholder support', () => {
       expect(placeholder).toBe('Choose a category')
     })
 
-    it('should default to — Select — when no placeholder is provided', () => {
+    it('should default to Select when no placeholder is provided', () => {
       const field: Field = {
         type: 'select',
         name: 'category',
@@ -29,8 +29,8 @@ describe('SelectField placeholder support', () => {
         ],
       } as unknown as Field
 
-      const placeholder = (field as { admin?: { placeholder?: string } }).admin?.placeholder || '— Select —'
-      expect(placeholder).toBe('— Select —')
+      const placeholder = (field as { admin?: { placeholder?: string } }).admin?.placeholder || 'Select'
+      expect(placeholder).toBe('Select')
     })
 
     it('should support Default (Label) format for schema type', () => {
@@ -100,8 +100,8 @@ describe('SelectField placeholder support', () => {
         ],
       } as unknown as Field
 
-      const placeholder = (field as { admin?: { placeholder?: string } }).admin?.placeholder || '— Select —'
-      expect(placeholder).toBe('— Select —')
+      const placeholder = (field as { admin?: { placeholder?: string } }).admin?.placeholder || 'Select'
+      expect(placeholder).toBe('Select')
     })
 
     it('should render without crashing when placeholder is undefined', () => {
@@ -114,8 +114,8 @@ describe('SelectField placeholder support', () => {
         admin: {},
       } as unknown as Field
 
-      const placeholder = (field as { admin?: { placeholder?: string } }).admin?.placeholder || '— Select —'
-      expect(placeholder).toBe('— Select —')
+      const placeholder = (field as { admin?: { placeholder?: string } }).admin?.placeholder || 'Select'
+      expect(placeholder).toBe('Select')
     })
 
     it('should preserve non-empty placeholder string', () => {
@@ -130,7 +130,7 @@ describe('SelectField placeholder support', () => {
         },
       } as unknown as Field
 
-      const placeholder = (field as { admin?: { placeholder?: string } }).admin?.placeholder || '— Select —'
+      const placeholder = (field as { admin?: { placeholder?: string } }).admin?.placeholder || 'Select'
       expect(placeholder).toBe('Select status...')
     })
   })
