@@ -1,5 +1,6 @@
 import { FEATURE_MAP } from '@/features/registry'
 
+import { parseRetryDays } from './dunning'
 import { DEFAULT_MEMBER_SETTINGS, type MemberSettings, type TeaserMode } from './types'
 import { MEMBER_SETTINGS_SLUG } from './slugs'
 
@@ -43,7 +44,7 @@ export const membersEnabled = async (engine: EngineLike): Promise<boolean> => {
 type SettingsDoc = {
   registration?: { allowSignup?: boolean; requireEmailVerification?: boolean; defaultTier?: string }
   access?: { redirectAfterLogin?: string; membersOnlyRedirect?: string; teaserMode?: string }
-  billing?: { currency?: string; allowCancellation?: boolean; proration?: boolean }
+  billing?: { currency?: string; allowCancellation?: boolean; proration?: boolean; dunningRetryDays?: string; dunningGraceDays?: number; dunningEndAction?: string }
   emails?: { welcomeSubject?: string; welcomeBody?: string; expiryReminderDays?: number }
 }
 
@@ -82,6 +83,9 @@ export const getMemberSettings = async (engine: EngineLike): Promise<MemberSetti
       currency: text(doc.billing?.currency, base.billing.currency),
       allowCancellation: bool(doc.billing?.allowCancellation, base.billing.allowCancellation),
       proration: bool(doc.billing?.proration, base.billing.proration),
+      dunningRetryDays: typeof doc.billing?.dunningRetryDays === 'string' ? parseRetryDays(doc.billing.dunningRetryDays) : base.billing.dunningRetryDays,
+      dunningGraceDays: num(doc.billing?.dunningGraceDays, base.billing.dunningGraceDays),
+      dunningEndAction: doc.billing?.dunningEndAction === 'free-tier' ? 'free-tier' : 'expire',
     },
     emails: {
       welcomeSubject: text(doc.emails?.welcomeSubject, base.emails.welcomeSubject),

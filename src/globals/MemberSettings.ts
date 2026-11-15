@@ -157,6 +157,40 @@ export const MemberSettings: GlobalConfig = {
             },
           ],
         },
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'dunningRetryDays',
+              type: 'text',
+              defaultValue: '1,3,5,7',
+              admin: {
+                width: '33%',
+                description: 'After a failed renewal, days after the first failure to retry the card and email the member, such as 1,3,5,7. Blank sends nothing.',
+              },
+            },
+            {
+              name: 'dunningGraceDays',
+              type: 'number',
+              defaultValue: 10,
+              min: 0,
+              admin: {
+                width: '33%',
+                description: 'Days from the first failure that the member keeps access while the card is chased. 0 locks content straight away.',
+              },
+            },
+            {
+              name: 'dunningEndAction',
+              type: 'select',
+              defaultValue: 'expire',
+              admin: { width: '33%', description: 'What happens when the grace period ends and the payment is still unpaid.' },
+              options: [
+                { label: 'End the membership', value: 'expire' },
+                { label: 'Move to the free tier (the default tier above)', value: 'free-tier' },
+              ],
+            },
+          ],
+        },
       ],
     },
     {

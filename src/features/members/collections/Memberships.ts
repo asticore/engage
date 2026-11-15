@@ -142,6 +142,10 @@ export const Memberships: CollectionConfig = {
       fields: [
         { name: 'welcomeEmailSentAt', type: 'date', admin: { readOnly: true } },
         { name: 'expiryReminderSentAt', type: 'date', admin: { readOnly: true } },
+        { name: 'dunningStartedAt', type: 'date', admin: { readOnly: true, description: 'When the first failed renewal payment was seen.' } },
+        { name: 'dunningAttempts', type: 'number', defaultValue: 0, admin: { readOnly: true, description: 'Failed payments seen and chasing emails sent in this run of failures.' } },
+        { name: 'dunningNextAt', type: 'date', admin: { readOnly: true, description: 'When the next retry and reminder is due.' } },
+        { name: 'graceEndsAt', type: 'date', admin: { readOnly: true, description: 'Access is kept until this time while the payment is chased.' } },
       ],
     },
     {

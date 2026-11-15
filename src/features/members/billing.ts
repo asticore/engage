@@ -20,11 +20,10 @@ import { MEMBERSHIPS_SLUG } from './slugs'
  *   BUILT   creating a subscription (Checkout, subscription mode, trials),
  *           cancelling one, switching tier with proration, and the webhook
  *           handlers that move a membership through its lifecycle.
- *   NOT BUILT  dunning. A failed payment marks the membership past-due, which
- *           locks the content, and stops there. No retry schedule, no
- *           card-expiring warning, no "we tried again" emails. Stripe's own
- *           retry settings still apply on its side; nothing in this project
- *           chases the member.
+ *   BUILT   dunning (dunning.ts, dunningRun.ts): a failed payment starts a run
+ *           with a grace period that keeps access, retries and emails on a
+ *           schedule, and ends or downgrades the membership if still unpaid.
+ *   NOT BUILT  a warning before a card expires.
  */
 
 const API_VERSION = '2025-06-30.preview'
