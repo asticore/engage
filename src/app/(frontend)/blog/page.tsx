@@ -35,7 +35,10 @@ export const dynamic = 'force-dynamic'
 export async function generateMetadata(): Promise<Metadata> {
   const engine = await getEngine()
   const settings = (await engine.findGlobal({ slug: 'blog-settings' }).catch((): null => null)) as BlogSetting | null
-  return buildMetadata({ title: settings?.archiveTitle || 'Journal', path: '/blog' })
+  const meta = await buildMetadata({ title: settings?.archiveTitle || 'Journal', path: '/blog' })
+  // Feed readers and browsers find the RSS feed from this link, unless the feed is switched off in Blog settings.
+  const rssOff = (settings as { rssEnabled?: boolean | null } | null)?.rssEnabled === false
+  return rssOff ? meta : { ...meta, alternates: { ...(meta.alternates ?? {}), types: { 'application/rss+xml': '/feed.xml' } } }
 }
 
 export default async function BlogArchivePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {

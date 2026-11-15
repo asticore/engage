@@ -23,6 +23,19 @@ export const BlogSettings: GlobalConfig = {
     update: isAdmin,
   },
   fields: [
+    {
+      type: 'row',
+      fields: [
+        { name: 'rssEnabled', type: 'checkbox', defaultValue: true, admin: { width: '40%', description: 'Publish the RSS feed at /feed.xml (add ?category=<slug> or ?tag=<slug> for one category or tag).' } },
+        {
+          name: 'rssMode',
+          type: 'select',
+          defaultValue: 'summary',
+          options: [{ label: 'Summary (excerpt only)', value: 'summary' }, { label: 'Full text', value: 'full' }],
+          admin: { width: '60%', description: 'Full text puts the whole post in the feed. Posts built only with page blocks fall back to the excerpt.' },
+        },
+      ],
+    },
     { name: 'archiveTitle', type: 'text', defaultValue: 'Journal' },
     { name: 'archiveIntro', type: 'textarea' },
     {
