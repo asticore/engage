@@ -14,7 +14,7 @@ import { EVENT_TIME_ZONE } from '@/features/editScreens/timeZone'
  * problem here is swallowed rather than returned to the guest.
  */
 
-type RsvpRecord = { event?: unknown; name?: unknown; email?: unknown; guestCount?: unknown }
+type RsvpRecord = { event?: unknown; name?: unknown; email?: unknown; guestCount?: unknown; ticketTier?: unknown; status?: unknown }
 
 /** The event's start, read as an Australian reader expects it, in the event's own time zone. */
 const whenText = (value: unknown): string => {
@@ -37,6 +37,7 @@ export const rsvpConfirmationAfterChange: CollectionAfterChangeHook = async ({ d
     if (operation !== 'create') return doc
 
     const rsvp = doc as RsvpRecord
+    if (rsvp.status === 'cancelled') return doc
     const to = typeof rsvp.email === 'string' ? rsvp.email.trim() : ''
     if (!to) return doc
 
@@ -51,11 +52,16 @@ export const rsvpConfirmationAfterChange: CollectionAfterChangeHook = async ({ d
 
     const { renderEmailTemplate } = await import('@/features/email/templateLoad')
     const locale = await localeForRecipient(req.engine as never, to)
+    const ticketType = typeof rsvp.ticketTier === 'string' ? rsvp.ticketTier.trim() : ''
+    const { loadStrings, translateWith } = await import('@/features/uiStrings')
+    const ticketLine = ticketType ? translateWith(await loadStrings(locale ?? 'en'), 'email.rsvpConfirmation.ticketLine', { ticketType }) : ''
     const mail = await renderEmailTemplate('rsvpConfirmation', {
       name: typeof rsvp.name === 'string' ? rsvp.name : '',
       eventTitle: typeof event.title === 'string' ? event.title : '',
       eventDate: whenText(event.startDate),
       guestCount: typeof rsvp.guestCount === 'number' ? rsvp.guestCount : 1,
+      ticketType,
+      ticketLine,
     }, undefined, locale)
 
     const { sendEmail } = await import('@/features/email')

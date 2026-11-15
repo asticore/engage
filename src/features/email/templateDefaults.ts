@@ -102,7 +102,7 @@ export const EMAIL_TEMPLATE_DEFAULTS: Record<EmailTemplateKey, EmailTemplate> = 
     subject: "You're booked: {{eventTitle}}",
     body: [
       'Hi {{name}}, your booking for {{eventTitle}} is confirmed.',
-      'When: {{eventDate}}\nGuests: {{guestCount}}',
+      'When: {{eventDate}}\nGuests: {{guestCount}}{{ticketLine}}',
       'See you there.',
     ].join('\n\n'),
   },

@@ -96,7 +96,7 @@ export const EmailTemplates: GlobalConfig = {
       'rsvpConfirmation',
       'Event booking confirmation',
       'Sent to a guest after they book a place at an event, when they gave an email address.',
-      '{{name}} the guest name, {{eventTitle}} the event title, {{eventDate}} the start date and time, {{guestCount}} the number of guests',
+      '{{name}} the guest name, {{eventTitle}} the event title, {{eventDate}} the start date and time, {{guestCount}} the number of guests, {{ticketLine}} the ticket type line (empty when the event has no ticket types), {{ticketType}} the ticket type name',
     ),
     template(
       'eventReminder',

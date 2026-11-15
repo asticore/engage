@@ -154,6 +154,7 @@ import * as migration_20270313_100000_promo_badges from './20270313_100000_promo
 import * as migration_20270313_100000_categories from './20270313_100000_categories';
 import * as migration_20270313_100000_org_content_grants from './20270313_100000_org_content_grants';
 import * as migration_20270314_100000_api_categories from './20270314_100000_api_categories';
+import * as migration_20270315_100000_event_rsvp_orders from './20270315_100000_event_rsvp_orders';
 
 export const migrations = [
   {
@@ -930,5 +931,10 @@ export const migrations = [
     up: migration_20270314_100000_api_categories.up,
     down: migration_20270314_100000_api_categories.down,
     name: '20270314_100000_api_categories',
+  },
+  {
+    up: migration_20270315_100000_event_rsvp_orders.up,
+    down: migration_20270315_100000_event_rsvp_orders.down,
+    name: '20270315_100000_event_rsvp_orders',
   },
 ];

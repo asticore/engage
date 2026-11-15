@@ -39,13 +39,9 @@ Open: Tasks 1 to 4 (follow-ups from the 9 Nov 2026 work on old tasks 1 to 7), th
 
 Order: 1 to 4 (follow-ups), 5 to 15 (features, in listed order), 16 to 22 (notes audit of 14 Nov), 23 to 25 (authentication and security), 26 to 32 (spam, comments, cart, DAM, chatbot, affiliates, blog builder), 33 to 39 (visual builder), (new verify tasks), 16 Speed up, 17 Live checks (ends with the fresh-account deploy check).
 
-### Task 1. Events and tickets: paid orders, refunds and gaps (new, 9 Nov 2026)
-Audit is in `docs/events-tickets-audit.md`. The "Sold out" state is done. Still open:
-- [ ] A paid order creates no RSVP row today, so paid buyers get no booking email, are missing from check-in and do not count toward capacity. Add an order id column to RSVPs (idempotent migration plus fresh-install tests) and create the RSVP from a paid order. Decision for Matt: sell one product or variant per ticket tier (so tier prices are real on paid events, today they are display only).
-- [ ] A refund should free the RSVP, and add a cancel RSVP action.
-- [ ] Make the capacity check atomic (count then insert lets two simultaneous RSVPs both pass).
-- [ ] Name the ticket type in the confirmation email.
-- [ ] Convert `EventTiers.tsx`, `RsvpForm.tsx` and the event page to Shine classes (one style system) and translate the public event strings (English only today).
+### Task 1. Events and tickets: ticket tier pricing decision (partly done 15 Nov 2026)
+Done 15 Nov (see `docs/remaining-work-done.md`): paid orders create bookings, refunds and cancelled orders free them, cancel status, race-safe capacity, ticket type in the booking email, Shine classes and translated event page text. Still open:
+- [ ] Decision for Matt: tier prices on paid events are real only when each tier is its own product or variation (a line whose variation label equals the tier name is booked on that tier). Today the event has one `ticketProduct`, so a paid event with several tiers sells one product with variations. Confirm this is how you want it, or ask for a tier-to-product picker on the event.
 
 ### Task 2. Shine and Effix follow-ups (new, 9 Nov 2026)
 Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated utility file `src/styles/engage-utilities.css` (`node scripts/generate-utilities.mjs`, checked by a test), `reference/references.json`, Effix loader on the public site.
@@ -72,6 +68,8 @@ Done on 9 Nov: Tailwind removed, Shine vendored in `src/styles/shine`, generated
 
 ### Task 8. Email notifications on actions, push and Cloudflare sending (new, 7 Nov 2026)
 - [ ] In Email, let admins set up notifications triggered by actions (order receipt, sign-up, form submit, booking, comment and others): choose the trigger, recipient, template, and channel (email through the connected tools, or push). Add push notifications (web push) as a channel. In Settings, allow connecting and sending email through Cloudflare (Cloudflare Email, see Known limits) as well as the third party email platforms already connectable. Also (14 Nov audit): add an SMTP provider, and let Email settings hold several providers at once with one default and an ordered fallback list (today one fallback, failover only on transient errors). Effort L.
+- [ ] **8b Email visual builder (added 15 Nov, Matt).** Build an email visual builder with merge tags that feels like the current visual builder (same panels, picker, undo, Shine styling) but outputs old-school, email-client-safe HTML: table layouts, inline styles, no flex or grid, no external CSS, bulletproof buttons, MSO conditional comments, a plain-text part, dark-mode safe colours, and a preview per client width. Merge tags come from the same merge tag registry as notifications. Builds on the existing visual email designer (see Notes audit). Done when: an admin designs an email, picks merge tags from a list, saves, and the sent mail renders in Gmail, Outlook and Apple Mail widths (tests assert no flex, grid or class-only styles in output).
+- [ ] **8c Visual builder lockdown and reset to theme (added 15 Nov, Matt).** Elementor-style lockdown in the visual builder: admins can lock individual settings (per widget, per template or site wide) so editors cannot change them, with a lock icon on locked fields. "Reset to default" on any setting falls back to the theming (design token) value, not a hard coded one. Done when: a locked field is read-only for roles below the lock level, reset returns the theme value live, covered by tests, and the same lock model is reused by the email builder (8b).
 
 ### Task 9. Style guide and theming: style preferences and uniqueness (new, 7 Nov 2026)
 - [ ] In the style guide and theming screen, let owners pick website styles they like (for example from example sites or style cards), explain why each style suits (reasoning shown to the user), and use the picks to choose or generate a unique theme. Keeps one style system only (no v1 or v2) and effects chosen from pickers. Effort M to L.
@@ -396,6 +394,7 @@ Lessons: migration-order specs use `migrations.length - N` offsets, so every new
 Only items not yet verified. Tick each, report failures. Grouped by area, each with how to check.
 
 ### Shine, reference file, tickets, pricing, badges and categories (9 Nov 2026 PR)
+- [ ] Paid event tickets (Task 1): on a paid event with a ticket product, buy a ticket, confirm a booking row appears (Event RSVPs, with the order number), the booking email names the ticket type, the guest is on the check-in list and the spots count drops; refund the order fully and confirm the booking shows Cancelled and the place is free again. Open a free event in light and dark and a phone width and in another language: ticket types, form and buttons are translated and look right.
 - [ ] Shine replaced Tailwind: open the admin (dashboard, a list, Settings, Pages tree) and the public site (home, shop, a product, cart, checkout) in light and dark, desktop and phone. Pass = nothing unstyled, no overlapping text, buttons and forms look like before.
 - [ ] Settings and the visual editor after the style change: open a settings page and save, open the visual editor, add a section, change its design, open the template picker, switch preview widths. Pass = all work and the editor canvas matches the live page.
 - [ ] Templates: the "Engage templates" library is listed in Settings > Template libraries (can be switched off, no Remove button) and its items appear in Templates and the editor. Switch it off and confirm the items disappear.
