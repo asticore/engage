@@ -1,0 +1,40 @@
+{
+  "$comment": "Merge into taxonomy/categories.json (new top level lists) and taxonomy/styles.json (colourSets). Do not rename existing ids.",
+  "siteTemplates": [
+    { "id": "header", "label": "Headers", "description": "Site headers with logo, menu and actions.", "keywords": ["navbar", "nav", "menu"] },
+    { "id": "footer", "label": "Footers", "description": "Site footers with links and social icons.", "keywords": ["sitemap", "bottom", "links"] },
+    { "id": "not-found", "label": "404 pages", "description": "Page shown when a page is missing.", "keywords": ["404", "missing", "error"] },
+    { "id": "search-results", "label": "Search results", "description": "Search results page with filters.", "keywords": ["search", "results"] },
+    { "id": "archive-blog", "label": "Blog archives", "description": "Blog listing with loop, sidebar and filters.", "keywords": ["blog", "posts", "news"] },
+    { "id": "archive-shop", "label": "Shop archives", "description": "Product listing with loop, filters and sort.", "keywords": ["shop", "products", "store"] },
+    { "id": "single-post", "label": "Single posts", "description": "One article with author, related posts and comments.", "keywords": ["article", "post"] },
+    { "id": "single-product", "label": "Single products", "description": "Product page with gallery, price, tabs and related products.", "keywords": ["product", "store"] },
+    { "id": "single-event", "label": "Single events", "description": "Event page with date, venue and booking.", "keywords": ["event", "tickets"] },
+    { "id": "archive-category", "label": "Category archives", "description": "Listing for one category.", "keywords": ["category"] },
+    { "id": "archive-tag", "label": "Tag archives", "description": "Listing for one tag.", "keywords": ["tag"] },
+    { "id": "archive-author", "label": "Author archives", "description": "Listing and bio for one author.", "keywords": ["author"] },
+    { "id": "sidebar-left", "label": "Left sidebars", "description": "Sidebar shown left of content.", "keywords": ["sidebar", "widgets"] },
+    { "id": "sidebar-right", "label": "Right sidebars", "description": "Sidebar shown right of content.", "keywords": ["sidebar", "widgets"] }
+  ],
+  "loops": [
+    { "id": "post-card", "label": "Post cards", "description": "A card for one blog post.", "keywords": ["blog", "post", "card"] },
+    { "id": "product-card", "label": "Product cards", "description": "A card for one product with price and button.", "keywords": ["shop", "product", "card"] },
+    { "id": "event-card", "label": "Event cards", "description": "A card for one event.", "keywords": ["event", "card"] },
+    { "id": "list-row", "label": "List rows", "description": "A compact row for one item.", "keywords": ["list", "row"] }
+  ],
+  "popups": [
+    { "id": "newsletter-popup", "label": "Newsletter popups", "description": "Email signup popup.", "keywords": ["email", "signup"] },
+    { "id": "offer-popup", "label": "Offer popups", "description": "Discount or offer popup.", "keywords": ["offer", "discount", "exit intent"] },
+    { "id": "age-gate", "label": "Age gates", "description": "Age or yes-no check overlay.", "keywords": ["age", "gate"] },
+    { "id": "cookie-banner", "label": "Cookie banners", "description": "Consent banner.", "keywords": ["cookies", "consent"] },
+    { "id": "announcement-drawer", "label": "Drawers", "description": "Side drawer or bar.", "keywords": ["drawer", "bar"] }
+  ],
+  "sections-extra": [
+    { "id": "hero-shop", "label": "Shop hero", "description": "Collection and shop headers.", "keywords": ["shop", "collection"] },
+    { "id": "charts", "label": "Charts and tables", "description": "Chart and data table sections built from Effix charts and Engage tables.", "keywords": ["chart", "table", "data", "stats"] }
+  ],
+  "colourSets": [
+    { "id": "shine-light-set", "label": "Shine light", "tokens": ["primary", "secondary", "accent", "surface", "text", "border", "success", "warning", "error"] },
+    { "id": "shine-dark-set", "label": "Shine dark", "tokens": ["primary", "secondary", "accent", "surface", "text", "border", "success", "warning", "error"] }
+  ]
+}
