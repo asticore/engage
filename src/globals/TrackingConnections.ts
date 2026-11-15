@@ -71,5 +71,12 @@ export const TrackingConnections: GlobalConfig = {
     { name: 'tiktokAccountName', type: 'text', label: 'TikTok connected account', admin: { readOnly: true } },
     { name: 'tiktokConnectedAt', type: 'text', label: 'TikTok connected at', admin: { readOnly: true } },
     { name: 'tiktokError', type: 'text', label: 'TikTok last error', admin: { readOnly: true } },
+    {
+      name: 'pinterestTagId',
+      type: 'text',
+      label: 'Pinterest Tag ID',
+      validate: (value: unknown) => (typeof value === 'string' && value.trim() && !/^\d{10,16}$/.test(value.trim()) ? 'A Pinterest Tag ID is 10 to 16 digits, from Pinterest Ads Manager, Conversions.' : true),
+      admin: { description: 'Optional. Loads the Pinterest Tag for marketing consent only. The ID is public, so it is not encrypted.' },
+    },
   ],
 }
