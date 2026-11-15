@@ -51,6 +51,9 @@ export type MemberSettingsDoc = {
     currency?: string | null
     allowCancellation?: boolean | null
     proration?: boolean | null
+    dunningRetryDays?: string | null
+    dunningGraceDays?: number | null
+    dunningEndAction?: string | null
   }
   emails?: {
     welcomeSubject?: string | null

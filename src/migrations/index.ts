@@ -170,6 +170,7 @@ import * as migration_20270316_170000_bookings from './20270316_170000_bookings'
 import * as migration_20270316_180000_quotes from './20270316_180000_quotes';
 import * as migration_20270316_190000_purchase_limits from './20270316_190000_purchase_limits';
 import * as migration_20270316_200000_approval_named_approvers from './20270316_200000_approval_named_approvers';
+import * as migration_20270316_210000_member_dunning from './20270316_210000_member_dunning';
 
 export const migrations = [
   {
@@ -1026,5 +1027,10 @@ export const migrations = [
     up: migration_20270316_200000_approval_named_approvers.up,
     down: migration_20270316_200000_approval_named_approvers.down,
     name: '20270316_200000_approval_named_approvers',
+  },
+  {
+    up: migration_20270316_210000_member_dunning.up,
+    down: migration_20270316_210000_member_dunning.down,
+    name: '20270316_210000_member_dunning',
   },
 ];

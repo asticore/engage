@@ -1,3 +1,4 @@
+import { inGrace } from './dunning'
 import type { MembershipDoc, MembershipStatus, MembershipTierDoc } from './types'
 import { MEMBERSHIPS_SLUG, MEMBERSHIP_TIERS_SLUG } from './slugs'
 
@@ -26,7 +27,9 @@ export type EngineQuery = {
 /** The two states that unlock content. Everything else withholds it. */
 const ACCESS_GRANTING: MembershipStatus[] = ['active', 'trialing']
 
-export const grantsAccess = (membership: Pick<MembershipDoc, 'status' | 'renewsAt'>, now = new Date()): boolean => {
+export const grantsAccess = (membership: Pick<MembershipDoc, 'status' | 'renewsAt' | 'graceEndsAt'>, now = new Date()): boolean => {
+  // A failed renewal keeps access for the grace period while the card is chased (see dunning.ts).
+  if (inGrace(membership as Pick<MembershipDoc, 'status' | 'graceEndsAt'>, now)) return true
   if (!ACCESS_GRANTING.includes(membership.status)) return false
   // A row left `active` past its renewal date is a row nobody got round to
   // expiring - a missed webhook, a failed cron. Treating the date as

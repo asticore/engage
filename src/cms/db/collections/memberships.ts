@@ -30,6 +30,10 @@ export type MembershipDoc = {
   externalCustomerId?: string | null
   welcomeEmailSentAt?: string | null
   expiryReminderSentAt?: string | null
+  dunningStartedAt?: string | null
+  dunningAttempts?: number | null
+  dunningNextAt?: string | null
+  graceEndsAt?: string | null
   notes?: string | null
   updatedAt: string
   createdAt: string

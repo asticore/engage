@@ -56,6 +56,11 @@ export type MembershipDoc = {
   cancelAtPeriodEnd?: boolean | null
   welcomeEmailSentAt?: string | null
   expiryReminderSentAt?: string | null
+  dunningStartedAt?: string | null
+  dunningAttempts?: number | null
+  dunningNextAt?: string | null
+  graceEndsAt?: string | null
+  notes?: string | null
 }
 
 export type MemberSettings = {
@@ -74,6 +79,11 @@ export type MemberSettings = {
     currency: string
     allowCancellation: boolean
     proration: boolean
+    /** Days after the first failed payment to retry and email, such as [1, 3, 5, 7]. */
+    dunningRetryDays: number[]
+    /** Days from the first failure that access is kept. */
+    dunningGraceDays: number
+    dunningEndAction: 'expire' | 'free-tier'
   }
   emails: {
     welcomeSubject: string
@@ -90,7 +100,7 @@ export const DEFAULT_MEMBER_SETTINGS: MemberSettings = {
     membersOnlyRedirect: '/membership',
     teaserMode: 'excerpt',
   },
-  billing: { currency: 'AUD', allowCancellation: true, proration: true },
+  billing: { currency: 'AUD', allowCancellation: true, proration: true, dunningRetryDays: [1, 3, 5, 7], dunningGraceDays: 10, dunningEndAction: 'expire' },
   emails: { welcomeSubject: 'Welcome aboard', welcomeBody: '', expiryReminderDays: 7 },
 }
 

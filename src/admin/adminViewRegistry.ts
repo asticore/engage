@@ -66,6 +66,7 @@ const BulkCreateView = lazyView(() => import('@/admin/views/BulkCreateView').the
 const BookingsView = lazyView(() => import('@/admin/views/BookingsView').then((mod) => mod.BookingsView))
 const QuotesView = lazyView(() => import('@/admin/views/QuotesView').then((mod) => mod.QuotesView))
 const PurchaseLimitsView = lazyView(() => import('@/admin/views/PurchaseLimitsView').then((mod) => mod.PurchaseLimitsView))
+const PastDueMembersView = lazyView(() => import('@/admin/views/PastDueMembersView').then((mod) => mod.PastDueMembersView))
 const PricingPreviewView = lazyView(() => import('@/admin/views/PricingPreviewView').then((mod) => mod.PricingPreviewView))
 const ProductFeedsView = lazyView(() => import('@/admin/views/ProductFeedsView').then((mod) => mod.ProductFeedsView))
 const SettingLocksView = lazyView(() => import('@/admin/views/SettingLocksView').then((mod) => mod.SettingLocksView))
@@ -245,6 +246,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'bookings', Component: BookingsView, path: '/bookings', meta: { title: 'Bookings', description: 'Booking types, opening hours and the bookings made.' } },
   { key: 'quotes', Component: QuotesView, path: '/quotes', meta: { title: 'Quotes and requests', description: 'Quote, offer and item requests, and the quotes sent back.' } },
   { key: 'purchase-limits', Component: PurchaseLimitsView, path: '/purchase-limits', meta: { title: 'Purchase limits', description: 'Per-person limits, waits between orders and refused attempts.' } },
+  { key: 'past-due-members', Component: PastDueMembersView, path: '/past-due-members', meta: { title: 'Past due members', description: 'Members whose renewal payment failed, with retry and end controls.' } },
   { key: 'pricingPreview', Component: PricingPreviewView, path: '/pricing-preview', meta: { title: 'Pricing preview', description: 'What a customer would pay for a cart, using the real checkout calculation.' } },
   { key: 'priceTiers', Component: PriceTiersView, path: '/price-tiers', meta: { title: 'Price tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.' } },
   {

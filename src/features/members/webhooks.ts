@@ -8,6 +8,7 @@ import { getMemberSettings } from './settings'
 import { periodEnd } from './billing'
 import { sendWelcomeEmail } from './emails'
 import { MEMBERSHIPS_SLUG } from './slugs'
+import { clearDunning, startDunning } from './dunningRun'
 
 /**
  * What Stripe tells us, turned into membership state.
@@ -21,9 +22,9 @@ import { MEMBERSHIPS_SLUG } from './slugs'
  * than adding a second webhook route - one signed endpoint, one secret to
  * rotate, one URL to register with Stripe.
  *
- * NOT handled here: dunning. `invoice.payment_failed` locks the content and
- * stops. Nothing retries, warns about an expiring card, or emails the member
- * about a failed payment.
+ * Dunning (Task 18a): `invoice.payment_failed` starts a run in dunning.ts and the hourly
+ * `member-dunning` job (dunningRun.ts) retries, emails and ends it; `invoice.paid` clears it.
+ * Not built: a warning before a card expires.
  */
 
 type HandlerArgs = { event: Stripe.Event; req: EngineRequest; stripe: Stripe }
@@ -157,7 +158,9 @@ export const membershipWebhooks = {
 
   'customer.subscription.updated': async ({ event, req }: HandlerArgs): Promise<void> => {
     const subscription = event.data.object as Stripe.Subscription
-    await applySubscription(req, subscription, await findBySubscription(engineOf(req), subscription.id))
+    const membership = await findBySubscription(engineOf(req), subscription.id)
+    await applySubscription(req, subscription, membership)
+    if (membership && (subscription.status === 'active' || subscription.status === 'trialing')) await clearDunning(req.engine, membership).catch((): undefined => undefined)
   },
 
   'customer.subscription.deleted': async ({ event, req }: HandlerArgs): Promise<void> => {
@@ -193,12 +196,13 @@ export const membershipWebhooks = {
 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId)
     await applySubscription(req, subscription, membership)
+    await clearDunning(req.engine, membership).catch((): undefined => undefined)
   },
 
   /**
-   * Locks the content and nothing else. This is the honest limit of what is
-   * built: Stripe's own retry schedule still runs, but this project does not
-   * chase the member, warn them, or escalate.
+   * A renewal payment failed. The first failure starts a dunning run (dunning.ts): access is kept for the grace period,
+   * the card is retried and the member emailed on the schedule from Settings, Members, Billing. A failure seen while
+   * a run is going (the result of our own retry or Stripe's) only counts.
    */
   'invoice.payment_failed': async ({ event, req }: HandlerArgs): Promise<void> => {
     const invoice = event.data.object as Stripe.Invoice
@@ -208,12 +212,7 @@ export const membershipWebhooks = {
     const membership = await findBySubscription(engineOf(req), subscriptionId)
     if (!membership) return
 
-    await engineOf(req).update({
-      collection: MEMBERSHIPS_SLUG,
-      id: membership.id,
-      data: { status: 'past-due' },
-      overrideAccess: true,
-    })
+    await startDunning(req.engine, membership, Number(invoice.attempt_count ?? 0))
   },
 }
 
