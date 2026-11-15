@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 import { linkHref, mediaOf, num, str } from './elementUtil'
+import { MAX_SLIDES, shouldLoad, slidesSettings, stepIndex, textAnimationOf, videoSrc, type TextAnimation } from '@/lib/elements/slidesLogic'
 import './wave65.css'
 
 /** Wave 65 client elements: business-hours and slides (defs: src/lib/elements/wave65Defs.ts). */
@@ -89,12 +90,12 @@ export function BusinessHoursElement(props: P): React.ReactElement | null {
 /** Wrap-around slide index. */
 export const nextIndex = (i: number, count: number, step: number): number => (count <= 0 ? 0 : (((i + step) % count) + count) % count)
 
-type Slide = { heading: string; text: string; label: string; href: string; image: string; alt: string }
+type Slide = { heading: string; text: string; label: string; href: string; image: string; alt: string; video: string; animation: TextAnimation }
 const slidesOf = (v: unknown): Slide[] =>
-  (Array.isArray(v) ? v : []).slice(0, 6).map((s) => {
+  (Array.isArray(v) ? v : []).slice(0, MAX_SLIDES).map((s) => {
     const o = (s && typeof s === 'object' ? s : {}) as P
     const m = mediaOf(o.image) ?? mediaOf(o.imageUrl)
-    return { heading: str(o.heading), text: str(o.text), label: str(o.buttonLabel), href: linkHref(o.buttonUrl), image: m?.url ?? '', alt: m?.alt ?? '' }
+    return { heading: str(o.heading), text: str(o.text), label: str(o.buttonLabel), href: linkHref(o.buttonUrl), image: m?.url ?? '', alt: m?.alt ?? '', video: videoSrc(o.videoUrl), animation: textAnimationOf(o.textAnimation) }
   })
 
 export function SlidesElement(props: P): React.ReactElement | null {
@@ -104,27 +105,30 @@ export function SlidesElement(props: P): React.ReactElement | null {
   const reduced = useSyncExternalStore(subscribeReduced, () => window.matchMedia(REDUCED).matches, () => true)
   const root = useRef<HTMLDivElement>(null)
   const count = slides.length
+  const cfg = slidesSettings(props)
   const auto = props.autoplay === true && !paused && !reduced && count > 1
-  const seconds = num(props.interval, 6, 2, 30)
+  const seconds = cfg.interval
   useEffect(() => {
     if (!auto) return undefined
-    const t = window.setInterval(() => setIndex((i) => nextIndex(i, count, 1)), seconds * 1000)
+    const t = window.setInterval(() => setIndex((i) => stepIndex(i, count, 1, true)), seconds * 1000)
     return () => window.clearInterval(t)
   }, [auto, count, seconds])
   if (count < 1) return null
-  const go = (step: number) => setIndex((i) => nextIndex(i, count, step))
+  const go = (step: number) => setIndex((i) => stepIndex(i, count, step, cfg.loop))
   return (
+    <>
     <div
       ref={root} className="be-el-65-slides" role="region" aria-roledescription="carousel" aria-label="Slides" tabIndex={0}
-      style={{ minHeight: num(props.height, 420, 200, 1000) }}
+      style={{ '--slides-h': `${cfg.height}px`, '--slides-h-mobile': `${cfg.heightMobile}px` } as React.CSSProperties}
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
       onKeyDown={(e) => { if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'ArrowRight') go(1) }}
     >
       {slides.map((s, i) => (
         <div key={i} className={`be-el-65-slides__slide${i === index ? ' is-active' : ''}`} role="group" aria-roledescription="slide" aria-label={`${i + 1} of ${count}`} aria-hidden={i === index ? undefined : true}
-          style={s.image ? { backgroundImage: `url("${s.image.replace(/"/g, '%22')}")` } : undefined}>
-          <div className="be-el-65-slides__body">
+          style={s.image && shouldLoad(i, index, count) ? { backgroundImage: `url("${s.image.replace(/"/g, '%22')}")` } : undefined}>
+          {s.video && shouldLoad(i, index, count) && !reduced ? <video className="be-el-65-slides__video" src={s.video} muted loop playsInline autoPlay={i === index} preload="metadata" aria-hidden="true" tabIndex={-1} /> : null}
+          <div key={i === index ? `on-${index}` : 'off'} className={`be-el-65-slides__body${s.animation !== 'none' && i === index ? ` anim-${s.animation}` : ''}`}>
             {s.heading ? <h2>{s.heading}</h2> : null}
             {s.text ? <p>{s.text}</p> : null}
             {s.label && s.href ? <a className="be-el-65-slides__btn" href={s.href} tabIndex={i === index ? 0 : -1}>{s.label}</a> : null}
@@ -133,14 +137,29 @@ export function SlidesElement(props: P): React.ReactElement | null {
       ))}
       {count > 1 ? (
         <>
-          <button type="button" className="be-el-65-slides__nav is-prev" aria-label="Previous slide" onClick={() => go(-1)}>{String.fromCodePoint(0x2039)}</button>
-          <button type="button" className="be-el-65-slides__nav is-next" aria-label="Next slide" onClick={() => go(1)}>{String.fromCodePoint(0x203a)}</button>
-          <div className="be-el-65-slides__dots">
-            {slides.map((_, i) => <button key={i} type="button" aria-label={`Go to slide ${i + 1}`} aria-current={i === index ? 'true' : undefined} onClick={() => setIndex(i)} />)}
-          </div>
+          {cfg.arrows ? (
+            <>
+              <button type="button" className="be-el-65-slides__nav is-prev" aria-label="Previous slide" disabled={!cfg.loop && index === 0} onClick={() => go(-1)}>{String.fromCodePoint(0x2039)}</button>
+              <button type="button" className="be-el-65-slides__nav is-next" aria-label="Next slide" disabled={!cfg.loop && index === count - 1} onClick={() => go(1)}>{String.fromCodePoint(0x203a)}</button>
+            </>
+          ) : null}
+          {cfg.dots ? (
+            <div className="be-el-65-slides__dots">
+              {slides.map((_, i) => <button key={i} type="button" aria-label={`Go to slide ${i + 1}`} aria-current={i === index ? 'true' : undefined} onClick={() => setIndex(i)} />)}
+            </div>
+          ) : null}
         </>
       ) : null}
     </div>
+    {cfg.thumbnails && count > 1 ? (
+      <div className="be-el-65-slides__thumbs">
+        {slides.map((s, i) => (
+          <button key={i} type="button" aria-label={`Show slide ${i + 1}${s.heading ? `: ${s.heading}` : ''}`} aria-current={i === index ? 'true' : undefined} onClick={() => setIndex(i)}
+            style={s.image ? { backgroundImage: `url("${s.image.replace(/"/g, '%22')}")` } : undefined}>{s.image ? null : i + 1}</button>
+        ))}
+      </div>
+    ) : null}
+    </>
   )
 }
 
