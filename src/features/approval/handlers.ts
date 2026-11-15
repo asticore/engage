@@ -197,7 +197,7 @@ function workflowInfo(workflow: ApprovalWorkflow | null, state: ReviewDocState):
     step: waiting
       ? { index, name: current.name, approverRoles: current.approverNames, approvalsNeeded: current.approvalsNeeded, total: workflow.steps.length }
       : null,
-    awaiting: waiting ? describeAwaiting(workflow, index) : null,
+    awaiting: waiting ? describeAwaiting(workflow, index, state.requestedBy) : null,
   }
 }
 
@@ -424,7 +424,7 @@ export async function handleReviewPost(args: {
     status: next.status,
     approvals: next.approvals,
     requiredApprovals: required,
-    ...(workflow && next.status === 'in_review' ? { step: next.step ?? 0, awaiting: describeAwaiting(workflow, next.step ?? 0) } : {}),
+    ...(workflow && next.status === 'in_review' ? { step: next.step ?? 0, awaiting: describeAwaiting(workflow, next.step ?? 0, next.requestedBy) } : {}),
     published: result.publish,
     events: result.events.map((event: { action: ReviewEventAction }) => event.action),
   })

@@ -33,6 +33,8 @@ interface RolesViewClientProps {
   canEdit: boolean
   /** Approval workflows, managed on the second tab. */
   workflows?: WorkflowRecord[]
+  /** Staff who can be named as approvers. */
+  people?: Array<{ id: number; name: string }>
   /** Whether content approval is switched on in Security settings. */
   approvalEnabled?: boolean
 }
@@ -71,7 +73,7 @@ function tabStyle(active: boolean): React.CSSProperties {
 /**
  * Roles admin view client: list, select, create, edit matrix, save, delete.
  */
-export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], approvalEnabled = true }: RolesViewClientProps) {
+export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], people = [], approvalEnabled = true }: RolesViewClientProps) {
   const t = useAdminT()
   const [tab, setTab] = useState<RolesTab>('permissions')
 
@@ -282,6 +284,7 @@ export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], 
           <ApprovalWorkflowsPanel
             workflows={workflows}
             roles={roles}
+            people={people}
             canEdit={canEdit}
             approvalEnabled={approvalEnabled}
           />

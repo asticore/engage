@@ -37,6 +37,15 @@ export async function RolesView() {
     .find({ collection: 'approval-workflows', limit: 200, depth: 0, sort: 'name', overrideAccess: true })
     .then((result) => (result.docs || []) as unknown as WorkflowRecord[])
     .catch((): WorkflowRecord[] => [])
+  // Staff who can be named as approvers: anyone who is not just a customer.
+  const people = await context.engine
+    .find({ collection: 'users', limit: 500, depth: 0, sort: 'name', overrideAccess: true })
+    .then((result) =>
+      ((result.docs || []) as unknown as Array<{ id: number; name?: string; email?: string; roles?: string[] }>)
+        .filter((u) => Array.isArray(u.roles) && u.roles.some((r) => r !== 'customer'))
+        .map((u) => ({ id: Number(u.id), name: u.name || u.email || `User ${u.id}` })),
+    )
+    .catch((): Array<{ id: number; name: string }> => [])
   const approvalEnabled = (await loadApprovalSettings(context.engine as never)).enabled
 
   return (
@@ -44,6 +53,7 @@ export async function RolesView() {
       roles={rolesDocs}
       canEdit={context.isAdmin}
       workflows={workflowDocs}
+      people={people}
       approvalEnabled={approvalEnabled}
     />
   )

@@ -4,7 +4,7 @@ import { can } from '@/features/roles/permissions'
 import type { ApprovalCollection, ApprovalSettings } from './settings'
 import { APPROVAL_SINGULAR } from './settings'
 import { roleSlugsFor, type CustomRoleInfo } from './roleSlugs'
-import { describeAwaiting, type ApprovalWorkflow } from './workflows'
+import { describeAwaiting, namedApprovers, type ApprovalWorkflow, type WorkflowStep } from './workflows'
 
 /**
  * Review emails. The Email feature is imported when a message is sent, not at load time, because
@@ -94,6 +94,22 @@ export async function reviewerAddresses(
   return [...addresses]
 }
 
+/**
+ * Who to email for a step. Named people (the author's route, or the step's own) are emailed instead of the roles; with
+ * the step's fallback on, the role members are emailed as well. With none named it is the roles, as before.
+ */
+async function stepAddresses(engine: EngineLike, collection: ApprovalCollection, workflow: ApprovalWorkflow, step: WorkflowStep, requesterId: number | null): Promise<string[]> {
+  const named = namedApprovers(workflow, step, requesterId)
+  if (named.length === 0) return reviewerAddresses(engine, collection, requesterId, step.approverRoles)
+  const addresses = new Set<string>()
+  for (const id of named) {
+    const user = await engine.findByID({ collection: 'users', id, depth: 0, overrideAccess: true }).catch((): null => null)
+    if (typeof user?.email === 'string' && user.email && id !== requesterId) addresses.add(user.email)
+  }
+  if (step.alsoRoles) for (const address of await reviewerAddresses(engine, collection, requesterId, step.approverRoles)) addresses.add(address)
+  return [...addresses]
+}
+
 export async function notifySubmitted({
   engine,
   settings,
@@ -119,9 +135,9 @@ export async function notifySubmitted({
   const adminRoot = await getAdminRoot()
   const addresses = new Set<string>(settings.notifyEmails)
   if (settings.notifyReviewers) {
-    for (const address of await reviewerAddresses(engine, collection, requesterId, workflow ? workflow.steps[0].approverRoles : null)) addresses.add(address)
+    for (const address of workflow ? await stepAddresses(engine, collection, workflow, workflow.steps[0], requesterId) : await reviewerAddresses(engine, collection, requesterId, null)) addresses.add(address)
   }
-  const waiting = workflow ? `\n\n${describeAwaiting(workflow, 0)}` : ''
+  const waiting = workflow ? `\n\n${describeAwaiting(workflow, 0, requesterId)}` : ''
   const { renderEmailTemplate } = await import('@/features/email/templateLoad')
   const mail = await renderEmailTemplate('approvalSubmitted', {
     requesterName,
@@ -204,9 +220,9 @@ export async function notifyStepReady({
   if (!settings.notifyReviewers) return []
   const current = workflow.steps[step]
   if (!current) return []
-  const addresses = await reviewerAddresses(engine, collection, requesterId, current.approverRoles)
+  const addresses = await stepAddresses(engine, collection, workflow, current, requesterId)
   const subject = `Your approval is needed: ${title}`
-  const text = `${approverName} approved the previous step of this ${APPROVAL_SINGULAR[collection]}: ${title}\n\n${describeAwaiting(workflow, step)}\n\nOpen it to approve or ask for changes:\n${origin}${adminCollectionPath(collection, adminRoot)}/${id}`
+  const text = `${approverName} approved the previous step of this ${APPROVAL_SINGULAR[collection]}: ${title}\n\n${describeAwaiting(workflow, step, requesterId)}\n\nOpen it to approve or ask for changes:\n${origin}${adminCollectionPath(collection, adminRoot)}/${id}`
   const sendEmail = await loadSender()
   await Promise.all(addresses.map((to) => sendEmail({ to, template: 'approval.step-ready', subject, text })))
   return addresses

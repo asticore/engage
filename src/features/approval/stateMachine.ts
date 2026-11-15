@@ -24,7 +24,7 @@
  * history and passes them in as `priorApprovers`.
  */
 
-import { clampStep, mayActOnStep, maySubmitUnder, type WorkflowRule } from './workflows'
+import { clampStep, mayActOnStep, maySubmitUnder, namedApprovers, type WorkflowRule } from './workflows'
 
 export const REVIEW_STATUSES = ['none', 'in_review', 'changes_requested', 'approved'] as const
 export type ReviewStatus = (typeof REVIEW_STATUSES)[number]
@@ -143,8 +143,10 @@ export function transition(input: TransitionInput): TransitionResult {
   /** A reviewer may act only on the step the document is at. Without a workflow anyone with review rights may. */
   const stepBlock = (): TransitionFail | null => {
     if (!workflow || !current) return null
-    if (mayActOnStep(current, roleSlugs, actor.isAdmin)) return null
-    return fail(403, `This is waiting on ${describe(current.approverNames)} (step ${stepOf(state, workflow) + 1} of ${workflow.steps.length}: ${current.name}). Your role cannot approve this step.`)
+    const named = namedApprovers(workflow, current, state.requestedBy)
+    if (mayActOnStep(current, roleSlugs, actor.isAdmin, { userId: actor.id, named })) return null
+    const routed = state.requestedBy !== null && (workflow.authorRoutes?.[String(state.requestedBy)]?.length ?? 0) > 0
+    return fail(403, `This is waiting on ${routed ? 'the approver named for this author' : describe(current.approverNames)} (step ${stepOf(state, workflow) + 1} of ${workflow.steps.length}: ${current.name}). ${named.length > 0 ? 'Only the named approver can approve this step.' : 'Your role cannot approve this step.'}`)
   }
   const describe = (names: string[]): string => (names.length === 0 ? 'an admin' : names.join(' or '))
 

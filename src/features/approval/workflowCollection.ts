@@ -3,7 +3,7 @@ import type { CollectionConfig, CollectionBeforeChangeHook } from '@/engine'
 import { isAdmin, roleAccess } from '@/access/ecommerceAccess'
 
 import { APPROVAL_COLLECTIONS } from './settings'
-import { BUILT_IN_ROLE_SLUGS, validateWorkflowInput, WORKFLOWS_SLUG } from './workflows'
+import { BUILT_IN_ROLE_SLUGS, namedUserIds, validateWorkflowInput, WORKFLOWS_SLUG } from './workflows'
 
 /**
  * Checks a workflow before it is saved: a name, a content type, at least one step, every step
@@ -32,11 +32,18 @@ export const validateWorkflowBeforeChange: CollectionBeforeChangeHook = async (a
     overrideAccess: true,
   })
   const selfId = operation === 'update' ? Number(originalDoc?.id) : null
+  const wantedUsers = namedUserIds(Array.isArray(merged.steps) ? (merged.steps as Array<{ approverUsers?: unknown }>) : [], merged.authorRoutes)
+  const knownUsers = new Set<number>()
+  if (wantedUsers.length > 0) {
+    const found = await req.engine.find({ collection: 'users', where: { id: { in: wantedUsers } }, limit: wantedUsers.length, depth: 0, overrideAccess: true })
+    for (const user of found.docs) knownUsers.add(Number(user.id))
+  }
   const problems = validateWorkflowInput(
     merged,
     known,
     active.docs.map((doc) => ({ id: Number(doc.id), collection: String(doc.collection) })),
     selfId,
+    knownUsers,
   )
   if (problems.length > 0) {
     const { ValidationError } = await import('@/localapi/operations')
@@ -88,6 +95,11 @@ export const ApprovalWorkflows: CollectionConfig = {
       admin: { description: 'Role slugs that may submit. Empty means anyone who can edit this content.' },
     },
     {
+      name: 'authorRoutes',
+      type: 'json',
+      admin: { description: 'Per-author approvers: { "<author user id>": [approver user ids] }. That author\'s work is approved by those people at every step.' },
+    },
+    {
       name: 'steps',
       type: 'array',
       required: true,
@@ -96,6 +108,8 @@ export const ApprovalWorkflows: CollectionConfig = {
         { name: 'name', type: 'text', required: true },
         { name: 'approverRoles', type: 'json', admin: { description: 'Role slugs that may approve this step. Admins always may.' } },
         { name: 'approvalsNeeded', type: 'number', required: true, defaultValue: 1, min: 1 },
+        { name: 'approverUsers', type: 'json', admin: { description: 'User ids of named approvers for this step. When set, only they (and admins) approve it.' } },
+        { name: 'alsoRoles', type: 'checkbox', defaultValue: false, admin: { description: 'With named approvers: the approver roles may also approve (a fallback).' } },
       ],
     },
   ],
