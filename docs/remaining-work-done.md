@@ -115,3 +115,4 @@ Finished tasks (PR numbers) first, then the visual editor waves through 71.
 - Task 2 (part), 15 Nov 2026, PR pending: Effix effects picker in the Design panel and the Reference sources admin screen with the update check. Left: real Effix catalogue, update popup tie-in, Tailwind-era classes.
 - Task 3 (part), 15 Nov 2026, PR pending: 150 English-only admin strings translated into the twelve other languages. Left: promo badge field labels, template library text, ut/api/apiBuilder strings.
 - Task 4 (part), 15 Nov 2026, PR pending: variation tier notes, badge product picker, nested blog category URLs and tree merge tags, company-based tier matching.
+- Tasks 5 and 6, 15 Nov 2026, PR pending: regions, language and domain audit in `docs/regions-domains-audit.md`; gaps are Tasks 41 and 42.
