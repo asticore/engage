@@ -167,6 +167,7 @@ import * as migration_20270316_140000_product_feeds from './20270316_140000_prod
 import * as migration_20270316_150000_product_donations from './20270316_150000_product_donations';
 import * as migration_20270316_160000_service_products from './20270316_160000_service_products';
 import * as migration_20270316_170000_bookings from './20270316_170000_bookings';
+import * as migration_20270316_180000_quotes from './20270316_180000_quotes';
 
 export const migrations = [
   {
@@ -1008,5 +1009,10 @@ export const migrations = [
     up: migration_20270316_170000_bookings.up,
     down: migration_20270316_170000_bookings.down,
     name: '20270316_170000_bookings',
+  },
+  {
+    up: migration_20270316_180000_quotes.up,
+    down: migration_20270316_180000_quotes.down,
+    name: '20270316_180000_quotes',
   },
 ];
