@@ -60,6 +60,7 @@ const CookieConsentView = lazyView(() => import('@/admin/views/CookieConsentView
 const ShopSettingsView = lazyView(() => import('@/admin/views/ShopSettingsView').then((mod) => mod.ShopSettingsView))
 const StoreCreditView = lazyView(() => import('@/admin/views/StoreCreditView').then((mod) => mod.StoreCreditView))
 const ShopReportsView = lazyView(() => import('@/admin/views/ShopReportsView').then((mod) => mod.ShopReportsView))
+const NotificationsView = lazyView(() => import('@/admin/views/NotificationsView').then((mod) => mod.NotificationsView))
 const PriceTiersView = lazyView(() => import('@/admin/views/PriceTiersView').then((mod) => mod.PriceTiersView))
 const DisplayCurrenciesView = lazyView(() => import('@/admin/views/DisplayCurrenciesView').then((mod) => mod.DisplayCurrenciesView))
 const AdsOverviewView = lazyView(() => import('@/features/ads/admin/AdsViews').then((mod) => mod.AdsOverviewView))
@@ -228,6 +229,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   },
   { key: 'shopReports', Component: ShopReportsView, path: '/shop-reports', meta: { title: 'Shop reports', description: 'Sales, refunds, customers, products, coupons, payments, locations, low stock and abandoned carts.' } },
   { key: 'displayCurrencies', Component: DisplayCurrenciesView, path: '/display-currencies', meta: { title: 'Display currencies', description: 'Show prices in other currencies. Shoppers always pay in the shop currency.' } },
+  { key: 'notifications', Component: NotificationsView, path: '/notifications', meta: { title: 'Notifications', description: 'Send an email or push when an order is paid, a form is sent, a booking is made and more.' } },
   { key: 'priceTiers', Component: PriceTiersView, path: '/price-tiers', meta: { title: 'Price tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.' } },
   {
     key: 'shopSettings',

@@ -18,12 +18,15 @@ export const EMAIL_PROVIDERS: { key: EmailProviderKey; label: string }[] = [
   { key: 'cloudflare', label: 'Cloudflare Email' },
   { key: 'brevo', label: 'Brevo' },
   { key: 'mandrill', label: 'Mandrill (Mailchimp Transactional)' },
+  { key: 'smtp', label: 'SMTP server' },
 ]
 
 /** The shape of the `communications` group as the engine returns it (nested, decrypted). */
 export type CommunicationsDoc = {
   defaultProvider?: string | null
   fallbackProvider?: string | null
+  fallbackOrder?: string | null
+  smtp?: { host?: string | null; port?: number | string | null; username?: string | null; password?: string | null; security?: string | null } | null
   resend?: { apiKey?: string | null } | null
   sesApi?: { accessKeyId?: string | null; secretAccessKey?: string | null; region?: string | null } | null
   mailgun?: { apiKey?: string | null; domain?: string | null; region?: string | null } | null
@@ -61,6 +64,14 @@ export function mergeConnections(
     ...l,
     provider: firstFilled(c.defaultProvider, l.provider),
     fallbackProvider: fallback === 'none' ? null : fallback || null,
+    fallbackOrder: firstFilled(c.fallbackOrder, l.fallbackOrder),
+    smtp: {
+      host: firstFilled(c.smtp?.host, l.smtp?.host),
+      port: c.smtp?.port ?? l.smtp?.port ?? null,
+      username: firstFilled(c.smtp?.username, l.smtp?.username),
+      password: firstFilled(c.smtp?.password, l.smtp?.password),
+      security: firstFilled(c.smtp?.security, l.smtp?.security),
+    },
     resend: { apiKey: firstFilled(c.resend?.apiKey, l.resend?.apiKey) },
     brevo: { apiKey: firstFilled(c.brevo?.apiKey, null) },
     mandrill: { apiKey: firstFilled(c.mandrill?.apiKey, null) },

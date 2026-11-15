@@ -44,6 +44,9 @@ export async function emitWebhookEvent(event: WebhookEvent, data: Record<string,
     const { resolveD1Binding } = await import('@/cms/db/connect')
     const store: WebhookStore = createD1WebhookStore(async () => (await resolveD1Binding()) as unknown as D1Like)
     after(dispatchEvent({ store, notifyAdmins: notifyWebhookAdmins }, event, data).catch((): number[] => []))
+    // The same event also starts any notification rule set up in Email > Notifications.
+    const { notifyEvent } = await import('@/features/notifications/runtime')
+    after(notifyEvent(event, data).catch((): void => undefined))
   } catch {
     // An event that cannot be queued never fails the save that caused it.
   }

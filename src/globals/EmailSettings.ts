@@ -352,6 +352,54 @@ export const EmailSettings: GlobalConfig = {
       ],
     },
     {
+      name: 'fallbackOrder',
+      type: 'text',
+      label: 'More fallbacks, in order',
+      admin: {
+        description: 'Optional. Provider keys separated by commas, tried in this order after the fallback above, for example sendgrid,smtp. Keys: resend, ses-api, mailgun, postmark, sendgrid, cloudflare, brevo, mandrill, smtp.',
+      },
+    },
+    {
+      name: 'smtp',
+      type: 'group',
+      label: 'SMTP server',
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'host', type: 'text', label: 'Host', admin: { width: '50%', description: 'For example smtp.example.com.' } },
+            { name: 'port', type: 'number', label: 'Port', defaultValue: 587, admin: { width: '25%', description: '587 (STARTTLS) or 465 (TLS).' } },
+            {
+              name: 'security',
+              type: 'select',
+              label: 'Security',
+              defaultValue: 'starttls',
+              admin: { width: '25%' },
+              options: [
+                { label: 'STARTTLS', value: 'starttls' },
+                { label: 'TLS', value: 'tls' },
+                { label: 'None (testing only)', value: 'none' },
+              ],
+            },
+          ],
+        },
+        {
+          type: 'row',
+          fields: [
+            { name: 'username', type: 'text', label: 'Username', admin: { width: '50%' } },
+            {
+              name: 'password',
+              type: 'text',
+              label: 'Password',
+              access: { read: adminOnlyFieldAccess, update: adminOnlyFieldAccess },
+              hooks: { beforeChange: [encryptSecretHook], afterRead: [decryptSecretHook] },
+              admin: { width: '50%', description: 'Stored encrypted at rest, visible only to admins.' },
+            },
+          ],
+        },
+      ],
+    },
+    {
       type: 'group',
       name: 'testing',
       label: 'Testing',

@@ -62,7 +62,12 @@ const button = (block: Extract<EmailBlock, { type: 'button' }>, ctx: RenderConte
   const align = alignOf(block.align)
   const inner = `display:inline-block;padding:12px 24px;${textStyle(ctx)}font-weight:bold;color:${fg};text-decoration:none;border-radius:${radius}px;background-color:${bg};`
   const anchor = isSafeUrl(url) ? `<a href="${escapeHtml(url)}" target="_blank" style="${inner}">${label}</a>` : `<span style="${inner}">${label}</span>`
-  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${align}" style="border-collapse:separate;"><tr><td align="center" bgcolor="${bg}" style="border-radius:${radius}px;background-color:${bg};">${anchor}</td></tr></table>`
+  // Outlook (Word) ignores padding and radius on a link, so it gets a rounded rectangle drawn in VML; every other client skips the comment and uses the table cell.
+  const vml = isSafeUrl(url)
+    ? `<!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${escapeHtml(url)}" style="height:44px;v-text-anchor:middle;width:200px;" arcsize="${Math.min(50, Math.round((radius / 44) * 100))}%" stroke="f" fillcolor="${bg}"><w:anchorlock/><center style="color:${fg};font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">${label}</center></v:roundrect><![endif]-->`
+    : ''
+  const hide = vml ? ['<!--[if !mso]><!-->', '<!--<![endif]-->'] : ['', '']
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="${align}" style="border-collapse:separate;"><tr><td align="center" bgcolor="${bg}" style="border-radius:${radius}px;background-color:${bg};">${vml}${hide[0]}${anchor}${hide[1]}</td></tr></table>`
 }
 
 const fillPlainUrl = (url: string, ctx: RenderContext): string => {

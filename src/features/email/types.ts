@@ -16,6 +16,7 @@ export type EmailProviderKey =
   | 'cloudflare'
   | 'brevo'
   | 'mandrill'
+  | 'smtp'
 
 export type SendEmailArgs = {
   to: string | string[]
@@ -102,6 +103,8 @@ export type EmailSettingsDoc = {
   provider?: string | null
   /** Tried only when the default fails with a transient error. 'none' or blank means no fallback. */
   fallbackProvider?: string | null
+  /** More fallbacks after `fallbackProvider`, as a comma separated list of provider keys, tried in order. */
+  fallbackOrder?: string | null
   fromName?: string | null
   fromEmail?: string | null
   replyToEmail?: string | null
@@ -122,6 +125,7 @@ export type EmailSettingsDoc = {
   postmark?: { serverToken?: string | null; messageStream?: string | null } | null
   sendgrid?: { apiKey?: string | null } | null
   cloudflare?: { apiToken?: string | null; accountId?: string | null } | null
+  smtp?: { host?: string | null; port?: number | string | null; username?: string | null; password?: string | null; security?: string | null } | null
   testing?: { testRecipient?: string | null } | null
 }
 
