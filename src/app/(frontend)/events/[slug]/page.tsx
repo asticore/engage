@@ -14,7 +14,9 @@ import { eventSaleMode } from '@/features/editScreens/eventSales'
 import { tierOptionLabel } from '@/features/editScreens/tierSales'
 import { formatPriceInAUD } from '@/lib/formatCurrency'
 import { priceLocale } from '@/features/uiStrings/publicFormat'
-import { publicLocale } from '@/features/uiStrings/storeTextsServer'
+import { publicLocale, storeTexts } from '@/features/uiStrings/storeTextsServer'
+import { translateWith } from '@/features/uiStrings/t'
+import type { UiStringKey } from '@/features/uiStrings/keys'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
 import { eventBlockContext } from '@/lib/blockContextFrom'
 import { PasswordGate } from '@/components/PasswordGate'
@@ -97,6 +99,31 @@ export default async function EventPage({
     return <PasswordGate collection="events" currentPath={`/events/${slug}`} id={event.id} wrongPassword={sp.pw === 'wrong'} />
   }
   const engine = await getEngine()
+  const storeDict = await storeTexts()
+  const tx = (key: UiStringKey, vars?: Record<string, string | number>) => translateWith(storeDict, key, vars)
+  const leftText = (count: number) => tx('events.left', { count })
+  const tierText = {
+    heading: tx('events.ticketTypes'),
+    soldOut: tx('events.soldOut'),
+    placesAvailable: tx('events.placesAvailable'),
+    left: leftText,
+    pricesInfoPaid: tx('events.pricesInfoPaid'),
+    pricesInfoFree: tx('events.pricesInfoFree'),
+  }
+  const rsvpText = {
+    heading: tx('events.rsvp.heading'),
+    ticketType: tx('events.rsvp.ticketType'),
+    chooseTicket: tx('events.rsvp.chooseTicket'),
+    name: tx('events.rsvp.name'),
+    email: tx('events.rsvp.email'),
+    guests: tx('events.rsvp.guests'),
+    notes: tx('events.rsvp.notes'),
+    submit: tx('events.rsvp.submit'),
+    sending: tx('events.rsvp.sending'),
+    successTitle: tx('events.rsvp.successTitle'),
+    successBody: tx('events.rsvp.successBody'),
+    error: tx('events.rsvp.error'),
+  }
 
   const cover = event.coverImage && typeof event.coverImage === 'object' ? (event.coverImage as Media) : null
   const ticket =
@@ -104,6 +131,7 @@ export default async function EventPage({
 
   const guestsSoFar =
     event.rsvps?.docs?.reduce((sum: number, doc: number | EventRsvp) => {
+      if (typeof doc === 'object' && (doc as { status?: unknown }).status === 'cancelled') return sum
       const guestCount = typeof doc === 'object' ? doc.guestCount : undefined
       return sum + (typeof guestCount === 'number' ? guestCount : 1)
     }, 0) || 0
@@ -121,25 +149,25 @@ export default async function EventPage({
   })
   const tierOptions: RsvpTierOption[] = isPaid
     ? []
-    : tierViews.map((view) => ({ name: view.name, label: tierOptionLabel(view), soldOut: view.soldOut }))
+    : tierViews.map((view) => ({ name: view.name, label: tierOptionLabel(view, { soldOut: tierText.soldOut, left: leftText }), soldOut: view.soldOut }))
 
   const body = (
     <div className="page-shell">
       <PageJsonLd collection="events" doc={event} path={`/events/${slug}`} />
       {cover?.url && (
-        <div className="relative mb-12 aspect-[16/6] w-full bg-[var(--color-cream-dim)]">
+        <div className="relative mb-12 w-full bg-surface-2 aspect-video">
           <Image src={cover.url} alt={cover.alt || event.title} fill style={{ objectFit: 'cover' }} />
         </div>
       )}
 
-      <div className="grid grid-cols-[1.1fr_0.9fr] gap-14 max-[900px]:grid-cols-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
-          <span className="text-[0.75rem] uppercase tracking-[0.1em] text-[var(--color-gold)]">
+          <span className="text-xs uppercase text-accent">
             {formatDateTime(event.startDate, details)}
           </span>
-          <h1 className="text-[2.75rem]">{event.title}</h1>
+          <h1 className="text-4xl">{event.title}</h1>
           {event.location?.venueName && <p className="font-medium">{event.location.venueName}</p>}
-          {event.location?.address && <p className="text-[rgba(20,17,15,0.6)]">{event.location.address}</p>}
+          {event.location?.address && <p className="text-muted">{event.location.address}</p>}
 
           {event.description && (
             <div className="mt-6">
@@ -149,8 +177,8 @@ export default async function EventPage({
           <EventSeries event={event} />
         </div>
 
-        <aside className="self-start border border-[var(--color-line)] bg-white p-8">
-          {tierViews.length > 0 && <EventTiers tiers={tierViews} paid={isPaid} />}
+        <aside className="card card-body self-start">
+          {tierViews.length > 0 && <EventTiers tiers={tierViews} paid={isPaid} text={tierText} />}
           {event.externalRegistrationUrl ? (
             <a
               className="btn btn--primary"
@@ -158,32 +186,32 @@ export default async function EventPage({
               target="_blank"
               rel="noopener noreferrer"
             >
-              Register
+              {tx('events.register')}
             </a>
           ) : saleMode === 'sold-out' ? (
-            <p className="empty-state">Sold out.</p>
+            <p className="empty-state">{tx('events.soldOut')}.</p>
           ) : event.eventType === 'paid' ? (
             ticket ? (
               <div>
-                <p className="mb-4 font-[family-name:var(--font-display)] text-[1.5rem]">
+                <p className="mb-4 text-2xl">
                   {formatPriceInAUD(ticket.priceInAUD, 'AUD', priceLocale(locale))}
                 </p>
-                <AddToCartButton productID={ticket.id} label="Buy ticket" />
+                <AddToCartButton productID={ticket.id} label={tx('events.buyTicket')} />
               </div>
             ) : (
-              <p className="empty-state">Ticket sales open soon.</p>
+              <p className="empty-state">{tx('events.salesSoon')}</p>
             )
           ) : (
-            <RsvpForm eventID={event.id} tiers={tierOptions} />
+            <RsvpForm eventID={event.id} tiers={tierOptions} text={rsvpText} />
           )}
 
           {spotsRemaining !== null && (
-            <p className="mt-4 text-[0.85rem] text-[rgba(20,17,15,0.6)]">{spotsRemaining} spot(s) remaining</p>
+            <p className="mt-4 text-sm text-muted">{tx('events.spotsRemaining', { count: spotsRemaining })}</p>
           )}
 
-          <p className="mt-4 text-[0.85rem]">
+          <p className="mt-4 text-sm">
             <a className="underline" href={`/api/events/${encodeURIComponent(slug)}/ics`}>
-              Add to calendar
+              {tx('events.addToCalendar')}
             </a>
           </p>
         </aside>

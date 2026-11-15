@@ -10,7 +10,23 @@ export type RsvpTierOption = {
   soldOut: boolean
 }
 
-export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOption[] }> = ({ eventID, tiers = [] }) => {
+/** The words the form shows, passed in already translated by the page. */
+export type RsvpFormText = {
+  heading: string
+  ticketType: string
+  chooseTicket: string
+  name: string
+  email: string
+  guests: string
+  notes: string
+  submit: string
+  sending: string
+  successTitle: string
+  successBody: string
+  error: string
+}
+
+export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOption[]; text: RsvpFormText }> = ({ eventID, tiers = [], text }) => {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
 
@@ -40,39 +56,36 @@ export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOpti
         const body = (await res.json().catch((): null => null)) as {
           errors?: { message: string }[]
         } | null
-        throw new Error(body?.errors?.[0]?.message || 'Something went wrong. Please try again.')
+        throw new Error(body?.errors?.[0]?.message || text.error)
       }
 
       setStatus('success')
       form.reset()
     } catch (err) {
       setStatus('error')
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setError(err instanceof Error ? err.message : text.error)
     }
   }
 
-  const inputClassName =
-    'border border-[var(--color-line)] bg-[var(--color-cream)] p-3 font-[family-name:var(--font-body)] text-base'
-  const labelClassName = 'flex flex-col gap-1.5 text-[0.85rem] uppercase tracking-[0.06em]'
 
   if (status === 'success') {
     return (
-      <div className="flex flex-col gap-4">
-        <h3 className="mb-2">You&apos;re on the list.</h3>
-        <p>We&apos;ve saved your RSVP - see you there.</p>
+      <div className="stack">
+        <h3 className="mb-2">{text.successTitle}</h3>
+        <p>{text.successBody}</p>
       </div>
     )
   }
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-      <h3>RSVP</h3>
+    <form className="stack" onSubmit={handleSubmit}>
+      <h3>{text.heading}</h3>
       {tiers.length > 0 && (
-        <label className={labelClassName}>
-          Ticket type
-          <select name="ticketTier" required defaultValue="" className={inputClassName}>
+        <label className="field">
+          {text.ticketType}
+          <select name="ticketTier" required defaultValue="" className="select">
             <option value="" disabled>
-              Choose a ticket type
+              {text.chooseTicket}
             </option>
             {tiers.map((tier) => (
               <option key={tier.name} value={tier.name} disabled={tier.soldOut}>
@@ -82,25 +95,25 @@ export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOpti
           </select>
         </label>
       )}
-      <label className={labelClassName}>
-        Name
-        <input name="name" type="text" required className={inputClassName} />
+      <label className="field">
+        {text.name}
+        <input name="name" type="text" required className="input" />
       </label>
-      <label className={labelClassName}>
-        Email
-        <input name="email" type="email" required className={inputClassName} />
+      <label className="field">
+        {text.email}
+        <input name="email" type="email" required className="input" />
       </label>
-      <label className={labelClassName}>
-        Guests (including yourself)
-        <input name="guestCount" type="number" min={1} defaultValue={1} className={inputClassName} />
+      <label className="field">
+        {text.guests}
+        <input name="guestCount" type="number" min={1} defaultValue={1} className="input" />
       </label>
-      <label className={labelClassName}>
-        Notes (optional)
-        <textarea name="notes" rows={3} className={inputClassName} />
+      <label className="field">
+        {text.notes}
+        <textarea name="notes" rows={3} className="textarea" />
       </label>
       {error && <p className="form-error">{error}</p>}
       <button type="submit" className="btn btn--primary" disabled={status === 'submitting'}>
-        {status === 'submitting' ? 'Sending...' : 'Reserve my spot'}
+        {status === 'submitting' ? text.sending : text.submit}
       </button>
     </form>
   )

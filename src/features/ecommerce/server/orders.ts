@@ -227,6 +227,13 @@ export async function markOrderPaid(engine: Engine, orderId: number, info: { pay
       // A replay finds stock that an earlier attempt could not update: retry it.
       await takeStock(engine, order, orderId)
     }
+    // A replay also retries event bookings an earlier attempt could not create (safe: one booking per order line).
+    if (['processing', 'on-hold', 'completed'].includes(status) && order.paidAt) {
+      try {
+        const { createRsvpsForOrder } = await import('@/features/events/orderRsvps')
+        await createRsvpsForOrder(engine as never, order)
+      } catch { /* flagged on the first payment */ }
+    }
     return { firstTime: false, order }
   }
 
@@ -280,6 +287,15 @@ export async function markOrderPaid(engine: Engine, orderId: number, info: { pay
   const fresh = { ...order, status: oversold ? 'on-hold' : 'processing' }
   await sendOrderEmail(engine, fresh, oversold ? 'onHold' : 'processing')
   await sendAdminNewOrderEmail(engine, fresh)
+  // Tickets for paid events become bookings (confirmation email, check-in list, capacity).
+  try {
+    const { createRsvpsForOrder } = await import('@/features/events/orderRsvps')
+    const booked = await createRsvpsForOrder(engine as never, fresh)
+    if (booked.created > 0) await addOrderNote(engine, orderId, { type: 'internal', text: `${booked.created} event booking(s) created from this order.`, author: 'System' })
+    if (booked.problems.length > 0) await flagAttention(engine, orderId, `Event booking not created: ${booked.problems.join('; ')}`)
+  } catch (error) {
+    await flagAttention(engine, orderId, `Event bookings for this order were not created: ${error instanceof Error ? error.message : 'unknown error'}. A replayed payment will try again.`)
+  }
   void emitWebhookEvent('order.paid', { ...fresh, id: orderId })
   return { firstTime: true, order: fresh }
 }

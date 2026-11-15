@@ -13,6 +13,9 @@ export type EventRSVPDoc = {
   email: string
   guestCount?: number | null
   notes?: string | null
+  status?: 'confirmed' | 'cancelled' | null
+  cancelledAt?: string | null
+  orderId?: number | null
   updatedAt: string
   createdAt: string
 }

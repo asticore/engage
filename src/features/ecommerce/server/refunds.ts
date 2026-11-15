@@ -115,6 +115,11 @@ export async function runRefundAfterChange({ doc, operation, req }: { doc: Doc; 
   const money = `$${(amount / 100).toFixed(2)}`
   try {
     const full = (order.refundedTotal as number) >= (order.amount as number)
+    if (full) {
+      const { cancelRsvpsForOrder } = await import('@/features/events/orderRsvps')
+      const freed = await cancelRsvpsForOrder(req.engine as never, orderId)
+      if (freed > 0) await addOrderNote(req.engine as never, orderId, { type: 'internal', text: `${freed} event booking(s) cancelled and their places freed.`, author: 'System' })
+    }
     if (full && order.status !== 'refunded') await runChanges(await rawD1(), `UPDATE eg_orders SET status = 'refunded' WHERE id = ?1 AND status IN ('processing','on-hold','completed')`, orderId)
     if (doc.restock) {
       const only = new Map<number, number>()

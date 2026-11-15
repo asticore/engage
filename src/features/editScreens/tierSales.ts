@@ -18,12 +18,13 @@ export type TierView = {
 }
 
 /** The slice of an RSVP the count reads. */
-export type TierSaleRow = { ticketTier?: unknown; guestCount?: unknown }
+export type TierSaleRow = { ticketTier?: unknown; guestCount?: unknown; status?: unknown }
 
 /** Guests booked per ticket type name. Rows with no type count for nothing here. */
 export function guestsByTier(rows: TierSaleRow[]): Map<string, number> {
   const totals = new Map<string, number>()
   for (const row of rows) {
+    if (row.status === 'cancelled') continue
     if (typeof row.ticketTier !== 'string' || row.ticketTier === '') continue
     const guests = Number(row.guestCount)
     const count = Number.isFinite(guests) && guests > 0 ? guests : 1
@@ -64,7 +65,7 @@ export function tierRoomError(tier: TicketTier, bookedGuests: number, guests: nu
 }
 
 /** One line for the RSVP ticket type list, e.g. "VIP - $25.00 - 4 left". */
-export function tierOptionLabel(view: TierView): string {
-  const sales = view.remaining === null ? '' : view.soldOut ? ' - sold out' : ` - ${view.remaining} left`
+export function tierOptionLabel(view: TierView, words: { soldOut: string; left: (count: number) => string } = { soldOut: 'sold out', left: (count) => `${count} left` }): string {
+  const sales = view.remaining === null ? '' : view.soldOut ? ` - ${words.soldOut.toLowerCase()}` : ` - ${words.left(view.remaining)}`
   return `${view.name} - ${view.priceLabel}${sales}`
 }

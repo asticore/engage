@@ -179,7 +179,8 @@ export function eventsDueForReminder<T extends EventLike>(events: T[], now: Date
 export type RsvpLike = { id: number; email?: unknown; reminderSentAt?: unknown }
 
 /** An RSVP still owed its reminder: it has an email address and no reminder time yet. */
-export function rsvpNeedsReminder(rsvp: RsvpLike): boolean {
+export function rsvpNeedsReminder(rsvp: RsvpLike & { status?: unknown }): boolean {
+  if (rsvp.status === 'cancelled') return false
   return typeof rsvp.email === 'string' && rsvp.email.trim().length > 0 && !rsvp.reminderSentAt
 }
 

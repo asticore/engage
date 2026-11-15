@@ -63,6 +63,7 @@ export async function GET(request: Request): Promise<Response> {
     )
     const attendees: CheckInAttendee[] = []
     for (const doc of docs) {
+      if (doc.status === 'cancelled') continue // a cancelled booking is not on the door list
       const attendee = parseAttendee(doc)
       if (attendee) attendees.push(attendee)
     }
