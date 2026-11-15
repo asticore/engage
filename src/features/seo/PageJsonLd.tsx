@@ -116,6 +116,7 @@ export const PageJsonLd = async ({
   const jsonLd = buildPageJsonLd({
     collection,
     schemaType: doc.schemaType,
+    schemaFacts: (doc as Record<string, unknown>).schemaFacts,
     title,
     description: doc.seo?.metaDescription,
     url,

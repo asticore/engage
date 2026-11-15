@@ -176,6 +176,7 @@ import * as migration_20270316_230000_media_tags from './20270316_230000_media_t
 import * as migration_20270316_240000_pinterest_tag from './20270316_240000_pinterest_tag';
 import * as migration_20270316_250000_breadcrumb_settings from './20270316_250000_breadcrumb_settings';
 import * as migration_20270316_260000_blog_rss from './20270316_260000_blog_rss';
+import * as migration_20270316_270000_schema_facts from './20270316_270000_schema_facts';
 
 export const migrations = [
   {
@@ -1062,5 +1063,10 @@ export const migrations = [
     up: migration_20270316_260000_blog_rss.up,
     down: migration_20270316_260000_blog_rss.down,
     name: '20270316_260000_blog_rss',
+  },
+  {
+    up: migration_20270316_270000_schema_facts.up,
+    down: migration_20270316_270000_schema_facts.down,
+    name: '20270316_270000_schema_facts',
   },
 ];

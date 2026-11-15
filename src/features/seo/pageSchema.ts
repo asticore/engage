@@ -1,4 +1,5 @@
 import { jsonLdFor } from '@/fields/schemaType'
+import { buildRichNode, parseFacts } from './richTypes'
 
 import { breadcrumbList, faqEntities, type Crumb, type FaqItem } from './schemaNodes'
 
@@ -22,6 +23,8 @@ const MAX_LIST_ITEMS = 100
 export const buildPageJsonLd = (input: {
   collection: string
   schemaType?: string | null
+  /** Facts (JSON text or object) for the rich page types. */
+  schemaFacts?: unknown
   title: string
   description?: string
   url: string
@@ -52,6 +55,7 @@ export const buildPageJsonLd = (input: {
   const {
     collection,
     schemaType,
+    schemaFacts,
     title,
     description,
     url,
@@ -91,6 +95,11 @@ export const buildPageJsonLd = (input: {
   }
 
   if (description) result.description = description
+
+  if (typeInfo.rich) {
+    const facts = parseFacts(schemaFacts)
+    if (Object.keys(facts).length > 0) result.mainEntity = buildRichNode(typeInfo.rich, facts, { title, url, imageUrl, siteName, description })
+  }
 
   // Reference the website node created by SeoJsonLd
   result.isPartOf = { '@id': `${baseUrl}/#website` }
