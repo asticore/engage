@@ -92,6 +92,8 @@ export type AuditAction =
   | 'password-group.refused'
   | 'database.table-dropped'
   | 'database.section-emptied'
+  | 'bulk.created'
+  | 'bulk.undone'
   | 'publish'
   | 'unpublish'
   | 'export'
@@ -165,6 +167,8 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'password-group.refused',
   'database.table-dropped',
   'database.section-emptied',
+  'bulk.created',
+  'bulk.undone',
 ]
 
 export type AuditEntry = {
