@@ -1403,7 +1403,7 @@ button {
 }
 
 .doc-link:disabled {
-  opacity: 0.5;
+  opacity: 0.62;
   cursor: not-allowed;
 }
 
