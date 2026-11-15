@@ -76,6 +76,15 @@ export const ShopExtraSettings: GlobalConfig = {
       admin: { description: 'Leave blank for the built-in wording. Merge fields: {{order_id}}, {{customer_name}}, {{review_links}}, {{site_name}}. Review links need the SITE_URL setting to be full web addresses.' },
     },
     {
+      name: 'readyPickupEmail',
+      type: 'checkbox',
+      label: 'Email the customer when a pickup order is ready',
+      defaultValue: true,
+      admin: { description: 'Sent once when you tick "Ready for pickup" on a local pickup order.' },
+    },
+    { name: 'readyPickupSubject', type: 'text', label: 'Ready for pickup subject', admin: { description: 'Leave blank for the built-in wording. Merge fields: {{order_id}}, {{customer_name}}, {{site_name}}.' } },
+    { name: 'readyPickupBody', type: 'textarea', label: 'Ready for pickup message', admin: { description: 'Leave blank for the built-in wording. Merge fields: {{order_id}}, {{customer_name}}, {{pickup_location}}, {{site_name}}.' } },
+    {
       type: 'collapsible',
       label: 'Dynamic pricing rules',
       fields: [

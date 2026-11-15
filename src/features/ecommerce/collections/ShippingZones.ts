@@ -81,6 +81,14 @@ export const ShippingZones: CollectionConfig = {
             { label: 'Item count', value: 'item_count' },
           ],
         },
+        {
+          name: 'pickupLocations',
+          type: 'textarea',
+          admin: {
+            condition: (_data, siblingData) => siblingData?.type === 'local_pickup',
+            description: 'Where customers collect. One place per line: Name | Address | Opening hours | Instructions. Only the name is needed. Checkout offers each place as its own choice. Leave blank for a single pickup choice.',
+          },
+        },
         { name: 'enabled', type: 'checkbox', defaultValue: true },
         {
           name: 'tableRates',

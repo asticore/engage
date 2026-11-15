@@ -198,7 +198,7 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
     shippingTotal: totals.shippingCents,
     taxTotal: totals.taxCents,
     pricesIncludeTax: totals.pricesIncludeTax,
-    shippingMethod: totals.shippingOption ? { id: totals.shippingOption.id, title: totals.shippingOption.title, costCents: totals.shippingOption.costCents, type: totals.shippingOption.type } : null,
+    shippingMethod: totals.shippingOption ? { id: totals.shippingOption.id, title: totals.shippingOption.title, costCents: totals.shippingOption.costCents, type: totals.shippingOption.type, ...(totals.shippingOption.pickup ? { pickup: totals.shippingOption.pickup } : {}) } : null,
     taxLines: totals.taxLines,
     couponLines: totals.coupon ? [totals.coupon] : [],
     checkoutFields: (fields as { values: Record<string, { value: string }> }).values,

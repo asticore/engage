@@ -1,4 +1,5 @@
 import { describeQuantity } from './packaging'
+import { pickupLines } from './pickup'
 import { DEFAULT_INVOICE_SETTINGS, FONT_STACKS, documentTitle, formatInvoiceNumber, normaliseInvoiceSettings, type InvoiceSettings } from './invoiceSettings'
 import { formatCents } from './money'
 
@@ -36,7 +37,7 @@ export type InvoiceOrder = {
   pricesIncludeTax?: boolean | null
   taxLines?: { name?: string; ratePct?: number; taxCents?: number }[] | null
   couponLines?: { code?: string; discountCents?: number }[] | null
-  shippingMethod?: { title?: string } | null
+  shippingMethod?: { title?: string; pickup?: { name?: string; address?: string; hours?: string; instructions?: string } | null } | null
   checkoutFields?: Record<string, { label?: string; value?: string }> | null
 }
 
@@ -152,7 +153,7 @@ export function renderPackingSlipHtml(order: InvoiceOrder, store: InvoiceStore, 
     .join('')
   const body = `
 <div class="head"><div>${logoHtml(settings)}<h1>Packing slip</h1><div class="muted">Order #${escapeHtml(orderRef)} &middot; ${escapeHtml(dateStr(order.createdAt))}</div></div><div style="text-align:right"><strong>${escapeHtml(store.name)}</strong></div></div>
-<div class="head"><div><strong>Ship to</strong><div class="addr">${addressLines(order.shippingAddress)}</div></div><div>${order.shippingMethod ? `<div><span class="muted">Shipping:</span> ${escapeHtml(order.shippingMethod.title)}</div>` : ''}${extra}</div></div>
+<div class="head"><div><strong>${order.shippingMethod?.pickup?.name ? 'Collect from' : 'Ship to'}</strong><div class="addr">${order.shippingMethod?.pickup?.name ? pickupLines(order.shippingMethod.pickup).map(escapeHtml).join('<br>') : addressLines(order.shippingAddress)}</div></div><div>${order.shippingMethod ? `<div><span class="muted">Shipping:</span> ${escapeHtml(order.shippingMethod.title)}</div>` : ''}${extra}</div></div>
 <table><thead><tr><th>Item</th><th class="num">Qty</th></tr></thead><tbody>${rows}</tbody></table>
 ${order.customerNote ? `<p><strong>Customer note</strong><br>${escapeHtml(order.customerNote)}</p>` : ''}
 ${settings.packingSlipNote ? `<div class="foot">${escapeHtml(settings.packingSlipNote)}</div>` : ''}`

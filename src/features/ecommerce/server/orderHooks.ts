@@ -13,6 +13,17 @@ type Args = { doc: Record<string, unknown>; previousDoc?: Record<string, unknown
  */
 export async function runOrderAfterChange({ doc, previousDoc, operation, req, context }: Args) {
   if (operation !== 'update' || !previousDoc || context?.skipOrderHooks) return doc
+  // "Ready for pickup" ticked on a local pickup order: stamp the time and email the customer once.
+  if (doc.readyForPickup === true && previousDoc.readyForPickup !== true && !doc.readyForPickupAt && (doc.shippingMethod as { type?: string } | null)?.type === 'local_pickup') {
+    try {
+      const at = new Date().toISOString()
+      const { rawD1 } = await import('./db')
+      await (await rawD1()).prepare('UPDATE eg_orders SET ready_for_pickup_at = ?1 WHERE id = ?2').bind(at, Number(doc.id)).run()
+      await sendOrderEmail(req.engine as never, { ...doc, readyForPickupAt: at }, 'readyForPickup')
+    } catch {
+      /* hooks must not fail a save */
+    }
+  }
   const from = previousDoc.status as string | undefined
   const to = doc.status as string | undefined
   if (!to || from === to) return doc
