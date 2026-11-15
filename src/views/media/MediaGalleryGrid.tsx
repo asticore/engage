@@ -382,6 +382,11 @@ export function MediaGalleryGrid({
           return (
             <div
               key={doc.id}
+              draggable
+              onDragStart={(e) => {
+                const ids = selected.has(doc.id) && selectedIds.length > 0 ? selectedIds : [Number(doc.id)]
+                e.dataTransfer.setData('application/x-engage-media-ids', ids.join(','))
+              }}
               className="group relative flex flex-col overflow-hidden rounded-[4px] border border-[var(--theme-elevation-150)] bg-[var(--ac-surface)] [transition:border-color_0.15s_ease] hover:border-[var(--ac-gold)]"
             >
               <label className="absolute left-[6px] top-[6px] z-10 flex h-[18px] w-[18px] items-center justify-center rounded-[3px] bg-[var(--theme-elevation-0)]/80">

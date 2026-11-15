@@ -7,6 +7,7 @@ import type { Engine } from '@/engine'
 import { IMAGES_UNAVAILABLE_MESSAGE, resolveOptimiseSettings } from '@/features/media/optimise'
 import { resolveImagesBinding } from '@/features/media/imagesBinding'
 import { distinctFolders } from '@/features/media/folders'
+import { MediaFolderTree } from './MediaFolderTree'
 import { describeSaving, formatBytes } from '@/features/media/admin/mediaApi'
 import { siteImageFormat, videoFormatOf } from '@/features/media/formats'
 import { streamCredentials } from '@/features/media/stream'
@@ -333,6 +334,9 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
         </div>
       )}
 
+      <div className="flex flex-col gap-[var(--base)] md:flex-row">
+        {!embedded ? <MediaFolderTree canEdit={Boolean(hasCreatePermission)} /> : null}
+        <div className="flex min-w-0 flex-1 flex-col gap-[var(--base)]">
       {galleryDocs.length === 0 ? (
         <p className="m-0 rounded-[4px] border border-dashed border-[var(--theme-elevation-200)] p-[calc(var(--base)*1.25)] text-[calc(var(--base)*0.82)] text-[var(--theme-elevation-600)]">
           {currentSearch ? `No files match "${currentSearch}".` : 'No media uploaded yet. Use Upload files above, or drop files onto this page.'}
@@ -435,6 +439,8 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
           </Link>
         </nav>
       ) : null}
+        </div>
+      </div>
     </div>
   )
 }
