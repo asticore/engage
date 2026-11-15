@@ -435,6 +435,7 @@ const NETWORKS = [
   { key: 'facebook', label: 'Facebook', glyph: 'facebook' },
   { key: 'x', label: 'X', glyph: 'x' },
   { key: 'linkedin', label: 'LinkedIn', glyph: 'linkedin' },
+  { key: 'pinterest', label: 'Pin it', glyph: 'pinterest' },
   { key: 'whatsapp', label: 'WhatsApp', glyph: '' },
   { key: 'email', label: 'Email', glyph: 'email' },
 ] as const
@@ -449,7 +450,7 @@ const enc = (params: Record<string, string>): string =>
  * The share link for one network. Facebook and LinkedIn only work with a page address, so they return '' when
  * none is set; X, WhatsApp and email fall back to the title alone.
  */
-function shareHref(key: string, url: string, title: string): string {
+export function shareHref(key: string, url: string, title: string, image = ''): string {
   switch (key) {
     case 'facebook':
       return url ? `https://www.facebook.com/sharer/sharer.php?${enc({ u: url })}` : ''
@@ -457,6 +458,9 @@ function shareHref(key: string, url: string, title: string): string {
       return `https://x.com/intent/post?${enc({ text: title, url })}`
     case 'linkedin':
       return url ? `https://www.linkedin.com/sharing/share-offsite/?${enc({ url })}` : ''
+    case 'pinterest':
+      // Pinterest needs a picture to pin; without one the button is left out.
+      return url && image ? `https://www.pinterest.com/pin/create/button/?${enc({ url, media: image, description: title })}` : ''
     case 'whatsapp':
       return `https://wa.me/?${enc({ text: url ? `${title} ${url}`.trim() : title })}`
     case 'email':
@@ -473,9 +477,13 @@ export const ShareButtonsElement: React.FC<P> = (p) => {
     return h && /^https?:\/\//i.test(h) ? h : ''
   })()
   const title = str(p.title).trim()
+  const image = (() => {
+    const h = safeUrl(p.shareImage)
+    return h && /^https?:\/\//i.test(h) ? h : ''
+  })()
   const style = pick(p.style, ['buttons', 'icons'] as const, 'buttons')
   const align = pick(p.align, ['left', 'center', 'right'] as const, 'left')
-  const links = NETWORKS.filter((n) => flag(p[n.key])).map((n) => ({ ...n, href: shareHref(n.key, url, title) })).filter((n) => n.href)
+  const links = NETWORKS.filter((n) => flag(p[n.key])).map((n) => ({ ...n, href: shareHref(n.key, url, title, image) })).filter((n) => n.href)
   if (links.length === 0) return null
   return (
     <ul className={`be-el-share be-el-share--${style} be-el-share--${align}`}>

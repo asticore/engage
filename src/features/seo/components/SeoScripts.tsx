@@ -36,6 +36,19 @@ export type SeoScriptsProps = {
   country?: string | null
 }
 
+/** The Pinterest Tag ID from Tracking connections (a public ID). Blank or unreadable means no tag. */
+const loadPinterestTagId = async (): Promise<string | undefined> => {
+  try {
+    const { getEngine } = await import('@/lib/engine')
+    const engine = await getEngine()
+    const doc = (await engine.findGlobal({ slug: 'tracking-connections', depth: 0, overrideAccess: true }).catch((): null => null)) as { pinterestTagId?: unknown } | null
+    const id = typeof doc?.pinterestTagId === 'string' ? doc.pinterestTagId.trim() : ''
+    return /^\d{10,16}$/.test(id) ? id : undefined
+  } catch {
+    return undefined
+  }
+}
+
 const loadIntegrations = async (): Promise<Record<string, unknown> | null> => {
   try {
     const { getEngine } = await import('@/lib/engine')
@@ -129,6 +142,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
   // SEO & Analytics values (see pickPublicIds).
   const { gtmContainerId, ga4MeasurementId, metaPixelId, tiktokPixelId, clarityProjectId } = pickPublicIds(integrations, { analytics })
 
+  const pinterestTagId = await loadPinterestTagId()
   const { initialDecided, optIn } = await readConsentState(consent, country)
   const logToken = await consentLogToken(consent.policyVersion).catch((): null => null)
   // Withdrawing needs a reload only for a tag or script that no consent signal or API reaches:
@@ -136,7 +150,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
   const hasCustomCode = Boolean(headHtml || custom?.bodyEndScripts?.trim())
   const reloadOnWithdraw = {
     analytics: Boolean(((gtmContainerId || ga4MeasurementId) && !consent.consentModeV2) || hasCustomCode),
-    marketing: Boolean(tiktokPixelId || hasCustomCode),
+    marketing: Boolean(tiktokPixelId || pinterestTagId || hasCustomCode),
   }
 
   // Tracking events fire only where a platform is connected and an enabled event exists.
@@ -161,6 +175,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
         ga4MeasurementId={ga4MeasurementId}
         metaPixelId={metaPixelId}
         tiktokPixelId={tiktokPixelId}
+        pinterestTagId={pinterestTagId}
         metaCategory={categories.meta}
         tiktokCategory={categories.tiktok}
         clarityProjectId={clarityProjectId}

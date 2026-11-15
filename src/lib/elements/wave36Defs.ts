@@ -133,7 +133,7 @@ export const WAVE36_ELEMENTS: ElementDef[] = [
     fields: [
       text('title', 'Title to share', { helpText: 'Used as the message text.' }),
       text('shareUrl', 'Address to share', { helpText: 'Full address of the page (https://...). Leave empty to share the title only.' }),
-      check('facebook', 'Facebook'), check('x', 'X (Twitter)'), check('linkedin', 'LinkedIn'), check('whatsapp', 'WhatsApp'), check('email', 'Email'),
+      check('facebook', 'Facebook'), check('x', 'X (Twitter)'), check('linkedin', 'LinkedIn'), check('pinterest', 'Pinterest (Pin it)'), text('shareImage', 'Picture to pin', { helpText: 'Full address of the picture (https://...). Pinterest needs a picture; without one the Pin it button is left out.' }), check('whatsapp', 'WhatsApp'), check('email', 'Email'),
       select('style', 'Style', opts('buttons', 'icons')), ALIGN,
     ],
     defaultProps: () => ({ title: 'Check this out', shareUrl: '', facebook: true, x: true, linkedin: true, whatsapp: true, email: true, style: 'buttons', align: 'left' }),
