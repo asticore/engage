@@ -12,6 +12,8 @@ export type AnalyticsIds = {
   metaPixelId?: string
   clarityProjectId?: string
   tiktokPixelId?: string
+  /** Pinterest Tag ID (marketing consent). */
+  pinterestTagId?: string
   /** Consent category the Meta and TikTok pixels wait for. Defaults to marketing. */
   metaCategory?: 'analytics' | 'marketing'
   tiktokCategory?: 'analytics' | 'marketing'
@@ -50,6 +52,7 @@ const tagState = {
   analytics: false,
   marketing: false,
   tiktok: false,
+  pinterest: false,
   /** The last consent the loaded Meta pixel and Clarity were given through their consent APIs. */
   metaConsent: null as boolean | null,
   clarityConsent: null as boolean | null,
@@ -136,6 +139,16 @@ const loadTikTokPixel = (tiktokPixelId?: string) => {
   )
 }
 
+export const pinterestTagScript = (id: string): string =>
+  `!function(e){if(!window.pintrk){window.pintrk=function(){window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var n=window.pintrk;n.queue=[],n.version="3.0";var t=document.createElement("script");t.async=!0,t.src=e;var r=document.getElementsByTagName("script")[0];r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");` +
+  `pintrk('load',${JSON.stringify(id)});pintrk('page');`
+
+const loadPinterestTag = (pinterestTagId?: string) => {
+  if (tagState.pinterest || !pinterestTagId) return
+  tagState.pinterest = true
+  appendScript({}, pinterestTagScript(pinterestTagId))
+}
+
 const loadMetaPixel = ({ metaPixelId }: AnalyticsIds) => {
   if (tagState.marketing || !metaPixelId) return
   tagState.marketing = true
@@ -159,7 +172,7 @@ const loadMetaPixel = ({ metaPixelId }: AnalyticsIds) => {
  * tags for a category load only once that category is granted.
  */
 export function syncAnalyticsTags(ids: AnalyticsIds, consentModeV2: boolean, choices: ConsentChoices): void {
-  const hasTags = Boolean(ids.gtmContainerId || ids.ga4MeasurementId || ids.metaPixelId || ids.tiktokPixelId || ids.clarityProjectId)
+  const hasTags = Boolean(ids.gtmContainerId || ids.ga4MeasurementId || ids.metaPixelId || ids.tiktokPixelId || ids.pinterestTagId || ids.clarityProjectId)
   if (!hasTags) return
 
   const signalKey = JSON.stringify(choices)
@@ -181,6 +194,7 @@ export function syncAnalyticsTags(ids: AnalyticsIds, consentModeV2: boolean, cho
   if (choices.analytics) loadAnalyticsTags(ids)
   if (choices[ids.metaCategory ?? 'marketing']) loadMetaPixel(ids)
   if (choices[ids.tiktokCategory ?? 'marketing']) loadTikTokPixel(ids.tiktokPixelId)
+  if (choices.marketing) loadPinterestTag(ids.pinterestTagId)
 
   // Pixels already on the page follow the choice through their consent APIs.
   if (ids.metaPixelId) syncMetaConsent(choices[ids.metaCategory ?? 'marketing'])
