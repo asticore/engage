@@ -10,6 +10,7 @@ import type { Status } from '@/features/seo/analysis/types'
 import { AUDIT_COLLECTIONS, type AuditCollection, type AuditRow, type AuditSummary } from '@/features/seo/audit'
 import { DEFAULT_AUDIT_FILTERS, filterAuditRows, sortAuditRows, type AuditFilters, type ScoreFilter, type SortKey } from '@/features/seo/auditFilters'
 import { changedSeoRows, rowKey, type SeoEditField, type SeoEditMap } from '@/features/seo/auditEdits'
+import { BrokenLinksPanel } from './BrokenLinksPanel'
 import './seo-audit.css'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
@@ -341,6 +342,8 @@ export function SeoAuditClient({ collections }: { collections: AuditCollection[]
           {AUDIT_COLLECTIONS.length === collections.length ? '' : ' Only the places you can edit or read are shown.'}
         </p>
       </header>
+
+      <BrokenLinksPanel />
 
       {state.status === 'loading' && <p className="sa-muted">{t('se.lit.checking_content')}</p>}
       {state.status === 'error' && <p className="sa-alert" role="alert">{t('se.lit.the_audit_could_not_load_refresh_the_pag')}</p>}
