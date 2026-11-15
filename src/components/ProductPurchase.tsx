@@ -43,7 +43,7 @@ function PriceLine({ price, regular, onSale, from }: { price: number | null; reg
   )
 }
 
-type Limits = { min: number; max: number | null }
+type Limits = { min: number; max: number | null; step?: number }
 type BuyerPrice = { enabled: boolean; suggested: number | null; minimum: number | null }
 
 /** Quantity box plus Add to cart. The server re-checks price, stock, limits and the option; it can still say no. */
@@ -52,8 +52,14 @@ function AddControl({ productId, variationId, disabled, label, limits, buyerPric
   const { addItem, isLoading } = useCart()
   const min = limits?.min ?? 1
   const cap = limits?.max ?? 99
+  const step = limits?.step ?? 1
+  // Whole cartons or pallets: the box moves in steps and a typed amount is raised to the next full step.
+  const snap = (value: number): number => {
+    const bounded = clampQuantity(value, { minQty: min, maxQty: cap })
+    return step > 1 ? Math.max(min, Math.ceil(bounded / step) * step) : bounded
+  }
   const named = buyerPrice?.enabled ? buyerPrice : null
-  const [qty, setQty] = useState(() => clampQuantity(1, { minQty: min, maxQty: cap }))
+  const [qty, setQty] = useState(() => snap(1))
   const [answers, setAnswers] = useState<AddOnValues>({})
   const [priceText, setPriceText] = useState(() => (named?.suggested != null ? named.suggested.toFixed(2) : ''))
   const [message, setMessage] = useState('')
@@ -77,7 +83,7 @@ function AddControl({ productId, variationId, disabled, label, limits, buyerPric
       if (value === undefined || value === '' || value === false) return []
       return [{ id: def.id, value }]
     })
-    const failure = await addItem({ product: productId, variation: variationId ?? null, ...(priceCents !== undefined ? { priceCents } : {}), ...(addOnAnswers.length > 0 ? { addOns: addOnAnswers } : {}) }, clampQuantity(qty, { minQty: min, maxQty: cap }))
+    const failure = await addItem({ product: productId, variation: variationId ?? null, ...(priceCents !== undefined ? { priceCents } : {}), ...(addOnAnswers.length > 0 ? { addOns: addOnAnswers } : {}) }, snap(qty))
     if (failure) setMessage(failure)
     else setAdded(true)
   }
@@ -86,7 +92,7 @@ function AddControl({ productId, variationId, disabled, label, limits, buyerPric
     <div className="mt-3">
       <div className="flex flex-wrap items-end gap-3">
         <ProductAddOns defs={addOns} values={answers} onChange={(id, value) => setAnswers((current) => ({ ...current, [id]: value }))} />
-        <QtyPriceFields qty={qty} onQty={setQty} min={min} max={limits?.max ?? null} buyerPrice={named} priceText={priceText} onPriceText={setPriceText} />
+        <QtyPriceFields qty={qty} onQty={(value) => setQty(value)} min={min} max={limits?.max ?? null} step={step} buyerPrice={named} priceText={priceText} onPriceText={setPriceText} />
         <button type="button" className="btn btn--primary" onClick={add} disabled={disabled || isLoading}>
           {isLoading ? t('store.addingProgress') : (label ?? t('store.addToCart'))}
         </button>

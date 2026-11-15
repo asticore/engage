@@ -1,3 +1,4 @@
+import { describeQuantity } from './packaging'
 import { DEFAULT_INVOICE_SETTINGS, FONT_STACKS, documentTitle, formatInvoiceNumber, normaliseInvoiceSettings, type InvoiceSettings } from './invoiceSettings'
 import { formatCents } from './money'
 
@@ -25,7 +26,7 @@ export type InvoiceOrder = {
   customerEmail?: string | null
   customerNote?: string | null
   shippingAddress?: Record<string, unknown> | null
-  lineItems?: { name?: string; sku?: string | null; quantity?: number; unitCents?: number; lineCents?: number; discountCents?: number; taxCents?: number }[] | null
+  lineItems?: { name?: string; sku?: string | null; quantity?: number; cartonSize?: number | null; unitCents?: number; lineCents?: number; discountCents?: number; taxCents?: number }[] | null
   subtotal?: number | null
   discountTotal?: number | null
   shippingTotal?: number | null
@@ -101,7 +102,7 @@ export function renderInvoiceHtml(order: InvoiceOrder, store: InvoiceStore, rawS
   const rows = (order.lineItems ?? [])
     .map(
       (l) =>
-        `<tr><td>${escapeHtml(l.name)}${settings.showSku && l.sku ? `<div class="muted">SKU ${escapeHtml(l.sku)}</div>` : ''}</td><td class="num">${escapeHtml(l.quantity ?? 0)}</td>${settings.showUnitPrice ? `<td class="num">${money(l.unitCents)}</td>` : ''}${settings.showDiscount ? `<td class="num">${(l.discountCents ?? 0) > 0 ? `-${money(l.discountCents)}` : ''}</td>` : ''}${settings.showTax ? `<td class="num">${money(l.taxCents ?? 0)}</td>` : ''}<td class="num">${money(l.lineCents ?? (l.unitCents ?? 0) * (l.quantity ?? 0))}</td></tr>`,
+        `<tr><td>${escapeHtml(l.name)}${settings.showSku && l.sku ? `<div class="muted">SKU ${escapeHtml(l.sku)}</div>` : ''}</td><td class="num">${escapeHtml(describeQuantity(l.quantity ?? 0, l.cartonSize))}</td>${settings.showUnitPrice ? `<td class="num">${money(l.unitCents)}</td>` : ''}${settings.showDiscount ? `<td class="num">${(l.discountCents ?? 0) > 0 ? `-${money(l.discountCents)}` : ''}</td>` : ''}${settings.showTax ? `<td class="num">${money(l.taxCents ?? 0)}</td>` : ''}<td class="num">${money(l.lineCents ?? (l.unitCents ?? 0) * (l.quantity ?? 0))}</td></tr>`,
     )
     .join('')
   const taxRows = settings.showTax
@@ -144,7 +145,7 @@ export function renderPackingSlipHtml(order: InvoiceOrder, store: InvoiceStore, 
   const settings = rawSettings ? normaliseInvoiceSettings(rawSettings) : DEFAULT_INVOICE_SETTINGS
   const orderRef = order.orderNumber || String(order.id)
   const rows = (order.lineItems ?? [])
-    .map((l) => `<tr><td>${escapeHtml(l.name)}${l.sku ? `<div class="muted">SKU ${escapeHtml(l.sku)}</div>` : ''}</td><td class="num">${escapeHtml(l.quantity ?? 0)}</td></tr>`)
+    .map((l) => `<tr><td>${escapeHtml(l.name)}${l.sku ? `<div class="muted">SKU ${escapeHtml(l.sku)}</div>` : ''}</td><td class="num">${escapeHtml(describeQuantity(l.quantity ?? 0, l.cartonSize))}</td></tr>`)
     .join('')
   const extra = Object.values(order.checkoutFields ?? {})
     .map((f) => `<div><span class="muted">${escapeHtml(f.label)}:</span> ${escapeHtml(f.value)}</div>`)

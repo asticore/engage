@@ -26,6 +26,8 @@ export type PricedLine = {
   preorder?: { releaseDate: string | null; note: string | null } | null
   /** Product add-on answers on this line (already priced into unitCents). */
   addOns?: AddOnChoice[]
+  /** Units in a carton when the line is sold by the carton (for the invoice and packing slip). */
+  cartonSize?: number | null
 }
 
 export type OrderTotals = {

@@ -1,3 +1,4 @@
+import { packagingStep } from '../lib/packaging'
 import { resolveCartLine, type CatalogueProduct } from '../catalogue'
 import { resolveCheckoutFields, validateCheckoutValues, type CheckoutField } from '../lib/checkoutFields'
 import { normalizeCode, type CouponDoc } from '../lib/coupons'
@@ -232,6 +233,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       heightCm: typeof p.height === 'number' ? p.height : null,
       shippingClass: idOf(p.shippingClass),
       requiresShipping: !virtual,
+      cartonSize: packagingStep(p as never) > 1 ? packagingStep(p as never) : null,
       // carried for the order snapshot
       ...({ variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices } as object),
     } as PricedLine)
