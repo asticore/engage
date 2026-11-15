@@ -12,7 +12,8 @@
 
 import type { CollectionBeforeChangeHook, Engine, EngineRequest } from '@/engine'
 import { can } from './permissions'
-import { checkLockChanges, checkLockedTree, hasAnyLock, isAdminSession, parseLocks, type LockUser } from './locks'
+import { checkLockChanges, checkLockedTree, hasAnyLock, isAdminSession, nodeKey, parseLocks, type LockUser } from './locks'
+import { checkSettingLockedTree } from './settingLocks'
 
 const BLOCKS_FIELD = 'blocks'
 
@@ -78,6 +79,30 @@ export const lockGuard: CollectionBeforeChangeHook = async (args: unknown): Prom
   if (data.locks !== undefined) {
     const result = checkLockChanges({ user, canManage, original: storedLocks, incoming: parseLocks(data.locks) })
     if ('message' in result) return throwForbidden(result.message)
+  }
+
+  if (data[BLOCKS_FIELD] !== undefined) {
+    // Setting locks (single design settings or groups): admin set, site wide, per block type or per template.
+    try {
+      const { rawD1 } = await import('@/features/ecommerce/server/db')
+      const { listSettingLocks } = await import('./settingLocksStore')
+      const { GROUP_KEYS } = await import('@/views/visualEditor/designHelpers')
+      const settingLocks = await listSettingLocks((await rawD1()) as never)
+      const result = checkSettingLockedTree({
+        locks: settingLocks,
+        user,
+        templateId: collection?.slug === 'site-templates' && originalDoc?.id !== undefined ? String(originalDoc.id) : undefined,
+        original: baseline?.[BLOCKS_FIELD] ?? [],
+        incoming: data[BLOCKS_FIELD],
+        groupKeys: GROUP_KEYS,
+        allKeys: Array.from(new Set(Object.values(GROUP_KEYS).flat())),
+        nodeKeyOf: nodeKey,
+      })
+      if ('message' in result) return throwForbidden(result.message)
+    } catch (error) {
+      if ((error as { name?: string })?.name === 'Forbidden') throw error
+      // A lock table that cannot be read must not stop every save; the editor still shows the locks.
+    }
   }
 
   if (data[BLOCKS_FIELD] !== undefined && hasAnyLock(storedLocks)) {
