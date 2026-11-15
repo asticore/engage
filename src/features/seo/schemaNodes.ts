@@ -123,6 +123,8 @@ export type EventFacts = {
   tiers: TicketTier[]
   /** Price of the linked ticket product in dollars, or null. */
   ticketPrice?: number | null
+  /** The shop currency the tickets are sold in. Defaults to AUD only when not given. */
+  currency?: string
   now?: Date
 }
 
@@ -157,21 +159,21 @@ export function eventOffers(facts: EventFacts): JsonLdNode[] {
   if (facts.tiers.length > 0) {
     return facts.tiers
       .filter((tier) => tierOnSale(tier, now))
-      .map((tier) => offerNode({ name: tier.name, price: tier.price, url: facts.url, validThrough: tier.salesEnd }))
+      .map((tier) => offerNode({ name: tier.name, price: tier.price, url: facts.url, validThrough: tier.salesEnd, currency: facts.currency }))
   }
   const price = facts.ticketPrice
   if (typeof price === 'number' && Number.isFinite(price) && price >= 0) {
-    return [offerNode({ name: 'Ticket', price, url: facts.url, validThrough: null })]
+    return [offerNode({ name: 'Ticket', price, url: facts.url, validThrough: null, currency: facts.currency })]
   }
   return []
 }
 
-function offerNode(input: { name: string; price: number; url: string; validThrough: string | null }): JsonLdNode {
+function offerNode(input: { name: string; price: number; url: string; validThrough: string | null; currency?: string }): JsonLdNode {
   const node: JsonLdNode = {
     '@type': 'Offer',
     name: input.name,
     price: input.price,
-    priceCurrency: CURRENCY,
+    priceCurrency: input.currency || CURRENCY,
     availability: IN_STOCK,
     url: input.url,
   }
