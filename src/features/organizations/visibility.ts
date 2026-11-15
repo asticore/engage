@@ -16,6 +16,10 @@ import type { D1Like } from './store'
 export const ORG_VISIBLE_COLLECTIONS = ['pages', 'posts', 'products', 'events'] as const
 export type OrgVisibleCollection = (typeof ORG_VISIBLE_COLLECTIONS)[number]
 
+/** Collections an admin can limit to a company: the protected content collections plus media files (gated downloads). */
+export const ORG_GATE_COLLECTIONS = [...ORG_VISIBLE_COLLECTIONS, 'media'] as const
+export const isOrgGateCollection = (value: unknown): boolean => typeof value === 'string' && (ORG_GATE_COLLECTIONS as readonly string[]).includes(value)
+
 export const isOrgVisibleCollection = (value: unknown): value is OrgVisibleCollection => typeof value === 'string' && (ORG_VISIBLE_COLLECTIONS as readonly string[]).includes(value)
 
 export async function getOrgVisibility(d1: D1Like, collection: string, docId: number): Promise<string | null> {

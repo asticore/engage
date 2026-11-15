@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { resolveD1Binding } from '@/cms/db/connect'
 import { noteDocumentChanged } from '@/features/dataViews/cache'
-import { clearOrgVisibility, getOrgVisibility, isOrgVisibleCollection, setOrgVisibility } from '@/features/organizations/visibility'
+import { clearOrgVisibility, getOrgVisibility, isOrgGateCollection, setOrgVisibility } from '@/features/organizations/visibility'
 import type { D1Like } from '@/features/organizations/store'
 import { assertDocAccess, docAccessDenied } from '@/features/roles/docAccess'
 import { getSecuritySettings } from '@/features/security/settings'
@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic'
 const authorise = async (collection: string, id: number) => {
   const context = await getAdminContext()
   if (!(context.isAdmin || context.can('admin-visibility-password', 'update'))) return { response: NextResponse.json({ error: 'unauthorised' }, { status: 401 }) }
-  if (!isOrgVisibleCollection(collection)) return { response: NextResponse.json({ error: 'Invalid collection' }, { status: 400 }) }
+  if (!isOrgGateCollection(collection)) return { response: NextResponse.json({ error: 'Invalid collection' }, { status: 400 }) }
   if (!Number.isInteger(id) || id <= 0) return { response: NextResponse.json({ error: 'Invalid id' }, { status: 400 }) }
   const access = await assertDocAccess(context, collection, id, 'update')
   if (!access.ok) return { response: docAccessDenied(access) }
