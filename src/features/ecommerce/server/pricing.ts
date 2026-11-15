@@ -14,6 +14,7 @@ import { DEFAULT_TAX_SETTINGS, type TaxClass, type TaxRate, type TaxSettings } f
 import { fetchLiveRates, normaliseShippingConfig } from '../shipping/registry'
 import { computeOrderTotals, type OrderTotals, type PricedLine } from '../lib/totals'
 import { loadPreordersEnabled } from './shopExtra'
+import { donationLine, withDonationAddOns } from '../lib/donations'
 import { addOnSummary, parseAddOnInputs, priceAddOns, normaliseAddOnDefs, type AddOnChoice } from '../lib/addOns'
 import { applyPricingRules } from '../lib/pricingRules'
 import { loadShopRulesConfig } from './pricingRules'
@@ -207,7 +208,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
     }
     // Product add-ons: the buyer's answers are checked against the product's own questions and priced here.
     // With the shop switch off, add-on answers are ignored and the product sells as before.
-    const addOnPriced = priceAddOns(addOnsOn ? normaliseAddOnDefs((product as Doc | null)?.addOns) : [], addOnsOn ? parseAddOnInputs(item.addOns) : [])
+    const addOnPriced = priceAddOns(withDonationAddOns((product ?? {}) as never, addOnsOn ? normaliseAddOnDefs((product as Doc | null)?.addOns) : []), addOnsOn ? parseAddOnInputs(item.addOns) : [])
     if (!addOnPriced.ok) throw new CheckoutError(addOnPriced.error ?? 'Please check the options you chose.')
     const addOnChoices: AddOnChoice[] = addOnPriced.choices
     const p = product as Doc
@@ -236,7 +237,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       requiresShipping: !virtual,
       cartonSize: packagingStep(p as never) > 1 ? packagingStep(p as never) : null,
       // carried for the order snapshot
-      ...({ variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices } as object),
+      ...({ variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices, donation: donationLine(p as never) } as object),
     } as PricedLine)
   }
   return lines

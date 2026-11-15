@@ -5,7 +5,7 @@
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { cachedReport } from './cache'
 import { loadAbandoned, loadLowStock } from './queriesStock'
-import { loadCategories, loadCoupons, loadKpis, loadLocations, loadPayments, loadSeries, loadTopProducts } from './queries'
+import { loadCategories, loadCoupons, loadDonations, loadKpis, loadLocations, loadPayments, loadSeries, loadTopProducts } from './queries'
 import type { ReportRange } from './range'
 import { averageOrderCents, fillSeries, pageCount, percentOfTotal } from './shape'
 import { PAGE_SIZE } from './queries'
@@ -16,7 +16,7 @@ export async function buildShopReport(range: ReportRange, pages: ReportPages = {
   const key = JSON.stringify([range.from, range.to, range.bucket, pages.products ?? 1, pages.locations ?? 1, pages.lowStock ?? 1])
   return cachedReport(key, async () => {
     const d1 = (await rawD1()) as unknown as Parameters<typeof loadKpis>[0]
-    const [kpis, series, products, categories, coupons, payments, locations, lowStock, abandoned] = await Promise.all([
+    const [kpis, series, products, categories, coupons, payments, locations, lowStock, abandoned, donations] = await Promise.all([
       loadKpis(d1, range),
       loadSeries(d1, range, range.bucket),
       loadTopProducts(d1, range, pages.products),
@@ -26,6 +26,7 @@ export async function buildShopReport(range: ReportRange, pages: ReportPages = {
       loadLocations(d1, range, pages.locations),
       loadLowStock(d1, pages.lowStock),
       loadAbandoned(d1, range),
+      loadDonations(d1, range),
     ])
     const paid = categories.reduce((n, c) => n + c.revenueCents, 0)
     return {
@@ -43,6 +44,7 @@ export async function buildShopReport(range: ReportRange, pages: ReportPages = {
       locations: { ...locations, pageSize: PAGE_SIZE, pages: pageCount(locations.total, PAGE_SIZE) },
       lowStock: { ...lowStock, pageSize: PAGE_SIZE, pages: pageCount(lowStock.total, PAGE_SIZE) },
       abandoned,
+      donations,
     }
   })
 }

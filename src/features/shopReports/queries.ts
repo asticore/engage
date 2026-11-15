@@ -170,6 +170,20 @@ export async function loadCoupons(d1: D1, range: ReportRange): Promise<{ code: s
   return found.map((r) => ({ code: String(r.code), uses: num(r.uses), discountCents: num(r.discount) }))
 }
 
+/** Donations by campaign (order lines marked as a donation). Lines with no campaign are grouped as "No campaign". */
+export async function loadDonations(d1: D1, range: ReportRange): Promise<{ campaign: string; donations: number; totalCents: number }[]> {
+  const found = await rows<Record<string, unknown>>(
+    d1,
+    `SELECT COALESCE(NULLIF(TRIM(json_extract(li.value,'$.donation.campaign')),''),'No campaign') AS campaign, COUNT(*) AS donations,
+       COALESCE(SUM(CAST(json_extract(li.value,'$.lineCents') AS INTEGER) - COALESCE(CAST(json_extract(li.value,'$.discountCents') AS INTEGER),0)),0) AS total
+     FROM eg_orders o, json_each(o.line_items) AS li
+     WHERE ${ORDERS_WHERE} AND json_extract(li.value,'$.donation') IS NOT NULL
+     GROUP BY campaign ORDER BY total DESC, campaign`,
+    [range.from, range.to],
+  )
+  return found.map((r) => ({ campaign: String(r.campaign), donations: num(r.donations), totalCents: num(r.total) }))
+}
+
 /** Orders and revenue by how the first payment was taken. Orders paid only with gift cards or credit show as "none". */
 export async function loadPayments(d1: D1, range: ReportRange): Promise<{ method: string; orders: number; revenueCents: number }[]> {
   const found = await rows<Record<string, unknown>>(

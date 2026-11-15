@@ -5,6 +5,7 @@ import { fallbackChain, loadStrings, t as uiT, type UiStringKey } from '@/featur
 import { escapeHtml } from '../lib/invoice'
 import { formatCents } from '../lib/money'
 import { ORDER_STATUS_LABELS, isOrderStatus } from '../lib/orderStatus'
+import { donationReceipt } from '../lib/donations'
 import { preorderSummary } from '../lib/preorder'
 import { pickupLines, type PickupLocation } from '../lib/pickup'
 
@@ -128,8 +129,10 @@ export function renderOrderEmail(kind: EmailKind, order: Record<string, unknown>
   const bodyTpl = opts.template?.body ?? (opts.bodyOverride && kind !== 'customerNote' ? opts.bodyOverride : tpl.body)
   // Pre-order lines get one extra paragraph, whatever the wording of the template.
   const preorderNote = preorderSummary(order.lineItems)
-  const text = mergeFields(bodyTpl, values, false) + (preorderNote ? `\n\n${preorderNote}` : '')
-  const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5">${mergeFields(bodyTpl, values, true).replace(/\n/g, '<br>')}${preorderNote ? `<p>${escapeHtml(preorderNote)}</p>` : ''}</div>`
+  // Donation lines get a thank you and the shop's receipt wording (ABN, tax deductibility) on the paid and completed emails.
+  const receipt = kind === 'processing' || kind === 'completed' ? donationReceipt(order.lineItems, (cents) => formatCents(cents, (order.currency as string) || 'AUD')) : ''
+  const text = mergeFields(bodyTpl, values, false) + (preorderNote ? `\n\n${preorderNote}` : '') + (receipt ? `\n\n${receipt}` : '')
+  const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5">${mergeFields(bodyTpl, values, true).replace(/\n/g, '<br>')}${preorderNote ? `<p>${escapeHtml(preorderNote)}</p>` : ''}${receipt ? `<p>${escapeHtml(receipt).replace(/\n/g, '<br>')}</p>` : ''}</div>`
   return { subject, text, html }
 }
 
