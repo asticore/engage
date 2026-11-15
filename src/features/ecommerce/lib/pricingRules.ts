@@ -14,7 +14,7 @@
 import { percentOf, toCents } from './money'
 
 export type RuleDiscountType = 'percent' | 'fixed'
-export type RuleCondition = 'quantity' | 'role' | 'subtotal' | 'category'
+export type RuleCondition = 'quantity' | 'role' | 'subtotal' | 'category' | 'lifetimeSpend' | 'orderCount' | 'country'
 
 /** One rule as the server uses it. Money is cents; dates are ISO text or null. */
 export type PricingRule = {
@@ -33,6 +33,12 @@ export type PricingRule = {
   minSubtotalCents: number
   /** category: items in this category (slug). */
   category: string
+  /** lifetimeSpend: what the customer has paid in earlier orders, in cents. */
+  minLifetimeSpendCents: number
+  /** orderCount: how many paid orders the customer has placed before. */
+  minOrders: number
+  /** country: the shipping country (ISO code, e.g. AU). */
+  country: string
   startsAt: string | null
   endsAt: string | null
   priority: number
@@ -41,11 +47,11 @@ export type PricingRule = {
 }
 
 /** Raw rows as stored on the shop-extra-settings global (prices in whole dollars). */
-export type PricingRuleRow = Partial<Record<keyof Omit<PricingRule, 'minSubtotalCents'> | 'minSubtotal', unknown>>
+export type PricingRuleRow = Partial<Record<keyof Omit<PricingRule, 'minSubtotalCents' | 'minLifetimeSpendCents'> | 'minSubtotal' | 'minLifetimeSpend', unknown>>
 
 export const MAX_RULES = 50
 
-const CONDITIONS: RuleCondition[] = ['quantity', 'role', 'subtotal', 'category']
+const CONDITIONS: RuleCondition[] = ['quantity', 'role', 'subtotal', 'category', 'lifetimeSpend', 'orderCount', 'country']
 
 const text = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const isoOrNull = (v: unknown): string | null => {
@@ -70,6 +76,8 @@ export function normalisePricingRules(raw: unknown): PricingRule[] {
     const appliesWhen = (CONDITIONS as unknown[]).includes(row.appliesWhen) ? (row.appliesWhen as RuleCondition) : 'quantity'
     const minQty = typeof row.minQuantity === 'number' && Number.isFinite(row.minQuantity) ? Math.max(1, Math.floor(row.minQuantity)) : 1
     const minSubtotal = typeof row.minSubtotal === 'number' && Number.isFinite(row.minSubtotal) && row.minSubtotal > 0 ? row.minSubtotal : 0
+    const minSpend = typeof row.minLifetimeSpend === 'number' && Number.isFinite(row.minLifetimeSpend) && row.minLifetimeSpend > 0 ? row.minLifetimeSpend : 0
+    const minOrders = typeof row.minOrders === 'number' && Number.isFinite(row.minOrders) ? Math.max(1, Math.floor(row.minOrders)) : 1
     const priority = typeof row.priority === 'number' && Number.isFinite(row.priority) ? row.priority : 10
     out.push({
       id: typeof row.id === 'string' && row.id ? row.id : `rule-${index}`,
@@ -82,6 +90,9 @@ export function normalisePricingRules(raw: unknown): PricingRule[] {
       customerRole: text(row.customerRole, 60).toLowerCase(),
       minSubtotalCents: toCents(minSubtotal),
       category: text(row.category, 80).toLowerCase(),
+      minLifetimeSpendCents: toCents(minSpend),
+      minOrders,
+      country: text(row.country, 2).toUpperCase(),
       startsAt: isoOrNull(row.startsAt),
       endsAt: isoOrNull(row.endsAt),
       priority,
@@ -120,6 +131,8 @@ export type RuleContext = {
   subtotalCents: number
   /** Names of the signed-in customer's roles (empty for a guest). */
   customerRoles?: string[]
+  /** What is known about the buyer from earlier orders and the address. Missing means nothing is known. */
+  customer?: { lifetimeSpendCents: number; orderCount: number; country: string }
   now?: Date
 }
 
@@ -143,6 +156,12 @@ function matches(rule: PricingRule, line: RuleLine, ctx: RuleContext): boolean {
     }
     case 'subtotal':
       return ctx.subtotalCents >= rule.minSubtotalCents
+    case 'lifetimeSpend':
+      return rule.minLifetimeSpendCents > 0 && (ctx.customer?.lifetimeSpendCents ?? 0) >= rule.minLifetimeSpendCents
+    case 'orderCount':
+      return (ctx.customer?.orderCount ?? 0) >= rule.minOrders
+    case 'country':
+      return rule.country !== '' && (ctx.customer?.country ?? '').toUpperCase() === rule.country
     case 'category': {
       const wanted = rule.category.trim().toLowerCase()
       return wanted !== '' && line.categories.some((c) => c.trim().toLowerCase() === wanted)
@@ -200,6 +219,12 @@ export function ruleNote(rule: PricingRule): string {
       return rule.category ? `${off} on ${rule.category} items.` : `${off}.`
     case 'role':
       return `${off} for ${rule.customerRole || 'selected'} customers.`
+    case 'lifetimeSpend':
+      return `${off} once you have spent $${(rule.minLifetimeSpendCents / 100).toFixed(2)} with us.`
+    case 'orderCount':
+      return `${off} from your ${rule.minOrders + 1}th order.`
+    case 'country':
+      return `${off} when shipping to ${rule.country}.`
     default:
       return `${off}.`
   }
@@ -207,5 +232,5 @@ export function ruleNote(rule: PricingRule): string {
 
 /** The product page notes for live rules the shop has chosen to show. */
 export function productPageNotes(rules: PricingRule[], now: Date = new Date()): string[] {
-  return rules.filter((rule) => rule.showOnProduct && rule.appliesWhen !== 'role' && ruleIsLive(rule, now)).map(ruleNote)
+  return rules.filter((rule) => rule.showOnProduct && !['role', 'lifetimeSpend', 'orderCount'].includes(rule.appliesWhen) && ruleIsLive(rule, now)).map(ruleNote)
 }

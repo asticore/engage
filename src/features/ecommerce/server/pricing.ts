@@ -1,3 +1,4 @@
+import { customerStatsForEmail, NO_STATS } from './customerStats'
 import { packagingStep } from '../lib/packaging'
 import { resolveCartLine, type CatalogueProduct } from '../catalogue'
 import { resolveCheckoutFields, validateCheckoutValues, type CheckoutField } from '../lib/checkoutFields'
@@ -344,6 +345,8 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
           lines: lines.map((l) => ({ key: l.key, categories: l.categories, quantity: l.quantity, unitCents: l.unitCents, isGiftCard: l.isGiftCard })),
           subtotalCents: lines.reduce((s, l) => s + l.unitCents * l.quantity, 0),
           customerRoles: Array.isArray(input.customerRoles) ? input.customerRoles : [],
+          // Only looked up when a live rule needs it.
+          customer: { ...(shopRules.rules.some((r) => r.appliesWhen === 'lifetimeSpend' || r.appliesWhen === 'orderCount') ? await customerStatsForEmail(input.email) : NO_STATS), country: input.address?.country ?? '' },
         })
       : null
   const code = normalizeCode(input.couponCode)
