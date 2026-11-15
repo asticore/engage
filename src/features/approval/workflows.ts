@@ -35,7 +35,14 @@ export type WorkflowStep = {
   /** Display names for approverRoles, same order. Falls back to the slug. */
   approverNames: string[]
   approvalsNeeded: number
+  /** Named people (user ids) who approve this step instead of the roles. Empty or absent means the roles. */
+  approverUsers?: number[]
+  /** With named people: the roles may also approve (a fallback). Off means only the named people and admins. */
+  alsoRoles?: boolean
 }
+
+/** Author user id (as text) to the people who approve that author's work at every step. */
+export type AuthorRoutes = Record<string, number[]>
 
 export type ApprovalWorkflow = {
   id: number
@@ -47,10 +54,12 @@ export type ApprovalWorkflow = {
   steps: WorkflowStep[]
   /** One person may approve more than one step of a review round. Off by default (separation of duties). */
   allowRepeatApprover: boolean
+  /** Per-author approvers. An author listed here has their work approved by these people, whatever the step says. */
+  authorRoutes?: AuthorRoutes
 }
 
 /** What the state machine needs from a workflow. */
-export type WorkflowRule = Pick<ApprovalWorkflow, 'steps' | 'submitterRoles'>
+export type WorkflowRule = Pick<ApprovalWorkflow, 'steps' | 'submitterRoles'> & { authorRoutes?: AuthorRoutes }
 
 /** Shown to non-admins while the workflows cannot be read. */
 export const WORKFLOWS_UNAVAILABLE_MESSAGE = 'Approval workflows could not be loaded; try again.'
@@ -77,6 +86,67 @@ export function parseRoleList(value: unknown): string[] {
   return [...seen]
 }
 
+/** A json field of user ids: an array or JSON text. Anything else reads as empty. */
+export function parseUserIds(value: unknown): number[] {
+  let raw: unknown = value
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw)
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(raw)) return []
+  const seen = new Set<number>()
+  for (const entry of raw) {
+    const id = Number(entry)
+    if (Number.isInteger(id) && id > 0) seen.add(id)
+  }
+  return [...seen]
+}
+
+/** { "<author id>": [approver ids] } from a json field, dropping rows with no author or no approvers. */
+export function parseAuthorRoutes(value: unknown): AuthorRoutes {
+  let raw: unknown = value
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw)
+    } catch {
+      return {}
+    }
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const out: AuthorRoutes = {}
+  for (const [key, ids] of Object.entries(raw as Record<string, unknown>)) {
+    if (!/^\d+$/.test(key)) continue
+    const list = parseUserIds(ids)
+    if (list.length > 0) out[key] = list
+  }
+  return out
+}
+
+/** Every user id a workflow names, so the loader can read their names and a save can check they exist. */
+export function namedUserIds(steps: ReadonlyArray<{ approverUsers?: unknown }>, routes: unknown): number[] {
+  const ids = new Set<number>()
+  for (const step of steps) for (const id of parseUserIds(step.approverUsers)) ids.add(id)
+  const parsed = parseAuthorRoutes(routes)
+  for (const [author, list] of Object.entries(parsed)) {
+    ids.add(Number(author))
+    for (const id of list) ids.add(id)
+  }
+  return [...ids]
+}
+
+/**
+ * The people who must approve this step for this author's work, or an empty list when the roles decide. An author with a
+ * route is approved by that route at every step; otherwise the step's own named people apply.
+ */
+export function namedApprovers(workflow: WorkflowRule, step: WorkflowStep, requestedBy: number | null): number[] {
+  const route = requestedBy !== null ? workflow.authorRoutes?.[String(requestedBy)] : undefined
+  if (route && route.length > 0) return route
+  return step.approverUsers ?? []
+}
+
 const toBool = (value: unknown): boolean => value === true || value === 1 || value === '1' || value === 'true'
 
 /** Number of approvals a step needs: a whole number, at least one. */
@@ -87,7 +157,7 @@ export const clampApprovalsNeeded = (value: unknown): number => {
 }
 
 /** Turns a stored workflow document into a workflow, or null when it cannot be used (no steps, bad collection). */
-export function parseWorkflow(doc: unknown, roleNames: ReadonlyMap<string, string> = new Map()): ApprovalWorkflow | null {
+export function parseWorkflow(doc: unknown, roleNames: ReadonlyMap<string, string> = new Map(), userNames: ReadonlyMap<number, string> = new Map()): ApprovalWorkflow | null {
   if (!doc || typeof doc !== 'object') return null
   const row = doc as Record<string, unknown>
   const id = Number(row.id)
@@ -99,11 +169,17 @@ export function parseWorkflow(doc: unknown, roleNames: ReadonlyMap<string, strin
     if (!entry || typeof entry !== 'object') continue
     const step = entry as Record<string, unknown>
     const approverRoles = parseRoleList(step.approverRoles)
+    const approverUsers = parseUserIds(step.approverUsers)
+    const alsoRoles = toBool(step.alsoRoles)
+    const roleLabels = approverRoles.map((slug) => roleNames.get(slug) ?? slug)
+    const people = approverUsers.map((id) => userNames.get(id) ?? `User ${id}`)
     steps.push({
       name: asString(step.name).trim() || `Step ${steps.length + 1}`,
       approverRoles,
-      approverNames: approverRoles.map((slug) => roleNames.get(slug) ?? slug),
+      approverNames: approverUsers.length > 0 ? (alsoRoles ? [...people, ...roleLabels] : people) : roleLabels,
       approvalsNeeded: clampApprovalsNeeded(step.approvalsNeeded),
+      approverUsers,
+      alsoRoles,
     })
   }
   if (steps.length === 0) return null
@@ -115,13 +191,19 @@ export function parseWorkflow(doc: unknown, roleNames: ReadonlyMap<string, strin
     submitterRoles: parseRoleList(row.submitterRoles),
     steps,
     allowRepeatApprover: toBool(row.allowRepeatApprover),
+    authorRoutes: parseAuthorRoutes(row.authorRoutes),
   }
 }
 
-/** True when the user (by role slugs) may act at this step. Admins always may. */
-export function mayActOnStep(step: WorkflowStep, roleSlugs: readonly string[], isAdmin: boolean): boolean {
+/**
+ * True when the user may act at this step. Admins always may. With named people (from the author's route or the step) only
+ * those people may, plus the step's roles when it keeps them as a fallback; with none named the roles decide.
+ */
+export function mayActOnStep(step: WorkflowStep, roleSlugs: readonly string[], isAdmin: boolean, who?: { userId: number; named: readonly number[] }): boolean {
   if (isAdmin) return true
-  return step.approverRoles.some((slug) => roleSlugs.includes(slug))
+  const byRole = step.approverRoles.some((slug) => roleSlugs.includes(slug))
+  if (who && who.named.length > 0) return who.named.includes(who.userId) || (step.alsoRoles === true && byRole)
+  return byRole
 }
 
 /** True when the user may submit under this workflow. Admins always may; an empty list means anyone with edit rights. */
@@ -144,10 +226,11 @@ const listNames = (names: string[]): string => {
 }
 
 /** "Step 2 of 3 (Legal review), waiting on Legal or Editor." Used wherever people are told what is awaited. */
-export function describeAwaiting(workflow: WorkflowRule, step: number): string {
+export function describeAwaiting(workflow: WorkflowRule, step: number, requestedBy: number | null = null): string {
   const index = clampStep(step, workflow.steps.length)
   const current = workflow.steps[index]
-  return `Step ${index + 1} of ${workflow.steps.length} (${current.name}), waiting on ${listNames(current.approverNames)}.`
+  const routed = requestedBy !== null && (workflow.authorRoutes?.[String(requestedBy)]?.length ?? 0) > 0
+  return `Step ${index + 1} of ${workflow.steps.length} (${current.name}), waiting on ${routed ? 'the approver named for this author' : listNames(current.approverNames)}.`
 }
 
 export type WorkflowInput = {
@@ -157,6 +240,7 @@ export type WorkflowInput = {
   submitterRoles?: unknown
   steps?: unknown
   allowRepeatApprover?: unknown
+  authorRoutes?: unknown
 }
 
 /**
@@ -169,6 +253,7 @@ export function validateWorkflowInput(
   knownRoles: ReadonlySet<string>,
   otherActive: ReadonlyArray<{ id: number; collection: string }> = [],
   selfId?: number | null,
+  knownUsers?: ReadonlySet<number>,
 ): Array<{ path: string; message: string }> {
   const problems: Array<{ path: string; message: string }> = []
   const name = asString(input.name).trim()
@@ -193,13 +278,24 @@ export function validateWorkflowInput(
     const label = `Step ${index + 1}`
     if (!asString(step.name).trim()) problems.push({ path: `steps.${index}.name`, message: `${label} needs a name.` })
     const approvers = parseRoleList(step.approverRoles)
-    if (approvers.length === 0) problems.push({ path: `steps.${index}.approverRoles`, message: `${label} needs at least one approver role.` })
+    const people = parseUserIds(step.approverUsers)
+    if (approvers.length === 0 && people.length === 0) problems.push({ path: `steps.${index}.approverRoles`, message: `${label} needs at least one approver role.` })
     checkRoles(`steps.${index}.approverRoles`, approvers, label)
+    if (knownUsers) for (const id of people) if (!knownUsers.has(id)) problems.push({ path: `steps.${index}.approverUsers`, message: `${label}: user ${id} does not exist.` })
     const needed = Number(step.approvalsNeeded)
     if (!Number.isInteger(needed) || needed < 1 || needed > MAX_APPROVALS_PER_STEP) {
       problems.push({ path: `steps.${index}.approvalsNeeded`, message: `${label}: approvals needed must be a whole number from 1 to ${MAX_APPROVALS_PER_STEP}.` })
     }
   })
+
+  const routes = parseAuthorRoutes(input.authorRoutes)
+  if (knownUsers) {
+    for (const [author, list] of Object.entries(routes)) {
+      if (!knownUsers.has(Number(author))) problems.push({ path: 'authorRoutes', message: `Approver by author: user ${author} does not exist.` })
+      for (const id of list) if (!knownUsers.has(id)) problems.push({ path: 'authorRoutes', message: `Approver by author: user ${id} does not exist.` })
+      if (list.includes(Number(author))) problems.push({ path: 'authorRoutes', message: 'An author cannot be their own approver.' })
+    }
+  }
 
   if (toBool(input.active) && isApprovalCollection(input.collection)) {
     const clash = otherActive.find((other) => other.collection === input.collection && other.id !== selfId)
@@ -241,6 +337,24 @@ export async function loadRoleNames(engine: EngineLike): Promise<Map<string, str
   return names
 }
 
+/** User id to display name, best effort: a failed read only means "User 12" is shown. */
+export async function loadUserNames(engine: EngineLike, ids: number[]): Promise<Map<number, string>> {
+  const names = new Map<number, string>()
+  const wanted = [...new Set(ids)].slice(0, 200)
+  if (wanted.length === 0) return names
+  try {
+    const { docs } = await engine.find({ collection: 'users', where: { id: { in: wanted } }, limit: wanted.length, depth: 0, overrideAccess: true })
+    for (const user of docs) {
+      const id = Number(user.id)
+      const label = asString(user.name).trim() || asString(user.email)
+      if (Number.isInteger(id) && label) names.set(id, label)
+    }
+  } catch {
+    // "User N" is shown instead
+  }
+  return names
+}
+
 const indexByCollection = (list: ApprovalWorkflow[]): ApprovalWorkflow | undefined => list[0]
 
 function groupActive(list: ApprovalWorkflow[]): Partial<Record<ApprovalCollection, ApprovalWorkflow>> {
@@ -276,7 +390,8 @@ export async function loadActiveWorkflows(engine: EngineLike | null | undefined)
       return { workflows: {}, unknown: false }
     }
     const names = await loadRoleNames(engine)
-    const parsed = active.map((doc) => parseWorkflow(doc, names))
+    const userNames = await loadUserNames(engine, active.flatMap((doc) => namedUserIds(Array.isArray(doc.steps) ? (doc.steps as Array<{ approverUsers?: unknown }>) : [], doc.authorRoutes)))
+    const parsed = active.map((doc) => parseWorkflow(doc, names, userNames))
     if (parsed.some((workflow) => workflow === null)) {
       if (lastKnownGood) return { workflows: groupActive(lastKnownGood), unknown: false }
       return { workflows: {}, unknown: true }
