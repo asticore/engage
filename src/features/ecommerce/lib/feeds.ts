@@ -42,6 +42,8 @@ export type FeedContext = {
   brand: string
   condition?: 'new' | 'used' | 'refurbished'
   googleCategory?: string
+  /** Adjusts a row's prices (price tier, currency). Receives the product, the variation id and the shop prices in units. */
+  price?: (productId: string, variationId: string | null, regular: number, current: number) => { regular: number; current: number }
   now?: Date
 }
 
@@ -71,6 +73,15 @@ export function plainText(value: unknown, max = 5000): string {
 }
 
 const money = (n: number, currency: string): string => `${n.toFixed(2)} ${currency}`
+
+/** The price and sale price text for a row, after the feed's own price and currency rules. */
+const pricesOf = (ctx: FeedContext, productId: string, variationId: string | null, info: { price: number | null; regular?: number | null; onSale?: boolean }): { price: string; salePrice: string } => {
+  const current = info.price ?? 0
+  const regular = info.regular ?? current
+  const priced = ctx.price ? ctx.price(productId, variationId, regular, current) : { regular, current }
+  const onSale = ctx.price ? priced.current < priced.regular : Boolean(info.onSale)
+  return { price: money(priced.regular, ctx.currency), salePrice: onSale ? money(priced.current, ctx.currency) : '' }
+}
 
 const mediaUrl = (m: unknown, base: string): string => {
   const url = m && typeof m === 'object' ? (m as Loose).url : typeof m === 'string' ? m : ''
@@ -132,8 +143,7 @@ export function buildFeedItems(products: Loose[], ctx: FeedContext): FeedItem[] 
           imageLink: own || images[0] || '',
           additionalImages: images.slice(own ? 0 : 1, 10),
           availability: availabilityOf(stock),
-          price: money(info.regular ?? info.price, ctx.currency),
-          salePrice: info.onSale ? money(info.price, ctx.currency) : '',
+          ...pricesOf(ctx, String(p.id), String(v.id), info),
           gtin: String(v.gtin || p.gtin || ''),
           mpn: String(v.sku || p.sku || ''),
           weightKg: typeof v.weight === 'number' ? v.weight : base.weightKg,
@@ -152,8 +162,7 @@ export function buildFeedItems(products: Loose[], ctx: FeedContext): FeedItem[] 
       imageLink: images[0] || '',
       additionalImages: images.slice(1, 11),
       availability: availabilityOf(p as StockFields),
-      price: money(info.regular ?? info.price, ctx.currency),
-      salePrice: info.onSale ? money(info.price, ctx.currency) : '',
+      ...pricesOf(ctx, String(p.id), null, info),
       gtin: String(p.gtin || ''),
       mpn: String(p.sku || ''),
       color: '',
