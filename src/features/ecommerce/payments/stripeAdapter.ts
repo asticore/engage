@@ -44,6 +44,7 @@
  * against the same Stripe account until the real plugin cutover.
  */
 
+import { enforcePurchaseLimits } from '@/features/purchaseLimits/enforce'
 import Stripe from 'stripe'
 
 import type { Engine } from '@/localapi/engine'
@@ -142,6 +143,8 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
     },
   )
   const { totals, config, lines } = priced
+  // Per-person limits (Task 17d): refuses an over-limit order before any payment starts. A no-op while the feature is off.
+  await enforcePurchaseLimits({ lines: totals.lines.map((l) => ({ productId: l.productId, name: l.name, quantity: l.quantity })), email: customerEmail, user: user as never, address, cartId: cart.id })
   const currency = shopCurrency(config).toLowerCase() // single-currency shop: whatever the caller passed is ignored
   const fields = validateCheckoutValues(config.fields, (checkout.checkoutFields ?? {}) as Record<string, unknown>)
   if (fields.ok === false || !('values' in fields)) throw new CheckoutError(Object.values((fields as unknown as { errors: Record<string, string> }).errors)[0] ?? 'Check the highlighted fields.')
