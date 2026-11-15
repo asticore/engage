@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 
 import { CourseListScreen } from '@/features/courses'
 import { buildPageJsonLd } from '@/features/seo/pageSchema'
+import { breadcrumbSchemaOn } from '@/features/seo/breadcrumbSettings'
 import { listBreadcrumbs } from '@/features/seo/schemaNodes'
 import { getSeoContext } from '@/features/seo/settings'
 import { buildMetadata } from '@/utilities/seo'
@@ -23,7 +24,7 @@ export default async function CoursesIndexRoute() {
         url: context.baseUrl + '/courses',
         baseUrl: context.baseUrl,
         siteName: context.siteName,
-        breadcrumbs: listBreadcrumbs({ baseUrl: context.baseUrl, path: '/courses', name: 'Courses' }),
+        breadcrumbs: breadcrumbSchemaOn(context.settings) ? listBreadcrumbs({ baseUrl: context.baseUrl, path: '/courses', name: 'Courses' }) : [],
       })
     : null
 

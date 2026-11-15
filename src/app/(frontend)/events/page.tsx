@@ -9,6 +9,7 @@ import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from
 import { buildMetadata } from '@/utilities/seo'
 import { buildPageJsonLd } from '@/features/seo/pageSchema'
 import { getSeoContext } from '@/features/seo/settings'
+import { breadcrumbSchemaOn } from '@/features/seo/breadcrumbSettings'
 import { listBreadcrumbs } from '@/features/seo/schemaNodes'
 import type { Event } from '@/engage-types'
 
@@ -58,7 +59,7 @@ export default async function EventsPage() {
         url: context.baseUrl + '/events',
         baseUrl: context.baseUrl,
         siteName: context.siteName,
-        breadcrumbs: listBreadcrumbs({ baseUrl: context.baseUrl, path: '/events', name: 'Events' }),
+        breadcrumbs: breadcrumbSchemaOn(context.settings) ? listBreadcrumbs({ baseUrl: context.baseUrl, path: '/events', name: 'Events' }) : [],
         listItems: upcoming.map((event) => ({ name: event.title, url: `${context.baseUrl}/events/${event.slug}` })),
       })
     : null

@@ -4,6 +4,8 @@ import React from 'react'
 import { getBlockContext } from '@/lib/blockContext'
 import { formatTagDate, formatTagPrice } from '@/lib/dynamicTags'
 import { archivePageHref, buildBreadcrumbs, formatPostMeta } from '@/lib/templateWidgets'
+import { pickSeparator, resolveBreadcrumbs } from '@/features/seo/breadcrumbSettings'
+import { getSeoContext } from '@/features/seo/settings'
 import { localizeForRequest } from '@/features/multilingual/requestLinkLocale'
 import { loopItemOf } from '@/features/siteTemplates/loopGrid'
 
@@ -65,17 +67,23 @@ export async function ProductPriceElement(props: P): Promise<React.ReactElement 
 export async function BreadcrumbsElement(props: P): Promise<React.ReactElement | null> {
   const ctx = getBlockContext()
   if (!ctx.path) return null
-  const crumbs = buildBreadcrumbs(ctx.path, currentTitle(), str(props.homeLabel) || 'Home').map((c) => ({ ...c, href: localizeForRequest(c.href) }))
+  // Sitewide look from SEO settings (Breadcrumbs group); the element's own separator and Home label win.
+  const site = resolveBreadcrumbs((await getSeoContext().catch((): null => null))?.settings)
+  const sep = pickSeparator(props.separator, site.separator)
+  const crumbs = buildBreadcrumbs(ctx.path, currentTitle(), str(props.homeLabel).trim() || site.homeLabel).map((c) => ({ ...c, href: localizeForRequest(c.href) }))
   if (crumbs.length < 2) return null
   return (
     <nav className="breadcrumbs" aria-label="Breadcrumb">
       <ol style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5em', listStyle: 'none', padding: 0, margin: 0 }}>
-        {crumbs.map((c, i) => (
-          <li key={c.href}>
-            {i < crumbs.length - 1 ? <Link href={c.href}>{c.label}</Link> : <span aria-current="page">{c.label}</span>}
-            {i < crumbs.length - 1 ? <span aria-hidden="true"> /</span> : null}
-          </li>
-        ))}
+        {crumbs.map((c, i) => {
+          const last = i === crumbs.length - 1
+          return (
+            <li key={c.href}>
+              {!last || site.linkLast ? <Link href={c.href} aria-current={last ? 'page' : undefined}>{c.label}</Link> : <span aria-current="page">{c.label}</span>}
+              {!last ? <span aria-hidden="true"> {sep}</span> : null}
+            </li>
+          )
+        })}
       </ol>
     </nav>
   )

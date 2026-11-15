@@ -141,7 +141,7 @@ const absoluteUrl = (v: unknown): string => {
 export const BreadcrumbsElement: React.FC<P> = (p) => {
   const items = records(p.items, ['label', 'url']).filter((r) => r.label)
   if (items.length === 0) return null
-  const sep = pick(p.separator, ['/', '>', '-'] as const, '/')
+  const sep = pick(p.separator, ['/', '>', '\u203a', '|', '-', '\u2022'] as const, '/')
   const ld = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',

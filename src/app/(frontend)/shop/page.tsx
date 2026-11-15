@@ -15,6 +15,7 @@ import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from
 import { buildMetadata } from '@/utilities/seo'
 import { buildPageJsonLd } from '@/features/seo/pageSchema'
 import { getSeoContext } from '@/features/seo/settings'
+import { breadcrumbSchemaOn } from '@/features/seo/breadcrumbSettings'
 import { listBreadcrumbs } from '@/features/seo/schemaNodes'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
 import { paginate, parsePage } from '@/features/siteTemplates/archiveQueries'
@@ -135,7 +136,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         url: context.baseUrl + '/shop',
         baseUrl: context.baseUrl,
         siteName: context.siteName,
-        breadcrumbs: listBreadcrumbs({ baseUrl: context.baseUrl, path: '/shop', name: 'Shop' }),
+        breadcrumbs: breadcrumbSchemaOn(context.settings) ? listBreadcrumbs({ baseUrl: context.baseUrl, path: '/shop', name: 'Shop' }) : [],
       })
     : null
 
