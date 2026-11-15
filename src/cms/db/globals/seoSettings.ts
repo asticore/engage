@@ -69,6 +69,12 @@ export type SeoSettingsDoc = {
     bing?: string | null
     pinterest?: string | null
   } | null
+  breadcrumbs?: {
+    separator?: string | null
+    homeLabel?: string | null
+    linkLast?: boolean | null
+    structuredData?: boolean | null
+  } | null
   analytics?: {
     ga4MeasurementId?: string | null
     gtmContainerId?: string | null

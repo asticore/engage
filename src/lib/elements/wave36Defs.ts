@@ -74,7 +74,7 @@ export const WAVE36_ELEMENTS: ElementDef[] = [
     description: 'A trail showing where the page sits on the site. Adds BreadcrumbList structured data for search engines.',
     fields: [
       { name: 'items', label: 'Trail', type: 'repeater', repeater: { fields: [text('label', 'Label'), text('url', 'Address', { helpText: 'Full address (https://...) helps search engines. Leave empty on the current page.' })] } },
-      select('separator', 'Separator', [{ label: '/', value: '/' }, { label: '>', value: '>' }, { label: '-', value: '-' }]),
+      select('separator', 'Separator', [{ label: '/', value: '/' }, { label: '>', value: '>' }, { label: '\u203a', value: '\u203a' }, { label: '|', value: '|' }, { label: '-', value: '-' }, { label: '\u2022', value: '\u2022' }]),
     ],
     defaultProps: () => ({
       items: [{ label: 'Home', url: '/' }, { label: 'Shop', url: '/shop' }, { label: 'Candles', url: '' }],

@@ -174,6 +174,7 @@ import * as migration_20270316_210000_member_dunning from './20270316_210000_mem
 import * as migration_20270316_220000_shipment_tracking from './20270316_220000_shipment_tracking';
 import * as migration_20270316_230000_media_tags from './20270316_230000_media_tags';
 import * as migration_20270316_240000_pinterest_tag from './20270316_240000_pinterest_tag';
+import * as migration_20270316_250000_breadcrumb_settings from './20270316_250000_breadcrumb_settings';
 
 export const migrations = [
   {
@@ -1050,5 +1051,10 @@ export const migrations = [
     up: migration_20270316_240000_pinterest_tag.up,
     down: migration_20270316_240000_pinterest_tag.down,
     name: '20270316_240000_pinterest_tag',
+  },
+  {
+    up: migration_20270316_250000_breadcrumb_settings.up,
+    down: migration_20270316_250000_breadcrumb_settings.down,
+    name: '20270316_250000_breadcrumb_settings',
   },
 ];

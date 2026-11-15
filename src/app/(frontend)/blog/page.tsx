@@ -15,6 +15,7 @@ import { buildPageJsonLd } from '@/features/seo/pageSchema'
 import { orderBlogPosts } from '@/features/editScreens/blogOrder'
 import { readingTimeLabel } from '@/features/editScreens/readingTime'
 import { getSeoContext } from '@/features/seo/settings'
+import { breadcrumbSchemaOn } from '@/features/seo/breadcrumbSettings'
 import { listBreadcrumbs } from '@/features/seo/schemaNodes'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
 import { paginate, parsePage } from '@/features/siteTemplates/archiveQueries'
@@ -92,7 +93,7 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
         url: context.baseUrl + '/blog',
         baseUrl: context.baseUrl,
         siteName: context.siteName,
-        breadcrumbs: listBreadcrumbs({ baseUrl: context.baseUrl, path: '/blog', name: 'Blog' }),
+        breadcrumbs: breadcrumbSchemaOn(context.settings) ? listBreadcrumbs({ baseUrl: context.baseUrl, path: '/blog', name: 'Blog' }) : [],
         listItems: postArchiveItems(posts).map((item) => ({ name: item.title, url: context.baseUrl + item.href })),
       })
     : null
