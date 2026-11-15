@@ -203,6 +203,8 @@ export type FormConfig = {
   saveForLater?: boolean
   /** Query-string keys that may pre-fill fields. A field only fills when its `prefillKey` is in here. */
   prefillKeys?: string[]
+  /** End the form at the checkout with a product in the cart and details filled in. */
+  checkout?: import('./checkoutHandoff').FormCheckoutConfig
 }
 
 export type FormNotificationRule = {

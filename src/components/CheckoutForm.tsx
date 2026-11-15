@@ -4,8 +4,10 @@ import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
 import { useAddresses, useCart, usePayments } from '@/engine/commerce/react'
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
-import { useRouter } from 'next/navigation'
-import React, { useCallback, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import { decodeHandoff, type Handoff } from '@/features/forms/checkoutHandoff'
 
 import { CheckoutExtras, type CheckoutInput } from '@/components/CheckoutExtras'
 import { OfflinePaymentOptions } from '@/components/OfflinePaymentOptions'
@@ -31,12 +33,19 @@ function readStoredCart(): { id: number; secret: string } | null {
 
 const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ stripePromise }) => {
   const t = useStoreText()
-  const { cart } = useCart()
+  const { cart, addItem, isLoading: cartLoading } = useCart()
   const { addresses } = useAddresses()
   const { initiatePayment, confirmOrder, isLoading } = usePayments()
   const router = useRouter()
 
-  const [email, setEmail] = useState('')
+  const searchParams = useSearchParams()
+  // A form that ends at the checkout sends the visitor here with a product and their details. Read once.
+  const handoff = useMemo<Handoff | null>(() => {
+    const token = searchParams.get('handoff')
+    return token ? decodeHandoff(token) : null
+  }, [searchParams])
+  const handoffDone = useRef(false)
+  const [email, setEmail] = useState(handoff?.customer.email ?? '')
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -50,6 +59,30 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
   const cartRef = useMemo(() => (cart?.id && cart.secret ? { id: cart.id, secret: String(cart.secret) } : readStoredCart()), [cart])
 
   const hasItems = (cart?.items?.length || 0) > 0
+
+  useEffect(() => {
+    if (!handoff || handoffDone.current || cartLoading || !cart) return
+    handoffDone.current = true
+    void addItem({ product: handoff.product, variation: handoff.variation ?? null }, handoff.quantity).then(() => router.replace('/checkout'))
+  }, [handoff, cart, cartLoading, addItem, router])
+  const initial = useMemo(() => {
+    const c = handoff?.customer
+    if (!c) return undefined
+    const [firstName = '', ...rest] = (c.name ?? '').split(/\s+/)
+    const address: Record<string, string> = {}
+    if (firstName) address.firstName = firstName
+    if (rest.length) address.lastName = rest.join(' ')
+    if (c.line1) address.addressLine1 = c.line1
+    if (c.city) address.city = c.city
+    if (c.state) address.state = c.state
+    if (c.postcode) address.postalCode = c.postcode
+    if (c.country) address.country = c.country.toUpperCase().slice(0, 2)
+    const fields: Record<string, string> = {}
+    if (c.phone) fields.phone = c.phone
+    const note = [c.note, handoff?.entry ? `Form entry ${handoff.entry}` : ''].filter(Boolean).join(' | ')
+    if (note) fields.orderNotes = note
+    return { address, fields }
+  }, [handoff])
 
   const handleInitiate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -147,7 +180,7 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
             className="border border-[var(--color-line)] bg-[var(--color-cream)] p-3 font-[family-name:var(--font-body)] text-base"
           />
         </label>
-        <CheckoutExtras cartRef={cartRef} email={email} onChange={onExtras} />
+        <CheckoutExtras cartRef={cartRef} email={email} onChange={onExtras} initial={initial} />
         <PayPalButton cartRef={cartRef} email={email} extras={extrasReady ? extras : null} />
         <OfflinePaymentOptions cartRef={cartRef} email={email} extras={extrasReady ? extras : null} />
         {error && <p className="form-error">{error}</p>}
