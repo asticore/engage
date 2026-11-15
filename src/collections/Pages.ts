@@ -17,7 +17,7 @@ import { excludeProtectedAccess } from '@/features/visibility/excludeProtected'
 import { roleAccess, roleOrPublished } from '../access/ecommerceAccess'
 import { pageBuilderBlocks } from '../blocks'
 import { seoFieldsWithCornerstone } from '../fields/seo'
-import { schemaTypeField } from '../fields/schemaType'
+import { schemaTypeField, schemaFactsField } from '../fields/schemaType'
 import { authorshipFields, authorshipBeforeChange } from '../fields/authorship'
 import { formatSlugHook, slugify } from '../utilities/formatSlug'
 import { customFieldsField } from '../fields/customFields'
@@ -164,6 +164,7 @@ export const Pages: CollectionConfig = {
     ...authorshipFields,
     ...reviewFields,
     schemaTypeField('pages'),
+    schemaFactsField(),
     noAdsField,
     pageAudioField,
     ...pageSpeedFields,
