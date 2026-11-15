@@ -27,3 +27,22 @@
 :focus-visible {
   outline-color: var(--sh-ring, color-mix(in oklab, var(--sh-primary) 50%, var(--sh-text)));
 }
+
+/* Target size (WCAG 2.5.8): buttons are at least 44 px high on phones and touch screens; bare text buttons never shrink under 24 px. */
+@layer shine.components {
+  @media (max-width: 640px), (pointer: coarse) {
+    .btn:not(.btn-sm) {
+      min-height: 44px;
+    }
+  }
+}
+.doc-link {
+  min-width: 24px;
+  min-height: 24px;
+}
+label:has(> input[type='checkbox'], > input[type='radio']) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  min-height: 24px;
+}
