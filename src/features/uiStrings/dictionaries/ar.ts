@@ -671,7 +671,7 @@ const ar: UiDictionary = {
   'label.singular.events': 'حدث',
   'label.singular.courses': 'دورة',
   // --- builder translate ---
-  'builder.translate.banner': 'جارٍ الترجمة إلى {language} — البنية مقفلة',
+  'builder.translate.banner': 'جارٍ الترجمة إلى {language}: البنية مقفلة',
   'builder.translate.exit': 'خروج',
   'builder.translate.approvePage': 'اعتماد الصفحة',
   'builder.translate.requestReview': 'طلب مراجعة',

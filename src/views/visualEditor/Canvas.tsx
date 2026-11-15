@@ -621,7 +621,7 @@ const SectionColumns: React.FC<{
   if (columns.length === 0) {
     return (
       <div className="ve-section-empty">
-        This section has no columns yet — add one from the Layout tab on the right.
+        This section has no columns yet. Add one from the Layout tab on the right.
       </div>
     )
   }
