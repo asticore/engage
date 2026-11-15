@@ -645,9 +645,29 @@ async function handleBulkUpdate(engine: Engine, collection: string, request: Req
 }
 
 /** `GET /api/media/file/:filename` - the reference engine's own `getFile.js` handler, reproduced for this app's one upload collection. No access check here: see `./storage.ts`'s own header for why `media`'s unconditional `access.read: () => true` means the reference engine's own `checkFileAccess` short-circuits to "allowed, no doc lookup" for it. `getMediaObjectResponse` does the actual R2 fetch/range/headers work; this handler only maps its `null` ("no such object") to a 404 in this module's own error-envelope shape. */
-async function handleGetMediaFile(filename: string, request: Request): Promise<Response> {
+async function handleGetMediaFile(filename: string, request: Request, engine?: Engine): Promise<Response> {
+  // A file limited to a company is served only to its members (features/organizations/mediaGate.ts). Unrestricted files take one cheap lookup.
+  let restricted = false
+  try {
+    const [{ resolveD1Binding }, { decideMediaAccess }] = await Promise.all([import('@/cms/db/connect'), import('@/features/organizations/mediaGate')])
+    const d1 = (await resolveD1Binding()) as unknown as import('@/features/organizations/store').D1Like
+    const who = engine ? await engine.auth({ headers: request.headers }).then((r) => r.user as { id?: number | string; roles?: string[] } | null, (): null => null) : null
+    const userId = who && who.id !== undefined && Number.isFinite(Number(who.id)) ? Number(who.id) : null
+    const decision = await decideMediaAccess(d1, filename, { userId, isAdmin: Boolean(who?.roles?.includes('admin')) })
+    if (decision.allow === false) {
+      return Response.json({ errors: [{ name: decision.status === 401 ? 'AuthenticationError' : 'Forbidden', message: decision.status === 401 ? 'Sign in to download this file.' : 'This file is only for members of a company.' }] }, { status: decision.status, headers: { 'Cache-Control': 'private, no-store' } })
+    }
+    restricted = decision.restricted
+  } catch {
+    // The gate could not run (no database binding in a test, for example): serve as before.
+  }
   const response = await getMediaObjectResponse(filename, request)
   if (!response) return Response.json({ errors: [{ name: 'NotFound', message: 'Not Found' }] }, { status: 404 })
+  if (restricted) {
+    const headers = new Headers(response.headers)
+    headers.set('Cache-Control', 'private, no-store')
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
+  }
   return response
 }
 
@@ -1982,7 +2002,7 @@ export async function handleRestRequest(request: Request, slug: string[], engine
     }
 
     if (rest.length === 2 && collectionSlug === UPLOAD_COLLECTION_SLUG && rest[0] === 'file' && method === 'GET') {
-      return await handleGetMediaFile(decodeURIComponent(rest[1]), request)
+      return await handleGetMediaFile(decodeURIComponent(rest[1]), request, engine)
     }
 
     if (rest.length === 2 && rest[1] === 'duplicate' && method === 'POST') {

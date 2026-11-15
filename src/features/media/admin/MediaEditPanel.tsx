@@ -11,6 +11,8 @@ import { useDocumentInfo } from '@/engine/ui'
 
 import { MediaUploader } from '@/views/media/MediaUploader'
 
+import { OrganizationVisibilitySection } from '@/admin/views/OrganizationVisibilitySection'
+
 import { describeSaving, postJson, requestJson } from './mediaApi'
 import { loadUploadRules } from './uploadClient'
 
@@ -245,6 +247,8 @@ function MediaEditPanelInner({ id }: { id: number }) {
         </button>
         <span className="text-[11px] text-[var(--theme-elevation-500)]">{t('md.lit.filename_stays')}</span>
       </form>
+
+      <OrganizationVisibilitySection collectionSlug="media" id={id} />
 
       {usage ? (
         <div className="flex flex-col gap-[6px] text-[12px] text-[var(--theme-elevation-800)]">
