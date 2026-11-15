@@ -711,6 +711,7 @@ export const Integrations: GlobalConfig = {
                 { label: 'Cloudflare Email', value: 'cloudflare' },
                 { label: 'Brevo', value: 'brevo' },
                 { label: 'Mandrill (Mailchimp Transactional)', value: 'mandrill' },
+                { label: 'SMTP server (details in Email settings)', value: 'smtp' },
               ],
             },
             {
@@ -732,6 +733,7 @@ export const Integrations: GlobalConfig = {
                 { label: 'Cloudflare Email', value: 'cloudflare' },
                 { label: 'Brevo', value: 'brevo' },
                 { label: 'Mandrill (Mailchimp Transactional)', value: 'mandrill' },
+                { label: 'SMTP server (details in Email settings)', value: 'smtp' },
               ],
             },
           ],
