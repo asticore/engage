@@ -1,3 +1,4 @@
+import { customerTypesForUser } from '@/features/ecommerce/server/customerTypes'
 import { NextResponse } from 'next/server'
 
 import { getEngine } from '@/engine'
@@ -40,7 +41,7 @@ export async function POST(request: Request): Promise<Response> {
         couponCode: str(body.couponCode),
         shippingOptionId: str(body.shippingOptionId),
         cartId,
-        customerRoles: Array.isArray(auth.user?.roles) ? auth.user.roles : [],
+        customerRoles: await customerTypesForUser(auth.user),
       },
       config,
     )

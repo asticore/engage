@@ -3819,7 +3819,7 @@ const ru: UiDictionary = {
   "shop.tiers.variationId": "ID вариации",
   "shop.tiers.allVariations": "Все вариации",
   "shop.tiers.priceEach": "Цена за единицу ({currency})",
-  "shop.tiers.customerTypeHelp": "Тип клиента сопоставляется с ролью покупателя, например оптовый. Оставьте поле пустым для всех. Когда появятся группы участников, они будут использовать это же поле.",
+  "shop.tiers.customerTypeHelp": "Тип клиента сравнивается с ролью покупателя, например оптовик, или с названием компании, к которой он относится (или company:slug). Оставьте пустым для всех.",
   "shop.tiers.remove": "Удалить",
   "shop.tiers.addTier": "Добавить уровень",
   "shop.tiers.save": "Сохранить уровни",

@@ -3819,7 +3819,7 @@ const pt: UiDictionary = {
   "shop.tiers.variationId": "ID da variação",
   "shop.tiers.allVariations": "Todas as variações",
   "shop.tiers.priceEach": "Preço unitário ({currency})",
-  "shop.tiers.customerTypeHelp": "O tipo de cliente é comparado com a função do comprador, por exemplo atacado. Deixe em branco para todos. Quando os grupos de membros forem adicionados, eles usarão este mesmo campo.",
+  "shop.tiers.customerTypeHelp": "O tipo de cliente é comparado com a função do comprador, por exemplo atacado, ou com o nome de uma empresa a que pertence (ou company:slug). Deixe vazio para todos.",
   "shop.tiers.remove": "Remover",
   "shop.tiers.addTier": "Adicionar faixa",
   "shop.tiers.save": "Salvar faixas",

@@ -38,7 +38,8 @@ import { loadPreordersEnabled } from '@/features/ecommerce/server/shopExtra'
 import { loadShopRulesConfig } from '@/features/ecommerce/server/pricingRules'
 import { productPageNotes } from '@/features/ecommerce/lib/pricingRules'
 import { currencyFromShopSettings } from '@/features/ecommerce/lib/shopCurrency'
-import { tierNotes } from '@/features/ecommerce/lib/priceTiers'
+import { tierNotes, variationTierNotes } from '@/features/ecommerce/lib/priceTiers'
+import { variationLabel } from '@/features/ecommerce/catalogue'
 import { loadTierContext } from '@/features/ecommerce/server/pricing'
 import { PasswordGate } from '@/components/PasswordGate'
 import { getPasswordGateState } from '@/features/visibility/gate'
@@ -158,10 +159,19 @@ export default async function ProductPage({
   const tierCtx = await loadTierContext([{ product: product.id }], [])
   const noteLocale = priceLocale(await publicLocale())
   const breakNotes = typeof catalogue.priceInAUD === 'number' ? tierNotes(tierCtx.tiers, { productId: String(product.id), variationId: null, customerTypes: [], basePrice: catalogue.priceInAUD }, (units) => formatPriceInAUD(units, currencyFromShopSettings(settings), noteLocale)) : []
+  const fmtMoney = (units: number) => formatPriceInAUD(units, currencyFromShopSettings(settings), noteLocale)
+  const variationBreakNotes = variationTierNotes(
+    tierCtx.tiers,
+    { productId: String(product.id), customerTypes: [] },
+    (Array.isArray(catalogue.variations) ? catalogue.variations : [])
+      .filter((v): v is NonNullable<typeof v> & { id: string } => Boolean(v && typeof v.id === 'string'))
+      .map((v) => ({ id: v.id, label: variationLabel(v), price: typeof v.priceInAUD === 'number' ? v.priceInAUD : typeof catalogue.priceInAUD === 'number' ? catalogue.priceInAUD : 0 })),
+    fmtMoney,
+  )
   const view = buildProductView(bundle ? { ...catalogue, ...bundle } : catalogue, new Date(), mediaUrls, {
     preorders: preordersOn,
     addOnsOn: shopRules.addOnsOn,
-    pricingNotes: [...(shopRules.rulesOn ? productPageNotes(shopRules.rules) : []), ...breakNotes],
+    pricingNotes: [...(shopRules.rulesOn ? productPageNotes(shopRules.rules) : []), ...breakNotes, ...variationBreakNotes],
   })
 
   const asDocs = (value: unknown): Array<Record<string, unknown> & { id: number }> =>

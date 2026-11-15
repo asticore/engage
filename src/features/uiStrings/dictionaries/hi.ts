@@ -3819,7 +3819,7 @@ const hi: UiDictionary = {
   "shop.tiers.variationId": "वेरिएशन आईडी",
   "shop.tiers.allVariations": "सभी वेरिएशन",
   "shop.tiers.priceEach": "प्रति इकाई मूल्य ({currency})",
-  "shop.tiers.customerTypeHelp": "ग्राहक प्रकार खरीदार की भूमिका से मिलाया जाता है, जैसे थोक। सभी के लिए खाली छोड़ें। जब सदस्य समूह आएँगे, तो वे इसी फ़ील्ड का उपयोग करेंगे।",
+  "shop.tiers.customerTypeHelp": "ग्राहक प्रकार को खरीदार की भूमिका (जैसे थोक) या उसकी कंपनी के नाम (या company:slug) से मिलाया जाता है। सभी के लिए खाली छोड़ें।",
   "shop.tiers.remove": "हटाएँ",
   "shop.tiers.addTier": "स्तर जोड़ें",
   "shop.tiers.save": "स्तर सहेजें",

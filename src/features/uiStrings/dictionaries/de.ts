@@ -3820,7 +3820,7 @@ const de: UiDictionary = {
   "shop.tiers.variationId": "Variations-ID",
   "shop.tiers.allVariations": "Alle Variationen",
   "shop.tiers.priceEach": "Preis pro Stück ({currency})",
-  "shop.tiers.customerTypeHelp": "Der Kundentyp wird mit der Rolle des Käufers abgeglichen, zum Beispiel Großhandel. Lass das Feld für alle leer. Sobald Mitgliedergruppen verfügbar sind, nutzen sie dasselbe Feld.",
+  "shop.tiers.customerTypeHelp": "Der Kundentyp wird mit der Rolle der kaufenden Person verglichen, zum Beispiel Großhandel, oder mit dem Namen einer Firma, zu der sie gehört (oder company:slug). Leer lassen für alle.",
   "shop.tiers.remove": "Entfernen",
   "shop.tiers.addTier": "Staffel hinzufügen",
   "shop.tiers.save": "Staffeln speichern",

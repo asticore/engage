@@ -3819,7 +3819,7 @@ const fr: UiDictionary = {
   "shop.tiers.variationId": "Identifiant de variante",
   "shop.tiers.allVariations": "Toutes les variantes",
   "shop.tiers.priceEach": "Prix unitaire ({currency})",
-  "shop.tiers.customerTypeHelp": "Le type de client est comparé au rôle de l'acheteur, par exemple grossiste. Laissez vide pour tous. Les groupes de membres arriveront plus tard et utiliseront le même champ.",
+  "shop.tiers.customerTypeHelp": "Le type de client est comparé au rôle de l'acheteur, par exemple grossiste, ou au nom d'une entreprise à laquelle il appartient (ou company:slug). Laissez vide pour tout le monde.",
   "shop.tiers.remove": "Supprimer",
   "shop.tiers.addTier": "Ajouter un niveau",
   "shop.tiers.save": "Enregistrer les niveaux",

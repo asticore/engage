@@ -43,7 +43,7 @@ describe('category tree helpers', () => {
     expect(uniqueSlug(rows, 'Shirts')).toBe('shirts-2')
     expect(uniqueSlug(rows, 'Shirts', 2)).toBe('shirts')
     expect(categoryUrl('shop', rows, 3)).toBe('/shop/category/clothing/shirts/polo-shirts')
-    expect(categoryUrl('blog', rows, 3)).toBe('/blog/category/polo-shirts')
+    expect(categoryUrl('blog', rows, 3)).toBe('/blog/category/clothing/shirts/polo-shirts')
     expect(categoryCrumbs('shop', rows, 2).map((c) => c.label)).toEqual(['Home', 'Shop', 'Clothing', 'Shirts'])
     expect(categoryCrumbs('shop', rows, 2).at(-1)?.url).toBe('')
   })

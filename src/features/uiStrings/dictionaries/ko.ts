@@ -3819,7 +3819,7 @@ const ko: UiDictionary = {
   "shop.tiers.variationId": "옵션 ID",
   "shop.tiers.allVariations": "모든 옵션",
   "shop.tiers.priceEach": "개당 가격 ({currency})",
-  "shop.tiers.customerTypeHelp": "고객 유형은 구매자의 역할(예: 도매)과 맞춰집니다. 모든 고객에게 적용하려면 비워 두세요. 회원 그룹이 추가되면 같은 항목을 사용합니다.",
+  "shop.tiers.customerTypeHelp": "고객 유형은 구매자의 역할(예: 도매) 또는 소속된 회사 이름(또는 company:slug)과 일치시킵니다. 비워 두면 모든 사람에게 적용됩니다.",
   "shop.tiers.remove": "삭제",
   "shop.tiers.addTier": "등급 추가",
   "shop.tiers.save": "등급 저장",

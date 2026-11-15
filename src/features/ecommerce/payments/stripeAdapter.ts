@@ -52,6 +52,7 @@ import { CheckoutError, priceCart, shopCurrency, validateCheckoutValues, type Pr
 import { loadPaymentSettings, methodTypesFor, resolveStripeSecret, stripeShipping } from './config'
 import { cardAmountOf } from '../lib/storedValueOrder'
 import { flagMismatch, markOrderPaid } from '../server/orders'
+import { customerTypesForUser } from '../server/customerTypes'
 import { consumeStoredValue, quoteStoredValue } from '../server/storedValue'
 
 // The real plugin's own `initiatePayment.js`/`confirmOrder.js` each hardcode
@@ -137,7 +138,7 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
       shippingOptionId: typeof checkout.shippingOptionId === 'string' ? checkout.shippingOptionId : null,
       strict: true,
       cartId: cart.id,
-      customerRoles: (user as unknown as { roles?: string[] } | null | undefined)?.roles ?? [],
+      customerRoles: await customerTypesForUser(user as unknown as { id?: number; roles?: string[] } | null | undefined),
     },
   )
   const { totals, config, lines } = priced

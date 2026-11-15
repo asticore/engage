@@ -27,6 +27,10 @@ export type ArchiveItem = {
   image?: { url: string; alt?: string }
   author?: string
   categories?: string[]
+  /** The first category's names from the top of the category tree down to it; set when the category is in the tree. */
+  categoryTrail?: string[]
+  /** Public address of that category (nested path); set with categoryTrail. */
+  categoryHref?: string
   tags?: string[]
   type?: string
 }
