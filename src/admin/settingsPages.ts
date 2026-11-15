@@ -237,6 +237,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
       { kind: 'link', label: 'Roles', href: '/roles', description: 'Manage role permissions with a matrix grid.', type: 'view' },
       { kind: 'link', label: 'Export and import', href: '/settings-transfer', description: 'Export settings, content and users, or import them from another site.', type: 'view' },
       { kind: 'link', label: 'Find and replace', href: '/find-replace', description: 'Change a word or phrase across pages, posts, products and events. Preview first.', type: 'view' },
+      { kind: 'link', label: 'Bulk create', href: '/bulk-create', description: 'Make many draft pages, posts or products at once from a list of titles or a CSV, with a plan, clash check and undo.', type: 'view' },
       { kind: 'link', label: 'Import pages and posts', href: '/import-content', description: 'Bring content in from a WordPress export or a CSV file. Imported items are saved as drafts.', type: 'view' },
     ],
   },
