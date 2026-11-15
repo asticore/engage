@@ -60,11 +60,8 @@ Done: variation specific tier notes on the product page, promo badge product pic
 - [ ] The tree merge tags are filled on the blog index and category archives only; tag and author archives and the single post page still give an empty `{{category_path}}`: pass the tree there too.
 - [ ] A product-picker for the promo badge category and tag rules (they still take typed slugs), and the badge field labels (Task 3).
 
-### Task 5. Multi region and language report (new, 7 Nov 2026)
-- [ ] Check and report how multi region and multi language work today (regions, locales, translated fields, fallbacks, hreflang, per region content and pricing, admin strings in the thirteen languages). Output: a short report with gaps, saved in this doc, then tasks for the gaps. Effort S to M.
-
-### Task 6. Multi domain support check (new, 7 Nov 2026)
-- [ ] Check multi domain support end to end: several domains on one install, per domain content, the Available on domains field and slug check, cookies and sign-in per domain, sitemap, robots, canonical and hreflang, email sender and Cloudflare routes. Output: report with gaps, then tasks. Effort S to M.
+### Tasks 5 and 6 (done 15 Nov 2026): regions, languages and domains audit
+Report: `docs/regions-domains-audit.md`. The gaps became Tasks 41 and 42 below.
 
 ### Task 7. Scheduled jobs (cron) in the portal (new, 7 Nov 2026)
 - [ ] Find out whether the portal has easy cron jobs, for example scheduled pages, scheduled publish and unpublish, and recurring tasks. Check what the Worker cron trigger already runs. If there is no admin view, add a Scheduled jobs screen: list of jobs, last run, next run, run now, enable or disable, and logs. Effort M.
@@ -311,6 +308,22 @@ Audit 15 Nov: `timeline` (`wave36Defs.ts:57`) is defined but `hidden: true`; `so
 - [ ] **39h Oxygen and Storyblok parity.** From the code folders most of this exists; scope: verify in 36f then add gaps. **Oxygen:** class and selector based global styles and CSS variables (styles shared across blocks, edited once), reusable components with properties (37c), interactions (click, scroll and hover triggers with actions, Effix based), code blocks for CSS and JS, query loops with conditions (built), design sets and templates (Task 38), dynamic data everywhere. **Storyblok:** nestable components with schema (sections and elements), content types and fields (`customFields`), datasources (shared option lists), workflow stages (`approval`), releases (publish a bundle of changes together, check `schedule`), version history with compare, field level translation (`multilingual`), roles, webhooks, REST API (`apiBuilder`), preview links, tags, asset manager (Task 29), click-to-edit visual preview. Done when: each line is marked in the matrix and every gap has a task.
 - [ ] **39j Two-way Google Calendar sync (Matt, 15 Nov: its own task).** Scope: connect a Google account in Integrations, choose a calendar per event category, events created here appear in Google and events created in Google appear here, edits and deletes both ways, conflict rule (last edit wins, logged), recurring events, time zones, Test button and sync log. Done when: an event created in Google appears on the site calendar within the sync interval.
 - [ ] **39i AI on any selected element.** Today the AI panel edits a selected top-level section. Scope: a small AI icon on the selection toolbar of any element, section or column that opens a chat docked to that element; the prompt plus the element JSON and design tokens go to the connected provider (keys in Integrations, none connected means the icon explains how to connect); the answer is a patch of that subtree shown as a preview with accept, reject and undo, changes limited to the selection, history per element, usage limit and warning reuse `usageText`; no content leaves without a provider connected; with no provider the icon still shows and suggests connecting one (Matt, 15 Nov). Done when: selecting a button and asking for "make it green and larger" changes only that button and is undoable. Code: `AiBuilderPanel.tsx`, `aiBuilderState.ts`, `src/features/ai`, `/api/admin-ai-builder`.
+
+### Task 41. Regions and language gaps (from the Task 5 audit, new 15 Nov 2026)
+Report: `docs/regions-domains-audit.md`, Task 5 gaps.
+- [ ] **41a Region model.** A region (name, domains, languages, currency, countries) that content and prices can be limited to; start by wiring the domain `currencyHint` to the default display currency on that domain (gap 2). Decision for Matt: regions as a new entity, or only domains plus currency.
+- [ ] **41b More translatable text.** Category names, navigation and menu labels, header and footer text, form labels and messages, site title and tagline, product attributes and variation labels, post category and tag names, event SEO fields, custom fields.
+- [ ] **41c Owner-edited email wording per language.** Let Email templates hold a version per active language, falling back to the built-in translation.
+- [ ] **41d Hard-coded English check.** A test that fails when a public component renders a literal English sentence outside the store text table.
+
+### Task 42. Multi domain gaps (from the Task 6 audit, new 15 Nov 2026)
+Report: `docs/regions-domains-audit.md`, Task 6 gaps.
+- [ ] **42a** "Available on domains" on events, FAQs, reusable sections and forms, with the slug check where slugs exist.
+- [ ] **42b** Per-domain email sender and reply-to (falls back to the site sender), shown in the domain screen.
+- [ ] **42c** Per-domain menus (header and footer) in Templates.
+- [ ] **42d** Optional shared sign-in across subdomains (cookie Domain setting, off by default).
+- [ ] **42e** Per-domain tracking IDs and consent text; per-domain cache purge.
+- [ ] **42f** After "Connect domain", a status check for DNS and certificate with plain-language next steps.
 
 ### Task 13. Speed up the portal and shrink the Worker bundle (right before the live checks)
 **Goals (Matt, 7 Nov 2026):**
