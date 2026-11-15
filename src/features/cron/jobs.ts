@@ -51,6 +51,10 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { runScheduledEmails } = await import('@/features/email/scheduledEmails')
     await runScheduledEmails(engine as never, now)
   },
+  'shipment-tracking': async ({ engine, now }) => {
+    const { pollTracking } = await import('@/features/ecommerce/server/tracking')
+    return pollTracking(engine as never, now)
+  },
   'member-dunning': async ({ engine, now }) => {
     const { sweepDunning } = await import('@/features/members/dunningRun')
     return sweepDunning(engine as never, now)
