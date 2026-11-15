@@ -113,6 +113,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
       { kind: 'global', slug: 'faq-settings' },
       { kind: 'global', slug: 'form-settings' },
       { kind: 'global', slug: 'media-settings' },
+      { kind: 'link', label: 'Design locks', href: '/design-locks', description: 'Lock fonts, colours, spacing and other settings in the visual builder and emails so editors cannot change them.', type: 'view' },
       { kind: 'link', label: 'Options pages', href: '/options', description: 'Site-wide field values, such as contact details and opening hours.', type: 'view' },
     ],
   },

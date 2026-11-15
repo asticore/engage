@@ -128,6 +128,8 @@ import { applyInlineEdit, inlineCandidate } from './visualEditor/inlineEdit'
 import { canInsertInto, effectiveLock, lockedKeySet, lockKeyOf, lockMapForCanvas, withNodeLock } from './visualEditor/lockState'
 import { canConvertLegacy, convertLegacyBlock } from './visualEditor/convertLegacy'
 import type { LockUi } from './visualEditor/LockControls'
+import { SettingLockCtx } from './visualEditor/settingLockContext'
+import { parseSettingLocks, type SettingLock } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 import { useHydrated } from '@/lib/clientStore'
 
@@ -211,6 +213,19 @@ export const VisualEditorView: React.FC = () => {
   const offerPendingRef = useRef(false)
   const [locks, setLocks] = useState<Locks>({ nodes: {} })
   const [locksDirty, setLocksDirty] = useState(false)
+  const [settingLocks, setSettingLocks] = useState<SettingLock[]>([])
+  useEffect(() => {
+    let live = true
+    fetch('/api/admin-setting-locks', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : { locks: [] as unknown[] }))
+      .then((body: { locks?: unknown }) => {
+        if (live) setSettingLocks(parseSettingLocks(body.locks))
+      })
+      .catch((): void => undefined)
+    return () => {
+      live = false
+    }
+  }, [])
   const [lockUser, setLockUser] = useState<(LockUser & { canManageLocks?: boolean }) | null>(null)
   const [roleChoices, setRoleChoices] = useState<string[]>(['editor', 'viewer'])
   const [lockNotice, setLockNotice] = useState<string | null>(null)
@@ -1776,7 +1791,9 @@ export const VisualEditorView: React.FC = () => {
     )
   }
 
+  const settingLockState = { locks: settingLocks, user: lockUser, templateId: surface?.slug === 'site-templates' && route?.id ? String(route.id) : undefined }
   return (
+    <SettingLockCtx.Provider value={settingLockState}>
     <div className="ve-root">
       { }
       <style dangerouslySetInnerHTML={{ __html: VISUAL_EDITOR_CSS }} />
@@ -2214,6 +2231,7 @@ export const VisualEditorView: React.FC = () => {
         </div>
       )}
     </div>
+    </SettingLockCtx.Provider>
   )
 }
 
