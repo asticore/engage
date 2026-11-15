@@ -6,7 +6,7 @@ import { formatCents } from '@/features/ecommerce/lib/money'
 
 describe('prices follow the shop currency', () => {
   it('uses the shop currency for event ticket offers, and AUD only when none is given', () => {
-    const base = { url: 'https://x.test/events/a', isOnline: false, tiers: [], ticketPrice: 20 }
+    const base = { url: 'https://x.test/events/a', isOnline: false, tiers: [] as never[], ticketPrice: 20 }
     expect(eventOffers({ ...base, currency: 'NZD' })[0]).toMatchObject({ priceCurrency: 'NZD', price: 20 })
     expect(eventOffers(base)[0]).toMatchObject({ priceCurrency: 'AUD' })
   })
