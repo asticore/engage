@@ -7,7 +7,8 @@ import { getPlatformProxy } from 'wrangler'
 
 import { cleanupDbFromD1 } from '@/features/cleanup/db'
 import { dropUnusedTable, exportUnusedTable, listUnusedTables, refusalFor } from '@/features/cleanup/unusedTables'
-import { DEFAULT_FLAGS, type FeatureFlags } from '@/features/registry'
+import { DEFAULT_FLAGS, FEATURES, type FeatureFlags } from '@/features/registry'
+import { ownerOfTable } from '@/features/featureTables'
 import { matchingSubmissions } from '@/features/privacy/data'
 import { recentBackupRuns } from '@/features/cron/history'
 import { consoleLogger } from '@/localapi/logger'
@@ -65,6 +66,14 @@ describe('lazy sections', () => {
 
   it('a second run changes nothing', () => {
     expect(lazySecond).toEqual(lazyFirst)
+  })
+
+  it('every table on a fresh install is core or belongs to a section that is on by default', () => {
+    const stray = lazyFirst.filter((table) => {
+      const owner = ownerOfTable(table)
+      return owner !== 'core' && !DEFAULT_FLAGS[owner]
+    })
+    expect(stray).toEqual([])
   })
 
   it('records every section that owns tables as deferred, except those on by default', async () => {
@@ -168,6 +177,17 @@ describe('lazy sections', () => {
       expect(now).not.toContain('events')
     }, 120_000)
   })
+
+  it('each section that owns tables gets exactly its own tables when it is switched on, and a second switch on changes nothing', async () => {
+    for (const feature of FEATURES.filter((f) => f.tables && f.tables.length > 0)) {
+      if (DEFAULT_FLAGS[feature.key]) continue
+      if (await isFeatureDeferred(d1, feature.key)) expect(await provisionFeature(d1, consoleLogger, feature.key), feature.key).toMatchObject({ ok: true, alreadyProvisioned: false })
+      const before = await names()
+      for (const base of feature.tables ?? []) expect(before, `${feature.key}: eg_${base}`).toContain(`eg_${base}`)
+      expect(await provisionFeature(d1, consoleLogger, feature.key), feature.key).toMatchObject({ ok: true, alreadyProvisioned: true })
+      expect(await names(), feature.key).toEqual(before)
+    }
+  }, 400_000)
 
   it('an install that predates lazy sections keeps every section: nothing is held back', async () => {
     // Pretend this is an older production database: every table there, no state table, no record of the migration.

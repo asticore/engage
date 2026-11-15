@@ -2,7 +2,8 @@
 
 import React from 'react'
 
-import { cleanupFeatureAction, tidyIndexNamesAction } from './actions'
+import { cleanupFeatureAction, emptySectionAction, exportSectionAction, tidyIndexNamesAction } from './actions'
+import { emptyPhraseFor, type EmptyPlan } from './emptyData'
 import { confirmationPhraseFor, type CleanupPlan } from './cleanup'
 import { formatBytes } from './size'
 import type { FeatureSurvey } from './survey'
@@ -45,6 +46,35 @@ export const FeatureCleanupCard: React.FC<{
   const [plan, setPlan] = React.useState<CleanupPlan | null>(null)
   const [typed, setTyped] = React.useState('')
   const [busy, setBusy] = React.useState(false)
+
+  const [emptyPlan, setEmptyPlan] = React.useState<EmptyPlan | null>(null)
+  const [emptyTyped, setEmptyTyped] = React.useState('')
+  const emptyPhrase = emptyPhraseFor(feature.key)
+
+  const previewEmpty = async (): Promise<void> => {
+    setBusy(true)
+    setEmptyPlan(await emptySectionAction({ feature: feature.key }))
+    setEmptyTyped('')
+    setBusy(false)
+  }
+  const downloadCopy = async (): Promise<void> => {
+    setBusy(true)
+    const result = await exportSectionAction(feature.key)
+    setBusy(false)
+    if (!result.ok) return
+    const url = URL.createObjectURL(new Blob([result.json], { type: 'application/json' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${feature.key}-data.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+  const emptyNow = async (): Promise<void> => {
+    setBusy(true)
+    setEmptyPlan(await emptySectionAction({ feature: feature.key, confirm: emptyTyped, execute: true }))
+    setEmptyTyped('')
+    setBusy(false)
+  }
 
   const phrase = confirmationPhraseFor(feature.key)
   const canDrop = !feature.enabled && feature.tables.length > 0
@@ -115,6 +145,80 @@ export const FeatureCleanupCard: React.FC<{
               </tbody>
             </table>
           </details>
+        )}
+
+        {feature.tables.length > 0 && (
+          <div className={actionsClassName}>
+            <button className={buttonDefaultClassName} disabled={busy} onClick={downloadCopy} type="button">
+              Download a copy of the data
+            </button>
+            <button className={buttonDefaultClassName} disabled={busy} onClick={previewEmpty} type="button">
+              {emptyPlan ? 'Re-check' : 'Empty the data (keep the tables)'}
+            </button>
+          </div>
+        )}
+
+        {emptyPlan && (
+          <div className={planClassName}>
+            {emptyPlan.refusals.map((reason) => (
+              <p className={refusalClassName} key={reason}>
+                {reason}
+              </p>
+            ))}
+            {emptyPlan.emptied.length > 0 && <p className={doneClassName}>Emptied {emptyPlan.emptied.length} table{emptyPlan.emptied.length === 1 ? '' : 's'}. Reload to see the updated figures.</p>}
+            {emptyPlan.errors.map((error) => (
+              <p className={refusalClassName} key={error.table}>
+                {error.table}: {error.error}
+              </p>
+            ))}
+            {emptyPlan.dryRun && emptyPlan.refusals.length === 0 && (
+              <>
+                {emptyPlan.tables.length === 0 ? (
+                  <p>Nothing to empty.</p>
+                ) : (
+                  <>
+                    <p className="m-0 font-semibold">
+                      This permanently deletes the rows in {emptyPlan.tables.length} table{emptyPlan.tables.length === 1 ? '' : 's'}. The tables stay and the section keeps working. There is no undo, so download a copy first.
+                    </p>
+                    <ul className={planListClassName}>
+                      {emptyPlan.tables.map((entry) => (
+                        <li key={entry.table}>
+                          <code>{entry.table}</code> ({entry.rows.toLocaleString()} row{entry.rows === 1 ? '' : 's'})
+                        </li>
+                      ))}
+                    </ul>
+                    <label className="flex max-w-[320px] flex-col gap-[calc(var(--base)*0.25)]">
+                      <span>
+                        Type <code>{emptyPhrase}</code> to confirm
+                      </span>
+                      <input
+                        autoComplete="off"
+                        className="[font:inherit] rounded-[3px] border border-[var(--theme-elevation-250)] bg-[var(--theme-input-bg,var(--theme-elevation-0))] p-[calc(var(--base)*0.35)] text-inherit"
+                        onChange={(event) => setEmptyTyped(event.target.value)}
+                        type="text"
+                        value={emptyTyped}
+                      />
+                    </label>
+                    <button className={`${buttonBaseClassName} border-[var(--theme-error-500,var(--theme-elevation-800))] text-[var(--theme-error-500,var(--theme-elevation-800))]`} disabled={busy || emptyTyped !== emptyPhrase} onClick={emptyNow} type="button">
+                      Empty the data
+                    </button>
+                  </>
+                )}
+                {emptyPlan.withheld.length > 0 && (
+                  <details>
+                    <summary>Kept ({emptyPlan.withheld.length})</summary>
+                    <ul className={planListClassName}>
+                      {emptyPlan.withheld.map((entry) => (
+                        <li key={entry.table}>
+                          <code>{entry.table}</code>: {entry.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </>
+            )}
+          </div>
         )}
 
         {canDrop && (

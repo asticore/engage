@@ -91,6 +91,7 @@ export type AuditAction =
   | 'password-group.unlock-failed'
   | 'password-group.refused'
   | 'database.table-dropped'
+  | 'database.section-emptied'
   | 'publish'
   | 'unpublish'
   | 'export'
@@ -163,6 +164,7 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'password-group.unlock-failed',
   'password-group.refused',
   'database.table-dropped',
+  'database.section-emptied',
 ]
 
 export type AuditEntry = {
