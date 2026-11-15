@@ -168,6 +168,7 @@ import * as migration_20270316_150000_product_donations from './20270316_150000_
 import * as migration_20270316_160000_service_products from './20270316_160000_service_products';
 import * as migration_20270316_170000_bookings from './20270316_170000_bookings';
 import * as migration_20270316_180000_quotes from './20270316_180000_quotes';
+import * as migration_20270316_190000_purchase_limits from './20270316_190000_purchase_limits';
 
 export const migrations = [
   {
@@ -1014,5 +1015,10 @@ export const migrations = [
     up: migration_20270316_180000_quotes.up,
     down: migration_20270316_180000_quotes.down,
     name: '20270316_180000_quotes',
+  },
+  {
+    up: migration_20270316_190000_purchase_limits.up,
+    down: migration_20270316_190000_purchase_limits.down,
+    name: '20270316_190000_purchase_limits',
   },
 ];

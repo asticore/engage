@@ -43,6 +43,7 @@ export type FeatureKey =
   | 'taskboard'
   | 'bookings'
   | 'quotes'
+  | 'limits'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -284,6 +285,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['quote_requests'],
+    implemented: true,
+  },
+  {
+    key: 'limits',
+    label: 'Purchase limits',
+    description: 'Per-person limits on limited products and event tickets, a wait between orders, an optional verified-account rule, and a report of refused attempts.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['purchase_limit_rules', 'purchase_limit_blocks'],
     implemented: true,
   },
 ]
