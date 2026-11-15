@@ -40,6 +40,7 @@ export type FeatureKey =
   | 'approval'
   | 'ads'
   | 'tracking'
+  | 'taskboard'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -251,6 +252,16 @@ export const FEATURES: FeatureDef[] = [
     collections: ['tracking-events'],
     globals: [],
     tables: ['tracking_events'],
+    implemented: true,
+  },
+  {
+    key: 'taskboard',
+    label: 'Taskboard',
+    description: 'A Kanban board where people create tasks and assign them to admin and staff users.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['task_boards', 'task_columns', 'task_cards', 'task_comments', 'task_activity'],
     implemented: true,
   },
 ]
