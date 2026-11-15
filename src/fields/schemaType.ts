@@ -1,4 +1,5 @@
 import type { Field } from '@/engine'
+import { RICH_TYPES, factsError, isRichType } from '@/features/seo/richTypes'
 
 /**
  * "Page type" for SEO structured data (JSON-LD), chosen per document in the
@@ -24,12 +25,22 @@ export const PAGE_SCHEMA_TYPES: SchemaTypeOption[] = [
   { label: 'Search results page', value: 'SearchResultsPage' },
   { label: 'Menu page (restaurant or cafe)', value: 'MenuPage' },
   { label: 'Local business page', value: 'LocalBusinessPage' },
+  { label: 'Recipe', value: 'Recipe' },
+  { label: 'Job posting', value: 'JobPosting' },
+  { label: 'How-to', value: 'HowTo' },
+  { label: 'Software application', value: 'SoftwareApplication' },
+  { label: 'Review', value: 'Review' },
+  { label: 'Person', value: 'Person' },
+  { label: 'Local business', value: 'LocalBusiness' },
 ]
 
 export const POST_SCHEMA_TYPES: SchemaTypeOption[] = [
   { label: 'Blog post (default)', value: 'BlogPosting' },
   { label: 'Article', value: 'Article' },
   { label: 'News article', value: 'NewsArticle' },
+  { label: 'Recipe', value: 'Recipe' },
+  { label: 'How-to', value: 'HowTo' },
+  { label: 'Review', value: 'Review' },
 ]
 
 export const PRODUCT_SCHEMA_TYPES: SchemaTypeOption[] = [{ label: 'Product (default)', value: 'Product' }]
@@ -80,7 +91,20 @@ export const schemaTypeField = (collection: keyof typeof SCHEMA_TYPES_BY_COLLECT
   } as Field
 }
 
-export type JsonLdTypeInfo = { type: string; extra?: Record<string, unknown> }
+/** Facts for Recipe, Job posting and the other rich types, as a JSON object. Only shown for those types. */
+export const schemaFactsField = (): Field =>
+  ({
+    name: 'schemaFacts',
+    type: 'textarea',
+    label: 'Page type facts (JSON)',
+    validate: (value: unknown) => factsError(value),
+    admin: {
+      description: 'Facts for the chosen page type, for example {"name":"Pancakes","ingredients":["Flour","Milk"],"steps":["Mix","Fry"],"prepTime":"PT10M"}. Missing items are listed in the page checks.',
+      condition: (data: Record<string, unknown>) => isRichType(data?.schemaType),
+    },
+  }) as Field
+
+export type JsonLdTypeInfo = { type: string; extra?: Record<string, unknown>; rich?: (typeof RICH_TYPES)[number] }
 
 /**
  * Maps a stored page type to the schema.org `@type` plus any extra properties.
@@ -99,5 +123,6 @@ export const jsonLdFor = (collection: string, value: string | null | undefined, 
       extra: { about: { '@type': 'LocalBusiness', name: ctx.siteName || ctx.title, ...(ctx.url ? { url: ctx.url } : {}) } },
     }
   }
+  if (isRichType(chosen)) return { type: 'WebPage', rich: chosen }
   return { type: chosen }
 }
