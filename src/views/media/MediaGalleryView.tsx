@@ -8,6 +8,10 @@ import { IMAGES_UNAVAILABLE_MESSAGE, resolveOptimiseSettings } from '@/features/
 import { resolveImagesBinding } from '@/features/media/imagesBinding'
 import { distinctFolders } from '@/features/media/folders'
 import { MediaFolderTree } from './MediaFolderTree'
+import { rawD1 } from '@/features/ecommerce/server/db'
+import { pathOf, type Tag } from '@/features/mediaTags/logic'
+import * as tagStore from '@/features/mediaTags/store'
+import { getFeatureFlags } from '@/utilities/features'
 import { describeSaving, formatBytes } from '@/features/media/admin/mediaApi'
 import { siteImageFormat, videoFormatOf } from '@/features/media/formats'
 import { streamCredentials } from '@/features/media/stream'
@@ -145,11 +149,30 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
     hasNextPage: data?.hasNextPage ?? false,
     totalDocs: data?.totalDocs ?? 0,
   }
-  if (currentFolder && finder) {
+  // Media tags (a feature that is off by default): the tag list for the filter and the bulk tool, and the files in a tag and its sub-tags.
+  let allTags: Tag[] = []
+  let tagFilter = 0
+  let tagMediaIds: number[] | null = null
+  try {
+    if ((await getFeatureFlags()).mediatags) {
+      const d1 = (await rawD1()) as never as tagStore.D1
+      allTags = await tagStore.listTags(d1)
+      tagFilter = allTags.some((t) => t.id === Number(strParam('tag'))) ? Number(strParam('tag')) : 0
+      if (tagFilter) tagMediaIds = await tagStore.mediaIdsForTag(d1, tagFilter)
+    }
+  } catch {
+    allTags = []
+  }
+  if ((currentFolder || tagMediaIds) && finder) {
     const requested = Math.max(1, Number(strParam('page') ?? '1') || 1)
     const result = await finder.find({
       collection: slug,
-      where: { folder: { equals: currentFolder } },
+      where: {
+        and: [
+          ...(currentFolder ? [{ folder: { equals: currentFolder } }] : []),
+          ...(tagMediaIds ? [{ id: { in: tagMediaIds.length ? tagMediaIds : [-1] } }] : []),
+        ],
+      },
       limit: FOLDER_PAGE_SIZE,
       page: requested,
       depth: 0,
@@ -305,6 +328,36 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
               </form>
             ) : null}
 
+            {allTags.length > 0 ? (
+              <form method="GET" className="flex items-center gap-[calc(var(--base)*0.4)]">
+                {view === 'list' ? <input type="hidden" name="view" value="list" /> : null}
+                {currentFolder ? <input type="hidden" name="folder" value={currentFolder} /> : null}
+                {currentSort ? <input type="hidden" name="sort" value={currentSort} /> : null}
+                {currentSearch ? <input type="hidden" name="search" value={currentSearch} /> : null}
+                <label className="text-[calc(var(--base)*0.78)] text-[var(--theme-elevation-600)]">
+                  Tag
+                  <select
+                    name="tag"
+                    defaultValue={tagFilter ? String(tagFilter) : ''}
+                    className="ml-[calc(var(--base)*0.4)] rounded-[4px] border border-[var(--theme-elevation-200)] bg-transparent px-[calc(var(--base)*0.5)] py-[calc(var(--base)*0.35)] text-[calc(var(--base)*0.82)] text-[var(--theme-elevation-900)]"
+                  >
+                    <option value="">All tags</option>
+                    {allTags.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {pathOf(allTags, t.id)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  className="rounded-[4px] border border-[var(--theme-elevation-200)] px-[calc(var(--base)*0.6)] py-[calc(var(--base)*0.35)] text-[calc(var(--base)*0.78)] text-[var(--theme-elevation-700)] hover:border-[var(--ac-gold)] hover:text-[var(--ac-gold)]"
+                >
+                  Show
+                </button>
+              </form>
+            ) : null}
+
           {view === 'list' ? (
             <form method="GET" className="flex items-center gap-[calc(var(--base)*0.4)]">
               <input type="hidden" name="view" value="list" />
@@ -345,6 +398,7 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
         <MediaGalleryGrid
           docs={galleryDocs}
           folders={folders}
+          tags={allTags.map((t) => ({ id: t.id, label: pathOf(allTags, t.id) }))}
           currentFolder={currentFolder}
           batchSize={settings.batchSize}
           optimisationOn={settings.enabled}

@@ -172,6 +172,7 @@ import * as migration_20270316_190000_purchase_limits from './20270316_190000_pu
 import * as migration_20270316_200000_approval_named_approvers from './20270316_200000_approval_named_approvers';
 import * as migration_20270316_210000_member_dunning from './20270316_210000_member_dunning';
 import * as migration_20270316_220000_shipment_tracking from './20270316_220000_shipment_tracking';
+import * as migration_20270316_230000_media_tags from './20270316_230000_media_tags';
 
 export const migrations = [
   {
@@ -1038,5 +1039,10 @@ export const migrations = [
     up: migration_20270316_220000_shipment_tracking.up,
     down: migration_20270316_220000_shipment_tracking.down,
     name: '20270316_220000_shipment_tracking',
+  },
+  {
+    up: migration_20270316_230000_media_tags.up,
+    down: migration_20270316_230000_media_tags.down,
+    name: '20270316_230000_media_tags',
   },
 ];
