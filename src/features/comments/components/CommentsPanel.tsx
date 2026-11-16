@@ -61,7 +61,7 @@ export const CommentsPanel: React.FC = () => {
           <label>Approval<br />
             <select value={settings.mode} onChange={(e) => set({ mode: e.target.value as CommentSettings['mode'] })}>
               <option value="all">Hold every comment</option>
-              <option value="first">Hold a person's first comment</option>
+              <option value="first">Hold a person&apos;s first comment</option>
               <option value="rules">Hold comments with links</option>
               <option value="open">Publish at once</option>
             </select>

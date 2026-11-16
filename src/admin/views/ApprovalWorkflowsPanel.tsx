@@ -168,7 +168,7 @@ function WorkflowForm({
       {people.length > 1 && (
         <fieldset className="rw-roles" disabled={disabled}>
           <legend>A different approver for an author</legend>
-          <p className="rw-hint">Work submitted by the author is approved by the person named, at every step, instead of the step's usual approvers.</p>
+          <p className="rw-hint">Work submitted by the author is approved by the person named, at every step, instead of the step&apos;s usual approvers.</p>
           {Object.entries(draft.authorRoutes).map(([author, approvers]) => (
             <p key={author} className="rw-hint">
               {people.find((p) => p.id === Number(author))?.name ?? `User ${author}`} is approved by {approvers.map((id) => people.find((p) => p.id === id)?.name ?? `User ${id}`).join(', ')}{' '}

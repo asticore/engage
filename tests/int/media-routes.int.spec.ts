@@ -159,10 +159,10 @@ describe('review hardening at the route level', () => {
     expect(await response.json()).toMatchObject({ error: expect.stringMatching(/confirmOverwrite/) })
   })
 
-  it('folders: reports whether the listing was cut short', async () => {
+  it('folders: lists the per-folder counts and folder records (no cut-off flag any more)', async () => {
     const response = await foldersGet()
     expect(response.status).toBe(200)
-    expect(await response.json()).toMatchObject({ folders: [], truncated: false })
+    expect(await response.json()).toMatchObject({ rows: [], folders: [] })
   })
 
   it('stock import: stores the source address only when it is https', async () => {

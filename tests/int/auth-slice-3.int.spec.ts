@@ -817,7 +817,7 @@ describe('last login method on the user record (Task 23e)', () => {
     const first = await loginAsUser(db, { id: 1, secret: SECRET, method: 'github' })
     expect(first.pendingToken).toBeTruthy()
     expect(db.rows[0].lastLoginMethod).toBeUndefined()
-    await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET })
+    await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { pendingBinding: first.pendingBinding } })
     expect(db.rows[0].lastLoginMethod).toBe('github')
   })
 })

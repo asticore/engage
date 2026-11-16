@@ -37,6 +37,6 @@ describe('remembered device on social and passwordless sign-in', () => {
 
   it('passwordless deps pass the device cookie into the engine sign-in', async () => {
     const deps = await passwordlessDepsFor({} as never, { ip: '203.0.113.5', userAgent: 'UA', trustedDeviceToken: 'device.token' })
-    expect(deps.client).toEqual({ userAgent: 'UA', ip: '203.0.113.5', trustedDeviceToken: 'device.token' })
+    expect(deps.client).toEqual({ userAgent: 'UA', ip: '203.0.113.5', country: null, trustedDeviceToken: 'device.token' })
   })
 })

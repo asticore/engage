@@ -13,11 +13,14 @@
   .bg-\[image\:linear-gradient\(135deg\,var\(--color-cream-dim\)\,var\(--color-gold-light\)\)\]{background-image:linear-gradient(135deg,var(--color-cream-dim),var(--color-gold-light))}
   .bg-\[rgba\(0\,0\,0\,0\.02\)\]{background-color:rgba(0,0,0,0.02)}
   .bg-\[var\(--ac-gold\)\]{background-color:var(--ac-gold)}
+  .bg-\[var\(--ac-gold\)\]\/20{background-color:color-mix(in oklab, var(--ac-gold) 20%, transparent)}
   .bg-\[var\(--ac-surface\)\]{background-color:var(--ac-surface)}
+  .bg-\[var\(--color-bg\,\#fff\)\]{background-color:var(--color-bg,#fff)}
   .bg-\[var\(--color-cream\)\]{background-color:var(--color-cream)}
   .bg-\[var\(--color-cream-dim\)\]{background-color:var(--color-cream-dim)}
   .bg-\[var\(--color-gold\)\]{background-color:var(--color-gold)}
   .bg-\[var\(--color-ink\)\]{background-color:var(--color-ink)}
+  .bg-\[var\(--color-line\)\]{background-color:var(--color-line)}
   .bg-\[var\(--theme-elevation-0\)\]{background-color:var(--theme-elevation-0)}
   .bg-\[var\(--theme-elevation-0\)\]\/80{background-color:color-mix(in oklab, var(--theme-elevation-0) 80%, transparent)}
   .bg-\[var\(--theme-elevation-0\,\#fff\)\]{background-color:var(--theme-elevation-0,#fff)}
@@ -29,6 +32,7 @@
   .bg-\[var\(--theme-elevation-50\,\#f4f2ec\)\]{background-color:var(--theme-elevation-50,#f4f2ec)}
   .bg-\[var\(--theme-input-bg\,\#fff\)\]{background-color:var(--theme-input-bg,#fff)}
   .bg-\[var\(--theme-input-bg\,var\(--theme-elevation-0\)\)\]{background-color:var(--theme-input-bg,var(--theme-elevation-0))}
+  .bg-black\/40{background-color:color-mix(in oklab, #000 40%, transparent)}
   .bg-black\/60{background-color:color-mix(in oklab, #000 60%, transparent)}
   .bg-none{background-image:none}
   .bg-surface{background-color:var(--ac-surface)}
@@ -106,6 +110,7 @@
   .grid-cols-\[repeat\(auto-fill\,minmax\(240px\,1fr\)\)\]{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
   .grid-cols-\[repeat\(auto-fit\,minmax\(180px\,1fr\)\)\]{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
   .h-7{height:calc(var(--sh-space) * 7)}
+  .h-\[0\.6rem\]{height:0.6rem}
   .h-\[1\.5px\]{height:1.5px}
   .h-\[14px\]{height:14px}
   .h-\[18px\]{height:18px}
@@ -132,6 +137,7 @@
   .max-h-10{max-height:calc(var(--sh-space) * 10)}
   .max-h-\[180px\]{max-height:180px}
   .max-h-\[260px\]{max-height:260px}
+  .max-h-\[80vh\]{max-height:80vh}
   .max-h-\[calc\(var\(--base\)\*14\)\]{max-height:calc(var(--base)*14)}
   .max-w-\[1100px\]{max-width:1100px}
   .max-w-\[1200px\]{max-width:1200px}
@@ -158,10 +164,13 @@
   .mb-\[1rem\]{margin-bottom:1rem}
   .mb-\[24px\]{margin-bottom:24px}
   .mb-\[4px\]{margin-bottom:4px}
+  .mb-\[6px\]{margin-bottom:6px}
   .mb-\[calc\(var\(--base\)\*0\.5\)\]{margin-bottom:calc(var(--base)*0.5)}
   .mb-\[calc\(var\(--base\)\*0\.6\)\]{margin-bottom:calc(var(--base)*0.6)}
+  .mb-\[calc\(var\(--base\)\*0\.75\)\]{margin-bottom:calc(var(--base)*0.75)}
   .mb-\[calc\(var\(--base\)\*0\.9\)\]{margin-bottom:calc(var(--base)*0.9)}
   .min-h-\[120px\]{min-height:120px}
+  .min-h-\[4rem\]{min-height:4rem}
   .min-h-\[60vh\]{min-height:60vh}
   .min-h-\[calc\(var\(--base\)\*5\)\]{min-height:calc(var(--base)*5)}
   .min-w-\[160px\]{min-width:160px}
@@ -196,6 +205,7 @@
   .p-\[16px\]{padding:16px}
   .p-\[20px\]{padding:20px}
   .p-\[24px\]{padding:24px}
+  .p-\[3px\]{padding:3px}
   .p-\[6px\]{padding:6px}
   .p-\[8px\]{padding:8px}
   .p-\[calc\(var\(--base\)\*0\.3\)\]{padding:calc(var(--base)*0.3)}
@@ -249,6 +259,7 @@
   .py-\[18px\]{padding-top:18px;padding-bottom:18px}
   .py-\[1px\]{padding-top:1px;padding-bottom:1px}
   .py-\[2px\]{padding-top:2px;padding-bottom:2px}
+  .py-\[3px\]{padding-top:3px;padding-bottom:3px}
   .py-\[4px\]{padding-top:4px;padding-bottom:4px}
   .py-\[5px\]{padding-top:5px;padding-bottom:5px}
   .py-\[6px\]{padding-top:6px;padding-bottom:6px}
@@ -266,6 +277,7 @@
   .py-\[calc\(var\(--base\)\*2\)\]{padding-top:calc(var(--base)*2);padding-bottom:calc(var(--base)*2)}
   .py-\[var\(--base\,1rem\)\]{padding-top:var(--base,1rem);padding-bottom:var(--base,1rem)}
   .right-3{right:calc(var(--sh-space) * 3)}
+  .right-4{right:calc(var(--sh-space) * 4)}
   .rounded-\[2px\]{border-radius:2px}
   .rounded-\[3px\]{border-radius:3px}
   .rounded-\[4px\]{border-radius:4px}
@@ -287,6 +299,7 @@
   .text-\[1\.05rem\]{font-size:1.05rem}
   .text-\[1\.1rem\]{font-size:1.1rem}
   .text-\[1\.25rem\]{font-size:1.25rem}
+  .text-\[1\.4rem\]{font-size:1.4rem}
   .text-\[1\.5rem\]{font-size:1.5rem}
   .text-\[1\.6rem\]{font-size:1.6rem}
   .text-\[1\.75rem\]{font-size:1.75rem}
@@ -344,6 +357,7 @@
   .text-inherit{color:inherit}
   .text-ink{color:var(--theme-elevation-900)}
   .text-red-700{color:#b91c1c}
+  .top-16{top:calc(var(--sh-space) * 16)}
   .top-3{top:calc(var(--sh-space) * 3)}
   .top-\[6px\]{top:6px}
   .tracking-\[0\.02em\]{letter-spacing:0.02em}
@@ -353,7 +367,9 @@
   .tracking-\[0\.08em\]{letter-spacing:0.08em}
   .tracking-\[0\.1em\]{letter-spacing:0.1em}
   .w-7{width:calc(var(--sh-space) * 7)}
+  .w-\[10rem\]{width:10rem}
   .w-\[14px\]{width:14px}
+  .w-\[16px\]{width:16px}
   .w-\[18px\]{width:18px}
   .w-\[200px\]{width:200px}
   .w-\[22px\]{width:22px}
@@ -363,8 +379,11 @@
   .w-\[calc\(var\(--base\)\*0\.85\)\]{width:calc(var(--base)*0.85)}
   .w-\[calc\(var\(--base\)\*2\)\]{width:calc(var(--base)*2)}
   .w-\[calc\(var\(--base\)\*2\.2\)\]{width:calc(var(--base)*2.2)}
+  .w-\[min\(92vw\,380px\)\]{width:min(92vw,380px)}
   .whitespace-pre-line{white-space:pre-line}
   .z-\[1000\]{z-index:1000}
+  .z-\[90\]{z-index:90}
+  .z-\[91\]{z-index:91}
   .z-index{z-index:index}
   @media (max-width:700px) {
     .max-\[700px\]\:grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
@@ -376,5 +395,8 @@
   @media (max-width:767.98px) {
     .max-md\:grid-cols-\[repeat\(auto-fill\,minmax\(120px\,1fr\)\)\]{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
     .max-md\:text-\[calc\(var\(--base\)\*1\.25\)\]{font-size:calc(var(--base)*1.25)}
+  }
+  @media (min-width:768px) {
+    .md\:w-\[240px\]{width:240px}
   }
 }
