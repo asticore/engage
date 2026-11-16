@@ -6,7 +6,7 @@ import { hit } from '@/features/security/rateLimit'
 import { getSecuritySettings, type OrganizationSettings } from '@/features/security/settings'
 import { getEngine } from '@/lib/engine'
 
-import { sendOrganizationInviteEmail } from './email'
+import { sendOrganizationInviteEmail, sendOrganizationTransferEmail } from './email'
 import { generateInviteToken, hashInviteToken } from './policy'
 import { resolveActiveOrganization, type Actor, type OrgDeps } from './service'
 import { defaultOrgStore } from './store'
@@ -41,6 +41,11 @@ export async function buildDeps(engine: AccountContext['engine'], settings: Orga
       const doc = found.docs[0] as { id: number } | undefined
       return doc ? Number(doc.id) : null
     },
+    emailOf: async (userId) => {
+      const row = (await engine.findByID({ collection: 'users', id: userId, depth: 0, overrideAccess: true }).catch((): null => null)) as { email?: string } | null
+      return row?.email ?? null
+    },
+    sendTransfer: async (mail) => (await sendOrganizationTransferEmail(mail)).ok,
     audit: async (entry) => {
       // Never throws: a log line cannot fail the action it describes.
       await recordAuthEvent(engine, { action: entry.action, actorId: entry.actorId, actorEmail: entry.actorEmail, collectionSlug: 'organizations', documentId: entry.organizationId, detail: entry.detail }, origin)

@@ -11,6 +11,11 @@ import type { PortalStringKey } from '@/features/multilingual/portalStrings'
 
 import {
   acceptInviteAction,
+  acceptTransferAction,
+  cancelTransferAction,
+  createDelegationAction,
+  declineTransferAction,
+  revokeDelegationAction,
   adminDeleteOrganizationAction,
   adminSaveBrandingAction,
   saveBrandingAction,
@@ -166,7 +171,7 @@ export const ResendInviteForm: React.FC<{ organizationId: string; inviteId: stri
 export const CancelInviteForm: React.FC<{ organizationId: string; inviteId: string }> = (props) => <RowForm action={cancelInviteAction} fields={props} label="orgs.cancelInvite" confirm="orgs.confirmCancelInvite" />
 export const RemoveMemberForm: React.FC<{ organizationId: string; userId: string }> = (props) => <RowForm action={removeMemberAction} fields={props} label="orgs.remove" confirm="orgs.confirmRemove" />
 export const TransferOwnershipForm: React.FC<{ organizationId: string; userId: string }> = (props) => (
-  <RowForm action={transferOwnershipAction} fields={props} label="orgs.makeOwner" confirm="orgs.confirmTransfer" />
+  <RowForm action={transferOwnershipAction} fields={props} label="orgs.makeOwner" confirm="orgs.confirmTransferRequest" />
 )
 export const LeaveOrganizationForm: React.FC<{ organizationId: string }> = (props) => <RowForm action={leaveOrganizationAction} fields={props} label="orgs.leave" confirm="orgs.confirmLeave" />
 export const DeleteOrganizationForm: React.FC<{ organizationId: string }> = (props) => (
@@ -370,6 +375,80 @@ export const BrandingForm: React.FC<{ organizationId: string; values: BrandingVa
         ))}
       </ul>
       <SubmitButton>{labels.save}</SubmitButton>
+      <Note state={state} />
+    </form>
+  )
+}
+
+export const TransferDecisionForm: React.FC<{ token: string }> = ({ token }) => {
+  const [acceptState, accept] = useForm(acceptTransferAction)
+  const [declineState, decline] = useForm(declineTransferAction)
+  const t = usePortalText()
+  return (
+    <div className="account-card__actions">
+      <form action={accept}>
+        <input type="hidden" name="token" value={token} />
+        <SubmitButton>{t('orgs.acceptTransfer')}</SubmitButton>
+        <Note state={acceptState} />
+      </form>
+      <form action={decline}>
+        <input type="hidden" name="token" value={token} />
+        <SubmitButton variant="ghost">{t('orgs.decline')}</SubmitButton>
+        <Note state={declineState} />
+      </form>
+    </div>
+  )
+}
+
+export const CancelTransferForm: React.FC<{ organizationId: string }> = ({ organizationId }) => {
+  const [state, action] = useForm(cancelTransferAction)
+  const t = usePortalText()
+  return (
+    <form action={action} className="org-inline-form">
+      <input type="hidden" name="organizationId" value={organizationId} />
+      <SubmitButton variant="ghost">{t('orgs.cancelTransfer')}</SubmitButton>
+      <Note state={state} />
+    </form>
+  )
+}
+
+export const RevokeDelegationForm: React.FC<{ organizationId: string; delegationId: string }> = ({ organizationId, delegationId }) => {
+  const [state, action] = useForm(revokeDelegationAction)
+  const t = usePortalText()
+  return (
+    <form action={action} className="org-inline-form">
+      <input type="hidden" name="organizationId" value={organizationId} />
+      <input type="hidden" name="delegationId" value={delegationId} />
+      <SubmitButton variant="ghost">{t('orgs.endDelegation')}</SubmitButton>
+      <Note state={state} />
+    </form>
+  )
+}
+
+/** Lets another account act for the signed-in member here. `rights` is only what this member holds and may delegate. */
+export const DelegationForm: React.FC<{ organizationId: string; rights: { value: string; label: string }[] }> = ({ organizationId, rights }) => {
+  const [state, action] = useForm(createDelegationAction)
+  const t = usePortalText()
+  return (
+    <form action={action} className="account-form">
+      <input type="hidden" name="organizationId" value={organizationId} />
+      <label>
+        {t('orgs.delegateEmail')}
+        <input name="email" type="email" required autoComplete="off" />
+      </label>
+      <fieldset className="org-perms">
+        <legend>{t('orgs.delegateRights')}</legend>
+        {rights.map((r) => (
+          <label key={r.value}>
+            <input type="checkbox" name="permissions" value={r.value} /> {r.label}
+          </label>
+        ))}
+      </fieldset>
+      <label>
+        {t('orgs.delegateHours')}
+        <input name="hours" type="number" min={1} max={2160} defaultValue={24} required />
+      </label>
+      <SubmitButton>{t('orgs.delegateSave')}</SubmitButton>
       <Note state={state} />
     </form>
   )
