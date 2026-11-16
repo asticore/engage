@@ -5,6 +5,9 @@ import { ACCEPTED_TYPES, fileKindOf } from '@/features/media/fileTypes'
 import { readLimitedForm } from '@/features/media/readBody'
 import { readUploadPolicy, type MediaEngine } from '@/features/media/store'
 import { checkUpload, recordUpload } from '@/features/dam/onUpload'
+import { inheritedDefaults, withAltPrefix } from '@/features/media/folderRecords'
+import { listRecords, userMayUse, type D1 as FolderD1 } from '@/features/media/folderRecordsStore'
+import { saveRights, type D1 as DamStoreD1 } from '@/features/dam/store'
 import { getSettings as getDamSettings, type D1 as DamD1 } from '@/features/dam/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { ValidationError } from '@/localapi/operations'
@@ -74,6 +77,20 @@ export async function POST(request: Request): Promise<Response> {
   const folder = text(form.get('folder'), 200).replace(/^\/+|\/+$/g, '')
   const caption = text(form.get('caption'), 300)
 
+  // Folder records: a folder limited to roles or companies refuses people outside them, and a folder's defaults apply to new files.
+  let folderDefaults = { altPrefix: '', defaultLicence: '' }
+  if (folder) {
+    try {
+      const fd1 = (await rawD1()) as never as FolderD1
+      if (!(await userMayUse(fd1, auth.context.user, auth.context.isAdmin, folder))) {
+        return NextResponse.json({ error: 'You do not have access to that folder.' }, { status: 403 })
+      }
+      folderDefaults = inheritedDefaults(await listRecords(fd1), folder)
+    } catch (error) {
+      console.error('Folder rules could not be read; the upload goes on:', error)
+    }
+  }
+
   // Asset manager: spot a file that is already in the library (same bytes), and keep its hash and camera data after storing.
   let dam: { d1: DamD1; hash: string; duplicateOf: number | null } | null = null
   try {
@@ -92,7 +109,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     // Pictures need alt text; give a draft when none was typed so a batch of pictures can go in at once.
     const looksLikePicture = fileKindOf(upload.mimetype) === 'image' || /\.(jpe?g|png|gif|webp|avif)$/i.test(upload.name)
-    const altText = alt || (looksLikePicture ? altFromName(upload.name) : '')
+    const altText = alt || (looksLikePicture ? withAltPrefix(folderDefaults.altPrefix, altFromName(upload.name)) : '')
     const doc = await engine.create({
       collection: 'media',
       data: { alt: altText, caption, folder, source: 'upload' },
@@ -101,6 +118,16 @@ export async function POST(request: Request): Promise<Response> {
     })
     const isPicture = typeof doc.mimeType === 'string' && doc.mimeType.startsWith('image/')
     if (dam) await recordUpload(dam.d1, Number(doc.id), bytes, upload.mimetype, dam.hash, caption, String(doc.alt ?? ''), null, new Date().toISOString())
+    if (dam && folderDefaults.defaultLicence) {
+      try {
+        const nowIso = new Date().toISOString()
+        const assets = await import('@/features/dam/store').then((m) => m.getAssets(dam.d1 as DamStoreD1, [Number(doc.id)]))
+        const rights = assets.get(Number(doc.id))?.rights
+        if (rights && !rights.licenceType) await saveRights(dam.d1 as DamStoreD1, Number(doc.id), { ...rights, licenceType: folderDefaults.defaultLicence }, nowIso)
+      } catch (error) {
+        console.error('Folder default licence not applied:', error)
+      }
+    }
     return NextResponse.json({
       ok: true,
       doc: {
