@@ -9,6 +9,7 @@ import { resolveCartLine, type CatalogueProduct } from '@/features/ecommerce/cat
 import { addOnSummary, readAddOnChoices } from '@/features/ecommerce/lib/addOns'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
 import { SavedForLaterList, useSavedForLater } from '@/components/SavedForLater'
+import { CartNoteBox } from '@/components/CartNoteBox'
 import { CartEstimate } from '@/components/CartEstimate'
 import { CartCrossSells } from '@/components/CartCrossSells'
 import { CartRecommendations } from '@/components/CartRecommendations'
@@ -131,6 +132,7 @@ export default function CartPage() {
           <CartRecommendations />
           <FreeShippingBar subtotal={cart?.subtotal} money={money} />
           <CartEstimate />
+          <CartNoteBox />
           <PayLaterMessage amountDollars={typeof cart?.subtotal === 'number' ? cart.subtotal : null} />
           {displayState.selected ? (
             <p className="opacity-70">Converted prices are approximate. You pay in {displayState.base} at checkout.</p>
