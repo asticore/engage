@@ -177,6 +177,7 @@ export const typeSpecificFields: Field[] = [
     fields: [
       { name: 'externalUrl', type: 'text', admin: { description: 'Where the Buy button sends the customer.' } },
       { name: 'buttonText', type: 'text', defaultValue: 'Buy', admin: { description: 'Label of the button.' } },
+      { name: 'outboundClicks', type: 'ui', admin: { components: { Field: '@/features/ecommerce/admin/OutboundClicksField#OutboundClicksField' } } },
     ],
   },
   {

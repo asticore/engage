@@ -1397,6 +1397,7 @@ const ja: UiDictionary = {
   "store.addingProgress": "追加中...",
   "store.invalidAmount": "有効な金額を入力してください。",
   "store.giftCardsUnavailable": "ギフトカードは現在ご利用いただけません。",
+  "store.affiliateDisclosure": "このリンクから購入されると、当サイトに報酬が入ることがあります。",
   "store.productUnavailable": "この商品は現在ご利用いただけません。",
   "store.noProductsInGroup": "このグループにはまだ商品がありません。",
   "store.chooseOption": "オプションを選択",

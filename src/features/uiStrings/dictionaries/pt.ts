@@ -1397,6 +1397,7 @@ const pt: UiDictionary = {
   "store.addingProgress": "Adicionando...",
   "store.invalidAmount": "Insira um valor válido.",
   "store.giftCardsUnavailable": "Cartões-presente não estão disponíveis no momento.",
+  "store.affiliateDisclosure": "Podemos receber uma comissão se você comprar por este link.",
   "store.productUnavailable": "Este produto não está disponível no momento.",
   "store.noProductsInGroup": "Este grupo ainda não tem produtos.",
   "store.chooseOption": "Escolha uma opção",

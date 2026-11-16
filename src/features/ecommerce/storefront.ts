@@ -29,6 +29,8 @@ export type VariationView = {
   preorder: PreorderInfo
 }
 
+import { outboundHref } from './outboundShared'
+
 export type ProductView = {
   type: 'simple' | 'variable' | 'grouped' | 'external' | 'giftcard' | 'bundle'
   price: number | null
@@ -153,7 +155,7 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
     options: options.filter((option) => option.values.length > 0),
     details,
     variations,
-    external: type === 'external' && safeUrl(product.externalUrl) ? { url: safeUrl(product.externalUrl) as string, label: (product.buttonText || 'Buy').slice(0, 40) } : null,
+    external: type === 'external' && safeUrl(product.externalUrl) ? { url: outboundHref((product as { id?: number }).id, safeUrl(product.externalUrl) as string, true), label: (product.buttonText || 'Buy').slice(0, 40) } : null,
     qtyLimits: { ...packagingLimits(product, typeof product.minQty === 'number' && product.minQty >= 1 ? Math.floor(product.minQty) : 1), max: typeof product.maxQty === 'number' && product.maxQty >= 1 ? Math.floor(product.maxQty) : null },
     buyerPrice: {
       enabled: type === 'simple' && (product.nameYourPrice === true || product.isDonation === true),
