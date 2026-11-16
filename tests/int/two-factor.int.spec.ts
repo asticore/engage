@@ -339,6 +339,19 @@ describe('login gate', () => {
     expect(backupCodesRemaining(db.rows[0])).toBe(9)
   })
 
+  it('refuses a pending token a second time once it has finished a sign-in', async () => {
+    const db = makeDb([makeUser()])
+    const used = new Set<string>()
+    db.pendingTokens = { isUsed: async (jti) => used.has(jti), markUsed: async (jti) => void used.add(jti) }
+    const { codes } = await enrol(db)
+
+    const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
+    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[0], secret: SECRET })
+    expect(done.token).toBeTruthy()
+    await expect(loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[1], secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
+    expect(backupCodesRemaining(db.rows[0])).toBe(9)
+  })
+
   it('refuses a wrong code, counts it toward the lockout, then locks', async () => {
     const db = makeDb([makeUser()])
     await enrol(db)

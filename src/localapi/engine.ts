@@ -111,6 +111,7 @@ import { attachCustomRole } from '@/features/roles/customRoleCache'
 import { defaultUserSessionStore } from '@/features/security/userSessionStore'
 import { audit } from '@/features/security/auditLog'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
+import { pendingTokenOps } from '@/features/security/pendingTokenStore'
 import { emailOtpOps, trustedDeviceOps } from '@/features/security/twoFactorRuntime'
 import { createD1CategoryStore } from '@/features/apiKeys/categoryStore'
 import { authenticateApiKey, createD1ApiKeyStore, presentedApiKey, type ApiKeyContext, type ApiKeyDeps, type D1Like } from '@/features/apiKeys'
@@ -229,6 +230,7 @@ function buildAuthDb(): AuthDbOps {
     sessions: defaultUserSessionStore,
     emailOtp: emailOtpOps,
     trustedDevices: trustedDeviceOps,
+    pendingTokens: pendingTokenOps,
   }
 }
 
