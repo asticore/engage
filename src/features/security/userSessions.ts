@@ -59,6 +59,8 @@ export type UserSessionStore = {
 export type SessionClient = {
   userAgent?: string | null
   ip?: string | null
+  /** Two-letter country from the Cloudflare `cf-ipcountry` header. Shown only as approximate. */
+  country?: string | null
   /** Re-authentication checks (password confirmations) sign in only to test a password; they must not leave a session behind. */
   skipSession?: boolean
   /** Replaces the device label derived from the User-Agent. Impersonation uses this to flag its sessions. */
@@ -115,6 +117,18 @@ export function deviceLabelFromUserAgent(userAgent: string | null | undefined): 
   return system ? `${browser} on ${system}` : browser
 }
 
+/** Adds "(near Germany)" style wording from the Cloudflare country code. Nothing is added for a missing, unknown or Tor code. */
+export function withApproxPlace(label: string, country: string | null | undefined): string {
+  const code = typeof country === 'string' ? country.trim().toUpperCase() : ''
+  if (!/^[A-Z]{2}$/.test(code) || code === 'XX' || code === 'T1') return label
+  try {
+    const name = new Intl.DisplayNames(['en'], { type: 'region' }).of(code)
+    return name && name !== code ? `${label} (near ${name})` : label
+  } catch {
+    return label
+  }
+}
+
 /**
  * Keeps enough of an address to tell two places apart and not enough to
  * locate a person: IPv4 loses its last octet, IPv6 keeps its first three
@@ -166,7 +180,7 @@ export async function openSession(
       id: usid,
       userId: args.userId,
       tokenHash: hashJti(jti),
-      deviceLabel: args.client?.label ?? deviceLabelFromUserAgent(args.client?.userAgent),
+      deviceLabel: withApproxPlace(args.client?.label ?? deviceLabelFromUserAgent(args.client?.userAgent), args.client?.country),
       ip: coarseIp(args.client?.ip),
       createdAt: at,
       lastSeenAt: at,
