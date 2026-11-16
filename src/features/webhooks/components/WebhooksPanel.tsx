@@ -17,6 +17,7 @@ import {
   type WebhooksData,
 } from '../actions'
 import { EVENT_LABEL_KEYS, type WebhookEvent } from '../events'
+import { WebhookTransfer } from './WebhookTransfer'
 
 /**
  * The webhooks builder screen: the list, the editor, the one-time signing secret, the Test button,
@@ -193,6 +194,7 @@ export const WebhooksPanel: React.FC<{ initial: WebhooksData }> = ({ initial }) 
               {t('webhooks.new')}
             </button>
           </div>
+          <WebhookTransfer onImported={refresh} canImport={initial.secretsReady} />
           {hooks.length === 0 ? (
             <p>{t('webhooks.none')}</p>
           ) : (

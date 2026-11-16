@@ -6,6 +6,7 @@ import { EVENT_FIELDS, EVENT_LABEL_KEYS, WEBHOOK_EVENTS, type WebhookEvent } fro
 import { gate, auditWebhook } from './gate'
 import { replayDelivery, sendTest, type AttemptOutcome } from './delivery'
 import { sealSecret } from './secret'
+import { exportWebhooks, parseWebhookImport } from './transfer'
 import type { DeliveryRecord, WebhookRecord, WebhookStore } from './store'
 
 /**
@@ -197,4 +198,33 @@ export async function replayDeliveryAction(deliveryId: number): Promise<WebhookR
   const outcome = await replayDelivery(deps(g.store), deliveryId)
   if (row) await auditWebhook(g, 'update', row.webhookId, `replayed: ${outcome.status}`)
   return { ok: true, value: outcomeView(outcome) }
+}
+
+/** The webhook settings as a JSON file's text. No secrets, ids or delivery log. */
+export async function exportWebhooksAction(): Promise<WebhookResult<{ json: string }>> {
+  const g = await gate('read')
+  if (g.ok === false) return g
+  return { ok: true, value: { json: JSON.stringify(exportWebhooks(await g.store.list()), null, 2) } }
+}
+
+/** Imports an export file. Each webhook gets a new signing secret (not shown, rotate to see it) and starts switched off. */
+export async function importWebhooksAction(text: string): Promise<WebhookResult<{ created: number; skipped: string[] }>> {
+  const g = await gate('create')
+  if (g.ok === false) return g
+  if (!process.env.ENGAGE_SECRET) return { ok: false, error: SECRET_SETUP }
+  if (typeof text !== 'string' || text.length > 500_000) return { ok: false, error: 'That file is too large.' }
+  const parsed = parseWebhookImport(text, Math.max(0, MAX_WEBHOOKS - (await g.store.count())))
+  if (parsed.ok === false) return { ok: false, error: parsed.error }
+  const at = new Date().toISOString()
+  let created = 0
+  const skipped = [...parsed.skipped]
+  for (const hook of parsed.webhooks) {
+    const saved = await createWebhookRecord(g.store, hook, sealSecret(newSigningSecret()), at)
+    if (saved.ok === false) skipped.push(`${hook.name}: ${saved.error}`)
+    else {
+      created += 1
+      await auditWebhook(g, 'create', saved.value.id, `imported ${saved.value.name}`)
+    }
+  }
+  return { ok: true, value: { created, skipped } }
 }
