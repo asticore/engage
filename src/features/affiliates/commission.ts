@@ -126,3 +126,13 @@ export function commissionForLines(
   amount = Math.round(amount)
   return { base, amount, pct: base > 0 ? (amount * 100) / base : 0 }
 }
+
+export type AffiliateReport = { orders: number; salesCents: number; conversionPct: number }
+
+/** Orders, commissioned sales and conversion (orders per visit) for one affiliate. Reversed commissions do not count. */
+export function affiliateReport(rows: readonly { status: string; base_cents?: number }[], visits: number): AffiliateReport {
+  const live = rows.filter((r) => r.status !== 'reversed')
+  const salesCents = live.reduce((n, r) => n + (Number(r.base_cents) || 0), 0)
+  const conversionPct = visits > 0 ? Math.round((live.length / visits) * 10000) / 100 : 0
+  return { orders: live.length, salesCents, conversionPct }
+}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
-import { balances, clampDays, clampPct, payoutsCsv } from '@/features/affiliates/commission'
+import { affiliateReport, balances, clampDays, clampPct, payoutsCsv } from '@/features/affiliates/commission'
 import { MAX_AFFILIATES, STATUSES, newToken, normaliseCode, normaliseCoupon, suggestCode, toConsentCategory, type AffiliateStatus } from '@/features/affiliates/core'
 import * as store from '@/features/affiliates/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
@@ -36,7 +36,7 @@ export async function GET(request: Request): Promise<Response> {
   }
   const [affiliates, settings, rows, commissions, payouts, configured, productRates, products] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1), store.listProductRates(d1), store.productChoices(d1)])
   const now = new Date()
-  const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now) }))
+  const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now), ...affiliateReport(rows.filter((r) => r.affiliate_id === a.id), a.visits) }))
   return json({ affiliates: withBalances, settings, commissions, payouts, configured, productRates, products })
 }
 

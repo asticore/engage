@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { setupSteps, shareKit, toConsentCategory } from '../core'
 import type { AffiliateSettings, Affiliate, CommissionRow } from '../store'
 
-type Row = Affiliate & { pending: number; owed: number; paid: number }
+type Row = Affiliate & { pending: number; owed: number; paid: number; orders: number; salesCents: number; conversionPct: number }
 type Payout = { id: number; affiliateId: number; amountCents: number; note: string; createdAt: string }
 
 const money = (cents: number): string => `$${(cents / 100).toFixed(2)}`
@@ -235,6 +235,29 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
             ))}
           </tbody>
         </table>
+      )}
+
+      {rows.some((r) => r.orders > 0) && (
+        <section aria-labelledby="aff-top">
+          <h2 id="aff-top">Top affiliates</h2>
+          <table>
+            <thead>
+              <tr><th scope="col">Affiliate</th><th scope="col">Visits</th><th scope="col">Orders</th><th scope="col">Conversion</th><th scope="col">Sales</th><th scope="col">Earned (waiting, owed, paid)</th></tr>
+            </thead>
+            <tbody>
+              {[...rows].filter((r) => r.orders > 0).sort((a, b) => b.salesCents - a.salesCents).slice(0, 10).map((r) => (
+                <tr key={r.id}>
+                  <th scope="row">{r.name}</th>
+                  <td>{r.visits}</td>
+                  <td>{r.orders}</td>
+                  <td>{r.conversionPct}%</td>
+                  <td>{money(r.salesCents)}</td>
+                  <td>{money(r.pending + r.owed + r.paid)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
       )}
 
       {commissions.length > 0 && (
