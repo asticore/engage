@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
-import { DEFAULT_COOKIE_DAYS, chooseCode, cleanPath, looksLikeBot, normaliseCode, parseUtm, readRefCookie, refCookie } from '@/features/affiliates/core'
-import { findActiveByCode, logVisit, type D1 } from '@/features/affiliates/store'
+import { chooseCode, cleanPath, looksLikeBot, normaliseCode, parseUtm, readRefCookie, refCookie } from '@/features/affiliates/core'
+import { findActiveByCode, getSettings, logVisit, type D1 } from '@/features/affiliates/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { clientKey, hit } from '@/features/security/rateLimit'
 import { getFeatureFlags } from '@/utilities/features'
@@ -26,6 +26,7 @@ export async function POST(request: Request): Promise<Response> {
   if (!affiliate) return ok()
   const utm = parseUtm({ get: (name) => (typeof body?.[name] === 'string' ? (body[name] as string) : null) })
   await logVisit(d1, { affiliateId: affiliate.id, path: cleanPath(body?.path), ...utm }, new Date().toISOString()).catch((): void => undefined)
-  const keep = chooseCode(readRefCookie(request.headers.get('cookie')), affiliate.code, 'last')
-  return ok({ 'Set-Cookie': refCookie(keep, DEFAULT_COOKIE_DAYS) })
+  const settings = await getSettings(d1)
+  const keep = chooseCode(readRefCookie(request.headers.get('cookie')), affiliate.code, settings.clickRule)
+  return ok({ 'Set-Cookie': refCookie(keep, settings.cookieDays) })
 }

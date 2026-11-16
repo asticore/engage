@@ -47,3 +47,88 @@ export async function deleteAffiliate(d1: D1, id: number): Promise<void> {
 export async function logVisit(d1: D1, v: { affiliateId: number; path: string; source: string; medium: string; campaign: string }, nowIso: string): Promise<void> {
   await d1.prepare('INSERT INTO eg_affiliate_visits (affiliate_id, path, utm_source, utm_medium, utm_campaign, created_at) VALUES (?1,?2,?3,?4,?5,?6)').bind(v.affiliateId, v.path, v.source, v.medium, v.campaign, nowIso).run()
 }
+
+/* ------------------------------------------------------------- settings */
+
+export type AffiliateSettings = { cookieDays: number; clickRule: 'first' | 'last'; commissionPct: number; pendingDays: number }
+export const DEFAULT_SETTINGS: AffiliateSettings = { cookieDays: 30, clickRule: 'last', commissionPct: 10, pendingDays: 30 }
+
+export async function getSettings(d1: D1): Promise<AffiliateSettings> {
+  try {
+    const r = (await all(d1, 'SELECT cookie_days, click_rule, commission_pct, pending_days FROM eg_affiliate_settings WHERE id = 1'))[0]
+    if (!r) return DEFAULT_SETTINGS
+    return { cookieDays: Number(r.cookie_days ?? 30), clickRule: r.click_rule === 'first' ? 'first' : 'last', commissionPct: Number(r.commission_pct ?? 10), pendingDays: Number(r.pending_days ?? 30) }
+  } catch {
+    return DEFAULT_SETTINGS
+  }
+}
+
+export async function saveSettings(d1: D1, s: AffiliateSettings, nowIso: string): Promise<void> {
+  await d1
+    .prepare('INSERT INTO eg_affiliate_settings (id, cookie_days, click_rule, commission_pct, pending_days, updated_at) VALUES (1,?1,?2,?3,?4,?5) ON CONFLICT(id) DO UPDATE SET cookie_days=?1, click_rule=?2, commission_pct=?3, pending_days=?4, updated_at=?5')
+    .bind(s.cookieDays, s.clickRule, s.commissionPct, s.pendingDays, nowIso)
+    .run()
+}
+
+/* ---------------------------------------------------------- commissions */
+
+export type CommissionRow = { id: number; affiliate_id: number; order_id: number; base_cents: number; rate_pct: number; amount_cents: number; status: string; eligible_at: string | null; created_at: string }
+const toCommission = (r: Row): CommissionRow => ({ id: Number(r.id), affiliate_id: Number(r.affiliate_id), order_id: Number(r.order_id), base_cents: Number(r.base_cents ?? 0), rate_pct: Number(r.rate_pct ?? 0), amount_cents: Number(r.amount_cents ?? 0), status: String(r.status), eligible_at: r.eligible_at ? String(r.eligible_at) : null, created_at: String(r.created_at ?? '') })
+
+export async function getAffiliateById(d1: D1, id: number): Promise<{ id: number; email: string } | null> {
+  const r = (await all(d1, 'SELECT id, email FROM eg_affiliates WHERE id = ?1', id))[0]
+  return r ? { id: Number(r.id), email: String(r.email ?? '') } : null
+}
+
+export async function commissionForOrder(d1: D1, orderId: number): Promise<CommissionRow | null> {
+  const r = (await all(d1, 'SELECT * FROM eg_affiliate_commissions WHERE order_id = ?1', orderId))[0]
+  return r ? toCommission(r) : null
+}
+
+export async function insertTracked(d1: D1, v: { affiliateId: number; orderId: number }, nowIso: string): Promise<void> {
+  await d1.prepare("INSERT OR IGNORE INTO eg_affiliate_commissions (affiliate_id, order_id, status, created_at, updated_at) VALUES (?1,?2,'tracked',?3,?3)").bind(v.affiliateId, v.orderId, nowIso).run()
+}
+
+/** tracked -> pending, once. Does nothing for a commission that is already past tracked. */
+export async function markCommissionPending(d1: D1, v: { orderId: number; base: number; pct: number; amount: number; eligibleAt: string }, nowIso: string): Promise<boolean> {
+  const res = await d1
+    .prepare("UPDATE eg_affiliate_commissions SET base_cents=?1, rate_pct=?2, amount_cents=?3, eligible_at=?4, status='pending', updated_at=?5 WHERE order_id=?6 AND status='tracked'")
+    .bind(v.base, v.pct, v.amount, v.eligibleAt, nowIso, v.orderId)
+    .run()
+  return Number((res as { meta?: { changes?: number } }).meta?.changes ?? 1) > 0
+}
+
+export async function setCommissionAmount(d1: D1, orderId: number, amount: number, status: string, nowIso: string): Promise<void> {
+  await d1.prepare("UPDATE eg_affiliate_commissions SET amount_cents=?1, status=?2, updated_at=?3 WHERE order_id=?4 AND status IN ('tracked','pending','paid')").bind(amount, status, nowIso, orderId).run()
+}
+
+export async function commissionsFor(d1: D1, affiliateId: number | null, limit = 100): Promise<CommissionRow[]> {
+  const rows = affiliateId
+    ? await all(d1, 'SELECT * FROM eg_affiliate_commissions WHERE affiliate_id = ?1 ORDER BY id DESC LIMIT ?2', affiliateId, limit)
+    : await all(d1, 'SELECT * FROM eg_affiliate_commissions ORDER BY id DESC LIMIT ?1', limit)
+  return rows.map(toCommission)
+}
+
+/** Records a manual payout for everything an affiliate is owed (pending commissions whose wait is over). Returns the amount. */
+export async function recordPayout(d1: D1, affiliateId: number, note: string, nowIso: string): Promise<{ id: number; amount: number } | null> {
+  const due = (await all(d1, "SELECT id, amount_cents FROM eg_affiliate_commissions WHERE affiliate_id = ?1 AND status = 'pending' AND eligible_at IS NOT NULL AND eligible_at <= ?2 AND amount_cents > 0", affiliateId, nowIso))
+  const amount = due.reduce((sum, r) => sum + Number(r.amount_cents), 0)
+  if (amount <= 0) return null
+  const res = await d1.prepare('INSERT INTO eg_affiliate_payouts (affiliate_id, amount_cents, note, created_at) VALUES (?1,?2,?3,?4)').bind(affiliateId, amount, note, nowIso).run()
+  const payoutId = Number(res.meta?.last_row_id ?? 0)
+  for (const r of due) await d1.prepare("UPDATE eg_affiliate_commissions SET status='paid', payout_id=?1, updated_at=?2 WHERE id=?3 AND status='pending'").bind(payoutId, nowIso, Number(r.id)).run()
+  return { id: payoutId, amount }
+}
+
+export async function payoutsFor(d1: D1, limit = 100): Promise<Array<{ id: number; affiliateId: number; amountCents: number; note: string; createdAt: string }>> {
+  return (await all(d1, 'SELECT id, affiliate_id, amount_cents, note, created_at FROM eg_affiliate_payouts ORDER BY id DESC LIMIT ?1', limit)).map((r) => ({ id: Number(r.id), affiliateId: Number(r.affiliate_id), amountCents: Number(r.amount_cents), note: String(r.note ?? ''), createdAt: String(r.created_at ?? '') }))
+}
+
+/** Every commission row with its affiliate, for balances. */
+export async function allCommissionRows(d1: D1): Promise<Array<{ affiliate_id: number; status: string; amount_cents: number; eligible_at: string | null }>> {
+  return (await all(d1, 'SELECT affiliate_id, status, amount_cents, eligible_at FROM eg_affiliate_commissions')).map((r) => ({ affiliate_id: Number(r.affiliate_id), status: String(r.status), amount_cents: Number(r.amount_cents ?? 0), eligible_at: r.eligible_at ? String(r.eligible_at) : null }))
+}
+
+export async function hasCommissions(d1: D1, affiliateId: number): Promise<boolean> {
+  return (await all(d1, 'SELECT id FROM eg_affiliate_commissions WHERE affiliate_id = ?1 LIMIT 1', affiliateId)).length > 0
+}
