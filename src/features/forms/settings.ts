@@ -46,6 +46,9 @@ export const DEFAULT_FORM_SETTINGS: ResolvedFormSettings = {
   recaptchaSecretKey: '',
   recaptchaMinScore: 0.5,
   protectSignIn: false,
+  blockedWords: '',
+  maxLinks: 0,
+  blockedSenders: '',
   submitButtonLabel: 'Submit',
   successMessage: 'Thank you - we have received your message and will be in touch shortly.',
   errorMessage: 'Sorry, something went wrong and your message was not sent. Please try again.',
@@ -70,6 +73,9 @@ type SettingsDoc = {
     recaptchaSecretKey?: string
     recaptchaMinScore?: number
     protectSignIn?: boolean
+    blockedWords?: string
+    maxLinks?: number
+    blockedSenders?: string
   }
   defaults?: {
     submitButtonLabel?: string
@@ -136,6 +142,9 @@ export const getFormSettings = async (engine: EngineLike): Promise<ResolvedFormS
     recaptchaSecretKey: text(doc.spam?.recaptchaSecretKey, ''),
     recaptchaMinScore: num(doc.spam?.recaptchaMinScore, DEFAULT_FORM_SETTINGS.recaptchaMinScore),
     protectSignIn: bool(doc.spam?.protectSignIn, DEFAULT_FORM_SETTINGS.protectSignIn),
+    blockedWords: text(doc.spam?.blockedWords, ''),
+    maxLinks: Math.max(0, Math.min(50, Math.floor(num(doc.spam?.maxLinks, 0)))),
+    blockedSenders: text(doc.spam?.blockedSenders, ''),
     submitButtonLabel: text(doc.defaults?.submitButtonLabel, DEFAULT_FORM_SETTINGS.submitButtonLabel),
     successMessage: text(doc.defaults?.successMessage, DEFAULT_FORM_SETTINGS.successMessage),
     errorMessage: text(doc.defaults?.errorMessage, DEFAULT_FORM_SETTINGS.errorMessage),

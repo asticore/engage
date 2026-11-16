@@ -29,7 +29,7 @@ export const TURNSTILE_FIELD = 'cf-turnstile-response'
 
 export type SpamVerdict = {
   spam: boolean
-  reason?: 'honeypot' | 'too-fast' | 'turnstile' | 'turnstile-unavailable'
+  reason?: 'honeypot' | 'rules' | 'too-fast' | 'turnstile' | 'turnstile-unavailable'
   detail?: string
 }
 

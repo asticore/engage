@@ -15,6 +15,7 @@ import { FORMS_SLUG, SUBMISSIONS_SLUG, type CreateArgs, type UpdateArgs } from '
 import { SLOT_TAKEN_MESSAGE } from './slots'
 import { firstLostSlot, firstTakenSlot, slotClaimsFor } from './slotGuard'
 import { checkCaptcha, checkFillTime, checkHoneypot } from './spam'
+import { checkSpamRules } from './spamRules'
 import { buildHandoff, checkoutHandoffUrl, NO_CHECKOUT } from './checkoutHandoff'
 import { inspectFiles, storeFiles, getUploadBucket, type PendingFile, type StoredFile } from './upload'
 import { validateSubmission } from './validate'
@@ -150,6 +151,12 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
   }
 
   const { values: sanitised, visible } = sanitiseValues(form.fields || [], input.values || {})
+
+  const rules = checkSpamRules(sanitised, settings)
+  if (rules.spam) {
+    engine.logger.info({ form: form.id, reason: rules.reason, detail: rules.detail }, 'Form submission discarded as spam')
+    return { ok: true, status: 200, message: settings.successMessage }
+  }
 
   const { errors, values } = validateSubmission(form.fields || [], sanitised, visible, now)
 
