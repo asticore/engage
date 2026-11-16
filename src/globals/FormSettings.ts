@@ -122,6 +122,14 @@ export const FormSettings: GlobalConfig = {
           ],
         },
         {
+          name: 'protectSignIn',
+          type: 'checkbox',
+          defaultValue: false,
+          admin: {
+            description: 'Also require the challenge below on member sign-in, create account and forgot password. Needs the challenge switched on and its keys saved; if the keys are missing, sign-in still works.',
+          },
+        },
+        {
           name: 'turnstile',
           type: 'checkbox',
           defaultValue: false,

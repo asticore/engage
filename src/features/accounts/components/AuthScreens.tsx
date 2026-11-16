@@ -23,6 +23,7 @@ import {
 import { passwordlessDepsFor, passwordlessOptions } from '../passwordlessWiring'
 import { passkeySignInAvailable } from '../passkeysWiring'
 import { LastUsedBadge } from './LastUsedBadge'
+import { AuthCaptchaField } from '@/features/security/AuthCaptchaField'
 import { inspectLink, safeLandingPath } from '@/features/passwordless'
 import { requestClient } from '../session'
 import { accountTexts } from '../portalCopy'
@@ -65,7 +66,7 @@ export const SignInScreen: React.FC<{
         </p>
       )}
       <LastUsedBadge>
-        <SignInForm next={safeNext} justReset={justReset} initialPendingToken={pending} passwordless={passwordless} passkey={passkey} />
+        <SignInForm next={safeNext} justReset={justReset} initialPendingToken={pending} passwordless={passwordless} passkey={passkey} captcha={<AuthCaptchaField />} />
         {!pending && (
           <SocialButtons
             providers={providers}
@@ -90,7 +91,7 @@ export const RegisterScreen: React.FC = async () => {
 
   return (
     <AuthShell title={tx('auth.createAccount')} intro={tx('auth.createAccountIntro')}>
-      <RegisterForm rules={rules} />
+      <RegisterForm rules={rules} captcha={<AuthCaptchaField />} />
       <SocialButtons providers={providers} area="account" verb={tx('common.signUpWith')} orLabel={tx('common.or')} />
     </AuthShell>
   )
@@ -102,7 +103,7 @@ export const ForgotPasswordScreen: React.FC = async () => {
 
   return (
     <AuthShell title={tx('auth.forgotTitle')} intro={tx('auth.forgotIntro')}>
-      <ForgotPasswordForm />
+      <ForgotPasswordForm captcha={<AuthCaptchaField />} />
     </AuthShell>
   )
 }
