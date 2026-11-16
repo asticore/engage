@@ -193,6 +193,7 @@ import * as migration_20270317_120000_franchising from './20270317_120000_franch
 import * as migration_20270316_428000_mini_cart from './20270316_428000_mini_cart';
 import * as migration_20270317_150000_stock_hold from './20270317_150000_stock_hold';
 import * as migration_20270317_160000_gift_wrap from './20270317_160000_gift_wrap';
+import * as migration_20270317_170000_saved_cart_lines from './20270317_170000_saved_cart_lines';
 import * as migration_20270316_435000_org_sso from './20270316_435000_org_sso';
 import * as migration_20270316_425000_livechat from './20270316_425000_livechat';
 import * as migration_20270317_130000_last_login_method from './20270317_130000_last_login_method';
@@ -1254,5 +1255,10 @@ export const migrations = [
     up: migration_20270317_160000_gift_wrap.up,
     down: migration_20270317_160000_gift_wrap.down,
     name: '20270317_160000_gift_wrap',
+  },
+  {
+    up: migration_20270317_170000_saved_cart_lines.up,
+    down: migration_20270317_170000_saved_cart_lines.down,
+    name: '20270317_170000_saved_cart_lines',
   },
 ];
