@@ -39,6 +39,8 @@ import {
   requestClient,
   requestAddress,
   setSessionCookie,
+  setPendingBindingCookie,
+  clearPendingBindingCookie,
   setTrustedDeviceCookie,
   siteOrigin,
   type AccountContext,
@@ -112,6 +114,7 @@ async function signInActionImpl(_state: ActionState, form: FormData): Promise<Ac
   const origin = await requestClient()
   const result = await signIn(context.engine, text(form, 'email'), text(form, 'password'), origin)
   if (result.needsTwoFactor && result.pendingToken) {
+    await setPendingBindingCookie(result.pendingBinding)
     return { status: 'idle', message: '', pendingToken: result.pendingToken }
   }
   if (!result.ok || !result.token) {
@@ -164,6 +167,7 @@ async function signInCodeActionImpl(_state: ActionState, form: FormData): Promis
   if (result.trustedDevice) await setTrustedDeviceCookie(result.trustedDevice.token, result.trustedDevice.maxAgeSeconds)
   // A social sign-in parks its pending token here; it has done its job.
   ;(await cookies()).delete('eg_social_pending')
+  await clearPendingBindingCookie()
   redirect(safeNext(form.get('next')))
 }
 
@@ -534,7 +538,10 @@ async function verifyCodeActionImpl(_state: ActionState, form: FormData): Promis
   const deps = await passwordlessDepsFor(context.engine, await requestClient())
   const outcome = await verifyCode(deps, email, text(form, 'code'))
   if (outcome.status === 'refused') return failed(outcome.message)
-  if (outcome.status === 'two-factor') return { status: 'idle', message: '', pendingToken: outcome.pendingToken }
+  if (outcome.status === 'two-factor') {
+    await setPendingBindingCookie(outcome.pendingBinding)
+    return { status: 'idle', message: '', pendingToken: outcome.pendingToken }
+  }
 
   await setSessionCookie(outcome.token)
   redirect(safeLandingPath(text(form, 'next')))
@@ -557,7 +564,10 @@ async function confirmLinkActionImpl(_state: ActionState, form: FormData): Promi
   const deps = await passwordlessDepsFor(context.engine, await requestClient())
   const outcome = await confirmLink(deps, text(form, 'token'))
   if (outcome.status === 'refused') return failed(outcome.message)
-  if (outcome.status === 'two-factor') return { status: 'idle', message: '', pendingToken: outcome.pendingToken }
+  if (outcome.status === 'two-factor') {
+    await setPendingBindingCookie(outcome.pendingBinding)
+    return { status: 'idle', message: '', pendingToken: outcome.pendingToken }
+  }
 
   await setSessionCookie(outcome.token)
   redirect(safeLandingPath(text(form, 'next')))

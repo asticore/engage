@@ -6,7 +6,7 @@ import { methodAllowed, readMatrix } from '@/features/security/authMatrix'
 
 import { guardAttempt, tooManyAttempts } from './rateLimit'
 import { passwordlessDepsFor, passwordlessOptions } from './passwordlessWiring'
-import { accountContext, requestAddress, requestClient, setSessionCookie, siteOrigin } from './session'
+import { accountContext, requestAddress, requestClient, setPendingBindingCookie, setSessionCookie, siteOrigin } from './session'
 
 /**
  * JSON handlers behind the admin sign-in screen, which is a client component and
@@ -93,6 +93,7 @@ export async function verifyResponse(request: Request): Promise<Response> {
   const deps = await passwordlessDepsFor(context.engine, await requestClient())
   const outcome = await verifyCode(deps, address, body.code ?? '')
   if (outcome.status === 'refused') return json({ ok: false, message: outcome.message }, 400)
+  if (outcome.status === 'two-factor') await setPendingBindingCookie(outcome.pendingBinding)
   if (outcome.status === 'two-factor') return json({ ok: false, twoFactorRequired: true, pendingToken: outcome.pendingToken }, 200)
 
   await setSessionCookie(outcome.token)

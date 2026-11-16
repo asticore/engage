@@ -528,6 +528,21 @@ const PBKDF2_DIGEST = 'sha256'
 
 /** How long a password-correct sign-in may wait for its code. */
 export const PENDING_TWO_FACTOR_SECONDS = 300
+
+/** Browser binding for a pending token: a random value goes to the browser in a cookie, only its hash goes in the token. */
+const newPendingBinding = (): { nonce: string; hash: string } => {
+  const nonce = crypto.randomBytes(24).toString('hex')
+  return { nonce, hash: crypto.createHash('sha256').update(nonce).digest('hex') }
+}
+
+/** True when the token carries no binding (issued before this existed) or the cookie value it was sent with matches. */
+const pendingBindingHolds = (claims: Record<string, unknown>, presented: string | null | undefined): boolean => {
+  if (typeof claims.pb !== 'string') return true
+  if (!presented) return false
+  const a = Buffer.from(crypto.createHash('sha256').update(presented).digest('hex'))
+  const b = Buffer.from(claims.pb)
+  return a.length === b.length && crypto.timingSafeEqual(a, b)
+}
 const PENDING_PURPOSE = 'two-factor-pending'
 
 /* -------------------------------------------------------------------------- */
@@ -742,7 +757,7 @@ export type LoginArgs = { email: string; password: string; secret: string; clien
  * (no session exists yet); `loginWithSecondFactor` turns that plus a code into
  * the session.
  */
-export type LoginResult = { user: AuthUserDoc; token?: string; exp?: number; twoFactorRequired?: boolean; pendingToken?: string; trustedDevice?: { token: string; maxAgeSeconds: number } }
+export type LoginResult = { user: AuthUserDoc; token?: string; exp?: number; twoFactorRequired?: boolean; pendingToken?: string; /** Random value the caller must hand the browser in a cookie; the second step must send it back. */ pendingBinding?: string; trustedDevice?: { token: string; maxAgeSeconds: number } }
 
 export type ResetPasswordArgs = { token: string; password: string; secret: string; client?: SessionClient }
 export type ResetPasswordResult = { user: AuthUserDoc; token: string }
@@ -990,8 +1005,9 @@ export async function login(db: AuthDbOps, args: LoginArgs): Promise<LoginResult
   // Confirmed two-step: the password alone does not earn a session. Nothing is
   // written yet (no session, no attempt reset); the code step finishes it.
   if (requiresSecondFactor(row) && !(await deviceIsTrusted(db, row.id, args.client, args.secret))) {
-    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: normalizedEmail, jti: crypto.randomUUID() }, args.secret, PENDING_TWO_FACTOR_SECONDS)
-    return { user: toAuthUserDoc(row), twoFactorRequired: true, pendingToken }
+    const bind = newPendingBinding()
+    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: normalizedEmail, jti: crypto.randomUUID(), pb: bind.hash }, args.secret, PENDING_TWO_FACTOR_SECONDS)
+    return { user: toAuthUserDoc(row), twoFactorRequired: true, pendingToken, pendingBinding: bind.nonce }
   }
 
   return finishLogin(db, row, now, args.secret, normalizedEmail, args.client)
@@ -1060,8 +1076,9 @@ export async function loginAsUser(db: AuthDbOps, args: LoginAsUserArgs): Promise
   checkLoginPermission(row, now)
 
   if (requiresSecondFactor(row) && !args.skipSecondFactor && !(await deviceIsTrusted(db, row.id, args.client, args.secret))) {
-    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: row.email, jti: crypto.randomUUID() }, args.secret, PENDING_TWO_FACTOR_SECONDS)
-    return { user: toAuthUserDoc(row), twoFactorRequired: true, pendingToken }
+    const bind = newPendingBinding()
+    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: row.email, jti: crypto.randomUUID(), pb: bind.hash }, args.secret, PENDING_TWO_FACTOR_SECONDS)
+    return { user: toAuthUserDoc(row), twoFactorRequired: true, pendingToken, pendingBinding: bind.nonce }
   }
   return finishLogin(db, row, now, args.secret, undefined, args.client, args.session)
 }
@@ -1080,6 +1097,8 @@ export async function loginWithSecondFactor(db: AuthDbOps, args: LoginSecondFact
   if (!claims || claims.purpose !== PENDING_PURPOSE || typeof claims.id !== 'number') throw new TwoFactorCodeError()
   const jti = typeof claims.jti === 'string' ? claims.jti : null
   if (jti && db.pendingTokens && (await db.pendingTokens.isUsed(jti))) throw new TwoFactorCodeError()
+  // A token seen elsewhere (a log, a shared screen) is useless without the cookie set at the first step. Not counted toward the lockout: the account holder did nothing wrong.
+  if (!pendingBindingHolds(claims, args.client?.pendingBinding)) throw new TwoFactorCodeError()
 
   const row = await db.findByID(claims.id)
   checkLoginPermission(row, now)
@@ -1110,9 +1129,10 @@ export async function loginWithSecondFactor(db: AuthDbOps, args: LoginSecondFact
  * Emails the second-step code for a pending sign-in. The pending token proves the password step
  * passed; nothing else about the account is revealed. Refused when the email method is not wired.
  */
-export async function sendSecondFactorEmail(db: AuthDbOps, args: { pendingToken: string; secret: string }): Promise<{ ok: boolean; message: string }> {
+export async function sendSecondFactorEmail(db: AuthDbOps, args: { pendingToken: string; secret: string; client?: SessionClient }): Promise<{ ok: boolean; message: string }> {
   const claims = typeof args.pendingToken === 'string' ? verifyJWT(args.pendingToken, args.secret) : null
   if (!claims || claims.purpose !== PENDING_PURPOSE || typeof claims.id !== 'number') throw new TwoFactorCodeError()
+  if (!pendingBindingHolds(claims, args.client?.pendingBinding)) throw new TwoFactorCodeError()
   const row = await db.findByID(claims.id)
   checkLoginPermission(row, Date.now())
   if (!db.emailOtp || !requiresSecondFactor(row)) return { ok: false, message: 'Email codes are not available.' }

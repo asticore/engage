@@ -5,6 +5,7 @@ import type { PortalStringKey } from '@/features/multilingual/portalStrings'
 import { accountTexts } from '../portalCopy'
 import { SCREEN_KEYWORDS, SETTINGS_FIELDS } from '../portalSearch'
 import { AccountNav } from './AccountNav'
+import { AccountSwitcher } from './AccountSwitcher'
 import { PortalSearch } from './PortalSearch'
 import { PortalTextProvider } from './PortalText'
 import { AccountStyles } from './styles'
@@ -66,6 +67,7 @@ export const AccountShell = async ({
       <div className="page-shell">
         <AccountStyles />
         <h1>{title}</h1>
+        <AccountSwitcher />
         <PortalSearch links={searchScreens} settings={searchSettings} account />
         <div className="account">
           <AccountNav links={links} current={current} />
@@ -89,6 +91,7 @@ export const AuthShell: React.FC<{ title: string; intro?: string; children: Reac
         <AccountStyles />
         <h1>{title}</h1>
         {intro ? <p>{intro}</p> : null}
+        <AccountSwitcher />
         {children}
       </div>
     </PortalTextProvider>

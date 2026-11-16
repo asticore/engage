@@ -2,6 +2,7 @@
 
 import { refuseWhileImpersonating } from '@/features/impersonation/policy'
 import { headers } from 'next/headers'
+import { pendingBindingFromCookieHeader } from './pendingBinding'
 
 import { getEngine } from '@/lib/engine'
 
@@ -221,7 +222,7 @@ export async function sendChallengeEmailAction(pendingToken: string): Promise<Tw
   if (decision.limited) return SLOW_DOWN
   try {
     const engine = await getEngine()
-    const result = await engine.sendSecondFactorEmail({ collection: 'users', data: { pendingToken: String(pendingToken ?? '') } })
+    const result = await engine.sendSecondFactorEmail({ collection: 'users', data: { pendingToken: String(pendingToken ?? '') }, client: { pendingBinding: pendingBindingFromCookieHeader((await headers()).get('cookie')) } })
     return { ok: result.ok, message: result.message }
   } catch {
     return { ok: false, message: 'That sign-in took too long. Start again.' }

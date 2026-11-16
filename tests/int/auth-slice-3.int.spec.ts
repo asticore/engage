@@ -463,8 +463,8 @@ describe('email as the second step at sign-in', () => {
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
     expect(first.twoFactorRequired).toBe(true)
 
-    await expect(loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: '999999', method: 'email', secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
-    const done = await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: '123456', method: 'email', secret: SECRET })
+    await expect(loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: '999999', method: 'email', secret: SECRET, client: { pendingBinding: first.pendingBinding } })).rejects.toBeInstanceOf(TwoFactorCodeError)
+    const done = await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: '123456', method: 'email', secret: SECRET, client: { pendingBinding: first.pendingBinding } })
     expect(done.token).toBeTruthy()
   })
 
@@ -473,15 +473,15 @@ describe('email as the second step at sign-in', () => {
     await enrolledByEmail(db)
     db.emailOtp = emailOps('123456')
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    await expect(loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: '123456', secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
+    await expect(loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: '123456', secret: SECRET, client: { pendingBinding: first.pendingBinding } })).rejects.toBeInstanceOf(TwoFactorCodeError)
   })
 
   it('refuses the email method when it is not wired, and still accepts a backup code', async () => {
     const db = makeDb([makeUser()])
     const codes = await enrolledByEmail(db)
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    await expect(loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: '123456', method: 'email', secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
-    const done = await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET })
+    await expect(loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: '123456', method: 'email', secret: SECRET, client: { pendingBinding: first.pendingBinding } })).rejects.toBeInstanceOf(TwoFactorCodeError)
+    const done = await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { pendingBinding: first.pendingBinding } })
     expect(done.token).toBeTruthy()
   })
 
@@ -492,7 +492,7 @@ describe('email as the second step at sign-in', () => {
     db.emailOtp = ops
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
 
-    expect(await sendSecondFactorEmail(db, { pendingToken: first.pendingToken!, secret: SECRET })).toMatchObject({ ok: true })
+    expect(await sendSecondFactorEmail(db, { pendingToken: first.pendingToken!, secret: SECRET, client: { pendingBinding: first.pendingBinding } })).toMatchObject({ ok: true })
     expect(ops.sent).toBe(1)
     await expect(sendSecondFactorEmail(db, { pendingToken: 'forged', secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
     expect(ops.sent).toBe(1)
@@ -639,11 +639,11 @@ describe('trusted devices at sign-in', () => {
   it('hands back a device cookie after a second step with "remember" ticked, and not otherwise', async () => {
     const { db, codes } = await enrolledDb()
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const without = await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { trustDevice: false } })
+    const without = await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { pendingBinding: first.pendingBinding, trustDevice: false } })
     expect(without.trustedDevice).toBeUndefined()
 
     const second = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const withTrust = await loginWithSecondFactor(db, { pendingToken: second.pendingToken!, code: codes[1], secret: SECRET, client: { trustDevice: true } })
+    const withTrust = await loginWithSecondFactor(db, { pendingToken: second.pendingToken!, code: codes[1], secret: SECRET, client: { pendingBinding: second.pendingBinding, trustDevice: true } })
     expect(withTrust.trustedDevice?.token).toBeTruthy()
     expect(withTrust.trustedDevice?.maxAgeSeconds).toBe(14 * 86_400)
   })
@@ -651,7 +651,7 @@ describe('trusted devices at sign-in', () => {
   it('skips the code on a remembered device but still checks the password', async () => {
     const { db, codes } = await enrolledDb()
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const done = await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { trustDevice: true } })
+    const done = await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { pendingBinding: first.pendingBinding, trustDevice: true } })
     const cookie = done.trustedDevice!.token
 
     const next = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET, client: { trustedDeviceToken: cookie } })
@@ -666,7 +666,7 @@ describe('trusted devices at sign-in', () => {
   it('asks for the code again for a revoked, foreign or garbage cookie', async () => {
     const { db, codes, store } = await enrolledDb()
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const cookie = (await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { trustDevice: true } })).trustedDevice!.token
+    const cookie = (await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { pendingBinding: first.pendingBinding, trustDevice: true } })).trustedDevice!.token
 
     expect((await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET, client: { trustedDeviceToken: 'garbage' } })).twoFactorRequired).toBe(true)
     await revokeAllTrustedDevices(store, 1)
@@ -676,7 +676,7 @@ describe('trusted devices at sign-in', () => {
   it('asks for the code when the feature is switched off, even with a valid cookie', async () => {
     const { db, codes, store } = await enrolledDb()
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const cookie = (await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { trustDevice: true } })).trustedDevice!.token
+    const cookie = (await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { pendingBinding: first.pendingBinding, trustDevice: true } })).trustedDevice!.token
     db.trustedDevices = deviceOps(store, false)
     expect((await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET, client: { trustedDeviceToken: cookie } })).twoFactorRequired).toBe(true)
   })
@@ -684,7 +684,7 @@ describe('trusted devices at sign-in', () => {
   it('forgets every device when the password is reset', async () => {
     const { db, codes, store } = await enrolledDb()
     const first = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { trustDevice: true } })
+    await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET, client: { pendingBinding: first.pendingBinding, trustDevice: true } })
     expect(await listTrustedDevices(store, 1)).toHaveLength(1)
 
     db.rows[0] = { ...db.rows[0], resetPasswordToken: 'reset-token', resetPasswordExpiration: new Date(Date.now() + HOUR).toISOString() } as AuthUserRow
