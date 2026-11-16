@@ -7186,6 +7186,9 @@ export interface FormSetting {
      * Also require the challenge below on member sign-in, create account and forgot password. Needs the challenge switched on and its keys saved; if the keys are missing, sign-in still works.
      */
     protectSignIn?: boolean | null;
+    blockedWords?: string | null;
+    maxLinks?: number | null;
+    blockedSenders?: string | null;
     turnstile?: boolean | null;
     /**
      * From the Turnstile section of your Cloudflare dashboard. This one is public - it appears in the form itself.
@@ -8268,6 +8271,9 @@ export interface FormSettingsSelect<T extends boolean = true> {
         honeypot?: T;
         minimumFillTimeSeconds?: T;
         protectSignIn?: T;
+        blockedWords?: T;
+        maxLinks?: T;
+        blockedSenders?: T;
         turnstile?: T;
         turnstileSiteKey?: T;
         turnstileSecretKey?: T;

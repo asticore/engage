@@ -293,6 +293,12 @@ export type ResolvedFormSettings = {
   recaptchaMinScore: number
   /** Also require the challenge on member sign-in, register and forgot password. */
   protectSignIn: boolean
+  /** One word or phrase per line. A submission containing one is discarded as spam. */
+  blockedWords: string
+  /** Most links a submission may contain. 0 means no limit. */
+  maxLinks: number
+  /** One email address or domain per line. A submission from one is discarded as spam. */
+  blockedSenders: string
   submitButtonLabel: string
   successMessage: string
   errorMessage: string
