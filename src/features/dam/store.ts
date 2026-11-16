@@ -1,5 +1,7 @@
 import { APPLIES_TO, FIELD_TYPES, type MetaField, type MetaFieldInput } from './metaFields'
 import { EMPTY_RIGHTS, STATUSES, type AssetStatus, type Rights } from './rights'
+import type { FolderRule } from './access'
+import type { Share, ShareKind } from './share'
 import { buildSearch, parseFilters, type SearchContext, type SearchFilters } from './search'
 import type { Version } from './versions'
 
@@ -319,4 +321,54 @@ export async function deleteSearch(d1: D1, id: number): Promise<void> {
 export async function saveSmartCollection(d1: D1, name: string, filters: SearchFilters, nowIso: string): Promise<number> {
   const res = await run(d1, "INSERT INTO eg_media_collections (name, description, smart_query, updated_at, created_at) VALUES (?1,'',?2,?3,?3)", name, JSON.stringify({ ...filters, collectionId: 0 }), nowIso)
   return Number(res.meta?.last_row_id ?? 0)
+}
+
+// Private files, folder rules and share links
+
+export async function setVisibility(d1: D1, mediaIds: number[], visibility: 'public' | 'private', nowIso: string): Promise<void> {
+  for (const id of mediaIds) {
+    await ensureRow(d1, id, nowIso)
+    await run(d1, 'UPDATE eg_media_assets SET visibility=?1, updated_at=?2 WHERE media_id=?3', visibility, nowIso, id)
+  }
+}
+
+export async function listFolderRules(d1: D1): Promise<FolderRule[]> {
+  return (await all(d1, "SELECT path, visibility FROM eg_media_folders WHERE visibility <> 'inherit' ORDER BY path")).map((r) => ({ path: str(r.path), visibility: r.visibility === 'private' ? 'private' : 'public' }))
+}
+export async function saveFolderRule(d1: D1, path: string, visibility: 'inherit' | 'public' | 'private', nowIso: string): Promise<void> {
+  await run(d1, "INSERT INTO eg_media_folders (path, visibility, updated_at, created_at) VALUES (?1, ?2, ?3, ?3) ON CONFLICT(path) DO UPDATE SET visibility=?2, updated_at=?3", path, visibility, nowIso)
+}
+
+const toShare = (r: Row): Share => ({
+  id: Number(r.id), kind: r.kind === 'collection' ? 'collection' : 'file', targetId: Number(r.target_id), expiresAt: nullable(r.expires_at), hasPassword: Boolean(str(r.password_hash)),
+  maxDownloads: Number(r.max_downloads), downloads: Number(r.downloads), revoked: Number(r.revoked) !== 0, createdAt: str(r.created_at),
+})
+
+export async function createShare(d1: D1, v: { tokenHash: string; kind: ShareKind; targetId: number; expiresAt: string | null; passwordHash: string; maxDownloads: number; userId: number | null }, nowIso: string): Promise<number> {
+  const res = await run(d1, 'INSERT INTO eg_media_shares (token_hash, kind, target_id, expires_at, password_hash, max_downloads, user_id, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)', v.tokenHash, v.kind, v.targetId, v.expiresAt, v.passwordHash, v.maxDownloads, v.userId, nowIso)
+  return Number(res.meta?.last_row_id ?? 0)
+}
+export async function listShares(d1: D1, kind: ShareKind, targetId: number): Promise<Share[]> {
+  return (await all(d1, 'SELECT * FROM eg_media_shares WHERE kind = ?1 AND target_id = ?2 ORDER BY id DESC LIMIT 50', kind, targetId)).map(toShare)
+}
+export async function revokeShare(d1: D1, id: number): Promise<void> {
+  await run(d1, 'UPDATE eg_media_shares SET revoked = 1 WHERE id = ?1', id)
+}
+export async function getShareByHash(d1: D1, tokenHash: string): Promise<(Share & { passwordHash: string }) | null> {
+  const r = (await all(d1, 'SELECT * FROM eg_media_shares WHERE token_hash = ?1', tokenHash))[0]
+  return r ? { ...toShare(r), passwordHash: str(r.password_hash) } : null
+}
+/** Counts one download, but only while the link is under its limit, so two quick downloads cannot both take the last one. */
+export async function takeDownload(d1: D1, id: number): Promise<boolean> {
+  const res = await run(d1, 'UPDATE eg_media_shares SET downloads = downloads + 1 WHERE id = ?1 AND revoked = 0 AND (max_downloads = 0 OR downloads < max_downloads)', id)
+  return Number(res.meta?.changes ?? 0) > 0
+}
+
+export type MediaRow = { id: number; filename: string; mimeType: string; filesize: number; alt: string }
+export async function mediaRows(d1: D1, ids: number[]): Promise<MediaRow[]> {
+  const out: MediaRow[] = []
+  for (const part of chunks(ids, 50)) {
+    for (const r of await all(d1, `SELECT id, filename, mime_type, filesize, alt FROM eg_media WHERE id IN (${marks(part.length)}) AND filename IS NOT NULL`, ...part)) out.push({ id: Number(r.id), filename: str(r.filename), mimeType: str(r.mime_type), filesize: Number(r.filesize ?? 0), alt: str(r.alt) })
+  }
+  return out
 }

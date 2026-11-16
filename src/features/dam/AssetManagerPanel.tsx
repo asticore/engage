@@ -8,6 +8,7 @@ import type { Collection, Settings } from './store'
 type Overview = {
   settings: Settings
   collections: Collection[]
+  folderRules: Array<{ path: string; visibility: 'public' | 'private' }>
   fields: MetaField[]
   expiring: Array<{ mediaId: number; licenceExpiry: string }>
   expired: Array<{ mediaId: number; licenceExpiry: string }>
@@ -22,6 +23,9 @@ export function AssetManagerPanel() {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [collection, setCollection] = useState({ id: 0, name: '', description: '' })
   const [field, setField] = useState(blankField)
+  const [rule, setRule] = useState({ path: '', visibility: 'private' })
+  const [share, setShare] = useState({ collectionId: 0, days: '7', password: '', maxDownloads: '' })
+  const [link, setLink] = useState('')
 
   const load = useCallback(async (): Promise<void> => {
     const res = await fetch('/api/admin-media-dam')
@@ -85,6 +89,54 @@ export function AssetManagerPanel() {
           <button type="button" className="btn" onClick={() => void post({ action: 'saveCollection', ...collection, id: collection.id || undefined }, 'Saved.').then((ok) => { if (ok) setCollection({ id: 0, name: '', description: '' }) })}>{collection.id ? 'Save changes' : 'Add collection'}</button>
           {collection.id ? <button type="button" className="btn" onClick={() => setCollection({ id: 0, name: '', description: '' })}>Cancel</button> : null}
         </div>
+      </div></div>
+
+      <h2>Private folders</h2>
+      <p className="text-muted">Files in a private folder (and its sub-folders) are not reachable by their public address. Staff who can read media still see them, and a share link can hand one out. A folder setting applies to files added later too. A change can take about ten seconds to apply everywhere.</p>
+      {data.folderRules.length === 0 ? <p className="text-muted">No folder rules yet.</p> : (
+        <ul className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+          {data.folderRules.map((r) => (
+            <li key={r.path} className="cluster">
+              <strong>{r.path}</strong><span className="text-muted">{r.visibility}</span>
+              <button type="button" className="btn" onClick={() => void post({ action: 'saveFolderRule', path: r.path, visibility: 'inherit' }, 'Rule removed.')}>Remove rule</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="card"><div className="card-body stack">
+        <div className="cluster">
+          <label className="field">Folder<input className="input" value={rule.path} onChange={(e) => setRule({ ...rule, path: e.target.value })} placeholder="e.g. contracts" /></label>
+          <label className="field">Make it
+            <select className="input" value={rule.visibility} onChange={(e) => setRule({ ...rule, visibility: e.target.value })}><option value="private">Private</option><option value="public">Public (inside a private folder)</option></select>
+          </label>
+          <button type="button" className="btn" onClick={() => void post({ action: 'saveFolderRule', ...rule }, 'Folder rule saved.').then((ok) => { if (ok) setRule({ path: '', visibility: 'private' }) })}>Save folder rule</button>
+        </div>
+      </div></div>
+
+      <h2>Share a collection</h2>
+      <div className="card"><div className="card-body stack">
+        <div className="cluster">
+          <label className="field">Collection
+            <select className="input" value={share.collectionId} onChange={(e) => setShare({ ...share, collectionId: Number(e.target.value) })}>
+              <option value={0}>Choose...</option>{data.collections.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </label>
+          <label className="field">Works for (days)<input className="input" inputMode="numeric" value={share.days} onChange={(e) => setShare({ ...share, days: e.target.value })} /></label>
+          <label className="field">Password (optional)<input className="input" autoComplete="off" value={share.password} onChange={(e) => setShare({ ...share, password: e.target.value })} /></label>
+          <label className="field">Download limit (optional)<input className="input" inputMode="numeric" value={share.maxDownloads} onChange={(e) => setShare({ ...share, maxDownloads: e.target.value })} /></label>
+        </div>
+        <div><button type="button" className="btn" onClick={() => {
+          void (async () => {
+            setMessage('')
+            const res = await fetch('/api/admin-media-dam', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'createShare', kind: 'collection', targetId: share.collectionId, days: Number(share.days), password: share.password, maxDownloads: share.maxDownloads }) })
+            const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+            if (!res.ok || !body.url) return setMessage(body.error ?? 'The link could not be made.')
+            setLink(body.url)
+            setShare({ ...share, password: '' })
+          })()
+        }}>Create share link</button></div>
+        {link ? <label className="field">Copy this link now, it is not shown again<input className="input" readOnly value={link} onFocus={(e) => e.currentTarget.select()} /></label> : null}
+        <p className="text-muted">The link opens a page that lists the collection&apos;s files with a download button for each and a zip of all of them. Files that are expired, embargoed or archived are left out.</p>
       </div></div>
 
       <h2>Metadata fields</h2>

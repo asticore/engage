@@ -648,10 +648,11 @@ async function handleBulkUpdate(engine: Engine, collection: string, request: Req
 async function handleGetMediaFile(filename: string, request: Request, engine?: Engine): Promise<Response> {
   // A file limited to a company is served only to its members (features/organizations/mediaGate.ts). Unrestricted files take one cheap lookup.
   let restricted = false
+  let who: { id?: number | string; roles?: string[] } | null = null
   try {
     const [{ resolveD1Binding }, { decideMediaAccess }] = await Promise.all([import('@/cms/db/connect'), import('@/features/organizations/mediaGate')])
     const d1 = (await resolveD1Binding()) as unknown as import('@/features/organizations/store').D1Like
-    const who = engine ? await engine.auth({ headers: request.headers }).then((r) => r.user as { id?: number | string; roles?: string[] } | null, (): null => null) : null
+    who = engine ? await engine.auth({ headers: request.headers }).then((r) => r.user as { id?: number | string; roles?: string[] } | null, (): null => null) : null
     const userId = who && who.id !== undefined && Number.isFinite(Number(who.id)) ? Number(who.id) : null
     const decision = await decideMediaAccess(d1, filename, { userId, isAdmin: Boolean(who?.roles?.includes('admin')) })
     if (decision.allow === false) {
@@ -660,6 +661,18 @@ async function handleGetMediaFile(filename: string, request: Request, engine?: E
     restricted = decision.restricted
   } catch {
     // The gate could not run (no database binding in a test, for example): serve as before.
+  }
+  // Asset manager: a file marked private (itself or through its folder) is served only to staff who can read media. Everyone else
+  // gets the same 404 as a missing file, so its address does not confirm that it exists. Share links serve it through their own route.
+  try {
+    const [{ resolveD1Binding }, { decidePrivateAccess }, { roleAccess }] = await Promise.all([import('@/cms/db/connect'), import('@/features/dam/access'), import('@/access/ecommerceAccess')])
+    const d1 = (await resolveD1Binding()) as unknown as Parameters<typeof decidePrivateAccess>[0]
+    const canReadMedia = Boolean(who && roleAccess('media', 'read')({ req: { user: who } } as never))
+    const decision = await decidePrivateAccess(d1, filename, { canReadMedia })
+    if (decision.allow === false) return Response.json({ errors: [{ name: 'NotFound', message: 'Not Found' }] }, { status: 404, headers: { 'Cache-Control': 'private, no-store' } })
+    if (decision.private) restricted = true
+  } catch {
+    // The check could not run (no database binding in a test): serve as before.
   }
   const response = await getMediaObjectResponse(filename, request)
   if (!response) return Response.json({ errors: [{ name: 'NotFound', message: 'Not Found' }] }, { status: 404 })
