@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { setupSteps, shareKit } from '../core'
+import { setupSteps, shareKit, toConsentCategory } from '../core'
 import type { AffiliateSettings, Affiliate, CommissionRow } from '../store'
 
 type Row = Affiliate & { pending: number; owed: number; paid: number }
@@ -112,6 +112,14 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
           <label>Commission %<br /><input type="number" min={0} max={100} step="0.5" value={settings.commissionPct} onChange={(e) => set({ commissionPct: Number(e.target.value) })} /></label>
           <label>Days before payable<br /><input type="number" min={0} max={365} value={settings.pendingDays} onChange={(e) => set({ pendingDays: Number(e.target.value) })} /></label>
           <label>Minimum payout ($)<br /><input type="number" min={0} step="1" value={settings.minPayoutCents / 100} onChange={(e) => set({ minPayoutCents: Math.round(Number(e.target.value) * 100) })} /></label>
+          <label>Referral cookie is filed under<br />
+            <select value={settings.consentCategory} onChange={(e) => set({ consentCategory: toConsentCategory(e.target.value) })}>
+              <option value="necessary">Necessary (always stored)</option>
+              <option value="preferences">Preferences (needs consent)</option>
+              <option value="analytics">Analytics (needs consent)</option>
+              <option value="marketing">Marketing (needs consent)</option>
+            </select>
+          </label>
           <label>
             <input type="checkbox" checked={settings.firstOrderOnly} onChange={(e) => set({ firstOrderOnly: e.target.checked })} /> Commission on a buyer&apos;s first order only
           </label>
@@ -174,6 +182,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
                   {a.status === 'active' && <button type="button" onClick={() => post({ action: 'status', id: a.id, status: 'suspended' })}>Suspend</button>}
                   {a.owed > 0 && <button type="button" onClick={() => { const note = window.prompt(`Record a payout of ${money(a.owed)} to ${a.name}. Note (for example the payment reference):`, ''); if (note !== null) void post({ action: 'payout', id: a.id, note }, `Payout of ${money(a.owed)} recorded. Pay ${a.name} outside the site.`) }}>Record payout</button>}
                   <button type="button" onClick={() => { const v = window.prompt(`Commission rate for ${a.name} in percent (blank to use the program rate of ${settings?.commissionPct ?? 10}%):`, a.ratePct === null ? '' : String(a.ratePct)); if (v !== null) void post({ action: 'rate', id: a.id, ratePct: v.trim() === '' ? null : Number(v) }, 'Rate saved.') }}>Rate: {a.ratePct === null ? 'default' : `${a.ratePct}%`}</button>
+                  <button type="button" onClick={() => { const v = window.prompt(`Coupon code that credits ${a.name} (for example a code they give their audience). Orders that use it are attributed to them when no link cookie is present. Blank removes it:`, a.couponCode); if (v !== null) void post({ action: 'coupon', id: a.id, coupon: v }, 'Coupon saved.') }}>Coupon: {a.couponCode || 'none'}</button>
                   <button type="button" onClick={() => void copyKit(a)}>Copy share kit</button>
                   <button type="button" onClick={() => void dashboardLink(a)}>Copy dashboard link</button>
                   <button type="button" onClick={() => navigator.clipboard?.writeText(link(a.code)).then(() => setMessage('Link copied.')).catch((): void => undefined)}>Copy link</button>
