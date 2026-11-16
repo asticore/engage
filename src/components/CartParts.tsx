@@ -4,6 +4,7 @@ import Link from 'next/link'
 import React from 'react'
 
 import { BundleContentsList } from '@/components/BundleContentsList'
+import { CartHoldNotice } from '@/components/CartHoldNotice'
 import { CartCrossSells } from '@/components/CartCrossSells'
 import { CartEstimate } from '@/components/CartEstimate'
 import { CartNoteBox } from '@/components/CartNoteBox'
@@ -133,6 +134,7 @@ export const CartTotalsPart: React.FC = () => {
   if (!(cart?.items?.length)) return null
   return (
     <div data-cart-part="totals">
+      <CartHoldNotice />
       <FreeShippingBar subtotal={cart.subtotal} money={money} />
       <CartEstimate />
       <CartNoteBox />

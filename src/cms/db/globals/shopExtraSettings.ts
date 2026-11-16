@@ -31,6 +31,7 @@ export type ShopExtraSettingsDoc = {
   /** Stock hold while checking out (server/stockHold.ts). */
   stockHoldEnabled?: boolean | null
   stockHoldMinutes?: number | null
+  stockHoldInCart?: boolean | null
   promoBadgesEnabled?: boolean | null
   promoBadges?: Record<string, unknown>[] | null
   updatedAt: string
