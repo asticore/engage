@@ -189,6 +189,7 @@ const fr: UiDictionary = {
   'portal.auth.confirmMyEmail': 'Confirmer mon adresse e-mail',
   'portal.auth.invitation': 'Invitation reçue',
   'portal.auth.emailCodeInstead': 'M\'envoyer plutôt un code par e-mail',
+  'portal.auth.usePasskeyInstead': 'Utiliser plutôt une clé d\'accès',
   'portal.auth.sendNewCode': 'Envoyer un nouveau code',
   'portal.auth.useAuthenticatorApp': 'Utiliser mon application d\'authentification',
   'portal.auth.rememberDeviceOne': 'Mémoriser cet appareil pendant 1 jour',

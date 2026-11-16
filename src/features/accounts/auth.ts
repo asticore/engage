@@ -317,14 +317,15 @@ export const signInWithCode = async (
   pendingToken: string,
   code: string,
   client?: SessionClient,
-  options: { method?: 'email' | 'app'; trustDevice?: boolean } = {},
+  options: { method?: 'email' | 'app' | 'passkey'; trustDevice?: boolean; passkeyVerifiedUserId?: number } = {},
 ): Promise<SignInResult> => {
-  if (!pendingToken || !code.trim()) return { ok: false, message: CODE_FAILED }
+  if (!pendingToken || (options.method !== 'passkey' && !code.trim())) return { ok: false, message: CODE_FAILED }
 
   try {
     const result = await engine.loginSecondFactor({
       collection: USERS_SLUG,
       data: { pendingToken, code: code.trim(), method: options.method },
+      passkeyVerifiedUserId: options.passkeyVerifiedUserId,
       client: { ...client, trustDevice: options.trustDevice === true },
     })
     if (!result.token) return { ok: false, message: CODE_FAILED, reason: 'failed' }

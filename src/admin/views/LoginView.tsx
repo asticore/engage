@@ -207,7 +207,7 @@ export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string 
                   ? 'Enter the 6-digit code we emailed you.'
                   : 'Enter the 6-digit code from your authenticator app, or one of your backup codes.'}
               </p>
-              <SecondFactorChoice pendingToken={pendingToken} method={method} onMethod={setMethod} trust={trust} onTrust={setTrust} disabled={isLoading} />
+              <SecondFactorChoice pendingToken={pendingToken} method={method} onMethod={setMethod} trust={trust} onTrust={setTrust} disabled={isLoading} next={finalRedirectTo} area="admin" />
             </div>
           ) : (
             <>
