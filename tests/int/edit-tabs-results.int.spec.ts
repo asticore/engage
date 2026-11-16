@@ -170,6 +170,8 @@ describe('row mapping', () => {
       email: 'a@example.com',
       guestCount: 4,
       ticketTier: '',
+      status: '',
+      orderId: null,
       notes: 'hi',
       createdAt: 'x',
     })

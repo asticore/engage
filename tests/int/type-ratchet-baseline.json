@@ -1,6 +1,6 @@
 {
   "any": 9,
-  "eslintDisable": 15,
+  "eslintDisable": 17,
   "justified": {
     "src/engage-types.ts": "Hand-kept content types in generated-file style; the file-level eslint-disable is its header.",
     "src/engine/types.ts": "Loose: the one named default for collection documents whose shape is only known per collection (give a collection a real shape with Access<Page> etc.).",
@@ -14,6 +14,8 @@
     "src/admin/fields/FieldRenderer.tsx": "The override component comes from the field config and is stable across renders; the lint rule cannot see that.",
     "src/views/visualEditor/CanvasFrame.tsx": "dangerouslySetInnerHTML of a static string constant, no user input.",
     "src/features/backups/workerEntry.ts": "Imports the built OpenNext output, which does not exist until the build has run (ts-ignore, not ts-expect-error).",
-    "src/features/members/billing.ts": "Stripe's apiVersion type is a single literal; the pinned older version needs a ts-ignore."
+    "src/features/members/billing.ts": "Stripe's apiVersion type is a single literal; the pinned older version needs a ts-ignore.",
+    "src/components/CartEstimate.tsx": "The estimate re-prices only when the cart lines change; the address and coupon fields are applied by the button, so they must stay out of the effect's dependencies.",
+    "src/features/bookings/BookingWidget.tsx": "The times load again only when the booking page slug changes; load() is re-created each render and must not retrigger the effect."
   }
 }

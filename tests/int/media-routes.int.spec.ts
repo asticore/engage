@@ -13,6 +13,15 @@ vi.mock('@/admin/auth', () => ({
 }))
 vi.mock('@/lib/engine', () => ({ getEngine: vi.fn(async () => state.context?.engine) }))
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: vi.fn(async () => ({ env: {} })) }))
+// An empty database: every statement returns no rows, so the folders route can be exercised without a real D1.
+vi.mock('@/features/ecommerce/server/db', () => {
+  const statement: Record<string, unknown> = {}
+  statement.bind = () => statement
+  statement.all = async (): Promise<{ results: unknown[] }> => ({ results: [] })
+  statement.first = async (): Promise<null> => null
+  statement.run = async () => ({ success: true, meta: {} })
+  return { rawD1: async () => ({ prepare: () => statement, batch: async (): Promise<unknown[]> => [], exec: async (): Promise<Record<string, never>> => ({}) }) }
+})
 vi.mock('@/localapi/storage', () => ({
   putMediaObject: vi.fn(async () => undefined),
   putOriginalIfMissing: vi.fn(async () => true),
@@ -159,10 +168,10 @@ describe('review hardening at the route level', () => {
     expect(await response.json()).toMatchObject({ error: expect.stringMatching(/confirmOverwrite/) })
   })
 
-  it('folders: reports whether the listing was cut short', async () => {
+  it('folders: lists the per-folder counts and folder records (no cut-off flag any more)', async () => {
     const response = await foldersGet()
     expect(response.status).toBe(200)
-    expect(await response.json()).toMatchObject({ folders: [], truncated: false })
+    expect(await response.json()).toMatchObject({ rows: [], folders: [] })
   })
 
   it('stock import: stores the source address only when it is https', async () => {

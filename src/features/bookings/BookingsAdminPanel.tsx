@@ -58,12 +58,12 @@ export function BookingsAdminPanel() {
       {message ? <p role="alert" className="badge">{message}</p> : null}
 
       <h2>People and places</h2>
-      <p className="text-muted">Who or what is booked. Opening times are in that place's time zone.</p>
+      <p className="text-muted">Who or what is booked. Opening times are in that place&apos;s time zone.</p>
       {data.resources.map((r) => (
         <div key={r.id} className="card">
           <div className="card-body stack">
             <strong>{r.title}{r.active ? '' : ' (off)'} <span className="text-muted">{r.timeZone}</span></strong>
-            <label className="field">Weekly hours, one line each, like "mon-fri 09:00-17:00"
+            <label className="field">Weekly hours, one line each, like &quot;mon-fri 09:00-17:00&quot;
               <textarea className="input" rows={4} value={hours[r.id] ?? ''} onChange={(e) => setHours({ ...hours, [r.id]: e.target.value })} />
             </label>
             <div className="cluster">
@@ -129,7 +129,7 @@ export function BookingsAdminPanel() {
             </label>
           </div>
           <label className="field">Description<textarea className="input" rows={2} value={type.description} onChange={(e) => setType({ ...type, description: e.target.value })} /></label>
-          <label className="field">Where (address or "video call")<input className="input" value={type.locationText} onChange={(e) => setType({ ...type, locationText: e.target.value })} /></label>
+          <label className="field">Where (address or &quot;video call&quot;)<input className="input" value={type.locationText} onChange={(e) => setType({ ...type, locationText: e.target.value })} /></label>
           <div className="cluster">
             {num('durationMinutes', 'Length (minutes)')}
             {num('stepMinutes', 'Start times every (minutes)')}

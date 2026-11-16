@@ -51,9 +51,10 @@ describe('workflow form helpers', () => {
       allowRepeatApprover: false,
       submitterRoles: ['editor'],
       steps: [
-        { name: 'Editor review', approverRoles: ['editor'], approvalsNeeded: 1 },
-        { name: 'Legal review', approverRoles: ['legal'], approvalsNeeded: 2 },
+        { name: 'Editor review', approverRoles: ['editor'], approverUsers: [], alsoRoles: false, approvalsNeeded: 1 },
+        { name: 'Legal review', approverRoles: ['legal'], approverUsers: [], alsoRoles: false, approvalsNeeded: 2 },
       ],
+      authorRoutes: {},
     })
   })
 

@@ -102,7 +102,7 @@ export const CORE_TABLE_BASES = [
   'integrations', 'kv', 'language_settings', 'locked_documents', 'login_tokens', 'machine_translation_usage', 'media',
   'media_settings', 'member_settings', 'migrations', 'navigation', 'not_found_log', 'number_counters',
   'organization_invitations', 'organization_members', 'organization_roles', 'organization_team_members',
-  'organization_teams', 'organizations', 'page_templates', 'pages', 'pagespeed_queue', 'pagespeed_results', 'passkeys',
+  'organization_teams', 'organizations', 'org_delegations', 'org_transfers', 'outbound_clicks', 'page_templates', 'pages', 'pagespeed_queue', 'pagespeed_results', 'passkeys',
   'password_groups', 'payment_settings', 'preferences', 'privacy_requests', 'rate_limits', 'reusable_sections', 'roles',
   'scheduled_publishes', 'security_settings', 'seo_settings', 'shipping_settings', 'shop_extra_settings', 'shop_settings',
   'site_details', 'site_pages', 'site_settings', 'site_templates', 'social_accounts', 'speed_settings',

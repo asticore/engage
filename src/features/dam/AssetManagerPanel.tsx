@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { useAdminHref } from '@/admin/adminRoute/AdminRouteProvider'
+
 import type { MetaField } from './metaFields'
 import type { Quota } from './quota'
 import type { Rendition } from './renditions'
@@ -25,6 +27,7 @@ const blankField = { id: 0, label: '', key: '', type: 'text', options: '', requi
 
 /** Asset manager admin page: settings, collections, custom metadata fields and the licence expiry report. */
 export function AssetManagerPanel() {
+  const adminHref = useAdminHref()
   const [data, setData] = useState<Overview | null>(null)
   const [message, setMessage] = useState('')
   const [settings, setSettings] = useState<Settings | null>(null)
@@ -76,8 +79,8 @@ export function AssetManagerPanel() {
 
       <h2>Licence expiry</h2>
       {data.expired.length === 0 && data.expiring.length === 0 ? <p className="text-muted">No licences are expired or about to expire.</p> : null}
-      {data.expired.length > 0 ? <p><strong>Expired ({data.expired.length}):</strong> {data.expired.map((e) => <a key={e.mediaId} href={`/admin/content/media/${e.mediaId}`} style={{ marginRight: 8 }}>#{e.mediaId} ({e.licenceExpiry})</a>)}</p> : null}
-      {data.expiring.length > 0 ? <p><strong>Expiring within {s.expiryWarnDays} days ({data.expiring.length}):</strong> {data.expiring.map((e) => <a key={e.mediaId} href={`/admin/content/media/${e.mediaId}`} style={{ marginRight: 8 }}>#{e.mediaId} ({e.licenceExpiry})</a>)}</p> : null}
+      {data.expired.length > 0 ? <p><strong>Expired ({data.expired.length}):</strong> {data.expired.map((e) => <a key={e.mediaId} href={adminHref(`/content/media/${e.mediaId}`)} style={{ marginRight: 8 }}>#{e.mediaId} ({e.licenceExpiry})</a>)}</p> : null}
+      {data.expiring.length > 0 ? <p><strong>Expiring within {s.expiryWarnDays} days ({data.expiring.length}):</strong> {data.expiring.map((e) => <a key={e.mediaId} href={adminHref(`/content/media/${e.mediaId}`)} style={{ marginRight: 8 }}>#{e.mediaId} ({e.licenceExpiry})</a>)}</p> : null}
       <p className="text-muted">An expired, embargoed, not yet started or archived file is hidden from the media picker and flagged on its own page.</p>
 
       <h2>Collections</h2>
@@ -87,7 +90,7 @@ export function AssetManagerPanel() {
             <li key={c.id} className="cluster">
               <strong>{c.name}</strong>
               <span className="text-muted">{c.smart ? 'Smart collection (follows a saved search)' : `${c.count} file${c.count === 1 ? '' : 's'}`}{c.description ? `, ${c.description}` : ''}</span>
-              <a className="btn" href={`/admin/media?collection=${c.id}`}>Open</a>
+              <a className="btn" href={adminHref(`/media?collection=${c.id}`)}>Open</a>
               <button type="button" className="btn" onClick={() => setCollection({ id: c.id, name: c.name, description: c.description })}>Edit</button>
               <button type="button" className="btn" onClick={() => { if (window.confirm(`Delete collection ${c.name}? The files stay in the library.`)) void post({ action: 'deleteCollection', id: c.id }, 'Collection deleted.') }}>Delete</button>
             </li>
@@ -224,7 +227,7 @@ export function AssetManagerPanel() {
       </div></div>
 
       <h2>Import a file</h2>
-      <p className="text-muted">From a web address (https) or a Google Drive link to one file shared as "Anyone with the link".</p>
+      <p className="text-muted">From a web address (https) or a Google Drive link to one file shared as &quot;Anyone with the link&quot;.</p>
       <div className="card"><div className="card-body stack">
         <label className="field">Address<input className="input" type="url" value={importUrl.url} onChange={(e) => setImportUrl({ ...importUrl, url: e.target.value })} /></label>
         <label className="field">Folder (optional)<input className="input" value={importUrl.folder} onChange={(e) => setImportUrl({ ...importUrl, folder: e.target.value })} /></label>

@@ -58,7 +58,7 @@ describe('password gate with an organisation restriction', () => {
   it('renders a members-only state without a password form', async () => {
     const html = await render({ signIn: true, password: false, org: { name: 'Acme' } })
     expect(html).toContain('Members of Acme only')
-    expect(html).toContain('href="/account/sign-in?redirect=%2Fblog%2Fx"')
+    expect(html).toContain('href="/account/member-sign-in?redirect=%2Fblog%2Fx"')
     expect(html).not.toContain('type="password"')
     expect(html).not.toContain('Unlock')
   })
