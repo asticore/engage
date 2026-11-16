@@ -158,6 +158,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       const bundle = await resolveBundle(engine, product as Doc, quantity, now, inCart, inCart.get(bundleKey) ?? 0, preordersOn)
       if (!bundle.ok) throw new CheckoutError((bundle as { error: string }).error)
       inCart.set(bundleKey, (inCart.get(bundleKey) ?? 0) + quantity)
+      for (const pool of bundle.pools) pools.set(pool.key, { available: pool.available, quantity: (pools.get(pool.key)?.quantity ?? 0) + pool.quantity })
       const b = product as Doc
       const virtual = isNonShipping(b as never) || b.category === 'digital'
       lines.push({

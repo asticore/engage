@@ -15,12 +15,12 @@ type Db = { prepare(sql: string): Statement }
 
 export const DEFAULT_STOCK_HOLD_MINUTES = 15
 
-export type StockHoldSettings = { enabled: boolean; minutes: number }
+export type StockHoldSettings = { enabled: boolean; minutes: number; inCart: boolean }
 
 export function normaliseStockHold(doc: unknown): StockHoldSettings {
-  const d = (doc ?? {}) as { stockHoldEnabled?: unknown; stockHoldMinutes?: unknown }
+  const d = (doc ?? {}) as { stockHoldEnabled?: unknown; stockHoldMinutes?: unknown; stockHoldInCart?: unknown }
   const minutes = typeof d.stockHoldMinutes === 'number' && Number.isFinite(d.stockHoldMinutes) ? Math.min(240, Math.max(1, Math.trunc(d.stockHoldMinutes))) : DEFAULT_STOCK_HOLD_MINUTES
-  return { enabled: d.stockHoldEnabled === true, minutes }
+  return { enabled: d.stockHoldEnabled === true, minutes, inCart: d.stockHoldEnabled === true && d.stockHoldInCart === true }
 }
 
 /** The stock a line draws on: the variation's own when it manages stock, else the product's. Null when nothing is counted or backorders are allowed. */
@@ -64,5 +64,16 @@ export async function sweepStockHolds(db: { prepare(sql: string): { bind(...v: u
     return result.meta?.changes ?? 0
   } catch {
     return 0
+  }
+}
+
+/** The earliest end among a cart's live holds, or null when it holds nothing. For the shopper's countdown. */
+export async function cartHoldExpiry(db: { prepare(sql: string): { bind(...v: unknown[]): { first<T>(): Promise<T | null> } } } | null, cartId: number, now: Date = new Date()): Promise<string | null> {
+  if (!db || !Number.isInteger(cartId)) return null
+  try {
+    const row = await db.prepare('SELECT MIN(expires_at) AS at FROM eg_stock_reservations WHERE cart_id = ? AND expires_at > ?').bind(cartId, now.toISOString()).first<{ at: string | null }>()
+    return row?.at ?? null
+  } catch {
+    return null
   }
 }

@@ -4,10 +4,10 @@ import { holdStock, normaliseStockHold, stockPool, sweepStockHolds } from '@/fea
 
 describe('stock hold settings', () => {
   it('is off by default with 15 minutes', () => {
-    expect(normaliseStockHold(null)).toEqual({ enabled: false, minutes: 15 })
+    expect(normaliseStockHold(null)).toEqual({ enabled: false, minutes: 15, inCart: false })
   })
   it('clamps the minutes', () => {
-    expect(normaliseStockHold({ stockHoldEnabled: true, stockHoldMinutes: 9999 })).toEqual({ enabled: true, minutes: 240 })
+    expect(normaliseStockHold({ stockHoldEnabled: true, stockHoldMinutes: 9999 })).toEqual({ enabled: true, minutes: 240, inCart: false })
     expect(normaliseStockHold({ stockHoldMinutes: 0 }).minutes).toBe(1)
   })
 })
@@ -61,5 +61,21 @@ describe('sweepStockHolds', () => {
   it('returns the number removed and 0 without a database', async () => {
     expect(await sweepStockHolds(fakeDb(3))).toBe(3)
     expect(await sweepStockHolds(null)).toBe(0)
+  })
+})
+
+describe('stock hold in cart and countdown (Task 23e)', () => {
+  it('the in-cart switch needs the checkout hold on', async () => {
+    const { normaliseStockHold } = await import('@/features/ecommerce/server/stockHold')
+    expect(normaliseStockHold({ stockHoldEnabled: true, stockHoldInCart: true }).inCart).toBe(true)
+    expect(normaliseStockHold({ stockHoldEnabled: false, stockHoldInCart: true }).inCart).toBe(false)
+    expect(normaliseStockHold({ stockHoldEnabled: true }).inCart).toBe(false)
+  })
+  it('formats the countdown', async () => {
+    const { holdCountdown } = await import('@/features/ecommerce/lib/holdCountdown')
+    expect(holdCountdown(754_000)).toEqual({ ended: false, label: '12:34' })
+    expect(holdCountdown(3_725_000).label).toBe('1:02:05')
+    expect(holdCountdown(0).ended).toBe(true)
+    expect(holdCountdown(Number.NaN).ended).toBe(true)
   })
 })
