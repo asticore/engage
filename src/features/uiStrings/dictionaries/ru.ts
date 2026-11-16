@@ -3136,8 +3136,6 @@ const ru: UiDictionary = {
   "blog.ai.writeFirst": "Напишите все разделы, прежде чем продолжить.",
   "blog.ai.detailsHeading": "Поисковые данные и теги",
   "blog.ai.suggestDetails": "Предложить данные",
-  "blog.ai.saasButton": "Получить предложения от Asticore SaaS",
-  "blog.ai.saasNote": "Пока не подключено. Для предложений Asticore SaaS нужны вход и адрес сервиса, которые не настроены, поэтому кнопка отключена. Используйте кнопки выше.",
   "blog.ai.savedPrompts": "Сохранённые промпты",
   "blog.ai.choosePrompt": "Выберите сохранённый промпт",
   "blog.ai.noSavedPrompts": "Сохранённых промптов пока нет. Сохраните бриф ниже.",

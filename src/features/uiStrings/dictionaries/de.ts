@@ -3137,8 +3137,6 @@ const de: UiDictionary = {
   "blog.ai.writeFirst": "Schreibe alle Abschnitte, bevor du weitermachst.",
   "blog.ai.detailsHeading": "Suchdetails und Schlagwörter",
   "blog.ai.suggestDetails": "Details vorschlagen",
-  "blog.ai.saasButton": "Vorschläge von Asticore SaaS abrufen",
-  "blog.ai.saasNote": "Noch nicht verbunden. Die Vorschläge von Asticore SaaS brauchen eine Anmeldung und einen Endpunkt, die noch nicht eingerichtet sind, daher bleibt dies aus. Nutzen Sie die Schaltflächen oben.",
   "blog.ai.savedPrompts": "Gespeicherte Vorlagen",
   "blog.ai.choosePrompt": "Gespeicherte Vorlage wählen",
   "blog.ai.noSavedPrompts": "Noch keine gespeicherten Vorlagen. Speichern Sie unten ein Briefing.",

@@ -3136,8 +3136,6 @@ const ar: UiDictionary = {
   "blog.ai.writeFirst": "اكتب كل الأقسام قبل المتابعة.",
   "blog.ai.detailsHeading": "تفاصيل البحث والوسوم",
   "blog.ai.suggestDetails": "اقتراح التفاصيل",
-  "blog.ai.saasButton": "الحصول على اقتراحات من Asticore SaaS",
-  "blog.ai.saasNote": "غير متصل بعد. اقتراحات Asticore SaaS تحتاج إلى تسجيل دخول ونقطة اتصال غير مُعدّين، لذلك يبقى هذا الزر معطلاً. استخدم الأزرار أعلاه.",
   "blog.ai.savedPrompts": "المطالبات المحفوظة",
   "blog.ai.choosePrompt": "اختر مطالبة محفوظة",
   "blog.ai.noSavedPrompts": "لا توجد مطالبات محفوظة بعد. احفظ موجزاً أدناه.",

@@ -918,12 +918,6 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, on
           </button>
         ) : null}
       </div>
-      <div className="blog-ai__saas">
-        <button type="button" className="btn" disabled aria-describedby="blog-ai-saas-note">
-          {t('blog.ai.saasButton')}
-        </button>
-        <p id="blog-ai-saas-note" className="blog-ai__intro">{t('blog.ai.saasNote')}</p>
-      </div>
     </>
   )
 }

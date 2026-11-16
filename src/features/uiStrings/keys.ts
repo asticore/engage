@@ -3215,8 +3215,6 @@ export const UI_STRING_SOURCE = {
   "blog.ai.writeFirst": "Write every section before continuing.",
   "blog.ai.detailsHeading": "Search details and tags",
   "blog.ai.suggestDetails": "Suggest details",
-  "blog.ai.saasButton": "Get suggestions from Asticore SaaS",
-  "blog.ai.saasNote": "Not connected yet. Asticore SaaS suggestions need a sign-in and an endpoint that are not set up, so this stays off. Use the buttons above.",
   "blog.ai.savedPrompts": "Saved prompts",
   "blog.ai.choosePrompt": "Choose a saved prompt",
   "blog.ai.noSavedPrompts": "No saved prompts yet. Save a brief below.",
