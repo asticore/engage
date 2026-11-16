@@ -59,6 +59,10 @@ export type AuditAction =
   | 'api-key.revoked'
   | 'api-key.used'
   | 'api-key.refused'
+  | 'api-token.issued'
+  | 'one-time-token.issued'
+  | 'one-time-token.used'
+  | 'signing-key.rotated'
   | 'privacy.request'
   | 'privacy.decide'
   | 'privacy.erase'
@@ -142,6 +146,10 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'api-key.revoked',
   'api-key.used',
   'api-key.refused',
+  'api-token.issued',
+  'one-time-token.issued',
+  'one-time-token.used',
+  'signing-key.rotated',
   'impersonation.started',
   'impersonation.ended',
   'impersonation.refused',
