@@ -68,6 +68,7 @@ const QuotesView = lazyView(() => import('@/admin/views/QuotesView').then((mod) 
 const PurchaseLimitsView = lazyView(() => import('@/admin/views/PurchaseLimitsView').then((mod) => mod.PurchaseLimitsView))
 const AuthenticationView = lazyView(() => import('@/admin/views/AuthenticationView').then((mod) => mod.AuthenticationView))
 const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').then((mod) => mod.AffiliatesView))
+const SsoView = lazyView(() => import('@/admin/views/SsoView').then((mod) => mod.SsoView))
 const AgentAccessView = lazyView(() => import('@/admin/views/AgentAccessView').then((mod) => mod.AgentAccessView))
 const ChatbotView = lazyView(() => import('@/admin/views/ChatbotView').then((mod) => mod.ChatbotView))
 const DemosView = lazyView(() => import('@/admin/views/DemosView').then((mod) => mod.DemosView))
@@ -261,6 +262,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'purchase-limits', Component: PurchaseLimitsView, path: '/purchase-limits', meta: { title: 'Purchase limits', description: 'Per-person limits, waits between orders and refused attempts.' } },
   { key: 'authentication', Component: AuthenticationView, path: '/authentication', meta: { title: 'Authentication', description: 'Every sign-in method with its status and a link to change it.' } },
   { key: 'affiliates', Component: AffiliatesView, path: '/affiliates', meta: { title: 'Affiliates', description: 'Partners with referral links and the visits they bring.' } },
+  { key: 'sso', Component: SsoView, path: '/sso', meta: { title: 'Single sign-on', description: 'Per-organisation OpenID Connect sign-in with verified domains.' } },
   { key: 'agent-access', Component: AgentAccessView, path: '/agent-access', meta: { title: 'AI agent access', description: 'Scoped, capped, revocable tokens for connected AI tools, with an activity log.' } },
   { key: 'chatbot', Component: ChatbotView, path: '/chatbot', meta: { title: 'Chatbot', description: 'Set up the site chat assistant and read its conversations.' } },
   { key: 'demos', Component: DemosView, path: '/demos', meta: { title: 'Agency demos', description: 'Save a demo copy, reset it, make view-only accounts and download a package.' } },

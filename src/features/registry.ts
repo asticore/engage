@@ -54,6 +54,7 @@ export type FeatureKey =
   | 'demos'
   | 'clientreports'
   | 'franchising'
+  | 'sso'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -405,6 +406,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['franchises', 'franchise_pages'],
+    implemented: true,
+  },
+  {
+    key: 'sso',
+    label: 'Single sign-on',
+    description: 'Let an organisation sign its people in with its own OpenID Connect identity provider. Each email domain is proved with a DNS record, new members can be created on first sign-in, and single sign-on can be required so those addresses no longer use a password. Off by default.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['org_sso', 'org_sso_links'],
     implemented: true,
   },
 ]
