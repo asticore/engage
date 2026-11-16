@@ -1,4 +1,5 @@
 import { getEngine } from '@/lib/engine'
+import { isStaging } from '@/features/site/staging'
 import { getFeatureFlags } from '@/utilities/features'
 import { configuredSiteOrigin } from '@/utilities/siteOrigin'
 
@@ -164,6 +165,11 @@ const deliverEmail = async (args: SendEmailArgs): Promise<SendEmailResult> => {
  * a send the feature has switched off is not logged at all.
  */
 export const sendEmail = async (args: SendEmailArgs): Promise<SendEmailResult> => {
+  if (isStaging()) {
+    const result: SendEmailResult = { ok: false, reason: 'turned-off', error: 'Email is switched off on a staging site.' }
+    await recordEmailSend(args, result)
+    return result
+  }
   if (await scheduleHolds(args)) {
     const result: SendEmailResult = { ok: false, reason: 'turned-off', error: 'Turned off under Settings > Communication > When emails are sent.' }
     await recordEmailSend(args, result)

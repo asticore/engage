@@ -1,4 +1,5 @@
 import { buildRobotsTxt } from '@/features/seo'
+import { isStaging } from '@/features/site/staging'
 import { getAdminRoot } from '@/features/security/settings'
 
 // Settings are read from the database on every request, so this can never be
@@ -11,6 +12,7 @@ export const dynamic = 'force-dynamic'
  * convention returns cannot represent arbitrary directives.
  */
 export async function GET(): Promise<Response> {
+  if (isStaging()) return new Response('User-agent: *\nDisallow: /\n', { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } })
   const body = await buildRobotsTxt(await getAdminRoot())
 
   if (body === null) {
