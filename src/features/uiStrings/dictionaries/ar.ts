@@ -3131,6 +3131,10 @@ const ar: UiDictionary = {
   "webhooks.event.order.refunded": "تم استرداد الطلب",
   "webhooks.event.form.submitted": "تم إرسال نموذج",
   "webhooks.event.user.registered": "تم إنشاء حساب",
+  "webhooks.event.affiliate.joined": "انضم مسوّق بالعمولة",
+  "webhooks.event.affiliate.approved": "تمت الموافقة على مسوّق بالعمولة",
+  "webhooks.event.affiliate.commission.earned": "تم كسب عمولة تسويق",
+  "webhooks.event.affiliate.payout.recorded": "تم تسجيل دفعة تسويق بالعمولة",
   "webhooks.event.tracking-event.saved": "تم حفظ حدث التتبع",
   // Portal search (task 6, added 30 Oct 2026)
   "portal.search.label": "ابحث في حسابك والموقع",

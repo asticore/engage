@@ -61,6 +61,9 @@ export async function POST(request: Request): Promise<Response> {
     if (await store.codeTaken(d1, code)) return json({ error: 'That code is already used.' }, 409)
     const status: AffiliateStatus = STATUSES.includes(body.status as AffiliateStatus) ? (body.status as AffiliateStatus) : 'active'
     const id = await store.createAffiliate(d1, { code, name, email: text(body.email, 200), status, token: newToken() }, now)
+    const svc = await import('@/features/affiliates/service')
+    await svc.emitAffiliateStatus('affiliate.joined', id)
+    if (status === 'active') await svc.emitAffiliateStatus('affiliate.approved', id)
     return json({ ok: true, id, code })
   }
   if (body.action === 'productRate') {
@@ -92,7 +95,11 @@ export async function POST(request: Request): Promise<Response> {
     if (!STATUSES.includes(body.status as AffiliateStatus)) return json({ error: 'Invalid status.' }, 400)
     const before = await store.getAffiliateById(d1, id)
     await store.setAffiliateStatus(d1, id, body.status as AffiliateStatus, now)
-    if (body.status === 'active' && before && before.status !== 'active') await (await import('@/features/affiliates/service')).sendAffiliateEmail('approved', id, {})
+    if (body.status === 'active' && before && before.status !== 'active') {
+      const svc = await import('@/features/affiliates/service')
+      await svc.sendAffiliateEmail('approved', id, {})
+      await svc.emitAffiliateStatus('affiliate.approved', id)
+    }
     return json({ ok: true })
   }
   if (body.action === 'rate') {
@@ -117,7 +124,11 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (body.action === 'payout') {
     const paid = await store.recordPayout(d1, id, text(body.note, 200), now, (await store.getSettings(d1)).minPayoutCents)
-    if (paid) await (await import('@/features/affiliates/service')).sendAffiliateEmail('payout', id, { amountCents: paid.amount, note: text(body.note, 200) })
+    if (paid) {
+      const svc = await import('@/features/affiliates/service')
+      await svc.sendAffiliateEmail('payout', id, { amountCents: paid.amount, note: text(body.note, 200) })
+      await svc.emitAffiliateEvent('affiliate.payout.recorded', { id: paid.id, affiliateId: id, amount: paid.amount, note: text(body.note, 200), createdAt: now })
+    }
     return paid ? json({ ok: true, amountCents: paid.amount }) : json({ error: 'Nothing is due for this affiliate yet, or it is below the minimum payout.' }, 400)
   }
   if (body.action === 'delete') {
