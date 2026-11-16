@@ -88,6 +88,12 @@ export const WAVE38_ELEMENTS: ElementDef[] = [
     defaultProps: () => ({ placeholder: 'Search', buttonLabel: 'Search', liveResults: true, maxResults: 6, showType: true }),
   },
   {
+    type: 'chatbot', label: 'Chatbot', icon: String.fromCodePoint(0x1f4ac), category: 'siteMeta',
+    description: 'A chat box that answers visitors from the FAQ, pages, posts and products, with links. Set it up under Chatbot in the admin. Shows nothing while the Chatbot feature is off.',
+    fields: [],
+    defaultProps: () => ({}),
+  },
+  {
     type: 'post-list', label: 'Latest posts', icon: String.fromCodePoint(0x25a6), category: 'siteMeta',
     description: 'The latest published blog posts, newest first (sticky posts first). Shows nothing when the blog is off or there are no posts.',
     fields: [

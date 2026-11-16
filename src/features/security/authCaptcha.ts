@@ -10,7 +10,7 @@ import { getFormSettings, type EngineLike } from '@/features/forms/settings'
 export type PublicCaptcha = { provider: 'turnstile' | 'recaptcha'; siteKey: string }
 
 /** What the browser needs to draw the widget, or null when the challenge is not required here. */
-export type CaptchaPlace = 'signin' | 'comments'
+export type CaptchaPlace = 'signin' | 'comments' | 'chatbot'
 
 export async function authCaptchaConfig(engine: EngineLike, place: CaptchaPlace = 'signin'): Promise<PublicCaptcha | null> {
   try {
