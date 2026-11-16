@@ -1,4 +1,4 @@
-import { PROVIDER_IDS, PROVIDERS, missingCredentials, type SocialConfig } from '@/features/socialLogin/providers'
+import { GLOBAL_PROVIDER_IDS, PROVIDER_IDS, isExtraProviderId, missingCredentials, providerLabel, type SocialConfig } from '@/features/socialLogin/providers'
 
 import type { SecuritySettings } from './settings'
 
@@ -41,10 +41,10 @@ export function describeAuthMethods(settings: SecuritySettings, social: SocialCo
     const status: MethodStatus = !cfg.enabled ? 'off' : missing.length ? 'needs-setup' : 'on'
     rows.push({
       id: `social-${id}`,
-      label: PROVIDERS[id].label,
+      label: providerLabel(id, cfg),
       status,
       detail: status === 'needs-setup' ? `Switched on but missing: ${missing.join(', ')}. The button stays hidden until complete.` : status === 'on' ? 'Shown on the sign-in form.' : 'Not offered.',
-      href: SECURITY,
+      href: isExtraProviderId(id) ? '/security/sign-in-providers' : SECURITY,
       toggle: status !== 'needs-setup',
     })
   }
@@ -59,7 +59,7 @@ export function togglePatch(id: string, on: boolean): Record<string, unknown> | 
   if (id === 'email-verification') return { emailVerificationRequired: on }
   if (id.startsWith('social-')) {
     const provider = id.slice('social-'.length)
-    if ((PROVIDER_IDS as readonly string[]).includes(provider)) return { socialLogin: { [`${provider}Enabled`]: on } }
+    if ((GLOBAL_PROVIDER_IDS as readonly string[]).includes(provider)) return { socialLogin: { [`${provider}Enabled`]: on } }
   }
   return null
 }

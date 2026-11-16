@@ -21,6 +21,7 @@ import {
 } from '@/features/socialLogin/http'
 import { placeholderPassword, hasRealPassword } from '@/features/socialLogin/passwords'
 import {
+  GLOBAL_PROVIDER_IDS,
   PROVIDER_IDS,
   PROVIDERS,
   emptySocialConfig,
@@ -959,11 +960,11 @@ describe('settings guard', () => {
     expect((SecuritySettings.hooks?.beforeChange ?? []).length).toBeGreaterThan(0)
     const group = SecuritySettings.fields.find((f) => (f as { name?: string }).name === 'socialLogin') as { fields: Array<{ name: string; defaultValue?: unknown; type: string }> }
     expect(group).toBeTruthy()
-    for (const id of PROVIDER_IDS) expect(group.fields.find((f) => f.name === `${id}Enabled`)).toMatchObject({ type: 'checkbox', defaultValue: false })
+    for (const id of GLOBAL_PROVIDER_IDS) expect(group.fields.find((f) => f.name === `${id}Enabled`)).toMatchObject({ type: 'checkbox', defaultValue: false })
     expect(group.fields.find((f) => f.name === 'allowSignupViaSocial')!.defaultValue).toBe(true)
     expect(group.fields.find((f) => f.name === 'allowAdminSocialLogin')!.defaultValue).toBe(false)
     expect(group.fields.find((f) => f.name === 'microsoftTenant')!.defaultValue).toBe('common')
-    for (const id of PROVIDER_IDS.filter((p) => p !== 'apple')) {
+    for (const id of GLOBAL_PROVIDER_IDS.filter((p) => p !== 'apple')) {
       const secret = group.fields.find((f) => f.name === `${id}ClientSecret`) as { hooks?: { beforeChange?: unknown[] } }
       expect(secret.hooks?.beforeChange?.length).toBe(1)
     }
@@ -992,7 +993,7 @@ describe('setup guides', () => {
     expect(redirectUriFor('https://b.example.org/', 'apple')).toBe('https://b.example.org/api/social/apple/callback')
     expect(guideFor('github', 'https://c.example.net').redirectUri).toBe('https://c.example.net/api/social/github/callback')
     const uris = new Set(PROVIDER_IDS.map((id) => redirectUriFor(ORIGIN, id)))
-    expect(uris.size).toBe(6)
+    expect(uris.size).toBe(PROVIDER_IDS.length)
   })
 
   it('ships no credentials', () => {

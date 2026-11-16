@@ -49,6 +49,8 @@ export type IdTokenExpectations = {
   audience: string
   nonce: string
   issuerOk: (iss: string, claims: Claims) => boolean
+  /** The claim that identifies the person. Default `sub`; the free-form provider may name another. */
+  subjectClaim?: string
   fetchImpl: Fetcher
   /** Milliseconds; injectable for tests. */
   now?: number
@@ -120,7 +122,8 @@ export async function verifyIdToken(token: string, expect: IdTokenExpectations):
   if (!expect.audience || !audOk) throw new TokenError('audience')
 
   if (!expect.nonce || claims.nonce !== expect.nonce) throw new TokenError('nonce')
-  if (typeof claims.sub !== 'string' || !claims.sub) throw new TokenError('subject')
+  const subject = claims[expect.subjectClaim || 'sub']
+  if (!((typeof subject === 'string' && subject) || typeof subject === 'number')) throw new TokenError('subject')
   return claims
 }
 

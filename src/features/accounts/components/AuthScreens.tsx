@@ -4,7 +4,8 @@ import Link from 'next/link'
 
 import { getEngine } from '@/lib/engine'
 import { SocialButtons } from '@/features/socialLogin/components/SocialButtons'
-import { publicProviders, registerProviders } from '@/features/socialLogin/public'
+import { GoogleOneTap } from '@/features/socialLogin/components/GoogleOneTap'
+import { oneTapAvailable, publicProviders, registerProviders } from '@/features/socialLogin/public'
 import { PENDING_COOKIE } from '@/features/socialLogin/http'
 
 import { passwordFormRules } from '@/features/security/passwordCheck'
@@ -49,6 +50,7 @@ export const SignInScreen: React.FC<{
   const safeNext = next && next.startsWith('/account') && !next.startsWith('//') ? next : '/account'
   const engine = await getEngine()
   const providers = await publicProviders(engine, 'account')
+  const oneTap = await oneTapAvailable(engine)
   // A social sign-in that still needs its two-step code parks the pending token in an HttpOnly cookie.
   const pending = social === '2fa' ? ((await cookies()).get(PENDING_COOKIE)?.value ?? '') : ''
   const tx = await accountTexts()
@@ -67,6 +69,7 @@ export const SignInScreen: React.FC<{
       )}
       <LastUsedBadge>
         <SignInForm next={safeNext} justReset={justReset} initialPendingToken={pending} passwordless={passwordless} passkey={passkey} captcha={<AuthCaptchaField />} />
+        {!pending && oneTap ? <GoogleOneTap next={safeNext} /> : null}
         {!pending && (
           <SocialButtons
             providers={providers}

@@ -97,6 +97,7 @@ const PasswordGroupsView = lazyView(() => import('@/admin/views/PasswordGroupsVi
 const ActivityLogView = lazyView(() => import('@/admin/views/ActivityLogView').then((mod) => mod.ActivityLogView))
 const SecurityAuditView = lazyView(() => import('@/admin/views/SecurityAuditView').then((mod) => mod.SecurityAuditView))
 const SocialView = lazyView(() => import('@/admin/views/SocialView').then((mod) => mod.SocialView))
+const SignInProvidersView = lazyView(() => import('@/admin/views/SignInProvidersView').then((mod) => mod.SignInProvidersView))
 const TemplatesHubView = lazyView(() => import('@/admin/views/TemplatesHubView').then((mod) => mod.TemplatesHubView))
 const MyPreferencesView = lazyView(() => import('@/admin/views/MyPreferencesView').then((mod) => mod.MyPreferencesView))
 const TemplateLibrariesView = lazyView(() => import('@/admin/views/TemplateLibrariesView').then((mod) => mod.TemplateLibrariesView))
@@ -435,6 +436,12 @@ export const CUSTOM_ADMIN_VIEWS = [
     Component: SecurityAuditView,
     path: '/security/audit',
     meta: { title: 'Security audit', description: 'Every sign-in, failed attempt, lockout, password, two-step, passkey, API key, connected account and impersonation event. Administrators only.' },
+  },
+  {
+    key: 'signInProviders',
+    Component: SignInProvidersView,
+    path: '/security/sign-in-providers',
+    meta: { title: 'More sign-in providers', description: 'Set up X, LinkedIn, TikTok, Slack, any OpenID Connect provider and Google One Tap. Administrators only.' },
   },
   {
     key: 'socialAccounts',

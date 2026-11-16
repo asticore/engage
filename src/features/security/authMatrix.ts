@@ -11,7 +11,7 @@ export type MatrixArea = 'admin' | 'account'
 export type AuthMatrix = { admin: string[]; account: string[] }
 
 export const MATRIX_KEY = 'auth-method-matrix'
-export const MATRIX_METHODS = ['magic-link', 'email-code', 'passkeys', 'social-google', 'social-github', 'social-apple', 'social-facebook', 'social-microsoft', 'social-discord'] as const
+export const MATRIX_METHODS = ['magic-link', 'email-code', 'passkeys', 'social-google', 'social-github', 'social-apple', 'social-facebook', 'social-microsoft', 'social-discord', 'social-x', 'social-linkedin', 'social-tiktok', 'social-slack', 'social-oidc'] as const
 
 export const emptyMatrix = (): AuthMatrix => ({ admin: [], account: [] })
 
