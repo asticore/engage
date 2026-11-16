@@ -6563,6 +6563,10 @@ export interface MemberSetting {
      */
     requireEmailVerification?: boolean | null;
     /**
+     * Refuse sign-ups from throwaway email services (such as Mailinator or 10 Minute Mail).
+     */
+    blockDisposableEmail?: boolean | null;
+    /**
      * The tier new members start on, entered as its short name. Leave blank to make people choose during sign-up.
      */
     defaultTier?: string | null;
@@ -8097,6 +8101,7 @@ export interface MemberSettingsSelect<T extends boolean = true> {
     | {
         allowSignup?: T;
         requireEmailVerification?: T;
+        blockDisposableEmail?: T;
         defaultTier?: T;
       };
   access?:

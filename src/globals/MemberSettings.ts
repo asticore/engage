@@ -50,6 +50,15 @@ export const MemberSettings: GlobalConfig = {
               },
             },
             {
+              name: 'blockDisposableEmail',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: {
+                width: '50%',
+                description: 'Refuse sign-ups from throwaway email services (such as Mailinator or 10 Minute Mail).',
+              },
+            },
+            {
               name: 'requireEmailVerification',
               type: 'checkbox',
               defaultValue: true,

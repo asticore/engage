@@ -38,6 +38,7 @@ export type SignupFailure =
   | 'feature-off'
   | 'signup-closed'
   | 'invalid-email'
+  | 'disposable-email'
   | 'weak-password'
   | 'no-tier'
   | 'verification-unavailable'
@@ -96,6 +97,11 @@ export const registerMember = async (
   const email = request.email.trim().toLowerCase()
   if (!EMAIL_PATTERN.test(email)) {
     return { ok: false, reason: 'invalid-email', error: 'That does not look like an email address.' }
+  }
+  if (settings.registration.blockDisposableEmail) {
+    const { checkEmail } = await import('@/features/security/emailCheck')
+    const verdict = checkEmail(email, { blockDisposable: true })
+    if (verdict.ok === false) return { ok: false, reason: 'disposable-email', error: verdict.message }
   }
   // Loaded lazily: the password store reaches the database layer, which imports the collection configs that import this module.
   const { passwordProblemFor } = await import('@/features/security/passwordCheck')

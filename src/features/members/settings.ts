@@ -42,7 +42,7 @@ export const membersEnabled = async (engine: EngineLike): Promise<boolean> => {
 }
 
 type SettingsDoc = {
-  registration?: { allowSignup?: boolean; requireEmailVerification?: boolean; defaultTier?: string }
+  registration?: { allowSignup?: boolean; requireEmailVerification?: boolean; blockDisposableEmail?: boolean; defaultTier?: string }
   access?: { redirectAfterLogin?: string; membersOnlyRedirect?: string; teaserMode?: string }
   billing?: { currency?: string; allowCancellation?: boolean; proration?: boolean; dunningRetryDays?: string; dunningGraceDays?: number; dunningEndAction?: string }
   emails?: { welcomeSubject?: string; welcomeBody?: string; expiryReminderDays?: number }
@@ -72,6 +72,7 @@ export const getMemberSettings = async (engine: EngineLike): Promise<MemberSetti
         doc.registration?.requireEmailVerification,
         base.registration.requireEmailVerification,
       ),
+      blockDisposableEmail: bool(doc.registration?.blockDisposableEmail, base.registration.blockDisposableEmail),
       defaultTier: text(doc.registration?.defaultTier, ''),
     },
     access: {
