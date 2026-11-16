@@ -28,6 +28,7 @@ import { loadPageAudioConfig } from '@/features/pageAudio/load'
 import { getPasswordGateState } from '@/features/visibility/gate'
 import { resolveDocumentContent } from '@/features/customFields/server'
 import { loadBlogSwitches } from '@/features/blog/switches'
+import { PostComments } from '@/features/comments/components/CommentsSection.server'
 import { authorPath, publicAuthor, tagPath, categoryPath } from '@/features/siteTemplates/archiveQueries'
 import { slugify } from '@/utilities/formatSlug'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
@@ -188,6 +189,10 @@ export default async function BlogPostPage({
       {annotated.blocks.map((block, index) => (
         <BlockRenderer key={block.id || index} block={block} index={index} />
       ))}
+
+      <div className="mx-auto max-w-[720px]">
+        <PostComments postId={Number(post.id)} />
+      </div>
     </article>
   )
   return renderWithTemplate({

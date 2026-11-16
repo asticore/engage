@@ -182,6 +182,7 @@ import * as migration_20270316_290000_site_planner from './20270316_290000_site_
 import * as migration_20270316_300000_ga4_user_id from './20270316_300000_ga4_user_id';
 import * as migration_20270316_310000_disposable_email from './20270316_310000_disposable_email';
 import * as migration_20270316_320000_affiliates from './20270316_320000_affiliates';
+import * as migration_20270316_370000_comments from './20270316_370000_comments';
 import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
 import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
 import * as migration_20270316_350000_affiliate_portal from './20270316_350000_affiliate_portal';
@@ -1122,5 +1123,10 @@ export const migrations = [
     up: migration_20270316_360000_auth_captcha.up,
     down: migration_20270316_360000_auth_captcha.down,
     name: '20270316_360000_auth_captcha',
+  },
+  {
+    up: migration_20270316_370000_comments.up,
+    down: migration_20270316_370000_comments.down,
+    name: '20270316_370000_comments',
   },
 ];
