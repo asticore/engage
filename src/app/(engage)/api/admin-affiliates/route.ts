@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
-import { balances, clampDays, clampPct } from '@/features/affiliates/commission'
+import { balances, clampDays, clampPct, payoutsCsv } from '@/features/affiliates/commission'
 import { MAX_AFFILIATES, STATUSES, newToken, normaliseCode, suggestCode, type AffiliateStatus } from '@/features/affiliates/core'
 import * as store from '@/features/affiliates/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
@@ -26,11 +26,14 @@ async function guard(request: Request, write: boolean) {
 
 const text = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
-/** GET: every affiliate with its visit count. */
+/** GET: every affiliate with its visit count. GET ?export=payouts downloads the payout log as CSV. */
 export async function GET(request: Request): Promise<Response> {
   const g = await guard(request, false)
   if (!g.context) return g.response
   const d1 = (await rawD1()) as never as store.D1
+  if (new URL(request.url).searchParams.get('export') === 'payouts') {
+    return new Response(payoutsCsv(await store.payoutsForExport(d1)), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="affiliate-payouts.csv"', 'Cache-Control': 'no-store' } })
+  }
   const [affiliates, settings, rows, commissions, payouts] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50)])
   const now = new Date()
   const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now) }))
@@ -62,7 +65,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (body.action === 'settings') {
     const s = body.settings as Record<string, unknown> | undefined
-    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
+    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
     return json({ ok: true })
   }
   const id = Number(body.id)
@@ -72,14 +75,21 @@ export async function POST(request: Request): Promise<Response> {
     await store.setAffiliateStatus(d1, id, body.status as AffiliateStatus, now)
     return json({ ok: true })
   }
+  if (body.action === 'rate') {
+    const raw = body.ratePct
+    const rate = raw === null || raw === '' || raw === undefined ? null : clampPct(raw, -1)
+    if (rate === -1) return json({ error: 'A rate is 0 to 100 percent.' }, 400)
+    await store.setAffiliateRate(d1, id, rate, now)
+    return json({ ok: true })
+  }
   if (body.action === 'token') {
     const token = newToken()
     await store.setToken(d1, id, token, now)
     return json({ ok: true, token })
   }
   if (body.action === 'payout') {
-    const paid = await store.recordPayout(d1, id, text(body.note, 200), now)
-    return paid ? json({ ok: true, amountCents: paid.amount }) : json({ error: 'Nothing is due for this affiliate yet.' }, 400)
+    const paid = await store.recordPayout(d1, id, text(body.note, 200), now, (await store.getSettings(d1)).minPayoutCents)
+    return paid ? json({ ok: true, amountCents: paid.amount }) : json({ error: 'Nothing is due for this affiliate yet, or it is below the minimum payout.' }, 400)
   }
   if (body.action === 'delete') {
     if (await store.hasCommissions(d1, id)) return json({ error: 'This affiliate has commissions on record. Suspend them instead of deleting.' }, 409)
