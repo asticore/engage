@@ -15,7 +15,7 @@ import { publicOrigin } from '@/features/google/origin'
  * log. Server only. Kept apart from the HTTP handlers, as passwordlessWiring is.
  */
 
-export type PasskeyClient = { ip: string | null; userAgent: string | null }
+export type PasskeyClient = { ip: string | null; userAgent: string | null; country?: string | null }
 
 const eligibleEmail = (user: PasskeyUser): boolean => typeof user.email === 'string' && user.email.length > 0
 
@@ -68,7 +68,7 @@ export const passkeyDepsFor = async (engine: Engine, client: PasskeyClient, requ
     findUser: async (id): Promise<PasskeyUser | null> =>
       ((await engine.findByID({ collection: USERS_SLUG, id, depth: 0, overrideAccess: true }).catch((): null => null)) as PasskeyUser | null) ?? null,
     loginAsUser: async (userId, skipSecondFactor): Promise<{ token?: string; twoFactorRequired?: boolean; pendingToken?: string }> =>
-      (await engine.loginAsUser({ collection: USERS_SLUG, id: userId, client: { userAgent: client.userAgent, ip: client.ip }, skipSecondFactor } as never)) as never,
+      (await engine.loginAsUser({ collection: USERS_SLUG, id: userId, client: { userAgent: client.userAgent, ip: client.ip, country: client.country ?? null }, skipSecondFactor } as never)) as never,
     reauthenticate,
     hasOtherSignInMethod: (userId) => hasOtherSignIn(engine, userId, settings),
     audit: async (action, detail, userId) => {

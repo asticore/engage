@@ -66,12 +66,13 @@ export const currentSessionToken = async (): Promise<string | null> => {
 }
 
 /** What a new session row records about the browser signing in: its User-Agent and (truncated later) address. */
-export const requestClient = async (): Promise<{ userAgent: string | null; ip: string | null; trustedDeviceToken: string | null }> => {
+export const requestClient = async (): Promise<{ userAgent: string | null; ip: string | null; country: string | null; trustedDeviceToken: string | null }> => {
   const incoming = await headers()
   const ip = await requestAddress()
   return {
     userAgent: incoming.get('user-agent'),
     ip: ip === 'unknown' ? null : ip,
+    country: incoming.get('cf-ipcountry'),
     // A remembered device stands in for the second-step code; the password is still checked.
     trustedDeviceToken: trustedTokenFromCookieHeader(incoming.get('cookie')),
   }
