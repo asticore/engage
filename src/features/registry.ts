@@ -86,7 +86,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: ['products', 'product-attributes', 'product-tags', 'product-brands', 'shipping-classes', 'product-reviews', 'stock-subscriptions', 'product-subscriptions', 'gift-cards', 'store-credits', 'credit-ledger', 'shipping-manifests', 'orders', 'order-refunds', 'coupons', 'shipping-zones', 'tax-rates', 'transactions', 'carts', 'addresses'],
     globals: ['shop-settings', 'shop-extra-settings', 'shipping-settings'],
-    tables: ['products', 'product_attributes', 'product_tags', 'product_brands', 'shop_display_currencies', 'shop_price_tiers', 'coupon_reservations', 'stock_reservations', 'shipping_classes', 'product_reviews', 'stock_subscriptions', 'product_subscriptions', 'gift_cards', 'store_credits', 'credit_ledger', 'shipping_manifests', 'orders', 'order_refunds', 'coupons', 'shipping_zones', 'tax_rates', 'transactions', 'carts', 'addresses', 'product_feeds'],
+    tables: ['products', 'product_attributes', 'product_tags', 'product_brands', 'shop_display_currencies', 'shop_price_tiers', 'coupon_reservations', 'stock_reservations', 'saved_cart_lines', 'shipping_classes', 'product_reviews', 'stock_subscriptions', 'product_subscriptions', 'gift_cards', 'store_credits', 'credit_ledger', 'shipping_manifests', 'orders', 'order_refunds', 'coupons', 'shipping_zones', 'tax_rates', 'transactions', 'carts', 'addresses', 'product_feeds'],
     implemented: true,
   },
   {

@@ -46,6 +46,7 @@ export const PAYMENT_RECORD_BASES = [
   'product_subscriptions',
   'coupon_reservations',
   'stock_reservations',
+  'saved_cart_lines',
 ]
 
 /** The name a table goes by with the `eg_` prefix and version-mirror underscore removed. */
