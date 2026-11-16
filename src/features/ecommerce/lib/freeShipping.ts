@@ -1,4 +1,4 @@
-import type { ShippingZone } from './shipping'
+import { matchZone, type ShippingAddress, type ShippingZone } from './shipping'
 
 /**
  * Free-shipping progress for the cart. The threshold is the lowest "free over amount" among the
@@ -24,4 +24,15 @@ export function freeShippingProgress(subtotal: number, threshold: number): FreeS
   const spent = Number.isFinite(subtotal) && subtotal > 0 ? subtotal : 0
   const reached = spent >= threshold
   return { reached, remaining: reached ? 0 : Math.round((threshold - spent) * 100) / 100, percent: Math.min(100, Math.round((spent / threshold) * 100)) }
+}
+
+/**
+ * The free-shipping threshold for one destination: the lowest "free over amount" in the zone that
+ * matches the address. Null when that zone (or no zone) offers none. Without a country it falls back
+ * to the lowest across all zones.
+ */
+export function thresholdForAddress(zones: readonly ShippingZone[], address: ShippingAddress): number | null {
+  if (!address.country) return lowestFreeThreshold(zones)
+  const zone = matchZone([...zones], address)
+  return zone ? lowestFreeThreshold([zone]) : null
 }

@@ -5,12 +5,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { CartCrossSells } from '@/components/CartCrossSells'
 import { CartEstimate } from '@/components/CartEstimate'
+import { MiniCartLinesPart } from '@/components/CartParts'
 import { useDisplayMoney } from '@/components/DisplayCurrencyContext'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
 import { useCart } from '@/engine/commerce/react'
 import { CART_ADDED_EVENT, DEFAULT_CART_UI, isCartHref, type CartUiSettings } from '@/features/ecommerce/lib/miniCart'
-import { resolveCartLine, type CatalogueProduct } from '@/features/ecommerce/catalogue'
-import type { Product } from '@/engage-types'
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
@@ -24,7 +23,7 @@ export const MiniCart: React.FC = () => {
   const [open, setOpen] = useState(false)
   const panel = useRef<HTMLDivElement | null>(null)
   const opener = useRef<HTMLElement | null>(null)
-  const { cart, decrementItem, incrementItem, removeItem, isLoading } = useCart()
+  const { cart } = useCart()
   const money = useDisplayMoney()
   const [announce, setAnnounce] = useState('')
 
@@ -133,42 +132,10 @@ export const MiniCart: React.FC = () => {
           {announce}
         </p>
         {items.length === 0 ? (
-          <p>
-            Your cart is empty. <Link href="/shop" onClick={() => setOpen(false)}>Continue shopping</Link>
-          </p>
+          <MiniCartLinesPart onNavigate={() => setOpen(false)} />
         ) : (
           <>
-            <ul className="m-0 mb-4 list-none border-t border-[var(--color-line)] p-0">
-              {items.map((item) => {
-                const product = item.product as unknown as Product
-                const isObj = typeof product === 'object' && product !== null
-                const isBundle = isObj && (product as unknown as { productType?: string }).productType === 'bundle'
-                const line = isObj && !isBundle ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, 1) : null
-                const unit = line && line.ok ? line.unitPrice : isObj ? product.priceInAUD : null
-                const title = isObj ? product.title : 'Item'
-                return (
-                  <li key={item.id} className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] py-3">
-                    <div className="min-w-0">
-                      <p className="m-0 truncate font-medium">{title}</p>
-                      {line && line.ok && line.variationLabel ? <p className="m-0 text-[0.85rem] opacity-70">{line.variationLabel}</p> : null}
-                      <p className="m-0 text-[0.85rem]">{isBundle ? '' : money(unit)}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button type="button" aria-label={`Decrease quantity of ${title}`} className="h-7 w-7 cursor-pointer border border-[var(--color-ink)] bg-transparent" onClick={() => void decrementItem(item.id)} disabled={isLoading}>
-                        -
-                      </button>
-                      <span aria-label={`Quantity ${item.quantity}`}>{item.quantity}</span>
-                      <button type="button" aria-label={`Increase quantity of ${title}`} className="h-7 w-7 cursor-pointer border border-[var(--color-ink)] bg-transparent" onClick={() => void incrementItem(item.id)} disabled={isLoading}>
-                        +
-                      </button>
-                      <button type="button" aria-label={`Remove ${title}`} className="cursor-pointer border-none bg-transparent text-[0.85rem] underline" onClick={() => void removeItem(item.id)} disabled={isLoading}>
-                        Remove
-                      </button>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
+            <MiniCartLinesPart />
             <FreeShippingBar subtotal={cart?.subtotal} money={money} />
             <CartEstimate compact />
             <CartCrossSells />

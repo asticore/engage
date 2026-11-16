@@ -63,6 +63,7 @@ export const CartEstimate: React.FC<{ compact?: boolean }> = ({ compact }) => {
         setQuote(body)
         try {
           window.localStorage.setItem(KEY, JSON.stringify(next))
+          window.dispatchEvent(new Event('cart-estimate-changed'))
         } catch {
           // Not saved.
         }

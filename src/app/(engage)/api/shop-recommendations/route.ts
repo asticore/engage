@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getEngine } from '@/engine'
-import { recommendationAnchors, recommendationCard, recommendedProducts, loadRecommendationSettings, type RecommendEngine } from '@/features/ecommerce/server/recommendations'
+import { recommendationAnchors, recommendationCard, newestProducts, recommendedProducts, loadRecommendationSettings, type RecommendEngine } from '@/features/ecommerce/server/recommendations'
 import { clientKey, hit } from '@/features/security/rateLimit'
 
 export const dynamic = 'force-dynamic'
@@ -11,6 +11,7 @@ const MAX_CART_PRODUCTS = 50
 /**
  * POST { productIds: number[] } - cart product ids in cart order.
  * Returns up to the shop's "most to show" product cards (public fields only), bought together or in the same category.
+ * An empty list returns the newest in-stock products instead (the empty cart).
  * Returns [] while the shop's "Show product recommendations" switch is off.
  */
 export async function POST(request: Request): Promise<Response> {
@@ -23,6 +24,10 @@ export async function POST(request: Request): Promise<Response> {
   const ids = recommendationAnchors(body.productIds.slice(0, MAX_CART_PRODUCTS))
   const engine = (await getEngine()) as unknown as RecommendEngine
   const settings = await loadRecommendationSettings(engine)
+  if (settings.enabled && body.productIds.length === 0) {
+    const newest = await newestProducts(engine, settings.max)
+    return NextResponse.json(newest.map(recommendationCard), { headers: { 'Cache-Control': 'public, max-age=60' } })
+  }
   if (!settings.enabled || ids.length === 0) return NextResponse.json([], { headers: { 'Cache-Control': 'no-store' } })
 
   const { docs: cartDocs } = await engine

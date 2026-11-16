@@ -8,18 +8,37 @@ import { freeShippingProgress } from '@/features/ecommerce/lib/freeShipping'
 export const FreeShippingBar: React.FC<{ subtotal: number | null | undefined; money: (value: number | null | undefined) => string }> = ({ subtotal, money }) => {
   const [threshold, setThreshold] = useState<number | null>(null)
 
+  const [address, setAddress] = useState({ country: '', postcode: '' })
+
+  // The destination typed into the cart estimate (same saved key), so the bar follows the shipping zone.
+  useEffect(() => {
+    const read = (): void => {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem('engage-cart-estimate') ?? '{}') as { country?: string; postcode?: string }
+        setAddress({ country: (saved.country ?? '').trim().toUpperCase(), postcode: (saved.postcode ?? '').trim() })
+      } catch {
+        // Private browsing: no destination.
+      }
+    }
+    read()
+    window.addEventListener('cart-estimate-changed', read)
+    return () => window.removeEventListener('cart-estimate-changed', read)
+  }, [])
+
   useEffect(() => {
     let live = true
-    fetch('/api/shop-free-shipping')
+    setThreshold(null)
+    const query = address.country ? `?country=${encodeURIComponent(address.country)}${address.postcode ? `&postcode=${encodeURIComponent(address.postcode)}` : ''}` : ''
+    fetch(`/api/shop-free-shipping${query}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { threshold?: number | null } | null) => {
-        if (live && data && typeof data.threshold === 'number') setThreshold(data.threshold)
+        setThreshold(live && data && typeof data.threshold === 'number' ? data.threshold : null)
       })
       .catch((): void => undefined)
     return () => {
       live = false
     }
-  }, [])
+  }, [address.country, address.postcode])
 
   if (threshold === null) return null
   const progress = freeShippingProgress(typeof subtotal === 'number' ? subtotal : 0, threshold)
