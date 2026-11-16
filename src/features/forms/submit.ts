@@ -19,6 +19,8 @@ import { checkSpamRules } from './spamRules'
 import { buildHandoff, checkoutHandoffUrl, NO_CHECKOUT } from './checkoutHandoff'
 import { inspectFiles, storeFiles, getUploadBucket, type PendingFile, type StoredFile } from './upload'
 import { validateSubmission } from './validate'
+import { requestSiteOrigin } from '@/utilities/siteOrigin'
+import { withFileLinks } from './fileLinks'
 import { buildPayload, deliver, summariseAttempts, type WebhookAttempt } from './webhooks'
 
 /**
@@ -279,11 +281,14 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
 
   // In parallel so one slow endpoint does not hold the visitor up for the sum
   // of them all. A failed delivery is recorded and retried by the cron.
+  let linkedValues: Promise<Record<string, unknown>> | undefined
+  // Files become signed expiring links (once per entry) instead of raw storage keys.
+  const hookValues = (): Promise<Record<string, unknown>> => (linkedValues ??= requestSiteOrigin().then((origin) => withFileLinks(values, origin)))
   const settled = await Promise.allSettled(
     (config.webhooks || [])
       .filter((hook) => hook.enabled !== false && hook.url)
-      .map((hook) => {
-        const payload = buildPayload(form, form.fields || [], submissionID, values, submittedAt, `${submissionID ?? 'x'}-${hook.id}-1`)
+      .map(async (hook) => {
+        const payload = buildPayload(form, form.fields || [], submissionID, await hookValues(), submittedAt, `${submissionID ?? 'x'}-${hook.id}-1`, { hook, meta: { sourceUrl: input.sourceUrl, consent: consent.length ? consent : undefined, status: 'new' } })
         return deliver(hook, payload, 1, input.fetcher)
       }),
   )

@@ -212,6 +212,12 @@ export type FormNotificationRule = {
   name?: string
   enabled?: boolean
   recipients?: string
+  /** Extra visible recipients (everyone on the To line sees them). */
+  cc?: string
+  /** Hidden copies: each address gets its own message, so nobody sees the others. */
+  bcc?: string
+  /** Set reply-to to the address the visitor typed. On unless set to false. */
+  replyToSubmitter?: boolean
   subject?: string
   message?: string
   /** Only send when these rules match. Empty means always. */
@@ -225,6 +231,15 @@ export type FormWebhook = {
   url?: string
   /** Signing secret. Never leaves the server. */
   secret?: string
+  /** What to send: every answer (default) or only the chosen field names. */
+  payload?: 'all' | 'chosen'
+  /** Field names to send when `payload` is 'chosen'. */
+  fields?: string[]
+  /** Add page URL, consent record and entry status to the payload. */
+  includeMeta?: boolean
+  /** Optional shared-secret header, sent as well as the signature (for example X-Api-Key). */
+  headerName?: string
+  headerValue?: string
 }
 
 export type FormDoc = {

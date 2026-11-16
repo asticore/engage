@@ -99,11 +99,15 @@ export function isSafeWebhookUrl(value: string): boolean {
   return true
 }
 
+/** Extra facts about an entry that a webhook may include (see `includeMeta`). */
+export type EntryMeta = { sourceUrl?: string; consent?: unknown; status?: string }
+
 export type WebhookPayload = {
-  event: 'form.submitted'
+  event: 'form.submitted' | 'form.test'
   deliveryId: string
   form: { id: number | string; title: string }
   submission: { id?: number | string; submittedAt: string; values: SubmissionValues; labels: Record<string, string> }
+  meta?: { pageUrl?: string; consent?: unknown; status?: string }
 }
 
 export function buildPayload(
@@ -113,15 +117,37 @@ export function buildPayload(
   values: SubmissionValues,
   submittedAt: string,
   deliveryId: string,
+  options: { hook?: Pick<FormWebhook, 'payload' | 'fields' | 'includeMeta'>; meta?: EntryMeta; event?: WebhookPayload['event'] } = {},
 ): WebhookPayload {
+  const chosen = options.hook?.payload === 'chosen' ? new Set(options.hook.fields || []) : null
   const labels: Record<string, string> = {}
-  for (const field of fields) if (field.name) labels[field.name] = field.label || field.name
-  return {
-    event: 'form.submitted',
+  const sent: SubmissionValues = {}
+  for (const field of fields) if (field.name && (!chosen || chosen.has(field.name))) labels[field.name] = field.label || field.name
+  for (const [key, value] of Object.entries(values)) if (!chosen || chosen.has(key)) sent[key] = value
+  const payload: WebhookPayload = {
+    event: options.event || 'form.submitted',
     deliveryId,
     form: { id: form.id as number | string, title: form.title || '' },
-    submission: { id: submissionId, submittedAt, values, labels },
+    submission: { id: submissionId, submittedAt, values: sent, labels },
   }
+  if (options.hook?.includeMeta) {
+    payload.meta = {
+      ...(options.meta?.sourceUrl ? { pageUrl: options.meta.sourceUrl } : {}),
+      ...(options.meta?.consent ? { consent: options.meta.consent } : {}),
+      ...(options.meta?.status ? { status: options.meta.status } : {}),
+    }
+  }
+  return payload
+}
+
+/** A made-up entry for the "Send test" button, shaped like a real one from this form's own fields. */
+export function sampleValues(fields: { name?: string; label?: string; type?: string }[]): SubmissionValues {
+  const values: SubmissionValues = {}
+  for (const field of fields) {
+    if (!field.name) continue
+    values[field.name] = field.type === 'email' ? 'test@example.com' : field.type === 'number' ? 42 : `Sample ${field.label || field.name}`
+  }
+  return values
 }
 
 export function hostOf(url: string): string {
@@ -158,6 +184,7 @@ export async function deliver(
     'X-Form-Event': payload.event,
     'X-Form-Delivery': payload.deliveryId,
   }
+  if (hook.headerName && hook.headerValue && /^[A-Za-z0-9-]{1,60}$/.test(hook.headerName)) headers[hook.headerName] = hook.headerValue
   if (hook.secret) headers['X-Form-Signature'] = `t=${timestamp},v1=${await signPayload(hook.secret, timestamp, body)}`
 
   const controller = new AbortController()
