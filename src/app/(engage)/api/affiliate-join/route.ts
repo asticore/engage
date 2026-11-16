@@ -36,6 +36,11 @@ export async function POST(request: Request): Promise<Response> {
   const token = newToken()
   const status = settings.autoApprove ? 'active' : 'pending'
   const newId = await store.createAffiliate(d1, { code, name, email, status, token }, new Date().toISOString())
-  if (status === 'active') await (await import('@/features/affiliates/service')).sendAffiliateEmail('approved', newId, {})
+  const svc = await import('@/features/affiliates/service')
+  await svc.emitAffiliateStatus('affiliate.joined', newId)
+  if (status === 'active') {
+    await svc.sendAffiliateEmail('approved', newId, {})
+    await svc.emitAffiliateStatus('affiliate.approved', newId)
+  }
   return reply({ ok: true, status, code, dashboard: `/affiliates/dashboard?token=${token}` })
 }

@@ -3131,6 +3131,10 @@ const nl: UiDictionary = {
   "webhooks.event.order.refunded": "Bestelling terugbetaald",
   "webhooks.event.form.submitted": "Formulier verzonden",
   "webhooks.event.user.registered": "Account aangemaakt",
+  "webhooks.event.affiliate.joined": "Affiliate aangemeld",
+  "webhooks.event.affiliate.approved": "Affiliate goedgekeurd",
+  "webhooks.event.affiliate.commission.earned": "Affiliate-commissie verdiend",
+  "webhooks.event.affiliate.payout.recorded": "Affiliate-uitbetaling vastgelegd",
   "webhooks.event.tracking-event.saved": "Trackinggebeurtenis opgeslagen",
   // Portal search (task 6, added 30 Oct 2026)
   "portal.search.label": "Zoek in je account en op de site",

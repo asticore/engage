@@ -3131,6 +3131,10 @@ const ko: UiDictionary = {
   "webhooks.event.order.refunded": "주문 환불",
   "webhooks.event.form.submitted": "양식 제출",
   "webhooks.event.user.registered": "계정 생성",
+  "webhooks.event.affiliate.joined": "제휴 파트너 가입",
+  "webhooks.event.affiliate.approved": "제휴 파트너 승인",
+  "webhooks.event.affiliate.commission.earned": "제휴 수수료 발생",
+  "webhooks.event.affiliate.payout.recorded": "제휴 지급 기록",
   "webhooks.event.tracking-event.saved": "추적 이벤트 저장됨",
   // Portal search (task 6, added 30 Oct 2026)
   "portal.search.label": "내 계정과 사이트에서 검색",

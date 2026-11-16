@@ -16,7 +16,7 @@ import {
   verifySignature,
 } from '@/features/webhooks/core'
 import { buildWebhookGuideMarkdown, markdownSectionToHtml, webhookSectionMarkdown } from '@/features/webhooks/docs'
-import { pickEventFields, WEBHOOK_EVENTS } from '@/features/webhooks/events'
+import { EVENT_FIELDS, EVENT_LABEL_KEYS, pickEventFields, WEBHOOK_EVENTS } from '@/features/webhooks/events'
 
 describe('webhook addresses (SSRF guard)', () => {
   it('accepts a public https address on the standard port', () => {
@@ -196,5 +196,19 @@ describe('webhook failure streak', () => {
     expect(isFailingStreak(['failed', 'failed', 'failed', 'failed'])).toBe(false)
     expect(isFailingStreak(['failed', 'ok', 'failed', 'failed', 'failed', 'failed'])).toBe(false)
     expect(isFailingStreak(['failed', 'failed', 'failed', 'failed', 'failed', 'ok'])).toBe(true)
+  })
+})
+
+describe('affiliate webhook events (26b)', () => {
+  it('lists the four affiliate events with fields and a label key each', () => {
+    for (const event of ['affiliate.joined', 'affiliate.approved', 'affiliate.commission.earned', 'affiliate.payout.recorded'] as const) {
+      expect(WEBHOOK_EVENTS).toContain(event)
+      expect(EVENT_FIELDS[event].length).toBeGreaterThan(0)
+      expect(EVENT_LABEL_KEYS[event]).toBe(`webhooks.event.${event}`)
+    }
+  })
+  it('sends only allowed fields', () => {
+    const body = pickEventFields('affiliate.commission.earned', { id: 1, affiliateId: 2, orderId: 3, amount: 450, payableOn: 'x', token: 'secret' })
+    expect(body).toEqual({ id: 1, affiliateId: 2, orderId: 3, amount: 450, payableOn: 'x' })
   })
 })

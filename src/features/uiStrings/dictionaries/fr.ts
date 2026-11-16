@@ -3131,6 +3131,10 @@ const fr: UiDictionary = {
   "webhooks.event.order.refunded": "Commande remboursée",
   "webhooks.event.form.submitted": "Formulaire envoyé",
   "webhooks.event.user.registered": "Compte créé",
+  "webhooks.event.affiliate.joined": "Affilié inscrit",
+  "webhooks.event.affiliate.approved": "Affilié approuvé",
+  "webhooks.event.affiliate.commission.earned": "Commission d'affilié gagnée",
+  "webhooks.event.affiliate.payout.recorded": "Paiement d'affilié enregistré",
   "webhooks.event.tracking-event.saved": "Événement de suivi enregistré",
   // Portal search (task 6, added 30 Oct 2026)
   "portal.search.label": "Rechercher dans votre compte et sur le site",

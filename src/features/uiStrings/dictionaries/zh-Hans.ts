@@ -3130,6 +3130,10 @@ const zhHans: UiDictionary = {
   "webhooks.event.order.refunded": "订单已退款",
   "webhooks.event.form.submitted": "表单已提交",
   "webhooks.event.user.registered": "账户已创建",
+  "webhooks.event.affiliate.joined": "联盟会员已加入",
+  "webhooks.event.affiliate.approved": "联盟会员已批准",
+  "webhooks.event.affiliate.commission.earned": "联盟佣金已产生",
+  "webhooks.event.affiliate.payout.recorded": "联盟付款已记录",
   "webhooks.event.tracking-event.saved": "已保存的跟踪事件",
   // Portal search (task 6, added 30 Oct 2026)
   "portal.search.label": "搜索账户和网站",

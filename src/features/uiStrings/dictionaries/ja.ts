@@ -3131,6 +3131,10 @@ const ja: UiDictionary = {
   "webhooks.event.order.refunded": "注文の返金",
   "webhooks.event.form.submitted": "フォーム送信",
   "webhooks.event.user.registered": "アカウント作成",
+  "webhooks.event.affiliate.joined": "アフィリエイト参加",
+  "webhooks.event.affiliate.approved": "アフィリエイト承認",
+  "webhooks.event.affiliate.commission.earned": "アフィリエイト報酬発生",
+  "webhooks.event.affiliate.payout.recorded": "アフィリエイト支払い記録",
   "webhooks.event.tracking-event.saved": "トラッキングイベントを保存",
   // Portal search (task 6, added 30 Oct 2026)
   "portal.search.label": "アカウントとサイトを検索",
