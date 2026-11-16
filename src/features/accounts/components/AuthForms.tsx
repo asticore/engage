@@ -37,7 +37,9 @@ export const SignInForm: React.FC<{
   passwordless?: { magicLink: boolean; emailCode: boolean }
   /** Passkey sign-in is offered only when the owner switched it on. */
   passkey?: boolean
-}> = ({ next, justReset, initialPendingToken, passwordless, passkey }) => {
+  /** The spam challenge, when Form settings require it on sign-in. */
+  captcha?: React.ReactNode
+}> = ({ next, justReset, initialPendingToken, passwordless, passkey, captcha }) => {
   const [state, action] = useActionState<ActionState, FormData>(signInAction, IDLE)
   const [passkeyPending, setPasskeyPending] = React.useState('')
   const tx = usePortalText()
@@ -55,6 +57,7 @@ export const SignInForm: React.FC<{
         </p>
       )}
       <input type="hidden" name="next" value={next} />
+      {captcha}
       <label>
         {tx('auth.email')}
         <input name="email" type="email" autoComplete="email" required />
@@ -118,7 +121,7 @@ export const CodeStep: React.FC<{ pendingToken: string; next: string }> = ({ pen
 /** Length floor and the hint line for the password fields, built on the server from the active rules. */
 export type PasswordRules = { minLength: number; hint: string }
 
-export const RegisterForm: React.FC<{ rules: PasswordRules }> = ({ rules }) => {
+export const RegisterForm: React.FC<{ rules: PasswordRules; captcha?: React.ReactNode }> = ({ rules, captcha }) => {
   const [state, action] = useActionState<ActionState, FormData>(registerAction, IDLE)
   const tx = usePortalText()
 
@@ -140,6 +143,7 @@ export const RegisterForm: React.FC<{ rules: PasswordRules }> = ({ rules }) => {
 
   return (
     <form action={action} className="account-form">
+      {captcha}
       <label>
         {tx('auth.email')}
         <input name="email" type="email" autoComplete="email" required />
@@ -168,7 +172,7 @@ export const RegisterForm: React.FC<{ rules: PasswordRules }> = ({ rules }) => {
   )
 }
 
-export const ForgotPasswordForm: React.FC = () => {
+export const ForgotPasswordForm: React.FC<{ captcha?: React.ReactNode }> = ({ captcha }) => {
   const [state, action] = useActionState<ActionState, FormData>(forgotPasswordAction, IDLE)
   const tx = usePortalText()
 
@@ -176,6 +180,7 @@ export const ForgotPasswordForm: React.FC = () => {
 
   return (
     <form action={action} className="account-form">
+      {captcha}
       <label>
         {tx('auth.email')}
         <input name="email" type="email" autoComplete="email" required />

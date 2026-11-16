@@ -7182,6 +7182,10 @@ export interface FormSetting {
     /**
      * Turn on Cloudflare Turnstile, a challenge that is usually invisible to real visitors. Use it if spam is still getting through - it adds a Cloudflare script to every page that has a form.
      */
+    /**
+     * Also require the challenge below on member sign-in, create account and forgot password. Needs the challenge switched on and its keys saved; if the keys are missing, sign-in still works.
+     */
+    protectSignIn?: boolean | null;
     turnstile?: boolean | null;
     /**
      * From the Turnstile section of your Cloudflare dashboard. This one is public - it appears in the form itself.
@@ -8263,6 +8267,7 @@ export interface FormSettingsSelect<T extends boolean = true> {
     | {
         honeypot?: T;
         minimumFillTimeSeconds?: T;
+        protectSignIn?: T;
         turnstile?: T;
         turnstileSiteKey?: T;
         turnstileSecretKey?: T;

@@ -102,6 +102,11 @@ async function signInActionImpl(_state: ActionState, form: FormData): Promise<Ac
 
   const guard = await guardAttempt(context.engine, 'sign-in', await requestAddress())
   if (!guard.allowed) return failed(tooManyAttempts(guard.retryAfterSeconds ?? 60))
+  {
+    const { authCaptchaRefusal } = await import('@/features/security/authCaptcha')
+    const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress())
+    if (refused) return failed(refused)
+  }
 
   const address = text(form, 'email').trim().toLowerCase()
   const origin = await requestClient()
@@ -196,6 +201,11 @@ async function registerActionImpl(_state: ActionState, form: FormData): Promise<
 
   const guard = await guardAttempt(context.engine, 'register', await requestAddress())
   if (!guard.allowed) return failed(tooManyAttempts(guard.retryAfterSeconds ?? 60))
+  {
+    const { authCaptchaRefusal } = await import('@/features/security/authCaptcha')
+    const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress())
+    if (refused) return failed(refused)
+  }
 
   const email = text(form, 'email')
   const password = text(form, 'password')
@@ -234,6 +244,11 @@ async function forgotPasswordActionImpl(
 
   const guard = await guardAttempt(context.engine, 'reset', await requestAddress())
   if (!guard.allowed) return failed(tooManyAttempts(guard.retryAfterSeconds ?? 60))
+  {
+    const { authCaptchaRefusal } = await import('@/features/security/authCaptcha')
+    const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress())
+    if (refused) return failed(refused)
+  }
 
   const origin = await siteOrigin()
   await requestPasswordReset(

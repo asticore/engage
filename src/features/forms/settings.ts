@@ -45,6 +45,7 @@ export const DEFAULT_FORM_SETTINGS: ResolvedFormSettings = {
   recaptchaSiteKey: '',
   recaptchaSecretKey: '',
   recaptchaMinScore: 0.5,
+  protectSignIn: false,
   submitButtonLabel: 'Submit',
   successMessage: 'Thank you - we have received your message and will be in touch shortly.',
   errorMessage: 'Sorry, something went wrong and your message was not sent. Please try again.',
@@ -68,6 +69,7 @@ type SettingsDoc = {
     recaptchaSiteKey?: string
     recaptchaSecretKey?: string
     recaptchaMinScore?: number
+    protectSignIn?: boolean
   }
   defaults?: {
     submitButtonLabel?: string
@@ -133,6 +135,7 @@ export const getFormSettings = async (engine: EngineLike): Promise<ResolvedFormS
     recaptchaSiteKey: text(doc.spam?.recaptchaSiteKey, ''),
     recaptchaSecretKey: text(doc.spam?.recaptchaSecretKey, ''),
     recaptchaMinScore: num(doc.spam?.recaptchaMinScore, DEFAULT_FORM_SETTINGS.recaptchaMinScore),
+    protectSignIn: bool(doc.spam?.protectSignIn, DEFAULT_FORM_SETTINGS.protectSignIn),
     submitButtonLabel: text(doc.defaults?.submitButtonLabel, DEFAULT_FORM_SETTINGS.submitButtonLabel),
     successMessage: text(doc.defaults?.successMessage, DEFAULT_FORM_SETTINGS.successMessage),
     errorMessage: text(doc.defaults?.errorMessage, DEFAULT_FORM_SETTINGS.errorMessage),
