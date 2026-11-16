@@ -1,5 +1,6 @@
 import type Stripe from 'stripe'
 
+import { assertNotStaging } from '@/features/site/staging'
 import type { BillingInterval, SubscriptionStatus } from './plan'
 
 /**
@@ -89,6 +90,7 @@ export async function createSubscriptionCheckout(
   stripe: StripeLike,
   args: { customerId: string; priceId: string; feePriceId: string | null; trialDays: number; successUrl: string; cancelUrl: string; metadata: Record<string, string> },
 ): Promise<string> {
+  assertNotStaging('Subscription checkout')
   const session = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: args.customerId,

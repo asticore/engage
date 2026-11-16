@@ -73,6 +73,27 @@ export const SitePages: GlobalConfig = {
           },
         },
         {
+          name: 'mode',
+          type: 'select',
+          label: 'Screen',
+          defaultValue: 'maintenance',
+          options: [
+            { label: "Maintenance (we'll be back soon)", value: 'maintenance' },
+            { label: 'Coming soon (launch countdown)', value: 'comingSoon' },
+          ],
+          admin: { description: 'Coming soon shows a countdown to the launch date and opens the site by itself when it is reached.' },
+        },
+        {
+          name: 'launchDate',
+          type: 'date',
+          label: 'Launch date and time',
+          admin: {
+            date: { pickerAppearance: 'dayAndTime' },
+            condition: (_data: unknown, siblingData: { mode?: string }) => siblingData?.mode === 'comingSoon',
+            description: 'Shown as a countdown. The site opens to everyone at this time.',
+          },
+        },
+        {
           name: 'headline',
           type: 'text',
           label: 'Headline',

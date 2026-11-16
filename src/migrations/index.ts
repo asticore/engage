@@ -177,6 +177,7 @@ import * as migration_20270316_240000_pinterest_tag from './20270316_240000_pint
 import * as migration_20270316_250000_breadcrumb_settings from './20270316_250000_breadcrumb_settings';
 import * as migration_20270316_260000_blog_rss from './20270316_260000_blog_rss';
 import * as migration_20270316_270000_schema_facts from './20270316_270000_schema_facts';
+import * as migration_20270316_280000_coming_soon from './20270316_280000_coming_soon';
 
 export const migrations = [
   {
@@ -1068,5 +1069,10 @@ export const migrations = [
     up: migration_20270316_270000_schema_facts.up,
     down: migration_20270316_270000_schema_facts.down,
     name: '20270316_270000_schema_facts',
+  },
+  {
+    up: migration_20270316_280000_coming_soon.up,
+    down: migration_20270316_280000_coming_soon.down,
+    name: '20270316_280000_coming_soon',
   },
 ];

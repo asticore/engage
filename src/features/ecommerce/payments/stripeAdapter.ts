@@ -44,6 +44,7 @@
  * against the same Stripe account until the real plugin cutover.
  */
 
+import { assertNotStaging } from '@/features/site/staging'
 import { enforcePurchaseLimits } from '@/features/purchaseLimits/enforce'
 import Stripe from 'stripe'
 
@@ -221,6 +222,7 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
  * retries do not pile up orders.
  */
 export async function initiateStripePayment(args: InitiateStripePaymentArgs): Promise<InitiateStripePaymentResult> {
+  assertNotStaging('Payment')
   const { engine, cart, customerEmail, billingAddress, user } = args
   const { orderData, amount, currency, address, email } = await buildOrderDraft(args)
   if (amount === 0) return payInFullWithStoredValue(engine, cart.id, orderData, email)
