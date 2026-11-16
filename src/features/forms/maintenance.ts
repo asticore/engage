@@ -1,6 +1,8 @@
 import type { FormDoc } from './types'
 
 import { normaliseFormConfig } from './config'
+import { requestSiteOrigin } from '@/utilities/siteOrigin'
+import { withFileLinks } from './fileLinks'
 import { buildPayload, deliver, MAX_ATTEMPTS, summariseAttempts, type WebhookAttempt } from './webhooks'
 import { getFormSettings } from './settings'
 import { FORMS_SLUG, SUBMISSIONS_SLUG } from './slugs'
@@ -94,7 +96,7 @@ export async function retryDueWebhooks(engine: MaintenanceEngine, now = new Date
   })
 
   let attempted = 0
-  for (const entry of due.docs as { id: number; form?: number | { id: number }; values?: Record<string, unknown>; submittedAt?: string; createdAt?: string; webhookDeliveries?: WebhookAttempt[] }[]) {
+  for (const entry of due.docs as { id: number; form?: number | { id: number }; values?: Record<string, unknown>; submittedAt?: string; createdAt?: string; webhookDeliveries?: WebhookAttempt[]; sourceUrl?: string; consent?: unknown; status?: string }[]) {
     const formId = typeof entry.form === 'object' ? entry.form?.id : entry.form
     if (!formId) continue
     const form = (await engine.findByID({ collection: FORMS_SLUG, id: formId, depth: 0 }).catch((): null => null)) as FormDoc | null
@@ -112,24 +114,28 @@ export async function retryDueWebhooks(engine: MaintenanceEngine, now = new Date
 export async function runWebhookRetry(
   engine: Pick<MaintenanceEngine, 'update'>,
   form: FormDoc,
-  entry: { id: number | string; values?: Record<string, unknown>; submittedAt?: string; createdAt?: string; webhookDeliveries?: WebhookAttempt[] },
+  entry: { id: number | string; values?: Record<string, unknown>; submittedAt?: string; createdAt?: string; webhookDeliveries?: WebhookAttempt[]; sourceUrl?: string; consent?: unknown; status?: string },
   now: Date,
   fetcher: typeof fetch,
   force: boolean,
+  onlyWebhookId?: string,
 ): Promise<number> {
   const resolved = withResolvedFields(form)
   const config = normaliseFormConfig(form.formConfig)
   const log: WebhookAttempt[] = Array.isArray(entry.webhookDeliveries) ? [...entry.webhookDeliveries] : []
   let attempted = 0
 
+  const linked = await withFileLinks(entry.values || {}, await requestSiteOrigin())
   for (const hook of config.webhooks || []) {
     if (hook.enabled === false || !hook.url) continue
+    if (onlyWebhookId && hook.id !== onlyWebhookId) continue
     const mine = log.filter((attempt) => attempt.webhookId === hook.id)
     const last = mine[mine.length - 1]
-    if (last?.ok) continue
+    // A re-send of one delivery sends again even after a success.
+    if (last?.ok && !onlyWebhookId) continue
     const attemptNumber = (last?.attempt || 0) + 1
     if (attemptNumber > MAX_ATTEMPTS && !force) continue
-    const payload = buildPayload(resolved, resolved.fields, entry.id, entry.values || {}, entry.submittedAt || entry.createdAt || now.toISOString(), `${entry.id}-${hook.id}-${attemptNumber}`)
+    const payload = buildPayload(resolved, resolved.fields, entry.id, linked, entry.submittedAt || entry.createdAt || now.toISOString(), `${entry.id}-${hook.id}-${attemptNumber}`, { hook, meta: { sourceUrl: entry.sourceUrl, consent: entry.consent, status: entry.status } })
     log.push(await deliver(hook, payload, attemptNumber, fetcher, () => now.getTime()))
     attempted += 1
   }
