@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import type { MetaField } from './metaFields'
-import type { Collection, Settings } from './store'
+import type { Quota } from './quota'
+import type { Rendition } from './renditions'
+import type { Collection, Settings, StorageTotals } from './store'
 
 type Overview = {
   settings: Settings
@@ -12,7 +14,12 @@ type Overview = {
   fields: MetaField[]
   expiring: Array<{ mediaId: number; licenceExpiry: string }>
   expired: Array<{ mediaId: number; licenceExpiry: string }>
+  renditions: Rendition[]
+  totals: StorageTotals
+  quotaUsage: Array<Quota & { usedBytes: number }>
 }
+
+const mb = (bytes: number): string => `${(bytes / 1048576).toFixed(bytes < 10485760 ? 1 : 0)} MB`
 
 const blankField = { id: 0, label: '', key: '', type: 'text', options: '', required: false, searchable: true, appliesTo: 'all' }
 
@@ -26,6 +33,9 @@ export function AssetManagerPanel() {
   const [rule, setRule] = useState({ path: '', visibility: 'private' })
   const [share, setShare] = useState({ collectionId: 0, days: '7', password: '', maxDownloads: '' })
   const [link, setLink] = useState('')
+  const [preset, setPreset] = useState({ id: 0, name: '', width: '1200', height: '0', fit: 'scale-down', format: 'auto' })
+  const [importUrl, setImportUrl] = useState({ url: '', folder: '' })
+  const [pickers, setPickers] = useState<{ roles: Array<{ value: string; label: string }>; companies: Array<{ id: string; name: string }> }>({ roles: [], companies: [] })
 
   const load = useCallback(async (): Promise<void> => {
     const res = await fetch('/api/admin-media-dam')
@@ -33,6 +43,11 @@ export function AssetManagerPanel() {
     if (!res.ok) return setMessage(body.error ?? 'Could not load the asset manager.')
     setData(body as Overview)
     setSettings((body as Overview).settings)
+    const pick = await fetch('/api/admin-media-folders')
+    if (pick.ok) {
+      const p = (await pick.json()) as { roles?: typeof pickers.roles; companies?: typeof pickers.companies }
+      setPickers({ roles: p.roles ?? [], companies: p.companies ?? [] })
+    }
   }, [])
   useEffect(() => {
     void load()
@@ -180,6 +195,52 @@ export function AssetManagerPanel() {
         </div>
       </div></div>
 
+      <h2>Storage</h2>
+      <p>{data.totals.files} files, {mb(data.totals.bytes)}{s.quotaMb > 0 ? ` of ${s.quotaMb} MB` : ''}.</p>
+      <ul className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+        {data.totals.byKind.map((k) => <li key={k.kind}>{k.kind}: {k.files} files, {mb(k.bytes)}</li>)}
+      </ul>
+      {data.totals.topFolders.length > 0 ? <p className="text-muted">Largest folders: {data.totals.topFolders.map((f) => `${f.folder || 'top level'} (${mb(f.bytes)})`).join(', ')}</p> : null}
+      {data.quotaUsage.length > 0 ? <ul className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>{data.quotaUsage.map((q) => <li key={`${q.scope}:${q.key}`}>{q.scope} {pickers.companies.find((c) => c.id === q.key)?.name ?? q.key}: {mb(q.usedBytes)} of {q.mb} MB</li>)}</ul> : null}
+
+      <h2>Rendition presets</h2>
+      <p className="text-muted">Named sizes a picture can be downloaded in from its page. Needs the Cloudflare Images service.</p>
+      <ul className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+        {data.renditions.map((r) => (
+          <li key={r.id} className="cluster">
+            <strong>{r.name}</strong> <span className="text-muted">{r.width || 'auto'} x {r.height || 'auto'}, {r.fit}, {r.format}</span>
+            <button type="button" className="btn" onClick={() => setPreset({ id: r.id, name: r.name, width: String(r.width), height: String(r.height), fit: r.fit, format: r.format })}>Edit</button>
+            <button type="button" className="btn" onClick={() => { if (window.confirm(`Delete preset ${r.name}?`)) void post({ action: 'deleteRendition', id: r.id }, 'Preset deleted.') }}>Delete</button>
+          </li>
+        ))}
+      </ul>
+      <div className="card"><div className="card-body stack">
+        <label className="field">Name<input className="input" value={preset.name} maxLength={60} onChange={(e) => setPreset({ ...preset, name: e.target.value })} /></label>
+        <label className="field">Width (0 for auto)<input className="input" type="number" min={0} max={8000} value={preset.width} onChange={(e) => setPreset({ ...preset, width: e.target.value })} /></label>
+        <label className="field">Height (0 for auto)<input className="input" type="number" min={0} max={8000} value={preset.height} onChange={(e) => setPreset({ ...preset, height: e.target.value })} /></label>
+        <label className="field">Fit<select className="input" value={preset.fit} onChange={(e) => setPreset({ ...preset, fit: e.target.value })}>{['scale-down', 'contain', 'cover', 'crop', 'pad'].map((f) => <option key={f} value={f}>{f}</option>)}</select></label>
+        <label className="field">Format<select className="input" value={preset.format} onChange={(e) => setPreset({ ...preset, format: e.target.value })}>{['auto', 'jpeg', 'png', 'webp', 'avif'].map((f) => <option key={f} value={f}>{f}</option>)}</select></label>
+        <div><button type="button" className="btn" onClick={() => void post({ action: 'saveRendition', ...preset }, 'Preset saved.').then((ok) => { if (ok) setPreset({ id: 0, name: '', width: '1200', height: '0', fit: 'scale-down', format: 'auto' }) })}>{preset.id ? 'Save preset' : 'Add preset'}</button></div>
+      </div></div>
+
+      <h2>Import a file</h2>
+      <p className="text-muted">From a web address (https) or a Google Drive link to one file shared as "Anyone with the link".</p>
+      <div className="card"><div className="card-body stack">
+        <label className="field">Address<input className="input" type="url" value={importUrl.url} onChange={(e) => setImportUrl({ ...importUrl, url: e.target.value })} /></label>
+        <label className="field">Folder (optional)<input className="input" value={importUrl.folder} onChange={(e) => setImportUrl({ ...importUrl, folder: e.target.value })} /></label>
+        <div><button type="button" className="btn" onClick={() => {
+          void (async () => {
+            setMessage('')
+            const res = await fetch('/api/admin-media-import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(importUrl) })
+            const body = (await res.json().catch(() => ({}))) as { error?: string; doc?: { id: number; filename: string }; duplicateOf?: number | null }
+            if (!res.ok) return setMessage(body.error ?? 'The import did not work.')
+            setMessage(`Imported ${body.doc?.filename ?? 'the file'}${body.duplicateOf ? ` (same bytes as file #${body.duplicateOf})` : ''}.`)
+            setImportUrl({ url: '', folder: importUrl.folder })
+            await load()
+          })()
+        }}>Import</button></div>
+      </div></div>
+
       <h2>Settings</h2>
       <div className="card"><div className="card-body stack">
         <label><input type="checkbox" checked={s.autoExtract} onChange={(e) => up({ autoExtract: e.target.checked })} /> Read camera data from JPEG photos on upload</label>
@@ -194,6 +255,22 @@ export function AssetManagerPanel() {
         <label className="field">Warn about licences expiring within (days)<input className="input" type="number" min={0} max={365} value={s.expiryWarnDays} onChange={(e) => up({ expiryWarnDays: Number(e.target.value) })} /></label>
         <label className="field">Previous versions kept per file<input className="input" type="number" min={0} max={50} value={s.keepVersions} onChange={(e) => up({ keepVersions: Number(e.target.value) })} /></label>
         <label className="field">Storage limit (MB, 0 for none)<input className="input" type="number" min={0} value={s.quotaMb} onChange={(e) => up({ quotaMb: Number(e.target.value) })} /></label>
+        <fieldset className="stack">
+          <legend>Storage limits per role or company (MB)</legend>
+          {s.quotas.map((q, i) => (
+            <div key={i} className="cluster">
+              <select className="input" value={`${q.scope}:${q.key}`} onChange={(e) => { const [scope, ...rest] = e.target.value.split(':'); up({ quotas: s.quotas.map((x, j) => (j === i ? { ...x, scope: scope as Quota['scope'], key: rest.join(':') } : x)) }) }}>
+                <option value={`${q.scope}:${q.key}`}>{q.key || 'Choose'}</option>
+                {pickers.roles.map((r) => <option key={`role:${r.value}`} value={`role:${r.value}`}>Role: {r.label}</option>)}
+                {pickers.companies.map((c) => <option key={`company:${c.id}`} value={`company:${c.id}`}>Company: {c.name}</option>)}
+              </select>
+              <input className="input" type="number" min={1} value={q.mb} onChange={(e) => up({ quotas: s.quotas.map((x, j) => (j === i ? { ...x, mb: Number(e.target.value) } : x)) })} />
+              <button type="button" className="btn" onClick={() => up({ quotas: s.quotas.filter((_, j) => j !== i) })}>Remove</button>
+            </div>
+          ))}
+          <div><button type="button" className="btn" onClick={() => up({ quotas: [...s.quotas, { scope: 'role', key: pickers.roles[0]?.value ?? 'editor', mb: 1000 }] })}>Add a limit</button></div>
+          <p className="text-muted">Counts what the people in that role or company uploaded. Over the limit, uploads are refused.</p>
+        </fieldset>
         <div><button type="button" className="btn" onClick={() => void post({ action: 'saveSettings', ...s }, 'Settings saved.')}>Save settings</button></div>
       </div></div>
     </div>

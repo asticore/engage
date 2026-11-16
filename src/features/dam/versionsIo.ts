@@ -21,6 +21,7 @@ export async function snapshotCurrent(d1: store.D1, doc: Doc, keep: number, user
       mediaId: doc.id, r2Key: key, filename: doc.filename, mimeType: doc.mimeType ?? current.contentType, filesize: doc.filesize ?? current.data.byteLength,
       width: doc.width ?? null, height: doc.height ?? null, contentHash: await contentHash(current.data), note, userId, createdAt: nowIso,
     })
+    await store.logActivity(d1, doc.id, 'replace', note, userId, nowIso)
     const stale = versionsToPrune(await store.listVersions(d1, doc.id), keep)
     if (stale.length > 0) {
       await deleteMediaKeys(stale.map((v) => v.r2Key))

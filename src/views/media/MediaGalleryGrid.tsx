@@ -519,6 +519,9 @@ export function MediaGalleryGrid({
                       loading="lazy"
                       className="h-full w-full object-cover [transition:transform_0.15s_ease] group-hover:scale-105"
                     />
+                  ) : doc.url && doc.mimeType?.startsWith('video/') && !isVideoLinkMimeType(doc.mimeType) ? (
+                    // The browser shows the first frame of the video as its thumbnail.
+                    <video src={`${doc.url}#t=0.5`} preload="metadata" muted playsInline aria-label={doc.filename ?? 'Video'} className="h-full w-full object-cover" />
                   ) : (
                     <FileIcon mimeType={doc.mimeType} filename={doc.filename} />
                   )}
