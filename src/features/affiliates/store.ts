@@ -228,3 +228,10 @@ export async function lifetimeSalesCents(d1: D1, affiliateId: number): Promise<n
 export async function recentVisits(d1: D1, limit = 50): Promise<Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>> {
   return (await all(d1, 'SELECT v.id, v.path, v.utm_source, v.utm_medium, v.utm_campaign, v.created_at, a.name FROM eg_affiliate_visits v LEFT JOIN eg_affiliates a ON a.id = v.affiliate_id ORDER BY v.id DESC LIMIT ?1', limit)).map((r) => ({ id: Number(r.id), affiliate: String(r.name ?? ''), path: String(r.path ?? '/'), source: String(r.utm_source ?? ''), medium: String(r.utm_medium ?? ''), campaign: String(r.utm_campaign ?? ''), createdAt: String(r.created_at ?? '') }))
 }
+
+/** The affiliate whose email matches (case-insensitive), for the signed-in member page. */
+export async function findByEmail(d1: D1, email: string): Promise<Affiliate | null> {
+  if (email === '') return null
+  const r = (await all(d1, 'SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, a.rate_pct, a.coupon_code, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a WHERE lower(a.email) = ?1 LIMIT 1', email.trim().toLowerCase()))[0]
+  return r ? { id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token ?? ''), ratePct: toRate(r.rate_pct), couponCode: String(r.coupon_code ?? '') } : null
+}
