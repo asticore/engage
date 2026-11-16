@@ -1,3 +1,4 @@
+import { approvedEmail, commissionEmail, payoutEmail } from './emails'
 import { afterRefund, commissionBase, commissionCents, effectiveRate, eligibleAt, isSelfReferral } from './commission'
 import { normaliseCoupon, readRefCookie, readUtmCookie } from './core'
 import * as store from './store'
@@ -65,7 +66,9 @@ export async function affiliateOrderPaid(order: Order | null): Promise<void> {
     const base = commissionBase(order.subtotal, order.discountTotal)
     const now = new Date()
     const pct = effectiveRate((await store.getAffiliateById(d1, row.affiliate_id))?.ratePct, settings.commissionPct)
-    await store.markCommissionPending(d1, { orderId: row.order_id, base, pct, amount: commissionCents(base, pct), eligibleAt: eligibleAt(now, settings.pendingDays) }, now.toISOString())
+    const eligible = eligibleAt(now, settings.pendingDays)
+    const started = await store.markCommissionPending(d1, { orderId: row.order_id, base, pct, amount: commissionCents(base, pct), eligibleAt: eligible }, now.toISOString())
+    if (started && commissionCents(base, pct) > 0) await sendAffiliateEmail('commission', row.affiliate_id, { orderId: row.order_id, amountCents: commissionCents(base, pct), payableOn: eligible })
   } catch {
     // Commissions are retried the next time the order is marked paid.
   }
@@ -85,5 +88,35 @@ export async function affiliateOrderRefunded(order: Order | null): Promise<void>
     await store.setCommissionAmount(d1, row.order_id, left, left === 0 ? 'reversed' : row.status, new Date().toISOString())
   } catch {
     // Best effort.
+  }
+}
+
+type EmailExtra = { amountCents?: number; note?: string; orderId?: number; payableOn?: string }
+
+/**
+ * Emails an affiliate (approved, commission earned, payout recorded) when the Email switch on the Affiliates screen is on
+ * and they have an address. Best effort: it never throws into the action that caused it.
+ */
+export async function sendAffiliateEmail(kind: 'approved' | 'commission' | 'payout', affiliateId: number, extra: EmailExtra): Promise<void> {
+  try {
+    const d1 = await db()
+    const settings = await store.getSettings(d1)
+    if (!settings.emailNotifications) return
+    const a = await store.getAffiliateById(d1, affiliateId)
+    if (!a || !a.email) return
+    const { configuredSiteOrigin } = await import('@/utilities/siteOrigin')
+    const origin = configuredSiteOrigin().replace(/\/+$/, '')
+    if (!origin) return
+    const dashboard = a.token ? `${origin}/affiliates/dashboard?token=${a.token}` : `${origin}/affiliates`
+    const mail =
+      kind === 'approved'
+        ? approvedEmail({ name: a.name, link: `${origin}/?ref=${encodeURIComponent(a.code)}`, dashboard, commissionPct: a.ratePct ?? settings.commissionPct, cookieDays: settings.cookieDays })
+        : kind === 'commission'
+          ? commissionEmail({ name: a.name, orderId: extra.orderId ?? 0, amountCents: extra.amountCents ?? 0, payableOn: extra.payableOn ?? '', dashboard })
+          : payoutEmail({ name: a.name, amountCents: extra.amountCents ?? 0, note: extra.note ?? '', dashboard })
+    const { sendEmail } = await import('@/features/email')
+    await sendEmail({ to: a.email, subject: mail.subject, text: mail.text, template: `affiliate.${kind}` })
+  } catch {
+    // An email problem never blocks approving, paying or an order.
   }
 }

@@ -35,6 +35,7 @@ export async function POST(request: Request): Promise<Response> {
   for (let i = 0; i < 5 && (await store.codeTaken(d1, code)); i++) code = suggestCode(name)
   const token = newToken()
   const status = settings.autoApprove ? 'active' : 'pending'
-  await store.createAffiliate(d1, { code, name, email, status, token }, new Date().toISOString())
+  const newId = await store.createAffiliate(d1, { code, name, email, status, token }, new Date().toISOString())
+  if (status === 'active') await (await import('@/features/affiliates/service')).sendAffiliateEmail('approved', newId, {})
   return reply({ ok: true, status, code, dashboard: `/affiliates/dashboard?token=${token}` })
 }
