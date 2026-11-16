@@ -92,8 +92,14 @@ export const WAVE65_ELEMENTS: ElementDef[] = [
   {
     type: 'language-switcher', label: 'Language switcher', icon: String.fromCodePoint(0x1f310), category: 'siteMeta',
     description: 'Links to this page in each active language. Hidden when Multilingual is off or only one language is active.',
-    fields: [text('label', 'Accessible label', { width: 'half' })],
-    defaultProps: () => ({ label: 'Language' }),
+    fields: [
+      text('label', 'Accessible label', { width: 'half' }),
+      { name: 'display', label: 'Show', type: 'select', width: 'half', options: [{ label: 'Language name', value: 'name' }, { label: 'Short code (EN)', value: 'code' }, { label: 'Flag and name', value: 'flag-name' }, { label: 'Flag only', value: 'flag' }], helpText: 'Flags show a country, not a language: the name stays as the accessible label.' },
+      { name: 'layout', label: 'Layout', type: 'select', width: 'half', options: [{ label: 'In a row', value: 'row' }, { label: 'As a list', value: 'list' }] },
+      { name: 'hover', label: 'Hover effect', type: 'select', width: 'half', options: [{ label: 'Underline', value: 'underline' }, { label: 'Background', value: 'background' }, { label: 'None', value: 'none' }] },
+      { name: 'align', label: 'Align', type: 'select', width: 'half', options: [{ label: 'Start', value: 'start' }, { label: 'Center', value: 'center' }, { label: 'End', value: 'end' }] },
+    ],
+    defaultProps: () => ({ label: 'Language', display: 'name', layout: 'row', hover: 'underline', align: 'start' }),
   },
 ]
 
