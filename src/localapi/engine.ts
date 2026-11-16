@@ -190,6 +190,14 @@ function apiKeyDeps(authDb: AuthDbOps): ApiKeyDeps {
     now: () => Date.now(),
     loadCategory: (userId) => categories.categoryForUser(userId),
     categoriesExist: async () => (await categories.count()) > 0,
+    verifyAccessToken: async (token) => {
+      const [{ verifyAccessToken }, { createD1SigningKeyStore }, { defaultTokenD1 }] = await Promise.all([
+        import('@/features/apiKeys/tokens/accessToken'),
+        import('@/features/apiKeys/tokens/signingKeys'),
+        import('@/features/apiKeys/tokens/tables'),
+      ])
+      return verifyAccessToken(createD1SigningKeyStore(defaultTokenD1), token, Date.now())
+    },
     audit: async (entry) => {
       const settings = await readSecuritySettingsFromD1()
       await audit({ ...entry, collectionSlug: 'api-keys' }, settings)

@@ -5,6 +5,7 @@ import {
   displayPrefix,
   generateApiKey,
   hashApiKey,
+  isAccessTokenShape,
   isApiKeyShape,
   isStaffRoles,
   parseScopes,
@@ -78,6 +79,8 @@ export type ApiKeyDeps = {
   loadCategory?: (userId: number) => Promise<CategoryLimits | null>
   /** Whether any category exists. Once one does, a customer needs a category to use or create a key. */
   categoriesExist?: () => Promise<boolean>
+  /** Checks a short-lived access token's signature and expiry. Null for any invalid token. Omitted means tokens are not accepted. */
+  verifyAccessToken?: (token: string) => Promise<{ userId: number; keyId: number; scopes: string[] } | null>
 }
 
 /** What a request learns about the key that authenticated it. */
@@ -121,16 +124,36 @@ export async function authenticateApiKey(deps: ApiKeyDeps, token: string, settin
     throw new ApiKeyRefused(reason)
   }
   if (!settings.enabled) return refuse('disabled')
-  if (!isApiKeyShape(token)) return refuse('malformed')
-
+  // A short-lived access token stands for the API key it was exchanged for: the key and its owner are
+  // checked below exactly as for the key itself, so revoking the key ends its tokens at once.
+  let tokenScopes: string[] | null = null
   let row: ApiKeyRow | null
   let owner: LiveOwner | null
-  try {
-    row = await deps.store.findByHash(await hashApiKey(token))
-  } catch {
-    throw new ApiKeyRefused('unavailable', 503)
+  if (isAccessTokenShape(token)) {
+    if (!deps.verifyAccessToken) return refuse('malformed')
+    let verified: Awaited<ReturnType<NonNullable<ApiKeyDeps['verifyAccessToken']>>>
+    try {
+      verified = await deps.verifyAccessToken(token)
+    } catch {
+      throw new ApiKeyRefused('unavailable', 503)
+    }
+    if (!verified) return refuse('bad-token')
+    try {
+      row = await deps.store.findById(verified.keyId)
+    } catch {
+      throw new ApiKeyRefused('unavailable', 503)
+    }
+    if (!row || row.userId !== verified.userId) return refuse('unknown')
+    tokenScopes = verified.scopes
+  } else {
+    if (!isApiKeyShape(token)) return refuse('malformed')
+    try {
+      row = await deps.store.findByHash(await hashApiKey(token))
+    } catch {
+      throw new ApiKeyRefused('unavailable', 503)
+    }
+    if (!row) return refuse('unknown')
   }
-  if (!row) return refuse('unknown')
   if (row.revokedAt) return refuse('revoked', `key ${row.id}`)
   const now = deps.now()
   if (row.expiresAt && Date.parse(row.expiresAt) <= now) return refuse('expired', `key ${row.id}`)
@@ -145,6 +168,8 @@ export async function authenticateApiKey(deps: ApiKeyDeps, token: string, settin
   if (!isStaffRoles(owner.roles) && !settings.allowCustomers) return refuse('customers-disabled', `key ${row.id}`)
 
   let scopes = parseScopes(row.scopes)
+  // A token can only narrow what its key may do, never widen it.
+  if (tokenScopes) scopes = intersectScopes(scopes, tokenScopes)
   let category: CategoryLimits | null = null
   if (deps.loadCategory) {
     try {

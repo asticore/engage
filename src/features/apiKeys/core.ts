@@ -76,6 +76,22 @@ export const displayPrefix = (key: string): string => key.slice(0, DISPLAY_PREFI
 export const isApiKeyShape = (token: string): boolean => KEY_SHAPE.test(token)
 
 /**
+ * True when a bearer value is one of our short-lived access tokens, judged from its header alone (no
+ * signature check here). A session token or any other JWT has a different `typ` and is left to the old path.
+ */
+export function isAccessTokenShape(token: string): boolean {
+  const parts = token.split('.')
+  if (parts.length !== 3 || parts.some((p) => !p) || token.length > 4096) return false
+  try {
+    const b64 = parts[0].replace(/-/g, '+').replace(/_/g, '/')
+    const header = JSON.parse(atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4))) as { typ?: unknown } | null
+    return Boolean(header) && typeof header === 'object' && header?.typ === 'at+jwt'
+  } catch {
+    return false
+  }
+}
+
+/**
  * The key a request presents, from HEADERS ONLY. `Authorization: Bearer egk_...`
  * or `x-api-key: egk_...`. A key in the query string or a cookie is never read
  * here, so it is ignored by construction. Returns null when no key-shaped value
@@ -85,7 +101,7 @@ export function presentedApiKey(headers: HeadersLike): string | null {
   const authorization = headers.get('Authorization')
   if (authorization && authorization.startsWith('Bearer ')) {
     const token = authorization.slice(7).trim()
-    return token.startsWith(KEY_PREFIX) ? token : null
+    return token.startsWith(KEY_PREFIX) || isAccessTokenShape(token) ? token : null
   }
   const header = headers.get('x-api-key')?.trim()
   return header && header.startsWith(KEY_PREFIX) ? header : null

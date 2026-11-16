@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { ApiKeysPanel } from '@/features/apiKeys/components/ApiKeysPanel'
+import { SigningKeysPanel } from '@/features/apiKeys/components/SigningKeysPanel'
 import {
   createTryItKeyAction,
   deleteEndpointAction,
@@ -577,6 +578,8 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
         <p>{t('apiBuilder.keys.intro')}</p>
         <ApiKeysPanel initial={initial.keys} showOwner />
       </section>
+
+      <SigningKeysPanel />
     </div>
   )
 }
