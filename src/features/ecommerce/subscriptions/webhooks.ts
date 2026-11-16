@@ -4,7 +4,7 @@ import { formatCents } from '../lib/money'
 import { sendSubscriptionEmail } from './emails'
 import { SUBSCRIPTION_STATUS_LABELS, type SubscriptionStatus } from './plan'
 import { createRenewalOrder, type InvoiceLike } from './renewal'
-import { createRecordFromSubscription, findRecordByStripeSubscription, updateRecord, withHistory, type HistoryEntry, type StripeSubscriptionLike, type SubEngine, type SubscriptionRecord } from './records'
+import { createRecordFromSubscription, findRecordByStripeSubscription, idOfRelation, updateRecord, withHistory, type HistoryEntry, type StripeSubscriptionLike, type SubEngine, type SubscriptionRecord } from './records'
 import { periodEndOf, statusFromStripe, subscriptionIdOf, type StripeLike } from './stripe'
 
 /**
@@ -133,6 +133,15 @@ async function onInvoicePaid(deps: WebhookDeps, invoice: InvoiceLike & { id: str
   if (isPayment) {
     orderId = await createRenewalOrder(deps.engine, record, invoice, now)
     paymentsMade += 1
+    if (reason === 'subscription_cycle') {
+      try {
+        const { affiliateRenewalPaid } = await import('@/features/affiliates/service')
+        const productId = idOfRelation(record.product)
+        await affiliateRenewalPaid({ id: orderId, customerEmail: record.customerEmail, lineItems: [{ productId, lineCents: paid }], subtotal: paid, discountTotal: 0, amount: paid })
+      } catch {
+        /* affiliate commission is best effort */
+      }
+    }
     entries.push({ at: now, text: `Payment received: ${formatCents(paid, invoice.currency.toUpperCase())}.`, invoiceId: invoice.id, orderId })
   } else if (paid === 0) {
     entries.push({ at: now, text: 'No payment due for this period (free trial).', invoiceId: invoice.id })
