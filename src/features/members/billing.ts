@@ -1,5 +1,6 @@
 import Stripe from 'stripe'
 
+import { assertNotStaging } from '@/features/site/staging'
 import type { EngineSignup } from './signup'
 import type { MemberSettings, MembershipDoc, MembershipTierDoc } from './types'
 
@@ -134,6 +135,7 @@ export const startSubscription = async (
 
     const trialDays = tier.trialDays ?? 0
 
+    assertNotStaging('Membership checkout')
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customer.id,

@@ -28,8 +28,10 @@ import { getAdsContext } from '@/features/ads/server'
 import { SpeedHead } from '@/features/speed'
 import { getSiteSnapshot } from '@/features/speed/siteSnapshot'
 import { getSitePages, isSignedInAdmin } from '@/features/site/pages'
+import { launchReached } from '@/features/site/pagesShape'
 import { BYPASS_COOKIE, shouldShowMaintenance } from '@/features/site/maintenance'
 import { MaintenanceScreen } from '@/features/site/MaintenanceScreen'
+import { STAGING_NOINDEX, isStaging } from '@/features/site/staging'
 import { buildFontCss, preloadLinks, remoteStylesheetUrls, resolveThemeFont } from '@/features/fonts/css'
 import { buildBuiltInFontCss } from '@/features/fonts/builtIn'
 import { readSelfHostBuiltInFonts } from '@/features/fonts/selfHost'
@@ -197,7 +199,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // this layout (they are route handlers or live outside the (frontend) group).
   const sitePages = await getSitePages()
   const maintenance = sitePages.maintenance
-  const showMaintenance = maintenance.enabled
+  const showMaintenance = maintenance.enabled && !launchReached(maintenance.mode, maintenance.launchAt, new Date())
     ? shouldShowMaintenance({
         enabled: true,
         path: (await headers()).get('next-url') ?? '/',
@@ -250,7 +252,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     >
       <head>
         <SpeedHead />
-        {showMaintenance && <meta name="robots" content="noindex" />}
+        {(showMaintenance || isStaging()) && <meta name="robots" content={isStaging() ? STAGING_NOINDEX : 'noindex'} />}
         {googleStylesheets.length > 0 && <link rel="preconnect" href="https://fonts.googleapis.com" />}
         {googleStylesheets.length > 0 && <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />}
         {usesFontsource && <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />}
@@ -296,7 +298,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           )}
           <AdPlacements position="header" />
           <main>
-            {showMaintenance ? <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} /> : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
+            {showMaintenance ? <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} launchAt={maintenance.mode === 'comingSoon' ? maintenance.launchAt : null} /> : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
           </main>
           <AdPlacements position="footer" />
           {chrome.footer ? (

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { domainMiddleware } from '@/features/domains/middleware'
 import { multilingualMiddleware } from '@/features/multilingual/middleware'
 import { securityMiddleware, readSecuritySettingsFromD1 } from '@/features/security'
+import { STAGING_NOINDEX, isStaging } from '@/features/site/staging'
 import { NOINDEX_HEADER_VALUE, isPickerRequest, isNoindexPath } from '@/features/security/noindex'
 import { SESSION_COOKIE, tokenIssuedAt } from '@/features/security/loginProtection'
 import {
@@ -34,6 +35,8 @@ export async function middleware(request: NextRequest) {
   if (isNoindexPath(pathname, root) || isNoindexPath(stripped, root) || isPickerRequest(request.nextUrl)) {
     response.headers.set('X-Robots-Tag', NOINDEX_HEADER_VALUE)
   }
+  // A staging site is never indexed, whatever the page says.
+  if (isStaging()) response.headers.set('X-Robots-Tag', STAGING_NOINDEX)
   return response
 }
 

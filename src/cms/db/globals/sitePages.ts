@@ -18,6 +18,8 @@ export type SitePagesDoc = {
     message?: string | null
     bypassToken?: string | null
     allowAdmins?: boolean | null
+    mode?: string | null
+    launchDate?: string | null
   } | null
   updatedAt: string
   createdAt: string

@@ -3,6 +3,16 @@
  * spec all read the same rules. The loader that reads the database is in ./pages.ts.
  */
 
+/** A launch date and time as stored (ISO text); anything that is not a real date gives null. */
+export const parseLaunch = (value: unknown): string | null => {
+  if (typeof value !== 'string' || !value.trim()) return null
+  const ms = Date.parse(value)
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null
+}
+
+/** True when coming soon mode has reached its launch date, so the site opens by itself. */
+export const launchReached = (mode: string, launchAt: string | null, now: Date): boolean => mode === 'comingSoon' && launchAt !== null && Date.parse(launchAt) <= now.getTime()
+
 export const DEFAULT_MAINTENANCE_HEADLINE = "We'll be back soon"
 
 export type SitePagesConfig = {
@@ -15,6 +25,10 @@ export type SitePagesConfig = {
     message: string
     bypassToken: string | null
     allowAdmins: boolean
+    /** Maintenance (we'll be back) or coming soon (launch countdown). */
+    mode: 'maintenance' | 'comingSoon'
+    /** Launch date as an ISO string, or null. Coming soon turns itself off from this moment. */
+    launchAt: string | null
   }
 }
 
@@ -49,6 +63,8 @@ export const normaliseSitePages = (raw: unknown): SitePagesConfig => {
       message: plainText(group.message, 1000),
       bypassToken: token,
       allowAdmins: group.allowAdmins !== false,
+      mode: group.mode === 'comingSoon' ? 'comingSoon' : 'maintenance',
+      launchAt: parseLaunch(group.launchDate),
     },
   }
 }
