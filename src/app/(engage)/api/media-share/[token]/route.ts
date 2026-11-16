@@ -53,6 +53,7 @@ async function resolveFiles(d1: store.D1, kind: 'file' | 'collection', targetId:
 
 async function download(d1: store.D1, shareId: number, file: store.MediaRow): Promise<Response> {
   if (!(await store.takeDownload(d1, shareId))) return page(410, 'Link used up', `<p>${SHARE_MESSAGES.used_up}</p>`)
+  await store.logActivity(d1, file.id, 'download', 'Share link', null, new Date().toISOString()).catch((): void => undefined)
   const object = await readMediaObject(file.filename)
   if (!object) return page(404, 'File not found', '<p>This file is no longer available.</p>')
   const headers = new Headers({ ...SAFE_HEADERS, 'Content-Type': file.mimeType || object.contentType })
@@ -69,6 +70,7 @@ async function downloadZip(d1: store.D1, shareId: number, files: store.MediaRow[
   if (!(await store.takeDownload(d1, shareId))) return page(410, 'Link used up', `<p>${SHARE_MESSAGES.used_up}</p>`)
   const entries: Array<{ name: string; data: Uint8Array }> = []
   for (const f of files) {
+    await store.logActivity(d1, f.id, 'download', 'Share link zip', null, new Date().toISOString()).catch((): void => undefined)
     const object = await readMediaObject(f.filename)
     if (object) entries.push({ name: f.filename, data: object.data })
   }

@@ -191,6 +191,7 @@ export const FRESH_BASELINE: FreshBaseline = {
     {"name":"20270316_400000_affiliate_rules","batch":2},
     {"name":"20270316_410000_affiliate_attribution","batch":2},
     {"name":"20270316_420000_media_folder_records","batch":2},
+    {"name":"20270316_440000_media_quotas","batch":2},
     {"name":"20270316_395000_chatbot","batch":2},
     {"name":"20270316_430000_affiliate_emails","batch":2},
     {"name":"20270316_425000_agent_access","batch":2},
@@ -634,7 +635,7 @@ export const FRESH_BASELINE: FreshBaseline = {
     {"table":"eg_media_activity","sql":"CREATE TABLE `eg_media_activity` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `media_id` integer NOT NULL,\n  `action` text NOT NULL,\n  `detail` text NOT NULL DEFAULT '',\n  `user_id` integer,\n  `created_at` text\n)"},
     {"table":"eg_media_saved_searches","sql":"CREATE TABLE `eg_media_saved_searches` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `name` text NOT NULL,\n  `query_json` text NOT NULL DEFAULT '{}',\n  `user_id` integer,\n  `updated_at` text,\n  `created_at` text\n)"},
     {"table":"eg_media_renditions","sql":"CREATE TABLE `eg_media_renditions` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `name` text NOT NULL,\n  `width` integer NOT NULL DEFAULT 0,\n  `height` integer NOT NULL DEFAULT 0,\n  `fit` text NOT NULL DEFAULT 'scale-down',\n  `format` text NOT NULL DEFAULT 'auto',\n  `updated_at` text,\n  `created_at` text\n)"},
-    {"table":"eg_media_dam_settings","sql":"CREATE TABLE `eg_media_dam_settings` (\n  `id` integer PRIMARY KEY NOT NULL,\n  `strip_gps` integer NOT NULL DEFAULT 1,\n  `auto_extract` integer NOT NULL DEFAULT 1,\n  `keep_versions` integer NOT NULL DEFAULT 5,\n  `block_used_delete` integer NOT NULL DEFAULT 1,\n  `duplicate_action` text NOT NULL DEFAULT 'warn',\n  `expiry_warn_days` integer NOT NULL DEFAULT 30,\n  `require_approval` integer NOT NULL DEFAULT 0,\n  `quota_mb` integer NOT NULL DEFAULT 0\n)"},
+    {"table":"eg_media_dam_settings","sql":"CREATE TABLE `eg_media_dam_settings` (\n  `id` integer PRIMARY KEY NOT NULL,\n  `strip_gps` integer NOT NULL DEFAULT 1,\n  `auto_extract` integer NOT NULL DEFAULT 1,\n  `keep_versions` integer NOT NULL DEFAULT 5,\n  `block_used_delete` integer NOT NULL DEFAULT 1,\n  `duplicate_action` text NOT NULL DEFAULT 'warn',\n  `expiry_warn_days` integer NOT NULL DEFAULT 30,\n  `require_approval` integer NOT NULL DEFAULT 0,\n  `quota_mb` integer NOT NULL DEFAULT 0\n, `quotas_json` text NOT NULL DEFAULT '[]')"},
     {"table":"eg_site_plans","sql":"CREATE TABLE `eg_site_plans` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `name` text NOT NULL,\n  `idea` text NOT NULL DEFAULT '',\n  `answers` text NOT NULL DEFAULT '',\n  `plan` text NOT NULL DEFAULT '{\"pages\":[]}',\n  `updated_at` text,\n  `created_at` text\n)"},
     {"table":"eg_affiliates","sql":"CREATE TABLE `eg_affiliates` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `code` text NOT NULL,\n  `name` text NOT NULL DEFAULT '',\n  `email` text NOT NULL DEFAULT '',\n  `status` text NOT NULL DEFAULT 'pending',\n  `updated_at` text,\n  `created_at` text\n, `token` text NOT NULL DEFAULT '', `rate_pct` real, `coupon_code` text NOT NULL DEFAULT '')"},
     {"table":"eg_affiliate_visits","sql":"CREATE TABLE `eg_affiliate_visits` (\n  `id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,\n  `affiliate_id` integer NOT NULL,\n  `path` text NOT NULL DEFAULT '/',\n  `utm_source` text NOT NULL DEFAULT '',\n  `utm_medium` text NOT NULL DEFAULT '',\n  `utm_campaign` text NOT NULL DEFAULT '',\n  `created_at` text\n)"},
@@ -2087,7 +2088,8 @@ export const FRESH_BASELINE: FreshBaseline = {
     ],
     "dam": [
         "20270316_390000_dam",
-        "20270316_420000_media_folder_records"
+        "20270316_420000_media_folder_records",
+        "20270316_440000_media_quotas"
     ],
     "siteplanner": [
         "20270316_290000_site_planner"

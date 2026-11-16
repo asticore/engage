@@ -17,6 +17,7 @@ import { hashToken, newToken, parseShareInput } from '@/features/dam/share'
 import { buildZip } from '@/features/dam/zip'
 import { sanitizeFolder } from '@/features/media/folders'
 import { hashPassword } from '@/features/visibility/password'
+import { parseRendition } from '@/features/dam/renditions'
 import { replaceEverywhere } from '@/features/dam/replaceEverywhere'
 import { snapshotCurrent } from '@/features/dam/versionsIo'
 import { ALLOW_USED_DELETE } from '@/features/dam/safeDelete'
@@ -77,6 +78,7 @@ export async function GET(request: Request): Promise<Response> {
     }
     if (entries.length === 0) return json({ error: 'None of those files could be read.' }, 404)
     const zip = buildZip(entries, now)
+    for (const row of rows) await store.logActivity(d1, row.id, 'download', 'Zip', Number((denied.context.user as { id?: unknown } | null)?.id) || null, now.toISOString())
     return new Response(zip as unknown as BodyInit, { headers: { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="media.zip"', 'Cache-Control': 'private, no-store', 'Content-Length': String(zip.byteLength) } })
   }
   if (url.searchParams.get('searchMeta') === '1') {
@@ -121,6 +123,8 @@ export async function GET(request: Request): Promise<Response> {
       allCollections: await store.listCollections(d1),
       activity: await store.listActivity(d1, id, 20),
       versions: await store.listVersions(d1, id),
+      renditions: await store.listRenditions(d1),
+      mimeType: media.mimeType ?? '',
       mediaUrl: typeof media.url === 'string' ? media.url : null,
       settings,
     })
@@ -134,6 +138,9 @@ export async function GET(request: Request): Promise<Response> {
     fields: await store.listFields(d1),
     expiring: await store.expiringSoon(d1, today, until),
     expired: await store.expiredIds(d1, today),
+    renditions: await store.listRenditions(d1),
+    totals: await store.storageTotals(d1),
+    quotaUsage: await store.quotaUsages(d1, settings.quotas),
   })
 }
 
@@ -341,6 +348,20 @@ export async function POST(request: Request): Promise<Response> {
         return json({ error: error instanceof Error ? error.message : 'The file could not be deleted.' }, 400)
       }
       clearUsageCache()
+      return json({ ok: true })
+    }
+    case 'saveRendition': {
+      if (!isAdmin) return json({ error: 'Only an admin can change rendition presets.' }, 403)
+      const id = positive(body.id)
+      const parsed = parseRendition(body, await store.listRenditions(d1), id)
+      if (parsed.ok === false) return json({ error: parsed.error }, 400)
+      return json({ ok: true, id: await store.saveRendition(d1, id, parsed.value, now) })
+    }
+    case 'deleteRendition': {
+      if (!isAdmin) return json({ error: 'Only an admin can change rendition presets.' }, 403)
+      const id = positive(body.id)
+      if (!id) return json({ error: 'Choose a preset.' }, 400)
+      await store.deleteRendition(d1, id)
       return json({ ok: true })
     }
     case 'saveSettings': {

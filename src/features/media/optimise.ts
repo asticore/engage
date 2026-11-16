@@ -238,7 +238,7 @@ export function isAnimatedPicture(data: Uint8Array, mimeType: string | null | un
 /** The part of the Cloudflare Images binding this module uses. Mirrors the runtime API so a real `env.IMAGES` satisfies it structurally. */
 export interface ImagesBinding {
   input(stream: ReadableStream<Uint8Array>): {
-    transform(options: { width: number; height: number; fit: 'scale-down' }): {
+    transform(options: { width?: number; height?: number; fit: 'scale-down' | 'contain' | 'cover' | 'crop' | 'pad' }): {
       output(options: { format: OutputMimeType; quality: number }): Promise<{
         image(): ReadableStream<Uint8Array>
         contentType(): string
