@@ -21,6 +21,9 @@ export type ShopExtraSettingsDoc = {
   /** Cart button behaviour (lib/miniCart.ts): page, drawer or dropdown. */
   cartAction?: 'page' | 'drawer' | 'dropdown' | null
   cartOpenOnAdd?: boolean | null
+  /** Stock hold while checking out (server/stockHold.ts). */
+  stockHoldEnabled?: boolean | null
+  stockHoldMinutes?: number | null
   promoBadgesEnabled?: boolean | null
   promoBadges?: Record<string, unknown>[] | null
   updatedAt: string
