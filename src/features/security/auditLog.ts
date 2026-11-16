@@ -82,6 +82,13 @@ export type AuditAction =
   | 'organization.invite-declined'
   | 'organization.invite-canceled'
   | 'organization.refused'
+  | 'organization.transfer-requested'
+  | 'organization.transfer-accepted'
+  | 'organization.transfer-declined'
+  | 'organization.transfer-canceled'
+  | 'organization.delegation-created'
+  | 'organization.delegation-revoked'
+  | 'organization.delegate-action'
   | 'password.changed'
   | 'password.reset'
   | 'email.verified'
@@ -165,6 +172,13 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'organization.invite-declined',
   'organization.invite-canceled',
   'organization.refused',
+  'organization.transfer-requested',
+  'organization.transfer-accepted',
+  'organization.transfer-declined',
+  'organization.transfer-canceled',
+  'organization.delegation-created',
+  'organization.delegation-revoked',
+  'organization.delegate-action',
   'password-group.created',
   'password-group.rotated',
   'password-group.updated',

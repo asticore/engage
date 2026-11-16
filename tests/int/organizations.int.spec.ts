@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ORGANIZATION_INDEXES, ORGANIZATION_TABLES } from '@/migrations/20261124_100000_organizations'
 import { ORG_GRANT_INDEXES, ORG_GRANT_TABLES } from '@/migrations/20270313_100000_org_content_grants'
+import { ORG_TRANSFER_INDEXES, ORG_TRANSFER_TABLES } from '@/migrations/20270316_420000_org_transfer_delegation'
 import { createD1OrgStore, type D1Like } from '@/features/organizations/store'
 import {
   ORG_ACTIONS,
@@ -54,7 +55,15 @@ import {
   saveCustomRole,
   setCompanyContentAccess,
   setTeamMembership,
-  transferOwnership,
+  requestOwnershipTransfer,
+  acceptOwnershipTransfer,
+  declineOwnershipTransfer,
+  cancelOwnershipTransfer,
+  previewOwnershipTransfer,
+  createDelegation,
+  revokeDelegation,
+  DELEGABLE_ACTIONS,
+  type TransferMail,
   updateOrganization,
   saveOrganizationBranding,
   adminSaveOrganizationBranding,
@@ -99,6 +108,7 @@ let d1: D1Like
 let clock = Date.parse('2026-11-24T00:00:00.000Z')
 let counter = 0
 let mails: InviteMail[]
+let transferMails: TransferMail[]
 let audits: OrgAuditEntry[]
 let mailWorks = true
 let allowSends = true
@@ -118,21 +128,36 @@ const makeDeps = (): OrgDeps => ({
   },
   allowInviteSend: () => allowSends,
   findUserIdByEmail: async (email) => USERS[email] ?? null,
+  emailOf: async (userId) => Object.entries(USERS).find(([, id]) => id === userId)?.[0] ?? null,
+  sendTransfer: async (mail) => {
+    transferMails.push(mail)
+    return true
+  },
   audit: async (entry) => {
     audits.push(entry)
   },
 })
 
+const transferTokenFrom = (mail: TransferMail): string => decodeURIComponent(mail.link.split('/account/transfer/')[1])
+
+/** Both steps of a transfer, the second made by the person offered ownership. */
+const transferNow = async (deps: OrgDeps, from: Actor, to: Actor, orgId: string) => {
+  const asked = await requestOwnershipTransfer(deps, from, orgId, to.id)
+  if (!asked.ok) return asked
+  return acceptOwnershipTransfer(deps, to, transferTokenFrom(transferMails[transferMails.length - 1]))
+}
+
 const tokenFrom = (mail: InviteMail): string => mail.link.split('/account/invite/')[1]
 
 beforeEach(() => {
   db = new DatabaseSync(':memory:')
-  for (const statement of [...ORGANIZATION_TABLES, ...ORGANIZATION_INDEXES, ...ORG_GRANT_TABLES, ...ORG_GRANT_INDEXES]) db.exec(statement)
+  for (const statement of [...ORGANIZATION_TABLES, ...ORGANIZATION_INDEXES, ...ORG_GRANT_TABLES, ...ORG_GRANT_INDEXES, ...ORG_TRANSFER_TABLES, ...ORG_TRANSFER_INDEXES]) db.exec(statement)
   for (const table of ['pages', 'posts', 'products', 'events']) db.exec(`CREATE TABLE eg_${table} (id integer PRIMARY KEY, title text)`)
   d1 = sqliteD1(db)
   clock = Date.parse('2026-11-24T00:00:00.000Z')
   counter = 0
   mails = []
+  transferMails = []
   audits = []
   mailWorks = true
   allowSends = true
@@ -349,7 +374,7 @@ describe('authorization', () => {
     expect((await removeMember(deps, CAL, orgId, BOB.id)).code).toBe('forbidden')
     expect((await changeMemberRole(deps, CAL, orgId, BOB.id, 'member')).code).toBe('forbidden')
     expect((await createTeam(deps, CAL, orgId, 'Team')).code).toBe('forbidden')
-    expect((await transferOwnership(deps, BOB, orgId, BOB.id)).code).toBe('forbidden')
+    expect((await requestOwnershipTransfer(deps, BOB, orgId, CAL.id)).code).toBe('forbidden')
   })
 
   it('refuses invalid roles, unknown custom roles and over-granting', async () => {
@@ -390,15 +415,15 @@ describe('last owner and ownership transfer', () => {
 
   it('a second owner lets the first leave; transfer makes the old owner an admin and keeps one owner', async () => {
     const { deps, orgId } = await acme()
-    expect((await transferOwnership(deps, ANN, orgId, CAL.id)).ok).toBe(true)
+    expect((await transferNow(deps, ANN, CAL, orgId)).ok).toBe(true)
     expect((await deps.store.getMember(orgId, CAL.id))?.role).toBe('owner')
     expect((await deps.store.getMember(orgId, ANN.id))?.role).toBe('admin')
     expect(await deps.store.countMembersWithRole(orgId, 'owner')).toBe(1)
     expect((await leaveOrganization(deps, ANN, orgId)).ok).toBe(true)
     expect((await deps.store.getMember(orgId, ANN.id))).toBeNull()
-    expect((await transferOwnership(deps, CAL, orgId, EVE.id)).code).toBe('not_found')
-    expect((await transferOwnership(deps, CAL, orgId, CAL.id)).code).toBe('invalid')
-    expect(audits.map((a) => a.action)).toEqual(expect.arrayContaining(['organization.owner-transferred', 'organization.member-left']))
+    expect((await requestOwnershipTransfer(deps, CAL, orgId, EVE.id)).code).toBe('not_found')
+    expect((await requestOwnershipTransfer(deps, CAL, orgId, CAL.id)).code).toBe('invalid')
+    expect(audits.map((a) => a.action)).toEqual(expect.arrayContaining(['organization.transfer-accepted', 'organization.member-left']))
   })
 
   it('removing a member also removes their team seats', async () => {
@@ -777,5 +802,127 @@ describe('company branding and layout (Task 22c)', () => {
     expect((await adminSaveOrganizationBranding(off, null, orgId, input)).ok).toBe(false)
     expect((await adminSaveOrganizationBranding(off, SITE_ADMIN, 'missing', input)).ok).toBe(false)
     expect(deps.settings.enabled).toBe(true)
+  })
+})
+
+describe('two-step ownership transfer and delegation (Task 22a)', () => {
+  it('nothing changes until the named person accepts, and the email goes only to them', async () => {
+    const { deps, orgId } = await acme()
+    const asked = await requestOwnershipTransfer(deps, ANN, orgId, CAL.id)
+    expect(asked.ok).toBe(true)
+    expect(transferMails).toHaveLength(1)
+    expect(transferMails[0].to).toBe('cal@example.com')
+    expect((await deps.store.getMember(orgId, ANN.id))?.role).toBe('owner')
+    expect((await deps.store.getMember(orgId, CAL.id))?.role).toBe('member')
+    const detail = await getOrganization(deps, ANN, orgId)
+    expect(detail.value.pendingTransfer?.toUserId).toBe(CAL.id)
+    expect((await getOrganization(deps, BOB, orgId)).value.pendingTransfer).toBeNull()
+  })
+
+  it('only the account it was offered to can accept, only once, and the link alone is not enough', async () => {
+    const { deps, orgId } = await acme()
+    await requestOwnershipTransfer(deps, ANN, orgId, CAL.id)
+    const token = transferTokenFrom(transferMails[0])
+    expect((await acceptOwnershipTransfer(deps, BOB, token)).code).toBe('transfer_wrong_account')
+    expect((await acceptOwnershipTransfer(deps, ANN, token)).code).toBe('transfer_wrong_account')
+    expect((await acceptOwnershipTransfer(deps, CAL, 'nonsense')).code).toBe('transfer_invalid')
+    expect((await acceptOwnershipTransfer(deps, CAL, token)).ok).toBe(true)
+    expect((await deps.store.getMember(orgId, CAL.id))?.role).toBe('owner')
+    expect((await deps.store.getMember(orgId, ANN.id))?.role).toBe('admin')
+    expect(await deps.store.countMembersWithRole(orgId, 'owner')).toBe(1)
+    expect((await acceptOwnershipTransfer(deps, CAL, token)).code).toBe('transfer_used')
+  })
+
+  it('expires, can be declined or cancelled, and a newer request replaces an older one', async () => {
+    const { deps, orgId } = await acme()
+    await requestOwnershipTransfer(deps, ANN, orgId, CAL.id)
+    const first = transferTokenFrom(transferMails[0])
+    await requestOwnershipTransfer(deps, ANN, orgId, BOB.id)
+    expect((await acceptOwnershipTransfer(deps, CAL, first)).code).toBe('transfer_used')
+    expect((await cancelOwnershipTransfer(deps, ANN, orgId)).ok).toBe(true)
+    expect((await acceptOwnershipTransfer(deps, BOB, transferTokenFrom(transferMails[1]))).code).toBe('transfer_used')
+    expect((await cancelOwnershipTransfer(deps, ANN, orgId)).code).toBe('not_found')
+
+    await requestOwnershipTransfer(deps, ANN, orgId, CAL.id)
+    const token = transferTokenFrom(transferMails[2])
+    expect((await declineOwnershipTransfer(deps, CAL, token)).ok).toBe(true)
+    expect((await deps.store.getMember(orgId, ANN.id))?.role).toBe('owner')
+
+    await requestOwnershipTransfer(deps, ANN, orgId, CAL.id)
+    const late = transferTokenFrom(transferMails[3])
+    clock += 8 * 86_400_000
+    expect((await acceptOwnershipTransfer(deps, CAL, late)).code).toBe('transfer_expired')
+    expect((await previewOwnershipTransfer(deps, CAL, late)).value.usable).toBe(false)
+  })
+
+  it('does not hand ownership over if the owner or the member left meanwhile', async () => {
+    const { deps, orgId } = await acme()
+    await requestOwnershipTransfer(deps, ANN, orgId, CAL.id)
+    await deps.store.removeMember(orgId, CAL.id)
+    expect((await acceptOwnershipTransfer(deps, CAL, transferTokenFrom(transferMails[0]))).ok).toBe(false)
+    expect((await deps.store.getMember(orgId, ANN.id))?.role).toBe('owner')
+  })
+
+  it('only an owner starts a transfer', async () => {
+    const { deps, orgId } = await acme()
+    expect((await requestOwnershipTransfer(deps, BOB, orgId, CAL.id)).ok).toBe(false)
+    expect(transferMails).toHaveLength(0)
+  })
+
+  it('delegates a chosen set of rights for a limited time, shown and audited', async () => {
+    const { deps, orgId } = await acme()
+    expect((await getOrganization(deps, EVE, orgId)).ok).toBe(false)
+    const made = await createDelegation(deps, BOB, orgId, { email: 'eve@example.com', permissions: ['organization:read', 'team:manage', 'member:remove', 'organization:delete'], hours: 24 })
+    expect(made.ok).toBe(true)
+    // Rights that change membership or ownership can never be handed on.
+    expect(made.value.permissions).toEqual(['organization:read', 'team:manage'])
+    const seen = await getOrganization(deps, EVE, orgId)
+    expect(seen.ok).toBe(true)
+    expect(seen.value.actingFor?.delegatorId).toBe(BOB.id)
+    expect((await listMyOrganizations(deps, EVE)).value.map((o) => o.id)).toContain(orgId)
+    expect((await createTeam(deps, EVE, orgId, 'Ops')).ok).toBe(true)
+    expect(audits.some((a) => a.action === 'organization.delegate-action' && a.actorId === EVE.id && a.detail.includes(`user ${BOB.id}`))).toBe(true)
+    // Not granted: removing members, editing the company, passing access on, transferring.
+    expect((await removeMember(deps, EVE, orgId, CAL.id)).code).toBe('forbidden')
+    expect((await updateOrganization(deps, EVE, orgId, { name: 'Hijack' })).code).toBe('forbidden')
+    expect((await createDelegation(deps, EVE, orgId, { email: 'cal@example.com', permissions: ['organization:read'], hours: 1 })).ok).toBe(false)
+    expect((await requestOwnershipTransfer(deps, EVE, orgId, CAL.id)).ok).toBe(false)
+  })
+
+  it('cannot delegate more than you hold, to a member, to yourself, or for a silly time', async () => {
+    const { deps, orgId } = await acme()
+    const wide = await createDelegation(deps, CAL, orgId, { email: 'eve@example.com', permissions: ['team:manage', 'content:manage', 'organization:read'], hours: 2 })
+    expect(wide.value.permissions).toEqual(['organization:read']) // a plain member holds only the read right
+    expect((await createDelegation(deps, CAL, orgId, { email: 'bob@example.com', permissions: ['organization:read'], hours: 2 })).code).toBe('already_member')
+    expect((await createDelegation(deps, CAL, orgId, { email: 'cal@example.com', permissions: ['organization:read'], hours: 2 })).code).toBe('delegation_invalid')
+    expect((await createDelegation(deps, CAL, orgId, { email: 'nobody@example.com', permissions: ['organization:read'], hours: 2 })).code).toBe('delegation_invalid')
+    expect((await createDelegation(deps, CAL, orgId, { email: 'eve@example.com', permissions: ['organization:read'], hours: 99999 })).code).toBe('delegation_invalid')
+    expect((await createDelegation(deps, CAL, orgId, { email: 'eve@example.com', permissions: ['member:remove'], hours: 2 })).code).toBe('delegation_invalid')
+    for (const action of DELEGABLE_ACTIONS) expect(['member:update', 'member:remove', 'role:manage', 'organization:delete', 'organization:transfer']).not.toContain(action)
+  })
+
+  it('ends at the set time, when revoked, and when the delegator leaves', async () => {
+    const { deps, orgId } = await acme()
+    const made = await createDelegation(deps, BOB, orgId, { email: 'eve@example.com', permissions: ['organization:read'], hours: 2 })
+    clock += 3 * 3_600_000
+    expect((await getOrganization(deps, EVE, orgId)).ok).toBe(false)
+    clock -= 3 * 3_600_000
+    expect((await getOrganization(deps, EVE, orgId)).ok).toBe(true)
+    expect((await revokeDelegation(deps, CAL, orgId, made.value.id)).ok).toBe(false)
+    expect((await revokeDelegation(deps, EVE, orgId, made.value.id)).ok).toBe(true)
+    expect((await getOrganization(deps, EVE, orgId)).ok).toBe(false)
+    const again = await createDelegation(deps, BOB, orgId, { email: 'eve@example.com', permissions: ['organization:read'], hours: 2 })
+    expect((await getOrganization(deps, EVE, orgId)).ok).toBe(true)
+    await deps.store.removeMember(orgId, BOB.id)
+    expect((await getOrganization(deps, EVE, orgId)).ok).toBe(false)
+    expect(again.ok).toBe(true)
+  })
+
+  it('a delegate loses the part of a grant the delegator no longer holds', async () => {
+    const { deps, orgId } = await acme()
+    await createDelegation(deps, BOB, orgId, { email: 'eve@example.com', permissions: ['team:manage', 'organization:read'], hours: 5 })
+    expect((await createTeam(deps, EVE, orgId, 'One')).ok).toBe(true)
+    await deps.store.setMemberRole(orgId, BOB.id, 'member')
+    expect((await createTeam(deps, EVE, orgId, 'Two')).code).toBe('forbidden')
   })
 })

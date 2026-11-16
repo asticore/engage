@@ -114,3 +114,36 @@ export const contentOrgGrants = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.organizationId, table.collection, table.docId, table.subjectType, table.subjectId] }), index('eg_content_org_grants_doc_idx').on(table.collection, table.docId)],
 )
+
+/** Two-step ownership transfer (Task 22a). Only a hash of the confirmation token is stored. Migration: 20270316_420000_org_transfer_delegation. */
+export const orgTransfers = sqliteTable(
+  'eg_org_transfers',
+  {
+    id: text('id').primaryKey().notNull(),
+    organizationId: text('organization_id').notNull(),
+    fromUserId: integer('from_user_id').notNull(),
+    toUserId: integer('to_user_id').notNull(),
+    tokenHash: text('token_hash').notNull(),
+    status: text('status').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    createdAt: text('created_at').notNull(),
+    resolvedAt: text('resolved_at'),
+  },
+  (table) => [uniqueIndex('eg_org_transfers_token_idx').on(table.tokenHash), index('eg_org_transfers_org_idx').on(table.organizationId)],
+)
+
+/** One member lets another account act for them inside one company, for chosen rights, until a set time. */
+export const orgDelegations = sqliteTable(
+  'eg_org_delegations',
+  {
+    id: text('id').primaryKey().notNull(),
+    organizationId: text('organization_id').notNull(),
+    delegatorId: integer('delegator_id').notNull(),
+    delegateId: integer('delegate_id').notNull(),
+    permissions: text('permissions').notNull(),
+    expiresAt: text('expires_at').notNull(),
+    createdAt: text('created_at').notNull(),
+    revokedAt: text('revoked_at'),
+  },
+  (table) => [index('eg_org_delegations_org_idx').on(table.organizationId), index('eg_org_delegations_delegate_idx').on(table.delegateId)],
+)
