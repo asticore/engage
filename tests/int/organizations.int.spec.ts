@@ -56,6 +56,8 @@ import {
   setTeamMembership,
   transferOwnership,
   updateOrganization,
+  saveOrganizationBranding,
+  adminSaveOrganizationBranding,
   type Actor,
   type InviteMail,
   type OrgAuditEntry,
@@ -725,5 +727,55 @@ describe('company content access', () => {
     await setCompanyContentAccess(deps, BOB, orgId, 'pages', 5, [{ subjectType: 'member', subjectId: String(BOB.id) }])
     await deleteOrganization(deps, ANN, orgId)
     expect((db.prepare('SELECT COUNT(*) AS n FROM eg_content_org_grants').get() as { n: number }).n).toBe(0)
+  })
+})
+
+describe('company branding and layout (Task 22c)', () => {
+  const input = { branding: { primary: '#112233', headingFont: 'serif' }, layout: { order: ['teams', 'members'], hidden: ['roles'] } }
+
+  it('an owner saves it, every member then reads the same look, and it is audited', async () => {
+    const { deps, orgId } = await acme()
+    const saved = await saveOrganizationBranding(deps, ANN, orgId, input)
+    expect(saved.ok).toBe(true)
+    const seenByCal = await getOrganization(deps, CAL, orgId)
+    const meta = JSON.parse(seenByCal.value.org.metadata)
+    expect(meta.branding.primary).toBe('#112233')
+    expect(meta.layout.order[0]).toBe('teams')
+    expect(meta.layout.hidden).toEqual(['roles'])
+    expect(audits.some((a) => a.detail === 'branding and layout')).toBe(true)
+  })
+
+  it('a plain member cannot change it, and another company is untouched', async () => {
+    const { deps, orgId } = await acme()
+    expect((await saveOrganizationBranding(deps, CAL, orgId, input)).ok).toBe(false)
+    const other = await createOrganization(deps, EVE, { name: 'Other Co' })
+    expect((await saveOrganizationBranding(deps, ANN, other.value.id, input)).ok).toBe(false)
+    expect((await getOrganization(deps, EVE, other.value.id)).value.org.metadata).toBeNull()
+  })
+
+  it('hostile values are dropped rather than stored', async () => {
+    const { deps, orgId } = await acme()
+    await saveOrganizationBranding(deps, ANN, orgId, { branding: { primary: 'red;}</style>', bodyFont: 'x' }, layout: null })
+    expect((await getOrganization(deps, ANN, orgId)).value.org.metadata).toBeNull()
+  })
+
+  it('editing the free-form metadata keeps the branding', async () => {
+    const { deps, orgId } = await acme()
+    await saveOrganizationBranding(deps, ANN, orgId, input)
+    await updateOrganization(deps, ANN, orgId, { metadata: '{"industry":"retail"}' })
+    const meta = JSON.parse((await getOrganization(deps, ANN, orgId)).value.org.metadata)
+    expect(meta.industry).toBe('retail')
+    expect(meta.branding.primary).toBe('#112233')
+  })
+
+  it('a site administrator can override any company, even with organisations switched off; others cannot', async () => {
+    const { deps, orgId } = await acme()
+    settings = { ...settings, enabled: false }
+    const off = makeDeps()
+    expect((await adminSaveOrganizationBranding(off, SITE_ADMIN, orgId, input)).ok).toBe(true)
+    expect((await adminSaveOrganizationBranding(off, ANN, orgId, input)).ok).toBe(false)
+    expect((await adminSaveOrganizationBranding(off, null, orgId, input)).ok).toBe(false)
+    expect((await adminSaveOrganizationBranding(off, SITE_ADMIN, 'missing', input)).ok).toBe(false)
+    expect(deps.settings.enabled).toBe(true)
   })
 })

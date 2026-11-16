@@ -1,5 +1,6 @@
 import type { OrganizationSettings } from '@/features/security/settings'
 
+import { keepBrandingKeys, sanitiseBranding, sanitiseLayout, withBrandingAndLayout } from './branding'
 import { cleanPermissions, isBuiltInRole, permissionsForRole, roleHasPermission, type CustomRoles, type OrgAction } from './permissions'
 import {
   inviteExpiry,
@@ -213,7 +214,8 @@ export async function updateOrganization(deps: OrgDeps, actor: Actor | null, org
   if (input.metadata !== undefined) {
     const metadata = normaliseMetadata(input.metadata)
     if (!metadata.ok) return fail<OrgRow>('invalid')
-    patch.metadata = metadata.value
+    // A free-form edit never wipes the company's branding and layout; those have their own form.
+    patch.metadata = keepBrandingKeys(metadata.value, g.value.org.metadata)
   }
   try {
     await deps.store.updateOrg(orgId, patch, new Date(deps.now()).toISOString())
@@ -222,6 +224,37 @@ export async function updateOrganization(deps: OrgDeps, actor: Actor | null, org
   }
   await deps.audit({ action: 'organization.updated', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: Object.keys(patch).join(', ') })
   return done((await deps.store.getOrg(orgId)) ?? g.value.org)
+}
+
+export type BrandingInput = { branding: unknown; layout: unknown }
+
+const writeBranding = async (deps: OrgDeps, org: OrgRow, input: BrandingInput): Promise<Result<OrgRow>> => {
+  const text = withBrandingAndLayout(org.metadata, sanitiseBranding(input.branding), sanitiseLayout(input.layout))
+  if (text === null) return fail<OrgRow>('invalid')
+  await deps.store.updateOrg(org.id, { metadata: text === '' ? null : text }, new Date(deps.now()).toISOString())
+  return done((await deps.store.getOrg(org.id)) ?? org)
+}
+
+/** A company sets its own colours, fonts and portal layout. Needs the right to update the organisation. */
+export async function saveOrganizationBranding(deps: OrgDeps, actor: Actor | null, orgId: string, input: BrandingInput): Promise<Result<OrgRow>> {
+  const blocked = gate(deps, actor)
+  if (blocked) return blocked as Result<OrgRow>
+  const g = await member(deps, actor, orgId, 'organization:update')
+  if (!g.ok) return pass(g)
+  const result = await writeBranding(deps, g.value.org, input)
+  if (result.ok) await deps.audit({ action: 'organization.updated', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: 'branding and layout' })
+  return result
+}
+
+/** Super admin override: sets any company's branding and layout, even with customer organisations switched off. */
+export async function adminSaveOrganizationBranding(deps: OrgDeps, admin: Actor | null, orgId: string, input: BrandingInput): Promise<Result<OrgRow>> {
+  if (!admin) return fail<OrgRow>('signed_out')
+  if (!isSiteAdmin(admin.roles)) return refuse<OrgRow>(deps, admin, orgId, 'forbidden', 'admin branding')
+  const org = await deps.store.getOrg(orgId)
+  if (!org) return fail<OrgRow>('not_found')
+  const result = await writeBranding(deps, org, input)
+  if (result.ok) await deps.audit({ action: 'organization.updated', actorId: admin.id, actorEmail: admin.email, organizationId: orgId, detail: 'branding and layout, by site administrator' })
+  return result
 }
 
 /** Owner-only deletion of one's own organisation. */

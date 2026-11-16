@@ -5,7 +5,11 @@ import { getAdminUi } from '@/admin/i18n/serverUi'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess, isAdminUser } from '@/admin/auth'
-import { AdminDeleteOrganizationForm } from '@/features/organizations/components/OrganizationForms'
+import { brandingOf, layoutOf } from '@/features/organizations/branding'
+import { parseMetadata } from '@/features/organizations/policy'
+import { AdminDeleteOrganizationForm, BrandingForm } from '@/features/organizations/components/OrganizationForms'
+import { brandingLabels } from '@/features/organizations/components/OrganizationScreens'
+import { loadPortalTexts } from '@/features/multilingual/portalStrings'
 import { adminListOrganizations } from '@/features/organizations/service'
 import { adminRuntime } from '@/features/organizations/wiring'
 import { SortableTable } from '@/admin/table/SortableTable'
@@ -30,6 +34,8 @@ export async function OrganizationsView() {
   const { deps, admin } = await adminRuntime()
   const result = await adminListOrganizations(deps, admin)
   const orgs = result.value ?? []
+  const tx = await loadPortalTexts(null)
+  const labels = brandingLabels(tx)
 
   return (
     <div style={{ maxWidth: 1040, padding: '1.5rem' }}>
@@ -64,7 +70,20 @@ export async function OrganizationsView() {
               slug: org.slug,
               members: org.memberCount,
               created: org.createdAt.slice(0, 10),
-              actions: <AdminDeleteOrganizationForm organizationId={org.id} name={org.name} />,
+              actions: (
+                <>
+                  <AdminDeleteOrganizationForm organizationId={org.id} name={org.name} />
+                  <details>
+                    <summary>{labels.title}</summary>
+                    <BrandingForm
+                      admin
+                      organizationId={org.id}
+                      values={{ ...brandingOf(parseMetadata(org.metadata)), order: layoutOf(parseMetadata(org.metadata)).order, hidden: layoutOf(parseMetadata(org.metadata)).hidden }}
+                      labels={labels}
+                    />
+                  </details>
+                </>
+              ),
             },
           }))}
         />

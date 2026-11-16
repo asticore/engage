@@ -6,15 +6,18 @@ import { AccountShell, AuthShell } from '@/features/accounts/components/AccountS
 import { requireCustomer } from '@/features/accounts/guards'
 import { portalFormatLocale } from '@/features/accounts/orders'
 import { currentPortalLocale } from '@/features/multilingual/portalLocaleServer'
-import { portalTextFor } from '@/features/multilingual/portalStrings'
+import { portalTextFor, type PortalStringKey } from '@/features/multilingual/portalStrings'
 
 import { switchOrganizationAction } from '../actions'
 import { ORG_ACTIONS, BUILT_IN_ROLES, isBuiltInRole } from '../permissions'
+import { brandingCss, brandingOf, hasBranding, layoutOf, plainMetadata, visibleSections, type PortalSection } from '../branding'
 import { parseMetadata } from '../policy'
 import { getOrganization, listCompanyContent, listMyOrganizations, previewInvite } from '../service'
 import { refusalText } from '../refusalText'
 import { activeOrganization, memberEmails, orgRuntime } from '../wiring'
 import {
+  BrandingForm,
+  type BrandingLabels,
   CancelInviteForm,
   ChangeRoleForm,
   CreateOrganizationForm,
@@ -43,6 +46,33 @@ import { OrganizationStyles } from './organizationStyles'
  */
 
 const START = '/account/organizations'
+
+/** The branding form's texts from the portal dictionary, so the admin override can show the same form. */
+export const brandingLabels = (tx: (key: PortalStringKey) => string): BrandingLabels => ({
+  title: tx('orgs.brandTitle'),
+  help: tx('orgs.brandHelp'),
+  primary: tx('orgs.brandPrimary'),
+  accent: tx('orgs.brandAccent'),
+  background: tx('orgs.brandBackground'),
+  text: tx('orgs.brandText'),
+  hint: tx('orgs.brandColourHint'),
+  headingFont: tx('orgs.brandHeadingFont'),
+  bodyFont: tx('orgs.brandBodyFont'),
+  position: tx('orgs.brandPosition'),
+  show: tx('orgs.brandShow'),
+  save: tx('orgs.brandSave'),
+  fontDefault: tx('orgs.fontDefault'),
+  fontSystem: tx('orgs.fontSystem'),
+  fontSerif: tx('orgs.fontSerif'),
+  fontMono: tx('orgs.fontMono'),
+  fontRounded: tx('orgs.fontRounded'),
+  members: tx('orgs.sectionMembers'),
+  teams: tx('orgs.sectionTeams'),
+  content: tx('orgs.sectionContent'),
+  invitations: tx('orgs.sectionInvitations'),
+  roles: tx('orgs.sectionRoles'),
+  details: tx('orgs.sectionDetails'),
+})
 
 const ensureOn = async (returnTo: string) => {
   await requireCustomer(returnTo)
@@ -143,18 +173,11 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
   // Whoever may manage members is shown controls only for the rows they may manage; the server checks again.
   const manages = (role: string) => detail.myRole === 'owner' || (detail.myRole === 'admin' && role !== 'owner')
 
-  return (
-    <AccountShell title={org.name} current={START}>
-      <OrganizationStyles />
-      <div className="org-head">
-        {org.logo ? <img decoding="async" className="org-logo" src={org.logo} alt="" width={56} height={56} /> : null}
-        <div>
-          <span className="org-badge">{tx('orgs.roleBadge', { role: detail.myRole })}</span>
-          <p className="org-muted">/{org.slug}</p>
-        </div>
-      </div>
-      {Object.keys(meta).length > 0 ? <p className="org-muted">{JSON.stringify(meta)}</p> : null}
+  const branding = brandingOf(meta)
+  const layout = layoutOf(meta)
 
+  const sections: Record<PortalSection, React.ReactNode> = {
+      members: (
       <section className="org-section">
         <h2>{tx('orgs.members', { count: detail.members.length })}</h2>
         <ul className="org-list">
@@ -173,8 +196,8 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
           ))}
         </ul>
       </section>
-
-      {can('team:read') ? (
+      ),
+      teams: can('team:read') ? (
         <section className="org-section">
           <h2>{tx('orgs.teams', { count: detail.teams.length })}</h2>
           {detail.teams.length === 0 ? <p className="account-empty">{tx('orgs.noTeams')}</p> : null}
@@ -201,9 +224,8 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
           </ul>
           {can('team:manage') ? <CreateTeamForm organizationId={org.id} /> : null}
         </section>
-      ) : null}
-
-      {can('content:manage') ? (
+      ) : null,
+      content: can('content:manage') ? (
         <section className="org-section">
           <h2>{tx('orgs.content')}</h2>
           <p className="org-muted">{tx('orgs.contentHelp')}</p>
@@ -228,9 +250,8 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
             ))}
           </ul>
         </section>
-      ) : null}
-
-      {can('invitation:read') ? (
+      ) : null,
+      invitations: can('invitation:read') ? (
         <section className="org-section">
           <h2>{tx('orgs.invitations')}</h2>
           {pending.length === 0 ? <p className="account-empty">{tx('orgs.noPending')}</p> : null}
@@ -264,9 +285,8 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
             </details>
           ) : null}
         </section>
-      ) : null}
-
-      {can('role:manage') ? (
+      ) : null,
+      roles: can('role:manage') ? (
         <section className="org-section">
           <h2>{tx('orgs.customRoles')}</h2>
           <ul className="org-list">
@@ -282,14 +302,37 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
           </ul>
           <RoleForm organizationId={org.id} actions={ORG_ACTIONS.filter((a) => a !== 'organization:delete' && a !== 'organization:transfer')} />
         </section>
-      ) : null}
-
-      {can('organization:update') ? (
+      ) : null,
+      details: can('organization:update') ? (
         <section className="org-section">
           <h2>{tx('orgs.details')}</h2>
-          <EditOrganizationForm organizationId={org.id} name={org.name} slug={org.slug} logo={org.logo ?? ''} metadata={org.metadata ?? ''} />
+          <EditOrganizationForm organizationId={org.id} name={org.name} slug={org.slug} logo={org.logo ?? ''} metadata={JSON.stringify(plainMetadata(meta)) === '{}' ? '' : JSON.stringify(plainMetadata(meta))} />
+          <h2>{tx('orgs.brandTitle')}</h2>
+          <BrandingForm
+            organizationId={org.id}
+            values={{ ...branding, order: layout.order, hidden: layout.hidden }}
+            labels={brandingLabels(tx)}
+          />
         </section>
-      ) : null}
+      ) : null,
+  }
+  return (
+    <AccountShell title={org.name} current={START}>
+      <OrganizationStyles />
+      {hasBranding(branding) ? <style>{brandingCss(branding)}</style> : null}
+      <div className="org-portal">
+      <div className="org-head">
+        {org.logo ? <img decoding="async" className="org-logo" src={org.logo} alt="" width={56} height={56} /> : null}
+        <div>
+          <span className="org-badge">{tx('orgs.roleBadge', { role: detail.myRole })}</span>
+          <p className="org-muted">/{org.slug}</p>
+        </div>
+      </div>
+      {Object.keys(plainMetadata(meta)).length > 0 ? <p className="org-muted">{JSON.stringify(plainMetadata(meta))}</p> : null}
+
+      {visibleSections(layout).map((key) => (
+        <React.Fragment key={key}>{sections[key]}</React.Fragment>
+      ))}
 
       <section className="org-danger">
         <LeaveOrganizationForm organizationId={org.id} />
@@ -297,6 +340,7 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
         {detail.myRole === 'owner' ? <p className="org-muted">{tx('orgs.lastOwnerNote')}</p> : null}
         {isBuiltInRole(detail.myRole) ? null : <p className="org-muted">{tx('orgs.customRoleNote')}</p>}
       </section>
+      </div>
     </AccountShell>
   )
 }
