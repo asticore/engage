@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { buildTree, decideStatus, hashAddress, hitsBlockedWord, isClosed, validateComment } from '@/features/comments/core'
 import * as store from '@/features/comments/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
+import { authCaptchaRefusal } from '@/features/security/authCaptcha'
 import { disposableRefusal } from '@/features/security/emailPolicy'
 import { clientKey, hit } from '@/features/security/rateLimit'
 import { getEngine } from '@/lib/engine'
@@ -45,6 +46,10 @@ export async function POST(request: Request): Promise<Response> {
   if (isClosed(settings.closeAfterDays, post.publishedAt, new Date())) return json({ error: 'Comments are closed on this post.' }, 403)
 
   const engine = await getEngine()
+  const form = new FormData()
+  for (const key of ['cf-turnstile-response', 'g-recaptcha-response']) if (typeof body[key] === 'string') form.set(key, body[key] as string)
+  const challenge = await authCaptchaRefusal(engine as never, form, request.headers.get('cf-connecting-ip') ?? undefined, 'comments')
+  if (challenge) return json({ error: challenge }, 400)
   const auth = (await engine.auth({ headers: request.headers }).catch(() => ({ user: null as unknown }))) as { user: { id?: number | string; email?: string; name?: string } | null }
   const user = auth.user
   const checked = validateComment({ name: body.name ?? user?.name, email: body.email ?? user?.email, content: body.content })

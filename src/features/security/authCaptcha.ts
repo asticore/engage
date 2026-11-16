@@ -10,10 +10,12 @@ import { getFormSettings, type EngineLike } from '@/features/forms/settings'
 export type PublicCaptcha = { provider: 'turnstile' | 'recaptcha'; siteKey: string }
 
 /** What the browser needs to draw the widget, or null when the challenge is not required here. */
-export async function authCaptchaConfig(engine: EngineLike): Promise<PublicCaptcha | null> {
+export type CaptchaPlace = 'signin' | 'comments'
+
+export async function authCaptchaConfig(engine: EngineLike, place: CaptchaPlace = 'signin'): Promise<PublicCaptcha | null> {
   try {
     const s = await getFormSettings(engine)
-    if (!s.turnstile || !s.protectSignIn) return null
+    if (!s.turnstile || (place === 'signin' && !s.protectSignIn)) return null
     const siteKey = s.captchaProvider === 'recaptcha' ? s.recaptchaSiteKey : s.turnstileSiteKey
     return siteKey ? { provider: s.captchaProvider, siteKey } : null
   } catch {
@@ -22,10 +24,10 @@ export async function authCaptchaConfig(engine: EngineLike): Promise<PublicCaptc
 }
 
 /** A message to show when the challenge failed, else null. */
-export async function authCaptchaRefusal(engine: EngineLike, form: FormData, ip?: string): Promise<string | null> {
+export async function authCaptchaRefusal(engine: EngineLike, form: FormData, ip?: string, place: CaptchaPlace = 'signin'): Promise<string | null> {
   try {
     const s = await getFormSettings(engine)
-    if (!s.turnstile || !s.protectSignIn) return null
+    if (!s.turnstile || (place === 'signin' && !s.protectSignIn)) return null
     const verdict = await checkCaptcha({ turnstile: form.get(TURNSTILE_FIELD), recaptcha: form.get(RECAPTCHA_FIELD) }, s, ip)
     if (!verdict.spam) return null
     if (verdict.reason === 'turnstile-unavailable') return null
