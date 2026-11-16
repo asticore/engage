@@ -16,7 +16,7 @@ export type UsageRow = {
   userId: string | null
   provider: AiProvider
   model: string
-  mode: BuilderMode | 'blog' | 'planner'
+  mode: BuilderMode | 'blog' | 'planner' | 'chatbot'
   inputTokens: number
   outputTokens: number
   ok: boolean

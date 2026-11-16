@@ -49,6 +49,7 @@ export type FeatureKey =
   | 'affiliates'
   | 'comments'
   | 'dam'
+  | 'chatbot'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -350,6 +351,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['comments', 'comment_settings'],
+    implemented: true,
+  },
+  {
+    key: 'chatbot',
+    label: 'Chatbot',
+    description: 'A chat assistant that answers visitors from the FAQ first, then pages, posts and products, with a link to each source. It hands off to the contact page when unsure. Uses the Claude or OpenAI key from Integrations and the shared monthly AI spend cap, or answers from the FAQ alone when no key is set.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['chatbot_settings', 'chatbot_conversations', 'chatbot_messages'],
     implemented: true,
   },
 ]
