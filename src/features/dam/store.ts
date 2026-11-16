@@ -1,0 +1,222 @@
+import { APPLIES_TO, FIELD_TYPES, type MetaField, type MetaFieldInput } from './metaFields'
+import { EMPTY_RIGHTS, STATUSES, type AssetStatus, type Rights } from './rights'
+
+type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T[] }>; run: () => Promise<{ meta?: { last_row_id?: number; changes?: number } }> } }
+export type D1 = { prepare: (sql: string) => Stmt }
+type Row = Record<string, unknown>
+
+const all = async (d1: D1, sql: string, ...args: unknown[]): Promise<Row[]> => (await d1.prepare(sql).bind(...args).all<Row>()).results
+const run = (d1: D1, sql: string, ...args: unknown[]) => d1.prepare(sql).bind(...args).run()
+const chunks = <T,>(list: T[], n: number): T[][] => Array.from({ length: Math.ceil(list.length / n) }, (_, i) => list.slice(i * n, i * n + n))
+const marks = (n: number): string => Array.from({ length: n }, (_, i) => `?${i + 1}`).join(',')
+const str = (v: unknown): string => (typeof v === 'string' ? v : '')
+const nullable = (v: unknown): string | null => (typeof v === 'string' && v ? v : null)
+
+export type Settings = {
+  stripGps: boolean
+  autoExtract: boolean
+  keepVersions: number
+  blockUsedDelete: boolean
+  duplicateAction: 'warn' | 'block' | 'allow'
+  expiryWarnDays: number
+  requireApproval: boolean
+  quotaMb: number
+}
+export const DEFAULT_SETTINGS: Settings = { stripGps: true, autoExtract: true, keepVersions: 5, blockUsedDelete: true, duplicateAction: 'warn', expiryWarnDays: 30, requireApproval: false, quotaMb: 0 }
+
+export async function getSettings(d1: D1): Promise<Settings> {
+  const r = (await all(d1, 'SELECT * FROM eg_media_dam_settings WHERE id = 1'))[0]
+  if (!r) return DEFAULT_SETTINGS
+  const action = str(r.duplicate_action)
+  return {
+    stripGps: Number(r.strip_gps) !== 0,
+    autoExtract: Number(r.auto_extract) !== 0,
+    keepVersions: Number(r.keep_versions),
+    blockUsedDelete: Number(r.block_used_delete) !== 0,
+    duplicateAction: action === 'block' || action === 'allow' ? action : 'warn',
+    expiryWarnDays: Number(r.expiry_warn_days),
+    requireApproval: Number(r.require_approval) !== 0,
+    quotaMb: Number(r.quota_mb),
+  }
+}
+
+export function parseSettings(input: Record<string, unknown>): { ok: true; value: Settings } | { ok: false; error: string } {
+  const int = (v: unknown, min: number, max: number): number | null => (Number.isInteger(Number(v)) && Number(v) >= min && Number(v) <= max ? Number(v) : null)
+  const keepVersions = int(input.keepVersions, 0, 50)
+  const expiryWarnDays = int(input.expiryWarnDays, 0, 365)
+  const quotaMb = int(input.quotaMb, 0, 10_000_000)
+  if (keepVersions === null) return { ok: false, error: 'Versions kept must be between 0 and 50.' }
+  if (expiryWarnDays === null) return { ok: false, error: 'Expiry warning days must be between 0 and 365.' }
+  if (quotaMb === null) return { ok: false, error: 'The storage limit must be a whole number of megabytes (0 for none).' }
+  const action = String(input.duplicateAction ?? 'warn')
+  if (action !== 'warn' && action !== 'block' && action !== 'allow') return { ok: false, error: 'Choose what happens with duplicates.' }
+  return { ok: true, value: { stripGps: input.stripGps !== false, autoExtract: input.autoExtract !== false, keepVersions, blockUsedDelete: input.blockUsedDelete !== false, duplicateAction: action, expiryWarnDays, requireApproval: input.requireApproval === true, quotaMb } }
+}
+
+export async function saveSettings(d1: D1, s: Settings): Promise<void> {
+  await run(
+    d1,
+    `INSERT INTO eg_media_dam_settings (id, strip_gps, auto_extract, keep_versions, block_used_delete, duplicate_action, expiry_warn_days, require_approval, quota_mb)
+     VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+     ON CONFLICT(id) DO UPDATE SET strip_gps=?1, auto_extract=?2, keep_versions=?3, block_used_delete=?4, duplicate_action=?5, expiry_warn_days=?6, require_approval=?7, quota_mb=?8`,
+    s.stripGps ? 1 : 0, s.autoExtract ? 1 : 0, s.keepVersions, s.blockUsedDelete ? 1 : 0, s.duplicateAction, s.expiryWarnDays, s.requireApproval ? 1 : 0, s.quotaMb,
+  )
+}
+
+export type Asset = { mediaId: number; rights: Rights; contentHash: string; exif: Record<string, unknown>; meta: Record<string, string>; searchText: string; visibility: 'public' | 'private' }
+
+const json = (text: string): Record<string, never> => {
+  try {
+    const v = JSON.parse(text)
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : {}
+  } catch {
+    return {}
+  }
+}
+
+function toAsset(r: Row): Asset {
+  const status = str(r.status)
+  return {
+    mediaId: Number(r.media_id),
+    rights: {
+      status: (STATUSES as readonly string[]).includes(status) ? (status as AssetStatus) : 'approved',
+      licenceType: str(r.licence_type), licenceTerms: str(r.licence_terms), credit: str(r.credit), usageNotes: str(r.usage_notes), territory: str(r.territory), releaseNote: str(r.release_note),
+      licenceStart: nullable(r.licence_start), licenceExpiry: nullable(r.licence_expiry), embargoUntil: nullable(r.embargo_until),
+    },
+    contentHash: str(r.content_hash),
+    exif: json(str(r.exif_json)),
+    meta: json(str(r.meta_json)),
+    searchText: str(r.search_text),
+    visibility: r.visibility === 'private' ? 'private' : 'public',
+  }
+}
+
+/** Assets for a set of files. A file with no row is the default asset (approved, no rights, public). */
+export async function getAssets(d1: D1, mediaIds: number[]): Promise<Map<number, Asset>> {
+  const out = new Map<number, Asset>()
+  for (const part of chunks(mediaIds, 50)) {
+    for (const r of await all(d1, `SELECT * FROM eg_media_assets WHERE media_id IN (${marks(part.length)})`, ...part)) out.set(Number(r.media_id), toAsset(r))
+  }
+  return out
+}
+export const defaultAsset = (mediaId: number): Asset => ({ mediaId, rights: { ...EMPTY_RIGHTS }, contentHash: '', exif: {}, meta: {}, searchText: '', visibility: 'public' })
+
+async function ensureRow(d1: D1, mediaId: number, nowIso: string): Promise<void> {
+  await run(d1, 'INSERT OR IGNORE INTO eg_media_assets (media_id, created_at, updated_at) VALUES (?1, ?2, ?2)', mediaId, nowIso)
+}
+
+export async function saveRights(d1: D1, mediaId: number, r: Rights, nowIso: string): Promise<void> {
+  await ensureRow(d1, mediaId, nowIso)
+  await run(
+    d1,
+    'UPDATE eg_media_assets SET status=?1, licence_type=?2, licence_terms=?3, credit=?4, usage_notes=?5, territory=?6, release_note=?7, licence_start=?8, licence_expiry=?9, embargo_until=?10, updated_at=?11 WHERE media_id=?12',
+    r.status, r.licenceType, r.licenceTerms, r.credit, r.usageNotes, r.territory, r.releaseNote, r.licenceStart, r.licenceExpiry, r.embargoUntil, nowIso, mediaId,
+  )
+}
+export async function saveMeta(d1: D1, mediaId: number, meta: Record<string, string>, searchText: string, nowIso: string): Promise<void> {
+  await ensureRow(d1, mediaId, nowIso)
+  await run(d1, 'UPDATE eg_media_assets SET meta_json=?1, search_text=?2, updated_at=?3 WHERE media_id=?4', JSON.stringify(meta), searchText, nowIso, mediaId)
+}
+export async function saveExif(d1: D1, mediaId: number, exif: Record<string, unknown>, searchText: string, nowIso: string): Promise<void> {
+  await ensureRow(d1, mediaId, nowIso)
+  await run(d1, 'UPDATE eg_media_assets SET exif_json=?1, search_text=?2, updated_at=?3 WHERE media_id=?4', JSON.stringify(exif), searchText, nowIso, mediaId)
+}
+/** Sets the status of many files at once (bulk approve, archive and so on). */
+export async function setStatus(d1: D1, mediaIds: number[], status: AssetStatus, nowIso: string): Promise<void> {
+  for (const id of mediaIds) {
+    await ensureRow(d1, id, nowIso)
+    await run(d1, 'UPDATE eg_media_assets SET status=?1, updated_at=?2 WHERE media_id=?3', status, nowIso, id)
+  }
+}
+
+/** Ids of files that cannot be used right now, so lists and pickers can leave them out. */
+export async function unusableIds(d1: D1, todayIso: string, requireApproval: boolean): Promise<number[]> {
+  const rows = await all(
+    d1,
+    `SELECT media_id FROM eg_media_assets WHERE status = 'archived' OR (licence_expiry IS NOT NULL AND licence_expiry < ?1) OR (embargo_until IS NOT NULL AND embargo_until > ?1) OR (licence_start IS NOT NULL AND licence_start > ?1) OR (?2 = 1 AND status <> 'approved')`,
+    todayIso, requireApproval ? 1 : 0,
+  )
+  return rows.map((r) => Number(r.media_id))
+}
+
+/** Files whose licence runs out within `days`, soonest first. */
+export async function expiringSoon(d1: D1, todayIso: string, untilIso: string): Promise<Array<{ mediaId: number; licenceExpiry: string }>> {
+  return (await all(d1, `SELECT media_id, licence_expiry FROM eg_media_assets WHERE licence_expiry IS NOT NULL AND licence_expiry >= ?1 AND licence_expiry <= ?2 ORDER BY licence_expiry LIMIT 200`, todayIso, untilIso)).map((r) => ({ mediaId: Number(r.media_id), licenceExpiry: str(r.licence_expiry) }))
+}
+export async function expiredIds(d1: D1, todayIso: string): Promise<Array<{ mediaId: number; licenceExpiry: string }>> {
+  return (await all(d1, `SELECT media_id, licence_expiry FROM eg_media_assets WHERE licence_expiry IS NOT NULL AND licence_expiry < ?1 ORDER BY licence_expiry LIMIT 200`, todayIso)).map((r) => ({ mediaId: Number(r.media_id), licenceExpiry: str(r.licence_expiry) }))
+}
+
+// Collections
+
+export type Collection = { id: number; name: string; description: string; count: number }
+
+export async function listCollections(d1: D1): Promise<Collection[]> {
+  return (await all(d1, 'SELECT c.id AS id, c.name AS name, c.description AS description, (SELECT COUNT(*) FROM eg_media_collection_items i WHERE i.collection_id = c.id) AS n FROM eg_media_collections c ORDER BY c.name')).map((r) => ({ id: Number(r.id), name: str(r.name), description: str(r.description), count: Number(r.n) }))
+}
+export function parseCollection(input: Record<string, unknown>, existing: Collection[], selfId: number | null): { ok: true; value: { name: string; description: string } } | { ok: false; error: string } {
+  const name = String(input.name ?? '').replace(/\s+/g, ' ').trim()
+  if (!name) return { ok: false, error: 'Give the collection a name.' }
+  if (name.length > 80) return { ok: false, error: 'Collection names can be up to 80 characters.' }
+  const description = String(input.description ?? '').trim()
+  if (description.length > 500) return { ok: false, error: 'The description can be up to 500 characters.' }
+  if (existing.some((c) => c.id !== selfId && c.name.toLowerCase() === name.toLowerCase())) return { ok: false, error: 'There is already a collection with that name.' }
+  return { ok: true, value: { name, description } }
+}
+export async function saveCollection(d1: D1, id: number | null, v: { name: string; description: string }, nowIso: string): Promise<number> {
+  if (id) {
+    await run(d1, 'UPDATE eg_media_collections SET name=?1, description=?2, updated_at=?3 WHERE id=?4', v.name, v.description, nowIso, id)
+    return id
+  }
+  const res = await run(d1, 'INSERT INTO eg_media_collections (name, description, updated_at, created_at) VALUES (?1,?2,?3,?3)', v.name, v.description, nowIso)
+  return Number(res.meta?.last_row_id ?? 0)
+}
+export async function deleteCollection(d1: D1, id: number): Promise<void> {
+  await run(d1, 'DELETE FROM eg_media_collection_items WHERE collection_id = ?1', id)
+  await run(d1, 'DELETE FROM eg_media_collections WHERE id = ?1', id)
+}
+export async function assignCollection(d1: D1, collectionId: number, mediaIds: number[], remove: boolean): Promise<void> {
+  for (const m of mediaIds) {
+    if (remove) await run(d1, 'DELETE FROM eg_media_collection_items WHERE collection_id = ?1 AND media_id = ?2', collectionId, m)
+    else await run(d1, 'INSERT OR IGNORE INTO eg_media_collection_items (collection_id, media_id) VALUES (?1, ?2)', collectionId, m)
+  }
+}
+export async function mediaIdsInCollection(d1: D1, collectionId: number): Promise<number[]> {
+  return (await all(d1, 'SELECT media_id FROM eg_media_collection_items WHERE collection_id = ?1', collectionId)).map((r) => Number(r.media_id))
+}
+export async function collectionsForMedia(d1: D1, mediaId: number): Promise<number[]> {
+  return (await all(d1, 'SELECT collection_id FROM eg_media_collection_items WHERE media_id = ?1', mediaId)).map((r) => Number(r.collection_id))
+}
+
+// Metadata fields
+
+export async function listFields(d1: D1): Promise<MetaField[]> {
+  return (await all(d1, 'SELECT * FROM eg_media_meta_fields ORDER BY sort_order, label')).map((r) => ({
+    id: Number(r.id), label: str(r.label), key: str(r.field_key),
+    type: (FIELD_TYPES as readonly string[]).includes(str(r.type)) ? (str(r.type) as MetaField['type']) : 'text',
+    options: str(r.options) ? str(r.options).split('\n').filter(Boolean) : [],
+    required: Number(r.required) !== 0, searchable: Number(r.searchable) !== 0,
+    appliesTo: (APPLIES_TO as readonly string[]).includes(str(r.applies_to)) ? (str(r.applies_to) as MetaField['appliesTo']) : 'all',
+    sortOrder: Number(r.sort_order),
+  }))
+}
+export async function saveField(d1: D1, id: number | null, v: MetaFieldInput, nowIso: string): Promise<number> {
+  const options = v.options.join('\n')
+  if (id) {
+    await run(d1, 'UPDATE eg_media_meta_fields SET label=?1, field_key=?2, type=?3, options=?4, required=?5, searchable=?6, applies_to=?7, sort_order=?8, updated_at=?9 WHERE id=?10', v.label, v.key, v.type, options, v.required ? 1 : 0, v.searchable ? 1 : 0, v.appliesTo, v.sortOrder, nowIso, id)
+    return id
+  }
+  const res = await run(d1, 'INSERT INTO eg_media_meta_fields (label, field_key, type, options, required, searchable, applies_to, sort_order, updated_at, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?9)', v.label, v.key, v.type, options, v.required ? 1 : 0, v.searchable ? 1 : 0, v.appliesTo, v.sortOrder, nowIso)
+  return Number(res.meta?.last_row_id ?? 0)
+}
+/** Deleting a field leaves old values in files' stored data; they stop showing and are never searched again once rebuilt. */
+export async function deleteField(d1: D1, id: number): Promise<void> {
+  await run(d1, 'DELETE FROM eg_media_meta_fields WHERE id = ?1', id)
+}
+
+export async function logActivity(d1: D1, mediaId: number, action: string, detail: string, userId: number | null, nowIso: string): Promise<void> {
+  await run(d1, 'INSERT INTO eg_media_activity (media_id, action, detail, user_id, created_at) VALUES (?1,?2,?3,?4,?5)', mediaId, action, detail.slice(0, 500), userId, nowIso)
+}
+export async function listActivity(d1: D1, mediaId: number, limit = 50): Promise<Array<{ action: string; detail: string; userId: number | null; createdAt: string }>> {
+  return (await all(d1, 'SELECT action, detail, user_id, created_at FROM eg_media_activity WHERE media_id = ?1 ORDER BY id DESC LIMIT ?2', mediaId, limit)).map((r) => ({ action: str(r.action), detail: str(r.detail), userId: r.user_id === null ? null : Number(r.user_id), createdAt: str(r.created_at) }))
+}

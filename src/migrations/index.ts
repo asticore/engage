@@ -184,6 +184,7 @@ import * as migration_20270316_310000_disposable_email from './20270316_310000_d
 import * as migration_20270316_320000_affiliates from './20270316_320000_affiliates';
 import * as migration_20270316_370000_comments from './20270316_370000_comments';
 import * as migration_20270316_380000_spam_rules from './20270316_380000_spam_rules';
+import * as migration_20270316_390000_dam from './20270316_390000_dam';
 import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
 import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
 import * as migration_20270316_350000_affiliate_portal from './20270316_350000_affiliate_portal';
@@ -1134,5 +1135,10 @@ export const migrations = [
     up: migration_20270316_380000_spam_rules.up,
     down: migration_20270316_380000_spam_rules.down,
     name: '20270316_380000_spam_rules',
+  },
+  {
+    up: migration_20270316_390000_dam.up,
+    down: migration_20270316_390000_dam.down,
+    name: '20270316_390000_dam',
   },
 ];

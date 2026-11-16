@@ -4,7 +4,11 @@ import { authorizeMedia } from '@/features/media/access'
 import { ACCEPTED_TYPES, fileKindOf } from '@/features/media/fileTypes'
 import { readLimitedForm } from '@/features/media/readBody'
 import { readUploadPolicy, type MediaEngine } from '@/features/media/store'
+import { checkUpload, recordUpload } from '@/features/dam/onUpload'
+import { getSettings as getDamSettings, type D1 as DamD1 } from '@/features/dam/store'
+import { rawD1 } from '@/features/ecommerce/server/db'
 import { ValidationError } from '@/localapi/operations'
+import { getFeatureFlags } from '@/utilities/features'
 import type { UploadFile } from '@/localapi/uploads'
 
 const text = (value: unknown, max: number): string => (typeof value === 'string' ? value.trim().slice(0, max) : '')
@@ -70,6 +74,21 @@ export async function POST(request: Request): Promise<Response> {
   const folder = text(form.get('folder'), 200).replace(/^\/+|\/+$/g, '')
   const caption = text(form.get('caption'), 300)
 
+  // Asset manager: spot a file that is already in the library (same bytes), and keep its hash and camera data after storing.
+  let dam: { d1: DamD1; hash: string; duplicateOf: number | null } | null = null
+  try {
+    if ((await getFeatureFlags()).dam) {
+      const d1 = (await rawD1()) as never as DamD1
+      const checked = await checkUpload(d1, bytes)
+      if (checked.duplicateOf && form.get('allowDuplicate') !== '1' && (await getDamSettings(d1)).duplicateAction === 'block') {
+        return NextResponse.json({ error: 'This exact file is already in the library.', duplicateOf: checked.duplicateOf }, { status: 409 })
+      }
+      dam = { d1, ...checked }
+    }
+  } catch (error) {
+    console.error('Asset manager check failed; the upload goes on:', error)
+  }
+
   try {
     // Pictures need alt text; give a draft when none was typed so a batch of pictures can go in at once.
     const looksLikePicture = fileKindOf(upload.mimetype) === 'image' || /\.(jpe?g|png|gif|webp|avif)$/i.test(upload.name)
@@ -81,6 +100,7 @@ export async function POST(request: Request): Promise<Response> {
       overrideAccess: true,
     })
     const isPicture = typeof doc.mimeType === 'string' && doc.mimeType.startsWith('image/')
+    if (dam) await recordUpload(dam.d1, Number(doc.id), bytes, upload.mimetype, dam.hash, caption, String(doc.alt ?? ''), null, new Date().toISOString())
     return NextResponse.json({
       ok: true,
       doc: {
@@ -94,6 +114,7 @@ export async function POST(request: Request): Promise<Response> {
         height: doc.height ?? null,
       },
       altDrafted: isPicture && !alt,
+      duplicateOf: dam?.duplicateOf ?? null,
     })
   } catch (error) {
     if (error instanceof ValidationError) {

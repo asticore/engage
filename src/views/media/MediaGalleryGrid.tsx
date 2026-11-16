@@ -103,6 +103,8 @@ export function MediaGalleryGrid({
   docs,
   folders,
   tags = [],
+  collections = [],
+  damOn = false,
   currentFolder,
   batchSize,
   optimisationOn,
@@ -112,6 +114,8 @@ export function MediaGalleryGrid({
   docs: GalleryDoc[]
   folders: string[]
   tags?: Array<{ id: number; label: string }>
+  collections?: Array<{ id: number; label: string }>
+  damOn?: boolean
   currentFolder: string
   batchSize: number
   optimisationOn: boolean
@@ -127,6 +131,7 @@ export function MediaGalleryGrid({
   const [keys, setKeys] = useState<Record<Provider, boolean> | null>(null)
   const [folderInput, setFolderInput] = useState('')
   const [tagPick, setTagPick] = useState(0)
+  const [collectionPick, setCollectionPick] = useState(0)
   const [stockOpen, setStockOpen] = useState(false)
   const [linkOpen, setLinkOpen] = useState(false)
 
@@ -255,6 +260,25 @@ export function MediaGalleryGrid({
     finish('ok', `${remove ? 'Removed the tag from' : 'Tagged'} ${ids.length} file${ids.length === 1 ? '' : 's'}.`)
   }
 
+  const collect = async (ids: number[], remove: boolean) => {
+    if (!collectionPick) return setNotice({ kind: 'error', text: 'Pick a collection first.' })
+    setBusy('collection')
+    setNotice(null)
+    const result = await postJson<{ ok: boolean }>('/api/admin-media-dam', { action: 'assignCollection', mediaIds: ids, collectionId: collectionPick, remove })
+    if (result.ok === false) return finish('error', result.error)
+    setSelected(new Set())
+    finish('ok', `${remove ? 'Removed' : 'Added'} ${ids.length} file${ids.length === 1 ? '' : 's'} ${remove ? 'from' : 'to'} the collection.`)
+  }
+
+  const setStatus = async (ids: number[], status: string) => {
+    setBusy('status')
+    setNotice(null)
+    const result = await postJson<{ ok: boolean }>('/api/admin-media-dam', { action: 'setStatus', ids, status })
+    if (result.ok === false) return finish('error', result.error)
+    setSelected(new Set())
+    finish('ok', `Set ${ids.length} file${ids.length === 1 ? '' : 's'} to ${status.replace('_', ' ')}.`)
+  }
+
   const optimiseOne = (id: string) => {
     const doc = docs.find((item) => item.id === id)
     if (doc && isVideoMimeType(doc.mimeType) && !formats.streamReady) {
@@ -358,6 +382,41 @@ export function MediaGalleryGrid({
               <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => tagIds(selectedIds, true)}>
                 Remove tag
               </button>
+            </span>
+          ) : null}
+          {damOn ? (
+            <span className="flex items-center gap-[6px]">
+              <select
+                value={collectionPick}
+                onChange={(event) => setCollectionPick(Number(event.target.value))}
+                aria-label="Collection"
+                className="rounded-[4px] border border-[var(--theme-elevation-200)] bg-transparent px-[6px] py-[4px] text-[12px]"
+              >
+                <option value={0}>Collection...</option>
+                {collections.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => collect(selectedIds, false)}>
+                Add to collection
+              </button>
+              <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => collect(selectedIds, true)}>
+                Remove from collection
+              </button>
+              <select
+                value=""
+                onChange={(event) => event.target.value && setStatus(selectedIds, event.target.value)}
+                aria-label="Set status"
+                className="rounded-[4px] border border-[var(--theme-elevation-200)] bg-transparent px-[6px] py-[4px] text-[12px]"
+              >
+                <option value="">Set status...</option>
+                <option value="draft">Draft</option>
+                <option value="in_review">In review</option>
+                <option value="approved">Approved</option>
+                <option value="archived">Archived</option>
+              </select>
             </span>
           ) : null}
           <form

@@ -1,0 +1,149 @@
+'use client'
+
+import { useCallback, useEffect, useState } from 'react'
+
+import type { MetaField } from './metaFields'
+import type { Collection, Settings } from './store'
+
+type Overview = {
+  settings: Settings
+  collections: Collection[]
+  fields: MetaField[]
+  expiring: Array<{ mediaId: number; licenceExpiry: string }>
+  expired: Array<{ mediaId: number; licenceExpiry: string }>
+}
+
+const blankField = { id: 0, label: '', key: '', type: 'text', options: '', required: false, searchable: true, appliesTo: 'all' }
+
+/** Asset manager admin page: settings, collections, custom metadata fields and the licence expiry report. */
+export function AssetManagerPanel() {
+  const [data, setData] = useState<Overview | null>(null)
+  const [message, setMessage] = useState('')
+  const [settings, setSettings] = useState<Settings | null>(null)
+  const [collection, setCollection] = useState({ id: 0, name: '', description: '' })
+  const [field, setField] = useState(blankField)
+
+  const load = useCallback(async (): Promise<void> => {
+    const res = await fetch('/api/admin-media-dam')
+    const body = (await res.json().catch(() => ({}))) as Partial<Overview> & { error?: string }
+    if (!res.ok) return setMessage(body.error ?? 'Could not load the asset manager.')
+    setData(body as Overview)
+    setSettings((body as Overview).settings)
+  }, [])
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const post = async (payload: Record<string, unknown>, okText: string): Promise<boolean> => {
+    setMessage('')
+    const res = await fetch('/api/admin-media-dam', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    if (!res.ok) {
+      setMessage(body.error ?? 'That did not work.')
+      return false
+    }
+    setMessage(okText)
+    await load()
+    return true
+  }
+
+  if (!data || !settings) return <p role="status">{message || 'Loading...'}</p>
+  const s = settings
+  const up = (patch: Partial<Settings>): void => setSettings({ ...s, ...patch })
+
+  return (
+    <div className="stack">
+      {message ? <p role="alert" className="badge">{message}</p> : null}
+
+      <h2>Licence expiry</h2>
+      {data.expired.length === 0 && data.expiring.length === 0 ? <p className="text-muted">No licences are expired or about to expire.</p> : null}
+      {data.expired.length > 0 ? <p><strong>Expired ({data.expired.length}):</strong> {data.expired.map((e) => <a key={e.mediaId} href={`/admin/content/media/${e.mediaId}`} style={{ marginRight: 8 }}>#{e.mediaId} ({e.licenceExpiry})</a>)}</p> : null}
+      {data.expiring.length > 0 ? <p><strong>Expiring within {s.expiryWarnDays} days ({data.expiring.length}):</strong> {data.expiring.map((e) => <a key={e.mediaId} href={`/admin/content/media/${e.mediaId}`} style={{ marginRight: 8 }}>#{e.mediaId} ({e.licenceExpiry})</a>)}</p> : null}
+      <p className="text-muted">An expired, embargoed, not yet started or archived file is hidden from the media picker and flagged on its own page.</p>
+
+      <h2>Collections</h2>
+      {data.collections.length === 0 ? <p className="text-muted">No collections yet. Add files to one from the Media page: select files, pick a collection, Add to collection.</p> : (
+        <ul className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+          {data.collections.map((c) => (
+            <li key={c.id} className="cluster">
+              <strong>{c.name}</strong>
+              <span className="text-muted">{c.count} file{c.count === 1 ? '' : 's'}{c.description ? `, ${c.description}` : ''}</span>
+              <a className="btn" href={`/admin/media?collection=${c.id}`}>Open</a>
+              <button type="button" className="btn" onClick={() => setCollection({ id: c.id, name: c.name, description: c.description })}>Edit</button>
+              <button type="button" className="btn" onClick={() => { if (window.confirm(`Delete collection ${c.name}? The files stay in the library.`)) void post({ action: 'deleteCollection', id: c.id }, 'Collection deleted.') }}>Delete</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="card"><div className="card-body stack">
+        <strong>{collection.id ? 'Edit collection' : 'Add a collection'}</strong>
+        <div className="cluster">
+          <label className="field">Name<input className="input" value={collection.name} onChange={(e) => setCollection({ ...collection, name: e.target.value })} /></label>
+          <label className="field">Description<input className="input" value={collection.description} onChange={(e) => setCollection({ ...collection, description: e.target.value })} /></label>
+        </div>
+        <div className="cluster">
+          <button type="button" className="btn" onClick={() => void post({ action: 'saveCollection', ...collection, id: collection.id || undefined }, 'Saved.').then((ok) => { if (ok) setCollection({ id: 0, name: '', description: '' }) })}>{collection.id ? 'Save changes' : 'Add collection'}</button>
+          {collection.id ? <button type="button" className="btn" onClick={() => setCollection({ id: 0, name: '', description: '' })}>Cancel</button> : null}
+        </div>
+      </div></div>
+
+      <h2>Metadata fields</h2>
+      <p className="text-muted">Extra details you want on every file, filled in on the file&apos;s page. Searchable fields are found by the media search.</p>
+      {data.fields.length === 0 ? <p className="text-muted">No fields yet.</p> : (
+        <ul className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+          {data.fields.map((f) => (
+            <li key={f.id} className="cluster">
+              <strong>{f.label}</strong>
+              <span className="text-muted">{f.key}, {f.type}{f.required ? ', required' : ''}{f.searchable ? ', searchable' : ''}, {f.appliesTo === 'all' ? 'all files' : `${f.appliesTo} files`}</span>
+              <button type="button" className="btn" onClick={() => setField({ id: f.id, label: f.label, key: f.key, type: f.type, options: f.options.join('\n'), required: f.required, searchable: f.searchable, appliesTo: f.appliesTo })}>Edit</button>
+              <button type="button" className="btn" onClick={() => { if (window.confirm(`Delete the field ${f.label}? Values already entered stay stored but stop showing.`)) void post({ action: 'deleteField', id: f.id }, 'Field deleted.') }}>Delete</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="card"><div className="card-body stack">
+        <strong>{field.id ? 'Edit field' : 'Add a field'}</strong>
+        <div className="cluster">
+          <label className="field">Label<input className="input" value={field.label} onChange={(e) => setField({ ...field, label: e.target.value })} /></label>
+          <label className="field">Key (optional)<input className="input" value={field.key} onChange={(e) => setField({ ...field, key: e.target.value })} /></label>
+          <label className="field">Type
+            <select className="input" value={field.type} onChange={(e) => setField({ ...field, type: e.target.value })}>
+              <option value="text">Text</option><option value="select">Select</option><option value="date">Date</option><option value="number">Number</option><option value="link">Link</option>
+            </select>
+          </label>
+          <label className="field">Applies to
+            <select className="input" value={field.appliesTo} onChange={(e) => setField({ ...field, appliesTo: e.target.value })}>
+              <option value="all">All files</option><option value="image">Images</option><option value="video">Videos</option><option value="audio">Audio</option><option value="document">Documents</option>
+            </select>
+          </label>
+        </div>
+        {field.type === 'select' ? <label className="field">Options (one per line)<textarea className="input" rows={4} value={field.options} onChange={(e) => setField({ ...field, options: e.target.value })} /></label> : null}
+        <div className="cluster">
+          <label><input type="checkbox" checked={field.required} onChange={(e) => setField({ ...field, required: e.target.checked })} /> Required</label>
+          <label><input type="checkbox" checked={field.searchable} onChange={(e) => setField({ ...field, searchable: e.target.checked })} /> Searchable</label>
+        </div>
+        <div className="cluster">
+          <button type="button" className="btn" onClick={() => void post({ action: 'saveField', ...field, id: field.id || undefined }, 'Saved.').then((ok) => { if (ok) setField(blankField) })}>{field.id ? 'Save changes' : 'Add field'}</button>
+          {field.id ? <button type="button" className="btn" onClick={() => setField(blankField)}>Cancel</button> : null}
+        </div>
+      </div></div>
+
+      <h2>Settings</h2>
+      <div className="card"><div className="card-body stack">
+        <label><input type="checkbox" checked={s.autoExtract} onChange={(e) => up({ autoExtract: e.target.checked })} /> Read camera data from JPEG photos on upload</label>
+        <label><input type="checkbox" checked={s.stripGps} onChange={(e) => up({ stripGps: e.target.checked })} /> Do not keep GPS location from photos</label>
+        <label><input type="checkbox" checked={s.requireApproval} onChange={(e) => up({ requireApproval: e.target.checked })} /> New uploads wait for approval (files not approved cannot be picked)</label>
+        <label><input type="checkbox" checked={s.blockUsedDelete} onChange={(e) => up({ blockUsedDelete: e.target.checked })} /> Warn before deleting a file that is in use</label>
+        <label className="field">When the exact same file is uploaded again
+          <select className="input" value={s.duplicateAction} onChange={(e) => up({ duplicateAction: e.target.value as Settings['duplicateAction'] })}>
+            <option value="warn">Warn and keep both</option><option value="block">Refuse the upload</option><option value="allow">Do nothing</option>
+          </select>
+        </label>
+        <label className="field">Warn about licences expiring within (days)<input className="input" type="number" min={0} max={365} value={s.expiryWarnDays} onChange={(e) => up({ expiryWarnDays: Number(e.target.value) })} /></label>
+        <label className="field">Previous versions kept per file<input className="input" type="number" min={0} max={50} value={s.keepVersions} onChange={(e) => up({ keepVersions: Number(e.target.value) })} /></label>
+        <label className="field">Storage limit (MB, 0 for none)<input className="input" type="number" min={0} value={s.quotaMb} onChange={(e) => up({ quotaMb: Number(e.target.value) })} /></label>
+        <div><button type="button" className="btn" onClick={() => void post({ action: 'saveSettings', ...s }, 'Settings saved.')}>Save settings</button></div>
+      </div></div>
+    </div>
+  )
+}
