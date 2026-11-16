@@ -42,7 +42,7 @@ export const membersEnabled = async (engine: EngineLike): Promise<boolean> => {
 }
 
 type SettingsDoc = {
-  registration?: { allowSignup?: boolean; requireEmailVerification?: boolean; blockDisposableEmail?: boolean; defaultTier?: string }
+  registration?: { allowSignup?: boolean; requireEmailVerification?: boolean; blockDisposableEmail?: boolean; blockDisposableCustomers?: boolean; blockDisposableForms?: boolean; blockDisposableCheckout?: boolean; defaultTier?: string }
   access?: { redirectAfterLogin?: string; membersOnlyRedirect?: string; teaserMode?: string }
   billing?: { currency?: string; allowCancellation?: boolean; proration?: boolean; dunningRetryDays?: string; dunningGraceDays?: number; dunningEndAction?: string }
   emails?: { welcomeSubject?: string; welcomeBody?: string; expiryReminderDays?: number }
@@ -73,6 +73,9 @@ export const getMemberSettings = async (engine: EngineLike): Promise<MemberSetti
         base.registration.requireEmailVerification,
       ),
       blockDisposableEmail: bool(doc.registration?.blockDisposableEmail, base.registration.blockDisposableEmail),
+      blockDisposableCustomers: bool(doc.registration?.blockDisposableCustomers, base.registration.blockDisposableCustomers),
+      blockDisposableForms: bool(doc.registration?.blockDisposableForms, base.registration.blockDisposableForms),
+      blockDisposableCheckout: bool(doc.registration?.blockDisposableCheckout, base.registration.blockDisposableCheckout),
       defaultTier: text(doc.registration?.defaultTier, ''),
     },
     access: {

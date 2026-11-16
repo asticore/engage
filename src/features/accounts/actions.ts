@@ -203,6 +203,10 @@ async function registerActionImpl(_state: ActionState, form: FormData): Promise<
   const badEmail = emailProblem(email)
   if (badEmail) return failed(badEmail)
 
+  const { disposableRefusal } = await import('@/features/security/emailPolicy')
+  const disposable = await disposableRefusal(context.engine, 'customers', email)
+  if (disposable) return failed(disposable)
+
   const badPassword = await passwordProblemFor(context.engine, password, { email })
   if (badPassword) return failed(badPassword)
   if (password !== text(form, 'passwordConfirm')) return failed('The two passwords do not match.')

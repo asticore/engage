@@ -41,6 +41,9 @@ export type MemberSettingsDoc = {
     allowSignup?: boolean | null
     requireEmailVerification?: boolean | null
     blockDisposableEmail?: boolean | null
+    blockDisposableCustomers?: boolean | null
+    blockDisposableForms?: boolean | null
+    blockDisposableCheckout?: boolean | null
     defaultTier?: string | null
   }
   access?: {

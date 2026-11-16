@@ -6567,6 +6567,18 @@ export interface MemberSetting {
      */
     blockDisposableEmail?: boolean | null;
     /**
+     * Also refuse throwaway email services when a customer creates a shop account.
+     */
+    blockDisposableCustomers?: boolean | null;
+    /**
+     * Also refuse throwaway email services in email fields on forms.
+     */
+    blockDisposableForms?: boolean | null;
+    /**
+     * Also refuse throwaway email services at checkout.
+     */
+    blockDisposableCheckout?: boolean | null;
+    /**
      * The tier new members start on, entered as its short name. Leave blank to make people choose during sign-up.
      */
     defaultTier?: string | null;
@@ -8102,6 +8114,9 @@ export interface MemberSettingsSelect<T extends boolean = true> {
         allowSignup?: T;
         requireEmailVerification?: T;
         blockDisposableEmail?: T;
+        blockDisposableCustomers?: T;
+        blockDisposableForms?: T;
+        blockDisposableCheckout?: T;
         defaultTier?: T;
       };
   access?:

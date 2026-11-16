@@ -183,6 +183,7 @@ import * as migration_20270316_300000_ga4_user_id from './20270316_300000_ga4_us
 import * as migration_20270316_310000_disposable_email from './20270316_310000_disposable_email';
 import * as migration_20270316_320000_affiliates from './20270316_320000_affiliates';
 import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
+import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
 
 export const migrations = [
   {
@@ -1104,5 +1105,10 @@ export const migrations = [
     up: migration_20270316_330000_affiliate_commissions.up,
     down: migration_20270316_330000_affiliate_commissions.down,
     name: '20270316_330000_affiliate_commissions',
+  },
+  {
+    up: migration_20270316_340000_disposable_email_surfaces.up,
+    down: migration_20270316_340000_disposable_email_surfaces.down,
+    name: '20270316_340000_disposable_email_surfaces',
   },
 ];
