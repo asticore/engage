@@ -701,3 +701,9 @@ SAML 2.0 per organisation next to OpenID Connect. Signature checking is done by 
 - **Cart expiry reminder (23e):** Cart expiry reminder (days before) in Shop switches, off by default. `server/cartExpiry.ts` runs in the abandoned-carts job, emails a signed-out cart's owner once, only for a known address that has not unsubscribed. Column `expiry_reminder_at` on carts, migration `20270317_190000_cart_expiry_reminder`. English only.
 - **Elements and /cart (23d):** `MiniCartLinesPart` is the compact list the mini cart drawer now uses and is the new Cart lines (compact) element. Switch Build the cart page in the visual editor (Shop switches) makes `/cart` show the published page with slug cart (`server/cartPage.ts`); the built-in cart is `components/CartPageClient.tsx`.
 
+### Task 23 last leftovers (holds, countdown, header dropdown)
+
+- **Bundle holds (23e):** `resolveBundle` now returns the stock pool of each component (`pools`), merged into the cart's pools in `loadPricedLines`, so checkout holds a bundle's component stock.
+- **Pre-checkout hold and countdown (23e):** switch Also hold stock while shoppers view their cart (Shop switches, needs the checkout hold on; migration `20270317_200000_stock_hold_in_cart`). `/api/shop-stock-hold` (cart secret required, rate limited) takes the holds when the cart page opens (`server/cartHold.ts`) and returns when the earliest ends. `CartHoldNotice` shows the ticking countdown at the top of the cart totals; screen readers hear it only at the start and end. Holds are never taken when an item is added.
+- **Header cart dropdown (23d):** Library > Commerce preset Header cart dropdown (compact lines and the subtotal with Checkout).
+

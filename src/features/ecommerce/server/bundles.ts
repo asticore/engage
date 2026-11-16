@@ -1,3 +1,4 @@
+import { stockPool } from './stockHold'
 import { resolveCartLine, type CatalogueProduct } from '../catalogue'
 import { bundleComponentRows, bundleDiscountOf, bundlePricingOf, bundleUnitCents, type BundleContent } from '../lib/bundles'
 import { toCents } from '../lib/money'
@@ -8,7 +9,7 @@ type Doc = Record<string, unknown>
 export type BundleEngine = { findByID: (a: unknown) => Promise<Doc | null> }
 
 export type BundleResult =
-  | { ok: true; unitCents: number; componentCents: number; contents: BundleContent[]; weightGrams: number }
+  | { ok: true; unitCents: number; componentCents: number; contents: BundleContent[]; weightGrams: number; pools: Array<{ key: string; available: number; quantity: number }> }
   | { ok: false; error: string }
 
 const fail = (error: string): BundleResult => ({ ok: false, error })
@@ -30,6 +31,7 @@ export async function resolveBundle(engine: BundleEngine, bundle: Doc, quantity:
 
   const contents: BundleContent[] = []
   const pending = new Map<string, number>()
+  const pools = new Map<string, { available: number; quantity: number }>() // the stock each component draws on, for the stock hold (Task 23e)
   let componentCents = 0
   let weightGrams = 0
   for (const row of rows) {
@@ -43,6 +45,8 @@ export async function resolveBundle(engine: BundleEngine, bundle: Doc, quantity:
     if (!resolved.ok) return fail(`${title}: ${(resolved as { error: string }).error}`)
     if (resolved.preorder) return fail(`${title} is on pre-order and cannot be sold inside a bundle.`)
     pending.set(key, (pending.get(key) ?? 0) + needed)
+    const pool = stockPool(child as never, null)
+    if (pool) pools.set(pool.key, { available: pool.available, quantity: (pools.get(pool.key)?.quantity ?? 0) + needed })
     componentCents += toCents(resolved.unitPrice) * row.quantity
     weightGrams += Math.round((typeof child.weight === 'number' ? child.weight : 0) * 1000) * row.quantity
     contents.push({ productId: row.productId, title, quantity: row.quantity })
@@ -58,7 +62,7 @@ export async function resolveBundle(engine: BundleEngine, bundle: Doc, quantity:
     discountPct: bundleDiscountOf(bundle.bundleDiscountPercent),
     componentCents,
   })
-  return { ok: true, unitCents, componentCents, contents, weightGrams }
+  return { ok: true, unitCents, componentCents, contents, weightGrams, pools: [...pools].map(([key, v]) => ({ key, ...v })) }
 }
 
 /** The products inside one bundle with their titles and quantities, whether or not they are in stock today. */

@@ -62,6 +62,15 @@ const PRESETS: Preset[] = [
     }),
   },
   {
+    id: 'cart-dropdown-panel',
+    label: 'Header cart dropdown',
+    description: 'A compact cart for a header dropdown or side column: item list, subtotal and the Checkout button. Place it in a header template.',
+    build: () => ({
+      blockType: 'section',
+      columns: [{ width: 12 as const, blocks: [el('cart-lines-compact'), el('cart-summary')] }],
+    }),
+  },
+  {
     id: 'mini-cart-button',
     label: 'Mini cart button',
     description: 'A button that opens the cart page.',

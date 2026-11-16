@@ -101,7 +101,7 @@ export const ShopExtraSettings: GlobalConfig = {
       type: 'checkbox',
       label: 'Hold stock while a cart is in checkout',
       defaultValue: false,
-      admin: { description: 'When a shopper starts checkout, the stock of managed-stock products is held for them for the minutes below, so two carts cannot both buy the last item. A cart that pays keeps its stock; an abandoned hold is released when the time ends. Bundles are not held. Off by default.' },
+      admin: { description: 'When a shopper starts checkout, the stock of managed-stock products is held for them for the minutes below, so two carts cannot both buy the last item. A cart that pays keeps its stock; an abandoned hold is released when the time ends. Bundles hold their component products. Off by default.' },
     },
     {
       name: 'stockHoldMinutes',
@@ -111,6 +111,13 @@ export const ShopExtraSettings: GlobalConfig = {
       min: 1,
       max: 240,
       admin: { description: 'How long checkout holds stock. Between 1 and 240.' },
+    },
+    {
+      name: 'stockHoldInCart',
+      type: 'checkbox',
+      label: 'Also hold stock while shoppers view their cart',
+      defaultValue: false,
+      admin: { description: 'Needs Hold stock while a cart is in checkout. Opening the cart page also holds the items for the same minutes and shows the shopper a countdown. Bundles hold their component products too. Holds are only taken when the cart page is opened, never when an item is added.' },
     },
     {
       name: 'cartAction',
