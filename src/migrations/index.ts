@@ -187,6 +187,9 @@ import * as migration_20270316_380000_spam_rules from './20270316_380000_spam_ru
 import * as migration_20270316_390000_dam from './20270316_390000_dam';
 import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
+import * as migration_20270317_100000_demos from './20270317_100000_demos';
+import * as migration_20270317_110000_client_reports from './20270317_110000_client_reports';
+import * as migration_20270317_120000_franchising from './20270317_120000_franchising';
 import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
 import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
 import * as migration_20270316_350000_affiliate_portal from './20270316_350000_affiliate_portal';
@@ -1176,5 +1179,20 @@ export const migrations = [
     up: migration_20270316_425000_agent_access.up,
     down: migration_20270316_425000_agent_access.down,
     name: '20270316_425000_agent_access',
+  },
+  {
+    up: migration_20270317_100000_demos.up,
+    down: migration_20270317_100000_demos.down,
+    name: '20270317_100000_demos',
+  },
+  {
+    up: migration_20270317_110000_client_reports.up,
+    down: migration_20270317_110000_client_reports.down,
+    name: '20270317_110000_client_reports',
+  },
+  {
+    up: migration_20270317_120000_franchising.up,
+    down: migration_20270317_120000_franchising.down,
+    name: '20270317_120000_franchising',
   },
 ];
