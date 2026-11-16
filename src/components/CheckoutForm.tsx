@@ -112,6 +112,7 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
           checkoutFields: extras?.checkoutFields,
           giftCardCodes: extras?.giftCardCodes,
           useStoreCredit: extras?.useStoreCredit,
+          giftWrap: extras?.giftWrap,
         },
       })) as InitiatePaymentResult
 

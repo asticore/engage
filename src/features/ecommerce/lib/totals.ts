@@ -42,6 +42,8 @@ export type OrderTotals = {
   pricingRuleCents: number
   pricingRules: AppliedRule[]
   shippingCents: number
+  /** Optional flat gift wrap fee chosen at checkout (Task 23c). Charged and taxed like shipping, stored in the order's shipping total. */
+  giftWrapCents: number
   shippingOption: ShippingOption | null
   shippingOptions: ShippingOption[]
   taxCents: number
@@ -79,6 +81,8 @@ export function computeOrderTotals(args: {
   requireShipping?: boolean
   /** Dynamic pricing rule discounts per line key (cents), worked out before coupons. */
   pricingRuleDiscounts?: Record<string, number>
+  /** Gift wrap fee in cents when the shopper chose it and the shop offers it. */
+  giftWrapCents?: number
   /** Which dynamic pricing rules took what, for the order record. */
   pricingRules?: AppliedRule[]
   now?: Date
@@ -157,10 +161,11 @@ export function computeOrderTotals(args: {
     }
   }
   const shippingCents = shippingOption?.costCents ?? 0
+  const giftWrapCents = Number.isInteger(args.giftWrapCents) && (args.giftWrapCents as number) > 0 ? (args.giftWrapCents as number) : 0
 
   const tax = calcTax({
     lines: lines.map((l) => ({ key: l.key, amountCents: l.unitCents * l.quantity - (discounts[l.key] ?? 0), taxClass: l.taxClass })),
-    shippingCents,
+    shippingCents: shippingCents + giftWrapCents,
     shippingTaxable: shippingOption?.taxable,
     rates: args.rates,
     settings: args.settings,
@@ -168,7 +173,7 @@ export function computeOrderTotals(args: {
   })
   const taxByKey = new Map(tax.lines.map((l) => [l.key, l.taxCents]))
 
-  const totalCents = afterDiscount + shippingCents + tax.addedCents
+  const totalCents = afterDiscount + shippingCents + giftWrapCents + tax.addedCents
   return {
     ok: true,
     lines: lines.map((l) => ({ ...l, lineCents: l.unitCents * l.quantity, discountCents: discounts[l.key] ?? 0, taxCents: taxByKey.get(l.key) ?? 0 })),
@@ -177,6 +182,7 @@ export function computeOrderTotals(args: {
     pricingRuleCents,
     pricingRules: args.pricingRules ?? [],
     shippingCents,
+    giftWrapCents,
     shippingOption,
     shippingOptions,
     taxCents: tax.taxCents,

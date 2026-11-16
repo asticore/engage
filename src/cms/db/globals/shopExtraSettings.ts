@@ -21,6 +21,9 @@ export type ShopExtraSettingsDoc = {
   /** Cart button behaviour (lib/miniCart.ts): page, drawer or dropdown. */
   cartAction?: 'page' | 'drawer' | 'dropdown' | null
   cartOpenOnAdd?: boolean | null
+  /** Gift wrap flat fee at checkout (lib/giftWrap.ts). */
+  giftWrapEnabled?: boolean | null
+  giftWrapFee?: number | null
   /** Stock hold while checking out (server/stockHold.ts). */
   stockHoldEnabled?: boolean | null
   stockHoldMinutes?: number | null

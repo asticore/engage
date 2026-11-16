@@ -44,6 +44,7 @@
  * against the same Stripe account until the real plugin cutover.
  */
 
+import { withGiftWrapNote } from '../lib/giftWrap'
 import { assertNotStaging } from '@/features/site/staging'
 import { enforcePurchaseLimits } from '@/features/purchaseLimits/enforce'
 import Stripe from 'stripe'
@@ -145,6 +146,7 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
       shippingOptionId: typeof checkout.shippingOptionId === 'string' ? checkout.shippingOptionId : null,
       strict: true,
       cartId: cart.id,
+      giftWrap: checkout.giftWrap === true,
       customerRoles: await customerTypesForUser(user as unknown as { id?: number; roles?: string[] } | null | undefined),
     },
   )
@@ -204,14 +206,14 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
     currency: currency.toUpperCase(),
     subtotal: totals.subtotalCents,
     discountTotal: totals.discountCents,
-    shippingTotal: totals.shippingCents,
+    shippingTotal: totals.shippingCents + totals.giftWrapCents,
     taxTotal: totals.taxCents,
     pricesIncludeTax: totals.pricesIncludeTax,
     shippingMethod: totals.shippingOption ? { id: totals.shippingOption.id, title: totals.shippingOption.title, costCents: totals.shippingOption.costCents, type: totals.shippingOption.type, ...(totals.shippingOption.pickup ? { pickup: totals.shippingOption.pickup } : {}) } : null,
     taxLines: totals.taxLines,
     couponLines: totals.coupon ? [totals.coupon] : [],
     checkoutFields: (fields as { values: Record<string, { value: string }> }).values,
-    customerNote: customerNote ?? null,
+    customerNote: withGiftWrapNote(customerNote ?? null, totals.giftWrapCents),
     cartId: cart.id,
   }
 
