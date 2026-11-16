@@ -11,7 +11,7 @@ import { cartProductIds, type CrossSellCard } from '@/features/ecommerce/lib/cro
 import { formatPriceInAUD } from '@/lib/formatCurrency'
 
 /** "Customers also bought" under the cart items, from paid orders and same-category products. Hidden when empty or switched off. */
-export function CartRecommendations() {
+export function CartRecommendations({ empty = false }: { empty?: boolean } = {}) {
   const { cart } = useCart()
   const currency = useShopCurrency()
   const ids = cartProductIds(cart?.items as Array<{ product?: unknown }> | undefined)
@@ -19,12 +19,12 @@ export function CartRecommendations() {
   const [result, setResult] = useState<{ key: string; cards: CrossSellCard[] } | null>(null)
 
   useEffect(() => {
-    if (!key) return
+    if (!key && !empty) return
     let active = true
     fetch('/api/shop-recommendations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productIds: key.split(',').map(Number) }),
+      body: JSON.stringify({ productIds: key ? key.split(',').map(Number) : [] }),
     })
       .then((res): Promise<unknown> => (res.ok ? res.json() : Promise.resolve([])))
       .then((data: unknown) => {
@@ -36,15 +36,15 @@ export function CartRecommendations() {
     return () => {
       active = false
     }
-  }, [key])
+  }, [key, empty])
 
-  const cards = key && result?.key === key ? result.cards : []
+  const cards = result?.key === key && (key || empty) ? result.cards : []
   if (cards.length === 0) return null
 
   return (
     <section className="mb-8" aria-labelledby="cart-recommendations-heading">
       <h2 id="cart-recommendations-heading" className="mb-4 text-[1.25rem]">
-        Customers also bought
+        {empty ? 'You might like' : 'Customers also bought'}
       </h2>
       <ul className="grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5 p-0">
         {cards.map((card) => (

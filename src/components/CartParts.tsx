@@ -37,9 +37,12 @@ export const CartLinesPart: React.FC = () => {
   return (
     <div ref={listRef} tabIndex={-1} data-cart-part="lines">
       {items.length === 0 ? (
-        <p>
-          {t('store.emptyCart')} <Link href="/shop">{t('store.continueShopping')}</Link>
-        </p>
+        <>
+          <p>
+            {t('store.emptyCart')} <Link href="/shop">{t('store.continueShopping')}</Link>
+          </p>
+          {!isLoading && <CartRecommendations empty />}
+        </>
       ) : (
       <ul className="mb-8 list-none border-t border-[var(--color-line)] p-0">
         {items.map((item) => {
