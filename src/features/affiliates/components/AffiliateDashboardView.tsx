@@ -44,7 +44,6 @@ export async function AffiliateDashboardView({ d1, affiliate, origin, privateLin
           <p>Use these on your site or posts. Copy the snippet to show the image as a link that carries your referral link.</p>
           {creatives.map((c) => (
             <div key={c.id}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={c.url} alt={c.alt} style={{ maxWidth: '20rem', height: 'auto' }} />
               <p>
                 <a href={c.url} download>Download</a>
