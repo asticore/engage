@@ -6,7 +6,7 @@ import { STATUS_LABELS, STATUSES, type AssetStatus, type RightsCheck } from './r
 
 type Field = { id: number; label: string; key: string; type: 'text' | 'select' | 'date' | 'number' | 'link'; options: string[]; required: boolean }
 type Detail = {
-  asset: { rights: Record<string, string | null>; exif: Record<string, unknown>; meta: Record<string, string>; contentHash: string }
+  asset: { visibility: 'public' | 'private'; rights: Record<string, string | null>; exif: Record<string, unknown>; meta: Record<string, string>; contentHash: string }
   check: RightsCheck
   fields: Field[]
   collections: number[]
@@ -31,6 +31,9 @@ export function DamAssetPanel({ id }: { id: number }) {
   const [message, setMessage] = useState('')
   const [compare, setCompare] = useState(0)
   const [withId, setWithId] = useState('')
+  const [shares, setShares] = useState<Array<{ id: number; expiresAt: string | null; hasPassword: boolean; maxDownloads: number; downloads: number; revoked: boolean }>>([])
+  const [share, setShare] = useState({ days: '7', password: '', maxDownloads: '' })
+  const [link, setLink] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/admin-media-dam?id=${id}`)
@@ -41,6 +44,8 @@ export function DamAssetPanel({ id }: { id: number }) {
     for (const [k, v] of Object.entries(body.asset.rights)) r[k] = v ?? ''
     setRights(r)
     setMeta(body.asset.meta)
+    const list = await fetch(`/api/admin-media-dam?shares=file&id=${id}`)
+    if (list.ok) setShares(((await list.json()) as { shares: typeof shares }).shares)
   }, [id])
   useEffect(() => {
     void load()
@@ -129,6 +134,39 @@ export function DamAssetPanel({ id }: { id: number }) {
           {exif.gps ? <li>GPS: {exif.gps.lat}, {exif.gps.lon}</li> : null}
         </ul>
       )}
+      <strong className="text-[13px]">Visibility and sharing</strong>
+      <div className="flex flex-wrap items-center gap-[8px] text-[12px]">
+        <span>{detail.asset.visibility === 'private' ? 'Private: its public address no longer works.' : 'Public: anyone with the address can open it (unless its folder is private).'}</span>
+        <button type="button" className={btn} onClick={() => void post({ action: 'setVisibility', ids: [id], visibility: detail.asset.visibility === 'private' ? 'public' : 'private' }, detail.asset.visibility === 'private' ? 'Made public.' : 'Made private. It can take about ten seconds to apply everywhere.')}>{detail.asset.visibility === 'private' ? 'Make public' : 'Make private'}</button>
+      </div>
+      <div className="flex flex-wrap items-end gap-[10px] text-[12px]">
+        <label className="flex flex-col">Link works for (days)<input className={input} style={{ width: 80 }} inputMode="numeric" value={share.days} onChange={(e) => setShare({ ...share, days: e.target.value })} /></label>
+        <label className="flex flex-col">Password (optional)<input className={input} type="text" autoComplete="off" value={share.password} onChange={(e) => setShare({ ...share, password: e.target.value })} /></label>
+        <label className="flex flex-col">Download limit (optional)<input className={input} style={{ width: 90 }} inputMode="numeric" value={share.maxDownloads} onChange={(e) => setShare({ ...share, maxDownloads: e.target.value })} /></label>
+        <button type="button" className={btn} onClick={() => {
+          void (async () => {
+            setMessage('')
+            const res = await fetch('/api/admin-media-dam', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'createShare', kind: 'file', targetId: id, days: Number(share.days), password: share.password, maxDownloads: share.maxDownloads }) })
+            const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+            if (!res.ok || !body.url) return setMessage(body.error ?? 'The link could not be made.')
+            setLink(body.url)
+            setShare({ ...share, password: '' })
+            await load()
+          })()
+        }}>Create share link</button>
+      </div>
+      {link ? <p className="m-0 text-[12px]">Copy this link now, it is not shown again: <input readOnly className={input} style={{ width: '100%' }} value={link} onFocus={(e) => e.currentTarget.select()} /></p> : null}
+      {shares.length > 0 ? (
+        <ul className="m-0 list-none p-0 text-[12px]">
+          {shares.map((sh) => (
+            <li key={sh.id} className="flex flex-wrap items-center gap-[8px]">
+              <span>{sh.revoked ? 'Revoked' : `Until ${sh.expiresAt?.slice(0, 10) ?? 'no end'}`}{sh.hasPassword ? ', password' : ''}{sh.maxDownloads ? `, ${sh.downloads} of ${sh.maxDownloads} downloads` : `, ${sh.downloads} downloads`}</span>
+              {sh.revoked ? null : <button type="button" className={btn} onClick={() => void post({ action: 'revokeShare', id: sh.id }, 'Link revoked.')}>Revoke</button>}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       <strong className="text-[13px]">Versions</strong>
       {detail.versions.length === 0 ? <p className="m-0 text-[12px]">No earlier versions. Replacing the file keeps the old one here.</p> : (
         <ul className="m-0 list-none p-0 text-[12px]">

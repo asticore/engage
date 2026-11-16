@@ -12,6 +12,11 @@ import { applySafeServingHeaders, readMediaObject, putMediaObject } from '@/loca
 import { filtersFromParams, parseFilters, type SearchContext } from '@/features/dam/search'
 import { pathOf } from '@/features/mediaTags/logic'
 import * as tagStore from '@/features/mediaTags/store'
+import { forgetPrivateCache } from '@/features/dam/access'
+import { hashToken, newToken, parseShareInput } from '@/features/dam/share'
+import { buildZip } from '@/features/dam/zip'
+import { sanitizeFolder } from '@/features/media/folders'
+import { hashPassword } from '@/features/visibility/password'
 import { replaceEverywhere } from '@/features/dam/replaceEverywhere'
 import { snapshotCurrent } from '@/features/dam/versionsIo'
 import { ALLOW_USED_DELETE } from '@/features/dam/safeDelete'
@@ -57,6 +62,23 @@ export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const id = positive(url.searchParams.get('id'))
   const now = new Date()
+  const sharesFor = url.searchParams.get('shares')
+  if ((sharesFor === 'file' || sharesFor === 'collection') && id) return json({ shares: await store.listShares(d1, sharesFor, id) })
+  const zipIds = url.searchParams.get('zipIds')
+  if (zipIds) {
+    const ids = parseIdList(zipIds.split(',').map((v) => Number(v)))
+    if (!ids) return json({ error: 'Choose up to 100 files.' }, 400)
+    const rows = await store.mediaRows(d1, ids)
+    if (rows.reduce((n, r) => n + r.filesize, 0) > 100 * 1024 * 1024) return json({ error: 'A zip holds up to 100 MB. Choose fewer files.' }, 413)
+    const entries: Array<{ name: string; data: Uint8Array }> = []
+    for (const row of rows) {
+      const object = await readMediaObject(row.filename)
+      if (object) entries.push({ name: row.filename, data: object.data })
+    }
+    if (entries.length === 0) return json({ error: 'None of those files could be read.' }, 404)
+    const zip = buildZip(entries, now)
+    return new Response(zip as unknown as BodyInit, { headers: { 'Content-Type': 'application/zip', 'Content-Disposition': 'attachment; filename="media.zip"', 'Cache-Control': 'private, no-store', 'Content-Length': String(zip.byteLength) } })
+  }
   if (url.searchParams.get('searchMeta') === '1') {
     const tags = (await getFeatureFlags()).mediatags ? await tagStore.listTags(d1 as never) : []
     return json({
@@ -108,6 +130,7 @@ export async function GET(request: Request): Promise<Response> {
   return json({
     settings,
     collections: await store.listCollections(d1),
+    folderRules: await store.listFolderRules(d1),
     fields: await store.listFields(d1),
     expiring: await store.expiringSoon(d1, today, until),
     expired: await store.expiredIds(d1, today),
@@ -220,6 +243,38 @@ export async function POST(request: Request): Promise<Response> {
     case 'deleteSearch':
       if (!id) return json({ error: 'Pick one.' }, 400)
       await store.deleteSearch(d1, id)
+      return json({ ok: true })
+    case 'setVisibility': {
+      const ids = parseIdList(body.ids)
+      const visibility = body.visibility === 'private' ? 'private' : body.visibility === 'public' ? 'public' : null
+      if (!ids || !visibility) return json({ error: 'Choose files and public or private.' }, 400)
+      await store.setVisibility(d1, ids, visibility, now)
+      forgetPrivateCache()
+      for (const mediaId of ids) await store.logActivity(d1, mediaId, 'visibility', visibility, userId, now)
+      return json({ ok: true })
+    }
+    case 'saveFolderRule': {
+      if (!isAdmin) return json({ error: 'Only an admin can make a folder private.' }, 403)
+      const path = sanitizeFolder(body.path)
+      const visibility = body.visibility === 'private' || body.visibility === 'public' || body.visibility === 'inherit' ? body.visibility : null
+      if (!path || !visibility) return json({ error: 'Type a folder path like products/summer and choose private, public or the parent folder\'s setting.' }, 400)
+      await store.saveFolderRule(d1, path, visibility, now)
+      forgetPrivateCache()
+      return json({ ok: true })
+    }
+    case 'createShare': {
+      const parsed = parseShareInput(body, new Date())
+      if (parsed.ok === false) return json({ error: parsed.error }, 400)
+      const v = parsed.value
+      if (v.kind === 'file' ? !(await loadMedia(engine, v.targetId)) : !(await store.listCollections(d1)).some((c) => c.id === v.targetId)) return json({ error: 'That is no longer there.' }, 404)
+      const token = newToken()
+      await store.createShare(d1, { tokenHash: await hashToken(token), kind: v.kind, targetId: v.targetId, expiresAt: v.expiresAt, passwordHash: v.password ? await hashPassword(v.password) : '', maxDownloads: v.maxDownloads, userId }, now)
+      if (v.kind === 'file') await store.logActivity(d1, v.targetId, 'share', `Link until ${v.expiresAt?.slice(0, 10)}`, userId, now)
+      return json({ ok: true, url: `${new URL(request.url).origin}/api/media-share/${token}`, expiresAt: v.expiresAt })
+    }
+    case 'revokeShare':
+      if (!id) return json({ error: 'Pick one.' }, 400)
+      await store.revokeShare(d1, id)
       return json({ ok: true })
     case 'saveField': {
       if (!isAdmin) return json({ error: 'Only an admin can change the metadata fields.' }, 403)

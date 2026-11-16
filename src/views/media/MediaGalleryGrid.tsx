@@ -270,6 +270,15 @@ export function MediaGalleryGrid({
     finish('ok', `${remove ? 'Removed' : 'Added'} ${ids.length} file${ids.length === 1 ? '' : 's'} ${remove ? 'from' : 'to'} the collection.`)
   }
 
+  const setVisibility = async (ids: number[], visibility: 'public' | 'private') => {
+    setBusy('visibility')
+    setNotice(null)
+    const result = await postJson<{ ok: boolean }>('/api/admin-media-dam', { action: 'setVisibility', ids, visibility })
+    if (result.ok === false) return finish('error', result.error)
+    setSelected(new Set())
+    finish('ok', `Made ${ids.length} file${ids.length === 1 ? '' : 's'} ${visibility}.`)
+  }
+
   const setStatus = async (ids: number[], status: string) => {
     setBusy('status')
     setNotice(null)
@@ -405,6 +414,15 @@ export function MediaGalleryGrid({
               <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => collect(selectedIds, true)}>
                 Remove from collection
               </button>
+              <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => setVisibility(selectedIds, 'private')}>
+                Make private
+              </button>
+              <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => setVisibility(selectedIds, 'public')}>
+                Make public
+              </button>
+              <a className={buttonClass} href={`/api/admin-media-dam?zipIds=${selectedIds.join(',')}`}>
+                Download zip
+              </a>
               <select
                 value=""
                 onChange={(event) => event.target.value && setStatus(selectedIds, event.target.value)}
