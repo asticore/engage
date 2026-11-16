@@ -16,6 +16,10 @@ export const WEBHOOK_EVENTS = [
   'booking.made',
   'user.registered',
   'tracking-event.saved',
+  'affiliate.joined',
+  'affiliate.approved',
+  'affiliate.commission.earned',
+  'affiliate.payout.recorded',
 ] as const
 
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number]
@@ -38,6 +42,10 @@ export const EVENT_LABEL_KEYS: Record<WebhookEvent, string> = {
   'booking.made': 'webhooks.event.booking.made',
   'user.registered': 'webhooks.event.user.registered',
   'tracking-event.saved': 'webhooks.event.tracking-event.saved',
+  'affiliate.joined': 'webhooks.event.affiliate.joined',
+  'affiliate.approved': 'webhooks.event.affiliate.approved',
+  'affiliate.commission.earned': 'webhooks.event.affiliate.commission.earned',
+  'affiliate.payout.recorded': 'webhooks.event.affiliate.payout.recorded',
 }
 
 /** The fields each event may send. `values` on form.submitted is the entry's answers, as the form webhook sends them. */
@@ -53,6 +61,10 @@ export const EVENT_FIELDS: Record<WebhookEvent, readonly string[]> = {
   'booking.made': ['id', 'source', 'eventId', 'formId', 'guestCount', 'status', 'createdAt'],
   'user.registered': ['id', 'createdAt'],
   'tracking-event.saved': ['id', 'name', 'platformEvent', 'triggerType', 'enabled', 'createdAt', 'updatedAt'],
+  'affiliate.joined': ['id', 'code', 'name', 'email', 'status', 'createdAt'],
+  'affiliate.approved': ['id', 'code', 'name', 'email', 'status', 'createdAt'],
+  'affiliate.commission.earned': ['id', 'affiliateId', 'orderId', 'amount', 'payableOn', 'createdAt'],
+  'affiliate.payout.recorded': ['id', 'affiliateId', 'amount', 'note', 'createdAt'],
 }
 
 /** Keeps only the fields an event allows. Missing fields are left out; `undefined` never reaches the body. */

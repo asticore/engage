@@ -3131,6 +3131,10 @@ const hi: UiDictionary = {
   "webhooks.event.order.refunded": "ऑर्डर का रिफंड हुआ",
   "webhooks.event.form.submitted": "फ़ॉर्म सबमिट हुआ",
   "webhooks.event.user.registered": "खाता बनाया गया",
+  "webhooks.event.affiliate.joined": "एफिलिएट जुड़ा",
+  "webhooks.event.affiliate.approved": "एफिलिएट स्वीकृत",
+  "webhooks.event.affiliate.commission.earned": "एफिलिएट कमीशन अर्जित",
+  "webhooks.event.affiliate.payout.recorded": "एफिलिएट भुगतान दर्ज",
   "webhooks.event.tracking-event.saved": "ट्रैकिंग इवेंट सहेजा गया",
   // Portal search (task 6, added 30 Oct 2026)
   "portal.search.label": "अपने खाते और साइट में खोजें",

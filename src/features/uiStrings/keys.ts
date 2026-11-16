@@ -3208,6 +3208,10 @@ export const UI_STRING_SOURCE = {
   "webhooks.event.order.refunded": "Order refunded",
   "webhooks.event.form.submitted": "Form submitted",
   "webhooks.event.user.registered": "Account created",
+  "webhooks.event.affiliate.joined": "Affiliate joined",
+  "webhooks.event.affiliate.approved": "Affiliate approved",
+  "webhooks.event.affiliate.commission.earned": "Affiliate commission earned",
+  "webhooks.event.affiliate.payout.recorded": "Affiliate payout recorded",
   // Webhooks: tracking event saved (added 30 Oct 2026)
   "webhooks.event.tracking-event.saved": "Tracking event saved",
   // Portal search (task 6, added 30 Oct 2026)

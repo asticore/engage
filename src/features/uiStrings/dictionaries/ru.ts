@@ -3131,6 +3131,10 @@ const ru: UiDictionary = {
   "webhooks.event.order.refunded": "Заказ возвращён",
   "webhooks.event.form.submitted": "Форма отправлена",
   "webhooks.event.user.registered": "Учётная запись создана",
+  "webhooks.event.affiliate.joined": "Партнёр присоединился",
+  "webhooks.event.affiliate.approved": "Партнёр одобрен",
+  "webhooks.event.affiliate.commission.earned": "Партнёрская комиссия начислена",
+  "webhooks.event.affiliate.payout.recorded": "Партнёрская выплата записана",
   "webhooks.event.tracking-event.saved": "Событие отслеживания сохранено",
   // Portal search (task 6, added 30 Oct 2026)
   "portal.search.label": "Поиск по аккаунту и сайту",
