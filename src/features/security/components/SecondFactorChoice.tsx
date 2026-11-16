@@ -112,7 +112,7 @@ export const SecondFactorChoice: React.FC<Props> = ({ pendingToken, method, onMe
       {passkeyOn && (
         <div className="tf-methods">
           <button type="button" className="btn btn--ghost" disabled={disabled || busy} onClick={() => void answerWithPasskey()}>
-            {busy ? tx('common.waitingDevice') : tx('auth.answerWithPasskeyInstead')}
+            {busy ? tx('common.waitingDevice') : tx('auth.usePasskeyInstead')}
           </button>
         </div>
       )}

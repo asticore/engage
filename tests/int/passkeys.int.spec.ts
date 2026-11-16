@@ -594,7 +594,7 @@ const secondStep = async (fx: Fixture, auth: Authenticator, userId: number, opts
     id,
     rawId: id,
     type: 'public-key',
-    response: { clientDataJSON: toBase64Url(cd), authenticatorData: toBase64Url(authData), signature: toBase64Url(signature), userHandle: null },
+    response: { clientDataJSON: toBase64Url(cd), authenticatorData: toBase64Url(authData), signature: toBase64Url(signature), userHandle: null as string | null },
   }
   return { body, cookie: options.cookie as string, options: options.options as { allowCredentials: Array<{ id: string }> } }
 }

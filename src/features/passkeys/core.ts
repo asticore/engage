@@ -308,7 +308,7 @@ export async function loginWithPasskey(
   if (!issued) return refusedFor('no valid challenge')
 
   const checked = await checkAssertion(deps, body, issued)
-  if (!checked.ok) return refusedFor(checked.reason, checked.userId)
+  if (checked.ok === false) return refusedFor(checked.reason, checked.userId)
   const { row, uv, now, auth } = checked
   const userId = row.userId
 
@@ -379,7 +379,7 @@ export async function verifySecondStep(
   const issued = await readChallenge(deps.secret, cookie, 'second', deps.now())
   if (!issued || issued.userId !== userId) return refusedFor('no valid challenge')
   const checked = await checkAssertion(deps, body, issued, userId)
-  if (!checked.ok) return refusedFor(checked.reason)
+  if (checked.ok === false) return refusedFor(checked.reason)
   await deps.store.recordUse(checked.row.id, checked.auth.signCount, new Date(checked.now).toISOString())
   await deps.audit('passkey.login', `${checked.uv ? 'user verified' : 'user not verified'}: second step`, userId)
   return { status: 'ok' }
