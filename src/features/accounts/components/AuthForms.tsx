@@ -108,7 +108,7 @@ export const CodeStep: React.FC<{ pendingToken: string; next: string }> = ({ pen
         {tx('auth.code')}
         <input name="code" type="text" inputMode="text" autoComplete="one-time-code" autoFocus required />
       </label>
-      <SecondFactorChoice pendingToken={token} method={method} onMethod={setMethod} trust={trust} onTrust={setTrust} />
+      <SecondFactorChoice pendingToken={token} method={method} onMethod={setMethod} trust={trust} onTrust={setTrust} next={next} />
       <Note state={state} />
       <SubmitButton>{tx('auth.continue')}</SubmitButton>
       <div className="account-link-row">

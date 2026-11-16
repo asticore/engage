@@ -189,6 +189,7 @@ const ru: UiDictionary = {
   'portal.auth.confirmMyEmail': 'Подтвердить мою эл. почту',
   'portal.auth.invitation': 'Приглашение',
   'portal.auth.emailCodeInstead': 'Отправить код по эл. почте',
+  'portal.auth.usePasskeyInstead': 'Использовать ключ доступа',
   'portal.auth.sendNewCode': 'Отправить новый код',
   'portal.auth.useAuthenticatorApp': 'Использовать приложение-аутентификатор',
   'portal.auth.rememberDeviceOne': 'Запомнить это устройство на 1 день',

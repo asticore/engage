@@ -4,9 +4,13 @@ import { NextResponse } from 'next/server'
 
 import {
   PASSKEY_CHALLENGE_COOKIE,
+  PASSKEY_REFUSED_MESSAGE,
   listPasskeys,
   loginOptions,
   loginWithPasskey,
+  secondStepAvailable,
+  secondStepOptions,
+  verifySecondStep,
   registerPasskey,
   registrationOptions,
   removePasskey,
@@ -16,7 +20,9 @@ import { methodAllowed, readMatrix } from '@/features/security/authMatrix'
 
 import { guardAttempt, tooManyAttempts } from './rateLimit'
 import { passkeyDepsFor } from './passkeysWiring'
-import { accountContext, requestAddress, requestClient, setPendingBindingCookie, setSessionCookie } from './session'
+import { accountContext, requestAddress, requestClient, clearPendingBindingCookie, setPendingBindingCookie, setSessionCookie, setTrustedDeviceCookie } from './session'
+import { signInWithCode } from './auth'
+import { recordAuthEvent } from '@/features/security/authAudit'
 import { safeLandingPath } from '@/features/passwordless'
 
 /**
@@ -186,4 +192,76 @@ export async function availabilityResponse(request: Request): Promise<Response> 
   const deps = await passkeyDepsFor(context.engine, await requestClient(), request.url)
   const allowed = deps.settings.enabled && (area === 'account' || deps.settings.allowAdmins) && deps.secret.length > 0
   return json({ enabled: allowed })
+}
+
+
+const pendingTokenOf = (body: Record<string, unknown>): string => (typeof body.pendingToken === 'string' ? body.pendingToken : '')
+
+/**
+ * POST /api/passkeys/second-options: body { pendingToken, probe? }. For the second sign-in step.
+ * The account comes from the pending token. With `probe` it only says whether a passkey can be used;
+ * otherwise it returns a challenge limited to that account's passkeys.
+ */
+export async function secondOptionsResponse(request: Request): Promise<Response> {
+  if (!(await sameSite(request))) return json({ ok: false, message: UNAVAILABLE }, 403)
+  const context = await accountContext()
+  if (!context.flags.accounts) return json({ ok: false, message: UNAVAILABLE }, 404)
+  const byIp = await guardAttempt(context.engine, 'passkey', `ip:${await requestAddress()}`)
+  if (!byIp.allowed) return json({ ok: false, message: tooManyAttempts(byIp.retryAfterSeconds ?? 60) }, 429)
+  const body = await readJson(request)
+  const userId = await context.engine.pendingTokenUser({ pendingToken: pendingTokenOf(body), client: await requestClient() }).catch((): null => null)
+  if (userId === null) return json({ ok: false, available: false, message: UNAVAILABLE }, 400)
+  const deps = await passkeyDepsFor(context.engine, await requestClient(), request.url)
+  const area = body.area === 'admin' ? 'admin' : 'account'
+  const m = await readMatrix()
+  const methodOk = methodAllowed(m, area, 'passkeys')
+  if (body.probe === true) return json({ ok: true, available: methodOk && (await secondStepAvailable(deps, userId)) })
+  if (!methodOk) return json({ ok: false, message: UNAVAILABLE }, 403)
+  const outcome = await secondStepOptions(deps, userId)
+  if (!outcome.ok) return json({ ok: false, message: outcome.message }, outcome.status)
+  await setChallengeCookie(outcome.cookie ?? '')
+  return json({ ok: true, options: outcome.options })
+}
+
+/**
+ * POST /api/passkeys/second-verify: body { pendingToken, trustDevice?, next?, area?, id, rawId, response }.
+ * Checks the assertion against the pending token's account, then finishes the sign-in through the same
+ * second-step path a code uses. A failed answer counts toward the lockout; the pending token is spent on success.
+ */
+export async function secondVerifyResponse(request: Request): Promise<Response> {
+  if (!(await sameSite(request))) return json({ ok: false, message: UNAVAILABLE }, 403)
+  const context = await accountContext()
+  if (!context.flags.accounts) return json({ ok: false, message: UNAVAILABLE }, 404)
+  const byIp = await guardAttempt(context.engine, 'two-factor', await requestAddress())
+  if (!byIp.allowed) return json({ ok: false, message: tooManyAttempts(byIp.retryAfterSeconds ?? 60) }, 429)
+  const body = await readJson(request)
+  const pendingToken = pendingTokenOf(body)
+  const userId = await context.engine.pendingTokenUser({ pendingToken, client: await requestClient() }).catch((): null => null)
+  if (userId === null) return json({ ok: false, message: PASSKEY_REFUSED_MESSAGE }, 400)
+  const area = body.area === 'admin' ? 'admin' : 'account'
+  if (!methodAllowed(await readMatrix(), area, 'passkeys')) return json({ ok: false, message: UNAVAILABLE }, 403)
+
+  const origin = await requestClient()
+  const deps = await passkeyDepsFor(context.engine, origin, request.url)
+  const outcome = await verifySecondStep(deps, userId, body as never, await challengeFromRequest())
+  await clearChallengeCookie()
+  // A refused answer is a failed second step: it counts toward the same lockout as a wrong code.
+  const result = await signInWithCode(context.engine, pendingToken, '', origin, {
+    method: 'passkey',
+    trustDevice: body.trustDevice === true,
+    passkeyVerifiedUserId: outcome.status === 'ok' ? userId : undefined,
+  })
+  if (outcome.status === 'refused' || !result.ok || !result.token) {
+    await recordAuthEvent(context.engine, { action: result.reason === 'locked' ? 'login.locked' : 'two-factor.failed', detail: 'passkey step' }, origin)
+    return json({ ok: false, message: outcome.status === 'refused' ? outcome.message : PASSKEY_REFUSED_MESSAGE }, 400)
+  }
+  await recordAuthEvent(context.engine, { action: 'two-factor.verified', actorId: result.userId ?? null, detail: 'passkey' }, origin)
+  await recordAuthEvent(context.engine, { action: 'login.success', actorId: result.userId ?? null, detail: 'two-step passkey' }, origin)
+  await setSessionCookie(result.token)
+  if (result.trustedDevice) await setTrustedDeviceCookie(result.trustedDevice.token, result.trustedDevice.maxAgeSeconds)
+  ;(await cookies()).delete('eg_social_pending')
+  await clearPendingBindingCookie()
+  const next = typeof body.next === 'string' ? body.next : ''
+  const redirect = area === 'admin' ? (next.startsWith('/admin') && !next.startsWith('//') && !next.includes('\\') ? next : '/admin') : safeLandingPath(next)
+  return json({ ok: true, redirect })
 }

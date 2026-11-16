@@ -188,6 +188,7 @@ const zhHans: UiDictionary = {
   'portal.auth.confirmMyEmail': '确认我的邮箱地址',
   'portal.auth.invitation': '邀请',
   'portal.auth.emailCodeInstead': '改为通过邮件发送验证码',
+  'portal.auth.usePasskeyInstead': '改用通行密钥',
   'portal.auth.sendNewCode': '重新发送验证码',
   'portal.auth.useAuthenticatorApp': '使用我的身份验证器应用',
   'portal.auth.rememberDeviceOne': '记住此设备 1 天',

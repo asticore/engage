@@ -189,6 +189,7 @@ const ko: UiDictionary = {
   'portal.auth.confirmMyEmail': '내 이메일 주소 확인',
   'portal.auth.invitation': '초대',
   'portal.auth.emailCodeInstead': '대신 이메일로 코드 보내기',
+  'portal.auth.usePasskeyInstead': '대신 패스키 사용',
   'portal.auth.sendNewCode': '새 코드 보내기',
   'portal.auth.useAuthenticatorApp': '인증 앱 사용하기',
   'portal.auth.rememberDeviceOne': '이 기기를 1일 동안 기억하기',

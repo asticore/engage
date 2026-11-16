@@ -10,7 +10,7 @@ import { fromBase64Url, randomBytes, textEqual, toBase64Url, utf8 } from './enco
 export const PASSKEY_CHALLENGE_COOKIE = 'eg_passkey_ch'
 export const CHALLENGE_MAX_AGE_MS = 5 * 60 * 1000
 
-export type ChallengeKind = 'register' | 'login'
+export type ChallengeKind = 'register' | 'login' | 'second'
 export type IssuedChallenge = { challenge: string; kind: ChallengeKind; userId: number | null }
 
 const hmacKey = (secret: string): Promise<CryptoKey> =>

@@ -1083,7 +1083,7 @@ export async function loginAsUser(db: AuthDbOps, args: LoginAsUserArgs): Promise
   return finishLogin(db, row, now, args.secret, undefined, args.client, args.session)
 }
 
-export type LoginSecondFactorArgs = { pendingToken: string; code: string; secret: string; client?: SessionClient; /** 'email' checks the emailed code instead of an authenticator or backup code. */ method?: 'email' | 'app' }
+export type LoginSecondFactorArgs = { pendingToken: string; code: string; secret: string; client?: SessionClient; /** 'email' checks the emailed code instead of an authenticator or backup code. 'passkey' takes no code: it is accepted only when `passkeyVerifiedUserId` (set by the server after it checked the assertion) equals the pending token's user. */ method?: 'email' | 'app' | 'passkey'; /** Server-only. Never read from a request body. */ passkeyVerifiedUserId?: number }
 
 /**
  * Step two of a two-step sign-in. A wrong code counts toward the same
@@ -1103,8 +1103,16 @@ export async function loginWithSecondFactor(db: AuthDbOps, args: LoginSecondFact
   const row = await db.findByID(claims.id)
   checkLoginPermission(row, now)
 
+  if (args.method === 'passkey') {
+    // The passkey itself was checked by the caller; a missing or different user id is a failed step and counts like a wrong code.
+    if (args.passkeyVerifiedUserId !== row.id) {
+      const updated = await incrementAndCheckLock(db, row, now)
+      if (isLocked(updated.lockUntil, now)) throw new LockedAuth()
+      throw new TwoFactorCodeError()
+    }
+  }
   const emailOk = args.method === 'email' && db.emailOtp ? await db.emailOtp.verify(row.id, args.code).catch((): boolean => false) : false
-  const check = args.method === 'email' ? { ok: emailOk } : await verifySecondFactor(db, row, args.code, { now })
+  const check = args.method === 'passkey' ? { ok: true } : args.method === 'email' ? { ok: emailOk } : await verifySecondFactor(db, row, args.code, { now })
   if (!check.ok) {
     const updated = await incrementAndCheckLock(db, row, now)
     if (isLocked(updated.lockUntil, now)) throw new LockedAuth()
@@ -1123,6 +1131,25 @@ export async function loginWithSecondFactor(db: AuthDbOps, args: LoginSecondFact
     if (trusted) return { ...result, trustedDevice: trusted }
   }
   return result
+}
+
+/**
+ * Who a still-valid pending token belongs to, or null when it is forged, expired or already used.
+ * Lets the passkey routes build a challenge for exactly that account.
+ */
+export async function pendingTokenUser(db: AuthDbOps, args: { pendingToken: string; secret: string; client?: SessionClient }): Promise<number | null> {
+  const claims = typeof args.pendingToken === 'string' ? verifyJWT(args.pendingToken, args.secret) : null
+  if (!claims || claims.purpose !== PENDING_PURPOSE || typeof claims.id !== 'number') return null
+  const jti = typeof claims.jti === 'string' ? claims.jti : null
+  if (jti && db.pendingTokens && (await db.pendingTokens.isUsed(jti))) return null
+  if (!pendingBindingHolds(claims, args.client?.pendingBinding)) return null
+  const row = await db.findByID(claims.id)
+  try {
+    checkLoginPermission(row, Date.now())
+  } catch {
+    return null
+  }
+  return claims.id
 }
 
 /**

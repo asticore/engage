@@ -189,6 +189,7 @@ const ja: UiDictionary = {
   'portal.auth.confirmMyEmail': 'メールアドレスを確認する',
   'portal.auth.invitation': '招待',
   'portal.auth.emailCodeInstead': '代わりにコードをメールで送る',
+  'portal.auth.usePasskeyInstead': '代わりにパスキーを使う',
   'portal.auth.sendNewCode': '新しいコードを送る',
   'portal.auth.useAuthenticatorApp': '認証アプリを使う',
   'portal.auth.rememberDeviceOne': 'このデバイスを1日間記憶する',

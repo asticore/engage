@@ -228,6 +228,70 @@ const sameBytesText = (value: string, expected: Uint8Array): boolean => {
   return bytes !== null && bytesEqual(bytes, expected)
 }
 
+type AssertionCheck =
+  | { ok: true; row: PasskeyRow; user: PasskeyUser; uv: boolean; now: number; auth: { signCount: number } }
+  | { ok: false; reason: string; userId?: number }
+
+/**
+ * The checks every passkey sign-in answer must pass, whether it is the first step or the
+ * second: challenge, origin, rpId, known credential, user handle, eligible and unlocked
+ * account, user verification, signature and counter. `expectUserId` (second step only) refuses
+ * a credential that belongs to anyone but the account the pending token names.
+ */
+async function checkAssertion(
+  deps: PasskeyDeps,
+  body: LoginBody,
+  issued: { challenge: string },
+  expectUserId?: number,
+): Promise<AssertionCheck> {
+  const now = deps.now()
+  let userId: number | undefined
+  try {
+    const idBytes = fromBase64Url(str(body.id))
+    const rawBytes = fromBase64Url(str(body.rawId))
+    const clientDataJSON = fromBase64Url(str(body.response?.clientDataJSON))
+    const authenticatorData = fromBase64Url(str(body.response?.authenticatorData))
+    const signature = fromBase64Url(str(body.response?.signature))
+    if (!idBytes || !rawBytes || !bytesEqual(idBytes, rawBytes) || !clientDataJSON || !authenticatorData || !signature) {
+      return { ok: false, reason: 'malformed' }
+    }
+
+    parseClientData(clientDataJSON, { type: 'webauthn.get', challenge: issued.challenge, origin: deps.origin })
+    const auth = parseAuthData(authenticatorData)
+    requireUserPresence(auth.flags)
+    await checkRpId(auth.rpIdHash, deps.rpId)
+
+    const row = await deps.store.findByCredentialId(toBase64Url(idBytes))
+    if (!row) return { ok: false, reason: 'unknown credential' }
+    userId = row.userId
+    if (expectUserId !== undefined && row.userId !== expectUserId) return { ok: false, reason: 'credential belongs to another account', userId: expectUserId }
+
+    // A discoverable credential names its account in userHandle; it must be the one the row belongs to.
+    const handle = str(body.response?.userHandle)
+    if (handle && !sameBytesText(handle, utf8(String(userId)))) return { ok: false, reason: 'user handle mismatch', userId }
+
+    const user = await deps.findUser(userId)
+    if (!user || !passkeyRoleAllowed(user, deps)) return { ok: false, reason: 'account not eligible', userId }
+    if (isLocked(user.lockUntil, now)) return { ok: false, reason: 'account locked', userId }
+
+    const uv = userVerified(auth.flags)
+    if (deps.settings.userVerification === 'required' && !uv) return { ok: false, reason: 'user verification required', userId }
+
+    const cose = await importCoseKey(fromBase64Url(row.publicKey) ?? new Uint8Array())
+    if (!(await verifyAssertionSignature(cose, signature, authenticatorData, clientDataJSON))) {
+      return { ok: false, reason: 'bad signature', userId }
+    }
+
+    // Sign counter: a counter that did not move forward means the key may have been copied.
+    if (row.signCount !== 0 && auth.signCount !== 0 && auth.signCount <= row.signCount) {
+      return { ok: false, reason: 'counter regression (possible cloned key)', userId }
+    }
+    return { ok: true, row, user, uv, now, auth }
+  } catch (error) {
+    return { ok: false, reason: error instanceof WebAuthnError ? error.message : 'lock or session error', userId }
+  }
+}
+
 /** Checks a sign-in answer. Every refusal writes an audit line and returns the same message, so the reason is not revealed. */
 export async function loginWithPasskey(
   deps: PasskeyDeps,
@@ -240,51 +304,15 @@ export async function loginWithPasskey(
   }
   if (!featureReady(deps)) return { status: 'refused', message: PASSKEY_DISABLED_MESSAGE }
 
-  const now = deps.now()
-  const issued = await readChallenge(deps.secret, cookie, 'login', now)
+  const issued = await readChallenge(deps.secret, cookie, 'login', deps.now())
   if (!issued) return refusedFor('no valid challenge')
 
-  let row: PasskeyRow | null = null
+  const checked = await checkAssertion(deps, body, issued)
+  if (checked.ok === false) return refusedFor(checked.reason, checked.userId)
+  const { row, uv, now, auth } = checked
+  const userId = row.userId
+
   try {
-    const idBytes = fromBase64Url(str(body.id))
-    const rawBytes = fromBase64Url(str(body.rawId))
-    const clientDataJSON = fromBase64Url(str(body.response?.clientDataJSON))
-    const authenticatorData = fromBase64Url(str(body.response?.authenticatorData))
-    const signature = fromBase64Url(str(body.response?.signature))
-    if (!idBytes || !rawBytes || !bytesEqual(idBytes, rawBytes) || !clientDataJSON || !authenticatorData || !signature) {
-      return refusedFor('malformed')
-    }
-
-    parseClientData(clientDataJSON, { type: 'webauthn.get', challenge: issued.challenge, origin: deps.origin })
-    const auth = parseAuthData(authenticatorData)
-    requireUserPresence(auth.flags)
-    await checkRpId(auth.rpIdHash, deps.rpId)
-
-    row = await deps.store.findByCredentialId(toBase64Url(idBytes))
-    if (!row) return refusedFor('unknown credential')
-    const userId = row.userId
-
-    // A discoverable credential names its account in userHandle; it must be the one the row belongs to.
-    const handle = str(body.response?.userHandle)
-    if (handle && !sameBytesText(handle, utf8(String(userId)))) return refusedFor('user handle mismatch', userId)
-
-    const user = await deps.findUser(userId)
-    if (!user || !passkeyRoleAllowed(user, deps)) return refusedFor('account not eligible', userId)
-    if (isLocked(user.lockUntil, now)) return refusedFor('account locked', userId)
-
-    const uv = userVerified(auth.flags)
-    if (deps.settings.userVerification === 'required' && !uv) return refusedFor('user verification required', userId)
-
-    const cose = await importCoseKey(fromBase64Url(row.publicKey) ?? new Uint8Array())
-    if (!(await verifyAssertionSignature(cose, signature, authenticatorData, clientDataJSON))) {
-      return refusedFor('bad signature', userId)
-    }
-
-    // Sign counter: a counter that did not move forward means the key may have been copied.
-    if (row.signCount !== 0 && auth.signCount !== 0 && auth.signCount <= row.signCount) {
-      return refusedFor('counter regression (possible cloned key)', userId)
-    }
-
     await deps.store.recordUse(row.id, auth.signCount, new Date(now).toISOString())
     // The two-step code is skipped only when the owner allowed it AND the device confirmed the PIN or biometric.
     const skipTwoFactor = uv && deps.settings.skipTwoFactor
@@ -297,8 +325,64 @@ export async function loginWithPasskey(
     await deps.audit('passkey.login', `${uv ? 'user verified' : 'user not verified'}${skipTwoFactor ? ', two-step code skipped' : ''}`, userId)
     return { status: 'ok', token: result.token }
   } catch (error) {
-    return refusedFor(error instanceof WebAuthnError ? error.message : 'lock or session error', row?.userId)
+    return refusedFor(error instanceof WebAuthnError ? error.message : 'lock or session error', userId)
   }
+}
+
+// --- Passkey as the second step ----------------------------------------------
+
+export type SecondStepResult = { status: 'ok' } | { status: 'refused'; message: string }
+
+/** Whether this account can answer a second step with a passkey: feature on, role allowed, at least one passkey. */
+export async function secondStepAvailable(deps: PasskeyDeps, userId: number): Promise<boolean> {
+  if (!featureReady(deps)) return false
+  const user = await deps.findUser(userId)
+  if (!user || !passkeyRoleAllowed(user, deps) || isLocked(user.lockUntil, deps.now())) return false
+  return (await deps.store.listForUser(userId)).length > 0
+}
+
+/** Request options limited to the passkeys of the account the pending token names, with a challenge bound to that account. */
+export async function secondStepOptions(deps: PasskeyDeps, userId: number): Promise<ChallengeOutcome> {
+  if (!featureReady(deps)) return refuse(PASSKEY_DISABLED_MESSAGE, 404)
+  if (!(await secondStepAvailable(deps, userId))) return refuse(PASSKEY_REFUSED_MESSAGE, 400)
+  const rows = await deps.store.listForUser(userId)
+  const { challenge, cookie } = await issueChallenge(deps.secret, 'second', userId, deps.now())
+  return {
+    ok: true,
+    cookie,
+    options: {
+      challenge,
+      rpId: deps.rpId,
+      timeout: TIMEOUT_MS,
+      userVerification: deps.settings.userVerification,
+      allowCredentials: rows.map((row) => ({ type: 'public-key', id: row.credentialId, transports: row.transports })),
+    },
+  }
+}
+
+/**
+ * Checks a passkey answer given as the second step. `userId` comes from the pending token, never
+ * from the body. A credential of another account, a challenge issued to another account, or any
+ * failed check is refused with one message; the caller then counts it toward the lockout.
+ */
+export async function verifySecondStep(
+  deps: PasskeyDeps,
+  userId: number,
+  body: LoginBody,
+  cookie: string | null | undefined,
+): Promise<SecondStepResult> {
+  const refusedFor = async (reason: string): Promise<SecondStepResult> => {
+    await deps.audit('passkey.refused', `second step: ${reason}`, userId)
+    return { status: 'refused', message: PASSKEY_REFUSED_MESSAGE }
+  }
+  if (!featureReady(deps)) return { status: 'refused', message: PASSKEY_DISABLED_MESSAGE }
+  const issued = await readChallenge(deps.secret, cookie, 'second', deps.now())
+  if (!issued || issued.userId !== userId) return refusedFor('no valid challenge')
+  const checked = await checkAssertion(deps, body, issued, userId)
+  if (checked.ok === false) return refusedFor(checked.reason)
+  await deps.store.recordUse(checked.row.id, checked.auth.signCount, new Date(checked.now).toISOString())
+  await deps.audit('passkey.login', `${checked.uv ? 'user verified' : 'user not verified'}: second step`, userId)
+  return { status: 'ok' }
 }
 
 // --- Managing passkeys ------------------------------------------------------

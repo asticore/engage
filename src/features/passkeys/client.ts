@@ -147,3 +147,49 @@ export const renamePasskeyRequest = (id: number, label: string): Promise<ApiResu
 export const removePasskeyRequest = (id: number, confirm: string): Promise<ApiResult> =>
   postJson('/api/passkeys/remove', /^\d{6}$/.test(confirm.trim()) ? { id, code: confirm.trim() } : { id, password: confirm })
 export const listPasskeysRequest = (): Promise<ApiResult> => postJson('/api/passkeys/list', {})
+
+/** Whether the pending sign-in's account has a passkey it can use as the second step. */
+export async function secondStepPasskeyAvailable(pendingToken: string, area: 'account' | 'admin' = 'account'): Promise<boolean> {
+  if (!passkeysSupported()) return false
+  const result = await postJson('/api/passkeys/second-options', { pendingToken, area, probe: true })
+  return result.ok && result.available === true
+}
+
+/** Answers the second sign-in step with a passkey of the account named by the pending token. Returns a redirect when it worked. */
+export async function secondStepWithPasskey(pendingToken: string, next: string, area: 'account' | 'admin' = 'account', trustDevice = false): Promise<ApiResult> {
+  if (!passkeysSupported()) return { ok: false, message: 'This browser cannot use passkeys.' }
+  const started = await postJson('/api/passkeys/second-options', { pendingToken, area })
+  if (!started.ok || !started.options) return started
+  const o = started.options as WireRequestOptions & { allowCredentials?: Array<{ id: string; transports?: AuthenticatorTransport[] }> }
+  let credential: PublicKeyCredential | null
+  try {
+    credential = (await navigator.credentials.get({
+      publicKey: {
+        challenge: fromBase64Url(o.challenge),
+        rpId: o.rpId,
+        timeout: o.timeout,
+        userVerification: o.userVerification,
+        allowCredentials: (o.allowCredentials ?? []).map((c) => ({ type: 'public-key' as const, id: fromBase64Url(c.id), transports: c.transports })),
+      },
+    })) as PublicKeyCredential | null
+  } catch (error) {
+    return { ok: false, message: cancelled(error) ? 'Passkey sign-in was cancelled.' : 'No passkey was found on this device.' }
+  }
+  if (!credential) return { ok: false, message: 'No passkey was found on this device.' }
+  const response = credential.response as AuthenticatorAssertionResponse
+  return postJson('/api/passkeys/second-verify', {
+    pendingToken,
+    next,
+    area,
+    trustDevice,
+    id: credential.id,
+    rawId: toBase64Url(credential.rawId),
+    type: credential.type,
+    response: {
+      clientDataJSON: toBase64Url(response.clientDataJSON),
+      authenticatorData: toBase64Url(response.authenticatorData),
+      signature: toBase64Url(response.signature),
+      userHandle: response.userHandle ? toBase64Url(response.userHandle) : null,
+    },
+  })
+}
