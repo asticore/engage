@@ -1397,6 +1397,7 @@ const ru: UiDictionary = {
   "store.addingProgress": "Добавляем...",
   "store.invalidAmount": "Введите корректную сумму.",
   "store.giftCardsUnavailable": "Подарочные карты сейчас недоступны.",
+  "store.affiliateDisclosure": "Мы можем получить комиссию, если вы купите по этой ссылке.",
   "store.productUnavailable": "Этот товар сейчас недоступен.",
   "store.noProductsInGroup": "В этой группе пока нет товаров.",
   "store.chooseOption": "Выберите вариант",

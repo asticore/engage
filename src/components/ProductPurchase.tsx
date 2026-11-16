@@ -144,9 +144,12 @@ export function ProductPurchase({ productId, view, grouped = [], giftConfig }: {
         <PriceLine price={view.price} regular={view.regular} onSale={view.onSale} />
         {view.sku ? <p className="text-[0.85rem] opacity-70">SKU: {view.sku}</p> : null}
         {view.external ? (
-          <a className="btn btn--primary mt-3 inline-block" href={view.external.url} target="_blank" rel="noopener noreferrer nofollow sponsored">
-            {view.external.label}
-          </a>
+          <>
+            <a className="btn btn--primary mt-3 inline-block" href={view.external.url} target="_blank" rel="noopener noreferrer nofollow sponsored">
+              {view.external.label}
+            </a>
+            <p className="mt-2 text-[0.8rem] opacity-70">{t('store.affiliateDisclosure')}</p>
+          </>
         ) : (
           <p>{t('store.productUnavailable')}</p>
         )}

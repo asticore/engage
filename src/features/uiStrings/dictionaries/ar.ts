@@ -1397,6 +1397,7 @@ const ar: UiDictionary = {
   "store.addingProgress": "جارٍ الإضافة...",
   "store.invalidAmount": "يُرجى إدخال مبلغ صالح.",
   "store.giftCardsUnavailable": "بطاقات الهدايا غير متاحة حاليًا.",
+  "store.affiliateDisclosure": "قد نحصل على عمولة إذا اشتريت عبر هذا الرابط.",
   "store.productUnavailable": "هذا المنتج غير متاح حاليًا.",
   "store.noProductsInGroup": "لا توجد منتجات في هذه المجموعة بعد.",
   "store.chooseOption": "اختر خيارًا",

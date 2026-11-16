@@ -1474,6 +1474,7 @@ export const UI_STRING_SOURCE = {
   "store.addingProgress": "Adding...",
   "store.invalidAmount": "Please enter a valid amount.",
   "store.giftCardsUnavailable": "Gift cards are not available right now.",
+  "store.affiliateDisclosure": "We may earn a commission if you buy through this link.",
   "store.productUnavailable": "This product is not available right now.",
   "store.noProductsInGroup": "No products in this group yet.",
   "store.chooseOption": "Choose an option",

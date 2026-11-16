@@ -1397,6 +1397,7 @@ const ko: UiDictionary = {
   "store.addingProgress": "담는 중...",
   "store.invalidAmount": "올바른 금액을 입력해 주세요.",
   "store.giftCardsUnavailable": "선물 카드는 현재 이용할 수 없습니다.",
+  "store.affiliateDisclosure": "이 링크를 통해 구매하시면 수수료를 받을 수 있습니다.",
   "store.productUnavailable": "이 상품은 현재 이용할 수 없습니다.",
   "store.noProductsInGroup": "이 그룹에는 아직 상품이 없습니다.",
   "store.chooseOption": "옵션 선택",

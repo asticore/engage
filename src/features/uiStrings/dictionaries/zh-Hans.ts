@@ -1396,6 +1396,7 @@ const zhHans: UiDictionary = {
   "store.addingProgress": "添加中...",
   "store.invalidAmount": "请输入有效金额。",
   "store.giftCardsUnavailable": "礼品卡目前不可用。",
+  "store.affiliateDisclosure": "如果您通过此链接购买，我们可能会获得佣金。",
   "store.productUnavailable": "该商品目前不可用。",
   "store.noProductsInGroup": "该分组暂时没有商品。",
   "store.chooseOption": "请选择",
