@@ -30,12 +30,14 @@ vi.mock('@/lib/engine', () => ({
 vi.mock('@/features/ai/keys', () => ({
   aiKeyAvailability: async () => state.keys,
   readAiKey: async () => 'key',
-  readBuilderSettings: async () => ({ models: { claude: 'claude-sonnet-4-5', openai: 'gpt-4o' }, capUsd: 0, brandVoice: '', savedPrompts: [] }),
+  readBuilderSettings: async () => ({ models: { claude: 'claude-sonnet-4-5', openai: 'gpt-4o' }, capUsd: 0, brandVoice: '', savedPrompts: [] as string[] }),
 }))
 vi.mock('@/features/ai/builderUsage', () => ({
   estimateTokensFromChars: (n: number) => Math.ceil(n / 4),
   readUsageSummary: async () => ({ capReached: state.capReached, capUsd: 5, estCostUsd: 0, month: '2027-01', calls: 0, inputTokens: 0, outputTokens: 0 }),
-  recordUsage: async (row: Record<string, unknown>) => void state.recorded.push(row),
+  recordUsage: async (row: Record<string, unknown>): Promise<void> => {
+    state.recorded.push(row)
+  },
 }))
 vi.mock('@/features/ai/client', () => ({
   AiError: class AiError extends Error {},
