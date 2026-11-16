@@ -182,6 +182,7 @@ export type CollectionConfigLike = {
     beforeChange?: Array<(args: never) => unknown>
     afterChange?: Array<(args: never) => unknown>
     afterDelete?: Array<(args: never) => unknown>
+    beforeDelete?: Array<(args: never) => unknown>
   }
   /** Only `versions.drafts` (boolean or `{validate?: boolean}`) is read. A bare `false` is valid and carries no `.drafts`. */
   versions?: boolean | { drafts?: boolean | { validate?: boolean } }
@@ -967,8 +968,11 @@ export async function deleteDocument<TDoc extends { id: number }>(args: DeleteDo
 
   const accessResult: AccessResult = overrideAccess ? true : await executeAccess(collection.access?.delete, { id, req })
 
-  // This app declares zero `beforeDelete` hooks anywhere, so the reference
-  // engine's beforeDelete step is not implemented here.
+  // beforeDelete - Collection: a pure side-effect hook (return value ignored, like the reference engine's). It may throw to
+  // refuse the delete, which is how the media library's "file is in use" check works (src/features/dam/safeDelete.ts).
+  for (const hook of (collection.hooks?.beforeDelete as unknown as Array<(hookArgs: Record<string, unknown>) => unknown> | undefined) ?? []) {
+    await hook({ id, collection, context, req })
+  }
 
   const doc = await db.findByID(id)
   if (!doc) throw new NotFound()

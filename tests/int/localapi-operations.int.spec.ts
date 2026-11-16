@@ -371,6 +371,28 @@ describe('operations/deleteDocument', () => {
     expect(doc.secret).toBe('decrypted')
     expect(db.rows).toHaveLength(0)
   })
+
+  it('runs beforeDelete hooks first, and a throwing hook refuses the delete', async () => {
+    const seen: Array<Record<string, unknown>> = []
+    const collection: CollectionConfigLike = {
+      ...baseCollection,
+      hooks: {
+        beforeDelete: [
+          ((args: Record<string, unknown>) => {
+            seen.push(args)
+            if (args.id === 1) throw new ValidationError([{ path: 'id', message: 'in use' }])
+          }) as never,
+        ],
+      },
+    }
+    const db = makeFakeDb([{ id: 1, title: 'x' }, { id: 2, title: 'y' }])
+    await expect(deleteDocument({ collection, db, id: 1, req: adminReq })).rejects.toThrow(ValidationError)
+    expect(db.rows).toHaveLength(2)
+    await deleteDocument({ collection, db, id: 2, req: adminReq })
+    expect(db.rows).toHaveLength(1)
+    expect(seen.map((a) => a.id)).toEqual([1, 2])
+    expect(seen[0]).toHaveProperty('context')
+  })
 })
 
 /* -------------------------------------------------------------------------- */

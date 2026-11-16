@@ -186,6 +186,22 @@ export const Media: CollectionConfig = {
       admin: { readOnly: true, hidden: true },
     },
   ],
+  hooks: {
+    // Asset manager (off by default): refuse to delete a file that is in use, and tidy what it kept about a deleted file.
+    beforeDelete: [
+      async ({ id, context, req }: { id?: unknown; context?: Record<string, unknown>; req?: { engine?: unknown } }) => {
+        const { guardUsedMedia } = await import('@/features/dam/safeDelete')
+        await guardUsedMedia(Number(id), context, req?.engine)
+      },
+    ],
+    afterDelete: [
+      async ({ id, doc }: { id: number | string; doc?: unknown }) => {
+        const { cleanupDeletedMedia } = await import('@/features/dam/safeDelete')
+        await cleanupDeletedMedia(Number(id))
+        return doc
+      },
+    ],
+  },
   upload: {
     // These are not supported on Workers yet due to lack of sharp
     crop: false,

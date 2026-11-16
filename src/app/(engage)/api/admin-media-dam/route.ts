@@ -8,7 +8,12 @@ import * as store from '@/features/dam/store'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { authorizeMedia } from '@/features/media/access'
 import { loadMedia, parseIdList, readJsonBody, type MediaEngine } from '@/features/media/store'
-import { readMediaObject } from '@/localapi/storage'
+import { applySafeServingHeaders, readMediaObject, putMediaObject } from '@/localapi/storage'
+import { replaceEverywhere } from '@/features/dam/replaceEverywhere'
+import { snapshotCurrent } from '@/features/dam/versionsIo'
+import { ALLOW_USED_DELETE } from '@/features/dam/safeDelete'
+import { mediaUpdater } from '@/features/media/store'
+import { clearUsageCache } from '@/features/media/usage'
 import { getFeatureFlags } from '@/utilities/features'
 
 export const dynamic = 'force-dynamic'
@@ -42,6 +47,16 @@ export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const id = positive(url.searchParams.get('id'))
   const now = new Date()
+  // A kept version's bytes, for the compare view. Served with the same safe headers as public files.
+  const versionFile = positive(url.searchParams.get('versionFile'))
+  if (id && versionFile) {
+    const version = await store.getVersion(d1, id, versionFile)
+    const stored = version ? await readMediaObject(version.r2Key) : null
+    if (!version || !stored) return json({ error: 'That version is not available.' }, 404)
+    const headers = new Headers({ 'Content-Type': version.mimeType || stored.contentType, 'Cache-Control': 'private, no-store' })
+    applySafeServingHeaders(headers, version.filename)
+    return new Response(stored.data as unknown as BodyInit, { headers })
+  }
   if (url.searchParams.get('unusable') === '1') {
     return json({ ids: await store.unusableIds(d1, now.toISOString().slice(0, 10), settings.requireApproval) })
   }
@@ -58,6 +73,8 @@ export async function GET(request: Request): Promise<Response> {
       collections: await store.collectionsForMedia(d1, id),
       allCollections: await store.listCollections(d1),
       activity: await store.listActivity(d1, id, 20),
+      versions: await store.listVersions(d1, id),
+      mediaUrl: typeof media.url === 'string' ? media.url : null,
       settings,
     })
   }
@@ -171,6 +188,62 @@ export async function POST(request: Request): Promise<Response> {
       if (!id) return json({ error: 'Pick one.' }, 400)
       await store.deleteField(d1, id)
       return json({ ok: true })
+    case 'restoreVersion': {
+      const versionId = positive(body.versionId)
+      if (!id || !versionId) return json({ error: 'Pick a version.' }, 400)
+      const media = await loadMedia(engine, id)
+      const version = await store.getVersion(d1, id, versionId)
+      if (!media?.filename || !version) return json({ error: 'That version no longer exists.' }, 404)
+      const stored = await readMediaObject(version.r2Key)
+      if (!stored) return json({ error: 'The stored copy of that version is missing.' }, 410)
+      // The file as it is now becomes a version first, so a restore can be undone.
+      const settings = await store.getSettings(d1)
+      await snapshotCurrent(d1, { id, filename: media.filename, mimeType: media.mimeType, filesize: media.filesize, width: media.width, height: media.height }, Math.max(settings.keepVersions, 1), userId, 'Before restore', now)
+      const update = mediaUpdater(engine)
+      const previous = { mimeType: media.mimeType, filesize: media.filesize, width: media.width, height: media.height }
+      await update(id, { mimeType: version.mimeType, filesize: version.filesize, width: version.width, height: version.height })
+      try {
+        await putMediaObject(media.filename, stored.data, version.mimeType || stored.contentType)
+      } catch (error) {
+        await update(id, previous).catch((): void => undefined)
+        console.error('Restoring a version failed:', error)
+        return json({ error: 'The version could not be restored. The file is unchanged.' }, 502)
+      }
+      await store.logActivity(d1, id, 'restore', `Version from ${version.createdAt.slice(0, 16).replace('T', ' ')}`, userId, now)
+      return json({ ok: true })
+    }
+    case 'deleteVersion': {
+      const versionId = positive(body.versionId)
+      if (!id || !versionId) return json({ error: 'Pick a version.' }, 400)
+      const version = await store.getVersion(d1, id, versionId)
+      if (!version) return json({ error: 'That version no longer exists.' }, 404)
+      const { deleteMediaKeys } = await import('@/localapi/storage')
+      await deleteMediaKeys([version.r2Key])
+      await store.deleteVersionRow(d1, versionId)
+      return json({ ok: true })
+    }
+    case 'replaceEverywhere': {
+      const withId = positive(body.withId)
+      if (!id || !withId || id === withId) return json({ error: 'Choose a different file to use instead.' }, 400)
+      if (!(await loadMedia(engine, withId))) return json({ error: 'The replacement file was not found.' }, 404)
+      const result = await replaceEverywhere(engine as never, id, withId)
+      await store.logActivity(d1, id, 'replace-everywhere', `Now uses file #${withId} in ${result.changed} place${result.changed === 1 ? '' : 's'}`, userId, now)
+      return json({ ok: true, ...result })
+    }
+    case 'deleteMedia': {
+      if (!id) return json({ error: 'Pick a file.' }, 400)
+      if (!context.can('media', 'delete') && !isAdmin) return json({ error: 'You cannot delete files.' }, 403)
+      try {
+        await (engine as unknown as { delete: (args: Record<string, unknown>) => Promise<unknown> }).delete({
+          collection: 'media', id, overrideAccess: true,
+          req: { context: { [ALLOW_USED_DELETE]: body.force === true } },
+        })
+      } catch (error) {
+        return json({ error: error instanceof Error ? error.message : 'The file could not be deleted.' }, 400)
+      }
+      clearUsageCache()
+      return json({ ok: true })
+    }
     case 'saveSettings': {
       if (!isAdmin) return json({ error: 'Only an admin can change the asset manager settings.' }, 403)
       const parsed = store.parseSettings(body)
