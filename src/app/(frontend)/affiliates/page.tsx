@@ -23,6 +23,9 @@ export default async function AffiliatesPage() {
       <p style={{ whiteSpace: 'pre-line' }}>{settings.terms || DEFAULT_TERMS}</p>
       <h2>Join</h2>
       <JoinForm />
+      <p>
+        Already an affiliate with an account here? <a href="/account/affiliate">Sign in to see your dashboard</a>.
+      </p>
     </div>
   )
 }
