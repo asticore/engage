@@ -136,3 +136,14 @@ export function affiliateReport(rows: readonly { status: string; base_cents?: nu
   const conversionPct = visits > 0 ? Math.round((live.length / visits) * 10000) / 100 : 0
   return { orders: live.length, salesCents, conversionPct }
 }
+
+/** Whether a renewal paid at `nowIso` still earns commission: `months` after the first order (0 means no limit). */
+export function renewalWindowOpen(firstIso: string, nowIso: string, months: number): boolean {
+  if (months <= 0) return true
+  const first = new Date(firstIso)
+  const now = new Date(nowIso)
+  if (Number.isNaN(first.getTime()) || Number.isNaN(now.getTime())) return false
+  const end = new Date(first)
+  end.setUTCMonth(end.getUTCMonth() + months)
+  return now.getTime() <= end.getTime()
+}

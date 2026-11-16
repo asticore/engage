@@ -1,5 +1,5 @@
 import { approvedEmail, commissionEmail, payoutEmail } from './emails'
-import { afterRefund, commissionForLines, eligibleAt, isSelfReferral, parseTiers, tierRate } from './commission'
+import { afterRefund, commissionForLines, eligibleAt, isSelfReferral, parseTiers, renewalWindowOpen, tierRate } from './commission'
 import { normaliseCoupon, readRefCookie, readUtmCookie } from './core'
 import * as store from './store'
 
@@ -52,6 +52,31 @@ export async function affiliateOrderCreated(order: Order): Promise<void> {
     await store.insertTracked(d1, { affiliateId: affiliate.id, orderId: Number(order.id), customerEmail: buyer, source, utm: source === 'link' ? readUtmCookie(cookie) : undefined }, new Date().toISOString())
   } catch {
     // Attribution must never fail an order.
+  }
+}
+
+/**
+ * A subscription renewal order (made by the payment webhook, so it has no cookie or coupon). When recurring commission is on,
+ * it goes to the affiliate who earned the buyer's first order, while that affiliate is active and the time limit has not passed.
+ * Then it is worked out like any paid order.
+ */
+export async function affiliateRenewalPaid(order: Order): Promise<void> {
+  try {
+    if (!(await enabled())) return
+    const d1 = await db()
+    const settings = await store.getSettings(d1)
+    if (!settings.recurring) return
+    const buyer = String(order.customerEmail ?? '')
+    const origin = await store.originalCommissionForEmail(d1, buyer)
+    if (!origin) return
+    const affiliate = await store.getAffiliateById(d1, origin.affiliate_id)
+    if (!affiliate || affiliate.status !== 'active') return
+    const now = new Date().toISOString()
+    if (!renewalWindowOpen(origin.created_at, now, settings.recurringMonths)) return
+    await store.insertTracked(d1, { affiliateId: affiliate.id, orderId: Number(order.id), customerEmail: buyer, source: 'renewal' }, now)
+    await affiliateOrderPaid(order)
+  } catch {
+    // Attribution must never fail a payment.
   }
 }
 

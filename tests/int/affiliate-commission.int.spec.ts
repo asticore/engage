@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { afterRefund, balances, clampDays, clampPct, commissionBase, commissionCents, effectiveRate, eligibleAt, isSelfReferral, meetsMinimum, payoutsCsv } from '@/features/affiliates/commission'
+import { afterRefund, balances, clampDays, clampPct, commissionBase, commissionCents, effectiveRate, eligibleAt, isSelfReferral, meetsMinimum, payoutsCsv, renewalWindowOpen } from '@/features/affiliates/commission'
 
 describe('affiliate commission maths', () => {
   it('works on subtotal minus discount', () => {
@@ -94,5 +94,18 @@ describe('affiliate report (26c)', () => {
     const { affiliateReport } = await import('@/features/affiliates/commission')
     expect(affiliateReport([], 0)).toEqual({ orders: 0, salesCents: 0, conversionPct: 0 })
     expect(affiliateReport([{ status: 'pending', base_cents: 5000 }, { status: 'paid', base_cents: 2500 }, { status: 'reversed', base_cents: 9000 }], 50)).toEqual({ orders: 2, salesCents: 7500, conversionPct: 4 })
+  })
+})
+
+describe('affiliate renewals (26b)', () => {
+  it('has no time limit when months is 0', () => {
+    expect(renewalWindowOpen('2026-01-01T00:00:00Z', '2030-01-01T00:00:00Z', 0)).toBe(true)
+  })
+  it('keeps earning up to the limit and stops after it', () => {
+    expect(renewalWindowOpen('2026-01-15T00:00:00Z', '2026-12-15T00:00:00Z', 12)).toBe(true)
+    expect(renewalWindowOpen('2026-01-15T00:00:00Z', '2027-01-16T00:00:00Z', 12)).toBe(false)
+  })
+  it('refuses an unreadable date', () => {
+    expect(renewalWindowOpen('nonsense', '2026-12-15T00:00:00Z', 6)).toBe(false)
   })
 })
