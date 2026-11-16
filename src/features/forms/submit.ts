@@ -173,6 +173,16 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
     }
   }
 
+  // Optional: refuse throwaway email services in email fields (Members settings, off by default).
+  for (const field of form.fields || []) {
+    if (field.type !== 'email' || !field.name || errors[field.name]) continue
+    const value = values[field.name]
+    if (typeof value !== 'string' || !value) continue
+    const { disposableRefusal } = await import('@/features/security/emailPolicy')
+    const refusal = await disposableRefusal(engine, 'forms', value)
+    if (refusal) errors[field.name] = refusal
+  }
+
   if (Object.keys(errors).length > 0) {
     return { ok: false, status: 400, message: 'Please check the highlighted fields.', errors }
   }
