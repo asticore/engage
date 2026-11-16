@@ -25,7 +25,12 @@ import {
   saveCustomRole,
   setCompanyContentAccess,
   setTeamMembership,
-  transferOwnership,
+  requestOwnershipTransfer,
+  acceptOwnershipTransfer,
+  declineOwnershipTransfer,
+  cancelOwnershipTransfer,
+  createDelegation,
+  revokeDelegation,
   updateOrganization,
   saveOrganizationBranding,
   adminSaveOrganizationBranding,
@@ -181,12 +186,54 @@ export async function leaveOrganizationAction(_state: ActionState, form: FormDat
   redirect('/account/organizations')
 }
 
+/** Step one of a transfer: the owner names a member, who is emailed a link. Nothing changes until that member confirms. */
 export async function transferOwnershipAction(_state: ActionState, form: FormData): Promise<ActionState> {
   const { runtime, refusal } = await open()
   if (refusal) return refusal
-  const result = await transferOwnership(runtime.deps, runtime.actor, text(form, 'organizationId'), Number(text(form, 'userId')))
+  const result = await requestOwnershipTransfer(runtime.deps, runtime.actor, text(form, 'organizationId'), Number(text(form, 'userId')))
   revalidatePath(`/account/organizations/${text(form, 'organizationId')}`)
-  return toState(result, 'Ownership transferred. You are now an admin.')
+  return toState(result, 'Confirmation email sent. Ownership changes only when that person accepts.')
+}
+
+export async function acceptTransferAction(_state: ActionState, form: FormData): Promise<ActionState> {
+  const { runtime, refusal } = await open()
+  if (refusal) return refusal
+  const result = await acceptOwnershipTransfer(runtime.deps, runtime.actor, text(form, 'token'))
+  if (!result.ok) return toState(result, '')
+  revalidatePath('/account/organizations')
+  redirect(`/account/organizations/${result.value.organizationId}`)
+}
+
+export async function declineTransferAction(_state: ActionState, form: FormData): Promise<ActionState> {
+  const { runtime, refusal } = await open()
+  if (refusal) return refusal
+  const result = await declineOwnershipTransfer(runtime.deps, runtime.actor, text(form, 'token'))
+  return toState(result, 'Ownership transfer declined.')
+}
+
+export async function cancelTransferAction(_state: ActionState, form: FormData): Promise<ActionState> {
+  const { runtime, refusal } = await open()
+  if (refusal) return refusal
+  const result = await cancelOwnershipTransfer(runtime.deps, runtime.actor, text(form, 'organizationId'))
+  revalidatePath(`/account/organizations/${text(form, 'organizationId')}`)
+  return toState(result, 'Ownership transfer cancelled.')
+}
+
+export async function createDelegationAction(_state: ActionState, form: FormData): Promise<ActionState> {
+  const { runtime, refusal } = await open()
+  if (refusal) return refusal
+  const result = await createDelegation(runtime.deps, runtime.actor, text(form, 'organizationId'), { email: text(form, 'email'), permissions: form.getAll('permissions'), hours: text(form, 'hours') })
+  revalidatePath(`/account/organizations/${text(form, 'organizationId')}`)
+  return toState(result, 'Access delegated.')
+}
+
+export async function revokeDelegationAction(_state: ActionState, form: FormData): Promise<ActionState> {
+  const { runtime, refusal } = await open()
+  if (refusal) return refusal
+  const result = await revokeDelegation(runtime.deps, runtime.actor, text(form, 'organizationId'), text(form, 'delegationId'))
+  revalidatePath(`/account/organizations/${text(form, 'organizationId')}`)
+  revalidatePath('/account/organizations')
+  return toState(result, 'Delegation ended.')
 }
 
 export async function createTeamAction(_state: ActionState, form: FormData): Promise<ActionState> {

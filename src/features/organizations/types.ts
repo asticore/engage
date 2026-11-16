@@ -42,6 +42,31 @@ export type GrantRow = { subjectType: GrantSubjectType; subjectId: string }
 /** A document limited to one company, with its current narrowing (empty = every member). */
 export type CompanyDocRow = { collection: string; docId: number; title: string; grants: GrantRow[] }
 
+export type TransferStatus = 'pending' | 'accepted' | 'declined' | 'canceled'
+
+export type TransferRow = {
+  id: string
+  organizationId: string
+  fromUserId: number
+  toUserId: number
+  tokenHash: string
+  status: TransferStatus
+  expiresAt: string
+  createdAt: string
+  resolvedAt: string | null
+}
+
+export type DelegationRow = {
+  id: string
+  organizationId: string
+  delegatorId: number
+  delegateId: number
+  permissions: string[]
+  expiresAt: string
+  createdAt: string
+  revokedAt: string | null
+}
+
 export type OrgSummary = OrgRow & { memberCount: number }
 
 export type OrgStore = {
@@ -95,5 +120,22 @@ export type OrgStore = {
   /** Moves a pending invitation to a final state. Returns false when it was no longer pending or had expired. Single use is decided here, in one statement. */
   resolveInvite: (id: string, status: 'accepted' | 'declined' | 'canceled', at: string, now: string) => Promise<boolean>
   /** Rotates the token and expiry of a pending invitation. */
+  /** Replaces any pending transfer of this organisation with a new one. */
+  insertTransfer: (row: TransferRow, at: string) => Promise<void>
+  getTransferByTokenHash: (hash: string) => Promise<TransferRow | null>
+  getPendingTransfer: (orgId: string) => Promise<TransferRow | null>
+  /** Moves a pending transfer to a final state in one statement. False when it was no longer pending or had expired. */
+  resolveTransfer: (id: string, status: 'accepted' | 'declined' | 'canceled', at: string, now: string) => Promise<boolean>
+
+  insertDelegation: (row: DelegationRow) => Promise<void>
+  /** Delegations of one organisation that are not revoked and have not expired, newest first. */
+  listActiveDelegations: (orgId: string, now: string) => Promise<DelegationRow[]>
+  /** The active delegation that lets `delegateId` act in `orgId`, if any. */
+  findActiveDelegation: (orgId: string, delegateId: number, now: string) => Promise<DelegationRow | null>
+  /** Organisations an account may act in through an active delegation. */
+  listDelegatedOrgs: (delegateId: number, now: string) => Promise<(OrgRow & { delegatorId: number })[]>
+  getDelegation: (id: string) => Promise<DelegationRow | null>
+  revokeDelegation: (id: string, at: string) => Promise<boolean>
+
   refreshInvite: (id: string, tokenHash: string, expiresAt: string, at: string) => Promise<boolean>
 }

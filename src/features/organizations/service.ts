@@ -18,7 +18,7 @@ import {
   roleShapeOk,
 } from './policy'
 import { isOrgVisibleCollection } from './visibility'
-import type { CompanyDocRow, GrantRow, InviteRow, MemberRow, OrgRow, OrgStore, OrgSummary, RoleRow } from './types'
+import type { CompanyDocRow, DelegationRow, GrantRow, InviteRow, MemberRow, OrgRow, OrgStore, OrgSummary, RoleRow } from './types'
 
 /**
  * Every organisation operation, with every side effect passed in. The server
@@ -50,6 +50,11 @@ export type Refusal =
   | 'wrong_account'
   | 'role_in_use'
   | 'email_failed'
+  | 'transfer_invalid'
+  | 'transfer_used'
+  | 'transfer_expired'
+  | 'transfer_wrong_account'
+  | 'delegation_invalid'
 
 export const REFUSAL_MESSAGES: Record<Refusal, string> = {
   disabled: 'Organisations are not available on this site.',
@@ -71,6 +76,11 @@ export const REFUSAL_MESSAGES: Record<Refusal, string> = {
   wrong_account: 'This invitation was sent to a different email address. Sign in with that account.',
   role_in_use: 'That role is still held by a member or a pending invitation.',
   email_failed: 'The invitation was saved but the email could not be sent. Try resending it.',
+  transfer_invalid: 'This ownership transfer link is not valid.',
+  transfer_used: 'This ownership transfer has already been accepted, declined or cancelled.',
+  transfer_expired: 'This ownership transfer has expired. Ask the owner to start it again.',
+  transfer_wrong_account: 'This ownership transfer was offered to a different account. Sign in with that account.',
+  delegation_invalid: 'Check the person, the rights and the end time and try again.',
 }
 
 /** Flat on purpose (see types.ts). `ok` false means `code` and `message` are set. */
@@ -97,6 +107,13 @@ export type OrgAuditEntry = {
     | 'organization.invite-declined'
     | 'organization.invite-canceled'
     | 'organization.refused'
+    | 'organization.transfer-requested'
+    | 'organization.transfer-accepted'
+    | 'organization.transfer-declined'
+    | 'organization.transfer-canceled'
+    | 'organization.delegation-created'
+    | 'organization.delegation-revoked'
+    | 'organization.delegate-action'
   actorId: number | null
   actorEmail: string | null
   organizationId: string | null
@@ -104,6 +121,8 @@ export type OrgAuditEntry = {
 }
 
 export type InviteMail = { to: string; organizationName: string; inviterEmail: string; role: string; link: string; expiresAt: string }
+
+export type TransferMail = { to: string; organizationName: string; fromEmail: string; link: string; expiresAt: string }
 
 export type OrgDeps = {
   settings: OrganizationSettings
@@ -119,6 +138,9 @@ export type OrgDeps = {
   /** True when this key may send another invitation now. */
   allowInviteSend: (key: string) => boolean
   findUserIdByEmail: (email: string) => Promise<number | null>
+  emailOf: (userId: number) => Promise<string | null>
+  /** Sends the ownership transfer confirmation. A false answer means it did not go out. */
+  sendTransfer: (mail: TransferMail) => Promise<boolean>
   audit: (entry: OrgAuditEntry) => Promise<void>
 }
 
@@ -126,16 +148,37 @@ export const isSiteAdmin = (roles: unknown): boolean => Array.isArray(roles) && 
 
 const customRolesOf = (roles: RoleRow[]): CustomRoles => Object.fromEntries(roles.map((r) => [r.name, r.permissions]))
 
-type Standing = { org: OrgRow; member: MemberRow; custom: CustomRoles }
+type Standing = { org: OrgRow; member: MemberRow; custom: CustomRoles; delegation?: DelegationRow }
 
-/** The caller's membership, or null when they are not a member (or the organisation is gone). */
+/** Rights a member may hand to a delegate. Never membership, role or ownership rights, so a delegate cannot widen their own access. */
+export const DELEGABLE_ACTIONS: readonly OrgAction[] = ['organization:read', 'organization:update', 'member:read', 'invitation:read', 'team:read', 'team:manage', 'content:read', 'content:manage']
+
+export const DELEGATE_ROLE = 'delegate'
+
+/** The caller's membership, or a delegated standing, or null when they have neither (or the organisation is gone). */
 async function standing(deps: OrgDeps, actor: Actor, orgId: string): Promise<Standing | null> {
   const org = await deps.store.getOrg(orgId)
   if (!org) return null
   const member = await deps.store.getMember(orgId, actor.id)
-  if (!member) return null
-  const custom = isBuiltInRole(member.role) ? {} : customRolesOf(await deps.store.listRoles(orgId))
-  return { org, member, custom }
+  if (member) {
+    const custom = isBuiltInRole(member.role) ? {} : customRolesOf(await deps.store.listRoles(orgId))
+    return { org, member, custom }
+  }
+  return delegatedStanding(deps, org, actor)
+}
+
+/** A delegate holds what was granted, cut down to what the delegator holds right now. If the delegator has left, the delegation gives nothing. */
+async function delegatedStanding(deps: OrgDeps, org: OrgRow, actor: Actor): Promise<Standing | null> {
+  const now = new Date(deps.now()).toISOString()
+  const delegation = await deps.store.findActiveDelegation(org.id, actor.id, now)
+  if (!delegation) return null
+  const delegator = await deps.store.getMember(org.id, delegation.delegatorId)
+  if (!delegator) return null
+  const custom = isBuiltInRole(delegator.role) ? {} : customRolesOf(await deps.store.listRoles(org.id))
+  const held = permissionsForRole(delegator.role, custom)
+  const granted = delegation.permissions.filter((p): p is OrgAction => (DELEGABLE_ACTIONS as readonly string[]).includes(p) && held.includes(p as OrgAction))
+  const row: MemberRow = { id: `delegation:${delegation.id}`, organizationId: org.id, userId: actor.id, role: DELEGATE_ROLE, createdAt: delegation.createdAt }
+  return { org, member: row, custom: { [DELEGATE_ROLE]: granted }, delegation }
 }
 
 const can = (s: Standing, action: OrgAction): boolean => roleHasPermission(s.member.role, action, s.custom)
@@ -156,6 +199,10 @@ async function member(deps: OrgDeps, actor: Actor, orgId: string, action: OrgAct
   const s = await standing(deps, actor, orgId)
   if (!s) return fail<Standing>('not_found')
   if (!can(s, action)) return refuse<Standing>(deps, actor, orgId, 'forbidden', action)
+  // Every change made through a delegation is on the record, with whose rights were used.
+  if (s.delegation && !action.endsWith(':read')) {
+    await deps.audit({ action: 'organization.delegate-action', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: `${action} acting for user ${s.delegation.delegatorId}` })
+  }
   return done(s)
 }
 
@@ -288,7 +335,15 @@ export async function adminListOrganizations(deps: Pick<OrgDeps, 'store'>, admin
 export async function listMyOrganizations(deps: OrgDeps, actor: Actor | null): Promise<Result<(OrgRow & { role: string })[]>> {
   const blocked = gate(deps, actor)
   if (blocked) return blocked as Result<(OrgRow & { role: string })[]>
-  return done(await deps.store.listOrgsForUser(actor.id))
+  const own = await deps.store.listOrgsForUser(actor.id)
+  const delegated = await deps.store.listDelegatedOrgs(actor.id, new Date(deps.now()).toISOString())
+  const extra = delegated.filter((o) => !own.some((m) => m.id === o.id)).map(({ delegatorId: _d, ...rest }) => ({ ...rest, role: DELEGATE_ROLE }))
+  return done([...own, ...extra])
+}
+
+const pendingOf = async (deps: OrgDeps, orgId: string): Promise<{ toUserId: number; expiresAt: string } | null> => {
+  const row = await deps.store.getPendingTransfer(orgId)
+  return row && Date.parse(row.expiresAt) > deps.now() ? { toUserId: row.toUserId, expiresAt: row.expiresAt } : null
 }
 
 export type OrgDetail = {
@@ -300,6 +355,10 @@ export type OrgDetail = {
   /** Without the token hash: nothing derived from a link leaves the service. */
   invites: Omit<InviteRow, 'tokenHash'>[]
   roles: RoleRow[]
+  /** Set when the caller is acting through a delegation. */
+  actingFor: { delegatorId: number; expiresAt: string } | null
+  pendingTransfer: { toUserId: number; expiresAt: string } | null
+  delegations: DelegationRow[]
 }
 
 /** Members only. Invitations are visible only to those who may read them. */
@@ -324,6 +383,9 @@ export async function getOrganization(deps: OrgDeps, actor: Actor | null, orgId:
     teams: teamDetails,
     invites: invites.map(({ tokenHash: _hash, ...rest }) => rest),
     roles,
+    actingFor: s.delegation ? { delegatorId: s.delegation.delegatorId, expiresAt: s.delegation.expiresAt } : null,
+    pendingTransfer: s.member.role === 'owner' && !s.delegation ? await pendingOf(deps, orgId) : null,
+    delegations: (await deps.store.listActiveDelegations(orgId, new Date(deps.now()).toISOString())).filter((d) => s.member.role === 'owner' || d.delegatorId === actor.id || d.delegateId === actor.id),
   })
 }
 
@@ -376,18 +438,140 @@ export async function leaveOrganization(deps: OrgDeps, actor: Actor | null, orgI
   return done()
 }
 
-/** The owner hands ownership to another member and steps down to admin. There is never a moment without an owner. */
-export async function transferOwnership(deps: OrgDeps, actor: Actor | null, orgId: string, newOwnerId: number): Promise<Result> {
+const TRANSFER_TTL_DAYS = 7
+
+/** Step one: the owner names a member. Nothing changes yet; the member is emailed a link and must confirm it themselves. A new request replaces an older pending one. */
+export async function requestOwnershipTransfer(deps: OrgDeps, actor: Actor | null, orgId: string, newOwnerId: number): Promise<Result<{ emailSent: boolean }>> {
+  type R = Result<{ emailSent: boolean }>
+  const blocked = gate(deps, actor)
+  if (blocked) return blocked as R
+  const g = await member(deps, actor, orgId, 'organization:transfer')
+  if (!g.ok) return pass<R['value']>(g)
+  if (g.value.delegation || g.value.member.role !== 'owner') return refuse(deps, actor, orgId, 'forbidden', 'transfer') as Promise<R>
+  if (newOwnerId === actor.id) return fail('invalid') as R
+  const target = await deps.store.getMember(orgId, newOwnerId)
+  const to = target ? await deps.emailOf(newOwnerId) : null
+  if (!target || !to) return fail('not_found') as R
+  const now = deps.now()
+  const token = deps.newToken()
+  const expiresAt = new Date(now + TRANSFER_TTL_DAYS * 86_400_000).toISOString()
+  const at = new Date(now).toISOString()
+  await deps.store.insertTransfer({ id: deps.newId(), organizationId: orgId, fromUserId: actor.id, toUserId: newOwnerId, tokenHash: await deps.hashToken(token), status: 'pending', expiresAt, createdAt: at, resolvedAt: null }, at)
+  const emailSent = await deps.sendTransfer({ to, organizationName: g.value.org.name, fromEmail: actor.email, link: `${deps.origin}/account/transfer/${encodeURIComponent(token)}`, expiresAt })
+  await deps.audit({ action: 'organization.transfer-requested', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: `to user ${newOwnerId}${emailSent ? '' : ' (email not sent)'}` })
+  return { ok: true, value: { emailSent }, message: emailSent ? undefined : 'The request was saved but the email could not be sent. Request it again.' }
+}
+
+export type TransferPreview = { organizationName: string; fromEmail: string; expiresAt: string; usable: boolean; mine: boolean; problem: Refusal | null }
+
+const transferProblem = (row: { status: string; expiresAt: string }, now: number): Refusal | null => {
+  if (row.status !== 'pending') return 'transfer_used'
+  if (Date.parse(row.expiresAt) <= now) return 'transfer_expired'
+  return null
+}
+
+export async function previewOwnershipTransfer(deps: OrgDeps, actor: Actor | null, token: unknown): Promise<Result<TransferPreview>> {
+  if (!deps.settings.enabled) return fail<TransferPreview>('disabled')
+  if (!isInviteTokenShape(token)) return fail<TransferPreview>('transfer_invalid')
+  const row = await deps.store.getTransferByTokenHash(await deps.hashToken(token))
+  if (!row) return fail<TransferPreview>('transfer_invalid')
+  const org = await deps.store.getOrg(row.organizationId)
+  if (!org) return fail<TransferPreview>('transfer_invalid')
+  const problem = transferProblem(row, deps.now())
+  return done({ organizationName: org.name, fromEmail: (await deps.emailOf(row.fromUserId)) ?? '', expiresAt: row.expiresAt, usable: problem === null, mine: actor?.id === row.toUserId, problem })
+}
+
+async function claimTransfer(deps: OrgDeps, actor: Actor | null, token: unknown, status: 'accepted' | 'declined'): Promise<Result<{ organizationId: string }>> {
+  type R = Result<{ organizationId: string }>
+  const blocked = gate(deps, actor)
+  if (blocked) return blocked as R
+  if (!isInviteTokenShape(token)) return fail('transfer_invalid') as R
+  const row = await deps.store.getTransferByTokenHash(await deps.hashToken(token))
+  if (!row) return refuse(deps, actor, null, 'transfer_invalid', 'unknown token') as Promise<R>
+  const problem = transferProblem(row, deps.now())
+  if (problem) return refuse(deps, actor, row.organizationId, problem, 'ownership transfer') as Promise<R>
+  // The link alone is not enough: only the account it was offered to may answer it.
+  if (row.toUserId !== actor.id) return refuse(deps, actor, row.organizationId, 'transfer_wrong_account', 'ownership transfer') as Promise<R>
+  if (status === 'accepted') {
+    // Both people must still hold their seats; the roles swap only if so.
+    const from = await deps.store.getMember(row.organizationId, row.fromUserId)
+    const to = await deps.store.getMember(row.organizationId, row.toUserId)
+    if (!from || from.role !== 'owner' || !to) {
+      await deps.store.resolveTransfer(row.id, 'canceled', new Date(deps.now()).toISOString(), new Date(deps.now()).toISOString())
+      return refuse(deps, actor, row.organizationId, 'transfer_invalid', 'seats changed') as Promise<R>
+    }
+  }
+  const at = new Date(deps.now()).toISOString()
+  if (!(await deps.store.resolveTransfer(row.id, status, at, at))) return refuse(deps, actor, row.organizationId, 'transfer_used', 'lost the claim') as Promise<R>
+  if (status === 'accepted') {
+    // The new owner is added first, so there is never a moment without an owner.
+    await deps.store.setMemberRole(row.organizationId, row.toUserId, 'owner')
+    await deps.store.setMemberRole(row.organizationId, row.fromUserId, 'admin')
+  }
+  await deps.audit({ action: status === 'accepted' ? 'organization.transfer-accepted' : 'organization.transfer-declined', actorId: actor.id, actorEmail: actor.email, organizationId: row.organizationId, detail: `from user ${row.fromUserId}` })
+  return done({ organizationId: row.organizationId })
+}
+
+export const acceptOwnershipTransfer = (deps: OrgDeps, actor: Actor | null, token: unknown) => claimTransfer(deps, actor, token, 'accepted')
+export const declineOwnershipTransfer = (deps: OrgDeps, actor: Actor | null, token: unknown) => claimTransfer(deps, actor, token, 'declined')
+
+/** The owner withdraws a pending request. */
+export async function cancelOwnershipTransfer(deps: OrgDeps, actor: Actor | null, orgId: string): Promise<Result> {
   const blocked = gate(deps, actor)
   if (blocked) return blocked
   const g = await member(deps, actor, orgId, 'organization:transfer')
   if (!g.ok) return pass(g)
-  if (newOwnerId === actor.id) return fail('invalid')
-  const target = await deps.store.getMember(orgId, newOwnerId)
-  if (!target) return fail('not_found')
-  await deps.store.setMemberRole(orgId, newOwnerId, 'owner')
-  await deps.store.setMemberRole(orgId, actor.id, 'admin')
-  await deps.audit({ action: 'organization.owner-transferred', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: `to user ${newOwnerId}` })
+  const pending = await deps.store.getPendingTransfer(orgId)
+  if (!pending) return fail('not_found')
+  const at = new Date(deps.now()).toISOString()
+  if (!(await deps.store.resolveTransfer(pending.id, 'canceled', at, at))) return fail('transfer_used')
+  await deps.audit({ action: 'organization.transfer-canceled', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: `to user ${pending.toUserId}` })
+  return done()
+}
+
+// --- Delegation -----------------------------------------------------------
+
+export const MAX_DELEGATION_DAYS = 90
+export const MIN_DELEGATION_HOURS = 1
+
+export type DelegationInput = { email: unknown; permissions: unknown; hours: unknown }
+
+/** A member lets another account act for them here, for chosen rights, for a limited time. The rights can never exceed the member's own, or be ones that change membership. */
+export async function createDelegation(deps: OrgDeps, actor: Actor | null, orgId: string, input: DelegationInput): Promise<Result<DelegationRow>> {
+  const blocked = gate(deps, actor)
+  if (blocked) return blocked as Result<DelegationRow>
+  const g = await member(deps, actor, orgId, 'organization:read')
+  if (!g.ok) return pass(g)
+  // Only a real member delegates; a delegate cannot pass their access on.
+  if (g.value.delegation) return refuse<DelegationRow>(deps, actor, orgId, 'forbidden', 'delegate cannot delegate')
+  const email = normaliseEmail(input.email)
+  const hours = Number(input.hours)
+  const held = permissionsForRole(g.value.member.role, g.value.custom)
+  const wanted = (Array.isArray(input.permissions) ? input.permissions : []).filter((p): p is OrgAction => (DELEGABLE_ACTIONS as readonly string[]).includes(p as string))
+  const permissions = [...new Set(wanted)].filter((p) => held.includes(p))
+  if (!email || permissions.length === 0 || !Number.isFinite(hours) || hours < MIN_DELEGATION_HOURS || hours > MAX_DELEGATION_DAYS * 24) return fail<DelegationRow>('delegation_invalid')
+  const delegateId = await deps.findUserIdByEmail(email)
+  // Same answer for "no such account" as for a bad request, so this cannot be used to look up who has an account.
+  if (delegateId === null || delegateId === actor.id) return fail<DelegationRow>('delegation_invalid')
+  if (await deps.store.getMember(orgId, delegateId)) return fail<DelegationRow>('already_member')
+  const now = deps.now()
+  const row: DelegationRow = { id: deps.newId(), organizationId: orgId, delegatorId: actor.id, delegateId, permissions, expiresAt: new Date(now + hours * 3_600_000).toISOString(), createdAt: new Date(now).toISOString(), revokedAt: null }
+  await deps.store.insertDelegation(row)
+  await deps.audit({ action: 'organization.delegation-created', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: `to user ${delegateId}: ${permissions.join(',')} until ${row.expiresAt}` })
+  return done(row)
+}
+
+/** The delegator, an owner, or the delegate themself ends a delegation at once. */
+export async function revokeDelegation(deps: OrgDeps, actor: Actor | null, orgId: string, delegationId: string): Promise<Result> {
+  const blocked = gate(deps, actor)
+  if (blocked) return blocked
+  const row = await deps.store.getDelegation(delegationId)
+  if (!row || row.organizationId !== orgId) return fail('not_found')
+  const mine = await deps.store.getMember(orgId, actor.id)
+  const allowed = row.delegatorId === actor.id || row.delegateId === actor.id || mine?.role === 'owner'
+  if (!allowed) return refuse(deps, actor, orgId, 'not_found' as Refusal, 'revoke delegation')
+  if (!(await deps.store.revokeDelegation(delegationId, new Date(deps.now()).toISOString()))) return fail('not_found')
+  await deps.audit({ action: 'organization.delegation-revoked', actorId: actor.id, actorEmail: actor.email, organizationId: orgId, detail: `delegation to user ${row.delegateId}` })
   return done()
 }
 

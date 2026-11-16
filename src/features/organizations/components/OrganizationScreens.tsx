@@ -10,6 +10,7 @@ import { portalTextFor, type PortalStringKey } from '@/features/multilingual/por
 
 import { switchOrganizationAction } from '../actions'
 import { ORG_ACTIONS, BUILT_IN_ROLES, isBuiltInRole } from '../permissions'
+import { DELEGABLE_ACTIONS, previewOwnershipTransfer } from '../service'
 import { brandingCss, brandingOf, hasBranding, layoutOf, plainMetadata, visibleSections, type PortalSection } from '../branding'
 import { parseMetadata } from '../policy'
 import { getOrganization, listCompanyContent, listMyOrganizations, previewInvite } from '../service'
@@ -19,6 +20,10 @@ import {
   BrandingForm,
   type BrandingLabels,
   CancelInviteForm,
+  CancelTransferForm,
+  DelegationForm,
+  RevokeDelegationForm,
+  TransferDecisionForm,
   ChangeRoleForm,
   CreateOrganizationForm,
   ContentAccessForm,
@@ -160,11 +165,22 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
   const { org } = detail
   const can = (action: (typeof ORG_ACTIONS)[number]) => detail.permissions.includes(action)
   const companyDocs = can('content:manage') ? ((await listCompanyContent(runtime.deps, runtime.actor, id)).value ?? []) : []
-  const emails = await memberEmails(runtime.context.engine, detail.members.map((m) => m.userId))
+  const emails = await memberEmails(runtime.context.engine, [...detail.members.map((m) => m.userId), ...detail.delegations.flatMap((d) => [d.delegatorId, d.delegateId]), ...(detail.actingFor ? [detail.actingFor.delegatorId] : []), ...(detail.pendingTransfer ? [detail.pendingTransfer.toUserId] : [])])
   const portalLocale = await currentPortalLocale()
   const tx = portalTextFor(portalLocale)
   const dateLocale = portalFormatLocale(portalLocale)
   const labelOf = (userId: number) => emails.get(userId) ?? tx('orgs.memberFallback', { id: userId })
+  const rightLabels: Record<string, PortalStringKey> = {
+    'organization:read': 'orgs.rightOrganizationRead',
+    'organization:update': 'orgs.rightOrganizationUpdate',
+    'member:read': 'orgs.rightMemberRead',
+    'invitation:read': 'orgs.rightInvitationRead',
+    'team:read': 'orgs.rightTeamRead',
+    'team:manage': 'orgs.rightTeamManage',
+    'content:read': 'orgs.rightContentRead',
+    'content:manage': 'orgs.rightContentManage',
+  }
+  const rightLabel = (action: string): string => (rightLabels[action] ? tx(rightLabels[action]) : action)
   const roleNames = [...BUILT_IN_ROLES.filter((r) => r !== 'owner' || detail.myRole === 'owner'), ...detail.roles.map((r) => r.name)]
   const meta = parseMetadata(org.metadata)
   const pending = detail.invites.filter((i) => i.status === 'pending')
@@ -180,6 +196,12 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
       members: (
       <section className="org-section">
         <h2>{tx('orgs.members', { count: detail.members.length })}</h2>
+        {detail.pendingTransfer ? (
+          <div className="org-row">
+            <div className="org-row__main">{tx('orgs.transferPending', { who: labelOf(detail.pendingTransfer.toUserId), date: formatDate(detail.pendingTransfer.expiresAt, dateLocale) })}</div>
+            <CancelTransferForm organizationId={org.id} />
+          </div>
+        ) : null}
         <ul className="org-list">
           {detail.members.map((m) => (
             <li key={m.id} className="org-row">
@@ -321,6 +343,11 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
       <OrganizationStyles />
       {hasBranding(branding) ? <style>{brandingCss(branding)}</style> : null}
       <div className="org-portal">
+      {detail.actingFor ? (
+        <p role="status" className="org-badge">
+          {tx('orgs.actingBanner', { who: labelOf(detail.actingFor.delegatorId), date: formatDate(detail.actingFor.expiresAt, dateLocale) })}
+        </p>
+      ) : null}
       <div className="org-head">
         {org.logo ? <img decoding="async" className="org-logo" src={org.logo} alt="" width={56} height={56} /> : null}
         <div>
@@ -334,12 +361,33 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
         <React.Fragment key={key}>{sections[key]}</React.Fragment>
       ))}
 
+      {detail.actingFor ? null : (
+        <section className="org-section">
+          <h2>{tx('orgs.delegationsTitle')}</h2>
+          <p className="org-muted">{tx('orgs.delegationsHelp')}</p>
+          {detail.delegations.length === 0 ? <p className="account-empty">{tx('orgs.noDelegations')}</p> : null}
+          <ul className="org-list">
+            {detail.delegations.map((d) => (
+              <li key={d.id} className="org-row">
+                <div className="org-row__main">
+                  {tx('orgs.delegationRow', { delegate: labelOf(d.delegateId), delegator: labelOf(d.delegatorId), rights: d.permissions.map((p) => rightLabel(p)).join(', '), date: formatDate(d.expiresAt, dateLocale) })}
+                </div>
+                <RevokeDelegationForm organizationId={org.id} delegationId={d.id} />
+              </li>
+            ))}
+          </ul>
+          <DelegationForm organizationId={org.id} rights={DELEGABLE_ACTIONS.filter((a) => can(a)).map((a) => ({ value: a, label: rightLabel(a) }))} />
+        </section>
+      )}
+
+      {detail.actingFor ? null : (
       <section className="org-danger">
         <LeaveOrganizationForm organizationId={org.id} />
         {can('organization:delete') ? <DeleteOrganizationForm organizationId={org.id} /> : null}
         {detail.myRole === 'owner' ? <p className="org-muted">{tx('orgs.lastOwnerNote')}</p> : null}
         {isBuiltInRole(detail.myRole) ? null : <p className="org-muted">{tx('orgs.customRoleNote')}</p>}
       </section>
+      )}
       </div>
     </AccountShell>
   )
@@ -377,6 +425,41 @@ export const AcceptInviteScreen: React.FC<{ token: string }> = async ({ token })
         {!invite.usable ? <p role="alert">{refusalText(invite.problem ?? 'invite_used', tx)}</p> : null}
         {invite.usable && !mine ? <p role="alert">{refusalText('wrong_account', tx)}</p> : null}
         {invite.usable && mine ? <InviteDecisionForm token={token} /> : null}
+      </div>
+    </AuthShell>
+  )
+}
+
+/** /account/transfer/[token]. Needs a signed-in account; only the account the offer names can accept it. */
+export const AcceptTransferScreen: React.FC<{ token: string }> = async ({ token }) => {
+  await requireCustomer(`/account/transfer/${encodeURIComponent(token)}`)
+  const runtime = await orgRuntime()
+  if (!runtime.settings.enabled) notFound()
+  const preview = await previewOwnershipTransfer(runtime.deps, runtime.actor, token)
+  const portalLocale = await currentPortalLocale()
+  const tx = portalTextFor(portalLocale)
+  const dateLocale = portalFormatLocale(portalLocale)
+  if (!preview.ok) {
+    return (
+      <AuthShell title={tx('orgs.inviteTitle')}>
+        <OrganizationStyles />
+        <p role="alert">{refusalText(preview.code ?? 'transfer_invalid', tx)}</p>
+        <p>
+          <Link href="/account">{tx('orgs.backToAccount')}</Link>
+        </p>
+      </AuthShell>
+    )
+  }
+  const offer = preview.value
+  return (
+    <AuthShell title={tx('orgs.transferTitle', { name: offer.organizationName })}>
+      <OrganizationStyles />
+      <div className="account-card">
+        <h3>{offer.organizationName}</h3>
+        <p>{tx('orgs.transferOffered', { from: offer.fromEmail, date: formatDate(offer.expiresAt, dateLocale) })}</p>
+        {!offer.usable ? <p role="alert">{refusalText(offer.problem ?? 'transfer_used', tx)}</p> : null}
+        {offer.usable && !offer.mine ? <p role="alert">{refusalText('transfer_wrong_account', tx)}</p> : null}
+        {offer.usable && offer.mine ? <TransferDecisionForm token={token} /> : null}
       </div>
     </AuthShell>
   )

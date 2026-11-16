@@ -2,7 +2,7 @@ import { resolveD1Binding } from '@/cms/db/connect'
 
 import type { OrgPermissionStore } from './permissions'
 import { ORG_VISIBLE_COLLECTIONS } from './visibility'
-import type { CompanyDocRow, GrantRow, InviteRow, MemberRow, OrgRow, OrgStore, RoleRow, TeamRow } from './types'
+import type { CompanyDocRow, DelegationRow, TransferRow, TransferStatus, GrantRow, InviteRow, MemberRow, OrgRow, OrgStore, RoleRow, TeamRow } from './types'
 
 /**
  * The real organisation tables, behind a D1-shaped handle so tests can run the
@@ -59,6 +59,21 @@ const invite = (r: RawInvite): InviteRow => ({
   lastSentAt: r.last_sent_at,
 })
 
+type RawTransfer = { id: string; organization_id: string; from_user_id: number; to_user_id: number; token_hash: string; status: string; expires_at: string; created_at: string; resolved_at: string | null }
+type RawDelegation = { id: string; organization_id: string; delegator_id: number; delegate_id: number; permissions: string; expires_at: string; created_at: string; revoked_at: string | null }
+
+const transfer = (r: RawTransfer): TransferRow => ({
+  id: r.id,
+  organizationId: r.organization_id,
+  fromUserId: Number(r.from_user_id),
+  toUserId: Number(r.to_user_id),
+  tokenHash: r.token_hash,
+  status: r.status as TransferStatus,
+  expiresAt: r.expires_at,
+  createdAt: r.created_at,
+  resolvedAt: r.resolved_at,
+})
+
 const permissionsOf = (text: unknown): string[] => {
   try {
     const parsed = JSON.parse(String(text)) as unknown
@@ -67,6 +82,17 @@ const permissionsOf = (text: unknown): string[] => {
     return []
   }
 }
+
+const delegation = (r: RawDelegation): DelegationRow => ({
+  id: r.id,
+  organizationId: r.organization_id,
+  delegatorId: Number(r.delegator_id),
+  delegateId: Number(r.delegate_id),
+  permissions: permissionsOf(r.permissions),
+  expiresAt: r.expires_at,
+  createdAt: r.created_at,
+  revokedAt: r.revoked_at,
+})
 
 export function createD1OrgStore(getD1: () => Promise<D1Like>): OrgStore {
   const run = async (query: string, ...values: unknown[]) => (await getD1()).prepare(query).bind(...values).run()
@@ -102,7 +128,7 @@ export function createD1OrgStore(getD1: () => Promise<D1Like>): OrgStore {
     },
     async deleteOrg(id) {
       await run('DELETE FROM `eg_organization_team_members` WHERE team_id IN (SELECT id FROM `eg_organization_teams` WHERE organization_id = ?)', id)
-      for (const table of ['eg_organization_teams', 'eg_organization_members', 'eg_organization_invitations', 'eg_organization_roles', 'eg_content_org_visibility', 'eg_content_org_grants']) {
+      for (const table of ['eg_organization_teams', 'eg_organization_members', 'eg_organization_invitations', 'eg_organization_roles', 'eg_content_org_visibility', 'eg_content_org_grants', 'eg_org_transfers', 'eg_org_delegations']) {
         await run(`DELETE FROM \`${table}\` WHERE organization_id = ?`, id)
       }
       await run('DELETE FROM `eg_organizations` WHERE id = ?', id)
@@ -279,6 +305,55 @@ export function createD1OrgStore(getD1: () => Promise<D1Like>): OrgStore {
           : await run("UPDATE `eg_organization_invitations` SET status = ?, resolved_at = ? WHERE id = ? AND status = 'pending' AND expires_at > ?", status, at, id, now)
       return changes(result) > 0
     },
+    async insertTransfer(row, at) {
+      await run("UPDATE `eg_org_transfers` SET status = 'canceled', resolved_at = ? WHERE organization_id = ? AND status = 'pending'", at, row.organizationId)
+      await run(
+        'INSERT INTO `eg_org_transfers` (id, organization_id, from_user_id, to_user_id, token_hash, status, expires_at, created_at, resolved_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        row.id, row.organizationId, row.fromUserId, row.toUserId, row.tokenHash, row.status, row.expiresAt, row.createdAt, row.resolvedAt,
+      )
+    },
+    async getTransferByTokenHash(hash) {
+      const r = await first<RawTransfer>('SELECT * FROM `eg_org_transfers` WHERE token_hash = ? LIMIT 1', hash)
+      return r ? transfer(r) : null
+    },
+    async getPendingTransfer(orgId) {
+      const r = await first<RawTransfer>("SELECT * FROM `eg_org_transfers` WHERE organization_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1", orgId)
+      return r ? transfer(r) : null
+    },
+    async resolveTransfer(id, status, at, now) {
+      const result = await run("UPDATE `eg_org_transfers` SET status = ?, resolved_at = ? WHERE id = ? AND status = 'pending' AND expires_at > ?", status, at, id, now)
+      return changes(result) > 0
+    },
+
+    async insertDelegation(row) {
+      await run(
+        'INSERT INTO `eg_org_delegations` (id, organization_id, delegator_id, delegate_id, permissions, expires_at, created_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        row.id, row.organizationId, row.delegatorId, row.delegateId, JSON.stringify(row.permissions), row.expiresAt, row.createdAt, row.revokedAt,
+      )
+    },
+    async listActiveDelegations(orgId, now) {
+      return (await all<RawDelegation>('SELECT * FROM `eg_org_delegations` WHERE organization_id = ? AND revoked_at IS NULL AND expires_at > ? ORDER BY created_at DESC', orgId, now)).map(delegation)
+    },
+    async findActiveDelegation(orgId, delegateId, now) {
+      const r = await first<RawDelegation>('SELECT * FROM `eg_org_delegations` WHERE organization_id = ? AND delegate_id = ? AND revoked_at IS NULL AND expires_at > ? ORDER BY created_at DESC LIMIT 1', orgId, delegateId, now)
+      return r ? delegation(r) : null
+    },
+    async listDelegatedOrgs(delegateId, now) {
+      const rows = await all<RawOrg & { delegator_id: number }>(
+        'SELECT o.*, d.delegator_id AS delegator_id FROM `eg_organizations` o JOIN `eg_org_delegations` d ON d.organization_id = o.id WHERE d.delegate_id = ? AND d.revoked_at IS NULL AND d.expires_at > ? ORDER BY o.name',
+        delegateId, now,
+      )
+      return rows.map((r) => ({ ...org(r), delegatorId: Number(r.delegator_id) }))
+    },
+    async getDelegation(id) {
+      const r = await first<RawDelegation>('SELECT * FROM `eg_org_delegations` WHERE id = ? LIMIT 1', id)
+      return r ? delegation(r) : null
+    },
+    async revokeDelegation(id, at) {
+      const result = await run('UPDATE `eg_org_delegations` SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL', at, id)
+      return changes(result) > 0
+    },
+
     async refreshInvite(id, tokenHash, expiresAt, at) {
       const result = await run("UPDATE `eg_organization_invitations` SET token_hash = ?, expires_at = ?, last_sent_at = ? WHERE id = ? AND status = 'pending'", tokenHash, expiresAt, at, id)
       return changes(result) > 0
