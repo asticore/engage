@@ -153,7 +153,6 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
                   return (
                     <label key={img.id} style={{ width: '7rem' }}>
                       <input type="checkbox" checked={chosen.includes(img.id)} onChange={(e) => set({ creatives: (e.target.checked ? [...chosen, img.id] : chosen.filter((x) => x !== img.id)).join(',') })} /> {img.alt || img.filename}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={img.url} alt="" style={{ width: '100%', height: '4rem', objectFit: 'cover' }} />
                     </label>
                   )
