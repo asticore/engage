@@ -50,3 +50,23 @@ export function balances(rows: readonly { status: string; amount_cents: number; 
   }
   return out
 }
+
+/** The rate used for an affiliate: their own override when set, otherwise the program rate. */
+export const effectiveRate = (override: number | null | undefined, programPct: number): number => (override === null || override === undefined ? programPct : clampPct(override, programPct))
+
+/** A payout is only recorded once what is owed reaches the minimum (0 means no minimum). */
+export const meetsMinimum = (owedCents: number, minCents: number): boolean => owedCents > 0 && owedCents >= Math.max(0, minCents)
+
+const csvCell = (value: unknown): string => {
+  let text = String(value ?? '')
+  // Spreadsheet formulas: a cell that starts with = + - or @ is read as a formula, so it is prefixed with a quote.
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
+}
+
+/** A payout log as CSV: date, affiliate, email, amount in dollars, note. */
+export function payoutsCsv(rows: readonly { createdAt: string; name: string; email: string; amountCents: number; note: string }[]): string {
+  const lines = [['Date', 'Affiliate', 'Email', 'Amount', 'Note'].join(',')]
+  for (const r of rows) lines.push([r.createdAt.slice(0, 10), r.name, r.email, (r.amountCents / 100).toFixed(2), r.note].map(csvCell).join(','))
+  return `${lines.join('\r\n')}\r\n`
+}
