@@ -179,6 +179,7 @@ import * as migration_20270316_260000_blog_rss from './20270316_260000_blog_rss'
 import * as migration_20270316_270000_schema_facts from './20270316_270000_schema_facts';
 import * as migration_20270316_280000_coming_soon from './20270316_280000_coming_soon';
 import * as migration_20270316_290000_site_planner from './20270316_290000_site_planner';
+import * as migration_20270316_300000_ga4_user_id from './20270316_300000_ga4_user_id';
 
 export const migrations = [
   {
@@ -1080,5 +1081,10 @@ export const migrations = [
     up: migration_20270316_290000_site_planner.up,
     down: migration_20270316_290000_site_planner.down,
     name: '20270316_290000_site_planner',
+  },
+  {
+    up: migration_20270316_300000_ga4_user_id.up,
+    down: migration_20270316_300000_ga4_user_id.down,
+    name: '20270316_300000_ga4_user_id',
   },
 ];

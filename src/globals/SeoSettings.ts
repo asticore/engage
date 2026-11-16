@@ -635,6 +635,25 @@ export const SeoSettings: GlobalConfig = {
               'Hold back tracking scripts until a visitor accepts cookies. Leaving this on is the safer choice in the UK, EU and Australia.',
           },
         },
+        {
+          name: 'sendUserId',
+          type: 'checkbox',
+          label: 'Send the signed-in customer ID to Google Analytics',
+          defaultValue: false,
+          admin: {
+            description: 'Off by default. When a customer is signed in, Google Analytics 4 receives an ID (user_id) so one person is counted once across devices. It is only sent after the visitor accepts analytics cookies. Mention it in your privacy policy.',
+          },
+        },
+        {
+          name: 'hashUserId',
+          type: 'checkbox',
+          label: 'Send a hashed ID, not the account number',
+          defaultValue: true,
+          admin: {
+            description: 'Recommended. Google receives a keyed hash that cannot be turned back into your customer number.',
+            condition: (_data: unknown, siblingData: { sendUserId?: boolean }) => siblingData?.sendUserId === true,
+          },
+        },
       ],
     },
   ],

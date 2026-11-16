@@ -1,5 +1,6 @@
 'use client'
 
+import { gtagConfigScript } from '../ga4User'
 import { useEffect, useEffectEvent, useSyncExternalStore } from 'react'
 
 import { effectiveChoices, type ConsentChoices } from '@/features/consent/consent'
@@ -9,6 +10,8 @@ import { getConsentState, SERVER_CONSENT_STATE, subscribeConsent, type ConsentSt
 export type AnalyticsIds = {
   gtmContainerId?: string
   ga4MeasurementId?: string
+  /** Signed-in customer ID (hashed or not) for GA4 user_id. Set only when the setting is on. */
+  ga4UserId?: string
   metaPixelId?: string
   clarityProjectId?: string
   tiktokPixelId?: string
@@ -97,7 +100,7 @@ const loadGtm = (gtmContainerId?: string) => {
   })
 }
 
-const loadAnalyticsTags = ({ ga4MeasurementId, clarityProjectId }: AnalyticsIds) => {
+const loadAnalyticsTags = ({ ga4MeasurementId, ga4UserId, clarityProjectId }: AnalyticsIds) => {
   if (tagState.analytics) return
   tagState.analytics = true
 
@@ -109,7 +112,7 @@ const loadAnalyticsTags = ({ ga4MeasurementId, clarityProjectId }: AnalyticsIds)
     appendScript(
       {},
       `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}` +
-        `gtag('js',new Date());gtag('config',${JSON.stringify(ga4MeasurementId)});`,
+        `gtag('js',new Date());${gtagConfigScript(ga4MeasurementId, ga4UserId)}`,
     )
   }
 
