@@ -7,12 +7,12 @@
 - **9 Nov Task 17 feedback popup (follow-up):** the Feedback button now opens a modal (focus trapped, Esc/backdrop closes) with Report a bug / Request a feature; each opens the matching new issue page (`template=bug_report.md` + label `bug`, or `feature_request.md` + label `enhancement`) with version, admin page and language pre-filled. Issue templates now carry labels. New strings (feedback.title/bug/feature/hint/cancel) in 13 languages; test extended.
 - **9 Nov Task 17 feedback button for super admins (PR pending):** sidebar Feedback button (admin role only, next to Help) opens the new issue page of asticore/engage in a new tab, pre-filled with portal version (package.json), admin page path and admin language; `src/admin/ui/FeedbackButton.tsx`, `feedbackUrl.ts`, strings in 13 languages, test `tests/int/feedback-url.int.spec.ts`. No tables, so no migration. Live click check goes into the live checklist (Task 20).
 - **9 Nov Task 10 easy API creation, keys and feeds (PR pending):** most of it already existed (API builder, per-user keys with scopes, revoke, call log, developer guide, webhooks, members portal keys). Added: API access categories (`eg_api_categories`, `eg_api_category_members`; scopes, rate per minute, key cap; members are a person or a customer organisation; a key is narrowed to its owner's category on every request and the category's rate applies; once any category exists a customer without one cannot use or create a key, staff are unaffected), key rotate (re-checks password or code, old key dies at once, audited), per-key daily usage (`eg_api_key_usage`, 30 days, shown on the key row), admin creates a key for a customer, endpoints can be limited to categories, the customer's portal API guide lists only the endpoints their account can call, data feeds (CSV with formula defusing, JSON lines, XML; `?format=` per call), drag and drop field picker with buttons for keyboard and touch (replaces the checkbox list), webhook link from the builder. Strings in 13 languages. Live checks in Task 20 (Closed Task 10 API).
-- **8 Nov Task 1 visual editor Elementor-parity tweaks (PR #226, 8 Nov):** VE-01 to VE-15 from `docs/visual-editor-elementor-tweaks.md`: paste style guarded and device-safe, CSS id de-duplication with warning, hidden blocks faded in the editor, edit lock and overwrite check, shortcuts (Mod+S/E/I/P, Mod+Shift+C/V/H/M), context menu Edit/Navigator/Reset style, History and Revisions panel, 13 more per-device style keys, preview button, unsaved-state save buttons, Finder, padding drag handles, multi-select, text style presets in Theme styles (JSON, no migration).
+- **8 Nov Task 1 visual editor Elementor-parity tweaks (PR #226, 8 Nov):** VE-01 to VE-15 from `the Elementor tweaks appendix of this file`: paste style guarded and device-safe, CSS id de-duplication with warning, hidden blocks faded in the editor, edit lock and overwrite check, shortcuts (Mod+S/E/I/P, Mod+Shift+C/V/H/M), context menu Edit/Navigator/Reset style, History and Revisions panel, 13 more per-device style keys, preview button, unsaved-state save buttons, Finder, padding drag handles, multi-select, text style presets in Theme styles (JSON, no migration).
 - **8 Nov Task 2 drag from the Elements bar (PR #226, 8 Nov):** root cause: the iframe pass-through flag was set in a capture-phase dragstart listener before React's setData, so dataTransfer.types was empty; now tracked in the bubble phase (`trackLibraryDrag`, `src/views/visualEditor/dropSlot.ts`).
-- **8 Nov Task 3 Elementor gap review (PR #226, 8 Nov):** `docs/visual-editor-elementor-gaps.md`; built: custom attributes with a strict allowlist, popup idle trigger and overlay/close/animation options (never impossible to close), visibility rules for weekday, time (visitor clock) and language. Left for later: dynamic link/image sources (needs a check and scope decision), scroll-linked motion (Firefox lacks view timelines).
+- **8 Nov Task 3 Elementor gap review (PR #226, 8 Nov):** `the Elementor gap review appendix of this file`; built: custom attributes with a strict allowlist, popup idle trigger and overlay/close/animation options (never impossible to close), visibility rules for weekday, time (visitor clock) and language. Left for later: dynamic link/image sources (needs a check and scope decision), scroll-linked motion (Firefox lacks view timelines).
 - **8 Nov Task 4 admin walkthrough (PR #226, 8 Nov):** once per user account (`eg_preferences` key `admin-tour`), Help button in the sidebar replays it, focus trap, 12 languages.
 - **8 Nov Task 5 fresh-install questionnaire (PR #226, 8 Nov):** dashboard dialog for admins, suggestions only turn sections on, summary before applying; migration `20270311_100000_setup_questionnaire` (existing installs marked skipped), baseline regenerated, fresh-install specs extended; translated.
-- **8 Nov Task 6 bookings research and plan (PR #226, 8 Nov):** `docs/bookings-plan.md` (gap list, data model, 4 phases, 14 decisions for Matt).
+- **8 Nov Task 6 bookings research and plan (PR #226, 8 Nov):** `the Bookings plan appendix of `docs/remaining-work.md`` (gap list, data model, 4 phases, 14 decisions for Matt).
 - **Task 4 fresh-install speed (PR #222, 2 Nov):** an empty database gets a precomputed final schema (`src/migrations/baseline/`, generated) and the existing migrations are recorded as run, so only newer ones run; existing installs and lazy sections unchanged. Local fresh install 78-83 s down to 6.5-7.5 s. `tests/int/fresh-baseline-parity.int.spec.ts` proves table, column, index, foreign key and seed parity with the full run (lazy default and all sections on) and that a later migration still runs; regenerate with `REGENERATE_BASELINE=1`. Specs that test migrations pass `baseline: false`.
 - **Task 4 Next 16 upgrade (PR #220, 2 Nov):** next 15.4.11 to 16.4.3 with eslint-config-next 16.2.7; `@opennextjs/cloudflare` 1.18.1 supports `^16.1.5`, so `--dangerouslyUseUnsupportedNextVersion` is gone from `deploy`, `deploy:app` and `scripts/build.mjs`. Next 16 builds with Turbopack by default and rejects the webpack `extensionAlias`, so build, dev and the OpenNext `buildCommand` use `--webpack`. `middleware.ts` kept (deprecated but supported on the edge; the Node-runtime `proxy` rename is a separate change). tsc, eslint (0 errors), edge-middleware-graph, speed-page-queries and `next build --webpack` pass; the OpenNext build and live deploy are a Task 6 check.
 - **Task 4 lazy sections and Unused tables (PR #218, 2 Nov):** a fresh install creates core tables (pages, media, users, settings, navigation) and the sections on by default (tracking); shop, events, blog, FAQs, forms, courses, members, A/B tests, ads, backups, redirects, translations and approval get their tables the first time they are ticked in Settings > General > Features (the same migration sequence replayed with only that section's statements, run before the save lands; a failure rejects the save and the switch stays off), plus a starter template for shop, events and FAQs. Switching off keeps data and tables. Existing installs: migration `20270310_100000_feature_tables_state` marks every section that already has tables as provisioned, switches untouched (tested on a simulated older database). A lazy install plus every section provisioned equals the old install table for table, column for column. Registry `src/features/featureTables.ts` (one owner per table, derived from `FEATURES[].tables`; settings tables are core; test fails for an unclassified or doubly claimed table). Reads of a missing section table return empty (find, findByID, count; privacy export and unsubscribe guarded). Settings > Data and System > Unused tables (admin role is the super admin): rows and size estimate, JSON export, delete by typing the table name, audit entry `database.table-dropped`, refuses core, sections that are on and payment records (orders, refunds, transactions, gift cards, store credit, credit ledger, subscriptions, coupon reservations); a deleted table marks its section deferred so switching it on recreates it. `POST /api/internal-migrate?provision=all` makes every section at once. Measured locally: fresh install about 15 percent faster; the rest is the 147 migrations' own lookups (next speed target: fewer per-migration reads, or the package split); one section takes about 5 s to create. Decisions: posts stay in the Blog section; settings pages are always created; the old Database screen (per-feature cleanup) stays. Live checks in Task 6. Known: `content-types-drift` fails on main (FormSubmission embedId and embedSource not declared), not from this PR.
@@ -116,7 +116,7 @@ Finished tasks (PR numbers) first, then the visual editor waves through 71.
 - Task 2 (part), 15 Nov 2026, PR pending: Effix effects picker in the Design panel and the Reference sources admin screen with the update check. Left: real Effix catalogue, update popup tie-in, Tailwind-era classes.
 - Task 3 (part), 15 Nov 2026, PR pending: 150 English-only admin strings translated into the twelve other languages. Left: promo badge field labels, template library text, ut/api/apiBuilder strings.
 - Task 4 (part), 15 Nov 2026, PR pending: variation tier notes, badge product picker, nested blog category URLs and tree merge tags, company-based tier matching.
-- Tasks 5 and 6, 15 Nov 2026, PR pending: regions, language and domain audit in `docs/regions-domains-audit.md`; gaps are Tasks 41 and 42.
+- Tasks 5 and 6, 15 Nov 2026, PR pending: regions, language and domain audit in `the Regions audit appendix of `docs/remaining-work.md``; gaps are Tasks 41 and 42.
 - Task 7, 15 Nov 2026, PR pending: Scheduled tasks screen has Next run, Run now, turn off and on per job (`JobControls`, `/api/admin-cron-job`, audit logged) and a 50 run history; one runner per job in `src/features/cron/jobs.ts`; state in `eg_cron_job_state` (migration `20270315_200000_cron_job_state`); the `schedules` heartbeat job cannot be turned off. Tests: `tests/int/cron-job-state.int.spec.ts`.
 
 ## Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md
@@ -130,7 +130,7 @@ Finished tasks (PR numbers) first, then the visual editor waves through 71.
 - **16i Donations (built 16 Nov 2026; recurring and goal bar still open).** A simple product has a Donation group: tick Is a donation and the buyer sets the amount (name your price rules, so the lowest amount is the minimum price field), with suggested amounts as buttons, a largest amount checked on the server, a campaign name, an optional Give anonymously tick box, and receipt wording. The page shows Donate, the amount buttons and the tick box. The confirmation email (paid and completed) adds a thank you per donation (amount, campaign, anonymous) and the receipt wording once, where the shop puts its ABN and tax text. Order lines keep the campaign, and Shop reports has Donations by campaign with a CSV. A monthly donation is a donation product that is also a subscription product (existing subscription fields). Code: `ecom/lib/donations.ts`, `catalogue.ts`, `storefront.ts`, `server/pricing.ts`, `hooks/cartHooks.ts`, `server/emails.ts`, `shopReports/queries.ts`, `ProductPurchase.tsx`, migration `20270316_150000_product_donations`, `tests/int/donations.int.spec.ts`.
 - **16j Storefront currency sweep (built 16 Nov 2026; product screen redesign still open).** Checked every place that formats a shop price. Fixed the ones that ignored the shop currency: the product page structured data (offers were always AUD), event ticket offers in the page structured data, the Wishlist page prices, and the admin new order email total. Other AUD defaults are fallbacks that only apply when no currency is passed, and every storefront caller passes the shop currency. Pre-order behaviour (button text, release date, cart rules) is already covered by `shop-extra-preorders-wave11` and `preorders-variation-images-wave9`. Test: `tests/int/shop-currency-follow.int.spec.ts`.
 - **17a Service products (built 16 Nov 2026; deposit and booking still open).** Decision: a service is a tick box on a simple or variable product, not a separate product type, so it keeps price, options, quantity breaks, add-ons and subscriptions (a new type would have needed every one of the many simple-type checks changed). The Service group has Is a service and a duration in minutes. A service is never shipped (no weight, no shipping step, no shipment label; the existing Virtual flag works the same way) and its page shows a Duration row. It appears in orders and the account like any product. Code: `ecom/lib/service.ts`, `productFields.ts` (serviceFields), `server/pricing.ts`, `server/shipments.ts`, `storefront.ts`, migration `20270316_160000_service_products`, `tests/int/service-product.int.spec.ts`.
-- **17b Booking pages, phase 1 (built 16 Nov 2026 on the proposed defaults in `docs/bookings-plan.md`; free appointments only).** New feature Bookings (off by default, switch on in Site Settings, Features; five lazy tables). Settings, Bookings: add a person or place (with a time zone), write weekly hours as lines like `mon-fri 09:00-17:00`, change single days (closed all day, closed for lunch, open extra hours), add booking types (name, address, who it is booked with, length, start every N minutes, gap before and after, least notice, how far ahead, people per time, location), and see the bookings with Completed, No show and Cancel. Public page `/book/<address>`: pick a day, pick a time, give name and email; times are checked again on booking, and two people asking for the last place cannot both get it (insert, then verify). The confirmation email has an add-to-calendar link (`/api/booking-ics`) and a private link `/book/manage/<token>` to cancel before it starts; only a hash of the link is stored. The slot engine is pure and tested across the Sydney and London daylight saving changes. Slot, create and manage routes are rate limited. Code: `src/features/bookings/{engine,logic,store,service}.ts`, `BookingWidget.tsx`, `ManageBooking.tsx`, `BookingsAdminPanel.tsx`, `/api/booking-*`, `/api/admin-bookings`, migration `20270316_170000_bookings`, tests `bookings-engine`, `bookings-logic`.
+- **17b Booking pages, phase 1 (built 16 Nov 2026 on the proposed defaults in `the Bookings plan appendix of `docs/remaining-work.md``; free appointments only).** New feature Bookings (off by default, switch on in Site Settings, Features; five lazy tables). Settings, Bookings: add a person or place (with a time zone), write weekly hours as lines like `mon-fri 09:00-17:00`, change single days (closed all day, closed for lunch, open extra hours), add booking types (name, address, who it is booked with, length, start every N minutes, gap before and after, least notice, how far ahead, people per time, location), and see the bookings with Completed, No show and Cancel. Public page `/book/<address>`: pick a day, pick a time, give name and email; times are checked again on booking, and two people asking for the last place cannot both get it (insert, then verify). The confirmation email has an add-to-calendar link (`/api/booking-ics`) and a private link `/book/manage/<token>` to cancel before it starts; only a hash of the link is stored. The slot engine is pure and tested across the Sydney and London daylight saving changes. Slot, create and manage routes are rate limited. Code: `src/features/bookings/{engine,logic,store,service}.ts`, `BookingWidget.tsx`, `ManageBooking.tsx`, `BookingsAdminPanel.tsx`, `/api/booking-*`, `/api/admin-bookings`, migration `20270316_170000_bookings`, tests `bookings-engine`, `bookings-logic`.
 - **17c Quote, bid and item requests (built 16 Nov 2026; card payment, bid auctions and form feed still open).** New feature Quotes and requests (off by default, switch on in Site Settings, Features; one lazy table `eg_quote_requests`). Public page `/request-quote?kind=quote|bid|item&product=<id>&title=<name>` (and the `RequestForm` component) takes name, email, phone, quantity, details, needed-by date and, for an offer, the amount; it has a hidden bot field and is rate limited. The customer gets a received email and the shop's admin email gets a notice. Settings, Quotes and requests is the inbox: filter by status, write a quote (lines, price each, days open, terms, and an email message that can use merge tags such as `{{name}}`, `{{total}}`, `{{validUntil}}` and `{{link}}`), send it, decline or close a request, and read the activity log. Sending makes a fresh private link `/quote/<token>` (only its hash is stored). The customer reads the quote, accepts, declines or sends a counter-offer (a note and an optional amount, which puts the request back in front of staff). Accepting is atomic (a double click makes one order) and creates a Pending payment order on the first offline method the shop has switched on, with the payment instructions emailed; staff mark it paid with the usual order action. Quotes past their date show as expired at once and are closed when the inbox is opened. Code: `src/features/quotes/{logic,store,service}.ts`, `RequestForm.tsx`, `QuoteView.tsx`, `QuotesAdminPanel.tsx`, `/api/quote-request`, `/api/quote-view`, `/api/admin-quotes`, `app/(frontend)/{request-quote,quote/[token]}`, migration `20270316_180000_quotes`, `tests/int/quotes-logic.int.spec.ts`.
 - **17d Purchase limits against hoarders and bots (built 16 Nov 2026; waiting list, card fingerprint and bot challenge still open).** New feature Purchase limits (off by default, switch on in Site Settings, Features; two lazy tables). Settings, Purchase limits: add rules for all products or one product (event tickets are products): most per person (over N days or ever), a wait in hours between orders, and an option to need a signed-in account with a verified email. A person is matched by account, by email (ignoring +tags and Gmail dots) and by delivery address; paid orders and orders still waiting for payment count, cancelled, refunded and failed ones do not, and the order already made from the same cart is not counted twice. The check runs when the order is priced (`buildOrderDraft`, so card, PayPal and offline checkouts all pass through it) and refuses with a clear sentence such as the limit and how many more can be ordered. A throttle of 20 checkout attempts per email per minute stops probing. Every refusal goes to a report with counts for the last day and week. If the feature is off or its tables cannot be read, orders go through. Code: `src/features/purchaseLimits/{logic,store,enforce}.ts`, `PurchaseLimitsPanel.tsx`, `/api/admin-purchase-limits`, hook in `ecom/payments/stripeAdapter.ts`, migration `20270316_190000_purchase_limits`, `tests/int/purchase-limits.int.spec.ts`.
 - **17e Approval assigned to a named person (built 16 Nov 2026; reassign, due date and reminders still open).** Settings, Roles, Approval workflows: each step can now name people as well as roles. Naming anyone means only they (and admins) can approve or send back that step; a tick box keeps the roles as a fallback. A workflow can also name a different approver for an author: that author's work is approved by the person named, at every step, whatever the step says, and nobody else (except admins) can approve it. A step may be named people only (no role). Saving checks the people exist and an author is not their own approver. The submit email and the next-step email go to the named people (and the roles too when the fallback is on), the waiting text and the refusal message name the person, and the history already records who approved. Per content type is the existing one active workflow per type. Code: `src/features/approval/{workflows,stateMachine,notify,handlers,workflowCollection,workflowForm}.ts`, `src/admin/views/{ApprovalWorkflowsPanel,RolesView,RolesViewClient}.tsx`, migration `20270316_200000_approval_named_approvers` (columns `approver_users`, `also_roles`, `author_routes`), `tests/int/approval-named-approvers.int.spec.ts`.
@@ -189,8 +189,8 @@ Finished tasks (PR numbers) first, then the visual editor waves through 71.
 - **23h Session location and self-service delete (built 16 Nov 2026, part).** A new session's device label now ends with "(near Germany)" style wording from the Cloudflare country header (nothing for a missing, unknown or Tor code), shown as approximate in the sessions list. Password, emailed link or code, and passkey sign-ins record it. No migration (added to the label). Self-service delete already existed: the customer asks on `/account/privacy`, confirms by email, an admin reviews, then `src/features/privacy/erase.ts` runs. English only. Code: `withApproxPlace` in `src/features/security/userSessions.ts`, `src/localapi/rest.ts` (`sessionClient`), `src/features/accounts/session.ts`, `passkeysWiring.ts`, `passwordlessWiring.ts`, `tests/int/session-place.int.spec.ts`.
 - **23i Access tokens, signing keys and one-time tokens (built 16 Nov 2026; needs API keys switched on in Settings > Security).** `POST /api/auth/token` trades an API key (`Authorization: Bearer egk_...`) for a signed ES256 access token (RFC 9068 shape: header `at+jwt`, claims iss, sub, aud `engage-api`, iat, exp, jti, scope, key). Optional body `scope` (space separated, narrows the key, never widens it) and `expires_in` (default 900 s, 60 to 3600). Send the token as `Authorization: Bearer <token>` anywhere an API key works: it counts as its key, so every check still runs on each request (key revoked or expired, owner locked, category limits) and revoking a key ends its tokens at once. A token cannot be exchanged for another token. Signing keys rotate by themselves every 30 days (lazy, on the next signing); a retired key stays published 25 hours so live tokens still verify, then is deleted. `/.well-known/jwks.json` publishes the public keys (empty while API keys are off); private keys are stored encrypted with the site secret. Admin: API builder page, Access tokens and signing keys (list, Rotate now). One-time tokens: `POST /api/auth/one-time-token` (purpose, optional payload up to 1 KB, `expires_in` up to 3600, default 300) returns an `egot_` token once; `POST /api/auth/one-time-token/verify` uses it up and answers `{valid, purpose, subject, payload}` (404 when unknown, wrong purpose, used or expired). Both need a staff-owned key; API purposes are stored as `app:<purpose>` so they never collide with a site purpose; only a hash is stored; claiming is one atomic update, so two simultaneous uses cannot both win. New audit actions `api-token.issued`, `one-time-token.issued`, `one-time-token.used`, `signing-key.rotated`. The tables `eg_signing_keys` and `eg_one_time_tokens` are created the first time they are used (no migration). Admin panel text is English only. Code: `src/features/apiKeys/tokens/`, `src/features/apiKeys/core.ts` (`isAccessTokenShape`), `service.ts` (`verifyAccessToken` dep), `src/localapi/engine.ts`, `src/app/(engage)/api/auth/`, `src/app/.well-known/jwks.json/route.ts`, `tests/int/api-tokens.int.spec.ts`.
 - **23d More social providers, generic OpenID Connect and Google One Tap (built 16 Nov 2026; every provider is off until its credentials are saved and it is switched on).** X (OAuth 2.0 with PKCE, Basic client auth, email only when X returns `confirmed_email`), LinkedIn (Sign In with LinkedIn using OpenID Connect, ID token checked against LinkedIn's keys), TikTok (Login Kit v2, `client_key`, profile id only, never an email, so it signs in only after being connected from a profile) and Slack (Sign in with Slack, OpenID Connect) each have a setup guide with console link, scopes and the exact redirect URL, an encrypted client secret, a button with an icon, and a Test sign-in button. A free-form OAuth 2.0 / OpenID Connect provider takes a discovery URL (or authorize, token and optional user info URLs), client ID and secret, scopes, button text, claim names for subject, email and verified, and a Trust the email switch; ID tokens must be RS256 and are checked for signature, issuer, audience and nonce, with a user info fallback when no ID token is returned. Every address must be https on a public host name (no http, IP addresses, localhost, internal names, credentials or ports), checked before any call; the discovery document is cached ten minutes. Google One Tap (Settings > Security > More sign-in providers, needs Google sign-in on and complete) shows Google's prompt on the member sign-in page; the credential is posted to `/api/social/one-tap` with a server-issued nonce and state in the signed state cookie, same-origin only, and goes through exactly the same account rules as the Google button (no staff accounts, no unverified emails, two-step still required). All providers use the existing start, callback, test, linking, unlinking, rate limit, audit and per-place method blocking (Who can sign in with what) paths, and appear on the Authentication overview with switches. Settings for the five new providers and One Tap live in table `eg_social_providers` (created on first use, secret encrypted, no migration, no column added to Security settings, whose table is full). Code: `src/features/socialLogin/` (`providers.ts`, `endpoints.ts`, `flow.ts`, `extraStore.ts`, `extraValidate.ts`, `extraActions.ts`, `admin/ExtraProvidersForm.tsx`, `components/GoogleOneTap.tsx`, `components/ProviderIcon.tsx`), `src/admin/views/SignInProvidersView.tsx`, `src/app/(engage)/api/social/one-tap/route.ts`, `tests/int/social-login-extra.int.spec.ts`. Admin text is English only. Not done: ES256 ID tokens for the free-form provider; the buttons use simple glyphs, not each brand's official artwork.
-- **23g Passkey as a second sign-in step (built 16 Nov 2026; live check in Task 14).** The second-step screen (customer sign-in and admin sign-in) shows "Use a passkey instead" when the account named by the pending token has a passkey and passkeys are allowed for that area in the Authentication matrix. `POST /api/passkeys/second-options` takes the pending token, reads the account from it (never from the body), and returns a challenge limited to that account's passkeys (`allowCredentials`); the challenge is a new `second` kind bound to that user id. `POST /api/passkeys/second-verify` runs the same checks as passkey sign-in (shared `checkAssertion` in `passkeys/core.ts`: origin, rpId, known credential, user handle, role and lock, user verification, signature, counter) plus a refusal when the credential belongs to another account or the challenge was issued to another account, then finishes through `loginWithSecondFactor` with `method: 'passkey'`. That method takes no code and is accepted only when the server passes `passkeyVerifiedUserId` equal to the pending token's user (an argument the REST route never sets, so the public second-step endpoint cannot use it); a refused passkey answer calls the same function without it, which counts toward the account lockout like a wrong code. The pending token is marked used on success (23a1), trusted-device cookie and landing redirect work as for a code. Audit: `passkey.login` "second step", `passkey.refused` "second step: ...". New text key `portal.auth.usePasskeyInstead` in all thirteen languages. Code: `src/features/passkeys/core.ts` (`secondStepOptions`, `verifySecondStep`), `src/features/accounts/passkeysHttp.ts`, `src/localapi/auth.ts` (`pendingTokenUser`), `SecondFactorChoice.tsx`, `src/features/passkeys/client.ts`. Tests: `tests/int/passkeys.int.spec.ts` (second sign-in step: only the account's passkeys offered, own passkey accepted, other account's passkey refused, other account's challenge refused, bad signature, locked account), `tests/int/two-factor.int.spec.ts` (passkey as the second step: single use token, refused without or with another user id, lockout, forged token).
-- **23g Guest accounts and 28a Account cart with merge on sign-in (built 16 Nov 2026; live check in Task 14).** A signed-out visitor's cart pair (id and secret, still kept in the browser) is also remembered in an HttpOnly cookie `eg_guest_cart` (30 days, set by `POST /api/shop-cart/guest` after the pair is checked against the cart). On every page load the shop client asks `GET /api/shop-cart/session`: signed out gives `signedIn: false` and the guest cart carries on; signed in gives the account's one persistent cart (found or created, with its own secret, newest unpurchased cart of that customer) after folding the guest cart into it (same product, variation, price and add-ons add quantities; gift cards and name-your-price lines stay their own lines), then deleting the guest cart and clearing the cookie. Because every sign-in and sign-up path ends in a page load, this covers password, code, magic link, social and passkey sign-in and registration with no change to each path. The cart rules re-check stock and limits on every save; if the whole merge is refused the lines go in one at a time and refused lines are counted, shown as a notice on the cart page. The browser marks an account cart so signing out never keeps showing it. Guest carts untouched for 30 days (no customer, not purchased) are deleted by the hourly Data clean-up job. Payment and cart mutations use the account cart's secret exactly as for a guest cart. The older `/merge` endpoint is unchanged and unused. Code: `src/features/ecommerce/lib/guestCart.ts`, `src/features/ecommerce/server/accountCart.ts`, `src/app/(engage)/api/shop-cart/{session,guest}/route.ts`, `src/engine/commerce/react.tsx`, `src/features/cron/jobs.ts`. Tests: `tests/int/guest-cart.int.spec.ts`. Not built: the cookie holds only the cart pair, not a general anonymous session id (nothing else needs one yet); the notice text is English only.
+- **23g Passkey as a second sign-in step (built 16 Nov 2026; live check in Live checks).** The second-step screen (customer sign-in and admin sign-in) shows "Use a passkey instead" when the account named by the pending token has a passkey and passkeys are allowed for that area in the Authentication matrix. `POST /api/passkeys/second-options` takes the pending token, reads the account from it (never from the body), and returns a challenge limited to that account's passkeys (`allowCredentials`); the challenge is a new `second` kind bound to that user id. `POST /api/passkeys/second-verify` runs the same checks as passkey sign-in (shared `checkAssertion` in `passkeys/core.ts`: origin, rpId, known credential, user handle, role and lock, user verification, signature, counter) plus a refusal when the credential belongs to another account or the challenge was issued to another account, then finishes through `loginWithSecondFactor` with `method: 'passkey'`. That method takes no code and is accepted only when the server passes `passkeyVerifiedUserId` equal to the pending token's user (an argument the REST route never sets, so the public second-step endpoint cannot use it); a refused passkey answer calls the same function without it, which counts toward the account lockout like a wrong code. The pending token is marked used on success (23a1), trusted-device cookie and landing redirect work as for a code. Audit: `passkey.login` "second step", `passkey.refused` "second step: ...". New text key `portal.auth.usePasskeyInstead` in all thirteen languages. Code: `src/features/passkeys/core.ts` (`secondStepOptions`, `verifySecondStep`), `src/features/accounts/passkeysHttp.ts`, `src/localapi/auth.ts` (`pendingTokenUser`), `SecondFactorChoice.tsx`, `src/features/passkeys/client.ts`. Tests: `tests/int/passkeys.int.spec.ts` (second sign-in step: only the account's passkeys offered, own passkey accepted, other account's passkey refused, other account's challenge refused, bad signature, locked account), `tests/int/two-factor.int.spec.ts` (passkey as the second step: single use token, refused without or with another user id, lockout, forged token).
+- **23g Guest accounts and 28a Account cart with merge on sign-in (built 16 Nov 2026; live check in Live checks).** A signed-out visitor's cart pair (id and secret, still kept in the browser) is also remembered in an HttpOnly cookie `eg_guest_cart` (30 days, set by `POST /api/shop-cart/guest` after the pair is checked against the cart). On every page load the shop client asks `GET /api/shop-cart/session`: signed out gives `signedIn: false` and the guest cart carries on; signed in gives the account's one persistent cart (found or created, with its own secret, newest unpurchased cart of that customer) after folding the guest cart into it (same product, variation, price and add-ons add quantities; gift cards and name-your-price lines stay their own lines), then deleting the guest cart and clearing the cookie. Because every sign-in and sign-up path ends in a page load, this covers password, code, magic link, social and passkey sign-in and registration with no change to each path. The cart rules re-check stock and limits on every save; if the whole merge is refused the lines go in one at a time and refused lines are counted, shown as a notice on the cart page. The browser marks an account cart so signing out never keeps showing it. Guest carts untouched for 30 days (no customer, not purchased) are deleted by the hourly Data clean-up job. Payment and cart mutations use the account cart's secret exactly as for a guest cart. The older `/merge` endpoint is unchanged and unused. Code: `src/features/ecommerce/lib/guestCart.ts`, `src/features/ecommerce/server/accountCart.ts`, `src/app/(engage)/api/shop-cart/{session,guest}/route.ts`, `src/engine/commerce/react.tsx`, `src/features/cron/jobs.ts`. Tests: `tests/int/guest-cart.int.spec.ts`. Not built: the cookie holds only the cart pair, not a general anonymous session id (nothing else needs one yet); the notice text is English only.
 - **23a1 Pending two-step token single use (built 16 Nov 2026, part).** The token after the password step now carries a `jti`; a successful second step records it (in `eg_kv` as `p2fa:<jti>`, swept once expired) and a repeat is refused like a wrong code. Fails open on a database error because the lockout still guards the code. Not done: browser binding (see leftovers). Code: `src/localapi/auth.ts` (`PendingTokenOps`, `loginWithSecondFactor`), `src/features/security/pendingTokenStore.ts`, `src/localapi/engine.ts`, test in `tests/int/two-factor.int.spec.ts`. No migration.
 - **23a2 Google connection reuses the sign-in client (built 16 Nov 2026).** When the Google connection has no client ID and secret of its own, it uses the Google sign-in client from Security. The connection's redirect address must be added to that Google app. Code: `resolveGoogleClient` in `src/features/google/auth.ts`, `tests/int/google-client-fallback.int.spec.ts`. No migration.
 - **23k OpenAPI for auth endpoints (built 16 Nov 2026).** An OpenAPI 3.1 document for the sign-in side: password sign-in, two-step (code and email code), logout, refresh, forgot and reset password, unlock, `me`; emailed link and code; passkeys (options, register, login, list, rename, remove); social sign-in (providers list, start, callback, pending, One Tap); API key exchange, one-time tokens and the JWKS. Three security schemes (session cookie, API key, access token). Download `JSON` or `YAML` from the API builder page (link under the developer guide downloads) at `/api/admin-api-builder-docs?format=auth-openapi.json` or `.yaml` (admins and the `api` read permission), or with the public docs token like the other formats. The base URL is the request's own origin and no key or secret is written in. A test fails when a documented path has no route file or the documented method is not exported, when a user route is not one the REST dispatcher serves, when an operation id repeats, or a reference does not resolve. Browser-only flows (passkeys, social, One Tap) are described so a client can see what each endpoint expects; English only. Code: `src/features/apiBuilder/authOpenApi.ts`, `guideResponse.ts`, `components/ApiBuilderPanel.tsx`, `tests/int/auth-openapi.int.spec.ts`.
@@ -206,3 +206,467 @@ Finished tasks (PR numbers) first, then the visual editor waves through 71.
 - **29g Previews, renditions, import, quotas (built 16 Nov 2026).** File page: inline players for video and audio and an inline sandboxed PDF preview; video tiles in the Media grid show the first frame. Asset manager, Rendition presets: named size, fit (scale-down, contain, cover, crop, pad) and format (auto, jpeg, png, webp, avif); each picture's page lists them under Download as, served by `/api/admin-media-rendition` through the Cloudflare Images binding (501 with a plain message when the account has none; nothing is stored). Import a file (`/api/admin-media-import`): an https address or a Google Drive link to one file shared as Anyone with the link; never http, credentials, odd ports or local and private hosts; redirects followed by hand and checked at every hop; size capped by the upload limit; then stored like an upload (type check, folder access and defaults from 29a, quota, duplicate check, rights default licence, activity). Activity log now also records upload by whom, import, replace (when a version is kept), and downloads by zip, rendition and share link. Storage section: totals by kind and the largest folders; site limit (MB) is now enforced on upload and import, plus per role and per company limits (stored as JSON on the settings row, use counted from uploads by the people in that role or company). Code: `src/features/dam/{importUrl,renditions,quota,quotaGuard}.ts`, `store.ts` (renditions, totals, quota use), `AssetManagerPanel.tsx`, `DamAssetPanel.tsx`, `MediaGalleryGrid.tsx`, `admin-media-rendition`, `admin-media-import`, `admin-media-dam`, `media-share/[token]`, migration `20270316_440000_media_quotas` (`quotas_json`), `tests/int/dam-previews-import-quota.int.spec.ts`.
 - **25c Device authorisation and 25d MCP endpoint (built 16 Nov 2026; part of AI agent access).** Device authorisation (RFC 8628): a tool calls `POST /api/device/code` (`client_name`, `scope` read or write) and gets a device code, a short user code like BCDF-GHJK, an address and a polling interval; the admin opens Admin > AI agent access (the address carries the code), checks the code against the tool's name, confirms with their password and approves or denies; the tool polls `POST /api/device/token` with `grant_type=urn:ietf:params:oauth:grant-type:device_code` and receives a normal agent token once (waiting, slow down, denied, expired and used answers follow the RFC). Approved tokens get the scope the tool asked for with the default caps (read only unless it asked to write). Codes last 10 minutes, at most 50 wait at once, only the hash of the device code is stored, the token is held encrypted and wiped at the first collection. MCP: `POST /api/mcp` speaks Model Context Protocol (JSON-RPC over HTTP) for an agent token only, with tools list_collections, find, get, create and update (no delete). Each call is checked like the same REST request (scopes, forbidden fields) and counted against the token's daily caps and the action log. Both are off unless AI agent access is switched on. The `eg_device_codes` table is created on first use, so no migration. Not built: OAuth proxy for preview deployments (Matt marked it later). Code: `src/features/agentAccess/` (`device.ts`, `deviceStore.ts`, `mint.ts`, `mcp.ts`), routes `src/app/(engage)/api/device/{code,token}`, `api/mcp`, `admin-agents` (approve and deny), `tests/int/agent-mcp-device.int.spec.ts`.
 - **31d Linking to affiliate products (built 16 Nov 2026).** The Buy button of an external or affiliate product now points at a cloaked short link on the site, `/go/<product id>?s=<source>` (`src/app/(frontend)/go/[id]/route.ts`): it counts the click, then 302s to the product's own address. Only published external products with an http(s) address redirect (else not found); bots and callers over 60 a minute are redirected without being counted; no-store, noindex and no-referrer headers. Clicks are counters per product, source and day in `eg_outbound_clicks` (no visitor identifier; migration `20270317_100000_outbound_clicks`, baseline regenerated). Source is the `s` value, else the page it came from on the site, else direct. The product edit page shows clicks per source for the last 30 days (`OutboundClicksField`, `GET /api/admin-outbound-clicks`). Links keep rel noopener, noreferrer, nofollow and sponsored. A disclosure line sits under the button, text `store.affiliateDisclosure` (editable as site text, all dictionaries fall back to English). Decision: cloaking is always on and the disclosure is a site text, because `eg_shop_settings` is at the 100 column limit of D1. Code: `ecommerce/outbound.ts`, `outboundShared.ts`, `storefront.ts`, `components/ProductPurchase.tsx`. Live check in Task 14.
+
+## Appendix: Elementor-parity tweaks task list (closed, VE-01 to VE-15 built, PR #226)
+### Visual editor – Elementor-parity tweaks (task list)
+
+Review of `src/views/VisualEditor.tsx` + `src/views/visualEditor/*` against how Elementor's editor behaves.
+The editor already covers most of Elementor's surface (section/column tree, responsive overrides, hover/focus
+states, navigator with drag/rename/hide/anchor, element library with search/favourites/recents, "/" quick
+insert, inline text editing, copy/paste + copy/paste style, undo/redo, context menu, templates, locks,
+local draft recovery, translate mode). The tasks below are the gaps and bugs found. Each task is self-contained.
+
+#### Conventions for every task
+
+- Tree mutations go through `applyBlocks(change, key?)` in `src/views/VisualEditor.tsx`. It enforces the
+  translate-mode guard, pushes undo history and sets `dirty`. Do not call `setBlocks` + `pushHistory` by hand.
+- Lock checks: `lockedOut(path)` before editing a node, `insertBlocked(containerPath)` before inserting.
+- Style edits require `userPermissions?.canEditStyle`.
+- Paths: `NodePath` = number[]. Odd length = node, even length = column (`isColumnPath`).
+- New UI text: add an English key to `src/features/uiStrings/keys.ts` and read it with `t('key')`
+  (`useAdminT()`). Other locale dictionaries fall back to English; do not edit them.
+- Keyboard shortcuts: `resolveShortcut()` in `src/views/visualEditor/useEditorShortcuts.ts`. Any key it
+  resolves is automatically forwarded from the canvas iframe (`CanvasFrame.tsx` line ~156), so no frame change
+  is needed for new shortcuts.
+- Tests: vitest, `tests/int/*.int.spec.ts` (see `tests/int/visual-editor-history-clipboard.int.spec.ts`,
+  `tests/int/responsive-editing.int.spec.ts`). Run one file: `pnpm vitest run --config ./vitest.config.mts tests/int/<file>`.
+  Put pure logic in a pure helper module so it can be unit-tested without React.
+- Before finishing: `pnpm lint` and the touched test files must pass.
+
+Model hint per task: **Haiku** = mechanical, fully specified. **Sonnet** = needs reading surrounding code / design choices.
+
+---
+
+#### P0 – bugs
+
+##### VE-01 · Paste style bypasses locks/translate/permissions and corrupts cross-device pastes — Haiku
+
+**Elementor behaviour:** Right-click → Paste Style copies all style settings (every breakpoint) onto the target; it is one undo step and respects permissions.
+
+**Problem** (`src/views/VisualEditor.tsx`, `pasteStyle`, ~line 905):
+1. Calls `setBlocks` + `pushHistory` directly → skips `applyBlocks` (translate-mode guard), skips `lockedOut(path)`, skips `canEditStyle`.
+2. When copy device ≠ current device it writes `design[sourceDevice] = sourceDesign` — e.g. copied on desktop, pasted while previewing mobile → stores a junk `design.desktop` key; copied on mobile, pasted on desktop → nests the *whole* design (incl. its own `tablet`/`mobile`) under `design.mobile`. `DeviceOverride` only accepts `RESPONSIVE_KEYS`.
+3. History key `'pasteStyle'` coalesces two pastes on different nodes within 800 ms into one undo step.
+4. Copies the source's `anchorId` → duplicate HTML ids.
+
+**Do:**
+1. Create pure helper `applyPastedStyle(target: BlockStyle | undefined, source: BlockStyle): BlockStyle` in `src/views/visualEditor/editorClipboard.ts`: returns `{ ...source, anchorId: target?.anchorId }` with `anchorId` removed when undefined. Ignore the clipboard `device` field entirely (the copied design already holds all breakpoints, same as Elementor).
+2. Rewrite `pasteStyle`:
+   ```ts
+   if (!path || path.length === 0) return
+   if (!userPermissions?.canEditStyle) { flashNotice('Your role cannot edit styles.'); return }
+   if (lockedOut(path)) return
+   const result = await readStyleClipboard(); if (result.ok === false) { flashNotice(result.error); return }
+   const changed = applyBlocks((prev) => updateNode(prev, path, (node) => ({ ...node, design: applyPastedStyle(node.design, result.design as BlockStyle) })))
+   if (changed) flashNotice('Style pasted')
+   ```
+   No history key (each paste = own undo step). Remove `device` from the deps if unused; add `userPermissions`, `lockedOut`, `applyBlocks`.
+3. Keep `serializeStyle(design, device)` signature as is (backward-compatible clipboard format).
+
+**Accept:** paste on locked node shows lock notice and changes nothing; paste in translate mode does nothing; paste across devices produces `design` equal to source design (plus target anchorId); two quick pastes = two undo steps.
+**Tests:** add cases for `applyPastedStyle` to `tests/int/visual-editor-history-clipboard.int.spec.ts`.
+
+##### VE-02 · Duplicate / paste / template insert duplicate `anchorId` (CSS ID) — Haiku
+
+**Elementor behaviour:** CSS ID must be unique; Elementor warns. Duplicating here silently creates two elements with the same `id`, which breaks anchor links (`#contact`) and the scoped CSS that uses `#id`.
+
+**Do:**
+1. In `src/views/visualEditor/treeOps.ts` add pure `uniquifyAnchors(existing: SectionNode[], incoming: SectionNode[]): SectionNode[]`:
+   - Collect every `design.anchorId` in `existing` (walk nodes, `columns[].blocks`, and column `design.anchorId`).
+   - Walk `incoming` (deep, same shape); for any anchor already taken, rename to `${id}-2`, `-3`, … first free; add each final id to the taken set (so two incoming nodes don't collide either).
+   - Return new objects; never mutate.
+2. Apply it in `VisualEditor.tsx`: `duplicateBlock` (wrap the cloned node), `pasteAt` (the nodes from `withFreshIds`), `insertTemplateAt`, `importAppend`, `aiInsertAtEnd`. Pass the current tree (`prev`) as `existing`. Do **not** apply to `cutNode`→paste of the same node after it was removed (it is no longer in the tree, so it keeps its id naturally) or to `moveBlockTo`.
+3. In `src/views/visualEditor/designWarnings.ts` add a warning "Duplicate CSS ID “x”" for any anchor used more than once (follow existing warning shape in that file).
+
+**Accept:** duplicate a block with anchor `contact` → copy has `contact-2`; original unchanged; warnings list flags a hand-made duplicate.
+**Tests:** `uniquifyAnchors` cases (nested section, column-level anchor, two incoming collide).
+
+##### VE-03 · Legacy "hide on desktop / hide on mobile" makes blocks vanish in the editor — Haiku
+
+**Elementor behaviour:** a widget hidden on the current device is shown faded in the editor so it can still be selected.
+
+**Problem:** `blockStyleCss()` in `src/lib/blockStyle.ts` (~line 1291) honours `options.editor` (opacity 0.3) only for `tablet.hide` / `mobile.hide`. Legacy `hideOnMobile` and `hideOnDesktop` always emit `display:none`, so on the canvas the block disappears and cannot be clicked.
+
+**Do:** compute `const hidden = options.editor ? 'opacity:0.3 !important' : 'display:none !important'` at the top of the function, and use it for both legacy rules (`hideOnMobile` inside `mobileDecls` → push `hidden` instead of `'display:none'`; `hideOnDesktop` rule → `${sel}{${hidden}}`). Leave non-editor output byte-identical except `!important` — check existing tests in `tests/int/responsive-editing.int.spec.ts`; if a test asserts the exact old string for the non-editor case, keep `display:none` (no `!important`) for the non-editor branch of the legacy rules.
+
+**Accept:** in the editor at desktop width a block with `hideOnDesktop: true` is visible at 30 % opacity and selectable; live site still hides it.
+**Tests:** `blockStyleCss({hideOnDesktop:true}, 'x', {editor:true})` contains `opacity:0.3`; without `editor` contains `display:none`.
+
+##### VE-04 · No concurrent-edit protection in the visual editor — Sonnet
+
+**Elementor behaviour:** "X is currently editing this page" takeover lock with heartbeat; prevents silent overwrites.
+
+**Problem:** the normal admin edit form mounts `EditLockBanner` (`src/admin/views/EditLockBanner.tsx`, API `src/app/(engage)/api/admin-edit-lock/route.ts`), but the visual editor does not. `save()` (~line 1216) PATCHes blindly: two tabs/users overwrite each other.
+
+**Do:**
+1. Read `EditLockBanner.tsx` and the route to understand acquire/heartbeat/release/takeover. Mount `<EditLockBanner collectionSlug={surface.slug} id={route.id} … />` in the VE top area for `surface.kind === 'collection'` (match the props `DocumentPanel.tsx` passes). If the banner reports the doc is locked by someone else and not taken over, disable Save/Publish buttons and show the banner.
+2. Optimistic check in `save()`: store `doc.updatedAt` on load in a ref (`loadedUpdatedAtRef`). Before the PATCH, `GET ${apiUrl}?depth=0` and compare `updatedAt`. If newer than the ref → `window.confirm('This page was changed by someone else since you opened it. Overwrite their changes?')`; cancel aborts the save with `setSaving('idle')`. After a successful PATCH set the ref from the response (`(await res.json()).doc?.updatedAt`) — note the form-mode branch already reads `res.json()`; read the body once and reuse it.
+3. Globals (`surface.kind === 'global'`): only do step 2.
+
+**Accept:** open same page in two tabs, save in tab A, save in tab B → B asks before overwriting. Second user sees lock banner.
+
+---
+
+#### P1 – Elementor parity
+
+##### VE-05 · Missing Elementor keyboard shortcuts — Haiku
+
+**Elementor:** Ctrl/Cmd+S save, Ctrl+Shift+C / Ctrl+Shift+V copy/paste style, Ctrl+I navigator, Ctrl+Shift+M responsive mode, Ctrl+P toggle panel. Today Ctrl+S opens the browser's "Save page as" dialog.
+
+**Do** (`src/views/visualEditor/useEditorShortcuts.ts`):
+1. Extend `ShortcutAction` with `'save' | 'copyStyle' | 'pasteStyle' | 'navigator' | 'cycleDevice' | 'togglePanel'`.
+2. In `resolveShortcut`, inside `if (mod && !k.alt)`: before the `if (k.shift) return null` line add
+   `if (key === 's' && !k.shift) return 'save'`, `if (k.shift && key === 'c') return 'copyStyle'`, `if (k.shift && key === 'v') return 'pasteStyle'`, `if (k.shift && key === 'm') return 'cycleDevice'`; after it add `if (key === 'i') return 'navigator'`, `if (key === 'p') return 'togglePanel'`.
+3. Add `'copyStyle','pasteStyle'` to `NEEDS_SELECTION`.
+4. In `handleKey`, `save` must work even while typing in an input: move the `isEditableTarget` check below `resolveShortcut` and skip it when `action === 'save'`.
+5. Add rows to `SHORTCUT_LIST` + keys in `keys.ts` (`ve.shortcut.save`, `ve.shortcut.copyStyle`, `ve.shortcut.pasteStyle`, `ve.shortcut.navigator`, `ve.shortcut.device`, `ve.shortcut.panel`).
+6. Wire handlers in `VisualEditor.tsx` (`useEditorShortcuts({... handlers})`, ~line 1056):
+   `save: () => void save(false)`, `copyStyle: () => selectedPath && void copyStyle(selectedPath)`, `pasteStyle: () => void pasteStyle(selectedPath)`, `navigator: () => setDockTab((t) => (t === 'navigator' ? 'elements' : 'navigator'))`, `cycleDevice: () => setDevice((d) => (d === 'desktop' ? 'tablet' : d === 'tablet' ? 'mobile' : 'desktop'))`, `togglePanel: () => setDockCollapsed((c) => !c)`. `save` is declared after the hook — move the hook call below `save` or call through a ref (`saveRef.current = save`).
+7. Context-menu hints: add `hint: \`${modLabel}+Shift+C\`` / `+Shift+V` to copy/paste style items (~line 1339).
+
+**Accept:** each shortcut works from the parent page and from inside the canvas iframe; Ctrl+S in a text field saves and does not open browser dialog.
+**Tests:** extend `resolveShortcut` tests for every new combo, and that Ctrl+Shift+Z still = redo.
+
+##### VE-06 · Context menu: add Edit, Navigator, Reset style — Haiku
+
+**Elementor:** right-click menu has Edit, Duplicate, Copy, Paste, Paste Style, Reset Style, Navigator, Save as Global, Delete.
+
+**Do** (`VisualEditor.tsx`, items array ~line 1335 and the `onSelect` handler of `<ContextMenu>` ~line 1705):
+- `{ id: 'edit', label: 'Edit' }` first → `setSelectedPath(path); setDockTab('settings')`.
+- `{ id: 'navigator', label: 'Show in Navigator' }` → `setSelectedPath(path); setDockTab('navigator')`; ensure ancestors expanded via `setNavigatorExpandedState` (check `NavigatorPanel` key format, usually `pathKey(ancestorPath)` → `true`).
+- `{ id: 'reset-style', label: 'Reset style', disabled: locked || !userPermissions?.canEditStyle }` after paste-style → `applyBlocks((prev) => updateNode(prev, path, (n) => ({ ...n, design: n.design?.anchorId ? { anchorId: n.design.anchorId } : undefined })))` after `lockedOut(path)` check. Then remove `design` key entirely when undefined (spread without it).
+- Disable `paste-style` also when `!userPermissions?.canEditStyle`.
+
+**Accept:** menu shows new items; Reset style is one undo step and keeps the CSS ID.
+
+##### VE-07 · History panel (Actions) — Sonnet
+
+**Elementor:** History panel (Ctrl+Shift+H) lists every action ("Heading – Edited", "Section – Added") and jumps to any point.
+
+**Do:**
+1. `src/views/visualEditor/history.ts`: add optional `label?: string` to `Snapshot`; `pushHistory(h, before, { key, label })` stores label on the pushed entry (and on coalesce, keep the existing entry). Export pure `jumpHistory(h, current, steps: number)` that applies undo (negative) / redo (positive) `|steps|` times and returns `{history, snapshot}` or null.
+2. `applyBlocks(change, key?, label?)`: pass label. Give labels at call sites: Added <Type>, Deleted <Type>, Duplicated, Moved, Edited <Type> (in `updateSelected` – use `selectedDef?.label`), Pasted, Style pasted, Column change, Template inserted, Imported, AI insert. Type label: `getBlockDef(node.blockType)?.label` or element def label.
+3. New `src/views/visualEditor/HistoryPanel.tsx`: list `past` (oldest → newest), a "Current" row, then `future` reversed; click row → `restoreSnapshot` from `jumpHistory`. Re-render on `historyFlags` change (add a counter to force refresh).
+4. Add `'history'` to `DockTab` (`EditorDock.tsx`), tab button with clock icon, shortcut Ctrl+Shift+H (`resolveShortcut` → `'history'`).
+
+**Accept:** 5 edits → 5 labelled rows; clicking row 2 restores that state; redo rows remain clickable.
+**Tests:** `jumpHistory` and label storage in history tests.
+
+##### VE-08 · Revisions tab (server versions) — Sonnet. Depends on VE-07 (shares the History panel).
+
+**Elementor:** History → Revisions lists saved revisions with author/time; preview and Apply.
+
+**Do:**
+1. Second tab "Revisions" inside `HistoryPanel`. Load `GET /api/${surface.slug}/versions?where[parent][equals]=${route.id}&limit=50&sort=-updatedAt&depth=0` (globals: `/api/globals/${slug}/versions?limit=50&sort=-updatedAt&depth=0`), `credentials: 'include'`. Reference implementation: `src/admin/views/VersionsList.tsx` (author resolution, error handling). Hide the tab when the endpoint 404s (collection without versions).
+2. Each row: relative time, author, status (draft/published).
+3. "Apply" → `const raw = version.version[surface.blocksField]`; `applyBlocks(() => withIds(raw), undefined, 'Revision restored')`. It becomes an undoable edit; nothing is saved until the user saves (same as Elementor).
+4. Refresh the list after each successful `save()`.
+
+**Accept:** apply a revision → canvas shows old content, Undo returns to current, Save persists.
+
+##### VE-09 · More properties responsive — Sonnet
+
+**Elementor:** nearly every style control has per-device values. Here `RESPONSIVE_KEYS` (`src/lib/blockStyle.ts` line 57) omits position offsets, z-index, opacity, word spacing, transforms, font weight.
+
+**Do:**
+1. Add to `RESPONSIVE_KEYS`: `'position','posTop','posRight','posBottom','posLeft','zIndex','opacity','fontWeight','wordSpacing','tfRotate','tfScale','tfTranslateX','tfTranslateY'`.
+2. `deviceOverrideDecls()` (~line 1230): emit `position`, `top/right/bottom/left` (same units logic as the base in `selfPositionCss`/`advancedCss` — read them first), `z-index`, `opacity`, `font-weight`, `word-spacing`, and `transform` built with the existing `transformValue()` over the merged style (`mergedU`) when any `tf*` key is in `own`. All with `!important` like the others.
+3. Check sanitizers that whitelist override keys (`src/lib/design/storeDesign.ts`, `upgrade.ts`, `resolveDeviceOverride`) and extend them.
+4. `DesignPanel.tsx`: switch the corresponding controls in Position / Typography / Effects-transform / Advanced groups to the responsive components (`RespNumber`, `RespSelect`, `ctl = makeResponsive(...)`) so they show the device icon + inherited value, exactly like padding does.
+5. `designHelpers.ts` group reset must also clear these keys from `tablet`/`mobile`.
+
+**Accept:** set z-index 5 desktop, 10 mobile → mobile canvas uses 10, desktop 5; reset group clears both.
+**Tests:** add to `tests/int/responsive-editing.int.spec.ts`.
+
+---
+
+#### P2 – workflow polish
+
+##### VE-10 · Preview / view page button — Haiku
+
+**Elementor:** "Preview changes" eye icon in the top bar.
+
+**Do:** in the top bar (`VisualEditor.tsx` ~line 1490, before Save) add an eye-icon button, collection pages only (`pageSettings` present). URL: `/${pageSettings.slug}` (`/` when slug is `home` — check how `src/app/(frontend)/[...slug]` resolves home and reuse its rule). On click: if `dirty`, `await save(false)` first; then `window.open(url, '_blank', 'noopener')`. Tooltip: if `status !== 'published'` say "Draft changes are only visible after publishing". Key `ve.top.preview`.
+
+##### VE-11 · Save buttons reflect state — Haiku
+
+**Elementor:** "Update" button is greyed when there are no changes and shows a dot when there are.
+
+**Do:** "Save draft" button: `disabled={saving === 'saving' || !dirty}`. Publish button: add class `ve-btn--dirty` (small dot via `::after`, add CSS in `visualEditor.styles.ts`) when `dirty || status !== 'published'`. Keep `title`/tooltip explaining.
+
+##### VE-12 · Finder (Ctrl+E) — Sonnet
+
+**Elementor:** Finder jumps to pages, settings and commands.
+
+**Do:** new `FinderPalette.tsx` modelled on `QuickInsertPalette.tsx` (reuse its CSS + `filterQuickInsert`-style ranking from `quickInsert.ts`). Sources: (a) every node in the tree by navigator name (`label` or type label) → select + scroll into view (send `selected` to frame); (b) commands: Save, Publish, Page settings (`setDockTab('settings')` with no selection), Navigator, History, Desktop/Tablet/Mobile, Import/Export, Keyboard shortcuts; (c) other pages: `GET /api/pages?limit=20&where[title][like]=<q>&depth=0` → navigate to `/admin/visual-editor/collection/pages/<id>` (confirm if `dirty`). Shortcut Ctrl+E (`'finder'` action).
+
+##### VE-13 · Drag padding handles on canvas — Sonnet
+
+**Elementor:** hover a section → drag top/bottom padding bars on canvas.
+
+**Do:** in `Canvas.tsx` section render, add two thin handles (top/bottom edge, visible on hover/selected). Pointer-drag changes padding live (local preview state), on pointerup post a new bridge message `{ type: 'padding', path, side: 'top'|'bottom', value }` (add type + guard in `canvasBridge.ts`). Parent handler: `lockedOut` + `canEditStyle`, then `applyBlocks(...)` writing `design.paddingTop` on desktop or `design[device].paddingTop` on tablet/mobile (reuse logic in `makeResponsive` from `DesignPanel.tsx`), key `pad:${pathKey}`. Show px tooltip while dragging. Respect `paddingUnit`: only allow drag when unit is px/undefined.
+
+##### VE-14 · Multi-select — Sonnet (largest)
+
+**Elementor (Pro 3.x)** supports selecting several elements for delete/duplicate/copy.
+
+**Do:** `selectedPaths: NodePath[]` alongside `selectedPath` (primary). Ctrl/Cmd-click (canvas: add `additive` flag to the `select` bridge message; navigator: same) toggles; Shift-click in navigator selects range within the same container. Bulk ops: delete (delete deepest/last index first so paths stay valid), duplicate, copy (serialize as multi-node clipboard – `serializeSelection` already handles a list? check; else extend), paste style to all. Settings panel shows "N elements selected" with only the bulk actions. All bulk ops = one `applyBlocks` call (one undo step). Locked nodes are skipped with a notice.
+
+##### VE-15 · Global typography presets — Sonnet (needs product decision on data model)
+
+**Elementor:** Site Settings → Global Fonts (Primary/Secondary/Text/Accent) selectable from any typography control, updates everywhere when changed.
+
+**Today:** colours have theme tokens (`ColorRow` "Theme" button → `var(--…)`); typography has no global presets.
+
+**Do:** add `typePresets: { id, name, fontFamily, fontSize, fontSizeUnit, fontWeight, lineHeight, letterSpacing, textTransform }[]` to theme settings (see `src/admin/views/ThemeStylesView.tsx` and the theme global), emitted as CSS classes `.tp-<id>` + custom properties in the site theme CSS. `BlockStyle.typePreset?: string` → wrapper gets class `tp-<id>`; per-block typography values still override. DesignPanel Typography group: preset dropdown at top ("Custom" = none). Admin UI to edit presets on Theme styles page.
+
+## Appendix: Visual editor vs Elementor gap review (closed; items 3 and 4 moved to Tasks in `docs/remaining-work.md`)
+### Visual editor vs Elementor: gap list (Task 3)
+
+Task: evaluate Elementor (free + Pro, from general knowledge, not re-verified online) against the visual editor and list gaps, then build the agreed ones. Matt's clarifications (7 Nov 2026): no extra widget list; drag and drop of Elements panel items is a separate task (Task 2). Rule: the Catalogue principle in `docs/remaining-work.md` (one HTML primitive = one element; variations are options, Design effects, section display modes or templates; a new widget only for new markup, behaviour or data).
+
+Already covered elsewhere, excluded here: the Elementor tweaks appendix above VE-01..VE-15 (paste style, CSS id duplicates, hidden blocks, edit lock, shortcuts, context menu, history/revisions, more responsive keys, preview, save state, finder, padding drag, multi-select, global fonts). Where a gap below touches one of those it is marked "see VE-xx" and not planned again.
+
+Legend: exists / partial / missing. Effort S (under a day) / M (1-3 days) / L (a week or more). Value H/M/L. "Build now" = yes / later / no.
+
+Scope of what was read: `src/lib/elements/registry.ts` and `wave*Defs.ts` (about 120 element types, 33 hidden legacy), `src/lib/sectionLayout.ts` (section display modes and flow), `src/lib/blockStyle.ts` (style keys), `src/views/visualEditor/DesignPanel.tsx` and `FieldPanel.tsx`, `src/lib/mergeTags.ts`, `src/features/siteTemplates/*`, `src/features/forms/*`, `src/lib/popupTriggers.ts`, `src/lib/visibilityRules.ts`.
+
+---
+
+#### 1. Widgets (catalogue)
+
+Registry categories (`src/lib/elements/registry.ts` ELEMENT_CATEGORIES): text, media, interactive, marketing, layout, commerce, siteMeta, formFields. Deliberately not split Free/Pro. Per the clarification there is no new-widget wish list; only a coverage check against the Catalogue principle.
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Basic: heading, image, text editor, video, button, divider, spacer, icon, icon box, image box, star rating, counter, progress bar, tabs, accordion, toggle, alert, social icons, testimonial, HTML, anchor, shortcode, read more | exists: `heading`, `image`, `text-editor`, `video`, `divider`, `icon`, `icon-box`, `image-box`, `star-rating`, `counter`/`count-up`, `progress-bar`, `alert`, `social-icons`, `testimonial`, `html`, `anchor` (registry.ts, wave26Defs.ts, wave36Defs.ts); tabs, accordion, toggle as section display modes `tabs`/`accordion` (sectionLayout.ts SectionDisplay) with legacy `tabs`/`accordion`/`spacer`/`flip-box` hidden | none structural. Button is the `link` element (registry.ts) | - | - | no, covered |
+| Pro: posts, portfolio, slides, form, login, nav menu, price list, price table, flip box, call to action, media carousel, testimonial carousel, countdown, share buttons, blockquote, Lottie, hotspot, progress tracker | exists: `post-list`, `slides`, `nav-menu`, `price-list`, `pricing-table`, `call-to-action`, `image-carousel`, `countdown`, `share-buttons`, `quote`, `hotspots`, `reading-progress` (wave*Defs.ts); carousel is also a section mode; forms via `src/features/forms/elementDefs.ts` | missing: Lottie / animated SVG player; login form element (accounts exist in `src/features/accounts`, not placed as an element) | M | L | later: Lottie needs a third-party player; login is a feature decision |
+| Theme elements: site logo, site title, page title, post title, post excerpt, featured image, post content, author box, post navigation, post info, breadcrumbs, archive title, search form, nav menu, sitemap | exists: `site-logo`, `site-title`, `post-title`, `post-excerpt`, `post-featured-image`, `author-box`, `post-navigation`, `post-meta`, `auto-breadcrumbs`, `search-box`, `content-slot` (wave*Defs.ts) | missing: archive title/description element (archive template likely uses `dynamic-text`); sitemap | S | L | later |
+| Woo: product title/price/image/add to cart/rating, cart, checkout, my account, product grid | exists: `product-price`, `product-rating`, `add-to-cart`, `cart-link`, `product-grid` block (src/blocks), `coupon-code` | checkout / my-account placement is page based, not an element | - | L | no (shop has its own pages) |
+| Loop builder: loop grid, loop carousel, loop item template | exists: `loop-grid`, `archive-filter` (src/lib/elements/loopDefs.ts), site template kind `loop` (src/features/siteTemplates/kinds.ts) | missing: loop carousel (carousel is a section mode but a loop cannot render into it) | M | M | later |
+| Marquee / scrolling text, animated headline, motion text | exists: `text-ticker`, `animated-headline`, `split-text`, `gradient-text`, `outline-text`, `highlight-text`, heading `effect` options | none | - | - | no |
+
+Catalogue check: nothing in the registry duplicates a primitive in a way that needs merging; legacy duplicates are already hidden.
+
+---
+
+#### 2. Controls per widget (content / style / advanced)
+
+Editor structure: per-element Content fields from `ElementDef.fields` (rendered in `FieldPanel.tsx`), Design panel accordions in `DesignPanel.tsx`: background, hover, spacing, border, layout, typography, position, dividers, effects, advanced, visibility rules, visibility (lines 135-456).
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Background: classic colour/image/video, gradient, slideshow, overlay | exists: `BlockStyle.bgType` none/color/gradient/image/video/slideshow, overlay type/blend (src/lib/blockStyle.ts 18, 119-128) | gradient has two stops and an angle only (no multi-stop, radial); no hover/per-device background (see VE "more responsive keys") | M | L | later |
+| Border, radius per corner, box shadow | exists: borderWidth/Style/Color, radiusTl..Bl, boxShadow presets (blockStyle.ts 141-154) | shadow is 4 presets only: no custom offset/blur/spread/colour, no inset | S | M | later |
+| Typography (family, size, weight, line height, letter/word spacing, transform, style, decoration, shadow) | exists (blockStyle.ts 158-177); text FX gradient/outline/glow (textFx) | global fonts see VE-15; no `text-stroke` colour per element beyond textFx; no columns/drop cap | S | L | no |
+| CSS filters, blend mode, opacity, transform (rotate/scale/translate/skew), hover transform | exists: filterBlur/Brightness/Contrast/Saturate/Grayscale/Hue, blendMode, opacity, `tf*` and `tfh*` keys (blockStyle.ts 348-394) | no backdrop-filter except `glass`; no transform origin; no mask image (only `maskShape` presets) | S | L | later |
+| Hover/focus states | exists: hoverBgColor/TextColor/BorderColor/BoxShadow/Radius/Opacity/Transform, hoverTransitionMs, focusRing (blockStyle.ts 364-378) | no active/pressed state; hover overrides do not cover typography | S | L | later |
+| Position: absolute/fixed/sticky, offsets, z-index | exists: position/posTop..posLeft/zIndex (blockStyle.ts 379-384) | offsets not per device | S | M | later (fold into VE responsive keys) |
+| Custom CSS per element (Pro) | exists: `customCss`, `cssClasses`, `customClass`, `anchorId` (blockStyle.ts 343-398) | CSS id duplicates see VE-02 | - | - | covered |
+| Custom attributes (Pro: `key|value` pairs on the wrapper; data-*, aria-*, role) | missing: no key in BlockStyle (grep for customAttr/attributes: none) | no way to set aria-label, role, data-* hooks for analytics, tabindex, title | S | H | **yes** (build item 1) |
+| Custom width / flex child controls (align self, order, grow, basis) | exists: selfAlign/selfWidth/selfWidthPercent (blockStyle.ts 310-315), ColumnLayout grow/shrink/alignSelf/order/minWidth (sectionLayout.ts) | none significant | - | - | no |
+| Element-level motion | see section 5 | | | | |
+| Element tooltips / help text | exists: Tooltip + `helpText` on fields | none | - | - | no |
+
+---
+
+#### 3. Responsive options
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Breakpoints: up to 6 custom (mobile, mobile extra, tablet, tablet extra, laptop, widescreen) | partial: two site breakpoints, tablet and mobile, editable in Theme styles (src/admin/views/themeStyles/LayoutControls.tsx 113-116; defaults 900/600 in src/lib/sectionLayout.ts 142); desktop first, cascading | no laptop / widescreen / extra breakpoints | L | L | no: the three-device model is simple and consistent; extra breakpoints multiply every override |
+| Every control per device | partial: `RESPONSIVE_KEYS` is a fixed list of 25 (padding, margin, textAlign, minHeight, self width/align, fontSize, lineHeight, letterSpacing, corner radii) (blockStyle.ts 57-84) | wide gap: colours, backgrounds, borders, position offsets, reveal, hover not per device | M | M | see VE "more responsive keys" (do not duplicate) |
+| Hide per device | exists: desktop `hideOnDesktop`, tablet `tablet.hide`, mobile `mobile.hide`/legacy `hideOnMobile` (blockStyle.ts 88, 339-340, 1298-1315; DesignPanel.tsx 456-460) | none | - | - | no |
+| Reverse columns / flow per device | exists: `SectionLayout.direction` per device incl. `row-reverse`/`column-reverse`, per-device gap, wrap/justify/align (sectionLayout.ts 26-31); column `order` per device | none | - | - | no |
+| Grid per device | exists: gridColumns / Tablet / Mobile, gaps per device, gridMinWidth auto-fit, dense flow (sectionLayout.ts 74-90) | none | - | - | no |
+| Preview per device in editor | exists (top bar device switch, `EditDevice` in DesignPanel.tsx 784) | custom preview width see VE preview task | - | - | covered |
+| Container query / min-max width per device | partial: `minHeight` per device, `boxedWidth` single value (sectionLayout.ts) | boxed width and max width not per device | S | L | later |
+
+---
+
+#### 4. Flexbox / grid containers (section model)
+
+The section is the container: a column tree with display modes. `SectionDisplay = 'columns' | 'tabs' | 'accordion' | 'carousel' | 'grid' | 'flex' | 'modal' | 'stack' | 'hscroll' | 'sticky-steps'` (src/lib/sectionLayout.ts line 24), edited in `FieldPanel.tsx` (modes list near line 458).
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Flexbox container: direction, justify, align, wrap, gap, boxed width, min height | exists (sectionLayout.ts 35-60) | none | - | - | no |
+| Grid container: columns/rows, gaps, auto flow, justify/align | exists (sectionLayout.ts 74-90); no explicit row count/row template | explicit rows and spanning cells (grid area) | M | L | no (columns + auto flow cover real use) |
+| Nested containers | exists: sections nest (docs/remaining-work.md design model: "sections nest") | none | - | - | no |
+| Carousel / tabs / accordion / popup / scroll story as modes | exists as `display` modes (variations are options, matches the Catalogue principle) | carousel lacks autoplay, loop, dots (only perView, gap, arrows: sectionLayout.ts 62-67) | S | M | later: see section 5 |
+| Container shape dividers, background effects | exists: `dividerTop/Bottom` shapes + animation, `bgEffect`, particles, `maskShape` (blockStyle.ts 188-230) | none | - | - | no |
+
+---
+
+#### 5. Motion effects
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Entrance animation (fade, slide, zoom, bounce...) with duration, delay | exists: `reveal` fade/fade-up/fade-down/slide-left/slide-right/zoom/blur with distance, duration, delay, easing (blockStyle.ts 31, 268-273) | no repeat-on-scroll-out; presets fewer than Elementor (no rotate, flip, bounce) | S | L | no (Catalogue: add options only if asked) |
+| Scrolling effects (vertical/horizontal scroll, transparency, blur, rotate, scale tied to scroll position) | partial: `parallax` background / float-up / float-down with strength, distance, direction (blockStyle.ts 211-232); element `draw-line`, `count-up` are scroll triggered | no scroll-linked opacity/scale/rotate/translate-X; no viewport range | M | M-H | **yes** (build item 4), product decision on browser support |
+| Mouse effects (track, 3D tilt) | exists: `pointerFx` spotlight/tilt/magnetic with strength (blockStyle.ts 217, 283-285; src/components/blocks/PointerFx.tsx), custom cursor ring in `page-effects` (wave44Defs.ts 25) | no "mouse track" (element moves opposite/toward cursor) | S | L | later |
+| Sticky (top/bottom, offset, per device, effects on scroll) | partial: `position: sticky` + offsets (blockStyle.ts 379-384), `sticky-bar` element (wave37Defs.ts 39), `sticky-steps` mode | no "sticky only on desktop", no shrink/transparent-on-scroll header | M | M | later |
+| Hover animations | exists: `hover` lift/glow/zoom, `hoverTransform`, `kenBurns`, `borderFx` (blockStyle.ts 215-221) | none | - | - | no |
+| Reduced motion | exists: `prefers-reduced-motion` handled in `src/components/blocks/effects.css` | none | - | - | no |
+
+---
+
+#### 6. Templates and kits
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Template library (blocks, pages), save as template | exists: TemplateBrowser.tsx, SaveAsTemplate.tsx, page_templates, template libraries/repos (src/features/templateLibraries, templateRepos), suggested templates hub (src/features/templatesHub) | none | - | - | no |
+| Global widgets (edit once, update everywhere) | exists: `reusable-section` block (src/components/blocks/ReusableSectionBlock.tsx) and `template-part` element (src/lib/elements/templatePartDefs.ts) | none | - | - | no |
+| Kit import/export (whole site: templates, global styles, settings) | exists: `engage-template` export (src/features/siteTemplates/templateIo.ts), settings transfer (src/features/settingsTransfer), starters (src/features/siteTemplates/starters.ts, src/features/starters.ts) | no single "kit" that bundles theme tokens + templates + pages in one file; not verified end to end | L | M | later (needs product decision) |
+| Import/export JSON of a page | exists: ImportExportModal.tsx | none | - | - | no |
+| Theme style presets | exists: StylePresets.tsx; theme tokens in src/features/themeStyles | style presets (not tokens) are per block only | - | - | no |
+
+---
+
+#### 7. Dynamic data
+
+Mechanism: merge tags `{{title}}`, `{{field:name}}`, `{{option:site.phone}}` resolved by `src/lib/mergeTags.ts`; fields flagged `supportsMergeTags` get the `MergeTagPicker` (src/views/visualEditor/MergeTagPicker.tsx, lists custom field groups via `fetchFieldGroups`); dynamic widgets on templates (post-title, post-excerpt, post-featured-image, post-meta, `dynamic-text` in wave60Defs.ts with `{{post.title}} {{post.date}} {{page.title}} {{site.name}} {{product.price}}`); Loop grid + loop item templates (src/lib/elements/loopDefs.ts, src/features/siteTemplates/loopMergeTags.ts).
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Dynamic tags on text (post title, date, excerpt, author, site title) | exists (above) | none | - | - | no |
+| Custom fields (ACF-like) in tags | exists: `{{field:...}}` incl. repeater, gallery, group, link, map sub-keys (MergeTagPicker.tsx TYPE_HINT; src/features/customFields) | none | - | - | no |
+| Dynamic links (post URL, custom field URL, author page, contact URL) on buttons/headings | partial: merge tags are allowed in text fields; the `link` field type (FieldPanel.tsx 1451, registry heading `link`) has no dynamic picker; `safeUrl` exists in mergeTags.ts for safe URLs | verify in the brief: whether `link` values already pass through merge-tag resolution on the public render | M | H | **yes, as build item 3** (needs a check first and a product decision) |
+| Dynamic images (featured image, custom field image, site logo) on any image / background | partial: `post-featured-image` and `site-logo` elements, `{{image}}` tag for the loop item; generic `image` element and background image take a media pick only | image src / background from a tag | M | M | included in build item 3 |
+| Dynamic visibility / conditions on dynamic values | partial: custom field value conditions exist for template location (`fieldValue` rule param, src/fields/customFields/types.ts) | not on element visibility | M | L | later |
+| Request/URL parameters, cookies, user info as tags | missing: `{{...}}` tags are server-resolved and pages are edge cached for all visitors (docs/remaining-work.md Catalogue principle), so per-visitor tags need a browser resolver | `{{param:utm_source}}`, `{{user.name}}` with fallback text | M | M | later (needs product decision: privacy and flicker) |
+| Archive tags (title, description, count) | partial: archive templates exist (below) and the loop uses the archive; no archive title/description tag in `dynamic-text` list | add `{{archive.title}}`, `{{archive.description}}` | S | M | later |
+
+---
+
+#### 8. Theme builder
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Template types: header, footer, single (post, page, custom post type), archive (posts, category, tag, author, CPT), search results, 404, loop item, sidebar | exists: `SITE_TEMPLATE_KINDS` header, footer, single-post, single-product, single-event, archive-blog, archive-shop, not-found, search-results, archive-category, archive-tag, archive-author, loop, sidebar-left, sidebar-right (src/features/siteTemplates/kinds.ts); dashboard tabs mirror Elementor (kinds.ts TEMPLATE_TYPE_TABS) | missing kinds: single-page (pages use their own content), archive-event, archive-faq, single-faq | M | M | later: each kind needs a route and resolver; no demand shown |
+| Display conditions: include/exclude, all pages, specific pages, post type, category, author, date, etc. | exists: OR-of-AND groups, params templateKind, path, page, audience (members/guests/everyone), productCategory, productType, eventType, domain, language, postCategory, postTag; priority and specificity tie break (src/features/siteTemplates/conditions.ts 1-60, src/fields/customFields/types.ts 110) | include only: rules are equals / notEquals so exclude is expressible by notEquals; no "author" or "date" param | S | L | no |
+| Template coverage checking | exists: src/features/siteTemplates/coverage.ts | none | - | - | no |
+| Preview with sample item | exists: PreviewAsPicker.tsx | none | - | - | no |
+| Sticky header, transparent header over hero | partial: position/sticky keys on a header section | no "scroll behaviour" preset; see section 5 sticky | M | M | later |
+| Template export/import | exists: ExportTemplateLink.tsx, TemplateImport.tsx, templateIo.ts | none | - | - | no |
+
+---
+
+#### 9. Forms
+
+Source: `src/features/forms` (types.ts, conditions.ts, submit.ts, notify.ts, webhooks.ts, layout.ts, spam.ts, upload.ts, pricing.ts, slots.ts) and the form block/field panels (FormBlockFieldsPanel.tsx, FormSettingsPanel.tsx).
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Field types (text, email, textarea, url, tel, radio, select, checkbox, acceptance, number, date, time, file, password, html, hidden, recaptcha, step) | exists: FormFieldType text, textarea, email, phone, number, select, radio, checkbox, date, file, hidden, html, section, page (step), calculation, time, datetime, rating, nps, signature, matrix, appointment, address, consent, payment (src/features/forms/types.ts 16-41) | no `url` or `password` type (a `text` with a pattern covers url) | S | L | no |
+| Multi-step with progress | exists: `page` field + `FormConfig.steps` progress bar/steps/text, back/next labels (types.ts 63-67) | none | - | - | no |
+| Conditional logic (show/hide fields, all/any) | exists: ConditionalLogic with eight operators, evaluated on client and server (src/features/forms/conditions.ts) | notifications also conditional (FormNotificationRule.conditions, types.ts 97) | - | - | no |
+| Actions after submit: email, email 2, redirect, webhook, Mailchimp, Slack, Zapier, etc. | exists: notification rules with conditions (notify.ts), auto-confirmation email, success message or redirect (types.ts 69-72), webhooks with secret (webhooks.ts), CSV export (csv.ts, exportEndpoint.ts), data retention | no named integrations (Mailchimp/Slack: webhook covers); redirect cannot depend on an answer | S-M | M | later (conditional redirect, product decision) |
+| Spam: honeypot, reCAPTCHA | exists: src/features/forms/spam.ts | not verified which captcha providers | - | - | no |
+| Submissions list, export | exists: collections/FormSubmissions.ts, submissionsApi.ts | none | - | - | no |
+| Payments, appointments, calculation, save for later, prefill, embeds | exists (beyond Elementor: pricing.ts, slots.ts, expression.ts, saveForLater, prefill.ts, embeds.ts) | none | - | - | no |
+| Form style (field/button/label typography, per field) | partial: presets theme/minimal/rounded/underline/card/dark, accent, custom CSS (types.ts 53-61) | no per-element style controls on fields | M | L | no |
+
+---
+
+#### 10. Popups
+
+Popup = a section with display `modal` (src/lib/sectionLayout.ts 92-108; renderer src/components/blocks/PopupController.tsx; pure triggers src/lib/popupTriggers.ts; editor FieldPanel.tsx 606-681).
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Trigger: on page load (delay) | exists: `popupDelay` 0..600 s | none | - | - | no |
+| Trigger: on scroll depth | exists: `popupScroll` 1..100 % | none | - | - | no |
+| Trigger: on click | exists: any link/button to `#popup-<anchorId>` (popupTriggers.ts `popupHref`, PopupController.tsx 132-142), plus the section's own trigger button/link (`modalLabel`, `modalStyle`) | none | - | - | no |
+| Trigger: exit intent | exists: `popupExit` (popupTriggers.ts `isExitIntent`) | none | - | - | no |
+| Trigger: inactivity / user idle | missing | no idle timer | S | M | **yes** (build item 2) |
+| Trigger: scroll to element, after N page views | missing | | M | L | no |
+| Frequency (once per session / N days / always) | exists: `popupFrequency` always/session/days + `popupDays` (sectionLayout.ts 28-30, popupTriggers.ts `frequencyAllows`) | no "never show again after interacting/submitting" | S | M | later |
+| Bots never auto-open | exists: `isLikelyBot` (popupTriggers.ts) | none | - | - | no |
+| Display conditions (which pages, audience, devices) | partial: popup lives in the page tree, so it appears where its section is; site-wide popup = a section in a header/footer template with its own conditions (kinds.ts, conditions.ts); element visibility rules `showAuth/showRoles/showUrl/showFrom/showUntil` apply (blockStyle.ts 330-336) | no dedicated popup template kind; fine under the Catalogue principle | - | - | no |
+| Popup settings: overlay colour/opacity, close button position/style, close on overlay click/Esc, entrance and exit animation, prevent scroll, width/height/position | partial: `modalWidth` only (sectionLayout.ts 100-101); focus trap and scroll lock exist (PopupController.tsx header comment) | no overlay, close, animation, position options | S-M | M | **yes** (build item 2, same section) |
+| Advanced rules (cookie, referrer, device) | missing | | M | L | no |
+
+---
+
+#### 11. Admin-level Elementor features
+
+| Elementor capability | Here | Gap | Effort | Value | Build now? |
+|---|---|---|---|---|---|
+| Role manager (who can edit content / design) | exists: roles permissions + custom roles (src/features/roles/permissions.ts, resolve.ts), `canEditStyle` and per-element style key limits (roles/elementStyleKeys.ts), content edit guard, locks (roles/lockGuard.ts) | none | - | - | no |
+| Maintenance / coming soon mode | exists: bypass field (src/admin/components/MaintenanceBypassField.tsx), `internalRouteGuard`, site health (src/admin/views/SiteHealthView.tsx), form maintenance (src/features/forms/maintenance.ts) | no visually built maintenance page (template kind) - not verified; check before planning | S | L | later |
+| Custom fonts | exists: src/features/fonts (install.ts, selfHost.ts, catalog.ts, css.ts) | global fonts see VE-15 | - | - | no |
+| Custom icons (icon library upload) | partial: SVG upload sanitising (src/features/media/svgSanitise.ts); `icon` element and `icon-list` use a fixed glyph set (registry.ts, wave*Defs.ts) | no custom icon set picker; media-SVG as icon is possible via `image` | M | L | later |
+| Element caching / performance | exists: page edge cache and purge (src/features/speed: edgeCache.ts, pageCache.ts, purge.ts), prefetch rules, lazy-loaded controllers (`PopupControllerLazy`, `PointerFxLazy`, `ParticlesLazy`) | none | - | - | no |
+| Accessibility | partial: heading tag independent of size (registry.ts heading), `focusRing`, reduced-motion CSS, popup focus trap, form labels | missing: aria-label / role / tabindex controls (see build item 1), alt text enforcement is a media concern | S | M-H | build item 1 |
+| Global colours | exists: `globalColorId` tokens (src/lib/elements/colorResolver.ts), theme tokens (src/features/themeStyles) | global fonts see VE-15 | - | - | no |
+| Navigator, finder, history, shortcuts, responsive preview | see VE-04..VE-14 | | | | covered |
+| Display conditions on elements (Pro) | partial: showFrom/showUntil (dates), showAuth, showRoles, showUrl (blockStyle.ts 330-336, src/lib/visibilityRules.ts); decided in the browser | no weekday / time-of-day window, no language, no device-type | S | M | **yes** (build item 5) |
+
+---
+
+#### 12. Summary of confirmed gaps
+
+High value: custom attributes (aria/data), dynamic links and images on non-text controls, scroll-linked motion, popup idle trigger and presentation options, extra visibility rules.
+Medium/later: loop carousel, conditional redirect after form submit, archive tags, per-device background and position offsets (VE "more responsive keys"), custom icon library, sticky header behaviour, URL-param/user tags, kit bundle, extra template kinds.
+No: extra breakpoints beyond tablet/mobile, Lottie, grid areas, new widgets (per Matt).
+
+---
+
+#### Recommended build set
+
+Order is by value over effort. None overlaps VE-01..VE-15. All follow the Catalogue principle: no new element, only options on existing blocks. Common rules (from `docs/remaining-work.md`): additive JSON keys inside the stored `design` or `layout` (no column, so no migration unless stated); a new key goes into the style normaliser in `src/lib/blockStyle.ts` so unknown/unsafe values are dropped on read; ASCII source; English UI text keys in `src/features/uiStrings/keys.ts`; tests in `tests/int/*.int.spec.ts`; gates `pnpm exec tsc --noEmit`, related specs, `pnpm run build`. Design values are stored grouped (see "Design model" in remaining-work.md): check how `toStoredDesign` / `readFlatDesign` (src/lib/design) treat a new key, and add it to the group map if one exists.
+
+##### 1. Custom attributes and ARIA (effort S, value H, no product decision)
+
+- Stored key: `BlockStyle.customAttrs?: string` (one `name|value` pair per line, mirrors Elementor, max 10 lines, value max 200 chars). Keep it a string so it fits the flat/grouped design codec.
+- Files: `src/lib/blockStyle.ts` (type, normaliser with a pure `sanitizeCustomAttrs(text): {name,value}[]`, and wherever the wrapper props are produced from a style, e.g. the function that returns `id`/`className`/style for `anchorId` and `customClass`); `src/components/blocks/StyledBlock.tsx` and the element wrapper path in `src/components/blocks/elements/elementUtil.ts` to spread the attributes; the editor canvas wrapper (`src/views/visualEditor/CanvasBlockPreview.tsx`) so the canvas matches; `src/views/visualEditor/DesignPanel.tsx` in the Advanced accordion (line ~448) add a textarea with a one-line help.
+- Rules for `sanitizeCustomAttrs` (security, server and client use the same function): names must match `^[a-z][a-z0-9-]{0,39}$`; allow only `data-*`, `aria-*`, `role`, `title`, `tabindex` (-1/0 only), `lang`, `rel`, `target` is NOT allowed; reject anything starting with `on`, and `style`, `class`, `id`, `href`, `src`, `srcdoc`, `formaction`; values stripped of control characters and quotes handled by React (never use dangerouslySetInnerHTML); `role` limited to an allow list.
+- Also add the key to `src/features/roles/elementStyleKeys.ts` so roles without full style access are handled consistently (check that file for how keys are grouped).
+- Tests: unit tests for the sanitiser (accepts `aria-label|Open menu`, `data-track|cta`; rejects `onclick|x`, `style|x`, `href|javascript:x`, bad names, caps); a render test that the attribute reaches the wrapper; a round trip through readFlatDesign/toStoredDesign.
+- Product decision: none. Note for the brief: duplicates with VE-02 (CSS id) are separate; do not touch `anchorId`.
+
+##### 2. Popup: idle trigger and presentation options (effort S-M, value M)
+
+- Stored keys (inside `SectionLayout`, src/lib/sectionLayout.ts, next to `popupDelay`): `popupIdle?: number` (seconds of no pointer/key/scroll/touch input, 5..600); `popupOverlay?: number` (overlay darkness 0..90, default today's value); `popupCloseOnOverlay?: boolean` (unset = true); `popupShowClose?: boolean` (unset = true); `popupAnim?: 'none' | 'fade' | 'slide-up' | 'zoom'` (unset = current behaviour); `popupPosition?: 'center' | 'top' | 'bottom' | 'right'`.
+- Files: `src/lib/sectionLayout.ts` (types, sanitiser for the layout, `sectionLayoutProps` attributes/custom properties, and the static CSS in `sectionLayoutCss` which a test keeps in sync with styles.css: update both); `src/lib/popupTriggers.ts` add a pure `idleElapsed(lastActivityMs, nowMs, seconds)` helper; `src/components/blocks/PopupController.tsx` register the idle timer (reset on pointermove/keydown/scroll/touchstart, passive listeners, honour `frequencyAllows` and `isLikelyBot`, clear on unmount, do not auto-open if already open); `src/views/visualEditor/FieldPanel.tsx` (after line ~681, same pattern as `popupDelay`, clamp values like the neighbours); canvas preview must not auto-open in the editor (check how the existing triggers are suppressed there).
+- Accessibility: keep focus trap and Esc to close; Esc must still close when "close on overlay" is off; the close button hidden only when `popupShowClose === false` AND Esc still works (decide with product whether to forbid hiding both overlay close and close button, recommended: when the close button is hidden, Esc and overlay close stay on).
+- Tests: `tests/int` for `idleElapsed`, layout sanitiser clamps, CSS sync test (existing one for sectionLayoutCss), and a controller test if one exists for the delay trigger (search `popupTriggers` in tests/).
+- Product decision: whether a popup may be made impossible to close by mouse (recommend no; keep Esc and one visible close path).
+
+##### 3. Dynamic link and image sources (effort M, value H; needs a check and a product decision first)
+
+- Step 0 (30 minutes): confirm whether `link`-type element fields and `button` links already resolve merge tags on the public render (`resolveMergeTags` and `safeUrl` in `src/lib/mergeTags.ts`; renderer helpers in `src/components/blocks/elements/elementUtil.ts`; the `link` field control at `src/views/visualEditor/FieldPanel.tsx` line ~1451). If they do, the work is only the picker; if not, the resolver too.
+- Scope (recommended): allow merge tags in link URL and in image/background source on elements that appear in loop item templates, single templates and `template-part`. Tags offered: `{{url}}`, `{{image}}`, `{{field:name}}` (link subkeys `.url`), `{{option:...}}` (already defined in `src/lib/mergeTags.ts` lines 113-135 and `loopMergeTags.ts`).
+- Files: `src/lib/elements/fieldTypes.ts` (`supportsMergeTags` flag already exists, line 59: set it on `link` and image fields in `registry.ts`/wave defs and make the editor honour it for those types); `FieldPanel.tsx` (show `MergeTagPicker` beside the `link` and `media` controls; for media allow a "use tag" toggle storing `{ tag: '{{image}}' }` or a plain string, decide shape in the brief before coding); renderers for `image`, `link`, `image-box`, `icon-box` etc. through one shared helper so each element does not re-implement it; `safeUrl` must be applied after resolution (block `javascript:` and `data:` except images); empty result falls back to the stored fallback (no broken link/image).
+- Tests: resolver unit tests (tag resolves, unknown tag left as is or empty per mergeTags.ts convention, `javascript:` rejected after resolution, fallback image used), a snapshot render of a loop item with a dynamic link.
+- Product decision: (a) which element fields get it (recommend: link and main image of image, image-box, hero/cta backgrounds); (b) fallback behaviour for empty values; (c) server resolution only (pages are edge cached, so no per-visitor tags here).
+
+##### 4. Scroll-linked motion effects (effort M, value M-H; product decision)
+
+- Stored keys (flat BlockStyle, Effects accordion): `scrollFx?: 'none' | 'fade' | 'scale' | 'rotate' | 'translate-x' | 'translate-y' | 'blur'` as a list is better but keep it simple: `scrollFx?: ScrollFx` (one effect, like `parallax`), `scrollFxStrength?: number` (0..100), `scrollFxStart?: number` and `scrollFxEnd?: number` (viewport range in percent, 0..100, default 0 and 60), `scrollFxDir?: 'in' | 'out'`.
+- Renderer: progressive enhancement with CSS `animation-timeline: view()` and `animation-range` behind `@supports (animation-timeline: view())`, only transform/opacity/filter animate, off under `prefers-reduced-motion: reduce`. Browsers without support show the element in its normal state (no JS fallback; decide with product whether a small IntersectionObserver fallback is wanted: recommended no).
+- Files: `src/lib/blockStyle.ts` (type, normaliser with clamps, a CSS emitter next to the `parallax`/`reveal` code that outputs a class plus custom properties, no inline keyframe strings from user data), `src/components/blocks/effects.css` or a new `src/components/blocks/effects-scroll.css` (own file per the lessons; the reduced-motion rule goes in it) and register it where `effects53.css` is imported, `DesignPanel.tsx` Effects accordion (line ~443) with the dot/Reset pattern used for the other FX rows, canvas injection so the editor preview matches (see how `effects.css` reaches the canvas frame, CanvasFrame.tsx).
+- Conflicts to check: elements that already use `reveal` or `parallax` (decide: scrollFx and reveal both set `animation`; make them mutually exclusive in the editor with a one-line note, or compose via separate properties).
+- Tests: normaliser clamps and unknown values dropped, emitted class/custom properties, reduced-motion CSS present (string test like the sectionLayoutCss sync test).
+- Product decision: accept that Firefox ships `animation-timeline` later than Chromium/Safari (no effect there, page still fine)? If not, this becomes L with a JS scroll handler.
+
+##### 5. Extra visibility rules: weekday, time of day, language (effort S, value M; small product decision)
+
+- Stored keys (extend the visibility set, src/lib/blockStyle.ts `VIS_KEYS` line ~498 and `src/lib/visibilityRules.ts`): `showDays?: string` (comma list of weekday numbers 0-6, Sunday = 0, max 7), `showFromTime?: string` and `showUntilTime?: string` (`HH:MM`, 24 h; overnight windows allowed when from > until), `showLang?: string` (comma list of language codes, max 10, from the site's language list in src/features/multilingual).
+- Evaluate in the browser like the existing rules (pages are edge cached and identical for all visitors): add the fields to `VisRules` and `evaluateRules` (`src/lib/visibilityRules.ts` line 139), to `needsClientGate` (line 111) so the gate is activated, and to the compact JSON form parsed by `parseRules` (line 117); `VisibilityGate.tsx` provides the context (`VisContext`, line 25) — add the current time and the page language there. Language can be decided on the server for a single-language-per-URL site, but keep it in the same gate for consistency unless the page already knows its locale (check `src/features/multilingual`).
+- Editor: new rows in the "Visibility rules" accordion (DesignPanel.tsx line ~452), reusing the existing date inputs' pattern; summary chip text where rules are summarised (search `rulesFromStyle` callers).
+- Tests: extend the existing visibility rules specs (search `visibilityRules` in tests/int) with weekday, overnight window, language match/mismatch, invalid values dropped.
+- Product decision: which timezone the time window uses: the visitor's browser (simple, recommended) or the site timezone (needs a setting). Recommend visitor time and say so in the help text.
+
+##### Not recommended now (reasons)
+
+- More responsive keys, per-device background/position: already VE "more responsive keys".
+- Extra breakpoints, grid areas, Lottie: cost exceeds value; the three-device model is a strength.
+- Kit bundle, extra template kinds, loop carousel, conditional form redirect, URL-param tags: valuable but need product decisions or touch routes and resolvers; list them in `docs/remaining-work.md` as later items if Matt agrees.
+
+##### Open questions for Matt
+
+1. Build set: approve items 1 to 5, or choose a subset? (Items 1, 2, 5 are small and independent; 3 and 4 need the decisions above.)
+2. Popup close rules (item 2) and time zone (item 5): as recommended?
+3. Scroll effects (item 4): is "no effect in Firefox until it ships timeline support" acceptable?
