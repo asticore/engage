@@ -79,6 +79,7 @@ type ConfirmOrderResult = { orderID?: number; transactionID?: number; message?: 
 
 type CartContextValue = {
   cart: CartDoc | null
+  cartRef: StoredCartRef | null
   /** Set when lines from an earlier guest cart could not be merged into the account cart. */
   cartNotice: string | null
   cartLoading: boolean
@@ -371,6 +372,7 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
   const value = useMemo<CartContextValue>(
     () => ({
       cart,
+      cartRef,
       cartNotice,
       cartLoading,
       addItem,
@@ -383,7 +385,7 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
       initiatePayment,
       confirmOrder,
     }),
-    [cart, cartNotice, cartLoading, addItem, incrementItem, decrementItem, removeItem, addresses, addressesLoading, paymentsLoading, initiatePayment, confirmOrder],
+    [cart, cartRef, cartNotice, cartLoading, addItem, incrementItem, decrementItem, removeItem, addresses, addressesLoading, paymentsLoading, initiatePayment, confirmOrder],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
@@ -395,10 +397,11 @@ function useCartContext(hookName: string): CartContextValue {
   return ctx
 }
 
-export function useCart(): { cart: CartDoc | null; notice: string | null; isLoading: boolean; addItem: CartContextValue['addItem']; incrementItem: CartContextValue['incrementItem']; decrementItem: CartContextValue['decrementItem']; removeItem: CartContextValue['removeItem'] } {
+export function useCart(): { cart: CartDoc | null; cartRef: { id: number; secret: string } | null; notice: string | null; isLoading: boolean; addItem: CartContextValue['addItem']; incrementItem: CartContextValue['incrementItem']; decrementItem: CartContextValue['decrementItem']; removeItem: CartContextValue['removeItem'] } {
   const ctx = useCartContext('useCart')
   return {
     cart: ctx.cart,
+    cartRef: ctx.cartRef,
     notice: ctx.cartNotice,
     isLoading: ctx.cartLoading,
     addItem: ctx.addItem,

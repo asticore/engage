@@ -2,6 +2,7 @@
 
 import { useCart } from '@/engine/commerce/react'
 import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
+import { announceCartAdded } from '@/features/ecommerce/lib/miniCart'
 import Link from 'next/link'
 import React, { useState } from 'react'
 
@@ -11,7 +12,8 @@ export const AddToCartButton: React.FC<{ productID: number; label?: string }> = 
   const [added, setAdded] = useState(false)
 
   const handleClick = async () => {
-    await addItem({ product: productID }, 1)
+    const failure = await addItem({ product: productID }, 1)
+    if (failure === null) announceCartAdded()
     setAdded(true)
   }
 
