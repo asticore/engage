@@ -1,33 +1,20 @@
-'use client'
-
-import { useCart } from '@/engine/commerce/react'
+import type { Metadata } from 'next'
 import React from 'react'
 
-import { CartExtrasPart, CartLinesPart, CartSummaryPart, CartTotalsPart } from '@/components/CartParts'
-import { useDisplayMoney } from '@/components/DisplayCurrencyContext'
-import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
+import { CartPageClient } from '@/components/CartPageClient'
+import { cartPageReplaced } from '@/features/ecommerce/server/cartPage'
+import BuiltPage, { generateMetadata as builtMetadata } from '../[...slug]/page'
 
-/** The cart page, composed from the same parts the visual editor offers as elements (components/CartParts.tsx). */
-export default function CartPage() {
-  const { cart, notice } = useCart()
-  const t = useStoreText()
-  const money = useDisplayMoney()
-  const headingRef = React.useRef<HTMLHeadingElement | null>(null)
-  const items = cart?.items || []
+export const dynamic = 'force-dynamic'
 
-  return (
-    <div className="page-shell">
-      <h1 ref={headingRef} tabIndex={-1}>
-        {t('store.yourCart')}
-      </h1>
-      {notice && <p role="status" className="cart-notice">{notice}</p>}
-      <p role="status" aria-live="polite" className="sr-only">
-        {items.length === 0 ? '' : `${items.reduce((n, i) => n + (i.quantity || 0), 0)} items in your cart, subtotal ${money(cart?.subtotal)}`}
-      </p>
-      <CartLinesPart />
-      <CartExtrasPart />
-      <CartTotalsPart />
-      <CartSummaryPart />
-    </div>
-  )
+type Search = Promise<Record<string, string | string[] | undefined>>
+
+/** The cart page. With "Build the cart page in the visual editor" on (Shop switches) and a published page at the slug cart, that page is shown instead. */
+export async function generateMetadata(): Promise<Metadata> {
+  return (await cartPageReplaced()) ? builtMetadata({ params: Promise.resolve({ slug: ['cart'] }) }) : { title: 'Your cart' }
+}
+
+export default async function CartPage({ searchParams }: { searchParams: Search }): Promise<React.ReactElement> {
+  if (await cartPageReplaced()) return BuiltPage({ params: Promise.resolve({ slug: ['cart'] }), searchParams }) as unknown as React.ReactElement
+  return <CartPageClient />
 }

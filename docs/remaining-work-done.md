@@ -694,3 +694,10 @@ SAML 2.0 per organisation next to OpenID Connect. Signature checking is done by 
 - **23c Per-line stock warnings (built 17 Nov 2026).** The cart lines show a red message when the quantity in the cart can no longer be bought (stock or limits), using the same catalogue rules as add to cart. The server decides again at checkout. Code: `src/components/CartParts.tsx`.
 - **23e Cart lifetime setting (built 17 Nov 2026, part).** Shop switches: Cart lifetime (days), 30 by default, 1 to 365. The clean-up job deletes untouched guest carts older than that; account and paid carts stay. Migration `20270317_180000_cart_lifetime`. Code: `lib/cartLifetime.ts`, `accountCart.ts` (`sweepGuestCarts`), `cron/jobs.ts`, tests in `tests/int/guest-cart.int.spec.ts`. Still open: the expiry reminder email.
 
+### Task 23 leftovers, third batch (cart lifetime follow-ups)
+
+- **Empty cart suggestions (23c):** an empty cart shows You might like with the newest in-stock products (`newestProducts` in `server/recommendations.ts`, `/api/shop-recommendations` with an empty list). Follows the Show product recommendations switch.
+- **Free-shipping bar per zone (23c):** `/api/shop-free-shipping` takes country, state and postcode and uses the matching zone (`thresholdForAddress` in `lib/freeShipping.ts`); the bar reads the destination saved by the cart estimate and updates when it changes.
+- **Cart expiry reminder (23e):** Cart expiry reminder (days before) in Shop switches, off by default. `server/cartExpiry.ts` runs in the abandoned-carts job, emails a signed-out cart's owner once, only for a known address that has not unsubscribed. Column `expiry_reminder_at` on carts, migration `20270317_190000_cart_expiry_reminder`. English only.
+- **Elements and /cart (23d):** `MiniCartLinesPart` is the compact list the mini cart drawer now uses and is the new Cart lines (compact) element. Switch Build the cart page in the visual editor (Shop switches) makes `/cart` show the published page with slug cart (`server/cartPage.ts`); the built-in cart is `components/CartPageClient.tsx`.
+

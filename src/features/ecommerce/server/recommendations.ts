@@ -93,6 +93,15 @@ export async function recommendedProducts(engine: RecommendEngine, input: { anch
 }
 
 /** A product card for the cart's suggestions (public fields only). `price` is whole shop currency units, like priceInAUD. */
+/** Newest in-stock, shoppable products, for the empty cart. */
+export async function newestProducts(engine: RecommendEngine, limit: number): Promise<Doc[]> {
+  const { docs: found } = (await engine
+    .find({ collection: 'products', where: { _status: { equals: 'published' } }, sort: '-createdAt', limit: Math.max(limit * 4, 12), depth: 1, overrideAccess: true })
+    .catch((): { docs: Doc[] } => ({ docs: [] }))) as { docs: Doc[] }
+  const docs = await excludeProtected('products', found)
+  return docs.filter((doc) => shoppable(doc) && computeStockStatus(doc as never) !== 'outofstock').slice(0, limit)
+}
+
 export function recommendationCard(doc: Doc): CrossSellCard {
   const first = Array.isArray(doc.images) ? doc.images[0] : null
   const image = first && typeof first === 'object' && typeof (first as { url?: unknown }).url === 'string' ? (first as { url: string }).url : null

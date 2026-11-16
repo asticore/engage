@@ -36,6 +36,12 @@ export const WAVE66_ELEMENTS: ElementDef[] = [
     defaultProps: () => ({}),
   },
   {
+    type: 'cart-lines-compact', label: 'Cart lines (compact)', icon: String.fromCodePoint(0x1f6d2), category: 'commerce',
+    description: 'A short list of the cart items with quantity and remove, as in the mini cart drawer. Use it in a header dropdown or a side column.',
+    fields: [],
+    defaultProps: () => ({}),
+  },
+  {
     type: 'cart-totals', label: 'Cart coupon and estimate', icon: String.fromCodePoint(0x1f9fe), category: 'commerce',
     description: 'Free-shipping bar, coupon code, shipping estimate and tax, and the order note and gift message. Shows nothing while the cart is empty.',
     fields: [],

@@ -117,6 +117,7 @@ export const Carts: CollectionConfig = {
     { name: 'email', type: 'email', index: true, access: serverOnlyFieldAccess, admin: { position: 'sidebar', readOnly: true, description: 'Captured at checkout.' } },
     { name: 'remindersSent', type: 'number', defaultValue: 0, access: serverOnlyFieldAccess, admin: { position: 'sidebar', readOnly: true } },
     { name: 'lastReminderAt', type: 'date', access: serverOnlyFieldAccess, admin: { position: 'sidebar', readOnly: true } },
+    { name: 'expiryReminderAt', type: 'date', access: serverOnlyFieldAccess, admin: { position: 'sidebar', readOnly: true, description: 'When the cart expiry reminder was sent.' } },
     { name: 'recoveredAt', type: 'date', access: serverOnlyFieldAccess, admin: { position: 'sidebar', readOnly: true } },
     { name: 'unsubscribed', type: 'checkbox', defaultValue: false, access: serverOnlyFieldAccess, admin: { position: 'sidebar', readOnly: true } },
   ],

@@ -18,6 +18,9 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
   'abandoned-carts': async ({ engine }) => {
     const { runAbandonedCartReminders } = await import('@/features/ecommerce/server/abandoned')
     await runAbandonedCartReminders(engine as never)
+    // The expiry reminder shares this job; a failure here must not fail the abandoned-cart run.
+    const { runCartExpiryReminders } = await import('@/features/ecommerce/server/cartExpiry')
+    await runCartExpiryReminders(engine as never).catch((): { sent: number } => ({ sent: 0 }))
     // Ended stock holds (Task 23e) are cleaned up on the same timer.
     const { sweepStockHolds } = await import('@/features/ecommerce/server/stockHold')
     const connect = await import('@/cms/db/connect')
