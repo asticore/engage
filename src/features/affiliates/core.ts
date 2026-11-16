@@ -129,3 +129,20 @@ export function readUtmCookie(cookieHeader: string | null | undefined): Utm {
   }
   return { source: '', medium: '', campaign: '' }
 }
+
+/** Media ids for the creatives kit from a comma separated list: positive whole numbers, no repeats, at most 20. */
+export function parseCreativeIds(text: unknown): number[] {
+  const ids: number[] = []
+  for (const part of String(text ?? '').split(',')) {
+    const n = Number(part.trim())
+    if (Number.isInteger(n) && n > 0 && !ids.includes(n)) ids.push(n)
+    if (ids.length >= 20) break
+  }
+  return ids
+}
+
+/** The HTML an affiliate pastes to show a banner that links to their referral link. Values are escaped. */
+export function bannerSnippet(v: { link: string; imageUrl: string; alt: string }): string {
+  const esc = (t: string): string => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return `<a href="${esc(v.link)}" rel="sponsored nofollow"><img src="${esc(v.imageUrl)}" alt="${esc(v.alt)}"></a>`
+}

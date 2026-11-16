@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
 import { affiliateReport, balances, clampDays, clampPct, payoutsCsv } from '@/features/affiliates/commission'
-import { MAX_AFFILIATES, STATUSES, newToken, normaliseCode, normaliseCoupon, suggestCode, toConsentCategory, type AffiliateStatus } from '@/features/affiliates/core'
+import { MAX_AFFILIATES, parseCreativeIds, STATUSES, newToken, normaliseCode, normaliseCoupon, suggestCode, toConsentCategory, type AffiliateStatus } from '@/features/affiliates/core'
 import * as store from '@/features/affiliates/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { adminRequestRefusal } from '@/features/forms/origin'
@@ -34,10 +34,10 @@ export async function GET(request: Request): Promise<Response> {
   if (new URL(request.url).searchParams.get('export') === 'payouts') {
     return new Response(payoutsCsv(await store.payoutsForExport(d1)), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="affiliate-payouts.csv"', 'Cache-Control': 'no-store' } })
   }
-  const [affiliates, settings, rows, commissions, payouts, configured, productRates, products, visits] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1), store.listProductRates(d1), store.productChoices(d1), store.recentVisits(d1, 50)])
+  const [affiliates, settings, rows, commissions, payouts, configured, productRates, products, visits, images] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1), store.listProductRates(d1), store.productChoices(d1), store.recentVisits(d1, 50), store.imageChoices(d1)])
   const now = new Date()
   const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now), ...affiliateReport(rows.filter((r) => r.affiliate_id === a.id), a.visits) }))
-  return json({ affiliates: withBalances, settings, commissions, payouts, configured, productRates, products, visits })
+  return json({ affiliates: withBalances, settings, commissions, payouts, configured, productRates, products, visits, images })
 }
 
 /**
@@ -74,7 +74,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (body.action === 'settings') {
     const s = body.settings as Record<string, unknown> | undefined
-    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, consentCategory: toConsentCategory(s?.consentCategory), emailNotifications: s?.emailNotifications !== false, tiers: typeof s?.tiers === 'string' ? s.tiers.trim().slice(0, 1000) : '', terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
+    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, consentCategory: toConsentCategory(s?.consentCategory), emailNotifications: s?.emailNotifications !== false, tiers: typeof s?.tiers === 'string' ? s.tiers.trim().slice(0, 1000) : '', creatives: parseCreativeIds(s?.creatives).join(','), terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
     return json({ ok: true })
   }
   const id = Number(body.id)

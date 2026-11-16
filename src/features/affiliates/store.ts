@@ -53,14 +53,14 @@ export async function logVisit(d1: D1, v: { affiliateId: number; path: string; s
 
 /* ------------------------------------------------------------- settings */
 
-export type AffiliateSettings = { cookieDays: number; clickRule: 'first' | 'last'; commissionPct: number; pendingDays: number; autoApprove: boolean; terms: string; minPayoutCents: number; firstOrderOnly: boolean; consentCategory: ConsentCategory; emailNotifications: boolean; tiers: string }
-export const DEFAULT_SETTINGS: AffiliateSettings = { cookieDays: 30, clickRule: 'last', commissionPct: 10, pendingDays: 30, autoApprove: false, terms: '', minPayoutCents: 0, firstOrderOnly: false, consentCategory: 'necessary', emailNotifications: true, tiers: '' }
+export type AffiliateSettings = { cookieDays: number; clickRule: 'first' | 'last'; commissionPct: number; pendingDays: number; autoApprove: boolean; terms: string; minPayoutCents: number; firstOrderOnly: boolean; consentCategory: ConsentCategory; emailNotifications: boolean; tiers: string; creatives: string }
+export const DEFAULT_SETTINGS: AffiliateSettings = { cookieDays: 30, clickRule: 'last', commissionPct: 10, pendingDays: 30, autoApprove: false, terms: '', minPayoutCents: 0, firstOrderOnly: false, consentCategory: 'necessary', emailNotifications: true, tiers: '', creatives: '' }
 
 export async function getSettings(d1: D1): Promise<AffiliateSettings> {
   try {
-    const r = (await all(d1, 'SELECT cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, min_payout_cents, first_order_only, consent_category, email_notifications, tiers FROM eg_affiliate_settings WHERE id = 1'))[0]
+    const r = (await all(d1, 'SELECT cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, min_payout_cents, first_order_only, consent_category, email_notifications, tiers, creatives FROM eg_affiliate_settings WHERE id = 1'))[0]
     if (!r) return DEFAULT_SETTINGS
-    return { cookieDays: Number(r.cookie_days ?? 30), clickRule: r.click_rule === 'first' ? 'first' : 'last', commissionPct: Number(r.commission_pct ?? 10), pendingDays: Number(r.pending_days ?? 30), autoApprove: Number(r.auto_approve ?? 0) === 1, terms: String(r.terms ?? ''), minPayoutCents: Number(r.min_payout_cents ?? 0), firstOrderOnly: Number(r.first_order_only ?? 0) === 1, consentCategory: toConsentCategory(r.consent_category), emailNotifications: Number(r.email_notifications ?? 1) === 1, tiers: String(r.tiers ?? '') }
+    return { cookieDays: Number(r.cookie_days ?? 30), clickRule: r.click_rule === 'first' ? 'first' : 'last', commissionPct: Number(r.commission_pct ?? 10), pendingDays: Number(r.pending_days ?? 30), autoApprove: Number(r.auto_approve ?? 0) === 1, terms: String(r.terms ?? ''), minPayoutCents: Number(r.min_payout_cents ?? 0), firstOrderOnly: Number(r.first_order_only ?? 0) === 1, consentCategory: toConsentCategory(r.consent_category), emailNotifications: Number(r.email_notifications ?? 1) === 1, tiers: String(r.tiers ?? ''), creatives: String(r.creatives ?? '') }
   } catch {
     return DEFAULT_SETTINGS
   }
@@ -68,8 +68,8 @@ export async function getSettings(d1: D1): Promise<AffiliateSettings> {
 
 export async function saveSettings(d1: D1, s: AffiliateSettings, nowIso: string): Promise<void> {
   await d1
-    .prepare('INSERT INTO eg_affiliate_settings (id, cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, min_payout_cents, first_order_only, consent_category, email_notifications, tiers, updated_at) VALUES (1,?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12) ON CONFLICT(id) DO UPDATE SET cookie_days=?1, click_rule=?2, commission_pct=?3, pending_days=?4, auto_approve=?5, terms=?6, min_payout_cents=?7, first_order_only=?8, consent_category=?9, email_notifications=?10, tiers=?11, updated_at=?12')
-    .bind(s.cookieDays, s.clickRule, s.commissionPct, s.pendingDays, s.autoApprove ? 1 : 0, s.terms, s.minPayoutCents, s.firstOrderOnly ? 1 : 0, s.consentCategory, s.emailNotifications ? 1 : 0, s.tiers, nowIso)
+    .prepare('INSERT INTO eg_affiliate_settings (id, cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, min_payout_cents, first_order_only, consent_category, email_notifications, tiers, creatives, updated_at) VALUES (1,?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13) ON CONFLICT(id) DO UPDATE SET cookie_days=?1, click_rule=?2, commission_pct=?3, pending_days=?4, auto_approve=?5, terms=?6, min_payout_cents=?7, first_order_only=?8, consent_category=?9, email_notifications=?10, tiers=?11, creatives=?12, updated_at=?13')
+    .bind(s.cookieDays, s.clickRule, s.commissionPct, s.pendingDays, s.autoApprove ? 1 : 0, s.terms, s.minPayoutCents, s.firstOrderOnly ? 1 : 0, s.consentCategory, s.emailNotifications ? 1 : 0, s.tiers, s.creatives, nowIso)
     .run()
 }
 
@@ -234,4 +234,27 @@ export async function findByEmail(d1: D1, email: string): Promise<Affiliate | nu
   if (email === '') return null
   const r = (await all(d1, 'SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, a.rate_pct, a.coupon_code, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a WHERE lower(a.email) = ?1 LIMIT 1', email.trim().toLowerCase()))[0]
   return r ? { id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token ?? ''), ratePct: toRate(r.rate_pct), couponCode: String(r.coupon_code ?? '') } : null
+}
+
+export type Creative = { id: number; url: string; alt: string; filename: string; width: number; height: number }
+const toCreative = (r: Row): Creative => ({ id: Number(r.id), url: String(r.url ?? ''), alt: String(r.alt ?? ''), filename: String(r.filename ?? ''), width: Number(r.width ?? 0), height: Number(r.height ?? 0) })
+
+/** Recent images from the media library, for picking the creatives kit. */
+export async function imageChoices(d1: D1): Promise<Creative[]> {
+  try {
+    return (await all(d1, "SELECT id, url, alt, filename, width, height FROM eg_media WHERE mime_type LIKE 'image/%' ORDER BY id DESC LIMIT 100")).map(toCreative)
+  } catch {
+    return []
+  }
+}
+
+/** The chosen creatives, in the order picked. Missing files are skipped. */
+export async function creativesByIds(d1: D1, ids: number[]): Promise<Creative[]> {
+  if (ids.length === 0) return []
+  try {
+    const rows = (await all(d1, `SELECT id, url, alt, filename, width, height FROM eg_media WHERE id IN (${ids.map((_, i) => `?${i + 1}`).join(',')})`, ...ids)).map(toCreative)
+    return ids.map((id) => rows.find((r) => r.id === id)).filter((r): r is Creative => Boolean(r && r.url))
+  } catch {
+    return []
+  }
 }

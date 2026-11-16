@@ -81,3 +81,16 @@ describe('affiliate attribution (31a)', () => {
     expect(referralAllowed('analytics', rec(true))).toBe(false)
   })
 })
+
+describe('affiliate creatives (26c)', () => {
+  it('parses media ids and builds a safe banner snippet', async () => {
+    const { parseCreativeIds, bannerSnippet } = await import('@/features/affiliates/core')
+    expect(parseCreativeIds('3, 5,3,x,-1,0,7')).toEqual([3, 5, 7])
+    expect(parseCreativeIds(undefined)).toEqual([])
+    expect(parseCreativeIds(Array.from({ length: 40 }, (_, i) => i + 1).join(','))).toHaveLength(20)
+    const html = bannerSnippet({ link: 'https://x.com/?ref=a&b=1', imageUrl: 'https://x.com/i.png', alt: 'A "big" <sale>' })
+    expect(html).toContain('href="https://x.com/?ref=a&amp;b=1"')
+    expect(html).toContain('alt="A &quot;big&quot; &lt;sale&gt;"')
+    expect(html).toContain('rel="sponsored nofollow"')
+  })
+})
