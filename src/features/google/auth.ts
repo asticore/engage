@@ -1,5 +1,6 @@
 import type { Engine } from '@/engine'
 
+import { readSocialConfig } from '@/features/socialLogin/settings'
 import { GOOGLE_CONNECTION_SLUG, TOKEN_URL } from './constants'
 import { requestJson } from './http'
 import { toConnectionStatus, type GoogleConnectionStatus } from './status'
@@ -44,8 +45,25 @@ export async function readGoogleConnection(engine: GoogleEngine): Promise<Google
 
 /** The client ID and secret, for the token exchange only. Never send these to the browser. */
 export async function readGoogleClient(engine: GoogleEngine): Promise<{ clientId: string; clientSecret: string }> {
-  const doc = await readGoogleDoc(engine)
-  return { clientId: text(doc?.clientId), clientSecret: text(doc?.clientSecretEnc) }
+  return resolveGoogleClient(engine, await readGoogleDoc(engine))
+}
+
+/**
+ * The Google connection's own client when both fields are filled, otherwise the Google sign-in client
+ * from Security (social login), so one Google app can serve both. The connection's redirect address
+ * must also be listed on that app in the Google console.
+ */
+export async function resolveGoogleClient(engine: GoogleEngine, doc: Record<string, unknown> | null): Promise<{ clientId: string; clientSecret: string }> {
+  const own = { clientId: text(doc?.clientId), clientSecret: text(doc?.clientSecretEnc) }
+  if (own.clientId && own.clientSecret) return own
+  try {
+    const social = await readSocialConfig(engine as never)
+    const g = social.providers.google
+    if (g.clientId && g.clientSecret) return { clientId: g.clientId, clientSecret: g.clientSecret }
+  } catch {
+    // Fall through to whatever the connection holds.
+  }
+  return own
 }
 
 /** Plain-English reason for a refused refresh, from Google's error code. */
@@ -79,8 +97,7 @@ export async function getGoogleAccessToken(engine: GoogleEngine): Promise<Google
     return { ok: true, token: cached.token }
   }
 
-  const clientId = text(doc?.clientId)
-  const clientSecret = text(doc?.clientSecretEnc)
+  const { clientId, clientSecret } = await resolveGoogleClient(engine, doc)
   if (!clientId || !clientSecret) {
     return { ok: false, reason: 'refresh-failed', message: 'The Google client ID or secret is missing. Add them on the Google connection page.' }
   }
