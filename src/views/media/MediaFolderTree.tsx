@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { requestJson, postJson } from '@/features/media/admin/mediaApi'
+import type { FolderRecord } from '@/features/media/folderRecords'
+import { MediaFolderSettings } from './MediaFolderSettings'
 import { breadcrumb, buildFolderTree, droppedPath, leafOf, parentOf, type FolderCount, type FolderNode } from '@/features/media/folderTree'
 
 export const MEDIA_IDS_TYPE = 'application/x-engage-media-ids'
@@ -21,11 +23,22 @@ export function MediaFolderTree({ canEdit }: { canEdit: boolean }) {
   const [over, setOver] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [focus, setFocus] = useState<string>(current)
+  const [records, setRecords] = useState<FolderRecord[]>([])
+  const [roles, setRoles] = useState<Array<{ value: string; label: string }>>([])
+  const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([])
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const load = useCallback(async () => {
-    const res = await requestJson<{ rows: FolderCount[] }>('/api/admin-media-folders')
-    if (res.ok !== false) setRows(res.data.rows)
+    const res = await requestJson<{ rows: FolderCount[]; folders?: FolderRecord[]; roles?: Array<{ value: string; label: string }>; companies?: Array<{ id: string; name: string }>; isAdmin?: boolean }>('/api/admin-media-folders')
+    if (res.ok !== false) {
+      setRows(res.data.rows)
+      setRecords(res.data.folders ?? [])
+      setRoles(res.data.roles ?? [])
+      setCompanies(res.data.companies ?? [])
+      setIsAdmin(Boolean(res.data.isAdmin))
+    }
   }, [])
+  const recordOf = useMemo(() => new Map(records.map((r) => [r.path, r])), [records])
   useEffect(() => {
     void load()
   }, [load, current])
@@ -97,10 +110,14 @@ export function MediaFolderTree({ canEdit }: { canEdit: boolean }) {
   const newFolder = async (parent: string) => {
     const name = window.prompt(parent ? `New folder inside ${parent}` : 'New folder name')
     if (!name) return
-    // A folder exists once it holds a file: open it, so uploads and drops land there.
-    const path = parent ? `${parent}/${name}` : name
-    go(path)
-    setMessage(`Folder ${path} is ready. It appears in the tree once it holds a file.`)
+    const res = await postJson<{ path: string; created: boolean }>('/api/admin-media-folders', { action: 'create', parent, name })
+    if (res.ok === false) {
+      setMessage(res.error)
+      return
+    }
+    await load()
+    go(res.data.path)
+    setMessage(res.data.created ? `Folder ${res.data.path} created.` : `Folder ${res.data.path} already exists.`)
   }
   const rename = async (path: string) => {
     const name = window.prompt('Rename folder', leafOf(path))
@@ -188,7 +205,9 @@ export function MediaFolderTree({ canEdit }: { canEdit: boolean }) {
                   onClick={() => go(item.path)}
                   className="flex-1 truncate border-0 bg-transparent p-[3px] text-left text-[calc(var(--base)*0.78)] text-[var(--theme-elevation-900)]"
                 >
+                  {item.node && recordOf.get(item.path) && recordOf.get(item.path)?.color !== '#888888' ? <span aria-hidden="true" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 4, marginRight: 4, background: recordOf.get(item.path)?.color }} /> : null}
                   {label} <span className="text-[var(--theme-elevation-500)]">({count})</span>
+                  {item.node && ((recordOf.get(item.path)?.allowedRoles.length ?? 0) + (recordOf.get(item.path)?.allowedCompanies.length ?? 0) > 0 || recordOf.get(item.path)?.visibility === 'private') ? <span title="Limited folder" aria-label="Limited folder"> 🔒</span> : null}
                 </button>
               </div>
             </li>
@@ -202,6 +221,10 @@ export function MediaFolderTree({ canEdit }: { canEdit: boolean }) {
           {current ? <button type="button" className={btn} onClick={() => void remove(current)}>Delete</button> : null}
         </div>
       ) : null}
+      {canEdit && current && recordOf.get(current) ? (
+        <MediaFolderSettings record={recordOf.get(current) as FolderRecord} roles={roles} companies={companies} isAdmin={isAdmin} onSaved={() => void load()} />
+      ) : null}
+      {recordOf.get(current)?.description ? <p className="m-0 text-[calc(var(--base)*0.7)] text-[var(--theme-elevation-600)]">{recordOf.get(current)?.description}</p> : null}
       {message ? <p role="status" className="m-0 text-[calc(var(--base)*0.7)] text-[var(--theme-elevation-600)]">{message}</p> : null}
     </nav>
   )

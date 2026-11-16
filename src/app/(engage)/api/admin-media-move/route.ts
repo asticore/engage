@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import { authorizeMedia } from '@/features/media/access'
+import { rawD1 } from '@/features/ecommerce/server/db'
+import { userMayUse, type D1 } from '@/features/media/folderRecordsStore'
 import { sanitizeFolder } from '@/features/media/folders'
 import { mediaUpdater, parseIdList, readJsonBody, type MediaEngine } from '@/features/media/store'
 
@@ -19,6 +21,10 @@ export async function POST(request: Request): Promise<Response> {
       { error: 'Folder names can use letters, numbers, spaces, hyphens, underscores and slashes, up to 120 characters.' },
       { status: 400 },
     )
+  }
+
+  if (!(await userMayUse((await rawD1()) as never as D1, auth.context.user, auth.context.isAdmin, folder))) {
+    return NextResponse.json({ error: 'You do not have access to that folder.' }, { status: 403 })
   }
 
   const update = mediaUpdater(auth.context.engine as unknown as MediaEngine)

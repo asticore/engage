@@ -7,6 +7,9 @@ import type { Engine } from '@/engine'
 import { IMAGES_UNAVAILABLE_MESSAGE, resolveOptimiseSettings } from '@/features/media/optimise'
 import { resolveImagesBinding } from '@/features/media/imagesBinding'
 import { distinctFolders } from '@/features/media/folders'
+import * as folderRecords from '@/features/media/folderRecords'
+import * as folderStore from '@/features/media/folderRecordsStore'
+import { getAdminContext } from '@/admin/auth'
 import { MediaFolderTree } from './MediaFolderTree'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { pathOf, type Tag } from '@/features/mediaTags/logic'
@@ -249,6 +252,22 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
     }
     const qs = params.toString()
     return qs ? `?${qs}` : '?'
+  }
+
+  // Folder records: hide files and folders the signed-in person's role or company may not use. Never fails the page.
+  try {
+    const d1 = (await rawD1()) as never as folderStore.D1
+    const recs = await folderStore.listRecords(d1)
+    if (recs.some((r) => folderRecords.isLimited(r))) {
+      const adminContext = await getAdminContext()
+      if (!adminContext.isAdmin) {
+        const viewer = await folderStore.viewerFor(d1, adminContext.user as never, false)
+        docs = docs.filter((doc) => folderRecords.mayUseFolder(recs, typeof doc.folder === 'string' ? doc.folder : '', viewer))
+        folders = folders.filter((f) => folderRecords.mayUseFolder(recs, f, viewer))
+      }
+    }
+  } catch {
+    // No folder records: show everything, as before.
   }
 
   const galleryDocs: GalleryDoc[] = docs.map((doc) => ({
