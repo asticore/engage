@@ -80,6 +80,8 @@ export type SeoSettingsDoc = {
     gtmContainerId?: string | null
     metaPixelId?: string | null
     requireCookieConsent?: boolean | null
+    sendUserId?: boolean | null
+    hashUserId?: boolean | null
   } | null
   schema?: {
     organisationName?: string | null

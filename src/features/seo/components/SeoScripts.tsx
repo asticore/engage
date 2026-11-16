@@ -1,5 +1,7 @@
 import React from 'react'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { getEngine } from '@/lib/engine'
+import { ga4UserId } from '../ga4User'
 
 import { pickPublicIds } from '@/features/integrations/publicIds'
 import { CONSENT_COOKIE_NAME, isCurrentRecord, parseRecord } from '@/features/consent/consent'
@@ -143,6 +145,8 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
   const { gtmContainerId, ga4MeasurementId, metaPixelId, tiktokPixelId, clarityProjectId } = pickPublicIds(integrations, { analytics })
 
   const pinterestTagId = await loadPinterestTagId()
+  // GA4 user_id: only read when the setting is on, so the normal path costs nothing extra.
+  const ga4UserIdValue = analytics?.sendUserId === true && ga4MeasurementId ? await signedInGa4UserId(analytics.hashUserId !== false) : undefined
   const { initialDecided, optIn } = await readConsentState(consent, country)
   const logToken = await consentLogToken(consent.policyVersion).catch((): null => null)
   // Withdrawing needs a reload only for a tag or script that no consent signal or API reaches:
@@ -173,6 +177,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
       <AnalyticsLoader
         gtmContainerId={gtmContainerId}
         ga4MeasurementId={ga4MeasurementId}
+        ga4UserId={ga4UserIdValue}
         metaPixelId={metaPixelId}
         tiktokPixelId={tiktokPixelId}
         pinterestTagId={pinterestTagId}
@@ -189,6 +194,17 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
       ) : null}
     </>
   )
+}
+
+/** The signed-in customer's GA4 user_id, or undefined when nobody is signed in. Never throws. */
+async function signedInGa4UserId(hash: boolean): Promise<string | undefined> {
+  try {
+    const engine = await getEngine()
+    const { user } = await engine.auth({ headers: await headers() })
+    return await ga4UserId((user as { id?: number | string } | null)?.id, { hash, secret: process.env.ENGAGE_SECRET || '' })
+  } catch {
+    return undefined
+  }
 }
 
 /** The picker's strings, in the admin's language (uiStrings `tracking.picker.*`). */
