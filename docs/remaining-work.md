@@ -1312,6 +1312,9 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Same screen, Clear activity log: pick "older than 90 days", Count entries, type CLEAR, Clear now; the old rows go and one `activity.cleared` row names you and the count. Cookie consent entries and privacy records stay. The CSV link downloads the current view.
 - [ ] Erase a test customer through the privacy flow; their activity rows keep the event but lose email, address and browser.
 
+### Next.js 16.4.6 patch (closed security upgrade)
+- [ ] Production deploy on Next 16.4.6: run `npm run deploy`. Pass = no "known security vulnerability" notice in the build log, the Worker deploys, and public home, `/admin` login, a blog page and `/checkout` load with no console errors. If it fails, roll back to the previous Worker version in the Cloudflare dashboard.
+
 ### Fresh-account deploy and setup script (last live check)
 - [ ] Fresh-account deploy check and the setup script on a new Cloudflare account (the "Fresh-account deploy check (detail)" section and the Setup script item under "Architecture (closed Task 4, PR #215)"). Runs after Live checks, so it also proves the free-plan size limit on a fresh account.
 - [ ] Task 14 25a SAML and self-service (Single sign-on): with a SAML test app (Okta developer, Entra or Google Workspace custom SAML app), make a SAML 2.0 connection from Admin, Single sign-on (paste the provider metadata XML), give the provider the shown ACS address and entity ID, add and verify your domain, then use the Sign in with single sign-on link on the account sign-in page and check you land signed in. Check the same response cannot be replayed. Then, as an organisation owner (not admin), open the organisation page and check the Single sign-on section sets up a connection for that organisation only, and that a non-owner member sees no such section.
