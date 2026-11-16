@@ -88,3 +88,11 @@ describe('affiliate product and tier rates (26b)', () => {
     expect(noLines).toMatchObject({ base: 7500, amount: 750 })
   })
 })
+
+describe('affiliate report (26c)', () => {
+  it('counts live orders, sales and conversion per visit', async () => {
+    const { affiliateReport } = await import('@/features/affiliates/commission')
+    expect(affiliateReport([], 0)).toEqual({ orders: 0, salesCents: 0, conversionPct: 0 })
+    expect(affiliateReport([{ status: 'pending', base_cents: 5000 }, { status: 'paid', base_cents: 2500 }, { status: 'reversed', base_cents: 9000 }], 50)).toEqual({ orders: 2, salesCents: 7500, conversionPct: 4 })
+  })
+})

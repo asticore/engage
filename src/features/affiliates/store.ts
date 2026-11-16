@@ -138,8 +138,8 @@ export async function payoutsFor(d1: D1, limit = 100): Promise<Array<{ id: numbe
 }
 
 /** Every commission row with its affiliate, for balances. */
-export async function allCommissionRows(d1: D1): Promise<Array<{ affiliate_id: number; status: string; amount_cents: number; eligible_at: string | null }>> {
-  return (await all(d1, 'SELECT affiliate_id, status, amount_cents, eligible_at FROM eg_affiliate_commissions')).map((r) => ({ affiliate_id: Number(r.affiliate_id), status: String(r.status), amount_cents: Number(r.amount_cents ?? 0), eligible_at: r.eligible_at ? String(r.eligible_at) : null }))
+export async function allCommissionRows(d1: D1): Promise<Array<{ affiliate_id: number; status: string; amount_cents: number; base_cents: number; eligible_at: string | null }>> {
+  return (await all(d1, 'SELECT affiliate_id, status, amount_cents, base_cents, eligible_at FROM eg_affiliate_commissions')).map((r) => ({ affiliate_id: Number(r.affiliate_id), status: String(r.status), amount_cents: Number(r.amount_cents ?? 0), base_cents: Number(r.base_cents ?? 0), eligible_at: r.eligible_at ? String(r.eligible_at) : null }))
 }
 
 export async function hasCommissions(d1: D1, affiliateId: number): Promise<boolean> {
