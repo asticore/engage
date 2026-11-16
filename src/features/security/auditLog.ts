@@ -32,6 +32,8 @@ export type AuditAction =
   | 'consent.update'
   | 'rate-limit.blocked'
   | 'probe.blocked'
+  | 'ip.blocked'
+  | 'ip.rule'
   | 'two-factor.enrolled'
   | 'two-factor.failed'
   | 'two-factor.verified'
@@ -364,4 +366,4 @@ export const PROTECTED_AUDIT_ACTIONS: readonly AuditAction[] = [
 ]
 
 /** Noise kept out of the activity screen (blocked probes and rate limits fill it fast). They still live in the table and the retention rule covers them. */
-export const ACTIVITY_HIDDEN_ACTIONS: readonly AuditAction[] = ['consent.update', 'rate-limit.blocked', 'probe.blocked', 'api-key.used']
+export const ACTIVITY_HIDDEN_ACTIONS: readonly AuditAction[] = ['consent.update', 'rate-limit.blocked', 'probe.blocked', 'ip.blocked', 'api-key.used']

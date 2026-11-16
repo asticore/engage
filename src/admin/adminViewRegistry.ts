@@ -67,6 +67,7 @@ const BookingsView = lazyView(() => import('@/admin/views/BookingsView').then((m
 const QuotesView = lazyView(() => import('@/admin/views/QuotesView').then((mod) => mod.QuotesView))
 const PurchaseLimitsView = lazyView(() => import('@/admin/views/PurchaseLimitsView').then((mod) => mod.PurchaseLimitsView))
 const AuthenticationView = lazyView(() => import('@/admin/views/AuthenticationView').then((mod) => mod.AuthenticationView))
+const IpRulesView = lazyView(() => import('@/admin/views/IpRulesView').then((mod) => mod.IpRulesView))
 const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').then((mod) => mod.AffiliatesView))
 const SsoView = lazyView(() => import('@/admin/views/SsoView').then((mod) => mod.SsoView))
 const AgentAccessView = lazyView(() => import('@/admin/views/AgentAccessView').then((mod) => mod.AgentAccessView))
@@ -262,6 +263,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'quotes', Component: QuotesView, path: '/quotes', meta: { title: 'Quotes and requests', description: 'Quote, offer and item requests, and the quotes sent back.' } },
   { key: 'purchase-limits', Component: PurchaseLimitsView, path: '/purchase-limits', meta: { title: 'Purchase limits', description: 'Per-person limits, waits between orders and refused attempts.' } },
   { key: 'authentication', Component: AuthenticationView, path: '/authentication', meta: { title: 'Authentication', description: 'Every sign-in method with its status and a link to change it.' } },
+  { key: 'ip-rules', Component: IpRulesView, path: '/security/ip-lists', meta: { title: 'IP lists', description: 'Block or allow addresses and ranges.' } },
   { key: 'affiliates', Component: AffiliatesView, path: '/affiliates', meta: { title: 'Affiliates', description: 'Partners with referral links and the visits they bring.' } },
   { key: 'sso', Component: SsoView, path: '/sso', meta: { title: 'Single sign-on', description: 'Per-organisation OpenID Connect sign-in with verified domains.' } },
   { key: 'agent-access', Component: AgentAccessView, path: '/agent-access', meta: { title: 'AI agent access', description: 'Scoped, capped, revocable tokens for connected AI tools, with an activity log.' } },
