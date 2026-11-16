@@ -4,7 +4,7 @@ type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T
 export type D1 = { prepare: (sql: string) => Stmt }
 type Row = Record<string, unknown>
 
-export type Affiliate = { id: number; code: string; name: string; email: string; status: AffiliateStatus; visits: number; createdAt: string }
+export type Affiliate = { id: number; code: string; name: string; email: string; status: AffiliateStatus; visits: number; createdAt: string; token: string }
 
 const all = async (d1: D1, sql: string, ...args: unknown[]): Promise<Row[]> => (await d1.prepare(sql).bind(...args).all<Row>()).results
 const toStatus = (v: unknown): AffiliateStatus => (v === 'active' || v === 'suspended' ? v : 'pending')
@@ -12,9 +12,9 @@ const toStatus = (v: unknown): AffiliateStatus => (v === 'active' || v === 'susp
 export async function listAffiliates(d1: D1): Promise<Affiliate[]> {
   const rows = await all(
     d1,
-    'SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a ORDER BY a.created_at DESC LIMIT 500',
+    'SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a ORDER BY a.created_at DESC LIMIT 500',
   )
-  return rows.map((r) => ({ id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? '') }))
+  return rows.map((r) => ({ id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token ?? '') }))
 }
 
 export async function countAffiliates(d1: D1): Promise<number> {
@@ -30,8 +30,8 @@ export async function codeTaken(d1: D1, code: string): Promise<boolean> {
   return (await all(d1, 'SELECT id FROM eg_affiliates WHERE code = ?1', code)).length > 0
 }
 
-export async function createAffiliate(d1: D1, v: { code: string; name: string; email: string; status: AffiliateStatus }, nowIso: string): Promise<number> {
-  const res = await d1.prepare('INSERT INTO eg_affiliates (code, name, email, status, created_at, updated_at) VALUES (?1,?2,?3,?4,?5,?5)').bind(v.code, v.name, v.email, v.status, nowIso).run()
+export async function createAffiliate(d1: D1, v: { code: string; name: string; email: string; status: AffiliateStatus; token: string }, nowIso: string): Promise<number> {
+  const res = await d1.prepare('INSERT INTO eg_affiliates (code, name, email, status, token, created_at, updated_at) VALUES (?1,?2,?3,?4,?5,?6,?6)').bind(v.code, v.name, v.email, v.status, v.token, nowIso).run()
   return Number(res.meta?.last_row_id ?? 0)
 }
 
@@ -50,14 +50,14 @@ export async function logVisit(d1: D1, v: { affiliateId: number; path: string; s
 
 /* ------------------------------------------------------------- settings */
 
-export type AffiliateSettings = { cookieDays: number; clickRule: 'first' | 'last'; commissionPct: number; pendingDays: number }
-export const DEFAULT_SETTINGS: AffiliateSettings = { cookieDays: 30, clickRule: 'last', commissionPct: 10, pendingDays: 30 }
+export type AffiliateSettings = { cookieDays: number; clickRule: 'first' | 'last'; commissionPct: number; pendingDays: number; autoApprove: boolean; terms: string }
+export const DEFAULT_SETTINGS: AffiliateSettings = { cookieDays: 30, clickRule: 'last', commissionPct: 10, pendingDays: 30, autoApprove: false, terms: '' }
 
 export async function getSettings(d1: D1): Promise<AffiliateSettings> {
   try {
-    const r = (await all(d1, 'SELECT cookie_days, click_rule, commission_pct, pending_days FROM eg_affiliate_settings WHERE id = 1'))[0]
+    const r = (await all(d1, 'SELECT cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms FROM eg_affiliate_settings WHERE id = 1'))[0]
     if (!r) return DEFAULT_SETTINGS
-    return { cookieDays: Number(r.cookie_days ?? 30), clickRule: r.click_rule === 'first' ? 'first' : 'last', commissionPct: Number(r.commission_pct ?? 10), pendingDays: Number(r.pending_days ?? 30) }
+    return { cookieDays: Number(r.cookie_days ?? 30), clickRule: r.click_rule === 'first' ? 'first' : 'last', commissionPct: Number(r.commission_pct ?? 10), pendingDays: Number(r.pending_days ?? 30), autoApprove: Number(r.auto_approve ?? 0) === 1, terms: String(r.terms ?? '') }
   } catch {
     return DEFAULT_SETTINGS
   }
@@ -65,8 +65,8 @@ export async function getSettings(d1: D1): Promise<AffiliateSettings> {
 
 export async function saveSettings(d1: D1, s: AffiliateSettings, nowIso: string): Promise<void> {
   await d1
-    .prepare('INSERT INTO eg_affiliate_settings (id, cookie_days, click_rule, commission_pct, pending_days, updated_at) VALUES (1,?1,?2,?3,?4,?5) ON CONFLICT(id) DO UPDATE SET cookie_days=?1, click_rule=?2, commission_pct=?3, pending_days=?4, updated_at=?5')
-    .bind(s.cookieDays, s.clickRule, s.commissionPct, s.pendingDays, nowIso)
+    .prepare('INSERT INTO eg_affiliate_settings (id, cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, updated_at) VALUES (1,?1,?2,?3,?4,?5,?6,?7) ON CONFLICT(id) DO UPDATE SET cookie_days=?1, click_rule=?2, commission_pct=?3, pending_days=?4, auto_approve=?5, terms=?6, updated_at=?7')
+    .bind(s.cookieDays, s.clickRule, s.commissionPct, s.pendingDays, s.autoApprove ? 1 : 0, s.terms, nowIso)
     .run()
 }
 
@@ -131,4 +131,17 @@ export async function allCommissionRows(d1: D1): Promise<Array<{ affiliate_id: n
 
 export async function hasCommissions(d1: D1, affiliateId: number): Promise<boolean> {
   return (await all(d1, 'SELECT id FROM eg_affiliate_commissions WHERE affiliate_id = ?1 LIMIT 1', affiliateId)).length > 0
+}
+
+export async function findByToken(d1: D1, token: string): Promise<Affiliate | null> {
+  const r = (await all(d1, "SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a WHERE a.token = ?1 AND a.token != ''", token))[0]
+  return r ? { id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token) } : null
+}
+
+export async function emailTaken(d1: D1, email: string): Promise<boolean> {
+  return email !== '' && (await all(d1, 'SELECT id FROM eg_affiliates WHERE lower(email) = ?1', email.toLowerCase())).length > 0
+}
+
+export async function setToken(d1: D1, id: number, token: string, nowIso: string): Promise<void> {
+  await d1.prepare('UPDATE eg_affiliates SET token = ?1, updated_at = ?2 WHERE id = ?3').bind(token, nowIso, id).run()
 }

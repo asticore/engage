@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
 import { balances, clampDays, clampPct } from '@/features/affiliates/commission'
-import { MAX_AFFILIATES, STATUSES, normaliseCode, suggestCode, type AffiliateStatus } from '@/features/affiliates/core'
+import { MAX_AFFILIATES, STATUSES, newToken, normaliseCode, suggestCode, type AffiliateStatus } from '@/features/affiliates/core'
 import * as store from '@/features/affiliates/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { adminRequestRefusal } from '@/features/forms/origin'
@@ -57,12 +57,12 @@ export async function POST(request: Request): Promise<Response> {
     if (!code) return json({ error: 'A code is 3 to 32 letters, numbers or dashes.' }, 400)
     if (await store.codeTaken(d1, code)) return json({ error: 'That code is already used.' }, 409)
     const status: AffiliateStatus = STATUSES.includes(body.status as AffiliateStatus) ? (body.status as AffiliateStatus) : 'active'
-    const id = await store.createAffiliate(d1, { code, name, email: text(body.email, 200), status }, now)
+    const id = await store.createAffiliate(d1, { code, name, email: text(body.email, 200), status, token: newToken() }, now)
     return json({ ok: true, id, code })
   }
   if (body.action === 'settings') {
     const s = body.settings as Record<string, unknown> | undefined
-    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365) }, now)
+    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
     return json({ ok: true })
   }
   const id = Number(body.id)
@@ -71,6 +71,11 @@ export async function POST(request: Request): Promise<Response> {
     if (!STATUSES.includes(body.status as AffiliateStatus)) return json({ error: 'Invalid status.' }, 400)
     await store.setAffiliateStatus(d1, id, body.status as AffiliateStatus, now)
     return json({ ok: true })
+  }
+  if (body.action === 'token') {
+    const token = newToken()
+    await store.setToken(d1, id, token, now)
+    return json({ ok: true, token })
   }
   if (body.action === 'payout') {
     const paid = await store.recordPayout(d1, id, text(body.note, 200), now)

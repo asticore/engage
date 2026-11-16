@@ -35,3 +35,15 @@ describe('affiliate tracking core', () => {
     expect(referralLink('https://a.com/', 'sam-12')).toBe('https://a.com/?ref=sam-12')
   })
 })
+
+import { isToken, newToken } from '@/features/affiliates/core'
+
+describe('affiliate dashboard token', () => {
+  it('makes unguessable hex tokens', () => {
+    const a = newToken()
+    expect(isToken(a)).toBe(true)
+    expect(newToken()).not.toBe(a)
+    expect(isToken('short')).toBe(false)
+    expect(isToken(`${a}x`)).toBe(false)
+  })
+})
