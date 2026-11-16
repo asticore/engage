@@ -30,6 +30,30 @@ export const WAVE66_ELEMENTS: ElementDef[] = [
     defaultProps: () => ({ label: 'View cart', showCount: true }),
   },
   {
+    type: 'cart-lines', label: 'Cart lines', icon: String.fromCodePoint(0x1f6d2), category: 'commerce',
+    description: 'The items in the cart with quantity, remove and save for later, the empty-cart message and the saved for later list. Part of a cart page layout.',
+    fields: [],
+    defaultProps: () => ({}),
+  },
+  {
+    type: 'cart-totals', label: 'Cart coupon and estimate', icon: String.fromCodePoint(0x1f9fe), category: 'commerce',
+    description: 'Free-shipping bar, coupon code, shipping estimate and tax, and the order note and gift message. Shows nothing while the cart is empty.',
+    fields: [],
+    defaultProps: () => ({}),
+  },
+  {
+    type: 'cart-extras', label: 'Cart cross-sells', icon: String.fromCodePoint(0x1f381), category: 'commerce',
+    description: 'You may also like products under the cart. Shows nothing while the cart is empty or when cross-sells and recommendations are off.',
+    fields: [],
+    defaultProps: () => ({}),
+  },
+  {
+    type: 'cart-summary', label: 'Cart subtotal and checkout', icon: String.fromCodePoint(0x1f4b3), category: 'commerce',
+    description: 'Subtotal, pay later message and the Checkout button. Shows nothing while the cart is empty.',
+    fields: [],
+    defaultProps: () => ({}),
+  },
+  {
     type: 'product-rating', label: 'Product rating', icon: String.fromCodePoint(0x2b50), category: 'commerce',
     description: 'Average star rating and review count of the product on this page.',
     fields: [{ name: 'showCount', label: 'Show the review count', type: 'checkbox' }],

@@ -20,7 +20,7 @@ describe('wave66 shop elements', () => {
     expect(await ProductRatingElement({})).toBeNull()
   })
   it('exposes defaults', () => {
-    expect(WAVE66_ELEMENTS.map((e) => e.type)).toEqual(['add-to-cart', 'cart-link', 'product-rating'])
+    expect(WAVE66_ELEMENTS.map((e) => e.type)).toEqual(['add-to-cart', 'cart-link', 'cart-lines', 'cart-totals', 'cart-extras', 'cart-summary', 'product-rating'])
     expect(WAVE66_ELEMENTS[1]!.defaultProps().showCount).toBe(true)
   })
 })
