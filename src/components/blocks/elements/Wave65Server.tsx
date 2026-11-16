@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { switcherLabel, switcherOptions } from '@/features/multilingual/switcherStyle'
 import { getBlockContext } from '@/lib/blockContext'
 import { getEngine } from '@/lib/engine'
 
@@ -92,14 +93,21 @@ async function languageData() {
 export async function LanguageSwitcherElement(props: P): Promise<React.ReactElement | null> {
   const d = await languageData()
   if (!d) return null
+  const o = switcherOptions(props)
   return (
     <nav aria-label={str(props.label) || 'Language'}>
-      <ul className="be-el-65-lang">
-        {d.offered.map((code) => (
-          <li key={code}>
-            <a href={localisedHref(d.paths[code] ?? d.rest, code, d.settings)} hrefLang={code} lang={code} aria-current={code === d.current ? 'true' : undefined}>{localeNativeName(code)}</a>
-          </li>
-        ))}
+      <ul className={`be-el-65-lang is-${o.layout} hover-${o.hover} align-${o.align}`}>
+        {d.offered.map((code) => {
+          const name = localeNativeName(code)
+          const { text, flag } = switcherLabel(code, name, o.display)
+          return (
+            <li key={code}>
+              <a href={localisedHref(d.paths[code] ?? d.rest, code, d.settings)} hrefLang={code} lang={code} aria-current={code === d.current ? 'true' : undefined} aria-label={text ? undefined : name} title={name}>
+                {flag ? <span aria-hidden="true">{flag}</span> : null}{flag && text ? ' ' : ''}{text}
+              </a>
+            </li>
+          )
+        })}
       </ul>
     </nav>
   )
