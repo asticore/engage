@@ -13,7 +13,9 @@ export type MethodRow = { id: string; label: string; status: MethodStatus; detai
 
 const SECURITY = '/globals/security-settings'
 
-export function describeAuthMethods(settings: SecuritySettings, social: SocialConfig): MethodRow[] {
+export type AgentAccessInfo = { featureOn: boolean; apiKeysOn: boolean; activeTokens: number }
+
+export function describeAuthMethods(settings: SecuritySettings, social: SocialConfig, agents?: AgentAccessInfo): MethodRow[] {
   const rows: MethodRow[] = [
     { id: 'password', label: 'Password', status: 'on', detail: 'Always available. Password rules are in Security settings.', href: SECURITY },
     {
@@ -46,6 +48,21 @@ export function describeAuthMethods(settings: SecuritySettings, social: SocialCo
       detail: status === 'needs-setup' ? `Switched on but missing: ${missing.join(', ')}. The button stays hidden until complete.` : status === 'on' ? 'Shown on the sign-in form.' : 'Not offered.',
       href: isExtraProviderId(id) ? '/security/sign-in-providers' : SECURITY,
       toggle: status !== 'needs-setup',
+    })
+  }
+  if (agents) {
+    const status: MethodStatus = !agents.featureOn ? 'off' : agents.apiKeysOn ? 'on' : 'needs-setup'
+    rows.push({
+      id: 'agent-access',
+      label: 'AI agent access',
+      status,
+      detail:
+        status === 'off'
+          ? 'Not offered. Switch it on in Site Settings to give connected AI tools their own capped, revocable tokens.'
+          : status === 'needs-setup'
+            ? 'Switched on, but API keys are off, so no agent token can be made. Switch API keys on in Security settings.'
+            : `${agents.activeTokens} active agent token${agents.activeTokens === 1 ? '' : 's'}. Each is scoped, never deletes, stops at a daily cap and is logged.`,
+      href: '/agent-access',
     })
   }
   return rows
