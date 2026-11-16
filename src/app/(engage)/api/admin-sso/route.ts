@@ -8,6 +8,7 @@ import { defaultOrgStore } from '@/features/organizations/store'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { publicOrigin } from '@/features/google/origin'
 import { randomToken } from '@/features/socialLogin/util'
+import * as scim from '@/features/scim/store'
 import { getFeatureFlags } from '@/utilities/features'
 
 export const dynamic = 'force-dynamic'
@@ -31,8 +32,8 @@ const view = (c: SsoConnection) => ({ ...publicView(c), records: c.domains.map((
 export async function GET(request: Request): Promise<Response> {
   const g = await guard(request, false)
   if (!g.context) return g.response
-  const [connections, orgs] = await Promise.all([store.listConnections(), defaultOrgStore.listAllOrgs(200)])
-  return json({ redirectUri: `${publicOrigin(request.url)}/api/sso/callback`, orgs: orgs.map((o) => ({ id: o.id, name: o.name })), connections: connections.map(view) })
+  const [connections, orgs, tokens] = await Promise.all([store.listConnections(), defaultOrgStore.listAllOrgs(200), scim.listTokens()])
+  return json({ scimBase: `${publicOrigin(request.url)}/api/scim/v2`, scim: tokens, redirectUri: `${publicOrigin(request.url)}/api/sso/callback`, orgs: orgs.map((o) => ({ id: o.id, name: o.name })), connections: connections.map(view) })
 }
 
 /**
@@ -45,6 +46,15 @@ export async function POST(request: Request): Promise<Response> {
   const body = (await request.json().catch((): null => null)) as Record<string, unknown> | null
   if (!body) return json({ error: 'Invalid request.' }, 400)
   const now = new Date().toISOString()
+  if (body.action === 'scim-rotate' || body.action === 'scim-disable') {
+    const orgId = typeof body.orgId === 'string' ? body.orgId : ''
+    if (!orgId || !(await defaultOrgStore.getOrg(orgId))) return json({ error: 'Unknown organisation.' }, 400)
+    if (body.action === 'scim-disable') {
+      await scim.disableToken(orgId)
+      return json({ ok: true })
+    }
+    return json({ ok: true, token: await scim.rotateToken(orgId, now) })
+  }
   const id = typeof body.id === 'string' ? body.id : ''
   const existing = id ? await store.getConnection(id) : null
 
