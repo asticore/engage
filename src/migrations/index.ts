@@ -192,6 +192,7 @@ import * as migration_20270317_110000_client_reports from './20270317_110000_cli
 import * as migration_20270317_120000_franchising from './20270317_120000_franchising';
 import * as migration_20270316_428000_mini_cart from './20270316_428000_mini_cart';
 import * as migration_20270317_150000_stock_hold from './20270317_150000_stock_hold';
+import * as migration_20270317_160000_gift_wrap from './20270317_160000_gift_wrap';
 import * as migration_20270316_435000_org_sso from './20270316_435000_org_sso';
 import * as migration_20270316_425000_livechat from './20270316_425000_livechat';
 import * as migration_20270317_130000_last_login_method from './20270317_130000_last_login_method';
@@ -1248,5 +1249,10 @@ export const migrations = [
     up: migration_20270317_150000_stock_hold.up,
     down: migration_20270317_150000_stock_hold.down,
     name: '20270317_150000_stock_hold',
+  },
+  {
+    up: migration_20270317_160000_gift_wrap.up,
+    down: migration_20270317_160000_gift_wrap.down,
+    name: '20270317_160000_gift_wrap',
   },
 ];

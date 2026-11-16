@@ -9,6 +9,7 @@ import { currencyFromShopSettings } from '../lib/shopCurrency'
 import { cleanRecipient, giftAmountError, normaliseGiftCardSettings } from '../lib/storedValue'
 import { PAID_STATUSES } from '../lib/orderStatus'
 import { holdCouponUse } from './couponHold'
+import { giftWrapFee, normaliseGiftWrap } from '../lib/giftWrap'
 import { holdStock, normaliseStockHold, stockPool } from './stockHold'
 import type { ShippingAddress, ShippingOption, ShippingZone } from '../lib/shipping'
 import { DEFAULT_TAX_SETTINGS, type TaxClass, type TaxRate, type TaxSettings } from '../lib/tax'
@@ -303,6 +304,8 @@ export type PriceInput = {
   cartId?: number
   /** Roles of the signed-in buyer, for customer-role pricing rules. Guests have none. */
   customerRoles?: string[] | null
+  /** The shopper ticked gift wrap; only honoured when the shop offers it (lib/giftWrap.ts). */
+  giftWrap?: boolean
 }
 
 type LiveResult = { options: ShippingOption[]; liveOn: boolean }
@@ -347,6 +350,7 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
   const config = cfg ?? (await loadShopConfig(engine))
   const shopRules = await loadShopRulesConfig(engine) // one read per checkout: add-on switch and pricing rules
   const tierCtx = await loadTierContext(input.items, input.customerRoles)
+  const giftWrapCents = input.giftWrap === true ? giftWrapFee(normaliseGiftWrap(await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null)), true) : 0
   const lines = await loadPricedLines(engine, input.items, undefined, shopRules.addOnsOn, tierCtx)
   // Dynamic pricing rules run before coupons (see lib/totals.ts). Gift cards are never discounted.
   const ruleResult =
@@ -382,6 +386,7 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
     usesByThisCustomer: uses,
     shippingOptionId: input.shippingOptionId,
     requireShipping: input.strict,
+    giftWrapCents,
     pricingRuleDiscounts: ruleResult?.lineDiscounts,
     pricingRules: ruleResult?.applied,
   })

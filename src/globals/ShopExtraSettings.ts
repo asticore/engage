@@ -57,6 +57,21 @@ export const ShopExtraSettings: GlobalConfig = {
       },
     },
     {
+      name: 'giftWrapEnabled',
+      type: 'checkbox',
+      label: 'Offer gift wrap at checkout',
+      defaultValue: false,
+      admin: { description: 'Shows a Gift wrap tick box at checkout for the flat fee below. The fee is taxed like shipping and added to the order total; staff see "Gift wrap requested" in the order note. Off by default.' },
+    },
+    {
+      name: 'giftWrapFee',
+      type: 'number',
+      label: 'Gift wrap fee',
+      defaultValue: 0,
+      min: 0,
+      admin: { description: 'Flat fee in the shop currency, for example 5 for $5.00. Gift wrap is only offered when this is above zero.' },
+    },
+    {
       name: 'stockHoldEnabled',
       type: 'checkbox',
       label: 'Hold stock while a cart is in checkout',
