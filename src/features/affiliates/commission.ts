@@ -102,7 +102,7 @@ export function commissionForLines(
   lines: readonly { productId?: unknown; lineCents?: unknown; quantity?: unknown; unitCents?: unknown }[] | null | undefined,
   subtotalCents: unknown,
   discountCents: unknown,
-  rates: { override: number | null | undefined; productRates: ReadonlyMap<number, number>; defaultPct: number },
+  rates: { override: number | null | undefined; productRates: ReadonlyMap<number, number>; defaultPct: number; tagRates?: ReadonlyMap<number, number>; productTags?: ReadonlyMap<number, readonly number[]> },
 ): { base: number; amount: number; pct: number } {
   const flatBase = commissionBase(subtotalCents, discountCents)
   const items: CommissionLine[] = (Array.isArray(lines) ? lines : [])
@@ -118,13 +118,24 @@ export function commissionForLines(
   let amount = 0
   for (const l of items) {
     const net = Math.max(0, l.netCents - (discount * l.netCents) / gross)
-    const pct = rates.override ?? (l.productId !== null ? rates.productRates.get(l.productId) : undefined) ?? rates.defaultPct
+    const pct = rates.override ?? (l.productId !== null ? rates.productRates.get(l.productId) : undefined) ?? (l.productId !== null ? highestTagRate(rates.productTags?.get(l.productId), rates.tagRates) : undefined) ?? rates.defaultPct
     base += net
     amount += (net * pct) / 100
   }
   base = Math.round(base)
   amount = Math.round(amount)
   return { base, amount, pct: base > 0 ? (amount * 100) / base : 0 }
+}
+
+/** The highest rate set on any of a product's tags, or undefined when none of them has a rate. */
+export function highestTagRate(tagIds: readonly number[] | undefined, tagRates: ReadonlyMap<number, number> | undefined): number | undefined {
+  if (!tagIds || !tagRates) return undefined
+  let best: number | undefined
+  for (const id of tagIds) {
+    const r = tagRates.get(id)
+    if (r !== undefined && (best === undefined || r > best)) best = r
+  }
+  return best
 }
 
 export type AffiliateReport = { orders: number; salesCents: number; conversionPct: number }

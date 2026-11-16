@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { afterRefund, balances, clampDays, clampPct, commissionBase, commissionCents, effectiveRate, eligibleAt, isSelfReferral, meetsMinimum, payoutsCsv, renewalWindowOpen } from '@/features/affiliates/commission'
+import { afterRefund, balances, clampDays, clampPct, commissionBase, commissionCents, effectiveRate, eligibleAt, isSelfReferral, meetsMinimum, payoutsCsv, renewalWindowOpen, highestTagRate, commissionForLines } from '@/features/affiliates/commission'
 
 describe('affiliate commission maths', () => {
   it('works on subtotal minus discount', () => {
@@ -107,5 +107,21 @@ describe('affiliate renewals (26b)', () => {
   })
   it('refuses an unreadable date', () => {
     expect(renewalWindowOpen('nonsense', '2026-12-15T00:00:00Z', 6)).toBe(false)
+  })
+})
+
+describe('affiliate tag rates (26b)', () => {
+  it('takes the highest rate among a product\'s tags', () => {
+    expect(highestTagRate([1, 2, 3], new Map([[1, 5], [3, 12]]))).toBe(12)
+    expect(highestTagRate([9], new Map([[1, 5]]))).toBeUndefined()
+    expect(highestTagRate(undefined, new Map([[1, 5]]))).toBeUndefined()
+  })
+  it('ranks override, product rate, tag rate, then default', () => {
+    const lines = [{ productId: 7, lineCents: 10000 }]
+    const base = { productRates: new Map<number, number>(), defaultPct: 10, tagRates: new Map([[4, 20]]), productTags: new Map([[7, [4]]]) }
+    expect(commissionForLines(lines, 10000, 0, { ...base, override: null }).amount).toBe(2000)
+    expect(commissionForLines(lines, 10000, 0, { ...base, override: null, productRates: new Map([[7, 15]]) }).amount).toBe(1500)
+    expect(commissionForLines(lines, 10000, 0, { ...base, override: 5 }).amount).toBe(500)
+    expect(commissionForLines(lines, 10000, 0, { ...base, override: null, productTags: new Map() }).amount).toBe(1000)
   })
 })

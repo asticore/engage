@@ -21,6 +21,10 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
   const [code, setCode] = useState('')
   const [message, setMessage] = useState('')
   const [configured, setConfigured] = useState(true)
+  const [tagRates, setTagRates] = useState<Array<{ tagId: number; ratePct: number; name: string }>>([])
+  const [tags, setTags] = useState<Array<{ id: number; name: string }>>([])
+  const [rateTag, setRateTag] = useState('')
+  const [tagValue, setTagValue] = useState('')
   const [productRates, setProductRates] = useState<Array<{ productId: number; ratePct: number; title: string }>>([])
   const [products, setProducts] = useState<Array<{ id: number; title: string }>>([])
   const [visits, setVisits] = useState<Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>>([])
@@ -31,7 +35,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-affiliates')
-    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; botHits?: number; images?: Array<{ id: number; url: string; alt: string; filename: string }>; visits?: Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>; error?: string } | null
+    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; tagRates?: Array<{ tagId: number; ratePct: number; name: string }>; tags?: Array<{ id: number; name: string }>; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; botHits?: number; images?: Array<{ id: number; url: string; alt: string; filename: string }>; visits?: Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>; error?: string } | null
     if (!res.ok) return setMessage(data?.error ?? 'Could not load affiliates.')
     setRows(data?.affiliates ?? [])
     setSettings(data?.settings ?? null)
@@ -39,6 +43,8 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
     setPayouts(data?.payouts ?? [])
     setConfigured(data?.configured !== false)
     setProductRates(data?.productRates ?? [])
+    setTagRates(data?.tagRates ?? [])
+    setTags(data?.tags ?? [])
     setProducts(data?.products ?? [])
     setVisits(data?.visits ?? [])
     setImages(data?.images ?? [])
@@ -220,6 +226,37 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
           <ul>
             {productRates.map((r) => (
               <li key={r.productId}>{r.title}: {r.ratePct}% <button type="button" onClick={() => void post({ action: 'productRate', productId: r.productId, ratePct: null }, 'Product rate removed.')}>Remove</button></li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="aff-tag-rates">
+        <h2 id="aff-tag-rates">Tag rates</h2>
+        <p>A product tag with a rate sets the commission for every product that has the tag (the highest wins if a product has several). A product&apos;s own rate and an affiliate&apos;s own rate still win over it.</p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            if (await post({ action: 'tagRate', tagId: Number(rateTag), ratePct: tagValue.trim() === '' ? null : Number(tagValue) }, 'Tag rate saved.')) {
+              setRateTag('')
+              setTagValue('')
+            }
+          }}
+          style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'end' }}
+        >
+          <label>Tag<br />
+            <select value={rateTag} onChange={(e) => setRateTag(e.target.value)} required>
+              <option value="">Choose a tag</option>
+              {tags.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+          </label>
+          <label>Rate %<br /><input type="number" min={0} max={100} step="0.5" value={tagValue} onChange={(e) => setTagValue(e.target.value)} required /></label>
+          <button type="submit">Save tag rate</button>
+        </form>
+        {tagRates.length > 0 && (
+          <ul>
+            {tagRates.map((r) => (
+              <li key={r.tagId}>{r.name}: {r.ratePct}% <button type="button" onClick={() => void post({ action: 'tagRate', tagId: r.tagId, ratePct: null }, 'Tag rate removed.')}>Remove</button></li>
             ))}
           </ul>
         )}
