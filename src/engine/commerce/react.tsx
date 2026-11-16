@@ -331,6 +331,11 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
         if (res.ok && result.paidInFull) {
           // Gift cards / store credit paid the whole order: the cart is purchased server-side.
           writeStoredCart(null)
+          try {
+            window.localStorage.removeItem('engage-cart-note')
+          } catch {
+            // Nothing to clear.
+          }
           setCartRef(null)
           setCart(null)
         }
@@ -358,6 +363,11 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
           // The cart is now purchased server-side - drop the local
           // reference so the next visit to the shop starts a fresh one.
           writeStoredCart(null)
+          try {
+            window.localStorage.removeItem('engage-cart-note')
+          } catch {
+            // Nothing to clear.
+          }
           setCartRef(null)
           setCart(null)
         }
