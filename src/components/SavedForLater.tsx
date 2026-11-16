@@ -25,14 +25,34 @@ export function useSavedForLater() {
   const { addItem } = useCart()
   const [saved, setSaved] = useState<SavedLine[]>([])
   const [message, setMessage] = useState<string | null>(null)
-  useEffect(() => setSaved(read()), [])
-  const save = useCallback((line: SavedLine) => {
-    setSaved((prev) => {
-      const next = addSaved(prev, line)
-      write(next)
-      return next
-    })
+  // Signed in: merge the browser list with the account list and keep both the same (Task 23c).
+  const sync = useCallback(async (lines: SavedLine[], replace = false) => {
+    try {
+      const res = await fetch('/api/shop-saved', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lines, replace }) })
+      if (!res.ok) return
+      const body = (await res.json().catch((): null => null)) as { signedIn?: boolean; lines?: unknown } | null
+      if (!body?.signedIn) return
+      const merged = parseSaved(JSON.stringify(body.lines ?? []))
+      write(merged)
+      setSaved(merged)
+    } catch {
+      // Offline: the browser list stays.
+    }
   }, [])
+  useEffect(() => {
+    const local = read()
+    setSaved(local)
+    void sync(local)
+  }, [sync])
+  const save = useCallback(
+    (line: SavedLine) => {
+      const next = addSaved(saved, line)
+      write(next)
+      setSaved(next)
+      void sync(next, true)
+    },
+    [saved, sync],
+  )
   const moveBack = useCallback(
     async (index: number) => {
       const line = saved[index]
@@ -46,16 +66,18 @@ export function useSavedForLater() {
       const next = removeSaved(saved, index)
       setSaved(next)
       write(next)
+      void sync(next, true)
     },
-    [saved, addItem],
+    [saved, addItem, sync],
   )
   const discard = useCallback(
     (index: number) => {
       const next = removeSaved(saved, index)
       setSaved(next)
       write(next)
+      void sync(next, true)
     },
-    [saved],
+    [saved, sync],
   )
   return { saved, save, moveBack, discard, message }
 }
