@@ -48,6 +48,7 @@ export type FeatureKey =
   | 'siteplanner'
   | 'affiliates'
   | 'comments'
+  | 'dam'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -309,6 +310,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['media_tags', 'media_tag_links'],
+    implemented: true,
+  },
+  {
+    key: 'dam',
+    label: 'Asset manager',
+    description: 'Turns Media into a digital asset manager: collections, custom metadata and camera data, full search, versions and safe delete, licence and expiry with approval, private files and share links.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['media_assets', 'media_folders', 'media_collections', 'media_collection_items', 'media_meta_fields', 'media_versions', 'media_shares', 'media_activity', 'media_saved_searches', 'media_renditions', 'media_dam_settings'],
     implemented: true,
   },
   {

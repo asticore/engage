@@ -10,6 +10,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { useDocumentInfo } from '@/engine/ui'
 
 import { MediaUploader } from '@/views/media/MediaUploader'
+import { DamAssetPanel } from '@/features/dam/DamAssetPanel'
 
 import { OrganizationVisibilitySection } from '@/admin/views/OrganizationVisibilitySection'
 
@@ -45,7 +46,12 @@ export function MediaEditPanel() {
   const { id, collectionSlug } = useDocumentInfo()
   if (collectionSlug !== 'media') return null
   if (id === undefined || id === null) return <MediaCreatePanel />
-  return <MediaEditPanelInner id={Number(id)} />
+  return (
+    <>
+      <MediaEditPanelInner id={Number(id)} />
+      <DamAssetPanel id={Number(id)} />
+    </>
+  )
 }
 
 /**

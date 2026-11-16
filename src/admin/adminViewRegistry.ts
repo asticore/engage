@@ -71,6 +71,7 @@ const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').the
 const CommentsView = lazyView(() => import('@/admin/views/CommentsView').then((mod) => mod.CommentsView))
 const SitePlannerView = lazyView(() => import('@/admin/views/SitePlannerView').then((mod) => mod.SitePlannerView))
 const MediaTagsView = lazyView(() => import('@/admin/views/MediaTagsView').then((mod) => mod.MediaTagsView))
+const AssetManagerView = lazyView(() => import('@/admin/views/AssetManagerView').then((mod) => mod.AssetManagerView))
 const PastDueMembersView = lazyView(() => import('@/admin/views/PastDueMembersView').then((mod) => mod.PastDueMembersView))
 const PricingPreviewView = lazyView(() => import('@/admin/views/PricingPreviewView').then((mod) => mod.PricingPreviewView))
 const ProductFeedsView = lazyView(() => import('@/admin/views/ProductFeedsView').then((mod) => mod.ProductFeedsView))
@@ -256,6 +257,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'comments', Component: CommentsView, path: '/comments', meta: { title: 'Comments', description: 'Moderate reader comments on blog posts.' } },
   { key: 'site-planner', Component: SitePlannerView, path: '/site-planner', meta: { title: 'Site planner', description: 'Plan the pages of a whole site with briefs, then create draft pages.' } },
   { key: 'media-tags', Component: MediaTagsView, path: '/media-tags', meta: { title: 'Media tags', description: 'Parent and child tags with colours for media files.' } },
+  { key: 'asset-manager', Component: AssetManagerView, path: '/asset-manager', meta: { title: 'Asset manager', description: 'Collections, custom details, licences and rules for media files.' } },
   { key: 'past-due-members', Component: PastDueMembersView, path: '/past-due-members', meta: { title: 'Past due members', description: 'Members whose renewal payment failed, with retry and end controls.' } },
   { key: 'pricingPreview', Component: PricingPreviewView, path: '/pricing-preview', meta: { title: 'Pricing preview', description: 'What a customer would pay for a cart, using the real checkout calculation.' } },
   { key: 'priceTiers', Component: PriceTiersView, path: '/price-tiers', meta: { title: 'Price tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.' } },
