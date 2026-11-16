@@ -27,8 +27,11 @@ import {
   setTeamMembership,
   transferOwnership,
   updateOrganization,
+  saveOrganizationBranding,
+  adminSaveOrganizationBranding,
   type Result,
 } from './service'
+import { brandingInputFromForm } from './branding'
 import { ACTIVE_ORG_COOKIE, adminRuntime, orgRuntime } from './wiring'
 
 /**
@@ -71,6 +74,23 @@ export async function updateOrganizationAction(_state: ActionState, form: FormDa
   const result = await updateOrganization(runtime.deps, runtime.actor, text(form, 'organizationId'), { name: text(form, 'name'), slug: text(form, 'slug'), logo: text(form, 'logo'), metadata: text(form, 'metadata') })
   revalidatePath('/account/organizations')
   return toState(result, 'Saved.')
+}
+
+export async function saveBrandingAction(_state: ActionState, form: FormData): Promise<ActionState> {
+  const { runtime, refusal } = await open()
+  if (refusal) return refusal
+  const result = await saveOrganizationBranding(runtime.deps, runtime.actor, text(form, 'organizationId'), brandingInputFromForm(form))
+  revalidatePath(`/account/organizations/${text(form, 'organizationId')}`)
+  return toState(result, 'Look and layout saved.')
+}
+
+/** Site administrators only (checked again in the service). Sets any company's look and layout. */
+export async function adminSaveBrandingAction(_state: ActionState, form: FormData): Promise<ActionState> {
+  const { deps, admin } = await adminRuntime()
+  const result = await adminSaveOrganizationBranding(deps, admin, text(form, 'organizationId'), brandingInputFromForm(form))
+  revalidatePath('/admin/security/organizations')
+  revalidatePath(`/account/organizations/${text(form, 'organizationId')}`)
+  return toState(result, 'Look and layout saved.')
 }
 
 export async function deleteOrganizationAction(_state: ActionState, form: FormData): Promise<ActionState> {
