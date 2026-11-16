@@ -19,6 +19,8 @@ import {
   type DailyCount,
 } from './dashboardData'
 import { AdminBarChart, type AdminBarDatum } from '@/admin/charts/AdminBarChart'
+import { resolveD1Binding } from '@/cms/db/connect'
+import { loadAuthStats } from '@/features/security/authStats'
 import type { AdminUiServer } from '@/admin/i18n/serverUi'
 
 import { loadGettingStartedProgress } from '@/features/gettingStarted/load'
@@ -152,6 +154,12 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
     flags.forms ? getDailyCounts(engine, 'form-submissions', TREND_DAYS, now, req) : Promise.resolve(null),
   ])
 
+  // Sign-in numbers: admins only, and only while Security is on.
+  const signIns =
+    reviewContext.isAdmin && flags.security
+      ? await loadAuthStats((await resolveD1Binding().catch((): null => null)) as never, TREND_DAYS, now).catch((): null => null)
+      : null
+
   const quickCreates = QUICK_CREATE_SLUGS.map((slug) => findEntity(groups, slug)).filter(
     (entity): entity is ResolvedEntity & { createHref: string } => Boolean(entity?.createHref),
   )
@@ -233,6 +241,31 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
                 <span className="text-[calc(var(--base)*0.72)] text-[var(--theme-elevation-600)]">{stat.label}</span>
               </Link>
             ))}
+          </div>
+        </section>
+      )}
+
+      {signIns && (
+        <section>
+          <h2 className={sectionTitleClassName}>Sign-ins, last {TREND_DAYS} days</h2>
+          <div className="grid grid-cols-1 gap-[calc(var(--base)*1)] md:grid-cols-2">
+            <TrendCard title={`Failed sign-ins (${signIns.failedTotal})`} series={signIns.days.map((d) => ({ day: d.day, count: d.failed }))} ui={ui} />
+            <div className="rounded-[4px] border border-[var(--theme-elevation-150)] bg-[var(--ac-surface)] p-[calc(var(--base)*0.9)]">
+              <h3 className="m-0 mb-[calc(var(--base)*0.5)] text-[calc(var(--base)*0.8)] font-semibold text-[var(--theme-elevation-800)]">Sign-in methods used ({signIns.successTotal})</h3>
+              {signIns.methods.length === 0 ? (
+                <p className="m-0">No sign-ins recorded.</p>
+              ) : (
+                <ul className="m-0 grid list-none gap-[calc(var(--base)*0.4)] p-0">
+                  {signIns.methods.map((m) => (
+                    <li key={m.id} className="flex items-center gap-[calc(var(--base)*0.5)]">
+                      <span className="w-[10rem] shrink-0">{m.label}</span>
+                      <span aria-hidden="true" className="h-[0.6rem] rounded-[2px] bg-[var(--ac-gold)]" style={{ width: `${Math.max(4, Math.round((m.count / signIns.methods[0].count) * 100))}%` }} />
+                      <span>{m.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </section>
       )}
