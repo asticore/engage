@@ -161,16 +161,16 @@ export async function POST(request: Request): Promise<Response> {
   try {
     if (body.action === 'questions') {
       const parsed = parseQuestions(await ask(questionsPrompt(idea), 600))
-      return parsed.ok ? json({ ok: true, questions: parsed.questions }) : json({ error: parsed.error }, 502)
+      return parsed.ok === false ? json({ error: parsed.error }, 502) : json({ ok: true, questions: parsed.questions })
     }
     if (body.action === 'generate') {
       const parsed = parsePlanReply(await ask(planPrompt(idea, text(body.answers, 3000)), 3500))
-      return parsed.ok ? json({ ok: true, plan: parsed.plan }) : json({ error: `The plan could not be read: ${parsed.error} Try again.` }, 502)
+      return parsed.ok === false ? json({ error: `The plan could not be read: ${parsed.error} Try again.` }, 502) : json({ ok: true, plan: parsed.plan })
     }
     const current = normalisePlan(body.plan)
     if (current.pages.length >= MAX_PLAN_PAGES) return json({ error: 'The plan already has the most pages allowed.' }, 400)
     const parsed = parsePlanReply(await ask(suggestPrompt(current, idea), 2500))
-    if (!parsed.ok) return json({ error: `The suggestions could not be read: ${parsed.error} Try again.` }, 502)
+    if (parsed.ok === false) return json({ error: `The suggestions could not be read: ${parsed.error} Try again.` }, 502)
     const merged = mergeSuggestions(current, parsed.plan)
     return json({ ok: true, plan: merged, added: merged.pages.length - current.pages.length })
   } catch (error) {
