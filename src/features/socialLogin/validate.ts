@@ -1,4 +1,4 @@
-import { PROVIDER_IDS, PROVIDERS, emptyProviderConfig, missingCredentials, type ProviderConfig, type ProviderId } from './providers'
+import { GLOBAL_PROVIDER_IDS, PROVIDERS, emptyProviderConfig, missingCredentials, type ProviderConfig, type ProviderId } from './providers'
 import { capitalise } from './util'
 
 /**
@@ -38,7 +38,7 @@ export const mergedProvider = (id: ProviderId, data: Bag, existing: Bag): Provid
 
 /** A message naming what is missing, or null when every enabled provider is complete. */
 export const socialSwitchProblem = (data: Bag, existing: Bag): string | null => {
-  for (const id of PROVIDER_IDS) {
+  for (const id of GLOBAL_PROVIDER_IDS) {
     const cfg = mergedProvider(id, data, existing)
     if (!cfg.enabled) continue
     const missing = missingCredentials(id, cfg)

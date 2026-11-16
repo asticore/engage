@@ -1,11 +1,23 @@
 /**
- * The six sign-in providers: endpoints, scopes and what each one needs before
+ * The sign-in providers: endpoints, scopes and what each one needs before
  * it may be used. Plain data and pure helpers - no I/O - so the settings
  * screen, the routes and the tests all read the same facts.
+ *
+ * Six providers keep their settings on the Security settings page. The
+ * others (X, LinkedIn, TikTok, Slack and the free-form `oidc` provider) keep
+ * theirs in their own table (see extraStore.ts), because that page's table has
+ * no room for more columns; they are set up on Settings > Security > More
+ * sign-in providers.
  */
 
-export const PROVIDER_IDS = ['google', 'github', 'apple', 'facebook', 'microsoft', 'discord'] as const
+export const GLOBAL_PROVIDER_IDS = ['google', 'github', 'apple', 'facebook', 'microsoft', 'discord'] as const
+export const EXTRA_PROVIDER_IDS = ['x', 'linkedin', 'tiktok', 'slack', 'oidc'] as const
+export const PROVIDER_IDS = [...GLOBAL_PROVIDER_IDS, ...EXTRA_PROVIDER_IDS] as const
 export type ProviderId = (typeof PROVIDER_IDS)[number]
+export type ExtraProviderId = (typeof EXTRA_PROVIDER_IDS)[number]
+
+export const isExtraProviderId = (value: unknown): value is ExtraProviderId =>
+  typeof value === 'string' && (EXTRA_PROVIDER_IDS as readonly string[]).includes(value)
 
 export const isProviderId = (value: unknown): value is ProviderId =>
   typeof value === 'string' && (PROVIDER_IDS as readonly string[]).includes(value)
@@ -20,11 +32,28 @@ export type ProviderConfig = {
   privateKey: string
   tenant: string
   redirectConfirmed: boolean
+  /** Free-form provider only: the button text. */
+  label: string
+  /** Free-form provider only: an OpenID Connect discovery address, or the three addresses below. */
+  discoveryUrl: string
+  authUrl: string
+  tokenUrl: string
+  userinfoUrl: string
+  /** Free-form provider only: space separated. Empty means "openid email profile". */
+  scopes: string
+  /** Free-form provider only: which claims hold the subject, the email and whether it is verified. Empty means sub, email, email_verified. */
+  subjectClaim: string
+  emailClaim: string
+  verifiedClaim: string
+  /** Free-form provider only: treat the email as verified even when the provider sends no verified claim. */
+  trustEmail: boolean
 }
 
 export type SocialConfig = {
   allowSignupViaSocial: boolean
   allowAdminSocialLogin: boolean
+  /** Show Google's One Tap prompt on the member sign-in page. Needs Google switched on. */
+  googleOneTap: boolean
   providers: Record<ProviderId, ProviderConfig>
   /** Providers the owner blocked per sign-in place (Who can sign in with what). Empty means nothing blocked. */
   blocked?: { admin: string[]; account: string[] }
@@ -46,6 +75,12 @@ export type ProviderDef = {
   tokenUrl: (cfg: ProviderConfig) => string
   /** Extra authorize-URL parameters. */
   authParams: Record<string, string>
+  /** Name of the client id parameter (TikTok calls it client_key). */
+  clientIdParam?: string
+  /** How the client secret reaches the token endpoint. Default: in the form body. */
+  clientAuth?: 'body' | 'basic'
+  /** Separator between scopes in the authorize URL. Default: a space. */
+  scopeSeparator?: string
 }
 
 const MS_PERSONAL_TENANT = '9188040d-6c67-4c5b-b112-36a304b66dad'
@@ -138,6 +173,66 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     tokenUrl: () => 'https://discord.com/api/oauth2/token',
     authParams: {},
   },
+  x: {
+    id: 'x',
+    label: 'X',
+    scopes: ['users.read', 'tweet.read', 'users.email'],
+    pkce: true,
+    oidc: null,
+    authUrl: () => 'https://x.com/i/oauth2/authorize',
+    tokenUrl: () => 'https://api.x.com/2/oauth2/token',
+    authParams: {},
+    clientAuth: 'basic',
+  },
+  linkedin: {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    scopes: ['openid', 'profile', 'email'],
+    pkce: false,
+    oidc: {
+      jwksUrl: 'https://www.linkedin.com/oauth/openid/jwks',
+      issuerOk: (iss) => iss === 'https://www.linkedin.com/oauth',
+    },
+    authUrl: () => 'https://www.linkedin.com/oauth/v2/authorization',
+    tokenUrl: () => 'https://www.linkedin.com/oauth/v2/accessToken',
+    authParams: {},
+  },
+  tiktok: {
+    id: 'tiktok',
+    label: 'TikTok',
+    scopes: ['user.info.basic'],
+    pkce: false,
+    oidc: null,
+    authUrl: () => 'https://www.tiktok.com/v2/auth/authorize/',
+    tokenUrl: () => 'https://open.tiktokapis.com/v2/oauth/token/',
+    authParams: {},
+    clientIdParam: 'client_key',
+    scopeSeparator: ',',
+  },
+  slack: {
+    id: 'slack',
+    label: 'Slack',
+    scopes: ['openid', 'email', 'profile'],
+    pkce: false,
+    oidc: {
+      jwksUrl: 'https://slack.com/openid/connect/keys',
+      issuerOk: (iss) => iss === 'https://slack.com',
+    },
+    authUrl: () => 'https://slack.com/openid/connect/authorize',
+    tokenUrl: () => 'https://slack.com/api/openid.connect.token',
+    authParams: {},
+  },
+  oidc: {
+    id: 'oidc',
+    label: 'Single sign-on',
+    scopes: ['openid', 'email', 'profile'],
+    pkce: true,
+    // Endpoints, keys and issuer come from the discovery document (see endpoints.ts).
+    oidc: null,
+    authUrl: (cfg) => cfg.authUrl,
+    tokenUrl: (cfg) => cfg.tokenUrl,
+    authParams: {},
+  },
 }
 
 export { MS_PERSONAL_TENANT }
@@ -151,19 +246,23 @@ export const emptyProviderConfig = (): ProviderConfig => ({
   privateKey: '',
   tenant: DEFAULT_MICROSOFT_TENANT,
   redirectConfirmed: false,
+  label: '',
+  discoveryUrl: '',
+  authUrl: '',
+  tokenUrl: '',
+  userinfoUrl: '',
+  scopes: '',
+  subjectClaim: '',
+  emailClaim: '',
+  verifiedClaim: '',
+  trustEmail: false,
 })
 
 export const emptySocialConfig = (): SocialConfig => ({
   allowSignupViaSocial: true,
   allowAdminSocialLogin: false,
-  providers: {
-    google: emptyProviderConfig(),
-    github: emptyProviderConfig(),
-    apple: emptyProviderConfig(),
-    facebook: emptyProviderConfig(),
-    microsoft: emptyProviderConfig(),
-    discord: emptyProviderConfig(),
-  },
+  googleOneTap: false,
+  providers: Object.fromEntries(PROVIDER_IDS.map((id) => [id, emptyProviderConfig()])) as Record<ProviderId, ProviderConfig>,
 })
 
 /** The credentials a provider cannot work without, as [settings key, plain label]. */
@@ -174,11 +273,36 @@ export const REQUIRED_CREDENTIALS: Record<ProviderId, Array<[keyof ProviderConfi
   discord: [['clientId', 'client ID'], ['clientSecret', 'client secret']],
   microsoft: [['clientId', 'application (client) ID'], ['clientSecret', 'client secret value']],
   apple: [['clientId', 'Services ID'], ['teamId', 'Team ID'], ['keyId', 'Key ID'], ['privateKey', 'private key (.p8)']],
+  x: [['clientId', 'client ID'], ['clientSecret', 'client secret']],
+  linkedin: [['clientId', 'client ID'], ['clientSecret', 'primary client secret']],
+  tiktok: [['clientId', 'client key'], ['clientSecret', 'client secret']],
+  slack: [['clientId', 'client ID'], ['clientSecret', 'client secret']],
+  oidc: [['clientId', 'client ID'], ['clientSecret', 'client secret']],
 }
 
 /** Plain-English names of the credentials still missing for a provider. Empty means complete. */
-export const missingCredentials = (id: ProviderId, cfg: ProviderConfig): string[] =>
-  REQUIRED_CREDENTIALS[id].filter(([key]) => !String(cfg[key] ?? '').trim()).map(([, label]) => label)
+export const missingCredentials = (id: ProviderId, cfg: ProviderConfig): string[] => {
+  const missing = REQUIRED_CREDENTIALS[id].filter(([key]) => !String(cfg[key] ?? '').trim()).map(([, label]) => label)
+  // The free-form provider also needs somewhere to send people: a discovery address, or both endpoints.
+  if (id === 'oidc' && !cfg.discoveryUrl.trim() && !(cfg.authUrl.trim() && cfg.tokenUrl.trim())) {
+    missing.push('discovery URL (or the authorize and token URLs)')
+  }
+  return missing
+}
+
+/** What the button says. The free-form provider uses the owner's own text. */
+export const providerLabel = (id: ProviderId, cfg?: Pick<ProviderConfig, 'label'>): string =>
+  id === 'oidc' && cfg?.label.trim() ? cfg.label.trim().slice(0, 40) : PROVIDERS[id].label
+
+/** The scopes a provider is asked for. The free-form provider uses the owner's list when there is one. */
+export const scopesFor = (id: ProviderId, cfg: Pick<ProviderConfig, 'scopes'>): string[] => {
+  const custom = id === 'oidc' ? cfg.scopes.split(/[\s,]+/).filter(Boolean).slice(0, 20) : []
+  return custom.length > 0 ? custom : PROVIDERS[id].scopes
+}
+
+/** True when the provider answers with an ID token to verify (and so a nonce is sent). */
+export const usesIdToken = (id: ProviderId, cfg: Pick<ProviderConfig, 'scopes'>): boolean =>
+  PROVIDERS[id].oidc !== null || (id === 'oidc' && scopesFor(id, cfg).includes('openid'))
 
 export const hasCredentials = (id: ProviderId, cfg: ProviderConfig): boolean => missingCredentials(id, cfg).length === 0
 

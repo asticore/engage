@@ -1,4 +1,4 @@
-import { PROVIDERS, isUsable, type ProviderId } from './providers'
+import { PROVIDERS, isUsable, providerLabel, type ProviderId } from './providers'
 import { readSocialConfig } from './settings'
 import { defaultSocialStore } from './store'
 import { userHasPassword } from './runtime'
@@ -19,7 +19,7 @@ export async function viewConnections(engine: Engine, user: { id: number | strin
   const rows = await defaultSocialStore.listForUser(id).catch((): never[] => [])
   const linked = rows.map((r) => ({
     provider: r.provider,
-    label: PROVIDERS[r.provider]?.label ?? r.provider,
+    label: PROVIDERS[r.provider] ? providerLabel(r.provider, config.providers[r.provider]) : r.provider,
     email: r.email,
     createdAt: r.createdAt,
     lastLoginAt: r.lastLoginAt,
@@ -29,7 +29,7 @@ export async function viewConnections(engine: Engine, user: { id: number | strin
   const available = canLink
     ? (Object.keys(PROVIDERS) as ProviderId[])
         .filter((p) => isUsable(p, config.providers[p]) && !taken.has(p))
-        .map((p) => ({ id: p, label: PROVIDERS[p].label }))
+        .map((p) => ({ id: p, label: providerLabel(p, config.providers[p]) }))
     : []
   return { linked, available, hasPassword: linked.length > 0 ? await userHasPassword(id) : true }
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 
 import type { PublicProvider } from '../settings'
+import { ProviderIcon } from './ProviderIcon'
 
 /**
  * "Continue with ..." buttons. Rendered only for providers that are switched on
@@ -26,6 +27,7 @@ export const SocialButtons: React.FC<{
           return (
             <li key={provider.id}>
               <a className={`btn btn--ghost account-social__button account-social__button--${provider.id}`} href={`/api/social/${provider.id}/start?${query.toString()}`}>
+                <ProviderIcon id={provider.id} />
                 {verb} {provider.label}
               </a>
             </li>
