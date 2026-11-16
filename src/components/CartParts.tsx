@@ -174,3 +174,50 @@ export const CartSummaryPart: React.FC = () => {
     </div>
   )
 }
+
+/** A compact list of the cart lines (quantity, remove) with the empty-cart message. The mini cart drawer is built from this, and it is the cart-lines-compact element. */
+export const MiniCartLinesPart: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => {
+  const { cart, decrementItem, incrementItem, removeItem, isLoading } = useCart()
+  const money = useDisplayMoney()
+  const items = cart?.items ?? []
+  if (items.length === 0) {
+    return (
+      <p data-cart-part="lines-compact">
+        Your cart is empty. <Link href="/shop" onClick={onNavigate}>Continue shopping</Link>
+      </p>
+    )
+  }
+  return (
+      <ul data-cart-part="lines-compact" className="m-0 mb-4 list-none border-t border-[var(--color-line)] p-0">
+        {items.map((item) => {
+          const product = item.product as unknown as Product
+          const isObj = typeof product === 'object' && product !== null
+          const isBundle = isObj && (product as unknown as { productType?: string }).productType === 'bundle'
+          const line = isObj && !isBundle ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, 1) : null
+          const unit = line && line.ok ? line.unitPrice : isObj ? product.priceInAUD : null
+          const title = isObj ? product.title : 'Item'
+          return (
+            <li key={item.id} className="flex items-center justify-between gap-3 border-b border-[var(--color-line)] py-3">
+              <div className="min-w-0">
+                <p className="m-0 truncate font-medium">{title}</p>
+                {line && line.ok && line.variationLabel ? <p className="m-0 text-[0.85rem] opacity-70">{line.variationLabel}</p> : null}
+                <p className="m-0 text-[0.85rem]">{isBundle ? '' : money(unit)}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" aria-label={`Decrease quantity of ${title}`} className="h-7 w-7 cursor-pointer border border-[var(--color-ink)] bg-transparent" onClick={() => void decrementItem(item.id)} disabled={isLoading}>
+                  -
+                </button>
+                <span aria-label={`Quantity ${item.quantity}`}>{item.quantity}</span>
+                <button type="button" aria-label={`Increase quantity of ${title}`} className="h-7 w-7 cursor-pointer border border-[var(--color-ink)] bg-transparent" onClick={() => void incrementItem(item.id)} disabled={isLoading}>
+                  +
+                </button>
+                <button type="button" aria-label={`Remove ${title}`} className="cursor-pointer border-none bg-transparent text-[0.85rem] underline" onClick={() => void removeItem(item.id)} disabled={isLoading}>
+                  Remove
+                </button>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+  )
+}

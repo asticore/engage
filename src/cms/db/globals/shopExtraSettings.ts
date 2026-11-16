@@ -24,6 +24,7 @@ export type ShopExtraSettingsDoc = {
   /** Days an untouched guest cart is kept (lib/cartLifetime.ts). */
   cartLifetimeDays?: number | null
   cartExpiryReminderDays?: number | null
+  cartPageFromEditor?: boolean | null
   /** Gift wrap flat fee at checkout (lib/giftWrap.ts). */
   giftWrapEnabled?: boolean | null
   giftWrapFee?: number | null

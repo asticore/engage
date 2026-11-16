@@ -66,6 +66,13 @@ export const ShopExtraSettings: GlobalConfig = {
       admin: { description: 'How long a signed-out cart nobody has touched is kept before the clean-up deletes it. Between 1 and 365. Account carts and paid carts are never deleted.' },
     },
     {
+      name: 'cartPageFromEditor',
+      type: 'checkbox',
+      label: 'Build the cart page in the visual editor',
+      defaultValue: false,
+      admin: { description: 'Show your own page at /cart instead of the built-in cart. Create a page with the slug cart, add the Cart lines, Cart coupon and estimate, Cart cross-sells and Cart subtotal and checkout elements (or the Cart layout preset), and publish it. Until that page is published the built-in cart stays.' },
+    },
+    {
       name: 'cartExpiryReminderDays',
       type: 'number',
       label: 'Cart expiry reminder (days before)',
