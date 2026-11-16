@@ -16,7 +16,8 @@ type Conn = {
   enabled: boolean
   records: Rec[]
 }
-type Loaded = { redirectUri: string; orgs: Array<{ id: string; name: string }>; connections: Conn[] }
+type ScimInfo = { orgId: string; prefix: string; enabled: boolean; createdAt: string; lastUsedAt: string | null }
+type Loaded = { scimBase: string; scim: ScimInfo[]; redirectUri: string; orgs: Array<{ id: string; name: string }>; connections: Conn[] }
 
 const blank = { id: '', orgId: '', name: '', issuer: '', clientId: '', clientSecret: '', defaultRole: 'member', jit: true, enforce: false, enabled: false }
 
@@ -26,6 +27,7 @@ export const SsoPanel: React.FC = () => {
   const [message, setMessage] = useState('')
   const [form, setForm] = useState(blank)
   const [domain, setDomain] = useState<Record<string, string>>({})
+  const [secret, setSecret] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-sso')
@@ -39,7 +41,8 @@ export const SsoPanel: React.FC = () => {
 
   const post = async (body: Record<string, unknown>, ok = ''): Promise<boolean> => {
     const res = await fetch('/api/admin-sso', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-    const out = (await res.json().catch((): null => null)) as { error?: string } | null
+    const out = (await res.json().catch((): null => null)) as { error?: string; token?: string } | null
+    if (res.ok && out?.token) setSecret(out.token)
     setMessage(res.ok ? ok : (out?.error ?? 'That did not work.'))
     if (res.ok) await load()
     return res.ok
@@ -63,6 +66,15 @@ export const SsoPanel: React.FC = () => {
       <p>
         People sign in at <code>/api/sso/start</code> with their work email.
       </p>
+
+      <p>
+        Provisioning address for your identity provider (SCIM 2.0): <code>{data.scimBase}</code>
+      </p>
+      {secret ? (
+        <p>
+          <strong>Provisioning token (shown once):</strong> <code>{secret}</code>
+        </p>
+      ) : null}
 
       <h2>{form.id ? 'Edit connection' : 'New connection'}</h2>
       <form
@@ -146,6 +158,16 @@ export const SsoPanel: React.FC = () => {
               ))}
             </tbody>
           </table>
+          <p>
+            Provisioning (SCIM): {(() => {
+              const t = data.scim.find((x) => x.orgId === c.orgId)
+              return t ? `${t.enabled ? 'on' : 'off'}, token ${t.prefix}..., last used ${t.lastUsedAt ? t.lastUsedAt.slice(0, 16).replace('T', ' ') : 'never'}` : 'not set up'
+            })()}{' '}
+            <button type="button" onClick={() => void post({ action: 'scim-rotate', orgId: c.orgId }, 'New token made. Copy it now; it is not shown again.')}>
+              {data.scim.some((x) => x.orgId === c.orgId) ? 'Make a new token' : 'Turn on'}
+            </button>{' '}
+            {data.scim.some((x) => x.orgId === c.orgId && x.enabled) ? <button type="button" onClick={() => void post({ action: 'scim-disable', orgId: c.orgId }, 'Provisioning turned off.')}>Turn off</button> : null}
+          </p>
           <label>
             Add a domain{' '}
             <input value={domain[c.id] ?? ''} onChange={(e) => setDomain((d) => ({ ...d, [c.id]: e.target.value }))} placeholder="example.com" />
