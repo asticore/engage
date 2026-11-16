@@ -2,6 +2,7 @@ import React from 'react'
 
 import { balances } from '../commission'
 import { bannerSnippet, parseCreativeIds, referralLink } from '../core'
+import { PayoutDetailsForm } from './PayoutDetailsForm'
 import { commissionsFor, creativesByIds, getSettings, type Affiliate, type D1 } from '../store'
 
 const money = (cents: number): string => `$${(cents / 100).toFixed(2)}`
@@ -31,6 +32,12 @@ export async function AffiliateDashboardView({ d1, affiliate, origin, privateLin
         <li>Payable now: {money(bal.owed)}</li>
         <li>Paid so far: {money(bal.paid)}</li>
       </ul>
+      {affiliate.token && (
+        <>
+          <h2>How you get paid</h2>
+          <PayoutDetailsForm token={affiliate.token} initial={affiliate.payoutDetails} />
+        </>
+      )}
       {creatives.length > 0 && (
         <>
           <h2>Banners and images</h2>

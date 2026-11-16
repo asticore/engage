@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { referralAllowed } from '@/features/affiliates/consentGate'
 import { chooseCode, cleanPath, looksLikeBot, normaliseCode, parseUtm, readRefCookie, refCookie, utmCookie } from '@/features/affiliates/core'
-import { findActiveByCode, getSettings, logVisit, type D1 } from '@/features/affiliates/store'
+import { countBotHit, findActiveByCode, getSettings, logVisit, type D1 } from '@/features/affiliates/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { clientKey, hit } from '@/features/security/rateLimit'
 import { getFeatureFlags } from '@/utilities/features'
@@ -22,7 +22,11 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (!(await getFeatureFlags()).affiliates) return ok()
   if (hit(`affiliate-visit:${clientKey(request)}`, 30).limited) return ok()
-  if (looksLikeBot(request.headers.get('user-agent'))) return ok()
+  if (looksLikeBot(request.headers.get('user-agent'))) {
+    // Crawlers and scripts are not logged as visits, only counted per day so the admin can see how many were ignored.
+    await countBotHit((await rawD1()) as never as D1, new Date().toISOString().slice(0, 10)).catch((): void => undefined)
+    return ok()
+  }
   const body = (await request.json().catch((): null => null)) as Record<string, unknown> | null
   const code = normaliseCode(body?.code)
   if (!code) return ok()

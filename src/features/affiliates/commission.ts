@@ -64,10 +64,10 @@ const csvCell = (value: unknown): string => {
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
 }
 
-/** A payout log as CSV: date, affiliate, email, amount in dollars, note. */
-export function payoutsCsv(rows: readonly { createdAt: string; name: string; email: string; amountCents: number; note: string }[]): string {
-  const lines = [['Date', 'Affiliate', 'Email', 'Amount', 'Note'].join(',')]
-  for (const r of rows) lines.push([r.createdAt.slice(0, 10), r.name, r.email, (r.amountCents / 100).toFixed(2), r.note].map(csvCell).join(','))
+/** A payout log as CSV: date, affiliate, email, amount in dollars, note, the affiliate's payout details. */
+export function payoutsCsv(rows: readonly { createdAt: string; name: string; email: string; amountCents: number; note: string; details?: string }[]): string {
+  const lines = [['Date', 'Affiliate', 'Email', 'Amount', 'Note', 'Payout details'].join(',')]
+  for (const r of rows) lines.push([r.createdAt.slice(0, 10), r.name, r.email, (r.amountCents / 100).toFixed(2), r.note, r.details ?? ''].map(csvCell).join(','))
   return `${lines.join('\r\n')}\r\n`
 }
 
