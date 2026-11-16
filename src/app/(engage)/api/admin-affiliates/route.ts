@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
+import { balances, clampDays, clampPct } from '@/features/affiliates/commission'
 import { MAX_AFFILIATES, STATUSES, normaliseCode, suggestCode, type AffiliateStatus } from '@/features/affiliates/core'
 import * as store from '@/features/affiliates/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
@@ -29,7 +30,11 @@ const text = (v: unknown, max: number): string => (typeof v === 'string' ? v.tri
 export async function GET(request: Request): Promise<Response> {
   const g = await guard(request, false)
   if (!g.context) return g.response
-  return json({ affiliates: await store.listAffiliates((await rawD1()) as never as store.D1) })
+  const d1 = (await rawD1()) as never as store.D1
+  const [affiliates, settings, rows, commissions, payouts] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50)])
+  const now = new Date()
+  const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now) }))
+  return json({ affiliates: withBalances, settings, commissions, payouts })
 }
 
 /**
@@ -55,6 +60,11 @@ export async function POST(request: Request): Promise<Response> {
     const id = await store.createAffiliate(d1, { code, name, email: text(body.email, 200), status }, now)
     return json({ ok: true, id, code })
   }
+  if (body.action === 'settings') {
+    const s = body.settings as Record<string, unknown> | undefined
+    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365) }, now)
+    return json({ ok: true })
+  }
   const id = Number(body.id)
   if (!Number.isInteger(id) || id < 1) return json({ error: 'Invalid affiliate.' }, 400)
   if (body.action === 'status') {
@@ -62,7 +72,12 @@ export async function POST(request: Request): Promise<Response> {
     await store.setAffiliateStatus(d1, id, body.status as AffiliateStatus, now)
     return json({ ok: true })
   }
+  if (body.action === 'payout') {
+    const paid = await store.recordPayout(d1, id, text(body.note, 200), now)
+    return paid ? json({ ok: true, amountCents: paid.amount }) : json({ error: 'Nothing is due for this affiliate yet.' }, 400)
+  }
   if (body.action === 'delete') {
+    if (await store.hasCommissions(d1, id)) return json({ error: 'This affiliate has commissions on record. Suspend them instead of deleting.' }, 409)
     await store.deleteAffiliate(d1, id)
     return json({ ok: true })
   }

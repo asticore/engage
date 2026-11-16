@@ -182,6 +182,7 @@ import * as migration_20270316_290000_site_planner from './20270316_290000_site_
 import * as migration_20270316_300000_ga4_user_id from './20270316_300000_ga4_user_id';
 import * as migration_20270316_310000_disposable_email from './20270316_310000_disposable_email';
 import * as migration_20270316_320000_affiliates from './20270316_320000_affiliates';
+import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
 
 export const migrations = [
   {
@@ -1098,5 +1099,10 @@ export const migrations = [
     up: migration_20270316_320000_affiliates.up,
     down: migration_20270316_320000_affiliates.down,
     name: '20270316_320000_affiliates',
+  },
+  {
+    up: migration_20270316_330000_affiliate_commissions.up,
+    down: migration_20270316_330000_affiliate_commissions.down,
+    name: '20270316_330000_affiliate_commissions',
   },
 ];

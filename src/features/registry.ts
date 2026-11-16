@@ -323,11 +323,11 @@ export const FEATURES: FeatureDef[] = [
   {
     key: 'affiliates',
     label: 'Affiliates',
-    description: 'Let partners promote the site with their own link (?ref=code). Visits are tracked with a 30 day cookie. Commissions and payouts are not built yet.',
+    description: 'Let partners promote the site with their own link (?ref=code). Visits are tracked with a cookie. A commission is worked out on each attributed paid order, waits a set number of days, is reduced by refunds, and is paid out by hand.',
     defaultEnabled: false,
     collections: [],
     globals: [],
-    tables: ['affiliates', 'affiliate_visits'],
+    tables: ['affiliates', 'affiliate_visits', 'affiliate_settings', 'affiliate_commissions', 'affiliate_payouts'],
     implemented: true,
   },
 ]

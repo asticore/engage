@@ -40,6 +40,18 @@ export const OrderRefunds: CollectionConfig = {
         return runRefundAfterChange(args as never)
       },
       webhookRefundAfterChange,
+      async ({ doc, operation, req }) => {
+        // Affiliates (off by default): reduce or reverse the commission on the refunded order.
+        if (operation !== 'create') return doc
+        try {
+          const orderId = typeof doc.order === 'object' && doc.order ? Number((doc.order as { id?: unknown }).id) : Number(doc.order)
+          const order = await (req as unknown as { engine: { findByID: (a: unknown) => Promise<Record<string, unknown> | null> } }).engine.findByID({ collection: 'orders', id: orderId, depth: 0, overrideAccess: true })
+          await (await import('@/features/affiliates/service')).affiliateOrderRefunded(order)
+        } catch {
+          // The refund itself is already recorded.
+        }
+        return doc
+      },
     ],
   },
   fields: [

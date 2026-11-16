@@ -62,6 +62,13 @@ export const Orders: CollectionConfig = {
         return runOrderAfterChange(args as never)
       },
       webhookOrderAfterChange,
+      async ({ doc, previousDoc, operation }) => {
+        // Affiliates (off by default): remember who sent a new order, and start the commission once it is paid.
+        const affiliates = await import('@/features/affiliates/service')
+        if (operation === 'create') await affiliates.affiliateOrderCreated(doc as never)
+        else if (['processing', 'completed'].includes(String((doc as { status?: string }).status)) && !['processing', 'completed', 'on-hold', 'refunded'].includes(String((previousDoc as { status?: string } | undefined)?.status))) await affiliates.affiliateOrderPaid(doc as never)
+        return doc
+      },
     ],
   },
   timestamps: true,
