@@ -8,6 +8,7 @@ import { PayLaterMessage } from '@/components/PayLaterMessage'
 import { resolveCartLine, type CatalogueProduct } from '@/features/ecommerce/catalogue'
 import { addOnSummary, readAddOnChoices } from '@/features/ecommerce/lib/addOns'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
+import { SavedForLaterList, useSavedForLater } from '@/components/SavedForLater'
 import { CartEstimate } from '@/components/CartEstimate'
 import { CartCrossSells } from '@/components/CartCrossSells'
 import { CartRecommendations } from '@/components/CartRecommendations'
@@ -32,6 +33,7 @@ export default function CartPage() {
   const money = useDisplayMoney()
   const displayState = useDisplayCurrencyState()
 
+  const savedLater = useSavedForLater()
   const headingRef = React.useRef<HTMLHeadingElement | null>(null)
   const items = cart?.items || []
   const bundles = useBundleInfo(items.map((item) => (typeof item.product === 'object' && item.product ? Number((item.product as { id?: unknown }).id) : 0)).filter((id) => id > 0))
@@ -98,6 +100,20 @@ export default function CartPage() {
                     type="button"
                     className="cursor-pointer border-none bg-none text-[0.85rem] underline"
                     onClick={() => {
+                      if (typeof product !== 'object' || product === null) return
+                      savedLater.save({ product: Number((product as { id: number }).id), variation: item.variation ?? null, quantity: item.quantity, title: product.title, note: line && line.ok ? line.variationLabel : null })
+                      void removeItem(item.id)
+                      headingRef.current?.focus()
+                    }}
+                    disabled={isLoading || typeof product !== 'object' || readAddOnChoices(item.addOns).length > 0}
+                    aria-label={`Save ${typeof product === 'object' ? product.title : t('store.item')} for later`}
+                  >
+                    Save for later
+                  </button>
+                  <button
+                    type="button"
+                    className="cursor-pointer border-none bg-none text-[0.85rem] underline"
+                    onClick={() => {
                       void removeItem(item.id)
                       headingRef.current?.focus()
                     }}
@@ -129,6 +145,7 @@ export default function CartPage() {
           </div>
         </>
       )}
+      <SavedForLaterList saved={savedLater.saved} moveBack={savedLater.moveBack} discard={savedLater.discard} message={savedLater.message} />
     </div>
   )
 }
