@@ -346,7 +346,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: [],
     globals: [],
-    tables: ['affiliates', 'affiliate_visits', 'affiliate_settings', 'affiliate_commissions', 'affiliate_payouts', 'affiliate_product_rates', 'affiliate_bot_hits'],
+    tables: ['affiliates', 'affiliate_visits', 'affiliate_settings', 'affiliate_commissions', 'affiliate_payouts', 'affiliate_product_rates', 'affiliate_tag_rates', 'affiliate_bot_hits'],
     implemented: true,
   },
   {
