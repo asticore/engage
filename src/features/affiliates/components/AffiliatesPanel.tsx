@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { setupSteps, shareKit, toConsentCategory } from '../core'
+import { parseCreativeIds, setupSteps, shareKit, toConsentCategory } from '../core'
 import type { AffiliateSettings, Affiliate, CommissionRow } from '../store'
 
 type Row = Affiliate & { pending: number; owed: number; paid: number; orders: number; salesCents: number; conversionPct: number }
@@ -24,12 +24,13 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
   const [productRates, setProductRates] = useState<Array<{ productId: number; ratePct: number; title: string }>>([])
   const [products, setProducts] = useState<Array<{ id: number; title: string }>>([])
   const [visits, setVisits] = useState<Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>>([])
+  const [images, setImages] = useState<Array<{ id: number; url: string; alt: string; filename: string }>>([])
   const [rateProduct, setRateProduct] = useState('')
   const [rateValue, setRateValue] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-affiliates')
-    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; visits?: Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>; error?: string } | null
+    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; images?: Array<{ id: number; url: string; alt: string; filename: string }>; visits?: Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>; error?: string } | null
     if (!res.ok) return setMessage(data?.error ?? 'Could not load affiliates.')
     setRows(data?.affiliates ?? [])
     setSettings(data?.settings ?? null)
@@ -39,6 +40,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
     setProductRates(data?.productRates ?? [])
     setProducts(data?.products ?? [])
     setVisits(data?.visits ?? [])
+    setImages(data?.images ?? [])
   }, [])
   useEffect(() => {
     void load()
@@ -140,6 +142,23 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
           <label style={{ flexBasis: '100%' }}>Sales tiers (optional): one per line as &quot;sales in dollars, rate percent&quot;, for example 1000, 12. An affiliate whose commissioned sales reach the amount earns that rate instead of the program rate.<br />
             <textarea rows={3} style={{ width: '100%' }} maxLength={1000} value={settings.tiers} onChange={(e) => set({ tiers: e.target.value })} />
           </label>
+          <fieldset style={{ flexBasis: '100%' }}>
+            <legend>Banners and images for affiliates (from your media library; shown on each affiliate&apos;s dashboard with a copy-ready snippet)</legend>
+            {images.length === 0 ? <p>No images in the media library yet.</p> : (
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                {images.map((img) => {
+                  const chosen = parseCreativeIds(settings.creatives)
+                  return (
+                    <label key={img.id} style={{ width: '7rem' }}>
+                      <input type="checkbox" checked={chosen.includes(img.id)} onChange={(e) => set({ creatives: (e.target.checked ? [...chosen, img.id] : chosen.filter((x) => x !== img.id)).join(',') })} /> {img.alt || img.filename}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img.url} alt="" style={{ width: '100%', height: '4rem', objectFit: 'cover' }} />
+                    </label>
+                  )
+                })}
+              </div>
+            )}
+          </fieldset>
           <label style={{ flexBasis: '100%' }}>Program terms shown on the sign-up page (leave blank for the standard text)<br />
             <textarea rows={3} style={{ width: '100%' }} maxLength={4000} value={settings.terms} onChange={(e) => set({ terms: e.target.value })} />
           </label>
