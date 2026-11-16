@@ -200,7 +200,15 @@ export const SettingsPageClient: React.FC<SettingsPageClientProps> = ({ page, se
       {/* Link sections */}
       {linkSections.length > 0 && (
         <div className="settings-page__links">
-          {linkSections.map((section) => (
+          {linkSections.map((section) => section.type === 'external' ? (
+            <a key={`external:${section.href}`} href={section.href} target="_blank" rel="noopener noreferrer" className="settings-page__link-card">
+              <div className="settings-page__link-card-content">
+                <h3 className="settings-page__link-card-title">{linkText(section.label, 'label', section.label)}</h3>
+                <p className="settings-page__link-card-description">{linkText(section.label, 'description', section.description)}</p>
+              </div>
+              <div className="settings-page__link-card-icon" aria-hidden="true">↗</div>
+            </a>
+          ) : (
             <AdminLink
               key={`${section.type}:${section.href}`}
               path={section.href}

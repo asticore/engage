@@ -5,6 +5,7 @@ import { useAdminRoot } from '@/admin/adminRoute/AdminRouteProvider'
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { LastUsedBadge } from '@/features/accounts/components/LastUsedBadge'
 import { PasskeySignInButton } from '@/features/passkeys/components/PasskeySignInButton'
 import { SecondFactorChoice, type SecondFactorMethod } from '@/features/security/components/SecondFactorChoice'
 
@@ -177,6 +178,7 @@ export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string 
   }
 
   return (
+    <LastUsedBadge>
     <div className="admin-login">
       <div className="admin-login__card">
         <h1 className="admin-login__title">{t('login.heading')}</h1>
@@ -271,12 +273,12 @@ export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string 
             ) : (
               <div>
                 {pwOptions.magicLink && (
-                  <button type="button" className="btn btn--style-secondary admin-login__submit" onClick={() => requestEmailed('link')}>
+                  <button type="button" name="kind" value="link" className="btn btn--style-secondary admin-login__submit" onClick={() => requestEmailed('link')}>
                     Email me a sign-in link
                   </button>
                 )}
                 {pwOptions.emailCode && (
-                  <button type="button" className="btn btn--style-secondary admin-login__submit" onClick={() => requestEmailed('code')}>
+                  <button type="button" name="kind" value="code" className="btn btn--style-secondary admin-login__submit" onClick={() => requestEmailed('code')}>
                     Email me a code
                   </button>
                 )}
@@ -291,7 +293,7 @@ export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string 
             {socialProviders.map((p) => (
               <a
                 key={p.id}
-                className="btn btn--style-secondary admin-login__submit"
+                className={`btn btn--style-secondary admin-login__submit account-social__button--${p.id}`}
                 href={`/api/social/${p.id}/start?area=admin&next=${encodeURIComponent(finalRedirectTo)}`}
               >
                 Continue with {p.label}
@@ -301,6 +303,7 @@ export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string 
         )}
       </div>
     </div>
+    </LastUsedBadge>
   )
 }
 

@@ -38,6 +38,7 @@ export async function SettingsHubView() {
 
     for (const section of page.sections) {
       if (section.kind === 'link') {
+        if (section.type === 'external') continue
         items.push({ label: section.label, description: section.description, context: page.title, href: section.href })
         continue
       }

@@ -157,7 +157,7 @@ export type Engine = {
   /** The account a still-valid pending token names, or null. */
   pendingTokenUser: (args: { pendingToken: string; client?: SessionClient }) => Promise<number | null>
   /** Session (or a pending second-factor token) for an already-proven identity - social login. Locked accounts are refused; two-step accounts still need their code. */
-  loginAsUser: (args: { collection: string; id: number; client?: SessionClient; skipSecondFactor?: boolean; session?: SessionOverride }) => Promise<{ user: AuthUserDoc; token?: string; exp?: number; twoFactorRequired?: boolean; pendingToken?: string; pendingBinding?: string }>
+  loginAsUser: (args: { collection: string; id: number; client?: SessionClient; skipSecondFactor?: boolean; session?: SessionOverride; method?: string }) => Promise<{ user: AuthUserDoc; token?: string; exp?: number; twoFactorRequired?: boolean; pendingToken?: string; pendingBinding?: string }>
   resetPassword: (args: { collection: string; data: { password: string; token: string }; overrideAccess?: boolean; client?: SessionClient }) => Promise<{ user: AuthUserDoc; token: string }>
   forgotPassword: (args: { collection: string; data: { email: string }; disableEmail?: boolean; expiration?: number }) => Promise<string | null>
   auth: (args: { headers: HeadersLike; apiKeys?: boolean }) => Promise<{ user: AuthUserDoc | null; apiKey?: ApiKeyContext }>
@@ -443,7 +443,7 @@ export function createEngine(): Engine {
       })
       return result
     },
-    loginAsUser: (args) => authLoginAsUser(authDb, { id: args.id, secret, client: args.client, skipSecondFactor: args.skipSecondFactor, session: args.session }),
+    loginAsUser: (args) => authLoginAsUser(authDb, { id: args.id, secret, client: args.client, skipSecondFactor: args.skipSecondFactor, session: args.session, method: args.method }),
     loginSecondFactor: (args) => authLoginSecondFactor(authDb, { pendingToken: args.data.pendingToken, code: args.data.code, method: args.data.method, passkeyVerifiedUserId: args.passkeyVerifiedUserId, secret, client: args.client }),
     pendingTokenUser: (args) => authPendingTokenUser(authDb, { pendingToken: args.pendingToken, secret, client: args.client }),
     sendSecondFactorEmail: (args) => authSendSecondFactorEmail(authDb, { pendingToken: args.data.pendingToken, secret, client: args.client }),

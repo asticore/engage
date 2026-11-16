@@ -19,3 +19,16 @@ describe('last used sign-in method', () => {
     expect(methodFor({ formHasPassword: false })).toBeNull()
   })
 })
+
+describe('last used: emailed and passkey methods', () => {
+  it('maps buttons to methods', async () => {
+    const { methodForButton, selectorForMethod } = await import('@/features/accounts/lastUsed')
+    expect(methodForButton({ kind: 'link' })).toBe('magic-link')
+    expect(methodForButton({ kind: 'code' })).toBe('email-code')
+    expect(methodForButton({ inPasskeyBox: true })).toBe('passkey')
+    expect(methodForButton({ kind: 'other' })).toBeNull()
+    expect(selectorForMethod('passkey')).toBe('.account-passkey button')
+    expect(selectorForMethod('google')).toBe('.account-social__button--google')
+    expect(selectorForMethod('<b>')).toBeNull()
+  })
+})

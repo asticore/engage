@@ -40,7 +40,7 @@ export type SocialRuntime = {
   /** The user the request's session cookie belongs to, or null. */
   sessionUser(request: Request): Promise<SessionUser | null>
   /** Session or pending second-factor token for an identity already proven. Throws when the account is locked or gone. */
-  login(userId: number, request: Request): Promise<{ token?: string; pendingToken?: string; pendingBinding?: string }>
+  login(userId: number, request: Request, provider?: string): Promise<{ token?: string; pendingToken?: string; pendingBinding?: string }>
   audit(action: AuditAction, request: Request, entry: { actorId?: number | null; actorEmail?: string | null; detail: string }): Promise<void>
   limited(request: Request): Promise<boolean>
   sessionCookie: { name: string; maxAgeSeconds: number }
@@ -293,7 +293,7 @@ async function finishSignIn(
 
   let result: { token?: string; pendingToken?: string; pendingBinding?: string }
   try {
-    result = await rt.login(outcome.userId, request)
+    result = await rt.login(outcome.userId, request, id)
   } catch {
     return { ok: false, code: 'locked', detail: 'login refused' }
   }
