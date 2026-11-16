@@ -172,3 +172,31 @@ describe('line type', () => {
     expect(line.quantity).toBe(1)
   })
 })
+
+import { DEFAULT_CART_LIFETIME_DAYS, normaliseCartLifetime } from '@/features/ecommerce/lib/cartLifetime'
+
+describe('cart lifetime', () => {
+  it('defaults to 30 days and clamps to 1 to 365', () => {
+    expect(normaliseCartLifetime(null)).toBe(DEFAULT_CART_LIFETIME_DAYS)
+    expect(normaliseCartLifetime({ cartLifetimeDays: 0 })).toBe(1)
+    expect(normaliseCartLifetime({ cartLifetimeDays: 9999 })).toBe(365)
+    expect(normaliseCartLifetime({ cartLifetimeDays: 7.9 })).toBe(7)
+  })
+  it('the sweep uses the days it is given', async () => {
+    const now = new Date('2026-12-01T00:00:00.000Z')
+    const calls: Array<Record<string, unknown>> = []
+    const engine = {
+      find: async (args: Record<string, unknown>): Promise<{ docs: unknown[] }> => {
+        calls.push(args)
+        return { docs: [] }
+      },
+      findByID: async (): Promise<null> => null,
+      create: async (): Promise<null> => null,
+      update: async (): Promise<null> => null,
+      delete: async (): Promise<void> => undefined,
+    }
+    await sweepGuestCarts(engine, now, 200, 7)
+    expect(JSON.stringify(calls[0].where)).toContain(new Date(now.getTime() - 7 * 24 * 3_600_000).toISOString())
+  })
+})
+

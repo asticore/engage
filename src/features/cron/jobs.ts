@@ -78,9 +78,11 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
   cleanup: async ({ engine }) => {
     const { runScheduledCleanup } = await import('@/features/cleanup/scheduledCleanup')
     await runScheduledCleanup(engine as never)
-    // Guest carts nobody touched for 30 days. A failure here must not fail the clean-up job.
+    // Guest carts nobody touched for the Cart lifetime setting (30 days by default). A failure here must not fail the clean-up job.
     const { sweepGuestCarts } = await import('@/features/ecommerce/server/accountCart')
-    await sweepGuestCarts(engine as never).catch((): number => 0)
+    const { normaliseCartLifetime } = await import('@/features/ecommerce/lib/cartLifetime')
+    const lifetime = normaliseCartLifetime(await (engine as unknown as { findGlobal: (a: unknown) => Promise<unknown> }).findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null))
+    await sweepGuestCarts(engine as never, new Date(), 200, lifetime).catch((): number => 0)
   },
   'error-alert': async ({ engine, now }) => {
     const { runErrorSpikeAlert } = await import('@/features/errors/spikeAlert')
