@@ -4,6 +4,8 @@ import type { NextRequest } from 'next/server'
 import { audit, auditContext } from './auditLog'
 import { FINGERPRINT_HEADERS, securityHeaders } from './headers'
 import { SESSION_COOKIE, isSessionExpired } from './loginProtection'
+import { decideIp } from './ipRules'
+import { readIpRulesCached } from './ipRulesStore'
 import { isDirectoryListingRequest, isProbePath } from './probePaths'
 import { classifyRoute, clientKey, hit, hitShared, limitFor } from './rateLimit'
 import { readSecuritySettingsFromD1, type SecuritySettings } from './settings'
@@ -225,6 +227,16 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
     const redirected = await tryRedirect(request, settings)
     if (redirected) return applyServerResponseHeaders(redirected, rules, pathname)
     return passThrough()
+  }
+
+  // IP block list (Settings > Security > IP lists). The allow list wins; an address that cannot be read is never blocked.
+  // SECURITY_IP_RULES_OFF=1 in the environment switches the list off, so an admin can always recover.
+  if (process.env.SECURITY_IP_RULES_OFF !== '1') {
+    const ip = clientKey(request)
+    if (ip !== 'unknown' && decideIp(ip, await readIpRulesCached()) === 'block') {
+      void audit({ action: 'ip.blocked', detail: pathname, ...auditContext(request) }, settings)
+      return new NextResponse('Access denied.', { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } })
+    }
   }
 
   const hardening = settings.hardening
