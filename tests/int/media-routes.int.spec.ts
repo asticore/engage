@@ -17,10 +17,10 @@ vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: vi.fn(async () 
 vi.mock('@/features/ecommerce/server/db', () => {
   const statement: Record<string, unknown> = {}
   statement.bind = () => statement
-  statement.all = async () => ({ results: [] })
-  statement.first = async () => null
+  statement.all = async (): Promise<{ results: unknown[] }> => ({ results: [] })
+  statement.first = async (): Promise<null> => null
   statement.run = async () => ({ success: true, meta: {} })
-  return { rawD1: async () => ({ prepare: () => statement, batch: async () => [], exec: async () => ({}) }) }
+  return { rawD1: async () => ({ prepare: () => statement, batch: async (): Promise<unknown[]> => [], exec: async (): Promise<Record<string, never>> => ({}) }) }
 })
 vi.mock('@/localapi/storage', () => ({
   putMediaObject: vi.fn(async () => undefined),
