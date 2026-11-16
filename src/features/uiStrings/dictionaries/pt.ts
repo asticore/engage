@@ -3136,8 +3136,6 @@ const pt: UiDictionary = {
   "blog.ai.writeFirst": "Escreva todas as seções antes de continuar.",
   "blog.ai.detailsHeading": "Dados de busca e tags",
   "blog.ai.suggestDetails": "Sugerir dados",
-  "blog.ai.saasButton": "Obter sugestões do Asticore SaaS",
-  "blog.ai.saasNote": "Ainda não ligado. As sugestões do Asticore SaaS precisam de um início de sessão e de um endpoint que não estão configurados, por isso continua desligado. Use os botões acima.",
   "blog.ai.savedPrompts": "Prompts guardados",
   "blog.ai.choosePrompt": "Escolha um prompt guardado",
   "blog.ai.noSavedPrompts": "Ainda não há prompts guardados. Guarde um briefing abaixo.",

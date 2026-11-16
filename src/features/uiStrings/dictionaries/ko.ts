@@ -3136,8 +3136,6 @@ const ko: UiDictionary = {
   "blog.ai.writeFirst": "계속하기 전에 모든 섹션을 작성하세요.",
   "blog.ai.detailsHeading": "검색 세부 정보와 태그",
   "blog.ai.suggestDetails": "세부 정보 제안",
-  "blog.ai.saasButton": "Asticore SaaS에서 제안 받기",
-  "blog.ai.saasNote": "아직 연결되지 않았습니다. Asticore SaaS 제안에는 아직 설정되지 않은 로그인과 엔드포인트가 필요하므로 꺼져 있습니다. 위의 버튼을 사용하세요.",
   "blog.ai.savedPrompts": "저장된 프롬프트",
   "blog.ai.choosePrompt": "저장된 프롬프트 선택",
   "blog.ai.noSavedPrompts": "아직 저장된 프롬프트가 없습니다. 아래에서 개요를 저장하세요.",

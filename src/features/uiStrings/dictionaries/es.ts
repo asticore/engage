@@ -3136,8 +3136,6 @@ const es: UiDictionary = {
   "blog.ai.writeFirst": "Escriba todas las secciones antes de continuar.",
   "blog.ai.detailsHeading": "Datos de búsqueda y etiquetas",
   "blog.ai.suggestDetails": "Sugerir datos",
-  "blog.ai.saasButton": "Obtener sugerencias de Asticore SaaS",
-  "blog.ai.saasNote": "Aún no está conectado. Las sugerencias de Asticore SaaS necesitan un inicio de sesión y un punto de conexión que no están configurados, así que sigue desactivado. Use los botones de arriba.",
   "blog.ai.savedPrompts": "Indicaciones guardadas",
   "blog.ai.choosePrompt": "Elija una indicación guardada",
   "blog.ai.noSavedPrompts": "Aún no hay indicaciones guardadas. Guarde un resumen abajo.",

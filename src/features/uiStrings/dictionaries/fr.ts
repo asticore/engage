@@ -3136,8 +3136,6 @@ const fr: UiDictionary = {
   "blog.ai.writeFirst": "Rédigez chaque section avant de continuer.",
   "blog.ai.detailsHeading": "Détails de recherche et étiquettes",
   "blog.ai.suggestDetails": "Proposer des détails",
-  "blog.ai.saasButton": "Obtenir des suggestions d'Asticore SaaS",
-  "blog.ai.saasNote": "Pas encore connecté. Les suggestions d'Asticore SaaS nécessitent une connexion et un point d'accès qui ne sont pas configurés, donc cette option reste désactivée. Utilisez les boutons ci-dessus.",
   "blog.ai.savedPrompts": "Modèles enregistrés",
   "blog.ai.choosePrompt": "Choisir un modèle enregistré",
   "blog.ai.noSavedPrompts": "Aucun modèle enregistré pour l'instant. Enregistrez un brief ci-dessous.",

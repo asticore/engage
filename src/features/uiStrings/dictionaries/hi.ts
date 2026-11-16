@@ -3136,8 +3136,6 @@ const hi: UiDictionary = {
   "blog.ai.writeFirst": "आगे बढ़ने से पहले सभी अनुभाग लिखें।",
   "blog.ai.detailsHeading": "खोज विवरण और टैग",
   "blog.ai.suggestDetails": "विवरण सुझाएँ",
-  "blog.ai.saasButton": "Asticore SaaS से सुझाव प्राप्त करें",
-  "blog.ai.saasNote": "अभी कनेक्ट नहीं है। Asticore SaaS के सुझावों के लिए साइन-इन और एक एंडपॉइंट चाहिए जो सेट नहीं हैं, इसलिए यह बंद है। ऊपर के बटन इस्तेमाल करें।",
   "blog.ai.savedPrompts": "सहेजे गए प्रॉम्प्ट",
   "blog.ai.choosePrompt": "सहेजा गया प्रॉम्प्ट चुनें",
   "blog.ai.noSavedPrompts": "अभी कोई प्रॉम्प्ट सहेजा नहीं गया है। नीचे एक ब्रीफ़ सहेजें।",

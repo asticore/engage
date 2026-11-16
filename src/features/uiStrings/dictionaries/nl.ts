@@ -3136,8 +3136,6 @@ const nl: UiDictionary = {
   "blog.ai.writeFirst": "Schrijf alle secties voordat je verdergaat.",
   "blog.ai.detailsHeading": "Zoekgegevens en tags",
   "blog.ai.suggestDetails": "Gegevens voorstellen",
-  "blog.ai.saasButton": "Suggesties ophalen van Asticore SaaS",
-  "blog.ai.saasNote": "Nog niet verbonden. Suggesties van Asticore SaaS vereisen een aanmelding en een eindpunt die nog niet zijn ingesteld, dus deze blijft uit. Gebruik de knoppen hierboven.",
   "blog.ai.savedPrompts": "Opgeslagen prompts",
   "blog.ai.choosePrompt": "Kies een opgeslagen prompt",
   "blog.ai.noSavedPrompts": "Nog geen opgeslagen prompts. Sla hieronder een opdracht op.",
