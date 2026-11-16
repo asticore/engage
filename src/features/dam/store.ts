@@ -1,3 +1,5 @@
+import { parseQuotaJson, parseQuotas, type Quota } from './quota'
+import type { Rendition, RenditionInput } from './renditions'
 import { APPLIES_TO, FIELD_TYPES, type MetaField, type MetaFieldInput } from './metaFields'
 import { EMPTY_RIGHTS, STATUSES, type AssetStatus, type Rights } from './rights'
 import type { FolderRule } from './access'
@@ -25,8 +27,9 @@ export type Settings = {
   expiryWarnDays: number
   requireApproval: boolean
   quotaMb: number
+  quotas: Quota[]
 }
-export const DEFAULT_SETTINGS: Settings = { stripGps: true, autoExtract: true, keepVersions: 5, blockUsedDelete: true, duplicateAction: 'warn', expiryWarnDays: 30, requireApproval: false, quotaMb: 0 }
+export const DEFAULT_SETTINGS: Settings = { stripGps: true, autoExtract: true, keepVersions: 5, blockUsedDelete: true, duplicateAction: 'warn', expiryWarnDays: 30, requireApproval: false, quotaMb: 0, quotas: [] }
 
 export async function getSettings(d1: D1): Promise<Settings> {
   const r = (await all(d1, 'SELECT * FROM eg_media_dam_settings WHERE id = 1'))[0]
@@ -41,6 +44,7 @@ export async function getSettings(d1: D1): Promise<Settings> {
     expiryWarnDays: Number(r.expiry_warn_days),
     requireApproval: Number(r.require_approval) !== 0,
     quotaMb: Number(r.quota_mb),
+    quotas: parseQuotaJson(r.quotas_json),
   }
 }
 
@@ -52,18 +56,20 @@ export function parseSettings(input: Record<string, unknown>): { ok: true; value
   if (keepVersions === null) return { ok: false, error: 'Versions kept must be between 0 and 50.' }
   if (expiryWarnDays === null) return { ok: false, error: 'Expiry warning days must be between 0 and 365.' }
   if (quotaMb === null) return { ok: false, error: 'The storage limit must be a whole number of megabytes (0 for none).' }
+  const quotas = parseQuotas(input.quotas)
+  if (quotas.ok === false) return { ok: false, error: quotas.error }
   const action = String(input.duplicateAction ?? 'warn')
   if (action !== 'warn' && action !== 'block' && action !== 'allow') return { ok: false, error: 'Choose what happens with duplicates.' }
-  return { ok: true, value: { stripGps: input.stripGps !== false, autoExtract: input.autoExtract !== false, keepVersions, blockUsedDelete: input.blockUsedDelete !== false, duplicateAction: action, expiryWarnDays, requireApproval: input.requireApproval === true, quotaMb } }
+  return { ok: true, value: { stripGps: input.stripGps !== false, autoExtract: input.autoExtract !== false, keepVersions, blockUsedDelete: input.blockUsedDelete !== false, duplicateAction: action, expiryWarnDays, requireApproval: input.requireApproval === true, quotaMb, quotas: quotas.value } }
 }
 
 export async function saveSettings(d1: D1, s: Settings): Promise<void> {
   await run(
     d1,
-    `INSERT INTO eg_media_dam_settings (id, strip_gps, auto_extract, keep_versions, block_used_delete, duplicate_action, expiry_warn_days, require_approval, quota_mb)
-     VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
-     ON CONFLICT(id) DO UPDATE SET strip_gps=?1, auto_extract=?2, keep_versions=?3, block_used_delete=?4, duplicate_action=?5, expiry_warn_days=?6, require_approval=?7, quota_mb=?8`,
-    s.stripGps ? 1 : 0, s.autoExtract ? 1 : 0, s.keepVersions, s.blockUsedDelete ? 1 : 0, s.duplicateAction, s.expiryWarnDays, s.requireApproval ? 1 : 0, s.quotaMb,
+    `INSERT INTO eg_media_dam_settings (id, strip_gps, auto_extract, keep_versions, block_used_delete, duplicate_action, expiry_warn_days, require_approval, quota_mb, quotas_json)
+     VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
+     ON CONFLICT(id) DO UPDATE SET strip_gps=?1, auto_extract=?2, keep_versions=?3, block_used_delete=?4, duplicate_action=?5, expiry_warn_days=?6, require_approval=?7, quota_mb=?8, quotas_json=?9`,
+    s.stripGps ? 1 : 0, s.autoExtract ? 1 : 0, s.keepVersions, s.blockUsedDelete ? 1 : 0, s.duplicateAction, s.expiryWarnDays, s.requireApproval ? 1 : 0, s.quotaMb, JSON.stringify(s.quotas),
   )
 }
 
@@ -370,5 +376,61 @@ export async function mediaRows(d1: D1, ids: number[]): Promise<MediaRow[]> {
   for (const part of chunks(ids, 50)) {
     for (const r of await all(d1, `SELECT id, filename, mime_type, filesize, alt FROM eg_media WHERE id IN (${marks(part.length)}) AND filename IS NOT NULL`, ...part)) out.push({ id: Number(r.id), filename: str(r.filename), mimeType: str(r.mime_type), filesize: Number(r.filesize ?? 0), alt: str(r.alt) })
   }
+  return out
+}
+
+/* ---- Renditions, storage totals and quota usage (Task 29g) ---- */
+
+export async function listRenditions(d1: D1): Promise<Rendition[]> {
+  return (await all(d1, 'SELECT * FROM eg_media_renditions ORDER BY name')).map((r) => ({ id: Number(r.id), name: str(r.name), width: Number(r.width), height: Number(r.height), fit: str(r.fit) as Rendition['fit'], format: str(r.format) as Rendition['format'] }))
+}
+export async function saveRendition(d1: D1, id: number | null, v: RenditionInput, nowIso: string): Promise<number> {
+  if (id) {
+    await run(d1, 'UPDATE eg_media_renditions SET name=?1, width=?2, height=?3, fit=?4, format=?5, updated_at=?6 WHERE id=?7', v.name, v.width, v.height, v.fit, v.format, nowIso, id)
+    return id
+  }
+  const res = await run(d1, 'INSERT INTO eg_media_renditions (name, width, height, fit, format, updated_at, created_at) VALUES (?1,?2,?3,?4,?5,?6,?6)', v.name, v.width, v.height, v.fit, v.format, nowIso)
+  return Number(res.meta?.last_row_id ?? 0)
+}
+export async function deleteRendition(d1: D1, id: number): Promise<void> {
+  await run(d1, 'DELETE FROM eg_media_renditions WHERE id = ?1', id)
+}
+
+export type StorageTotals = { files: number; bytes: number; byKind: Array<{ kind: string; files: number; bytes: number }>; topFolders: Array<{ folder: string; files: number; bytes: number }> }
+export async function storageTotals(d1: D1): Promise<StorageTotals> {
+  const { kindOfMime } = await import('./quota')
+  const kinds = new Map<string, { files: number; bytes: number }>()
+  let files = 0
+  let bytes = 0
+  for (const r of await all(d1, "SELECT COALESCE(mime_type,'') AS mime, COUNT(*) AS files, COALESCE(SUM(filesize),0) AS bytes FROM eg_media GROUP BY COALESCE(mime_type,'')")) {
+    const k = kindOfMime(str(r.mime))
+    const cur = kinds.get(k) ?? { files: 0, bytes: 0 }
+    cur.files += Number(r.files)
+    cur.bytes += Number(r.bytes)
+    kinds.set(k, cur)
+    files += Number(r.files)
+    bytes += Number(r.bytes)
+  }
+  const topFolders = (await all(d1, "SELECT COALESCE(folder,'') AS folder, COUNT(*) AS files, COALESCE(SUM(filesize),0) AS bytes FROM eg_media GROUP BY COALESCE(folder,'') ORDER BY bytes DESC LIMIT 10")).map((r) => ({ folder: str(r.folder), files: Number(r.files), bytes: Number(r.bytes) }))
+  return { files, bytes, byKind: Array.from(kinds, ([kind, v]) => ({ kind, ...v })).sort((a, b) => b.bytes - a.bytes), topFolders }
+}
+
+export async function siteBytes(d1: D1): Promise<number> {
+  return Number((await all(d1, 'SELECT COALESCE(SUM(filesize),0) AS n FROM eg_media'))[0]?.n ?? 0)
+}
+
+/** Bytes uploaded by the people in a role or company, read from the upload entries in the activity log. */
+export async function quotaUsage(d1: D1, q: Quota): Promise<number> {
+  const who = q.scope === 'role' ? 'SELECT parent_id FROM eg_users_roles WHERE value = ?1' : 'SELECT user_id FROM eg_organization_members WHERE organization_id = ?1'
+  try {
+    return Number((await all(d1, `SELECT COALESCE(SUM(m.filesize),0) AS n FROM eg_media m JOIN eg_media_activity a ON a.media_id = m.id AND a.action = 'upload' WHERE a.user_id IN (${who})`, q.key))[0]?.n ?? 0)
+  } catch {
+    return 0
+  }
+}
+
+export async function quotaUsages(d1: D1, quotas: Quota[]): Promise<Array<Quota & { usedBytes: number }>> {
+  const out: Array<Quota & { usedBytes: number }> = []
+  for (const q of quotas) out.push({ ...q, usedBytes: await quotaUsage(d1, q) })
   return out
 }

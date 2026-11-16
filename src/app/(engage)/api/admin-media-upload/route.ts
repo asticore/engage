@@ -7,6 +7,7 @@ import { readUploadPolicy, type MediaEngine } from '@/features/media/store'
 import { checkUpload, recordUpload } from '@/features/dam/onUpload'
 import { inheritedDefaults, withAltPrefix } from '@/features/media/folderRecords'
 import { listRecords, userMayUse, type D1 as FolderD1 } from '@/features/media/folderRecordsStore'
+import { quotaRefusal } from '@/features/dam/quotaGuard'
 import { saveRights, type D1 as DamStoreD1 } from '@/features/dam/store'
 import { getSettings as getDamSettings, type D1 as DamD1 } from '@/features/dam/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
@@ -100,6 +101,8 @@ export async function POST(request: Request): Promise<Response> {
       if (checked.duplicateOf && form.get('allowDuplicate') !== '1' && (await getDamSettings(d1)).duplicateAction === 'block') {
         return NextResponse.json({ error: 'This exact file is already in the library.', duplicateOf: checked.duplicateOf }, { status: 409 })
       }
+      const refusal = await quotaRefusal(d1, auth.context.user, auth.context.isAdmin, bytes.byteLength)
+      if (refusal) return NextResponse.json({ error: refusal }, { status: 413 })
       dam = { d1, ...checked }
     }
   } catch (error) {
@@ -117,7 +120,7 @@ export async function POST(request: Request): Promise<Response> {
       overrideAccess: true,
     })
     const isPicture = typeof doc.mimeType === 'string' && doc.mimeType.startsWith('image/')
-    if (dam) await recordUpload(dam.d1, Number(doc.id), bytes, upload.mimetype, dam.hash, caption, String(doc.alt ?? ''), null, new Date().toISOString())
+    if (dam) await recordUpload(dam.d1, Number(doc.id), bytes, upload.mimetype, dam.hash, caption, String(doc.alt ?? ''), Number((auth.context.user as { id?: unknown } | null)?.id) || null, new Date().toISOString())
     if (dam && folderDefaults.defaultLicence) {
       try {
         const nowIso = new Date().toISOString()

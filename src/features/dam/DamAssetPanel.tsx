@@ -13,6 +13,8 @@ type Detail = {
   allCollections: Array<{ id: number; name: string }>
   activity: Array<{ action: string; detail: string; createdAt: string }>
   mediaUrl: string | null
+  mimeType: string
+  renditions: Array<{ id: number; name: string; width: number; height: number; fit: string; format: string }>
   versions: Array<{ id: number; filesize: number; mimeType: string; note: string; createdAt: string; width: number | null; height: number | null }>
 }
 
@@ -124,6 +126,29 @@ export function DamAssetPanel({ id }: { id: number }) {
           )
         })}
       </div>
+
+      {detail.mediaUrl && /^(video|audio)\//.test(detail.mimeType) ? (
+        <>
+          <strong className="text-[13px]">Preview</strong>
+          {detail.mimeType.startsWith('video/') ? <video controls preload="metadata" style={{ maxWidth: '100%', maxHeight: 360 }} src={detail.mediaUrl} /> : <audio controls preload="metadata" style={{ width: '100%' }} src={detail.mediaUrl} />}
+        </>
+      ) : null}
+      {detail.mediaUrl && detail.mimeType === 'application/pdf' ? (
+        <>
+          <strong className="text-[13px]">Preview</strong>
+          <iframe title="PDF preview" src={detail.mediaUrl} sandbox="" style={{ width: '100%', height: 420, border: '1px solid var(--theme-elevation-200)' }} />
+        </>
+      ) : null}
+      {/^image\/(jpeg|png|webp|gif)$/.test(detail.mimeType) && detail.renditions.length > 0 ? (
+        <>
+          <strong className="text-[13px]">Download as</strong>
+          <ul className="m-0 flex list-none flex-wrap gap-[8px] p-0 text-[12px]">
+            {detail.renditions.map((r) => (
+              <li key={r.id}><a className={btn} href={`/api/admin-media-rendition?id=${id}&preset=${r.id}&download=1`}>{r.name} ({r.width || 'auto'} x {r.height || 'auto'}, {r.format})</a></li>
+            ))}
+          </ul>
+        </>
+      ) : null}
 
       <strong className="text-[13px]">Camera data</strong>
       {Object.keys(exif).length === 0 ? (
