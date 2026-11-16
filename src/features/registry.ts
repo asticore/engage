@@ -47,6 +47,7 @@ export type FeatureKey =
   | 'mediatags'
   | 'siteplanner'
   | 'affiliates'
+  | 'comments'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -328,6 +329,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['affiliates', 'affiliate_visits', 'affiliate_settings', 'affiliate_commissions', 'affiliate_payouts'],
+    implemented: true,
+  },
+  {
+    key: 'comments',
+    label: 'Comments',
+    description: 'Let visitors comment on blog posts. Comments wait for approval by default, can be threaded, and close after a set number of days. Moderate them in the admin.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['comments', 'comment_settings'],
     implemented: true,
   },
 ]
