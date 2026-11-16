@@ -189,6 +189,7 @@ import * as migration_20270316_330000_affiliate_commissions from './20270316_330
 import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
 import * as migration_20270316_350000_affiliate_portal from './20270316_350000_affiliate_portal';
 import * as migration_20270316_400000_affiliate_rules from './20270316_400000_affiliate_rules';
+import * as migration_20270316_410000_affiliate_attribution from './20270316_410000_affiliate_attribution';
 import * as migration_20270316_360000_auth_captcha from './20270316_360000_auth_captcha';
 
 export const migrations = [
@@ -1146,5 +1147,10 @@ export const migrations = [
     up: migration_20270316_400000_affiliate_rules.up,
     down: migration_20270316_400000_affiliate_rules.down,
     name: '20270316_400000_affiliate_rules',
+  },
+  {
+    up: migration_20270316_410000_affiliate_attribution.up,
+    down: migration_20270316_410000_affiliate_attribution.down,
+    name: '20270316_410000_affiliate_attribution',
   },
 ];

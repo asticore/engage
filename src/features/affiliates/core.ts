@@ -29,6 +29,17 @@ export function chooseCode(existing: string | null, incoming: string, rule: 'fir
   return rule === 'first' && existing ? existing : incoming
 }
 
+export const REF_UTM_COOKIE = 'eg_ref_utm'
+export type ConsentCategory = 'necessary' | 'preferences' | 'analytics' | 'marketing'
+export const CONSENT_CATEGORY_OPTIONS: readonly ConsentCategory[] = ['necessary', 'preferences', 'analytics', 'marketing']
+export const toConsentCategory = (v: unknown): ConsentCategory => (CONSENT_CATEGORY_OPTIONS as readonly unknown[]).includes(v) ? (v as ConsentCategory) : 'necessary'
+
+/** The coupon code kept for an affiliate: lowercase, letters, digits, dashes and underscores, 3 to 40 characters, or empty. */
+export function normaliseCoupon(value: unknown): string {
+  const code = typeof value === 'string' ? value.trim().toLowerCase() : ''
+  return /^[a-z0-9][a-z0-9_-]{1,38}[a-z0-9]$/.test(code) ? code : ''
+}
+
 export type Utm = { source: string; medium: string; campaign: string }
 
 const clip = (v: string | null): string => (v ?? '').trim().slice(0, 80)
@@ -95,4 +106,26 @@ export function shareKit(v: { name: string; link: string; dashboard: string; com
     '',
     'Add your link to your posts, videos, emails or bio. Please say clearly that it is an affiliate link.',
   ].join('\n')
+}
+
+/** The UTM values of the landing, kept in a small cookie beside eg_ref so the order can carry them. */
+export function utmCookie(utm: Utm, days: number = DEFAULT_COOKIE_DAYS): string {
+  const value = [utm.source, utm.medium, utm.campaign].map((v) => v.replace(/[|;,\s]+/g, '_')).join('|')
+  return `${REF_UTM_COOKIE}=${encodeURIComponent(value)}; Path=/; Max-Age=${Math.round(days * 86400)}; SameSite=Lax`
+}
+
+export function readUtmCookie(cookieHeader: string | null | undefined): Utm {
+  for (const part of (cookieHeader ?? '').split(';')) {
+    const [name, ...rest] = part.trim().split('=')
+    if (name !== REF_UTM_COOKIE) continue
+    let decoded = ''
+    try {
+      decoded = decodeURIComponent(rest.join('='))
+    } catch {
+      return { source: '', medium: '', campaign: '' }
+    }
+    const [source = '', medium = '', campaign = ''] = decoded.split('|')
+    return { source: source.slice(0, 80), medium: medium.slice(0, 80), campaign: campaign.slice(0, 80) }
+  }
+  return { source: '', medium: '', campaign: '' }
 }
