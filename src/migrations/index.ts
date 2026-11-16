@@ -1220,6 +1220,8 @@ export const migrations = [
     up: migration_20270316_420000_org_transfer_delegation.up,
     down: migration_20270316_420000_org_transfer_delegation.down,
     name: '20270316_420000_org_transfer_delegation',
+  },
+  {
     up: migration_20270316_428000_mini_cart.up,
     down: migration_20270316_428000_mini_cart.down,
     name: '20270316_428000_mini_cart',
