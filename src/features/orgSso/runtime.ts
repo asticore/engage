@@ -26,6 +26,7 @@ export async function ssoRuntime(): Promise<SsoRuntime> {
     audit: base.audit,
     limited: base.limited,
     sessionCookie: base.sessionCookie,
+    markAssertionSeen: (id, exp, at) => store.markAssertionSeen(id, exp, at),
     listConnections: () => store.listConnectionsSafe(),
     getConnection: (id) => store.getConnection(id).catch((): null => null),
     deps: {

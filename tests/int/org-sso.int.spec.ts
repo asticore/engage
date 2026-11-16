@@ -195,6 +195,7 @@ describe('the sign-in flow end to end', () => {
   }) as typeof fetch
 
   const runtime = (): SsoRuntime => ({
+    markAssertionSeen: async () => true,
     secret: SECRET,
     fetchImpl: idp,
     now: () => Date.now(),

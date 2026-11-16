@@ -39,6 +39,18 @@ import { passwordHintSay, socialMessageText } from '../messages'
  * screen, not with the route.
  */
 
+/** True when the site has single sign-on on and at least one connection ready to use. Never throws. */
+async function ssoAvailable(): Promise<boolean> {
+  try {
+    const { getFeatureFlags } = await import('@/utilities/features')
+    if (!(await getFeatureFlags()).sso) return false
+    const { listConnectionsSafe } = await import('@/features/orgSso/store')
+    return (await listConnectionsSafe()).some((c) => c.enabled && c.domains.some((d) => d.verifiedAt))
+  } catch {
+    return false
+  }
+}
+
 export const SignInScreen: React.FC<{
   next?: string
   justReset?: boolean
@@ -60,6 +72,7 @@ export const SignInScreen: React.FC<{
   // Off unless the owner switched passkeys on. Existing sign-in screens render exactly as before.
   const passkey = await passkeySignInAvailable(engine, 'account')
 
+  const sso = await ssoAvailable()
   return (
     <AuthShell title={tx('auth.signIn')}>
       {message && (
@@ -80,6 +93,13 @@ export const SignInScreen: React.FC<{
           />
         )}
       </LastUsedBadge>
+      {!pending && sso ? (
+        <p>
+          <a className="account-link" href="/api/sso/start">
+            Sign in with single sign-on
+          </a>
+        </p>
+      ) : null}
     </AuthShell>
   )
 }
