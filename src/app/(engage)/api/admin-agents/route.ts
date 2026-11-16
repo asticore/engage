@@ -4,7 +4,10 @@ import { getAdminContext } from '@/admin/auth'
 import { resolveD1Binding } from '@/cms/db/connect'
 import { retentionCutoff, validateGrantInput, DEFAULT_RETENTION_DAYS, describeCaps } from '@/features/agentAccess/core'
 import * as store from '@/features/agentAccess/store'
-import { createApiKey, createD1ApiKeyStore, scopableCollections, type ApiKeyDeps, type D1Like, type LiveOwner } from '@/features/apiKeys'
+import { createD1ApiKeyStore, scopableCollections, type D1Like, type LiveOwner } from '@/features/apiKeys'
+import { mintAgentToken } from '@/features/agentAccess/mint'
+import { normaliseUserCode } from '@/features/agentAccess/device'
+import * as devices from '@/features/agentAccess/deviceStore'
 import { reauthenticate } from '@/features/accounts/passkeysWiring'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { adminRequestRefusal } from '@/features/forms/origin'
@@ -43,7 +46,10 @@ export async function GET(request: Request): Promise<Response> {
   const settings = await getSecuritySettings(engine as never)
   const [grants, totals, actions, keys] = await Promise.all([store.listGrants(d1), store.todayTotals(d1, now), store.recentActions(d1, grantId, 100), keyStore().listAll()])
   const byKey = new Map(keys.map((k) => [k.id, k]))
+  const dd = await devices.deviceDb().catch((): null => null)
+  const pendingDevices = dd ? await devices.listPending(dd, now).catch((): never[] => []) : []
   return json({
+    pendingDevices,
     apiKeysOn: settings.apiKeys.enabled,
     maxLifetimeDays: settings.apiKeys.maxLifetimeDays,
     collections: scopableCollections(engine.config.collections as unknown as Array<{ slug?: unknown; labels?: { plural?: unknown } | null }>),
@@ -96,18 +102,42 @@ export async function POST(request: Request): Promise<Response> {
     if (!(await reauthenticate(Number(user.id), { password: typeof body.password === 'string' ? body.password : undefined, code: typeof body.code === 'string' ? body.code : undefined }))) {
       return json({ error: 'Enter your current password or a two-step code to create an agent token.' }, 403)
     }
-    const deps: ApiKeyDeps = {
-      store: keyStore(),
-      now: () => Date.now(),
-      audit: async () => undefined,
-      loadOwner: async (): Promise<LiveOwner | null> => ({ id: Number(user.id), email: user.email, roles: user.roles ?? [], locked: false, user }),
-    }
     const owner: LiveOwner = { id: Number(user.id), email: user.email, roles: user.roles ?? [], locked: false, user }
-    const created = await createApiKey(deps, owner, { name: `Agent: ${input.value.label}`, scopes: body.scopes, expiresInDays: body.expiresInDays }, settings.apiKeys)
-    if (created.ok === false) return json({ error: created.error }, 400)
-    await store.insertGrant(d1, { keyId: created.value.row.id, ...input.value, createdBy: Number(user.id) }, now.toISOString())
-    await note('api-key.created', created.value.row.id, `agent token for ${input.value.label}: ${created.value.row.scopes.join(',')}`)
-    return json({ ok: true, key: created.value.key })
+    const made = await mintAgentToken({ owner, settings: settings.apiKeys, keyStore: keyStore(), d1, input: input.value, scopes: body.scopes, expiresInDays: body.expiresInDays, nowIso: now.toISOString() })
+    if (made.ok === false) return json({ error: made.error }, 400)
+    await note('api-key.created', made.keyId, `agent token for ${input.value.label}`)
+    return json({ ok: true, key: made.key })
+  }
+  if (body.action === 'device-approve' || body.action === 'device-deny') {
+    const code = normaliseUserCode(body.userCode)
+    if (!code) return json({ error: 'That is not a device code.' }, 400)
+    const dd = await devices.deviceDb()
+    const row = await devices.findPendingByUserCode(dd, code, now.getTime())
+    if (!row) return json({ error: 'No waiting request with that code. It may have expired.' }, 404)
+    if (body.action === 'device-deny') {
+      await devices.deny(dd, row.id)
+      return json({ ok: true })
+    }
+    if (!settings.apiKeys.enabled) return json({ error: 'API keys are not turned on. Switch them on in Security settings first.' }, 409)
+    if (hit(`agents:create:${user.id}`, 10).limited) return json({ error: 'Too many tokens made in a short time. Try again later.' }, 429)
+    if (!(await reauthenticate(Number(user.id), { password: typeof body.password === 'string' ? body.password : undefined, code: typeof body.code === 'string' ? body.code : undefined }))) {
+      return json({ error: 'Enter your current password or a two-step code to approve.' }, 403)
+    }
+    const input = validateGrantInput({ label: body.label || row.clientName, tool: body.tool, dailyWriteCap: body.dailyWriteCap, dailyReadCap: body.dailyReadCap })
+    if (input.ok === false) return json({ error: input.error }, 400)
+    const owner: LiveOwner = { id: Number(user.id), email: user.email, roles: user.roles ?? [], locked: false, user }
+    const scopes = Array.isArray(body.scopes) && body.scopes.length > 0 ? body.scopes : row.scope === 'write' ? ['*:read', '*:write'] : ['*:read']
+    const made = await mintAgentToken({ owner, settings: settings.apiKeys, keyStore: keyStore(), d1, input: input.value, scopes, expiresInDays: body.expiresInDays, nowIso: now.toISOString() })
+    if (made.ok === false) return json({ error: made.error }, 400)
+    if (!(await devices.approve(dd, row.id, made.key))) {
+      // Someone else answered first: the token just made must not survive.
+      const grant = (await store.listGrants(d1)).find((x) => x.keyId === made.keyId)
+      if (grant) await store.revokeGrant(d1, grant.id, now.toISOString())
+      await keyStore().revoke(made.keyId, now.toISOString())
+      return json({ error: 'That request was already answered.' }, 409)
+    }
+    await note('api-key.created', made.keyId, `agent token for ${input.value.label} approved from a device code`)
+    return json({ ok: true })
   }
   if (body.action === 'caps') {
     const id = Math.floor(Number(body.id))
