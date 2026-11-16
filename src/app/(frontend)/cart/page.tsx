@@ -7,6 +7,7 @@ import React from 'react'
 import { PayLaterMessage } from '@/components/PayLaterMessage'
 import { resolveCartLine, type CatalogueProduct } from '@/features/ecommerce/catalogue'
 import { addOnSummary, readAddOnChoices } from '@/features/ecommerce/lib/addOns'
+import { FreeShippingBar } from '@/components/FreeShippingBar'
 import { CartCrossSells } from '@/components/CartCrossSells'
 import { CartRecommendations } from '@/components/CartRecommendations'
 import { BundleContentsList } from '@/components/BundleContentsList'
@@ -98,6 +99,7 @@ export default function CartPage() {
 
           <CartCrossSells />
           <CartRecommendations />
+          <FreeShippingBar subtotal={cart?.subtotal} money={money} />
           <PayLaterMessage amountDollars={typeof cart?.subtotal === 'number' ? cart.subtotal : null} />
           {displayState.selected ? (
             <p className="opacity-70">Converted prices are approximate. You pay in {displayState.base} at checkout.</p>
