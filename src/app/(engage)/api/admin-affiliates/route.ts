@@ -65,14 +65,16 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (body.action === 'settings') {
     const s = body.settings as Record<string, unknown> | undefined
-    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, consentCategory: toConsentCategory(s?.consentCategory), terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
+    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, consentCategory: toConsentCategory(s?.consentCategory), emailNotifications: s?.emailNotifications !== false, terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
     return json({ ok: true })
   }
   const id = Number(body.id)
   if (!Number.isInteger(id) || id < 1) return json({ error: 'Invalid affiliate.' }, 400)
   if (body.action === 'status') {
     if (!STATUSES.includes(body.status as AffiliateStatus)) return json({ error: 'Invalid status.' }, 400)
+    const before = await store.getAffiliateById(d1, id)
     await store.setAffiliateStatus(d1, id, body.status as AffiliateStatus, now)
+    if (body.status === 'active' && before && before.status !== 'active') await (await import('@/features/affiliates/service')).sendAffiliateEmail('approved', id, {})
     return json({ ok: true })
   }
   if (body.action === 'rate') {
@@ -97,6 +99,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (body.action === 'payout') {
     const paid = await store.recordPayout(d1, id, text(body.note, 200), now, (await store.getSettings(d1)).minPayoutCents)
+    if (paid) await (await import('@/features/affiliates/service')).sendAffiliateEmail('payout', id, { amountCents: paid.amount, note: text(body.note, 200) })
     return paid ? json({ ok: true, amountCents: paid.amount }) : json({ error: 'Nothing is due for this affiliate yet, or it is below the minimum payout.' }, 400)
   }
   if (body.action === 'delete') {

@@ -53,14 +53,14 @@ export async function logVisit(d1: D1, v: { affiliateId: number; path: string; s
 
 /* ------------------------------------------------------------- settings */
 
-export type AffiliateSettings = { cookieDays: number; clickRule: 'first' | 'last'; commissionPct: number; pendingDays: number; autoApprove: boolean; terms: string; minPayoutCents: number; firstOrderOnly: boolean; consentCategory: ConsentCategory }
-export const DEFAULT_SETTINGS: AffiliateSettings = { cookieDays: 30, clickRule: 'last', commissionPct: 10, pendingDays: 30, autoApprove: false, terms: '', minPayoutCents: 0, firstOrderOnly: false, consentCategory: 'necessary' }
+export type AffiliateSettings = { cookieDays: number; clickRule: 'first' | 'last'; commissionPct: number; pendingDays: number; autoApprove: boolean; terms: string; minPayoutCents: number; firstOrderOnly: boolean; consentCategory: ConsentCategory; emailNotifications: boolean }
+export const DEFAULT_SETTINGS: AffiliateSettings = { cookieDays: 30, clickRule: 'last', commissionPct: 10, pendingDays: 30, autoApprove: false, terms: '', minPayoutCents: 0, firstOrderOnly: false, consentCategory: 'necessary', emailNotifications: true }
 
 export async function getSettings(d1: D1): Promise<AffiliateSettings> {
   try {
-    const r = (await all(d1, 'SELECT cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, min_payout_cents, first_order_only, consent_category FROM eg_affiliate_settings WHERE id = 1'))[0]
+    const r = (await all(d1, 'SELECT cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, min_payout_cents, first_order_only, consent_category, email_notifications FROM eg_affiliate_settings WHERE id = 1'))[0]
     if (!r) return DEFAULT_SETTINGS
-    return { cookieDays: Number(r.cookie_days ?? 30), clickRule: r.click_rule === 'first' ? 'first' : 'last', commissionPct: Number(r.commission_pct ?? 10), pendingDays: Number(r.pending_days ?? 30), autoApprove: Number(r.auto_approve ?? 0) === 1, terms: String(r.terms ?? ''), minPayoutCents: Number(r.min_payout_cents ?? 0), firstOrderOnly: Number(r.first_order_only ?? 0) === 1, consentCategory: toConsentCategory(r.consent_category) }
+    return { cookieDays: Number(r.cookie_days ?? 30), clickRule: r.click_rule === 'first' ? 'first' : 'last', commissionPct: Number(r.commission_pct ?? 10), pendingDays: Number(r.pending_days ?? 30), autoApprove: Number(r.auto_approve ?? 0) === 1, terms: String(r.terms ?? ''), minPayoutCents: Number(r.min_payout_cents ?? 0), firstOrderOnly: Number(r.first_order_only ?? 0) === 1, consentCategory: toConsentCategory(r.consent_category), emailNotifications: Number(r.email_notifications ?? 1) === 1 }
   } catch {
     return DEFAULT_SETTINGS
   }
@@ -68,8 +68,8 @@ export async function getSettings(d1: D1): Promise<AffiliateSettings> {
 
 export async function saveSettings(d1: D1, s: AffiliateSettings, nowIso: string): Promise<void> {
   await d1
-    .prepare('INSERT INTO eg_affiliate_settings (id, cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, min_payout_cents, first_order_only, consent_category, updated_at) VALUES (1,?1,?2,?3,?4,?5,?6,?7,?8,?9,?10) ON CONFLICT(id) DO UPDATE SET cookie_days=?1, click_rule=?2, commission_pct=?3, pending_days=?4, auto_approve=?5, terms=?6, min_payout_cents=?7, first_order_only=?8, consent_category=?9, updated_at=?10')
-    .bind(s.cookieDays, s.clickRule, s.commissionPct, s.pendingDays, s.autoApprove ? 1 : 0, s.terms, s.minPayoutCents, s.firstOrderOnly ? 1 : 0, s.consentCategory, nowIso)
+    .prepare('INSERT INTO eg_affiliate_settings (id, cookie_days, click_rule, commission_pct, pending_days, auto_approve, terms, min_payout_cents, first_order_only, consent_category, email_notifications, updated_at) VALUES (1,?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11) ON CONFLICT(id) DO UPDATE SET cookie_days=?1, click_rule=?2, commission_pct=?3, pending_days=?4, auto_approve=?5, terms=?6, min_payout_cents=?7, first_order_only=?8, consent_category=?9, email_notifications=?10, updated_at=?11')
+    .bind(s.cookieDays, s.clickRule, s.commissionPct, s.pendingDays, s.autoApprove ? 1 : 0, s.terms, s.minPayoutCents, s.firstOrderOnly ? 1 : 0, s.consentCategory, s.emailNotifications ? 1 : 0, nowIso)
     .run()
 }
 
@@ -78,9 +78,9 @@ export async function saveSettings(d1: D1, s: AffiliateSettings, nowIso: string)
 export type CommissionRow = { id: number; affiliate_id: number; order_id: number; base_cents: number; rate_pct: number; amount_cents: number; status: string; eligible_at: string | null; created_at: string }
 const toCommission = (r: Row): CommissionRow => ({ id: Number(r.id), affiliate_id: Number(r.affiliate_id), order_id: Number(r.order_id), base_cents: Number(r.base_cents ?? 0), rate_pct: Number(r.rate_pct ?? 0), amount_cents: Number(r.amount_cents ?? 0), status: String(r.status), eligible_at: r.eligible_at ? String(r.eligible_at) : null, created_at: String(r.created_at ?? '') })
 
-export async function getAffiliateById(d1: D1, id: number): Promise<{ id: number; email: string; ratePct: number | null } | null> {
-  const r = (await all(d1, 'SELECT id, email, rate_pct FROM eg_affiliates WHERE id = ?1', id))[0]
-  return r ? { id: Number(r.id), email: String(r.email ?? ''), ratePct: toRate(r.rate_pct) } : null
+export async function getAffiliateById(d1: D1, id: number): Promise<{ id: number; email: string; ratePct: number | null; name: string; code: string; token: string; status: AffiliateStatus } | null> {
+  const r = (await all(d1, 'SELECT id, email, rate_pct, name, code, token, status FROM eg_affiliates WHERE id = ?1', id))[0]
+  return r ? { id: Number(r.id), email: String(r.email ?? ''), ratePct: toRate(r.rate_pct), name: String(r.name ?? ''), code: String(r.code ?? ''), token: String(r.token ?? ''), status: toStatus(r.status) } : null
 }
 
 export async function setAffiliateRate(d1: D1, id: number, ratePct: number | null, nowIso: string): Promise<void> {
