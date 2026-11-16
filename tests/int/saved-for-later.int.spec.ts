@@ -49,7 +49,7 @@ describe('mergeSavedLists', () => {
 describe('saved lines store', () => {
   it('writes the list in order and reads it back', async () => {
     const rows: Array<unknown[]> = []
-    const d1: D1Saved = {
+    const d1 = {
       prepare: (sql: string) => ({
         bind: (...v: unknown[]) => ({
           run: async () => {
@@ -60,8 +60,9 @@ describe('saved lines store', () => {
         }),
       }),
     }
-    await writeSaved(d1, 7, [line({ product: 3, quantity: 2, title: 'Mug' })])
+    const store = d1 as unknown as D1Saved
+    await writeSaved(store, 7, [line({ product: 3, quantity: 2, title: 'Mug' })])
     expect(rows[0].slice(0, 5)).toEqual([7, 3, '', 2, 'Mug'])
-    expect(await readSaved(d1, 7)).toEqual([{ product: 3, variation: null, quantity: 2, title: 'Mug', note: null }])
+    expect(await readSaved(store, 7)).toEqual([{ product: 3, variation: null, quantity: 2, title: 'Mug', note: null }])
   })
 })
