@@ -547,9 +547,9 @@ async function handleFind(engine: Engine, collection: string, request: Request, 
 }
 
 /** What a new session row records about the browser signing in. */
-function sessionClient(request: Request): { userAgent: string | null; ip: string | null; trustedDeviceToken: string | null } {
+function sessionClient(request: Request): { userAgent: string | null; ip: string | null; country: string | null; trustedDeviceToken: string | null } {
   const { ip, userAgent } = auditContext(request)
-  return { userAgent: userAgent ?? null, ip: ip ?? null, trustedDeviceToken: trustedTokenFromCookieHeader(request.headers.get('cookie')) }
+  return { userAgent: userAgent ?? null, ip: ip ?? null, country: request.headers.get('cf-ipcountry'), trustedDeviceToken: trustedTokenFromCookieHeader(request.headers.get('cookie')) }
 }
 
 /** The remembered-device cookie: HttpOnly, lax, scoped to the whole site, lasting `maxAgeSeconds`. */
