@@ -3136,8 +3136,6 @@ const ja: UiDictionary = {
   "blog.ai.writeFirst": "続ける前に、すべてのセクションを書いてください。",
   "blog.ai.detailsHeading": "検索の詳細とタグ",
   "blog.ai.suggestDetails": "詳細を提案",
-  "blog.ai.saasButton": "Asticore SaaS から提案を取得",
-  "blog.ai.saasNote": "まだ接続されていません。Asticore SaaS の提案には、未設定のサインインとエンドポイントが必要なため、オフのままです。上のボタンを使ってください。",
   "blog.ai.savedPrompts": "保存済みプロンプト",
   "blog.ai.choosePrompt": "保存済みプロンプトを選ぶ",
   "blog.ai.noSavedPrompts": "保存済みプロンプトはまだありません。下で依頼内容を保存してください。",

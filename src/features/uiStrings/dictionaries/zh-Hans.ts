@@ -3135,8 +3135,6 @@ const zhHans: UiDictionary = {
   "blog.ai.writeFirst": "请先撰写每个章节，再继续。",
   "blog.ai.detailsHeading": "搜索详情和标签",
   "blog.ai.suggestDetails": "建议详情",
-  "blog.ai.saasButton": "从 Asticore SaaS 获取建议",
-  "blog.ai.saasNote": "尚未连接。Asticore SaaS 建议需要尚未设置的登录和接口，因此保持关闭。请使用上方的按钮。",
   "blog.ai.savedPrompts": "已保存的提示",
   "blog.ai.choosePrompt": "选择已保存的提示",
   "blog.ai.noSavedPrompts": "还没有已保存的提示。请在下方保存一份简报。",
