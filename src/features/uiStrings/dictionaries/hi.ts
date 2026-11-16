@@ -189,6 +189,7 @@ const hi: UiDictionary = {
   'portal.auth.confirmMyEmail': 'मेरा ईमेल पता पुष्टि करें',
   'portal.auth.invitation': 'निमंत्रण',
   'portal.auth.emailCodeInstead': 'इसके बजाय मुझे कोड ईमेल करें',
+  'portal.auth.usePasskeyInstead': 'इसके बजाय पासकी का उपयोग करें',
   'portal.auth.sendNewCode': 'नया कोड भेजें',
   'portal.auth.useAuthenticatorApp': 'मेरा ऑथेंटिकेटर ऐप उपयोग करें',
   'portal.auth.rememberDeviceOne': 'इस डिवाइस को 1 दिन के लिए याद रखें',

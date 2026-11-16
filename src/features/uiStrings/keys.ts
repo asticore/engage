@@ -216,6 +216,7 @@ export const UI_STRING_SOURCE = {
   'portal.auth.confirmMyEmail': 'Confirm my email address',
   'portal.auth.invitation': 'Invitation',
   'portal.auth.emailCodeInstead': 'Email me a code instead',
+  'portal.auth.usePasskeyInstead': 'Use a passkey instead',
   'portal.auth.sendNewCode': 'Send a new code',
   'portal.auth.useAuthenticatorApp': 'Use my authenticator app',
   'portal.auth.rememberDeviceOne': 'Remember this device for 1 day',

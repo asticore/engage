@@ -189,6 +189,7 @@ const nl: UiDictionary = {
   'portal.auth.confirmMyEmail': 'Bevestig mijn e-mailadres',
   'portal.auth.invitation': 'Uitnodiging',
   'portal.auth.emailCodeInstead': 'Stuur me in plaats daarvan een code per e-mail',
+  'portal.auth.usePasskeyInstead': 'Gebruik in plaats daarvan een passkey',
   'portal.auth.sendNewCode': 'Stuur een nieuwe code',
   'portal.auth.useAuthenticatorApp': 'Gebruik mijn authenticator-app',
   'portal.auth.rememberDeviceOne': 'Onthoud dit apparaat 1 dag',

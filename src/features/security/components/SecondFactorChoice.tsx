@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react'
 
 import { sendChallengeEmailAction, twoFactorChallengeOptionsAction, type TwoFactorChallengeOptions } from '../twoFactorActions'
+import { secondStepPasskeyAvailable, secondStepWithPasskey } from '@/features/passkeys/client'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 import './twoFactorExtras.css'
 
@@ -25,12 +26,16 @@ type Props = {
   trust: boolean
   onTrust: (trust: boolean) => void
   disabled?: boolean
+  /** Where to go after a passkey finishes the sign-in. */
+  next?: string
+  area?: 'account' | 'admin'
 }
 
-export const SecondFactorChoice: React.FC<Props> = ({ pendingToken, method, onMethod, trust, onTrust, disabled }) => {
+export const SecondFactorChoice: React.FC<Props> = ({ pendingToken, method, onMethod, trust, onTrust, disabled, next = '/account', area = 'account' }) => {
   const [options, setOptions] = useState<TwoFactorChallengeOptions>({ emailAvailable: false, trustAvailable: false, trustDays: 30 })
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
+  const [passkeyOn, setPasskeyOn] = useState(false)
   const tx = usePortalText()
 
   useEffect(() => {
@@ -44,6 +49,30 @@ export const SecondFactorChoice: React.FC<Props> = ({ pendingToken, method, onMe
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    secondStepPasskeyAvailable(pendingToken, area)
+      .then((ok) => {
+        if (!cancelled) setPasskeyOn(ok)
+      })
+      .catch((): undefined => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [pendingToken, area])
+
+  const answerWithPasskey = async () => {
+    setBusy(true)
+    setNote('')
+    const result = await secondStepWithPasskey(pendingToken, next, area, trust)
+    if (result.redirect) {
+      window.location.assign(result.redirect)
+      return
+    }
+    setNote(result.message || tx('common.passkeyFailed'))
+    setBusy(false)
+  }
 
   const sendEmailCode = async () => {
     setBusy(true)
@@ -78,6 +107,13 @@ export const SecondFactorChoice: React.FC<Props> = ({ pendingToken, method, onMe
               </button>
             </>
           )}
+        </div>
+      )}
+      {passkeyOn && (
+        <div className="tf-methods">
+          <button type="button" className="btn btn--ghost" disabled={disabled || busy} onClick={() => void answerWithPasskey()}>
+            {busy ? tx('common.waitingDevice') : tx('auth.answerWithPasskeyInstead')}
+          </button>
         </div>
       )}
       {note && (

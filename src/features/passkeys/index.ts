@@ -9,6 +9,9 @@ export {
   passkeyRoleAllowed,
   registerPasskey,
   registrationOptions,
+  secondStepAvailable,
+  secondStepOptions,
+  verifySecondStep,
   removePasskey,
   renamePasskey,
   viewOf,
@@ -17,6 +20,7 @@ export {
   type PasskeyLoginResult,
   type PasskeyUser,
   type PasskeyView,
+  type SecondStepResult,
 } from './core'
 export { PASSKEY_CHALLENGE_COOKIE, issueChallenge, readChallenge } from './challenge'
 export { defaultPasskeyStore, type NewPasskey, type PasskeyRow, type PasskeyStore } from './store'

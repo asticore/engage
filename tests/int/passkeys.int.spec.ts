@@ -13,6 +13,9 @@ import {
   registrationOptions,
   removePasskey,
   renamePasskey,
+  secondStepAvailable,
+  secondStepOptions,
+  verifySecondStep,
   type PasskeyDeps,
   type PasskeyRow,
   type PasskeyStore,
@@ -575,6 +578,84 @@ describe('passkeys: roles, locks and two-step accounts', () => {
     const { body, cookie } = await signIn(fx, auth, { flags: { up: true, uv: false } })
     expect(await loginWithPasskey(fx.deps, body as never, cookie)).toEqual({ status: 'two-factor', pendingToken: 'pending-1' })
     expect(fx.loginCalls).toEqual([{ userId: 1, skip: false }])
+  })
+})
+
+/** A second-step answer for `auth`, signed over a challenge issued to `userId`. */
+const secondStep = async (fx: Fixture, auth: Authenticator, userId: number, opts: { flags?: Flags; count?: number } = {}) => {
+  const options = await secondStepOptions(fx.deps, userId)
+  expect(options.ok).toBe(true)
+  const challenge = (options.options as { challenge: string }).challenge
+  const cd = clientData('webauthn.get', challenge, ORIGIN)
+  const authData = await buildAssertionAuthData(RP_ID, opts.flags ?? { up: true, uv: true }, opts.count ?? 1)
+  const signature = await auth.sign(concat(authData, await sha256(cd)))
+  const id = toBase64Url(auth.credentialId)
+  const body = {
+    id,
+    rawId: id,
+    type: 'public-key',
+    response: { clientDataJSON: toBase64Url(cd), authenticatorData: toBase64Url(authData), signature: toBase64Url(signature), userHandle: null },
+  }
+  return { body, cookie: options.cookie as string, options: options.options as { allowCredentials: Array<{ id: string }> } }
+}
+
+describe('passkeys: second sign-in step', () => {
+  let fx: Fixture
+  beforeEach(() => {
+    fx = makeFixture()
+    fx.users.set(2, { id: 2, email: 'bob@example.com', name: 'Bob', roles: ['customer'], lockUntil: null })
+  })
+
+  it('offers only the passkeys of the pending account and accepts one of them', async () => {
+    const auth = await freshAuthenticatorAndRegister(fx)
+    expect(await secondStepAvailable(fx.deps, 1)).toBe(true)
+    const { body, cookie, options } = await secondStep(fx, auth, 1)
+    expect(options.allowCredentials.map((c) => c.id)).toEqual([toBase64Url(auth.credentialId)])
+    expect(await verifySecondStep(fx.deps, 1, body as never, cookie)).toEqual({ status: 'ok' })
+    expect(fx.store.rows[0].lastUsedAt).not.toBeNull()
+    expect(fx.audit.at(-1)?.detail).toBe('user verified: second step')
+  })
+
+  it('has nothing to offer an account without a passkey', async () => {
+    await freshAuthenticatorAndRegister(fx)
+    expect(await secondStepAvailable(fx.deps, 2)).toBe(false)
+    expect((await secondStepOptions(fx.deps, 2)).ok).toBe(false)
+  })
+
+  it('refuses a passkey that belongs to another account', async () => {
+    const auth = await freshAuthenticatorAndRegister(fx)
+    const bobAuth = await makeAuthenticator(2)
+    expect((await register(fx, bobAuth, { userId: 2 })).result.ok).toBe(true)
+    // Bob is the pending account; Ada's passkey signs a challenge issued to Bob.
+    const { body, cookie } = await secondStep(fx, auth, 2)
+    const refused = await verifySecondStep(fx.deps, 2, body as never, cookie)
+    expect(refused.status).toBe('refused')
+    expect(fx.audit.at(-1)?.detail).toContain('another account')
+  })
+
+  it('refuses a challenge that was issued to a different account, and a first-step challenge', async () => {
+    const auth = await freshAuthenticatorAndRegister(fx)
+    const bobAuth = await makeAuthenticator(2)
+    expect((await register(fx, bobAuth, { userId: 2 })).result.ok).toBe(true)
+    const { body, cookie } = await secondStep(fx, auth, 1)
+    expect((await verifySecondStep(fx.deps, 2, body as never, cookie)).status).toBe('refused')
+    const first = await signIn(fx, auth, { count: 5 })
+    expect((await verifySecondStep(fx.deps, 1, first.body as never, first.cookie)).status).toBe('refused')
+  })
+
+  it('refuses a bad signature, a locked account and a disabled feature', async () => {
+    const auth = await freshAuthenticatorAndRegister(fx)
+    const bad = await secondStep(fx, auth, 1)
+    ;(bad.body.response as { signature: string }).signature = toBase64Url(new Uint8Array(64))
+    expect((await verifySecondStep(fx.deps, 1, bad.body as never, bad.cookie)).status).toBe('refused')
+
+    const ok = await secondStep(fx, auth, 1, { count: 3 })
+    fx.users.get(1)!.lockUntil = new Date(START + 60_000).toISOString()
+    expect((await verifySecondStep(fx.deps, 1, ok.body as never, ok.cookie)).status).toBe('refused')
+    expect(await secondStepAvailable(fx.deps, 1)).toBe(false)
+
+    const off = makeFixture({ enabled: false })
+    expect(await secondStepAvailable(off.deps, 1)).toBe(false)
   })
 })
 
