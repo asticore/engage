@@ -70,7 +70,7 @@ describe('agent core rules', () => {
 
 describe('agent gate', () => {
   const call = (over: Partial<Parameters<typeof gateAgentRequest>[0]> = {}) =>
-    gateAgentRequest({ d1: {} as never, featureOn: true, keyId: 7, method: 'POST', slug: ['pages'], now: 1_800_000_000_000, ...over })
+    gateAgentRequest({ getD1: async () => ({}) as never, featureOn: async () => true, keyId: 7, method: 'POST', slug: ['pages'], now: 1_800_000_000_000, ...over })
 
   beforeEach(() => {
     state.grant = grant() as never
@@ -101,7 +101,7 @@ describe('agent gate', () => {
     state.grant = grant({ revokedAt: '2027-01-02T00:00:00.000Z' }) as never
     expect((await call())?.status).toBe(403)
     state.grant = grant() as never
-    expect((await call({ featureOn: false }))?.status).toBe(403)
+    expect((await call({ featureOn: async () => false }))?.status).toBe(403)
     expect(state.logged).toHaveLength(0)
   })
 })

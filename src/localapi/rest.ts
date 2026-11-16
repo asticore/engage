@@ -414,10 +414,13 @@ export async function gateApiKeyRequest(engine: Engine, request: Request, slug: 
 
   // Task 25d: a key with an agent grant is also held to its daily caps and every request is logged.
   try {
-    const [{ gateAgentRequest }, { getFeatureFlags }] = await Promise.all([import('@/features/agentAccess/gate'), import('@/utilities/features')])
-    const featureOn = await getFeatureFlags().then((f) => Boolean(f.agents), (): boolean => false)
-    const db = (await resolveD1Binding()) as unknown as import('@/features/agentAccess/store').D1
-    return await gateAgentRequest({ d1: db, featureOn, keyId: key.id, method, slug, now: Date.now() })
+    const { gateAgentRequest } = await import('@/features/agentAccess/gate')
+    const getD1 = async (): Promise<import('@/features/agentAccess/store').D1> => (await resolveD1Binding()) as unknown as import('@/features/agentAccess/store').D1
+    const featureOn = async (): Promise<boolean> => {
+      const { getFeatureFlags } = await import('@/utilities/features')
+      return getFeatureFlags().then((f) => Boolean(f.agents), (): boolean => false)
+    }
+    return await gateAgentRequest({ getD1, featureOn, keyId: key.id, method, slug, now: Date.now() })
   } catch {
     return null
   }
