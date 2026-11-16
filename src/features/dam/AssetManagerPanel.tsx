@@ -67,7 +67,7 @@ export function AssetManagerPanel() {
           {data.collections.map((c) => (
             <li key={c.id} className="cluster">
               <strong>{c.name}</strong>
-              <span className="text-muted">{c.count} file{c.count === 1 ? '' : 's'}{c.description ? `, ${c.description}` : ''}</span>
+              <span className="text-muted">{c.smart ? 'Smart collection (follows a saved search)' : `${c.count} file${c.count === 1 ? '' : 's'}`}{c.description ? `, ${c.description}` : ''}</span>
               <a className="btn" href={`/admin/media?collection=${c.id}`}>Open</a>
               <button type="button" className="btn" onClick={() => setCollection({ id: c.id, name: c.name, description: c.description })}>Edit</button>
               <button type="button" className="btn" onClick={() => { if (window.confirm(`Delete collection ${c.name}? The files stay in the library.`)) void post({ action: 'deleteCollection', id: c.id }, 'Collection deleted.') }}>Delete</button>

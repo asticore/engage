@@ -79,5 +79,21 @@ export function buildSearchText(fields: MetaField[], values: Record<string, stri
   const parts: string[] = []
   for (const f of fields) if (f.searchable && values[f.key]) parts.push(values[f.key])
   for (const e of extra) if (e && e.trim()) parts.push(e.trim())
-  return parts.join(' ').replace(/\s+/g, ' ').slice(0, 4000).toLowerCase()
+  return parts.join(' ').replace(/\s+/g, ' ').slice(0, 4_000).toLowerCase()
 }
+
+/** Marks where the words read from a PDF or Word document start inside the stored search text, so rebuilding the rest keeps them. */
+export const DOC_MARK = ' \u00b6doc\u00b6 '
+
+export const docPart = (searchText: string): string => {
+  const at = searchText.indexOf(DOC_MARK)
+  return at < 0 ? '' : searchText.slice(at + DOC_MARK.length)
+}
+
+/** The details part of a stored search text (everything before the document words). */
+export const headPart = (searchText: string): string => {
+  const at = searchText.indexOf(DOC_MARK)
+  return at < 0 ? searchText : searchText.slice(0, at)
+}
+
+export const joinSearchText = (head: string, doc: string): string => (doc.trim() ? `${head.slice(0, 4_000)}${DOC_MARK}${doc.replace(/\s+/g, ' ').trim().slice(0, 20_000).toLowerCase()}` : head.slice(0, 24_000))
