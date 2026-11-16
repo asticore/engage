@@ -56,7 +56,7 @@ describe('saved lines store', () => {
             if (sql.startsWith('INSERT')) rows.push(v)
             return {}
           },
-          all: async () => ({ results: [{ product_id: 3, variation: '', quantity: 2, title: 'Mug', note: null }] }),
+          all: async () => ({ results: [{ product_id: 3, variation: '', quantity: 2, title: 'Mug', note: null as string | null }] }),
         }),
       }),
     }
