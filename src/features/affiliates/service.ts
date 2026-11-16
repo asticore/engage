@@ -95,7 +95,10 @@ export async function affiliateOrderPaid(order: Order | null): Promise<void> {
     const { base, amount, pct } = commissionForLines(order.lineItems as never, order.subtotal, order.discountTotal, { override: (await store.getAffiliateById(d1, row.affiliate_id))?.ratePct, productRates: await store.getProductRates(d1), defaultPct, tagRates, productTags })
     const eligible = eligibleAt(now, settings.pendingDays)
     const started = await store.markCommissionPending(d1, { orderId: row.order_id, base, pct, amount, eligibleAt: eligible }, now.toISOString())
-    if (started && amount > 0) await sendAffiliateEmail('commission', row.affiliate_id, { orderId: row.order_id, amountCents: amount, payableOn: eligible })
+    if (started && amount > 0) {
+      await sendAffiliateEmail('commission', row.affiliate_id, { orderId: row.order_id, amountCents: amount, payableOn: eligible })
+      await emitAffiliateEvent('affiliate.commission.earned', { id: row.id, affiliateId: row.affiliate_id, orderId: row.order_id, amount, payableOn: eligible, createdAt: now.toISOString() })
+    }
   } catch {
     // Commissions are retried the next time the order is marked paid.
   }
@@ -115,6 +118,28 @@ export async function affiliateOrderRefunded(order: Order | null): Promise<void>
     await store.setCommissionAmount(d1, row.order_id, left, left === 0 ? 'reversed' : row.status, new Date().toISOString())
   } catch {
     // Best effort.
+  }
+}
+
+/** Sends an affiliate event to webhooks (and any notification rule). Best effort: never throws into the action that caused it. */
+export async function emitAffiliateEvent(event: 'affiliate.joined' | 'affiliate.approved' | 'affiliate.commission.earned' | 'affiliate.payout.recorded', data: Record<string, unknown>): Promise<void> {
+  try {
+    const { emitWebhookEvent } = await import('@/features/webhooks/emit')
+    const { pickEventFields } = await import('@/features/webhooks/events')
+    await emitWebhookEvent(event, pickEventFields(event, data))
+  } catch {
+    // Events are optional.
+  }
+}
+
+/** Emits joined (and approved, when the affiliate starts active) for a new affiliate, or approved after a status change. */
+export async function emitAffiliateStatus(event: 'affiliate.joined' | 'affiliate.approved', affiliateId: number): Promise<void> {
+  try {
+    const a = await store.getAffiliateById(await db(), affiliateId)
+    if (!a) return
+    await emitAffiliateEvent(event, { id: a.id, code: a.code, name: a.name, email: a.email, status: a.status, createdAt: new Date().toISOString() })
+  } catch {
+    // Events are optional.
   }
 }
 
