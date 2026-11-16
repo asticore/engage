@@ -26,6 +26,8 @@ export type SocialConfig = {
   allowSignupViaSocial: boolean
   allowAdminSocialLogin: boolean
   providers: Record<ProviderId, ProviderConfig>
+  /** Providers the owner blocked per sign-in place (Who can sign in with what). Empty means nothing blocked. */
+  blocked?: { admin: string[]; account: string[] }
 }
 
 export type OidcInfo = {

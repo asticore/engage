@@ -12,6 +12,8 @@ import {
   removePasskey,
   renamePasskey,
 } from '@/features/passkeys'
+import { methodAllowed, readMatrix } from '@/features/security/authMatrix'
+
 import { guardAttempt, tooManyAttempts } from './rateLimit'
 import { passkeyDepsFor } from './passkeysWiring'
 import { accountContext, requestAddress, requestClient, setSessionCookie } from './session'
@@ -104,6 +106,7 @@ export async function loginOptionsResponse(request: Request): Promise<Response> 
   if (!(await sameSite(request))) return json({ ok: false, message: UNAVAILABLE }, 403)
   const context = await accountContext()
   if (!context.flags.accounts) return json({ ok: false, message: UNAVAILABLE }, 404)
+  { const m = await readMatrix(); if (!methodAllowed(m, 'account', 'passkeys') && !methodAllowed(m, 'admin', 'passkeys')) return json({ ok: false, message: UNAVAILABLE }, 403) }
   const byIp = await guardAttempt(context.engine, 'passkey', `ip:${await requestAddress()}`)
   if (!byIp.allowed) return json({ ok: false, message: tooManyAttempts(byIp.retryAfterSeconds ?? 60) }, 429)
   const deps = await passkeyDepsFor(context.engine, await requestClient(), request.url)
@@ -118,6 +121,7 @@ export async function loginVerifyResponse(request: Request): Promise<Response> {
   if (!(await sameSite(request))) return json({ ok: false, message: UNAVAILABLE }, 403)
   const context = await accountContext()
   if (!context.flags.accounts) return json({ ok: false, message: UNAVAILABLE }, 404)
+  { const m = await readMatrix(); if (!methodAllowed(m, 'account', 'passkeys') && !methodAllowed(m, 'admin', 'passkeys')) return json({ ok: false, message: UNAVAILABLE }, 403) }
   const byIp = await guardAttempt(context.engine, 'passkey', `ip:${await requestAddress()}`)
   if (!byIp.allowed) return json({ ok: false, message: tooManyAttempts(byIp.retryAfterSeconds ?? 60) }, 429)
   const body = await readJson(request)
