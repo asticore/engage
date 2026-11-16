@@ -51,6 +51,9 @@ export type FeatureKey =
   | 'dam'
   | 'chatbot'
   | 'agents'
+  | 'demos'
+  | 'clientreports'
+  | 'franchising'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -372,6 +375,36 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['agent_grants', 'agent_actions'],
+    implemented: true,
+  },
+  {
+    key: 'demos',
+    label: 'Agency demos',
+    description: 'Run this site as a demo for clients. Save a copy of the demo, reset it back to that copy by hand or on a schedule, create view-only demo accounts, and download the copy as a package to import on a client site later.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['demo_settings', 'demo_snapshots'],
+    implemented: true,
+  },
+  {
+    key: 'clientreports',
+    label: 'Client reports',
+    description: 'Make read-only report links for a client (sales, form entries and content over a date range), download the numbers as CSV and email the report on a weekly or monthly schedule.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['client_reports'],
+    implemented: true,
+  },
+  {
+    key: 'franchising',
+    label: 'Franchising',
+    description: 'Give each franchise its own domain, owner and pages. Roll a shared page template out to every franchise as locked pages, and roll later updates out again.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['franchises', 'franchise_pages'],
     implemented: true,
   },
 ]

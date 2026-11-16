@@ -59,6 +59,18 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { sweepDunning } = await import('@/features/members/dunningRun')
     return sweepDunning(engine as never, now)
   },
+  'demo-reset': async ({ engine, env, now }) => {
+    const { getFeatureFlags } = await import('@/utilities/features')
+    if (!(await getFeatureFlags()).demos) return 'feature off'
+    const { runScheduledReset } = await import('@/features/demos/service')
+    return runScheduledReset(engine as never, env.D1 as never, now)
+  },
+  'client-reports': async ({ engine, env, now }) => {
+    const { getFeatureFlags } = await import('@/utilities/features')
+    if (!(await getFeatureFlags()).clientreports) return 'feature off'
+    const { sendDueReports } = await import('@/features/clientReports/service')
+    return sendDueReports(engine as never, env.D1 as never, now)
+  },
   cleanup: async ({ engine }) => {
     const { runScheduledCleanup } = await import('@/features/cleanup/scheduledCleanup')
     await runScheduledCleanup(engine as never)
