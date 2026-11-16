@@ -56,7 +56,7 @@ export type SocialConfig = {
   googleOneTap: boolean
   providers: Record<ProviderId, ProviderConfig>
   /** Providers the owner blocked per sign-in place (Who can sign in with what). Empty means nothing blocked. */
-  blocked?: { admin: string[]; account: string[] }
+  blocked?: { admin: string[]; account: string[]; members?: string[] }
 }
 
 export type OidcInfo = {

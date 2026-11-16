@@ -1,5 +1,6 @@
 import { GLOBAL_PROVIDER_IDS, PROVIDER_IDS, isExtraProviderId, missingCredentials, providerLabel, type SocialConfig } from '@/features/socialLogin/providers'
 
+import { methodAllowed, type AuthMatrix, type MatrixArea } from './authMatrix'
 import type { SecuritySettings } from './settings'
 
 /**
@@ -20,6 +21,14 @@ export type AgentAccessInfo = { featureOn: boolean; apiKeysOn: boolean; activeTo
 export function describeAuthMethods(settings: SecuritySettings, social: SocialConfig, agents?: AgentAccessInfo, sso?: SsoInfo): MethodRow[] {
   const rows: MethodRow[] = [
     { id: 'password', label: 'Password', status: 'on', detail: 'Always available. Password rules are in Security settings.', href: SECURITY },
+    {
+      id: 'username',
+      label: 'Username',
+      status: settings.usernameSignIn.enabled ? 'on' : 'off',
+      detail: settings.usernameSignIn.enabled ? 'The account sign-in form accepts a username as well as an email.' : 'People sign in with their email address only.',
+      href: SECURITY,
+      toggle: true,
+    },
     {
       id: 'email-verification',
       label: 'Email verification',
@@ -85,11 +94,29 @@ export function describeAuthMethods(settings: SecuritySettings, social: SocialCo
   return rows
 }
 
+/**
+ * True while a customer or member sign-in place still has at least one way in: a password the owner
+ * has not blocked, or another method that is switched on, complete and not blocked for that place.
+ * Used to refuse a change that would leave the place with no way to sign in. The admin sign-in
+ * always keeps its password, so it is never asked.
+ */
+export function placeHasWayIn(area: MatrixArea, matrix: AuthMatrix, settings: SecuritySettings, social: SocialConfig): boolean {
+  if (methodAllowed(matrix, area, 'password')) return true
+  if (settings.passwordless.magicLinkEnabled && methodAllowed(matrix, area, 'magic-link')) return true
+  if (settings.passwordless.emailCodeEnabled && methodAllowed(matrix, area, 'email-code')) return true
+  if (settings.passkeys.enabled && methodAllowed(matrix, area, 'passkeys')) return true
+  return PROVIDER_IDS.some((id) => {
+    const cfg = social.providers[id]
+    return cfg.enabled && missingCredentials(id, cfg).length === 0 && methodAllowed(matrix, area, `social-${id}`)
+  })
+}
+
 /** The settings patch that switches one method on or off, or null when the method has no switch. Social patches touch only that provider's flag. */
 export function togglePatch(id: string, on: boolean): Record<string, unknown> | null {
   if (id === 'magic-link') return { magicLinkEnabled: on }
   if (id === 'email-code') return { emailCodeEnabled: on }
   if (id === 'passkeys') return { passkeysEnabled: on }
+  if (id === 'username') return { usernameSignInEnabled: on }
   if (id === 'email-verification') return { emailVerificationRequired: on }
   if (id.startsWith('social-')) {
     const provider = id.slice('social-'.length)

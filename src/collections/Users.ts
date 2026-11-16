@@ -105,6 +105,23 @@ export const Users: CollectionConfig = {
       admin: { description: 'Profile picture shown in the admin sidebar.' },
     },
     {
+      // Optional sign-in name (Task 23g). Lowercase, unique; set by the account holder on the profile screen.
+      // Used only when Security, Username sign-in is on. Mirror: src/migrations/20270317_130000_username_sign_in.ts.
+      name: 'username',
+      type: 'text',
+      unique: true,
+      admin: { description: 'Optional sign-in name, 3 to 32 letters, digits, underscores or dashes. Stored lowercase. Works at the sign-in form only while Username sign-in is on in Security.' },
+      hooks: {
+        beforeValidate: [
+          ({ value }: { value?: unknown }) => {
+            if (value === undefined) return undefined
+            const clean = typeof value === 'string' ? value.trim().toLowerCase() : ''
+            return clean || null
+          },
+        ],
+      },
+    },
+    {
       name: 'slug',
       type: 'text',
       unique: true,

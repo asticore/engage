@@ -4,7 +4,7 @@ import { isUsable } from './providers'
 import { readSocialConfig, usableProviders, type PublicProvider } from './settings'
 
 /** Providers to show on a public screen: enabled and configured, nothing else. Never throws. */
-export async function publicProviders(engine: Engine, area: 'account' | 'admin' = 'account'): Promise<PublicProvider[]> {
+export async function publicProviders(engine: Engine, area: 'account' | 'admin' | 'members' = 'account'): Promise<PublicProvider[]> {
   try {
     return usableProviders(await readSocialConfig(engine), area)
   } catch {

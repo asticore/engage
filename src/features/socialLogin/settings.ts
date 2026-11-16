@@ -47,7 +47,8 @@ export async function readSocialConfig(engine: Pick<Engine, 'findGlobal'>): Prom
     const doc = await engine.findGlobal({ slug: 'security-settings', depth: 0, overrideAccess: true })
     const config = applyExtraRows(configFromDoc(doc as Record<string, unknown> | null), await readExtraRows())
     const matrix = await readMatrix()
-    config.blocked = { admin: matrix.admin.filter((m) => m.startsWith('social-')).map((m) => m.slice(7)), account: matrix.account.filter((m) => m.startsWith('social-')).map((m) => m.slice(7)) }
+    const socialOf = (list: string[]): string[] => list.filter((m) => m.startsWith('social-')).map((m) => m.slice(7))
+    config.blocked = { admin: socialOf(matrix.admin), account: socialOf(matrix.account), members: socialOf(matrix.members) }
     return config
   } catch {
     // Unreadable settings means no provider is usable: fail closed.
@@ -58,7 +59,7 @@ export async function readSocialConfig(engine: Pick<Engine, 'findGlobal'>): Prom
 export type PublicProvider = { id: ProviderId; label: string }
 
 /** What the sign-in screens may know: which providers to offer. No credentials. */
-export function usableProviders(config: SocialConfig, area: 'account' | 'admin' = 'account'): PublicProvider[] {
+export function usableProviders(config: SocialConfig, area: 'account' | 'admin' | 'members' = 'account'): PublicProvider[] {
   if (area === 'admin' && !config.allowAdminSocialLogin) return []
   return PROVIDER_IDS.filter((id) => !(config.blocked?.[area] ?? []).includes(id) && isUsable(id, config.providers[id])).map((id) => ({ id, label: providerLabel(id, config.providers[id]) }))
 }

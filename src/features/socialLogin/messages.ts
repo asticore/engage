@@ -29,5 +29,18 @@ export const SOCIAL_MESSAGES: Record<string, string> = {
   'test-ok': 'Test sign-in worked.',
 }
 
+const BLOCKED_PREFIX = 'blocked-'
+const PROVIDER_NAMES: Record<string, string> = {
+  google: 'Google', github: 'GitHub', apple: 'Apple', facebook: 'Facebook', microsoft: 'Microsoft', discord: 'Discord',
+  x: 'X', linkedin: 'LinkedIn', tiktok: 'TikTok', slack: 'Slack', oidc: 'Single sign-on',
+}
+
+/** `blocked-<provider>`: the owner turned that provider off for this sign-in place. Names the method; only known provider ids are echoed. */
+export const blockedMessage = (code: string): string | null => {
+  if (!code.startsWith(BLOCKED_PREFIX)) return null
+  const name = PROVIDER_NAMES[code.slice(BLOCKED_PREFIX.length)]
+  return name ? `Signing in with ${name} is not turned on here. Use another way to sign in.` : null
+}
+
 export const socialMessage = (code: string | null | undefined): string =>
-  (code && SOCIAL_MESSAGES[code]) || (code ? SOCIAL_MESSAGES['not-found'] : '')
+  (code && (SOCIAL_MESSAGES[code] ?? blockedMessage(code))) || (code ? SOCIAL_MESSAGES['not-found'] : '')

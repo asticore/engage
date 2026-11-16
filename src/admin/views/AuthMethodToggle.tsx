@@ -34,7 +34,7 @@ export function AuthMethodToggle({ id, label, on }: { id: string; label: string;
 }
 
 /** Allow or block one method for one sign-in place. */
-export function AreaToggle({ area, method, label, allowed }: { area: 'admin' | 'account'; method: string; label: string; allowed: boolean }) {
+export function AreaToggle({ area, method, label, allowed }: { area: 'admin' | 'account' | 'members'; method: string; label: string; allowed: boolean }) {
   const router = useRouter()
   const [pending, start] = useTransition()
   const [message, setMessage] = useState('')
@@ -44,7 +44,7 @@ export function AreaToggle({ area, method, label, allowed }: { area: 'admin' | '
         type="button"
         role="switch"
         aria-checked={allowed}
-        aria-label={`${label} on the ${area === 'admin' ? 'admin' : 'account'} sign-in`}
+        aria-label={`${label} on the ${area === 'admin' ? 'admin' : area === 'members' ? 'member' : 'customer'} sign-in`}
         disabled={pending}
         onClick={() =>
           start(async () => {
