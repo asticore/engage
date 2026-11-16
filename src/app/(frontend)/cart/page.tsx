@@ -8,6 +8,7 @@ import { PayLaterMessage } from '@/components/PayLaterMessage'
 import { resolveCartLine, type CatalogueProduct } from '@/features/ecommerce/catalogue'
 import { addOnSummary, readAddOnChoices } from '@/features/ecommerce/lib/addOns'
 import { FreeShippingBar } from '@/components/FreeShippingBar'
+import { CartEstimate } from '@/components/CartEstimate'
 import { CartCrossSells } from '@/components/CartCrossSells'
 import { CartRecommendations } from '@/components/CartRecommendations'
 import { BundleContentsList } from '@/components/BundleContentsList'
@@ -31,13 +32,19 @@ export default function CartPage() {
   const money = useDisplayMoney()
   const displayState = useDisplayCurrencyState()
 
+  const headingRef = React.useRef<HTMLHeadingElement | null>(null)
   const items = cart?.items || []
   const bundles = useBundleInfo(items.map((item) => (typeof item.product === 'object' && item.product ? Number((item.product as { id?: unknown }).id) : 0)).filter((id) => id > 0))
 
   return (
     <div className="page-shell">
-      <h1>{t('store.yourCart')}</h1>
+      <h1 ref={headingRef} tabIndex={-1}>
+        {t('store.yourCart')}
+      </h1>
       {notice && <p role="status" className="cart-notice">{notice}</p>}
+      <p role="status" aria-live="polite" className="sr-only">
+        {items.length === 0 ? '' : `${items.reduce((n, i) => n + (i.quantity || 0), 0)} items in your cart, subtotal ${money(cart?.subtotal)}`}
+      </p>
 
       {items.length === 0 ? (
         <p>
@@ -72,15 +79,17 @@ export default function CartPage() {
                       className="h-7 w-7 cursor-pointer border border-[var(--color-ink)] bg-transparent"
                       onClick={() => decrementItem(item.id)}
                       disabled={isLoading}
+                      aria-label={`Decrease quantity of ${typeof product === 'object' ? product.title : t('store.item')}`}
                     >
                       -
                     </button>
-                    <span>{item.quantity}</span>
+                    <span aria-label={`Quantity ${item.quantity}`}>{item.quantity}</span>
                     <button
                       type="button"
                       className="h-7 w-7 cursor-pointer border border-[var(--color-ink)] bg-transparent"
                       onClick={() => incrementItem(item.id)}
                       disabled={isLoading}
+                      aria-label={`Increase quantity of ${typeof product === 'object' ? product.title : t('store.item')}`}
                     >
                       +
                     </button>
@@ -88,8 +97,12 @@ export default function CartPage() {
                   <button
                     type="button"
                     className="cursor-pointer border-none bg-none text-[0.85rem] underline"
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => {
+                      void removeItem(item.id)
+                      headingRef.current?.focus()
+                    }}
                     disabled={isLoading}
+                    aria-label={`Remove ${typeof product === 'object' ? product.title : t('store.item')}`}
                   >
                     Remove
                   </button>
@@ -101,6 +114,7 @@ export default function CartPage() {
           <CartCrossSells />
           <CartRecommendations />
           <FreeShippingBar subtotal={cart?.subtotal} money={money} />
+          <CartEstimate />
           <PayLaterMessage amountDollars={typeof cart?.subtotal === 'number' ? cart.subtotal : null} />
           {displayState.selected ? (
             <p className="opacity-70">Converted prices are approximate. You pay in {displayState.base} at checkout.</p>

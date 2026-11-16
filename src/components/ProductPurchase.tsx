@@ -1,5 +1,6 @@
 'use client'
 
+import { announceCartAdded } from '@/features/ecommerce/lib/miniCart'
 import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
 import { useCart } from '@/engine/commerce/react'
 import Link from 'next/link'
@@ -90,7 +91,10 @@ function AddControl({ productId, variationId, disabled, label, limits, buyerPric
     })
     const failure = await addItem({ product: productId, variation: variationId ?? null, ...(priceCents !== undefined ? { priceCents } : {}), ...(addOnAnswers.length > 0 ? { addOns: addOnAnswers } : {}) }, snap(qty))
     if (failure) setMessage(failure)
-    else setAdded(true)
+    else {
+      setAdded(true)
+      announceCartAdded()
+    }
   }
 
   return (

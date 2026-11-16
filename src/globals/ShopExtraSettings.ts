@@ -57,6 +57,25 @@ export const ShopExtraSettings: GlobalConfig = {
       },
     },
     {
+      name: 'cartAction',
+      type: 'select',
+      label: 'What the cart button does',
+      defaultValue: 'page',
+      options: [
+        { label: 'Go to the cart page', value: 'page' },
+        { label: 'Open a slide-out drawer', value: 'drawer' },
+        { label: 'Open a dropdown under the button', value: 'dropdown' },
+      ],
+      admin: { description: 'Applies to the header cart link, the cart button element and add to cart. The drawer and dropdown show the lines, coupon, shipping estimate, tax and a checkout button.' },
+    },
+    {
+      name: 'cartOpenOnAdd',
+      type: 'checkbox',
+      label: 'Open the drawer or dropdown after add to cart',
+      defaultValue: true,
+      admin: { description: 'Only used when the cart button opens a drawer or dropdown.' },
+    },
+    {
       name: 'reviewRequestEmail',
       type: 'checkbox',
       label: 'Ask for a review after an order is completed',
