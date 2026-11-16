@@ -1,4 +1,4 @@
-import { approvedEmail, commissionEmail, payoutEmail } from './emails'
+import { approvedEmail, commissionEmail, payableEmail, payoutEmail } from './emails'
 import { afterRefund, commissionForLines, eligibleAt, isSelfReferral, parseTiers, renewalWindowOpen, tierRate } from './commission'
 import { normaliseCoupon, readRefCookie, readUtmCookie } from './core'
 import * as store from './store'
@@ -97,6 +97,7 @@ export async function affiliateOrderPaid(order: Order | null): Promise<void> {
     const started = await store.markCommissionPending(d1, { orderId: row.order_id, base, pct, amount, eligibleAt: eligible }, now.toISOString())
     if (started && amount > 0) {
       await sendAffiliateEmail('commission', row.affiliate_id, { orderId: row.order_id, amountCents: amount, payableOn: eligible })
+      if (settings.pendingDays === 0) await store.markPayableNotified(d1, row.id)
       await emitAffiliateEvent('affiliate.commission.earned', { id: row.id, affiliateId: row.affiliate_id, orderId: row.order_id, amount, payableOn: eligible, createdAt: now.toISOString() })
     }
   } catch {
@@ -145,11 +146,24 @@ export async function emitAffiliateStatus(event: 'affiliate.joined' | 'affiliate
 
 type EmailExtra = { amountCents?: number; note?: string; orderId?: number; payableOn?: string }
 
+/** The interface strings in the site's language (the default language when Languages is on), or null for English. */
+async function emailStrings(): Promise<Partial<import('@/features/uiStrings/keys').UiDictionary> | null> {
+  try {
+    const { readMultilingualSettingsFromD1 } = await import('@/features/multilingual/settings')
+    const settings = await readMultilingualSettingsFromD1()
+    if (!settings.enabled) return null
+    const { loadStrings } = await import('@/features/uiStrings/t')
+    return await loadStrings(settings.defaultLocale)
+  } catch {
+    return null
+  }
+}
+
 /**
  * Emails an affiliate (approved, commission earned, payout recorded) when the Email switch on the Affiliates screen is on
  * and they have an address. Best effort: it never throws into the action that caused it.
  */
-export async function sendAffiliateEmail(kind: 'approved' | 'commission' | 'payout', affiliateId: number, extra: EmailExtra): Promise<void> {
+export async function sendAffiliateEmail(kind: 'approved' | 'commission' | 'payout' | 'payable', affiliateId: number, extra: EmailExtra): Promise<void> {
   try {
     const d1 = await db()
     const settings = await store.getSettings(d1)
@@ -160,15 +174,38 @@ export async function sendAffiliateEmail(kind: 'approved' | 'commission' | 'payo
     const origin = configuredSiteOrigin().replace(/\/+$/, '')
     if (!origin) return
     const dashboard = a.token ? `${origin}/affiliates/dashboard?token=${a.token}` : `${origin}/affiliates`
+    const dict = await emailStrings()
     const mail =
       kind === 'approved'
-        ? approvedEmail({ name: a.name, link: `${origin}/?ref=${encodeURIComponent(a.code)}`, dashboard, commissionPct: a.ratePct ?? settings.commissionPct, cookieDays: settings.cookieDays })
+        ? approvedEmail({ name: a.name, link: `${origin}/?ref=${encodeURIComponent(a.code)}`, dashboard, commissionPct: a.ratePct ?? settings.commissionPct, cookieDays: settings.cookieDays }, dict)
         : kind === 'commission'
-          ? commissionEmail({ name: a.name, orderId: extra.orderId ?? 0, amountCents: extra.amountCents ?? 0, payableOn: extra.payableOn ?? '', dashboard })
-          : payoutEmail({ name: a.name, amountCents: extra.amountCents ?? 0, note: extra.note ?? '', dashboard })
+          ? commissionEmail({ name: a.name, orderId: extra.orderId ?? 0, amountCents: extra.amountCents ?? 0, payableOn: extra.payableOn ?? '', dashboard }, dict)
+          : kind === 'payable'
+            ? payableEmail({ name: a.name, orderId: extra.orderId ?? 0, amountCents: extra.amountCents ?? 0, dashboard }, dict)
+            : payoutEmail({ name: a.name, amountCents: extra.amountCents ?? 0, note: extra.note ?? '', dashboard }, dict)
     const { sendEmail } = await import('@/features/email')
     await sendEmail({ to: a.email, subject: mail.subject, text: mail.text, template: `affiliate.${kind}` })
   } catch {
     // An email problem never blocks approving, paying or an order.
+  }
+}
+
+/**
+ * The daily job: emails each affiliate once when a commission's waiting period is over and it can be paid.
+ * A commission is marked as sent even when the affiliate has no email or emails are off, so it is never retried forever.
+ * Returns how many were handled.
+ */
+export async function sendPayableEmails(now: Date = new Date()): Promise<number> {
+  try {
+    if (!(await enabled())) return 0
+    const d1 = await db()
+    const due = await store.dueForPayableEmail(d1, now.toISOString())
+    for (const c of due) {
+      await sendAffiliateEmail('payable', c.affiliate_id, { orderId: c.order_id, amountCents: c.amount_cents })
+      await store.markPayableNotified(d1, c.id)
+    }
+    return due.length
+  } catch {
+    return 0
   }
 }
