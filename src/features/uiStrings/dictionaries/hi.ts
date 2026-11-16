@@ -1397,6 +1397,7 @@ const hi: UiDictionary = {
   "store.addingProgress": "जोड़ा जा रहा है...",
   "store.invalidAmount": "कृपया मान्य राशि दर्ज करें।",
   "store.giftCardsUnavailable": "गिफ़्ट कार्ड अभी उपलब्ध नहीं हैं।",
+  "store.affiliateDisclosure": "यदि आप इस लिंक से खरीदारी करते हैं तो हमें कमीशन मिल सकता है।",
   "store.productUnavailable": "यह उत्पाद अभी उपलब्ध नहीं है।",
   "store.noProductsInGroup": "इस समूह में अभी कोई उत्पाद नहीं है।",
   "store.chooseOption": "एक विकल्प चुनें",

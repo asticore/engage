@@ -1398,6 +1398,7 @@ const de: UiDictionary = {
   "store.addingProgress": "Wird hinzugefügt...",
   "store.invalidAmount": "Bitte gib einen gültigen Betrag ein.",
   "store.giftCardsUnavailable": "Geschenkkarten sind derzeit nicht verfügbar.",
+  "store.affiliateDisclosure": "Wir erhalten möglicherweise eine Provision, wenn du über diesen Link kaufst.",
   "store.productUnavailable": "Dieses Produkt ist derzeit nicht verfügbar.",
   "store.noProductsInGroup": "In dieser Gruppe gibt es noch keine Produkte.",
   "store.chooseOption": "Option auswählen",

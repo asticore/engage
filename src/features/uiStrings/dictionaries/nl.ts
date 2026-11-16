@@ -1397,6 +1397,7 @@ const nl: UiDictionary = {
   "store.addingProgress": "Bezig met toevoegen...",
   "store.invalidAmount": "Vul een geldig bedrag in.",
   "store.giftCardsUnavailable": "Cadeaukaarten zijn momenteel niet beschikbaar.",
+  "store.affiliateDisclosure": "Wij kunnen een commissie ontvangen als je via deze link koopt.",
   "store.productUnavailable": "Dit product is momenteel niet beschikbaar.",
   "store.noProductsInGroup": "Er zijn in deze groep nog geen producten.",
   "store.chooseOption": "Kies een optie",
