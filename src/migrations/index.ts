@@ -1135,6 +1135,8 @@ export const migrations = [
     up: migration_20270316_380000_spam_rules.up,
     down: migration_20270316_380000_spam_rules.down,
     name: '20270316_380000_spam_rules',
+  },
+  {
     up: migration_20270316_390000_dam.up,
     down: migration_20270316_390000_dam.down,
     name: '20270316_390000_dam',
