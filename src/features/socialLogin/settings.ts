@@ -9,6 +9,8 @@ import {
   type ProviderId,
   type SocialConfig,
 } from './providers'
+import { readMatrix } from '@/features/security/authMatrix'
+
 import { capitalise } from './util'
 
 /** Reads the `socialLogin` group of the Security settings global. Secrets are decrypted: server use only. */
@@ -41,7 +43,10 @@ export function configFromDoc(doc: Record<string, unknown> | null | undefined): 
 export async function readSocialConfig(engine: Pick<Engine, 'findGlobal'>): Promise<SocialConfig> {
   try {
     const doc = await engine.findGlobal({ slug: 'security-settings', depth: 0, overrideAccess: true })
-    return configFromDoc(doc as Record<string, unknown> | null)
+    const config = configFromDoc(doc as Record<string, unknown> | null)
+    const matrix = await readMatrix()
+    config.blocked = { admin: matrix.admin.filter((m) => m.startsWith('social-')).map((m) => m.slice(7)), account: matrix.account.filter((m) => m.startsWith('social-')).map((m) => m.slice(7)) }
+    return config
   } catch {
     // Unreadable settings means no provider is usable: fail closed.
     return emptySocialConfig()
@@ -53,5 +58,5 @@ export type PublicProvider = { id: ProviderId; label: string }
 /** What the sign-in screens may know: which providers to offer. No credentials. */
 export function usableProviders(config: SocialConfig, area: 'account' | 'admin' = 'account'): PublicProvider[] {
   if (area === 'admin' && !config.allowAdminSocialLogin) return []
-  return PROVIDER_IDS.filter((id) => isUsable(id, config.providers[id])).map((id) => ({ id, label: PROVIDERS[id].label }))
+  return PROVIDER_IDS.filter((id) => !(config.blocked?.[area] ?? []).includes(id) && isUsable(id, config.providers[id])).map((id) => ({ id, label: PROVIDERS[id].label }))
 }
