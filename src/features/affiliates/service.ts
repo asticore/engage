@@ -1,4 +1,4 @@
-import { afterRefund, commissionBase, commissionCents, eligibleAt, isSelfReferral } from './commission'
+import { afterRefund, commissionBase, commissionCents, effectiveRate, eligibleAt, isSelfReferral } from './commission'
 import { readRefCookie } from './core'
 import * as store from './store'
 
@@ -35,8 +35,10 @@ export async function affiliateOrderCreated(order: Order): Promise<void> {
     const affiliate = await store.findActiveByCode(d1, code)
     if (!affiliate) return
     const full = await store.getAffiliateById(d1, affiliate.id)
-    if (isSelfReferral(full?.email, String(order.customerEmail ?? ''))) return
-    await store.insertTracked(d1, { affiliateId: affiliate.id, orderId: Number(order.id) }, new Date().toISOString())
+    const buyer = String(order.customerEmail ?? '')
+    if (isSelfReferral(full?.email, buyer)) return
+    if ((await store.getSettings(d1)).firstOrderOnly && (await store.hasPriorOrderFrom(d1, affiliate.id, buyer))) return
+    await store.insertTracked(d1, { affiliateId: affiliate.id, orderId: Number(order.id), customerEmail: buyer }, new Date().toISOString())
   } catch {
     // Attribution must never fail an order.
   }
@@ -52,7 +54,8 @@ export async function affiliateOrderPaid(order: Order | null): Promise<void> {
     const settings = await store.getSettings(d1)
     const base = commissionBase(order.subtotal, order.discountTotal)
     const now = new Date()
-    await store.markCommissionPending(d1, { orderId: row.order_id, base, pct: settings.commissionPct, amount: commissionCents(base, settings.commissionPct), eligibleAt: eligibleAt(now, settings.pendingDays) }, now.toISOString())
+    const pct = effectiveRate((await store.getAffiliateById(d1, row.affiliate_id))?.ratePct, settings.commissionPct)
+    await store.markCommissionPending(d1, { orderId: row.order_id, base, pct, amount: commissionCents(base, pct), eligibleAt: eligibleAt(now, settings.pendingDays) }, now.toISOString())
   } catch {
     // Commissions are retried the next time the order is marked paid.
   }

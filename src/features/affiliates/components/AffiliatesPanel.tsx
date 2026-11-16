@@ -82,6 +82,10 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
           </label>
           <label>Commission %<br /><input type="number" min={0} max={100} step="0.5" value={settings.commissionPct} onChange={(e) => set({ commissionPct: Number(e.target.value) })} /></label>
           <label>Days before payable<br /><input type="number" min={0} max={365} value={settings.pendingDays} onChange={(e) => set({ pendingDays: Number(e.target.value) })} /></label>
+          <label>Minimum payout ($)<br /><input type="number" min={0} step="1" value={settings.minPayoutCents / 100} onChange={(e) => set({ minPayoutCents: Math.round(Number(e.target.value) * 100) })} /></label>
+          <label>
+            <input type="checkbox" checked={settings.firstOrderOnly} onChange={(e) => set({ firstOrderOnly: e.target.checked })} /> Commission on a buyer&apos;s first order only
+          </label>
           <label>
             <input type="checkbox" checked={settings.autoApprove} onChange={(e) => set({ autoApprove: e.target.checked })} /> Approve new sign-ups automatically
           </label>
@@ -140,6 +144,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
                   {a.status !== 'active' && <button type="button" onClick={() => post({ action: 'status', id: a.id, status: 'active' })}>Approve</button>}
                   {a.status === 'active' && <button type="button" onClick={() => post({ action: 'status', id: a.id, status: 'suspended' })}>Suspend</button>}
                   {a.owed > 0 && <button type="button" onClick={() => { const note = window.prompt(`Record a payout of ${money(a.owed)} to ${a.name}. Note (for example the payment reference):`, ''); if (note !== null) void post({ action: 'payout', id: a.id, note }, `Payout of ${money(a.owed)} recorded. Pay ${a.name} outside the site.`) }}>Record payout</button>}
+                  <button type="button" onClick={() => { const v = window.prompt(`Commission rate for ${a.name} in percent (blank to use the program rate of ${settings?.commissionPct ?? 10}%):`, a.ratePct === null ? '' : String(a.ratePct)); if (v !== null) void post({ action: 'rate', id: a.id, ratePct: v.trim() === '' ? null : Number(v) }, 'Rate saved.') }}>Rate: {a.ratePct === null ? 'default' : `${a.ratePct}%`}</button>
                   <button type="button" onClick={() => void dashboardLink(a)}>Copy dashboard link</button>
                   <button type="button" onClick={() => navigator.clipboard?.writeText(link(a.code)).then(() => setMessage('Link copied.')).catch((): void => undefined)}>Copy link</button>
                   <button type="button" onClick={() => { if (window.confirm(`Delete ${a.name} and their visit log?`)) void post({ action: 'delete', id: a.id }) }}>Delete</button>
@@ -175,6 +180,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
       {payouts.length > 0 && (
         <section>
           <h2>Payouts recorded</h2>
+          <p><a href="/api/admin-affiliates?export=payouts">Download payouts as CSV</a></p>
           <table>
             <thead>
               <tr><th scope="col">Date</th><th scope="col">Affiliate</th><th scope="col">Amount</th><th scope="col">Note</th></tr>

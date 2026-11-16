@@ -249,7 +249,7 @@ Nothing exists. Building blocks: the AI client and keys (`src/features/ai/`), si
 Nothing exists beyond the "external or affiliate product" type. No order attribution, no `ref` capture.
 Priority (Matt, 15 Nov): the main goal is that any site owner can run affiliates easily. Build order: 31e easy setup first, then 31a, 31b, 31c.
 - [ ] 31a leftovers: affiliate sign-up form with approval and link to a user, vanity codes per product, UTM stored on orders, coupon-code attribution, consent category for the cookie, visit log viewer with bot filtering report. (Cookie days and first or last click are now settings; order attribution and self-referral block are built under 31b.)
-- [ ] 31b leftovers: per product, category, tier and recurring commission rules, first-order-only rule, tier rates, payout CSV export, payout methods and minimum payout, per-affiliate rate override, commission on subscription renewals.
+- [ ] 31b leftovers: per product, category, tier and recurring commission rules, tier rates, payout methods, commission on subscription renewals.
 - [ ] 31c leftovers: sign-in portal tied to a user account, creatives and banners from the media library, reports for top affiliates and conversion rate, emails (new referral, approved commission, payout), webhook events.
 - [ ] **31d Linking to affiliate products.** External or affiliate product type: tracked outbound click log (clicks per product and per source), rel sponsored and nofollow by default, disclosure text setting, cloaked short links through the existing short links. Code: `ecommerce/collections/productFields.ts:29`.
 - [ ] 31e leftovers: a Turn on affiliates wizard and checklist, an Affiliates page template in the visual editor, welcome email with the link and a share kit, an Affiliates card on the admin dashboard.
@@ -663,6 +663,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Task 14 28c (Free-shipping progress bar): try it live once on the deployed site. What it does and where it lives are in `docs/remaining-work-done.md`.
 - [ ] Task 14 31a (Affiliate tracking, first slice): try it live once on the deployed site. What it does and where it lives are in `docs/remaining-work-done.md`.
 - [ ] Task 14 31b (Commissions and manual payouts): try it live once on the deployed site. What it does and where it lives are in `docs/remaining-work-done.md`.
+- [ ] Task 14 31b rules (per-affiliate rate, minimum payout, first order only, payout CSV): set a rate on one affiliate and check a new order uses it; set a minimum payout above what is owed and check Record payout refuses; tick first order only and check a second order from the same buyer earns nothing; download the payouts CSV and open it. Details in `docs/remaining-work-done.md`.
 - [ ] Task 14 31c (Affiliate dashboard, first version): try it live once on the deployed site. What it does and where it lives are in `docs/remaining-work-done.md`.
 - [ ] Task 14 31e (Easy affiliate setup, first version): try it live once on the deployed site. What it does and where it lives are in `docs/remaining-work-done.md`.
 - [ ] Task 14 32a (Remove the Asticore SaaS button): try it live once on the deployed site. What it does and where it lives are in `docs/remaining-work-done.md`.
