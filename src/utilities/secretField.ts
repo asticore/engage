@@ -22,7 +22,8 @@ const getKey = (): Buffer => {
   return crypto.createHash('sha256').update(secret).digest()
 }
 
-export const encryptSecretHook: FieldHook = ({ value }) => {
+/** Same encryption as the field hook, for values stored outside a collection field. Empty and already-encrypted values pass through. */
+export const encryptSecret = (value: unknown): unknown => {
   if (typeof value !== 'string' || value.length === 0) return value
   // Already encrypted (e.g. re-saving the doc without touching this field) - don't double-encrypt.
   if (value.startsWith(PREFIX)) return value
@@ -39,7 +40,8 @@ export const encryptSecretHook: FieldHook = ({ value }) => {
   return `${PREFIX}${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`
 }
 
-export const decryptSecretHook: FieldHook = ({ value }) => {
+/** Reverse of `encryptSecret`. A rotated secret or malformed value gives an empty string. */
+export const decryptSecret = (value: unknown): unknown => {
   if (typeof value !== 'string' || !value.startsWith(PREFIX)) return value
 
   try {
@@ -53,3 +55,6 @@ export const decryptSecretHook: FieldHook = ({ value }) => {
     return ''
   }
 }
+
+export const encryptSecretHook: FieldHook = ({ value }) => encryptSecret(value)
+export const decryptSecretHook: FieldHook = ({ value }) => decryptSecret(value)
