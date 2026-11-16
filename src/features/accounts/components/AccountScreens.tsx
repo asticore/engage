@@ -34,7 +34,7 @@ import { ConnectedAccountsPanel } from '@/features/socialLogin/components/Connec
 import { viewConnections } from '@/features/socialLogin/connections'
 import { passwordHintSay, socialMessageText } from '../messages'
 import { accountTexts } from '../portalCopy'
-import { AddressForm, AddressRowActions, EmailForm, LanguageForm, NameForm, PasswordForm, SendConfirmationForm, type LanguageOption } from './AccountForms'
+import { AddressForm, AddressRowActions, EmailForm, LanguageForm, NameForm, PasswordForm, SendConfirmationForm, UsernameForm, type LanguageOption } from './AccountForms'
 import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
 import { isLocaleRoutable } from '@/features/multilingual/routing'
 import { localeNativeName } from '@/features/multilingual/locales'
@@ -444,6 +444,13 @@ export const ProfileScreen: React.FC<{ socialError?: string; passwordDue?: boole
         <h2>{tx('profile.name')}</h2>
         <NameForm name={preferences.name} />
       </section>
+
+      {settings?.usernameSignIn.enabled && (
+        <section className="account-section" id="username">
+          <h2>{tx('profile.username')}</h2>
+          <UsernameForm username={(() => { const name = (user as unknown as { username?: unknown }).username; return typeof name === 'string' ? name : '' })()} />
+        </section>
+      )}
 
       {languageOptions && (
         <section className="account-section" id="language">

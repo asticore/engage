@@ -37,9 +37,15 @@ export const SignInForm: React.FC<{
   passwordless?: { magicLink: boolean; emailCode: boolean }
   /** Passkey sign-in is offered only when the owner switched it on. */
   passkey?: boolean
+  /** Which public sign-in this is. Posted as `area` so the server applies the right blocked methods. */
+  place?: 'account' | 'members'
+  /** False when the owner blocked the password for this place (and another way in is left). */
+  passwordOpen?: boolean
+  /** Username sign-in is on: the first field takes an email or a username. */
+  usernameSignIn?: boolean
   /** The spam challenge, when Form settings require it on sign-in. */
   captcha?: React.ReactNode
-}> = ({ next, justReset, initialPendingToken, passwordless, passkey, captcha }) => {
+}> = ({ next, justReset, initialPendingToken, passwordless, passkey, usernameSignIn, place = 'account', passwordOpen = true, captcha }) => {
   const [state, action] = useActionState<ActionState, FormData>(signInAction, IDLE)
   const [passkeyPending, setPasskeyPending] = React.useState('')
   const tx = usePortalText()
@@ -50,6 +56,7 @@ export const SignInForm: React.FC<{
 
   return (
     <>
+    {passwordOpen && (
     <form action={action} className="account-form">
       {justReset && (
         <p className="account-note account-note--success">
@@ -57,10 +64,15 @@ export const SignInForm: React.FC<{
         </p>
       )}
       <input type="hidden" name="next" value={next} />
+      <input type="hidden" name="area" value={place} />
       {captcha}
       <label>
-        {tx('auth.email')}
-        <input name="email" type="email" autoComplete="email" required />
+        {usernameSignIn ? tx('auth.emailOrUsername') : tx('auth.email')}
+        {usernameSignIn ? (
+          <input name="email" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} required />
+        ) : (
+          <input name="email" type="email" autoComplete="email" required />
+        )}
       </label>
       <label>
         {tx('auth.password')}
@@ -79,9 +91,18 @@ export const SignInForm: React.FC<{
         <Link href="/account/forgot-password">{tx('auth.forgotPasswordLink')}</Link>
       </div>
     </form>
+    )}
+    {!passwordOpen && passkey && (
+      <>
+        <PasskeySignInButton next={next} onTwoFactor={setPasskeyPending} />
+        <div className="account-link-row">
+          <Link href="/account/register">{tx('auth.createAccount')}</Link>
+        </div>
+      </>
+    )}
     {state.status === 'error' && state.code === 'verify-first' && <ResendVerificationForm />}
     {passwordless && (passwordless.magicLink || passwordless.emailCode) && (
-      <PasswordlessPanel magicLink={passwordless.magicLink} emailCode={passwordless.emailCode} next={next} />
+      <PasswordlessPanel magicLink={passwordless.magicLink} emailCode={passwordless.emailCode} next={next} place={place} />
     )}
     </>
   )
@@ -272,13 +293,13 @@ export const ResendVerificationForm: React.FC<{ email?: string }> = ({ email }) 
  * Only the enabled options are drawn. After a request the same sentence comes back
  * whether or not the address has an account; a code then gets its own entry step.
  */
-export const PasswordlessPanel: React.FC<{ magicLink: boolean; emailCode: boolean; next: string }> = ({ magicLink, emailCode, next }) => {
+export const PasswordlessPanel: React.FC<{ magicLink: boolean; emailCode: boolean; next: string; place?: 'account' | 'members' }> = ({ magicLink, emailCode, next, place = 'account' }) => {
   const [state, action] = useActionState<ActionState, FormData>(requestLoginAction, IDLE)
   const [email, setEmail] = React.useState('')
   const tx = usePortalText()
 
   if (state.status === 'success' && state.kind === 'code') {
-    return <VerifyCodeForm email={state.email ?? ''} next={next} />
+    return <VerifyCodeForm email={state.email ?? ''} next={next} place={place} />
   }
   if (state.status === 'success') {
     return (
@@ -293,6 +314,7 @@ export const PasswordlessPanel: React.FC<{ magicLink: boolean; emailCode: boolea
       <p className="account-hint">{tx('auth.orNoPassword')}</p>
       <form action={action} className="account-form">
         <input type="hidden" name="next" value={next} />
+        <input type="hidden" name="area" value={place} />
         <label>
           {tx('auth.email')}
           <input name="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
@@ -314,7 +336,7 @@ export const PasswordlessPanel: React.FC<{ magicLink: boolean; emailCode: boolea
 }
 
 /** The code step after an emailed code request. A two-step account is then asked for its authenticator code. */
-export const VerifyCodeForm: React.FC<{ email: string; next: string }> = ({ email, next }) => {
+export const VerifyCodeForm: React.FC<{ email: string; next: string; place?: 'account' | 'members' }> = ({ email, next, place = 'account' }) => {
   const [state, action] = useActionState<ActionState, FormData>(verifyCodeAction, IDLE)
   const tx = usePortalText()
 
@@ -325,6 +347,7 @@ export const VerifyCodeForm: React.FC<{ email: string; next: string }> = ({ emai
       <p>{tx('auth.codeEmailedOnce')}</p>
       <input type="hidden" name="email" value={email} />
       <input type="hidden" name="next" value={next} />
+      <input type="hidden" name="area" value={place} />
       <label>
         {tx('auth.code')}
         <input name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} autoFocus required />
@@ -332,7 +355,7 @@ export const VerifyCodeForm: React.FC<{ email: string; next: string }> = ({ emai
       <Note state={state} />
       <SubmitButton>{tx('auth.signIn')}</SubmitButton>
       <div className="account-link-row">
-        <Link href="/account/sign-in">{tx('auth.startAgain')}</Link>
+        <Link href={place === 'members' ? '/account/member-sign-in' : '/account/sign-in'}>{tx('auth.startAgain')}</Link>
       </div>
     </form>
   )

@@ -205,6 +205,7 @@ import * as migration_20270316_430000_affiliate_emails from './20270316_430000_a
 import * as migration_20270316_440000_media_quotas from './20270316_440000_media_quotas';
 import * as migration_20270316_360000_auth_captcha from './20270316_360000_auth_captcha';
 import * as migration_20270316_420000_org_transfer_delegation from './20270316_420000_org_transfer_delegation';
+import * as migration_20270317_130000_username_sign_in from './20270317_130000_username_sign_in';
 
 export const migrations = [
   {
@@ -1236,5 +1237,10 @@ export const migrations = [
     up: migration_20270317_130000_last_login_method.up,
     down: migration_20270317_130000_last_login_method.down,
     name: '20270317_130000_last_login_method',
+  },
+  {
+    up: migration_20270317_130000_username_sign_in.up,
+    down: migration_20270317_130000_username_sign_in.down,
+    name: '20270317_130000_username_sign_in',
   },
 ];

@@ -94,8 +94,8 @@ const siteName = async (engine: Engine): Promise<string> => {
 }
 
 /** Whether a sign-in screen should show the passkey button. Off unless the owner switched passkeys on for that area. */
-export const passkeySignInAvailable = async (engine: Engine, area: 'account' | 'admin'): Promise<boolean> => {
+export const passkeySignInAvailable = async (engine: Engine, area: 'account' | 'admin' | 'members'): Promise<boolean> => {
   const settings = await getSecuritySettings(engine as never).catch((): typeof DEFAULT_SECURITY_SETTINGS => DEFAULT_SECURITY_SETTINGS)
-  const allowed = settings.passkeys.enabled && (area === 'account' || settings.passkeys.allowAdmins) && methodAllowed(await readMatrix(), area, 'passkeys')
+  const allowed = settings.passkeys.enabled && (area !== 'admin' || settings.passkeys.allowAdmins) && methodAllowed(await readMatrix(), area, 'passkeys')
   return allowed && Boolean(process.env.ENGAGE_SECRET)
 }

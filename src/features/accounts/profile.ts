@@ -5,6 +5,7 @@ import { defaultUserSessionStore } from '@/features/security/userSessionStore'
 import { revokeQuietly, sessionIdFromToken, type SessionClient } from '@/features/security/userSessions'
 
 import { emailProblem, signIn, verifyPassword } from './auth'
+import { normalizeUsername, usernameProblem } from './username'
 import { writePreferences } from './preferences'
 import type { AccountUser } from './session'
 import { USERS_SLUG } from './types'
@@ -39,6 +40,34 @@ export const changeName = async (
   const trimmed = name.trim().slice(0, 120)
   await writePreferences(engine, user, { name: trimmed })
   return { ok: true, message: 'Your name has been saved.' }
+}
+
+/**
+ * Sets or clears the sign-in username. Empty clears it. A taken name gets the same wording as an
+ * unusable one, so this form cannot be used to find out which usernames exist.
+ */
+export const changeUsername = async (
+  engine: Engine,
+  user: AccountUser,
+  username: string,
+): Promise<ProfileOutcome> => {
+  const clean = normalizeUsername(username)
+  if (clean) {
+    const problem = usernameProblem(clean)
+    if (problem) return { ok: false, message: problem }
+  }
+  try {
+    await engine.update({
+      collection: USERS_SLUG,
+      id: user.id,
+      data: { username: clean || null },
+      overrideAccess: false,
+      user,
+    })
+  } catch {
+    return { ok: false, message: 'That username cannot be used.' }
+  }
+  return { ok: true, message: clean ? 'Your username has been saved.' : 'Your username has been removed.' }
 }
 
 /**

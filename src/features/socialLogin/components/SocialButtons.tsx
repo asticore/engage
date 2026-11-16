@@ -11,7 +11,7 @@ import { ProviderIcon } from './ProviderIcon'
 export const SocialButtons: React.FC<{
   providers: PublicProvider[]
   next?: string
-  area?: 'account' | 'admin'
+  area?: 'account' | 'admin' | 'members'
   verb?: string
   /** The word between the form and the buttons. English unless the caller passes a translation. */
   orLabel?: string

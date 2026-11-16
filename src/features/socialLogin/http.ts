@@ -88,13 +88,14 @@ function failurePath(state: Pick<FlowState, 'mode' | 'area' | 'p'>, code: string
   const q = `social_error=${encodeURIComponent(code)}`
   if (state.mode === 'test') return testPath(state.p, 'fail', encodeURIComponent(code))
   if (state.mode === 'link') return state.area === 'admin' ? `/admin/security/social?${q}` : `/account/profile?${q}#connected`
-  return state.area === 'admin' ? `/admin/login?${q}` : `/account/sign-in?${q}`
+  if (state.area === 'admin') return `/admin/login?${q}`
+  return state.area === 'members' ? `/account/member-sign-in?${q}` : `/account/sign-in?${q}`
 }
 
 const clearState = (secure: boolean): string => serialize(STATE_COOKIE, '', { maxAge: 0, secure, path: '/api/social' })
 
 const flowMode = (value: string | null): FlowMode => (value === 'link' || value === 'test' ? value : 'signin')
-const flowArea = (value: string | null): FlowArea => (value === 'admin' ? 'admin' : 'account')
+const flowArea = (value: string | null): FlowArea => (value === 'admin' || value === 'members' ? value : 'account')
 
 const notFound = (): Response => new Response('Not found', { status: 404, headers: { 'Cache-Control': NO_STORE } })
 
@@ -132,7 +133,8 @@ export async function handleStart(request: Request, providerParam: string, rt: S
     if (!hasCredentials(id, cfg)) return redirect(origin, failurePath(stateStub, 'unavailable'))
     if (mode === 'link' && !user) return redirect(origin, area === 'admin' ? '/admin/login' : '/account/sign-in')
     if (area === 'admin' && !config.allowAdminSocialLogin) return notFound()
-    if ((config.blocked?.[area] ?? []).includes(id)) return notFound()
+    // Blocked for this place: say so by name instead of a bare 404, so the person knows to use another way in.
+    if ((config.blocked?.[area] ?? []).includes(id)) return redirect(origin, failurePath(stateStub, `blocked-${id}`))
   }
 
   if (await rt.limited(request)) return redirect(origin, failurePath(stateStub, 'rate-limited'))
@@ -288,7 +290,7 @@ async function finishSignIn(
   ctx: { id: ProviderId; area: FlowArea; next: string; secure: boolean },
 ): Promise<SignInDone> {
   const { id, area, next, secure } = ctx
-  const outcome: Outcome = await resolveSignIn(deps, identity, { allowCreate: area === 'account' })
+  const outcome: Outcome = await resolveSignIn(deps, identity, { allowCreate: area !== 'admin' })
   if (!outcome.ok) return { ok: false, code: outcome.code }
 
   let result: { token?: string; pendingToken?: string; pendingBinding?: string }
@@ -310,7 +312,8 @@ async function finishSignIn(
     // Social sign-in never skips two-step. The code step finishes it.
     await rt.audit('social.login', request, { actorId: outcome.userId, detail: `${id}: password-equivalent step done, awaiting two-step code` })
     const pendingCookie = serialize(PENDING_COOKIE, result.pendingToken, { maxAge: PENDING_MAX_AGE_S, secure, path: '/' })
-    const to = staff || area === 'admin' ? '/admin/login?social=2fa' : `/account/sign-in?social=2fa&next=${encodeURIComponent(target)}`
+    const place = area === 'members' ? '/account/member-sign-in' : '/account/sign-in'
+    const to = staff || area === 'admin' ? '/admin/login?social=2fa' : `${place}?social=2fa&next=${encodeURIComponent(target)}`
     const bindCookie = result.pendingBinding ? [buildPendingBindingCookie(result.pendingBinding, secure)] : []
     return { ok: true, to, cookies: [pendingCookie, ...bindCookie] }
   }

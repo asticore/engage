@@ -16,7 +16,7 @@ export const STATE_COOKIE = 'eg_social_state'
 export const STATE_MAX_AGE_MS = 10 * 60 * 1000
 
 export type FlowMode = 'signin' | 'link' | 'test'
-export type FlowArea = 'account' | 'admin'
+export type FlowArea = 'account' | 'admin' | 'members'
 
 export type FlowState = {
   p: ProviderId

@@ -76,6 +76,16 @@ export type SecuritySettings = {
   emailVerification: EmailVerificationSettings
   /** Shared password groups for protected content. On by default; off locks every group-protected document. */
   passwordGroups: PasswordGroupSettings
+  /** Lets the account sign-in form take a username as well as an email. Off by default (Task 23g). */
+  usernameSignIn: UsernameSignInSettings
+}
+
+export type UsernameSignInSettings = {
+  enabled: boolean
+}
+
+export const DEFAULT_USERNAME_SIGN_IN_SETTINGS: UsernameSignInSettings = {
+  enabled: false,
 }
 
 export type TwoFactorSettings = {
@@ -239,6 +249,7 @@ export const DEFAULT_SECURITY_SETTINGS: SecuritySettings = {
   organizations: DEFAULT_ORGANIZATION_SETTINGS,
   passwordGroups: DEFAULT_PASSWORD_GROUP_SETTINGS,
   emailVerification: DEFAULT_EMAIL_VERIFICATION_SETTINGS,
+  usernameSignIn: DEFAULT_USERNAME_SIGN_IN_SETTINGS,
 }
 
 export const SECURITY_FEATURE_KEY: FeatureKey = 'security'
@@ -362,6 +373,11 @@ export const passwordGroupsFrom = (get: (column: string) => unknown): PasswordGr
   enabled: asBool(get('password_groups_enabled'), DEFAULT_PASSWORD_GROUP_SETTINGS.enabled),
 })
 
+/** Reads the username sign-in switch (`username_sign_in_enabled`). Off unless explicitly turned on. */
+export const usernameSignInFrom = (get: (column: string) => unknown): UsernameSignInSettings => ({
+  enabled: asBool(get('username_sign_in_enabled'), DEFAULT_USERNAME_SIGN_IN_SETTINGS.enabled),
+})
+
 /** Reads the two verification fields; `get` takes the column name. The cooldown is clamped to 0..3600. */
 export const emailVerificationFrom = (get: (column: string) => unknown): EmailVerificationSettings => {
   const base = DEFAULT_EMAIL_VERIFICATION_SETTINGS
@@ -458,6 +474,7 @@ export function rowToSettings(row: SettingsRow | null, featureEnabled: boolean):
     passwordGroups: passwordGroupsFrom((key) => row[key]),
     twoFactor: twoFactorFrom((key) => row[key]),
     emailVerification: emailVerificationFrom((key) => row[key]),
+    usernameSignIn: usernameSignInFrom((key) => row[key]),
   }
 }
 
@@ -606,5 +623,6 @@ export async function getSecuritySettings(engine: EngineLike): Promise<SecurityS
     passwordGroups: passwordGroupsFrom((key) => (settings as Record<string, unknown>)[key === 'password_groups_enabled' ? 'passwordGroupsEnabled' : key]),
     twoFactor: twoFactorFrom((key) => (settings as Record<string, unknown>)[camel(key)]),
     emailVerification: emailVerificationFrom((key) => (settings as Record<string, unknown>)[EMAIL_VERIFICATION_GLOBAL_KEYS[key] ?? key]),
+    usernameSignIn: usernameSignInFrom((key) => (settings as Record<string, unknown>)[key === 'username_sign_in_enabled' ? 'usernameSignInEnabled' : key]),
   }
 }
