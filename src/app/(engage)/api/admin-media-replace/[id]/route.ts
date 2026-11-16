@@ -7,6 +7,10 @@ import { isCompatibleReplacement, replaceStoredMedia } from '@/features/media/li
 import { prepareUploadFile } from '@/features/media/uploadHook'
 import { readLimitedForm } from '@/features/media/readBody'
 import { loadMedia, mediaUpdater, readOptimiseSettings, readUploadPolicy, type MediaEngine } from '@/features/media/store'
+import { rawD1 } from '@/features/ecommerce/server/db'
+import { getSettings as getDamSettings, type D1 as DamD1 } from '@/features/dam/store'
+import { snapshotCurrent } from '@/features/dam/versionsIo'
+import { getFeatureFlags } from '@/utilities/features'
 import { ValidationError } from '@/localapi/operations'
 import type { UploadFile } from '@/localapi/uploads'
 
@@ -77,6 +81,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       { error: `This file is ${doc.mimeType}. Upload a file of the same kind to replace it.` },
       { status: 415 },
     )
+  }
+
+  // Asset manager: keep the file being replaced as a version (the newest few are kept, see its settings).
+  try {
+    if ((await getFeatureFlags()).dam) {
+      const d1 = (await rawD1()) as never as DamD1
+      const keep = (await getDamSettings(d1)).keepVersions
+      await snapshotCurrent(d1, { id, filename: doc.filename, mimeType: doc.mimeType, filesize: doc.filesize, width: doc.width, height: doc.height }, keep, null, 'Replaced', new Date().toISOString())
+    }
+  } catch (error) {
+    console.error('Keeping the old version failed; the replace goes on:', error)
   }
 
   try {

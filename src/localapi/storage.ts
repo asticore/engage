@@ -108,6 +108,13 @@ export async function deleteMediaObject(key: string): Promise<void> {
   await bucket.delete([key, `${ORIGINAL_PREFIX}${key}`])
 }
 
+/** Removes stored objects by exact key (kept versions). Missing keys are ignored. */
+export async function deleteMediaKeys(keys: string[]): Promise<void> {
+  if (keys.length === 0) return
+  const bucket = await getMediaBucket()
+  await bucket.delete(keys)
+}
+
 /**
  * Stores the untouched bytes of a picture under `original/<filename>`, but only
  * if no copy is there yet - so the first version ever seen is the one kept, not
