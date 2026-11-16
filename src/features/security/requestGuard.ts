@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 import { audit, auditContext } from './auditLog'
 import { FINGERPRINT_HEADERS, securityHeaders } from './headers'
 import { SESSION_COOKIE, isSessionExpired } from './loginProtection'
-import { decideIp } from './ipRules'
+import { decideCountry, decideIp } from './ipRules'
 import { readIpRulesCached } from './ipRulesStore'
 import { isDirectoryListingRequest, isProbePath } from './probePaths'
 import { classifyRoute, clientKey, hit, hitShared, limitFor } from './rateLimit'
@@ -233,9 +233,16 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
   // SECURITY_IP_RULES_OFF=1 in the environment switches the list off, so an admin can always recover.
   if (process.env.SECURITY_IP_RULES_OFF !== '1') {
     const ip = clientKey(request)
-    if (ip !== 'unknown' && decideIp(ip, await readIpRulesCached()) === 'block') {
+    const ipRules = await readIpRulesCached()
+    const byIp = ip === 'unknown' ? 'none' : decideIp(ip, ipRules)
+    if (byIp === 'block') {
       void audit({ action: 'ip.blocked', detail: pathname, ...auditContext(request) }, settings)
       return new NextResponse('Access denied.', { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } })
+    }
+    // Country rules (whole site). An allow-listed address skips them.
+    if (byIp !== 'allow' && ipRules.some((r) => r.kind === 'country-allow' || r.kind === 'country-block') && decideCountry(request.headers.get('cf-ipcountry'), ipRules) === 'block') {
+      void audit({ action: 'ip.blocked', detail: `country ${pathname}`, ...auditContext(request) }, settings)
+      return new NextResponse('This site is not available in your country.', { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } })
     }
   }
 
