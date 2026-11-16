@@ -62,3 +62,29 @@ describe('affiliate rules (31b)', () => {
     expect(csv).toContain('\'=HYPERLINK')
   })
 })
+
+describe('affiliate product and tier rates (26b)', () => {
+  const none = new Map<number, number>()
+  it('parses tiers and picks the highest reached', async () => {
+    const { parseTiers, tierRate } = await import('@/features/affiliates/commission')
+    const tiers = parseTiers('5000, 15\nbad line\n1000, 12\n0, 50')
+    expect(tiers).toEqual([{ minCents: 100000, pct: 12 }, { minCents: 500000, pct: 15 }])
+    expect(tierRate(tiers, 0, 10)).toBe(10)
+    expect(tierRate(tiers, 100000, 10)).toBe(12)
+    expect(tierRate(tiers, 900000, 10)).toBe(15)
+  })
+  it('works a commission line by line with product rates and a shared discount', async () => {
+    const { commissionForLines, commissionCents } = await import('@/features/affiliates/commission')
+    const lines = [{ productId: 1, lineCents: 6000 }, { productId: 2, lineCents: 4000 }]
+    const flat = commissionForLines(lines, 10000, 0, { override: null, productRates: none, defaultPct: 10 })
+    expect(flat).toMatchObject({ base: 10000, amount: 1000 })
+    const mixed = commissionForLines(lines, 10000, 1000, { override: null, productRates: new Map([[1, 20]]), defaultPct: 10 })
+    expect(mixed.base).toBe(9000)
+    expect(mixed.amount).toBe(Math.round(5400 * 0.2 + 3600 * 0.1))
+    expect(commissionCents(mixed.base, mixed.pct)).toBe(mixed.amount)
+    const over = commissionForLines(lines, 10000, 0, { override: 5, productRates: new Map([[1, 20]]), defaultPct: 10 })
+    expect(over.amount).toBe(500)
+    const noLines = commissionForLines(null, 10000, 2500, { override: null, productRates: none, defaultPct: 10 })
+    expect(noLines).toMatchObject({ base: 7500, amount: 750 })
+  })
+})
