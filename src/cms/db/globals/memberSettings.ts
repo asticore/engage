@@ -40,6 +40,7 @@ export type MemberSettingsDoc = {
   registration?: {
     allowSignup?: boolean | null
     requireEmailVerification?: boolean | null
+    blockDisposableEmail?: boolean | null
     defaultTier?: string | null
   }
   access?: {
