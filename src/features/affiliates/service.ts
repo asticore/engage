@@ -1,5 +1,5 @@
 import { afterRefund, commissionBase, commissionCents, effectiveRate, eligibleAt, isSelfReferral } from './commission'
-import { readRefCookie } from './core'
+import { normaliseCoupon, readRefCookie, readUtmCookie } from './core'
 import * as store from './store'
 
 /**
@@ -29,16 +29,26 @@ export async function affiliateOrderCreated(order: Order): Promise<void> {
   try {
     if (!(await enabled())) return
     const { headers } = await import('next/headers')
-    const code = readRefCookie((await headers()).get('cookie'))
-    if (!code) return
+    const cookie = (await headers()).get('cookie')
     const d1 = await db()
-    const affiliate = await store.findActiveByCode(d1, code)
+    const code = readRefCookie(cookie)
+    let affiliate = code ? await store.findActiveByCode(d1, code) : null
+    let source: 'link' | 'coupon' = 'link'
+    if (!affiliate) {
+      // No link cookie (or its affiliate is not active): fall back to a coupon code that belongs to an affiliate.
+      const lines = (Array.isArray(order.couponLines) ? order.couponLines : []) as { code?: string }[]
+      for (const line of lines) {
+        affiliate = await store.findActiveByCoupon(d1, normaliseCoupon(line.code))
+        if (affiliate) break
+      }
+      source = 'coupon'
+    }
     if (!affiliate) return
     const full = await store.getAffiliateById(d1, affiliate.id)
     const buyer = String(order.customerEmail ?? '')
     if (isSelfReferral(full?.email, buyer)) return
     if ((await store.getSettings(d1)).firstOrderOnly && (await store.hasPriorOrderFrom(d1, affiliate.id, buyer))) return
-    await store.insertTracked(d1, { affiliateId: affiliate.id, orderId: Number(order.id), customerEmail: buyer }, new Date().toISOString())
+    await store.insertTracked(d1, { affiliateId: affiliate.id, orderId: Number(order.id), customerEmail: buyer, source, utm: source === 'link' ? readUtmCookie(cookie) : undefined }, new Date().toISOString())
   } catch {
     // Attribution must never fail an order.
   }

@@ -60,3 +60,24 @@ describe('affiliate setup checklist and share kit (31e)', () => {
     expect(kit).toContain('https://x.com/?ref=sam')
   })
 })
+
+describe('affiliate attribution (31a)', () => {
+  it('keeps UTM values in a cookie and reads them back', async () => {
+    const { utmCookie, readUtmCookie, normaliseCoupon } = await import('@/features/affiliates/core')
+    const cookie = utmCookie({ source: 'news letter', medium: 'email', campaign: 'spring|sale' }).split(';')[0]
+    expect(readUtmCookie(`a=b; ${cookie}`)).toEqual({ source: 'news_letter', medium: 'email', campaign: 'spring_sale' })
+    expect(readUtmCookie('a=b')).toEqual({ source: '', medium: '', campaign: '' })
+    expect(normaliseCoupon(' SAM10 ')).toBe('sam10')
+    expect(normaliseCoupon('a')).toBe('')
+    expect(normaliseCoupon('bad code!')).toBe('')
+  })
+  it('allows the cookie only when its consent category is on', async () => {
+    const { referralAllowed } = await import('@/features/affiliates/consentGate')
+    const rec = (marketing: boolean) => `engage_consent=${encodeURIComponent(JSON.stringify({ v: 1, id: 'abcdefgh1234', c: { necessary: true, preferences: false, analytics: false, marketing }, t: 1 }))}`
+    expect(referralAllowed('necessary', null)).toBe(true)
+    expect(referralAllowed('marketing', null)).toBe(false)
+    expect(referralAllowed('marketing', rec(false))).toBe(false)
+    expect(referralAllowed('marketing', rec(true))).toBe(true)
+    expect(referralAllowed('analytics', rec(true))).toBe(false)
+  })
+})

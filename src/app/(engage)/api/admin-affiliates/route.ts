@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
 import { balances, clampDays, clampPct, payoutsCsv } from '@/features/affiliates/commission'
-import { MAX_AFFILIATES, STATUSES, newToken, normaliseCode, suggestCode, type AffiliateStatus } from '@/features/affiliates/core'
+import { MAX_AFFILIATES, STATUSES, newToken, normaliseCode, normaliseCoupon, suggestCode, toConsentCategory, type AffiliateStatus } from '@/features/affiliates/core'
 import * as store from '@/features/affiliates/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { adminRequestRefusal } from '@/features/forms/origin'
@@ -65,7 +65,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (body.action === 'settings') {
     const s = body.settings as Record<string, unknown> | undefined
-    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
+    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, consentCategory: toConsentCategory(s?.consentCategory), terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
     return json({ ok: true })
   }
   const id = Number(body.id)
@@ -80,6 +80,14 @@ export async function POST(request: Request): Promise<Response> {
     const rate = raw === null || raw === '' || raw === undefined ? null : clampPct(raw, -1)
     if (rate === -1) return json({ error: 'A rate is 0 to 100 percent.' }, 400)
     await store.setAffiliateRate(d1, id, rate, now)
+    return json({ ok: true })
+  }
+  if (body.action === 'coupon') {
+    const raw = text(body.coupon, 40)
+    const coupon = raw === '' ? '' : normaliseCoupon(raw)
+    if (raw !== '' && coupon === '') return json({ error: 'A coupon code is 3 to 40 letters, numbers, dashes or underscores.' }, 400)
+    if (await store.couponTaken(d1, coupon, id)) return json({ error: 'Another affiliate already uses that coupon code.' }, 409)
+    await store.setAffiliateCoupon(d1, id, coupon, now)
     return json({ ok: true })
   }
   if (body.action === 'token') {
