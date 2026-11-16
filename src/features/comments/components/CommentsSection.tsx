@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
+import { AuthCaptcha } from '@/features/security/AuthCaptcha'
+
 import { initials, MAX_CONTENT, type CommentNode } from '../core'
 
 type Loaded = { comments: CommentNode[]; count: number; closed: boolean }
@@ -34,7 +36,7 @@ const Thread: React.FC<{ nodes: CommentNode[]; onReply: (id: number) => void; cl
 )
 
 /** Comments under a blog post: the list and the form. English only. */
-export const CommentsSection: React.FC<{ postId: number }> = ({ postId }) => {
+export const CommentsSection: React.FC<{ postId: number; captcha?: { provider: 'turnstile' | 'recaptcha'; siteKey: string } | null }> = ({ postId, captcha }) => {
   const [data, setData] = useState<Loaded | null>(null)
   const [parent, setParent] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
@@ -104,6 +106,7 @@ export const CommentsSection: React.FC<{ postId: number }> = ({ postId }) => {
               <input name="website" tabIndex={-1} autoComplete="off" />
             </label>
           </div>
+          {captcha ? <AuthCaptcha provider={captcha.provider} siteKey={captcha.siteKey} /> : null}
           <button type="submit" className="btn btn--primary" disabled={busy}>
             Post comment
           </button>
