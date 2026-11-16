@@ -420,13 +420,13 @@ describe('passkey as the second step', () => {
     db.pendingTokens = { isUsed: async (jti) => used.has(jti), markUsed: async (jti) => void used.add(jti) }
     await enrol(db)
     const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    expect(await pendingTokenUser(db, { pendingToken: pending.pendingToken as string, secret: SECRET })).toBe(1)
+    expect(await pendingTokenUser(db, { pendingToken: pending.pendingToken as string, secret: SECRET, client: { pendingBinding: pending.pendingBinding } })).toBe(1)
 
-    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: '', method: 'passkey', passkeyVerifiedUserId: 1, secret: SECRET })
+    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: '', method: 'passkey', passkeyVerifiedUserId: 1, secret: SECRET, client: { pendingBinding: pending.pendingBinding } })
     expect(done.token).toBeTruthy()
     // The token cannot be reused, by a passkey or by a code, and no longer names a user.
-    await expect(loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: '', method: 'passkey', passkeyVerifiedUserId: 1, secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
-    expect(await pendingTokenUser(db, { pendingToken: pending.pendingToken as string, secret: SECRET })).toBeNull()
+    await expect(loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: '', method: 'passkey', passkeyVerifiedUserId: 1, secret: SECRET, client: { pendingBinding: pending.pendingBinding } })).rejects.toBeInstanceOf(TwoFactorCodeError)
+    expect(await pendingTokenUser(db, { pendingToken: pending.pendingToken as string, secret: SECRET, client: { pendingBinding: pending.pendingBinding } })).toBeNull()
   })
 
   it('refuses the passkey method when nothing vouched for it, or when another account was vouched for', async () => {
@@ -443,9 +443,17 @@ describe('passkey as the second step', () => {
     const db = makeDb([makeUser()])
     await enrol(db)
     const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const args = { pendingToken: pending.pendingToken as string, code: '', method: 'passkey' as const, secret: SECRET }
+    const args = { pendingToken: pending.pendingToken as string, code: '', method: 'passkey' as const, secret: SECRET, client: { pendingBinding: pending.pendingBinding } }
     for (let i = 0; i < 4; i += 1) await expect(loginWithSecondFactor(db, args)).rejects.toBeInstanceOf(TwoFactorCodeError)
     await expect(loginWithSecondFactor(db, args)).rejects.toBeInstanceOf(LockedAuth)
+  })
+
+  it('does not name a user, or accept a passkey, when the browser binding is missing', async () => {
+    const db = makeDb([makeUser()])
+    await enrol(db)
+    const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
+    expect(await pendingTokenUser(db, { pendingToken: pending.pendingToken as string, secret: SECRET })).toBeNull()
+    await expect(loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: '', method: 'passkey', passkeyVerifiedUserId: 1, secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
   })
 
   it('does not name a user for a forged token', async () => {
