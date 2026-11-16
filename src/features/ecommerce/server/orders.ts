@@ -297,6 +297,10 @@ export async function markOrderPaid(engine: Engine, orderId: number, info: { pay
     await flagAttention(engine, orderId, `Event bookings for this order were not created: ${error instanceof Error ? error.message : 'unknown error'}. A replayed payment will try again.`)
   }
   void emitWebhookEvent('order.paid', { ...fresh, id: orderId })
+  // Affiliates (off by default): start the commission for an attributed order.
+  try {
+    await (await import('@/features/affiliates/service')).affiliateOrderPaid(fresh)
+  } catch { /* commissions never block a payment */ }
   return { firstTime: true, order: fresh }
 }
 

@@ -19,7 +19,7 @@ export async function AffiliatesView() {
     <div className="settings-page">
       <div className="settings-page__header">
         <h1 className="settings-page__title">Affiliates</h1>
-        <p className="settings-page__description">Each affiliate gets a link like yoursite.com/?ref=code. Visitors who arrive with it carry a 30 day cookie and each visit is logged. Commissions, payouts and the affiliate sign-in page are not built yet.</p>
+        <p className="settings-page__description">Each affiliate gets a link like yoursite.com/?ref=code. Visitors who arrive with it carry a cookie and each visit is logged. Orders they place earn a commission that becomes payable after the waiting days; refunds reduce it. Record payouts here after paying outside the site. The affiliate sign-in page is not built yet.</p>
       </div>
       <AffiliatesPanel origin={origin} />
     </div>
