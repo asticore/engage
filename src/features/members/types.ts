@@ -69,6 +69,9 @@ export type MemberSettings = {
     allowSignup: boolean
     requireEmailVerification: boolean
     blockDisposableEmail: boolean
+    blockDisposableCustomers: boolean
+    blockDisposableForms: boolean
+    blockDisposableCheckout: boolean
     defaultTier: string
   }
   access: {
@@ -95,7 +98,7 @@ export type MemberSettings = {
 
 export const DEFAULT_MEMBER_SETTINGS: MemberSettings = {
   featureEnabled: false,
-  registration: { allowSignup: false, requireEmailVerification: true, blockDisposableEmail: false, defaultTier: '' },
+  registration: { allowSignup: false, requireEmailVerification: true, blockDisposableEmail: false, blockDisposableCustomers: false, blockDisposableForms: false, blockDisposableCheckout: false, defaultTier: '' },
   access: {
     redirectAfterLogin: '/account',
     membersOnlyRedirect: '/membership',

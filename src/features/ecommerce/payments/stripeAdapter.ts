@@ -127,6 +127,11 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
   const { engine, cart, customerEmail, shippingAddress, user } = args
   if (!cart.items || cart.items.length === 0) throw new Error('Cart is empty or not provided.')
   if (!customerEmail || typeof customerEmail !== 'string') throw new Error('A valid customer email is required to make a purchase.')
+  {
+    const { disposableRefusal } = await import('@/features/security/emailPolicy')
+    const refusal = await disposableRefusal(engine, 'checkout', customerEmail)
+    if (refusal) throw new Error(refusal)
+  }
   const checkout = args.checkout ?? {}
 
   const address = cleanAddress(shippingAddress)

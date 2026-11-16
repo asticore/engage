@@ -59,6 +59,24 @@ export const MemberSettings: GlobalConfig = {
               },
             },
             {
+              name: 'blockDisposableCustomers',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: { width: '50%', description: 'Also refuse throwaway email services when a customer creates a shop account.' },
+            },
+            {
+              name: 'blockDisposableForms',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: { width: '50%', description: 'Also refuse throwaway email services in email fields on forms.' },
+            },
+            {
+              name: 'blockDisposableCheckout',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: { width: '50%', description: 'Also refuse throwaway email services at checkout.' },
+            },
+            {
               name: 'requireEmailVerification',
               type: 'checkbox',
               defaultValue: true,
