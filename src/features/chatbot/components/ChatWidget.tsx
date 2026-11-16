@@ -4,9 +4,11 @@ import React, { useEffect, useRef, useState } from 'react'
 
 import { AuthCaptcha } from '@/features/security/AuthCaptcha'
 
+import { LiveChat } from '@/features/livechat/components/LiveChat'
+
 import type { Handoff } from '../core'
 
-type Config = { sitewide: boolean; position: 'left' | 'right'; name: string; avatar: string; greeting: string; requireConsent: boolean; consentText: string; hours: string; captcha: { provider: 'turnstile' | 'recaptcha'; siteKey: string } | null }
+type Config = { live: boolean; sitewide: boolean; position: 'left' | 'right'; name: string; avatar: string; greeting: string; requireConsent: boolean; consentText: string; hours: string; captcha: { provider: 'turnstile' | 'recaptcha'; siteKey: string } | null }
 type Line = { id: number; role: 'user' | 'assistant'; text: string; sources?: Array<{ title: string; url: string }>; handoff?: Handoff | null; messageId?: number; rated?: 1 | -1 }
 
 const TOKEN_KEY = 'eg_chat_token'
@@ -35,6 +37,7 @@ export const ChatWidget: React.FC<{ inline?: boolean }> = ({ inline = false }) =
   const [lines, setLines] = useState<Line[]>([])
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [live, setLive] = useState(false)
   const [error, setError] = useState('')
   const token = useRef('')
   const next = useRef(1)
@@ -106,6 +109,11 @@ export const ChatWidget: React.FC<{ inline?: boolean }> = ({ inline = false }) =
           </span>
         )}
         <strong style={{ flex: 1 }}>{cfg.name}</strong>
+        {cfg.live && agreed && !live && (
+          <button type="button" onClick={() => setLive(true)}>
+            Talk to a person
+          </button>
+        )}
         {!inline && (
           <button type="button" aria-label="Close chat" onClick={() => setOpen(false)}>
             ×
@@ -119,6 +127,8 @@ export const ChatWidget: React.FC<{ inline?: boolean }> = ({ inline = false }) =
             I agree, start chat
           </button>
         </div>
+      ) : live ? (
+        <LiveChat captcha={cfg.captcha} onBack={() => setLive(false)} />
       ) : (
         <>
           <div ref={log} role="log" aria-live="polite" style={{ flex: 1, overflowY: 'auto', padding: '0.75rem', display: 'grid', gap: '0.5rem', alignContent: 'start' }}>
@@ -137,6 +147,13 @@ export const ChatWidget: React.FC<{ inline?: boolean }> = ({ inline = false }) =
                 )}
                 {l.handoff && (
                   <p style={{ margin: '0.5rem 0 0' }}>
+                    {cfg.live ? (
+                      <>
+                        <button type="button" onClick={() => setLive(true)}>
+                          Talk to a person
+                        </button>{' '}
+                      </>
+                    ) : null}
                     <a href={l.handoff.url}>Contact us</a>
                     {l.handoff.email ? (
                       <>

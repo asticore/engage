@@ -191,6 +191,7 @@ import * as migration_20270317_100000_demos from './20270317_100000_demos';
 import * as migration_20270317_110000_client_reports from './20270317_110000_client_reports';
 import * as migration_20270317_120000_franchising from './20270317_120000_franchising';
 import * as migration_20270316_435000_org_sso from './20270316_435000_org_sso';
+import * as migration_20270316_425000_livechat from './20270316_425000_livechat';
 import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
 import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
 import * as migration_20270316_350000_affiliate_portal from './20270316_350000_affiliate_portal';
@@ -1218,5 +1219,10 @@ export const migrations = [
     up: migration_20270316_420000_org_transfer_delegation.up,
     down: migration_20270316_420000_org_transfer_delegation.down,
     name: '20270316_420000_org_transfer_delegation',
+  },
+  {
+    up: migration_20270316_425000_livechat.up,
+    down: migration_20270316_425000_livechat.down,
+    name: '20270316_425000_livechat',
   },
 ];
