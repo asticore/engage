@@ -46,6 +46,7 @@ export type FeatureKey =
   | 'limits'
   | 'mediatags'
   | 'siteplanner'
+  | 'affiliates'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -317,6 +318,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['site_plans'],
+    implemented: true,
+  },
+  {
+    key: 'affiliates',
+    label: 'Affiliates',
+    description: 'Let partners promote the site with their own link (?ref=code). Visits are tracked with a 30 day cookie. Commissions and payouts are not built yet.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['affiliates', 'affiliate_visits'],
     implemented: true,
   },
 ]
