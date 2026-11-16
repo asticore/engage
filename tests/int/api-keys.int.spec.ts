@@ -3,7 +3,10 @@
 // the D1 store, so every rule runs against real key material: keys are generated, hashed,
 // looked up by hash and checked exactly as in production. The REST gate is exercised through
 // the exported gateApiKeyRequest with a fake engine. No browser, no live database.
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+// The agent-grant check needs a real D1 binding (a wrangler proxy in tests); these tests are about plain keys.
+vi.mock('@/features/agentAccess/gate', () => ({ gateAgentRequest: async (): Promise<null> => null }))
 
 import {
   API_KEY_RATE_PER_MINUTE,

@@ -5,6 +5,7 @@ import { describeAuthMethods } from '@/features/security/authMethods'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot, getSecuritySettings } from '@/features/security/settings'
 import { readSocialConfig } from '@/features/socialLogin/settings'
+import { getFeatureFlags } from '@/utilities/features'
 
 import { MATRIX_METHODS, methodAllowed, readMatrix } from '@/features/security/authMatrix'
 
@@ -19,7 +20,14 @@ export async function AuthenticationView() {
   if (!context.user) redirect(adminHref('/login', root))
   if (!context.isAdmin) return <p>Only an admin can see the authentication overview.</p>
   const [settings, social] = await Promise.all([getSecuritySettings(context.engine as never), readSocialConfig(context.engine as never)])
-  const rows = describeAuthMethods(settings, social)
+  const featureOn = Boolean((await getFeatureFlags()).agents)
+  let activeTokens = 0
+  if (featureOn) {
+    const { rawD1 } = await import('@/features/ecommerce/server/db')
+    const { listGrants } = await import('@/features/agentAccess/store')
+    activeTokens = (await listGrants((await rawD1()) as never).catch((): never[] => [])).filter((g) => !g.revokedAt).length
+  }
+  const rows = describeAuthMethods(settings, social, { featureOn, apiKeysOn: settings.apiKeys.enabled, activeTokens })
   const matrix = await readMatrix()
   const matrixRows = rows.filter((row) => (MATRIX_METHODS as readonly string[]).includes(row.id))
   return (
