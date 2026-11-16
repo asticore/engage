@@ -216,6 +216,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
       { kind: 'link', label: 'Password groups', href: '/security/password-groups', description: 'Shared passwords that protect many pages, posts, products and events. Create, rotate or delete a group and see which content uses it.', type: 'view' },
       { kind: 'link', label: 'Activity log', href: '/security/activity', description: 'Admins: what people do (sign-ins, edits, publishes, setting changes, exports), filterable by person, event, collection and date, with a CSV download and a clear that keeps its own record.', type: 'view' },
       { kind: 'link', label: 'Security audit', href: '/security/audit', description: 'Admins: every sign-in, failed attempt, lockout and account security change, newest first, filterable by event or account.', type: 'view' },
+      { kind: 'link', label: 'More sign-in providers', href: '/security/sign-in-providers', description: 'Admins: set up X, LinkedIn, TikTok, Slack, a free-form OpenID Connect provider and Google One Tap. Google, GitHub, Apple, Facebook, Microsoft and Discord are set up above in Social login.', type: 'view' },
       { kind: 'link', label: 'Connected accounts', href: '/security/social', description: 'Connect or disconnect Google, GitHub and other sign-in providers on your own account. Provider setup is above in Security > Social login.', type: 'view' },
     ],
   },

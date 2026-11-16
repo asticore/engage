@@ -4,7 +4,8 @@ import { headers } from 'next/headers'
 
 import { getAdminContext } from '@/admin/auth'
 import { refuseWhileImpersonating } from '@/features/impersonation/policy'
-import { missingCredentials, PROVIDER_IDS, type ProviderId } from '@/features/socialLogin/providers'
+import { extraRowFor, readExtraRows, writeExtraRow } from '@/features/socialLogin/extraStore'
+import { isExtraProviderId, missingCredentials, PROVIDER_IDS, type ProviderId } from '@/features/socialLogin/providers'
 import { readSocialConfig } from '@/features/socialLogin/settings'
 
 import { audit, auditContext } from './auditLog'
@@ -21,7 +22,8 @@ export async function toggleAuthMethodAction(id: string, on: boolean): Promise<T
   if (blocked) return { ok: false, message: blocked }
   const context = await getAdminContext()
   if (!context.user || !context.isAdmin) return { ok: false, message: 'Only an admin can change sign-in methods.' }
-  const patch = togglePatch(id, on === true)
+  const extra = id.startsWith('social-') ? id.slice('social-'.length) : ''
+  const patch = isExtraProviderId(extra) ? {} : togglePatch(id, on === true)
   if (!patch) return { ok: false, message: 'That method has no switch here.' }
   try {
     const engine = context.engine as never as { updateGlobal: (a: Record<string, unknown>) => Promise<unknown> }
@@ -32,7 +34,13 @@ export async function toggleAuthMethodAction(id: string, on: boolean): Promise<T
       const missing = missingCredentials(provider, social.providers[provider])
       if (missing.length) return { ok: false, message: `Add ${missing.join(', ')} first, then switch it on.` }
     }
-    await engine.updateGlobal({ slug: 'security-settings', data: patch, overrideAccess: true })
+    if (isExtraProviderId(extra)) {
+      // Providers stored apart from the Security settings keep their switch in their own table.
+      const row = extraRowFor(await readExtraRows(), extra)
+      await writeExtraRow({ ...row, enabled: on === true })
+    } else {
+      await engine.updateGlobal({ slug: 'security-settings', data: patch, overrideAccess: true })
+    }
     try {
       const settings = await getSecuritySettings(context.engine as never)
       const origin = auditContext(new Request('https://engage.local', { headers: incoming }))

@@ -1,10 +1,12 @@
 import type { Engine } from '@/engine'
 
+import { applyExtraRows, readExtraRows } from './extraStore'
 import {
+  GLOBAL_PROVIDER_IDS,
   PROVIDER_IDS,
-  PROVIDERS,
   emptySocialConfig,
   isUsable,
+  providerLabel,
   safeTenant,
   type ProviderId,
   type SocialConfig,
@@ -25,7 +27,7 @@ export function configFromDoc(doc: Record<string, unknown> | null | undefined): 
 
   config.allowSignupViaSocial = get('allowSignupViaSocial') !== false
   config.allowAdminSocialLogin = get('allowAdminSocialLogin') === true
-  for (const id of PROVIDER_IDS) {
+  for (const id of GLOBAL_PROVIDER_IDS) {
     const p = config.providers[id]
     p.enabled = get(`${id}Enabled`) === true
     p.clientId = text(get(`${id}ClientId`))
@@ -43,7 +45,7 @@ export function configFromDoc(doc: Record<string, unknown> | null | undefined): 
 export async function readSocialConfig(engine: Pick<Engine, 'findGlobal'>): Promise<SocialConfig> {
   try {
     const doc = await engine.findGlobal({ slug: 'security-settings', depth: 0, overrideAccess: true })
-    const config = configFromDoc(doc as Record<string, unknown> | null)
+    const config = applyExtraRows(configFromDoc(doc as Record<string, unknown> | null), await readExtraRows())
     const matrix = await readMatrix()
     config.blocked = { admin: matrix.admin.filter((m) => m.startsWith('social-')).map((m) => m.slice(7)), account: matrix.account.filter((m) => m.startsWith('social-')).map((m) => m.slice(7)) }
     return config
@@ -58,5 +60,5 @@ export type PublicProvider = { id: ProviderId; label: string }
 /** What the sign-in screens may know: which providers to offer. No credentials. */
 export function usableProviders(config: SocialConfig, area: 'account' | 'admin' = 'account'): PublicProvider[] {
   if (area === 'admin' && !config.allowAdminSocialLogin) return []
-  return PROVIDER_IDS.filter((id) => !(config.blocked?.[area] ?? []).includes(id) && isUsable(id, config.providers[id])).map((id) => ({ id, label: PROVIDERS[id].label }))
+  return PROVIDER_IDS.filter((id) => !(config.blocked?.[area] ?? []).includes(id) && isUsable(id, config.providers[id])).map((id) => ({ id, label: providerLabel(id, config.providers[id]) }))
 }

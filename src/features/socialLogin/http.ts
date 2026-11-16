@@ -1,8 +1,9 @@
 import type { AuditAction } from '@/features/security/auditLog'
 
-import { buildAuthorizeUrl, exchangeForIdentity, FlowError, type Identity } from './flow'
-import type { Fetcher } from './jwt'
-import { isProviderId, isUsable, hasCredentials, PROVIDERS, redirectUriFor, type ProviderId, type SocialConfig } from './providers'
+import { EndpointError, resolveEndpoints, type Endpoints } from './endpoints'
+import { buildAuthorizeUrl, exchangeForIdentity, FlowError, identityFromClaims, type Identity } from './flow'
+import { TokenError, verifyIdToken, type Fetcher } from './jwt'
+import { isExtraProviderId, isProviderId, isUsable, hasCredentials, PROVIDERS, redirectUriFor, usesIdToken, type ProviderId, type SocialConfig } from './providers'
 import { resolveLink, resolveSignIn, isCustomerOnly, type PolicyDeps, type Outcome } from './service'
 import { usableProviders } from './settings'
 import {
@@ -75,10 +76,16 @@ export const safeNext = (value: string | null, area: FlowArea, mode: FlowMode): 
 
 const isAdminUser = (user: SessionUser | null): boolean => Boolean(user && user.roles.includes('admin'))
 
+/** Where an admin test sign-in reports back: the Security settings page, or the page for the providers set up separately. */
+const testPath = (id: ProviderId, outcome: 'ok' | 'fail', detail: string): string =>
+  isExtraProviderId(id)
+    ? `/admin/security/sign-in-providers?social_test=${id}:${outcome}:${detail}#provider-${id}`
+    : `/admin/settings/security?social_test=${id}:${outcome}:${detail}#social-login`
+
 /** Where a failure is shown, per flow. */
 function failurePath(state: Pick<FlowState, 'mode' | 'area' | 'p'>, code: string): string {
   const q = `social_error=${encodeURIComponent(code)}`
-  if (state.mode === 'test') return `/admin/settings/security?social_test=${state.p}:fail:${encodeURIComponent(code)}#social-login`
+  if (state.mode === 'test') return testPath(state.p, 'fail', encodeURIComponent(code))
   if (state.mode === 'link') return state.area === 'admin' ? `/admin/security/social?${q}` : `/account/profile?${q}#connected`
   return state.area === 'admin' ? `/admin/login?${q}` : `/account/sign-in?${q}`
 }
@@ -131,12 +138,18 @@ export async function handleStart(request: Request, providerParam: string, rt: S
   if (!rt.secret) return redirect(origin, failurePath(stateStub, 'unavailable'))
 
   const def = PROVIDERS[id]
+  let endpoints: Endpoints
+  try {
+    endpoints = await resolveEndpoints(id, cfg, rt.fetchImpl, rt.now())
+  } catch (error) {
+    return redirect(origin, failurePath(stateStub, error instanceof EndpointError ? error.reason : 'provider'))
+  }
   const secrets = newFlowSecrets()
   const state: FlowState = {
     p: id,
     s: secrets.s,
     v: def.pkce ? secrets.v : '',
-    n: def.oidc ? secrets.n : '',
+    n: usesIdToken(id, cfg) ? secrets.n : '',
     mode,
     area,
     next: safeNext(url.searchParams.get('next'), area, mode),
@@ -149,6 +162,7 @@ export async function handleStart(request: Request, providerParam: string, rt: S
     state: state.s,
     nonce: state.n,
     verifier: state.v,
+    endpoints,
   })
   const headers = new Headers({ Location: location, 'Cache-Control': NO_STORE })
   headers.append(
@@ -216,7 +230,9 @@ export async function handleCallback(request: Request, providerParam: string, rt
 
   let identity: Identity
   try {
+    const endpoints = await resolveEndpoints(id, cfg, rt.fetchImpl, rt.now())
     identity = await exchangeForIdentity(id, cfg, {
+      endpoints,
       code,
       redirectUri: redirectUriFor(origin, id),
       verifier: state.v,
@@ -225,7 +241,7 @@ export async function handleCallback(request: Request, providerParam: string, rt
       now: rt.now(),
     })
   } catch (error) {
-    const reason = error instanceof FlowError ? error.reason : 'unknown'
+    const reason = error instanceof FlowError || error instanceof EndpointError ? error.reason : 'unknown'
     if (state.mode === 'test') return redirect(origin, failurePath(state, reason), clear)
     return fail('provider', reason)
   }
@@ -233,7 +249,7 @@ export async function handleCallback(request: Request, providerParam: string, rt
   // Test: prove the setup works. Touches no account, creates no link, signs nobody in.
   if (state.mode === 'test') {
     const note = !identity.email ? 'no-email' : identity.emailVerified ? 'email-verified' : 'email-unverified'
-    return redirect(origin, `/admin/settings/security?social_test=${id}:ok:${note}#social-login`, clear)
+    return redirect(origin, testPath(id, 'ok', note), clear)
   }
 
   const deps = rt.policy(config)
@@ -251,14 +267,34 @@ export async function handleCallback(request: Request, providerParam: string, rt
     return redirect(origin, `${state.next}${sep}social=linked`, clear)
   }
 
-  const outcome: Outcome = await resolveSignIn(deps, identity, { allowCreate: state.area === 'account' })
-  if (!outcome.ok) return fail(outcome.code)
+  const done = await finishSignIn(rt, request, deps, identity, { id, area: state.area, next: state.next, secure })
+  if (done.ok === false) return fail(done.code, done.detail)
+  return redirect(origin, done.to, [...clear, ...done.cookies])
+}
+
+type SignInDone = { ok: true; to: string; cookies: string[] } | { ok: false; code: string; detail?: string }
+
+/**
+ * Turns a proven identity into a session (or a pending second step): resolves the account by the
+ * rules in service.ts, logs in, and says where to go and which cookies to set. Shared by the
+ * redirect flow and Google One Tap, so both obey exactly the same policy.
+ */
+async function finishSignIn(
+  rt: SocialRuntime,
+  request: Request,
+  deps: PolicyDeps,
+  identity: Identity,
+  ctx: { id: ProviderId; area: FlowArea; next: string; secure: boolean },
+): Promise<SignInDone> {
+  const { id, area, next, secure } = ctx
+  const outcome: Outcome = await resolveSignIn(deps, identity, { allowCreate: area === 'account' })
+  if (!outcome.ok) return { ok: false, code: outcome.code }
 
   let result: { token?: string; pendingToken?: string }
   try {
     result = await rt.login(outcome.userId, request)
   } catch {
-    return fail('locked', 'login refused')
+    return { ok: false, code: 'locked', detail: 'login refused' }
   }
 
   if (outcome.linked) {
@@ -267,20 +303,95 @@ export async function handleCallback(request: Request, providerParam: string, rt
 
   const user = await deps.findUserByID(outcome.userId)
   const staff = Boolean(user && !isCustomerOnly(user.roles))
-  const target = state.area === 'admin' && !staff ? '/account' : state.next
+  const target = area === 'admin' && !staff ? '/account' : next
 
   if (result.pendingToken) {
     // Social sign-in never skips two-step. The code step finishes it.
     await rt.audit('social.login', request, { actorId: outcome.userId, detail: `${id}: password-equivalent step done, awaiting two-step code` })
     const pendingCookie = serialize(PENDING_COOKIE, result.pendingToken, { maxAge: PENDING_MAX_AGE_S, secure, path: '/' })
-    const to = staff || state.area === 'admin' ? '/admin/login?social=2fa' : `/account/sign-in?social=2fa&next=${encodeURIComponent(target)}`
-    return redirect(origin, to, [...clear, pendingCookie])
+    const to = staff || area === 'admin' ? '/admin/login?social=2fa' : `/account/sign-in?social=2fa&next=${encodeURIComponent(target)}`
+    return { ok: true, to, cookies: [pendingCookie] }
   }
-  if (!result.token) return fail('locked', 'no token')
+  if (!result.token) return { ok: false, code: 'locked', detail: 'no token' }
 
   await rt.audit('social.login', request, { actorId: outcome.userId, detail: `${id}: signed in` })
   const sessionCookie = serialize(rt.sessionCookie.name, result.token, { maxAge: rt.sessionCookie.maxAgeSeconds, secure, path: '/' })
-  return redirect(origin, target, [...clear, sessionCookie])
+  return { ok: true, to: target, cookies: [sessionCookie] }
+}
+
+// --- GET|POST /api/social/one-tap ------------------------------------
+
+const GOOGLE_JWKS = 'https://www.googleapis.com/oauth2/v3/certs'
+const jsonNoStore = (body: Record<string, unknown>, status = 200, cookies: string[] = []): Response => {
+  const headers = new Headers({ 'Cache-Control': NO_STORE })
+  for (const c of cookies) headers.append('Set-Cookie', c)
+  return Response.json(body, { status, headers })
+}
+
+/** One Tap is offered only when switched on and Google itself is fully set up for member sign-in. */
+const oneTapAvailable = (config: SocialConfig): boolean => config.googleOneTap && isUsable('google', config.providers.google)
+
+/**
+ * GET: hands the browser what Google's prompt needs (the public client ID and a fresh nonce) and
+ * remembers the nonce and a random `state` in the signed state cookie, so the credential Google
+ * returns can only be used by this browser, once, within ten minutes.
+ */
+export async function handleOneTapStart(request: Request, rt: SocialRuntime): Promise<Response> {
+  const config = await rt.readConfig()
+  if (!oneTapAvailable(config) || !rt.secret) return notFound()
+  if (await rt.limited(request)) return jsonNoStore({ ok: false, code: 'rate-limited' }, 429)
+  const origin = rt.origin(request)
+  const secure = origin.startsWith('https://')
+  const secrets = newFlowSecrets()
+  const next = safeNext(new URL(request.url).searchParams.get('next'), 'account', 'signin')
+  const state: FlowState = { p: 'google', s: secrets.s, v: '', n: secrets.n, mode: 'signin', area: 'account', next, uid: '', iat: rt.now() }
+  const cookie = serialize(STATE_COOKIE, await sealState(rt.secret, state), { maxAge: Math.floor(STATE_MAX_AGE_MS / 1000), secure, path: '/api/social' })
+  return jsonNoStore({ ok: true, clientId: config.providers.google.clientId, nonce: secrets.n, state: secrets.s }, 200, [cookie])
+}
+
+/** POST { credential, state }: checks Google's signed ID token and signs the person in under the usual rules. */
+export async function handleOneTapSignIn(request: Request, rt: SocialRuntime): Promise<Response> {
+  const config = await rt.readConfig()
+  if (!oneTapAvailable(config)) return notFound()
+  const origin = rt.origin(request)
+  const secure = origin.startsWith('https://')
+  // A cross-site page must not be able to post a credential: the request has to come from this site.
+  const from = request.headers.get('origin')
+  if (!from || from !== origin) return jsonNoStore({ ok: false, code: 'state' }, 403)
+
+  const body = (await request.json().catch((): null => null)) as { credential?: unknown; state?: unknown } | null
+  const credential = typeof body?.credential === 'string' ? body.credential : ''
+  const stateParam = typeof body?.state === 'string' ? body.state : ''
+  const clear = [clearState(secure)]
+  const cookieValue = readCookie(request, STATE_COOKIE)
+  const state = await openState(rt.secret, cookieValue ? decodeURIComponent(cookieValue) : null, stateParam, 'google', rt.now())
+  if (!state || state.mode !== 'signin' || state.area !== 'account' || !credential || credential.length > 4000) return jsonNoStore({ ok: false, code: 'state' }, 400, clear)
+  if (await rt.limited(request)) return jsonNoStore({ ok: false, code: 'rate-limited' }, 429, clear)
+
+  const cfg = config.providers.google
+  let identity: Identity
+  try {
+    const claims = await verifyIdToken(credential, {
+      jwksUrl: GOOGLE_JWKS,
+      audience: cfg.clientId,
+      nonce: state.n,
+      issuerOk: (iss) => iss === 'https://accounts.google.com' || iss === 'accounts.google.com',
+      fetchImpl: rt.fetchImpl,
+      now: rt.now(),
+    })
+    identity = identityFromClaims('google', claims)
+  } catch (error) {
+    const reason = error instanceof TokenError ? `token-${error.reason}` : 'token'
+    await rt.audit('social.refused', request, { detail: `google one-tap: ${reason}` })
+    return jsonNoStore({ ok: false, code: 'provider' }, 400, clear)
+  }
+
+  const done = await finishSignIn(rt, request, rt.policy(config), identity, { id: 'google', area: 'account', next: state.next, secure })
+  if (done.ok === false) {
+    await rt.audit('social.refused', request, { detail: `google one-tap: ${done.detail ?? done.code}` })
+    return jsonNoStore({ ok: false, code: done.code }, 400, clear)
+  }
+  return jsonNoStore({ ok: true, redirect: done.to }, 200, [...clear, ...done.cookies])
 }
 
 // --- GET /api/social/pending ------------------------------------------------

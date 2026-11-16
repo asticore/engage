@@ -9,6 +9,8 @@ export const SOCIAL_MESSAGES: Record<string, string> = {
   state: 'That sign-in link expired or did not start here. Please try again.',
   unavailable: 'That sign-in method is not available right now.',
   provider: 'The sign-in provider could not be reached or did not accept the request. Please try again later.',
+  'bad-endpoint': 'The sign-in provider is set up with an address that is not allowed. Ask the site owner to check it.',
+  discovery: 'The sign-in provider could not be reached or did not answer properly. Please try again later.',
   'rate-limited': 'Too many attempts. Please wait a few minutes and try again.',
   'no-email': 'The provider did not share an email address, so we could not match or create an account.',
   'unverified-email':

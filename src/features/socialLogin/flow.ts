@@ -1,9 +1,10 @@
 import { appleClientSecret, TokenError, verifyIdToken, type Claims, type Fetcher } from './jwt'
-import { PROVIDERS, type ProviderConfig, type ProviderId } from './providers'
+import type { Endpoints } from './endpoints'
+import { PROVIDERS, scopesFor, usesIdToken, type ProviderConfig, type ProviderId } from './providers'
 import { b64urlEncode, sha256 } from './util'
 
 /**
- * OAuth 2.0 authorization code flow for the six providers: the authorize URL,
+ * OAuth 2.0 authorization code flow for every provider: the authorize URL,
  * the code exchange, and turning the answer into one normalised identity.
  */
 
@@ -44,23 +45,23 @@ export const pkceChallenge = async (verifier: string): Promise<string> => b64url
 export async function buildAuthorizeUrl(
   id: ProviderId,
   cfg: ProviderConfig,
-  args: { redirectUri: string; state: string; nonce: string; verifier: string },
+  args: { redirectUri: string; state: string; nonce: string; verifier: string; endpoints: Endpoints },
 ): Promise<string> {
   const def = PROVIDERS[id]
   const params = new URLSearchParams({
-    client_id: cfg.clientId,
+    [def.clientIdParam ?? 'client_id']: cfg.clientId,
     redirect_uri: args.redirectUri,
     response_type: 'code',
-    scope: def.scopes.join(' '),
+    scope: scopesFor(id, cfg).join(def.scopeSeparator ?? ' '),
     state: args.state,
     ...def.authParams,
   })
-  if (def.oidc) params.set('nonce', args.nonce)
+  if (usesIdToken(id, cfg)) params.set('nonce', args.nonce)
   if (def.pkce && args.verifier) {
     params.set('code_challenge', await pkceChallenge(args.verifier))
     params.set('code_challenge_method', 'S256')
   }
-  return `${def.authUrl(cfg)}?${params.toString()}`
+  return `${args.endpoints.authUrl}${args.endpoints.authUrl.includes('?') ? '&' : '?'}${params.toString()}`
 }
 
 const asRecord = (value: unknown): Record<string, unknown> =>
@@ -72,15 +73,16 @@ const isTrue = (value: unknown): boolean => value === true || value === 'true'
 export async function exchangeForIdentity(
   id: ProviderId,
   cfg: ProviderConfig,
-  args: { code: string; redirectUri: string; verifier: string; nonce: string; fetchImpl: Fetcher; now?: number },
+  args: { code: string; redirectUri: string; verifier: string; nonce: string; fetchImpl: Fetcher; endpoints: Endpoints; now?: number },
 ): Promise<Identity> {
   const def = PROVIDERS[id]
   const body = new URLSearchParams({
     grant_type: 'authorization_code',
     code: args.code,
     redirect_uri: args.redirectUri,
-    client_id: cfg.clientId,
+    [def.clientIdParam ?? 'client_id']: cfg.clientId,
   })
+  const headers: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' }
   if (def.pkce && args.verifier) body.set('code_verifier', args.verifier)
   if (id === 'apple') {
     try {
@@ -91,48 +93,53 @@ export async function exchangeForIdentity(
     } catch {
       throw new FlowError('bad-credentials')
     }
+  } else if (def.clientAuth === 'basic') {
+    // X wants the id and secret as HTTP Basic credentials (RFC 6749 section 2.3.1), form-encoded first.
+    headers.Authorization = `Basic ${btoa(`${encodeURIComponent(cfg.clientId)}:${encodeURIComponent(cfg.clientSecret)}`)}`
   } else {
     body.set('client_secret', cfg.clientSecret)
   }
 
   let tokenBody: Record<string, unknown>
   try {
-    const response = await timed(args.fetchImpl, def.tokenUrl(cfg), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-      body: body.toString(),
-    })
+    const response = await timed(args.fetchImpl, args.endpoints.tokenUrl, { method: 'POST', headers, body: body.toString() })
     tokenBody = asRecord(await response.json().catch((): null => null))
-    if (!response.ok || tokenBody.error) throw new FlowError('exchange')
+    // Slack answers 200 with {"ok": false}.
+    if (!response.ok || tokenBody.error || tokenBody.ok === false) throw new FlowError('exchange')
   } catch (error) {
     if (error instanceof FlowError) throw error
     throw new FlowError('network')
   }
 
-  if (def.oidc) {
-    const idToken = tokenBody.id_token
-    if (typeof idToken !== 'string') throw new FlowError('no-id-token')
+  if (usesIdToken(id, cfg) && typeof tokenBody.id_token === 'string') {
+    const jwksUrl = def.oidc?.jwksUrl ?? args.endpoints.jwksUrl
+    if (!jwksUrl) throw new FlowError('no-jwks')
     let claims: Claims
     try {
-      claims = await verifyIdToken(idToken, {
-        jwksUrl: def.oidc.jwksUrl,
+      claims = await verifyIdToken(tokenBody.id_token, {
+        jwksUrl,
         audience: cfg.clientId,
         nonce: args.nonce,
-        issuerOk: (iss, c) => def.oidc!.issuerOk(iss, c, cfg),
+        issuerOk: (iss, c) => (def.oidc ? def.oidc.issuerOk(iss, c, cfg) : Boolean(args.endpoints.issuer) && iss === args.endpoints.issuer),
+        subjectClaim: id === 'oidc' ? cfg.subjectClaim.trim() || undefined : undefined,
         fetchImpl: args.fetchImpl,
         now: args.now,
       })
     } catch (error) {
       throw new FlowError(error instanceof TokenError ? `token-${error.reason}` : 'token')
     }
-    return identityFromClaims(id, claims)
+    return identityFromClaims(id, claims, cfg)
   }
+  if (def.oidc) throw new FlowError('no-id-token')
 
   const accessToken = tokenBody.access_token
   if (typeof accessToken !== 'string' || !accessToken) throw new FlowError('no-access-token')
   try {
     if (id === 'github') return await githubIdentity(accessToken, args.fetchImpl)
     if (id === 'discord') return await discordIdentity(accessToken, args.fetchImpl)
+    if (id === 'x') return await xIdentity(accessToken, args.fetchImpl)
+    if (id === 'tiktok') return await tiktokIdentity(accessToken, typeof tokenBody.open_id === 'string' ? tokenBody.open_id : '', args.fetchImpl)
+    if (id === 'oidc') return await oidcUserinfoIdentity(cfg, accessToken, args.endpoints, args.fetchImpl)
     return await facebookIdentity(accessToken, args.fetchImpl)
   } catch (error) {
     if (error instanceof FlowError) throw error
@@ -144,14 +151,18 @@ const normEmail = (value: unknown): string | null =>
   typeof value === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) ? value.trim().toLowerCase() : null
 
 /** Maps verified id_token claims to an identity. Exported for the tests. */
-export function identityFromClaims(id: ProviderId, claims: Claims): Identity {
-  const email = normEmail(claims.email)
-  let verified = isTrue(claims.email_verified)
+export function identityFromClaims(id: ProviderId, claims: Claims, cfg?: ProviderConfig): Identity {
+  const custom = id === 'oidc' && cfg
+  const email = normEmail(claims[(custom && cfg.emailClaim.trim()) || 'email'])
+  let verified = isTrue(claims[(custom && cfg.verifiedClaim.trim()) || 'email_verified'])
   if (id === 'microsoft') {
     // Microsoft id tokens do not carry email_verified. `xms_edov` says the domain owner verified it; the personal-account tenant verifies addresses itself.
     verified = isTrue(claims.xms_edov) || claims.xms_edov === 1 || claims.tid === '9188040d-6c67-4c5b-b112-36a304b66dad' || verified
   }
-  return { provider: id, providerUserId: String(claims.sub), email, emailVerified: Boolean(email) && verified }
+  if (custom && cfg.trustEmail) verified = true
+  const subject = claims[(custom && cfg.subjectClaim.trim()) || 'sub']
+  if ((typeof subject !== 'string' && typeof subject !== 'number') || String(subject) === '') throw new FlowError('no-subject')
+  return { provider: id, providerUserId: String(subject), email, emailVerified: Boolean(email) && verified }
 }
 
 async function githubIdentity(token: string, fetchImpl: Fetcher): Promise<Identity> {
@@ -192,4 +203,34 @@ async function facebookIdentity(token: string, fetchImpl: Fetcher): Promise<Iden
   if (!res.ok || typeof user.id !== 'string') throw new FlowError('no-profile')
   const email = normEmail(user.email)
   return { provider: 'facebook', providerUserId: user.id, email, emailVerified: FACEBOOK_EMAIL_TRUSTED && Boolean(email) }
+}
+
+async function xIdentity(token: string, fetchImpl: Fetcher): Promise<Identity> {
+  const res = await timed(fetchImpl, 'https://api.x.com/2/users/me?user.fields=confirmed_email', { headers: { Authorization: `Bearer ${token}` } })
+  const body = asRecord(await res.json().catch((): null => null))
+  const user = asRecord(body.data)
+  if (!res.ok || typeof user.id !== 'string') throw new FlowError('no-profile')
+  // `confirmed_email` is only present when X has confirmed the address with its owner.
+  const email = normEmail(user.confirmed_email)
+  return { provider: 'x', providerUserId: user.id, email, emailVerified: Boolean(email) }
+}
+
+async function tiktokIdentity(token: string, openId: string, fetchImpl: Fetcher): Promise<Identity> {
+  let id = openId
+  if (!id) {
+    const res = await timed(fetchImpl, 'https://open.tiktokapis.com/v2/user/info/?fields=open_id', { headers: { Authorization: `Bearer ${token}` } })
+    const user = asRecord(asRecord(asRecord(await res.json().catch((): null => null)).data).user)
+    if (!res.ok || typeof user.open_id !== 'string') throw new FlowError('no-profile')
+    id = user.open_id
+  }
+  // TikTok never shares an email address: an account can only be signed into once it has been connected.
+  return { provider: 'tiktok', providerUserId: id, email: null, emailVerified: false }
+}
+
+async function oidcUserinfoIdentity(cfg: ProviderConfig, token: string, endpoints: Endpoints, fetchImpl: Fetcher): Promise<Identity> {
+  if (!endpoints.userinfoUrl) throw new FlowError('no-id-token')
+  const res = await timed(fetchImpl, endpoints.userinfoUrl, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
+  const claims = asRecord(await res.json().catch((): null => null))
+  if (!res.ok) throw new FlowError('no-profile')
+  return identityFromClaims('oidc', claims, cfg)
 }
