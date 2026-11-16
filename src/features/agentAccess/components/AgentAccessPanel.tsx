@@ -19,7 +19,8 @@ type GrantView = {
   keyRevoked: boolean
   usedToday: { reads: number; writes: number }
 }
-type Loaded = { apiKeysOn: boolean; maxLifetimeDays: number; collections: Array<{ slug: string; label: string }>; grants: GrantView[]; actions: AgentAction[] }
+type Pending = { userCode: string; clientName: string; scope: 'read' | 'write'; expiresAt: number }
+type Loaded = { pendingDevices: Pending[]; apiKeysOn: boolean; maxLifetimeDays: number; collections: Array<{ slug: string; label: string }>; grants: GrantView[]; actions: AgentAction[] }
 
 const when = (iso: string | null): string => (iso ? iso.replace('T', ' ').slice(0, 16) : 'never')
 
@@ -32,6 +33,8 @@ export const AgentAccessPanel: React.FC = () => {
   const [mode, setMode] = useState<'read' | 'write'>('read')
   const [form, setForm] = useState({ label: '', tool: '', dailyWriteCap: '200', dailyReadCap: '5000', expiresInDays: '30', password: '' })
   const [grantFilter, setGrantFilter] = useState(0)
+  const [deviceCode, setDeviceCode] = useState('')
+  const [devicePassword, setDevicePassword] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/admin-agents${grantFilter ? `?grant=${grantFilter}` : ''}`)
@@ -42,6 +45,10 @@ export const AgentAccessPanel: React.FC = () => {
   useEffect(() => {
     void load()
   }, [load])
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('code')
+    if (q) setDeviceCode(q)
+  }, [])
 
   const post = async (body: Record<string, unknown>, ok = ''): Promise<{ ok: boolean; key?: string }> => {
     const res = await fetch('/api/admin-agents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -78,6 +85,41 @@ export const AgentAccessPanel: React.FC = () => {
     <div>
       {message ? <p role="status">{message}</p> : null}
       {!data.apiKeysOn ? <p>API keys are switched off. Switch them on in Security settings before you make an agent token.</p> : null}
+
+      <h2>Approve a device code</h2>
+      <p>When an AI tool or command line asks to connect, it shows a code like BCDF-GHJK. Approve it here and the tool receives its own token. It gets the access it asked for (read only unless it asked to write) with the default caps.</p>
+      {data.pendingDevices.map((d) => (
+        <p key={d.userCode}>
+          <strong>{d.userCode}</strong> from {d.clientName}, wants {d.scope === 'write' ? 'read and write' : 'read only'}.{' '}
+          <button type="button" onClick={() => setDeviceCode(d.userCode)}>
+            Use this code
+          </button>
+        </p>
+      ))}
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault()
+          if (await post({ action: 'device-approve', userCode: deviceCode, password: devicePassword, dailyWriteCap: form.dailyWriteCap, dailyReadCap: form.dailyReadCap, expiresInDays: form.expiresInDays ? Number(form.expiresInDays) : undefined }, 'Approved. The tool collects its token in a moment.')) {
+            setDeviceCode('')
+            setDevicePassword('')
+          }
+        }}
+      >
+        <label style={{ display: 'block', marginBottom: 8 }}>
+          Code
+          <input value={deviceCode} onChange={(e) => setDeviceCode(e.target.value)} style={{ display: 'block' }} autoComplete="off" />
+        </label>
+        <label style={{ display: 'block', marginBottom: 8 }}>
+          Your password, to confirm
+          <input type="password" value={devicePassword} onChange={(e) => setDevicePassword(e.target.value)} style={{ display: 'block' }} />
+        </label>
+        <button type="submit" disabled={!data.apiKeysOn}>
+          Approve
+        </button>{' '}
+        <button type="button" onClick={() => void post({ action: 'device-deny', userCode: deviceCode }, 'Denied.')}>
+          Deny
+        </button>
+      </form>
 
       <h2>New agent token</h2>
       <form onSubmit={create}>
