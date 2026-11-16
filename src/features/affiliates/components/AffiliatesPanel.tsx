@@ -136,6 +136,15 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
             <input type="checkbox" checked={settings.firstOrderOnly} onChange={(e) => set({ firstOrderOnly: e.target.checked })} /> Commission on a buyer&apos;s first order only
           </label>
           <label>
+            <input type="checkbox" checked={settings.recurring} onChange={(e) => set({ recurring: e.target.checked })} /> Commission on subscription renewals (to the affiliate who earned the buyer&apos;s first order)
+          </label>
+          {settings.recurring && (
+            <label>
+              Stop after (months, 0 for no limit){' '}
+              <input type="number" min={0} max={120} value={settings.recurringMonths} onChange={(e) => set({ recurringMonths: Number(e.target.value) || 0 })} style={{ width: '5rem' }} />
+            </label>
+          )}
+          <label>
             <input type="checkbox" checked={settings.emailNotifications} onChange={(e) => set({ emailNotifications: e.target.checked })} /> Email affiliates when approved, when they earn and when paid
           </label>
           <label>
