@@ -2,6 +2,7 @@ import React from 'react'
 
 import { getBlockContext } from '@/lib/blockContext'
 
+import { CartExtrasPart, CartLinesPart, CartSummaryPart, CartTotalsPart } from '@/components/CartParts'
 import { AddToCartControl, CartLinkControl } from './Wave66Elements'
 import './wave66.css'
 
@@ -44,8 +45,25 @@ export async function ProductRatingElement(props: P): Promise<React.ReactElement
   )
 }
 
+export async function CartLinesElement(): Promise<React.ReactElement> {
+  return <CartLinesPart />
+}
+export async function CartTotalsElement(): Promise<React.ReactElement> {
+  return <CartTotalsPart />
+}
+export async function CartExtrasElement(): Promise<React.ReactElement> {
+  return <CartExtrasPart />
+}
+export async function CartSummaryElement(): Promise<React.ReactElement> {
+  return <CartSummaryPart />
+}
+
 export const WAVE66_COMPONENTS: Record<string, React.ComponentType<P>> = {
   'add-to-cart': AddToCartElement as never,
   'cart-link': CartLinkElement as never,
+  'cart-lines': CartLinesElement as never,
+  'cart-totals': CartTotalsElement as never,
+  'cart-extras': CartExtrasElement as never,
+  'cart-summary': CartSummaryElement as never,
   'product-rating': ProductRatingElement as never,
 }

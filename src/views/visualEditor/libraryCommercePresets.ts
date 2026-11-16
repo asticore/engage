@@ -50,6 +50,18 @@ const PRESETS: Preset[] = [
     }),
   },
   {
+    id: 'cart-layout',
+    label: 'Cart layout',
+    description: 'Cart lines on the left, coupon and estimate, cross-sells and the checkout summary on the right.',
+    build: () => ({
+      blockType: 'section',
+      columns: [
+        { width: 8 as const, blocks: [el('cart-lines'), el('cart-extras')] },
+        { width: 4 as const, blocks: [el('cart-totals'), el('cart-summary')] },
+      ],
+    }),
+  },
+  {
     id: 'mini-cart-button',
     label: 'Mini cart button',
     description: 'A button that opens the cart page.',
