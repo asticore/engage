@@ -21,16 +21,22 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
   const [code, setCode] = useState('')
   const [message, setMessage] = useState('')
   const [configured, setConfigured] = useState(true)
+  const [productRates, setProductRates] = useState<Array<{ productId: number; ratePct: number; title: string }>>([])
+  const [products, setProducts] = useState<Array<{ id: number; title: string }>>([])
+  const [rateProduct, setRateProduct] = useState('')
+  const [rateValue, setRateValue] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-affiliates')
-    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; error?: string } | null
+    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; error?: string } | null
     if (!res.ok) return setMessage(data?.error ?? 'Could not load affiliates.')
     setRows(data?.affiliates ?? [])
     setSettings(data?.settings ?? null)
     setCommissions(data?.commissions ?? [])
     setPayouts(data?.payouts ?? [])
     setConfigured(data?.configured !== false)
+    setProductRates(data?.productRates ?? [])
+    setProducts(data?.products ?? [])
   }, [])
   useEffect(() => {
     void load()
@@ -129,6 +135,9 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
           <label>
             <input type="checkbox" checked={settings.autoApprove} onChange={(e) => set({ autoApprove: e.target.checked })} /> Approve new sign-ups automatically
           </label>
+          <label style={{ flexBasis: '100%' }}>Sales tiers (optional): one per line as &quot;sales in dollars, rate percent&quot;, for example 1000, 12. An affiliate whose commissioned sales reach the amount earns that rate instead of the program rate.<br />
+            <textarea rows={3} style={{ width: '100%' }} maxLength={1000} value={settings.tiers} onChange={(e) => set({ tiers: e.target.value })} />
+          </label>
           <label style={{ flexBasis: '100%' }}>Program terms shown on the sign-up page (leave blank for the standard text)<br />
             <textarea rows={3} style={{ width: '100%' }} maxLength={4000} value={settings.terms} onChange={(e) => set({ terms: e.target.value })} />
           </label>
@@ -153,6 +162,37 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
         <label>Code (optional)<br /><input value={code} onChange={(e) => setCode(e.target.value)} maxLength={32} /></label>
         <button type="submit">Add affiliate</button>
       </form>
+
+      <section aria-labelledby="aff-prod-rates">
+        <h2 id="aff-prod-rates">Product rates</h2>
+        <p>A product with its own rate earns that rate for every affiliate, instead of the program or tier rate. An affiliate&apos;s own rate (Rate button below) still wins.</p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            if (await post({ action: 'productRate', productId: Number(rateProduct), ratePct: rateValue.trim() === '' ? null : Number(rateValue) }, 'Product rate saved.')) {
+              setRateProduct('')
+              setRateValue('')
+            }
+          }}
+          style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'end' }}
+        >
+          <label>Product<br />
+            <select value={rateProduct} onChange={(e) => setRateProduct(e.target.value)} required>
+              <option value="">Choose a product</option>
+              {products.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+            </select>
+          </label>
+          <label>Rate %<br /><input type="number" min={0} max={100} step="0.5" value={rateValue} onChange={(e) => setRateValue(e.target.value)} required /></label>
+          <button type="submit">Save product rate</button>
+        </form>
+        {productRates.length > 0 && (
+          <ul>
+            {productRates.map((r) => (
+              <li key={r.productId}>{r.title}: {r.ratePct}% <button type="button" onClick={() => void post({ action: 'productRate', productId: r.productId, ratePct: null }, 'Product rate removed.')}>Remove</button></li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {rows.length === 0 ? (
         <p>No affiliates yet. Add one, then share their link.</p>
