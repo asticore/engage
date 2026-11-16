@@ -1,5 +1,6 @@
 import { APPLIES_TO, FIELD_TYPES, type MetaField, type MetaFieldInput } from './metaFields'
 import { EMPTY_RIGHTS, STATUSES, type AssetStatus, type Rights } from './rights'
+import type { Version } from './versions'
 
 type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T[] }>; run: () => Promise<{ meta?: { last_row_id?: number; changes?: number } }> } }
 export type D1 = { prepare: (sql: string) => Stmt }
@@ -219,4 +220,34 @@ export async function logActivity(d1: D1, mediaId: number, action: string, detai
 }
 export async function listActivity(d1: D1, mediaId: number, limit = 50): Promise<Array<{ action: string; detail: string; userId: number | null; createdAt: string }>> {
   return (await all(d1, 'SELECT action, detail, user_id, created_at FROM eg_media_activity WHERE media_id = ?1 ORDER BY id DESC LIMIT ?2', mediaId, limit)).map((r) => ({ action: str(r.action), detail: str(r.detail), userId: r.user_id === null ? null : Number(r.user_id), createdAt: str(r.created_at) }))
+}
+
+// Versions
+
+const toVersion = (r: Row): Version => ({
+  id: Number(r.id), mediaId: Number(r.media_id), r2Key: str(r.r2_key), filename: str(r.filename), mimeType: str(r.mime_type), filesize: Number(r.filesize),
+  width: r.width === null ? null : Number(r.width), height: r.height === null ? null : Number(r.height), contentHash: str(r.content_hash), note: str(r.note), createdAt: str(r.created_at),
+})
+export async function listVersions(d1: D1, mediaId: number): Promise<Version[]> {
+  return (await all(d1, 'SELECT * FROM eg_media_versions WHERE media_id = ?1 ORDER BY created_at DESC, id DESC', mediaId)).map(toVersion)
+}
+export async function getVersion(d1: D1, mediaId: number, versionId: number): Promise<Version | null> {
+  const r = (await all(d1, 'SELECT * FROM eg_media_versions WHERE media_id = ?1 AND id = ?2', mediaId, versionId))[0]
+  return r ? toVersion(r) : null
+}
+export async function addVersion(d1: D1, v: Omit<Version, 'id'> & { userId: number | null }): Promise<number> {
+  const res = await run(d1, 'INSERT INTO eg_media_versions (media_id, r2_key, filename, mime_type, filesize, width, height, content_hash, note, user_id, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)', v.mediaId, v.r2Key, v.filename, v.mimeType, v.filesize, v.width, v.height, v.contentHash, v.note, v.userId, v.createdAt)
+  return Number(res.meta?.last_row_id ?? 0)
+}
+export async function deleteVersionRow(d1: D1, versionId: number): Promise<void> {
+  await run(d1, 'DELETE FROM eg_media_versions WHERE id = ?1', versionId)
+}
+
+/** Removes everything the asset manager keeps about a deleted file and returns the stored version keys to delete from storage. */
+export async function purgeAsset(d1: D1, mediaId: number): Promise<string[]> {
+  const keys = (await listVersions(d1, mediaId)).map((v) => v.r2Key)
+  await run(d1, 'DELETE FROM eg_media_versions WHERE media_id = ?1', mediaId)
+  await run(d1, 'DELETE FROM eg_media_assets WHERE media_id = ?1', mediaId)
+  await run(d1, 'DELETE FROM eg_media_collection_items WHERE media_id = ?1', mediaId)
+  return keys
 }

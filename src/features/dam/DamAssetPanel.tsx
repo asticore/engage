@@ -12,6 +12,8 @@ type Detail = {
   collections: number[]
   allCollections: Array<{ id: number; name: string }>
   activity: Array<{ action: string; detail: string; createdAt: string }>
+  mediaUrl: string | null
+  versions: Array<{ id: number; filesize: number; mimeType: string; note: string; createdAt: string; width: number | null; height: number | null }>
 }
 
 const input = 'rounded-[4px] border border-[var(--theme-elevation-200)] bg-transparent px-[8px] py-[5px] text-[13px]'
@@ -27,6 +29,8 @@ export function DamAssetPanel({ id }: { id: number }) {
   const [rights, setRights] = useState<Record<string, string>>({})
   const [meta, setMeta] = useState<Record<string, string>>({})
   const [message, setMessage] = useState('')
+  const [compare, setCompare] = useState(0)
+  const [withId, setWithId] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/admin-media-dam?id=${id}`)
@@ -42,12 +46,13 @@ export function DamAssetPanel({ id }: { id: number }) {
     void load()
   }, [load])
 
-  const post = async (payload: Record<string, unknown>, ok: string): Promise<void> => {
+  const post = async (payload: Record<string, unknown>, ok: string): Promise<boolean> => {
     setMessage('')
     const res = await fetch('/api/admin-media-dam', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...payload }) })
     const body = (await res.json().catch(() => ({}))) as { error?: string }
     setMessage(res.ok ? ok : (body.error ?? 'That did not work.'))
     if (res.ok) await load()
+    return res.ok
   }
 
   if (off || !detail) return null
@@ -124,6 +129,33 @@ export function DamAssetPanel({ id }: { id: number }) {
           {exif.gps ? <li>GPS: {exif.gps.lat}, {exif.gps.lon}</li> : null}
         </ul>
       )}
+      <strong className="text-[13px]">Versions</strong>
+      {detail.versions.length === 0 ? <p className="m-0 text-[12px]">No earlier versions. Replacing the file keeps the old one here.</p> : (
+        <ul className="m-0 list-none p-0 text-[12px]">
+          {detail.versions.map((v) => (
+            <li key={v.id} className="mb-[6px] flex flex-wrap items-center gap-[8px]">
+              <span>{v.createdAt.slice(0, 16).replace('T', ' ')}, {Math.round(v.filesize / 1024)} KB{v.width && v.height ? `, ${v.width} x ${v.height}` : ''}{v.note ? `, ${v.note}` : ''}</span>
+              <button type="button" className={btn} onClick={() => setCompare(compare === v.id ? 0 : v.id)}>{compare === v.id ? 'Hide' : 'Compare'}</button>
+              <button type="button" className={btn} onClick={() => { if (window.confirm('Put this version back as the current file? The current file is kept as a version.')) void post({ action: 'restoreVersion', versionId: v.id }, 'Version restored. Reload to see it.') }}>Restore</button>
+              <button type="button" className={btn} onClick={() => { if (window.confirm('Delete this stored version?')) void post({ action: 'deleteVersion', versionId: v.id }, 'Version deleted.') }}>Delete</button>
+              {compare === v.id && v.mimeType.startsWith('image/') ? (
+                <span className="flex w-full gap-[12px]">
+                  <span>Version<br /><img alt="Earlier version" style={{ maxWidth: 240, maxHeight: 240 }} src={`/api/admin-media-dam?id=${id}&versionFile=${v.id}`} /></span>
+                  <span>Current<br /><img alt="Current file" style={{ maxWidth: 240, maxHeight: 240 }} src={detail.mediaUrl ?? ''} /></span>
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <strong className="text-[13px]">Delete or replace</strong>
+      <div className="flex flex-wrap items-center gap-[8px] text-[12px]">
+        <label className="flex items-center gap-[4px]">Use file number<input className={input} style={{ width: 90 }} inputMode="numeric" value={withId} onChange={(e) => setWithId(e.target.value)} /> instead, everywhere this file is used</label>
+        <button type="button" className={btn} onClick={() => { if (window.confirm(`Point every page, post and setting that uses this file at file ${withId}?`)) void post({ action: 'replaceEverywhere', withId: Number(withId) }, 'Every place now uses the other file.') }}>Replace everywhere</button>
+        <button type="button" className={btn} onClick={() => { if (window.confirm('Delete this file? If it is in use, the places that use it will lose it.')) void post({ action: 'deleteMedia', force: true }, 'File deleted.').then((ok) => { if (ok) window.location.assign('/admin/media') }) }}>Delete anyway</button>
+      </div>
+
       {detail.activity.length > 0 ? (
         <details>
           <summary className="cursor-pointer text-[12px]">Activity</summary>

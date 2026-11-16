@@ -122,6 +122,11 @@ export function editUrlFor(target: UsageTarget, id: string | number | null, admi
 /** In-memory reports for the default targets, keyed by admin route and media id. Per process only; a cold start simply rescans. */
 const reportCache = new Map<string, { at: number; report: UsageReport }>()
 
+/** Forgets finished reports, after something changed where files are used (a replace everywhere or a delete). */
+export function clearUsageCache(): void {
+  reportCache.clear()
+}
+
 /**
  * Runs the full scan for one media id. Never throws for a single failed target:
  * that target is listed under `unchecked` and the rest still report. A report
