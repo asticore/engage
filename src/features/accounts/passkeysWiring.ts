@@ -1,4 +1,5 @@
 import type { Engine } from '@/engine'
+import { methodAllowed, readMatrix } from '@/features/security/authMatrix'
 import { resolveD1Binding } from '@/cms/db/connect'
 import { DEFAULT_SECURITY_SETTINGS, audit, getSecuritySettings } from '@/features/security'
 import { defaultTwoFactorStore } from '@/features/security/twoFactorStore'
@@ -95,6 +96,6 @@ const siteName = async (engine: Engine): Promise<string> => {
 /** Whether a sign-in screen should show the passkey button. Off unless the owner switched passkeys on for that area. */
 export const passkeySignInAvailable = async (engine: Engine, area: 'account' | 'admin'): Promise<boolean> => {
   const settings = await getSecuritySettings(engine as never).catch((): typeof DEFAULT_SECURITY_SETTINGS => DEFAULT_SECURITY_SETTINGS)
-  const allowed = settings.passkeys.enabled && (area === 'account' || settings.passkeys.allowAdmins)
+  const allowed = settings.passkeys.enabled && (area === 'account' || settings.passkeys.allowAdmins) && methodAllowed(await readMatrix(), area, 'passkeys')
   return allowed && Boolean(process.env.ENGAGE_SECRET)
 }

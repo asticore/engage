@@ -2,6 +2,8 @@ import type { Engine } from '@/engine'
 import { DEFAULT_SECURITY_SETTINGS, audit, getSecuritySettings } from '@/features/security'
 import { defaultLoginTokenStore, type PasswordlessDeps } from '@/features/passwordless'
 
+import { methodAllowed, readMatrix } from '@/features/security/authMatrix'
+
 import { verificationRequired } from './auth'
 import { sendLoginCodeEmail, sendMagicLinkEmail } from './emails'
 
@@ -45,8 +47,9 @@ export const passwordlessOptions = async (
 ): Promise<{ magicLink: boolean; emailCode: boolean }> => {
   const settings = await getSecuritySettings(engine as never).catch(() => DEFAULT_SECURITY_SETTINGS)
   const allowed = area === 'account' || settings.passwordless.allowForAdmins
+  const matrix = await readMatrix()
   return {
-    magicLink: allowed && settings.passwordless.magicLinkEnabled,
-    emailCode: allowed && settings.passwordless.emailCodeEnabled,
+    magicLink: allowed && settings.passwordless.magicLinkEnabled && methodAllowed(matrix, area, 'magic-link'),
+    emailCode: allowed && settings.passwordless.emailCodeEnabled && methodAllowed(matrix, area, 'email-code'),
   }
 }

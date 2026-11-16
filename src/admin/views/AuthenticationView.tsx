@@ -6,7 +6,9 @@ import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot, getSecuritySettings } from '@/features/security/settings'
 import { readSocialConfig } from '@/features/socialLogin/settings'
 
-import { AuthMethodToggle } from './AuthMethodToggle'
+import { MATRIX_METHODS, methodAllowed, readMatrix } from '@/features/security/authMatrix'
+
+import { AreaToggle, AuthMethodToggle } from './AuthMethodToggle'
 
 const BADGE = { on: 'On', off: 'Off', 'needs-setup': 'Needs setup' } as const
 
@@ -18,6 +20,8 @@ export async function AuthenticationView() {
   if (!context.isAdmin) return <p>Only an admin can see the authentication overview.</p>
   const [settings, social] = await Promise.all([getSecuritySettings(context.engine as never), readSocialConfig(context.engine as never)])
   const rows = describeAuthMethods(settings, social)
+  const matrix = await readMatrix()
+  const matrixRows = rows.filter((row) => (MATRIX_METHODS as readonly string[]).includes(row.id))
   return (
     <div className="settings-page">
       <div className="settings-page__header">
@@ -42,6 +46,26 @@ export async function AuthenticationView() {
               <td>
                 <a href={adminHref(row.href, root)}>Open</a>
               </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <h2>Who can sign in with what</h2>
+      <p>Staff sign in at the admin sign-in, members and customers at the account sign-in. A blocked method disappears from that form and is refused by the server. Password is always available. Two-step codes are asked for after a social sign-in too.</p>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Method</th>
+            <th scope="col">Admin sign-in</th>
+            <th scope="col">Account sign-in</th>
+          </tr>
+        </thead>
+        <tbody>
+          {matrixRows.map((row) => (
+            <tr key={row.id}>
+              <th scope="row">{row.label}</th>
+              <td><AreaToggle area="admin" method={row.id} label={row.label} allowed={methodAllowed(matrix, 'admin', row.id)} /></td>
+              <td><AreaToggle area="account" method={row.id} label={row.label} allowed={methodAllowed(matrix, 'account', row.id)} /></td>
             </tr>
           ))}
         </tbody>

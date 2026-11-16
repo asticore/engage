@@ -8,6 +8,7 @@ import { missingCredentials, PROVIDER_IDS, type ProviderId } from '@/features/so
 import { readSocialConfig } from '@/features/socialLogin/settings'
 
 import { audit, auditContext } from './auditLog'
+import { readMatrix, setBlocked, writeMatrix, type MatrixArea } from './authMatrix'
 import { togglePatch } from './authMethods'
 import { getSecuritySettings } from './settings'
 
@@ -41,6 +42,25 @@ export async function toggleAuthMethodAction(id: string, on: boolean): Promise<T
       // Never fail the switch over a log line.
     }
     return { ok: true, message: `${on ? 'Switched on' : 'Switched off'}.` }
+  } catch {
+    return { ok: false, message: 'That could not be saved just now. Try again.' }
+  }
+}
+
+/** Admin only: allow or block one method for one sign-in place (admin sign-in or account sign-in). */
+export async function setMethodAreaAction(area: string, method: string, allowed: boolean): Promise<ToggleResult> {
+  const incoming = await headers()
+  const refused = refuseWhileImpersonating(incoming)
+  if (refused) return { ok: false, message: refused }
+  const context = await getAdminContext()
+  if (!context.user || !context.isAdmin) return { ok: false, message: 'Only an admin can change sign-in methods.' }
+  if (area !== 'admin' && area !== 'account') return { ok: false, message: 'Unknown sign-in place.' }
+  try {
+    const before = await readMatrix()
+    const after = setBlocked(before, area as MatrixArea, method, !allowed)
+    if (after === before) return { ok: false, message: 'That method cannot be changed here.' }
+    await writeMatrix(after)
+    return { ok: true, message: allowed ? 'Allowed.' : 'Blocked.' }
   } catch {
     return { ok: false, message: 'That could not be saved just now. Try again.' }
   }

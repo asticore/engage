@@ -124,6 +124,7 @@ export async function handleStart(request: Request, providerParam: string, rt: S
     if (!hasCredentials(id, cfg)) return redirect(origin, failurePath(stateStub, 'unavailable'))
     if (mode === 'link' && !user) return redirect(origin, area === 'admin' ? '/admin/login' : '/account/sign-in')
     if (area === 'admin' && !config.allowAdminSocialLogin) return notFound()
+    if ((config.blocked?.[area] ?? []).includes(id)) return notFound()
   }
 
   if (await rt.limited(request)) return redirect(origin, failurePath(stateStub, 'rate-limited'))
