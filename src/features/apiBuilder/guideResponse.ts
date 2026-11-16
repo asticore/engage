@@ -1,4 +1,5 @@
 import type { ApiEndpoint } from './core'
+import { buildAuthOpenApi } from './authOpenApi'
 import { buildHtmlGuide, buildMarkdownGuide, buildOpenApi, buildPostman, toYaml, type GuideOptions } from './devguide'
 import { buildPdf, markdownToPdfLines } from './pdf'
 
@@ -8,7 +9,7 @@ import { buildPdf, markdownToPdfLines } from './pdf'
  * is marked noindex, and so is every /api response (src/features/security/noindex.ts).
  */
 
-export const GUIDE_FORMATS = ['openapi.json', 'openapi.yaml', 'guide.md', 'guide.html', 'guide.pdf', 'postman.json'] as const
+export const GUIDE_FORMATS = ['openapi.json', 'openapi.yaml', 'guide.md', 'guide.html', 'guide.pdf', 'postman.json', 'auth-openapi.json', 'auth-openapi.yaml'] as const
 export type GuideFormat = (typeof GUIDE_FORMATS)[number]
 
 export const isGuideFormat = (value: string | null): value is GuideFormat => value !== null && (GUIDE_FORMATS as readonly string[]).includes(value)
@@ -20,6 +21,8 @@ const TYPES: Record<GuideFormat, string> = {
   'guide.html': 'text/html; charset=utf-8',
   'guide.pdf': 'application/pdf',
   'postman.json': 'application/json; charset=utf-8',
+  'auth-openapi.json': 'application/json; charset=utf-8',
+  'auth-openapi.yaml': 'application/yaml; charset=utf-8',
 }
 
 const FILE_NAMES: Record<GuideFormat, string> = {
@@ -29,12 +32,16 @@ const FILE_NAMES: Record<GuideFormat, string> = {
   'guide.html': 'api-guide.html',
   'guide.pdf': 'api-guide.pdf',
   'postman.json': 'postman-collection.json',
+  'auth-openapi.json': 'auth-openapi.json',
+  'auth-openapi.yaml': 'auth-openapi.yaml',
 }
 
 export function renderGuide(format: GuideFormat, endpoints: readonly ApiEndpoint[], options: GuideOptions, mode: 'download' | 'page'): Response {
   let body: string | Uint8Array<ArrayBuffer>
   if (format === 'openapi.json') body = JSON.stringify(buildOpenApi(endpoints, options), null, 2)
   else if (format === 'openapi.yaml') body = toYaml(buildOpenApi(endpoints, options)) + '\n'
+  else if (format === 'auth-openapi.json') body = JSON.stringify(buildAuthOpenApi(options), null, 2)
+  else if (format === 'auth-openapi.yaml') body = toYaml(buildAuthOpenApi(options)) + '\n'
   else if (format === 'guide.md') body = buildMarkdownGuide(endpoints, options)
   else if (format === 'guide.html') body = buildHtmlGuide(endpoints, options)
   else if (format === 'guide.pdf') body = buildPdf(markdownToPdfLines(buildMarkdownGuide(endpoints, options)), `${options.siteName} API`)

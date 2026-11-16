@@ -515,6 +515,17 @@ export const ApiBuilderPanel: React.FC<{ initial: BuilderData }> = ({ initial })
             </li>
           ))}
         </ul>
+        <p>
+          Sign-in and token endpoints (password, two-step, email link and code, passkeys, social sign-in, API keys, access tokens and one-time tokens) are described in a separate OpenAPI document:{' '}
+          <a href="/api/admin-api-builder-docs?format=auth-openapi.json" download>
+            authentication OpenAPI (JSON)
+          </a>
+          {' · '}
+          <a href="/api/admin-api-builder-docs?format=auth-openapi.yaml" download>
+            YAML
+          </a>
+          .
+        </p>
         <label>
           <input
             type="checkbox"
