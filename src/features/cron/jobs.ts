@@ -74,6 +74,9 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
   cleanup: async ({ engine }) => {
     const { runScheduledCleanup } = await import('@/features/cleanup/scheduledCleanup')
     await runScheduledCleanup(engine as never)
+    // Guest carts nobody touched for 30 days. A failure here must not fail the clean-up job.
+    const { sweepGuestCarts } = await import('@/features/ecommerce/server/accountCart')
+    await sweepGuestCarts(engine as never).catch((): number => 0)
   },
   'error-alert': async ({ engine, now }) => {
     const { runErrorSpikeAlert } = await import('@/features/errors/spikeAlert')

@@ -35,7 +35,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 const CART_STORAGE_KEY = 'gracengatsby-cart'
 const API_ROUTE = '/api'
 
-type StoredCartRef = { id: number; secret: string }
+type StoredCartRef = { id: number; secret: string; /** True when this is the signed-in account's own cart, so a sign-out never keeps showing it. */ account?: boolean }
 
 export type CartItemDoc = {
   id: string
@@ -79,6 +79,8 @@ type ConfirmOrderResult = { orderID?: number; transactionID?: number; message?: 
 
 type CartContextValue = {
   cart: CartDoc | null
+  /** Set when lines from an earlier guest cart could not be merged into the account cart. */
+  cartNotice: string | null
   cartLoading: boolean
   /** Resolves to null on success, or the server's reason (out of stock, unavailable option ...). */
   addItem: (item: AddItemInput, quantity?: number) => Promise<string | null>
@@ -99,7 +101,7 @@ function readStoredCart(): StoredCartRef | null {
     const raw = window.localStorage.getItem(CART_STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Partial<StoredCartRef>
-    if (typeof parsed.id === 'number' && typeof parsed.secret === 'string') return { id: parsed.id, secret: parsed.secret }
+    if (typeof parsed.id === 'number' && typeof parsed.secret === 'string') return { id: parsed.id, secret: parsed.secret, ...(parsed.account === true ? { account: true } : {}) }
     return null
   } catch {
     return null
@@ -127,6 +129,30 @@ async function fetchCart(ref: StoredCartRef): Promise<CartDoc | null> {
   return doc
 }
 
+type CartSession = { signedIn: boolean; id?: number; secret?: string; merged?: number; skipped?: number }
+
+/** Asks the server who is shopping. A signed-in shopper gets the account cart, with any guest cart already merged into it. */
+async function fetchCartSession(): Promise<CartSession | null> {
+  try {
+    const res = await fetch('/api/shop-cart/session', { credentials: 'same-origin', cache: 'no-store' })
+    if (!res.ok) return null
+    const body = (await res.json().catch((): null => null)) as CartSession | null
+    return body && typeof body.signedIn === 'boolean' ? body : null
+  } catch {
+    return null
+  }
+}
+
+/** Tells the server which guest cart this browser holds, so a later sign-in or sign-up can merge it. Best effort. */
+function rememberGuestCart(ref: StoredCartRef): void {
+  void fetch('/api/shop-cart/guest', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: ref.id, secret: ref.secret }),
+  }).catch((): undefined => undefined)
+}
+
 async function createCart(currency: string): Promise<{ cart: CartDoc; ref: StoredCartRef } | null> {
   const res = await fetch(`${API_ROUTE}/carts`, {
     method: 'POST',
@@ -148,6 +174,7 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
   const [cart, setCart] = useState<CartDoc | null>(null)
   const [cartRef, setCartRef] = useState<StoredCartRef | null>(null)
   const [cartLoading, setCartLoading] = useState(true)
+  const [cartNotice, setCartNotice] = useState<string | null>(null)
   const [addresses, setAddresses] = useState<AddressDoc[]>([])
   const [addressesLoading, setAddressesLoading] = useState(true)
   const [paymentsLoading, setPaymentsLoading] = useState(false)
@@ -156,10 +183,32 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      const stored = readStoredCart()
+      // A signed-in shopper has one cart that follows the account; a guest cart in this browser was merged into it.
+      const session = await fetchCartSession()
+      if (cancelled) return
+      if (session?.signedIn && typeof session.id === 'number' && typeof session.secret === 'string') {
+        const accountRef: StoredCartRef = { id: session.id, secret: session.secret, account: true }
+        const accountCart = await fetchCart(accountRef)
+        if (cancelled) return
+        if (accountCart) {
+          writeStoredCart(accountRef)
+          setCart(accountCart)
+          setCartRef(accountRef)
+          if (session.skipped) setCartNotice(session.skipped === 1 ? 'One item from your earlier cart could not be added because of stock or limits.' : `${session.skipped} items from your earlier cart could not be added because of stock or limits.`)
+          setCartLoading(false)
+          return
+        }
+      }
+      let stored = readStoredCart()
+      // Signed out now: never keep showing a cart that belonged to an account.
+      if (stored?.account && !session?.signedIn && session !== null) {
+        writeStoredCart(null)
+        stored = null
+      }
       const existing = stored ? await fetchCart(stored) : null
       if (cancelled) return
       if (existing && stored) {
+        if (!stored.account) rememberGuestCart(stored)
         setCart(existing)
         setCartRef(stored)
         setCartLoading(false)
@@ -171,6 +220,7 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
       if (cancelled) return
       if (created) {
         writeStoredCart(created.ref)
+        rememberGuestCart(created.ref)
         setCart(created.cart)
         setCartRef(created.ref)
       }
@@ -321,6 +371,7 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
   const value = useMemo<CartContextValue>(
     () => ({
       cart,
+      cartNotice,
       cartLoading,
       addItem,
       incrementItem,
@@ -332,7 +383,7 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
       initiatePayment,
       confirmOrder,
     }),
-    [cart, cartLoading, addItem, incrementItem, decrementItem, removeItem, addresses, addressesLoading, paymentsLoading, initiatePayment, confirmOrder],
+    [cart, cartNotice, cartLoading, addItem, incrementItem, decrementItem, removeItem, addresses, addressesLoading, paymentsLoading, initiatePayment, confirmOrder],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
@@ -344,10 +395,11 @@ function useCartContext(hookName: string): CartContextValue {
   return ctx
 }
 
-export function useCart(): { cart: CartDoc | null; isLoading: boolean; addItem: CartContextValue['addItem']; incrementItem: CartContextValue['incrementItem']; decrementItem: CartContextValue['decrementItem']; removeItem: CartContextValue['removeItem'] } {
+export function useCart(): { cart: CartDoc | null; notice: string | null; isLoading: boolean; addItem: CartContextValue['addItem']; incrementItem: CartContextValue['incrementItem']; decrementItem: CartContextValue['decrementItem']; removeItem: CartContextValue['removeItem'] } {
   const ctx = useCartContext('useCart')
   return {
     cart: ctx.cart,
+    notice: ctx.cartNotice,
     isLoading: ctx.cartLoading,
     addItem: ctx.addItem,
     incrementItem: ctx.incrementItem,

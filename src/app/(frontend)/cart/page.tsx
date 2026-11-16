@@ -26,7 +26,7 @@ import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
  * every other storefront page already uses for this field.
  */
 export default function CartPage() {
-  const { cart, decrementItem, incrementItem, removeItem, isLoading } = useCart()
+  const { cart, notice, decrementItem, incrementItem, removeItem, isLoading } = useCart()
   const t = useStoreText()
   const money = useDisplayMoney()
   const displayState = useDisplayCurrencyState()
@@ -37,6 +37,7 @@ export default function CartPage() {
   return (
     <div className="page-shell">
       <h1>{t('store.yourCart')}</h1>
+      {notice && <p role="status" className="cart-notice">{notice}</p>}
 
       {items.length === 0 ? (
         <p>
