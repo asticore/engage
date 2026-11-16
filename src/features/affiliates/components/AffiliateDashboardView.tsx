@@ -1,8 +1,8 @@
 import React from 'react'
 
 import { balances } from '../commission'
-import { referralLink } from '../core'
-import { commissionsFor, type Affiliate, type D1 } from '../store'
+import { bannerSnippet, parseCreativeIds, referralLink } from '../core'
+import { commissionsFor, creativesByIds, getSettings, type Affiliate, type D1 } from '../store'
 
 const money = (cents: number): string => `$${(cents / 100).toFixed(2)}`
 
@@ -11,6 +11,7 @@ export async function AffiliateDashboardView({ d1, affiliate, origin, privateLin
   const rows = await commissionsFor(d1, affiliate.id, 100)
   const bal = balances(rows, new Date())
   const link = referralLink(origin, affiliate.code)
+  const creatives = affiliate.status === 'active' ? await creativesByIds(d1, parseCreativeIds((await getSettings(d1)).creatives)) : []
   const note = affiliate.status === 'pending' ? 'Your application is waiting for approval, so your link is not tracking yet.' : affiliate.status === 'suspended' ? 'Your account is suspended.' : ''
   return (
     <div className="page-shell">
@@ -30,6 +31,23 @@ export async function AffiliateDashboardView({ d1, affiliate, origin, privateLin
         <li>Payable now: {money(bal.owed)}</li>
         <li>Paid so far: {money(bal.paid)}</li>
       </ul>
+      {creatives.length > 0 && (
+        <>
+          <h2>Banners and images</h2>
+          <p>Use these on your site or posts. Copy the snippet to show the image as a link that carries your referral link.</p>
+          {creatives.map((c) => (
+            <div key={c.id}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={c.url} alt={c.alt} style={{ maxWidth: '20rem', height: 'auto' }} />
+              <p>
+                <a href={c.url} download>Download</a>
+                {c.width > 0 ? ` (${c.width} x ${c.height})` : ''}
+              </p>
+              <textarea readOnly rows={3} style={{ width: '100%' }} aria-label={`HTML for ${c.alt || c.filename}`} value={bannerSnippet({ link, imageUrl: /^https?:\/\//.test(c.url) ? c.url : `${origin}${c.url.startsWith('/') ? c.url : `/${c.url}`}`, alt: c.alt })} />
+            </div>
+          ))}
+        </>
+      )}
       {rows.length > 0 && (
         <table>
           <thead>
