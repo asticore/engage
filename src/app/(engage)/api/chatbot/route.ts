@@ -16,11 +16,12 @@ const json = (body: unknown, status = 200): Response => NextResponse.json(body, 
 
 /** GET: what the widget needs to draw itself. No instructions, no keys, no topic lists. */
 export async function GET(): Promise<Response> {
-  if (!(await getFeatureFlags()).chatbot) return json({ error: 'The chatbot is not switched on.' }, 404)
+  const flags = await getFeatureFlags()
+  if (!flags.chatbot) return json({ error: 'The chatbot is not switched on.' }, 404)
   const d1 = (await rawD1()) as never as store.D1
   const s = await store.getSettings(d1)
   const captcha = await authCaptchaConfig((await getEngine()) as never, 'chatbot')
-  return json({ sitewide: s.sitewide, position: s.position, name: s.name, avatar: s.avatar, greeting: s.greeting, requireConsent: s.requireConsent, consentText: s.consentText, hours: s.hours, captcha })
+  return json({ live: Boolean(flags.livechat), sitewide: s.sitewide, position: s.position, name: s.name, avatar: s.avatar, greeting: s.greeting, requireConsent: s.requireConsent, consentText: s.consentText, hours: s.hours, captcha })
 }
 
 /**

@@ -55,6 +55,7 @@ export type FeatureKey =
   | 'clientreports'
   | 'franchising'
   | 'sso'
+  | 'livechat'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -376,6 +377,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['agent_grants', 'agent_actions'],
+    implemented: true,
+  },
+  {
+    key: 'livechat',
+    label: 'Live chat',
+    description: 'Talk to visitors in real time. Visitors reach staff from the chat widget (or after the chatbot hands off), staff reply from an inbox in the admin, and an offline message becomes an email. Needs the Chatbot section switched on for the widget.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['livechat_settings', 'livechat_chats', 'livechat_messages', 'livechat_canned', 'livechat_staff'],
     implemented: true,
   },
   {

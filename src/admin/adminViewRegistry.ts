@@ -70,6 +70,7 @@ const AuthenticationView = lazyView(() => import('@/admin/views/AuthenticationVi
 const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').then((mod) => mod.AffiliatesView))
 const SsoView = lazyView(() => import('@/admin/views/SsoView').then((mod) => mod.SsoView))
 const AgentAccessView = lazyView(() => import('@/admin/views/AgentAccessView').then((mod) => mod.AgentAccessView))
+const LiveChatView = lazyView(() => import('@/admin/views/LiveChatView').then((mod) => mod.LiveChatView))
 const ChatbotView = lazyView(() => import('@/admin/views/ChatbotView').then((mod) => mod.ChatbotView))
 const DemosView = lazyView(() => import('@/admin/views/DemosView').then((mod) => mod.DemosView))
 const ClientReportsView = lazyView(() => import('@/admin/views/ClientReportsView').then((mod) => mod.ClientReportsView))
@@ -264,6 +265,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'affiliates', Component: AffiliatesView, path: '/affiliates', meta: { title: 'Affiliates', description: 'Partners with referral links and the visits they bring.' } },
   { key: 'sso', Component: SsoView, path: '/sso', meta: { title: 'Single sign-on', description: 'Per-organisation OpenID Connect sign-in with verified domains.' } },
   { key: 'agent-access', Component: AgentAccessView, path: '/agent-access', meta: { title: 'AI agent access', description: 'Scoped, capped, revocable tokens for connected AI tools, with an activity log.' } },
+  { key: 'livechat', Component: LiveChatView, path: '/livechat', meta: { title: 'Live chat', description: 'Reply to visitors in real time and read offline messages.' } },
   { key: 'chatbot', Component: ChatbotView, path: '/chatbot', meta: { title: 'Chatbot', description: 'Set up the site chat assistant and read its conversations.' } },
   { key: 'demos', Component: DemosView, path: '/demos', meta: { title: 'Agency demos', description: 'Save a demo copy, reset it, make view-only accounts and download a package.' } },
   { key: 'client-reports', Component: ClientReportsView, path: '/client-reports', meta: { title: 'Client reports', description: 'Read-only report links and scheduled report emails for clients.' } },
