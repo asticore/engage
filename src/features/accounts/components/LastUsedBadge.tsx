@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react'
 
-import { lastMethodCookie, methodFor, readLastMethod } from '../lastUsed'
+import { lastMethodCookie, methodFor, methodForButton, readLastMethod, selectorForMethod } from '../lastUsed'
 
 /**
  * Wraps the sign-in screen. Remembers which method this browser used last and shows a small
@@ -21,7 +21,7 @@ export const LastUsedBadge: React.FC<{ children: React.ReactNode }> = ({ childre
       last = null
     }
     if (last) {
-      const target = last === 'password' ? el.querySelector('form input[type="password"]')?.closest('form')?.querySelector('button[type="submit"]') : el.querySelector(`.account-social__button--${last}`)
+      const target = last === 'password' ? el.querySelector('form input[type="password"]')?.closest('form')?.querySelector('button[type="submit"]') : (() => { const sel = selectorForMethod(last); return sel ? el.querySelector(sel) : null })()
       if (target && !target.parentElement?.querySelector('[data-last-used]')) {
         const badge = document.createElement('small')
         badge.setAttribute('data-last-used', '')
@@ -41,9 +41,12 @@ export const LastUsedBadge: React.FC<{ children: React.ReactNode }> = ({ childre
     const onClick = (e: Event) => {
       const a = (e.target as HTMLElement | null)?.closest('a')
       if (a) remember(methodFor({ socialClass: a.className }))
+      const button = (e.target as HTMLElement | null)?.closest('button')
+      if (button) remember(methodForButton({ kind: button.getAttribute('name') === 'kind' ? button.getAttribute('value') : null, inPasskeyBox: Boolean(button.closest('.account-passkey')) }))
     }
     const onSubmit = (e: Event) => {
       const form = e.target as HTMLFormElement
+      if (!form.querySelector('input[type="password"]')) return
       remember(methodFor({ formHasPassword: Boolean(form.querySelector('input[type="password"]')) }))
     }
     el.addEventListener('click', onClick)

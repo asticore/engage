@@ -20,7 +20,8 @@ export interface LinkSection extends SettingsSection {
   label: string
   href: string
   description: string
-  type: 'view' | 'collection'
+  /** `external` opens an https address in a new tab (href must start with https://). */
+  type: 'view' | 'collection' | 'external'
 }
 
 export interface SettingsPage {
@@ -99,6 +100,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
     description: 'Connect ad and analytics platforms, and choose which actions send events. A tag loads only after the visitor accepts its cookie category.',
     sections: [
       { kind: 'link', label: 'Tracking connections', href: '/tracking-connections', description: 'Sign in with Google, Facebook or TikTok and pick your Analytics property, Tag Manager container or pixel. The IDs fill in on Integrations.', type: 'view' },
+      { kind: 'link', label: 'Google Analytics', href: 'https://analytics.google.com/', description: 'Open Google Analytics in a new tab to see your reports.', type: 'external' },
       { kind: 'global', slug: 'integrations' },
       { kind: 'link', label: 'Tracking events', href: collectionRoute('tracking-events'), description: 'Clicks, form submits, page views, scroll depth and time on page that send events to your platforms.', type: 'collection' },
     ],

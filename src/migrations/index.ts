@@ -193,6 +193,7 @@ import * as migration_20270317_120000_franchising from './20270317_120000_franch
 import * as migration_20270316_428000_mini_cart from './20270316_428000_mini_cart';
 import * as migration_20270316_435000_org_sso from './20270316_435000_org_sso';
 import * as migration_20270316_425000_livechat from './20270316_425000_livechat';
+import * as migration_20270317_130000_last_login_method from './20270317_130000_last_login_method';
 import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
 import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
 import * as migration_20270316_350000_affiliate_portal from './20270316_350000_affiliate_portal';
@@ -1230,5 +1231,10 @@ export const migrations = [
     up: migration_20270316_425000_livechat.up,
     down: migration_20270316_425000_livechat.down,
     name: '20270316_425000_livechat',
+  },
+  {
+    up: migration_20270317_130000_last_login_method.up,
+    down: migration_20270317_130000_last_login_method.down,
+    name: '20270317_130000_last_login_method',
   },
 ];

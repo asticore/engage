@@ -99,10 +99,11 @@ export async function defaultRuntime(): Promise<SocialRuntime> {
       const u = user as unknown as UserDoc | null
       return u ? { id: Number(u.id), email: String(u.email ?? ''), roles: Array.isArray(u.roles) ? (u.roles as string[]) : [] } : null
     },
-    async login(userId, request) {
+    async login(userId, request, provider) {
       const result = await engine.loginAsUser({
         collection: 'users',
         id: userId,
+        method: provider,
         client: {
           userAgent: request.headers.get('user-agent'),
           ip: addressOf(request) === 'unknown' ? null : addressOf(request),

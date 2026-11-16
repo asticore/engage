@@ -11,6 +11,7 @@ import { getEngine } from '@/lib/engine'
 import { isProviderId } from './providers'
 import { userHasPassword } from './runtime'
 import { resolveUnlink } from './service'
+import { userHasPasskeyOrEmailedMethod } from './otherMethods'
 import { defaultSocialStore } from './store'
 
 /**
@@ -31,7 +32,7 @@ export async function unlinkSocialAction(provider: string): Promise<{ ok: boolea
   if (!guard.allowed) return { ok: false, message: 'Too many attempts. Try again in a few minutes.' }
 
   const userId = Number((user as { id: number | string }).id)
-  const outcome = await resolveUnlink({ store: defaultSocialStore, hasPassword: userHasPassword }, userId, provider)
+  const outcome = await resolveUnlink({ store: defaultSocialStore, hasPassword: userHasPassword, hasOtherMethod: (id) => userHasPasskeyOrEmailedMethod(engine, id) }, userId, provider)
   if (outcome.ok) {
     try {
       const settings = await getSecuritySettings(engine as never)

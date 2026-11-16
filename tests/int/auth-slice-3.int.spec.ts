@@ -790,3 +790,34 @@ describe('client key', () => {
     expect(clientKey(new Request('http://x/', { headers: { 'cf-connecting-ip': '198.51.100.1' } }))).toBe('198.51.100.1')
   })
 })
+
+describe('last login method on the user record (Task 23e)', () => {
+  it('records password, then the method an identity was proven with', async () => {
+    const db = makeDb([makeUser()])
+    await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
+    expect(db.rows[0].lastLoginMethod).toBe('password')
+    expect(typeof db.rows[0].lastLoginAt).toBe('string')
+
+    await loginAsUser(db, { id: 1, secret: SECRET, method: 'google' })
+    expect(db.rows[0].lastLoginMethod).toBe('google')
+    await loginAsUser(db, { id: 1, secret: SECRET, method: 'passkey', skipSecondFactor: true })
+    expect(db.rows[0].lastLoginMethod).toBe('passkey')
+  })
+
+  it('ignores a malformed method and keeps the old value', async () => {
+    const db = makeDb([makeUser()])
+    await loginAsUser(db, { id: 1, secret: SECRET, method: 'magic-link' })
+    await loginAsUser(db, { id: 1, secret: SECRET, method: '<script>' })
+    expect(db.rows[0].lastLoginMethod).toBe('magic-link')
+  })
+
+  it('carries the method through the two-step code', async () => {
+    const db = makeDb([makeUser()])
+    const codes = await enrolledByEmail(db)
+    const first = await loginAsUser(db, { id: 1, secret: SECRET, method: 'github' })
+    expect(first.pendingToken).toBeTruthy()
+    expect(db.rows[0].lastLoginMethod).toBeUndefined()
+    await loginWithSecondFactor(db, { pendingToken: first.pendingToken!, code: codes[0], secret: SECRET })
+    expect(db.rows[0].lastLoginMethod).toBe('github')
+  })
+})
