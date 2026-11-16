@@ -34,10 +34,10 @@ export async function GET(request: Request): Promise<Response> {
   if (new URL(request.url).searchParams.get('export') === 'payouts') {
     return new Response(payoutsCsv(await store.payoutsForExport(d1)), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="affiliate-payouts.csv"', 'Cache-Control': 'no-store' } })
   }
-  const [affiliates, settings, rows, commissions, payouts, configured, productRates, products, visits, images] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1), store.listProductRates(d1), store.productChoices(d1), store.recentVisits(d1, 50), store.imageChoices(d1)])
+  const [affiliates, settings, rows, commissions, payouts, configured, productRates, products, visits, images, botHits] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1), store.listProductRates(d1), store.productChoices(d1), store.recentVisits(d1, 50), store.imageChoices(d1), store.botHitsSince(d1, new Date(Date.now() - 6 * 86_400_000).toISOString().slice(0, 10))])
   const now = new Date()
   const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now), ...affiliateReport(rows.filter((r) => r.affiliate_id === a.id), a.visits) }))
-  return json({ affiliates: withBalances, settings, commissions, payouts, configured, productRates, products, visits, images })
+  return json({ affiliates: withBalances, settings, commissions, payouts, configured, productRates, products, visits, images, botHits })
 }
 
 /**
