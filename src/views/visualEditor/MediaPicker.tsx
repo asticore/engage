@@ -98,9 +98,15 @@ export const MediaPicker: React.FC<{
     let cancelled = false
     fetch('/api/media?limit=100&sort=-createdAt&depth=0', { credentials: 'include' })
       .then((res) => res.json())
-      .then((data: { docs?: MediaDoc[] }) => {
+      .then(async (data: { docs?: MediaDoc[] }) => {
         if (cancelled) return
-        setItems(data?.docs || [])
+        // Asset manager (when on): files that are expired, embargoed, archived or not yet approved cannot be picked.
+        const blocked = await fetch('/api/admin-media-dam?unusable=1', { credentials: 'include' })
+          .then((res) => (res.ok ? (res.json() as Promise<{ ids?: number[] }>) : { ids: [] as number[] }))
+          .then((body) => new Set(body.ids ?? []))
+          .catch(() => new Set<number>())
+        if (cancelled) return
+        setItems((data?.docs || []).filter((doc) => !blocked.has(Number(doc.id))))
         setLoading(false)
       })
       .catch((err) => {

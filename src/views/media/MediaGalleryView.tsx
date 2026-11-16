@@ -11,6 +11,7 @@ import { MediaFolderTree } from './MediaFolderTree'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { pathOf, type Tag } from '@/features/mediaTags/logic'
 import * as tagStore from '@/features/mediaTags/store'
+import * as damStore from '@/features/dam/store'
 import { getFeatureFlags } from '@/utilities/features'
 import { describeSaving, formatBytes } from '@/features/media/admin/mediaApi'
 import { siteImageFormat, videoFormatOf } from '@/features/media/formats'
@@ -162,6 +163,24 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
     }
   } catch {
     allTags = []
+  }
+  // Asset manager (off by default): collections for the filter and the bulk tool, and the files in the chosen collection.
+  let damCollections: damStore.Collection[] = []
+  let collectionFilter = 0
+  let damOn = false
+  try {
+    if ((await getFeatureFlags()).dam) {
+      damOn = true
+      const d1 = (await rawD1()) as never as damStore.D1
+      damCollections = await damStore.listCollections(d1)
+      collectionFilter = damCollections.some((c) => c.id === Number(strParam('collection'))) ? Number(strParam('collection')) : 0
+      if (collectionFilter) {
+        const inCollection = await damStore.mediaIdsInCollection(d1, collectionFilter)
+        tagMediaIds = tagMediaIds ? tagMediaIds.filter((id) => inCollection.includes(id)) : inCollection
+      }
+    }
+  } catch {
+    damCollections = []
   }
   if ((currentFolder || tagMediaIds) && finder) {
     const requested = Math.max(1, Number(strParam('page') ?? '1') || 1)
@@ -328,6 +347,37 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
               </form>
             ) : null}
 
+            {damCollections.length > 0 ? (
+              <form method="GET" className="flex items-center gap-[calc(var(--base)*0.4)]">
+                {view === 'list' ? <input type="hidden" name="view" value="list" /> : null}
+                {currentFolder ? <input type="hidden" name="folder" value={currentFolder} /> : null}
+                {currentSort ? <input type="hidden" name="sort" value={currentSort} /> : null}
+                {currentSearch ? <input type="hidden" name="search" value={currentSearch} /> : null}
+                {tagFilter ? <input type="hidden" name="tag" value={String(tagFilter)} /> : null}
+                <label className="text-[calc(var(--base)*0.78)] text-[var(--theme-elevation-600)]">
+                  Collection
+                  <select
+                    name="collection"
+                    defaultValue={collectionFilter ? String(collectionFilter) : ''}
+                    className="ml-[calc(var(--base)*0.4)] rounded-[4px] border border-[var(--theme-elevation-200)] bg-transparent px-[calc(var(--base)*0.5)] py-[calc(var(--base)*0.35)] text-[calc(var(--base)*0.82)] text-[var(--theme-elevation-900)]"
+                  >
+                    <option value="">All collections</option>
+                    {damCollections.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} ({c.count})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="submit"
+                  className="rounded-[4px] border border-[var(--theme-elevation-200)] px-[calc(var(--base)*0.6)] py-[calc(var(--base)*0.35)] text-[calc(var(--base)*0.78)] text-[var(--theme-elevation-700)] hover:border-[var(--ac-gold)] hover:text-[var(--ac-gold)]"
+                >
+                  Show
+                </button>
+              </form>
+            ) : null}
+
             {allTags.length > 0 ? (
               <form method="GET" className="flex items-center gap-[calc(var(--base)*0.4)]">
                 {view === 'list' ? <input type="hidden" name="view" value="list" /> : null}
@@ -399,6 +449,8 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
           docs={galleryDocs}
           folders={folders}
           tags={allTags.map((t) => ({ id: t.id, label: pathOf(allTags, t.id) }))}
+          collections={damCollections.map((c) => ({ id: c.id, label: c.name }))}
+          damOn={damOn}
           currentFolder={currentFolder}
           batchSize={settings.batchSize}
           optimisationOn={settings.enabled}
