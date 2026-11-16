@@ -42,6 +42,8 @@ const readBody = async (request: Request): Promise<Record<string, string>> => {
 
 const UNAVAILABLE = 'Accounts are not available on this site.'
 
+const areaOf = (value: string | undefined): 'admin' | 'account' | 'members' => (value === 'admin' || value === 'members' ? value : 'account')
+
 export async function optionsResponse(request: Request): Promise<Response> {
   const context = await accountContext()
   if (!context.flags.accounts) return json({ magicLink: false, emailCode: false })
@@ -56,7 +58,7 @@ export async function requestResponse(request: Request): Promise<Response> {
 
   const body = await readBody(request)
   const kind = body.kind === 'code' ? 'code' : 'link'
-  if (!methodAllowed(await readMatrix(), (body as { area?: string }).area === 'admin' ? 'admin' : 'account', kind === 'code' ? 'email-code' : 'magic-link')) return json({ ok: false, message: 'That way of signing in is not turned on.' }, 403)
+  if (!methodAllowed(await readMatrix(), areaOf((body as { area?: string }).area), kind === 'code' ? 'email-code' : 'magic-link')) return json({ ok: false, message: 'That way of signing in is not turned on.' }, 403)
   const address = (body.email ?? '').trim().toLowerCase()
 
   const byIp = await guardAttempt(context.engine, 'passwordless-request', `ip:${await requestAddress()}`)
@@ -83,7 +85,7 @@ export async function verifyResponse(request: Request): Promise<Response> {
 
   const body = await readBody(request)
   const address = (body.email ?? '').trim().toLowerCase()
-  if (!methodAllowed(await readMatrix(), (body as { area?: string }).area === 'admin' ? 'admin' : 'account', 'email-code')) return json({ ok: false, message: 'That way of signing in is not turned on.' }, 403)
+  if (!methodAllowed(await readMatrix(), areaOf((body as { area?: string }).area), 'email-code')) return json({ ok: false, message: 'That way of signing in is not turned on.' }, 403)
 
   const byIp = await guardAttempt(context.engine, 'passwordless-verify', `ip:${await requestAddress()}`)
   if (!byIp.allowed) return json({ ok: false, message: tooManyAttempts(byIp.retryAfterSeconds ?? 60) }, 429)

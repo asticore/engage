@@ -68,21 +68,23 @@ export async function AuthenticationView() {
         </tbody>
       </table>
       <h2>Who can sign in with what</h2>
-      <p>Staff sign in at the admin sign-in, members and customers at the account sign-in. A blocked method disappears from that form and is refused by the server. Password is always available. Two-step codes are asked for after a social sign-in too.</p>
+      <p>Staff sign in at the admin sign-in, shop customers at <code>/account/sign-in</code> and members at <code>/account/member-sign-in</code>. A blocked method disappears from that form and is refused by the server. Staff always keep their password; a customer or member sign-in can block its password only while another way in is left. Two-step codes are asked for after a social sign-in too.</p>
       <table>
         <thead>
           <tr>
             <th scope="col">Method</th>
             <th scope="col">Admin sign-in</th>
-            <th scope="col">Account sign-in</th>
+            <th scope="col">Customer sign-in</th>
+            <th scope="col">Member sign-in</th>
           </tr>
         </thead>
         <tbody>
           {matrixRows.map((row) => (
             <tr key={row.id}>
               <th scope="row">{row.label}</th>
-              <td><AreaToggle area="admin" method={row.id} label={row.label} allowed={methodAllowed(matrix, 'admin', row.id)} /></td>
+              <td>{row.id === 'password' ? 'Always allowed' : <AreaToggle area="admin" method={row.id} label={row.label} allowed={methodAllowed(matrix, 'admin', row.id)} />}</td>
               <td><AreaToggle area="account" method={row.id} label={row.label} allowed={methodAllowed(matrix, 'account', row.id)} /></td>
+              <td><AreaToggle area="members" method={row.id} label={row.label} allowed={methodAllowed(matrix, 'members', row.id)} /></td>
             </tr>
           ))}
         </tbody>

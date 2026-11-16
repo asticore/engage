@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 
 import { passwordProblemFor } from '@/features/security/passwordCheck'
 import { recordAuthEvent } from '@/features/security/authAudit'
+import { getSecuritySettings } from '@/features/security/settings'
 
 import {
   completePasswordReset,
@@ -27,7 +28,9 @@ import {
   setDefaultAddress,
   updateAddress,
 } from './addresses'
-import { changeEmail, changeName, changePassword } from './profile'
+import { changeEmail, changeName, changePassword, changeUsername } from './profile'
+import { emailForUsername, looksLikeUsername } from './username'
+import { emailedMethodBlocked, passwordOpenFor, placeFromForm } from './placeMethods'
 import { writePreferences } from './preferences'
 import { isLocaleRoutable } from '@/features/multilingual/routing'
 import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
@@ -110,9 +113,19 @@ async function signInActionImpl(_state: ActionState, form: FormData): Promise<Ac
     if (refused) return failed(refused)
   }
 
-  const address = text(form, 'email').trim().toLowerCase()
+  // A password the owner blocked for this place is refused here, not only hidden from the form.
+  const place = placeFromForm(form.get('area'))
+  if (!(await passwordOpenFor(context.engine, place))) return failed('Signing in with a password is not turned on here.')
+
+  let address = text(form, 'email').trim().toLowerCase()
+  // Username sign-in (Task 23g): only when the owner switched it on and the entry cannot be an email.
+  // An unknown username falls through as typed, which fails exactly like a wrong email.
+  if (looksLikeUsername(address)) {
+    const settings = await getSecuritySettings(context.engine as never).catch((): null => null)
+    if (settings?.usernameSignIn.enabled) address = (await emailForUsername(context.engine, address)) ?? address
+  }
   const origin = await requestClient()
-  const result = await signIn(context.engine, text(form, 'email'), text(form, 'password'), origin)
+  const result = await signIn(context.engine, address, text(form, 'password'), origin)
   if (result.needsTwoFactor && result.pendingToken) {
     await setPendingBindingCookie(result.pendingBinding)
     return { status: 'idle', message: '', pendingToken: result.pendingToken }
@@ -423,6 +436,16 @@ async function saveNameActionImpl(_state: ActionState, form: FormData): Promise<
   return result.ok ? succeeded(result.message) : failed(result.message)
 }
 
+async function saveUsernameActionImpl(_state: ActionState, form: FormData): Promise<ActionState> {
+  const context = await openContext()
+  if (!context) return FEATURE_OFF
+  if (!context.user) return SIGNED_OUT
+
+  const result = await changeUsername(context.engine, context.user, text(form, 'username'))
+  revalidatePath('/account/profile')
+  return result.ok ? succeeded(result.message) : failed(result.message)
+}
+
 /**
  * The portal language. Empty clears the choice (automatic: cookie, then browser). Anything else must be one of
  * the site's active locales, and the refusal names no other language.
@@ -503,6 +526,9 @@ async function requestLoginActionImpl(_state: ActionState, form: FormData): Prom
   const kind = text(form, 'kind') === 'code' ? 'code' : 'link'
   const address = text(form, 'email').trim().toLowerCase()
   const ip = await requestAddress()
+  if (await emailedMethodBlocked(placeFromForm(form.get('area')), kind === 'code' ? 'email-code' : 'magic-link')) {
+    return failed('That way of signing in is not turned on.')
+  }
 
   const byIp = await guardAttempt(context.engine, 'passwordless-request', `ip:${ip}`)
   if (!byIp.allowed) return failed(tooManyAttempts(byIp.retryAfterSeconds ?? 60))
@@ -530,6 +556,7 @@ async function verifyCodeActionImpl(_state: ActionState, form: FormData): Promis
   if (!context) return FEATURE_OFF
 
   const email = text(form, 'email').trim().toLowerCase()
+  if (await emailedMethodBlocked(placeFromForm(form.get('area')), 'email-code')) return failed('That way of signing in is not turned on.')
   const byIp = await guardAttempt(context.engine, 'passwordless-verify', `ip:${await requestAddress()}`)
   if (!byIp.allowed) return failed(tooManyAttempts(byIp.retryAfterSeconds ?? 60))
   const byEmail = await guardAttempt(context.engine, 'passwordless-verify', `email:${email}`)
@@ -587,6 +614,10 @@ async function localisedState(result: ActionState): Promise<ActionState> {
 
 export async function signInAction(state: ActionState, form: FormData): Promise<ActionState> {
   return localisedState(await signInActionImpl(state, form))
+}
+
+export async function saveUsernameAction(state: ActionState, form: FormData): Promise<ActionState> {
+  return localisedState(await saveUsernameActionImpl(state, form))
 }
 
 export async function signInCodeAction(state: ActionState, form: FormData): Promise<ActionState> {

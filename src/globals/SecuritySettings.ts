@@ -289,6 +289,17 @@ export const SecuritySettings: GlobalConfig = {
         description: 'The least time between two verification emails to the same account, so the resend button cannot be used to flood a mailbox. 0 turns the gap off.',
       },
     },
+    // Username sign-in (Task 23g). Column username_sign_in_enabled, see src/migrations/20270317_130000_username_sign_in.ts.
+    {
+      name: 'usernameSignInEnabled',
+      type: 'checkbox',
+      defaultValue: false,
+      label: 'Allow sign-in with a username',
+      admin: {
+        description:
+          'The account sign-in form accepts an email or a username. People choose a username on their account profile. The same lockout and the same error message apply, so usernames cannot be probed. Off by default.',
+      },
+    },
     // The admin URL (src/features/security/adminPath.ts). Column admin_path, see
     // src/migrations/20261130_100000_admin_path.ts. Empty means /admin.
     {

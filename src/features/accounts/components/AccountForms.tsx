@@ -11,6 +11,7 @@ import {
   saveAddressAction,
   saveLanguageAction,
   saveNameAction,
+  saveUsernameAction,
   sendOwnConfirmationAction,
   setDefaultAddressAction,
   signOutAction,
@@ -172,6 +173,23 @@ export const NameForm: React.FC<{ name: string }> = ({ name }) => {
       </label>
       <Note state={state} />
       <SubmitButton>{tx('profile.saveName')}</SubmitButton>
+    </form>
+  )
+}
+
+/** The sign-in username. Shown only while Username sign-in is on in Security. */
+export const UsernameForm: React.FC<{ username: string }> = ({ username }) => {
+  const [state, action] = useActionState<ActionState, FormData>(saveUsernameAction, IDLE)
+  const tx = usePortalText()
+  return (
+    <form action={action} className="account-form">
+      <label>
+        {tx('profile.username')}
+        <input name="username" defaultValue={username} autoComplete="username" minLength={3} maxLength={32} pattern="[A-Za-z0-9_\-]*" />
+      </label>
+      <p className="account-hint">{tx('profile.usernameNote')}</p>
+      <Note state={state} />
+      <SubmitButton>{tx('profile.saveUsername')}</SubmitButton>
     </form>
   )
 }

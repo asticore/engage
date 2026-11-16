@@ -30,7 +30,8 @@ export const PasswordGate = async ({
   const orgName = options.org?.name
   // An organisation-only page never offers a password form: no password can unlock it for a non-member.
   const showPassword = !orgName && (options.password || !options.signIn)
-  const signInHref = `/account/sign-in?redirect=${encodeURIComponent(currentPath)}`
+  // Organisation-only pages are for members, so they send people to the member sign-in.
+  const signInHref = `${orgName ? '/account/member-sign-in' : '/account/sign-in'}?redirect=${encodeURIComponent(currentPath)}`
 
   return (
     <div className="pw-gate__wrap">

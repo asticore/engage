@@ -43,10 +43,10 @@ export const passwordlessDepsFor = async (engine: Engine, client: PasswordlessCl
  */
 export const passwordlessOptions = async (
   engine: Engine,
-  area: 'account' | 'admin',
+  area: 'account' | 'admin' | 'members',
 ): Promise<{ magicLink: boolean; emailCode: boolean }> => {
   const settings = await getSecuritySettings(engine as never).catch(() => DEFAULT_SECURITY_SETTINGS)
-  const allowed = area === 'account' || settings.passwordless.allowForAdmins
+  const allowed = area !== 'admin' || settings.passwordless.allowForAdmins
   const matrix = await readMatrix()
   return {
     magicLink: allowed && settings.passwordless.magicLinkEnabled && methodAllowed(matrix, area, 'magic-link'),

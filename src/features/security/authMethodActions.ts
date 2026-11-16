@@ -10,7 +10,7 @@ import { readSocialConfig } from '@/features/socialLogin/settings'
 
 import { audit, auditContext } from './auditLog'
 import { readMatrix, setBlocked, writeMatrix, type MatrixArea } from './authMatrix'
-import { togglePatch } from './authMethods'
+import { placeHasWayIn, togglePatch } from './authMethods'
 import { getSecuritySettings } from './settings'
 
 export type ToggleResult = { ok: boolean; message: string }
@@ -62,11 +62,19 @@ export async function setMethodAreaAction(area: string, method: string, allowed:
   if (refused) return { ok: false, message: refused }
   const context = await getAdminContext()
   if (!context.user || !context.isAdmin) return { ok: false, message: 'Only an admin can change sign-in methods.' }
-  if (area !== 'admin' && area !== 'account') return { ok: false, message: 'Unknown sign-in place.' }
+  if (area !== 'admin' && area !== 'account' && area !== 'members') return { ok: false, message: 'Unknown sign-in place.' }
+  if (area === 'admin' && method === 'password' && !allowed) return { ok: false, message: 'Staff can always sign in with a password, so it cannot be blocked on the admin sign-in.' }
   try {
     const before = await readMatrix()
     const after = setBlocked(before, area as MatrixArea, method, !allowed)
     if (after === before) return { ok: false, message: 'That method cannot be changed here.' }
+    if (!allowed) {
+      const settings = await getSecuritySettings(context.engine as never)
+      const social = await readSocialConfig(context.engine as never)
+      if (!placeHasWayIn(area as MatrixArea, after, settings, social)) {
+        return { ok: false, message: 'That would leave this sign-in with no way in. Allow another method first.' }
+      }
+    }
     await writeMatrix(after)
     return { ok: true, message: allowed ? 'Allowed.' : 'Blocked.' }
   } catch {

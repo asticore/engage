@@ -8,6 +8,7 @@ import { GoogleOneTap } from '@/features/socialLogin/components/GoogleOneTap'
 import { oneTapAvailable, publicProviders, registerProviders } from '@/features/socialLogin/public'
 import { PENDING_COOKIE } from '@/features/socialLogin/http'
 
+import { getSecuritySettings } from '@/features/security/settings'
 import { passwordFormRules } from '@/features/security/passwordCheck'
 
 import { redirectIfSignedIn, requireFeature } from '../guards'
@@ -22,6 +23,7 @@ import {
   VerifyEmailForm,
 } from './AuthForms'
 import { passwordlessDepsFor, passwordlessOptions } from '../passwordlessWiring'
+import { passwordOpenFor, type SignInPlace } from '../placeMethods'
 import { passkeySignInAvailable } from '../passkeysWiring'
 import { LastUsedBadge } from './LastUsedBadge'
 import { AuthCaptchaField } from '@/features/security/AuthCaptchaField'
@@ -56,21 +58,25 @@ export const SignInScreen: React.FC<{
   justReset?: boolean
   socialError?: string
   social?: string
-}> = async ({ next, justReset, socialError, social }) => {
+  /** `members` on the member sign-in path (`/account/member-sign-in`); customers use the default. */
+  place?: SignInPlace
+}> = async ({ next, justReset, socialError, social, place = 'account' }) => {
   await redirectIfSignedIn()
 
   const safeNext = next && next.startsWith('/account') && !next.startsWith('//') ? next : '/account'
   const engine = await getEngine()
-  const providers = await publicProviders(engine, 'account')
+  const providers = await publicProviders(engine, place)
   const oneTap = await oneTapAvailable(engine)
   // A social sign-in that still needs its two-step code parks the pending token in an HttpOnly cookie.
   const pending = social === '2fa' ? ((await cookies()).get(PENDING_COOKIE)?.value ?? '') : ''
   const tx = await accountTexts()
   const message = socialError ? socialMessageText(socialError, tx) : ''
   // Off unless the owner switched an emailed option on, so an existing site renders exactly as before.
-  const passwordless = await passwordlessOptions(engine, 'account')
+  const passwordless = await passwordlessOptions(engine, place)
   // Off unless the owner switched passkeys on. Existing sign-in screens render exactly as before.
-  const passkey = await passkeySignInAvailable(engine, 'account')
+  const passkey = await passkeySignInAvailable(engine, place)
+  const passwordOpen = await passwordOpenFor(engine, place)
+  const usernameSignIn = await getSecuritySettings(engine as never).then((v) => v.usernameSignIn.enabled, (): boolean => false)
 
   const sso = await ssoAvailable()
   return (
@@ -81,13 +87,13 @@ export const SignInScreen: React.FC<{
         </p>
       )}
       <LastUsedBadge>
-        <SignInForm next={safeNext} justReset={justReset} initialPendingToken={pending} passwordless={passwordless} passkey={passkey} captcha={<AuthCaptchaField />} />
-        {!pending && oneTap ? <GoogleOneTap next={safeNext} /> : null}
+        <SignInForm next={safeNext} justReset={justReset} initialPendingToken={pending} passwordless={passwordless} passkey={passkey} usernameSignIn={usernameSignIn} place={place} passwordOpen={passwordOpen} captcha={<AuthCaptchaField />} />
+        {!pending && oneTap && place === 'account' ? <GoogleOneTap next={safeNext} /> : null}
         {!pending && (
           <SocialButtons
             providers={providers}
             next={safeNext}
-            area="account"
+            area={place}
             verb={tx('common.continueWith')}
             orLabel={tx('common.or')}
           />
