@@ -45,6 +45,7 @@ export type FeatureKey =
   | 'quotes'
   | 'limits'
   | 'mediatags'
+  | 'siteplanner'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -306,6 +307,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['media_tags', 'media_tag_links'],
+    implemented: true,
+  },
+  {
+    key: 'siteplanner',
+    label: 'Site planner',
+    description: 'Plan a whole site: describe the idea, answer a few questions, get a page tree with a brief for each page, edit it, then create draft pages and track each page from idea to done. Uses the Claude or OpenAI key from Integrations.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['site_plans'],
     implemented: true,
   },
 ]
