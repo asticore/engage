@@ -710,7 +710,11 @@ export type AuthDbOps = {
   emailOtp?: EmailOtpOps
   /** "Remember this device". Absent: every sign-in asks for its code. */
   trustedDevices?: TrustedDeviceOps
+  /** Single-use pending two-step tokens. Absent: a token can be used again until it expires. */
+  pendingTokens?: PendingTokenOps
 }
+
+export type PendingTokenOps = { isUsed: (jti: string) => Promise<boolean>; markUsed: (jti: string, expiresAtIso: string) => Promise<void> }
 
 export type EmailOtpOps = {
   /** True when `code` is the live emailed code for this user. Consumes it. */
@@ -986,7 +990,7 @@ export async function login(db: AuthDbOps, args: LoginArgs): Promise<LoginResult
   // Confirmed two-step: the password alone does not earn a session. Nothing is
   // written yet (no session, no attempt reset); the code step finishes it.
   if (requiresSecondFactor(row) && !(await deviceIsTrusted(db, row.id, args.client, args.secret))) {
-    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: normalizedEmail }, args.secret, PENDING_TWO_FACTOR_SECONDS)
+    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: normalizedEmail, jti: crypto.randomUUID() }, args.secret, PENDING_TWO_FACTOR_SECONDS)
     return { user: toAuthUserDoc(row), twoFactorRequired: true, pendingToken }
   }
 
@@ -1056,7 +1060,7 @@ export async function loginAsUser(db: AuthDbOps, args: LoginAsUserArgs): Promise
   checkLoginPermission(row, now)
 
   if (requiresSecondFactor(row) && !args.skipSecondFactor && !(await deviceIsTrusted(db, row.id, args.client, args.secret))) {
-    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: row.email }, args.secret, PENDING_TWO_FACTOR_SECONDS)
+    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: row.email, jti: crypto.randomUUID() }, args.secret, PENDING_TWO_FACTOR_SECONDS)
     return { user: toAuthUserDoc(row), twoFactorRequired: true, pendingToken }
   }
   return finishLogin(db, row, now, args.secret, undefined, args.client, args.session)
@@ -1074,6 +1078,8 @@ export async function loginWithSecondFactor(db: AuthDbOps, args: LoginSecondFact
   const now = Date.now()
   const claims = typeof args.pendingToken === 'string' ? verifyJWT(args.pendingToken, args.secret) : null
   if (!claims || claims.purpose !== PENDING_PURPOSE || typeof claims.id !== 'number') throw new TwoFactorCodeError()
+  const jti = typeof claims.jti === 'string' ? claims.jti : null
+  if (jti && db.pendingTokens && (await db.pendingTokens.isUsed(jti))) throw new TwoFactorCodeError()
 
   const row = await db.findByID(claims.id)
   checkLoginPermission(row, now)
@@ -1090,6 +1096,7 @@ export async function loginWithSecondFactor(db: AuthDbOps, args: LoginSecondFact
   // mintSession writes the whole row back.
   const fresh = (await db.findByID(row.id)) ?? row
   const result = await finishLogin(db, fresh, now, args.secret, undefined, args.client)
+  if (jti && db.pendingTokens) await db.pendingTokens.markUsed(jti, new Date((typeof claims.exp === 'number' ? claims.exp : Math.floor(now / 1000) + PENDING_TWO_FACTOR_SECONDS) * 1000).toISOString())
 
   // "Remember this device" was ticked: hand back a device cookie for the caller to set.
   if (args.client?.trustDevice && db.trustedDevices) {
