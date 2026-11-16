@@ -67,6 +67,7 @@ const BookingsView = lazyView(() => import('@/admin/views/BookingsView').then((m
 const QuotesView = lazyView(() => import('@/admin/views/QuotesView').then((mod) => mod.QuotesView))
 const PurchaseLimitsView = lazyView(() => import('@/admin/views/PurchaseLimitsView').then((mod) => mod.PurchaseLimitsView))
 const AuthenticationView = lazyView(() => import('@/admin/views/AuthenticationView').then((mod) => mod.AuthenticationView))
+const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').then((mod) => mod.AffiliatesView))
 const SitePlannerView = lazyView(() => import('@/admin/views/SitePlannerView').then((mod) => mod.SitePlannerView))
 const MediaTagsView = lazyView(() => import('@/admin/views/MediaTagsView').then((mod) => mod.MediaTagsView))
 const PastDueMembersView = lazyView(() => import('@/admin/views/PastDueMembersView').then((mod) => mod.PastDueMembersView))
@@ -250,6 +251,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'quotes', Component: QuotesView, path: '/quotes', meta: { title: 'Quotes and requests', description: 'Quote, offer and item requests, and the quotes sent back.' } },
   { key: 'purchase-limits', Component: PurchaseLimitsView, path: '/purchase-limits', meta: { title: 'Purchase limits', description: 'Per-person limits, waits between orders and refused attempts.' } },
   { key: 'authentication', Component: AuthenticationView, path: '/authentication', meta: { title: 'Authentication', description: 'Every sign-in method with its status and a link to change it.' } },
+  { key: 'affiliates', Component: AffiliatesView, path: '/affiliates', meta: { title: 'Affiliates', description: 'Partners with referral links and the visits they bring.' } },
   { key: 'site-planner', Component: SitePlannerView, path: '/site-planner', meta: { title: 'Site planner', description: 'Plan the pages of a whole site with briefs, then create draft pages.' } },
   { key: 'media-tags', Component: MediaTagsView, path: '/media-tags', meta: { title: 'Media tags', description: 'Parent and child tags with colours for media files.' } },
   { key: 'past-due-members', Component: PastDueMembersView, path: '/past-due-members', meta: { title: 'Past due members', description: 'Members whose renewal payment failed, with retry and end controls.' } },
