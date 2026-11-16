@@ -545,6 +545,9 @@ const pendingBindingHolds = (claims: Record<string, unknown>, presented: string 
 }
 const PENDING_PURPOSE = 'two-factor-pending'
 
+/** A method name is lowercase letters, digits and dashes, up to 32 characters; anything else is not recorded. */
+const cleanLoginMethod = (value: unknown): string | undefined => (typeof value === 'string' && /^[a-z0-9-]{1,32}$/.test(value) ? value : undefined)
+
 /* -------------------------------------------------------------------------- */
 /* Errors                                                                      */
 /* -------------------------------------------------------------------------- */
@@ -661,6 +664,9 @@ export type AuthUserRow = {
   twoFactorConfirmedAt?: string | null
   twoFactorLastUsedStep?: number | null
   twoFactorBackupHashes?: string | null
+  /** How the account last signed in ('password', 'magic-link', 'email-code', 'passkey', or a social provider id) and when. Set by `finishLogin`. */
+  lastLoginMethod?: string | null
+  lastLoginAt?: string | null
   updatedAt: string
   createdAt: string
 }
@@ -946,13 +952,13 @@ async function incrementAndCheckLock(db: AuthDbOps, row: AuthUserRow, now: numbe
  * merged row if the mock/adapter returns `null`, so callers always get a
  * consistent shape to build the JWT/response from).
  */
-async function mintSession(db: AuthDbOps, row: AuthUserRow, now: number): Promise<{ sid: string; row: AuthUserRow }> {
+async function mintSession(db: AuthDbOps, row: AuthUserRow, now: number, method?: string): Promise<{ sid: string; row: AuthUserRow }> {
   const sid = crypto.randomUUID()
   const session: AuthSession = { id: sid, createdAt: new Date(now).toISOString(), expiresAt: new Date(now + TOKEN_EXPIRATION_SECONDS * 1000).toISOString() }
   const newSessions = [...pruneExpiredSessions(row.sessions, now), session]
 
   const { id, createdAt: _createdAt, ...authRowRest } = row
-  const updated = await db.updateByID(id, { ...authRowRest, sessions: newSessions, updatedAt: null })
+  const updated = await db.updateByID(id, { ...authRowRest, sessions: newSessions, updatedAt: null, ...(method ? { lastLoginMethod: method, lastLoginAt: new Date(now).toISOString() } : {}) })
 
   return { sid, row: updated ?? { ...row, sessions: newSessions } }
 }
@@ -1006,11 +1012,11 @@ export async function login(db: AuthDbOps, args: LoginArgs): Promise<LoginResult
   // written yet (no session, no attempt reset); the code step finishes it.
   if (requiresSecondFactor(row) && !(await deviceIsTrusted(db, row.id, args.client, args.secret))) {
     const bind = newPendingBinding()
-    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: normalizedEmail, jti: crypto.randomUUID(), pb: bind.hash }, args.secret, PENDING_TWO_FACTOR_SECONDS)
+    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: normalizedEmail, method: 'password', jti: crypto.randomUUID(), pb: bind.hash }, args.secret, PENDING_TWO_FACTOR_SECONDS)
     return { user: toAuthUserDoc(row), twoFactorRequired: true, pendingToken, pendingBinding: bind.nonce }
   }
 
-  return finishLogin(db, row, now, args.secret, normalizedEmail, args.client)
+  return finishLogin(db, row, now, args.secret, normalizedEmail, args.client, undefined, 'password')
 }
 
 /** A remembered device stands in for the code, never for the password. False on any doubt or failure. */
@@ -1024,8 +1030,8 @@ async function deviceIsTrusted(db: AuthDbOps, userId: number, client: SessionCli
 }
 
 /** Mints the session, clears the failed-attempt counters and signs the JWT. Shared by the one-step and two-step paths. */
-async function finishLogin(db: AuthDbOps, row: AuthUserRow, now: number, secret: string, email: string = row.email, client?: SessionClient, override?: SessionOverride): Promise<LoginResult> {
-  const { sid, row: rowAfterSession } = await mintSession(db, row, now)
+async function finishLogin(db: AuthDbOps, row: AuthUserRow, now: number, secret: string, email: string = row.email, client?: SessionClient, override?: SessionOverride, method?: string): Promise<LoginResult> {
+  const { sid, row: rowAfterSession } = await mintSession(db, row, now, override ? undefined : cleanLoginMethod(method))
   const device = await openDeviceSession(db, row.id, now, override?.label ? { ...client, label: override.label } : client, override?.ttlSeconds)
 
   let finalRow = rowAfterSession
@@ -1061,6 +1067,8 @@ export type LoginAsUserArgs = {
   skipSecondFactor?: boolean
   /** Set only by admin impersonation. See SessionOverride. */
   session?: SessionOverride
+  /** How the identity was proven: 'magic-link', 'email-code', 'passkey' or a social provider id. Recorded on the user as the last login method. */
+  method?: string
 }
 
 /**
@@ -1077,10 +1085,10 @@ export async function loginAsUser(db: AuthDbOps, args: LoginAsUserArgs): Promise
 
   if (requiresSecondFactor(row) && !args.skipSecondFactor && !(await deviceIsTrusted(db, row.id, args.client, args.secret))) {
     const bind = newPendingBinding()
-    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: row.email, jti: crypto.randomUUID(), pb: bind.hash }, args.secret, PENDING_TWO_FACTOR_SECONDS)
+    const { token: pendingToken } = signJWT({ purpose: PENDING_PURPOSE, id: row.id, email: row.email, method: cleanLoginMethod(args.method) ?? 'other', jti: crypto.randomUUID(), pb: bind.hash }, args.secret, PENDING_TWO_FACTOR_SECONDS)
     return { user: toAuthUserDoc(row), twoFactorRequired: true, pendingToken, pendingBinding: bind.nonce }
   }
-  return finishLogin(db, row, now, args.secret, undefined, args.client, args.session)
+  return finishLogin(db, row, now, args.secret, undefined, args.client, args.session, args.method)
 }
 
 export type LoginSecondFactorArgs = { pendingToken: string; code: string; secret: string; client?: SessionClient; /** 'email' checks the emailed code instead of an authenticator or backup code. 'passkey' takes no code: it is accepted only when `passkeyVerifiedUserId` (set by the server after it checked the assertion) equals the pending token's user. */ method?: 'email' | 'app' | 'passkey'; /** Server-only. Never read from a request body. */ passkeyVerifiedUserId?: number }
@@ -1122,7 +1130,7 @@ export async function loginWithSecondFactor(db: AuthDbOps, args: LoginSecondFact
   // Re-read: the check just wrote lastUsedStep / the backup list, and
   // mintSession writes the whole row back.
   const fresh = (await db.findByID(row.id)) ?? row
-  const result = await finishLogin(db, fresh, now, args.secret, undefined, args.client)
+  const result = await finishLogin(db, fresh, now, args.secret, undefined, args.client, undefined, typeof claims.method === 'string' && claims.method !== 'other' ? claims.method : undefined)
   if (jti && db.pendingTokens) await db.pendingTokens.markUsed(jti, new Date((typeof claims.exp === 'number' ? claims.exp : Math.floor(now / 1000) + PENDING_TWO_FACTOR_SECONDS) * 1000).toISOString())
 
   // "Remember this device" was ticked: hand back a device cookie for the caller to set.

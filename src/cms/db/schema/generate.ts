@@ -169,6 +169,8 @@ function authColumns(): Record<string, SQLiteColumnBuilderBase> {
     twoFactorSecret: text(toSnakeCase('twoFactorSecret')),
     twoFactorConfirmedAt: text(toSnakeCase('twoFactorConfirmedAt')),
     twoFactorLastUsedStep: numeric(toSnakeCase('twoFactorLastUsedStep'), { mode: 'number' }),
+    lastLoginMethod: text(toSnakeCase('lastLoginMethod')),
+    lastLoginAt: text(toSnakeCase('lastLoginAt')),
   }
 }
 

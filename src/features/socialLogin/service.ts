@@ -80,6 +80,15 @@ async function verificationGate(deps: PolicyDeps, user: UserLite, identity: Iden
   return refuse('verify-first')
 }
 
+/**
+ * Account-linking rule (written down, Task 23e):
+ *  1. A provider sign-in links to an existing account only when BOTH the provider's email is verified
+ *     and the account's email is verified, and the two addresses match. Otherwise it is refused.
+ *  2. Staff and admin accounts are never linked automatically.
+ *  3. A signed-in person may link a provider themselves (they already proved who they are).
+ *  4. A link can be removed at any time, except the last way into the account: with no password,
+ *     no other provider and no passkey or emailed sign-in, the unlink is refused.
+ */
 /** Sign-in: find or create the account for this identity. */
 export async function resolveSignIn(deps: PolicyDeps, identity: Identity, opts: { allowCreate: boolean }): Promise<Outcome> {
   const existing = await deps.store.findByProviderUser(identity.provider, identity.providerUserId)
@@ -138,17 +147,17 @@ export type UnlinkOutcome = { ok: boolean; message?: string }
  * their own and no other connected provider, the person would be locked out.
  */
 export async function resolveUnlink(
-  deps: Pick<PolicyDeps, 'store'> & { hasPassword(userId: number): Promise<boolean> },
+  deps: Pick<PolicyDeps, 'store'> & { hasPassword(userId: number): Promise<boolean>; /** A passkey, or an emailed sign-in the account can use. Optional; absent means none. */ hasOtherMethod?(userId: number): Promise<boolean> },
   userId: number,
   provider: ProviderId,
 ): Promise<UnlinkOutcome> {
   const links: SocialAccountRow[] = await deps.store.listForUser(userId)
   if (!links.some((l) => l.provider === provider)) return { ok: false, message: 'That account is not connected.' }
   const others = links.filter((l) => l.provider !== provider).length
-  if (others === 0 && !(await deps.hasPassword(userId))) {
+  if (others === 0 && !(await deps.hasPassword(userId)) && !(await deps.hasOtherMethod?.(userId))) {
     return {
       ok: false,
-      message: 'This is the only way you can sign in. Set a password first (use Forgotten your password), then disconnect it.',
+      message: 'This is the only way you can sign in. Set a password or add a passkey first, then disconnect it.',
     }
   }
   const removed = await deps.store.remove(userId, provider)

@@ -249,6 +249,8 @@ export interface User {
   twoFactorSecret?: string | null;
   twoFactorConfirmedAt?: string | null;
   twoFactorLastUsedStep?: number | null;
+  lastLoginMethod?: string | null;
+  lastLoginAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

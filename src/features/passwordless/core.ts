@@ -211,6 +211,7 @@ const finish = async (deps: PasswordlessDeps, row: LoginTokenRow, now: number): 
       collection: USERS_SLUG,
       id: row.userId,
       client: deps.client,
+      method: row.kind === 'code' ? 'email-code' : 'magic-link',
     } as never)
   } catch {
     // Includes a lock that tripped between the checks above.

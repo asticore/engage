@@ -902,6 +902,15 @@ describe('unlinking', () => {
     expect(world.links).toHaveLength(1)
   })
 
+  it('allows removing the last provider when a passkey or emailed sign-in remains', async () => {
+    const world = makeWorld(googleConfig())
+    await googleLogin(world, { email: 'passkey-user@example.com', email_verified: true })
+    const user = world.rows[0]
+    const base = { store: world.store, hasPassword: async () => false }
+    expect((await resolveUnlink({ ...base, hasOtherMethod: async () => false }, user.id, 'google')).ok).toBe(false)
+    expect((await resolveUnlink({ ...base, hasOtherMethod: async () => true }, user.id, 'google')).ok).toBe(true)
+  })
+
   it('allows it with a password of their own, or with another provider connected', async () => {
     const world = makeWorld(googleConfig())
     const user = world.addUser('pat@example.com', ['customer'])
