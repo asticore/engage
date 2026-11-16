@@ -46,6 +46,7 @@ import { siteEffectsFor } from '@/components/site/siteEffectsConfig'
 import { renderChromeTemplates, renderSidebarTemplates, requestPathOf, type ChromeScope } from '@/features/siteTemplates/chrome'
 import { SidebarLayout } from '@/features/siteTemplates/SidebarLayout'
 import { AffiliateCapture } from '@/features/affiliates/components/AffiliateCapture.server'
+import { SiteChatbot } from '@/features/chatbot/components/ChatWidget.server'
 import { ImpersonationBanner } from '@/features/impersonation/components/ImpersonationBanner'
 import { directionFor } from '@/features/multilingual/detect'
 import { LOCALE_HEADER, requestLocale } from '@/features/multilingual/routing'
@@ -268,6 +269,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       <body>
         <ImpersonationBanner />
         <AffiliateCapture />
+        <SiteChatbot />
         <SeoScripts country={country} />
         <SeoJsonLd />
         <AdsRoot />

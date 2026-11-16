@@ -20,6 +20,7 @@ import { EMBED_CODE_COMPONENTS } from './EmbedCodeServer'
 import { TEMPLATE_PART_COMPONENTS } from './TemplatePartServer'
 import { DynamicTextElement } from './DynamicText'
 import SearchSuggest from './SearchSuggest'
+import { ChatWidget } from '@/features/chatbot/components/ChatWidget'
 import './wave38.css'
 import './navMenu.css'
 
@@ -258,6 +259,9 @@ export const NavMenuElement: React.FC<P> = async (p) => {
   )
 }
 
+/** `chatbot`: the chat box in the page. The widget hides itself when the Chatbot feature is off. */
+export const ChatbotElement: React.FC<P> = () => <ChatWidget inline />
+
 /* ---------- search box ---------- */
 
 /**
@@ -392,6 +396,7 @@ const SITE_RENDERERS: Record<string, React.ComponentType<P>> = {
   'site-title': SiteTitleElement,
   'nav-menu': NavMenuElement,
   'search-box': SearchBoxElement,
+  chatbot: ChatbotElement,
   'post-list': PostListElement,
   loop: LoopElement,
   'dynamic-text': DynamicTextElement,
