@@ -48,6 +48,9 @@ export const CartLinesPart: React.FC = () => {
           const isBundle = typeof product === 'object' && product !== null && (product as unknown as { productType?: string }).productType === 'bundle'
           const bundle = isBundle ? bundles[String((product as { id: number }).id)] : undefined
           const line = typeof product === 'object' && !isBundle ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, 1) : null
+          // Warns when the quantity in the cart can no longer be bought (stock, limits). The server decides again at checkout.
+          const whole = typeof product === 'object' && !isBundle ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, item.quantity) : null
+          const stockWarning = whole && !whole.ok ? (whole as { error: string }).error : null
           const unitPrice = isBundle ? (bundle && bundle.priceCents !== null ? bundle.priceCents / 100 : null) : line && line.ok ? line.unitPrice : typeof product === 'object' ? product.priceInAUD : null
           return (
             <li
@@ -60,7 +63,8 @@ export const CartLinesPart: React.FC = () => {
                 {readAddOnChoices(item.addOns).length > 0 ? <p className="text-[0.85rem] opacity-70">{addOnSummary(readAddOnChoices(item.addOns))}</p> : null}
                 <p>{money(unitPrice)}</p>
                 {isBundle && bundle ? <BundleContentsList items={bundle.contents} /> : null}
-                {isBundle && bundle && !bundle.available ? <p role="alert" className="text-[#b3261e]">This bundle is not available right now.</p> : null}
+                {stockWarning ? <p role="alert" className="text-[#b3261e]">{stockWarning}</p> : null}
+              {isBundle && bundle && !bundle.available ? <p role="alert" className="text-[#b3261e]">This bundle is not available right now.</p> : null}
               </div>
               <div className="flex items-center gap-3">
                 <button

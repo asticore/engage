@@ -57,6 +57,15 @@ export const ShopExtraSettings: GlobalConfig = {
       },
     },
     {
+      name: 'cartLifetimeDays',
+      type: 'number',
+      label: 'Cart lifetime (days)',
+      defaultValue: 30,
+      min: 1,
+      max: 365,
+      admin: { description: 'How long a signed-out cart nobody has touched is kept before the clean-up deletes it. Between 1 and 365. Account carts and paid carts are never deleted.' },
+    },
+    {
       name: 'giftWrapEnabled',
       type: 'checkbox',
       label: 'Offer gift wrap at checkout',

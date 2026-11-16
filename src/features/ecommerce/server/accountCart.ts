@@ -99,9 +99,9 @@ export const engineAccountCartStore = (engine: EngineLike): AccountCartStore => 
   newSecret: () => crypto.randomBytes(20).toString('hex'),
 })
 
-/** Deletes guest carts nobody has touched for GUEST_CART_DAYS days. Bounded per run. Purchased carts and account carts stay. */
-export async function sweepGuestCarts(engine: EngineLike, now: Date = new Date(), limit = 200): Promise<number> {
-  const cutoff = new Date(now.getTime() - GUEST_CART_DAYS * 24 * 3_600_000).toISOString()
+/** Deletes guest carts nobody has touched for `days` days (the Cart lifetime setting, 30 by default). Bounded per run. Purchased carts and account carts stay. */
+export async function sweepGuestCarts(engine: EngineLike, now: Date = new Date(), limit = 200, days: number = GUEST_CART_DAYS): Promise<number> {
+  const cutoff = new Date(now.getTime() - days * 24 * 3_600_000).toISOString()
   const old = await engine.find({
     collection: 'carts',
     where: { and: [{ updatedAt: { less_than: cutoff } }, { customer: { exists: false } }, { purchasedAt: { exists: false } }] },
