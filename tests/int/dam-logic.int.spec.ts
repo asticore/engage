@@ -137,8 +137,8 @@ describe('content hash and settings', () => {
   })
   it('validates collections and settings', () => {
     expect(parseCollection({ name: ' ' }, [], null).ok).toBe(false)
-    expect(parseCollection({ name: 'Summer' }, [{ id: 1, name: 'summer', description: '', count: 0 }], null).ok).toBe(false)
-    expect(parseCollection({ name: 'Summer' }, [{ id: 1, name: 'summer', description: '', count: 0 }], 1).ok).toBe(true)
+    expect(parseCollection({ name: 'Summer' }, [{ id: 1, name: 'summer', description: '', count: 0, smart: false }], null).ok).toBe(false)
+    expect(parseCollection({ name: 'Summer' }, [{ id: 1, name: 'summer', description: '', count: 0, smart: false }], 1).ok).toBe(true)
     expect(parseSettings({ keepVersions: 99, expiryWarnDays: 30, quotaMb: 0 }).ok).toBe(false)
     expect(parseSettings({ keepVersions: 5, expiryWarnDays: 30, quotaMb: 0, duplicateAction: 'maybe' }).ok).toBe(false)
     const ok = parseSettings({ keepVersions: 5, expiryWarnDays: 14, quotaMb: 100, duplicateAction: 'block', stripGps: false })

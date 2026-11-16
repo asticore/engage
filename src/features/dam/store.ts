@@ -1,5 +1,6 @@
 import { APPLIES_TO, FIELD_TYPES, type MetaField, type MetaFieldInput } from './metaFields'
 import { EMPTY_RIGHTS, STATUSES, type AssetStatus, type Rights } from './rights'
+import { buildSearch, parseFilters, type SearchContext, type SearchFilters } from './search'
 import type { Version } from './versions'
 
 type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T[] }>; run: () => Promise<{ meta?: { last_row_id?: number; changes?: number } }> } }
@@ -150,10 +151,11 @@ export async function expiredIds(d1: D1, todayIso: string): Promise<Array<{ medi
 
 // Collections
 
-export type Collection = { id: number; name: string; description: string; count: number }
+/** `count` is -1 for a smart collection, whose files come from a saved search. */
+export type Collection = { id: number; name: string; description: string; count: number; smart: boolean }
 
 export async function listCollections(d1: D1): Promise<Collection[]> {
-  return (await all(d1, 'SELECT c.id AS id, c.name AS name, c.description AS description, (SELECT COUNT(*) FROM eg_media_collection_items i WHERE i.collection_id = c.id) AS n FROM eg_media_collections c ORDER BY c.name')).map((r) => ({ id: Number(r.id), name: str(r.name), description: str(r.description), count: Number(r.n) }))
+  return (await all(d1, 'SELECT c.id AS id, c.name AS name, c.description AS description, (SELECT COUNT(*) FROM eg_media_collection_items i WHERE i.collection_id = c.id) AS n, c.smart_query AS smart_query FROM eg_media_collections c ORDER BY c.name')).map((r) => ({ id: Number(r.id), name: str(r.name), description: str(r.description), count: str(r.smart_query) ? -1 : Number(r.n), smart: Boolean(str(r.smart_query)) }))
 }
 export function parseCollection(input: Record<string, unknown>, existing: Collection[], selfId: number | null): { ok: true; value: { name: string; description: string } } | { ok: false; error: string } {
   const name = String(input.name ?? '').replace(/\s+/g, ' ').trim()
@@ -250,4 +252,71 @@ export async function purgeAsset(d1: D1, mediaId: number): Promise<string[]> {
   await run(d1, 'DELETE FROM eg_media_assets WHERE media_id = ?1', mediaId)
   await run(d1, 'DELETE FROM eg_media_collection_items WHERE media_id = ?1', mediaId)
   return keys
+}
+
+// Search, saved searches and smart collections
+
+/** Replaces the searchable text of a file (details, caption, camera data and words read from a document). */
+export async function setSearchText(d1: D1, mediaId: number, text: string, nowIso: string): Promise<void> {
+  await ensureRow(d1, mediaId, nowIso)
+  await run(d1, 'UPDATE eg_media_assets SET search_text=?1, updated_at=?2 WHERE media_id=?3', text, nowIso, mediaId)
+}
+
+export type SearchHit = { id: number; filename: string | null; url: string | null; alt: string | null; mimeType: string | null; filesize: number | null; width: number | null; height: number | null; folder: string | null; status: string; licenceExpiry: string | null }
+
+export async function runSearch(d1: D1, f: SearchFilters, ctx: SearchContext, page: number, pageSize: number): Promise<{ docs: SearchHit[]; total: number }> {
+  const q = buildSearch(f, ctx, page, pageSize)
+  const rows = await all(d1, q.sql, ...q.args)
+  const total = Number((await all(d1, q.countSql, ...q.args))[0]?.n ?? 0)
+  const num = (v: unknown): number | null => (v === null || v === undefined ? null : Number(v))
+  return {
+    total,
+    docs: rows.map((r) => ({ id: Number(r.id), filename: nullable(r.filename), url: nullable(r.url), alt: nullable(r.alt), mimeType: nullable(r.mime_type), filesize: num(r.filesize), width: num(r.width), height: num(r.height), folder: nullable(r.folder), status: str(r.status) || 'approved', licenceExpiry: nullable(r.licence_expiry) })),
+  }
+}
+
+/** A tag and all its sub-tags. Empty when the tags feature has no tables yet (it is off). */
+export async function tagWithChildren(d1: D1, tagId: number): Promise<number[]> {
+  try {
+    return (await all(d1, 'WITH RECURSIVE t(id) AS (SELECT ?1 UNION SELECT c.id FROM eg_media_tags c JOIN t ON c.parent_id = t.id) SELECT id FROM t', tagId)).map((r) => Number(r.id))
+  } catch {
+    return []
+  }
+}
+
+/** Every file a smart collection holds right now (up to 5000). */
+export async function smartCollectionIds(d1: D1, collectionId: number, ctx: SearchContext): Promise<number[]> {
+  const row = (await all(d1, 'SELECT smart_query FROM eg_media_collections WHERE id = ?1', collectionId))[0]
+  const filters = parseFilters(json(str(row?.smart_query)))
+  if (filters.tagId && !ctx.tagIds) ctx = { ...ctx, tagIds: await tagWithChildren(d1, filters.tagId) }
+  const ids: number[] = []
+  for (let page = 1; page <= 25; page++) {
+    const { docs, total } = await runSearch(d1, { ...filters, collectionId: 0 }, ctx, page, 200)
+    ids.push(...docs.map((d) => d.id))
+    if (ids.length >= total || docs.length === 0) break
+  }
+  return ids
+}
+
+export type SavedSearch = { id: number; name: string; filters: SearchFilters }
+
+export async function listSavedSearches(d1: D1): Promise<SavedSearch[]> {
+  return (await all(d1, 'SELECT id, name, query_json FROM eg_media_saved_searches ORDER BY name')).map((r) => ({ id: Number(r.id), name: str(r.name), filters: parseFilters(json(str(r.query_json))) }))
+}
+export function parseSearchName(input: unknown): { ok: true; value: string } | { ok: false; error: string } {
+  const name = String(input ?? '').replace(/\s+/g, ' ').trim()
+  if (!name) return { ok: false, error: 'Give it a name.' }
+  if (name.length > 80) return { ok: false, error: 'Names can be up to 80 characters.' }
+  return { ok: true, value: name }
+}
+export async function saveSearch(d1: D1, name: string, filters: SearchFilters, userId: number | null, nowIso: string): Promise<number> {
+  const res = await run(d1, 'INSERT INTO eg_media_saved_searches (name, query_json, user_id, updated_at, created_at) VALUES (?1,?2,?3,?4,?4)', name, JSON.stringify(filters), userId, nowIso)
+  return Number(res.meta?.last_row_id ?? 0)
+}
+export async function deleteSearch(d1: D1, id: number): Promise<void> {
+  await run(d1, 'DELETE FROM eg_media_saved_searches WHERE id = ?1', id)
+}
+export async function saveSmartCollection(d1: D1, name: string, filters: SearchFilters, nowIso: string): Promise<number> {
+  const res = await run(d1, "INSERT INTO eg_media_collections (name, description, smart_query, updated_at, created_at) VALUES (?1,'',?2,?3,?3)", name, JSON.stringify({ ...filters, collectionId: 0 }), nowIso)
+  return Number(res.meta?.last_row_id ?? 0)
 }
