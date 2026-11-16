@@ -202,6 +202,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
     description: 'Password policies, 2FA and security options.',
     sections: [
       { kind: 'global', slug: 'security-settings' },
+      { kind: 'link', label: 'Authentication overview', href: '/authentication', description: 'Every sign-in method in one list: password, magic link, email code, passkeys, two-step and each social provider, with its status and where to change it.', type: 'view' },
       { kind: 'link', label: 'Two-step sign-in', href: '/security/two-factor', description: 'Set up an authenticator app and backup codes for your own account.', type: 'view' },
       { kind: 'link', label: 'Signed-in devices', href: '/security/sessions', description: 'See where your account is signed in, sign out a device, or sign out an account you manage.', type: 'view' },
       { kind: 'link', label: 'Passkeys', href: '/security/passkeys', description: 'Register a passkey on your own account, and see whether the site allows passkeys for admins.', type: 'view' },
