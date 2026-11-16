@@ -43,7 +43,7 @@ export type RequestOutcome = { ok: boolean; message: string }
 
 export type VerifyOutcome =
   | { status: 'ok'; token: string }
-  | { status: 'two-factor'; pendingToken: string }
+  | { status: 'two-factor'; pendingToken: string; pendingBinding?: string }
   | { status: 'refused'; message: string }
 
 export const NEUTRAL_MESSAGE = NEUTRAL_EMAIL_NOTICE
@@ -205,7 +205,7 @@ const finish = async (deps: PasswordlessDeps, row: LoginTokenRow, now: number): 
       .catch((): undefined => undefined)
   }
 
-  let result: { token?: string; twoFactorRequired?: boolean; pendingToken?: string }
+  let result: { token?: string; twoFactorRequired?: boolean; pendingToken?: string; pendingBinding?: string }
   try {
     result = await deps.engine.loginAsUser({
       collection: USERS_SLUG,
@@ -219,7 +219,7 @@ const finish = async (deps: PasswordlessDeps, row: LoginTokenRow, now: number): 
 
   if (result.twoFactorRequired && result.pendingToken) {
     await deps.audit?.('passwordless.login', `${row.kind}: two-step code next`, row.userId)
-    return { status: 'two-factor', pendingToken: result.pendingToken }
+    return { status: 'two-factor', pendingToken: result.pendingToken, pendingBinding: result.pendingBinding }
   }
   if (!result.token) return refuse(deps, row.kind, row.userId)
   await deps.audit?.('passwordless.login', row.kind, row.userId)

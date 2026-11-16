@@ -67,7 +67,7 @@ export const passkeyDepsFor = async (engine: Engine, client: PasskeyClient, requ
     userAgent: client.userAgent,
     findUser: async (id): Promise<PasskeyUser | null> =>
       ((await engine.findByID({ collection: USERS_SLUG, id, depth: 0, overrideAccess: true }).catch((): null => null)) as PasskeyUser | null) ?? null,
-    loginAsUser: async (userId, skipSecondFactor): Promise<{ token?: string; twoFactorRequired?: boolean; pendingToken?: string }> =>
+    loginAsUser: async (userId, skipSecondFactor): Promise<{ token?: string; twoFactorRequired?: boolean; pendingToken?: string; pendingBinding?: string }> =>
       (await engine.loginAsUser({ collection: USERS_SLUG, id: userId, client: { userAgent: client.userAgent, ip: client.ip, country: client.country ?? null }, skipSecondFactor } as never)) as never,
     reauthenticate,
     hasOtherSignInMethod: (userId) => hasOtherSignIn(engine, userId, settings),

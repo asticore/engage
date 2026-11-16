@@ -1,4 +1,5 @@
 import type { AuditAction } from '@/features/security/auditLog'
+import { buildPendingBindingCookie } from '@/features/security/pendingBinding'
 
 import { EndpointError, resolveEndpoints, type Endpoints } from './endpoints'
 import { buildAuthorizeUrl, exchangeForIdentity, FlowError, identityFromClaims, type Identity } from './flow'
@@ -39,7 +40,7 @@ export type SocialRuntime = {
   /** The user the request's session cookie belongs to, or null. */
   sessionUser(request: Request): Promise<SessionUser | null>
   /** Session or pending second-factor token for an identity already proven. Throws when the account is locked or gone. */
-  login(userId: number, request: Request): Promise<{ token?: string; pendingToken?: string }>
+  login(userId: number, request: Request): Promise<{ token?: string; pendingToken?: string; pendingBinding?: string }>
   audit(action: AuditAction, request: Request, entry: { actorId?: number | null; actorEmail?: string | null; detail: string }): Promise<void>
   limited(request: Request): Promise<boolean>
   sessionCookie: { name: string; maxAgeSeconds: number }
@@ -290,7 +291,7 @@ async function finishSignIn(
   const outcome: Outcome = await resolveSignIn(deps, identity, { allowCreate: area === 'account' })
   if (!outcome.ok) return { ok: false, code: outcome.code }
 
-  let result: { token?: string; pendingToken?: string }
+  let result: { token?: string; pendingToken?: string; pendingBinding?: string }
   try {
     result = await rt.login(outcome.userId, request)
   } catch {
@@ -310,7 +311,8 @@ async function finishSignIn(
     await rt.audit('social.login', request, { actorId: outcome.userId, detail: `${id}: password-equivalent step done, awaiting two-step code` })
     const pendingCookie = serialize(PENDING_COOKIE, result.pendingToken, { maxAge: PENDING_MAX_AGE_S, secure, path: '/' })
     const to = staff || area === 'admin' ? '/admin/login?social=2fa' : `/account/sign-in?social=2fa&next=${encodeURIComponent(target)}`
-    return { ok: true, to, cookies: [pendingCookie] }
+    const bindCookie = result.pendingBinding ? [buildPendingBindingCookie(result.pendingBinding, secure)] : []
+    return { ok: true, to, cookies: [pendingCookie, ...bindCookie] }
   }
   if (!result.token) return { ok: false, code: 'locked', detail: 'no token' }
 

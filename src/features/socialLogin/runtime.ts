@@ -110,7 +110,7 @@ export async function defaultRuntime(): Promise<SocialRuntime> {
           trustedDeviceToken: trustedTokenFromCookieHeader(request.headers.get('cookie')),
         },
       })
-      return { token: result.token, pendingToken: result.pendingToken }
+      return { token: result.token, pendingToken: result.pendingToken, pendingBinding: result.pendingBinding }
     },
     async audit(action: AuditAction, request, entry) {
       try {

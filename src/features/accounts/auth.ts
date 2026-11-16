@@ -64,6 +64,8 @@ export type SignInResult = {
   /** True when the password was right and a two-step code is the next step. */
   needsTwoFactor?: boolean
   pendingToken?: string
+  /** The value to set in the browser-binding cookie alongside the pending token. */
+  pendingBinding?: string
   /** Set after a second step with "remember this device" ticked: the cookie value to store. */
   trustedDevice?: { token: string; maxAgeSeconds: number }
   /** Set on a refused password or code: `locked` when the account is in its lockout window. For the audit log only. */
@@ -291,7 +293,7 @@ export const signIn = async (
     // Confirmed two-step: the password was right, but no session exists until
     // a code is given. Only people who finished setup ever get here.
     if (result.twoFactorRequired && result.pendingToken) {
-      return { ok: false, needsTwoFactor: true, pendingToken: result.pendingToken }
+      return { ok: false, needsTwoFactor: true, pendingToken: result.pendingToken, pendingBinding: result.pendingBinding }
     }
     if (!result.token) return { ok: false, message: SIGN_IN_FAILED, reason: 'failed' }
 

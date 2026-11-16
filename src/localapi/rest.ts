@@ -169,6 +169,7 @@ import { clientKey, hit, hitShared, limitFor } from '@/features/security/rateLim
 import { audit, auditContext } from '@/features/security/auditLog'
 import { recordAuthEvent } from '@/features/security/authAudit'
 import { TRUSTED_DEVICE_COOKIE, trustedTokenFromCookieHeader } from '@/features/security/trustedDevices'
+import { buildClearedPendingBindingCookie, buildPendingBindingCookie, pendingBindingFromCookieHeader } from '@/features/security/pendingBinding'
 import { evaluateEnforcement, isEnrolmentSafeRoute } from '@/features/security/twoFactorEnforcement'
 import { ADMIN_ENROL_PATH, MEMBER_ENROL_PATH } from '@/features/security/twoFactor'
 import { sessionIdFromToken } from '@/features/security/userSessions'
@@ -559,9 +560,9 @@ async function handleFind(engine: Engine, collection: string, request: Request, 
 }
 
 /** What a new session row records about the browser signing in. */
-function sessionClient(request: Request): { userAgent: string | null; ip: string | null; country: string | null; trustedDeviceToken: string | null } {
+function sessionClient(request: Request): { userAgent: string | null; ip: string | null; country: string | null; trustedDeviceToken: string | null; pendingBinding: string | null } {
   const { ip, userAgent } = auditContext(request)
-  return { userAgent: userAgent ?? null, ip: ip ?? null, country: request.headers.get('cf-ipcountry'), trustedDeviceToken: trustedTokenFromCookieHeader(request.headers.get('cookie')) }
+  return { userAgent: userAgent ?? null, ip: ip ?? null, country: request.headers.get('cf-ipcountry'), trustedDeviceToken: trustedTokenFromCookieHeader(request.headers.get('cookie')), pendingBinding: pendingBindingFromCookieHeader(request.headers.get('cookie')) }
 }
 
 /** The remembered-device cookie: HttpOnly, lax, scoped to the whole site, lasting `maxAgeSeconds`. */
@@ -1535,7 +1536,9 @@ async function handleLogin(engine: Engine, collection: string, request: Request)
   // Confirmed two-step: password right, session not yet issued. No cookie, and
   // nothing about the account beyond the fact that a code is needed.
   if (result.twoFactorRequired) {
-    return Response.json({ message: 'A two-step code is required.', twoFactorRequired: true, pendingToken: result.pendingToken }, { status: 200 })
+    const pendingHeaders = new Headers()
+    if (result.pendingBinding) pendingHeaders.append('Set-Cookie', buildPendingBindingCookie(result.pendingBinding))
+    return Response.json({ message: 'A two-step code is required.', twoFactorRequired: true, pendingToken: result.pendingToken }, { status: 200, headers: pendingHeaders })
   }
   await recordAuthEvent(engine, { action: 'login.success', collectionSlug: collection, actorId: result.user?.id ?? null, actorEmail: address }, auditContext(request))
   const headers = new Headers()
@@ -1554,7 +1557,7 @@ async function handleSecondFactorEmail(engine: Engine, collection: string, reque
     return Response.json({ errors: [{ name: 'TooManyRequests', message: 'Too many attempts. Wait a few minutes and sign in again.' }] }, { status: 429, headers: { 'Retry-After': String(decision.retryAfterSeconds) } })
   }
   const { data } = await readRequestBody(request)
-  const result = await engine.sendSecondFactorEmail({ collection, data: { pendingToken: stringField(data, 'pendingToken') } })
+  const result = await engine.sendSecondFactorEmail({ collection, data: { pendingToken: stringField(data, 'pendingToken') }, client: sessionClient(request) })
   return Response.json({ ok: result.ok, message: result.message }, { status: result.ok ? 200 : 400 })
 }
 
@@ -1589,6 +1592,7 @@ async function handleLoginSecondFactor(engine: Engine, collection: string, reque
     await recordAuthEvent(engine, { action: 'login.success', collectionSlug: collection, actorId: result.user.id, actorEmail: result.user.email, detail: 'two-step' }, context)
     const headers = new Headers()
     if (result.token) headers.append('Set-Cookie', buildAuthCookie(result.token, 7200))
+    headers.append('Set-Cookie', buildClearedPendingBindingCookie())
     if (result.trustedDevice) headers.append('Set-Cookie', buildTrustedDeviceCookie(result.trustedDevice.token, result.trustedDevice.maxAgeSeconds))
     const { trustedDevice: _trusted, ...publicResult } = result
     return Response.json({ message: 'Authentication Passed', ...publicResult }, { status: 200, headers })
