@@ -10,6 +10,11 @@ import React from 'react'
  */
 export const AccountStyles: React.FC = () => (
   <style>{`
+    .account-switcher { margin: 0 0 1.5rem; padding: .8rem 1rem; border: 1px solid color-mix(in srgb, var(--eg-c-text) 12%, transparent); border-radius: 8px; display: grid; gap: .5rem; }
+    .account-switcher__heading { margin: 0; font-size: .95rem; }
+    .account-switcher__active { margin: 0; overflow-wrap: anywhere; }
+    .account-switcher__list { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+    .account-switcher button { padding: .5rem .8rem; border: 1px solid color-mix(in srgb, var(--eg-c-text) 25%, transparent); border-radius: 6px; background: var(--eg-c-surface); font: inherit; cursor: pointer; text-align: start; overflow-wrap: anywhere; }
     .account { display: grid; gap: 2rem; grid-template-columns: minmax(0, 14rem) minmax(0, 1fr); align-items: start; }
     @media (max-width: 720px) { .account { grid-template-columns: 1fr; } }
     .account-nav { list-style: none; margin: 0; padding: 0; border: 1px solid color-mix(in srgb, var(--eg-c-text) 12%, transparent); border-radius: 8px; overflow: hidden; }

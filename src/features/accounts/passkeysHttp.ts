@@ -16,7 +16,7 @@ import { methodAllowed, readMatrix } from '@/features/security/authMatrix'
 
 import { guardAttempt, tooManyAttempts } from './rateLimit'
 import { passkeyDepsFor } from './passkeysWiring'
-import { accountContext, requestAddress, requestClient, setSessionCookie } from './session'
+import { accountContext, requestAddress, requestClient, setPendingBindingCookie, setSessionCookie } from './session'
 import { safeLandingPath } from '@/features/passwordless'
 
 /**
@@ -129,6 +129,7 @@ export async function loginVerifyResponse(request: Request): Promise<Response> {
   const outcome = await loginWithPasskey(deps, body as never, await challengeFromRequest())
   await clearChallengeCookie()
   if (outcome.status === 'refused') return json({ ok: false, message: outcome.message }, 400)
+  if (outcome.status === 'two-factor') await setPendingBindingCookie(outcome.pendingBinding)
   if (outcome.status === 'two-factor') return json({ ok: false, twoFactorRequired: true, pendingToken: outcome.pendingToken }, 200)
   await setSessionCookie(outcome.token)
   const next = typeof body.next === 'string' ? body.next : ''

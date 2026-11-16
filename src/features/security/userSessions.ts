@@ -67,6 +67,8 @@ export type SessionClient = {
   label?: string
   /** The remembered-device cookie the request carried, if any. A valid one stands in for the second-step code. */
   trustedDeviceToken?: string | null
+  /** The browser-binding cookie value a second-step request carried. Required when the pending token was issued with one. */
+  pendingBinding?: string | null
   /** Set on the second-step request when "remember this device" was ticked. */
   trustDevice?: boolean
 }

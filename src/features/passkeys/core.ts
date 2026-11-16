@@ -52,7 +52,7 @@ export type PasskeyAuditAction = 'passkey.registered' | 'passkey.login' | 'passk
 
 export type PasskeyLoginResult =
   | { status: 'ok'; token: string }
-  | { status: 'two-factor'; pendingToken: string }
+  | { status: 'two-factor'; pendingToken: string; pendingBinding?: string }
   | { status: 'refused'; message: string }
 
 export type PasskeyDeps = {
@@ -69,7 +69,7 @@ export type PasskeyDeps = {
   store: PasskeyStore
   findUser: (id: number) => Promise<PasskeyUser | null>
   /** Session for an identity the passkey has proven. Throws when the account is locked. */
-  loginAsUser: (userId: number, skipSecondFactor: boolean) => Promise<{ token?: string; twoFactorRequired?: boolean; pendingToken?: string }>
+  loginAsUser: (userId: number, skipSecondFactor: boolean) => Promise<{ token?: string; twoFactorRequired?: boolean; pendingToken?: string; pendingBinding?: string }>
   /** Password or two-step code for registration and removal. True when the person is confirmed. */
   reauthenticate: (userId: number, data: { password?: string; code?: string }) => Promise<boolean>
   /** True when the account has another way in: a password, a linked social identity, or an emailed link or code. */
@@ -291,7 +291,7 @@ export async function loginWithPasskey(
     const result = await deps.loginAsUser(userId, skipTwoFactor)
     if (result.twoFactorRequired && result.pendingToken) {
       await deps.audit('passkey.login', `${uv ? 'user verified' : 'user not verified'}: two-step code next`, userId)
-      return { status: 'two-factor', pendingToken: result.pendingToken }
+      return { status: 'two-factor', pendingToken: result.pendingToken, pendingBinding: result.pendingBinding }
     }
     if (!result.token) return refusedFor('no session issued', userId)
     await deps.audit('passkey.login', `${uv ? 'user verified' : 'user not verified'}${skipTwoFactor ? ', two-step code skipped' : ''}`, userId)

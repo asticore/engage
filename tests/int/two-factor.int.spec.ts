@@ -321,7 +321,7 @@ describe('login gate', () => {
     const { secret } = await enrol(db, now - 60_000)
 
     const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: await codeFor(secret, now), secret: SECRET })
+    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: await codeFor(secret, now), secret: SECRET, client: { pendingBinding: pending.pendingBinding } })
 
     expect(done.token).toBeTruthy()
     expect(db.rows[0].sessions).toHaveLength(1)
@@ -334,9 +334,31 @@ describe('login gate', () => {
     const { codes } = await enrol(db)
 
     const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[3], secret: SECRET })
+    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[3], secret: SECRET, client: { pendingBinding: pending.pendingBinding } })
     expect(done.token).toBeTruthy()
     expect(backupCodesRemaining(db.rows[0])).toBe(9)
+  })
+
+  it('binds the pending token to the browser that did the password step', async () => {
+    const db = makeDb([makeUser()])
+    const { codes } = await enrol(db)
+
+    const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
+    expect(pending.pendingBinding).toBeTruthy()
+    // The nonce itself is not in the token, only its hash.
+    expect(pending.pendingToken as string).not.toContain(pending.pendingBinding as string)
+
+    // Another browser: no cookie, or somebody else's.
+    await expect(loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[0], secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
+    await expect(
+      loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[0], secret: SECRET, client: { pendingBinding: 'guess' } }),
+    ).rejects.toBeInstanceOf(TwoFactorCodeError)
+    // A refused browser neither spends the code nor counts toward the account lockout.
+    expect(db.rows[0].loginAttempts).toBe(0)
+    expect(backupCodesRemaining(db.rows[0])).toBe(10)
+
+    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[0], secret: SECRET, client: { pendingBinding: pending.pendingBinding } })
+    expect(done.token).toBeTruthy()
   })
 
   it('refuses a pending token a second time once it has finished a sign-in', async () => {
@@ -346,9 +368,9 @@ describe('login gate', () => {
     const { codes } = await enrol(db)
 
     const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[0], secret: SECRET })
+    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[0], secret: SECRET, client: { pendingBinding: pending.pendingBinding } })
     expect(done.token).toBeTruthy()
-    await expect(loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[1], secret: SECRET })).rejects.toBeInstanceOf(TwoFactorCodeError)
+    await expect(loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[1], secret: SECRET, client: { pendingBinding: pending.pendingBinding } })).rejects.toBeInstanceOf(TwoFactorCodeError)
     expect(backupCodesRemaining(db.rows[0])).toBe(9)
   })
 
@@ -356,7 +378,7 @@ describe('login gate', () => {
     const db = makeDb([makeUser()])
     await enrol(db)
     const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const args = { pendingToken: pending.pendingToken as string, code: '000000', secret: SECRET }
+    const args = { pendingToken: pending.pendingToken as string, code: '000000', secret: SECRET, client: { pendingBinding: pending.pendingBinding } }
 
     for (let i = 0; i < 4; i += 1) {
       await expect(loginWithSecondFactor(db, args)).rejects.toBeInstanceOf(TwoFactorCodeError)
@@ -386,7 +408,7 @@ describe('login gate', () => {
     process.env.ENGAGE_SECRET = 'a-rotated-secret'
 
     const pending = await login(db, { email: 'user@example.com', password: PASSWORD, secret: SECRET })
-    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[0], secret: SECRET })
+    const done = await loginWithSecondFactor(db, { pendingToken: pending.pendingToken as string, code: codes[0], secret: SECRET, client: { pendingBinding: pending.pendingBinding } })
     expect(done.token).toBeTruthy()
   })
 })

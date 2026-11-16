@@ -3,6 +3,7 @@ import type { Engine, TypedUser } from '@/engine'
 
 import { getEngine } from '@/lib/engine'
 import { TRUSTED_DEVICE_COOKIE, trustedTokenFromCookieHeader } from '@/features/security/trustedDevices'
+import { PENDING_BINDING_COOKIE, PENDING_BINDING_MAX_AGE_S, pendingBindingFromCookieHeader } from '@/features/security/pendingBinding'
 import { getFeatureFlags } from '@/utilities/features'
 import type { FeatureFlags } from '@/features/registry'
 import { SESSION_COOKIE, loginProtectionAuth } from '@/features/security'
@@ -66,7 +67,7 @@ export const currentSessionToken = async (): Promise<string | null> => {
 }
 
 /** What a new session row records about the browser signing in: its User-Agent and (truncated later) address. */
-export const requestClient = async (): Promise<{ userAgent: string | null; ip: string | null; country: string | null; trustedDeviceToken: string | null }> => {
+export const requestClient = async (): Promise<{ userAgent: string | null; ip: string | null; country: string | null; trustedDeviceToken: string | null; pendingBinding: string | null }> => {
   const incoming = await headers()
   const ip = await requestAddress()
   return {
@@ -75,7 +76,27 @@ export const requestClient = async (): Promise<{ userAgent: string | null; ip: s
     country: incoming.get('cf-ipcountry'),
     // A remembered device stands in for the second-step code; the password is still checked.
     trustedDeviceToken: trustedTokenFromCookieHeader(incoming.get('cookie')),
+    // Set at the first sign-in step; the second step must send it back (23a1).
+    pendingBinding: pendingBindingFromCookieHeader(incoming.get('cookie')),
   }
+}
+
+/** Hands the browser the value the pending two-step token is bound to. Call it wherever a pending token is given out. */
+export const setPendingBindingCookie = async (nonce: string | null | undefined): Promise<void> => {
+  if (!nonce) return
+  const jar = await cookies()
+  jar.set(PENDING_BINDING_COOKIE, nonce, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: PENDING_BINDING_MAX_AGE_S,
+  })
+}
+
+export const clearPendingBindingCookie = async (): Promise<void> => {
+  const jar = await cookies()
+  jar.delete(PENDING_BINDING_COOKIE)
 }
 
 /** Sets the remembered-device cookie handed back after a second step with "remember this device" ticked. */
