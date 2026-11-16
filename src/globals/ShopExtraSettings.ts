@@ -66,6 +66,15 @@ export const ShopExtraSettings: GlobalConfig = {
       admin: { description: 'How long a signed-out cart nobody has touched is kept before the clean-up deletes it. Between 1 and 365. Account carts and paid carts are never deleted.' },
     },
     {
+      name: 'cartExpiryReminderDays',
+      type: 'number',
+      label: 'Cart expiry reminder (days before)',
+      defaultValue: 0,
+      min: 0,
+      max: 14,
+      admin: { description: 'Email a signed-out shopper whose cart is about to be deleted, this many days before. 0 turns it off. Only sent to people the shop already knows (a registered customer or a past buyer), once per cart, and never to anyone who unsubscribed from cart reminders. English only.' },
+    },
+    {
       name: 'giftWrapEnabled',
       type: 'checkbox',
       label: 'Offer gift wrap at checkout',
