@@ -1,5 +1,6 @@
 'use client'
 
+import { CART_NOTE_KEY, composeOrderNote, parseCartNote } from '@/features/ecommerce/lib/cartNote'
 import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
 import { useAddresses, useCart, usePayments } from '@/engine/commerce/react'
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
@@ -67,7 +68,14 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
   }, [handoff, cart, cartLoading, addItem, router])
   const initial = useMemo(() => {
     const c = handoff?.customer
-    if (!c) return undefined
+    // The note and gift message from the cart page fill the Order notes field (Task 23c).
+    let cartNote = ''
+    try {
+      cartNote = composeOrderNote(parseCartNote(window.localStorage.getItem(CART_NOTE_KEY)))
+    } catch {
+      // No saved note.
+    }
+    if (!c) return cartNote ? { address: {} as Record<string, string>, fields: { orderNotes: cartNote } as Record<string, string> } : undefined
     const [firstName = '', ...rest] = (c.name ?? '').split(/\s+/)
     const address: Record<string, string> = {}
     if (firstName) address.firstName = firstName
@@ -80,7 +88,7 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
     const fields: Record<string, string> = {}
     if (c.phone) fields.phone = c.phone
     const note = [c.note, handoff?.entry ? `Form entry ${handoff.entry}` : ''].filter(Boolean).join(' | ')
-    if (note) fields.orderNotes = note
+    if (note || cartNote) fields.orderNotes = [note, cartNote].filter(Boolean).join('\n')
     return { address, fields }
   }, [handoff])
 
