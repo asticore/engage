@@ -57,7 +57,7 @@ describe('affiliate rules (31b)', () => {
   })
   it('writes a safe payout CSV', () => {
     const csv = payoutsCsv([{ createdAt: '2026-11-16T01:00:00Z', name: 'Sam, Jr', email: 'sam@x.com', amountCents: 1234, note: '=HYPERLINK("x")' }])
-    expect(csv.split('\r\n')[0]).toBe('Date,Affiliate,Email,Amount,Note')
+    expect(csv.split('\r\n')[0]).toBe('Date,Affiliate,Email,Amount,Note,Payout details')
     expect(csv).toContain('2026-11-16,"Sam, Jr",sam@x.com,12.34,')
     expect(csv).toContain('\'=HYPERLINK')
   })

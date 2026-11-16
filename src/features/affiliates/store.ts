@@ -6,7 +6,7 @@ type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T
 export type D1 = { prepare: (sql: string) => Stmt }
 type Row = Record<string, unknown>
 
-export type Affiliate = { id: number; code: string; name: string; email: string; status: AffiliateStatus; visits: number; createdAt: string; token: string; ratePct: number | null; couponCode: string }
+export type Affiliate = { id: number; code: string; name: string; email: string; status: AffiliateStatus; visits: number; createdAt: string; token: string; ratePct: number | null; couponCode: string; payoutDetails: string }
 
 const all = async (d1: D1, sql: string, ...args: unknown[]): Promise<Row[]> => (await d1.prepare(sql).bind(...args).all<Row>()).results
 const toRate = (v: unknown): number | null => (v === null || v === undefined || v === '' ? null : Number(v))
@@ -15,9 +15,9 @@ const toStatus = (v: unknown): AffiliateStatus => (v === 'active' || v === 'susp
 export async function listAffiliates(d1: D1): Promise<Affiliate[]> {
   const rows = await all(
     d1,
-    'SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, a.rate_pct, a.coupon_code, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a ORDER BY a.created_at DESC LIMIT 500',
+    'SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, a.rate_pct, a.coupon_code, a.payout_details, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a ORDER BY a.created_at DESC LIMIT 500',
   )
-  return rows.map((r) => ({ id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token ?? ''), ratePct: toRate(r.rate_pct), couponCode: String(r.coupon_code ?? '') }))
+  return rows.map((r) => ({ id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token ?? ''), ratePct: toRate(r.rate_pct), couponCode: String(r.coupon_code ?? ''), payoutDetails: String(r.payout_details ?? '') }))
 }
 
 export async function countAffiliates(d1: D1): Promise<number> {
@@ -147,8 +147,8 @@ export async function hasCommissions(d1: D1, affiliateId: number): Promise<boole
 }
 
 export async function findByToken(d1: D1, token: string): Promise<Affiliate | null> {
-  const r = (await all(d1, "SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, a.rate_pct, a.coupon_code, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a WHERE a.token = ?1 AND a.token != ''", token))[0]
-  return r ? { id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token), ratePct: toRate(r.rate_pct), couponCode: String(r.coupon_code ?? '') } : null
+  const r = (await all(d1, "SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, a.rate_pct, a.coupon_code, a.payout_details, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a WHERE a.token = ?1 AND a.token != ''", token))[0]
+  return r ? { id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token), ratePct: toRate(r.rate_pct), couponCode: String(r.coupon_code ?? ''), payoutDetails: String(r.payout_details ?? '') } : null
 }
 
 export async function emailTaken(d1: D1, email: string): Promise<boolean> {
@@ -160,8 +160,8 @@ export async function setToken(d1: D1, id: number, token: string, nowIso: string
 }
 
 /** Every payout with the affiliate's name and email, newest first, for the CSV export. */
-export async function payoutsForExport(d1: D1): Promise<Array<{ createdAt: string; name: string; email: string; amountCents: number; note: string }>> {
-  return (await all(d1, 'SELECT p.created_at, p.amount_cents, p.note, a.name, a.email FROM eg_affiliate_payouts p LEFT JOIN eg_affiliates a ON a.id = p.affiliate_id ORDER BY p.id DESC LIMIT 5000')).map((r) => ({ createdAt: String(r.created_at ?? ''), name: String(r.name ?? ''), email: String(r.email ?? ''), amountCents: Number(r.amount_cents ?? 0), note: String(r.note ?? '') }))
+export async function payoutsForExport(d1: D1): Promise<Array<{ createdAt: string; name: string; email: string; amountCents: number; note: string; details: string }>> {
+  return (await all(d1, 'SELECT p.created_at, p.amount_cents, p.note, a.name, a.email, a.payout_details FROM eg_affiliate_payouts p LEFT JOIN eg_affiliates a ON a.id = p.affiliate_id ORDER BY p.id DESC LIMIT 5000')).map((r) => ({ createdAt: String(r.created_at ?? ''), name: String(r.name ?? ''), email: String(r.email ?? ''), amountCents: Number(r.amount_cents ?? 0), note: String(r.note ?? ''), details: String(r.payout_details ?? '') }))
 }
 
 /** True once the owner has saved the program settings at least once. */
@@ -232,8 +232,8 @@ export async function recentVisits(d1: D1, limit = 50): Promise<Array<{ id: numb
 /** The affiliate whose email matches (case-insensitive), for the signed-in member page. */
 export async function findByEmail(d1: D1, email: string): Promise<Affiliate | null> {
   if (email === '') return null
-  const r = (await all(d1, 'SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, a.rate_pct, a.coupon_code, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a WHERE lower(a.email) = ?1 LIMIT 1', email.trim().toLowerCase()))[0]
-  return r ? { id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token ?? ''), ratePct: toRate(r.rate_pct), couponCode: String(r.coupon_code ?? '') } : null
+  const r = (await all(d1, 'SELECT a.id, a.code, a.name, a.email, a.status, a.created_at, a.token, a.rate_pct, a.coupon_code, a.payout_details, (SELECT COUNT(*) FROM eg_affiliate_visits v WHERE v.affiliate_id = a.id) AS visits FROM eg_affiliates a WHERE lower(a.email) = ?1 LIMIT 1', email.trim().toLowerCase()))[0]
+  return r ? { id: Number(r.id), code: String(r.code), name: String(r.name ?? ''), email: String(r.email ?? ''), status: toStatus(r.status), visits: Number(r.visits ?? 0), createdAt: String(r.created_at ?? ''), token: String(r.token ?? ''), ratePct: toRate(r.rate_pct), couponCode: String(r.coupon_code ?? ''), payoutDetails: String(r.payout_details ?? '') } : null
 }
 
 export type Creative = { id: number; url: string; alt: string; filename: string; width: number; height: number }
@@ -256,5 +256,23 @@ export async function creativesByIds(d1: D1, ids: number[]): Promise<Creative[]>
     return ids.map((id) => rows.find((r) => r.id === id)).filter((r): r is Creative => Boolean(r && r.url))
   } catch {
     return []
+  }
+}
+
+export async function setPayoutDetails(d1: D1, id: number, details: string, nowIso: string): Promise<void> {
+  await d1.prepare('UPDATE eg_affiliates SET payout_details = ?1, updated_at = ?2 WHERE id = ?3').bind(details, nowIso, id).run()
+}
+
+/** Counts one ignored crawler or script hit for today. Best effort. */
+export async function countBotHit(d1: D1, day: string): Promise<void> {
+  await d1.prepare('INSERT INTO eg_affiliate_bot_hits (day, hits) VALUES (?1, 1) ON CONFLICT(day) DO UPDATE SET hits = hits + 1').bind(day).run()
+}
+
+/** Ignored crawler and script hits since a day (inclusive, YYYY-MM-DD). */
+export async function botHitsSince(d1: D1, sinceDay: string): Promise<number> {
+  try {
+    return Number((await all(d1, 'SELECT COALESCE(SUM(hits),0) AS n FROM eg_affiliate_bot_hits WHERE day >= ?1', sinceDay))[0]?.n ?? 0)
+  } catch {
+    return 0
   }
 }
