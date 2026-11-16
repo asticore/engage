@@ -119,6 +119,7 @@ export const PayPalButton: React.FC<{ cartRef: Cart | null; email: string; extra
                   checkoutFields: x?.checkoutFields,
                   giftCardCodes: x?.giftCardCodes,
                   useStoreCredit: x?.useStoreCredit,
+                  giftWrap: x?.giftWrap,
                 }),
               })
               const json = (await res.json().catch((): Record<string, unknown> => ({}))) as { paypalOrderId?: string; paidInFull?: boolean; error?: string }

@@ -67,6 +67,7 @@ export const OfflinePaymentOptions: React.FC<{ cartRef: Cart | null; email: stri
           checkoutFields: extras?.checkoutFields,
           giftCardCodes: extras?.giftCardCodes,
           useStoreCredit: extras?.useStoreCredit,
+          giftWrap: extras?.giftWrap,
         }),
       })
       const json = (await res.json().catch((): Record<string, unknown> => ({}))) as { orderID?: number; error?: string }

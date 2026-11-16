@@ -12,6 +12,7 @@ export type Quote = {
   subtotalCents: number
   discountCents: number
   shippingCents: number
+  giftWrapCents?: number
   taxCents: number
   taxLines: { name: string; ratePct: number; taxCents: number }[]
   pricesIncludeTax: boolean
@@ -39,6 +40,7 @@ export type CheckoutInput = {
   checkoutFields: Record<string, string>
   giftCardCodes: string[]
   useStoreCredit: boolean
+  giftWrap: boolean
 }
 
 const ADDRESS_FIELDS: [string, string][] = [
@@ -68,6 +70,8 @@ export function CheckoutExtras({ cartRef, email, onChange, initial }: { cartRef:
   const [giftInput, setGiftInput] = useState('')
   const [giftCodes, setGiftCodes] = useState<string[]>([])
   const [useCredit, setUseCredit] = useState(false)
+  const [giftWrap, setGiftWrap] = useState(false)
+  const [wrapOffer, setWrapOffer] = useState<{ on: boolean; feeCents: number }>({ on: false, feeCents: 0 })
   const [quote, setQuote] = useState<Quote | null>(null)
   const [error, setError] = useState('')
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -78,7 +82,7 @@ export function CheckoutExtras({ cartRef, email, onChange, initial }: { cartRef:
       const res = await fetch('/api/shop-quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cartID: cartRef.id, secret: cartRef.secret, address, email, couponCode: appliedCoupon, shippingOptionId: shipId, giftCardCodes: giftCodes, useStoreCredit: useCredit }),
+        body: JSON.stringify({ cartID: cartRef.id, secret: cartRef.secret, address, email, couponCode: appliedCoupon, shippingOptionId: shipId, giftCardCodes: giftCodes, useStoreCredit: useCredit, giftWrap: wrapOffer.on && giftWrap }),
       })
       const body = (await res.json()) as Quote & { error?: string }
       if (!res.ok) {
@@ -91,7 +95,21 @@ export function CheckoutExtras({ cartRef, email, onChange, initial }: { cartRef:
     } catch {
       setError(t('store.couldNotPriceCart'))
     }
-  }, [cartRef, address, email, appliedCoupon, shipId, giftCodes, useCredit])
+  }, [cartRef, address, email, appliedCoupon, shipId, giftCodes, useCredit, giftWrap, wrapOffer.on])
+
+  useEffect(() => {
+    let live = true
+    fetch('/api/shop-checkout-fields')
+      .then((r): Promise<unknown> => (r.ok ? r.json() : Promise.resolve(null)))
+      .then((d: unknown) => {
+        const x = d as { giftWrap?: boolean; giftWrapFeeCents?: number } | null
+        if (live && x?.giftWrap === true && typeof x.giftWrapFeeCents === 'number') setWrapOffer({ on: true, feeCents: x.giftWrapFeeCents })
+      })
+      .catch((): void => undefined)
+    return () => {
+      live = false
+    }
+  }, [])
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current)
@@ -104,8 +122,8 @@ export function CheckoutExtras({ cartRef, email, onChange, initial }: { cartRef:
   useEffect(() => {
     const needsShip = (quote?.shippingOptions.length ?? 0) > 0
     const ready = Boolean(quote) && (!needsShip || Boolean(shipId)) && Boolean(address.addressLine1 && address.country)
-    onChange({ address: { ...address, ...(values.company ? { company: values.company } : {}) }, couponCode: appliedCoupon, shippingOptionId: shipId, checkoutFields: values, giftCardCodes: giftCodes, useStoreCredit: useCredit }, ready)
-  }, [address, appliedCoupon, shipId, values, quote, onChange, giftCodes, useCredit])
+    onChange({ address: { ...address, ...(values.company ? { company: values.company } : {}) }, couponCode: appliedCoupon, shippingOptionId: shipId, checkoutFields: values, giftCardCodes: giftCodes, useStoreCredit: useCredit, giftWrap: wrapOffer.on && giftWrap }, ready)
+  }, [address, appliedCoupon, shipId, values, quote, onChange, giftCodes, useCredit, giftWrap, wrapOffer.on])
 
   const input = 'border border-[var(--color-line)] bg-[var(--color-cream)] p-3 text-base'
   return (
@@ -174,11 +192,18 @@ export function CheckoutExtras({ cartRef, email, onChange, initial }: { cartRef:
           ))}
         </fieldset>
       )}
+      {wrapOffer.on && (
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={giftWrap} onChange={(e) => setGiftWrap(e.target.checked)} />
+          Gift wrap this order (+{money(wrapOffer.feeCents)})
+        </label>
+      )}
       {quote && (
         <dl className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-1">
           <dt>{t('store.subtotal')}</dt><dd>{money(quote.subtotalCents)}</dd>
           {quote.discountCents > 0 && (<><dt>Discount ({quote.coupon?.code})</dt><dd>-{money(quote.discountCents)}</dd></>)}
           {quote.shippingOptions.length > 0 && (<><dt>{t('store.shipping')}</dt><dd>{money(quote.shippingCents)}</dd></>)}
+          {(quote.giftWrapCents ?? 0) > 0 && (<><dt>Gift wrap</dt><dd>{money(quote.giftWrapCents ?? 0)}</dd></>)}
           {quote.taxLines.map((t) => (<React.Fragment key={t.name + t.ratePct}><dt>{t.name} ({t.ratePct}%){quote.pricesIncludeTax ? ' included' : ''}</dt><dd>{money(t.taxCents)}</dd></React.Fragment>))}
           <dt className="font-bold">Total</dt><dd className="font-bold">{money(quote.totalCents)}</dd>
           {quote.storedValue && quote.storedValue.coveredCents > 0 && (
