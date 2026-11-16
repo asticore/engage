@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
+import { setupSteps, shareKit } from '../core'
 import type { AffiliateSettings, Affiliate, CommissionRow } from '../store'
 
 type Row = Affiliate & { pending: number; owed: number; paid: number }
@@ -19,15 +20,17 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [message, setMessage] = useState('')
+  const [configured, setConfigured] = useState(true)
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-affiliates')
-    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; error?: string } | null
+    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; error?: string } | null
     if (!res.ok) return setMessage(data?.error ?? 'Could not load affiliates.')
     setRows(data?.affiliates ?? [])
     setSettings(data?.settings ?? null)
     setCommissions(data?.commissions ?? [])
     setPayouts(data?.payouts ?? [])
+    setConfigured(data?.configured !== false)
   }, [])
   useEffect(() => {
     void load()
@@ -58,12 +61,38 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
     const url = `${origin.replace(/\/+$/, '')}/affiliates/dashboard?token=${token}`
     await navigator.clipboard?.writeText(url).then(() => setMessage(`Private dashboard link for ${a.name} copied. Send it to them.`)).catch(() => setMessage(url))
   }
+  const copyKit = async (a: Row) => {
+    let token = a.token
+    if (!token) {
+      const res = await fetch('/api/admin-affiliates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'token', id: a.id }) })
+      const data = (await res.json().catch((): null => null)) as { token?: string } | null
+      if (!res.ok || !data?.token) return setMessage('Could not make a dashboard link.')
+      token = data.token
+      await load()
+    }
+    const text = shareKit({ name: a.name, link: link(a.code), dashboard: `${origin.replace(/\/+$/, '')}/affiliates/dashboard?token=${token}`, commissionPct: a.ratePct ?? settings?.commissionPct ?? 10, cookieDays: settings?.cookieDays ?? 30 })
+    await navigator.clipboard?.writeText(text).then(() => setMessage(`Share kit for ${a.name} copied. Paste it into an email or message.`)).catch(() => setMessage(text))
+  }
+  const steps = setupSteps({ configured, affiliates: rows.length, active: rows.filter((r) => r.status === 'active').length, visits: rows.reduce((n, r) => n + r.visits, 0), commissions: commissions.length, payouts: payouts.length })
   const nameOf = (id: number): string => rows.find((r) => r.id === id)?.name ?? `#${id}`
   const set = (patch: Partial<AffiliateSettings>) => setSettings((s) => (s ? { ...s, ...patch } : s))
 
   return (
     <div style={{ display: 'grid', gap: '1.5rem' }}>
       {message && <p role="status">{message}</p>}
+
+      {steps.some((st) => !st.done) && (
+        <section aria-labelledby="aff-setup">
+          <h2 id="aff-setup">Get started ({steps.filter((st) => st.done).length} of {steps.length} done)</h2>
+          <ol>
+            {steps.map((st) => (
+              <li key={st.key}>
+                <strong>{st.done ? 'Done: ' : 'To do: '}{st.label}.</strong> {st.done ? '' : st.hint}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {settings && (
         <form
@@ -145,6 +174,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
                   {a.status === 'active' && <button type="button" onClick={() => post({ action: 'status', id: a.id, status: 'suspended' })}>Suspend</button>}
                   {a.owed > 0 && <button type="button" onClick={() => { const note = window.prompt(`Record a payout of ${money(a.owed)} to ${a.name}. Note (for example the payment reference):`, ''); if (note !== null) void post({ action: 'payout', id: a.id, note }, `Payout of ${money(a.owed)} recorded. Pay ${a.name} outside the site.`) }}>Record payout</button>}
                   <button type="button" onClick={() => { const v = window.prompt(`Commission rate for ${a.name} in percent (blank to use the program rate of ${settings?.commissionPct ?? 10}%):`, a.ratePct === null ? '' : String(a.ratePct)); if (v !== null) void post({ action: 'rate', id: a.id, ratePct: v.trim() === '' ? null : Number(v) }, 'Rate saved.') }}>Rate: {a.ratePct === null ? 'default' : `${a.ratePct}%`}</button>
+                  <button type="button" onClick={() => void copyKit(a)}>Copy share kit</button>
                   <button type="button" onClick={() => void dashboardLink(a)}>Copy dashboard link</button>
                   <button type="button" onClick={() => navigator.clipboard?.writeText(link(a.code)).then(() => setMessage('Link copied.')).catch((): void => undefined)}>Copy link</button>
                   <button type="button" onClick={() => { if (window.confirm(`Delete ${a.name} and their visit log?`)) void post({ action: 'delete', id: a.id }) }}>Delete</button>

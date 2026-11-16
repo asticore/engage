@@ -162,3 +162,12 @@ export async function setToken(d1: D1, id: number, token: string, nowIso: string
 export async function payoutsForExport(d1: D1): Promise<Array<{ createdAt: string; name: string; email: string; amountCents: number; note: string }>> {
   return (await all(d1, 'SELECT p.created_at, p.amount_cents, p.note, a.name, a.email FROM eg_affiliate_payouts p LEFT JOIN eg_affiliates a ON a.id = p.affiliate_id ORDER BY p.id DESC LIMIT 5000')).map((r) => ({ createdAt: String(r.created_at ?? ''), name: String(r.name ?? ''), email: String(r.email ?? ''), amountCents: Number(r.amount_cents ?? 0), note: String(r.note ?? '') }))
 }
+
+/** True once the owner has saved the program settings at least once. */
+export async function settingsConfigured(d1: D1): Promise<boolean> {
+  try {
+    return (await all(d1, 'SELECT id FROM eg_affiliate_settings WHERE id = 1')).length > 0
+  } catch {
+    return false
+  }
+}

@@ -47,3 +47,16 @@ describe('affiliate dashboard token', () => {
     expect(isToken(`${a}x`)).toBe(false)
   })
 })
+
+describe('affiliate setup checklist and share kit (31e)', () => {
+  it('marks steps done from what exists', async () => {
+    const { setupSteps, shareKit } = await import('@/features/affiliates/core')
+    const none = setupSteps({ configured: false, affiliates: 0, active: 0, visits: 0, commissions: 0, payouts: 0 })
+    expect(none.every((s) => !s.done)).toBe(true)
+    const some = setupSteps({ configured: true, affiliates: 2, active: 1, visits: 5, commissions: 0, payouts: 0 })
+    expect(some.filter((s) => s.done).map((s) => s.key)).toEqual(['rules', 'first', 'visit'])
+    const kit = shareKit({ name: 'Sam', link: 'https://x.com/?ref=sam', dashboard: 'https://x.com/affiliates/dashboard?token=t', commissionPct: 12, cookieDays: 30 })
+    expect(kit).toContain('12% commission')
+    expect(kit).toContain('https://x.com/?ref=sam')
+  })
+})

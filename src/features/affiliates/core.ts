@@ -69,3 +69,30 @@ export const isToken = (value: unknown): value is string => typeof value === 'st
 
 export const DEFAULT_TERMS =
   'Share your link. When someone follows it and buys, you earn a commission on their order. Commission becomes payable after the waiting period, is reduced if the order is refunded, and is paid by the site owner. Buying through your own link does not earn commission. The site owner may suspend an affiliate who breaks these rules.'
+
+export type SetupStep = { key: string; label: string; done: boolean; hint: string }
+
+/** The affiliate set-up checklist, worked out from what exists (Task 31e). Nothing is stored. */
+export function setupSteps(f: { configured: boolean; affiliates: number; active: number; visits: number; commissions: number; payouts: number }): SetupStep[] {
+  return [
+    { key: 'rules', label: 'Choose your rules', done: f.configured, hint: 'Set the commission, days before payable and cookie days below, then press Save settings.' },
+    { key: 'first', label: 'Get your first affiliate', done: f.active > 0, hint: 'Add one below, or share the sign-up page and approve people when they apply.' },
+    { key: 'visit', label: 'See a first visit', done: f.visits > 0, hint: 'Send an affiliate their link (use Copy share kit). Visits show in the table.' },
+    { key: 'sale', label: 'Earn a first commission', done: f.commissions > 0, hint: 'It appears when someone buys after following a link.' },
+    { key: 'payout', label: 'Record a first payout', done: f.payouts > 0, hint: 'Pay outside the site, then press Record payout.' },
+  ]
+}
+
+/** A ready-to-send message for a new affiliate: their link, the sign-up page and the dashboard link. */
+export function shareKit(v: { name: string; link: string; dashboard: string; commissionPct: number; cookieDays: number }): string {
+  return [
+    `Hi ${v.name},`,
+    '',
+    `Thanks for joining our affiliate program. You earn ${v.commissionPct}% commission on every order from people who follow your link and buy within ${v.cookieDays} days.`,
+    '',
+    `Your link: ${v.link}`,
+    `Your private results page: ${v.dashboard}`,
+    '',
+    'Add your link to your posts, videos, emails or bio. Please say clearly that it is an affiliate link.',
+  ].join('\n')
+}
