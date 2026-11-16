@@ -30,7 +30,7 @@ describe('giftWrapFee and note', () => {
 
 describe('computeOrderTotals with gift wrap', () => {
   const line: PricedLine = { key: '1', productId: '1', name: 'Mug', unitCents: 2000, quantity: 1, taxClass: 'standard', categories: [], onSale: false, weightGrams: 100, shippingClass: null, requiresShipping: false } as PricedLine
-  const base = { lines: [line], address: { country: 'AU' }, zones: [], rates: [] as never[], settings: { pricesIncludeTax: false, defaultCountry: 'AU', storeRatePct: 10, enabled: false } }
+  const base = { lines: [line], address: { country: 'AU' }, zones: [] as never[], rates: [] as never[], settings: { pricesIncludeTax: false, defaultCountry: 'AU', storeRatePct: 10, enabled: false } }
   it('adds the fee to the total', () => {
     const r = computeOrderTotals({ ...base, giftWrapCents: 500 })
     expect(r.ok && r.giftWrapCents).toBe(500)
