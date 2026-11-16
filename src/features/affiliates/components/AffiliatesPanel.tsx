@@ -124,6 +124,9 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
             <input type="checkbox" checked={settings.firstOrderOnly} onChange={(e) => set({ firstOrderOnly: e.target.checked })} /> Commission on a buyer&apos;s first order only
           </label>
           <label>
+            <input type="checkbox" checked={settings.emailNotifications} onChange={(e) => set({ emailNotifications: e.target.checked })} /> Email affiliates when approved, when they earn and when paid
+          </label>
+          <label>
             <input type="checkbox" checked={settings.autoApprove} onChange={(e) => set({ autoApprove: e.target.checked })} /> Approve new sign-ups automatically
           </label>
           <label style={{ flexBasis: '100%' }}>Program terms shown on the sign-up page (leave blank for the standard text)<br />
