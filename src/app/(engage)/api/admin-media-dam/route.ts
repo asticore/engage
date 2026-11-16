@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server'
 
 import { rawD1 } from '@/features/ecommerce/server/db'
-import { exifForStorage, exifSearchWords, parseExif } from '@/features/dam/exif'
-import { buildSearchText, fieldsFor, parseMetaField, validateMetaValues } from '@/features/dam/metaFields'
+import { analyseFile, searchTextFor } from '@/features/dam/onUpload'
+import { docPart, fieldsFor, parseMetaField, validateMetaValues } from '@/features/dam/metaFields'
 import { canMoveStatus, checkRights, parseRights, STATUSES, type AssetStatus } from '@/features/dam/rights'
 import * as store from '@/features/dam/store'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { authorizeMedia } from '@/features/media/access'
 import { loadMedia, parseIdList, readJsonBody, type MediaEngine } from '@/features/media/store'
 import { applySafeServingHeaders, readMediaObject, putMediaObject } from '@/localapi/storage'
+import { filtersFromParams, parseFilters, type SearchContext } from '@/features/dam/search'
+import { pathOf } from '@/features/mediaTags/logic'
+import * as tagStore from '@/features/mediaTags/store'
 import { replaceEverywhere } from '@/features/dam/replaceEverywhere'
 import { snapshotCurrent } from '@/features/dam/versionsIo'
 import { ALLOW_USED_DELETE } from '@/features/dam/safeDelete'
@@ -31,6 +34,13 @@ async function guard(request: Request, write: boolean) {
   return { context: auth.context }
 }
 
+/** Dates and tag ids the search builder needs, resolved once per request. */
+async function searchContext(d1: store.D1, now: Date, warnDays: number, tagId: number): Promise<SearchContext> {
+  const ctx: SearchContext = { todayIso: now.toISOString().slice(0, 10), warnUntilIso: new Date(now.getTime() + warnDays * 86_400_000).toISOString().slice(0, 10) }
+  if (tagId && (await getFeatureFlags()).mediatags) ctx.tagIds = await store.tagWithChildren(d1, tagId)
+  return ctx
+}
+
 const positive = (v: unknown): number | null => (Number.isInteger(Number(v)) && Number(v) > 0 ? Number(v) : null)
 const caption = (media: Record<string, unknown>): string => (typeof media.caption === 'string' ? media.caption : '')
 const alt = (media: Record<string, unknown>): string => (typeof media.alt === 'string' ? media.alt : '')
@@ -47,6 +57,21 @@ export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const id = positive(url.searchParams.get('id'))
   const now = new Date()
+  if (url.searchParams.get('searchMeta') === '1') {
+    const tags = (await getFeatureFlags()).mediatags ? await tagStore.listTags(d1 as never) : []
+    return json({
+      saved: await store.listSavedSearches(d1),
+      fields: (await store.listFields(d1)).filter((f) => f.searchable).map((f) => ({ key: f.key, label: f.label, type: f.type, options: f.options })),
+      collections: (await store.listCollections(d1)).filter((c) => !c.smart).map((c) => ({ id: c.id, name: c.name })),
+      tags: tags.map((t) => ({ id: t.id, label: pathOf(tags, t.id) })),
+    })
+  }
+  if (url.searchParams.get('search') === '1') {
+    const filters = filtersFromParams(url.searchParams)
+    const page = Math.max(1, Number(url.searchParams.get('page')) || 1)
+    const pageSize = Math.min(200, Math.max(1, Number(url.searchParams.get('pageSize')) || 48))
+    return json(await store.runSearch(d1, filters, await searchContext(d1, now, settings.expiryWarnDays, filters.tagId), page, pageSize))
+  }
   // A kept version's bytes, for the compare view. Served with the same safe headers as public files.
   const versionFile = positive(url.searchParams.get('versionFile'))
   if (id && versionFile) {
@@ -122,7 +147,7 @@ export async function POST(request: Request): Promise<Response> {
       const values = validateMetaValues(fields, media.mimeType, (body.values && typeof body.values === 'object' ? body.values : {}) as Record<string, unknown>)
       if (values.ok === false) return json({ error: values.error }, 400)
       const asset = (await store.getAssets(d1, [id])).get(id) ?? store.defaultAsset(id)
-      await store.saveMeta(d1, id, values.value, buildSearchText(fields, values.value, [caption(media), alt(media), ...exifSearchWords(asset.exif as never)]), now)
+      await store.saveMeta(d1, id, values.value, searchTextFor(fields, values.value, caption(media), alt(media), asset.exif as never, docPart(asset.searchText)), now)
       await store.logActivity(d1, id, 'metadata', '', userId, now)
       return json({ ok: true })
     }
@@ -135,7 +160,7 @@ export async function POST(request: Request): Promise<Response> {
       let skipped = 0
       for (const mediaId of ids) {
         const media = await loadMedia(engine, mediaId)
-        if (!media?.filename || !/jpe?g/i.test(media.mimeType ?? '')) {
+        if (!media?.filename) {
           skipped++
           continue
         }
@@ -144,9 +169,13 @@ export async function POST(request: Request): Promise<Response> {
           skipped++
           continue
         }
-        const exif = exifForStorage(parseExif(object.data), settings.stripGps)
+        const { exif, text } = await analyseFile(object.data, media.mimeType ?? '', settings)
+        if (Object.keys(exif).length === 0 && !text) {
+          skipped++
+          continue
+        }
         const asset = (await store.getAssets(d1, [mediaId])).get(mediaId) ?? store.defaultAsset(mediaId)
-        await store.saveExif(d1, mediaId, exif, buildSearchText(fields, asset.meta, [caption(media), alt(media), ...exifSearchWords(exif)]), now)
+        await store.saveExif(d1, mediaId, Object.keys(exif).length > 0 ? exif : (asset.exif as never), searchTextFor(fields, asset.meta, caption(media), alt(media), Object.keys(exif).length > 0 ? exif : (asset.exif as never), text || docPart(asset.searchText)), now)
         read++
       }
       return json({ ok: true, read, skipped })
@@ -173,10 +202,25 @@ export async function POST(request: Request): Promise<Response> {
       const ids = parseIdList(body.mediaIds)
       const collectionId = positive(body.collectionId)
       if (!ids || !collectionId) return json({ error: 'Choose files and a collection.' }, 400)
-      if (!(await store.listCollections(d1)).some((c) => c.id === collectionId)) return json({ error: 'That collection no longer exists.' }, 400)
+      const target = (await store.listCollections(d1)).find((c) => c.id === collectionId)
+      if (!target) return json({ error: 'That collection no longer exists.' }, 400)
+      if (target.smart) return json({ error: 'A smart collection fills itself from its search. Change the search instead.' }, 400)
       await store.assignCollection(d1, collectionId, ids, body.remove === true)
       return json({ ok: true })
     }
+    case 'saveSearch':
+    case 'saveSmartCollection': {
+      const name = store.parseSearchName(body.name)
+      if (name.ok === false) return json({ error: name.error }, 400)
+      const filters = parseFilters((body.filters && typeof body.filters === 'object' ? body.filters : {}) as Record<string, unknown>)
+      if (body.action === 'saveSearch') return json({ ok: true, id: await store.saveSearch(d1, name.value, filters, userId, now) })
+      if ((await store.listCollections(d1)).some((c) => c.name.toLowerCase() === name.value.toLowerCase())) return json({ error: 'There is already a collection with that name.' }, 400)
+      return json({ ok: true, id: await store.saveSmartCollection(d1, name.value, filters, now) })
+    }
+    case 'deleteSearch':
+      if (!id) return json({ error: 'Pick one.' }, 400)
+      await store.deleteSearch(d1, id)
+      return json({ ok: true })
     case 'saveField': {
       if (!isAdmin) return json({ error: 'Only an admin can change the metadata fields.' }, 403)
       const parsed = parseMetaField(body, await store.listFields(d1), id)

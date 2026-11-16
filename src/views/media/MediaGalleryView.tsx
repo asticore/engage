@@ -175,7 +175,11 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
       damCollections = await damStore.listCollections(d1)
       collectionFilter = damCollections.some((c) => c.id === Number(strParam('collection'))) ? Number(strParam('collection')) : 0
       if (collectionFilter) {
-        const inCollection = await damStore.mediaIdsInCollection(d1, collectionFilter)
+        const chosen = damCollections.find((c) => c.id === collectionFilter)
+        const today = new Date()
+        const inCollection = chosen?.smart
+          ? await damStore.smartCollectionIds(d1, collectionFilter, { todayIso: today.toISOString().slice(0, 10), warnUntilIso: today.toISOString().slice(0, 10) })
+          : await damStore.mediaIdsInCollection(d1, collectionFilter)
         tagMediaIds = tagMediaIds ? tagMediaIds.filter((id) => inCollection.includes(id)) : inCollection
       }
     }
@@ -364,7 +368,7 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
                     <option value="">All collections</option>
                     {damCollections.map((c) => (
                       <option key={c.id} value={c.id}>
-                        {c.name} ({c.count})
+                        {c.name} ({c.smart ? 'smart' : c.count})
                       </option>
                     ))}
                   </select>
@@ -429,6 +433,11 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
               {currentSearch ? (
                 <Link href={buildHref({ search: undefined })} className="text-[calc(var(--base)*0.78)] text-[var(--theme-elevation-500)] no-underline hover:text-[var(--ac-gold)]">
                   Clear
+                </Link>
+              ) : null}
+              {damOn ? (
+                <Link href={`${adminRoute}/media-search`} className="text-[calc(var(--base)*0.78)] text-[var(--theme-elevation-500)] no-underline hover:text-[var(--ac-gold)]">
+                  Advanced search
                 </Link>
               ) : null}
             </form>
