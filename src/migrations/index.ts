@@ -190,6 +190,7 @@ import * as migration_20270316_425000_agent_access from './20270316_425000_agent
 import * as migration_20270317_100000_demos from './20270317_100000_demos';
 import * as migration_20270317_110000_client_reports from './20270317_110000_client_reports';
 import * as migration_20270317_120000_franchising from './20270317_120000_franchising';
+import * as migration_20270316_435000_org_sso from './20270316_435000_org_sso';
 import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
 import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
 import * as migration_20270316_350000_affiliate_portal from './20270316_350000_affiliate_portal';
@@ -1194,5 +1195,10 @@ export const migrations = [
     up: migration_20270317_120000_franchising.up,
     down: migration_20270317_120000_franchising.down,
     name: '20270317_120000_franchising',
+  },
+  {
+    up: migration_20270316_435000_org_sso.up,
+    down: migration_20270316_435000_org_sso.down,
+    name: '20270316_435000_org_sso',
   },
 ];

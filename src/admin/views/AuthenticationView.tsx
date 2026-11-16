@@ -27,7 +27,16 @@ export async function AuthenticationView() {
     const { listGrants } = await import('@/features/agentAccess/store')
     activeTokens = (await listGrants((await rawD1()) as never).catch((): never[] => [])).filter((g) => !g.revokedAt).length
   }
-  const rows = describeAuthMethods(settings, social, { featureOn, apiKeysOn: settings.apiKeys.enabled, activeTokens })
+  const ssoOn = Boolean((await getFeatureFlags()).sso)
+  let ssoConnections = 0
+  let ssoEnforced = 0
+  if (ssoOn) {
+    const { listConnectionsSafe } = await import('@/features/orgSso/store')
+    const all = await listConnectionsSafe()
+    ssoConnections = all.filter((c) => c.enabled).length
+    ssoEnforced = all.filter((c) => c.enabled && c.enforce).length
+  }
+  const rows = describeAuthMethods(settings, social, { featureOn, apiKeysOn: settings.apiKeys.enabled, activeTokens }, { featureOn: ssoOn, connections: ssoConnections, enforced: ssoEnforced })
   const matrix = await readMatrix()
   const matrixRows = rows.filter((row) => (MATRIX_METHODS as readonly string[]).includes(row.id))
   return (

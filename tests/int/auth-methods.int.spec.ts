@@ -43,4 +43,12 @@ describe('authentication overview', () => {
     expect(on.detail).toContain('1 active agent token.')
     expect(describeAuthMethods(DEFAULT_SECURITY_SETTINGS as never, emptySocialConfig()).some((r) => r.id === 'agent-access')).toBe(false)
   })
+
+  it('shows single sign-on as off, needing setup, or on', () => {
+    const row = (info: { featureOn: boolean; connections: number; enforced: number }) =>
+      describeAuthMethods(DEFAULT_SECURITY_SETTINGS as never, emptySocialConfig(), undefined, info).find((r) => r.id === 'org-sso')!
+    expect(row({ featureOn: false, connections: 0, enforced: 0 }).status).toBe('off')
+    expect(row({ featureOn: true, connections: 0, enforced: 0 }).status).toBe('needs-setup')
+    expect(row({ featureOn: true, connections: 2, enforced: 1 }).detail).toBe('2 connections, 1 requiring single sign-on.')
+  })
 })

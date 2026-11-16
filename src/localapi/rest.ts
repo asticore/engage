@@ -1529,6 +1529,28 @@ async function handleGlobalUpdate(engine: Engine, slug: string, request: Request
 async function handleLogin(engine: Engine, collection: string, request: Request): Promise<Response> {
   const { data } = await readRequestBody(request)
   const address = stringField(data, 'email').trim().toLowerCase() || null
+  // Task 25a: an address whose organisation requires single sign-on may not use a password (staff are exempt).
+  if (address && collection === 'users') {
+    try {
+      const [{ passwordBlockedBySso, ssoRefusal }, { listConnectionsSafe }, { getFeatureFlags }] = await Promise.all([import('@/features/orgSso/enforce'), import('@/features/orgSso/store'), import('@/utilities/features')])
+      const blocked = await passwordBlockedBySso({
+        email: address,
+        featureOn: () => getFeatureFlags().then((f) => Boolean(f.sso), (): boolean => false),
+        listConnections: () => listConnectionsSafe(),
+        rolesOf: async (email) => {
+          const found = await engine.find({ collection: 'users', where: { email: { equals: email } }, limit: 1, depth: 0, overrideAccess: true }).catch((): null => null)
+          const roles = (found?.docs?.[0] as { roles?: unknown } | undefined)?.roles
+          return Array.isArray(roles) ? (roles as string[]) : null
+        },
+      })
+      if (blocked) {
+        await recordAuthEvent(engine, { action: 'login.failed', collectionSlug: collection, actorEmail: address, detail: 'single sign-on required' }, auditContext(request))
+        return ssoRefusal()
+      }
+    } catch {
+      // The check never stops a normal sign-in.
+    }
+  }
   const result = await engine.login({ collection, data: { email: stringField(data, 'email'), password: stringField(data, 'password') }, client: sessionClient(request) }).catch(async (err: unknown): Promise<never> => {
     await recordAuthEvent(engine, { action: err instanceof LockedAuth ? 'login.locked' : 'login.failed', collectionSlug: collection, actorEmail: address, detail: 'password step' }, auditContext(request))
     throw err
