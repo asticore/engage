@@ -13,6 +13,15 @@ vi.mock('@/admin/auth', () => ({
 }))
 vi.mock('@/lib/engine', () => ({ getEngine: vi.fn(async () => state.context?.engine) }))
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: vi.fn(async () => ({ env: {} })) }))
+// An empty database: every statement returns no rows, so the folders route can be exercised without a real D1.
+vi.mock('@/features/ecommerce/server/db', () => {
+  const statement: Record<string, unknown> = {}
+  statement.bind = () => statement
+  statement.all = async () => ({ results: [] })
+  statement.first = async () => null
+  statement.run = async () => ({ success: true, meta: {} })
+  return { rawD1: async () => ({ prepare: () => statement, batch: async () => [], exec: async () => ({}) }) }
+})
 vi.mock('@/localapi/storage', () => ({
   putMediaObject: vi.fn(async () => undefined),
   putOriginalIfMissing: vi.fn(async () => true),
