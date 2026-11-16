@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { describeAuthMethods } from '@/features/security/authMethods'
+import { describeAuthMethods, togglePatch } from '@/features/security/authMethods'
 import { DEFAULT_SECURITY_SETTINGS } from '@/features/security/settings'
 import { emptySocialConfig } from '@/features/socialLogin/providers'
 
@@ -18,5 +18,18 @@ describe('authentication overview', () => {
     const row = describeAuthMethods(DEFAULT_SECURITY_SETTINGS as never, social).find((r) => r.id === 'social-google')!
     expect(row.status).toBe('needs-setup')
     expect(row.detail).toContain('missing')
+  })
+  it('builds a patch per switchable method and refuses the rest', () => {
+    expect(togglePatch('magic-link', true)).toEqual({ magicLinkEnabled: true })
+    expect(togglePatch('passkeys', false)).toEqual({ passkeysEnabled: false })
+    expect(togglePatch('social-google', true)).toEqual({ socialLogin: { googleEnabled: true } })
+    expect(togglePatch('social-nope', true)).toBeNull()
+    expect(togglePatch('password', false)).toBeNull()
+    expect(togglePatch('two-factor', false)).toBeNull()
+  })
+  it('marks switchable rows', () => {
+    const rows = describeAuthMethods(DEFAULT_SECURITY_SETTINGS as never, emptySocialConfig())
+    expect(rows.find((r) => r.id === 'magic-link')?.toggle).toBe(true)
+    expect(rows.find((r) => r.id === 'password')?.toggle).toBeUndefined()
   })
 })
