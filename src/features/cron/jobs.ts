@@ -18,6 +18,10 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
   'abandoned-carts': async ({ engine }) => {
     const { runAbandonedCartReminders } = await import('@/features/ecommerce/server/abandoned')
     await runAbandonedCartReminders(engine as never)
+    // Ended stock holds (Task 23e) are cleaned up on the same timer.
+    const { sweepStockHolds } = await import('@/features/ecommerce/server/stockHold')
+    const connect = await import('@/cms/db/connect')
+    await sweepStockHolds((await connect.resolveD1Binding().catch((): null => null)) as never)
   },
   pagespeed: async ({ engine, db }) => {
     const { runDueTests } = await import('@/features/pagespeed/queue')
