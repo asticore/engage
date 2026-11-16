@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { audit, auditContext } from '@/features/security/auditLog'
-import { decideIp, MAX_RULES, parseBulk, type IpRule, type IpRuleKind } from '@/features/security/ipRules'
+import { decideCountry, decideIp, MAX_RULES, parseBulk, parseCountries, type IpRule, type IpRuleKind } from '@/features/security/ipRules'
 import * as store from '@/features/security/ipRulesStore'
 import { clientKey } from '@/features/security/rateLimit'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
@@ -35,7 +35,7 @@ export async function GET(request: Request): Promise<Response> {
     const lines = ['kind,entry,reason,expires_at,created_at', ...rules.map((r) => [r.kind, r.entry, r.reason, r.expiresAt ?? '', r.createdAt].map(csvCell).join(','))]
     return new Response(lines.join('\n'), { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="ip-rules.csv"', 'Cache-Control': 'no-store' } })
   }
-  return json({ rules, yourAddress: clientKey(request) })
+  return json({ rules, yourAddress: clientKey(request), yourCountry: request.headers.get('cf-ipcountry') ?? '' })
 }
 
 /** POST { action: 'add', kind, entries (text), reason?, expiresAt? } | { action: 'delete', ids } */
@@ -68,6 +68,22 @@ export async function POST(request: Request): Promise<Response> {
     store.resetIpRulesCache()
     void audit({ action: 'ip.rule', detail: `${kind} ${parsed.entries.length} added`, ...ctx }, settings)
     return json({ ok: true, added: parsed.entries.length, rejected: parsed.rejected })
+  }
+  if (body.action === 'countries') {
+    const mode = body.mode === 'allow' ? 'country-allow' : body.mode === 'block' ? 'country-block' : null
+    const parsed = parseCountries(typeof body.countries === 'string' ? body.countries.slice(0, 2000) : '')
+    if (mode && parsed.codes.length === 0) return json({ error: parsed.rejected.length ? `Not a country code: ${parsed.rejected.join(', ')}. Use two letters such as AU or US (XX is an unknown country).` : 'Enter at least one country code.' }, 400)
+    if (mode) {
+      // Lockout guard: the saving admin must still get in from where they are, unless their address is on the allow list.
+      const existing = await store.listRules(d1).catch((): IpRule[] => [])
+      const test: IpRule[] = parsed.codes.map((entry, i) => ({ id: i, kind: mode, entry, reason: '', expiresAt: null as string | null, createdAt: '' }))
+      const byIp = decideIp(clientKey(request), existing)
+      if (byIp !== 'allow' && decideCountry(request.headers.get('cf-ipcountry'), test) === 'block') return json({ error: 'That would block your own country. Add your address to the IP allow list first.' }, 400)
+    }
+    await store.setCountries(d1, mode, parsed.codes, now)
+    store.resetIpRulesCache()
+    void audit({ action: 'ip.rule', detail: mode ? `${mode} ${parsed.codes.length} countries` : 'countries cleared', ...ctx }, settings)
+    return json({ ok: true })
   }
   if (body.action === 'delete') {
     const ids = Array.isArray(body.ids) ? body.ids.map((n) => Math.floor(Number(n))).filter((n) => Number.isFinite(n) && n > 0) : []

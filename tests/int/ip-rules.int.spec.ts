@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { decideIp, matches, parseBulk, parseEntry, parseIp, type IpRule } from '@/features/security/ipRules'
+import { decideCountry, decideIp, matches, parseBulk, parseCountries, parseEntry, parseIp, type IpRule } from '@/features/security/ipRules'
 
-const rule = (kind: 'allow' | 'block', entry: string, expiresAt: string | null = null): IpRule => ({ id: 1, kind, entry, reason: '', expiresAt, createdAt: '' })
+const rule = (kind: IpRule['kind'], entry: string, expiresAt: string | null = null): IpRule => ({ id: 1, kind, entry, reason: '', expiresAt, createdAt: '' })
 
 describe('ip rules', () => {
   it('parses addresses', () => {
@@ -37,5 +37,20 @@ describe('ip rules', () => {
     const r = parseBulk('1.2.3.4\n5.6.7.0/24, bad entry # note\n# whole comment\n1.2.3.4')
     expect(r.entries).toEqual(['1.2.3.4', '5.6.7.0/24'])
     expect(r.rejected).toEqual(['bad entry'])
+  })
+  it('applies country rules from the header', () => {
+    const block = [rule('country-block', 'CN'), rule('country-block', 'XX')]
+    expect(decideCountry('CN', block)).toBe('block')
+    expect(decideCountry('cn', block)).toBe('block')
+    expect(decideCountry('AU', block)).toBe('allow')
+    expect(decideCountry(null, block)).toBe('block')
+    expect(decideCountry('T1', block)).toBe('block')
+    const only = [rule('country-allow', 'AU'), rule('country-allow', 'NZ')]
+    expect(decideCountry('AU', only)).toBe('allow')
+    expect(decideCountry('US', only)).toBe('block')
+    expect(decideCountry(null, only)).toBe('block')
+    expect(decideCountry('US', [])).toBe('allow')
+    expect(parseCountries('au, nz xx bad1 AU').codes).toEqual(['AU', 'NZ', 'XX'])
+    expect(parseCountries('bad1').rejected).toEqual(['bad1'])
   })
 })

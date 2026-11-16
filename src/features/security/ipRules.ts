@@ -3,7 +3,7 @@
  * matching an address, and the allow-first decision. No I/O, so every rule is testable on its own.
  */
 
-export type IpRuleKind = 'allow' | 'block'
+export type IpRuleKind = 'allow' | 'block' | 'country-allow' | 'country-block'
 export type IpRule = { id: number; kind: IpRuleKind; entry: string; reason: string; expiresAt: string | null; createdAt: string }
 export type Parsed = { v: 4 | 6; value: bigint; bits: number }
 
@@ -76,3 +76,35 @@ export function parseBulk(text: string): { entries: string[]; rejected: string[]
 }
 
 export const MAX_RULES = 2000
+
+/** A two letter country code in capitals, or XX for an unknown country. Anything else is refused. */
+export function normaliseCountry(text: string): string | null {
+  const c = text.trim().toUpperCase()
+  return /^[A-Z]{2}$/.test(c) ? c : null
+}
+
+export function parseCountries(text: string): { codes: string[]; rejected: string[] } {
+  const codes: string[] = []
+  const rejected: string[] = []
+  for (const raw of text.split(/[\s,;]+/)) {
+    if (!raw) continue
+    const c = normaliseCountry(raw)
+    if (c) {
+      if (!codes.includes(c)) codes.push(c)
+    } else rejected.push(raw.slice(0, 20))
+  }
+  return { codes: codes.slice(0, 300), rejected: rejected.slice(0, 20) }
+}
+
+/**
+ * Whole site country rule from the Cloudflare country header. Allow mode (any country-allow row): only those countries
+ * get in. Block mode: the listed countries are refused. XX in a list stands for an unknown country (no header, T1 or XX).
+ */
+export function decideCountry(header: string | null | undefined, rules: readonly IpRule[]): 'allow' | 'block' {
+  const raw = (header ?? '').trim().toUpperCase()
+  const country = /^[A-Z]{2}$/.test(raw) && raw !== 'T1' ? raw : 'XX'
+  const allowed = rules.filter((r) => r.kind === 'country-allow').map((r) => r.entry)
+  const blocked = rules.filter((r) => r.kind === 'country-block').map((r) => r.entry)
+  if (allowed.length > 0) return allowed.includes(country) ? 'allow' : 'block'
+  return blocked.includes(country) ? 'block' : 'allow'
+}
