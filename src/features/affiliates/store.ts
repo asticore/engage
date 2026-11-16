@@ -223,3 +223,8 @@ export async function productChoices(d1: D1): Promise<Array<{ id: number; title:
 export async function lifetimeSalesCents(d1: D1, affiliateId: number): Promise<number> {
   return Number((await all(d1, "SELECT COALESCE(SUM(base_cents),0) AS n FROM eg_affiliate_commissions WHERE affiliate_id = ?1 AND status IN ('pending','paid')", affiliateId))[0]?.n ?? 0)
 }
+
+/** The newest tracked visits with the affiliate's name, for the visit log on the Affiliates screen. */
+export async function recentVisits(d1: D1, limit = 50): Promise<Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>> {
+  return (await all(d1, 'SELECT v.id, v.path, v.utm_source, v.utm_medium, v.utm_campaign, v.created_at, a.name FROM eg_affiliate_visits v LEFT JOIN eg_affiliates a ON a.id = v.affiliate_id ORDER BY v.id DESC LIMIT ?1', limit)).map((r) => ({ id: Number(r.id), affiliate: String(r.name ?? ''), path: String(r.path ?? '/'), source: String(r.utm_source ?? ''), medium: String(r.utm_medium ?? ''), campaign: String(r.utm_campaign ?? ''), createdAt: String(r.created_at ?? '') }))
+}

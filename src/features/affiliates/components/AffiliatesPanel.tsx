@@ -23,12 +23,13 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
   const [configured, setConfigured] = useState(true)
   const [productRates, setProductRates] = useState<Array<{ productId: number; ratePct: number; title: string }>>([])
   const [products, setProducts] = useState<Array<{ id: number; title: string }>>([])
+  const [visits, setVisits] = useState<Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>>([])
   const [rateProduct, setRateProduct] = useState('')
   const [rateValue, setRateValue] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-affiliates')
-    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; error?: string } | null
+    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; visits?: Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>; error?: string } | null
     if (!res.ok) return setMessage(data?.error ?? 'Could not load affiliates.')
     setRows(data?.affiliates ?? [])
     setSettings(data?.settings ?? null)
@@ -37,6 +38,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
     setConfigured(data?.configured !== false)
     setProductRates(data?.productRates ?? [])
     setProducts(data?.products ?? [])
+    setVisits(data?.visits ?? [])
   }, [])
   useEffect(() => {
     void load()
@@ -276,6 +278,23 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
                   <td>{c.status}</td>
                   <td>{c.eligible_at ? c.eligible_at.slice(0, 10) : ''}</td>
                 </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      {visits.length > 0 && (
+        <section aria-labelledby="aff-visits">
+          <h2 id="aff-visits">Recent visits</h2>
+          <p>The newest 50 visits through affiliate links. Crawlers and scripts are not logged, and nothing is stored for visitors who have not allowed the referral cookie.</p>
+          <table>
+            <thead>
+              <tr><th scope="col">When</th><th scope="col">Affiliate</th><th scope="col">Landing page</th><th scope="col">UTM source</th><th scope="col">UTM medium</th><th scope="col">UTM campaign</th></tr>
+            </thead>
+            <tbody>
+              {visits.map((v) => (
+                <tr key={v.id}><td>{v.createdAt.slice(0, 16).replace('T', ' ')}</td><td>{v.affiliate}</td><td><code>{v.path}</code></td><td>{v.source}</td><td>{v.medium}</td><td>{v.campaign}</td></tr>
               ))}
             </tbody>
           </table>
