@@ -218,6 +218,53 @@ export async function listProductRates(d1: D1): Promise<Array<{ productId: numbe
   }
 }
 
+export async function getTagRates(d1: D1): Promise<Map<number, number>> {
+  try {
+    return new Map((await all(d1, 'SELECT tag_id, rate_pct FROM eg_affiliate_tag_rates')).map((r) => [Number(r.tag_id), Number(r.rate_pct)]))
+  } catch {
+    return new Map()
+  }
+}
+
+export async function setTagRate(d1: D1, tagId: number, ratePct: number | null, nowIso: string): Promise<void> {
+  if (ratePct === null) await d1.prepare('DELETE FROM eg_affiliate_tag_rates WHERE tag_id = ?1').bind(tagId).run()
+  else await d1.prepare('INSERT INTO eg_affiliate_tag_rates (tag_id, rate_pct, updated_at) VALUES (?1,?2,?3) ON CONFLICT(tag_id) DO UPDATE SET rate_pct=?2, updated_at=?3').bind(tagId, ratePct, nowIso).run()
+}
+
+export async function listTagRates(d1: D1): Promise<Array<{ tagId: number; ratePct: number; name: string }>> {
+  try {
+    return (await all(d1, 'SELECT r.tag_id, r.rate_pct, t.name FROM eg_affiliate_tag_rates r LEFT JOIN eg_product_tags t ON t.id = r.tag_id ORDER BY r.tag_id')).map((x) => ({ tagId: Number(x.tag_id), ratePct: Number(x.rate_pct), name: String(x.name ?? '') }))
+  } catch {
+    return []
+  }
+}
+
+export async function tagChoices(d1: D1): Promise<Array<{ id: number; name: string }>> {
+  try {
+    return (await all(d1, 'SELECT id, name FROM eg_product_tags ORDER BY name LIMIT 500')).map((r) => ({ id: Number(r.id), name: String(r.name ?? '') }))
+  } catch {
+    return []
+  }
+}
+
+/** Which tags each of the given products has (only when some tag has a rate, so most orders skip the lookup). */
+export async function productTagMap(d1: D1, productIds: readonly number[]): Promise<Map<number, number[]>> {
+  const out = new Map<number, number[]>()
+  const ids = [...new Set(productIds.filter((n) => Number.isInteger(n) && n > 0))].slice(0, 50)
+  if (ids.length === 0) return out
+  try {
+    const marks = ids.map((_, i) => `?${i + 1}`).join(',')
+    for (const r of await all(d1, `SELECT parent_id, eg_product_tags_id FROM eg_products_rels WHERE path = 'tags' AND eg_product_tags_id IS NOT NULL AND parent_id IN (${marks})`, ...ids)) {
+      const list = out.get(Number(r.parent_id)) ?? []
+      list.push(Number(r.eg_product_tags_id))
+      out.set(Number(r.parent_id), list)
+    }
+  } catch {
+    // The shop tables may not exist: no tag rates then.
+  }
+  return out
+}
+
 export async function productChoices(d1: D1): Promise<Array<{ id: number; title: string }>> {
   try {
     return (await all(d1, 'SELECT id, title FROM eg_products ORDER BY title LIMIT 500')).map((r) => ({ id: Number(r.id), title: String(r.title ?? '') }))
