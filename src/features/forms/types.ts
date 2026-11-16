@@ -291,6 +291,8 @@ export type ResolvedFormSettings = {
   recaptchaSiteKey: string
   recaptchaSecretKey: string
   recaptchaMinScore: number
+  /** Also require the challenge on member sign-in, register and forgot password. */
+  protectSignIn: boolean
   submitButtonLabel: string
   successMessage: string
   errorMessage: string
