@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import React from 'react'
+import { SsoPanel } from '@/features/orgSso/components/SsoPanel'
+import { getFeatureFlags } from '@/utilities/features'
 
 import { AccountShell, AuthShell } from '@/features/accounts/components/AccountShell'
 import { requireCustomer } from '@/features/accounts/guards'
@@ -189,6 +191,7 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
   // Whoever may manage members is shown controls only for the rows they may manage; the server checks again.
   const manages = (role: string) => detail.myRole === 'owner' || (detail.myRole === 'admin' && role !== 'owner')
 
+  const ssoOn = Boolean((await getFeatureFlags().catch((): { sso?: boolean } => ({}))).sso)
   const branding = brandingOf(meta)
   const layout = layoutOf(meta)
 
@@ -360,6 +363,13 @@ export const OrganizationDetailScreen: React.FC<{ id: string }> = async ({ id })
       {visibleSections(layout).map((key) => (
         <React.Fragment key={key}>{sections[key]}</React.Fragment>
       ))}
+
+      {detail.myRole === 'owner' && ssoOn ? (
+        <section className="org-section">
+          <h2>Single sign-on</h2>
+          <SsoPanel endpoint="/api/org-sso" orgId={org.id} />
+        </section>
+      ) : null}
 
       {detail.actingFor ? null : (
         <section className="org-section">

@@ -45,6 +45,7 @@
     "@opennextjs/cloudflare": "~1.18.1",
     "@stripe/react-stripe-js": "^6.9.0",
     "@stripe/stripe-js": "^9.15.0",
+    "@xmldom/xmldom": "^0.9.12",
     "cross-env": "10.1.0",
     "drizzle-orm": "0.45.2",
     "fflate": "^0.8.3",
@@ -54,7 +55,9 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "stripe": "^22.6.1",
-    "to-snake-case": "1.0.0"
+    "to-snake-case": "1.0.0",
+    "xml-crypto": "^6.4.0",
+    "xpath": "^0.0.36"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

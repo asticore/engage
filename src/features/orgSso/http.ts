@@ -5,6 +5,7 @@ import { emptyProviderConfig, type ProviderConfig } from '@/features/socialLogin
 import { newFlowSecrets, openState, sealState, STATE_MAX_AGE_MS, type FlowState } from '@/features/socialLogin/state'
 
 import { connectionForEmail, discoveryUrlFor, type SsoConnection } from './core'
+import { buildAuthnRequest, deflateBase64, newRequestId, spMetadata, validateSamlResponse } from './saml'
 import { completeSso, type SsoDeps } from './service'
 
 /**
@@ -20,11 +21,13 @@ export type SsoRuntime = Pick<SocialRuntime, 'secret' | 'fetchImpl' | 'now' | 'o
   listConnections(): Promise<SsoConnection[]>
   getConnection(id: string): Promise<SsoConnection | null>
   deps: SsoDeps
+  /** One-time use of a SAML assertion id. False means it was already used. */
+  markAssertionSeen(assertionId: string, expiresAt: number, now: number): Promise<boolean>
 }
 
 const NO_STORE = 'no-store'
-const serialize = (name: string, value: string, maxAge: number, secure: boolean, path = '/'): string =>
-  `${name}=${value}; Path=${path}; Max-Age=${maxAge}; SameSite=Lax; HttpOnly${secure ? '; Secure' : ''}`
+const serialize = (name: string, value: string, maxAge: number, secure: boolean, path = '/', sameSite: 'Lax' | 'None' = 'Lax'): string =>
+  `${name}=${value}; Path=${path}; Max-Age=${maxAge}; SameSite=${sameSite}; HttpOnly${secure || sameSite === 'None' ? '; Secure' : ''}`
 
 const redirect = (origin: string, path: string, cookies: string[] = []): Response => {
   const headers = new Headers({ Location: `${origin}${path}`, 'Cache-Control': NO_STORE })
@@ -74,6 +77,7 @@ export async function handleSsoStart(request: Request, rt: SsoRuntime): Promise<
   const conn = connectionForEmail(await rt.listConnections(), email)
   // The same answer whether or not the domain is known, so the form cannot be used to list organisations.
   if (!conn) return redirect(origin, `${PATH}/start?error=1`)
+  if (conn.saml) return samlStart(request, rt, conn, email, origin)
   let endpoints
   try {
     endpoints = await resolveEndpoints('oidc', configFor(conn), rt.fetchImpl, rt.now())
@@ -119,7 +123,21 @@ export async function handleSsoCallback(request: Request, rt: SsoRuntime): Promi
     return refuse('provider', error instanceof FlowError || error instanceof EndpointError ? error.reason : 'unknown')
   }
 
-  const outcome = await completeSso(rt.deps, conn, { subject: identity.providerUserId, email: identity.email, emailVerified: identity.emailVerified })
+  return finishSso(rt, request, conn, { subject: identity.providerUserId, email: identity.email, emailVerified: identity.emailVerified }, clear, secure, origin, refuse)
+}
+
+/** Shared by the OpenID Connect and SAML callbacks: applies the account rules, then signs the person in. */
+async function finishSso(
+  rt: SsoRuntime,
+  request: Request,
+  conn: SsoConnection,
+  identity: { subject: string; email: string | null; emailVerified: boolean },
+  clear: string,
+  secure: boolean,
+  origin: string,
+  refuse: (code: string, detail: string) => Promise<Response>,
+): Promise<Response> {
+  const outcome = await completeSso(rt.deps, conn, identity)
   if (!outcome.ok) return refuse(outcome.code ?? 'refused', `${conn.name}: ${outcome.code}`)
 
   let result: { token?: string; pendingToken?: string }
@@ -136,4 +154,76 @@ export async function handleSsoCallback(request: Request, rt: SsoRuntime): Promi
   if (!result.token) return refuse('locked', 'no token')
   await rt.audit('social.login', request, { actorId: outcome.userId, detail: `sso ${conn.name}: signed in${outcome.created ? ' (new account)' : ''}` })
   return redirect(origin, '/account', [clear, serialize(rt.sessionCookie.name, result.token, rt.sessionCookie.maxAgeSeconds, secure)])
+}
+
+// --- SAML 2.0 -----------------------------------------------------------------
+
+export const spEntityIdFor = (origin: string, connId: string): string => `${origin}${PATH}/saml/metadata/${connId}`
+export const acsUrlFor = (origin: string): string => `${origin}${PATH}/saml/acs`
+
+async function samlStart(request: Request, rt: SsoRuntime, conn: SsoConnection, email: string, origin: string): Promise<Response> {
+  const saml = conn.saml!
+  const secure = origin.startsWith('https://')
+  const secrets = newFlowSecrets()
+  const requestId = newRequestId()
+  // `n` carries the request id, so only a response to this very request is accepted.
+  const state: FlowState = { p: 'oidc', s: secrets.s, v: '', n: requestId, mode: 'signin', area: 'account', next: '/account', uid: conn.id, iat: rt.now() }
+  const xml = buildAuthnRequest({ id: requestId, now: rt.now(), destination: saml.ssoUrl, acsUrl: acsUrlFor(origin), spEntityId: spEntityIdFor(origin, conn.id) })
+  const url = new URL(saml.ssoUrl)
+  url.searchParams.set('SAMLRequest', await deflateBase64(xml))
+  url.searchParams.set('RelayState', state.s)
+  const headers = new Headers({ Location: url.toString(), 'Cache-Control': NO_STORE })
+  // The identity provider answers with a cross-site POST, where a Lax cookie is not sent; so this one is SameSite=None.
+  headers.append('Set-Cookie', serialize(SSO_STATE_COOKIE, await sealState(rt.secret, state), Math.floor(STATE_MAX_AGE_MS / 1000), true, PATH, 'None'))
+  void email
+  void secure
+  return new Response(null, { status: 303, headers })
+}
+
+/** GET /api/sso/saml/metadata/:id: the service provider metadata to hand to the identity provider. */
+export async function handleSamlMetadata(request: Request, connId: string, rt: SsoRuntime): Promise<Response> {
+  const conn = await rt.getConnection(connId)
+  if (!conn || !conn.saml) return new Response('Not found', { status: 404 })
+  const origin = rt.origin(request)
+  return new Response(spMetadata({ spEntityId: spEntityIdFor(origin, conn.id), acsUrl: acsUrlFor(origin) }), { headers: { 'Content-Type': 'application/samlmetadata+xml; charset=utf-8', 'Cache-Control': 'no-store' } })
+}
+
+/** POST /api/sso/saml/acs: the identity provider's answer. */
+export async function handleSamlAcs(request: Request, rt: SsoRuntime): Promise<Response> {
+  const origin = rt.origin(request)
+  const clear = serialize(SSO_STATE_COOKIE, '', 0, true, PATH, 'None')
+  const form = await request.formData().catch((): null => null)
+  const response = form?.get('SAMLResponse')
+  const relay = form?.get('RelayState')
+  const cookieValue = readCookie(request, SSO_STATE_COOKIE)
+  const state = await openState(rt.secret, cookieValue ? decodeURIComponent(cookieValue) : null, typeof relay === 'string' ? relay : null, 'oidc', rt.now())
+  if (!state || !state.uid || !state.n.startsWith('_')) return fail(origin, 'state', [clear])
+  const refuse = async (code: string, detail: string): Promise<Response> => {
+    await rt.audit('social.refused', request, { detail: `sso saml: ${detail}` })
+    return fail(origin, code, [clear])
+  }
+  const conn = await rt.getConnection(state.uid)
+  if (!conn || !conn.enabled || !conn.saml) return refuse('unavailable', 'connection off or gone')
+  if (typeof response !== 'string' || response.length > 300_000) return refuse('denied', 'no response')
+  if (await rt.limited(request)) return refuse('rate-limited', 'rate limited')
+
+  let xml = ''
+  try {
+    xml = new TextDecoder().decode(Uint8Array.from(atob(response), (c) => c.charCodeAt(0)))
+  } catch {
+    return refuse('provider', 'not base64')
+  }
+  const result = validateSamlResponse({
+    xml,
+    keys: conn.saml.keys,
+    idpEntityId: conn.saml.entityId,
+    spEntityId: spEntityIdFor(origin, conn.id),
+    acsUrl: acsUrlFor(origin),
+    requestId: state.n,
+    now: rt.now(),
+    emailAttribute: conn.saml.emailAttribute,
+  })
+  if (result.ok === false) return refuse('provider', `${conn.name}: ${result.code}`)
+  if (!(await rt.markAssertionSeen(result.assertion.assertionId, result.assertion.notOnOrAfter, rt.now()))) return refuse('provider', `${conn.name}: replay`)
+  return finishSso(rt, request, conn, { subject: result.assertion.subject, email: result.assertion.email, emailVerified: true }, clear, origin.startsWith('https://'), origin, refuse)
 }

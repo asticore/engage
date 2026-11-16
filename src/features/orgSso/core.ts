@@ -1,3 +1,5 @@
+import { parsePem } from './pem'
+
 /**
  * Task 25a: single sign-on per organisation (OpenID Connect). Pure rules; no I/O.
  * An organisation connects its identity provider, proves it owns its email domains with a DNS record,
@@ -7,7 +9,20 @@
 
 export type DomainClaim = { domain: string; token: string; verifiedAt: string | null }
 
+/** Set when the connection uses SAML 2.0 instead of OpenID Connect. */
+export type SamlSettings = {
+  /** The identity provider's entity id (the Issuer it puts in assertions). */
+  entityId: string
+  /** Where the sign-in request is sent (HTTP-Redirect binding). */
+  ssoUrl: string
+  /** PEM certificates or public keys the provider signs with. Up to three, so keys can be rotated. */
+  keys: string[]
+  /** The attribute that carries the email address; blank uses common names and the NameID. */
+  emailAttribute: string
+}
+
 export type SsoConnection = {
+  saml?: SamlSettings | null
   id: string
   orgId: string
   name: string
@@ -97,6 +112,20 @@ export function enforcingConnection(connections: readonly SsoConnection[], email
 }
 
 export const ENFORCED_MESSAGE = 'Your organisation requires single sign-on. Use the single sign-on link on the sign-in page.'
+
+export const isSaml = (c: SsoConnection): boolean => Boolean(c.saml)
+
+export function validateSamlInput(raw: Record<string, unknown>): { ok: true; value: SamlSettings } | { ok: false; error: string } {
+  const str = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+  const entityId = str(raw.entityId, 300)
+  const ssoUrl = str(raw.ssoUrl, 400)
+  if (!entityId) return { ok: false, error: 'Enter the identity provider entity ID (its issuer).' }
+  if (!isHttpsIssuer(ssoUrl)) return { ok: false, error: 'The sign-in URL must be a secure https address on a real host name.' }
+  const keys = parsePem(str(raw.certificate, 12000))
+  if (keys.length === 0) return { ok: false, error: 'Paste the identity provider signing certificate (the text between BEGIN CERTIFICATE and END CERTIFICATE).' }
+  const emailAttribute = str(raw.emailAttribute, 200)
+  return { ok: true, value: { entityId, ssoUrl, keys, emailAttribute } }
+}
 
 export const publicView = (c: SsoConnection): Omit<SsoConnection, 'clientSecret'> & { hasSecret: boolean } => {
   const { clientSecret, ...rest } = c
