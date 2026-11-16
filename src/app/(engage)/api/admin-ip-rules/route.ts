@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { audit, auditContext } from '@/features/security/auditLog'
-import { decideIp, MAX_RULES, parseBulk, type IpRuleKind } from '@/features/security/ipRules'
+import { decideIp, MAX_RULES, parseBulk, type IpRule, type IpRuleKind } from '@/features/security/ipRules'
 import * as store from '@/features/security/ipRulesStore'
 import { clientKey } from '@/features/security/rateLimit'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
@@ -30,7 +30,7 @@ const csvCell = (v: string): string => `"${v.replace(/"/g, '""')}"`
 export async function GET(request: Request): Promise<Response> {
   const g = await guard(request, false)
   if (!g.context) return g.response
-  const rules = await store.listRules((await rawD1()) as never as store.D1).catch(() => [])
+  const rules = await store.listRules((await rawD1()) as never as store.D1).catch((): IpRule[] => [])
   if (new URL(request.url).searchParams.get('format') === 'csv') {
     const lines = ['kind,entry,reason,expires_at,created_at', ...rules.map((r) => [r.kind, r.entry, r.reason, r.expiresAt ?? '', r.createdAt].map(csvCell).join(','))]
     return new Response(lines.join('\n'), { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="ip-rules.csv"', 'Cache-Control': 'no-store' } })
@@ -53,12 +53,12 @@ export async function POST(request: Request): Promise<Response> {
     const kind: IpRuleKind = body.kind === 'allow' ? 'allow' : 'block'
     const parsed = parseBulk(typeof body.entries === 'string' ? body.entries.slice(0, 20000) : '')
     if (parsed.entries.length === 0) return json({ error: parsed.rejected.length ? `Not a valid address or range: ${parsed.rejected.join(', ')}` : 'Enter at least one address.' }, 400)
-    const existing = await store.listRules(d1).catch(() => [])
+    const existing = await store.listRules(d1).catch((): IpRule[] => [])
     if (existing.length + parsed.entries.length > MAX_RULES) return json({ error: `The lists can hold at most ${MAX_RULES} entries.` }, 400)
     if (kind === 'block') {
       // Lockout guard: never let the saving admin block their own address.
       const me = clientKey(request)
-      const test = parsed.entries.map((entry, i) => ({ id: i, kind: 'block' as const, entry, reason: '', expiresAt: null, createdAt: '' }))
+      const test = parsed.entries.map((entry, i) => ({ id: i, kind: 'block' as const, entry, reason: '', expiresAt: null as string | null, createdAt: '' }))
       const allowed = existing.filter((r) => r.kind === 'allow')
       if (decideIp(me, [...allowed, ...test]) === 'block') return json({ error: 'That would block your own address. Add your address to the allow list first.' }, 400)
     }
