@@ -20,7 +20,7 @@ import {
 } from './dashboardData'
 import { AdminBarChart, type AdminBarDatum } from '@/admin/charts/AdminBarChart'
 import { resolveD1Binding } from '@/cms/db/connect'
-import { loadAuthStats } from '@/features/security/authStats'
+import { loadAccountCounts, loadAuthStats } from '@/features/security/authStats'
 import type { AdminUiServer } from '@/admin/i18n/serverUi'
 
 import { loadGettingStartedProgress } from '@/features/gettingStarted/load'
@@ -160,6 +160,11 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
       ? await loadAuthStats((await resolveD1Binding().catch((): null => null)) as never, TREND_DAYS, now).catch((): null => null)
       : null
 
+  const accountCounts =
+    reviewContext.isAdmin && flags.security
+      ? await loadAccountCounts((await resolveD1Binding().catch((): null => null)) as never, TREND_DAYS, now).catch((): null => null)
+      : null
+
   const quickCreates = QUICK_CREATE_SLUGS.map((slug) => findEntity(groups, slug)).filter(
     (entity): entity is ResolvedEntity & { createHref: string } => Boolean(entity?.createHref),
   )
@@ -248,6 +253,11 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
       {signIns && (
         <section>
           <h2 className={sectionTitleClassName}>Sign-ins, last {TREND_DAYS} days</h2>
+          {accountCounts && (
+            <p className="m-0 mb-[calc(var(--base)*0.75)]">
+              <strong>{accountCounts.signUps}</strong> new sign-ups in the last {TREND_DAYS} days. <strong>{accountCounts.activeSessions}</strong> active sessions right now.
+            </p>
+          )}
           <div className="grid grid-cols-1 gap-[calc(var(--base)*1)] md:grid-cols-2">
             <TrendCard title={`Failed sign-ins (${signIns.failedTotal})`} series={signIns.days.map((d) => ({ day: d.day, count: d.failed }))} ui={ui} />
             <div className="rounded-[4px] border border-[var(--theme-elevation-150)] bg-[var(--ac-surface)] p-[calc(var(--base)*0.9)]">

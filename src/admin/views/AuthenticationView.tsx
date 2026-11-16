@@ -6,6 +6,8 @@ import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot, getSecuritySettings } from '@/features/security/settings'
 import { readSocialConfig } from '@/features/socialLogin/settings'
 
+import { AuthMethodToggle } from './AuthMethodToggle'
+
 const BADGE = { on: 'On', off: 'Off', 'needs-setup': 'Needs setup' } as const
 
 /** /admin/authentication: every sign-in method in one list with its status and a link to where it is set. Admin only, read only. */
@@ -20,7 +22,7 @@ export async function AuthenticationView() {
     <div className="settings-page">
       <div className="settings-page__header">
         <h1 className="settings-page__title">Authentication</h1>
-        <p className="settings-page__description">Every way people can sign in, and whether it is on. Change a method on the screen it links to.</p>
+        <p className="settings-page__description">Every way people can sign in, and whether it is on. Switch a method on or off here, or open its screen for the details. A method that is off is hidden from the sign-in form.</p>
       </div>
       <table>
         <thead>
@@ -35,7 +37,7 @@ export async function AuthenticationView() {
           {rows.map((row) => (
             <tr key={row.id}>
               <th scope="row">{row.label}</th>
-              <td>{BADGE[row.status]}</td>
+              <td>{row.toggle ? <AuthMethodToggle id={row.id} label={row.label} on={row.status === 'on'} /> : BADGE[row.status]}</td>
               <td>{row.detail}</td>
               <td>
                 <a href={adminHref(row.href, root)}>Open</a>
