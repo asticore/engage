@@ -50,6 +50,7 @@ export type FeatureKey =
   | 'comments'
   | 'dam'
   | 'chatbot'
+  | 'agents'
 
 export type FeatureDef = {
   key: FeatureKey
@@ -361,6 +362,16 @@ export const FEATURES: FeatureDef[] = [
     collections: [],
     globals: [],
     tables: ['chatbot_settings', 'chatbot_conversations', 'chatbot_messages'],
+    implemented: true,
+  },
+  {
+    key: 'agents',
+    label: 'AI agent access',
+    description: 'Give a connected AI tool its own scoped, revocable token for the admin API, with a daily cap on writes and reads and a log of everything it did. Off by default.',
+    defaultEnabled: false,
+    collections: [],
+    globals: [],
+    tables: ['agent_grants', 'agent_actions'],
     implemented: true,
   },
 ]

@@ -411,7 +411,19 @@ export async function gateApiKeyRequest(engine: Engine, request: Request, slug: 
     const field = forbiddenFieldIn(body)
     if (field) return refuseKey(403, 'Forbidden', `API keys cannot write the field "${field}".`, `key ${key.id}: field ${field} refused`)
   }
-  return null
+
+  // Task 25d: a key with an agent grant is also held to its daily caps and every request is logged.
+  try {
+    const { gateAgentRequest } = await import('@/features/agentAccess/gate')
+    const getD1 = async (): Promise<import('@/features/agentAccess/store').D1> => (await resolveD1Binding()) as unknown as import('@/features/agentAccess/store').D1
+    const featureOn = async (): Promise<boolean> => {
+      const { getFeatureFlags } = await import('@/utilities/features')
+      return getFeatureFlags().then((f) => Boolean(f.agents), (): boolean => false)
+    }
+    return await gateAgentRequest({ getD1, featureOn, keyId: key.id, method, slug, now: Date.now() })
+  } catch {
+    return null
+  }
 }
 
 /** Best-effort JSON body parse for a request that may have none, or malformed JSON - mirrors the reference engine's own defensive `typeof req.data?.x === 'string' ? req.data.x : ''` coercion pattern (confirmed by reading every auth handler directly) rather than letting a malformed body throw an uncaught, unmapped `SyntaxError`. */

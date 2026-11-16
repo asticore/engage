@@ -32,4 +32,15 @@ describe('authentication overview', () => {
     expect(rows.find((r) => r.id === 'magic-link')?.toggle).toBe(true)
     expect(rows.find((r) => r.id === 'password')?.toggle).toBeUndefined()
   })
+
+  it('shows AI agent access as off, needing setup, or on', () => {
+    const row = (info: { featureOn: boolean; apiKeysOn: boolean; activeTokens: number }) =>
+      describeAuthMethods(DEFAULT_SECURITY_SETTINGS as never, emptySocialConfig(), info).find((r) => r.id === 'agent-access')!
+    expect(row({ featureOn: false, apiKeysOn: true, activeTokens: 0 }).status).toBe('off')
+    expect(row({ featureOn: true, apiKeysOn: false, activeTokens: 0 }).status).toBe('needs-setup')
+    const on = row({ featureOn: true, apiKeysOn: true, activeTokens: 1 })
+    expect(on.status).toBe('on')
+    expect(on.detail).toContain('1 active agent token.')
+    expect(describeAuthMethods(DEFAULT_SECURITY_SETTINGS as never, emptySocialConfig()).some((r) => r.id === 'agent-access')).toBe(false)
+  })
 })

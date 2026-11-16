@@ -53,6 +53,8 @@ export async function eraseCustomerData(engine: unknown, d1: D1Like, userId: num
   }
 
   counts.sessions += await runCount(d1, 'DELETE FROM eg_user_sessions WHERE user_id = ?', userId)
+  await runCount(d1, 'DELETE FROM eg_agent_actions WHERE grant_id IN (SELECT id FROM eg_agent_grants WHERE key_id IN (SELECT id FROM eg_api_keys WHERE user_id = ?))', userId).catch((): number => 0)
+  await runCount(d1, 'DELETE FROM eg_agent_grants WHERE key_id IN (SELECT id FROM eg_api_keys WHERE user_id = ?)', userId).catch((): number => 0)
   counts.apiKeys += await runCount(d1, 'DELETE FROM eg_api_keys WHERE user_id = ?', userId)
   counts.passkeys += await runCount(d1, 'DELETE FROM eg_passkeys WHERE user_id = ?', userId)
   counts.trustedDevices += await runCount(d1, 'DELETE FROM eg_trusted_devices WHERE user_id = ?', userId)
