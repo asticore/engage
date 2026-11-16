@@ -184,6 +184,7 @@ import * as migration_20270316_310000_disposable_email from './20270316_310000_d
 import * as migration_20270316_320000_affiliates from './20270316_320000_affiliates';
 import * as migration_20270316_330000_affiliate_commissions from './20270316_330000_affiliate_commissions';
 import * as migration_20270316_340000_disposable_email_surfaces from './20270316_340000_disposable_email_surfaces';
+import * as migration_20270316_350000_affiliate_portal from './20270316_350000_affiliate_portal';
 
 export const migrations = [
   {
@@ -1110,5 +1111,10 @@ export const migrations = [
     up: migration_20270316_340000_disposable_email_surfaces.up,
     down: migration_20270316_340000_disposable_email_surfaces.down,
     name: '20270316_340000_disposable_email_surfaces',
+  },
+  {
+    up: migration_20270316_350000_affiliate_portal.up,
+    down: migration_20270316_350000_affiliate_portal.down,
+    name: '20270316_350000_affiliate_portal',
   },
 ];
