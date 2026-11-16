@@ -34,10 +34,10 @@ export async function GET(request: Request): Promise<Response> {
   if (new URL(request.url).searchParams.get('export') === 'payouts') {
     return new Response(payoutsCsv(await store.payoutsForExport(d1)), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="affiliate-payouts.csv"', 'Cache-Control': 'no-store' } })
   }
-  const [affiliates, settings, rows, commissions, payouts] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50)])
+  const [affiliates, settings, rows, commissions, payouts, configured] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1)])
   const now = new Date()
   const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now) }))
-  return json({ affiliates: withBalances, settings, commissions, payouts })
+  return json({ affiliates: withBalances, settings, commissions, payouts, configured })
 }
 
 /**
