@@ -5,6 +5,8 @@ import { answerFields } from './csv'
 import { isFieldVisible } from './conditions'
 import { displayValue } from './format'
 import { withResolvedFields } from './layout'
+import { isStoredFile } from './upload'
+import { signFileLink } from './fileLinks'
 
 /**
  * The emails a submission can produce: the notification to the site owner
@@ -99,7 +101,7 @@ export function renderTemplate(
   return html ? body.replace(/\n/g, '<br>') : body
 }
 
-const splitRecipients = (value: string): string[] =>
+export const splitRecipients = (value: string): string[] =>
   (value || '')
     .split(/[,;\s]+/)
     .map((entry) => entry.trim())
@@ -202,8 +204,10 @@ export async function sendSubmissionEmails(
       ruleLines.push(`${rule.name}: skipped, no recipients`)
       continue
     }
+    const cc = splitRecipients(rule.cc || '').filter((address) => !to.includes(address))
+    const bcc = splitRecipients(rule.bcc || '')
     const sent = await sendEmail({
-      to,
+      to: [...to, ...cc],
       template: 'form.notification',
       subject: rule.subject ? renderTemplate(rule.subject, values, rows, false, extras) : `${rule.name}: ${form.title || 'form'}`,
       html: rule.message
@@ -212,9 +216,22 @@ export async function sendSubmissionEmails(
       text: rule.message
         ? renderTemplate(rule.message, values, rows, false, extras)
         : `A new entry was submitted through ${form.title || 'your form'}.\n\n${rowsToText(rows)}`,
-      replyTo: findReplyTo(form, values),
+      replyTo: rule.replyToSubmitter === false ? undefined : findReplyTo(form, values),
     })
-    ruleLines.push(`${rule.name}: ${sent.ok ? 'sent' : `failed: ${sent.error || sent.reason}`}`)
+    // Hidden copies go one by one so no recipient sees another's address.
+    let hidden = 0
+    for (const address of bcc) {
+      const copy = await sendEmail({
+        to: address,
+        template: 'form.notification',
+        subject: rule.subject ? renderTemplate(rule.subject, values, rows, false, extras) : `${rule.name}: ${form.title || 'form'}`,
+        html: rule.message ? renderTemplate(rule.message, values, rows, true, extras) : `<p>A new entry was submitted through <strong>${escapeHtml(form.title || 'your form')}</strong>.</p>${rowsToHtml(rows)}`,
+        text: rule.message ? renderTemplate(rule.message, values, rows, false, extras) : `A new entry was submitted through ${form.title || 'your form'}.\n\n${rowsToText(rows)}`,
+        replyTo: rule.replyToSubmitter === false ? undefined : findReplyTo(form, values),
+      })
+      if (copy.ok) hidden += 1
+    }
+    ruleLines.push(`${rule.name}: ${sent.ok ? 'sent' : `failed: ${sent.error || sent.reason}`}${bcc.length ? ` (${hidden}/${bcc.length} hidden copies)` : ''}`)
   }
   if (ruleLines.length) result.rules = ruleLines
 
@@ -268,4 +285,66 @@ export function summarise(form: FormDoc, values: SubmissionValues): string {
 
   const line = parts.join(' - ') || 'Empty submission'
   return line.length > 120 ? `${line.slice(0, 117)}...` : line
+}
+
+export type ForwardInput = {
+  to: string
+  cc?: string
+  bcc?: string
+  note?: string
+  /** Absolute site address used to build file links; files are skipped without it. */
+  origin?: string
+  replyToSubmitter?: boolean
+  sendEmail?: NotifyContext['sendEmail']
+}
+
+export type ForwardResult = { ok: boolean; sent: number; error?: string }
+
+/**
+ * Sends one stored entry to people the editor chose, with an optional note on
+ * top. Attached files go as expiring links, never as attachments. A hidden
+ * copy (bcc) is sent as its own message. Returns what happened so the caller
+ * can record it on the entry.
+ */
+export async function forwardSubmission(
+  formInput: FormDoc,
+  entry: { id?: number | string; values: SubmissionValues; submittedAt?: string },
+  input: ForwardInput,
+): Promise<ForwardResult> {
+  const form = withResolvedFields(formInput)
+  const to = splitRecipients(input.to)
+  if (to.length === 0) return { ok: false, sent: 0, error: 'Enter at least one valid email address.' }
+  const cc = splitRecipients(input.cc || '').filter((address) => !to.includes(address))
+  const bcc = splitRecipients(input.bcc || '')
+  const rows = rowsFor(form, entry.values)
+
+  const secret = process.env.ENGAGE_SECRET || ''
+  const fileLines: string[] = []
+  if (secret && input.origin) {
+    const collect = async (value: unknown): Promise<void> => {
+      if (Array.isArray(value)) {
+        for (const item of value) await collect(item)
+      } else if (isStoredFile(value)) {
+        fileLines.push(`${value.name}: ${await signFileLink(secret, value.key, input.origin as string)}`)
+      }
+    }
+    for (const value of Object.values(entry.values)) await collect(value)
+  }
+  const note = (input.note || '').trim().slice(0, 2000)
+  const subject = `Forwarded: ${form.title || 'form'} entry${entry.id !== undefined ? ` #${entry.id}` : ''}`
+  const html = `${note ? `<p>${escapeHtml(note).replace(/\n/g, '<br>')}</p>` : ''}<p>An entry from <strong>${escapeHtml(form.title || 'a form')}</strong>${entry.submittedAt ? ` (${escapeHtml(entry.submittedAt)})` : ''}:</p>${rowsToHtml(rows)}${
+    fileLines.length ? `<p>Files (links expire in 7 days):</p><ul>${fileLines.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>` : ''
+  }`
+  const text = `${note ? `${note}\n\n` : ''}An entry from ${form.title || 'a form'}:\n\n${rowsToText(rows)}${fileLines.length ? `\n\nFiles (links expire in 7 days):\n${fileLines.join('\n')}` : ''}`
+  const replyTo = input.replyToSubmitter === false ? undefined : findReplyTo(form, entry.values)
+  const sendEmail = input.sendEmail || (await loadSendEmail())
+
+  const main = await sendEmail({ to: [...to, ...cc], template: 'form.notification', subject, html, text, replyTo })
+  if (!main.ok) return { ok: false, sent: 0, error: main.error || main.reason || 'The email could not be sent.' }
+  let sent = to.length + cc.length
+  for (const address of bcc) {
+    const copy = await sendEmail({ to: address, template: 'form.notification', subject, html, text, replyTo })
+    if (copy.ok) sent += 1
+  }
+  return { ok: true, sent }
 }

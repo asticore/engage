@@ -6,6 +6,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { STYLE_PRESETS } from '@/features/forms/config'
 import { CUSTOMER_FIELDS, NO_CHECKOUT, type CustomerField } from '@/features/forms/checkoutHandoff'
+import { WebhookDeliveryLog, WebhookTestButton } from './FormWebhookTools'
 import type { FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from '@/features/forms/types'
 
 /**
@@ -203,6 +204,12 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
               </label>
               <input type="text" aria-label={t('ve.form.name')} placeholder={t('ve.form.name')} value={rule.name || ''} onChange={(event) => setRule(index, { name: event.target.value })} />
               <input type="text" aria-label={t('ve.form.sendToLabel')} placeholder={t('ve.form.sendTo')} value={rule.recipients || ''} onChange={(event) => setRule(index, { recipients: event.target.value })} />
+              <input type="text" aria-label="Also send to (visible to everyone)" placeholder="Also send to (cc, visible to everyone)" value={rule.cc || ''} onChange={(event) => setRule(index, { cc: event.target.value })} />
+              <input type="text" aria-label="Hidden copies" placeholder="Hidden copies (bcc, one message each)" value={rule.bcc || ''} onChange={(event) => setRule(index, { bcc: event.target.value })} />
+              <label className="ve-field--checkbox">
+                <input type="checkbox" checked={rule.replyToSubmitter !== false} onChange={(event) => setRule(index, { replyToSubmitter: event.target.checked })} />
+                <span>Reply goes to the person who filled in the form</span>
+              </label>
               <input type="text" aria-label={t('ve.form.subject')} placeholder={t('ve.form.subject')} value={rule.subject || ''} onChange={(event) => setRule(index, { subject: event.target.value })} />
               <textarea rows={3} aria-label={t('ve.form.message')} placeholder={t('ve.form.message')} value={rule.message || ''} onChange={(event) => setRule(index, { message: event.target.value })} />
               <div className="ve-col-row">
@@ -265,6 +272,29 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
                 <input type="text" aria-label={t('ve.form.name')} placeholder={t('ve.form.name')} value={hook.name || ''} onChange={(event) => setHook(index, { name: event.target.value })} />
                 <input type="url" aria-label={t('ve.form.url')} placeholder="https://example.com/hook" value={hook.url || ''} onChange={(event) => setHook(index, { url: event.target.value })} />
                 <input type="password" aria-label={t('ve.form.signingSecret')} placeholder={t('ve.form.signingSecret')} autoComplete="new-password" value={hook.secret || ''} onChange={(event) => setHook(index, { secret: event.target.value })} />
+                <label className="ve-field">
+                  <span>What to send</span>
+                  <select value={hook.payload === 'chosen' ? 'chosen' : 'all'} onChange={(event) => setHook(index, { payload: event.target.value === 'chosen' ? 'chosen' : 'all' })}>
+                    <option value="all">Every answer</option>
+                    <option value="chosen">Only the fields I name</option>
+                  </select>
+                </label>
+                {hook.payload === 'chosen' ? (
+                  <input
+                    type="text"
+                    aria-label="Field names to send"
+                    placeholder="Field names, separated by commas"
+                    value={(hook.fields || []).join(', ')}
+                    onChange={(event) => setHook(index, { fields: event.target.value.split(',').map((name) => name.trim()).filter(Boolean) })}
+                  />
+                ) : null}
+                <label className="ve-field--checkbox">
+                  <input type="checkbox" checked={hook.includeMeta === true} onChange={(event) => setHook(index, { includeMeta: event.target.checked })} />
+                  <span>Include page address, consent record and status</span>
+                </label>
+                <input type="text" aria-label="Shared secret header name" placeholder="Optional header name, e.g. X-Api-Key" value={hook.headerName || ''} onChange={(event) => setHook(index, { headerName: event.target.value })} />
+                <input type="password" aria-label="Shared secret header value" placeholder="Header value" autoComplete="new-password" value={hook.headerValue || ''} onChange={(event) => setHook(index, { headerValue: event.target.value })} />
+                <WebhookTestButton formId={formId} webhookId={hook.id} />
                 <button type="button" className="ve-btn ve-btn--ghost" onClick={() => set('webhooks', hooks.filter((_, i) => i !== index))}>
                   Remove
                 </button>
@@ -278,6 +308,7 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
             >
               + Add webhook
             </button>
+            <WebhookDeliveryLog formId={formId} />
           </Section>
         )}
 

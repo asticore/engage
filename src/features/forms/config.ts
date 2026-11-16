@@ -102,6 +102,9 @@ export function normaliseFormConfig(input: unknown): FormConfig {
         name: str(rule.name, 80) || `Notification ${index + 1}`,
         enabled: bool(rule.enabled) !== false,
         recipients: str(rule.recipients, 500) || '',
+        cc: str(rule.cc, 500) || '',
+        bcc: str(rule.bcc, 500) || '',
+        replyToSubmitter: bool(rule.replyToSubmitter) !== false,
         subject: str(rule.subject, 200) || '',
         message: str(rule.message, 5000) || '',
         conditions: cleanConditions(rule.conditions),
@@ -118,6 +121,14 @@ export function normaliseFormConfig(input: unknown): FormConfig {
         enabled: bool(hook.enabled) !== false,
         url: str(hook.url, 500) || '',
         secret: str(hook.secret, 200) || '',
+        payload: hook.payload === 'chosen' ? ('chosen' as const) : ('all' as const),
+        fields: (Array.isArray(hook.fields) ? hook.fields : [])
+          .map((name) => (typeof name === 'string' ? name.trim().slice(0, 80) : ''))
+          .filter(Boolean)
+          .slice(0, 100),
+        includeMeta: bool(hook.includeMeta) === true,
+        headerName: /^[A-Za-z0-9-]{1,60}$/.test(String(hook.headerName || '')) ? String(hook.headerName) : '',
+        headerValue: str(hook.headerValue, 300) || '',
       }
     })
 

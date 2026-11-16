@@ -3,6 +3,7 @@
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useState } from 'react'
+import { ForwardEntry } from './ForwardEntry'
 import { ResultsMessage, ResultsPager, ResultsStat } from './ResultsChrome'
 import { cellText, formatWhen, type PageInfo, type SubmissionColumn, type SubmissionRow } from './rows'
 import { useResultsPage } from './useResultsPage'
@@ -66,6 +67,7 @@ export function FormResultsTab({ formId }: { formId: number }) {
                     {showPayment && <td className="et-nowrap">{row.paymentStatus}</td>}
                     <td className="et-nowrap">
                       <AdminLink path={`/other/form-submissions/${row.id}`}>{t('frm.lit.open')}</AdminLink>
+                      <ForwardEntry entryId={row.id} />
                     </td>
                   </tr>
                 ))}
