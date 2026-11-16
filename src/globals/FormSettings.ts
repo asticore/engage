@@ -130,6 +130,22 @@ export const FormSettings: GlobalConfig = {
           },
         },
         {
+          name: 'blockedWords',
+          type: 'textarea',
+          admin: { description: 'One word or phrase per line. A submission containing any of them is quietly discarded as spam.' },
+        },
+        {
+          name: 'maxLinks',
+          type: 'number',
+          defaultValue: 0,
+          admin: { description: 'The most links one submission may contain. 0 means no limit. Spam usually carries several links; a real message rarely has more than two.' },
+        },
+        {
+          name: 'blockedSenders',
+          type: 'textarea',
+          admin: { description: 'One email address or domain per line (for example spam.example). A submission from any of them is quietly discarded as spam.' },
+        },
+        {
           name: 'turnstile',
           type: 'checkbox',
           defaultValue: false,
