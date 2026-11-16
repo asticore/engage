@@ -13,9 +13,11 @@ export type MethodRow = { id: string; label: string; status: MethodStatus; detai
 
 const SECURITY = '/globals/security-settings'
 
+export type SsoInfo = { featureOn: boolean; connections: number; enforced: number }
+
 export type AgentAccessInfo = { featureOn: boolean; apiKeysOn: boolean; activeTokens: number }
 
-export function describeAuthMethods(settings: SecuritySettings, social: SocialConfig, agents?: AgentAccessInfo): MethodRow[] {
+export function describeAuthMethods(settings: SecuritySettings, social: SocialConfig, agents?: AgentAccessInfo, sso?: SsoInfo): MethodRow[] {
   const rows: MethodRow[] = [
     { id: 'password', label: 'Password', status: 'on', detail: 'Always available. Password rules are in Security settings.', href: SECURITY },
     {
@@ -48,6 +50,21 @@ export function describeAuthMethods(settings: SecuritySettings, social: SocialCo
       detail: status === 'needs-setup' ? `Switched on but missing: ${missing.join(', ')}. The button stays hidden until complete.` : status === 'on' ? 'Shown on the sign-in form.' : 'Not offered.',
       href: isExtraProviderId(id) ? '/security/sign-in-providers' : SECURITY,
       toggle: status !== 'needs-setup',
+    })
+  }
+  if (sso) {
+    const status: MethodStatus = !sso.featureOn ? 'off' : sso.connections > 0 ? 'on' : 'needs-setup'
+    rows.push({
+      id: 'org-sso',
+      label: 'Single sign-on (organisations)',
+      status,
+      detail:
+        status === 'off'
+          ? 'Not offered. Switch Single sign-on on in Site Settings to let organisations use their own identity provider.'
+          : status === 'needs-setup'
+            ? 'Switched on, but no organisation has a connection yet.'
+            : `${sso.connections} connection${sso.connections === 1 ? '' : 's'}${sso.enforced ? `, ${sso.enforced} requiring single sign-on` : ''}.`,
+      href: '/sso',
     })
   }
   if (agents) {
