@@ -57,6 +57,22 @@ export const ShopExtraSettings: GlobalConfig = {
       },
     },
     {
+      name: 'stockHoldEnabled',
+      type: 'checkbox',
+      label: 'Hold stock while a cart is in checkout',
+      defaultValue: false,
+      admin: { description: 'When a shopper starts checkout, the stock of managed-stock products is held for them for the minutes below, so two carts cannot both buy the last item. A cart that pays keeps its stock; an abandoned hold is released when the time ends. Bundles are not held. Off by default.' },
+    },
+    {
+      name: 'stockHoldMinutes',
+      type: 'number',
+      label: 'Stock hold minutes',
+      defaultValue: 15,
+      min: 1,
+      max: 240,
+      admin: { description: 'How long checkout holds stock. Between 1 and 240.' },
+    },
+    {
       name: 'cartAction',
       type: 'select',
       label: 'What the cart button does',

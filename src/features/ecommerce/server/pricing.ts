@@ -9,6 +9,7 @@ import { currencyFromShopSettings } from '../lib/shopCurrency'
 import { cleanRecipient, giftAmountError, normaliseGiftCardSettings } from '../lib/storedValue'
 import { PAID_STATUSES } from '../lib/orderStatus'
 import { holdCouponUse } from './couponHold'
+import { holdStock, normaliseStockHold, stockPool } from './stockHold'
 import type { ShippingAddress, ShippingOption, ShippingZone } from '../lib/shipping'
 import { DEFAULT_TAX_SETTINGS, type TaxClass, type TaxRate, type TaxSettings } from '../lib/tax'
 import { fetchLiveRates, normaliseShippingConfig } from '../shipping/registry'
@@ -139,6 +140,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
   const lines: PricedLine[] = []
   let giftSettings: ReturnType<typeof normaliseGiftCardSettings> | null = null
   const inCart = new Map<string, number>() // the same product listed twice must be available for the sum
+  const pools = new Map<string, { available: number; quantity: number }>() // stock pools to hold at checkout (Task 23e)
   const preordersOn = await loadPreordersEnabled(engine) // one read per cart, shop-wide switch
   for (const [i, item] of items.entries()) {
     const productId = idOf(item.product)
@@ -178,6 +180,10 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
     const stockKey = `${productId}:${item.variation ?? ''}`
     const resolved = resolveCartLine(product, item.variation ?? null, quantity, now, inCart.get(stockKey) ?? 0, item.priceCents ?? null, preordersOn)
     inCart.set(stockKey, (inCart.get(stockKey) ?? 0) + (Number.isInteger(quantity) ? quantity : 0))
+    if (resolved.ok && product && Number.isInteger(quantity)) {
+      const pool = stockPool(product as never, resolved.variationId)
+      if (pool) pools.set(pool.key, { available: pool.available, quantity: (pools.get(pool.key)?.quantity ?? 0) + quantity })
+    }
     let unitPrice: number
     let title: string
     let sku: string | null
@@ -241,6 +247,8 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       ...({ variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices, donation: donationLine(p as never) } as object),
     } as PricedLine)
   }
+  // The stock pools this cart draws on, read by priceCart for the stock hold (kept off the line list's own entries).
+  Object.defineProperty(lines, 'stockPools', { value: pools, enumerable: false })
   return lines
 }
 
@@ -385,6 +393,18 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
     const db = await import('@/cms/db/connect').then((m) => m.resolveD1Binding()).catch((): null => null)
     const held = await holdCouponUse(db as unknown as Parameters<typeof holdCouponUse>[0], code, Number(input.cartId), Number(coupon.usageLimit))
     if (held === false) throw new CheckoutError(`Coupon "${code}" has reached its usage limit.`)
+  }
+  // Optional stock hold (Task 23e): the final checkout holds the stock it draws on, atomically.
+  if (input.strict && input.cartId !== undefined) {
+    const hold = normaliseStockHold(await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null))
+    const pools = (lines as unknown as { stockPools?: Map<string, { available: number; quantity: number }> }).stockPools
+    if (hold.enabled && pools && pools.size > 0) {
+      const db = await import('@/cms/db/connect').then((m) => m.resolveD1Binding()).catch((): null => null)
+      for (const [key, pool] of pools) {
+        const held = await holdStock(db as unknown as Parameters<typeof holdStock>[0], Number(input.cartId), key, pool.quantity, pool.available, hold.minutes)
+        if (held === false) throw new CheckoutError('Some items in your cart are being held by another checkout right now. Please try again in a few minutes.')
+      }
+    }
   }
   return { totals: result as OrderTotals, config, lines }
 }
