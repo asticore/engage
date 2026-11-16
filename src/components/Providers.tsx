@@ -2,6 +2,7 @@
 
 import { EcommerceProvider } from '@/engine/commerce/react'
 import { useShopCurrency } from '@/components/ShopCurrencyContext'
+import { MiniCart } from '@/components/MiniCart'
 import React from 'react'
 
 /**
@@ -20,5 +21,10 @@ import React from 'react'
 export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // The layout wraps this in ShopCurrencyProvider, so this is the shop's currency from Shop settings.
   const currency = useShopCurrency()
-  return <EcommerceProvider defaultCurrency={currency}>{children}</EcommerceProvider>
+  return (
+    <EcommerceProvider defaultCurrency={currency}>
+      {children}
+      <MiniCart />
+    </EcommerceProvider>
+  )
 }

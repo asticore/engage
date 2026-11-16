@@ -1,5 +1,6 @@
 'use client'
 
+import { announceCartAdded } from '@/features/ecommerce/lib/miniCart'
 import { useCart } from '@/engine/commerce/react'
 import Link from 'next/link'
 import React, { useState } from 'react'
@@ -15,7 +16,8 @@ export const AddToCartControl: React.FC<{ productId: number; label: string; show
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
   const click = async () => {
-    await addItem({ product: productId }, Math.max(1, Math.min(99, qty || 1)))
+    const failure = await addItem({ product: productId }, Math.max(1, Math.min(99, qty || 1)))
+    if (failure === null) announceCartAdded()
     setAdded(true)
   }
   return (

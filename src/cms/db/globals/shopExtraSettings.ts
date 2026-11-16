@@ -18,6 +18,9 @@ export type ShopExtraSettingsDoc = {
   pricingRulesEnabled?: boolean | null
   pricingRules?: Record<string, unknown>[] | null
   /** Promo badges on product cards (lib/promoBadges.ts). A missing switch means on. */
+  /** Cart button behaviour (lib/miniCart.ts): page, drawer or dropdown. */
+  cartAction?: 'page' | 'drawer' | 'dropdown' | null
+  cartOpenOnAdd?: boolean | null
   promoBadgesEnabled?: boolean | null
   promoBadges?: Record<string, unknown>[] | null
   updatedAt: string
