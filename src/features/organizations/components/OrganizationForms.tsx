@@ -12,6 +12,8 @@ import type { PortalStringKey } from '@/features/multilingual/portalStrings'
 import {
   acceptInviteAction,
   adminDeleteOrganizationAction,
+  adminSaveBrandingAction,
+  saveBrandingAction,
   cancelInviteAction,
   changeMemberRoleAction,
   companyContentAccessAction,
@@ -292,6 +294,82 @@ export const ContentAccessForm: React.FC<{ organizationId: string; collection: s
         ))}
       </fieldset>
       <SubmitButton>{t('orgs.contentSave')}</SubmitButton>
+      <Note state={state} />
+    </form>
+  )
+}
+
+export type BrandingValues = {
+  primary: string
+  accent: string
+  background: string
+  text: string
+  headingFont: string
+  bodyFont: string
+  /** Section ids in the company's order, with the ones that are hidden. */
+  order: string[]
+  hidden: string[]
+}
+
+/** Texts for the branding form, resolved by the screen that renders it (the portal's or the admin's). */
+export type BrandingLabels = Record<
+  | 'title' | 'help' | 'primary' | 'accent' | 'background' | 'text' | 'hint' | 'headingFont' | 'bodyFont' | 'position' | 'show' | 'save'
+  | 'fontDefault' | 'fontSystem' | 'fontSerif' | 'fontMono' | 'fontRounded'
+  | 'members' | 'teams' | 'content' | 'invitations' | 'roles' | 'details',
+  string
+>
+
+const FONT_LABEL_KEYS = { default: 'fontDefault', system: 'fontSystem', serif: 'fontSerif', mono: 'fontMono', rounded: 'fontRounded' } as const
+
+/** One company's colours, fonts and portal layout. The company's owners use it; so does a site administrator (override). */
+export const BrandingForm: React.FC<{ organizationId: string; values: BrandingValues; labels: BrandingLabels; admin?: boolean }> = ({ organizationId, values, labels, admin }) => {
+  const [state, action] = useForm(admin ? adminSaveBrandingAction : saveBrandingAction)
+  const colours = ['primary', 'accent', 'background', 'text'] as const
+  return (
+    <form action={action} className="account-form">
+      <input type="hidden" name="organizationId" value={organizationId} />
+      <p className="org-muted">{labels.help}</p>
+      <div className="account-form__row">
+        {colours.map((field) => (
+          <label key={field}>
+            {labels[field]}
+            <input name={field} defaultValue={values[field]} maxLength={80} placeholder={labels.hint} />
+          </label>
+        ))}
+      </div>
+      <div className="account-form__row">
+        {(['headingFont', 'bodyFont'] as const).map((field) => (
+          <label key={field}>
+            {labels[field]}
+            <select name={field} defaultValue={values[field]}>
+              {(Object.keys(FONT_LABEL_KEYS) as (keyof typeof FONT_LABEL_KEYS)[]).map((name) => (
+                <option key={name} value={name}>
+                  {labels[FONT_LABEL_KEYS[name]]}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+      <ul className="org-list">
+        {values.order.map((section, index) => (
+          <li key={section} className="org-row">
+            <div className="org-row__main">{labels[section as keyof BrandingLabels]}</div>
+            <div className="org-row__actions">
+              <label>
+                {labels.position}
+                <input name={`pos_${section}`} type="number" min={1} max={values.order.length} defaultValue={index + 1} style={{ width: '4.5rem' }} />
+              </label>
+              <label>
+                <input name={`show_${section}`} type="checkbox" value="yes" defaultChecked={!values.hidden.includes(section)} disabled={section === 'details'} />
+                {labels.show}
+              </label>
+              {section === 'details' ? <input type="hidden" name="show_details" value="yes" /> : null}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <SubmitButton>{labels.save}</SubmitButton>
       <Note state={state} />
     </form>
   )
