@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/features/security/authMatrix', () => ({ readMatrix: async () => ({ admin: [], account: [] }) }))
+vi.mock('@/features/security/authMatrix', () => ({ readMatrix: async (): Promise<{ admin: string[]; account: string[] }> => ({ admin: [], account: [] }) }))
 
 import { resolveGoogleClient } from '@/features/google/auth'
 
