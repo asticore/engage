@@ -22,6 +22,7 @@ import {
 } from './AuthForms'
 import { passwordlessDepsFor, passwordlessOptions } from '../passwordlessWiring'
 import { passkeySignInAvailable } from '../passkeysWiring'
+import { LastUsedBadge } from './LastUsedBadge'
 import { inspectLink, safeLandingPath } from '@/features/passwordless'
 import { requestClient } from '../session'
 import { accountTexts } from '../portalCopy'
@@ -63,16 +64,18 @@ export const SignInScreen: React.FC<{
           {message}
         </p>
       )}
-      <SignInForm next={safeNext} justReset={justReset} initialPendingToken={pending} passwordless={passwordless} passkey={passkey} />
-      {!pending && (
-        <SocialButtons
-          providers={providers}
-          next={safeNext}
-          area="account"
-          verb={tx('common.continueWith')}
-          orLabel={tx('common.or')}
-        />
-      )}
+      <LastUsedBadge>
+        <SignInForm next={safeNext} justReset={justReset} initialPendingToken={pending} passwordless={passwordless} passkey={passkey} />
+        {!pending && (
+          <SocialButtons
+            providers={providers}
+            next={safeNext}
+            area="account"
+            verb={tx('common.continueWith')}
+            orLabel={tx('common.or')}
+          />
+        )}
+      </LastUsedBadge>
     </AuthShell>
   )
 }
