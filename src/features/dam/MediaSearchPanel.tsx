@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { useAdminHref } from '@/admin/adminRoute/AdminRouteProvider'
+
 import { EMPTY_FILTERS, type SearchFilters } from './search'
 
 type Doc = { id: number; filename: string | null; url: string | null; alt: string | null; mimeType: string | null; filesize: number | null; width: number | null; height: number | null; folder: string | null; status: string }
@@ -22,6 +24,7 @@ const toParams = (f: SearchFilters, page: number): string => {
 
 /** Advanced media search: every filter in one form, saved searches and smart collections. */
 export function MediaSearchPanel() {
+  const adminHref = useAdminHref()
   const [f, setF] = useState<SearchFilters>(EMPTY_FILTERS)
   const [page, setPage] = useState(1)
   const [docs, setDocs] = useState<Doc[]>([])
@@ -161,7 +164,7 @@ export function MediaSearchPanel() {
       <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 12, padding: 0, margin: 0, listStyle: 'none' }}>
         {docs.map((d) => (
           <li key={d.id}>
-            <a href={`/admin/content/media/${d.id}`} style={{ display: 'block' }}>
+            <a href={adminHref(`/content/media/${d.id}`)} style={{ display: 'block' }}>
               {d.mimeType?.startsWith('image/') && d.url ? <img src={d.url} alt={d.alt ?? ''} loading="lazy" style={{ width: '100%', height: 110, objectFit: 'cover' }} /> : <span style={{ display: 'block', height: 110 }}>{d.mimeType ?? 'file'}</span>}
               <span style={{ display: 'block', fontSize: 12, overflowWrap: 'anywhere' }}>{d.filename}</span>
             </a>

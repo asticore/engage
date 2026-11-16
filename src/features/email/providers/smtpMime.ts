@@ -15,7 +15,6 @@ const wrapBase64 = (value: string): string => {
 /** A header value with non-ASCII text encoded as an RFC 2047 word. Line breaks are removed so a value cannot add a header. */
 export const encodeHeader = (value: string): string => {
   const clean = value.replace(/[\r\n]+/g, ' ').trim()
-  // eslint-disable-next-line no-control-regex
   if (/^[\x20-\x7e]*$/.test(clean)) return clean
   return `=?UTF-8?B?${btoa(String.fromCharCode(...new TextEncoder().encode(clean)))}?=`
 }

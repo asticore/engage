@@ -251,6 +251,7 @@ export interface User {
   twoFactorLastUsedStep?: number | null;
   lastLoginMethod?: string | null;
   lastLoginAt?: string | null;
+  username?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -819,6 +820,20 @@ export interface Product {
   noAds?: boolean | null;
   pagespeedScore?: number | null;
   pagespeedAt?: string | null;
+  isService?: boolean | null;
+  serviceDuration?: number | null;
+  isDonation?: boolean | null;
+  donationAmounts?: string | null;
+  donationMax?: number | null;
+  donationCampaign?: string | null;
+  donationGoal?: number | null;
+  donationAnonymous?: boolean | null;
+  donationReceiptText?: string | null;
+  unitsPerCarton?: number | null;
+  cartonsPerPallet?: number | null;
+  sellInMultiplesOf?: 'unit' | 'carton' | 'pallet' | null;
+  roundUp?: boolean | null;
+  minCartons?: number | null;
 }
 /**
  * Reusable Q&A entries. Show them on the site FAQ page, or drop the FAQ block into any page/product.
@@ -1453,6 +1468,9 @@ export interface EventRsvp {
   checkedIn?: boolean | null;
   checkedInAt?: string | null;
   reminderSentAt?: string | null;
+  status?: string | null;
+  cancelledAt?: string | null;
+  orderId?: number | null;
 }
 /**
  * Every page on the site, including the homepage. Build sections from the block library (drag the ⚿ handle to reorder), set a Parent to nest it under another page, and add it to the menu under Header. Click "Edit visually" above to lay it out on a drag-and-drop canvas instead.
@@ -1881,6 +1899,7 @@ export interface Page {
   pagespeedScore?: number | null;
   pagespeedAt?: string | null;
   trashedAt?: string | null;
+  schemaFacts?: string | null;
 }
 /**
  * The levels people can join at, what each costs, and what each unlocks.
@@ -2386,6 +2405,7 @@ export interface Post {
   sticky?: boolean | null;
   readingTime?: number | null;
   trashedAt?: string | null;
+  schemaFacts?: string | null;
 }
 /**
  * Define extra fields for your content - like Advanced Custom Fields. Pick which collections they appear on, and they show up as real inputs when editing those items. Use them in templates as {{field:the_field_name}}.
@@ -2673,6 +2693,10 @@ export interface Membership {
   notes?: string | null;
   updatedAt: string;
   createdAt: string;
+  dunningStartedAt?: string | null;
+  dunningAttempts?: number | null;
+  dunningNextAt?: string | null;
+  graceEndsAt?: string | null;
 }
 /**
  * Each course holds an ordered set of lessons. Set how people get in - free, bought through the shop, or included with a membership tier - under Access in the sidebar.

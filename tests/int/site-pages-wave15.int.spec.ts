@@ -114,7 +114,7 @@ describe('site pages shape', () => {
       notFoundPageId: null,
       privacyPolicyPageId: null,
       termsPageId: null,
-      maintenance: { enabled: false, headline: DEFAULT_MAINTENANCE_HEADLINE, message: '', bypassToken: null, allowAdmins: true },
+      maintenance: { enabled: false, headline: DEFAULT_MAINTENANCE_HEADLINE, message: '', bypassToken: null, allowAdmins: true, mode: 'maintenance', launchAt: null },
     })
     expect(DEFAULT_MAINTENANCE_HEADLINE).toBe("We'll be back soon")
   })

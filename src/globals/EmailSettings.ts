@@ -374,7 +374,7 @@ export const EmailSettings: GlobalConfig = {
               type: 'select',
               label: 'Security',
               defaultValue: 'starttls',
-              admin: { width: '25%' },
+              admin: { width: '25%', description: 'How the connection is secured. STARTTLS (port 587) and TLS (port 465) are the usual choices; None is for local testing only.' },
               options: [
                 { label: 'STARTTLS', value: 'starttls' },
                 { label: 'TLS', value: 'tls' },
