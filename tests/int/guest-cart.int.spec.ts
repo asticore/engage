@@ -149,14 +149,14 @@ describe('sweepGuestCarts', () => {
     const calls: Array<Record<string, unknown>> = []
     const deleted: number[] = []
     const engine = {
-      find: async (args: Record<string, unknown>) => {
+      find: async (args: Record<string, unknown>): Promise<{ docs: unknown[] }> => {
         calls.push(args)
         return { docs: [{ id: 1 }, { id: 2, customer: 4 }, { id: 3, purchasedAt: '2026-10-01T00:00:00.000Z' }] }
       },
-      findByID: async () => null,
-      create: async () => null,
-      update: async () => null,
-      delete: async (args: Record<string, unknown>) => void deleted.push(args.id as number),
+      findByID: async (): Promise<null> => null,
+      create: async (): Promise<null> => null,
+      update: async (): Promise<null> => null,
+      delete: async (args: Record<string, unknown>): Promise<void> => void deleted.push(args.id as number),
     }
     expect(await sweepGuestCarts(engine, now)).toBe(1)
     expect(deleted).toEqual([1])
