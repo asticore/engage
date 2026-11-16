@@ -208,6 +208,7 @@ import * as migration_20270317_100000_outbound_clicks from './20270317_100000_ou
 import * as migration_20270316_410000_affiliate_attribution from './20270316_410000_affiliate_attribution';
 import * as migration_20270316_420000_media_folder_records from './20270316_420000_media_folder_records';
 import * as migration_20270316_430000_affiliate_emails from './20270316_430000_affiliate_emails';
+import * as migration_20270317_180000_affiliate_rates from './20270317_180000_affiliate_rates';
 import * as migration_20270316_440000_media_quotas from './20270316_440000_media_quotas';
 import * as migration_20270316_360000_auth_captcha from './20270316_360000_auth_captcha';
 import * as migration_20270316_420000_org_transfer_delegation from './20270316_420000_org_transfer_delegation';
@@ -1193,6 +1194,11 @@ export const migrations = [
     up: migration_20270316_430000_affiliate_emails.up,
     down: migration_20270316_430000_affiliate_emails.down,
     name: '20270316_430000_affiliate_emails',
+  },
+  {
+    up: migration_20270317_180000_affiliate_rates.up,
+    down: migration_20270317_180000_affiliate_rates.down,
+    name: '20270317_180000_affiliate_rates',
   },
   {
     up: migration_20270316_425000_agent_access.up,

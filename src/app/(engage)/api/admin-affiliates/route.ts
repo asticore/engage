@@ -34,10 +34,10 @@ export async function GET(request: Request): Promise<Response> {
   if (new URL(request.url).searchParams.get('export') === 'payouts') {
     return new Response(payoutsCsv(await store.payoutsForExport(d1)), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="affiliate-payouts.csv"', 'Cache-Control': 'no-store' } })
   }
-  const [affiliates, settings, rows, commissions, payouts, configured] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1)])
+  const [affiliates, settings, rows, commissions, payouts, configured, productRates, products] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1), store.listProductRates(d1), store.productChoices(d1)])
   const now = new Date()
   const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now) }))
-  return json({ affiliates: withBalances, settings, commissions, payouts, configured })
+  return json({ affiliates: withBalances, settings, commissions, payouts, configured, productRates, products })
 }
 
 /**
@@ -63,9 +63,18 @@ export async function POST(request: Request): Promise<Response> {
     const id = await store.createAffiliate(d1, { code, name, email: text(body.email, 200), status, token: newToken() }, now)
     return json({ ok: true, id, code })
   }
+  if (body.action === 'productRate') {
+    const productId = Number(body.productId)
+    if (!Number.isInteger(productId) || productId < 1) return json({ error: 'Choose a product.' }, 400)
+    const raw = body.ratePct
+    const rate = raw === null || raw === '' || raw === undefined ? null : clampPct(raw, -1)
+    if (rate === -1) return json({ error: 'A rate is 0 to 100 percent.' }, 400)
+    await store.setProductRate(d1, productId, rate, now)
+    return json({ ok: true })
+  }
   if (body.action === 'settings') {
     const s = body.settings as Record<string, unknown> | undefined
-    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, consentCategory: toConsentCategory(s?.consentCategory), emailNotifications: s?.emailNotifications !== false, terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
+    await store.saveSettings(d1, { cookieDays: clampDays(s?.cookieDays, 30, 365) || 30, clickRule: s?.clickRule === 'first' ? 'first' : 'last', commissionPct: clampPct(s?.commissionPct, 10), pendingDays: clampDays(s?.pendingDays, 30, 365), autoApprove: s?.autoApprove === true, minPayoutCents: Math.min(100_000_00, Math.max(0, Math.round(Number(s?.minPayoutCents) || 0))), firstOrderOnly: s?.firstOrderOnly === true, consentCategory: toConsentCategory(s?.consentCategory), emailNotifications: s?.emailNotifications !== false, tiers: typeof s?.tiers === 'string' ? s.tiers.trim().slice(0, 1000) : '', terms: typeof s?.terms === 'string' ? s.terms.trim().slice(0, 4000) : '' }, now)
     return json({ ok: true })
   }
   const id = Number(body.id)

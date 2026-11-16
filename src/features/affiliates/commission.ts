@@ -70,3 +70,59 @@ export function payoutsCsv(rows: readonly { createdAt: string; name: string; ema
   for (const r of rows) lines.push([r.createdAt.slice(0, 10), r.name, r.email, (r.amountCents / 100).toFixed(2), r.note].map(csvCell).join(','))
   return `${lines.join('\r\n')}\r\n`
 }
+
+export type Tier = { minCents: number; pct: number }
+
+/** Sales tiers from text, one per line: "sales in dollars, rate percent" (for example "1000, 12"). Bad lines are skipped; sorted by sales. */
+export function parseTiers(text: unknown): Tier[] {
+  const out: Tier[] = []
+  for (const line of String(text ?? '').split(/\r?\n/).slice(0, 20)) {
+    const [dollars, pct] = line.split(/[,;\t]/).map((v) => Number(v.trim().replace(/^\$|%$/g, '')))
+    if (Number.isFinite(dollars) && Number.isFinite(pct) && dollars > 0 && pct >= 0 && pct <= 100) out.push({ minCents: Math.round(dollars * 100), pct })
+  }
+  return out.sort((a, b) => a.minCents - b.minCents)
+}
+
+/** The program rate, raised by the highest tier whose sales an affiliate has reached. */
+export function tierRate(tiers: readonly Tier[], lifetimeSalesCents: number, programPct: number): number {
+  let pct = programPct
+  for (const t of tiers) if (lifetimeSalesCents >= t.minCents) pct = t.pct
+  return pct
+}
+
+export type CommissionLine = { productId: number | null; netCents: number }
+
+/**
+ * One commission for an order, worked line by line. The order discount is shared across lines in proportion to their value.
+ * A line takes the product's own rate when it has one, else `defaultPct`; an `override` (the affiliate's own rate) beats both.
+ * Returns the base, the amount and the blended percent (kept unrounded so the amount can be worked out again for refunds).
+ * With no usable lines the flat base is used.
+ */
+export function commissionForLines(
+  lines: readonly { productId?: unknown; lineCents?: unknown; quantity?: unknown; unitCents?: unknown }[] | null | undefined,
+  subtotalCents: unknown,
+  discountCents: unknown,
+  rates: { override: number | null | undefined; productRates: ReadonlyMap<number, number>; defaultPct: number },
+): { base: number; amount: number; pct: number } {
+  const flatBase = commissionBase(subtotalCents, discountCents)
+  const items: CommissionLine[] = (Array.isArray(lines) ? lines : [])
+    .map((l) => ({ productId: Number.isInteger(Number(l?.productId)) && Number(l?.productId) > 0 ? Number(l?.productId) : null, netCents: Math.max(0, Math.round(Number(l?.lineCents) || (Number(l?.unitCents) || 0) * (Number(l?.quantity) || 0))) }))
+    .filter((l) => l.netCents > 0)
+  const gross = items.reduce((n, l) => n + l.netCents, 0)
+  const discount = Math.max(0, Math.round(Number(discountCents) || 0))
+  if (items.length === 0 || gross <= 0) {
+    const pct = effectiveRate(rates.override, rates.defaultPct)
+    return { base: flatBase, amount: commissionCents(flatBase, pct), pct }
+  }
+  let base = 0
+  let amount = 0
+  for (const l of items) {
+    const net = Math.max(0, l.netCents - (discount * l.netCents) / gross)
+    const pct = rates.override ?? (l.productId !== null ? rates.productRates.get(l.productId) : undefined) ?? rates.defaultPct
+    base += net
+    amount += (net * pct) / 100
+  }
+  base = Math.round(base)
+  amount = Math.round(amount)
+  return { base, amount, pct: base > 0 ? (amount * 100) / base : 0 }
+}

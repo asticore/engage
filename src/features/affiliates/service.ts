@@ -1,5 +1,5 @@
 import { approvedEmail, commissionEmail, payoutEmail } from './emails'
-import { afterRefund, commissionBase, commissionCents, effectiveRate, eligibleAt, isSelfReferral } from './commission'
+import { afterRefund, commissionForLines, eligibleAt, isSelfReferral, parseTiers, tierRate } from './commission'
 import { normaliseCoupon, readRefCookie, readUtmCookie } from './core'
 import * as store from './store'
 
@@ -63,12 +63,12 @@ export async function affiliateOrderPaid(order: Order | null): Promise<void> {
     const row = await store.commissionForOrder(d1, Number(order.id))
     if (!row || row.status !== 'tracked') return
     const settings = await store.getSettings(d1)
-    const base = commissionBase(order.subtotal, order.discountTotal)
     const now = new Date()
-    const pct = effectiveRate((await store.getAffiliateById(d1, row.affiliate_id))?.ratePct, settings.commissionPct)
+    const defaultPct = tierRate(parseTiers(settings.tiers), await store.lifetimeSalesCents(d1, row.affiliate_id), settings.commissionPct)
+    const { base, amount, pct } = commissionForLines(order.lineItems as never, order.subtotal, order.discountTotal, { override: (await store.getAffiliateById(d1, row.affiliate_id))?.ratePct, productRates: await store.getProductRates(d1), defaultPct })
     const eligible = eligibleAt(now, settings.pendingDays)
-    const started = await store.markCommissionPending(d1, { orderId: row.order_id, base, pct, amount: commissionCents(base, pct), eligibleAt: eligible }, now.toISOString())
-    if (started && commissionCents(base, pct) > 0) await sendAffiliateEmail('commission', row.affiliate_id, { orderId: row.order_id, amountCents: commissionCents(base, pct), payableOn: eligible })
+    const started = await store.markCommissionPending(d1, { orderId: row.order_id, base, pct, amount, eligibleAt: eligible }, now.toISOString())
+    if (started && amount > 0) await sendAffiliateEmail('commission', row.affiliate_id, { orderId: row.order_id, amountCents: amount, payableOn: eligible })
   } catch {
     // Commissions are retried the next time the order is marked paid.
   }
