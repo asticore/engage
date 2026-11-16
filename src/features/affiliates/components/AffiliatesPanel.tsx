@@ -46,6 +46,18 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
   }
 
   const link = (c: string): string => `${origin.replace(/\/+$/, '')}/?ref=${encodeURIComponent(c)}`
+  const dashboardLink = async (a: Row) => {
+    let token = a.token
+    if (!token) {
+      const res = await fetch('/api/admin-affiliates', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'token', id: a.id }) })
+      const data = (await res.json().catch((): null => null)) as { token?: string } | null
+      if (!res.ok || !data?.token) return setMessage('Could not make a dashboard link.')
+      token = data.token
+      await load()
+    }
+    const url = `${origin.replace(/\/+$/, '')}/affiliates/dashboard?token=${token}`
+    await navigator.clipboard?.writeText(url).then(() => setMessage(`Private dashboard link for ${a.name} copied. Send it to them.`)).catch(() => setMessage(url))
+  }
   const nameOf = (id: number): string => rows.find((r) => r.id === id)?.name ?? `#${id}`
   const set = (patch: Partial<AffiliateSettings>) => setSettings((s) => (s ? { ...s, ...patch } : s))
 
@@ -70,7 +82,14 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
           </label>
           <label>Commission %<br /><input type="number" min={0} max={100} step="0.5" value={settings.commissionPct} onChange={(e) => set({ commissionPct: Number(e.target.value) })} /></label>
           <label>Days before payable<br /><input type="number" min={0} max={365} value={settings.pendingDays} onChange={(e) => set({ pendingDays: Number(e.target.value) })} /></label>
+          <label>
+            <input type="checkbox" checked={settings.autoApprove} onChange={(e) => set({ autoApprove: e.target.checked })} /> Approve new sign-ups automatically
+          </label>
+          <label style={{ flexBasis: '100%' }}>Program terms shown on the sign-up page (leave blank for the standard text)<br />
+            <textarea rows={3} style={{ width: '100%' }} maxLength={4000} value={settings.terms} onChange={(e) => set({ terms: e.target.value })} />
+          </label>
           <button type="submit">Save settings</button>
+          <span>Public sign-up page: <a href="/affiliates" target="_blank" rel="noreferrer">{origin.replace(/\/+$/, '')}/affiliates</a></span>
         </form>
       )}
 
@@ -121,6 +140,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
                   {a.status !== 'active' && <button type="button" onClick={() => post({ action: 'status', id: a.id, status: 'active' })}>Approve</button>}
                   {a.status === 'active' && <button type="button" onClick={() => post({ action: 'status', id: a.id, status: 'suspended' })}>Suspend</button>}
                   {a.owed > 0 && <button type="button" onClick={() => { const note = window.prompt(`Record a payout of ${money(a.owed)} to ${a.name}. Note (for example the payment reference):`, ''); if (note !== null) void post({ action: 'payout', id: a.id, note }, `Payout of ${money(a.owed)} recorded. Pay ${a.name} outside the site.`) }}>Record payout</button>}
+                  <button type="button" onClick={() => void dashboardLink(a)}>Copy dashboard link</button>
                   <button type="button" onClick={() => navigator.clipboard?.writeText(link(a.code)).then(() => setMessage('Link copied.')).catch((): void => undefined)}>Copy link</button>
                   <button type="button" onClick={() => { if (window.confirm(`Delete ${a.name} and their visit log?`)) void post({ action: 'delete', id: a.id }) }}>Delete</button>
                 </td>

@@ -57,3 +57,15 @@ export const referralLink = (origin: string, code: string): string => `${origin.
 
 /** Only a same-site path is stored as the landing page. */
 export const cleanPath = (value: unknown): string => (typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value.slice(0, 200) : '/')
+
+/** A private dashboard token: 48 hex characters from the platform's secure random source. */
+export function newToken(): string {
+  const bytes = new Uint8Array(24)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+export const isToken = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{48}$/.test(value)
+
+export const DEFAULT_TERMS =
+  'Share your link. When someone follows it and buys, you earn a commission on their order. Commission becomes payable after the waiting period, is reduced if the order is refunded, and is paid by the site owner. Buying through your own link does not earn commission. The site owner may suspend an affiliate who breaks these rules.'
