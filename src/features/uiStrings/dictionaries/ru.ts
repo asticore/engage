@@ -4173,7 +4173,7 @@ const ru: UiDictionary = {
   "webhooks.event.subscription.payment_failed": "Не удалось списать оплату за подписку",
   "themeStyle.minimal.name": "Минимализм",
   "themeStyle.minimal.look": "Много свободного пространства, тонкие линии и один спокойный акцент.",
-  "themeStyle.minimal.suits": "Подходит для портфолио, консалтинга и всего, где главное — контент.",
+  "themeStyle.minimal.suits": "Подходит для портфолио, консалтинга и всего, где главное: контент.",
   "themeStyle.editorial.name": "Журнальный",
   "themeStyle.editorial.look": "Заголовки с засечками, спокойные бумажные тона и удобный ритм чтения.",
   "themeStyle.editorial.suits": "Подходит для блогов, журналов и длинных материалов, потому что читать удобно.",

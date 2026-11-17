@@ -56,6 +56,8 @@ describe('workflow form helpers', () => {
         { name: 'Legal review', approverRoles: ['legal'], approverUsers: [], alsoRoles: false, approvalsNeeded: 2 },
       ],
       authorRoutes: {},
+      sectionRoutes: {},
+      standIns: [],
     })
   })
 

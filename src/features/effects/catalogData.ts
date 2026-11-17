@@ -4738,7 +4738,7 @@ export const EFFECT_DATA: EffectDef[] = [
         "attr": "chars",
         "label": "Glyph pool used while scrambling.",
         "type": "text",
-        "placeholder": "!<>-_\\/[]{}—=+*^?#________"
+        "placeholder": "!<>-_\\/[]{}\u2014=+*^?#________"
       },
       {
         "attr": "speed",
