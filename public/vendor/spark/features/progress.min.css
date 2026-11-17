@@ -1,0 +1,2 @@
+/*! Spark progress v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark progress v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-progress{display:block;height:var(--spark-progress-height, 4px);background:var(--spark-color, var(--sh-tone, var(--sh-primary, #6366f1)));transform:scaleX(var(--spark-progress, 0));transform-origin:0 50%;pointer-events:none}.spark-progress--top,.spark-progress--bottom{position:fixed;left:0;right:0;width:100%;z-index:1000}.spark-progress--top{top:0}.spark-progress--bottom{bottom:0}}

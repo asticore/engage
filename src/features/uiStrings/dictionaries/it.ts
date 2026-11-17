@@ -1451,7 +1451,7 @@ const it: UiDictionary = {
   'settings.link.scheduled-tasks.label': "Attività pianificate",
   'settings.link.scheduled-tasks.description': "Ogni attività temporizzata, il suo ultimo risultato e ciò che attende di andare online.",
   'settings.link.references.label': "Fonti di riferimento",
-  'settings.link.references.description': "Shine ed Effix: versioni fissate e se ne esiste una più recente.",
+  'settings.link.references.description': "Shine ed Spark: versioni fissate e se ne esiste una più recente.",
   'settings.link.users.label': "Utenti",
   'settings.link.users.description': "Gestisci gli account utente dell'amministrazione.",
   'settings.link.audit-log.label': "Registro di controllo",

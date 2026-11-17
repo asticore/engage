@@ -1,17 +1,17 @@
 /**
- * Effix effects the visual editor picker offers (asticore/effix, reference/references.json). Picking an effect adds its
- * `efx-` class to the block's CSS classes and its options as `data-efx-*` attributes, the same two fields the Design
+ * Spark effects the visual editor picker offers (asticore/spark, reference/references.json). Picking an effect adds its
+ * `spark-` class to the block's CSS classes and its options as `data-spark-*` attributes, the same two fields the Design
  * panel already has, so nothing new is stored and an effect can still be typed by hand.
  *
- * The list is generated from the Effix `.meta.js` files at the commit pinned in reference/references.json
- * (`node scripts/gen-effect-catalog.cjs <effix checkout> <commit>`, output in `catalogData.ts`). Anything not
+ * The list is generated from the Spark `.meta.js` files at the commit pinned in reference/references.json
+ * (`node scripts/gen-effect-catalog.cjs <spark checkout> <commit>`, output in `catalogData.ts`). Anything not
  * listed stays usable through the CSS classes field.
  */
 
 import { EFFECT_DATA } from './catalogData'
 
 export type EffectOption = {
-  /** The attribute name without the `data-efx-` prefix. */
+  /** The attribute name without the `data-spark-` prefix. */
   attr: string
   label: string
   type: 'number' | 'text' | 'select' | 'boolean'
@@ -22,7 +22,7 @@ export type EffectOption = {
 export type EffectDef = {
   id: string
   label: string
-  /** The Effix group the effect is listed under (Scroll, Text, Charts and so on). */
+  /** The Spark group the effect is listed under (Scroll, Text, Charts and so on). */
   group: string
   className: string
   help: string
@@ -31,7 +31,7 @@ export type EffectDef = {
 
 export const EFFECT_CATALOG: EffectDef[] = EFFECT_DATA
 
-const ATTR_PREFIX = 'data-efx-'
+const ATTR_PREFIX = 'data-spark-'
 const MAX_CLASSES = 8
 const MAX_ATTRS = 10
 

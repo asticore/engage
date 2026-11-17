@@ -1451,7 +1451,7 @@ const pt: UiDictionary = {
   'settings.link.scheduled-tasks.label': "Tarefas agendadas",
   'settings.link.scheduled-tasks.description': "Cada tarefa temporizada, seu último resultado e o que aguarda para entrar no ar.",
   'settings.link.references.label': "Fontes de referência",
-  'settings.link.references.description': "Shine e Effix: versões fixadas e se existe uma mais recente.",
+  'settings.link.references.description': "Shine e Spark: versões fixadas e se existe uma mais recente.",
   'settings.link.users.label': "Usuários",
   'settings.link.users.description': "Gerencie as contas de usuário do painel.",
   'settings.link.audit-log.label': "Log de auditoria",

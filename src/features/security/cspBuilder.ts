@@ -74,7 +74,7 @@ export type KnownHost = { host: string; label: string; directives: string[]; inD
 export const KNOWN_HOSTS: KnownHost[] = [
   { host: 'https://fonts.googleapis.com', label: 'Google Fonts (stylesheets)', directives: ['style-src'], inDefault: true },
   { host: 'https://fonts.gstatic.com', label: 'Google Fonts (font files)', directives: ['font-src'], inDefault: true },
-  { host: 'https://cdn.jsdelivr.net', label: 'jsDelivr (Effix and other libraries)', directives: ['script-src', 'style-src', 'font-src'], inDefault: true },
+  { host: 'https://cdn.jsdelivr.net', label: 'jsDelivr (Spark and other libraries)', directives: ['script-src', 'style-src', 'font-src'], inDefault: true },
   { host: 'https://www.googletagmanager.com', label: 'Google Tag Manager and GA4', directives: ['script-src', 'frame-src'], inDefault: true },
   { host: 'https://www.clarity.ms', label: 'Microsoft Clarity', directives: ['script-src'], inDefault: true },
   { host: 'https://scripts.clarity.ms', label: 'Microsoft Clarity (scripts)', directives: ['script-src'], inDefault: true },

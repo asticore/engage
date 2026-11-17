@@ -13,7 +13,7 @@
     "theme": "both",
     "pairWith": "archive-shop-three-column-dark",
     "colourSet": "shine-light-set",
-    "frameworks": ["shine", "effix"],
+    "frameworks": ["shine", "spark"],
     "version": "1.0.0",
     "parameters": [
       { "name": "columns", "type": "number", "label": "Columns", "default": 3, "targets": ["tree.0.columns.0.blocks.2.props.columns"] }

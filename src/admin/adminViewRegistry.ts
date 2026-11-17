@@ -204,7 +204,7 @@ export const CUSTOM_ADMIN_VIEWS = [
     key: 'references',
     Component: ReferencesView,
     path: '/references',
-    meta: { title: 'Reference sources', description: 'The shared sources Engage follows (Shine, Effix), their pinned versions and whether a newer one exists.' },
+    meta: { title: 'Reference sources', description: 'The shared sources Engage follows (Shine, Spark), their pinned versions and whether a newer one exists.' },
   },
   {
     key: 'unusedTables',

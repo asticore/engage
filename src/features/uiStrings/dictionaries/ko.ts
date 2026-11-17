@@ -1451,7 +1451,7 @@ const ko: UiDictionary = {
   'settings.link.scheduled-tasks.label': "예약 작업",
   'settings.link.scheduled-tasks.description': "모든 시간 기반 작업, 마지막 결과, 공개 대기 중인 항목.",
   'settings.link.references.label': "참조 소스",
-  'settings.link.references.description': "Shine 및 Effix: 고정된 버전과 새 버전 여부.",
+  'settings.link.references.description': "Shine 및 Spark: 고정된 버전과 새 버전 여부.",
   'settings.link.users.label': "사용자",
   'settings.link.users.description': "관리자 사용자 계정을 관리합니다.",
   'settings.link.audit-log.label': "감사 로그",

@@ -1,0 +1,2 @@
+/*! Spark draggable v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark draggable v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-draggable-on{-webkit-user-select:none;user-select:none}.spark-draggable-on.is-dragging,.spark-draggable-on.is-dragging *{cursor:grabbing}.spark-draggable-on.is-dragging{will-change:translate;z-index:5}.spark-draggable-on:focus-visible{outline:2px solid var(--spark-color, var(--sh-tone, var(--sh-primary, #6366f1)));outline-offset:3px}}

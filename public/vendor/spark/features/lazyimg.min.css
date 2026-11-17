@@ -1,0 +1,2 @@
+/*! Spark lazyimg v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark lazyimg v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-lazyimg.is-lazy{filter:blur(var(--spark-blur, 12px))}.spark-lazyimg.is-loaded{filter:none;transition:filter var(--spark-duration) var(--spark-ease)}.spark-lazyimg[data-spark-bg]{background-size:cover;background-position:center}}

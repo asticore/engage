@@ -6,9 +6,9 @@ import { describe, expect, it } from 'vitest'
 import { checkReferenceUpdates, loadReferences, parseReferences, referenceById } from '@/features/references/references'
 
 describe('reference file', () => {
-  it('ships shine, effix and engage-templates, all valid', () => {
+  it('ships shine, spark and engage-templates, all valid', () => {
     const ids = loadReferences().sources.map((s) => s.id)
-    expect(ids).toEqual(['shine', 'effix', 'engage-templates'])
+    expect(ids).toEqual(['shine', 'spark', 'engage-templates'])
   })
 
   it('has the vendored shine copy in the repo', () => {
