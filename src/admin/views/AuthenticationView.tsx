@@ -7,6 +7,8 @@ import { getAdminRoot, getSecuritySettings } from '@/features/security/settings'
 import { readSocialConfig } from '@/features/socialLogin/settings'
 import { getFeatureFlags } from '@/utilities/features'
 
+import { loadBotFlags } from '@/features/security/authStats'
+import { CAPTCHA_PLACES } from '@/features/security/captchaPlaces'
 import { MATRIX_METHODS, methodAllowed, readMatrix } from '@/features/security/authMatrix'
 
 import { getAdminUi } from '@/admin/i18n/serverUi'
@@ -42,6 +44,7 @@ export async function AuthenticationView() {
   }
   const rows = describeAuthMethods(settings, social, { featureOn, apiKeysOn: settings.apiKeys.enabled, activeTokens }, { featureOn: ssoOn, connections: ssoConnections, enforced: ssoEnforced })
   const matrix = await readMatrix()
+  const flagged = await import('@/features/ecommerce/server/db').then(async ({ rawD1 }) => loadBotFlags((await rawD1()) as never, 7, new Date())).catch((): null => null)
   const matrixRows = rows.filter((row) => (MATRIX_METHODS as readonly string[]).includes(row.id))
   return (
     <div className="settings-page">
@@ -49,6 +52,12 @@ export async function AuthenticationView() {
         <h1 className="settings-page__title">Authentication</h1>
         <p className="settings-page__description">Every way people can sign in, and whether it is on. Switch a method on or off here, or open its screen for the details. A method that is off is hidden from the sign-in form.</p>
       </div>
+      {flagged && (
+        <p className="settings-page__description">
+          Bot protection, last 7 days: {flagged.total} visitor{flagged.total === 1 ? '' : 's'} flagged by the Cloudflare bot score ({flagged.asked} asked for the challenge, {flagged.refused} refused).
+          {flagged.places.length > 0 && ` By place: ${flagged.places.map((p) => `${CAPTCHA_PLACES.find((c) => c.id === p.place)?.label ?? p.place} ${p.count}`).join(', ')}.`} Counted once per address and hour. Set up in Form settings, Spam protection.
+        </p>
+      )}
       <table>
         <thead>
           <tr>

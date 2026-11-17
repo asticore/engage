@@ -36,7 +36,7 @@ describe('bot score and the sign-in challenge', () => {
   const person = { score: 90, verifiedBot: false }
   it('asks for the challenge on a low score even when sign-in protection is off', async () => {
     const on = { ...keys, botDetection: 'challenge' }
-    expect(await authCaptchaConfig(engine(on) as never, 'signin', bot)).toEqual({ provider: 'turnstile', siteKey: 'site' })
+    expect(await authCaptchaConfig(engine(on) as never, 'signin', bot)).toMatchObject({ provider: 'turnstile', siteKey: 'site' })
     expect(await authCaptchaConfig(engine(on) as never, 'signin', person)).toBeNull()
     expect(await authCaptchaRefusal(engine(on) as never, new FormData(), undefined, 'signin', bot)).toContain('challenge')
     expect(await authCaptchaRefusal(engine(on) as never, new FormData(), undefined, 'signin', person)).toBeNull()

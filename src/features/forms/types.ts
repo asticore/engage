@@ -267,6 +267,8 @@ export type FormDoc = {
     honeypot?: Inherited
     minimumFillTime?: Inherited
     turnstile?: Inherited
+    /** Bot detection for this form only: 'inherit' takes the site setting. */
+    botDetection?: 'inherit' | 'off' | 'challenge' | 'block'
   }
   payment?: FormPayment
 }

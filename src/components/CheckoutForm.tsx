@@ -13,6 +13,7 @@ import { decodeHandoff, type Handoff } from '@/features/forms/checkoutHandoff'
 import { CheckoutExtras, type CheckoutInput } from '@/components/CheckoutExtras'
 import { OfflinePaymentOptions } from '@/components/OfflinePaymentOptions'
 import { PayPalButton } from '@/components/PayPalButton'
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
 
@@ -46,6 +47,7 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
     return token ? decodeHandoff(token) : null
   }, [searchParams])
   const handoffDone = useRef(false)
+  const cardCaptcha = useRef<HTMLDivElement>(null)
   const [email, setEmail] = useState(handoff?.customer.email ?? '')
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -101,9 +103,17 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
       return
     }
 
+    // The CAPTCHA tokens (card payment place), when the shop asks for them.
+    const captchaTokens: Record<string, string> = {}
+    for (const field of ['cf-turnstile-response', 'g-recaptcha-response', 'captcha-answer', 'captcha-token']) {
+      const value = cardCaptcha.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`)?.value
+      if (value) captchaTokens[field] = value
+    }
+
     try {
       const result = (await initiatePayment('stripe', {
         additionalData: {
+          ...captchaTokens,
           billingAddress: extras?.address ?? addresses?.[0],
           customerEmail: email,
           shippingAddress: extras?.address ?? addresses?.[0],
@@ -192,6 +202,9 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
         <CheckoutExtras cartRef={cartRef} email={email} onChange={onExtras} initial={initial} />
         <PayPalButton cartRef={cartRef} email={email} extras={extrasReady ? extras : null} />
         <OfflinePaymentOptions cartRef={cartRef} email={email} extras={extrasReady ? extras : null} />
+        <div ref={cardCaptcha}>
+          <PlaceCaptcha place="cardCheckout" refreshKey={error} />
+        </div>
         {error && <p className="form-error">{error}</p>}
         {publishableKey && (
           <button type="submit" className="btn btn--primary" disabled={isLoading || !extrasReady}>
