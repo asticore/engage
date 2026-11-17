@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { decodeHandoff, type Handoff } from '@/features/forms/checkoutHandoff'
 
+import { OrderBump } from '@/components/OrderBump'
 import { CheckoutExtras, type CheckoutInput } from '@/components/CheckoutExtras'
 import { OfflinePaymentOptions } from '@/components/OfflinePaymentOptions'
 import { PayPalButton } from '@/components/PayPalButton'
@@ -199,6 +200,7 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
             className="border border-[var(--color-line)] bg-[var(--color-cream)] p-3 font-[family-name:var(--font-body)] text-base"
           />
         </label>
+        <OrderBump />
         <CheckoutExtras cartRef={cartRef} email={email} onChange={onExtras} initial={initial} />
         <PayPalButton cartRef={cartRef} email={email} extras={extrasReady ? extras : null} />
         <OfflinePaymentOptions cartRef={cartRef} email={email} extras={extrasReady ? extras : null} />

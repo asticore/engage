@@ -385,6 +385,19 @@ export const wholesaleFields: Field[] = [
   },
 ]
 
+/** Order bump: one tick-box offer on the checkout when this product is in the cart (api/shop-order-bump). */
+export const orderBumpFields: Field[] = [
+  {
+    type: 'collapsible',
+    label: 'Order bump',
+    admin: { initCollapsed: true },
+    fields: [
+      { name: 'orderBumpProduct', type: 'relationship', relationTo: 'products', admin: { description: 'A simple product offered as a tick-box at checkout while this product is in the cart. Blank means no offer.' } },
+      { name: 'orderBumpHeadline', type: 'text', admin: { description: 'Offer wording, for example "Add gift packaging for $5". Blank uses the product title and price.' } },
+    ],
+  },
+]
+
 export const ratingFields: Field[] = [
   { name: 'ratingAverage', type: 'number', admin: { readOnly: true, position: 'sidebar', description: 'Average of approved reviews.' } },
   { name: 'ratingCount', type: 'number', defaultValue: 0, admin: { readOnly: true, position: 'sidebar' } },
@@ -412,6 +425,7 @@ export const catalogueFields: Field[] = [
   ...donationFields,
   ...packagingFields,
   ...wholesaleFields,
+  ...orderBumpFields,
   ...shippingFields,
   ...typeSpecificFields,
   ...preorderFields,
