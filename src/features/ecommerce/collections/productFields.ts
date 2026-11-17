@@ -399,15 +399,21 @@ export const orderBumpFields: Field[] = [
   },
 ]
 
-/** Offers (bids): visitors make an offer on the product page; an end date makes it an auction where the highest offer wins (features/quotes/auctions.ts). */
+/** Offers (bids), stored as one JSON column `bid` ({ minimum, endsAt }) to stay under D1's 100-column limit: visitors make an offer on the product page; an end date makes it an auction where the highest offer wins (features/quotes/auctions.ts). */
 export const bidFields: Field[] = [
   {
     type: 'collapsible',
     label: 'Offers (bids)',
     admin: { initCollapsed: true, condition: (data) => data?.productType === 'simple' },
     fields: [
-      { name: 'bidMinimum', type: 'number', min: 0, admin: { description: 'The lowest offer taken, in the shop currency. Blank or 0 means any amount.' } },
-      { name: 'bidEndsAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' }, description: 'When offers close. At that time the highest offer is sent a quote at its price and the others are told they were not successful. Blank means no end: staff pick the winner.' } },
+      {
+        name: 'bid',
+        type: 'json',
+        admin: {
+          components: { Field: '@/features/quotes/components/BidTermsField#BidTermsField' },
+          description: 'The lowest offer taken (shop currency, blank or 0 means any) and when offers close. At close the highest offer is sent a quote at its price and the others are told they were not successful. No end time means staff pick the winner.',
+        },
+      },
     ],
   },
 ]

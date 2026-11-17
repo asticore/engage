@@ -151,7 +151,7 @@ export async function listExpiring(d1: D1, nowIso: string, untilIso: string, lim
 
 /** The Offers settings of one product (minimum in cents, end time and title), or null when the product is gone. */
 export async function productBidTerms(d1: D1, productId: number): Promise<{ title: string; minimumCents: number; endsAt: string | null } | null> {
-  const rows = await all(d1, 'SELECT title, bid_minimum, bid_ends_at FROM eg_products WHERE id = ?1', productId)
+  const rows = await all(d1, "SELECT title, json_extract(bid, '$.minimum') AS bid_minimum, json_extract(bid, '$.endsAt') AS bid_ends_at FROM eg_products WHERE id = ?1", productId)
   if (!rows[0]) return null
   return { title: String(rows[0].title ?? ''), minimumCents: Math.round(Number(rows[0].bid_minimum ?? 0) * 100), endsAt: rows[0].bid_ends_at ? String(rows[0].bid_ends_at) : null }
 }
