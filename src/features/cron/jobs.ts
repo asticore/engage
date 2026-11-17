@@ -68,7 +68,11 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
   },
   'member-dunning': async ({ engine, now }) => {
     const { sweepDunning } = await import('@/features/members/dunningRun')
-    return sweepDunning(engine as never, now)
+    const dunning = await sweepDunning(engine as never, now)
+    // Once a day (03:00 UTC): warn people whose saved card is about to expire.
+    if (now.getUTCHours() !== 3) return dunning
+    const { sweepCardExpiry } = await import('@/features/billing/cardExpiry')
+    return { ...dunning, cardExpiry: await sweepCardExpiry(engine as never, now) }
   },
   'demo-reset': async ({ engine, env, now }) => {
     const { getFeatureFlags } = await import('@/utilities/features')
