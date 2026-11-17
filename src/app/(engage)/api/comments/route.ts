@@ -1,3 +1,4 @@
+import { moderatorMailText } from '@/features/comments/moderatorMail'
 import { checkSpamRules } from '@/features/forms/spamRules'
 import { DEFAULT_FORM_SETTINGS, getFormSettings } from '@/features/forms/settings'
 import { NextResponse } from 'next/server'
@@ -75,6 +76,21 @@ export async function POST(request: Request): Promise<Response> {
   const ip = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? ''
   const userId = user?.id != null && Number.isFinite(Number(user.id)) ? Number(user.id) : null
   await store.insertComment(d1, { refType: 'post', refId: id, parentId, name, email, userId, content, status: finalStatus, fromTeam: false, ipHash: await hashAddress(ip, 'eg-comments') }, new Date().toISOString())
+  // Tell the admins when a comment is waiting for approval. Best effort; COMMENT_EMAILS_OFF=1 switches it off.
+  if (finalStatus === 'pending' && process.env.COMMENT_EMAILS_OFF !== '1') {
+    void (async () => {
+      const [{ adminEmails }, { sendEmail }, { adminHref }, { getAdminRoot }] = await Promise.all([
+        import('@/features/security/sensitiveChanges'),
+        import('@/features/email'),
+        import('@/features/security/adminPath'),
+        import('@/features/security/settings'),
+      ])
+      const to = await adminEmails(engine)
+      if (to.length === 0) return
+      const mail = moderatorMailText({ name, content, postId: id }, `${new URL(request.url).origin}${adminHref('/comments', await getAdminRoot())}`)
+      await sendEmail({ to, subject: mail.subject, template: 'comments.moderation', text: mail.text })
+    })().catch((): void => undefined)
+  }
   // A comment marked spam looks accepted, so a spammer learns nothing.
   return json({ ok: true, status: finalStatus === 'approved' ? 'approved' : 'pending' })
 }
