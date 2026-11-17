@@ -2,6 +2,7 @@ import type { GlobalConfig } from '@/engine'
 
 import { isAdmin } from '../access/ecommerceAccess'
 import { indexNowKeyBeforeChange } from '@/features/seo/indexNowKey'
+import { validateBlogBaseField } from '@/features/seo/permalinkValidate'
 
 /**
  * Site-wide SEO and analytics defaults.
@@ -23,9 +24,14 @@ export const SeoSettings: GlobalConfig = {
   dbName: 'eg_seo_settings',
   hooks: {
     beforeChange: [indexNowKeyBeforeChange],
-    // The header, blocked-path and llms.txt rules are held in memory for a minute on each isolate. Saving
-    // them drops this isolate's copy at once (other isolates still wait out their minute).
     afterChange: [
+      // A saved blog address takes effect in this isolate at once (Task 16e).
+      async () => {
+        const { invalidateBlogBaseCache } = await import('@/features/seo/permalinkStore')
+        invalidateBlogBaseCache()
+      },
+      // The header, blocked-path and llms.txt rules are held in memory for a minute on each isolate. Saving
+      // them drops this isolate's copy at once (other isolates still wait out their minute).
       async () => {
         const { invalidateServerRulesCache } = await import('@/features/seo/serverRules')
         invalidateServerRulesCache()
@@ -351,6 +357,29 @@ export const SeoSettings: GlobalConfig = {
           type: 'checkbox',
           defaultValue: true,
           admin: { description: 'Tell search engines about the trail (BreadcrumbList), so it can show in results.' },
+        },
+      ],
+    },
+    {
+      type: 'group',
+      name: 'permalinks',
+      label: 'Permalinks',
+      admin: {
+        description:
+          'The first part of the blog address. Changing it moves the blog to the new address, and the old /blog addresses redirect to it. Shop and product addresses are not changed here yet.',
+      },
+      fields: [
+        {
+          name: 'blogBase',
+          type: 'text',
+          label: 'Blog address',
+          defaultValue: 'blog',
+          validate: validateBlogBaseField(),
+          admin: {
+            placeholder: 'blog',
+            description:
+              'One part of the address, such as news (lowercase letters, digits and hyphens, 3 to 40 characters). Leave as blog to keep /blog. The site words, the admin and sign-in addresses, and a page with the same address are refused. Sitemap and canonical tags use the new address at once.',
+          },
         },
       ],
     },

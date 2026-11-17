@@ -20,6 +20,8 @@ import {
   resolveSignInPaths,
   type SignInPlace,
 } from '@/features/security/signInPath'
+import { DEFAULT_BLOG_BASE, isUnderPath } from '@/features/seo/permalinks'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 
 /**
  * Host routing (features/domains) wraps locale routing (features/multilingual), which wraps the
@@ -28,6 +30,9 @@ import {
  * The admin URL is configurable. When it is not /admin, requests under the configured path are
  * served by the admin at /admin (the rewrite runs the whole pipeline on the /admin path), and /admin
  * itself answers 404. Redirects that point at /admin are sent to the configured path instead.
+ *
+ * The blog address is configurable too (Task 16e). A custom one is served by the /blog folder, and a GET to /blog
+ * redirects (308) to it.
  *
  * The customer and member sign-in URLs are configurable too (Task 19l). A custom path is served by the
  * default route (a rewrite), and a GET to the default path redirects to the custom one.
@@ -85,6 +90,18 @@ async function serveAdminAware(request: NextRequest): Promise<NextResponse> {
       return NextResponse.redirect(target, { status: 307, headers: { 'cache-control': 'private, no-store' } })
     }
     return new NextResponse('Not found', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } })
+  }
+  // The blog address (SEO settings, Permalinks): a custom one is served by the /blog folder, and /blog redirects to it.
+  const blog = await readBlogBase()
+  if (blog !== DEFAULT_BLOG_BASE) {
+    const custom = `/${blog}`
+    const fallback = `/${DEFAULT_BLOG_BASE}`
+    if (isUnderPath(pathname, custom)) return serveRewritten(request, custom, fallback)
+    if (isUnderPath(pathname, fallback) && isPlainNavigation(request)) {
+      const target = new URL(request.url)
+      target.pathname = `${custom}${pathname.slice(fallback.length)}`
+      return NextResponse.redirect(target, { status: 308, headers: { 'cache-control': 'private, no-store' } })
+    }
   }
   const signIn = await signInPathsFor(root)
   for (const place of ['customer', 'member'] as const) {
