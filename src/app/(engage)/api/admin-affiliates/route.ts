@@ -34,10 +34,10 @@ export async function GET(request: Request): Promise<Response> {
   if (new URL(request.url).searchParams.get('export') === 'payouts') {
     return new Response(payoutsCsv(await store.payoutsForExport(d1)), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="affiliate-payouts.csv"', 'Cache-Control': 'no-store' } })
   }
-  const [affiliates, settings, rows, commissions, payouts, configured, productRates, products, visits, images, botHits, tagRates, tags] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1), store.listProductRates(d1), store.productChoices(d1), store.recentVisits(d1, 50), store.imageChoices(d1), store.botHitsSince(d1, new Date(Date.now() - 6 * 86_400_000).toISOString().slice(0, 10)), store.listTagRates(d1), store.tagChoices(d1)])
+  const [affiliates, settings, rows, commissions, payouts, configured, productRates, products, visits, images, botHits, tagRates, tags, shortLinks] = await Promise.all([store.listAffiliates(d1), store.getSettings(d1), store.allCommissionRows(d1), store.commissionsFor(d1, null, 50), store.payoutsFor(d1, 50), store.settingsConfigured(d1), store.listProductRates(d1), store.productChoices(d1), store.recentVisits(d1, 50), store.imageChoices(d1), store.botHitsSince(d1, new Date(Date.now() - 6 * 86_400_000).toISOString().slice(0, 10)), store.listTagRates(d1), store.tagChoices(d1), store.listShortLinks(d1)])
   const now = new Date()
   const withBalances = affiliates.map((a) => ({ ...a, ...balances(rows.filter((r) => r.affiliate_id === a.id), now), ...affiliateReport(rows.filter((r) => r.affiliate_id === a.id), a.visits) }))
-  return json({ affiliates: withBalances, settings, commissions, payouts, configured, productRates, products, visits, images, botHits, tagRates, tags })
+  return json({ affiliates: withBalances, settings, commissions, payouts, configured, productRates, products, visits, images, botHits, tagRates, tags, shortLinks })
 }
 
 /**
@@ -73,6 +73,23 @@ export async function POST(request: Request): Promise<Response> {
     const rate = raw === null || raw === '' || raw === undefined ? null : clampPct(raw, -1)
     if (rate === -1) return json({ error: 'A rate is 0 to 100 percent.' }, 400)
     await store.setProductRate(d1, productId, rate, now)
+    return json({ ok: true })
+  }
+  if (body.action === 'link') {
+    const affiliateId = Number(body.affiliateId)
+    const code = normaliseCode(body.code)
+    const rawProduct = body.productId
+    const productId = rawProduct === null || rawProduct === '' || rawProduct === undefined ? null : Number(rawProduct)
+    if (!Number.isInteger(affiliateId) || affiliateId < 1 || !(await store.getAffiliateById(d1, affiliateId))) return json({ error: 'Choose an affiliate.' }, 400)
+    if (!code) return json({ error: 'A short link code is 3 to 32 letters, numbers or dashes.' }, 400)
+    if (productId !== null && (!Number.isInteger(productId) || productId < 1)) return json({ error: 'Choose a product.' }, 400)
+    if (!(await store.addShortLink(d1, { code, affiliateId, productId }, now))) return json({ error: 'That short link code is already used.' }, 409)
+    return json({ ok: true, code })
+  }
+  if (body.action === 'unlink') {
+    const code = normaliseCode(body.code)
+    if (!code) return json({ error: 'Unknown short link.' }, 400)
+    await store.removeShortLink(d1, code)
     return json({ ok: true })
   }
   if (body.action === 'tagRate') {
