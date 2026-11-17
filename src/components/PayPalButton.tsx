@@ -68,17 +68,25 @@ const messageOf = (error: unknown, fallback: string): string => (error instanceo
  * "Pay with PayPal" beside the card form. Renders nothing unless PayPal is switched on and configured. The server
  * prices the order and captures the payment; this component only passes the buyer's choices and the cart ids.
  */
-export const PayPalButton: React.FC<{ cartRef: Cart | null; email: string; extras: CheckoutInput | null }> = ({ cartRef, email, extras }) => {
+export const PayPalButton: React.FC<{
+  cartRef: Cart | null
+  email: string
+  extras: CheckoutInput | null
+  /** The element holding the checkout's bot challenge (place "cardCheckout"); its token goes with the create request. */
+  captchaRef?: React.RefObject<HTMLElement | null>
+  /** Called after each create request, so the page can show a fresh challenge (a token works once). */
+  onAttempt?: () => void
+}> = ({ cartRef, email, extras, captchaRef, onAttempt }) => {
   const t = useStoreText()
   const router = useRouter()
   const [cfg, setCfg] = useState<PayPalPublicConfig | null>(null)
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   // The PayPal popup keeps the callbacks it was given, so they read the latest values from here.
-  const latest = useRef({ cartRef, email, extras })
+  const latest = useRef({ cartRef, email, extras, captchaRef, onAttempt })
 
   useEffect(() => {
-    latest.current = { cartRef, email, extras }
+    latest.current = { cartRef, email, extras, captchaRef, onAttempt }
   }, [cartRef, email, extras])
 
   useEffect(() => {
@@ -105,10 +113,16 @@ export const PayPalButton: React.FC<{ cartRef: Cart | null; email: string; extra
               setError(null)
               if (!c) throw new Error('Your cart is empty.')
               if (!e) throw new Error(t('store.enterEmailFirst'))
+              const captchaTokens: Record<string, string> = {}
+              for (const field of ['cf-turnstile-response', 'g-recaptcha-response', 'captcha-answer', 'captcha-token']) {
+                const value = latest.current.captchaRef?.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`)?.value
+                if (value) captchaTokens[field] = value
+              }
               const res = await fetch('/api/shop-paypal-create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                  ...captchaTokens,
                   cartID: c.id,
                   secret: c.secret,
                   customerEmail: e,
@@ -124,6 +138,7 @@ export const PayPalButton: React.FC<{ cartRef: Cart | null; email: string; extra
               })
               const json = (await res.json().catch((): Record<string, unknown> => ({}))) as { paypalOrderId?: string; paidInFull?: boolean; error?: string }
               if (json.paidInFull) throw new Error('Gift cards and store credit cover this order. Use Continue to payment instead.')
+              latest.current.onAttempt?.() // the challenge token was used up
               if (!res.ok || !json.paypalOrderId) throw new Error(json.error || 'Could not start PayPal.')
               return json.paypalOrderId
             },

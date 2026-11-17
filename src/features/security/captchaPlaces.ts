@@ -26,7 +26,7 @@ export const CAPTCHA_PLACES = [
   { id: 'reviews', label: 'Product reviews', kind: 'public', legacy: 'off', counts: 'tries' },
   { id: 'backInStock', label: 'Back-in-stock sign-up', kind: 'public', legacy: 'off', counts: 'tries' },
   { id: 'rsvp', label: 'Event RSVP', kind: 'public', legacy: 'off', counts: 'tries' },
-  { id: 'cardCheckout', label: 'Checkout: card payment', kind: 'public', legacy: 'off', counts: 'tries' },
+  { id: 'cardCheckout', label: 'Checkout: card and PayPal payment', kind: 'public', legacy: 'off', counts: 'tries' },
   { id: 'offlineOrder', label: 'Checkout: bank transfer, cheque and cash orders', kind: 'public', legacy: 'off', counts: 'tries' },
 ] as const
 
