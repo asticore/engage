@@ -12,6 +12,7 @@ import { ProductCardPrice } from '@/components/ProductCardPrice'
 import { PromoBadges } from '@/components/PromoBadges'
 import { pricesHiddenFor } from '@/features/ecommerce/lib/wholesale'
 import { wholesaleViewer } from '@/features/ecommerce/server/wholesale'
+import { serviceBadge } from '@/features/ecommerce/lib/service'
 import { badgesFor, type PromoBadge } from '@/features/ecommerce/lib/promoBadges'
 import type { Media, Product } from '@/engage-types'
 
@@ -84,6 +85,7 @@ export async function ProductCard({
         <span className="text-[0.7rem] uppercase tracking-[0.1em] text-[var(--color-gold)]">
           {product.category || 'Boutique'}
         </span>
+        {serviceBadge(product as never) ? <span className="ml-2 text-[0.7rem] uppercase tracking-[0.1em] opacity-70">{serviceBadge(product as never)}</span> : null}
         <h3>{product.title}</h3>
         <p className="mt-1 font-[family-name:var(--font-display)] text-[1.25rem]">
           {priceHidden ? <span className="text-[0.85rem] opacity-70">{cfg.hiddenText || tx('store.wholesale.hiddenPrice')}</span> : <ProductCardPrice info={info} range={range} variable={variable} fallback={product.priceInAUD} />}
