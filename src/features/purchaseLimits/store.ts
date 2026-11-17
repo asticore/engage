@@ -31,22 +31,62 @@ export type Identity = { emailKeys: string[]; userId: number | null; addressKey:
 export async function priorPurchases(d1: D1, productId: number, who: Identity, excludeCartId: number | null, normalise: (email: string) => string, addressOf: (line1: unknown, postal: unknown) => string, sinceMs: number): Promise<Prior[]> {
   const rows = await all(
     d1,
-    `SELECT i.quantity AS quantity, o.created_at AS created_at, o.customer_email AS email, o.customer_id AS customer_id, o.shipping_address_address_line1 AS line1, o.shipping_address_postal_code AS postal, o.cart_id AS cart_id
+    `SELECT i.quantity AS quantity, o.created_at AS created_at, o.customer_email AS email, o.customer_id AS customer_id, o.shipping_address_address_line1 AS line1, o.shipping_address_postal_code AS postal, o.cart_id AS cart_id, o.id AS order_id
      FROM eg_orders_items i JOIN eg_orders o ON o.id = i._parent_id
      WHERE i.product_id = ?1 AND o.status NOT IN ('cancelled','refunded','failed') AND o.created_at >= ?2
      ORDER BY o.id DESC LIMIT 2000`,
     productId, new Date(sinceMs).toISOString(),
   )
   const out: Prior[] = []
+  const matchedOrders = new Set<number>()
   for (const r of rows) {
     if (excludeCartId !== null && r.cart_id !== null && Number(r.cart_id) === excludeCartId) continue
     const sameUser = who.userId !== null && r.customer_id !== null && Number(r.customer_id) === who.userId
     const sameEmail = Boolean(r.email) && who.emailKeys.includes(normalise(String(r.email)))
     const key = addressOf(r.line1, r.postal)
     const sameAddress = who.addressKey !== '' && key === who.addressKey
-    if (sameUser || sameEmail || sameAddress) out.push({ qty: Number(r.quantity ?? 1), atMs: Date.parse(String(r.created_at)) || 0 })
+    if (sameUser || sameEmail || sameAddress) {
+      out.push({ qty: Number(r.quantity ?? 1), atMs: Date.parse(String(r.created_at)) || 0 })
+      matchedOrders.add(Number(r.order_id))
+    }
   }
+  // Same card: another order paid with a card this buyer's earlier orders used is the same person under another name.
+  out.push(...(await cardLinkedPurchases(d1, productId, [...matchedOrders], excludeCartId, sinceMs)))
   return out
+}
+
+/** Records the card fingerprint (from Stripe) a paid order was paid with. Once per order and card. */
+export async function recordCardPrint(d1: D1, orderId: number, fingerprint: string, nowIso: string): Promise<void> {
+  if (!fingerprint) return
+  await run(d1, 'INSERT OR IGNORE INTO eg_purchase_card_prints (order_id, fingerprint, created_at) VALUES (?1,?2,?3)', orderId, fingerprint.slice(0, 80), nowIso)
+}
+
+/**
+ * Orders for the product paid with a card that one of `matchedOrders` was paid with, other than those orders and the
+ * order made from this cart. Never throws: with the table missing (limits off, or nothing recorded yet) there is no link.
+ */
+export async function cardLinkedPurchases(d1: D1, productId: number, matchedOrders: number[], excludeCartId: number | null, sinceMs: number): Promise<Prior[]> {
+  if (matchedOrders.length === 0) return []
+  try {
+    const marks = matchedOrders.map((_, i) => `?${i + 1}`).join(',')
+    const prints = (await all(d1, `SELECT DISTINCT fingerprint FROM eg_purchase_card_prints WHERE order_id IN (${marks}) LIMIT 50`, ...matchedOrders)).map((r) => String(r.fingerprint))
+    if (prints.length === 0) return []
+    const printMarks = prints.map((_, i) => `?${i + 3}`).join(',')
+    const rows = await all(
+      d1,
+      `SELECT DISTINCT i.id AS item_id, i.quantity AS quantity, o.created_at AS created_at, o.id AS order_id, o.cart_id AS cart_id
+       FROM eg_orders_items i JOIN eg_orders o ON o.id = i._parent_id JOIN eg_purchase_card_prints c ON c.order_id = o.id
+       WHERE i.product_id = ?1 AND o.status NOT IN ('cancelled','refunded','failed') AND o.created_at >= ?2 AND c.fingerprint IN (${printMarks})
+       LIMIT 2000`,
+      productId, new Date(sinceMs).toISOString(), ...prints,
+    )
+    const known = new Set(matchedOrders)
+    return rows
+      .filter((r) => !known.has(Number(r.order_id)) && !(excludeCartId !== null && r.cart_id !== null && Number(r.cart_id) === excludeCartId))
+      .map((r) => ({ qty: Number(r.quantity ?? 1), atMs: Date.parse(String(r.created_at)) || 0 }))
+  } catch {
+    return []
+  }
 }
 
 export async function logBlock(d1: D1, b: { ruleId: number | null; productId: number | null; reason: string; emailKey: string; detail: string }, nowIso: string): Promise<void> {
