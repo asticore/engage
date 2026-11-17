@@ -12,6 +12,14 @@ import {
   isUnderAdminRoot,
   resolveAdminRoot,
 } from '@/features/security/adminPath'
+import {
+  CUSTOMER_SIGN_IN_PATH_ENV,
+  DEFAULT_SIGN_IN_PATHS,
+  MEMBER_SIGN_IN_PATH_ENV,
+  isUnderSignInRoot,
+  resolveSignInPaths,
+  type SignInPlace,
+} from '@/features/security/signInPath'
 
 /**
  * Host routing (features/domains) wraps locale routing (features/multilingual), which wraps the
@@ -20,6 +28,9 @@ import {
  * The admin URL is configurable. When it is not /admin, requests under the configured path are
  * served by the admin at /admin (the rewrite runs the whole pipeline on the /admin path), and /admin
  * itself answers 404. Redirects that point at /admin are sent to the configured path instead.
+ *
+ * The customer and member sign-in URLs are configurable too (Task 19l). A custom path is served by the
+ * default route (a rewrite), and a GET to the default path redirects to the custom one.
  *
  * Kept as a one-liner on purpose. Middleware runs on every single request, so
  * it is the worst place for logic to accumulate quietly.
@@ -30,9 +41,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const root = await adminRootFor()
   // Any redirect a route handler sends into /admin (social sign-in, passkeys, Google) lands on the configured path.
-  const response = root === DEFAULT_ADMIN_PATH ? served : relocate(served, request, root)
+  const adminAware = root === DEFAULT_ADMIN_PATH ? served : relocate(served, request, root)
+  const response = relocateSignIn(adminAware, request, await signInPathsFor(root))
   const stripped = response.headers.get('x-pathname') ?? pathname
   if (isNoindexPath(pathname, root) || isNoindexPath(stripped, root) || isPickerRequest(request.nextUrl)) {
+    response.headers.set('X-Robots-Tag', NOINDEX_HEADER_VALUE)
+  }
+  const signInPaths = await signInPathsFor(root)
+  if (isUnderSignInRoot(pathname, signInPaths.customer) || isUnderSignInRoot(pathname, signInPaths.member)) {
     response.headers.set('X-Robots-Tag', NOINDEX_HEADER_VALUE)
   }
   // A staging site is never indexed, whatever the page says.
@@ -43,6 +59,16 @@ export async function middleware(request: NextRequest) {
 async function adminRootFor(): Promise<string> {
   const settings = await readSecuritySettingsFromD1()
   return resolveAdminRoot(settings.adminPath, process.env[ADMIN_PATH_ENV])
+}
+
+/** The sign-in paths in use: env first, then the saved settings, then the defaults. */
+async function signInPathsFor(adminRoot: string): Promise<Record<SignInPlace, string>> {
+  const settings = await readSecuritySettingsFromD1()
+  return resolveSignInPaths(
+    settings.signInPaths ?? {},
+    { customer: process.env[CUSTOMER_SIGN_IN_PATH_ENV], member: process.env[MEMBER_SIGN_IN_PATH_ENV] },
+    adminRoot,
+  )
 }
 
 /** Routes one request: the configured admin path, the retired /admin, or the normal locale and security pipeline. */
@@ -60,7 +86,24 @@ async function serveAdminAware(request: NextRequest): Promise<NextResponse> {
     }
     return new NextResponse('Not found', { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8' } })
   }
+  const signIn = await signInPathsFor(root)
+  for (const place of ['customer', 'member'] as const) {
+    const custom = signIn[place]
+    const fallback = DEFAULT_SIGN_IN_PATHS[place]
+    if (custom === fallback) continue
+    if (isUnderSignInRoot(pathname, custom)) return serveRewritten(request, custom, fallback)
+    if (isUnderSignInRoot(pathname, fallback) && isPlainNavigation(request)) {
+      const target = new URL(request.url)
+      target.pathname = `${custom}${pathname.slice(fallback.length)}`
+      return NextResponse.redirect(target, { status: 307, headers: { 'cache-control': 'private, no-store' } })
+    }
+  }
   return multilingualMiddleware(request, securityMiddleware)
+}
+
+/** A page view (GET or HEAD, not a server action): the only request that is redirected off the old sign-in path. */
+function isPlainNavigation(request: NextRequest): boolean {
+  return (request.method === 'GET' || request.method === 'HEAD') && !request.headers.has('next-action')
 }
 
 /** True when the request carries a session cookie shaped like one this site issues (a three-part token with an issue time). */
@@ -71,16 +114,21 @@ function hasAdminSessionCookie(request: NextRequest): boolean {
 
 /** Runs the pipeline on the /admin path that a configured admin URL stands for, then rewrites to it. */
 async function serveCustomAdmin(request: NextRequest, root: string): Promise<NextResponse> {
+  return serveRewritten(request, root, DEFAULT_ADMIN_PATH)
+}
+
+/** Runs the pipeline on the internal path that a custom URL stands for, then rewrites to it. */
+async function serveRewritten(request: NextRequest, root: string, internal: string): Promise<NextResponse> {
   const rest = request.nextUrl.pathname.slice(root.length)
   const url = new URL(request.url)
-  url.pathname = `${DEFAULT_ADMIN_PATH}${rest}`
+  url.pathname = `${internal}${rest}`
   const readable = request.method === 'GET' || request.method === 'HEAD'
   const target = readable
     ? new NextRequest(url, { headers: request.headers, method: request.method })
     : new NextRequest(url, { headers: request.headers, method: request.method, body: request.body, duplex: 'half' } as RequestInit)
 
   const inner = await multilingualMiddleware(target, securityMiddleware)
-  if (inner.headers.get('x-middleware-next') !== '1') return relocate(inner, request, root)
+  if (inner.headers.get('x-middleware-next') !== '1') return internal === DEFAULT_ADMIN_PATH ? relocate(inner, request, root) : inner
 
   const out = NextResponse.rewrite(url, { request: { headers: target.headers } })
   inner.headers.forEach((value, key) => {
@@ -103,5 +151,26 @@ function relocate(response: NextResponse, request: NextRequest, root: string): N
   if (target.origin !== request.nextUrl.origin || !isUnderAdminRoot(target.pathname, DEFAULT_ADMIN_PATH)) return response
   target.pathname = `${root}${target.pathname.slice(DEFAULT_ADMIN_PATH.length)}`
   response.headers.set('location', /^https?:\/\//.test(location) ? target.toString() : `${target.pathname}${target.search}`)
+  return response
+}
+
+/** A redirect that points at a default sign-in path is sent to the custom one instead, saving a hop. */
+function relocateSignIn(response: NextResponse, request: NextRequest, paths: Record<SignInPlace, string>): NextResponse {
+  const location = response.headers.get('location')
+  if (!location) return response
+  let target: URL
+  try {
+    target = new URL(location, request.nextUrl.origin)
+  } catch {
+    return response
+  }
+  if (target.origin !== request.nextUrl.origin) return response
+  for (const place of ['customer', 'member'] as const) {
+    const fallback = DEFAULT_SIGN_IN_PATHS[place]
+    if (paths[place] === fallback || !isUnderSignInRoot(target.pathname, fallback)) continue
+    target.pathname = `${paths[place]}${target.pathname.slice(fallback.length)}`
+    response.headers.set('location', /^https?:\/\//.test(location) ? target.toString() : `${target.pathname}${target.search}`)
+    return response
+  }
   return response
 }
