@@ -21,6 +21,8 @@ export async function listRules(d1: D1): Promise<NotificationRule[]> {
         customTo: String(r.custom_to ?? ''),
         subject: String(r.subject ?? ''),
         body: String(r.body ?? ''),
+        // The look rides on the channel column ('email_brand'), so no schema change is needed.
+        layout: r.channel === 'email_brand' ? 'brand' : 'plain',
         enabled: Number(r.enabled) !== 0,
       })
     }
@@ -31,7 +33,7 @@ export async function listRules(d1: D1): Promise<NotificationRule[]> {
 }
 
 export async function saveRule(d1: D1, rule: NotificationRule, nowIso: string): Promise<void> {
-  const values = [rule.name, rule.event, rule.channel, rule.recipient, rule.customTo, rule.subject, rule.body, rule.enabled ? 1 : 0, nowIso]
+  const values = [rule.name, rule.event, rule.channel === 'email' && rule.layout === 'brand' ? 'email_brand' : rule.channel, rule.recipient, rule.customTo, rule.subject, rule.body, rule.enabled ? 1 : 0, nowIso]
   if (rule.id) {
     await d1.prepare('UPDATE eg_notification_rules SET name=?1, event=?2, channel=?3, recipient=?4, custom_to=?5, subject=?6, body=?7, enabled=?8, updated_at=?9 WHERE id=?10').bind(...values, rule.id).run()
   } else {

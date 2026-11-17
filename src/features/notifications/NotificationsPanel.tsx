@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Trigger = { key: string; label: string; recipients: string[] }
-type Rule = { id?: number; name: string; event: string; channel: 'email' | 'push'; recipient: string; customTo: string; subject: string; body: string; enabled: boolean }
+type Rule = { id?: number; name: string; event: string; channel: 'email' | 'push'; recipient: string; customTo: string; subject: string; body: string; layout: 'plain' | 'brand'; enabled: boolean }
 type Data = { rules: Rule[]; triggers: Trigger[]; tags: Record<string, { tag: string; label: string }[]> }
 
-const blank = (event: string): Rule => ({ name: '', event, channel: 'email', recipient: 'admin', customTo: '', subject: '', body: '', enabled: true })
+const blank = (event: string): Rule => ({ name: '', event, channel: 'email', recipient: 'admin', customTo: '', subject: '', body: '', layout: 'brand', enabled: true })
 const RECIPIENT_LABEL: Record<string, string> = { customer: 'The customer', admin: 'The shop admin address', custom: 'A set address' }
 
 /** Email > Notifications: rules that send an email or a push when something happens. Tags come from the trigger's own list. */
@@ -146,6 +146,15 @@ export function NotificationsPanel() {
               <label className="field">Email address<input className="input" type="email" value={draft.customTo} onChange={(e) => setDraft({ ...draft, customTo: e.target.value })} /></label>
             ) : null}
             <label className="field">{draft.channel === 'push' ? 'Title' : 'Subject'}<input className="input" value={draft.subject} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} /></label>
+            {draft.channel === 'email' ? (
+              <label className="field">Look of the email
+                <select className="select" value={draft.layout} onChange={(e) => setDraft({ ...draft, layout: e.target.value === 'brand' ? 'brand' : 'plain' })}>
+                  <option value="brand">Designed: your logo, colours and footer from Email design</option>
+                  <option value="plain">Plain paragraphs</option>
+                </select>
+                <span className="hint">The designed look is used once the brand is switched on in Email design; until then the email stays plain. In the message, **bold** and [link text](https://example.com) work.</span>
+              </label>
+            ) : null}
             <label className="field">Message<textarea ref={bodyRef} className="textarea" rows={6} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} /></label>
             <div className="cluster">
               <span className="text-muted">Merge tags:</span>

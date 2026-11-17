@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { generateTheme, hslToHex, seedNumber, STYLE_CARDS } from '@/features/themeStyles/styleCards'
+import { formatReasons, generateTheme, hslToHex, seedNumber, STYLE_CARDS } from '@/features/themeStyles/styleCards'
 import { effectById } from '@/features/effects/catalog'
 import { applyPreset } from '@/features/themeStyles/presets'
 import { sanitizeThemeStyles } from '@/features/themeStyles/sanitize'
@@ -77,6 +77,23 @@ describe('theme from style picks', () => {
       expect(t.effect, card.id).not.toBeNull()
       expect(effectById(t.effect!.id)).toBeDefined()
       expect(t.reasons.some((r) => r.startsWith('Suggested effect:'))).toBe(true)
+    }
+  })
+  it('has text for every explanation line, in every language, with its placeholders kept', async () => {
+    const { UI_STRING_SOURCE } = await import('@/features/uiStrings/keys')
+    const t = generateTheme(['editorial', 'luxe', 'tech'], 'x', [{ id: 'lora', family: 'Lora', category: 'serif' }])!
+    const keys = new Set<string>()
+    for (const item of t.reasonItems) {
+      keys.add(item.key)
+      for (const v of Object.values(item.vars ?? {})) if (typeof v === 'object') for (const k of 'key' in v ? [v.key] : v.keys) keys.add(k)
+    }
+    for (const k of keys) expect(k in UI_STRING_SOURCE, k).toBe(true)
+    expect(formatReasons(t.reasonItems, (k) => `<${k}>`).some((r) => r.includes('{'))).toBe(false)
+    for (const locale of ['de', 'es', 'fr', 'it', 'nl', 'pt', 'ru', 'ja', 'ko', 'zh-Hans', 'hi', 'ar']) {
+      const dict = (await import(`@/features/uiStrings/dictionaries/${locale}`)).default as Record<string, string>
+      for (const k of Object.keys(UI_STRING_SOURCE).filter((x) => x.startsWith('themeStyle.r.'))) {
+        for (const ph of UI_STRING_SOURCE[k as keyof typeof UI_STRING_SOURCE].match(/\{\w+\}/g) ?? []) expect(dict[k], `${locale} ${k}`).toContain(ph)
+      }
     }
   })
 })

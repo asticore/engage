@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import { runNotifications, type NotificationDeps } from '@/features/notifications/dispatch'
 import { parseRule, resolveRecipient, type NotificationRule } from '@/features/notifications/rules'
+import { DEFAULT_EMAIL_BRAND } from '@/features/email/design/brand'
 import { MERGE_TAGS, notificationValues } from '@/features/notifications/triggers'
 
-const rule = (over: Partial<NotificationRule>): NotificationRule => ({ id: 1, name: 'r', event: 'order.paid', channel: 'email', recipient: 'customer', customTo: '', subject: 'Receipt {{order_id}}', body: 'Hi, total {{amount}} at {{site_name}}', enabled: true, ...over })
+const rule = (over: Partial<NotificationRule>): NotificationRule => ({ id: 1, name: 'r', event: 'order.paid', channel: 'email', recipient: 'customer', customTo: '', subject: 'Receipt {{order_id}}', body: 'Hi, total {{amount}} at {{site_name}}', layout: 'plain', enabled: true, ...over })
 
 const deps = (rules: NotificationRule[], extra: Partial<NotificationDeps> = {}) => {
-  const sent: { to: string; subject: string; text: string; template: string }[] = []
+  const sent: { to: string; subject: string; html: string; text: string; template: string }[] = []
   const pushes: { title: string; body: string }[] = []
   const d: NotificationDeps = {
     listRules: async () => rules,
@@ -66,5 +67,56 @@ describe('stock, course and subscription notifications', () => {
     const { d, sent } = deps([rule({ event: 'subscription.cancelled', subject: 'Ended: {{product_name}}', body: '{{status}}' })])
     expect(await runNotifications(d, 'subscription.cancelled', { id: 3, productName: 'Club', customerEmail: 'c@example.com', status: 'cancelled' })).toBe(1)
     expect(sent[0]).toMatchObject({ to: 'c@example.com', subject: 'Ended: Club' })
+  })
+})
+
+describe('designed layout', () => {
+  const brand = { ...DEFAULT_EMAIL_BRAND, enabled: true, accent: '#123456', footerText: 'Brand footer' }
+  it('wraps a brand rule in the Email design brand, with the tags filled and the text escaped', async () => {
+    const { d, sent } = deps([rule({ layout: 'brand', body: 'Total **{{amount}}**' })], { brand: async () => brand })
+    expect(await runNotifications(d, 'order.paid', { id: 1, amount: 50, customerEmail: 'c@example.com' })).toBe(1)
+    expect(sent[0].html).toContain('Brand footer')
+    expect(sent[0].html).toContain('<strong')
+    expect(sent[0].text).toContain('50')
+  })
+  it('stays plain when the brand is off, when there is no brand, or when the rule is plain', async () => {
+    for (const extra of [{ brand: async () => ({ ...brand, enabled: false }) }, {}]) {
+      const { d, sent } = deps([rule({ layout: 'brand' })], extra)
+      await runNotifications(d, 'order.paid', { id: 1, amount: 50, customerEmail: 'c@example.com' })
+      expect(sent[0].html).toBe('<p>Hi, total 50 at Shop</p>')
+    }
+    const { d, sent } = deps([rule({})], { brand: async () => brand })
+    await runNotifications(d, 'order.paid', { id: 1, amount: 50, customerEmail: 'c@example.com' })
+    expect(sent[0].html).toBe('<p>Hi, total 50 at Shop</p>')
+  })
+  it('keeps only email rules on the brand layout when parsing', () => {
+    const base = { name: 'n', event: 'order.paid', subject: 's', body: 'b', recipient: 'admin' }
+    expect(parseRule({ ...base, layout: 'brand' })).toMatchObject({ ok: true, rule: { layout: 'brand' } })
+    expect(parseRule({ ...base, channel: 'push', layout: 'brand' })).toMatchObject({ ok: true, rule: { layout: 'plain' } })
+    expect(parseRule({ ...base })).toMatchObject({ ok: true, rule: { layout: 'plain' } })
+  })
+})
+
+describe('stored look', () => {
+  it('keeps the designed look in the channel column and reads it back', async () => {
+    const { listRules, saveRule } = await import('@/features/notifications/store')
+    const rows: Record<string, unknown>[] = []
+    const d1 = {
+      prepare: (sql: string) => ({
+        bind: (...args: unknown[]) => ({
+          all: async () => ({ results: rows as never[] }),
+          run: async () => {
+            if (sql.startsWith('INSERT')) rows.push({ id: 1, name: args[0], event: args[1], channel: args[2], recipient: args[3], custom_to: args[4], subject: args[5], body: args[6], enabled: args[7] })
+          },
+        }),
+      }),
+    }
+    await saveRule(d1 as never, rule({ id: undefined, layout: 'brand' }), 'now')
+    expect(rows[0].channel).toBe('email_brand')
+    expect((await listRules(d1 as never))[0]).toMatchObject({ channel: 'email', layout: 'brand' })
+    rows.length = 0
+    await saveRule(d1 as never, rule({ id: undefined, layout: 'plain' }), 'now')
+    expect(rows[0].channel).toBe('email')
+    expect((await listRules(d1 as never))[0].layout).toBe('plain')
   })
 })

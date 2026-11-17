@@ -11,6 +11,7 @@ import { BrandPanel } from './BrandPanel'
 import { type LogoChoice } from './LogoPicker'
 import { PreviewPane, type PreviewDevice, type PreviewTheme } from './PreviewPane'
 import { sampleVars, starterBlocks, tagsFor } from './designerModel'
+import { emptyHistory, recordEdit, redo, undo, type History } from './designerHistory'
 import '../email-designer.css'
 
 export type DesignerTemplate = {
@@ -64,6 +65,7 @@ export function EmailDesignerClient({ templates, brand: initialBrand, logo: init
   const [theme, setTheme] = useState<PreviewTheme>('light')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<Notice>(null)
+  const [histories, setHistories] = useState<Record<string, History<Draft>>>({})
 
   const brand = brandDraft.brand
   const template = templates.find((t) => t.key === key)
@@ -80,9 +82,19 @@ export function EmailDesignerClient({ templates, brand: initialBrand, logo: init
   )
   const warnings = useMemo(() => lintEmail(draft.blocks, { brand }), [draft.blocks, brand])
 
+  const history = histories[key] ?? emptyHistory<Draft>()
   const patchDraft = (patch: Partial<Draft>) => {
     setNotice(null)
+    setHistories((current) => ({ ...current, [key]: recordEdit(current[key] ?? emptyHistory<Draft>(), draft, Date.now()) }))
     setDrafts((current) => ({ ...current, [key]: { ...(current[key] ?? draft), ...patch } }))
+  }
+
+  const step = (direction: 'undo' | 'redo') => {
+    const result = (direction === 'undo' ? undo : redo)(history, draft)
+    if (!result) return
+    setNotice(null)
+    setHistories((current) => ({ ...current, [key]: result.history }))
+    setDrafts((current) => ({ ...current, [key]: result.value }))
   }
 
   const pickTemplate = (next: string) => {
@@ -123,7 +135,17 @@ export function EmailDesignerClient({ templates, brand: initialBrand, logo: init
   }
 
   return (
-    <div className="ed-page">
+    <div
+      className="ed-page"
+      onKeyDown={(event) => {
+        // Ctrl or Cmd + Z undoes, with Shift (or Ctrl + Y) redoes. Left alone inside text fields so their own undo still works.
+        const target = event.target as HTMLElement
+        if (/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) || !(event.ctrlKey || event.metaKey)) return
+        const k = event.key.toLowerCase()
+        if (k === 'z') { event.preventDefault(); step(event.shiftKey ? 'redo' : 'undo') }
+        else if (k === 'y') { event.preventDefault(); step('redo') }
+      }}
+    >
       <header className="ed-header">
         <h1 className="ed-title">Email designer</h1>
         <p className="ed-intro">
@@ -167,6 +189,12 @@ export function EmailDesignerClient({ templates, brand: initialBrand, logo: init
             {notice && <p className={`ed-notice ed-notice--${notice.tone}`}>{notice.text}</p>}
 
             <div className="ed-actions">
+              <button type="button" className="ed-button ed-button--quiet" disabled={busy || history.past.length === 0} onClick={() => step('undo')}>
+                Undo
+              </button>
+              <button type="button" className="ed-button ed-button--quiet" disabled={busy || history.future.length === 0} onClick={() => step('redo')}>
+                Redo
+              </button>
               <button type="button" className="ed-button ed-button--primary" disabled={busy || !dirty || !draft.subject.trim()} onClick={save}>
                 {busy ? 'Saving...' : 'Save this email'}
               </button>
