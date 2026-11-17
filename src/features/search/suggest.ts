@@ -94,9 +94,9 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
   }
   const products = async (): Promise<Suggestion[]> => {
     const out: Suggestion[] = []
-    for (const d of await findDocs('products', terms, ['title', 'slug'], '-createdAt', limit)) {
+    for (const d of await findDocs('products', terms, ['title', 'slug', 'shortDescription'], '-createdAt', limit)) {
       if (!d.slug || !(await isOpen('products', d.id))) continue
-      out.push({ title: String(d.title ?? ''), url: `/shop/${d.slug}`, type: 'Product', excerpt: '' })
+      out.push({ title: String(d.title ?? ''), url: `/shop/${d.slug}`, type: 'Product', excerpt: gated(d) ? '' : clipExcerpt((d as Record<string, unknown>).shortDescription) })
     }
     return out
   }
