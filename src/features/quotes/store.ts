@@ -138,3 +138,17 @@ export async function listExpiring(d1: D1, nowIso: string, untilIso: string, lim
   const rows = await all(d1, "SELECT * FROM eg_quote_requests WHERE status IN ('quoted','countered') AND valid_until IS NOT NULL AND valid_until > ?1 AND valid_until <= ?2 ORDER BY valid_until ASC LIMIT ?3", nowIso, untilIso, Math.max(1, Math.min(limit, 500)))
   return rows.map(toRequest)
 }
+
+/** The Offers settings of one product (minimum in cents, end time and title), or null when the product is gone. */
+export async function productBidTerms(d1: D1, productId: number): Promise<{ title: string; minimumCents: number; endsAt: string | null } | null> {
+  const rows = await all(d1, 'SELECT title, bid_minimum, bid_ends_at FROM eg_products WHERE id = ?1', productId)
+  if (!rows[0]) return null
+  return { title: String(rows[0].title ?? ''), minimumCents: Math.round(Number(rows[0].bid_minimum ?? 0) * 100), endsAt: rows[0].bid_ends_at ? String(rows[0].bid_ends_at) : null }
+}
+/** Products that have unanswered offers. */
+export async function productsWithOpenBids(d1: D1): Promise<number[]> {
+  return (await all(d1, "SELECT DISTINCT product_id FROM eg_quote_requests WHERE kind = 'bid' AND status = 'new' AND product_id IS NOT NULL LIMIT 200")).map((r) => Number(r.product_id))
+}
+export async function openBidsFor(d1: D1, productId: number): Promise<QuoteRequest[]> {
+  return (await all(d1, "SELECT * FROM eg_quote_requests WHERE kind = 'bid' AND status = 'new' AND product_id = ?1 ORDER BY id LIMIT 500", productId)).map(toRequest)
+}

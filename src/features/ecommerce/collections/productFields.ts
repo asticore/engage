@@ -399,6 +399,19 @@ export const orderBumpFields: Field[] = [
   },
 ]
 
+/** Offers (bids): visitors make an offer on the product page; an end date makes it an auction where the highest offer wins (features/quotes/auctions.ts). */
+export const bidFields: Field[] = [
+  {
+    type: 'collapsible',
+    label: 'Offers (bids)',
+    admin: { initCollapsed: true, condition: (data) => data?.productType === 'simple' },
+    fields: [
+      { name: 'bidMinimum', type: 'number', min: 0, admin: { description: 'The lowest offer taken, in the shop currency. Blank or 0 means any amount.' } },
+      { name: 'bidEndsAt', type: 'date', admin: { date: { pickerAppearance: 'dayAndTime' }, description: 'When offers close. At that time the highest offer is sent a quote at its price and the others are told they were not successful. Blank means no end: staff pick the winner.' } },
+    ],
+  },
+]
+
 export const ratingFields: Field[] = [
   { name: 'ratingAverage', type: 'number', admin: { readOnly: true, position: 'sidebar', description: 'Average of approved reviews.' } },
   { name: 'ratingCount', type: 'number', defaultValue: 0, admin: { readOnly: true, position: 'sidebar' } },
@@ -427,6 +440,7 @@ export const catalogueFields: Field[] = [
   ...packagingFields,
   ...wholesaleFields,
   ...orderBumpFields,
+  ...bidFields,
   ...shippingFields,
   ...typeSpecificFields,
   ...preorderFields,

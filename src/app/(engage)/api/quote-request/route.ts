@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { rawD1 } from '@/features/ecommerce/server/db'
-import { parseRequest, newQuoteNumber } from '@/features/quotes/logic'
+import { bidRefusal, parseRequest, newQuoteNumber } from '@/features/quotes/logic'
 import { getEngineSafe, sendQuoteEmail } from '@/features/quotes/service'
 import * as store from '@/features/quotes/store'
 import { loadShopCurrency } from '@/features/ecommerce/lib/shopCurrency'
@@ -23,6 +23,11 @@ export async function POST(request: Request): Promise<Response> {
   const parsed = parseRequest(body)
   if (parsed.ok === false) return json({ error: parsed.error }, 400)
   const d1 = (await rawD1()) as never as store.D1
+  if (parsed.value.kind === 'bid' && parsed.value.productId) {
+    const terms = await store.productBidTerms(d1, parsed.value.productId).catch((): null => null)
+    const refusal = terms ? bidRefusal(terms, parsed.value.offerCents, new Date()) : null
+    if (refusal) return json({ error: refusal }, 409)
+  }
   const engine = await getEngineSafe()
   const currency = await loadShopCurrency(engine as never).catch(() => 'AUD')
   const saved = await store.createRequest(d1, newQuoteNumber(), parsed.value, currency, new Date().toISOString())
