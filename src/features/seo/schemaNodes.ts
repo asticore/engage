@@ -91,10 +91,12 @@ export function breadcrumbTrail(input: {
   pageTrail?: TrailItem[]
   /** Locale prefix for a non-default language, e.g. '/fr'. Empty or omitted for the default language. */
   localePrefix?: string
+  /** Sitewide Home label from SEO settings. Defaults to 'Home'. */
+  homeLabel?: string
 }): Crumb[] {
   if (input.path === '/' || !input.title) return []
   const at = (path: string): string => `${input.baseUrl}${withLocalePrefix(path, input.localePrefix)}`
-  const home: Crumb = { name: 'Home', url: at('/') }
+  const home: Crumb = { name: input.homeLabel || 'Home', url: at('/') }
   const self: Crumb = { name: input.title, url: at(input.path) }
   if (input.collection === 'pages') {
     return [home, ...(input.pageTrail ?? []).map((item) => ({ name: item.name, url: at(item.path) })), self]

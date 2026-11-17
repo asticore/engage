@@ -6,6 +6,7 @@ import { resolveVideoFacts } from './videoResolve'
 import { getSeoContext, mediaUrl, absoluteUrl, type DocumentSeo } from './settings'
 import { articleFacts, authorNameOf, eventExtraFor, loadFaqItems } from './pageSchemaData'
 import { currentPageLocale } from './pageLocale'
+import { breadcrumbSchemaOn, resolveBreadcrumbs } from './breadcrumbSettings'
 import { breadcrumbTrail, type TrailItem } from './schemaNodes'
 import { localisedHref } from '@/features/multilingual/detect'
 import { localizedPathsFor } from '@/features/multilingual/slugIndex'
@@ -134,7 +135,8 @@ export const PageJsonLd = async ({
     inLanguage: article.inLanguage,
     sku: doc.sku || undefined,
     faqs,
-    breadcrumbs: breadcrumbTrail({
+    breadcrumbs: !breadcrumbSchemaOn(context.settings) ? [] : breadcrumbTrail({
+      homeLabel: resolveBreadcrumbs(context.settings).homeLabel,
       collection,
       baseUrl: context.baseUrl,
       path,
