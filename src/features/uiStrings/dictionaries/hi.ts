@@ -3135,6 +3135,7 @@ const hi: UiDictionary = {
   "webhooks.event.affiliate.approved": "एफिलिएट स्वीकृत",
   "webhooks.event.affiliate.commission.earned": "एफिलिएट कमीशन अर्जित",
   "webhooks.event.affiliate.payout.recorded": "एफिलिएट भुगतान दर्ज",
+  "webhooks.event.audit.recorded": "गतिविधि लॉग प्रविष्टि",
   "affiliate.email.approved.subject": "आपको एफिलिएट के रूप में स्वीकृत किया गया है",
   "affiliate.email.approved.body": "नमस्ते {name},\n\nआप स्वीकृत हो गए हैं। जो लोग आपके लिंक से आते हैं और {days} दिनों के भीतर खरीदारी करते हैं, उनके ऑर्डर पर आपको {pct}% कमीशन मिलता है।\n\nआपका लिंक: {link}\nआपका निजी परिणाम पेज: {dashboard}\n\nपरिणाम का लिंक निजी रखें: जिसके पास भी यह है वह आपके परिणाम देख सकता है। अपना लिंक साझा करते समय साफ़ बताएँ कि यह एफिलिएट लिंक है।",
   "affiliate.email.commission.subject": "आपने {amount} का कमीशन कमाया",

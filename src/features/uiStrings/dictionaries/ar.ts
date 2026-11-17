@@ -3135,6 +3135,7 @@ const ar: UiDictionary = {
   "webhooks.event.affiliate.approved": "تمت الموافقة على مسوّق بالعمولة",
   "webhooks.event.affiliate.commission.earned": "تم كسب عمولة تسويق",
   "webhooks.event.affiliate.payout.recorded": "تم تسجيل دفعة تسويق بالعمولة",
+  "webhooks.event.audit.recorded": "إدخال في سجل النشاط",
   "affiliate.email.approved.subject": "تمت الموافقة عليك كمسوّق بالعمولة",
   "affiliate.email.approved.body": "مرحبًا {name}،\n\nتمت الموافقة عليك. تحصل على عمولة {pct}% من الطلبات التي يشتريها من يتبعون رابطك خلال {days} يومًا.\n\nرابطك: {link}\nصفحة نتائجك الخاصة: {dashboard}\n\nأبقِ رابط النتائج خاصًا: يمكن لأي شخص يملكه رؤية نتائجك. يرجى توضيح أن رابطك رابط تسويق بالعمولة عند مشاركته.",
   "affiliate.email.commission.subject": "لقد ربحت عمولة قدرها {amount}",

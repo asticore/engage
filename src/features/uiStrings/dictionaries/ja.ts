@@ -3135,6 +3135,7 @@ const ja: UiDictionary = {
   "webhooks.event.affiliate.approved": "アフィリエイト承認",
   "webhooks.event.affiliate.commission.earned": "アフィリエイト報酬発生",
   "webhooks.event.affiliate.payout.recorded": "アフィリエイト支払い記録",
+  "webhooks.event.audit.recorded": "アクティビティログの記録",
   "affiliate.email.approved.subject": "アフィリエイトとして承認されました",
   "affiliate.email.approved.body": "{name} 様\n\n承認されました。あなたのリンクから{days}日以内に購入された注文に対して、{pct}%の報酬が得られます。\n\nあなたのリンク: {link}\nあなた専用の成果ページ: {dashboard}\n\n成果ページのリンクは非公開にしてください。リンクを知っている人は誰でも成果を見られます。リンクを共有するときは、アフィリエイトリンクであることを明記してください。",
   "affiliate.email.commission.subject": "{amount}の報酬が発生しました",

@@ -1,4 +1,4 @@
-import { ACTIVITY_HIDDEN_ACTIONS, AUDIT_TABLE, PROTECTED_AUDIT_ACTIONS } from './auditLog'
+import { ACTIVITY_HIDDEN_ACTIONS, AUDIT_TABLE, PROTECTED_AUDIT_ACTIONS } from './auditConstants'
 
 /**
  * The query behind the activity log (/security/activity): everything people do

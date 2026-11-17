@@ -3135,6 +3135,7 @@ const fr: UiDictionary = {
   "webhooks.event.affiliate.approved": "Affilié approuvé",
   "webhooks.event.affiliate.commission.earned": "Commission d'affilié gagnée",
   "webhooks.event.affiliate.payout.recorded": "Paiement d'affilié enregistré",
+  "webhooks.event.audit.recorded": "Entrée du journal d'activité",
   "affiliate.email.approved.subject": "Vous êtes approuvé comme affilié",
   "affiliate.email.approved.body": "Bonjour {name},\n\nVous êtes approuvé. Vous gagnez {pct} % de commission sur les commandes des personnes qui suivent votre lien et achètent dans les {days} jours.\n\nVotre lien : {link}\nVotre page privée de résultats : {dashboard}\n\nGardez le lien des résultats privé : toute personne qui l'a peut voir vos résultats. Indiquez clairement qu'il s'agit d'un lien d'affiliation lorsque vous le partagez.",
   "affiliate.email.commission.subject": "Vous avez gagné une commission de {amount}",

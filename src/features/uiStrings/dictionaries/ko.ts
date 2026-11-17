@@ -3135,6 +3135,7 @@ const ko: UiDictionary = {
   "webhooks.event.affiliate.approved": "제휴 파트너 승인",
   "webhooks.event.affiliate.commission.earned": "제휴 수수료 발생",
   "webhooks.event.affiliate.payout.recorded": "제휴 지급 기록",
+  "webhooks.event.audit.recorded": "활동 로그 항목",
   "affiliate.email.approved.subject": "제휴 파트너로 승인되었습니다",
   "affiliate.email.approved.body": "{name}님, 안녕하세요.\n\n승인되었습니다. 회원님의 링크를 통해 {days}일 이내에 구매한 주문에 대해 {pct}% 수수료를 받습니다.\n\n회원님의 링크: {link}\n회원님 전용 결과 페이지: {dashboard}\n\n결과 링크는 비공개로 유지하세요. 링크를 가진 사람은 누구나 결과를 볼 수 있습니다. 링크를 공유할 때는 제휴 링크임을 분명히 밝혀 주세요.",
   "affiliate.email.commission.subject": "{amount}의 수수료가 발생했습니다",

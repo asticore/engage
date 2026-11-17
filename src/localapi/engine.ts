@@ -110,7 +110,7 @@ import { prepareUploadFile, storePreparedUpload, type PreparedUpload } from '@/f
 import { generateUploadFields, type UploadFile } from './uploads'
 import { attachCustomRole } from '@/features/roles/customRoleCache'
 import { defaultUserSessionStore } from '@/features/security/userSessionStore'
-import { audit } from '@/features/security/auditLog'
+import { audit, setAuditSink } from '@/features/security/auditLog'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
 import { pendingTokenOps } from '@/features/security/pendingTokenStore'
 import { emailOtpOps, trustedDeviceOps } from '@/features/security/twoFactorRuntime'
@@ -123,6 +123,11 @@ import { findUserAuthRowByID, findUserAuthRowsPaginated, updateUserAuthRow } fro
 import { getDb } from '@/cms/db/connect'
 import { ensureMigrationsTable, type EngineDb } from '@/migrations/schema/engineBootstrap'
 import { migrations as ALL_MIGRATIONS } from '@/migrations'
+
+// Audit log drain (Task 19i): hand ordinary audit entries to the webhook system. Loaded lazily so the audit writer stays free of webhook code.
+setAuditSink((payload) => {
+  void import('@/features/webhooks/emit').then((m) => m.emitWebhookEvent('audit.recorded', payload as unknown as Record<string, unknown>)).catch((): void => undefined)
+})
 
 /** A caller's pre-built request-like object, matching the reference engine's own Local API convention (see this file's header, "CALL SHAPE"). Loose (`Record<string,unknown>`-backed via `LocalReq` itself) so any real call site's own `req` object - however it got built - is accepted without this module needing to know its concrete shape. */
 export type EngineReqLike = Partial<LocalReq>

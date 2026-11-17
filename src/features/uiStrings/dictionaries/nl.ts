@@ -3135,6 +3135,7 @@ const nl: UiDictionary = {
   "webhooks.event.affiliate.approved": "Affiliate goedgekeurd",
   "webhooks.event.affiliate.commission.earned": "Affiliate-commissie verdiend",
   "webhooks.event.affiliate.payout.recorded": "Affiliate-uitbetaling vastgelegd",
+  "webhooks.event.audit.recorded": "Activiteitenlogvermelding",
   "affiliate.email.approved.subject": "Je bent goedgekeurd als affiliate",
   "affiliate.email.approved.body": "Hoi {name},\n\nJe bent goedgekeurd. Je verdient {pct}% commissie op bestellingen van mensen die je link volgen en binnen {days} dagen kopen.\n\nJouw link: {link}\nJouw privé-resultatenpagina: {dashboard}\n\nHoud de resultatenlink privé: iedereen die hem heeft, kan je resultaten zien. Zeg duidelijk dat het een affiliatelink is als je hem deelt.",
   "affiliate.email.commission.subject": "Je hebt een commissie van {amount} verdiend",
