@@ -100,6 +100,16 @@ export async function originalCommissionForEmail(d1: D1, email: string): Promise
   return r ? { affiliate_id: Number(r.affiliate_id), created_at: String(r.created_at ?? '') } : null
 }
 
+/** Pending commissions whose waiting period is over and whose "now payable" email has not been sent. */
+export async function dueForPayableEmail(d1: D1, nowIso: string, limit = 100): Promise<Array<{ id: number; affiliate_id: number; order_id: number; amount_cents: number }>> {
+  const rows = await all(d1, "SELECT id, affiliate_id, order_id, amount_cents FROM eg_affiliate_commissions WHERE status = 'pending' AND payable_notified = 0 AND amount_cents > 0 AND eligible_at IS NOT NULL AND eligible_at <= ?1 ORDER BY id LIMIT ?2", nowIso, limit)
+  return rows.map((r) => ({ id: Number(r.id), affiliate_id: Number(r.affiliate_id), order_id: Number(r.order_id), amount_cents: Number(r.amount_cents ?? 0) }))
+}
+
+export async function markPayableNotified(d1: D1, commissionId: number): Promise<void> {
+  await d1.prepare('UPDATE eg_affiliate_commissions SET payable_notified = 1 WHERE id = ?1').bind(commissionId).run()
+}
+
 export async function commissionForOrder(d1: D1, orderId: number): Promise<CommissionRow | null> {
   const r = (await all(d1, 'SELECT * FROM eg_affiliate_commissions WHERE order_id = ?1', orderId))[0]
   return r ? toCommission(r) : null

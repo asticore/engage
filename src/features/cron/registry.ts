@@ -39,6 +39,7 @@ export const CRON_JOBS: CronJob[] = [
   { name: 'display-rates', label: 'Display currency rates', description: 'Refreshes the exchange rates used to show prices in other currencies.', schedule: 'hourly', feature: 'ecommerce', source: 'cron' },
   { name: 'cleanup', label: 'Data clean-up', description: 'Removes old versions, trashed items and logs as set on the Data and system settings, and shop carts that signed-out visitors left untouched for 30 days.', schedule: 'hourly', feature: null, source: 'cron' },
   { name: 'demo-reset', label: 'Demo reset', description: 'Puts the demo site back to its saved copy on the schedule chosen on the Agency demos screen (never, hourly or daily).', schedule: 'hourly', feature: 'demos', source: 'cron' },
+  { name: 'affiliate-payable', label: 'Affiliate payable emails', description: 'Emails each affiliate once when a commission has finished its waiting period and can be paid, when affiliate emails are on.', schedule: 'hourly', feature: 'affiliates', source: 'cron' },
   { name: 'client-reports', label: 'Client report emails', description: 'Emails each client report that is set to weekly or monthly when its time has come, with the link to the read-only report.', schedule: 'hourly', feature: 'clientreports', source: 'cron' },
   { name: 'backups', label: 'Backups', description: 'Takes the scheduled site backup at the time set on the Backups screen.', schedule: 'hourly (checks the backup time)', feature: 'backups', source: 'backups' },
 ]
