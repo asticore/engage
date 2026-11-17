@@ -180,7 +180,13 @@ export async function ListView({
   const bannedClause: Where | null = bannedView ? { loginAttempts: { greater_than: BAN_MARKER - 1 } } : null
   // Orders: a Ready for pickup filter (local pickup orders the shop has marked ready to collect).
   const pickupView = collectionSlug === 'orders' && searchParams.status === 'ready-pickup'
-  const pickupClause: Where | null = pickupView ? { readyForPickup: { equals: true } } : null
+  // Orders: Delivery problem (a parcel whose tracking reached the exception status, see ecom/lib/tracking.ts).
+  const problemView = collectionSlug === 'orders' && searchParams.status === 'delivery-problem'
+  const pickupClause: Where | null = pickupView
+    ? { readyForPickup: { equals: true } }
+    : problemView
+      ? { shipments: { like: '"status":"exception"' } }
+      : null
   const baseWhere = trashClause ? (findArgs.where ? { and: [findArgs.where, trashClause] } : trashClause) : findArgs.where
   const extraClause = bannedClause ?? pickupClause
   const listWhere = extraClause ? (baseWhere ? { and: [baseWhere, extraClause] } : extraClause) : baseWhere
@@ -375,11 +381,14 @@ export async function ListView({
 
       {collectionSlug === 'orders' && activeTab.view === 'list' && (
         <nav aria-label="Order filter" className="es-trash-links">
-          <a aria-current={!pickupView ? 'true' : undefined} href={adminCollectionPath(collectionSlug)}>
+          <a aria-current={!pickupView && !problemView ? 'true' : undefined} href={adminCollectionPath(collectionSlug)}>
             All
           </a>
           <a aria-current={pickupView ? 'true' : undefined} href={`${adminCollectionPath(collectionSlug)}?status=ready-pickup`}>
             Ready for pickup
+          </a>
+          <a aria-current={problemView ? 'true' : undefined} href={`${adminCollectionPath(collectionSlug)}?status=delivery-problem`}>
+            Delivery problem
           </a>
         </nav>
       )}
