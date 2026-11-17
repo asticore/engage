@@ -49,6 +49,7 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
   }, [searchParams])
   const handoffDone = useRef(false)
   const cardCaptcha = useRef<HTMLDivElement>(null)
+  const [captchaRound, setCaptchaRound] = useState(0) // bumped after a PayPal try so the card-checkout challenge is renewed
   const [email, setEmail] = useState(handoff?.customer.email ?? '')
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -202,10 +203,10 @@ const CheckoutInner: React.FC<{ stripePromise: Promise<Stripe | null> }> = ({ st
         </label>
         <OrderBump />
         <CheckoutExtras cartRef={cartRef} email={email} onChange={onExtras} initial={initial} />
-        <PayPalButton cartRef={cartRef} email={email} extras={extrasReady ? extras : null} />
+        <PayPalButton cartRef={cartRef} email={email} extras={extrasReady ? extras : null} captchaRef={cardCaptcha} onAttempt={() => setCaptchaRound((n) => n + 1)} />
         <OfflinePaymentOptions cartRef={cartRef} email={email} extras={extrasReady ? extras : null} />
         <div ref={cardCaptcha}>
-          <PlaceCaptcha place="cardCheckout" refreshKey={error} />
+          <PlaceCaptcha place="cardCheckout" refreshKey={`${error ?? ''}|${captchaRound}`} />
         </div>
         {error && <p className="form-error">{error}</p>}
         {publishableKey && (
