@@ -52,7 +52,7 @@ export const ReviewQueueTable: React.FC<{ rows: ReviewQueueRow[]; now?: number; 
         </Link>
       ),
       type: APPROVAL_SINGULAR[row.collection],
-      sentBy: row.requestedBy,
+      sentBy: row.assignedTo ? `${row.requestedBy} (handed to ${row.assignedTo})` : row.requestedBy,
       waiting: (
         <>
           {now === undefined ? formatDate(row.requestedAt) : formatRelativeTime(row.requestedAt, now)}

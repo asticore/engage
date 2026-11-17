@@ -4,7 +4,7 @@ import { can } from '@/features/roles/permissions'
 import type { ApprovalCollection, ApprovalSettings } from './settings'
 import { APPROVAL_SINGULAR } from './settings'
 import { roleSlugsFor, type CustomRoleInfo } from './roleSlugs'
-import { describeAwaiting, namedApprovers, type ApprovalWorkflow, type WorkflowStep } from './workflows'
+import { describeAwaiting, isAway, namedApprovers, type ApprovalWorkflow, type WorkflowStep } from './workflows'
 
 /**
  * Review emails. The Email feature is imported when a message is sent, not at load time, because
@@ -66,7 +66,18 @@ export async function reviewerAddresses(
   exceptUserId: number | null,
   stepRoles?: readonly string[] | null,
 ): Promise<string[]> {
-  const addresses = new Set<string>()
+  const people = await reviewerUsers(engine, collection, exceptUserId, stepRoles)
+  return [...new Set(people.map((person) => person.email).filter(Boolean))]
+}
+
+/** The people who can approve this collection (same rule as reviewerAddresses), as id, display name and address. */
+export async function reviewerUsers(
+  engine: EngineLike,
+  collection: ApprovalCollection,
+  exceptUserId: number | null,
+  stepRoles?: readonly string[] | null,
+): Promise<Array<{ id: number; name: string; email: string }>> {
+  const addresses = new Map<number, { id: number; name: string; email: string }>()
   const customRoles = await loadCustomRoles(engine)
   let scanned = 0
   for (let page = 1; scanned < MAX_REVIEWER_SCAN; page++) {
@@ -85,13 +96,28 @@ export async function reviewerAddresses(
         const slugs = roleSlugsFor(account, customRoles)
         if (!isAdmin && !stepRoles.some((slug) => slugs.includes(slug))) continue
       }
-      addresses.add(email)
+      const label = typeof (user as { name?: unknown }).name === 'string' ? String((user as { name?: unknown }).name).trim() : ''
+      addresses.set(Number(user.id), { id: Number(user.id), name: label || 'Unnamed user', email })
     }
     scanned += docs.length
     const hasMore = (result as { hasNextPage?: boolean }).hasNextPage ?? docs.length === USER_PAGE_SIZE
     if (!hasMore || docs.length === 0) break
   }
-  return [...addresses]
+  return [...addresses.values()]
+}
+
+const todayText = (now = new Date()): string => now.toISOString().slice(0, 10)
+
+/** Adds the stand-in's address wherever an away approver's address is already in the list. */
+async function withStandIns(engine: EngineLike, workflow: ApprovalWorkflow, addresses: Set<string>): Promise<void> {
+  const today = todayText()
+  for (const entry of workflow.standIns ?? []) {
+    if (!isAway(entry, today)) continue
+    const away = await engine.findByID({ collection: 'users', id: entry.userId, depth: 0, overrideAccess: true }).catch((): null => null)
+    if (typeof away?.email !== 'string' || !addresses.has(away.email)) continue
+    const cover = await engine.findByID({ collection: 'users', id: entry.standInId, depth: 0, overrideAccess: true }).catch((): null => null)
+    if (typeof cover?.email === 'string' && cover.email) addresses.add(cover.email)
+  }
 }
 
 /**
@@ -100,14 +126,49 @@ export async function reviewerAddresses(
  */
 async function stepAddresses(engine: EngineLike, collection: ApprovalCollection, workflow: ApprovalWorkflow, step: WorkflowStep, requesterId: number | null): Promise<string[]> {
   const named = namedApprovers(workflow, step, requesterId)
-  if (named.length === 0) return reviewerAddresses(engine, collection, requesterId, step.approverRoles)
+  if (named.length === 0) {
+    const byRole = new Set(await reviewerAddresses(engine, collection, requesterId, step.approverRoles))
+    await withStandIns(engine, workflow, byRole)
+    return [...byRole]
+  }
   const addresses = new Set<string>()
   for (const id of named) {
     const user = await engine.findByID({ collection: 'users', id, depth: 0, overrideAccess: true }).catch((): null => null)
     if (typeof user?.email === 'string' && user.email && id !== requesterId) addresses.add(user.email)
   }
   if (step.alsoRoles) for (const address of await reviewerAddresses(engine, collection, requesterId, step.approverRoles)) addresses.add(address)
+  await withStandIns(engine, workflow, addresses)
   return [...addresses]
+}
+
+/** A review was handed to someone: tell them. */
+export async function notifyReassigned({
+  engine,
+  collection,
+  id,
+  title,
+  assigneeId,
+  byName,
+  note,
+  origin,
+}: {
+  engine: EngineLike
+  collection: ApprovalCollection
+  id: number
+  title: string
+  assigneeId: number
+  byName: string
+  note: string | null
+  origin: string
+}): Promise<void> {
+  const adminRoot = await getAdminRoot()
+  const user = await engine.findByID({ collection: 'users', id: assigneeId, depth: 0, overrideAccess: true }).catch((): null => null)
+  const email = typeof user?.email === 'string' ? user.email : ''
+  if (!email) return
+  const subject = `A review was handed to you: ${title}`
+  const text = `${byName} handed this ${APPROVAL_SINGULAR[collection]} to you for review: ${title}${note ? `\n\nTheir note:\n${note}` : ''}\n\nOpen it to approve or ask for changes:\n${origin}${adminCollectionPath(collection, adminRoot)}/${id}`
+  const sendEmail = await loadSender()
+  await sendEmail({ to: email, template: 'approval.step-ready', subject, text })
 }
 
 export async function notifySubmitted({

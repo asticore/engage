@@ -32,7 +32,7 @@ export const validateWorkflowBeforeChange: CollectionBeforeChangeHook = async (a
     overrideAccess: true,
   })
   const selfId = operation === 'update' ? Number(originalDoc?.id) : null
-  const wantedUsers = namedUserIds(Array.isArray(merged.steps) ? (merged.steps as Array<{ approverUsers?: unknown }>) : [], merged.authorRoutes)
+  const wantedUsers = namedUserIds(Array.isArray(merged.steps) ? (merged.steps as Array<{ approverUsers?: unknown }>) : [], merged.authorRoutes, merged.standIns)
   const knownUsers = new Set<number>()
   if (wantedUsers.length > 0) {
     const found = await req.engine.find({ collection: 'users', where: { id: { in: wantedUsers } }, limit: wantedUsers.length, depth: 0, overrideAccess: true })
@@ -105,6 +105,11 @@ export const ApprovalWorkflows: CollectionConfig = {
       name: 'authorRoutes',
       type: 'json',
       admin: { description: 'Per-author approvers: { "<author user id>": [approver user ids] }. That author\'s work is approved by those people at every step.' },
+    },
+    {
+      name: 'standIns',
+      type: 'json',
+      admin: { description: 'Stand-ins: [{ "userId": reviewer, "standInId": cover, "until": "YYYY-MM-DD" or null }]. While the reviewer is away the stand-in may approve what the reviewer could.' },
     },
     {
       name: 'steps',

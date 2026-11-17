@@ -14,7 +14,7 @@ import {
 import {
   MAX_NOTE_LENGTH,
   hashReviewedContent,
-  parseApprovals,
+  parseStoredReview,
   parseStatus,
   serializeStoredReview,
   transition,
@@ -24,8 +24,8 @@ import {
   type ReviewActor,
 } from './stateMachine'
 import { reviewPermissions, type ReviewViewer } from './permissions'
-import { notifyRequester, notifyStepReady, notifySubmitted } from './notify'
-import { clampStep, describeAwaiting, type ApprovalWorkflow } from './workflows'
+import { notifyReassigned, notifyRequester, notifyStepReady, notifySubmitted, reviewerUsers } from './notify'
+import { clampStep, coveredBy, describeAwaiting, type ApprovalWorkflow } from './workflows'
 import { roleSlugsOfUser } from './roleSlugs'
 import type { ClaimFn } from './claim'
 
@@ -78,7 +78,7 @@ export const parseDocRef = (collection: unknown, id: unknown): { collection: App
   return { collection, id: numericId }
 }
 
-function actorFor(viewer: ReviewViewer, collection: string, roleSlugs: string[] = []): ReviewActor {
+function actorFor(viewer: ReviewViewer, collection: string, roleSlugs: string[] = [], coveringFor?: ReviewActor['coveringFor']): ReviewActor {
   const perms = reviewPermissions(viewer, collection)
   return {
     id: viewer.id,
@@ -86,7 +86,21 @@ function actorFor(viewer: ReviewViewer, collection: string, roleSlugs: string[] 
     isAdmin: viewer.isAdmin,
     can: { submit: perms.canSubmit, comment: perms.canComment, review: perms.canReview, publish: perms.canPublish },
     roleSlugs,
+    ...(coveringFor && coveringFor.userIds.length > 0 ? { coveringFor } : {}),
   }
+}
+
+/**
+ * The people this viewer stands in for right now under the workflow, and the roles those people hold.
+ * Read only when a stand-in names the viewer; a failed role read gives no roles (fail closed).
+ */
+async function standInCover(engine: ReviewEngine, viewer: ReviewViewer, workflow: ApprovalWorkflow | null, now: string): Promise<ReviewActor['coveringFor']> {
+  if (!workflow || viewer.isAdmin) return undefined
+  const userIds = coveredBy(workflow.standIns, viewer.id, now.slice(0, 10))
+  if (userIds.length === 0) return undefined
+  const roleSlugs = new Set<string>()
+  for (const id of userIds) for (const slug of await roleSlugsOfUser(engine, id)) roleSlugs.add(slug)
+  return { userIds, roleSlugs: [...roleSlugs] }
 }
 
 /** The viewer's role slugs, read only when a workflow needs them. Admins need none; a failed read means no roles (fail closed). */
@@ -145,7 +159,7 @@ function allowedActions(args: {
   workflow?: ApprovalWorkflow | null
   priorApprovers?: number[]
   now: string
-}): Record<'submit' | 'withdraw' | 'approve' | 'approveAndPublish' | 'requestChanges' | 'comment' | 'publish', boolean> {
+}): Record<'submit' | 'withdraw' | 'approve' | 'approveAndPublish' | 'requestChanges' | 'comment' | 'publish' | 'reassign', boolean> {
   const base = {
     state: args.state,
     actor: args.actor,
@@ -168,19 +182,23 @@ function allowedActions(args: {
     requestChanges: ok({ ...base, action: 'request_changes', note: 'x' }),
     comment: ok({ ...base, action: 'comment', note: 'x' }),
     publish: ok({ ...base, action: 'publish' }),
+    // A dummy target that is nobody: the check is whether this viewer may hand the review on at all.
+    reassign: ok({ ...base, action: 'reassign', assignTo: { userId: -1, name: 'x' } }),
   }
 }
 
 async function loadState(engine: ReviewEngine, collection: string, id: number): Promise<{ doc: Record<string, unknown>; state: ReviewDocState } | null> {
   const doc = await engine.findByID({ collection, id, depth: 0, overrideAccess: true })
   if (!doc) return null
+  const stored = parseStoredReview(doc.reviewApprovals)
   return {
     doc,
     state: {
       status: parseStatus(doc.reviewStatus),
       requestedBy: relationId(doc.reviewRequestedBy),
-      approvals: parseApprovals(doc.reviewApprovals),
+      approvals: stored.approvals,
       step: Math.max(0, Math.floor(Number(doc.reviewStep)) || 0),
+      assignee: stored.assignee ?? null,
     },
   }
 }
@@ -222,8 +240,8 @@ export async function handleReviewGet(args: {
 
   const workflow = activeWorkflowFor(settings, ref.collection)
   const required = workflow ? workflow.steps[clampStep(loaded.state.step, workflow.steps.length)].approvalsNeeded : requiredApprovalsFor(settings, ref.collection)
-  const actor = actorFor(args.viewer, ref.collection, await viewerRoleSlugs(args.engine, args.viewer, workflow))
   const now = args.now ?? new Date().toISOString()
+  const actor = actorFor(args.viewer, ref.collection, await viewerRoleSlugs(args.engine, args.viewer, workflow), await standInCover(args.engine, args.viewer, workflow, now))
   const priorApprovers = await priorApproversThisRound(args.engine, ref.collection, ref.id, workflow, clampStep(loaded.state.step, workflow?.steps.length ?? 1))
   const allowed = allowedActions({
     state: loaded.state,
@@ -246,6 +264,11 @@ export async function handleReviewGet(args: {
   })
 
   const requestedByName = await userName(args.engine, loaded.state.requestedBy)
+  // The people a review can be handed to. Names only, never addresses: this reaches the browser.
+  const canReassign = allowed.reassign && loaded.state.status === 'in_review' && settings.enabled
+  const reviewerChoices = canReassign
+    ? (await reviewerUsers(args.engine, ref.collection, loaded.state.requestedBy).catch((): Array<{ id: number; name: string; email: string }> => [])).filter((person) => person.id !== args.viewer.id).slice(0, 200).map((person) => ({ id: person.id, name: person.name }))
+    : []
 
   return json(200, {
     enabled: settings.enabled,
@@ -258,7 +281,9 @@ export async function handleReviewGet(args: {
     requestedAt: typeof loaded.doc.reviewRequestedAt === 'string' ? loaded.doc.reviewRequestedAt : null,
     approvals: loaded.state.approvals,
     publishBlocked: publishBlockMessage({ settings, collection: ref.collection, reviewStatus: loaded.state.status, reviewStep: loaded.state.step, isAdmin: args.viewer.isAdmin }),
-    allowed: { ...allowed, comment: allowed.comment && settings.enabled },
+    allowed: { ...allowed, comment: allowed.comment && settings.enabled, reassign: canReassign },
+    assignee: loaded.state.status === 'in_review' && loaded.state.assignee ? { id: loaded.state.assignee.userId, name: loaded.state.assignee.name || UNKNOWN_USER } : null,
+    reviewerChoices,
     history: history.docs.map((event) => ({
       id: event.id,
       action: event.action,
@@ -287,7 +312,7 @@ export async function handleReviewPost(args: {
   if (!ref) return json(400, { error: 'Invalid collection or id' })
 
   const action = body.action as ReviewAction
-  if (!['submit', 'approve', 'request_changes', 'comment', 'withdraw', 'publish'].includes(String(action))) {
+  if (!['submit', 'approve', 'request_changes', 'comment', 'withdraw', 'publish', 'reassign'].includes(String(action))) {
     return json(400, { error: 'Invalid action' })
   }
   if (body.note !== undefined && body.note !== null && typeof body.note !== 'string') return json(400, { error: 'Note must be text' })
@@ -314,10 +339,24 @@ export async function handleReviewPost(args: {
   const workflow = activeWorkflowFor(settings, ref.collection)
   const required = workflow ? workflow.steps[clampStep(loaded.state.step, workflow.steps.length)].approvalsNeeded : requiredApprovalsFor(settings, ref.collection)
   const priorApprovers = action === 'approve' ? await priorApproversThisRound(args.engine, ref.collection, ref.id, workflow, clampStep(loaded.state.step, workflow?.steps.length ?? 1)) : []
+
+  // Reassigning: the target must be a real user. A null target hands the review back to the usual approvers.
+  let assignTo: { userId: number; name: string } | null = null
+  if (action === 'reassign') {
+    if (body.assignTo !== null && body.assignTo !== undefined) {
+      const targetId = relationId(body.assignTo)
+      if (targetId === null) return json(400, { error: 'Pick who to hand this to.' })
+      const target = await args.engine.findByID({ collection: 'users', id: targetId, depth: 0, overrideAccess: true }).catch((): null => null)
+      if (!target) return json(400, { error: 'That person does not exist.' })
+      assignTo = { userId: targetId, name: (await userName(args.engine, targetId)) ?? UNKNOWN_USER }
+    }
+  }
+
   const result = transition({
     state: loaded.state,
     action,
-    actor: actorFor(args.viewer, ref.collection, await viewerRoleSlugs(args.engine, args.viewer, workflow)),
+    assignTo,
+    actor: actorFor(args.viewer, ref.collection, await viewerRoleSlugs(args.engine, args.viewer, workflow), await standInCover(args.engine, args.viewer, workflow, now)),
     workflow,
     priorApprovers,
     required,
@@ -335,6 +374,7 @@ export async function handleReviewPost(args: {
     next.status !== loaded.state.status ||
     next.requestedBy !== loaded.state.requestedBy ||
     JSON.stringify(next.approvals) !== JSON.stringify(loaded.state.approvals) ||
+    (next.assignee?.userId ?? null) !== (loaded.state.assignee?.userId ?? null) ||
     (workflow !== null && (next.step ?? 0) !== (loaded.state.step ?? 0))
 
   if (result.publish || stateChanged) {
@@ -357,7 +397,7 @@ export async function handleReviewPost(args: {
       reviewRequestedBy: next.requestedBy,
       reviewRequestedAt: action === 'submit' ? now : next.requestedBy === null ? null : (loaded.doc.reviewRequestedAt ?? null),
       // The approvals are tied to the content as it is now, so a later edit can be detected.
-      reviewApprovals: serializeStoredReview({ hash: hashReviewedContent(loaded.doc), approvals: next.approvals }),
+      reviewApprovals: serializeStoredReview({ hash: hashReviewedContent(loaded.doc), approvals: next.approvals, assignee: next.status === 'in_review' ? (next.assignee ?? null) : null }),
     }
     if (workflow) data.reviewStep = next.step ?? 0
     else if (loaded.state.step) data.reviewStep = 0
@@ -383,6 +423,9 @@ export async function handleReviewPost(args: {
   }
 
   // Emails. Failures are swallowed inside the notifier.
+  if (action === 'reassign' && assignTo) {
+    await notifyReassigned({ engine: args.engine, collection: ref.collection, id: ref.id, title, assigneeId: assignTo.userId, byName: args.viewer.name, note: note ?? null, origin: args.origin })
+  }
   if (action === 'submit') {
     await notifySubmitted({
       engine: args.engine,
@@ -440,6 +483,8 @@ export type ReviewQueueRow = {
   href: string
   /** Workflow step the document waits at ("Step 2 of 3: Legal review"), when a workflow is active. */
   awaiting?: string
+  /** Who the review was handed to, when it was reassigned. */
+  assignedTo?: string
   /** True once the review has waited longer than its workflow's due days. */
   overdue?: boolean
 }
@@ -485,16 +530,20 @@ export async function loadReviewQueue({
     })
     const workflow = activeWorkflowFor(active, collection)
     if (workflow && !viewer.isAdmin && roleSlugs === null) roleSlugs = await roleSlugsOfUser(engine, viewer.id)
+    const cover = await standInCover(engine, viewer, workflow, new Date().toISOString())
     for (const doc of docs) {
       const id = Number(doc.id)
       let awaiting: string | undefined
+      const assignee = parseStoredReview(doc.reviewApprovals).assignee ?? null
       if (workflow) {
         const index = clampStep(doc.reviewStep, workflow.steps.length)
         const step = workflow.steps[index]
         awaiting = `Step ${index + 1} of ${workflow.steps.length}: ${step.name}`
-        // Reviewers see what waits on their step; the people who submitted a document still see it.
+        // Reviewers see what waits on their step; the people who submitted a document still see it. A review handed to
+        // someone (or to a person they stand in for) shows for them, and so does what waits on the roles of someone they cover.
         const ownSubmission = relationId(doc.reviewRequestedBy) === viewer.id
-        const mayAct = viewer.isAdmin || step.approverRoles.some((slug) => (roleSlugs ?? []).includes(slug))
+        const handedToViewer = assignee !== null && (assignee.userId === viewer.id || (cover?.userIds ?? []).includes(assignee.userId))
+        const mayAct = viewer.isAdmin || handedToViewer || step.approverRoles.some((slug) => [...(roleSlugs ?? []), ...(cover?.roleSlugs ?? [])].includes(slug))
         if (!mayAct && !ownSubmission) continue
       }
       const requester = doc.reviewRequestedBy as { name?: unknown } | number | null | undefined
@@ -508,6 +557,7 @@ export async function loadReviewQueue({
         requestedAt,
         href: `${adminCollectionPath(collection, adminRoot)}/${id}`,
         ...(awaiting ? { awaiting } : {}),
+        ...(assignee ? { assignedTo: assignee.name || UNKNOWN_USER } : {}),
         ...(isOverdue(requestedAt, workflow?.reviewDueDays, new Date()) ? { overdue: true } : {}),
       })
     }
