@@ -11,6 +11,8 @@ export const SITE_TEMPLATE_KINDS = [
   'archive-blog',
   'archive-shop',
   'not-found',
+  'maintenance',
+  'coming-soon',
   'search-results',
   'archive-category',
   'archive-tag',
@@ -31,6 +33,8 @@ export const KIND_LABELS: Record<SiteTemplateKind, string> = {
   'archive-blog': 'Blog archive',
   'archive-shop': 'Shop archive',
   'not-found': '404 page',
+  maintenance: 'Maintenance screen',
+  'coming-soon': 'Coming soon screen',
   'search-results': 'Search results',
   'archive-category': 'Category archive',
   'archive-tag': 'Tag archive',
@@ -48,15 +52,16 @@ export const TEMPLATE_TYPE_TABS: ReadonlyArray<{ id: string; label: string; kind
   { id: 'archive', label: 'Archive', kinds: ['archive-blog', 'archive-shop', 'archive-category', 'archive-tag', 'archive-author'] },
   { id: 'search', label: 'Search', kinds: ['search-results'] },
   { id: 'not-found', label: '404', kinds: ['not-found'] },
+  { id: 'screens', label: 'Maintenance and coming soon', kinds: ['maintenance', 'coming-soon'] },
   { id: 'loop', label: 'Loop item', kinds: ['loop'] },
   { id: 'sidebar', label: 'Sidebars', kinds: ['sidebar-left', 'sidebar-right'] },
 ]
 
 /**
  * Kinds drawn beside the page (not required): the site has no sidebar unless a template of the kind applies,
- * so a missing one is not a coverage gap. Loop item templates are drawn by a Loop grid.
+ * so a missing one is not a coverage gap. Loop item templates are drawn by a Loop grid. The maintenance and coming soon screens use the built-in screen until a template exists.
  */
-export const OPTIONAL_KINDS: readonly SiteTemplateKind[] = ['loop', 'sidebar-left', 'sidebar-right']
+export const OPTIONAL_KINDS: readonly SiteTemplateKind[] = ['loop', 'sidebar-left', 'sidebar-right', 'maintenance', 'coming-soon']
 
 /**
  * Where a kind can be previewed on the public site, or null when there is no public page for it.
