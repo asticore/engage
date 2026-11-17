@@ -227,3 +227,41 @@ export async function notifyStepReady({
   await Promise.all(addresses.map((to) => sendEmail({ to, template: 'approval.step-ready', subject, text })))
   return addresses
 }
+
+/** A review has waited past its workflow's due days: remind the approvers of the step it sits at, once. */
+export async function notifyOverdue({
+  engine,
+  settings,
+  collection,
+  id,
+  title,
+  workflow,
+  step,
+  requesterId,
+  origin,
+  days,
+  requestedAt,
+}: {
+  engine: EngineLike
+  settings: ApprovalSettings
+  collection: ApprovalCollection
+  id: number
+  title: string
+  workflow: ApprovalWorkflow
+  step: number
+  requesterId: number | null
+  origin: string
+  days: number
+  requestedAt: string
+}): Promise<string[]> {
+  const adminRoot = await getAdminRoot()
+  const current = workflow.steps[step]
+  if (!current) return []
+  const addresses = new Set<string>(settings.notifyEmails)
+  if (settings.notifyReviewers) for (const address of await stepAddresses(engine, collection, workflow, current, requesterId)) addresses.add(address)
+  const subject = `Overdue review: ${title}`
+  const text = `This ${APPROVAL_SINGULAR[collection]} has been waiting for review since ${requestedAt.slice(0, 10)}, more than ${days} day${days === 1 ? '' : 's'}: ${title}\n\n${describeAwaiting(workflow, step, requesterId)}\n\nOpen it to approve or ask for changes:\n${origin}${adminCollectionPath(collection, adminRoot)}/${id}`
+  const sendEmail = await loadSender()
+  await Promise.all([...addresses].map((to) => sendEmail({ to, template: 'approval.step-ready', subject, text })))
+  return [...addresses]
+}

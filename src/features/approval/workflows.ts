@@ -54,6 +54,8 @@ export type ApprovalWorkflow = {
   steps: WorkflowStep[]
   /** One person may approve more than one step of a review round. Off by default (separation of duties). */
   allowRepeatApprover: boolean
+  /** Days a review may wait before it is overdue and the approvers are reminded. 0 means no limit. */
+  reviewDueDays?: number
   /** Per-author approvers. An author listed here has their work approved by these people, whatever the step says. */
   authorRoutes?: AuthorRoutes
 }
@@ -191,6 +193,7 @@ export function parseWorkflow(doc: unknown, roleNames: ReadonlyMap<string, strin
     submitterRoles: parseRoleList(row.submitterRoles),
     steps,
     allowRepeatApprover: toBool(row.allowRepeatApprover),
+    reviewDueDays: Math.max(0, Math.min(365, Math.floor(Number(row.reviewDueDays) || 0))),
     authorRoutes: parseAuthorRoutes(row.authorRoutes),
   }
 }
@@ -240,6 +243,7 @@ export type WorkflowInput = {
   submitterRoles?: unknown
   steps?: unknown
   allowRepeatApprover?: unknown
+  reviewDueDays?: unknown
   authorRoutes?: unknown
 }
 
