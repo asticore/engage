@@ -27,6 +27,7 @@ import { reviewPermissions, type ReviewViewer } from './permissions'
 import { notifyReassigned, notifyRequester, notifyStepReady, notifySubmitted, reviewerUsers } from './notify'
 import { clampStep, coveredBy, describeAwaiting, type ApprovalWorkflow } from './workflows'
 import { roleSlugsOfUser } from './roleSlugs'
+import { sectionKeyOf } from './sections'
 import type { ClaimFn } from './claim'
 
 /**
@@ -203,6 +204,12 @@ async function loadState(engine: ReviewEngine, collection: string, id: number): 
   }
 }
 
+/** Works out the document's section when the workflow routes by section, so the step check and the emails can use it. */
+async function attachSection(engine: ReviewEngine, workflow: ApprovalWorkflow | null, collection: string, loaded: { doc: Record<string, unknown>; state: ReviewDocState }): Promise<void> {
+  if (!workflow || Object.keys(workflow.sectionRoutes ?? {}).length === 0) return
+  loaded.state.section = await sectionKeyOf(engine, collection, loaded.doc)
+}
+
 /** The workflow part of a GET: which flow, which step is awaited and who is waited on. */
 function workflowInfo(workflow: ApprovalWorkflow | null, state: ReviewDocState): Record<string, unknown> | null {
   if (!workflow) return null
@@ -216,7 +223,7 @@ function workflowInfo(workflow: ApprovalWorkflow | null, state: ReviewDocState):
     step: waiting
       ? { index, name: current.name, approverRoles: current.approverNames, approvalsNeeded: current.approvalsNeeded, total: workflow.steps.length }
       : null,
-    awaiting: waiting ? describeAwaiting(workflow, index, state.requestedBy) : null,
+    awaiting: waiting ? describeAwaiting(workflow, index, state.requestedBy, state.section ?? null) : null,
   }
 }
 
@@ -239,6 +246,7 @@ export async function handleReviewGet(args: {
   if (!loaded) return json(404, { error: 'Not found' })
 
   const workflow = activeWorkflowFor(settings, ref.collection)
+  await attachSection(args.engine, workflow, ref.collection, loaded)
   const required = workflow ? workflow.steps[clampStep(loaded.state.step, workflow.steps.length)].approvalsNeeded : requiredApprovalsFor(settings, ref.collection)
   const now = args.now ?? new Date().toISOString()
   const actor = actorFor(args.viewer, ref.collection, await viewerRoleSlugs(args.engine, args.viewer, workflow), await standInCover(args.engine, args.viewer, workflow, now))
@@ -337,6 +345,7 @@ export async function handleReviewPost(args: {
 
   const now = args.now ?? new Date().toISOString()
   const workflow = activeWorkflowFor(settings, ref.collection)
+  await attachSection(args.engine, workflow, ref.collection, loaded)
   const required = workflow ? workflow.steps[clampStep(loaded.state.step, workflow.steps.length)].approvalsNeeded : requiredApprovalsFor(settings, ref.collection)
   const priorApprovers = action === 'approve' ? await priorApproversThisRound(args.engine, ref.collection, ref.id, workflow, clampStep(loaded.state.step, workflow?.steps.length ?? 1)) : []
 
@@ -436,6 +445,7 @@ export async function handleReviewPost(args: {
       requesterName: args.viewer.name,
       requesterId: args.viewer.id,
       origin: args.origin,
+      section: loaded.state.section ?? null,
       workflow,
     })
   }
@@ -450,6 +460,7 @@ export async function handleReviewPost(args: {
       step: result.advancedTo,
       approverName: args.viewer.name,
       requesterId: loaded.state.requestedBy,
+      section: loaded.state.section ?? null,
       origin: args.origin,
     })
   }
@@ -468,7 +479,7 @@ export async function handleReviewPost(args: {
     status: next.status,
     approvals: next.approvals,
     requiredApprovals: required,
-    ...(workflow && next.status === 'in_review' ? { step: next.step ?? 0, awaiting: describeAwaiting(workflow, next.step ?? 0, next.requestedBy) } : {}),
+    ...(workflow && next.status === 'in_review' ? { step: next.step ?? 0, awaiting: describeAwaiting(workflow, next.step ?? 0, next.requestedBy, loaded.state.section ?? null) } : {}),
     published: result.publish,
     events: result.events.map((event: { action: ReviewEventAction }) => event.action),
   })

@@ -124,8 +124,8 @@ async function withStandIns(engine: EngineLike, workflow: ApprovalWorkflow, addr
  * Who to email for a step. Named people (the author's route, or the step's own) are emailed instead of the roles; with
  * the step's fallback on, the role members are emailed as well. With none named it is the roles, as before.
  */
-async function stepAddresses(engine: EngineLike, collection: ApprovalCollection, workflow: ApprovalWorkflow, step: WorkflowStep, requesterId: number | null): Promise<string[]> {
-  const named = namedApprovers(workflow, step, requesterId)
+async function stepAddresses(engine: EngineLike, collection: ApprovalCollection, workflow: ApprovalWorkflow, step: WorkflowStep, requesterId: number | null, section: string | null = null): Promise<string[]> {
+  const named = namedApprovers(workflow, step, requesterId, section)
   if (named.length === 0) {
     const byRole = new Set(await reviewerAddresses(engine, collection, requesterId, step.approverRoles))
     await withStandIns(engine, workflow, byRole)
@@ -181,6 +181,7 @@ export async function notifySubmitted({
   requesterId,
   origin,
   workflow,
+  section = null,
 }: {
   engine: EngineLike
   settings: ApprovalSettings
@@ -190,15 +191,17 @@ export async function notifySubmitted({
   requesterName: string
   requesterId: number | null
   origin: string
+  /** The document's section, when the workflow routes approvers by section. */
+  section?: string | null
   /** The active workflow: only the first step's approvers are emailed. */
   workflow?: ApprovalWorkflow | null
 }): Promise<string[]> {
   const adminRoot = await getAdminRoot()
   const addresses = new Set<string>(settings.notifyEmails)
   if (settings.notifyReviewers) {
-    for (const address of workflow ? await stepAddresses(engine, collection, workflow, workflow.steps[0], requesterId) : await reviewerAddresses(engine, collection, requesterId, null)) addresses.add(address)
+    for (const address of workflow ? await stepAddresses(engine, collection, workflow, workflow.steps[0], requesterId, section) : await reviewerAddresses(engine, collection, requesterId, null)) addresses.add(address)
   }
-  const waiting = workflow ? `\n\n${describeAwaiting(workflow, 0, requesterId)}` : ''
+  const waiting = workflow ? `\n\n${describeAwaiting(workflow, 0, requesterId, section)}` : ''
   const { renderEmailTemplate } = await import('@/features/email/templateLoad')
   const mail = await renderEmailTemplate('approvalSubmitted', {
     requesterName,
@@ -265,6 +268,7 @@ export async function notifyStepReady({
   approverName,
   requesterId,
   origin,
+  section = null,
 }: {
   engine: EngineLike
   settings: ApprovalSettings
@@ -276,14 +280,15 @@ export async function notifyStepReady({
   approverName: string
   requesterId: number | null
   origin: string
+  section?: string | null
 }): Promise<string[]> {
   const adminRoot = await getAdminRoot()
   if (!settings.notifyReviewers) return []
   const current = workflow.steps[step]
   if (!current) return []
-  const addresses = await stepAddresses(engine, collection, workflow, current, requesterId)
+  const addresses = await stepAddresses(engine, collection, workflow, current, requesterId, section)
   const subject = `Your approval is needed: ${title}`
-  const text = `${approverName} approved the previous step of this ${APPROVAL_SINGULAR[collection]}: ${title}\n\n${describeAwaiting(workflow, step, requesterId)}\n\nOpen it to approve or ask for changes:\n${origin}${adminCollectionPath(collection, adminRoot)}/${id}`
+  const text = `${approverName} approved the previous step of this ${APPROVAL_SINGULAR[collection]}: ${title}\n\n${describeAwaiting(workflow, step, requesterId, section)}\n\nOpen it to approve or ask for changes:\n${origin}${adminCollectionPath(collection, adminRoot)}/${id}`
   const sendEmail = await loadSender()
   await Promise.all(addresses.map((to) => sendEmail({ to, template: 'approval.step-ready', subject, text })))
   return addresses
@@ -302,6 +307,7 @@ export async function notifyOverdue({
   origin,
   days,
   requestedAt,
+  section = null,
 }: {
   engine: EngineLike
   settings: ApprovalSettings
@@ -314,14 +320,15 @@ export async function notifyOverdue({
   origin: string
   days: number
   requestedAt: string
+  section?: string | null
 }): Promise<string[]> {
   const adminRoot = await getAdminRoot()
   const current = workflow.steps[step]
   if (!current) return []
   const addresses = new Set<string>(settings.notifyEmails)
-  if (settings.notifyReviewers) for (const address of await stepAddresses(engine, collection, workflow, current, requesterId)) addresses.add(address)
+  if (settings.notifyReviewers) for (const address of await stepAddresses(engine, collection, workflow, current, requesterId, section)) addresses.add(address)
   const subject = `Overdue review: ${title}`
-  const text = `This ${APPROVAL_SINGULAR[collection]} has been waiting for review since ${requestedAt.slice(0, 10)}, more than ${days} day${days === 1 ? '' : 's'}: ${title}\n\n${describeAwaiting(workflow, step, requesterId)}\n\nOpen it to approve or ask for changes:\n${origin}${adminCollectionPath(collection, adminRoot)}/${id}`
+  const text = `This ${APPROVAL_SINGULAR[collection]} has been waiting for review since ${requestedAt.slice(0, 10)}, more than ${days} day${days === 1 ? '' : 's'}: ${title}\n\n${describeAwaiting(workflow, step, requesterId, section)}\n\nOpen it to approve or ask for changes:\n${origin}${adminCollectionPath(collection, adminRoot)}/${id}`
   const sendEmail = await loadSender()
   await Promise.all([...addresses].map((to) => sendEmail({ to, template: 'approval.step-ready', subject, text })))
   return [...addresses]
