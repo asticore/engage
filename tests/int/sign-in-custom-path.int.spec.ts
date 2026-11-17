@@ -52,12 +52,27 @@ describe('sign-in path validation', () => {
   it('refuses the same path for both places', () => {
     expect(validateSignInPath('/welcome-in', 'member', { ...ctx, otherPath: '/welcome-in' })).toBe('clash')
   })
-  it('field validator returns messages and accepts empty', () => {
+  it('field validator returns messages and accepts empty', async () => {
     const v = validateSignInPathField('customer', 'memberSignInPath')
-    expect(v('')).toBe(true)
-    expect(v('/ab')).toMatch(/between 3 and 40/)
-    expect(v('/studio-7f3', { siblingData: { adminPath: '/studio-7f3' } })).toMatch(/admin URL/)
-    expect(v('/same-one', { siblingData: { memberSignInPath: '/same-one' } })).toMatch(/cannot share/)
+    expect(await v('')).toBe(true)
+    expect(await v('/ab')).toMatch(/between 3 and 40/)
+    expect(await v('/studio-7f3', { siblingData: { adminPath: '/studio-7f3' } })).toMatch(/admin URL/)
+    expect(await v('/same-one', { siblingData: { memberSignInPath: '/same-one' } })).toMatch(/cannot share/)
+  })
+  it('refuses an address a top-level page already uses', async () => {
+    const v = validateSignInPathField('customer', 'memberSignInPath')
+    const withPages = (slugs: string[]) => ({
+      engine: {
+        find: async (args: Record<string, unknown>) => ({
+          docs: slugs.filter((s) => s === (args as { where: { and: { slug?: { equals: string } }[] } }).where.and[0].slug?.equals),
+        }),
+      },
+    })
+    expect(await v('/welcome-in', { req: withPages(['welcome-in']) })).toMatch(/page already uses/)
+    expect(await v('/welcome-in', { req: withPages(['about']) })).toBe(true)
+    expect(await v('/account/sign-in', { req: withPages(['account']) })).toBe(true)
+    const broken = { engine: { find: async () => { throw new Error('db down') } } }
+    expect(await v('/welcome-in', { req: broken })).toBe(true)
   })
 })
 
