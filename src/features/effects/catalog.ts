@@ -3,10 +3,12 @@
  * `efx-` class to the block's CSS classes and its options as `data-efx-*` attributes, the same two fields the Design
  * panel already has, so nothing new is stored and an effect can still be typed by hand.
  *
- * This list is a seed. Effix is meant to publish a `.meta.js` entry per effect (see docs/repo-issues); when the
- * installed copy lists effects, replace `EFFECT_CATALOG` with that list. Anything not listed stays usable through the
- * CSS classes field.
+ * The list is generated from the Effix `.meta.js` files at the commit pinned in reference/references.json
+ * (`node scripts/gen-effect-catalog.cjs <effix checkout> <commit>`, output in `catalogData.ts`). Anything not
+ * listed stays usable through the CSS classes field.
  */
+
+import { EFFECT_DATA } from './catalogData'
 
 export type EffectOption = {
   /** The attribute name without the `data-efx-` prefix. */
@@ -20,22 +22,14 @@ export type EffectOption = {
 export type EffectDef = {
   id: string
   label: string
-  group: 'Motion and loading' | 'Numbers' | 'Overlays' | 'Charts'
+  /** The Effix group the effect is listed under (Scroll, Text, Charts and so on). */
+  group: string
   className: string
   help: string
   options: EffectOption[]
 }
 
-export const EFFECT_CATALOG: EffectDef[] = [
-  { id: 'shimmer', label: 'Shimmer (loading placeholder)', group: 'Motion and loading', className: 'efx-shimmer', help: 'A moving highlight over a placeholder while content loads.', options: [] },
-  { id: 'carousel', label: 'Carousel', group: 'Motion and loading', className: 'efx-carousel', help: 'Turns the children into slides.', options: [{ attr: 'autoplay', label: 'Autoplay', type: 'boolean' }, { attr: 'interval', label: 'Seconds per slide', type: 'number', placeholder: '5' }] },
-  { id: 'counter', label: 'Counter', group: 'Numbers', className: 'efx-counter', help: 'Counts up to the number in the element.', options: [{ attr: 'duration', label: 'Seconds', type: 'number', placeholder: '2' }] },
-  { id: 'countdown', label: 'Countdown', group: 'Numbers', className: 'efx-countdown', help: 'Counts down to a date and time.', options: [{ attr: 'to', label: 'Ends at (date and time)', type: 'text', placeholder: '2027-01-01T00:00' }] },
-  { id: 'toast', label: 'Toast', group: 'Overlays', className: 'efx-toast', help: 'A small message that appears and fades.', options: [{ attr: 'duration', label: 'Seconds shown', type: 'number', placeholder: '4' }] },
-  { id: 'popup', label: 'Popup', group: 'Overlays', className: 'efx-popup', help: 'Shows the element as a popup.', options: [{ attr: 'trigger', label: 'Opens on', type: 'select', values: ['click', 'load', 'scroll'] }] },
-  { id: 'chart-bar', label: 'Bar chart', group: 'Charts', className: 'efx-chart-bar', help: 'Draws a bar chart from the data in the element.', options: [{ attr: 'data', label: 'Data (JSON)', type: 'text', placeholder: '[1,2,3]' }] },
-  { id: 'chart-radar', label: 'Radar chart', group: 'Charts', className: 'efx-chart-radar', help: 'Draws a radar chart from the data in the element.', options: [{ attr: 'data', label: 'Data (JSON)', type: 'text', placeholder: '[1,2,3]' }] },
-]
+export const EFFECT_CATALOG: EffectDef[] = EFFECT_DATA
 
 const ATTR_PREFIX = 'data-efx-'
 const MAX_CLASSES = 8

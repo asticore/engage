@@ -1,10 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { FieldLabel, useField } from '@/engine/ui'
 
 import { MAX_TIERS, parseTiers, type TicketTier } from '../tiers'
 import './edit-screens.css'
+
+type ProductOption = { id: number; title?: string }
 
 type Row = Omit<TicketTier, 'capacity' | 'price'> & { price: number | string; capacity: number | string | null }
 
@@ -15,6 +17,19 @@ type Row = Omit<TicketTier, 'capacity' | 'price'> & { price: number | string; ca
 export function TicketTiersField({ path, readOnly }: { path: string; readOnly?: boolean }) {
   const { value, setValue } = useField<unknown>({ path })
   const rows = parseTiers(value) as Row[]
+  const [products, setProducts] = useState<ProductOption[]>([])
+  useEffect(() => {
+    let live = true
+    fetch('/api/products?limit=500&depth=0&sort=title', { credentials: 'include' })
+      .then(async (res) => {
+        const body = (await res.json().catch(() => ({}))) as { docs?: ProductOption[] }
+        if (live) setProducts((body.docs ?? []).filter((p) => Number.isInteger(Number(p.id))))
+      })
+      .catch((): void => undefined)
+    return () => {
+      live = false
+    }
+  }, [])
   // Rows being typed into can be blank for a moment, so keep the raw array when it is one.
   const current: Row[] = Array.isArray(value) ? (value as Row[]) : rows
 
@@ -58,6 +73,18 @@ export function TicketTiersField({ path, readOnly }: { path: string; readOnly?: 
               />
             </label>
           </div>
+          <label>
+            Shop product that sells this ticket type (optional)
+            <select onChange={(event) => update(index, { productId: event.target.value ? Number(event.target.value) : null })} value={row.productId ?? ''}>
+              <option value="">The event's single ticket product</option>
+              {row.productId && !products.some((p) => Number(p.id) === row.productId) && <option value={row.productId}>Product #{row.productId}</option>}
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title ?? `Product #${p.id}`}
+                </option>
+              ))}
+            </select>
+          </label>
           <button className="doc-link doc-link--danger" onClick={() => remove(index)} type="button">
             Remove this tier
           </button>

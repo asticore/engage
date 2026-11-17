@@ -109,6 +109,7 @@ export default async function EventPage({
     left: leftText,
     pricesInfoPaid: tx('events.pricesInfoPaid'),
     pricesInfoFree: tx('events.pricesInfoFree'),
+    buyTicket: tx('events.buyTicket'),
   }
   const rsvpText = {
     heading: tx('events.rsvp.heading'),
@@ -145,7 +146,7 @@ export default async function EventPage({
     eventType: event.eventType,
     externalRegistrationUrl: event.externalRegistrationUrl,
     spotsRemaining,
-    hasTicketProduct: Boolean(ticket),
+    hasTicketProduct: Boolean(ticket) || tierViews.some((view) => view.productId),
   })
   const tierOptions: RsvpTierOption[] = isPaid
     ? []
@@ -198,7 +199,7 @@ export default async function EventPage({
                 </p>
                 <AddToCartButton productID={ticket.id} label={tx('events.buyTicket')} />
               </div>
-            ) : (
+            ) : tierViews.some((view) => view.productId) ? null : (
               <p className="empty-state">{tx('events.salesSoon')}</p>
             )
           ) : (

@@ -91,6 +91,15 @@ describe('library URLs', () => {
 })
 
 describe('library manifest', () => {
+  it('reads the languages list and defaults to English only', () => {
+    const plain = validateLibraryManifest(library())
+    expect(plain.ok && plain.value.languages).toEqual(['en'])
+    const multi = validateLibraryManifest(library({ languages: ['en', 'de', 'zh-Hans', 'de'] }))
+    expect(multi.ok && multi.value.languages).toEqual(['en', 'de', 'zh-Hans'])
+    expect(validateLibraryManifest(library({ languages: [] })).ok).toBe(false)
+    expect(validateLibraryManifest(library({ languages: ['English'] })).ok).toBe(false)
+  })
+
   it('accepts a good library.json and defaults the category', () => {
     const parsed = parseLibraryText(JSON.stringify(library()))
     expect(parsed.ok).toBe(true)

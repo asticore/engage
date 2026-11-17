@@ -50,7 +50,7 @@ export function adminLabel(
  * A field's label. `path` is the field's place in the config (`metaPixel.enabled`
  * for a field inside the `metaPixel` group); when the table has `label.field.<path>`
  * that wins, so two groups that both hold an `enabled` or `pixelId` field can
- * each have their own label. Otherwise the bare field `name` is used.
+ * each have their own label. Row numbers in the path are ignored. Otherwise the bare field `name` is used.
  */
 export function adminFieldLabel(
   path: string | undefined,
@@ -61,6 +61,12 @@ export function adminFieldLabel(
   if (path && path !== name) {
     const scoped = translatedLabel('field', path, context)
     if (scoped) return scoped
+    // A field inside an array row has a numbered path (`promoBadges.2.text`): the key drops the row number.
+    const unnumbered = path.replace(/\.\d+(?=\.|$)/g, '')
+    if (unnumbered !== path) {
+      const rowScoped = translatedLabel('field', unnumbered, context)
+      if (rowScoped) return rowScoped
+    }
   }
   return adminLabel('field', name, fallbackEnglish, context)
 }

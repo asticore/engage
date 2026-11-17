@@ -23,11 +23,12 @@ export async function listLibraries(engine: LibraryStoreEngine, options: { fresh
   const libraries: LibrarySummary[] = []
   const items: LibraryItemRow[] = []
   state.rows.forEach((row, index) => {
-    const summary: LibrarySummary = { id: row.id, label: row.label, url: row.url, enabled: row.enabled, name: null, itemCount: 0, error: row.error, builtIn: row.builtIn === true }
+    const summary: LibrarySummary = { id: row.id, label: row.label, url: row.url, enabled: row.enabled, name: null, itemCount: 0, languages: ['en'], error: row.error, builtIn: row.builtIn === true }
     const result = loaded[index]
     if (result && result.ok) {
       summary.name = result.value.name
       summary.itemCount = result.value.items.length
+      summary.languages = result.value.languages
       for (const item of result.value.items as LibraryItem[]) {
         items.push({
           key: `${row.id}:${item.slug}`,

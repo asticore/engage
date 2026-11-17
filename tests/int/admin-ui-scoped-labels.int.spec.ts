@@ -29,6 +29,14 @@ describe('adminFieldLabel: per-group labels for shared field names', () => {
     expect(adminFieldLabel('items.0.title', 'title', 'Headline', { locale: 'de', dict })).toBe('Titel')
   })
 
+  it('ignores array row numbers in the path (promo badge labels)', async () => {
+    const dict = await loadStrings('de')
+    const ctx = { locale: 'de', dict }
+    expect(adminFieldLabel('promoBadges.2.text', 'text', 'Text', ctx)).toBe('Abzeichentext')
+    expect(adminFieldLabel('promoBadges.0.colour', 'colour', 'Colour', ctx)).toBe('Abzeichenfarbe')
+    expect(adminFieldLabel('promoBadgesEnabled', 'promoBadgesEnabled', 'Show promo badges on products', ctx)).toBe('Aktionsabzeichen auf Produkten anzeigen')
+  })
+
   it('returns the config label for English, with or without a path', async () => {
     const dict = await loadStrings('en')
     expect(adminFieldLabel('metaPixel.enabled', 'enabled', 'Send events to Meta', { locale: 'en', dict })).toBe('Send events to Meta')

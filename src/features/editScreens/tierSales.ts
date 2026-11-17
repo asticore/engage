@@ -15,6 +15,8 @@ export type TierView = {
   remaining: number | null
   onSale: boolean
   soldOut: boolean
+  /** The shop product that sells this type, when it has its own. */
+  productId: number | null
 }
 
 /** The slice of an RSVP the count reads. */
@@ -47,6 +49,7 @@ export function tierViews(tiers: TicketTier[], rows: TierSaleRow[], now = new Da
       remaining,
       onSale,
       soldOut: !onSale || remaining === 0,
+      productId: tier.productId ?? null,
     }
   })
 }
