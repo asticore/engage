@@ -195,6 +195,7 @@ import * as migration_20270317_265000_composite_products from './20270317_265000
 import * as migration_20270318_110000_webhook_audit_options from './20270318_110000_webhook_audit_options';
 import * as migration_20270318_100000_wholesale from './20270318_100000_wholesale';
 import * as migration_20270318_110000_purchase_limit_message_exempt from './20270318_110000_purchase_limit_message_exempt';
+import * as migration_20270318_110000_bot_rules from './20270318_110000_bot_rules';
 import * as migration_20270316_390000_dam from './20270316_390000_dam';
 import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
@@ -1410,5 +1411,10 @@ export const migrations = [
     up: migration_20270318_110000_purchase_limit_message_exempt.up,
     down: migration_20270318_110000_purchase_limit_message_exempt.down,
     name: '20270318_110000_purchase_limit_message_exempt',
+  },
+  {
+    up: migration_20270318_110000_bot_rules.up,
+    down: migration_20270318_110000_bot_rules.down,
+    name: '20270318_110000_bot_rules',
   },
 ];

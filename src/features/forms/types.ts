@@ -312,6 +312,10 @@ export type ResolvedFormSettings = {
   protectSignIn: boolean
   botDetection: 'off' | 'challenge' | 'block'
   botMinScore: number
+  /** JA3 or JA4 hashes that always count as a bot, one per line. */
+  botFingerprints: string
+  /** Verified bot categories that may pass, one per line. Empty means every verified bot. */
+  botAllowedCategories: string
   /** Mode of each place that can ask for the CAPTCHA (Task 19a). */
   placeModes: Record<import('@/features/security/captchaPlaces').PlaceId, import('@/features/security/captchaPlaces').PlaceMode>
   /** Failures (or tries) from one address before "after failures" places ask for the challenge. */

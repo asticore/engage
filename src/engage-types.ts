@@ -7216,6 +7216,8 @@ export interface FormSetting {
     protectSignIn?: boolean | null;
     botDetection?: ('off' | 'challenge' | 'block') | null;
     botMinScore?: number | null;
+    botFingerprints?: string | null;
+    botAllowedCategories?: string | null;
     modeSignIn?: ('default' | 'off' | 'always' | 'failures') | null;
     modeAdminSignIn?: ('default' | 'off' | 'always' | 'failures') | null;
     modeCardCheckout?: ('default' | 'off' | 'always' | 'failures') | null;
@@ -8319,6 +8321,8 @@ export interface FormSettingsSelect<T extends boolean = true> {
         protectSignIn?: T;
         botDetection?: T;
         botMinScore?: T;
+        botFingerprints?: T;
+        botAllowedCategories?: T;
         modeSignIn?: T;
         modeAdminSignIn?: T;
         modeCardCheckout?: T;

@@ -14,7 +14,7 @@ import { loadForm } from './server'
 import { FORMS_SLUG, SUBMISSIONS_SLUG, type CreateArgs, type UpdateArgs } from './slugs'
 import { SLOT_TAKEN_MESSAGE } from './slots'
 import { firstLostSlot, firstTakenSlot, slotClaimsFor } from './slotGuard'
-import { botDecision, type BotSignals } from '@/features/security/botSignals'
+import { botDecision, parseList, type BotSignals } from '@/features/security/botSignals'
 import { checkCaptcha, checkFillTime, checkHoneypot } from './spam'
 import { checkSpamRules } from './spamRules'
 import { buildHandoff, checkoutHandoffUrl, NO_CHECKOUT } from './checkoutHandoff'
@@ -141,7 +141,7 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
     return { ok: true, status: 200, message: settings.successMessage }
   }
 
-  if (input.botSignals && botDecision(settings.botDetection, input.botSignals, settings.botMinScore) === 'block') {
+  if (input.botSignals && botDecision(settings.botDetection, input.botSignals, settings.botMinScore, { fingerprints: parseList(settings.botFingerprints), allowedCategories: parseList(settings.botAllowedCategories) }) === 'block') {
     engine.logger.info({ form: form.id, reason: 'bot-score', score: input.botSignals.score }, 'Form submission discarded as spam')
     return { ok: true, status: 200, message: settings.successMessage }
   }
