@@ -6,7 +6,6 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { FeatureFlags } from '@/features/registry'
 
 import { SetupQuestionnaire } from './SetupQuestionnaire'
-import styles from './SetupQuestionnaireHost.module.css'
 
 type Props = {
   /** True while the owner has neither answered nor skipped: the dialog opens by itself, once per page load. */
@@ -26,24 +25,24 @@ export function SetupQuestionnaireHost({ pending, requested, currentFlags }: Pro
 
   return (
     <>
-      <section aria-labelledby="setup-q-card-title" className={pending ? styles.card : styles.quiet}>
+      <section aria-labelledby="setup-q-card-title" className={pending ? 'eg-setuphost-card' : 'eg-setuphost-quiet'}>
         {pending ? (
           <>
-            <h2 className={styles.title} id="setup-q-card-title">
+            <h2 className="eg-setuphost-title" id="setup-q-card-title">
               {t('setup.q.cardTitle')}
             </h2>
-            <p className={styles.text}>{t('setup.q.cardText')}</p>
-            <button className={styles.button} onClick={() => setOpen(true)} type="button">
+            <p className="eg-setuphost-text">{t('setup.q.cardText')}</p>
+            <button className="eg-setuphost-button" onClick={() => setOpen(true)} type="button">
               {t('setup.q.cardButton')}
             </button>
           </>
         ) : (
-          <p className={styles.text} id="setup-q-card-title">
+          <p className="eg-setuphost-text" id="setup-q-card-title">
             {t('setup.q.rerunText')}{' '}
-            <button className={styles.linkButton} onClick={() => setOpen(true)} type="button">
+            <button className="eg-setuphost-linkButton" onClick={() => setOpen(true)} type="button">
               {t('setup.q.rerun')}
             </button>{' '}
-            <span className={styles.note}>{t('setup.q.rerunNote')}</span>
+            <span className="eg-setuphost-note">{t('setup.q.rerunNote')}</span>
           </p>
         )}
       </section>

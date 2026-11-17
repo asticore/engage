@@ -21,7 +21,6 @@ import {
 } from '@/features/setup/questionnaire'
 import type { UiStringKey } from '@/features/uiStrings'
 
-import styles from './SetupQuestionnaire.module.css'
 
 const STEP_COUNT = 6
 const SUMMARY_STEP = STEP_COUNT
@@ -133,7 +132,7 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
   const radio = <V extends string>(name: string, values: readonly V[], group: string, current: V | undefined, onPick: (value: V) => void) => (
     <>
       {values.map((value) => (
-        <label className={styles.option} key={value}>
+        <label className="eg-setup-option" key={value}>
           <input checked={current === value} name={name} onChange={() => onPick(value)} type="radio" value={value} />
           <span>{t(key(`${group}.${value}`))}</span>
         </label>
@@ -142,7 +141,7 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
   )
 
   const check = (id: string, label: string, checked: boolean, onChange: () => void) => (
-    <label className={styles.option} key={id}>
+    <label className="eg-setup-option" key={id}>
       <input checked={checked} onChange={onChange} type="checkbox" />
       <span>{label}</span>
     </label>
@@ -154,43 +153,43 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
     switch (step) {
       case 1:
         return (
-          <fieldset className={styles.group}>
+          <fieldset className="eg-setup-group">
             <legend>{t(key('shape.legend'))}</legend>
             {radio('shape', SITE_SHAPES, 'shape', answers.siteShape, (v) => setAnswer('siteShape', v))}
           </fieldset>
         )
       case 2:
         return (
-          <fieldset className={styles.group}>
+          <fieldset className="eg-setup-group">
             <legend>{t(key('products.legend'))}</legend>
-            <p className={styles.hint}>{t(key('products.hint'))}</p>
+            <p className="eg-setup-hint">{t(key('products.hint'))}</p>
             {PRODUCT_KINDS.map((kind) => check(kind, t(key(`products.${kind}`)), (answers.products ?? []).includes(kind), () => toggleProduct(kind)))}
           </fieldset>
         )
       case 3:
         return (
-          <fieldset className={styles.group}>
+          <fieldset className="eg-setup-group">
             <legend>{t(key('bookings.legend'))}</legend>
             {radio<BookingKind>('bookings', BOOKING_KINDS, 'bookings', answers.bookings, (v) => setAnswer('bookings', v))}
           </fieldset>
         )
       case 4:
         return (
-          <fieldset className={styles.group}>
+          <fieldset className="eg-setup-group">
             <legend>{t(key('more.legend'))}</legend>
-            <p className={styles.hint}>{t(key('more.hint'))}</p>
+            <p className="eg-setup-hint">{t(key('more.hint'))}</p>
             {moreKeys.map((name) => check(name, t(key(`more.${name}`)), Boolean(answers[name]), () => setAnswer(name, !answers[name])))}
           </fieldset>
         )
       case 5:
         return (
           <>
-            <fieldset className={styles.group}>
+            <fieldset className="eg-setup-group">
               <legend>{t(key('languages.legend'))}</legend>
               {radio('languages', ['one', 'several'] as const, 'languages', answers.languages, (v) => setAnswer('languages', v))}
             </fieldset>
             {answers.languages === 'several' && (
-              <fieldset className={`${styles.group} ${styles.locales}`}>
+              <fieldset className={`eg-setup-group eg-setup-locales`}>
                 <legend>{t(key('languages.localesLegend'))}</legend>
                 {LOCALE_OPTIONS.map((locale) =>
                   check(locale.value, locale.label, (answers.locales ?? []).includes(locale.value), () => setAnswer('locales', toggle(answers.locales ?? [], locale.value))),
@@ -201,25 +200,25 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
         )
       case 6:
         return (
-          <fieldset className={styles.group}>
+          <fieldset className="eg-setup-group">
             <legend>{t(key('business.legend'))}</legend>
             {radio('business', BUSINESS_TYPES, 'business', answers.businessType, (v) => setAnswer('businessType', v))}
           </fieldset>
         )
       default:
         return (
-          <div className={styles.summary}>
-            <h3 className={styles.summaryTitle}>{t(key('summary.title'))}</h3>
+          <div className="eg-setup-summary">
+            <h3 className="eg-setup-summaryTitle">{t(key('summary.title'))}</h3>
             {suggestion.on.length === 0 ? (
               <p>{t(key('summary.none'))}</p>
             ) : (
-              <fieldset className={styles.group}>
+              <fieldset className="eg-setup-group">
                 <legend>{t(key('summary.intro'))}</legend>
                 {suggestion.on.map((featureKey) => {
                   const feature = FEATURE_MAP[featureKey]
                   const already = Boolean(currentFlags[featureKey])
                   return (
-                    <label className={styles.option} key={featureKey}>
+                    <label className="eg-setup-option" key={featureKey}>
                       <input
                         checked={selected.includes(featureKey)}
                         onChange={() => setChosen(toggle(selected, featureKey))}
@@ -228,7 +227,7 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
                       <span>
                         <strong>{feature.label}</strong>
                         {already ? ` (${t(key('summary.alreadyOn'))})` : ''}
-                        <span className={styles.featureText}>{feature.description}</span>
+                        <span className="eg-setup-featureText">{feature.description}</span>
                       </span>
                     </label>
                   )
@@ -236,7 +235,7 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
               </fieldset>
             )}
             {suggestion.notes.length > 0 && (
-              <div className={styles.notes}>
+              <div className="eg-setup-notes">
                 <h4>{t(key('summary.notesTitle'))}</h4>
                 <ul>
                   {suggestion.notes.map((note) => (
@@ -254,37 +253,37 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
   const total = STEP_COUNT + 1
 
   return (
-    <div className={styles.backdrop}>
-      <div aria-labelledby={titleId} aria-modal="true" className={styles.dialog} onKeyDown={onKeyDown} ref={dialogRef} role="dialog" tabIndex={-1}>
-        <h2 className={styles.title} id={titleId}>
+    <div className="eg-setup-backdrop">
+      <div aria-labelledby={titleId} aria-modal="true" className="eg-setup-dialog" onKeyDown={onKeyDown} ref={dialogRef} role="dialog" tabIndex={-1}>
+        <h2 className="eg-setup-title" id={titleId}>
           {t(key('title'))}
         </h2>
-        <p aria-live="polite" className={styles.progress}>
+        <p aria-live="polite" className="eg-setup-progress">
           {t(key('stepOf'), { n: step, m: total })}
         </p>
-        {step === 1 && <p className={styles.intro}>{t(key('intro'))}</p>}
-        <div className={styles.body}>{renderStep()}</div>
+        {step === 1 && <p className="eg-setup-intro">{t(key('intro'))}</p>}
+        <div className="eg-setup-body">{renderStep()}</div>
         {error && (
-          <p className={styles.error} role="alert">
+          <p className="eg-setup-error" role="alert">
             {error}
           </p>
         )}
-        <div className={styles.actions}>
-          <button className={styles.link} disabled={busy !== null} onClick={() => void save('skip')} type="button">
+        <div className="eg-setup-actions">
+          <button className="eg-setup-link" disabled={busy !== null} onClick={() => void save('skip')} type="button">
             {t(key('skip'))}
           </button>
-          <span className={styles.spacer} />
+          <span className="eg-setup-spacer" />
           {step > 1 && (
-            <button className={styles.secondary} disabled={busy !== null} onClick={() => setStep(step - 1)} type="button">
+            <button className="eg-setup-secondary" disabled={busy !== null} onClick={() => setStep(step - 1)} type="button">
               {t(key('back'))}
             </button>
           )}
           {onSummary ? (
-            <button className={styles.primary} disabled={busy !== null} onClick={() => void save('apply')} type="button">
+            <button className="eg-setup-primary" disabled={busy !== null} onClick={() => void save('apply')} type="button">
               {busy === 'apply' ? t(key('saving')) : t(key('apply'))}
             </button>
           ) : (
-            <button className={styles.primary} onClick={() => setStep(step + 1)} type="button">
+            <button className="eg-setup-primary" onClick={() => setStep(step + 1)} type="button">
               {t(key('next'))}
             </button>
           )}

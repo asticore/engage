@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import styles from '@/admin/admin.module.css'
 import {
   type PermissionMatrix,
   type PermissionOverrides,
@@ -141,19 +140,19 @@ export function PermissionTable({
   }
 
   return (
-    <div className={styles.matrixWrapper}>
+    <div className="eg-roles-matrixWrapper">
       <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem' }}>
         <input
           type="text"
           placeholder="Search permissions..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className={styles.input}
+          className="eg-roles-input"
           style={{ flex: 1, maxWidth: '100%' }}
         />
       </div>
 
-      <table className={styles.matrix}>
+      <table className="eg-roles-matrix">
         <thead>
           <tr>
             <th style={{ textAlign: 'left', width: '200px' }}>Resource</th>
@@ -166,13 +165,13 @@ export function PermissionTable({
                 publish: 'Publish',
               }
               return (
-              <th key={action} className={styles.actionHeader}>
+              <th key={action} className="eg-roles-actionHeader">
                 <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   <input
                     type="checkbox"
                     onChange={(e) => handleToggleColumn(action as Action, e.target.checked)}
                     disabled={readOnly}
-                    className={styles.checkbox}
+                    className="eg-roles-checkbox"
                   />
                   <span style={{ fontSize: '0.85rem' }}>{actionLabels[action]}</span>
                 </label>
@@ -190,7 +189,7 @@ export function PermissionTable({
             }).length
 
             return [
-              <tr key={`group-${category.id}`} className={styles.groupHeader}>
+              <tr key={`group-${category.id}`} className="eg-roles-groupHeader">
                 <td colSpan={6} style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleCategoryExpanded(category.id)}>
                   <span style={{ marginRight: '0.5rem' }}>{isExpanded ? '▼' : '▶'}</span>
                   {category.label}
@@ -207,11 +206,11 @@ export function PermissionTable({
                     return (
                       <tr
                         key={row.resource}
-                        className={`${styles.resourceRow} ${isSecret ? styles.secretRow : ''}`}
+                        className={`eg-roles-resourceRow ${isSecret ? 'eg-roles-secretRow' : ''}`}
                       >
-                        <td className={styles.resourceLabel}>
+                        <td className="eg-roles-resourceLabel">
                           {row.label}
-                          {isSecret && <span className={styles.adminOnly}> Admin only</span>}
+                          {isSecret && <span className="eg-roles-adminOnly"> Admin only</span>}
                           {mode === 'matrix' && supportsScope(row.resource) && hasScopedAction(matrix, row.resource) && (
                             <select
                               aria-label={`${row.label}: which items`}
@@ -228,7 +227,7 @@ export function PermissionTable({
                         </td>
                         {['read', 'create', 'update', 'delete', 'publish'].map((action) => {
                           if (!row.actions.includes(action as Action)) {
-                            return <td key={`${row.resource}-${action}`} className={styles.cellContainer} />
+                            return <td key={`${row.resource}-${action}`} className="eg-roles-cellContainer" />
                           }
 
                           if (mode === 'override') {
@@ -243,12 +242,12 @@ export function PermissionTable({
                             return (
                               <td
                                 key={`${row.resource}-${action}`}
-                                className={styles.cellContainer}
+                                className="eg-roles-cellContainer"
                               ><Tooltip text={displayState}><span>
                                 <button
                                   onClick={() => handleToggleCell(row.resource, action as Action)}
                                   disabled={readOnly || isSecret}
-                                  className={styles.checkbox}
+                                  className="eg-roles-checkbox"
                                   style={{
                                     appearance: 'none',
                                     width: '20px',
@@ -273,14 +272,14 @@ export function PermissionTable({
                             return (
                               <td
                                 key={`${row.resource}-${action}`}
-                                className={styles.cellContainer}
+                                className="eg-roles-cellContainer"
                               >
                                 <input
                                   type="checkbox"
                                   checked={isEnabled}
                                   onChange={() => handleToggleCell(row.resource, action as Action)}
                                   disabled={readOnly || isSecret}
-                                  className={styles.checkbox}
+                                  className="eg-roles-checkbox"
                                 />
                               </td>
                             )
