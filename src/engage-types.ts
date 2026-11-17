@@ -332,6 +332,7 @@ export interface Event {
    * Leave blank for unlimited capacity.
    */
   capacity?: number | null;
+  maxPerPerson?: number | null;
   /**
    * Optional. If set, the "Register" button on the event page links straight to this URL (e.g. an external Eventbrite page or form) instead of the built-in RSVP/ticket flow.
    */
@@ -822,6 +823,11 @@ export interface Product {
   pagespeedAt?: string | null;
   isService?: boolean | null;
   serviceDuration?: number | null;
+  serviceStaff?: string | null;
+  wholesaleOnly?: boolean | null;
+  orderBumpProduct?: (number | null) | Product;
+  orderBumpHeadline?: string | null;
+  bid?: unknown;
   isDonation?: boolean | null;
   donationAmounts?: string | null;
   donationMax?: number | null;

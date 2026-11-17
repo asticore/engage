@@ -30,7 +30,10 @@ vi.mock('@/lib/engine', () => ({
 
 vi.mock('@/utilities/features', () => ({ getFeatureFlags: async () => ({ blog: true }) }))
 
-vi.mock('@/features/visibility/excludeProtected', () => ({ excludeProtected: async (_collection: string, docs: unknown[]) => docs }))
+vi.mock('@/features/visibility/excludeProtected', () => ({
+  excludeProtected: async (_collection: string, docs: unknown[]) => docs,
+  excludeProtectedAccess: (_collection: string, base: unknown) => base,
+}))
 
 vi.mock('@/features/multilingual/applyTranslations', () => ({
   currentRequestLocale: async () => 'en',
