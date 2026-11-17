@@ -205,6 +205,8 @@ export type FormConfig = {
   prefillKeys?: string[]
   /** End the form at the checkout with a product in the cart and details filled in. */
   checkout?: import('./checkoutHandoff').FormCheckoutConfig
+  /** Each entry also becomes a quote, offer or item request. */
+  requestFeed?: import('./requestFeed').FormRequestFeed
 }
 
 export type FormNotificationRule = {

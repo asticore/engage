@@ -5,6 +5,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { STYLE_PRESETS } from '@/features/forms/config'
+import { FEED_FIELDS, NO_REQUEST_FEED, type FeedField } from '@/features/forms/requestFeed'
 import { CUSTOMER_FIELDS, NO_CHECKOUT, type CustomerField } from '@/features/forms/checkoutHandoff'
 import { WebhookDeliveryLog, WebhookTestButton } from './FormWebhookTools'
 import { FormEditorContext } from './formInputs'
@@ -43,7 +44,7 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
   const { fields: fieldChoices } = useContext(FormEditorContext)
   const [products, setProducts] = useState<{ id: number; title: string }[]>([])
   useEffect(() => {
-    if (!(config.checkout || NO_CHECKOUT).enabled) return
+    if (!(config.checkout || NO_CHECKOUT).enabled && !(config.requestFeed || NO_REQUEST_FEED).enabled) return
     let live = true
     fetch('/api/products?limit=500&depth=0&sort=title', { credentials: 'include' })
       .then(async (res) => {
@@ -54,7 +55,7 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
     return () => {
       live = false
     }
-  }, [config.checkout])
+  }, [config.checkout, config.requestFeed])
   /** A field name picked from this form's fields; a name typed earlier that no longer matches stays selectable. */
   const fieldSelect = (value: string, onPick: (name: string) => void) => (
     <select value={value} onChange={(event) => onPick(event.target.value)}>
@@ -72,6 +73,9 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
   const key = embedKey || formId || ''
   const checkout = config.checkout || NO_CHECKOUT
   const setCheckout = (patch: Partial<typeof NO_CHECKOUT>) => set('checkout', { ...checkout, ...patch })
+  const feed = config.requestFeed || NO_REQUEST_FEED
+  const setFeed = (patch: Partial<typeof NO_REQUEST_FEED>) => set('requestFeed', { ...feed, ...patch })
+  const setFeedMap = (field: FeedField, name: string) => setFeed({ map: { ...feed.map, [field]: name } })
   const setMap = (field: CustomerField, name: string) => setCheckout({ map: { ...checkout.map, [field]: name } })
 
   const setRule = (index: number, patch: Partial<FormNotificationRule>) => set('notifications', rules.map((rule, i) => (i === index ? { ...rule, ...patch } : rule)))
@@ -194,6 +198,46 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
                 <label className="ve-field ve-field--full" key={field}>
                   <span>{{ email: 'Email', name: 'Full name', phone: 'Phone', line1: 'Street address', city: 'Suburb or city', state: 'State', postcode: 'Postcode', country: 'Country (2 letter code)', note: 'Order note' }[field]}</span>
                   {fieldSelect(checkout.map[field] || '', (name) => setMap(field, name))}
+                </label>
+              ))}
+            </>
+          ) : null}
+        </Section>
+
+        <Section title="Send as a request">
+          <label className="ve-field ve-field--checkbox">
+            <input type="checkbox" checked={feed.enabled} onChange={(event) => setFeed({ enabled: event.target.checked })} />
+            <span>Each entry also becomes a quote request, offer or item request</span>
+          </label>
+          {feed.enabled ? (
+            <>
+              <p className="ve-panel__hint">Needs Quotes and requests switched on in Site Settings. The entry is still saved, and the customer and the shop get the usual request emails.</p>
+              <label className="ve-field ve-field--full">
+                <span>Request type</span>
+                <select value={feed.kind} onChange={(event) => setFeed({ kind: event.target.value as typeof feed.kind })}>
+                  <option value="quote">Quote request</option>
+                  <option value="bid">Offer (bid)</option>
+                  <option value="item">Item request</option>
+                </select>
+              </label>
+              <label className="ve-field ve-field--full">
+                <span>Product (optional)</span>
+                <select value={feed.productId ?? ''} onChange={(event) => setFeed({ productId: event.target.value === '' ? null : Number(event.target.value) })}>
+                  <option value="">None</option>
+                  {feed.productId && !products.some((p) => p.id === feed.productId) ? <option value={feed.productId}>Product {feed.productId}</option> : null}
+                  {products.map((p) => <option key={p.id} value={p.id}>{p.title} (#{p.id})</option>)}
+                </select>
+              </label>
+              <label className="ve-field ve-field--full">
+                <span>Or choose the product from a field</span>
+                {fieldSelect(feed.productField, (name) => setFeed({ productField: name }))}
+                <span className="ve-field__help">A choice or dropdown field whose option values are product numbers, such as 12. It overrides the product above.</span>
+              </label>
+              <p className="ve-panel__hint">Fill the request from these fields (pick a field, or None to skip). Name and email are needed; details default to all the answers.</p>
+              {FEED_FIELDS.map((field) => (
+                <label className="ve-field ve-field--full" key={field}>
+                  <span>{{ name: 'Name', email: 'Email', phone: 'Phone', quantity: 'Quantity', details: 'Details', deadline: 'Needed by (date)', offer: 'Offer amount (offers only)' }[field]}</span>
+                  {fieldSelect(feed.map[field] || '', (name) => setFeedMap(field, name))}
                 </label>
               ))}
             </>

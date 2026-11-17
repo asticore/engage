@@ -1,4 +1,5 @@
 import { normaliseCheckoutConfig } from './checkoutHandoff'
+import { normaliseRequestFeed } from './requestFeed'
 import type { ConditionalLogic, FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from './types'
 
 /**
@@ -172,6 +173,7 @@ export function normaliseFormConfig(input: unknown): FormConfig {
     saveForLater: bool(raw.saveForLater) === true,
     prefillKeys: Array.from(new Set(prefillKeys)),
     checkout: normaliseCheckoutConfig(raw.checkout),
+    requestFeed: normaliseRequestFeed(raw.requestFeed),
   }
 }
 
