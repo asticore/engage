@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import { useCart } from '@/engine/commerce/react'
 import { useShopCurrency } from '@/components/ShopCurrencyContext'
@@ -27,6 +27,11 @@ export function OrderBump(): React.ReactElement | null {
   const key = ids.join(',')
   const bumpLine = offer ? lines.find((l) => productIdOf(l) === offer.id) : undefined
 
+  const bumpIdRef = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    bumpIdRef.current = offer?.id
+  }, [offer?.id])
+
   useEffect(() => {
     let live = true
     if (!key) return
@@ -34,7 +39,7 @@ export function OrderBump(): React.ReactElement | null {
     fetch('/api/shop-order-bump', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productIds, bumpId: offer?.id }),
+      body: JSON.stringify({ productIds, bumpId: bumpIdRef.current }),
     })
       .then((r): Promise<unknown> => (r.ok ? r.json() : Promise.resolve(null)))
       .then((d: unknown) => {
@@ -44,7 +49,6 @@ export function OrderBump(): React.ReactElement | null {
     return () => {
       live = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
   if (!offer) return null
