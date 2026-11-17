@@ -47,6 +47,12 @@ type EngineLike = { findGlobal: (args: Record<string, unknown>) => Promise<Recor
 /** Sends the alerts in one email when Shop settings allow it. Never throws. */
 export async function sendStockAlerts(engine: EngineLike, alerts: StockAlert[]): Promise<boolean> {
   if (alerts.length === 0) return false
+  // Webhooks and notification rules hear about every crossing, whatever the stock email setting says.
+  for (const alert of alerts) {
+    void import('@/features/webhooks/emit')
+      .then((m) => m.emitWebhookEvent('stock.low', { kind: alert.kind, label: alert.label, sku: alert.sku ?? undefined, qty: alert.qty, createdAt: new Date().toISOString() }))
+      .catch((): void => undefined)
+  }
   try {
     const settings = (await engine.findGlobal({ slug: 'shop-settings', depth: 0, overrideAccess: true })) as Record<string, unknown>
     if (settings.lowStockEmails === false) return false

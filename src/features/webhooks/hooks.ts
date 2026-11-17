@@ -96,3 +96,17 @@ export const webhookRsvpAfterChange: CollectionAfterChangeHook = async (args) =>
   }
   return args.doc
 }
+
+/** Course enrolments: `course.enrolled` on each new seat. */
+export const webhookEnrolmentAfterChange: CollectionAfterChangeHook = async (args) => {
+  try {
+    const { doc, operation } = args as unknown as { doc: Doc | null; operation: string }
+    if (doc && operation === 'create') {
+      const id = (value: unknown): unknown => (value && typeof value === 'object' ? (value as { id?: unknown }).id : value)
+      void emitWebhookEvent('course.enrolled', { ...doc, userId: id(doc.user), courseId: id(doc.course) })
+    }
+  } catch {
+    // Events are best effort.
+  }
+  return args.doc
+}

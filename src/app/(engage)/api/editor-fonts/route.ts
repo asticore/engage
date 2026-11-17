@@ -18,7 +18,7 @@ export async function GET(): Promise<Response> {
     const engine = await getEngine()
     const settings = (await engine.findGlobal({ slug: 'site-settings', depth: 0 }).catch((): null => null)) as { theme?: { customFonts?: unknown } } | null
     const installed = sanitizeInstalledFonts(settings?.theme?.customFonts)
-    const fonts = installed.map((font) => ({ family: font.family }))
+    const fonts = installed.map((font) => ({ family: font.family, id: font.id, category: font.category }))
     // css + stylesheets let the canvas load every installed family, so any pick in the Family select previews live.
     return NextResponse.json({ fonts, css: buildFontCss(installed), stylesheets: remoteStylesheetUrls(installed) }, { headers: NO_STORE })
   } catch {

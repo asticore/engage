@@ -26,12 +26,22 @@ type EventLike = { type: string; data: { object: unknown } }
 const isShopSubscription = (subscription: { metadata?: Record<string, string> | null } | null | undefined): boolean => subscription?.metadata?.shopSubscription === '1'
 
 /** Finds the record, or creates it when the shop started this subscription and the record is missing. */
+/** Queues a subscription event for webhooks and notification rules. Best effort: never fails the Stripe handler. */
+function emitSubscription(event: 'subscription.started' | 'subscription.cancelled' | 'subscription.payment_failed', record: SubscriptionRecord): void {
+  void import('@/features/webhooks/emit')
+    .then((m) => m.emitWebhookEvent(event, { id: record.id, customerEmail: record.customerEmail ?? undefined, productName: record.productName ?? undefined, status: record.status, startedAt: record.startedAt ?? undefined, endedAt: record.endedAt ?? undefined, nextPaymentAt: record.nextPaymentAt ?? undefined }))
+    .catch((): void => undefined)
+}
+
 async function recordFor(deps: WebhookDeps, subscription: StripeSubscriptionLike, now: string): Promise<SubscriptionRecord | null> {
   const existing = await findRecordByStripeSubscription(deps.engine, subscription.id)
   if (existing) return existing
   if (!isShopSubscription(subscription)) return null
   const created = await createRecordFromSubscription(deps.engine, subscription, now)
-  if (created) await sendSubscriptionEmail('new', created)
+  if (created) {
+    await sendSubscriptionEmail('new', created)
+    emitSubscription('subscription.started', created)
+  }
   return created
 }
 
@@ -88,6 +98,7 @@ async function onSubscriptionDeleted(deps: WebhookDeps, subscription: StripeSubs
     history: withHistory(record, [{ at: now, text: 'Subscription ended.' }]),
   })
   await sendSubscriptionEmail('cancelled', record)
+  emitSubscription('subscription.cancelled', { ...record, status: 'cancelled', endedAt: now })
   return true
 }
 
@@ -102,6 +113,7 @@ async function onInvoiceFailed(deps: WebhookDeps, invoiceObject: unknown, now: s
     history: withHistory(record, [{ at: now, text: 'A payment failed. Stripe will try again.' }]),
   })
   await sendSubscriptionEmail('failed', record)
+  emitSubscription('subscription.payment_failed', record)
   return true
 }
 

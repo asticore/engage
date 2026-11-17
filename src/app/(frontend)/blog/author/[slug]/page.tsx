@@ -14,6 +14,7 @@ import { blogSwitches, loadBlogSwitches } from '@/features/blog/switches'
 import { getEngine } from '@/lib/engine'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
+import { listCategoriesSafe } from '@/features/categories/store'
 import { postArchiveItems } from '@/lib/blockContextFrom'
 import { getFeatureFlags } from '@/utilities/features'
 import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
@@ -62,6 +63,7 @@ export default async function AuthorArchivePage({ params, searchParams }: Params
   if (!blogSwitches(settings).authorArchives) notFound()
   const term = await load(slug)
   if (!term) notFound()
+  const blogTree = await listCategoriesSafe('blog')
   const perPage = settings?.postsPerPage || ARCHIVE_PAGE_SIZE
   const query = await searchParams
   // Filter params (?category=&tag=&q=&sort=) narrow the posts before paging. With none, the list and pages are unchanged.
@@ -73,7 +75,7 @@ export default async function AuthorArchivePage({ params, searchParams }: Params
   setBlockContext({
     page: { title: term.name },
     path,
-    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(paged.items), kind: 'posts', filters, facets: archivePostFacets(term.posts) },
+    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(paged.items, blogTree), kind: 'posts', filters, facets: archivePostFacets(term.posts) },
   })
 
   const body = (

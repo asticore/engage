@@ -40,7 +40,7 @@ function firstImage(images: unknown): { url: unknown; alt: unknown } | undefined
 }
 
 /** Context for a post document (depth 1). Shared by /blog/[slug] and the editor's "Preview as". */
-export function postBlockContext(post: Record<string, unknown>, path: string, siteName?: string, opts?: { authors?: boolean }): BlockContext {
+export function postBlockContext(post: Record<string, unknown>, path: string, siteName?: string, opts?: { authors?: boolean; tree?: CategoryRow[] }): BlockContext {
   const showAuthor = opts?.authors !== false && post.hideAuthor !== true
   const image = post.featuredImage && typeof post.featuredImage === 'object' ? rec(post.featuredImage) : null
   const categories = (Array.isArray(post.categories) ? post.categories : []).map((c) => str(rec(c).name)).filter((n) => !!n)
@@ -52,6 +52,7 @@ export function postBlockContext(post: Record<string, unknown>, path: string, si
       author: (showAuthor ? postAuthorName(post.author, siteName) : '') || undefined,
       featuredImage: image ? { url: image.url, alt: image.alt } : undefined,
       categories,
+      ...categoryTreeFields(categories[0], opts?.tree ?? []),
     },
     path,
   }

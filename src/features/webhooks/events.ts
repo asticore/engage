@@ -21,6 +21,11 @@ export const WEBHOOK_EVENTS = [
   'affiliate.commission.earned',
   'affiliate.payout.recorded',
   'audit.recorded',
+  'stock.low',
+  'course.enrolled',
+  'subscription.started',
+  'subscription.cancelled',
+  'subscription.payment_failed',
 ] as const
 
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number]
@@ -48,6 +53,11 @@ export const EVENT_LABEL_KEYS: Record<WebhookEvent, string> = {
   'affiliate.commission.earned': 'webhooks.event.affiliate.commission.earned',
   'affiliate.payout.recorded': 'webhooks.event.affiliate.payout.recorded',
   'audit.recorded': 'webhooks.event.audit.recorded',
+  'stock.low': 'webhooks.event.stock.low',
+  'course.enrolled': 'webhooks.event.course.enrolled',
+  'subscription.started': 'webhooks.event.subscription.started',
+  'subscription.cancelled': 'webhooks.event.subscription.cancelled',
+  'subscription.payment_failed': 'webhooks.event.subscription.payment_failed',
 }
 
 /** The fields each event may send. `values` on form.submitted is the entry's answers, as the form webhook sends them. */
@@ -68,6 +78,11 @@ export const EVENT_FIELDS: Record<WebhookEvent, readonly string[]> = {
   'affiliate.commission.earned': ['id', 'affiliateId', 'orderId', 'amount', 'payableOn', 'createdAt'],
   'affiliate.payout.recorded': ['id', 'affiliateId', 'amount', 'note', 'createdAt'],
   'audit.recorded': ['action', 'actorEmail', 'collection', 'documentId', 'ip', 'detail', 'createdAt'],
+  'stock.low': ['kind', 'productId', 'label', 'sku', 'qty', 'createdAt'],
+  'course.enrolled': ['id', 'userId', 'courseId', 'source', 'status', 'enrolledAt'],
+  'subscription.started': ['id', 'customerEmail', 'productName', 'status', 'startedAt'],
+  'subscription.cancelled': ['id', 'customerEmail', 'productName', 'status', 'endedAt'],
+  'subscription.payment_failed': ['id', 'customerEmail', 'productName', 'status', 'nextPaymentAt'],
 }
 
 /** Keeps only the fields an event allows. Missing fields are left out; `undefined` never reaches the body. */
