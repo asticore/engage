@@ -1,0 +1,2 @@
+/*! Spark core v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark core v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{:root{--spark-duration: .7s;--spark-ease: cubic-bezier(.22, 1, .36, 1);--spark-distance: 24px}[data-spark-reduce] [class*=spark-],[data-spark-reduce] [class*=spark-]:before,[data-spark-reduce] [class*=spark-]:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

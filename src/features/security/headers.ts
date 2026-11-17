@@ -42,7 +42,7 @@ const HSTS_VALUE = 'max-age=63072000; includeSubDomains'
  */
 export const DEFAULT_CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  // cdn.jsdelivr.net serves Effix (reference/references.json). Analytics and consent tags: Google Tag Manager and GA4 (gtag.js), Microsoft
+  // cdn.jsdelivr.net serves Spark (reference/references.json). Analytics and consent tags: Google Tag Manager and GA4 (gtag.js), Microsoft
   // Clarity (its tag redirects to scripts.clarity.ms), Meta Pixel. Connect and
   // image requests from those tags are already covered by https: below.
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.clarity.ms https://scripts.clarity.ms https://connect.facebook.net https://cdn.jsdelivr.net",

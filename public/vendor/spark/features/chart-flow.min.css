@@ -1,0 +1,2 @@
+/*! Spark chart-flow v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark chart-flow v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-flow__label{paint-order:stroke;stroke:var(--sh-surface, #fff);stroke-width:3px;stroke-linejoin:round;pointer-events:none;font-weight:500}.spark-chart-flow path.spark-chart__mark:not(.is-dim){stroke-opacity:.65}.spark-chart-flow:not(:has(.is-active)) path.spark-chart__mark{stroke-opacity:.35}.spark-chart-flow path.is-active{filter:none}}

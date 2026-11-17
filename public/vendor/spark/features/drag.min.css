@@ -1,0 +1,2 @@
+/*! Spark drag v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark drag v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-drag-on{cursor:grab}.spark-drag-on.is-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}.spark-drag-on.is-dragging *{cursor:grabbing}}

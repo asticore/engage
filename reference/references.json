@@ -16,16 +16,17 @@
       "license": "MIT"
     },
     {
-      "id": "effix",
-      "name": "Effix",
+      "id": "spark",
+      "name": "Spark",
       "type": "js-effects",
-      "url": "https://github.com/asticore/effix",
+      "url": "https://github.com/asticore/spark",
       "branch": "main",
-      "version": "0.1.0",
-      "commit": "576996d81a9f8ca0e78c3ed3a9f39dfe81fd00c6",
-      "cdn": "https://cdn.jsdelivr.net/gh/asticore/effix@576996d81a9f8ca0e78c3ed3a9f39dfe81fd00c6/dist/",
-      "usedFor": "Effects and charts applied with efx- classes. The loader starts only when a page uses an efx- class and fails safe when the CDN is unreachable.",
-      "license": "MIT"
+      "version": "0.4.0",
+      "commit": "dc0d630e97cfbb973357be9e2067401cc732c46f",
+      "cdn": "https://cdn.jsdelivr.net/gh/asticore/spark@dc0d630e97cfbb973357be9e2067401cc732c46f/dist/",
+      "usedFor": "Effects and charts applied with spark- classes. The loader starts only when a page uses an spark- class and fails safe when the CDN is unreachable. If the CDN fails, the copy in public/vendor/spark is used.",
+      "license": "MIT",
+      "vendored": "public/vendor/spark/spark.auto.min.js"
     },
     {
       "id": "engage-templates",

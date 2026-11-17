@@ -5,7 +5,7 @@ import React from 'react'
 import { applyEffect, currentEffect, EFFECT_CATALOG, readEffectOptions } from '@/features/effects/catalog'
 
 /**
- * Effects picker for the Design panel: choose an Effix effect and set its options. It writes the effect's `efx-` class
+ * Effects picker for the Design panel: choose an Spark effect and set its options. It writes the effect's `spark-` class
  * into the CSS classes field and the options into Custom attributes, so the two fields below stay the source of truth.
  */
 export const EffectsPicker: React.FC<{
@@ -20,7 +20,7 @@ export const EffectsPicker: React.FC<{
 
   return (
     <div className="ve-row">
-      <label className="ve-row__label" htmlFor="ve-effect-picker">Effect (Effix)</label>
+      <label className="ve-row__label" htmlFor="ve-effect-picker">Effect (Spark)</label>
       <select
         id="ve-effect-picker"
         value={effect?.id ?? ''}

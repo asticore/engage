@@ -31,7 +31,7 @@
   ],
   "sections-extra": [
     { "id": "hero-shop", "label": "Shop hero", "description": "Collection and shop headers.", "keywords": ["shop", "collection"] },
-    { "id": "charts", "label": "Charts and tables", "description": "Chart and data table sections built from Effix charts and Engage tables.", "keywords": ["chart", "table", "data", "stats"] }
+    { "id": "charts", "label": "Charts and tables", "description": "Chart and data table sections built from Spark charts and Engage tables.", "keywords": ["chart", "table", "data", "stats"] }
   ],
   "colourSets": [
     { "id": "shine-light-set", "label": "Shine light", "tokens": ["primary", "secondary", "accent", "surface", "text", "border", "success", "warning", "error"] },

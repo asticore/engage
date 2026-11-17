@@ -1,0 +1,2 @@
+/*! Spark viz-parallel v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark viz-parallel v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-pc__line{pointer-events:none;transition:opacity .2s,stroke-width .15s}.spark-pc__line.is-active{stroke-width:3.2;stroke-opacity:1;filter:none}.spark-pc__line.is-off.spark-chart__mark{opacity:.06}.spark-pc__ov{cursor:ns-resize;touch-action:none}.spark-pc__sel{fill:var(--sh-primary, #6366f1);fill-opacity:.25;stroke:var(--sh-primary, #6366f1);pointer-events:none}}

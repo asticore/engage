@@ -1,0 +1,2 @@
+/*! Spark totop v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark totop v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-totop{opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity .3s,transform .3s,visibility 0s .3s}.spark-totop:not([data-spark-fixed=false]){position:fixed;right:1.25rem;bottom:1.25rem;z-index:900}.spark-totop.is-shown{opacity:1;visibility:visible;transform:none;transition-delay:0s}}

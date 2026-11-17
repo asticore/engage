@@ -1,0 +1,2 @@
+/*! Spark viz-arc v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark viz-arc v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-viz-arc:has(.is-active) .spark-viz__arc:not(.is-dim){stroke-opacity:.85}.spark-viz-arc .spark-viz__label{fill:var(--spark-chart-text, #64748b);font-size:11px;paint-order:stroke;stroke:var(--sh-surface, #fff);stroke-width:3px;stroke-linejoin:round;pointer-events:none}.spark-viz-arc .spark-chart__plot .spark-chart__mark.is-dim{opacity:.3}}

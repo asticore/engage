@@ -1,0 +1,2 @@
+/*! Spark textfill v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark textfill v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-textfill__w{display:inline-block;white-space:nowrap}.spark-textfill__p{opacity:calc(var(--spark-textfill-dim, .2) + (1 - var(--spark-textfill-dim, .2)) * var(--f, 0));color:var(--spark-textfill-color, inherit)}.spark-textfill__sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}}

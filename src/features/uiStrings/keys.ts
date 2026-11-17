@@ -1528,7 +1528,7 @@ export const UI_STRING_SOURCE = {
   'settings.link.scheduled-tasks.label': "Scheduled tasks",
   'settings.link.scheduled-tasks.description': "Every timed job, its last result and what is waiting to go live.",
   'settings.link.references.label': "Reference sources",
-  'settings.link.references.description': "Shine and Effix: pinned versions and whether a newer one exists.",
+  'settings.link.references.description': "Shine and Spark: pinned versions and whether a newer one exists.",
   'settings.link.users.label': "Users",
   'settings.link.users.description': "Manage admin user accounts.",
   'settings.link.audit-log.label': "Audit log",
