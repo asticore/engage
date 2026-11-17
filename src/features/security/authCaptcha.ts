@@ -2,7 +2,7 @@ import { RECAPTCHA_FIELD, TURNSTILE_FIELD, checkCaptcha } from '@/features/forms
 import { getFormSettings, type EngineLike } from '@/features/forms/settings'
 import type { ResolvedFormSettings } from '@/features/forms/types'
 import { FALLBACK_ANSWER_FIELD, FALLBACK_TOKEN_FIELD, checkFallback, makeFallback, type FallbackQuestion } from './captchaFallback'
-import { botDecision, currentBotSignals, type BotSignals } from './botSignals'
+import { botDecision, currentBotSignals, parseList, type BotSignals } from './botSignals'
 import { CAPTCHA_PLACES, effectiveMode, failuresReached, isPlaceId, type PlaceId } from './captchaPlaces'
 import { hitShared, peekShared } from './rateLimit'
 
@@ -42,7 +42,7 @@ export async function placeDecision(engine: EngineLike, place: CaptchaPlace, ip?
   const s = await getFormSettings(engine)
   const none: PlaceDecision = { required: false, block: false, why: null, settings: s }
   try {
-    const bot = s.botDetection === 'off' ? 'allow' : botDecision(s.botDetection, signals ?? (await currentBotSignals()), s.botMinScore)
+    const bot = s.botDetection === 'off' ? 'allow' : botDecision(s.botDetection, signals ?? (await currentBotSignals()), s.botMinScore, { fingerprints: parseList(s.botFingerprints), allowedCategories: parseList(s.botAllowedCategories) })
     if (bot === 'block') return { ...none, block: true }
     const mode = effectiveMode(id, s.placeModes[id], { turnstile: s.turnstile, protectSignIn: s.protectSignIn })
     let why: PlaceDecision['why'] = null

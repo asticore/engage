@@ -156,6 +156,24 @@ export const FormSettings: GlobalConfig = {
             condition: (_, s) => s?.botDetection === 'challenge' || s?.botDetection === 'block',
           },
         },
+        {
+          name: 'botFingerprints',
+          type: 'textarea',
+          admin: {
+            description:
+              'JA3 or JA4 TLS fingerprints (one per line) that always count as a bot, whatever their score. Cloudflare sends them in the cf-ja3-hash and cf-ja4 headers (Managed Transform, or Bot Management). Takes effect when Bot detection above is on.',
+            condition: (_, s) => s?.botDetection === 'challenge' || s?.botDetection === 'block',
+          },
+        },
+        {
+          name: 'botAllowedCategories',
+          type: 'textarea',
+          admin: {
+            description:
+              'Verified bot categories that may pass (one per line), for example Search Engine Crawler. Empty lets every verified bot through. When listed, any other verified bot, such as an AI crawler, is treated like a bot. Needs Cloudflare to send the category (cf-verified-bot-category).',
+            condition: (_, s) => s?.botDetection === 'challenge' || s?.botDetection === 'block',
+          },
+        },
         ...CAPTCHA_PLACES.map((place) => ({
           name: modeFieldOf(place.id),
           label: `Challenge: ${place.label}`,
