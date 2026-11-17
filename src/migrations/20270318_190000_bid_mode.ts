@@ -19,6 +19,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   for (const [table, cols] of Object.entries(COLUMNS)) {
     const have = new Set(((await db.all(sql.raw(`PRAGMA table_info(\`${table}\`)`))) as { name: string }[]).map((r) => r.name))
     if (have.size === 0) continue
+    // Newer installs hold the offer terms in one JSON column (see 20270318_200000_bid_json_column), so the two columns are not added.
+    if (have.has('bid') || have.has('version_bid')) continue
     for (const [column, type] of cols) {
       if (!have.has(column)) await db.run(sql.raw(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${type}`))
     }

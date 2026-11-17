@@ -251,6 +251,7 @@ import * as migration_20270318_170000_event_max_per_person from './20270318_1700
 import * as migration_20270318_180000_paid_bookings from './20270318_180000_paid_bookings';
 import * as migration_20270318_190000_bid_mode from './20270318_190000_bid_mode';
 import * as migration_20270318_210000_waiting_list from './20270318_210000_waiting_list';
+import * as migration_20270318_200000_bid_json_column from './20270318_200000_bid_json_column';
 
 export const migrations = [
   {
@@ -1512,5 +1513,10 @@ export const migrations = [
     up: migration_20270318_240000_limit_claims.up,
     down: migration_20270318_240000_limit_claims.down,
     name: '20270318_240000_limit_claims',
+  },
+  {
+    up: migration_20270318_200000_bid_json_column.up,
+    down: migration_20270318_200000_bid_json_column.down,
+    name: '20270318_200000_bid_json_column',
   },
 ];
