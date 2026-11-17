@@ -37,10 +37,6 @@ Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20
 ## Tasks (in order, 38 open; Tasks 1 and 3 closed 17 Nov 2026, the rest keep their numbers until the next renumber)
 Open tasks are numbered 1 to 40 in the order they should be built (renumbered 16 Nov 2026 after finished work moved to `remaining-work-done.md`). The live checks are not tasks: they are the last section of this file. Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the done file, and is not the same as an open task with that number. Sub-ids like 11a and 29c are the item letters inside a task. The audits, plans and reports that these tasks depend on are in the Reference sections after the tasks.
 
-### Task 2. Shine and Spark follow-ups: leftovers (partly done 17 Nov 2026)
-Built items are in `docs/remaining-work-done.md`. Still open:
-- [ ] Move the four CSS modules onto Shine classes and tokens so Shine is the only style system: `src/admin/admin.module.css`, `src/admin/views/setup/SetupQuestionnaire.module.css`, `SetupQuestionnaireHost.module.css` and `src/features/gettingStarted/GettingStartedCard.module.css` (823 lines in total). Done when: no `*.module.css` is left, the admin roles and permissions tables, the setup questionnaire and the Getting started card look the same in light and dark, and the contrast specs pass.
-
 ### Task 4. Small gaps left by tasks 3 to 7 (partly done 17 Nov 2026)
 Shipped history is in `docs/remaining-work-done.md`. Still open:
 - [ ] The promo badge field labels and descriptions are English only (Task 3).
@@ -907,6 +903,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Shine replaced Tailwind: open the admin (dashboard, a list, Settings, Pages tree) and the public site (home, shop, a product, cart, checkout) in light and dark, desktop and phone. Pass = nothing unstyled, no overlapping text, buttons and forms look like before.
 - [ ] Settings and the visual editor after the style change: open a settings page and save, open the visual editor, add a section, change its design, open the template picker, switch preview widths. Pass = all work and the editor canvas matches the live page.
 - [ ] Templates: the "Engage templates" library is listed in Settings > Template libraries (can be switched off, no Remove button) and its items appear in Templates and the editor. Switch it off and confirm the items disappear.
+- [ ] CSS modules moved into global `eg-*` classes (`src/app/(engage)/module-styles.css`): open Admin > Roles (list, permission matrix, user overrides), Settings transfer (export and import), the approval workflows panel, the setup questionnaire and the Getting started card on the dashboard, in light and dark, desktop and phone. Pass = they look the same as before the change.
 - [ ] Spark rename: open a page that was saved with an old `efx-tilt` class (or add `spark-tilt` in the custom class field) and view it live. Pass = the tilt effect runs; with cdn.jsdelivr.net blocked the effect still runs from `/vendor/spark/`; in Settings > Data and System > Reference sources the source is called Spark. Original check: add class `spark-tilt` to a block (custom class field), view the live page. Pass = the effect runs; with the network blocked to cdn.jsdelivr.net the page still looks normal.
 - [ ] Price tiers: Shop > Price tiers, add quantity breaks and a wholesale price for a role, then check the cart and an order with a normal and a wholesale account. Also check currency rounding on the storefront.
 - [ ] Promo badges: Shop settings > Storefront, add a badge (icon picker, colour pickers), see it on archive and cards at phone width, check the effects respect reduced motion.

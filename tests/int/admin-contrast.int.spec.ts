@@ -36,7 +36,7 @@ const utilities = `
 const html = `<!doctype html><html><head><style>@layer theme, base, components, utilities;
 ${css}
 ${utilities}
-/* Mirrors GettingStartedCard.module.css (theme tokens only; the source is checked below). */
+/* Mirrors the GettingStartedCard styles in module-styles.css (theme tokens only; the source is checked below). */
 .gs-card { background: var(--ac-surface); color: var(--theme-text); border: 1px solid var(--theme-elevation-200); padding: 12px; }
 body { margin: 20px; background: var(--ac-ground); }
 button, a { display: inline-block; margin: 6px; }
@@ -127,10 +127,11 @@ describe('list toolbar and Getting started card contrast (resting)', () => {
     }
   }
 
-  it('GettingStartedCard.module.css uses theme tokens, no hard-coded dark fill', () => {
-    const src = readFileSync(join(process.cwd(), 'src/features/gettingStarted/GettingStartedCard.module.css'), 'utf8')
+  it('GettingStartedCard styles use theme tokens, no hard-coded dark fill', () => {
+    const all = readFileSync(join(process.cwd(), 'src/app/(engage)/module-styles.css'), 'utf8')
+    const src = all.slice(all.indexOf('---- GettingStartedCard'))
     expect(src).not.toMatch(/data-theme/)
     expect(src).not.toMatch(/#1a1a1a|#2a2a2a|#ffffff|#000000/i)
-    expect(src).toMatch(/\.card\s*\{[^}]*background:\s*var\(--ac-surface\)/)
+    expect(src).toMatch(/\.eg-gs-card\s*\{[^}]*background:\s*var\(--ac-surface\)/)
   })
 })

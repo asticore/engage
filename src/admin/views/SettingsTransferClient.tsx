@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState } from 'react'
-import styles from '@/admin/admin.module.css'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings'
@@ -311,7 +310,7 @@ export function SettingsTransferClient() {
                 <label className="st-check">
                   <input
                     type="checkbox"
-                    className={styles.checkbox}
+                    className="eg-roles-checkbox"
                     checked={choices[choice.key]}
                     onChange={() => toggleChoice(choice.key)}
                   />
@@ -324,7 +323,7 @@ export function SettingsTransferClient() {
             ))}
             <li>
               <label className="st-check">
-                <input type="checkbox" className={styles.checkbox} checked={exportCustomers} onChange={() => setExportCustomers((on) => !on)} />
+                <input type="checkbox" className="eg-roles-checkbox" checked={exportCustomers} onChange={() => setExportCustomers((on) => !on)} />
                 <span>
                   <span className="st-check-label">{t('st.label.customers')}</span>
                   <span className="st-muted st-check-hint">{t('st.hint.customers')}</span>
@@ -338,7 +337,7 @@ export function SettingsTransferClient() {
           <label className="st-check">
             <input
               type="checkbox"
-              className={styles.checkbox}
+              className="eg-roles-checkbox"
               checked={includeSecrets}
               onChange={(event) => setIncludeSecrets(event.target.checked)}
               disabled={exportBusy}
@@ -357,7 +356,7 @@ export function SettingsTransferClient() {
                 id="st-export-password"
                 type="password"
                 autoComplete="new-password"
-                className={`${styles.input} st-input`}
+                className={`eg-roles-input st-input`}
                 value={exportPassword}
                 onChange={(event) => setExportPassword(event.target.value)}
                 disabled={exportBusy}
@@ -366,10 +365,10 @@ export function SettingsTransferClient() {
           ) : null}
         </div>
 
-        {exportError ? <p className={`${styles.error} st-error`} role="alert">{exportError}</p> : null}
+        {exportError ? <p className={`eg-roles-error st-error`} role="alert">{exportError}</p> : null}
 
         <div className="st-actions">
-          <button type="button" className={styles.btnPrimary} onClick={handleExport} disabled={exportDisabled}>
+          <button type="button" className="eg-roles-btnPrimary" onClick={handleExport} disabled={exportDisabled}>
             {exportBusy ? t('st.preparing') : t('st.download')}
           </button>
         </div>
@@ -400,7 +399,7 @@ export function SettingsTransferClient() {
               id="st-import-password"
               type="password"
               autoComplete="off"
-              className={`${styles.input} st-input`}
+              className={`eg-roles-input st-input`}
               value={importPassword}
               onChange={(event) => setImportPassword(event.target.value)}
               disabled={importBusy}
@@ -417,7 +416,7 @@ export function SettingsTransferClient() {
                   <label className="st-check">
                     <input
                       type="checkbox"
-                      className={styles.checkbox}
+                      className="eg-roles-checkbox"
                       checked={importSections.includes(section)}
                       onChange={() => toggleImportSection(section)}
                     />
@@ -429,7 +428,7 @@ export function SettingsTransferClient() {
             <label className="st-check">
               <input
                 type="checkbox"
-                className={styles.checkbox}
+                className="eg-roles-checkbox"
                 checked={allowAdmins}
                 onChange={(event) => setAllowAdmins(event.target.checked)}
               />
@@ -441,18 +440,18 @@ export function SettingsTransferClient() {
           </fieldset>
         ) : null}
 
-        {importError ? <p className={`${styles.error} st-error`} role="alert">{importError}</p> : null}
+        {importError ? <p className={`eg-roles-error st-error`} role="alert">{importError}</p> : null}
 
         <div className="st-actions">
           <button
             type="button"
-            className={styles.btnSecondary}
+            className="eg-roles-btnSecondary"
             onClick={handleDryRun}
             disabled={!importFile || importBusy || importSections.length === 0 || (importFile.encrypted && !importPassword)}
           >
             {t('st.dryRun')}
           </button>
-          <button type="button" className={styles.btnPrimary} onClick={handleApply} disabled={!planClean || importBusy}>
+          <button type="button" className="eg-roles-btnPrimary" onClick={handleApply} disabled={!planClean || importBusy}>
             {t('st.apply')}
           </button>
         </div>
