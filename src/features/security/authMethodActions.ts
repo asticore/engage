@@ -5,11 +5,12 @@ import { headers } from 'next/headers'
 import { getAdminContext } from '@/admin/auth'
 import { refuseWhileImpersonating } from '@/features/impersonation/policy'
 import { extraRowFor, readExtraRows, writeExtraRow } from '@/features/socialLogin/extraStore'
-import { isExtraProviderId, missingCredentials, PROVIDER_IDS, type ProviderId } from '@/features/socialLogin/providers'
+import { isExtraProviderId, isProviderId, missingCredentials, PROVIDER_IDS, type ProviderId } from '@/features/socialLogin/providers'
 import { readSocialConfig } from '@/features/socialLogin/settings'
 
 import { audit, auditContext } from './auditLog'
 import { readMatrix, setBlocked, writeMatrix, type MatrixArea } from './authMatrix'
+import { checkProviderConfig, testKind } from './authMethodTest'
 import { placeHasWayIn, togglePatch } from './authMethods'
 import { getSecuritySettings } from './settings'
 
@@ -79,5 +80,31 @@ export async function setMethodAreaAction(area: string, method: string, allowed:
     return { ok: true, message: allowed ? 'Allowed.' : 'Blocked.' }
   } catch {
     return { ok: false, message: 'That could not be saved just now. Try again.' }
+  }
+}
+
+/** Admin only: checks one method. Social providers get a configuration check; email methods send a test email to the admin's own address. */
+export async function testAuthMethodAction(id: string): Promise<ToggleResult> {
+  const incoming = await headers()
+  const refused = refuseWhileImpersonating(incoming)
+  if (refused) return { ok: false, message: refused }
+  const context = await getAdminContext()
+  if (!context.user || !context.isAdmin) return { ok: false, message: 'Only an admin can test sign-in methods.' }
+  const kind = testKind(String(id))
+  if (!kind) return { ok: false, message: 'That method has nothing to test.' }
+  try {
+    if (kind === 'provider') {
+      const provider = id.slice('social-'.length)
+      if (!isProviderId(provider)) return { ok: false, message: 'Unknown provider.' }
+      const social = await readSocialConfig(context.engine as never)
+      return checkProviderConfig(provider, social.providers[provider])
+    }
+    const to = (context.user as unknown as { email?: string }).email
+    if (!to) return { ok: false, message: 'Your account has no email address.' }
+    const { sendEmail } = await import('@/features/email')
+    const result = await sendEmail({ to, template: 'test', subject: 'Sign-in email test', text: 'This confirms sign-in emails can be sent from your site.', html: '<p>This confirms sign-in emails can be sent from your site.</p>' })
+    return result.ok ? { ok: true, message: `Test email sent to ${to}.` } : { ok: false, message: result.error || 'The email could not be sent. Check Email settings.' }
+  } catch {
+    return { ok: false, message: 'The test could not run just now. Try again.' }
   }
 }

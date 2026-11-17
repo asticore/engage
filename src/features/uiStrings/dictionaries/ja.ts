@@ -4136,6 +4136,12 @@ const ja: UiDictionary = {
   "themeStyle.confirm": "このテーマを適用しますか？現在の色、テキスト、ボタン、レイアウトが置き換えられます。「変更を保存」を選ぶまで保存されません。",
   "themeStyle.applied": "選択内容から作成したテーマをエディターに適用しました。内容を確認してから「変更を保存」を選んでください。",
   "themeStyle.use": "このテーマを使う",
+  "auth.test": "テスト",
+  "signins.title": "サインイン、{from} から {to}",
+  "signins.from": "開始",
+  "signins.to": "終了",
+  "signins.apply": "表示",
+  "signins.reset": "過去30日",
 }
 
 export default ja

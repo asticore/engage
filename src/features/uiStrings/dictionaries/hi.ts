@@ -4136,6 +4136,12 @@ const hi: UiDictionary = {
   "themeStyle.confirm": "यह थीम लागू करें? यह आपके मौजूदा रंग, टेक्स्ट, बटन और लेआउट की जगह लेगी। जब तक आप बदलाव सहेजें नहीं चुनते, यह सहेजी नहीं जाएगी।",
   "themeStyle.applied": "आपकी पसंद से बनी थीम एडिटर में लागू हो गई है। इसे देखें, फिर बदलाव सहेजें चुनें।",
   "themeStyle.use": "यह थीम इस्तेमाल करें",
+  "auth.test": "जाँचें",
+  "signins.title": "साइन-इन, {from} से {to} तक",
+  "signins.from": "से",
+  "signins.to": "तक",
+  "signins.apply": "दिखाएँ",
+  "signins.reset": "पिछले 30 दिन",
 }
 
 export default hi

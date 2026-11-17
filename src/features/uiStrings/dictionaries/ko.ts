@@ -4136,6 +4136,12 @@ const ko: UiDictionary = {
   "themeStyle.confirm": "이 테마를 적용할까요? 현재 색상, 텍스트, 버튼, 레이아웃이 바뀌어요. 변경 사항 저장을 누르기 전까지는 저장되지 않아요.",
   "themeStyle.applied": "고른 스타일로 만든 테마를 편집기에 적용했어요. 확인한 뒤 변경 사항 저장을 눌러 주세요.",
   "themeStyle.use": "이 테마 사용",
+  "auth.test": "테스트",
+  "signins.title": "로그인, {from} ~ {to}",
+  "signins.from": "시작",
+  "signins.to": "종료",
+  "signins.apply": "보기",
+  "signins.reset": "최근 30일",
 }
 
 export default ko

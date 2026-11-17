@@ -4136,6 +4136,12 @@ const fr: UiDictionary = {
   "themeStyle.confirm": "Appliquer ce thème ? Il remplace tes couleurs, textes, boutons et mise en page actuels. Rien n'est enregistré tant que tu ne choisis pas Enregistrer les modifications.",
   "themeStyle.applied": "Le thème créé à partir de tes choix est appliqué à l'éditeur. Vérifie-le, puis choisis Enregistrer les modifications.",
   "themeStyle.use": "Utiliser ce thème",
+  "auth.test": "Tester",
+  "signins.title": "Connexions, du {from} au {to}",
+  "signins.from": "Du",
+  "signins.to": "Au",
+  "signins.apply": "Afficher",
+  "signins.reset": "30 derniers jours",
 }
 
 export default fr

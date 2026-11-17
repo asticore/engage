@@ -20,6 +20,7 @@ import {
 } from './dashboardData'
 import { AdminBarChart, type AdminBarDatum } from '@/admin/charts/AdminBarChart'
 import { resolveD1Binding } from '@/cms/db/connect'
+import { parseSignInRange } from '@/features/security/authRange'
 import { loadAccountCounts, loadAuthStats } from '@/features/security/authStats'
 import type { AdminUiServer } from '@/admin/i18n/serverUi'
 
@@ -155,14 +156,16 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
   ])
 
   // Sign-in numbers: admins only, and only while Security is on.
+  const sp = (props.searchParams ?? {}) as Record<string, unknown>
+  const range = parseSignInRange(sp.signinFrom, sp.signinTo, now)
   const signIns =
     reviewContext.isAdmin && flags.security
-      ? await loadAuthStats((await resolveD1Binding().catch((): null => null)) as never, TREND_DAYS, now).catch((): null => null)
+      ? await loadAuthStats((await resolveD1Binding().catch((): null => null)) as never, range.days, range.end).catch((): null => null)
       : null
 
   const accountCounts =
     reviewContext.isAdmin && flags.security
-      ? await loadAccountCounts((await resolveD1Binding().catch((): null => null)) as never, TREND_DAYS, now).catch((): null => null)
+      ? await loadAccountCounts((await resolveD1Binding().catch((): null => null)) as never, range.days, range.end, range.to === now.toISOString().slice(0, 10) ? undefined : new Date(Date.parse(`${range.to}T00:00:00Z`) + 86400000).toISOString()).catch((): null => null)
       : null
 
   const quickCreates = QUICK_CREATE_SLUGS.map((slug) => findEntity(groups, slug)).filter(
@@ -252,10 +255,20 @@ export const Dashboard: React.FC<AdminViewServerProps> = async (props) => {
 
       {signIns && (
         <section>
-          <h2 className={sectionTitleClassName}>Sign-ins, last {TREND_DAYS} days</h2>
+          <h2 className={sectionTitleClassName}>{ui.t('signins.title', { from: range.from, to: range.to })}</h2>
+          <form method="get" className="mb-[calc(var(--base)*0.75)] flex flex-wrap items-end gap-[calc(var(--base)*0.5)]">
+            <label>
+              {ui.t('signins.from')} <input type="date" name="signinFrom" defaultValue={range.from} max={range.to} />
+            </label>
+            <label>
+              {ui.t('signins.to')} <input type="date" name="signinTo" defaultValue={range.to} />
+            </label>
+            <button type="submit">{ui.t('signins.apply')}</button>
+            {range.custom && <a href="?">{ui.t('signins.reset')}</a>}
+          </form>
           {accountCounts && (
             <p className="m-0 mb-[calc(var(--base)*0.75)]">
-              <strong>{accountCounts.signUps}</strong> new sign-ups in the last {TREND_DAYS} days. <strong>{accountCounts.activeSessions}</strong> active sessions right now.
+              <strong>{accountCounts.signUps}</strong> new sign-ups in these {range.days} days. <strong>{accountCounts.activeSessions}</strong> active sessions right now.
             </p>
           )}
           <div className="grid grid-cols-1 gap-[calc(var(--base)*1)] md:grid-cols-2">
