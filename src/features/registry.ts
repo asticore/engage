@@ -402,7 +402,7 @@ export const FEATURES: FeatureDef[] = [
   {
     key: 'clientreports',
     label: 'Client reports',
-    description: 'Make read-only report links for a client (sales, form entries and content over a date range), download the numbers as CSV and email the report on a weekly or monthly schedule.',
+    description: 'Make read-only report links for a client (sales, form entries, content, Google traffic and search numbers and page speed over a date range, with the sections chosen per report), download the numbers as CSV and email the report on a weekly or monthly schedule.',
     defaultEnabled: false,
     collections: [],
     globals: [],

@@ -76,7 +76,7 @@ export function TicketTiersField({ path, readOnly }: { path: string; readOnly?: 
           <label>
             Shop product that sells this ticket type (optional)
             <select onChange={(event) => update(index, { productId: event.target.value ? Number(event.target.value) : null })} value={row.productId ?? ''}>
-              <option value="">The event's single ticket product</option>
+              <option value="">The event&apos;s single ticket product</option>
               {row.productId && !products.some((p) => Number(p.id) === row.productId) && <option value={row.productId}>Product #{row.productId}</option>}
               {products.map((p) => (
                 <option key={p.id} value={p.id}>

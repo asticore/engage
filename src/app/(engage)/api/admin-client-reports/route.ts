@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
 import { newToken } from '@/features/affiliates/core'
-import { CADENCES, MAX_NAME, MAX_RECIPIENTS, MAX_REPORTS, PRESETS, parseRecipients, reportCsv, toCadence, toPreset } from '@/features/clientReports/core'
-import { buildReport, reportLink, sendReport } from '@/features/clientReports/service'
+import { CADENCES, MAX_NAME, MAX_RECIPIENTS, MAX_REPORTS, PRESETS, SECTIONS, parseRecipients, parseSections, reportCsv, toCadence, toDay, toPreset } from '@/features/clientReports/core'
+import { buildReport, reportLink, reportPdf, sendReport } from '@/features/clientReports/service'
 import * as store from '@/features/clientReports/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { adminRequestRefusal } from '@/features/forms/origin'
@@ -26,9 +26,18 @@ async function guard(request: Request, write: boolean) {
   return { context }
 }
 
+/** The sections and fixed dates from a request. A 'custom' period needs two valid dates, start not after end. */
+function options(body: Record<string, unknown>): { ok: true; preset: ReturnType<typeof toPreset>; sections: ReturnType<typeof parseSections>; rangeFrom: string; rangeTo: string } | { ok: false; error: string } {
+  const preset = toPreset(body.preset)
+  const rangeFrom = toDay(body.rangeFrom)
+  const rangeTo = toDay(body.rangeTo)
+  if (preset === 'custom' && (!rangeFrom || !rangeTo || rangeFrom > rangeTo)) return { ok: false, error: 'Choose a start date and an end date, with the start first.' }
+  return { ok: true, preset, sections: parseSections(body.sections), rangeFrom: preset === 'custom' ? rangeFrom : '', rangeTo: preset === 'custom' ? rangeTo : '' }
+}
+
 const text = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
-/** GET: every report with its share link. GET ?csv=<id> downloads that report's numbers as CSV. */
+/** GET: every report with its share link. GET ?csv=<id> downloads that report's numbers as CSV, ?pdf=<id> as a PDF. */
 export async function GET(request: Request): Promise<Response> {
   const g = await guard(request, false)
   if (!g.context) return g.response
@@ -37,12 +46,19 @@ export async function GET(request: Request): Promise<Response> {
   if (csvId) {
     const report = await store.findById(d1, csvId)
     if (!report) return json({ error: 'Report not found.' }, 404)
-    const data = await buildReport(g.context.engine, d1 as never, report.preset, new Date())
+    const data = await buildReport(g.context.engine, d1 as never, report, new Date())
     return new Response(reportCsv(data), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="client-report-${report.id}.csv"`, 'Cache-Control': 'no-store' } })
+  }
+  const pdfId = Number(new URL(request.url).searchParams.get('pdf'))
+  if (pdfId) {
+    const report = await store.findById(d1, pdfId)
+    if (!report) return json({ error: 'Report not found.' }, 404)
+    const pdf = await reportPdf(g.context.engine, d1 as never, report, report, new Date())
+    return new Response(pdf, { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="client-report-${report.id}.pdf"`, 'Cache-Control': 'no-store' } })
   }
   const origin = await requestSiteOrigin()
   const reports = (await store.listReports(d1)).map((r) => ({ ...r, link: reportLink(origin, r.token) }))
-  return json({ reports, presets: PRESETS, cadences: CADENCES, maxRecipients: MAX_RECIPIENTS })
+  return json({ reports, presets: PRESETS, cadences: CADENCES, sections: SECTIONS, maxRecipients: MAX_RECIPIENTS })
 }
 
 /** POST { action: 'create' | 'update' | 'revoke' | 'restore' | 'rotate' | 'delete' | 'send', id?, name?, preset?, recipients?, cadence? } */
@@ -60,7 +76,9 @@ export async function POST(request: Request): Promise<Response> {
     const name = text(body.name, MAX_NAME)
     if (!name) return json({ error: 'Give the report a name, such as the client name.' }, 400)
     if ((await store.countReports(d1)) >= MAX_REPORTS) return json({ error: `A site can have at most ${MAX_REPORTS} reports.` }, 400)
-    const newId = await store.createReport(d1, { name, token: newToken(), preset: toPreset(body.preset), recipients: parseRecipients(body.recipients).join(', '), cadence: toCadence(body.cadence) }, iso)
+    const o = options(body)
+    if ('error' in o) return json({ error: o.error }, 400)
+    const newId = await store.createReport(d1, { name, token: newToken(), preset: o.preset, sections: o.sections, rangeFrom: o.rangeFrom, rangeTo: o.rangeTo, recipients: parseRecipients(body.recipients).join(', '), cadence: toCadence(body.cadence) }, iso)
     return json({ ok: true, id: newId })
   }
   if (!Number.isFinite(id) || id <= 0) return json({ error: 'Unknown report.' }, 400)
@@ -69,7 +87,9 @@ export async function POST(request: Request): Promise<Response> {
 
   if (body.action === 'update') {
     const name = text(body.name, MAX_NAME) || report.name
-    await store.updateReport(d1, id, { name, preset: toPreset(body.preset), recipients: parseRecipients(body.recipients).join(', '), cadence: toCadence(body.cadence) }, iso)
+    const o = options(body)
+    if ('error' in o) return json({ error: o.error }, 400)
+    await store.updateReport(d1, id, { name, preset: o.preset, sections: o.sections, rangeFrom: o.rangeFrom, rangeTo: o.rangeTo, recipients: parseRecipients(body.recipients).join(', '), cadence: toCadence(body.cadence) }, iso)
     return json({ ok: true })
   }
   if (body.action === 'revoke' || body.action === 'restore') {

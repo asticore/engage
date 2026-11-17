@@ -9,7 +9,7 @@ import type { UiStringKey } from '@/features/uiStrings'
 import { PRIORITIES, isOverdue, myTasks, type Board, type Card, type Person } from './logic'
 import type { Activity, Column, Comment } from './store'
 
-type Data = { boards: Board[]; me: { id: number; isAdmin: boolean }; people: Person[]; board?: Board; columns?: Column[]; cards?: Card[]; activity?: Activity[]; assignable?: Person[]; comments?: Comment[] }
+type Data = { boards: Board[]; me: { id: number; isAdmin: boolean }; people: Person[]; board?: Board; columns?: Column[]; cards?: Card[]; activity?: Activity[]; assignable?: Person[]; comments?: Comment[]; scopeChoices?: { organizations: { id: string; name: string }[]; teams: { id: string; organizationId: string; name: string }[] } }
 type Draft = { cardId?: number; columnId: number; title: string; description: string; assigneeId: string; dueDate: string; labels: string; priority: string }
 
 const API = '/api/admin-taskboard'
@@ -37,7 +37,7 @@ export function TaskboardPanel() {
   const [comment, setComment] = useState('')
   const [message, setMessage] = useState('')
   const [dragId, setDragId] = useState<number | null>(null)
-  const [settings, setSettings] = useState<{ name: string; memberIds: number[]; columns: { id?: number; name: string }[] } | null>(null)
+  const [settings, setSettings] = useState<{ name: string; memberIds: number[]; organizationId: string; teamId: string; columns: { id?: number; name: string }[] } | null>(null)
 
   const load = useCallback(async (id: number | null, cardId?: number) => {
     const query = new URLSearchParams()
@@ -111,7 +111,7 @@ export function TaskboardPanel() {
         {data.me.isAdmin ? (
           <>
             <button type="button" className="btn" onClick={() => { const name = window.prompt(t('tb.boardNamePrompt')); if (name) void post({ action: 'create-board', boardId: undefined, name }).then((b) => b && setBoardId(Number(b.id))) }}>{t('tb.newBoard')}</button>
-            {data.board ? <button type="button" className="btn" onClick={() => setSettings({ name: data.board!.name, memberIds: data.board!.memberIds, columns: columns.map((c) => ({ id: c.id, name: c.name })) })}>{t('tb.boardSettings')}</button> : null}
+            {data.board ? <button type="button" className="btn" onClick={() => setSettings({ name: data.board!.name, memberIds: data.board!.memberIds, organizationId: data.board!.organizationId ?? '', teamId: data.board!.teamId ?? '', columns: columns.map((c) => ({ id: c.id, name: c.name })) })}>{t('tb.boardSettings')}</button> : null}
           </>
         ) : null}
       </div>
@@ -195,6 +195,24 @@ export function TaskboardPanel() {
         <div className="card" role="dialog" aria-label={t('tb.boardSettings')}>
           <div className="card-body stack">
             <label className="field">{t('tb.boardName')}<input className="input" value={settings.name} onChange={(e) => setSettings({ ...settings, name: e.target.value })} /></label>
+            {data.scopeChoices && data.scopeChoices.organizations.length > 0 ? (
+              <>
+                <label className="field">{t('tb.company')}
+                  <select className="input" value={settings.organizationId} onChange={(e) => setSettings({ ...settings, organizationId: e.target.value, teamId: '' })}>
+                    <option value="">{t('tb.noCompany')}</option>
+                    {data.scopeChoices.organizations.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  </select>
+                </label>
+                {settings.organizationId ? (
+                  <label className="field">{t('tb.team')}
+                    <select className="input" value={settings.teamId} onChange={(e) => setSettings({ ...settings, teamId: e.target.value })}>
+                      <option value="">{t('tb.wholeCompany')}</option>
+                      {data.scopeChoices.teams.filter((x) => x.organizationId === settings.organizationId).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                    </select>
+                  </label>
+                ) : null}
+              </>
+            ) : null}
             <fieldset className="field">
               <legend>{t('tb.whoCanOpen')}</legend>
               {people.map((p) => (
@@ -211,7 +229,7 @@ export function TaskboardPanel() {
             ))}
             <button type="button" className="btn" onClick={() => setSettings({ ...settings, columns: [...settings.columns, { name: '' }] })}>{t('tb.addColumn')}</button>
             <div className="cluster">
-              <button type="button" className="btn" onClick={() => void post({ action: 'update-board', name: settings.name, memberIds: settings.memberIds, columns: settings.columns }).then((ok) => ok && setSettings(null))}>{t('tb.saveBoard')}</button>
+              <button type="button" className="btn" onClick={() => void post({ action: 'update-board', name: settings.name, memberIds: settings.memberIds, organizationId: settings.organizationId || null, teamId: settings.teamId || null, columns: settings.columns }).then((ok) => ok && setSettings(null))}>{t('tb.saveBoard')}</button>
               <button type="button" className="btn" onClick={() => setSettings(null)}>{t('tb.close')}</button>
               <button type="button" className="btn" onClick={() => { if (window.confirm(t('tb.deleteBoardConfirm'))) void post({ action: 'delete-board' }).then(() => { setSettings(null); setBoardId(null) }) }}>{t('tb.deleteBoard')}</button>
             </div>

@@ -244,6 +244,31 @@ export function MediaGalleryGrid({
     )
   }
 
+  const aiTag = async (ids: number[]) => {
+    setBusy('aitag')
+    setNotice(null)
+    let tagged = 0
+    let failed = 0
+    let firstError = ''
+    for (let i = 0; i < ids.length; i += ALT_BATCH) {
+      const result = await postJson<{ results: Array<{ status: string; reason?: string }> }>('/api/admin-media-ai-tags', {
+        ids: ids.slice(i, i + ALT_BATCH),
+        provider,
+        apply: true,
+      })
+      if (result.ok === false) return finish('error', result.error)
+      for (const item of result.data.results) {
+        if (item.status === 'tagged') tagged += 1
+        else if (item.status === 'failed') {
+          failed += 1
+          firstError = firstError || item.reason || ''
+        }
+      }
+    }
+    setSelected(new Set())
+    finish(failed > 0 ? 'error' : 'ok', `Added AI tags to ${tagged} file${tagged === 1 ? '' : 's'}.${failed ? ` ${failed} failed${firstError ? `: ${firstError}` : ''}` : ''}`)
+  }
+
   const moveTo = async (ids: number[], folder: string) => {
     setBusy('move')
     setNotice(null)
@@ -394,6 +419,9 @@ export function MediaGalleryGrid({
               </button>
               <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => tagIds(selectedIds, true)}>
                 Remove tag
+              </button>
+              <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => aiTag(selectedIds)}>
+                {busy === 'aitag' ? 'Tagging...' : 'AI tag'}
               </button>
             </span>
           ) : null}

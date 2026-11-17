@@ -3,6 +3,8 @@
  * Boards hold columns, columns hold cards. A card's `position` orders it inside its column.
  */
 
+import { mayAccessRecord, type OrgAccess } from '@/features/organizations/access'
+
 export const PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const
 export type Priority = (typeof PRIORITIES)[number]
 
@@ -23,7 +25,7 @@ export type Card = {
   archived: boolean
 }
 
-export type Board = { id: number; name: string; memberIds: number[] }
+export type Board = { id: number; name: string; memberIds: number[]; organizationId: string | null; teamId: string | null; createdBy: number | null }
 
 export type Person = { id: number; email: string; name: string }
 
@@ -56,9 +58,15 @@ export function parseCardInput(raw: unknown): { ok: true; card: CardInput } | { 
   return { ok: true, card: { title, description: clean(r.description, 5000), assigneeId: assignee, dueDate: due, labels: [...new Set(labels)], priority } }
 }
 
-/** A board with no members listed is open to every admin and staff user. */
-export function canAccessBoard(board: Pick<Board, 'memberIds'>, user: { id: number; isAdmin: boolean }): boolean {
+/**
+ * Admins always get in. A board that names a company or team follows the organisation access helper (its
+ * creator, company owners and admins, team members, or company members when no team is named); without
+ * `access` such a board is closed to non-admins. Any other board with no members listed is open to every
+ * admin and staff user.
+ */
+export function canAccessBoard(board: Pick<Board, 'memberIds'> & Partial<Pick<Board, 'organizationId' | 'teamId' | 'createdBy'>>, user: { id: number; isAdmin: boolean }, access?: OrgAccess): boolean {
   if (user.isAdmin) return true
+  if (board.organizationId || board.teamId) return access ? mayAccessRecord(access, { organizationId: board.organizationId, teamId: board.teamId, ownerUserId: board.createdBy ?? null }) === true : false
   return board.memberIds.length === 0 || board.memberIds.includes(user.id)
 }
 

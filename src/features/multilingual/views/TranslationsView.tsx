@@ -224,8 +224,14 @@ export const TranslationsView: React.FC<AdminViewServerProps> = async (props) =>
         <h1>{ui.t('translations.heading')}</h1>
         <div className="text-[13px]" style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
           {progress.map((entry) => (
-            <span key={entry.locale}>
+            <span key={entry.locale} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               {entry.label}: {entry.done} of {entry.total} approved
+              <progress
+                value={entry.done}
+                max={Math.max(entry.total, 1)}
+                aria-label={`${entry.label}: ${entry.done} of ${entry.total} approved`}
+                style={{ width: 96, height: 8, accentColor: 'var(--theme-success-500, #2e7d32)' }}
+              />
             </span>
           ))}
         </div>

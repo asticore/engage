@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- a CommonJS script, run by hand with node */
 /**
  * Writes src/features/effects/catalogData.ts from the `.meta.js` files of a Spark checkout.
  *   node scripts/gen-effect-catalog.cjs <path to spark checkout> <commit it is pinned at>
@@ -61,7 +62,7 @@ import type { EffectDef } from './catalog'
 
 export const SPARK_CATALOG_COMMIT = ${JSON.stringify(commit)}
 
-export const EFFECT_DATA: EffectDef[] = ${JSON.stringify(effects, null, 2)}
+export const EFFECT_DATA: EffectDef[] = ${JSON.stringify(effects, null, 2).replace(/\u2014/g, '\\u2014')}
 `
 fs.writeFileSync(path.join(__dirname, '../src/features/effects/catalogData.ts'), out)
 console.log(`${effects.length} effects`)

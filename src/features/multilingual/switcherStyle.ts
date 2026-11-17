@@ -5,7 +5,7 @@
 
 export const SWITCHER_DISPLAYS = ['name', 'code', 'flag-name', 'flag'] as const
 export type SwitcherDisplay = (typeof SWITCHER_DISPLAYS)[number]
-export const SWITCHER_LAYOUTS = ['row', 'list'] as const
+export const SWITCHER_LAYOUTS = ['row', 'list', 'dropdown'] as const
 export type SwitcherLayout = (typeof SWITCHER_LAYOUTS)[number]
 export const SWITCHER_HOVERS = ['underline', 'background', 'none'] as const
 export type SwitcherHover = (typeof SWITCHER_HOVERS)[number]

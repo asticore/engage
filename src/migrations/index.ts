@@ -204,6 +204,7 @@ import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
 import * as migration_20270317_100000_demos from './20270317_100000_demos';
 import * as migration_20270317_110000_client_reports from './20270317_110000_client_reports';
+import * as migration_20270318_250000_client_report_options from './20270318_250000_client_report_options';
 import * as migration_20270317_120000_franchising from './20270317_120000_franchising';
 import * as migration_20270316_428000_mini_cart from './20270316_428000_mini_cart';
 import * as migration_20270317_150000_stock_hold from './20270317_150000_stock_hold';
@@ -252,6 +253,7 @@ import * as migration_20270318_170000_event_max_per_person from './20270318_1700
 import * as migration_20270318_180000_paid_bookings from './20270318_180000_paid_bookings';
 import * as migration_20270318_190000_bid_mode from './20270318_190000_bid_mode';
 import * as migration_20270318_210000_waiting_list from './20270318_210000_waiting_list';
+import * as migration_20270319_100000_taskboard_org_scope from './20270319_100000_taskboard_org_scope';
 import * as migration_20270318_200000_bid_json_column from './20270318_200000_bid_json_column';
 
 export const migrations = [
@@ -1524,5 +1526,15 @@ export const migrations = [
     up: migration_20270317_290000_blog_base.up,
     down: migration_20270317_290000_blog_base.down,
     name: '20270317_290000_blog_base',
+  },
+  {
+    up: migration_20270318_250000_client_report_options.up,
+    down: migration_20270318_250000_client_report_options.down,
+    name: '20270318_250000_client_report_options',
+  },
+  {
+    up: migration_20270319_100000_taskboard_org_scope.up,
+    down: migration_20270319_100000_taskboard_org_scope.down,
+    name: '20270319_100000_taskboard_org_scope',
   },
 ];

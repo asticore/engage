@@ -2,6 +2,7 @@ import type { Engine } from '@/engine'
 import { applyImport } from '@/features/settingsTransfer/import'
 import { renderExport } from '@/features/settingsTransfer/export'
 
+import { getStarter } from '@/features/siteTemplates/starters'
 import { DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, MAX_SNAPSHOT_BYTES, RESET_CLEAN_COLLECTIONS, demoPassword, describeBytes, idsAddedAfterCopy, isEmail, isResetDue } from './core'
 import { copyPictures, restorePictures } from './pictures'
 import * as store from './store'
@@ -87,4 +88,25 @@ export async function createDemoAccount(engine: Engine, email: string, host: str
     return { ok: false, error: `Could not create the account: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300) }
   }
   return { ok: true, password }
+}
+
+export type StarterResult = { ok: true; message: string; templateId: number | string } | { ok: false; error: string }
+
+/**
+ * One step from a chosen starter to a demo: creates a switched-on site template from the starter (everywhere on the
+ * site for its type), then saves the site as the demo copy. Needs no draft or editor visit first.
+ */
+export async function createDemoFromStarter(engine: Engine, d1: store.D1, starterId: unknown, now: Date): Promise<StarterResult> {
+  const starter = getStarter(starterId)
+  if (!starter) return { ok: false, error: 'Unknown starter.' }
+  let templateId: number | string
+  try {
+    const doc = await engine.create({ collection: 'site-templates', overrideAccess: true, data: { name: `Demo: ${starter.label}`, kind: starter.kind, enabled: true, conditions: [], blocks: starter.blocks() } } as never)
+    templateId = (doc as { id: number | string }).id
+  } catch (error) {
+    return { ok: false, error: `Could not create the template: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300) }
+  }
+  const snapshot = await takeSnapshot(engine, d1, now)
+  if ('error' in snapshot) return { ok: false, error: `The "${starter.label}" template is on, but the demo copy was not saved. ${snapshot.error}` }
+  return { ok: true, templateId, message: `The "${starter.label}" starter is on across the site and the demo copy is saved.` }
 }
