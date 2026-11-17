@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/features/ecommerce/server/pricing', () => ({
   CheckoutError: class CheckoutError extends Error {},
 }))
-vi.mock('@/features/ecommerce/server/db', () => ({ rawD1: async () => null }))
+vi.mock('@/features/ecommerce/server/db', () => ({ rawD1: async (): Promise<null> => null }))
 vi.mock('@/utilities/features', () => ({ getFeatureFlags: async () => ({ limits: true }) }))
 
 import { checkRules, type LimitCheck } from '@/features/purchaseLimits/enforce'
