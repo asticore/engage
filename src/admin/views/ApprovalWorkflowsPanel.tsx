@@ -219,71 +219,70 @@ function WorkflowForm({
 
       {people.length > 0 && sectionOptions.length > 0 && (
         <fieldset className="rw-roles" disabled={disabled}>
-          <legend>A different approver for a section</legend>
+          <legend>{t('approval.workflow.section.legend')}</legend>
           <p className="rw-hint">
-            {draft.collection === 'pages' ? 'A page belongs to the top-level page it sits under.' : 'A post belongs to its first category.'} Work in that section is approved by the people named, at every step, unless its author has an approver of their own.
+            {draft.collection === 'pages' ? t('approval.workflow.section.hintPages') : t('approval.workflow.section.hintPosts')} {t('approval.workflow.section.hintRule')}
           </p>
           {Object.entries(draft.sectionRoutes).map(([key, approvers]) => (
             <p key={key} className="rw-hint">
-              {sectionLabel(key)} is approved by {approvers.map(personName).join(', ')}{' '}
-              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, sectionRoutes: setSectionRoute(draft.sectionRoutes, key, []) })}>Remove</button>
+              {t('approval.workflow.section.row', { section: sectionLabel(key), people: approvers.map(personName).join(', ') })}{' '}
+              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, sectionRoutes: setSectionRoute(draft.sectionRoutes, key, []) })}>{t('approval.workflow.remove')}</button>
             </p>
           ))}
           <div className="rw-grid">
             <label className="rw-field" htmlFor={`${idBase}-section`}>
-              <span>Section</span>
+              <span>{t('approval.workflow.section.field')}</span>
               <select id={`${idBase}-section`} className="eg-roles-input" value={sectionKey} onChange={(event) => setSectionKey(event.target.value)}>
-                <option value="">Pick…</option>
+                <option value="">{t('approval.workflow.pick')}</option>
                 {sectionOptions.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
               </select>
             </label>
             <label className="rw-field" htmlFor={`${idBase}-section-approver`}>
-              <span>Approved by</span>
+              <span>{t('approval.workflow.approvedBy')}</span>
               <select id={`${idBase}-section-approver`} className="eg-roles-input" value={sectionApprover} onChange={(event) => setSectionApprover(Number(event.target.value))}>
-                <option value={0}>Pick…</option>
+                <option value={0}>{t('approval.workflow.pick')}</option>
                 {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </label>
           </div>
           <button type="button" className="eg-roles-btnSecondary" disabled={!sectionKey || !sectionApprover} onClick={() => { const key = sectionKey.trim().toLowerCase(); onChange({ ...draft, sectionRoutes: setSectionRoute(draft.sectionRoutes, key, [...new Set([...(draft.sectionRoutes[key] ?? []), sectionApprover])]) }); setSectionApprover(0) }}>
-            Add
+            {t('approval.workflow.add')}
           </button>
         </fieldset>
       )}
 
       {people.length > 1 && (
         <fieldset className="rw-roles" disabled={disabled}>
-          <legend>Stand-ins for reviewers who are away</legend>
-          <p className="rw-hint">While a reviewer is away, the stand-in may approve or send back anything that reviewer could, and gets the same emails. Remove the row when they are back, or set the last day away.</p>
+          <legend>{t('approval.workflow.standIn.legend')}</legend>
+          <p className="rw-hint">{t('approval.workflow.standIn.hint')}</p>
           {draft.standIns.map((entry) => (
             <p key={entry.userId} className="rw-hint">
-              {personName(entry.userId)} is covered by {personName(entry.standInId)}
-              {entry.until ? ` until ${entry.until}` : ' until removed'}{' '}
-              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, standIns: setStandIn(draft.standIns, entry.userId, null, null) })}>Remove</button>
+              {entry.until ? t('approval.workflow.standIn.row', { name: personName(entry.userId), cover: personName(entry.standInId), date: entry.until }) : t('approval.workflow.standIn.rowOpen', { name: personName(entry.userId), cover: personName(entry.standInId) })}{' '}
+              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, standIns: setStandIn(draft.standIns, entry.userId, null, null) })}>{t('approval.workflow.remove')}</button>
             </p>
           ))}
           <div className="rw-grid">
             <label className="rw-field" htmlFor={`${idBase}-away-user`}>
-              <span>Reviewer who is away</span>
+              <span>{t('approval.workflow.standIn.away')}</span>
               <select id={`${idBase}-away-user`} className="eg-roles-input" value={awayUser} onChange={(event) => setAwayUser(Number(event.target.value))}>
-                <option value={0}>Pick…</option>
+                <option value={0}>{t('approval.workflow.pick')}</option>
                 {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </label>
             <label className="rw-field" htmlFor={`${idBase}-cover-user`}>
-              <span>Covered by</span>
+              <span>{t('approval.workflow.standIn.coveredBy')}</span>
               <select id={`${idBase}-cover-user`} className="eg-roles-input" value={coverUser} onChange={(event) => setCoverUser(Number(event.target.value))}>
-                <option value={0}>Pick…</option>
+                <option value={0}>{t('approval.workflow.pick')}</option>
                 {people.filter((p) => p.id !== awayUser).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </label>
             <label className="rw-field" htmlFor={`${idBase}-away-until`}>
-              <span>Last day away (optional)</span>
+              <span>{t('approval.workflow.standIn.until')}</span>
               <input id={`${idBase}-away-until`} className="eg-roles-input" type="date" value={awayUntil} onChange={(event) => setAwayUntil(event.target.value)} />
             </label>
           </div>
           <button type="button" className="eg-roles-btnSecondary" disabled={!awayUser || !coverUser} onClick={() => { onChange({ ...draft, standIns: setStandIn(draft.standIns, awayUser, coverUser, awayUntil || null) }); setAwayUser(0); setCoverUser(0); setAwayUntil('') }}>
-            Add stand-in
+            {t('approval.workflow.standIn.add')}
           </button>
         </fieldset>
       )}

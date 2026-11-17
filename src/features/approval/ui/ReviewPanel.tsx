@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { ReviewState, UseReviewState } from './useReviewState'
 
 /**
@@ -166,6 +167,7 @@ export const ReviewBox: React.FC<{ review: UseReviewState }> = ({ review }) => {
   const [posting, setPosting] = useState(false)
   const [assignTo, setAssignTo] = useState('')
   const [reassigning, setReassigning] = useState(false)
+  const t = useAdminT()
   const state = review.state
 
   if (review.loadError) return <p className="doc-muted">{review.loadError}</p>
@@ -188,14 +190,14 @@ export const ReviewBox: React.FC<{ review: UseReviewState }> = ({ review }) => {
         </p>
       )}
       {state.workflow?.awaiting && state.status === 'in_review' && <p className="doc-line doc-review-awaiting">{state.workflow.awaiting}</p>}
-      {state.status === 'in_review' && state.assignee && <p className="doc-line">Handed to {state.assignee.name}.</p>}
+      {state.status === 'in_review' && state.assignee && <p className="doc-line">{t('approval.review.handedTo', { name: state.assignee.name })}</p>}
       {state.status === 'in_review' && state.allowed.reassign && (
         <div className="doc-review-note">
           <label className="doc-muted" htmlFor="doc-review-reassign">
-            Hand this review to someone else
+            {t('approval.review.reassignLabel')}
           </label>
           <select id="doc-review-reassign" value={assignTo} onChange={(event) => setAssignTo(event.target.value)} style={{ width: '100%', font: 'inherit' }}>
-            <option value="">Pick a person…</option>
+            <option value="">{t('approval.review.reassignPick')}</option>
             {(state.reviewerChoices ?? []).map((person) => (
               <option key={person.id} value={person.id}>
                 {person.name}
@@ -213,11 +215,11 @@ export const ReviewBox: React.FC<{ review: UseReviewState }> = ({ review }) => {
             }}
             type="button"
           >
-            {reassigning ? 'Handing over…' : 'Hand over'}
+            {reassigning ? t('approval.review.handingOver') : t('approval.review.handOver')}
           </button>
           {state.assignee && (
             <button className="doc-link" disabled={reassigning} onClick={() => void review.act('reassign', { assignTo: null })} type="button">
-              Hand back to the usual approvers
+              {t('approval.review.handBack')}
             </button>
           )}
         </div>
@@ -234,7 +236,7 @@ export const ReviewBox: React.FC<{ review: UseReviewState }> = ({ review }) => {
           {state.history.map((event) => (
             <li key={String(event.id)} style={{ marginBottom: '0.5rem' }}>
               <div>
-                <strong>{ACTION_LABELS[event.action]}</strong> {event.actorName ? `by ${event.actorName}` : ''}
+                <strong>{event.action === 'reassigned' ? t('approval.review.history.reassigned') : event.action === 'reset' ? t('approval.review.history.reset') : ACTION_LABELS[event.action]}</strong> {event.actorName ? `by ${event.actorName}` : ''}
                 {event.step ? <span className="doc-muted"> ({event.step})</span> : null}
               </div>
               <div className="doc-muted">{formatDate(event.createdAt)}</div>
