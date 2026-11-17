@@ -94,6 +94,16 @@ export async function listRequests(d1: D1, filter: { status?: string }, limit = 
   return (await all(d1, sql, ...(filter.status ? [filter.status] : []))).map(toRequest)
 }
 
+/** A customer's requests by the email on them, newest first. Callers pass only a confirmed account email. */
+export async function listByEmail(d1: D1, email: string, limit = 50): Promise<QuoteRequest[]> {
+  return (await all(d1, `SELECT * FROM eg_quote_requests WHERE lower(email) = ?1 ORDER BY id DESC LIMIT ${Math.max(1, Math.min(limit, 200))}`, email.trim().toLowerCase())).map(toRequest)
+}
+/** Replaces the private link of a request that has a quote. The link in an earlier email stops working. */
+export async function setTokenHash(d1: D1, id: number, tokenHash: string, nowIso: string): Promise<boolean> {
+  const res = await run(d1, 'UPDATE eg_quote_requests SET token_hash = ?1, updated_at = ?2 WHERE id = ?3 AND quote_total_cents IS NOT NULL', tokenHash, nowIso, id)
+  return (res.meta?.changes ?? 0) > 0
+}
+
 /** Adds an activity line. Read-modify-write: the log is a note for staff, not a ledger. */
 export async function addActivity(d1: D1, id: number, by: ActivityEntry['by'], text: string, nowIso: string): Promise<void> {
   const current = await getRequest(d1, id)
