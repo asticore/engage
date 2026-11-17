@@ -85,13 +85,27 @@ export async function exportSectionAction(feature: string, page = 0): Promise<Se
 }
 
 /** Empties a section's data (rows only, tables stay). Plans unless execute is set; the typed phrase is checked again here. Always audited. */
-export async function emptySectionAction(request: { feature: string; confirm?: string; execute?: boolean; resetCounters?: boolean }): Promise<EmptyPlan> {
+export async function emptySectionAction(request: { feature: string; confirm?: string; execute?: boolean; resetCounters?: boolean; clearFiles?: boolean }): Promise<EmptyPlan> {
   const dryRun = request.execute !== true
   const refuse = (reason: string): EmptyPlan => ({ ok: false, dryRun, feature: request.feature, tables: [], emptied: [], withheld: [], refusals: [reason], errors: [] })
   if (!(await hasAdminSession(await headers()))) return refuse('Not permitted.')
   const db = await getCleanupDb()
   if (!db) return refuse(NO_DB)
+  // Optional second step: also delete the uploaded files the rows pointed at (media only). Names are read first, deleted only after the rows are gone.
+  const wantFiles = request.clearFiles === true && request.execute === true && request.feature === 'media'
+  const { collectMediaFilenames, deleteFiles } = await import('./emptyFiles')
+  const filenames = wantFiles ? await collectMediaFilenames(db).catch((): string[] => []) : []
   const result = await runEmptyFeature(db, await getFeatureFlags(), request)
+  if (wantFiles && result.emptied.includes('eg_media') && filenames.length > 0) {
+    try {
+      const { getMediaBucket } = await import('@/localapi/storage')
+      const files = await deleteFiles(await getMediaBucket(), filenames)
+      result.filesDeleted = files.deleted
+      if (files.failed > 0) result.errors.push({ table: 'files', error: `${files.failed} file${files.failed === 1 ? '' : 's'} could not be removed from storage.` })
+    } catch {
+      result.errors.push({ table: 'files', error: 'The files could not be removed from storage.' })
+    }
+  }
   if (!result.dryRun && result.emptied.length > 0) {
     try {
       const { getEngine } = await import('@/lib/engine')

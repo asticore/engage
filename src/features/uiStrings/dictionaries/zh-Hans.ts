@@ -4177,6 +4177,21 @@ const zhHans: UiDictionary = {
   "themeStyle.r.effect": "建议效果：{label}。{help} 在可视化编辑器的“效果”选择器中应用。",
   "themeStyle.r.effectNone": "这些选择未建议任何效果。",
   "themeStyle.r.variation": "变体：针对此网站微调了具体色调，因此选择相同的其他网站会获得不同的配色。",
+  "webhooks.event.task.assigned": "任务已分配",
+  "webhooks.event.task.commented": "任务有新评论",
+  "webhooks.event.task.due": "任务即将到期",
+  "tb.archive": "归档",
+  "tb.restore": "恢复",
+  "tb.showArchived": "显示已归档",
+  "tb.archived": "已归档",
+  "tb.act.archived": "已归档",
+  "tb.act.restored": "已恢复",
+  "tb.mine.link": "我的所有任务",
+  "tb.mine.openBoard": "打开任务看板",
+  "tb.mine.empty": "没有等待您处理的内容。",
+  "update.updateNow": "立即更新",
+  "update.updating": "正在更新…",
+  "update.failed": "更新失败。",
 }
 
 export default zhHans

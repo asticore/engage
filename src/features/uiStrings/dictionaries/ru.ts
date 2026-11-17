@@ -4178,6 +4178,21 @@ const ru: UiDictionary = {
   "themeStyle.r.effect": "Рекомендуемый эффект: {label}. {help} Примените его в выборе эффектов в визуальном редакторе.",
   "themeStyle.r.effectNone": "Для этих вариантов эффект не рекомендуется.",
   "themeStyle.r.variation": "Вариация: точные оттенки немного сдвинуты для этого сайта, поэтому другой сайт с такими же вариантами получит другую палитру.",
+  "webhooks.event.task.assigned": "Задача назначена",
+  "webhooks.event.task.commented": "Комментарий к задаче",
+  "webhooks.event.task.due": "Срок задачи скоро",
+  "tb.archive": "В архив",
+  "tb.restore": "Восстановить",
+  "tb.showArchived": "Показать архив",
+  "tb.archived": "В архиве",
+  "tb.act.archived": "архивировано",
+  "tb.act.restored": "восстановлено",
+  "tb.mine.link": "Все мои задачи",
+  "tb.mine.openBoard": "Открыть доску задач",
+  "tb.mine.empty": "Ничего не ждёт вашего внимания.",
+  "update.updateNow": "Обновить сейчас",
+  "update.updating": "Обновление…",
+  "update.failed": "Обновление не удалось.",
 }
 
 export default ru

@@ -235,6 +235,7 @@ import * as migration_20270317_280000_captcha_followups from './20270317_280000_
 import * as migration_20270316_420000_org_transfer_delegation from './20270316_420000_org_transfer_delegation';
 import * as migration_20270317_130000_username_sign_in from './20270317_130000_username_sign_in';
 import * as migration_20270318_200000_product_feed_mapping from './20270318_200000_product_feed_mapping';
+import * as migration_20270318_100000_taskboard_archive_due from './20270318_100000_taskboard_archive_due';
 
 export const migrations = [
   {
@@ -1371,6 +1372,11 @@ export const migrations = [
     up: migration_20270317_280000_sign_in_paths.up,
     down: migration_20270317_280000_sign_in_paths.down,
     name: '20270317_280000_sign_in_paths',
+  },
+  {
+    up: migration_20270318_100000_taskboard_archive_due.up,
+    down: migration_20270318_100000_taskboard_archive_due.down,
+    name: '20270318_100000_taskboard_archive_due',
   },
   {
     up: migration_20270317_280000_captcha_followups.up,

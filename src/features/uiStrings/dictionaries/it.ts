@@ -4178,6 +4178,21 @@ const it: UiDictionary = {
   "themeStyle.r.effect": "Effetto suggerito: {label}. {help} Applicalo dal selettore Effetti nell'editor visivo.",
   "themeStyle.r.effectNone": "Per queste scelte non viene suggerito alcun effetto.",
   "themeStyle.r.variation": "Variazione: le tonalità esatte sono modificate per questo sito, quindi un altro sito con le stesse scelte ottiene una palette diversa.",
+  "webhooks.event.task.assigned": "Attività assegnata",
+  "webhooks.event.task.commented": "Attività commentata",
+  "webhooks.event.task.due": "Attività in scadenza",
+  "tb.archive": "Archivia",
+  "tb.restore": "Ripristina",
+  "tb.showArchived": "Mostra archiviate",
+  "tb.archived": "Archiviate",
+  "tb.act.archived": "archiviato",
+  "tb.act.restored": "ripristinato",
+  "tb.mine.link": "Tutte le mie attività",
+  "tb.mine.openBoard": "Apri la bacheca attività",
+  "tb.mine.empty": "Non c'è nulla in attesa di te.",
+  "update.updateNow": "Aggiorna ora",
+  "update.updating": "Aggiornamento in corso…",
+  "update.failed": "Aggiornamento non riuscito.",
 }
 
 export default it

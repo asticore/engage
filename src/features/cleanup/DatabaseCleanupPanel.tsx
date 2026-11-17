@@ -50,6 +50,7 @@ export const FeatureCleanupCard: React.FC<{
   const [emptyPlan, setEmptyPlan] = React.useState<EmptyPlan | null>(null)
   const [emptyTyped, setEmptyTyped] = React.useState('')
   const [resetCounters, setResetCounters] = React.useState(false)
+  const [clearFiles, setClearFiles] = React.useState(false)
   const emptyPhrase = emptyPhraseFor(feature.key)
 
   const previewEmpty = async (): Promise<void> => {
@@ -77,7 +78,7 @@ export const FeatureCleanupCard: React.FC<{
   }
   const emptyNow = async (): Promise<void> => {
     setBusy(true)
-    setEmptyPlan(await emptySectionAction({ feature: feature.key, confirm: emptyTyped, execute: true, resetCounters }))
+    setEmptyPlan(await emptySectionAction({ feature: feature.key, confirm: emptyTyped, execute: true, resetCounters, clearFiles: feature.key === 'media' && clearFiles }))
     setEmptyTyped('')
     setBusy(false)
   }
@@ -209,6 +210,12 @@ export const FeatureCleanupCard: React.FC<{
                       <input checked={resetCounters} onChange={(event) => setResetCounters(event.target.checked)} type="checkbox" />
                       <span>Also restart the numbering, so new records start again at 1</span>
                     </label>
+                    {feature.key === 'media' && (
+                      <label className="flex items-center gap-[calc(var(--base)*0.35)]">
+                        <input checked={clearFiles} onChange={(event) => setClearFiles(event.target.checked)} type="checkbox" />
+                        <span>Also delete the uploaded files from storage (pages that use them will show a missing file)</span>
+                      </label>
+                    )}
                     <button className={`${buttonBaseClassName} border-[var(--theme-error-500,var(--theme-elevation-800))] text-[var(--theme-error-500,var(--theme-elevation-800))]`} disabled={busy || emptyTyped !== emptyPhrase} onClick={emptyNow} type="button">
                       Empty the data
                     </button>

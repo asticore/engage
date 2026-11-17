@@ -4178,6 +4178,21 @@ const hi: UiDictionary = {
   "themeStyle.r.effect": "सुझाया गया प्रभाव: {label}। {help} इसे विज़ुअल एडिटर में इफ़ेक्ट्स पिकर से लागू करें।",
   "themeStyle.r.effectNone": "इन पसंदों के लिए कोई प्रभाव सुझाया नहीं गया है।",
   "themeStyle.r.variation": "विविधता: इस साइट के लिए सटीक शेड्स थोड़े बदले जाते हैं, इसलिए समान पसंद वाली दूसरी साइट को अलग पैलेट मिलता है।",
+  "webhooks.event.task.assigned": "कार्य सौंपा गया",
+  "webhooks.event.task.commented": "कार्य पर टिप्पणी की गई",
+  "webhooks.event.task.due": "कार्य की समय सीमा नज़दीक है",
+  "tb.archive": "संग्रहित करें",
+  "tb.restore": "पुनर्स्थापित करें",
+  "tb.showArchived": "संग्रहित दिखाएँ",
+  "tb.archived": "संग्रहित",
+  "tb.act.archived": "संग्रहित किया गया",
+  "tb.act.restored": "पुनर्स्थापित किया गया",
+  "tb.mine.link": "मेरे सभी कार्य",
+  "tb.mine.openBoard": "कार्य बोर्ड खोलें",
+  "tb.mine.empty": "आपके लिए कुछ भी प्रतीक्षा नहीं कर रहा है।",
+  "update.updateNow": "अभी अपडेट करें",
+  "update.updating": "अपडेट हो रहा है…",
+  "update.failed": "अपडेट विफल रहा।",
 }
 
 export default hi
