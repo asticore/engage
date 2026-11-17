@@ -37,6 +37,7 @@ export type AuditAction =
   | 'ip.rule'
   | 'user.banned'
   | 'user.unbanned'
+  | 'user.bulk'
   | 'two-factor.enrolled'
   | 'two-factor.failed'
   | 'two-factor.verified'

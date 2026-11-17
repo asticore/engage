@@ -1,3 +1,4 @@
+import { UsersBulkBar } from './UsersBulkBar'
 import type { Where } from '@/engine'
 import { adminHref } from '@/features/security/adminPath'
 import { domainScopeWhere } from '@/features/domains/access'
@@ -234,7 +235,8 @@ export async function ListView({
   const label = adminLabel('collection', collectionSlug, typeof collection.labels?.plural === 'string' ? collection.labels.plural : collectionSlug, ui)
 
   const bulkPerms = bulkCollection ? bulkPermissions(context as never, bulkCollection) : null
-  const showBulk = bulkPerms !== null && (bulkPerms.update || bulkPerms.publish || bulkPerms.delete)
+  const showUserBulk = collectionSlug === 'users' && context.isAdmin
+  const showBulk = showUserBulk || (bulkPerms !== null && (bulkPerms.update || bulkPerms.publish || bulkPerms.delete))
   const trashQs: Record<string, string> = trashView ? { trash: '1' } : {}
 
   // Resolve view tabs and active tab
@@ -366,6 +368,7 @@ export async function ListView({
       {/* List view (or other tab view) */}
       {activeTab.view === 'list' && (
         <>
+          {showUserBulk && <UsersBulkBar />}
           {showBulk && bulkCollection && bulkPerms && (
             <BulkActionsBar
               canChangeAuthor={actionRefusal('changeAuthor', bulkPerms) === null}
