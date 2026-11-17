@@ -246,6 +246,11 @@ export const EditorDock: React.FC<{
   const buildButtonRef = useRef<HTMLButtonElement>(null)
 
   const closeAi = useCallback(() => setAiOpen(false), [])
+  // Opened from the site planner's Fill this page with AI: open the dialog once, with the planned page's brief in it.
+  const plannerBrief = aiBuilder?.plannerFill?.brief ?? null
+  useEffect(() => {
+    if (plannerBrief) setAiOpen(true)
+  }, [plannerBrief])
 
   const warnings = useMemo(() => (tree ? collectWarnings(tree) : []), [tree])
   const nodePaths = useMemo(() => (tree ? indexNodePaths(tree) : new Map<string, NodePath>()), [tree])
@@ -363,6 +368,11 @@ export const EditorDock: React.FC<{
                   </span>
                   {t('ve.ai.buildWithAi')}
                 </button>
+                {aiBuilder.plannerFill?.nextHref ? (
+                  <p className="ve-dock__ai-next">
+                    <a href={aiBuilder.plannerFill.nextHref}>Next planned page: {aiBuilder.plannerFill.nextTitle}</a> (save this page first)
+                  </p>
+                ) : null}
               </div>
             )}
             <ElementLibrary targetLabel={targetLabel} onPickBlock={onPickBlock} onPickTemplate={onPickTemplate} formMode={Boolean(formPanel)} />
