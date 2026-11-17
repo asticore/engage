@@ -89,6 +89,19 @@ describe('paid ticket bookings', () => {
     expect(tierForLine(tiers, 'Other', 'Gala')).toBeNull()
   })
 
+  it('books a line on the ticket type that owns its product', async () => {
+    const own: Array<{ id: string; name: string; description: string; price: number; capacity: number | null; salesEnd: string | null; productId: number }> = [
+      { id: 'a', name: 'General', description: '', price: 10, capacity: null, salesEnd: null, productId: 11 },
+      { id: 'b', name: 'VIP', description: '', price: 40, capacity: null, salesEnd: null, productId: 12 },
+    ]
+    expect(tierForLine(own as never, null, 'Gala', 12)).toBe('VIP')
+    const engine = fakeEngine({ events: [{ id: 8, eventType: 'paid', ticketProduct: null, ticketTiers: own }], 'event-rsvps': [] })
+    const order = { id: 60, customerEmail: 'a@b.test', lineItems: [{ productId: 12, quantity: 2, name: 'VIP pass' }, { productId: 99, quantity: 1, name: 'Mug' }] }
+    const result = await createRsvpsForOrder(engine as never, order)
+    expect(result.created).toBe(1)
+    expect(engine.data['event-rsvps'][0]).toMatchObject({ event: 8, ticketTier: 'VIP', guestCount: 2 })
+  })
+
   it('stamps and clears the cancellation time', async () => {
     const run = (data: Doc) => (stampCancellation as never as (a: { data: Doc }) => Promise<Doc>)({ data })
     expect((await run({ status: 'cancelled' })).cancelledAt).toBeTruthy()

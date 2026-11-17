@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { useAdminT } from '@/admin/i18n/AdminUiProvider'
+import { useAdminT, useAdminUi } from '@/admin/i18n/AdminUiProvider'
 
 import type { LibrarySummary } from '../types'
 
@@ -17,6 +17,8 @@ const JSON_HEADERS = { 'Content-Type': 'application/json' }
 /** Settings > Template libraries: add a library by its GitHub address, switch it on or off, remove it, refresh. */
 export const TemplateLibrariesManager: React.FC = () => {
   const t = useAdminT()
+  const { locale } = useAdminUi()
+  const hasAdminLanguage = (languages: string[]) => languages.some((code) => code === locale || code.split('-')[0] === locale.split('-')[0])
   const [listing, setListing] = useState<Listing | null>(null)
   const [url, setUrl] = useState('')
   const [label, setLabel] = useState('')
@@ -209,6 +211,11 @@ export const TemplateLibrariesManager: React.FC = () => {
                     <span>
                       {library.name ? `${library.name}, ` : ''}
                       {t('templateLibraries.itemCount', { count: library.itemCount })}
+                      {!hasAdminLanguage(library.languages) && (
+                        <span style={{ display: 'block', fontSize: 12, opacity: 0.8 }}>
+                          {t('templateLibraries.languagesNote', { languages: library.languages.join(', ') })}
+                        </span>
+                      )}
                     </span>
                   ) : (
                     <span>-</span>

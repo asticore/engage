@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { AddToCartButton } from '@/components/AddToCartButton'
 import type { TierView } from '@/features/editScreens/tierSales'
 
 /** The words EventTiers shows, passed in already translated by the page. */
@@ -11,11 +12,14 @@ export type EventTiersText = {
   left: (count: number) => string
   pricesInfoPaid: string
   pricesInfoFree: string
+  /** Label of the buy button on a ticket type that has its own product. */
+  buyTicket?: string
 }
 
 /**
  * Ticket types on the event page: name, price and what is left. On a paid event the
- * numbers are for information only; the Buy ticket button sells the one ticket product.
+ * numbers are for information only unless the type has its own product, which then gets its own buy button;
+ * otherwise the Buy ticket button sells the one ticket product.
  */
 export const EventTiers: React.FC<{ tiers: TierView[]; paid: boolean; text: EventTiersText }> = ({ tiers, paid, text }) => {
   if (tiers.length === 0) return null
@@ -30,6 +34,8 @@ export const EventTiers: React.FC<{ tiers: TierView[]; paid: boolean; text: Even
               <span>{tier.priceLabel}</span>
             </span>
             {tier.description && <span className="text-sm">{tier.description}</span>}
+            {paid && tier.productId && !tier.soldOut && <AddToCartButton productID={tier.productId} label={text.buyTicket} />}
+            {paid && tier.productId && tier.soldOut && <span className="text-xs text-muted">{text.soldOut}</span>}
             {!paid && (
               <span className="text-xs text-muted">
                 {tier.soldOut ? text.soldOut : tier.remaining === null ? text.placesAvailable : text.left(tier.remaining)}

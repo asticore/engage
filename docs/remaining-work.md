@@ -34,24 +34,13 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 ### Fresh-account deploy check (detail)
 Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20261003_100000_visibility_schedule_lock_events_seo`, `20261005_100000_redirects`, `20261005_110000_pages_sort_order`, `20261006_100000_roles`, `20261007_100000_users_authorship`, `20261008_100000_integrations_expand`, `20261009_100000_user_permission_overrides`, `20261010_100000_site_fonts`, `20261011_100000_site_files`, `20261011_110000_cookie_consent`, `20261011_120000_media_library`, `20261011_130000_content_approval`, `20261011_140000_custom_fields_v2`; the `images` binding in `wrangler.jsonc` (Cloudflare Images transformations must be on the account, otherwise upload optimisation is skipped with a message); the cron trigger (`triggers.crons` in `wrangler.jsonc`, entry `cloudflare-worker.ts`).
 
-## Tasks (in order, 40 open)
+## Tasks (in order, 38 open; Tasks 1 and 3 closed 17 Nov 2026, the rest keep their numbers until the next renumber)
 Open tasks are numbered 1 to 40 in the order they should be built (renumbered 16 Nov 2026 after finished work moved to `remaining-work-done.md`). The live checks are not tasks: they are the last section of this file. Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the done file, and is not the same as an open task with that number. Sub-ids like 11a and 29c are the item letters inside a task. The audits, plans and reports that these tasks depend on are in the Reference sections after the tasks.
 
-### Task 1. Events and tickets: ticket tier pricing decision (partly done 15 Nov 2026)
-Done 15 Nov (see `docs/remaining-work-done.md`): paid orders create bookings, refunds and cancelled orders free them, cancel status, race-safe capacity, ticket type in the booking email, Shine classes and translated event page text. Still open:
-- [ ] Decision for Matt: tier prices on paid events are real only when each tier is its own product or variation (a line whose variation label equals the tier name is booked on that tier). Today the event has one `ticketProduct`, so a paid event with several tiers sells one product with variations. Confirm this is how you want it, or ask for a tier-to-product picker on the event.
-
-### Task 2. Shine and Effix follow-ups (partly done 15 Nov 2026)
-Done: effects picker in the Design panel (`src/features/effects/catalog.ts`, `src/views/visualEditor/EffectsPicker.tsx`) and the Reference sources screen (`src/features/references/ReferencesView.tsx`, Settings > Data and System). Still open:
-- [ ] The picker list is a seed (shimmer, carousel, counter, countdown, toast, popup, bar and radar chart): the `efx-` class names and option names were taken from the Effix notes, not from the Effix files (the build environment cannot reach the Effix repo or its CDN). Replace `EFFECT_CATALOG` with the list from Effix's `.meta.js` entries (see the Effix issues appendix of `docs/remaining-work.md`) once checked against the pinned copy; add diagrams and the other chart types.
-- [ ] Tie the Reference sources check into the update popup (Task 9): show a super admin notice when a source is outdated.
-- [ ] Bring the remaining Tailwind-era look-alike classes onto Shine tokens over time (compare dark mode and density knobs); vendor an offline copy of Effix if a site must run with no CDN.
-
-### Task 3. Translation pass for the new admin and public text (partly done 15 Nov 2026)
-Done: 150 English-only admin strings translated into the twelve other languages (price tiers, rounding rules, categories `cat.*`, text styles, profile, site switcher, webhooks inbound endpoint and retention). Still open:
-- [ ] Promo badge field labels and descriptions in Shop extra settings (`src/globals/ShopExtraSettings.ts`) use English config text: give each a key and translate.
-- [ ] The default template library text (`docs/template-library-example`, Engage templates library items) is English: translate it per language, or mark the library English only.
-- [ ] Other English-only admin strings not in the list above (`ut.*` unused tables, `api.*`, `apiBuilder.*`): translate.
+### Task 2. Shine and Effix follow-ups: leftovers (partly done 17 Nov 2026)
+Built items are in `docs/remaining-work-done.md`. Still open, both only when needed:
+- [ ] Bring the remaining Tailwind-era look-alike classes onto Shine tokens over time (compare dark mode and density knobs).
+- [ ] Vendor an offline copy of Effix only if a site must run with no CDN.
 
 ### Task 4. Small gaps left by tasks 3 to 7 (partly done 15 Nov 2026)
 Done: variation specific tier notes on the product page, promo badge product picker (`BadgeProductsField`), nested blog category URLs (`/blog/category/parent/child`, bare slug still works, sitemap uses full paths), `{{category_path}}` and `{{category_url}}` loop merge tags from the tree, wholesale tiers matched by company as well as role (`src/features/ecommerce/server/customerTypes.ts`: a tier's customer type may be a company name or `company:slug`). Still open:
@@ -813,6 +802,10 @@ Tokens only (`--sh-*`), light and dark, no JavaScript, documented in the docs si
 
 ## Live checks (not tasks: need Matt's own accounts; FINAL section)
 Every built item that still needs a live check is listed here, in groups. Tick an item when checked on the live site; delete it once it passes.
+
+- [ ] Live check ticket tier products (closed Task 1): edit a paid event, add two ticket tiers and pick a different shop product for each (Shop product that sells this ticket type). The event page shows a Buy button on each tier and no single Buy ticket button. Buy one of each and pay: each order books a place on its own tier (check the RSVP list shows the tier and the tier capacity counts it); refund one and the place frees.
+- [ ] Live check Effix effects list and update notice (closed Task 2): in the visual editor open Design > Effects on a block: groups Scroll, Text, Charts, Diagrams and others list; pick Counter, set a prefix, publish, see it count on the page. Pick a chart type and a diagram. As an admin, with the pinned Effix commit older than Effix main, the update popup shows "Newer version available for: Effix" and Later hides it until the next change.
+- [ ] Live check translations (closed Task 3): set the admin language to German, Japanese and Arabic: Shop extra settings > Promo badges field labels, Settings > Unused tables, API keys and API builder, and the domain connect messages read in that language. Settings > Template libraries shows "Item text is written in: en" under the Engage templates library for a non-English admin.
 
 - [ ] Live check IP lists (19c): open Settings > Security > IP lists. Note your address. Add a test address to Block: it is saved; adding your own address is refused. Add your own range to Allow, then block that same range: you stay in. Using a second device or a proxy on a blocked address, load any page: a plain 403 appears within 30 seconds. Remove the entry and it loads again. Download the CSV.
 - [ ] Live check IP list extras (19c, 19d): Security audit page: any row with an address shows Block this IP; confirm it and the address appears in IP lists > Block (your own address is refused). IP lists > Import a list: upload a .txt of addresses, then paste an https link to a raw text list; entries appear, bad lines are listed as skipped. Turn Admin bypass on, then block your own country using an allowed address: you still get in; turn it off and the block applies. Save a custom message and visit from a blocked address: that text shows. Countries: tick countries from the named list, save.

@@ -18,6 +18,8 @@ export type LibraryItem = ManifestTemplate
 export type LibraryManifest = {
   format: 'library' | 'legacy'
   name: string
+  /** Languages the item text is written in (library.json `languages`, default English only). */
+  languages: string[]
   items: LibraryItem[]
 }
 
@@ -37,6 +39,8 @@ export type LibraryRow = {
 export type LibrarySummary = Omit<LibraryRow, 'config'> & {
   name: string | null
   itemCount: number
+  /** Languages the library's item text is written in. */
+  languages: string[]
   error: string | null
 }
 

@@ -69,7 +69,17 @@ export function validateLibraryManifest(data: unknown): Result<LibraryManifest> 
 
     items.push({ slug, title, kind: kind as TemplateKind, category, tags, preview, file })
   }
-  return ok({ format: 'library', name, items })
+  let languages = ['en']
+  if (data.languages !== undefined) {
+    if (!Array.isArray(data.languages) || data.languages.length === 0 || data.languages.length > 30) return fail('The library file "languages" must be a list of up to 30 language codes such as "en" or "de".')
+    languages = []
+    for (const code of data.languages) {
+      const clean = typeof code === 'string' ? code.trim() : ''
+      if (!/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})?$/.test(clean)) return fail('The library file "languages" must hold language codes such as "en", "de" or "zh-Hans".')
+      if (!languages.includes(clean)) languages.push(clean)
+    }
+  }
+  return ok({ format: 'library', name, languages, items })
 }
 
 /** Parses the text of a `library.json` file under the byte cap. */
@@ -96,6 +106,7 @@ export function parseLegacyManifestText(text: unknown): Result<LibraryManifest> 
   return ok({
     format: 'legacy',
     name: parsed.value.name,
+    languages: ['en'],
     items: parsed.value.templates.map((entry) => ({ ...entry, category: labels.get(entry.category) ?? entry.category })),
   })
 }

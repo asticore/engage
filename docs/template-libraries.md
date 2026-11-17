@@ -49,6 +49,7 @@ without removing it.
   "format": "engage-library",
   "schemaVersion": 1,
   "name": "Example template library",
+  "languages": ["en"],
   "items": [
     {
       "slug": "intro-split",
@@ -68,6 +69,7 @@ without removing it.
 | `format` | yes | exactly `engage-library` |
 | `schemaVersion` | yes | exactly `1` |
 | `name` | yes | text, up to 120 characters |
+| `languages` | no | the languages the item titles, categories and text are written in, such as `["en", "de"]`; defaults to `["en"]`. The Template libraries screen tells an administrator when the library has no text in the admin language |
 | `items` | yes | a list, up to 500 items |
 | `items[].slug` | yes | lower case letters, digits and dashes, up to 64 characters; unique in the library |
 | `items[].kind` | yes | `section` (one section) or `page` (a whole page) |

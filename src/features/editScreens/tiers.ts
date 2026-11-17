@@ -18,6 +18,8 @@ export type TicketTier = {
   capacity: number | null
   /** ISO date after which the tier is no longer sold; null to sell until the event. */
   salesEnd: string | null
+  /** Shop product that sells this ticket type on a paid event; null to use the event's single ticket product. */
+  productId?: number | null
 }
 
 export const MAX_TIERS = 20
@@ -82,6 +84,8 @@ export function parseTiers(value: unknown): TicketTier[] {
     if (!name) continue
     const salesEnd = typeof e.salesEnd === 'string' && !Number.isNaN(new Date(e.salesEnd).getTime()) ? e.salesEnd : null
     const id = typeof e.id === 'string' && TIER_ID.test(e.id) ? e.id : undefined
+    const productNumber = Number(e.productId)
+    const productId = Number.isInteger(productNumber) && productNumber > 0 ? productNumber : null
     tiers.push({
       ...(id ? { id } : {}),
       name,
@@ -89,6 +93,7 @@ export function parseTiers(value: unknown): TicketTier[] {
       price: num(e.price) ?? 0,
       capacity: num(e.capacity),
       salesEnd,
+      ...(productId ? { productId } : {}),
     })
   }
   return tiers

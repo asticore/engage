@@ -7,9 +7,10 @@ import { parseTiers, type TicketTier } from '@/features/editScreens/tiers'
  * buyer gets the booking email, is on the check-in list and takes places in the event's capacity. When the
  * order is fully refunded or cancelled, those bookings are cancelled and the places are free again.
  *
- * Ticket types on a paid event: sell one product (or one variation of the product) per ticket type. A line
- * whose variation label is the same as a ticket type name, case aside, is booked on that type. A line with
- * no matching type is booked with no type.
+ * Ticket types on a paid event: a ticket type can have its own shop product (picked on the event); a line for
+ * that product is booked on that type. Otherwise sell one variation of the ticket product per type: a line whose
+ * variation label is the same as a ticket type name, case aside, is booked on that type. A line with no
+ * matching type is booked with no type.
  *
  * Idempotent: a booking is created once per order, event and line, so a replayed payment webhook never
  * books twice. Never throws to the caller; problems are returned so the order can note them.
@@ -30,7 +31,11 @@ const idOf = (value: unknown): number | null => {
 }
 
 /** The ticket type a line was bought for, or null. Pure. */
-export function tierForLine(tiers: TicketTier[], label: string | null, lineName: string): string | null {
+export function tierForLine(tiers: TicketTier[], label: string | null, lineName: string, productId: number | null = null): string | null {
+  if (productId !== null) {
+    const own = tiers.find((tier) => tier.productId === productId)
+    if (own) return own.name
+  }
   const wanted = (label ?? '').trim().toLowerCase()
   if (wanted) {
     const hit = tiers.find((tier) => tier.name.trim().toLowerCase() === wanted)
@@ -52,13 +57,20 @@ export async function createRsvpsForOrder(engine: Engine, order: Doc): Promise<O
 
   const productIds = [...new Set(lines.map((line) => idOf(line.productId)).filter((id): id is number => id !== null))]
   if (productIds.length === 0) return result
-  const { docs: events } = await engine.find({
+  const { docs: ticketEvents } = await engine.find({
     collection: 'events',
     where: { ticketProduct: { in: productIds } },
     depth: 0,
     limit: 200,
     overrideAccess: true,
   })
+  // Ticket types can have their own product (stored inside the tiers, so not searchable): read the paid events and filter.
+  const { docs: paidEvents } = await engine.find({ collection: 'events', where: { eventType: { equals: 'paid' } }, depth: 0, limit: 1000, overrideAccess: true })
+  const events = [...ticketEvents]
+  for (const event of paidEvents) {
+    if (events.some((known) => idOf(known.id) === idOf(event.id))) continue
+    if (parseTiers(event.ticketTiers).some((tier) => tier.productId && productIds.includes(tier.productId))) events.push(event)
+  }
   if (events.length === 0) return result
 
   const { docs: existing } = await engine.find({ collection: 'event-rsvps', where: { orderId: { equals: orderId } }, depth: 0, limit: 500, overrideAccess: true })
@@ -69,7 +81,8 @@ export async function createRsvpsForOrder(engine: Engine, order: Doc): Promise<O
     const productId = idOf(line.productId)
     if (productId === null) continue
     for (const event of events) {
-      if (idOf(event.ticketProduct) !== productId) continue
+      const eventTiers = parseTiers(event.ticketTiers)
+      if (idOf(event.ticketProduct) !== productId && !eventTiers.some((tier) => tier.productId === productId)) continue
       const eventId = idOf(event.id) as number
       if (booked.has(`${eventId}:${index}`)) {
         result.skipped += 1
@@ -84,7 +97,7 @@ export async function createRsvpsForOrder(engine: Engine, order: Doc): Promise<O
           const variation = variations.find((v) => v.id === line.variationId)
           if (variation) label = variationLabel(variation as never)
         }
-        const tier = tierForLine(parseTiers(event.ticketTiers), label, typeof line.name === 'string' ? line.name : '')
+        const tier = tierForLine(eventTiers, label, typeof line.name === 'string' ? line.name : '', productId)
         await engine.create({
           collection: 'event-rsvps',
           data: {
