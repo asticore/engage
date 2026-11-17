@@ -33,6 +33,8 @@ import { PostComments } from '@/features/comments/components/CommentsSection.ser
 import { authorPath, publicAuthor, tagPath, categoryPath } from '@/features/siteTemplates/archiveQueries'
 import { slugify } from '@/utilities/formatSlug'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
+import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import type { Media, Post } from '@/engage-types'
 
 export const dynamic = 'force-dynamic'
@@ -83,7 +85,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     seo: post.seo,
     availableDomains: (post as { availableDomains?: unknown }).availableDomains,
     featuredImage: post.featuredImage,
-    path: `/blog/${slug}`,
+    path: blogPath(await readBlogBase(), `/${slug}`),
     kind: 'article',
     publishedAt: post.publishedDate,
     updatedAt: post.updatedAt,
@@ -128,6 +130,7 @@ export default async function BlogPostPage({
   })
 
   const currentPath = `/blog/${slug}`
+  const publicPath = blogPath(await readBlogBase(), `/${slug}`)
 
   if (gateState === 'locked') {
     return <PasswordGate collection="posts" currentPath={currentPath} id={post.id} wrongPassword={sp.pw === 'wrong'} />
@@ -149,7 +152,7 @@ export default async function BlogPostPage({
   const body = (
     <article className="page-shell">
       <AdsPageScope collection="posts" noAds={(post as { noAds?: boolean }).noAds} />
-      <PageJsonLd collection="posts" doc={post} path={currentPath} />
+      <PageJsonLd collection="posts" doc={post} path={publicPath} />
       {audioConfig && <PageAudio config={audioConfig} />}
       <header className="mx-auto mb-8 max-w-[720px] text-center">
         {post.categories?.length ? (

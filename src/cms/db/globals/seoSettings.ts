@@ -69,6 +69,9 @@ export type SeoSettingsDoc = {
     bing?: string | null
     pinterest?: string | null
   } | null
+  permalinks?: {
+    blogBase?: string | null
+  } | null
   breadcrumbs?: {
     separator?: string | null
     homeLabel?: string | null

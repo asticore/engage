@@ -28,6 +28,8 @@ import { archivePageHref } from '@/lib/templateWidgets'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
 import { postArchiveItems } from '@/lib/blockContextFrom'
 import { InFeedAd } from '@/features/ads/components/InFeedAd'
+import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import type { BlogSetting, Media, Post } from '@/engage-types'
 
 export const dynamic = 'force-dynamic'
@@ -35,7 +37,7 @@ export const dynamic = 'force-dynamic'
 export async function generateMetadata(): Promise<Metadata> {
   const engine = await getEngine()
   const settings = (await engine.findGlobal({ slug: 'blog-settings' }).catch((): null => null)) as BlogSetting | null
-  const meta = await buildMetadata({ title: settings?.archiveTitle || 'Journal', path: '/blog' })
+  const meta = await buildMetadata({ title: settings?.archiveTitle || 'Journal', path: blogPath(await readBlogBase()) })
   // Feed readers and browsers find the RSS feed from this link, unless the feed is switched off in Blog settings.
   const rssOff = (settings as { rssEnabled?: boolean | null } | null)?.rssEnabled === false
   return rssOff ? meta : { ...meta, alternates: { ...(meta.alternates ?? {}), types: { 'application/rss+xml': '/feed.xml' } } }

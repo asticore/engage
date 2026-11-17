@@ -19,6 +19,8 @@ import { requestDomain } from '@/features/domains/request'
 import { availableOnHost, parseHostList } from '@/features/domains/scope'
 import { isNoindexPath } from '@/features/security/noindex'
 import { getAdminRoot } from '@/features/security/settings'
+import { blogPath } from './permalinks'
+import { readBlogBase } from './permalinkStore'
 
 export type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never'
 
@@ -206,8 +208,9 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
   }
 
   if (flags?.blog) {
-    add('/blog', undefined, 0.7)
-    await addCollection('posts', '/blog', 0.6)
+    const blog = blogPath(await readBlogBase())
+    add(blog, undefined, 0.7)
+    await addCollection('posts', blog, 0.6)
     try {
       const engine = await getEngine()
       const found = await engine.find({ collection: 'posts', where: { _status: { equals: 'published' } }, limit: 0, depth: 1 })
@@ -217,11 +220,11 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
       const { pathSlugs } = await import('@/features/categories/tree')
       const blogTree = await listCategoriesSafe('blog')
       const inTree = new Set(blogTree.map((row) => row.slug))
-      for (const row of blogTree) add(`/blog/category/${pathSlugs(blogTree, row.id).join('/')}`, undefined, 0.4)
-      for (const slug of categoryIndex(docs as ArchivePost[]).keys()) if (!inTree.has(slug)) add(`/blog/category/${slug}`, undefined, 0.4)
+      for (const row of blogTree) add(`${blog}/category/${pathSlugs(blogTree, row.id).join('/')}`, undefined, 0.4)
+      for (const slug of categoryIndex(docs as ArchivePost[]).keys()) if (!inTree.has(slug)) add(`${blog}/category/${slug}`, undefined, 0.4)
       const sw = await loadBlogSwitches()
-      if (sw.tags) for (const slug of tagIndex(docs as ArchivePost[]).keys()) add(`/blog/tag/${slug}`, undefined, 0.4)
-      if (sw.authorArchives) for (const slug of authorIndex(docs as ArchivePost[]).keys()) add(`/blog/author/${slug}`, undefined, 0.4)
+      if (sw.tags) for (const slug of tagIndex(docs as ArchivePost[]).keys()) add(`${blog}/tag/${slug}`, undefined, 0.4)
+      if (sw.authorArchives) for (const slug of authorIndex(docs as ArchivePost[]).keys()) add(`${blog}/author/${slug}`, undefined, 0.4)
     } catch {
       // Category archives are optional entries.
     }

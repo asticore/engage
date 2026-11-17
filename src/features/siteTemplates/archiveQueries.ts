@@ -2,6 +2,7 @@ import type { ArchiveFilterValues } from '@/lib/blockContext'
 import { orderBlogPosts } from '@/features/editScreens/blogOrder'
 import { slugify } from '@/utilities/formatSlug'
 import { archiveFacets, filterArchiveItems, sortArchiveItems } from './archiveFilter'
+import { DEFAULT_BLOG_BASE, blogPath } from '@/features/seo/permalinks'
 
 /**
  * Pure helpers for the public term archives (/blog/category/[slug]). Posts store categories as an array of
@@ -62,8 +63,8 @@ export function paginate<T>(items: T[], requested: number, perPage = ARCHIVE_PAG
 }
 
 /** Public path of a category archive page. */
-export function categoryPath(slug: string, page = 1): string {
-  return `/blog/category/${slug}${page > 1 ? `?page=${page}` : ''}`
+export function categoryPath(slug: string, page = 1, base = DEFAULT_BLOG_BASE): string {
+  return `${blogPath(base)}/category/${slug}${page > 1 ? `?page=${page}` : ''}`
 }
 
 /** Distinct tag names across posts, keyed by slug (first spelling wins). */
@@ -86,13 +87,13 @@ export function postsWithTag<T extends ArchivePost>(posts: T[], slug: string): T
 }
 
 /** Public path of a tag archive page. */
-export function tagPath(slug: string, page = 1): string {
-  return `/blog/tag/${slug}${page > 1 ? `?page=${page}` : ''}`
+export function tagPath(slug: string, page = 1, base = DEFAULT_BLOG_BASE): string {
+  return `${blogPath(base)}/tag/${slug}${page > 1 ? `?page=${page}` : ''}`
 }
 
 /** Public path of an author archive page. */
-export function authorPath(slug: string, page = 1): string {
-  return `/blog/author/${slug}${page > 1 ? `?page=${page}` : ''}`
+export function authorPath(slug: string, page = 1, base = DEFAULT_BLOG_BASE): string {
+  return `${blogPath(base)}/author/${slug}${page > 1 ? `?page=${page}` : ''}`
 }
 
 /** The public author of a post: displayName and slug only (email is never read). Null without a populated author with both. */

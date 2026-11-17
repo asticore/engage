@@ -198,6 +198,7 @@ import * as migration_20270318_110000_purchase_limit_message_exempt from './2027
 import * as migration_20270318_240000_limit_claims from './20270318_240000_limit_claims';
 import * as migration_20270318_230000_card_prints from './20270318_230000_card_prints';
 import * as migration_20270318_110000_bot_rules from './20270318_110000_bot_rules';
+import * as migration_20270317_290000_blog_base from './20270317_290000_blog_base';
 import * as migration_20270316_390000_dam from './20270316_390000_dam';
 import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
@@ -1518,5 +1519,10 @@ export const migrations = [
     up: migration_20270318_200000_bid_json_column.up,
     down: migration_20270318_200000_bid_json_column.down,
     name: '20270318_200000_bid_json_column',
+  },
+  {
+    up: migration_20270317_290000_blog_base.up,
+    down: migration_20270317_290000_blog_base.down,
+    name: '20270317_290000_blog_base',
   },
 ];
