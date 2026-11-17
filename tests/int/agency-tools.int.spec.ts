@@ -3,9 +3,39 @@ import { describe, expect, it } from 'vitest'
 import { CADENCES, isReportDue, parseRecipients, reportCsv, reportEmail, summaryLines, toCadence, toPreset, type ReportData } from '@/features/clientReports/core'
 import { copyKey, picturesAddedAfterCopy, idsAddedAfterCopy, DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
 import { cleanHost, cleanName, describeRollout, franchiseLocks, toLockChoice, toStatus } from '@/features/franchising/core'
+import { assetFilePath, collectRefs, pageFilePath, rewriteRefs, rootPrefix, sitemapPaths, stripScripts } from '@/features/demos/staticExport'
 import { CRON_JOBS } from '@/features/cron/registry'
 import { JOB_RUNNERS } from '@/features/cron/jobs'
 import { FEATURE_MAP } from '@/features/registry'
+
+describe('static export (17g)', () => {
+  const origin = 'https://demo.test'
+  const html = '<html><head><link rel="stylesheet" href="/styles.css"><script src="/_next/a.js"></script></head><body><a href="/about#x">About</a><a href="https://other.test/">Out</a><img src="/api/media/file/a.jpg" srcset="/a.jpg 1x, /a2.jpg 2x"></body></html>'
+  it('names pages and assets', () => {
+    expect(pageFilePath('/')).toBe('index.html')
+    expect(pageFilePath('/shop/hats/')).toBe('shop/hats/index.html')
+    expect(assetFilePath('/a/b.css', '')).toBe('assets/a/b.css')
+    expect(assetFilePath('/_next/image', '?url=x&w=64', 'image/webp')).toMatch(/^assets\/_next\/image-[a-z0-9]+\.webp$/)
+    expect(rootPrefix('shop/hats/index.html')).toBe('../../')
+  })
+  it('finds same-site references only', () => {
+    expect(collectRefs(html, origin, 'html').sort()).toEqual(['/_next/a.js', '/a.jpg', '/a2.jpg', '/about', '/api/media/file/a.jpg', '/styles.css'])
+    expect(collectRefs('a{background:url("/f.woff2")} b{background:url(data:x)}', origin, 'css')).toEqual(['/f.woff2'])
+  })
+  it('strips scripts and rewrites links relative', () => {
+    const clean = stripScripts(html)
+    expect(clean).not.toContain('<script')
+    const map = { pages: new Map([['/about', 'about/index.html']]), assets: new Map([['/styles.css', 'assets/styles.css'], ['/a.jpg', 'assets/a.jpg']]) }
+    const out = rewriteRefs(clean, origin, 'shop/index.html', map, 'html')
+    expect(out).toContain('href="../assets/styles.css"')
+    expect(out).toContain('href="../about/index.html#x"')
+    expect(out).toContain('href="https://other.test/"')
+    expect(out).toContain('../assets/a.jpg 1x, /a2.jpg 2x')
+  })
+  it('reads page paths from a sitemap', () => {
+    expect(sitemapPaths('<urlset><url><loc>https://demo.test/</loc></url><url><loc>https://demo.test/a</loc></url><url><loc>https://x.test/b</loc></url></urlset>', origin)).toEqual(['/', '/a'])
+  })
+})
 
 describe('agency demos (22g)', () => {
   it('keeps picture copies under their own prefix and finds pictures added later', () => {
