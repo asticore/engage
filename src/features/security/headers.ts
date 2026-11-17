@@ -111,6 +111,7 @@ export function securityHeaders(
   settings: SecuritySettings = DEFAULT_SECURITY_SETTINGS,
   pathname = '/',
   builder: CspBuilderConfig | null = null,
+  nonce = '',
 ): HeaderMap {
   const headers: HeaderMap = {}
 
@@ -160,9 +161,10 @@ export function securityHeaders(
   // The guided builder (Security > Content-Security-Policy builder) layers on top of the policy above, on public pages only:
   // the admin, the embed frame document and the shareable data page keep their own rules.
   if (builder && csp && !isPolicyFreePath(pathname) && !isEmbedFramePath(pathname) && !isFrameablePath(pathname)) {
-    const built = builderHeaders(csp, builder)
+    const built = builderHeaders(csp, builder, nonce)
     if (built.enforce) headers['Content-Security-Policy'] = built.enforce
     if (built.reportOnly) headers['Content-Security-Policy-Report-Only'] = built.reportOnly
+    if (built.reportingEndpoints) headers['Reporting-Endpoints'] = built.reportingEndpoints
   }
 
   // The Embed code frame document (third-party snippet) has its own relaxed, sandboxed policy; the site policy is untouched.

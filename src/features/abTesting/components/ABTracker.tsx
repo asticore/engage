@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { requestNonce } from '../../security/nonce'
 import { AB_TRACK_PATH } from '../slugs'
 import type { AbContext } from '../types'
 
@@ -58,14 +59,16 @@ const script = (bindings: Bindings, endpoint: string): string => `
   },true)}
 })();`
 
-export const ABTracker: React.FC<{ context: AbContext }> = ({ context }) => {
+export const ABTracker = async ({ context }: { context: AbContext }) => {
   if (!context.enabled) return null
 
   const bindings = bindingsFor(context)
   if (bindings.selectors.length === 0 && bindings.paths.length === 0 && !bindings.forms) return null
 
+  const nonce = await requestNonce()
   return (
     <script
+      nonce={nonce}
       // Server-generated from the site's own test definitions - there is no
       // visitor input anywhere in this string.
       dangerouslySetInnerHTML={{ __html: script(bindings, AB_TRACK_PATH) }}

@@ -26,10 +26,15 @@ export type CspBuilderConfig = {
   mode: CspMode
   /** Record violation reports sent by browsers to /api/csp-report. */
   collectReports: boolean
+  /**
+   * Per-request script nonces: public pages get 'nonce-<random>' and 'strict-dynamic' in script-src instead of
+   * 'unsafe-inline'. Needs the pages' own inline scripts to carry the nonce (see nonce.ts); run report-only first.
+   */
+  scriptNonce: boolean
   directives: Record<string, DirectiveEntry>
 }
 
-export const EMPTY_CSP_BUILDER: CspBuilderConfig = { mode: 'off', collectReports: true, directives: {} }
+export const EMPTY_CSP_BUILDER: CspBuilderConfig = { mode: 'off', collectReports: true, scriptNonce: false, directives: {} }
 
 export const CSP_REPORT_PATH = '/api/csp-report'
 
@@ -107,7 +112,7 @@ export function normaliseConfig(input: unknown): CspBuilderConfig {
     if (sources.length === 0) continue
     directives[name] = { sources, replace: entry.replace === true }
   }
-  return { mode, collectReports: raw.collectReports !== false, directives }
+  return { mode, collectReports: raw.collectReports !== false, scriptNonce: raw.scriptNonce === true, directives }
 }
 
 /** The builder's own directives as policy text (without the default). */
@@ -141,6 +146,7 @@ export function builderWarnings(config: CspBuilderConfig): string[] {
       out.push("script-src replaces the default without 'unsafe-inline', a nonce or a hash: the visual editor and the framework's own inline scripts will be blocked on public pages. Try report-only first.")
     if (entry.replace && entry.sources.includes("'none'") && ['default-src', 'script-src', 'style-src'].includes(name)) out.push(`${name} 'none' blocks every ${name === 'script-src' ? 'script' : name === 'style-src' ? 'style' : 'resource'} on public pages. Try report-only first.`)
   }
+  if (config.scriptNonce) out.push("Script nonces drop 'unsafe-inline' for scripts. Any inline script on a public page without the nonce (custom code blocks, pasted tag snippets) is blocked: run report-only and clear the violations first. Styles keep 'unsafe-inline'.")
   if (config.mode === 'enforce') out.push('Enforce mode blocks content on public pages straight away. Run report-only for a few days and check the violation list first.')
   return out
 }
@@ -169,17 +175,43 @@ export function applyBuilder(base: string, config: CspBuilderConfig): string {
   return [...merged.entries()].map(([name, sources]) => (sources.length ? `${name} ${sources.join(' ')}` : name)).join('; ')
 }
 
+/** A random nonce for one response: 128 bits, base64. */
+export function makeNonce(): string {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  let binary = ''
+  for (const b of bytes) binary += String.fromCharCode(b)
+  return btoa(binary)
+}
+
+/** Swaps 'unsafe-inline' for 'nonce-<nonce>' and 'strict-dynamic' in script-src (and script-src-elem when present). */
+export function applyNonce(policy: string, nonce: string): string {
+  return parsePolicy(policy)
+    .map(({ name, sources }) => {
+      if (name !== 'script-src' && name !== 'script-src-elem') return [name, ...sources].join(' ')
+      const kept = sources.filter((x) => x.toLowerCase() !== "'unsafe-inline'" && !x.startsWith("'nonce-") && x.toLowerCase() !== "'strict-dynamic'")
+      return [name, ...kept, `'nonce-${nonce}'`, "'strict-dynamic'"].join(' ')
+    })
+    .join('; ')
+}
+
+/** Name of the Reporting API endpoint declared in the Reporting-Endpoints header and named by report-to. */
+export const CSP_REPORT_GROUP = 'csp-endpoint'
+
 /**
  * The header(s) the builder adds on a public page, given the policy the site would otherwise enforce.
  * `enforced` is that policy (default, merged with free text). Returns the replacement enforced policy
- * and/or a report-only policy; both may be empty strings meaning "no change".
+ * and/or a report-only policy plus the Reporting-Endpoints value; empty strings mean "no change".
+ * Reports go both ways: report-uri (older browsers) and report-to with Reporting-Endpoints (current ones).
  */
-export function builderHeaders(enforced: string, config: CspBuilderConfig): { enforce: string; reportOnly: string } {
-  if (config.mode === 'off' || Object.keys(config.directives).length === 0) return { enforce: '', reportOnly: '' }
-  const candidate = applyBuilder(enforced, config)
-  const withReport = config.collectReports ? `${candidate}; report-uri ${CSP_REPORT_PATH}` : candidate
-  if (config.mode === 'enforce') return { enforce: withReport, reportOnly: '' }
-  return { enforce: '', reportOnly: withReport }
+export function builderHeaders(enforced: string, config: CspBuilderConfig, nonce = ''): { enforce: string; reportOnly: string; reportingEndpoints: string } {
+  if (config.mode === 'off' || (Object.keys(config.directives).length === 0 && !(config.scriptNonce && nonce))) return { enforce: '', reportOnly: '', reportingEndpoints: '' }
+  let candidate = applyBuilder(enforced, config)
+  if (config.scriptNonce && nonce) candidate = applyNonce(candidate, nonce)
+  const withReport = config.collectReports ? `${candidate}; report-uri ${CSP_REPORT_PATH}; report-to ${CSP_REPORT_GROUP}` : candidate
+  const reportingEndpoints = config.collectReports ? `${CSP_REPORT_GROUP}="${CSP_REPORT_PATH}"` : ''
+  if (config.mode === 'enforce') return { enforce: withReport, reportOnly: '', reportingEndpoints }
+  return { enforce: '', reportOnly: withReport, reportingEndpoints }
 }
 
 // ---------------------------------------------------------------------------------------------

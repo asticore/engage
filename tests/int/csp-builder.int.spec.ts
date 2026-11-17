@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   addSource,
+  applyNonce,
+  makeNonce,
   applyBuilder,
   blockedSource,
   builderHeaders,
@@ -68,14 +70,15 @@ describe('csp builder headers', () => {
   const builder = cfg({ mode: 'report-only', directives: { 'script-src': { sources: ['https://js.stripe.com'], replace: false } } })
 
   it('does nothing when off or empty', () => {
-    expect(builderHeaders('default-src', cfg({ mode: 'off', directives: builder.directives }))).toEqual({ enforce: '', reportOnly: '' })
-    expect(builderHeaders('default-src', cfg({ mode: 'enforce' }))).toEqual({ enforce: '', reportOnly: '' })
+    expect(builderHeaders('default-src', cfg({ mode: 'off', directives: builder.directives }))).toEqual({ enforce: '', reportOnly: '', reportingEndpoints: '' })
+    expect(builderHeaders('default-src', cfg({ mode: 'enforce' }))).toEqual({ enforce: '', reportOnly: '', reportingEndpoints: '' })
   })
   it('report-only leaves the enforced policy alone', () => {
     const h = securityHeaders(enabled, '/shop', builder)
     expect(h['Content-Security-Policy']).toBe(DEFAULT_CONTENT_SECURITY_POLICY)
     expect(h['Content-Security-Policy-Report-Only']).toContain('https://js.stripe.com')
     expect(h['Content-Security-Policy-Report-Only']).toContain('report-uri /api/csp-report')
+    expect(h['Reporting-Endpoints']).toBe('csp-endpoint="/api/csp-report"')
   })
   it('enforce replaces the enforced policy and sends no report-only header', () => {
     const h = securityHeaders(enabled, '/shop', { ...builder, mode: 'enforce' })
@@ -85,6 +88,7 @@ describe('csp builder headers', () => {
   it('can leave the report endpoint out', () => {
     const h = securityHeaders(enabled, '/shop', { ...builder, collectReports: false })
     expect(h['Content-Security-Policy-Report-Only']).not.toContain('report-uri')
+    expect(h['Reporting-Endpoints']).toBeUndefined()
   })
   it('never touches the admin, and the free-text policy still merges first', () => {
     expect(securityHeaders(enabled, '/admin/pages', { ...builder, mode: 'enforce' })['Content-Security-Policy']).toBeUndefined()
@@ -97,6 +101,40 @@ describe('csp builder headers', () => {
     const h = securityHeaders(enabled, '/shop')
     expect(h['Content-Security-Policy']).toBe(DEFAULT_CONTENT_SECURITY_POLICY)
     expect(h['Content-Security-Policy-Report-Only']).toBeUndefined()
+  })
+})
+
+describe('csp builder nonces and report-to', () => {
+  it('makes a fresh url-safe-enough nonce each time', () => {
+    const a = makeNonce()
+    expect(a).toMatch(/^[A-Za-z0-9+/]{22}==$/)
+    expect(makeNonce()).not.toBe(a)
+  })
+  it("swaps 'unsafe-inline' for the nonce and strict-dynamic in script-src only", () => {
+    const out = applyNonce("default-src 'self'; script-src 'self' 'unsafe-inline' https://a.com; style-src 'self' 'unsafe-inline'; upgrade-insecure-requests", 'AbC=')
+    expect(directive(out, 'script-src')).toBe("script-src 'self' https://a.com 'nonce-AbC=' 'strict-dynamic'")
+    expect(directive(out, 'style-src')).toBe("style-src 'self' 'unsafe-inline'")
+    expect(out).toContain('upgrade-insecure-requests')
+  })
+  it('sends the nonce policy as report-only and declares the reporting endpoint', () => {
+    const c = cfg({ mode: 'report-only', scriptNonce: true })
+    const h = securityHeaders(enabled, '/shop', c, 'N0nce=')
+    const ro = h['Content-Security-Policy-Report-Only']
+    expect(directive(ro, 'script-src')).toContain("'nonce-N0nce='")
+    expect(directive(ro, 'script-src')).not.toContain("'unsafe-inline'")
+    expect(ro).toContain('report-to csp-endpoint')
+    expect(h['Reporting-Endpoints']).toBe('csp-endpoint="/api/csp-report"')
+    expect(h['Content-Security-Policy']).toBe(DEFAULT_CONTENT_SECURITY_POLICY)
+  })
+  it('does nothing for nonces without a nonce value, and never on the admin', () => {
+    const c = cfg({ mode: 'enforce', scriptNonce: true })
+    expect(securityHeaders(enabled, '/shop', c, '')['Content-Security-Policy']).toBe(DEFAULT_CONTENT_SECURITY_POLICY)
+    expect(securityHeaders(enabled, '/admin/x', c, 'N=')['Content-Security-Policy']).toBeUndefined()
+  })
+  it('keeps the setting through normalise and warns about it', () => {
+    expect(normaliseConfig({ scriptNonce: true }).scriptNonce).toBe(true)
+    expect(normaliseConfig({}).scriptNonce).toBe(false)
+    expect(builderWarnings(cfg({ scriptNonce: true })).join(' ')).toContain('Script nonces')
   })
 })
 

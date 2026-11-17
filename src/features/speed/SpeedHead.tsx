@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { requestNonce } from '../security/nonce'
 import { buildRuntimeScript, runtimeConfigFor } from './runtime'
 import { getSpeedSettings } from './settings'
 import type { ResolvedSpeed } from './types'
@@ -38,6 +39,7 @@ export async function SpeedHead({ settings }: { settings?: ResolvedSpeed } = {})
   const { preconnectOrigins, prefetchDns } = speed.advanced
   const runtime = runtimeConfigFor(speed)
   if (!preconnectOrigins.length && !prefetchDns.length && !runtime) return null
+  const nonce = runtime ? await requestNonce() : undefined
 
   return (
     <>
@@ -51,6 +53,7 @@ export async function SpeedHead({ settings }: { settings?: ResolvedSpeed } = {})
       ))}
       {runtime ? (
         <script
+          nonce={nonce}
           // Inline and synchronous on purpose: it has to be installed before
           // the body streams in, or there is nothing left for it to intercept.
           dangerouslySetInnerHTML={{ __html: buildRuntimeScript(runtime) }}

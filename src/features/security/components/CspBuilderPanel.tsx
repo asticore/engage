@@ -87,6 +87,9 @@ export const CspBuilderPanel: React.FC = () => {
         <label>
           <input type="checkbox" checked={config.collectReports} onChange={(e) => setConfig({ ...config, collectReports: e.target.checked })} /> Collect violation reports from visitors&apos; browsers
         </label>
+        <label>
+          <input type="checkbox" checked={config.scriptNonce} onChange={(e) => setConfig({ ...config, scriptNonce: e.target.checked })} /> Use script nonces instead of &apos;unsafe-inline&apos; for scripts (stricter, test in Report only first)
+        </label>
         <p>Start with Report only. Browse the public site, then come back to Violations below and allow what is legitimate with one click. The admin never gets the builder&apos;s policy, so a mistake cannot lock you out. The free-text policy in Security settings, Headers still works and is merged first.</p>
       </section>
 

@@ -9,6 +9,7 @@ import { BYPASS_COOKIE, verifyBypass } from './ipBypass'
 import { readIpRulesCached } from './ipRulesStore'
 import { matchRateRule } from './routeRules'
 import { readRateRulesCached } from './routeRulesStore'
+import { makeNonce } from './cspBuilder'
 import { currentCspBuilder, refreshCspBuilder } from './cspBuilderStore'
 import { isDirectoryListingRequest, isProbePath } from './probePaths'
 import { classifyRoute, clientKey, hit, hitShared, limitFor } from './rateLimit'
@@ -139,8 +140,9 @@ export function applySecurityHeaders(
   response: NextResponse,
   settings: SecuritySettings,
   pathname: string,
+  nonce = '',
 ): NextResponse {
-  for (const [name, value] of Object.entries(securityHeaders(settings, pathname, currentCspBuilder()))) {
+  for (const [name, value] of Object.entries(securityHeaders(settings, pathname, currentCspBuilder(), nonce))) {
     response.headers.set(name, value)
   }
 
@@ -215,9 +217,23 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
   // Preserved from the original middleware: the frontend layout reads this to
   // know which page it is rendering.
   const passThrough = (): NextResponse => {
-    const response = NextResponse.next()
+    // Script nonces (CSP builder): one random value per response. It reaches the page as the x-nonce request header and
+    // in the policy header, which Next.js reads from the request to put the nonce on its own scripts.
+    const builder = currentCspBuilder()
+    const nonce = builder.scriptNonce && builder.mode !== 'off' && !isAppPath(pathname) ? makeNonce() : ''
+    let response: NextResponse
+    if (nonce) {
+      const forwarded = new Headers(request.headers)
+      forwarded.set('x-nonce', nonce)
+      const preview = securityHeaders(settings, pathname, builder, nonce)
+      const policyHeader = preview['Content-Security-Policy-Report-Only'] ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy'
+      if (preview[policyHeader]) forwarded.set(policyHeader, preview[policyHeader])
+      response = NextResponse.next({ request: { headers: forwarded } })
+    } else {
+      response = NextResponse.next()
+    }
     response.headers.append('x-pathname', pathname)
-    applySecurityHeaders(response, settings, pathname)
+    applySecurityHeaders(response, settings, pathname, nonce)
     if (adsCsp) applyAdsCsp(response, adsCsp)
     return applyServerResponseHeaders(response, rules, pathname)
   }
