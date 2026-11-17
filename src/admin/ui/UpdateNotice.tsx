@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react'
 
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
+
 type Check = { current: string; latest: string | null; updateAvailable: boolean; links: { changelog: string; start: string; sameRepo: boolean } }
 
 const SEEN_KEY = 'engage-update-dismissed'
 
 /** The update popup for super admins: appears when a newer Engage is released. Update opens the update page, then the changelog link stays. */
 export function UpdateNotice() {
+  const t = useAdminT()
   const [check, setCheck] = useState<Check | null>(null)
   const [started, setStarted] = useState(false)
 
@@ -41,10 +44,10 @@ export function UpdateNotice() {
   }
 
   return (
-    <div role="dialog" aria-label="Update available" data-testid="update-notice" style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 1000, maxWidth: 340 }} className="card">
+    <div role="dialog" aria-label={t('update.aria')} data-testid="update-notice" style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 1000, maxWidth: 340 }} className="card">
       <div className="card-body stack">
-        <strong>Engage {check.latest} is available</strong>
-        <span className="text-muted">This site runs {check.current}. {check.links.sameRepo ? 'Update from the releases page, then redeploy.' : 'Sync your fork with the original, then redeploy.'}</span>
+        <strong>{t('update.title', { version: check.latest ?? '' })}</strong>
+        <span className="text-muted">{t('update.body', { current: check.current, how: check.links.sameRepo ? t('update.howSame') : t('update.howFork') })}</span>
         <div className="cluster">
           <a
             className="btn"
@@ -55,10 +58,10 @@ export function UpdateNotice() {
               setStarted(true)
             }}
           >
-            Update
+            {t('update.update')}
           </a>
-          <a className="btn" href={check.links.changelog} target="_blank" rel="noopener noreferrer">{started ? 'Read the changelog' : 'Changelog'}</a>
-          <button type="button" className="btn" onClick={dismiss}>Later</button>
+          <a className="btn" href={check.links.changelog} target="_blank" rel="noopener noreferrer">{started ? t('update.readChangelog') : t('update.changelog')}</a>
+          <button type="button" className="btn" onClick={dismiss}>{t('update.later')}</button>
         </div>
       </div>
     </div>

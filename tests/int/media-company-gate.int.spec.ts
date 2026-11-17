@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { decideMediaAccess, restrictedMediaId } from '@/features/organizations/mediaGate'
+import { decideMediaAccess, isBrowserNavigation, mediaSignInRedirect, restrictedMediaId } from '@/features/organizations/mediaGate'
 import { isOrgGateCollection, isOrgVisibleCollection } from '@/features/organizations/visibility'
 
 type Row = Record<string, unknown> | null
@@ -55,5 +55,17 @@ describe('company gated downloads', () => {
     expect(await restrictedMediaId(fakeD1({ broken: true }), 'x.pdf')).toBeNull()
     expect(isOrgGateCollection('media')).toBe(true)
     expect(isOrgVisibleCollection('media')).toBe(false)
+  })
+})
+
+describe('browser navigation to a gated file', () => {
+  it('detects a page request by its Accept header', () => {
+    expect(isBrowserNavigation('text/html,application/xhtml+xml,*/*;q=0.8')).toBe(true)
+    expect(isBrowserNavigation('image/avif,image/webp,*/*')).toBe(false)
+    expect(isBrowserNavigation(null)).toBe(false)
+  })
+  it('sends the person to sign in and back, site paths only', () => {
+    expect(mediaSignInRedirect('/api/media/file/a%20b.pdf')).toBe('/account/sign-in?redirect=%2Fapi%2Fmedia%2Ffile%2Fa%2520b.pdf')
+    expect(mediaSignInRedirect('//evil.example')).toBe('/account/sign-in?redirect=%2F')
   })
 })

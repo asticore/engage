@@ -9,6 +9,15 @@ import { streamCredentials, type StreamFetch } from '@/features/media/stream'
 import { optimiseStoredVideo, type VideoSettings } from '@/features/media/videoOptimise'
 import { loadMedia, mediaUpdater, parseIdList, readJsonBody, readMediaSettings, readOptimiseSettings, type MediaEngine } from '@/features/media/store'
 
+/** True when the file is limited to a company or marked private (such a file is never copied to Cloudflare Stream). */
+async function isMediaRestricted(doc: { filename?: string | null }): Promise<boolean> {
+  if (!doc.filename) return false
+  const [{ resolveD1Binding }, { restrictedMediaId }, { decidePrivateAccess }] = await Promise.all([import('@/cms/db/connect'), import('@/features/organizations/mediaGate'), import('@/features/dam/access')])
+  const d1 = (await resolveD1Binding()) as unknown as Parameters<typeof decidePrivateAccess>[0]
+  if ((await restrictedMediaId(d1 as never, doc.filename)) !== null) return true
+  return (await decidePrivateAccess(d1, doc.filename, { canReadMedia: false })).allow === false
+}
+
 /** Hard ceiling on items per request, whatever Media Settings says. */
 const MAX_PER_REQUEST = 25
 
@@ -72,6 +81,7 @@ export async function POST(request: Request): Promise<Response> {
         await optimiseStoredVideo(doc as Parameters<typeof optimiseStoredVideo>[0], videoGlobal, creds, origin, {
           update,
           fetch: fetchStream,
+          isRestricted: isMediaRestricted,
         }),
       )
     } else if (binding) {

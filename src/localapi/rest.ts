@@ -663,12 +663,16 @@ async function handleGetMediaFile(filename: string, request: Request, engine?: E
   let restricted = false
   let who: { id?: number | string; roles?: string[] } | null = null
   try {
-    const [{ resolveD1Binding }, { decideMediaAccess }] = await Promise.all([import('@/cms/db/connect'), import('@/features/organizations/mediaGate')])
+    const [{ resolveD1Binding }, { decideMediaAccess, isBrowserNavigation, mediaSignInRedirect }] = await Promise.all([import('@/cms/db/connect'), import('@/features/organizations/mediaGate')])
     const d1 = (await resolveD1Binding()) as unknown as import('@/features/organizations/store').D1Like
     who = engine ? await engine.auth({ headers: request.headers }).then((r) => r.user as { id?: number | string; roles?: string[] } | null, (): null => null) : null
     const userId = who && who.id !== undefined && Number.isFinite(Number(who.id)) ? Number(who.id) : null
     const decision = await decideMediaAccess(d1, filename, { userId, isAdmin: Boolean(who?.roles?.includes('admin')) })
     if (decision.allow === false) {
+      if (decision.status === 401 && isBrowserNavigation(request.headers.get('accept'))) {
+        const url = new URL(request.url)
+        return new Response(null, { status: 302, headers: { Location: mediaSignInRedirect(url.pathname + url.search), 'Cache-Control': 'private, no-store' } })
+      }
       return Response.json({ errors: [{ name: decision.status === 401 ? 'AuthenticationError' : 'Forbidden', message: decision.status === 401 ? 'Sign in to download this file.' : 'This file is only for members of a company.' }] }, { status: decision.status, headers: { 'Cache-Control': 'private, no-store' } })
     }
     restricted = decision.restricted
