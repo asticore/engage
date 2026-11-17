@@ -1,3 +1,5 @@
+import { checkSpamRules } from '@/features/forms/spamRules'
+import { DEFAULT_FORM_SETTINGS, getFormSettings } from '@/features/forms/settings'
 import { NextResponse } from 'next/server'
 
 import { buildTree, decideStatus, hashAddress, hitsBlockedWord, isClosed, validateComment } from '@/features/comments/core'
@@ -67,9 +69,12 @@ export async function POST(request: Request): Promise<Response> {
   const status = hitsBlockedWord(`${name} ${content}`, settings.blockedWords)
     ? 'spam'
     : decideStatus(settings, { content, signedIn: Boolean(user), hasApprovedBefore: await store.hasApprovedBefore(d1, email) })
+  // The site-wide spam rules (Settings > Forms: blocked words, link limit, blocked senders) also apply to comments.
+  const siteRules = status === 'spam' ? { spam: false } : checkSpamRules({ name, email, content }, await getFormSettings(engine as never).catch(() => DEFAULT_FORM_SETTINGS))
+  const finalStatus = siteRules.spam ? 'spam' : status
   const ip = request.headers.get('cf-connecting-ip') ?? request.headers.get('x-forwarded-for') ?? ''
   const userId = user?.id != null && Number.isFinite(Number(user.id)) ? Number(user.id) : null
-  await store.insertComment(d1, { refType: 'post', refId: id, parentId, name, email, userId, content, status, fromTeam: false, ipHash: await hashAddress(ip, 'eg-comments') }, new Date().toISOString())
+  await store.insertComment(d1, { refType: 'post', refId: id, parentId, name, email, userId, content, status: finalStatus, fromTeam: false, ipHash: await hashAddress(ip, 'eg-comments') }, new Date().toISOString())
   // A comment marked spam looks accepted, so a spammer learns nothing.
-  return json({ ok: true, status: status === 'approved' ? 'approved' : 'pending' })
+  return json({ ok: true, status: finalStatus === 'approved' ? 'approved' : 'pending' })
 }
