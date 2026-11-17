@@ -96,11 +96,12 @@ export const schemaFactsField = (): Field =>
   ({
     name: 'schemaFacts',
     type: 'textarea',
-    label: 'Page type facts (JSON)',
+    label: 'Page type facts',
     validate: (value: unknown) => factsError(value),
     admin: {
-      description: 'Facts for the chosen page type, for example {"name":"Pancakes","ingredients":["Flour","Milk"],"steps":["Mix","Fry"],"prepTime":"PT10M"}. Missing items are listed in the page checks.',
+      description: 'Facts for the chosen page type. Missing items are listed in the page checks.',
       condition: (data: Record<string, unknown>) => isRichType(data?.schemaType),
+      components: { Field: '@/fields/schemaFacts/SchemaFactsField#SchemaFactsField' },
     },
   }) as Field
 

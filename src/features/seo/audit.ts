@@ -72,6 +72,8 @@ export function buildAuditRow(doc: Record<string, unknown>, collection: AuditCol
     links: body.links,
     images: body.images,
     cornerstone,
+    schemaType: asText(doc.schemaType),
+    schemaFacts: doc.schemaFacts,
   }
   const result = analyze(input)
   const problems = [...result.seo, ...result.readability].filter((check) => check.status === 'bad').map((check) => check.message)
