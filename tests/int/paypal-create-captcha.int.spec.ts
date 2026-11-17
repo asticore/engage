@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({ refusal: null as string | null, places: [] as string[] }))
 
-vi.mock('@/engine', () => ({ getEngine: async () => ({ findByID: async () => null }) }))
+vi.mock('@/engine', () => ({ getEngine: async () => ({ findByID: async (): Promise<null> => null }) }))
 vi.mock('@/features/security/authCaptcha', () => ({
   captchaFormFrom: (body: unknown) => body,
   authCaptchaRefusal: async (_engine: unknown, _form: unknown, _ip: unknown, place: string) => {
@@ -11,7 +11,7 @@ vi.mock('@/features/security/authCaptcha', () => ({
     return state.refusal
   },
 }))
-vi.mock('@/features/impersonation/policy', () => ({ refuseWhileImpersonating: () => null }))
+vi.mock('@/features/impersonation/policy', () => ({ refuseWhileImpersonating: (): null => null }))
 
 import { POST } from '@/app/(engage)/api/shop-paypal-create/route'
 import { CAPTCHA_PLACES } from '@/features/security/captchaPlaces'
