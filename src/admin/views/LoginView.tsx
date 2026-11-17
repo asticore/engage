@@ -5,6 +5,7 @@ import { useAdminRoot } from '@/admin/adminRoute/AdminRouteProvider'
 
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
 import { LastUsedBadge } from '@/features/accounts/components/LastUsedBadge'
 import { PasskeySignInButton } from '@/features/passkeys/components/PasskeySignInButton'
 import { SecondFactorChoice, type SecondFactorMethod } from '@/features/security/components/SecondFactorChoice'
@@ -19,6 +20,19 @@ import { SecondFactorChoice, type SecondFactorMethod } from '@/features/security
  * - expired=1: Shows "Your session expired. Please log in again." notice
  * - redirect=<path>: Redirects to this path after successful login (must be relative, start with /admin)
  */
+const CAPTCHA_FIELDS = ['cf-turnstile-response', 'g-recaptcha-response', 'captcha-answer', 'captcha-token']
+
+/** The challenge tokens the sign-in form's widget filled in, to send with the password. */
+function captchaTokens(form: HTMLFormElement): Record<string, string> {
+  const data = new FormData(form)
+  const out: Record<string, string> = {}
+  for (const field of CAPTCHA_FIELDS) {
+    const value = data.get(field)
+    if (typeof value === 'string' && value) out[field] = value
+  }
+  return out
+}
+
 export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string } = {}) {
   const root = useAdminRoot()
   const redirectTo = redirectToProp ?? root
@@ -151,7 +165,7 @@ export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string 
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pendingToken ? { pendingToken, code, method, trustDevice: trust } : { email, password }),
+        body: JSON.stringify(pendingToken ? { pendingToken, code, method, trustDevice: trust } : { email, password, ...captchaTokens(event.currentTarget) }),
       })
 
       const body = (await response.json()) as { errors?: Array<{ message?: string }>; twoFactorRequired?: boolean; pendingToken?: string }
@@ -238,6 +252,7 @@ export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string 
               required
             />
           </div>
+          <PlaceCaptcha place="adminSignIn" refreshKey={error} />
             </>
           )}
 

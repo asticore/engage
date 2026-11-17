@@ -1,6 +1,7 @@
 import { RECAPTCHA_FIELD, TURNSTILE_FIELD, checkCaptcha } from '@/features/forms/spam'
 import { getFormSettings, type EngineLike } from '@/features/forms/settings'
 import type { ResolvedFormSettings } from '@/features/forms/types'
+import { FALLBACK_ANSWER_FIELD, FALLBACK_TOKEN_FIELD, checkFallback, makeFallback, type FallbackQuestion } from './captchaFallback'
 import { botDecision, currentBotSignals, type BotSignals } from './botSignals'
 import { CAPTCHA_PLACES, effectiveMode, failuresReached, isPlaceId, type PlaceId } from './captchaPlaces'
 import { hitShared, peekShared } from './rateLimit'
@@ -13,7 +14,7 @@ import { hitShared, peekShared } from './rateLimit'
  * Fails open when the keys are missing or the provider cannot be reached (a log line, never a locked-out site).
  */
 
-export type PublicCaptcha = { provider: 'turnstile' | 'recaptcha'; siteKey: string }
+export type PublicCaptcha = { provider: 'turnstile' | 'recaptcha'; siteKey: string; fallback?: FallbackQuestion | null }
 
 /** Old place names still passed by a few callers. */
 export type CaptchaPlace = PlaceId | 'signin'
@@ -60,7 +61,7 @@ export async function authCaptchaConfig(engine: EngineLike, place: CaptchaPlace 
   const d = await placeDecision(engine, place, ip, signals)
   if (!d.required) return null
   const siteKey = d.settings.captchaProvider === 'recaptcha' ? d.settings.recaptchaSiteKey : d.settings.turnstileSiteKey
-  return siteKey ? { provider: d.settings.captchaProvider, siteKey } : null
+  return siteKey ? { provider: d.settings.captchaProvider, siteKey, fallback: await makeFallback().catch((): null => null) } : null
 }
 
 const REFUSAL = 'Please complete the challenge and try again.'
@@ -71,14 +72,18 @@ export async function authCaptchaRefusal(engine: EngineLike, form: FormData, ip?
   try {
     const d = await placeDecision(engine, id, ip, signals)
     if (d.block) {
+      await logBotFlag(engine, id, ip, 'refused')
       await logRefusal(engine, id, ip, 'bot score too low')
       return REFUSAL
     }
+    if (d.why === 'bot') await logBotFlag(engine, id, ip, 'asked')
     if (!d.required) {
       // Places that count tries note each one here; places that count failures are noted by their caller on a real failure.
       if (CAPTCHA_PLACES.find((p) => p.id === id)?.counts === 'tries') await noteCaptchaFailure(engine, id, ip)
       return null
     }
+    // The text question is the accessible way through when the widget cannot be used.
+    if (form.get(FALLBACK_ANSWER_FIELD) && (await checkFallback(form.get(FALLBACK_TOKEN_FIELD), form.get(FALLBACK_ANSWER_FIELD)))) return null
     const verdict = await checkCaptcha({ turnstile: form.get(TURNSTILE_FIELD), recaptcha: form.get(RECAPTCHA_FIELD) }, { ...d.settings, turnstile: true }, ip)
     if (!verdict.spam || verdict.reason === 'turnstile-unavailable') return null
     await logRefusal(engine, id, ip, `${d.why}: ${verdict.detail ?? 'challenge not passed'}`)
@@ -104,6 +109,18 @@ export async function noteCaptchaFailure(engine: EngineLike, place: CaptchaPlace
   }
 }
 
+/** One audit line per address and hour when the bot score flags a visitor: the count behind "visitors flagged" in Authentication. */
+async function logBotFlag(engine: EngineLike, id: PlaceId, ip: string | undefined, outcome: 'asked' | 'refused'): Promise<void> {
+  try {
+    const seen = await hitShared(`captcha:flag:${ip || 'unknown'}`, 1, { windowMs: 3_600_000 })
+    if (seen.limited) return
+    const { recordAuthEvent } = await import('./authAudit')
+    await recordAuthEvent(engine, { action: 'bot.flagged', detail: `${id}: ${outcome}` }, { ip: ip ?? null })
+  } catch {
+    // Counting never changes the answer.
+  }
+}
+
 async function logRefusal(engine: EngineLike, id: PlaceId, ip: string | undefined, detail: string): Promise<void> {
   try {
     const { recordAuthEvent } = await import('./authAudit')
@@ -117,7 +134,7 @@ async function logRefusal(engine: EngineLike, id: PlaceId, ip: string | undefine
 export function captchaFormFrom(body: unknown, headers?: { get(name: string): string | null } | null): FormData {
   const form = new FormData()
   const source = body && typeof body === 'object' ? (body as Record<string, unknown>) : {}
-  for (const field of [TURNSTILE_FIELD, RECAPTCHA_FIELD]) {
+  for (const field of [TURNSTILE_FIELD, RECAPTCHA_FIELD, FALLBACK_ANSWER_FIELD, FALLBACK_TOKEN_FIELD]) {
     const fromBody = source[field]
     const value = typeof fromBody === 'string' && fromBody ? fromBody : headers?.get(`x-${field}`)
     if (value) form.set(field, value)

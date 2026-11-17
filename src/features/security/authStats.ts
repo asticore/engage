@@ -81,3 +81,31 @@ export async function loadAccountCounts(db: D1Like, days: number, now: Date, unt
     return null
   }
 }
+
+export type BotFlagRow = { detail: string | null }
+export type BotFlagStats = { total: number; asked: number; refused: number; places: { place: string; count: number }[] }
+
+/** Counts the `bot.flagged` audit lines (written once per address and hour) by outcome and place. Rows look like "signIn: asked". */
+export function summariseBotFlags(rows: readonly BotFlagRow[]): BotFlagStats {
+  const places = new Map<string, number>()
+  let asked = 0
+  let refused = 0
+  for (const row of rows) {
+    const [place, outcome] = String(row.detail ?? '').split(': ')
+    if (outcome === 'refused') refused += 1
+    else asked += 1
+    if (place) places.set(place, (places.get(place) ?? 0) + 1)
+  }
+  return { total: rows.length, asked, refused, places: [...places].map(([place, count]) => ({ place, count })).sort((a, b) => b.count - a.count) }
+}
+
+/** Visitors the bot score flagged in the last `days` days. Null when the log cannot be read. */
+export async function loadBotFlags(db: D1Like, days: number, now: Date): Promise<BotFlagStats | null> {
+  try {
+    const since = `${lastDays(days, now)[0]}T00:00:00.000Z`
+    const { results } = await db.prepare("SELECT detail FROM `eg_audit_log` WHERE action = 'bot.flagged' AND created_at >= ? LIMIT 20000").bind(since).all()
+    return summariseBotFlags((results ?? []) as BotFlagRow[])
+  } catch {
+    return null
+  }
+}

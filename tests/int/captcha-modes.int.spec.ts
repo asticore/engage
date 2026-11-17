@@ -33,7 +33,7 @@ describe('place modes', () => {
 describe('always and off', () => {
   it('asks only where the mode says, once keys exist', async () => {
     const spam = { ...keys, modeRsvp: 'always' }
-    expect(await authCaptchaConfig(engine(spam) as never, 'rsvp')).toEqual({ provider: 'turnstile', siteKey: 'site' })
+    expect(await authCaptchaConfig(engine(spam) as never, 'rsvp')).toMatchObject({ provider: 'turnstile', siteKey: 'site' })
     expect(await authCaptchaConfig(engine(spam) as never, 'reviews')).toBeNull()
     expect(await authCaptchaConfig(engine({ modeRsvp: 'always' }) as never, 'rsvp')).toBeNull()
   })
@@ -83,5 +83,50 @@ describe('bot score on every place', () => {
   it('refuses outright in block mode', async () => {
     const e = engine({ ...keys, botDetection: 'block' }) as never
     expect(await authCaptchaRefusal(e, new FormData(), '1.1.1.1', 'offlineOrder', low)).toContain('challenge')
+  })
+})
+
+describe('text question fallback', () => {
+  it('accepts the right answer once signed, refuses wrong, expired or forged ones', async () => {
+    const { makeFallback, checkFallback } = await import('@/features/security/captchaFallback')
+    const now = 1_000_000
+    const q = await makeFallback(now, 'secret', () => 0.5)
+    expect(q?.question).toMatch(/What is \d plus \d/)
+    const sum = (q!.question.match(/\d+/g) ?? []).slice(0, 2).reduce((a, b) => a + Number(b), 0)
+    expect(await checkFallback(q!.token, String(sum), now + 1000, 'secret')).toBe(true)
+    expect(await checkFallback(q!.token, String(sum + 1), now + 1000, 'secret')).toBe(false)
+    expect(await checkFallback(q!.token, String(sum), now + 16 * 60_000, 'secret')).toBe(false)
+    expect(await checkFallback(q!.token, String(sum), now + 1000, 'other')).toBe(false)
+    expect(await makeFallback(now, '')).toBeNull()
+  })
+  it('lets a typed answer through the place check', async () => {
+    const { makeFallback } = await import('@/features/security/captchaFallback')
+    vi.stubEnv('ENGAGE_SECRET', 'secret')
+    const q = await makeFallback()
+    const sum = (q!.question.match(/\d+/g) ?? []).slice(0, 2).reduce((a, b) => a + Number(b), 0)
+    const e = engine({ ...keys, modeAdminSignIn: 'always' }) as never
+    expect(await authCaptchaRefusal(e, captchaFormFrom({ 'captcha-answer': String(sum), 'captcha-token': q!.token }), '1.1.1.1', 'adminSignIn')).toBeNull()
+    expect(await authCaptchaRefusal(e, captchaFormFrom({ 'captcha-answer': '99', 'captcha-token': q!.token }), '1.1.1.1', 'adminSignIn')).toContain('challenge')
+    vi.unstubAllEnvs()
+  })
+})
+
+describe('flagged visitors summary', () => {
+  it('counts by outcome and place', async () => {
+    const { summariseBotFlags } = await import('@/features/security/authStats')
+    const s = summariseBotFlags([{ detail: 'signIn: asked' }, { detail: 'signIn: refused' }, { detail: 'rsvp: asked' }])
+    expect(s).toMatchObject({ total: 3, asked: 2, refused: 1 })
+    expect(s.places[0]).toEqual({ place: 'signIn', count: 2 })
+  })
+})
+
+describe('per-form bot detection', () => {
+  it('overrides the site mode only when the form says so', async () => {
+    const { resolveForForm, DEFAULT_FORM_SETTINGS } = await import('@/features/forms/settings')
+    const site = { ...DEFAULT_FORM_SETTINGS, botDetection: 'challenge' as const }
+    expect(resolveForForm({ spam: { botDetection: 'inherit' } } as never, site).botDetection).toBe('challenge')
+    expect(resolveForForm({ spam: { botDetection: 'block' } } as never, site).botDetection).toBe('block')
+    expect(resolveForForm({ spam: { botDetection: 'off' } } as never, site).botDetection).toBe('off')
+    expect(resolveForForm({} as never, site).botDetection).toBe('challenge')
   })
 })

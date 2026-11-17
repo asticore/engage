@@ -23,10 +23,11 @@ const load = (src: string, id: string): Promise<boolean> =>
  * Draws the challenge inside a sign-in, register or forgot-password form and fills the hidden field the server
  * checks (`cf-turnstile-response` or `g-recaptcha-response`). reCAPTCHA v3 gets a fresh token every 90 seconds.
  */
-export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKey: string }> = ({ provider, siteKey }) => {
+export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKey: string; fallback?: { question: string; token: string } | null }> = ({ provider, siteKey, fallback }) => {
   const box = useRef<HTMLDivElement>(null)
   const hidden = useRef<HTMLInputElement>(null)
   const [blocked, setBlocked] = useState(false)
+  const [useText, setUseText] = useState(false)
 
   useEffect(() => {
     let live = true
@@ -57,9 +58,20 @@ export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKe
   return (
     <>
       {provider === 'turnstile' && <div ref={box} />}
-      {blocked && (
+      {blocked && !fallback && (
         <p role="alert">The security check could not load. Please turn off any content blocker for this site, reload the page and try again, or contact the site owner.</p>
       )}
+      {fallback && (useText || blocked) ? (
+        <label className="captcha-fallback">
+          {fallback.question}
+          <input name="captcha-answer" type="text" inputMode="numeric" autoComplete="off" required aria-required="true" />
+          <input type="hidden" name="captcha-token" value={fallback.token} />
+        </label>
+      ) : fallback ? (
+        <button type="button" className="btn btn--style-secondary" onClick={() => setUseText(true)}>
+          Can&apos;t use the security check? Answer a question instead
+        </button>
+      ) : null}
       <input ref={hidden} type="hidden" name={provider === 'turnstile' ? 'cf-turnstile-response' : 'g-recaptcha-response'} />
     </>
   )

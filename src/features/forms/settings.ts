@@ -177,6 +177,7 @@ export const resolveForForm = (form: FormDoc, settings: ResolvedFormSettings): R
     ...settings,
     honeypot: override(form?.spam?.honeypot, settings.honeypot),
     turnstile: override(form?.spam?.turnstile, settings.turnstile),
+    botDetection: form?.spam?.botDetection && form.spam.botDetection !== 'inherit' ? normaliseBotMode(form.spam.botDetection) : settings.botDetection,
     // Off means no wait at all, so this cannot go through `override` - it is a
     // number gated by a three-state choice, not a boolean.
     minimumFillTimeSeconds:

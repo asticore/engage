@@ -33,6 +33,7 @@ export type AuditAction =
   | 'consent.update'
   | 'rate-limit.blocked'
   | 'captcha.failed'
+  | 'bot.flagged'
   | 'probe.blocked'
   | 'ip.blocked'
   | 'ip.rule'
@@ -132,6 +133,7 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'session.expired',
   'rate-limit.blocked',
   'captcha.failed',
+  'bot.flagged',
   'password.changed',
   'password.reset',
   'email.verified',

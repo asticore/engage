@@ -40,7 +40,7 @@ export type FormDoc = {
   settings?: { submitButtonLabel?: string | null; successMessage?: string | null; errorMessage?: string | null; redirectUrl?: string | null } | null
   notification?: { enabled?: boolean | null; recipients?: string | null; subject?: string | null; message?: string | null } | null
   confirmation?: { enabled?: boolean | null; toField?: string | null; subject?: string | null; message?: string | null } | null
-  spam?: { honeypot?: string | null; minimumFillTime?: string | null; turnstile?: string | null } | null
+  spam?: { honeypot?: string | null; minimumFillTime?: string | null; turnstile?: string | null; botDetection?: string | null } | null
   payment?: { purchasable?: boolean | null; basePrice?: number | null; currency?: string | null; totalField?: string | null; product?: number | null } | null
   updatedAt: string
   createdAt: string

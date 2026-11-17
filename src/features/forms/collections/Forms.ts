@@ -581,6 +581,18 @@ export const Forms: CollectionConfig = {
             },
           ],
         },
+        {
+          name: 'botDetection',
+          type: 'select',
+          defaultValue: 'inherit',
+          options: [
+            { label: 'Use site setting', value: 'inherit' },
+            { label: 'Off', value: 'off' },
+            { label: 'Ask for the challenge', value: 'challenge' },
+            { label: 'Ask for the challenge and refuse the worst', value: 'block' },
+          ],
+          admin: { description: 'Bot detection for this form only (uses the Cloudflare bot score, see Form settings).' },
+        },
       ],
     },
     {
