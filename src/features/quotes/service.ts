@@ -5,7 +5,8 @@ import { loadPaymentSettings, resolveStripeSecret } from '@/features/ecommerce/p
 import { getStripeClient } from '@/features/ecommerce/payments/stripeAdapter'
 import { sendAdminNewOrderEmail, sendOrderEmail } from '@/features/ecommerce/server/emails'
 import { sendEmail } from '@/features/email'
-import { renderQuoteEmail, totalCents, type QuoteEmailKey } from './logic'
+import { totalCents, type QuoteEmailKey } from './logic'
+import { renderQuoteMail } from './mail'
 import * as store from './store'
 
 type Engine = {
@@ -39,7 +40,7 @@ export async function sendQuoteEmail(engine: Engine, key: QuoteEmailKey, request
       if (!to) return
     }
     const total = request.totalCents ?? totalCents(request.lines)
-    const mail = renderQuoteEmail(
+    const mail = await renderQuoteMail(
       key,
       {
         name: request.name,
@@ -55,6 +56,7 @@ export async function sendQuoteEmail(engine: Engine, key: QuoteEmailKey, request
         siteName: await siteName(engine),
       },
       extra.message,
+      engine as never,
     )
     await sendEmail({ to, template: `quote.${key}`, ...mail })
   } catch {

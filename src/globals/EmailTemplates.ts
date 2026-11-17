@@ -40,6 +40,14 @@ const DESIGN_KEYS = [
   'approvalDecision',
   'rsvpConfirmation',
   'eventReminder',
+  'quoteReceived',
+  'quoteAdminNew',
+  'quoteSent',
+  'quoteExpiring',
+  'quoteBidLost',
+  'quoteCounter',
+  'quoteAccepted',
+  'quoteDeclined',
 ] as const
 
 const DESIGN_FIELDS = DESIGN_KEYS.map((key) => ({
@@ -103,6 +111,55 @@ export const EmailTemplates: GlobalConfig = {
       'Event reminder',
       'Sent to a guest before their event. How long before is set under When emails are sent.',
       '{{name}} the guest name, {{eventTitle}} the event title, {{when}} the start date and time, {{guestCount}} the number of guests',
+    ),
+    // Quotes and requests emails (shown when that section is switched on).
+    template(
+      'quoteReceived',
+      'Quote request received (to customer)',
+      'Sent to the customer when they send a quote request, offer or item request.',
+      '{{name}} the customer name, {{number}} the request number, {{kindLabel}} quote request, offer or item request, {{siteName}} your site name',
+    ),
+    template(
+      'quoteAdminNew',
+      'New request (to you)',
+      'Sent to the shop admin email when a request comes in.',
+      '{{name}}, {{email}}, {{number}}, {{kindLabel}}, {{details}} what they asked for',
+    ),
+    template(
+      'quoteSent',
+      'Quote sent (to customer)',
+      'Sent with the quote and its private link. The message you type when sending a quote fills {{message}}.',
+      '{{name}}, {{number}}, {{message}} the message typed with the quote, {{total}} the quote total, {{validUntil}} the last day it can be accepted, {{link}} the private quote link, {{siteName}}',
+    ),
+    template(
+      'quoteExpiring',
+      'Quote expiring soon (to customer)',
+      'Sent once, a few days before an open quote runs out.',
+      '{{name}}, {{number}}, {{total}}, {{validUntil}}, {{siteName}}',
+    ),
+    template(
+      'quoteBidLost',
+      'Offer not successful (to customer)',
+      'Sent to people whose offer was not the highest when offers closed.',
+      '{{name}}, {{number}}, {{siteName}}',
+    ),
+    template(
+      'quoteCounter',
+      'Counter-offer (to you)',
+      'Sent to the shop admin email when a customer replies to a quote with a counter-offer.',
+      '{{name}}, {{email}}, {{number}}, {{note}} their message and the price they would pay',
+    ),
+    template(
+      'quoteAccepted',
+      'Quote accepted (to you)',
+      'Sent to the shop admin email when a customer accepts a quote.',
+      '{{name}}, {{number}}, {{total}}, {{orderNumber}} the new order number',
+    ),
+    template(
+      'quoteDeclined',
+      'Quote declined (to you)',
+      'Sent to the shop admin email when a customer declines a quote.',
+      '{{name}}, {{number}}',
     ),
     // Designed layout for each email (Email design page). Stored as a list of blocks; hidden here, edited on the designer.
     ...DESIGN_FIELDS,

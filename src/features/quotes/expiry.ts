@@ -1,5 +1,6 @@
 import { formatMoney } from '@/features/ecommerce/lib/money'
-import { renderQuoteEmail, totalCents } from './logic'
+import { totalCents } from './logic'
+import { renderQuoteMail } from './mail'
 import { dateText } from './service'
 import * as store from './store'
 
@@ -17,7 +18,7 @@ export const reminderMarker = (validUntil: string | null): string => `Expiry rem
  * customer's private link is only stored as a hash, so the email points back to the earlier quote email.
  * Never throws: a missing table or a failed email must not fail the cron run.
  */
-export async function runQuoteSweep(d1: store.D1, now: Date, siteName: string, send: SendFn): Promise<{ expired: number; reminded: number }> {
+export async function runQuoteSweep(d1: store.D1, now: Date, siteName: string, send: SendFn, reader?: { findGlobal: (args: never) => Promise<unknown> }): Promise<{ expired: number; reminded: number }> {
   const result = { expired: 0, reminded: 0 }
   try {
     result.expired = await store.expireOverdue(d1, now.toISOString())
@@ -27,13 +28,13 @@ export async function runQuoteSweep(d1: store.D1, now: Date, siteName: string, s
       if (!request.email || request.activity.some((a) => a.text === marker)) continue
       try {
         await store.addActivity(d1, request.id, 'system', marker, now.toISOString())
-        const mail = renderQuoteEmail('expiring', {
+        const mail = await renderQuoteMail('expiring', {
           name: request.name,
           number: request.number,
           total: formatMoney(request.totalCents ?? totalCents(request.lines), request.currency),
           validUntil: dateText(request.validUntil),
           siteName,
-        })
+        }, undefined, reader)
         await send({ to: request.email, template: 'quote.expiring', ...mail })
         result.reminded += 1
       } catch {

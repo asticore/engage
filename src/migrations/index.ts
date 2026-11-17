@@ -241,6 +241,7 @@ import * as migration_20270318_100000_taskboard_archive_due from './20270318_100
 import * as migration_20270318_120000_approval_review_due_days from './20270318_120000_approval_review_due_days';
 import * as migration_20270318_210000_approval_stand_ins from './20270318_210000_approval_stand_ins';
 import * as migration_20270318_220000_approval_section_routes from './20270318_220000_approval_section_routes';
+import * as migration_20270318_230000_quote_email_templates from './20270318_230000_quote_email_templates';
 import * as migration_20270318_130000_member_dunning_emails from './20270318_130000_member_dunning_emails';
 import * as migration_20270318_140000_order_bump from './20270318_140000_order_bump';
 import * as migration_20270318_150000_service_staff from './20270318_150000_service_staff';
@@ -1500,5 +1501,10 @@ export const migrations = [
     up: migration_20270318_230000_card_prints.up,
     down: migration_20270318_230000_card_prints.down,
     name: '20270318_230000_card_prints',
+  },
+  {
+    up: migration_20270318_230000_quote_email_templates.up,
+    down: migration_20270318_230000_quote_email_templates.down,
+    name: '20270318_230000_quote_email_templates',
   },
 ];
