@@ -58,6 +58,15 @@ async function applyStock(engine: Engine, lines: LineItem[], sign: 1 | -1, only?
     try {
       const product = await engine.findByID({ collection: 'products', id: productId, depth: 0, overrideAccess: true, draft: false })
       if (!product) continue
+      if (product.productType === 'composite') {
+        // A kit takes stock from each item that was picked: the snapshot taken at checkout (a kit with no snapshot has nothing to give back).
+        const contents = Array.isArray(line.bundleContents) ? line.bundleContents : []
+        const sub = await applyStock(engine, bundleStockLines(contents, qty), sign)
+        out.oversold.push(...sub.oversold)
+        out.failed.push(...sub.failed)
+        out.applied.push({ line, qty })
+        continue
+      }
       if (product.productType === 'bundle') {
         // A bundle takes stock from each product inside it: the snapshot taken at checkout, else the bundle's current contents.
         const contents = Array.isArray(line.bundleContents) ? line.bundleContents : bundleComponentRows(product.bundleItems).map((row): BundleContent => ({ productId: row.productId, quantity: row.quantity, title: `Item ${row.productId}` }))

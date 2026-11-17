@@ -25,6 +25,8 @@ import { loadShopRulesConfig } from '../server/pricingRules'
 import { withDonationAddOns } from '../lib/donations'
 import { normaliseAddOnDefs, parseAddOnInputs, priceAddOns, storeAddOnChoices } from '../lib/addOns'
 import { resolveBundle } from '../server/bundles'
+import { resolveComposite } from '../server/composite'
+import { parseCompositePicks, storeCompositePicks } from '../lib/composite'
 import { normaliseGiftCardSettings } from '../lib/storedValue'
 
 type CartItem = {
@@ -40,6 +42,7 @@ type CartItem = {
   giftSendAt?: string | null
   /** Product add-on answers, stored as JSON text once the hook has checked them. */
   addOns?: unknown
+  composite?: unknown
 }
 
 const productIdOf = (item: CartItem): number | null | undefined =>
@@ -110,6 +113,19 @@ export const beforeChangeCart = async ({ data, originalDoc, operation, req }: Re
         }
         const unchangedBundle = before.includes(`${productId}|${item.variation ?? ''}|${item.quantity}`)
         if (!unchangedBundle) errors.push({ path: `items.${index}`, message: (bundle as { error: string }).error })
+        continue
+      }
+      if (product && (product as { productType?: string }).productType === 'composite') {
+        // A kit line is priced from its base price and the picked items; only the accepted picks are kept on the line.
+        const composite = await resolveComposite(engine as never, product as never, parseCompositePicks(item.composite), item.quantity, new Date(), reservedParts, seen.get(`${productId}|`) ?? 0, preordersOn)
+        seen.set(`${productId}|`, (seen.get(`${productId}|`) ?? 0) + item.quantity)
+        if (composite.ok) {
+          item.composite = storeCompositePicks(composite.picks)
+          subtotal += (composite.unitCents * item.quantity) / 100
+          continue
+        }
+        const unchangedKit = before.includes(`${productId}|${item.variation ?? ''}|${item.quantity}`)
+        if (!unchangedKit) errors.push({ path: `items.${index}`, message: (composite as { error: string }).error })
         continue
       }
       // A product that rounds up takes the next full carton or pallet instead of refusing the quantity.

@@ -1,5 +1,6 @@
 import type { Field } from '@/engine'
 import { addOnFields } from './productAddOns'
+import { compositeFields } from './productComposite'
 import { subscriptionFields } from '../subscriptions/fields'
 
 /**
@@ -21,7 +22,7 @@ export const productTypeField: Field = {
   name: 'productType',
   type: 'select',
   defaultValue: 'simple',
-  admin: { description: 'Simple: one price. Variable: options such as size or colour, each with its own price and stock. Grouped: a set of related products. External: sold on another site. Gift card: the buyer chooses an amount and the card is emailed to the recipient (set amounts in Shop settings > Gift cards). Bundle: several products sold together (see Bundle contents).' },
+  admin: { description: 'Simple: one price. Variable: options such as size or colour, each with its own price and stock. Grouped: a set of related products. External: sold on another site. Gift card: the buyer chooses an amount and the card is emailed to the recipient (set amounts in Shop settings > Gift cards). Bundle: several products sold together (see Bundle contents). Composite: the buyer picks items for each step of a kit (see Kit choices).' },
   options: [
     { label: 'Simple product', value: 'simple' },
     { label: 'Variable product', value: 'variable' },
@@ -29,6 +30,7 @@ export const productTypeField: Field = {
     { label: 'External / affiliate product', value: 'external' },
     { label: 'Gift card', value: 'giftcard' },
     { label: 'Bundle', value: 'bundle' },
+    { label: 'Composite (build your own kit)', value: 'composite' },
   ],
 }
 
@@ -74,7 +76,7 @@ export const inventoryFields: Field[] = [
   {
     type: 'collapsible',
     label: 'Stock',
-    admin: { condition: (data) => data?.productType !== 'grouped' && data?.productType !== 'external' && data?.productType !== 'bundle' },
+    admin: { condition: (data) => data?.productType !== 'grouped' && data?.productType !== 'external' && data?.productType !== 'bundle' && data?.productType !== 'composite' },
     fields: [
       { name: 'manageStock', type: 'checkbox', defaultValue: false, admin: { description: 'Track a quantity for this product. For a variable product, tick it on each variation instead (or here to share one stock pool).' } },
       {
@@ -404,6 +406,7 @@ export const catalogueFields: Field[] = [
   ...preorderFields,
   ...variationFields,
   ...bundleFields,
+  ...compositeFields,
   ...addOnFields,
   ...subscriptionFields,
   ...linkedProductFields,

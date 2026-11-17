@@ -22,6 +22,8 @@ import { addOnSummary, parseAddOnInputs, priceAddOns, normaliseAddOnDefs, type A
 import { applyPricingRules } from '../lib/pricingRules'
 import { loadShopRulesConfig } from './pricingRules'
 import { resolveBundle } from './bundles'
+import { resolveComposite } from './composite'
+import { parseCompositePicks } from '../lib/composite'
 import { resolveTierPrice, type PriceTier } from '../lib/priceTiers'
 import { listPriceTiers } from './priceTiers'
 
@@ -76,6 +78,7 @@ export type CartItemInput = {
   priceCents?: number | null
   /** Product add-on answers: [{id, value}] (or the JSON text they are stored as). Checked against the product here. */
   addOns?: unknown
+  composite?: unknown
   /** Gift card lines: amount in cents chosen by the buyer, and who receives it. Validated here, never trusted. */
   customAmount?: number | null
   giftName?: string | null
@@ -176,6 +179,33 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
         requiresShipping: !virtual,
         // carried for the order snapshot: what one bundle holds, so later edits to the bundle do not change its stock
         ...({ variationId: null, bundleContents: bundle.contents } as object),
+      } as PricedLine)
+      continue
+    }
+    if (product && product.productType === 'composite') {
+      // A kit is priced from its base price plus the picked items; their stock goes through the same `inCart` tally as single products.
+      const kitKey = `${productId}:`
+      const kit = await resolveComposite(engine, product as Doc, parseCompositePicks(item.composite), quantity, now, inCart, inCart.get(kitKey) ?? 0, preordersOn)
+      if (!kit.ok) throw new CheckoutError((kit as { error: string }).error)
+      inCart.set(kitKey, (inCart.get(kitKey) ?? 0) + quantity)
+      for (const pool of kit.pools) pools.set(pool.key, { available: pool.available, quantity: (pools.get(pool.key)?.quantity ?? 0) + pool.quantity })
+      const k = product as Doc
+      const virtualKit = isNonShipping(k as never) || k.category === 'digital'
+      lines.push({
+        key: String(i),
+        productId: String(productId),
+        name: `${String(k.title ?? 'Kit')} (${kit.summary})`,
+        sku: typeof k.sku === 'string' ? k.sku : null,
+        unitCents: kit.unitCents,
+        quantity,
+        taxClass: (['standard', 'reduced', 'zero'].includes(String(k.taxClass)) ? k.taxClass : 'standard') as TaxClass,
+        categories: k.category ? [String(k.category)] : [],
+        onSale: false,
+        weightGrams: kit.weightGrams,
+        shippingClass: idOf(k.shippingClass),
+        requiresShipping: !virtualKit,
+        // carried for the order snapshot: the items picked for one kit, so stock and refunds follow what was sold
+        ...({ variationId: null, bundleContents: kit.contents } as object),
       } as PricedLine)
       continue
     }

@@ -191,6 +191,7 @@ import * as migration_20270317_260000_rate_rules from './20270317_260000_rate_ru
 import * as migration_20270317_280000_sign_in_paths from './20270317_280000_sign_in_paths';
 import * as migration_20270318_100000_csp_builder from './20270318_100000_csp_builder';
 import * as migration_20270317_270000_product_feed_cache from './20270317_270000_product_feed_cache';
+import * as migration_20270317_265000_composite_products from './20270317_265000_composite_products';
 import * as migration_20270316_390000_dam from './20270316_390000_dam';
 import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
@@ -1380,5 +1381,10 @@ export const migrations = [
     up: migration_20270317_270000_product_feed_cache.up,
     down: migration_20270317_270000_product_feed_cache.down,
     name: '20270317_270000_product_feed_cache',
+  },
+  {
+    up: migration_20270317_265000_composite_products.up,
+    down: migration_20270317_265000_composite_products.down,
+    name: '20270317_265000_composite_products',
   },
 ];
