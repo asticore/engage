@@ -59,6 +59,7 @@ const EmailDesignerView = lazyView(() => import('@/admin/views/EmailDesignerView
 const CookieConsentView = lazyView(() => import('@/admin/views/CookieConsentView').then((mod) => mod.CookieConsentView))
 const ShopSettingsView = lazyView(() => import('@/admin/views/ShopSettingsView').then((mod) => mod.ShopSettingsView))
 const StoreCreditView = lazyView(() => import('@/admin/views/StoreCreditView').then((mod) => mod.StoreCreditView))
+const OutboundClicksView = lazyView(() => import('@/admin/views/OutboundClicksView').then((mod) => mod.OutboundClicksView))
 const ShopReportsView = lazyView(() => import('@/admin/views/ShopReportsView').then((mod) => mod.ShopReportsView))
 const NotificationsView = lazyView(() => import('@/admin/views/NotificationsView').then((mod) => mod.NotificationsView))
 const TaskboardView = lazyView(() => import('@/admin/views/TaskboardView').then((mod) => mod.TaskboardView))
@@ -254,6 +255,7 @@ export const CUSTOM_ADMIN_VIEWS = [
     path: '/store-credit',
     meta: { title: 'Store credit', description: 'Add or deduct store credit with a reason.' },
   },
+  { key: 'outboundClicks', Component: OutboundClicksView, path: '/outbound-clicks', meta: { title: 'Outbound clicks', description: 'Clicks on external and affiliate product buttons.' } },
   { key: 'shopReports', Component: ShopReportsView, path: '/shop-reports', meta: { title: 'Shop reports', description: 'Sales, refunds, customers, products, coupons, payments, locations, low stock and abandoned carts.' } },
   { key: 'displayCurrencies', Component: DisplayCurrenciesView, path: '/display-currencies', meta: { title: 'Display currencies', description: 'Show prices in other currencies. Shoppers always pay in the shop currency.' } },
   { key: 'notifications', Component: NotificationsView, path: '/notifications', meta: { title: 'Notifications', description: 'Send an email or push when an order is paid, a form is sent, a booking is made and more.' } },
