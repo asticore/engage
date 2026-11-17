@@ -136,7 +136,7 @@ describe('a person per section', () => {
     expect(run(state, 'approve', actor(7, []), { workflow: routed })).toMatchObject({ ok: true })
     const blocked = run(state, 'approve', actor(5, ['editor']), { workflow: routed })
     expect(blocked).toMatchObject({ ok: false, status: 403 })
-    expect(!blocked.ok && blocked.error).toContain('the approver named for this section')
+    expect(blocked).toMatchObject({ error: expect.stringContaining('the approver named for this section') })
     expect(run(state, 'approve', actor(1, ['admin'], { isAdmin: true }), { workflow: routed })).toMatchObject({ ok: true })
     // A document in another section is decided by the step's roles.
     expect(run(inReview({ requestedBy: 4, section: 'other' }), 'approve', actor(5, ['editor']), { workflow: routed })).toMatchObject({ ok: true })
@@ -150,7 +150,10 @@ describe('a person per section', () => {
 
   it('works out a page section from its top-level page and a post section from its first category', async () => {
     const pages: Record<number, Record<string, unknown>> = { 12: { id: 12, parent: null }, 20: { id: 20, parent: 12 }, 21: { id: 21, parent: { id: 20 } } }
-    const engine = { findByID: async ({ id }: { id: number }) => pages[id] ?? null, find: async () => ({ docs: [] }) }
+    const engine = {
+      findByID: async (args: Record<string, unknown>): Promise<Record<string, unknown> | null> => pages[Number(args.id)] ?? null,
+      find: async (): Promise<{ docs: Array<Record<string, unknown>> }> => ({ docs: [] }),
+    }
     expect(await sectionKeyOf(engine, 'pages', { id: 21, parent: 20 })).toBe('12')
     expect(await sectionKeyOf(engine, 'pages', { id: 12 })).toBe('12')
     expect(await sectionKeyOf(engine, 'posts', { id: 1, categories: [{ name: ' News ' }, { name: 'Other' }] })).toBe('news')
