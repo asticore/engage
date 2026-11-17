@@ -13,7 +13,9 @@ export const TASKBOARD_STATEMENTS = [
   \`member_ids\` text NOT NULL DEFAULT '[]',
   \`created_by\` integer,
   \`updated_at\` text,
-  \`created_at\` text
+  \`created_at\` text,
+  \`organization_id\` text,
+  \`team_id\` text
 )`,
   `CREATE TABLE IF NOT EXISTS \`eg_task_columns\` (
   \`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,

@@ -16,7 +16,7 @@ const json = <T>(value: unknown, fallback: T): T => {
   }
 }
 
-const toBoard = (r: Row): Board => ({ id: Number(r.id), name: String(r.name ?? ''), memberIds: json<unknown[]>(r.member_ids, []).map(Number).filter((n) => Number.isInteger(n) && n > 0) })
+const toBoard = (r: Row): Board => ({ id: Number(r.id), name: String(r.name ?? ''), memberIds: json<unknown[]>(r.member_ids, []).map(Number).filter((n) => Number.isInteger(n) && n > 0), organizationId: r.organization_id ? String(r.organization_id) : null, teamId: r.team_id ? String(r.team_id) : null, createdBy: r.created_by === null || r.created_by === undefined ? null : Number(r.created_by) })
 
 const toCard = (r: Row): Card => ({
   id: Number(r.id),
@@ -46,11 +46,11 @@ export async function listPeople(d1: D1): Promise<Person[]> {
 }
 
 export async function listBoards(d1: D1): Promise<Board[]> {
-  return (await all(d1, 'SELECT id, name, member_ids FROM eg_task_boards ORDER BY id')).map(toBoard)
+  return (await all(d1, 'SELECT id, name, member_ids, organization_id, team_id, created_by FROM eg_task_boards ORDER BY id')).map(toBoard)
 }
 
 export async function getBoard(d1: D1, id: number): Promise<Board | null> {
-  const rows = await all(d1, 'SELECT id, name, member_ids FROM eg_task_boards WHERE id = ?1', id)
+  const rows = await all(d1, 'SELECT id, name, member_ids, organization_id, team_id, created_by FROM eg_task_boards WHERE id = ?1', id)
   return rows[0] ? toBoard(rows[0]) : null
 }
 
@@ -77,16 +77,45 @@ export async function logActivity(d1: D1, entry: { boardId: number; cardId?: num
   await run(d1, 'INSERT INTO eg_task_activity (board_id, card_id, user_id, action, detail, created_at) VALUES (?1,?2,?3,?4,?5,?6)', entry.boardId, entry.cardId ?? null, entry.userId, entry.action, (entry.detail ?? '').slice(0, 300), nowIso)
 }
 
-export async function createBoard(d1: D1, name: string, memberIds: number[], userId: number, nowIso: string): Promise<number> {
-  const result = await run(d1, 'INSERT INTO eg_task_boards (name, member_ids, created_by, updated_at, created_at) VALUES (?1,?2,?3,?4,?4)', name, JSON.stringify(memberIds), userId, nowIso)
+export type BoardScope = { organizationId: string | null; teamId: string | null }
+
+export async function createBoard(d1: D1, name: string, memberIds: number[], userId: number, nowIso: string, scope: BoardScope = { organizationId: null, teamId: null }): Promise<number> {
+  const result = await run(d1, 'INSERT INTO eg_task_boards (name, member_ids, created_by, updated_at, created_at, organization_id, team_id) VALUES (?1,?2,?3,?4,?4,?5,?6)', name, JSON.stringify(memberIds), userId, nowIso, scope.organizationId, scope.teamId)
   const id = Number(result.meta?.last_row_id)
   for (let i = 0; i < DEFAULT_COLUMNS.length; i += 1) await run(d1, 'INSERT INTO eg_task_columns (board_id, name, position) VALUES (?1,?2,?3)', id, DEFAULT_COLUMNS[i], i)
   await logActivity(d1, { boardId: id, userId, action: 'board.created', detail: name }, nowIso)
   return id
 }
 
-export async function updateBoard(d1: D1, id: number, name: string, memberIds: number[], nowIso: string): Promise<void> {
-  await run(d1, 'UPDATE eg_task_boards SET name = ?1, member_ids = ?2, updated_at = ?3 WHERE id = ?4', name, JSON.stringify(memberIds), nowIso, id)
+export async function updateBoard(d1: D1, id: number, name: string, memberIds: number[], nowIso: string, scope?: BoardScope): Promise<void> {
+  if (scope) await run(d1, 'UPDATE eg_task_boards SET name = ?1, member_ids = ?2, updated_at = ?3, organization_id = ?5, team_id = ?6 WHERE id = ?4', name, JSON.stringify(memberIds), nowIso, id, scope.organizationId, scope.teamId)
+  else await run(d1, 'UPDATE eg_task_boards SET name = ?1, member_ids = ?2, updated_at = ?3 WHERE id = ?4', name, JSON.stringify(memberIds), nowIso, id)
+}
+
+/** A board's company and team must exist and the team must belong to the company. Returns null for a bad pair. */
+export async function validScope(d1: D1, organizationId: unknown, teamId: unknown): Promise<BoardScope | null> {
+  const org = typeof organizationId === 'string' && organizationId ? organizationId : null
+  const team = typeof teamId === 'string' && teamId ? teamId : null
+  if (!org && !team) return { organizationId: null, teamId: null }
+  if (!org) return null
+  try {
+    if (!(await all(d1, 'SELECT id FROM eg_organizations WHERE id = ?1', org)).length) return null
+    if (team && !(await all(d1, 'SELECT id FROM eg_organization_teams WHERE id = ?1 AND organization_id = ?2', team, org)).length) return null
+  } catch {
+    return null
+  }
+  return { organizationId: org, teamId: team }
+}
+
+/** Companies and their teams for the board settings picker. Empty when the companies feature is off. */
+export async function listScopeChoices(d1: D1): Promise<{ organizations: { id: string; name: string }[]; teams: { id: string; organizationId: string; name: string }[] }> {
+  try {
+    const organizations = (await all(d1, 'SELECT id, name FROM eg_organizations ORDER BY name')).map((r) => ({ id: String(r.id), name: String(r.name ?? '') }))
+    const teams = (await all(d1, 'SELECT id, organization_id, name FROM eg_organization_teams ORDER BY name')).map((r) => ({ id: String(r.id), organizationId: String(r.organization_id), name: String(r.name ?? '') }))
+    return { organizations, teams }
+  } catch {
+    return { organizations: [], teams: [] }
+  }
 }
 
 export async function deleteBoard(d1: D1, id: number): Promise<void> {

@@ -202,3 +202,30 @@ describe('taskboard entries in the main Activity log', () => {
   })
 })
 
+
+describe('taskboard boards scoped to a company or team (18j)', () => {
+  it('follows the organisation access helper and checks the company and team pair', async () => {
+    const { raw, d1, deps } = setup()
+    raw.exec("CREATE TABLE eg_organizations (id text, name text); CREATE TABLE eg_organization_teams (id text, organization_id text, name text); INSERT INTO eg_organizations VALUES ('o1','Acme'),('o2','Beta'); INSERT INTO eg_organization_teams VALUES ('t1','o1','Sales');")
+    expect((await runAction(deps, admin, { action: 'create-board', name: 'Bad', organizationId: 'o2', teamId: 't1' })).status).toBe(400)
+    expect((await runAction(deps, admin, { action: 'create-board', name: 'Bad', organizationId: 'nope' })).status).toBe(400)
+    const wholeId = Number((await runAction(deps, admin, { action: 'create-board', name: 'Acme board', organizationId: 'o1' })).body.id)
+    const teamId = Number((await runAction(deps, admin, { action: 'create-board', name: 'Sales board', organizationId: 'o1', teamId: 't1' })).body.id)
+    const [whole, team] = [await store.getBoard(d1, wholeId), await store.getBoard(d1, teamId)]
+    expect(whole).toMatchObject({ organizationId: 'o1', teamId: null })
+    const member = { id: 2, isAdmin: false }
+    const plain = { userId: 2, memberships: [{ organizationId: 'o1', role: 'member', teamIds: [] }] }
+    const inTeam = { userId: 2, memberships: [{ organizationId: 'o1', role: 'member', teamIds: ['t1'] }] }
+    const manager = { userId: 2, memberships: [{ organizationId: 'o1', role: 'admin', teamIds: [] }] }
+    expect(canAccessBoard(whole!, member)).toBe(false)
+    expect(canAccessBoard(whole!, member, plain)).toBe(true)
+    expect(canAccessBoard(team!, member, plain)).toBe(false)
+    expect(canAccessBoard(team!, member, inTeam)).toBe(true)
+    expect(canAccessBoard(team!, member, manager)).toBe(true)
+    expect(canAccessBoard(team!, { id: 9, isAdmin: true })).toBe(true)
+    expect((await runAction(deps, { ...editor, orgAccess: plain }, { action: 'save-card', boardId: teamId, columnId: 1, card: { title: 'x' } })).status).toBe(404)
+    await runAction(deps, admin, { action: 'update-board', boardId: wholeId, name: 'Acme board', columns: [{ name: 'A' }], organizationId: null, teamId: null })
+    expect(await store.getBoard(d1, wholeId)).toMatchObject({ organizationId: null })
+    expect((await store.listScopeChoices(d1)).organizations.map((o) => o.id)).toEqual(['o1', 'o2'])
+  })
+})

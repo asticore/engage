@@ -1,7 +1,8 @@
 import { assignablePeople, assignmentEmail, canAccessBoard, moveCard, parseBoardName, parseCardInput, parseColumns, parseComment, parseMemberIds, type Board } from './logic'
+import type { OrgAccess } from '@/features/organizations/access'
 import * as store from './store'
 
-export type Actor = { id: number; isAdmin: boolean; label: string }
+export type Actor = { id: number; isAdmin: boolean; label: string; orgAccess?: OrgAccess }
 export type Deps = {
   d1: store.D1
   nowIso: string
@@ -44,13 +45,15 @@ export async function runAction(deps: Deps, actor: Actor, body: Record<string, u
     if (!actor.isAdmin) return fail(403, 'Only an admin can add a board.')
     const name = parseBoardName(body.name)
     if (!name) return fail(400, 'Give the board a name.')
-    return ok({ id: await store.createBoard(d1, name, parseMemberIds(body.memberIds), actor.id, nowIso) })
+    const scope = await store.validScope(d1, body.organizationId, body.teamId)
+    if (!scope) return fail(400, 'Pick a team that belongs to the chosen company.')
+    return ok({ id: await store.createBoard(d1, name, parseMemberIds(body.memberIds), actor.id, nowIso, scope) })
   }
 
   const boardId = Number(body.boardId)
   if (!Number.isInteger(boardId) || boardId < 1) return fail(400, 'Pick a board.')
   const board = await store.getBoard(d1, boardId)
-  if (!board || !canAccessBoard(board, actor)) return fail(404, 'That board is not available to you.')
+  if (!board || !canAccessBoard(board, actor, actor.orgAccess)) return fail(404, 'That board is not available to you.')
 
   switch (action) {
     case 'update-board': {
@@ -59,7 +62,9 @@ export async function runAction(deps: Deps, actor: Actor, body: Record<string, u
       if (!name) return fail(400, 'Give the board a name.')
       const columns = parseColumns(body.columns)
       if (columns.ok === false) return fail(400, columns.error)
-      await store.updateBoard(d1, boardId, name, parseMemberIds(body.memberIds), nowIso)
+      const scope = 'organizationId' in body || 'teamId' in body ? await store.validScope(d1, body.organizationId, body.teamId) : undefined
+      if (scope === null) return fail(400, 'Pick a team that belongs to the chosen company.')
+      await store.updateBoard(d1, boardId, name, parseMemberIds(body.memberIds), nowIso, scope)
       await store.saveColumns(d1, boardId, columns.columns)
       return ok()
     }

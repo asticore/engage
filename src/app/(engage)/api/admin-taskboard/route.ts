@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { rawD1 } from '@/features/ecommerce/server/db'
+import { loadOrgAccess } from '@/features/organizations/access'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { runAction } from '@/features/taskboard/actions'
 import { canAccessBoard, assignablePeople } from '@/features/taskboard/logic'
@@ -17,7 +18,8 @@ async function guard() {
   if (!hasAdminPanelAccess(ctx.user)) return { response: json({ error: 'Unauthorised' }, 401) }
   if (!(await getFeatureFlags()).taskboard) return { response: json({ error: 'Switch the Taskboard on in Site Settings first.' }, 409) }
   const user = ctx.user as { id: number | string; email?: string; displayName?: string }
-  return { ctx, me: { id: Number(user.id), isAdmin: ctx.isAdmin, label: user.displayName || user.email || '' } }
+  const orgAccess = await loadOrgAccess((await rawD1()) as never, Number(user.id))
+  return { ctx, orgAccess, me: { id: Number(user.id), isAdmin: ctx.isAdmin, label: user.displayName || user.email || '', orgAccess } }
 }
 
 /**
@@ -30,7 +32,7 @@ export async function GET(request: Request): Promise<Response> {
   if (!access.ctx) return access.response!
   const d1 = (await rawD1()) as never as store.D1
   const url = new URL(request.url)
-  const boards = (await store.listBoards(d1)).filter((b) => canAccessBoard(b, access.me))
+  const boards = (await store.listBoards(d1)).filter((b) => canAccessBoard(b, access.me, access.orgAccess))
   const people = await store.listPeople(d1)
   if (url.searchParams.get('mine') === '1') {
     const cards = await store.cardsForPerson(d1, access.me.id, boards.map((b) => b.id))
@@ -39,6 +41,7 @@ export async function GET(request: Request): Promise<Response> {
   const boardId = Number(url.searchParams.get('board'))
   const board = boards.find((b) => b.id === boardId)
   const out: Record<string, unknown> = { boards, me: { id: access.me.id, isAdmin: access.me.isAdmin }, people }
+  if (access.me.isAdmin) out.scopeChoices = await store.listScopeChoices(d1)
   if (board) {
     Object.assign(out, await store.boardData(d1, board.id), { board, assignable: assignablePeople(board, people) })
     const cardId = Number(url.searchParams.get('card'))
