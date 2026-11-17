@@ -214,6 +214,14 @@ export const BackupSettings: GlobalConfig = {
               ],
             },
             {
+              name: 'endpoint',
+              type: 'text',
+              admin: {
+                description:
+                  'Leave empty for Amazon S3. For Backblaze B2, Wasabi, MinIO or DigitalOcean Spaces enter the S3 endpoint, such as https://s3.us-west-004.backblazeb2.com or https://s3.wasabisys.com.',
+              },
+            },
+            {
               type: 'row',
               fields: [
                 {

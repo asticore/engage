@@ -232,6 +232,7 @@ import * as migration_20270316_360000_auth_captcha from './20270316_360000_auth_
 import * as migration_20270317_260000_bot_detection from './20270317_260000_bot_detection';
 import * as migration_20270317_270000_captcha_modes from './20270317_270000_captcha_modes';
 import * as migration_20270317_280000_captcha_followups from './20270317_280000_captcha_followups';
+import * as migration_20270318_110000_backup_s3_endpoint from './20270318_110000_backup_s3_endpoint';
 import * as migration_20270316_420000_org_transfer_delegation from './20270316_420000_org_transfer_delegation';
 import * as migration_20270317_130000_username_sign_in from './20270317_130000_username_sign_in';
 import * as migration_20270318_200000_product_feed_mapping from './20270318_200000_product_feed_mapping';
@@ -1470,5 +1471,10 @@ export const migrations = [
     up: migration_20270318_190000_bid_mode.up,
     down: migration_20270318_190000_bid_mode.down,
     name: '20270318_190000_bid_mode',
+  },
+  {
+    up: migration_20270318_110000_backup_s3_endpoint.up,
+    down: migration_20270318_110000_backup_s3_endpoint.down,
+    name: '20270318_110000_backup_s3_endpoint',
   },
 ];

@@ -85,6 +85,7 @@ export type BackupSettingsDoc = {
     s3?: {
       bucket?: string | null
       region?: string | null
+      endpoint?: string | null
       accessKeyId?: string | null
       secretAccessKey?: string | null
       path?: string | null
