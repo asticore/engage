@@ -186,3 +186,9 @@ export async function dueReminders(d1: D1, nowMs: number, withinMs: number, limi
 export async function markReminded(d1: D1, id: number, nowIso: string): Promise<void> {
   await run(d1, 'UPDATE eg_bookings SET reminder_sent_at = ?1 WHERE id = ?2', nowIso, id)
 }
+
+/** A person's bookings by the email they booked with, newest first. Callers must only pass an address the signed-in account has confirmed. */
+export async function listBookingsByEmail(d1: D1, email: string, limit = 100): Promise<Booking[]> {
+  const rows = await all(d1, 'SELECT * FROM eg_bookings WHERE lower(customer_email) = ?1 ORDER BY start_ms DESC LIMIT ?2', email.trim().toLowerCase(), Math.max(1, Math.min(limit, 200)))
+  return rows.map(toBooking)
+}
