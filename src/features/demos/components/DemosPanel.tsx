@@ -8,6 +8,7 @@ type Loaded = {
   settings: { resetEvery: ResetEvery; lastResetAt: string | null; lastResult: string; banner: string }
   snapshot: { takenAt: string; size: number } | null
   choices: { value: ResetEvery; label: string }[]
+  starters?: { id: string; kind: string; label: string }[]
 }
 
 /** Admin screen for agency demos: saved copy, reset, demo accounts and the package download. English only. */
@@ -16,6 +17,7 @@ export const DemosPanel: React.FC = () => {
   const [every, setEvery] = useState<ResetEvery>('off')
   const [banner, setBanner] = useState('')
   const [email, setEmail] = useState('')
+  const [starter, setStarter] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -79,6 +81,26 @@ export const DemosPanel: React.FC = () => {
         <button type="submit" disabled={busy}>Save</button>
         {banner && <p style={{ flexBasis: '100%' }}>Visitors see this strip at the top of every page of the site while Agency demos is on.</p>}
       </form>
+
+      <section aria-labelledby="demo-starter">
+        <h2 id="demo-starter">Start a demo from a starter</h2>
+        <p>Pick a starter layout. It is switched on across the site for its type and the site is saved as the demo copy, in one step.</p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            void post({ action: 'starter', starterId: starter }, 'Demo started.')
+          }}
+          style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'end' }}
+        >
+          <label>Starter<br />
+            <select required value={starter} onChange={(e) => setStarter(e.target.value)}>
+              <option value="" disabled>Choose a starter</option>
+              {(data?.starters ?? []).map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </label>
+          <button type="submit" disabled={busy || !starter}>Create demo from starter</button>
+        </form>
+      </section>
 
       <section aria-labelledby="demo-accounts">
         <h2 id="demo-accounts">Demo account</h2>

@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
 import { DEMO_EXPORT_OPTIONS, RESET_CHOICES, cleanBanner, toResetEvery } from '@/features/demos/core'
-import { createDemoAccount, resetFromSnapshot, takeSnapshot } from '@/features/demos/service'
+import { createDemoAccount, createDemoFromStarter, resetFromSnapshot, takeSnapshot } from '@/features/demos/service'
 import * as store from '@/features/demos/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { renderExport } from '@/features/settingsTransfer/export'
+import { STARTERS } from '@/features/siteTemplates/starters'
 import { getFeatureFlags } from '@/utilities/features'
 
 export const dynamic = 'force-dynamic'
@@ -35,10 +36,10 @@ export async function GET(request: Request): Promise<Response> {
   }
   const d1 = (await rawD1()) as never as store.D1
   const [settings, snapshot] = await Promise.all([store.getSettings(d1), store.snapshotInfo(d1)])
-  return json({ settings, snapshot, choices: RESET_CHOICES })
+  return json({ settings, snapshot, choices: RESET_CHOICES, starters: STARTERS.map(({ id, kind, label }) => ({ id, kind, label })) })
 }
 
-/** POST { action: 'settings', resetEvery, banner } | { action: 'snapshot' } | { action: 'reset' } | { action: 'account', email } */
+/** POST { action: 'settings', resetEvery, banner } | { action: 'starter', starterId } | { action: 'snapshot' } | { action: 'reset' } | { action: 'account', email } */
 export async function POST(request: Request): Promise<Response> {
   const g = await guard(request, true)
   if (!g.context) return g.response
@@ -54,6 +55,10 @@ export async function POST(request: Request): Promise<Response> {
   if (body.action === 'snapshot') {
     const result = await takeSnapshot(g.context.engine, d1, now)
     return 'error' in result ? json({ error: result.error }, 400) : json({ ok: true, size: result.size })
+  }
+  if (body.action === 'starter') {
+    const result = await createDemoFromStarter(g.context.engine, d1, body.starterId, now)
+    return 'error' in result ? json({ error: result.error }, 400) : json({ ok: true, message: result.message, templateId: result.templateId })
   }
   if (body.action === 'reset') {
     const result = await resetFromSnapshot(g.context.engine, d1, now)
