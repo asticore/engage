@@ -1,14 +1,15 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@/engine/db'
 
 /**
- * Task 12d: waiting list with held places. Two Shop settings (how a restock is offered, hours a place is held)
+ * Task 12d: waiting list with held places. Two shop switches (how a restock is offered, hours a place is held)
  * and the hold end time on each back-in-stock sign-up. Idempotent: a column that exists is skipped, a missing
  * table is left alone (it is created whole, with these columns, when it is first needed). Down is a no-op.
  */
 const COLUMNS: Record<string, [string, string][]> = {
-  eg_shop_settings: [
-    ['storefront_waiting_list_mode', "text DEFAULT 'all'"],
-    ['storefront_waiting_list_hold_hours', 'numeric DEFAULT 24'],
+  // Shop settings (eg_shop_settings) is at the D1 limit of 100 columns, so the two switches live on the extra settings.
+  eg_shop_extra_settings: [
+    ['waiting_list_mode', "text DEFAULT 'all'"],
+    ['waiting_list_hold_hours', 'numeric DEFAULT 24'],
   ],
   eg_stock_subscriptions: [['hold_until', 'text']],
 }

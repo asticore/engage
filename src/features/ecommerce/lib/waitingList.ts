@@ -14,9 +14,9 @@ export type WaitingListSettings = { mode: WaitingListMode; holdHours: number }
 export const DEFAULT_HOLD_HOURS = 24
 export const MAX_HOLD_HOURS = 24 * 14
 
-/** Reads the storefront settings. Anything unknown means the original behaviour (email everyone). */
-export function normaliseWaitingListSettings(storefront: unknown): WaitingListSettings {
-  const s = (storefront ?? {}) as { waitingListMode?: unknown; waitingListHoldHours?: unknown }
+/** Reads the shop-extra-settings document. Anything unknown means the original behaviour (email everyone). */
+export function normaliseWaitingListSettings(doc: unknown): WaitingListSettings {
+  const s = (doc ?? {}) as { waitingListMode?: unknown; waitingListHoldHours?: unknown }
   const hours = Number(s.waitingListHoldHours)
   const holdHours = Number.isFinite(hours) && hours >= 1 ? Math.min(Math.floor(hours), MAX_HOLD_HOURS) : DEFAULT_HOLD_HOURS
   return { mode: s.waitingListMode === 'ordered' ? 'ordered' : 'all', holdHours }

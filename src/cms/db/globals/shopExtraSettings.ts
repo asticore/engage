@@ -32,6 +32,9 @@ export type ShopExtraSettingsDoc = {
   stockHoldEnabled?: boolean | null
   stockHoldMinutes?: number | null
   stockHoldInCart?: boolean | null
+  /** Waiting list with held places (lib/waitingList.ts, waitingList.ts). */
+  waitingListMode?: 'all' | 'ordered' | null
+  waitingListHoldHours?: number | null
   /** Wholesale mode (lib/wholesale.ts). Off unless wholesaleEnabled is true. */
   wholesaleEnabled?: boolean | null
   wholesaleRole?: string | null

@@ -120,6 +120,26 @@ export const ShopExtraSettings: GlobalConfig = {
       admin: { description: 'Needs Hold stock while a cart is in checkout. Opening the cart page also holds the items for the same minutes and shows the shopper a countdown. Bundles hold their component products too. Holds are only taken when the cart page is opened, never when an item is added.' },
     },
     {
+      name: 'waitingListMode',
+      type: 'select',
+      label: 'When stock returns, back-in-stock sign-ups are',
+      defaultValue: 'all',
+      options: [
+        { label: 'Emailed all at once', value: 'all' },
+        { label: 'Offered a held place in order', value: 'ordered' },
+      ],
+      admin: { description: 'In order: the free places go to the people who signed up first, each held for the hours below. Nobody else can buy a held place at checkout, and one nobody takes passes to the next person in line. Needs the Back-in-stock sign-up setting on, and stock tracked on the product.' },
+    },
+    {
+      name: 'waitingListHoldHours',
+      type: 'number',
+      label: 'Waiting list hold hours',
+      defaultValue: 24,
+      min: 1,
+      max: 336,
+      admin: { description: 'How long a held place waits for its buyer before it goes to the next person. Between 1 and 336 (two weeks).' },
+    },
+    {
       name: 'cartAction',
       type: 'select',
       label: 'What the cart button does',

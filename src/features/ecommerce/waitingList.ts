@@ -28,7 +28,7 @@ export async function loadWaitingListSettings(engine: WaitingListEngine): Promis
   const settings = await engine.findGlobal({ slug: 'shop-settings', depth: 0, overrideAccess: true }).catch((): null => null)
   const storefront = (settings?.storefront ?? {}) as { backInStock?: boolean | null }
   if (storefront.backInStock === false) return { mode: 'all', holdHours: 24 }
-  return normaliseWaitingListSettings(storefront)
+  return normaliseWaitingListSettings(await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null))
 }
 
 const toRow = (doc: Doc): WaitRow => ({
