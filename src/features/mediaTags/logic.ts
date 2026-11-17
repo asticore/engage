@@ -130,3 +130,24 @@ export function chipsFor(tags: Tag[], ids: number[] | undefined): TagChip[] {
   }
   return out.sort((a, b) => a.title.localeCompare(b.title))
 }
+
+/** Splits CSV text into pieces under `max` characters on row boundaries, repeating the header row in each piece after the first. */
+export function splitCsv(text: string, max: number): string[] {
+  if (text.length <= max) return [text]
+  const lines = text.split(/\r?\n/)
+  const header = lines[0] ?? ''
+  const pieces: string[] = []
+  let current: string[] = [header]
+  let size = header.length
+  for (const line of lines.slice(1)) {
+    if (size + line.length + 1 > max && current.length > 1) {
+      pieces.push(current.join('\n'))
+      current = [header]
+      size = header.length
+    }
+    current.push(line)
+    size += line.length + 1
+  }
+  if (current.length > 1) pieces.push(current.join('\n'))
+  return pieces
+}

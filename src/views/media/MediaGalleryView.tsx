@@ -433,6 +433,9 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
                       </option>
                     ))}
                   </select>
+                  {tagFilter ? (
+                    <span aria-hidden className="ml-[calc(var(--base)*0.4)] inline-block h-[12px] w-[12px] rounded-full align-middle" style={{ background: allTags.find((t) => t.id === tagFilter)?.color }} />
+                  ) : null}
                 </label>
                 <button
                   type="submit"

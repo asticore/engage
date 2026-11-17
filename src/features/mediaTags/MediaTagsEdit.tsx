@@ -7,12 +7,17 @@ import { postJson, requestJson } from '@/features/media/admin/mediaApi'
 
 import { pathOf, type Tag } from './logic'
 
+type Provider = 'claude' | 'openai'
+
 /** Tag field on a file's edit screen. Hidden when Media tags is off. Each tick saves at once. */
 export function MediaTagsEdit({ id }: { id: number }) {
   const t = useAdminT()
   const [tags, setTags] = useState<Tag[] | null>(null)
   const [selected, setSelected] = useState<number[]>([])
   const [error, setError] = useState('')
+  const [keys, setKeys] = useState<Record<Provider, boolean> | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState('')
 
   useEffect(() => {
     let alive = true
@@ -26,6 +31,12 @@ export function MediaTagsEdit({ id }: { id: number }) {
     }
   }, [id])
 
+  useEffect(() => {
+    void requestJson<{ providers: Record<Provider, boolean> }>('/api/admin-media-ai-tags').then((r) => {
+      if (r.ok === true) setKeys(r.data.providers)
+    })
+  }, [])
+
   if (!tags) return null
 
   const toggle = async (tagId: number, on: boolean) => {
@@ -33,6 +44,22 @@ export function MediaTagsEdit({ id }: { id: number }) {
     const r = await postJson<{ ok: boolean }>('/api/admin-media-tags', { action: 'assign', mediaIds: [id], tagIds: [tagId], remove: !on })
     if (r.ok !== true) return setError(r.error)
     setSelected((cur) => (on ? [...cur, tagId] : cur.filter((x) => x !== tagId)))
+  }
+
+  const provider: Provider | null = keys?.claude ? 'claude' : keys?.openai ? 'openai' : null
+  const suggest = async () => {
+    if (!provider) return
+    setError('')
+    setNote('')
+    setBusy(true)
+    const r = await postJson<{ results: Array<{ status: string; tagIds?: number[]; reason?: string }> }>('/api/admin-media-ai-tags', { ids: [id], provider, apply: true })
+    setBusy(false)
+    if (r.ok !== true) return setError(r.error)
+    const item = r.data.results[0]
+    if (item?.status === 'tagged') {
+      setSelected((cur) => [...new Set([...cur, ...(item.tagIds ?? [])])])
+      setNote(`Added ${item.tagIds?.length ?? 0} tag${item.tagIds?.length === 1 ? '' : 's'}. Untick any that do not fit.`)
+    } else setError(item?.reason ?? 'No tags were suggested.')
   }
 
   return (
@@ -53,6 +80,14 @@ export function MediaTagsEdit({ id }: { id: number }) {
           </div>
         </>
       )}
+      {tags.length > 0 && provider ? (
+        <div>
+          <button type="button" className="btn" disabled={busy} onClick={() => void suggest()}>
+            {busy ? 'Suggesting...' : 'Suggest tags with AI'}
+          </button>
+        </div>
+      ) : null}
+      {note ? <p role="status" className="m-0 text-[12px] text-[var(--theme-elevation-600)]">{note}</p> : null}
       {error ? <p role="alert" className="m-0 text-[12px] text-[var(--theme-error-500,#c00)]">{error}</p> : null}
     </section>
   )
