@@ -3,6 +3,7 @@
  * product filters. Pure: no I/O, so the admin preview and the public feed share one set of rules.
  */
 
+import { parseMapping, parseRefreshMinutes, type FeedMapping } from './feedMapping'
 import { csvCell } from './manifest'
 import { META_COLUMNS, metaCatalogCsv, googleMerchantXml, type FeedItem } from './feeds'
 
@@ -35,6 +36,10 @@ export type FeedRecord = {
   tag: string
   includeOutOfStock: boolean
   enabled: boolean
+  /** Column templates that replace the built-in value, for example brand: `{brand}`. */
+  mapping: FeedMapping
+  /** How long a built feed is reused before it is rebuilt. */
+  refreshMinutes: number
 }
 
 const text = (value: unknown, max: number): string => (typeof value === 'string' ? value.trim().slice(0, max) : '')
@@ -60,6 +65,8 @@ export function parseFeedInput(raw: unknown): { ok: true; feed: FeedInput } | { 
       tag: text(r.tag, 80).toLowerCase(),
       includeOutOfStock: r.includeOutOfStock === true,
       enabled: r.enabled !== false,
+      mapping: parseMapping(r.mapping),
+      refreshMinutes: parseRefreshMinutes(r.refreshMinutes),
     },
   }
 }

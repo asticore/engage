@@ -231,6 +231,7 @@ import * as migration_20270317_270000_captcha_modes from './20270317_270000_capt
 import * as migration_20270317_280000_captcha_followups from './20270317_280000_captcha_followups';
 import * as migration_20270316_420000_org_transfer_delegation from './20270316_420000_org_transfer_delegation';
 import * as migration_20270317_130000_username_sign_in from './20270317_130000_username_sign_in';
+import * as migration_20270318_200000_product_feed_mapping from './20270318_200000_product_feed_mapping';
 
 export const migrations = [
   {
@@ -1392,5 +1393,10 @@ export const migrations = [
     up: migration_20270318_110000_webhook_audit_options.up,
     down: migration_20270318_110000_webhook_audit_options.down,
     name: '20270318_110000_webhook_audit_options',
+  },
+  {
+    up: migration_20270318_200000_product_feed_mapping.up,
+    down: migration_20270318_200000_product_feed_mapping.down,
+    name: '20270318_200000_product_feed_mapping',
   },
 ];
