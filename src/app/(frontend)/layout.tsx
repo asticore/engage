@@ -51,6 +51,7 @@ import { SidebarLayout } from '@/features/siteTemplates/SidebarLayout'
 import { AffiliateCapture } from '@/features/affiliates/components/AffiliateCapture.server'
 import { SiteChatbot } from '@/features/chatbot/components/ChatWidget.server'
 import { ImpersonationBanner } from '@/features/impersonation/components/ImpersonationBanner'
+import { DemoBanner } from '@/features/demos/components/DemoBanner'
 import { directionFor } from '@/features/multilingual/detect'
 import { LOCALE_HEADER, requestLocale } from '@/features/multilingual/routing'
 import { isPortalPath } from '@/features/multilingual/portal'
@@ -288,6 +289,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       </head>
       <body>
         <ImpersonationBanner />
+        <DemoBanner />
         <AffiliateCapture />
         <SiteChatbot />
         <SeoScripts country={country} />
