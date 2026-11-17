@@ -74,6 +74,7 @@ export async function rowToBackupSettings(row: Row | null, featureEnabled: boole
   } else if (provider === 's3') {
     destination.bucket = asText(row.destination_s3_bucket)
     destination.region = asText(row.destination_s3_region)
+    destination.endpoint = asText(row.destination_s3_endpoint)
     destination.accessKeyId = await decrypt(row.destination_s3_access_key_id)
     destination.secretAccessKey = await decrypt(row.destination_s3_secret_access_key)
     destination.path = asText(row.destination_s3_path)

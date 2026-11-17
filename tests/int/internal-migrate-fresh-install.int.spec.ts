@@ -1087,6 +1087,17 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(cols.filter((c) => c === 'two_factor_backup_hashes')).toHaveLength(1)
   })
 
+  it('adds the S3 backup endpoint column once', async () => {
+    const mod = await import('@/migrations/20270318_110000_backup_s3_endpoint')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    const engine = { logger: consoleLogger } as never
+    await mod.up({ db, engine } as never)
+    await mod.up({ db, engine } as never)
+    const cols = ((await proxy.env.D1.prepare('PRAGMA table_info(`eg_backup_settings`)').all()).results as { name: string }[]).map((r) => r.name)
+    expect(cols.filter((c) => c === 'destination_s3_endpoint')).toHaveLength(1)
+  })
+
   it('creates the signed-in device sessions table with its indexes', async () => {
     expect(tables).toContain('eg_user_sessions')
     const cols = ((await proxy.env.D1.prepare('PRAGMA table_info(`eg_user_sessions`)').all()).results as { name: string }[]).map((r) => r.name)

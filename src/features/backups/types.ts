@@ -37,6 +37,8 @@ export type BackupSettings = {
     accountId?: string
     bucket?: string
     region?: string
+    /** Custom S3-compatible endpoint (https origin). Empty means Amazon S3. */
+    endpoint?: string
     accessKeyId?: string
     secretAccessKey?: string
     path?: string
