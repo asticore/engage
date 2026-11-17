@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
+import { deleteQuoteFiles, getQuoteBucket } from '@/features/quotes/attachments'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { hashToken, isQuoteStatus, newQuoteToken, parseQuote, totalCents } from '@/features/quotes/logic'
@@ -67,6 +68,7 @@ export async function POST(request: Request): Promise<Response> {
       return json({ ok: true })
     }
     case 'delete':
+      await deleteQuoteFiles(await getQuoteBucket(), current.number).catch((): number => 0)
       await store.deleteRequest(d1, id)
       return json({ ok: true })
     default:
