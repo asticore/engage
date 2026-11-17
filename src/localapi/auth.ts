@@ -902,7 +902,7 @@ function isLocked(lockUntil: string | null | undefined, now: number): boolean {
 /** Mirrors the reference engine's `checkLoginPermission` (`auth/operations/login.js:21-28`): no user found -> `AuthenticationError`; user found but currently locked -> `LockedAuth`. Locked is checked BEFORE any password comparison happens. */
 function checkLoginPermission(row: AuthUserRow | null, now: number): asserts row is AuthUserRow {
   if (!row) throw new AuthenticationError()
-  if (isLocked(row.lockUntil, now)) throw new LockedAuth()
+  if (isLocked(row.lockUntil, now)) throw (row.loginAttempts ?? 0) >= 100_000 ? new LockedAuth('This account cannot sign in.') : new LockedAuth()
 }
 
 /** Mirrors the reference engine's `removeExpiredSessions` (`auth/sessions.js:4-10`): strict `expiresAt > now`, so a session expiring at exactly `now` is dropped, not kept. */
