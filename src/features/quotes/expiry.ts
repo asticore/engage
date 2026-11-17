@@ -1,4 +1,5 @@
 import { formatMoney } from '@/features/ecommerce/lib/money'
+import { loadStrings } from '@/features/uiStrings'
 import { totalCents } from './logic'
 import { renderQuoteMail } from './mail'
 import { dateText } from './service'
@@ -28,13 +29,16 @@ export async function runQuoteSweep(d1: store.D1, now: Date, siteName: string, s
       if (!request.email || request.activity.some((a) => a.text === marker)) continue
       try {
         await store.addActivity(d1, request.id, 'system', marker, now.toISOString())
+        const { localeForRecipient } = await import('@/features/email/recipientLocale')
+        const locale = reader ? await localeForRecipient(reader as never, request.email).catch((): null => null) : null
+        if (locale) await loadStrings(locale)
         const mail = await renderQuoteMail('expiring', {
           name: request.name,
           number: request.number,
           total: formatMoney(request.totalCents ?? totalCents(request.lines), request.currency),
           validUntil: dateText(request.validUntil),
           siteName,
-        }, undefined, reader)
+        }, undefined, reader, locale)
         await send({ to: request.email, template: 'quote.expiring', ...mail })
         result.reminded += 1
       } catch {

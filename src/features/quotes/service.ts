@@ -5,6 +5,7 @@ import { loadPaymentSettings, resolveStripeSecret } from '@/features/ecommerce/p
 import { getStripeClient } from '@/features/ecommerce/payments/stripeAdapter'
 import { sendAdminNewOrderEmail, sendOrderEmail } from '@/features/ecommerce/server/emails'
 import { sendEmail } from '@/features/email'
+import { loadStrings, t } from '@/features/uiStrings'
 import { totalCents, type QuoteEmailKey } from './logic'
 import { renderQuoteMail } from './mail'
 import * as store from './store'
@@ -28,7 +29,7 @@ export async function siteName(engine: Engine): Promise<string> {
 
 export const dateText = (iso: string | null): string => (iso ? new Intl.DateTimeFormat('en-AU', { dateStyle: 'long' }).format(new Date(iso)) : '')
 
-export const kindLabelOf = (r: store.QuoteRequest): string => (r.kind === 'bid' ? 'offer' : r.kind === 'item' ? 'item request' : 'quote request')
+export const kindLabelOf = (r: store.QuoteRequest, locale?: string | null): string => t(r.kind === 'bid' ? 'email.quoteKind.bid' : r.kind === 'item' ? 'email.quoteKind.item' : 'email.quoteKind.quote', locale)
 
 /** Fills a quote email's tags from the request. Never throws: a mail failure must not undo a saved request. */
 export async function sendQuoteEmail(engine: Engine, key: QuoteEmailKey, request: store.QuoteRequest, extra: { to: 'customer' | 'admin'; origin?: string; token?: string; message?: string; orderNumber?: string }): Promise<void> {
@@ -39,6 +40,12 @@ export async function sendQuoteEmail(engine: Engine, key: QuoteEmailKey, request
       to = typeof shop?.emails?.adminEmail === 'string' ? shop.emails.adminEmail : ''
       if (!to) return
     }
+    let locale: string | null = null
+    if (extra.to === 'customer') {
+      const { localeForRecipient } = await import('@/features/email/recipientLocale')
+      locale = await localeForRecipient(engine as never, request.email).catch((): null => null)
+      if (locale) await loadStrings(locale)
+    }
     const total = request.totalCents ?? totalCents(request.lines)
     const mail = await renderQuoteMail(
       key,
@@ -46,7 +53,7 @@ export async function sendQuoteEmail(engine: Engine, key: QuoteEmailKey, request
         name: request.name,
         email: request.email,
         number: request.number,
-        kindLabel: kindLabelOf(request),
+        kindLabel: kindLabelOf(request, locale),
         details: request.details || (request.offerCents ? `Offer: ${formatMoney(request.offerCents, request.currency)}` : ''),
         total: formatMoney(total, request.currency),
         validUntil: dateText(request.validUntil),
@@ -57,6 +64,7 @@ export async function sendQuoteEmail(engine: Engine, key: QuoteEmailKey, request
       },
       extra.message,
       engine as never,
+      locale,
     )
     await sendEmail({ to, template: `quote.${key}`, ...mail })
   } catch {
