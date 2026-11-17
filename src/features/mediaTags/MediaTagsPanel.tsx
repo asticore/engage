@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { splitCsv } from './logic'
+
 type Tag = { id: number; name: string; parentId: number | null; color: string }
 type Node = Tag & { count: number; total: number; children: Node[] }
 
+const CSV_CHUNK = 900_000
 const blank = { id: 0, name: '', parentId: 0, color: '#3366cc' }
 
 /** Tag manager: the tag tree with colours and counts, add, edit, delete, and CSV import and export. */
@@ -38,6 +41,22 @@ export function MediaTagsPanel() {
     if (okText) setMessage(okText)
     await load()
     return body
+  }
+
+  /** Sends the CSV in pieces of at most CSV_CHUNK characters (header repeated), so a file over the 1 MB request limit still imports. */
+  const importCsv = async (): Promise<void> => {
+    let created = 0
+    let linked = 0
+    let missing = 0
+    for (const part of splitCsv(csv, CSV_CHUNK)) {
+      const r = await post({ action: kind, csv: part })
+      if (!r) return
+      created += Number(r.created ?? 0)
+      linked += Number(r.linked ?? 0)
+      missing += Number(r.missing ?? 0)
+    }
+    setMessage(kind === 'importTags' ? `Created ${created} tags.` : `Linked ${linked} tags to files. ${missing} filenames were not found.`)
+    setCsv('')
   }
 
   const row = (n: Node, depth: number): React.ReactNode => (
@@ -94,7 +113,7 @@ export function MediaTagsPanel() {
           </label>
           <textarea className="input" rows={6} value={csv} onChange={(e) => setCsv(e.target.value)} aria-label="CSV text" />
           <div className="cluster">
-            <button type="button" className="btn" onClick={() => void post({ action: kind, csv }).then((r) => { if (r) { setMessage(kind === 'importTags' ? `Created ${r.created} tags.` : `Linked ${r.linked} tags to files. ${r.missing} filenames were not found.`); setCsv('') } })}>Import</button>
+            <button type="button" className="btn" onClick={() => void importCsv()}>Import</button>
             <input type="file" accept=".csv,text/csv" aria-label="Choose a CSV file" onChange={(e) => { const f = e.target.files?.[0]; if (f) void f.text().then(setCsv) }} />
           </div>
         </div>
