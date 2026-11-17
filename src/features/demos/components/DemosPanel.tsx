@@ -59,7 +59,7 @@ export const DemosPanel: React.FC = () => {
           <button type="button" disabled={busy || !data?.snapshot} onClick={() => void post({ action: 'reset' }, 'Demo reset.')}>Reset to the saved copy now</button>
           <a href="/api/admin-demos?download=package" download>Download as an importable package</a>
         </div>
-        <p>A reset writes everything in the copy back. Items added after the copy was saved stay. Import a package on a client site from Settings, Export and import.</p>
+        <p>A reset writes everything in the copy back and deletes pages, posts and products added after the copy was saved. Import a package on a client site from Settings, Export and import.</p>
         {data?.settings.lastResetAt && <p>Last reset {new Date(data.settings.lastResetAt).toLocaleString()}: {data.settings.lastResult}</p>}
       </section>
 
