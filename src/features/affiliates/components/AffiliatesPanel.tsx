@@ -21,6 +21,10 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
   const [code, setCode] = useState('')
   const [message, setMessage] = useState('')
   const [configured, setConfigured] = useState(true)
+  const [shortLinks, setShortLinks] = useState<Array<{ code: string; affiliateId: number; productId: number | null; productTitle: string }>>([])
+  const [linkAffiliate, setLinkAffiliate] = useState('')
+  const [linkProduct, setLinkProduct] = useState('')
+  const [linkCode, setLinkCode] = useState('')
   const [tagRates, setTagRates] = useState<Array<{ tagId: number; ratePct: number; name: string }>>([])
   const [tags, setTags] = useState<Array<{ id: number; name: string }>>([])
   const [rateTag, setRateTag] = useState('')
@@ -35,7 +39,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-affiliates')
-    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; tagRates?: Array<{ tagId: number; ratePct: number; name: string }>; tags?: Array<{ id: number; name: string }>; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; botHits?: number; images?: Array<{ id: number; url: string; alt: string; filename: string }>; visits?: Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>; error?: string } | null
+    const data = (await res.json().catch((): null => null)) as { affiliates?: Row[]; settings?: AffiliateSettings; commissions?: CommissionRow[]; payouts?: Payout[]; configured?: boolean; tagRates?: Array<{ tagId: number; ratePct: number; name: string }>; shortLinks?: Array<{ code: string; affiliateId: number; productId: number | null; productTitle: string }>; tags?: Array<{ id: number; name: string }>; productRates?: Array<{ productId: number; ratePct: number; title: string }>; products?: Array<{ id: number; title: string }>; botHits?: number; images?: Array<{ id: number; url: string; alt: string; filename: string }>; visits?: Array<{ id: number; affiliate: string; path: string; source: string; medium: string; campaign: string; createdAt: string }>; error?: string } | null
     if (!res.ok) return setMessage(data?.error ?? 'Could not load affiliates.')
     setRows(data?.affiliates ?? [])
     setSettings(data?.settings ?? null)
@@ -44,6 +48,7 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
     setConfigured(data?.configured !== false)
     setProductRates(data?.productRates ?? [])
     setTagRates(data?.tagRates ?? [])
+    setShortLinks(data?.shortLinks ?? [])
     setTags(data?.tags ?? [])
     setProducts(data?.products ?? [])
     setVisits(data?.visits ?? [])
@@ -226,6 +231,46 @@ export const AffiliatesPanel: React.FC<{ origin: string }> = ({ origin }) => {
           <ul>
             {productRates.map((r) => (
               <li key={r.productId}>{r.title}: {r.ratePct}% <button type="button" onClick={() => void post({ action: 'productRate', productId: r.productId, ratePct: null }, 'Product rate removed.')}>Remove</button></li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="aff-short-links">
+        <h2 id="aff-short-links">Short links</h2>
+        <p>A short link such as <code>{origin.replace(/\/+$/, '')}/a/summer-sam</code> opens a product (or the home page) with the affiliate&apos;s referral link attached, so it is easy to say out loud or put on a card.</p>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault()
+            if (await post({ action: 'link', affiliateId: Number(linkAffiliate), productId: linkProduct === '' ? null : Number(linkProduct), code: linkCode }, 'Short link saved.')) {
+              setLinkCode('')
+              setLinkProduct('')
+            }
+          }}
+          style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'end' }}
+        >
+          <label>Affiliate<br />
+            <select value={linkAffiliate} onChange={(e) => setLinkAffiliate(e.target.value)} required>
+              <option value="">Choose an affiliate</option>
+              {rows.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </label>
+          <label>Opens<br />
+            <select value={linkProduct} onChange={(e) => setLinkProduct(e.target.value)}>
+              <option value="">Home page</option>
+              {products.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+            </select>
+          </label>
+          <label>Short code<br /><input type="text" value={linkCode} onChange={(e) => setLinkCode(e.target.value)} minLength={3} maxLength={32} required /></label>
+          <button type="submit">Save short link</button>
+        </form>
+        {shortLinks.length > 0 && (
+          <ul>
+            {shortLinks.map((l) => (
+              <li key={l.code}>
+                <code>/a/{l.code}</code> for {rows.find((r) => r.id === l.affiliateId)?.name ?? 'an affiliate'}, opens {l.productId ? l.productTitle || `product ${l.productId}` : 'the home page'}{' '}
+                <button type="button" onClick={() => void post({ action: 'unlink', code: l.code }, 'Short link removed.')}>Remove</button>
+              </li>
             ))}
           </ul>
         )}

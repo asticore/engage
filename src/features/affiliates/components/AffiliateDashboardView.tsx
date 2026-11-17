@@ -3,7 +3,7 @@ import React from 'react'
 import { balances } from '../commission'
 import { bannerSnippet, parseCreativeIds, referralLink } from '../core'
 import { PayoutDetailsForm } from './PayoutDetailsForm'
-import { commissionsFor, creativesByIds, getSettings, type Affiliate, type D1 } from '../store'
+import { commissionsFor, creativesByIds, getSettings, listShortLinks, type Affiliate, type D1 } from '../store'
 
 const money = (cents: number): string => `$${(cents / 100).toFixed(2)}`
 
@@ -13,6 +13,7 @@ export async function AffiliateDashboardView({ d1, affiliate, origin, privateLin
   const bal = balances(rows, new Date())
   const link = referralLink(origin, affiliate.code)
   const creatives = affiliate.status === 'active' ? await creativesByIds(d1, parseCreativeIds((await getSettings(d1)).creatives)) : []
+  const shortLinks = affiliate.status === 'active' ? await listShortLinks(d1, affiliate.id) : []
   const note = affiliate.status === 'pending' ? 'Your application is waiting for approval, so your link is not tracking yet.' : affiliate.status === 'suspended' ? 'Your account is suspended.' : ''
   return (
     <div className="page-shell">
@@ -24,6 +25,18 @@ export async function AffiliateDashboardView({ d1, affiliate, origin, privateLin
       <p>
         <code>{link}</code>
       </p>
+      {shortLinks.length > 0 && (
+        <>
+          <h2>Your short links</h2>
+          <ul>
+            {shortLinks.map((l) => (
+              <li key={l.code}>
+                <code>{`${origin.replace(/\/+$/, '')}/a/${l.code}`}</code> opens {l.productId ? l.productTitle || 'a product' : 'the home page'}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <h2>Results</h2>
       <ul>
         <li>Visits: {affiliate.visits}</li>
