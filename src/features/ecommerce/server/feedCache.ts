@@ -10,11 +10,11 @@ type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T
 type Db = { prepare: (sql: string) => Stmt } & Partial<D1>
 
 /** The stored feed text, or null when none is stored, it is stale, or the table does not exist yet. */
-export async function readFeedCache(d1: Db, feedId: number, origin: string, nowMs: number): Promise<CachedFeed | null> {
+export async function readFeedCache(d1: Db, feedId: number, origin: string, nowMs: number, maxAgeMs: number = FEED_CACHE_MAX_AGE_MS): Promise<CachedFeed | null> {
   try {
     const rows = (await d1.prepare('SELECT body, content_type, built_at FROM eg_product_feed_cache WHERE feed_id = ?1 AND origin = ?2').bind(feedId, origin).all<{ body: string; content_type: string; built_at: number }>()).results
     const row = rows[0]
-    if (!row || nowMs - Number(row.built_at) > FEED_CACHE_MAX_AGE_MS) return null
+    if (!row || nowMs - Number(row.built_at) > maxAgeMs) return null
     return { body: String(row.body), contentType: String(row.content_type) }
   } catch {
     return null

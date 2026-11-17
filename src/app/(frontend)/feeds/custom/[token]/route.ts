@@ -19,7 +19,7 @@ export async function GET(request: Request, context: { params: Promise<{ token: 
   // Built text is stored per feed and site address; a product save or a feed change clears it (see feedCacheHook.ts).
   const d1 = await rawD1()
   const origin = new URL(request.url).origin
-  const cached = await readFeedCache(d1, record.id, origin, Date.now())
+  const cached = await readFeedCache(d1, record.id, origin, Date.now(), record.refreshMinutes * 60_000)
   if (cached) return new Response(cached.body, { headers: headers(cached.contentType, 'hit') })
   const feed = await loadFeedFor(request, record)
   const { body, contentType } = renderFeed(record.channel, feed.items, { title: feed.title, link: feed.link })

@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
+import { FEED_MAP_FIELDS, FEED_MAP_LABELS, REFRESH_CHOICES, type FeedMapping } from '../lib/feedMapping'
 import { FEED_CHANNELS, FEED_CHANNEL_LABELS, type FeedChannel, type FeedProblem } from '../lib/feedRecords'
 
-type Feed = { id: number; name: string; channel: FeedChannel; token: string; currency: string; priceTier: string; category: string; tag: string; includeOutOfStock: boolean; enabled: boolean; url: string }
+type Feed = { id: number; name: string; channel: FeedChannel; token: string; currency: string; priceTier: string; category: string; tag: string; includeOutOfStock: boolean; enabled: boolean; mapping: FeedMapping; refreshMinutes: number; url: string }
 type Preview = { total: number; problems: FeedProblem[]; sample: string }
 
-const blank = { id: 0, name: '', channel: 'google' as FeedChannel, currency: '', priceTier: '', category: '', tag: '', includeOutOfStock: false, enabled: true }
+const blank = { id: 0, name: '', channel: 'google' as FeedChannel, currency: '', priceTier: '', category: '', tag: '', includeOutOfStock: false, enabled: true, mapping: {} as FeedMapping, refreshMinutes: 60 }
 
 /** Product feeds for Google, Meta, Pinterest and others: each has its own secret address, currency, price tier and filters. */
 export function ProductFeedsPanel() {
@@ -62,10 +63,10 @@ export function ProductFeedsPanel() {
         <div key={f.id} className="card">
           <div className="card-body stack">
             <strong>{f.name}{f.enabled ? '' : ' (off)'}</strong>
-            <p className="text-muted">{FEED_CHANNEL_LABELS[f.channel]}. Currency {f.currency || 'shop currency'}. Price tier {f.priceTier || 'normal price'}. {f.category ? `Category ${f.category}. ` : ''}{f.tag ? `Tag ${f.tag}. ` : ''}{f.includeOutOfStock ? 'Includes out of stock.' : 'Skips out of stock.'}</p>
+            <p className="text-muted">{FEED_CHANNEL_LABELS[f.channel]}. Currency {f.currency || 'shop currency'}. Price tier {f.priceTier || 'normal price'}. {f.category ? `Category ${f.category}. ` : ''}{f.tag ? `Tag ${f.tag}. ` : ''}{f.includeOutOfStock ? 'Includes out of stock.' : 'Skips out of stock.'} Rebuilt every {f.refreshMinutes ?? 60} minutes or when a product is saved.</p>
             <input className="input" readOnly value={f.url} onFocus={(e) => e.currentTarget.select()} aria-label={`Address of ${f.name}`} />
             <div className="cluster">
-              <button type="button" className="btn" onClick={() => setForm({ id: f.id, name: f.name, channel: f.channel, currency: f.currency, priceTier: f.priceTier, category: f.category, tag: f.tag, includeOutOfStock: f.includeOutOfStock, enabled: f.enabled })}>Edit</button>
+              <button type="button" className="btn" onClick={() => setForm({ id: f.id, name: f.name, channel: f.channel, currency: f.currency, priceTier: f.priceTier, category: f.category, tag: f.tag, includeOutOfStock: f.includeOutOfStock, enabled: f.enabled, mapping: f.mapping ?? {}, refreshMinutes: f.refreshMinutes ?? 60 })}>Edit</button>
               <button type="button" className="btn" onClick={() => void runPreview(f.id)}>Preview</button>
               <button type="button" className="btn" disabled={busy} onClick={() => void post({ id: f.id, action: 'rotate' })}>New address</button>
               <button type="button" className="btn" disabled={busy} onClick={() => void post({ id: f.id, action: 'delete' })}>Delete</button>
@@ -99,6 +100,24 @@ export function ProductFeedsPanel() {
             <label className="field"><span><input type="checkbox" checked={form.includeOutOfStock} onChange={(e) => set('includeOutOfStock', e.target.checked)} /> Include out of stock</span></label>
             <label className="field"><span><input type="checkbox" checked={form.enabled} onChange={(e) => set('enabled', e.target.checked)} /> Feed is on</span></label>
           </div>
+          <div className="cluster">
+            <label className="field">Rebuild at most every
+              <select className="input" value={form.refreshMinutes} onChange={(e) => set('refreshMinutes', Number(e.target.value))}>
+                {REFRESH_CHOICES.map((m) => <option key={m} value={m}>{m >= 60 ? `${m / 60} hour${m === 60 ? '' : 's'}` : `${m} minutes`}</option>)}
+              </select>
+            </label>
+          </div>
+          <fieldset className="stack">
+            <legend>Field mapping (optional)</legend>
+            <p className="text-muted">Fill a column from your product data. Use {'{field}'} for a product field, for example {'{brand} {title}'} or {'{sku}'}. Plain text is used as written. Blank keeps the built-in value.</p>
+            <div className="cluster">
+              {FEED_MAP_FIELDS.map((field) => (
+                <label key={field} className="field">{FEED_MAP_LABELS[field]}
+                  <input className="input" maxLength={300} value={form.mapping[field] ?? ''} onChange={(e) => set('mapping', { ...form.mapping, [field]: e.target.value })} />
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <div className="cluster">
             <button type="button" className="btn" disabled={busy} onClick={() => void post(form.id ? form : { ...form, id: undefined }).then((ok) => { if (ok) setForm(blank) })}>{form.id ? 'Save changes' : 'Add feed'}</button>
             {form.id ? <button type="button" className="btn" onClick={() => setForm(blank)}>Cancel</button> : null}

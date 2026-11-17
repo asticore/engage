@@ -3,6 +3,7 @@ import { getEngine } from '@/engine'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { effectiveRate, convertForDisplay, minorDigits, normaliseRounding, type RoundingRule } from '../lib/displayCurrency'
 import { buildFeedItems, type FeedItem } from '../lib/feeds'
+import { mappedFields } from '../lib/feedMapping'
 import { matchesFeedFilters, type FeedRecord } from '../lib/feedRecords'
 import { resolveTierPrice } from '../lib/priceTiers'
 import { rawD1 } from './db'
@@ -87,6 +88,7 @@ export async function loadFeedFor(request: Request, feed: FeedRecord): Promise<{
     brand: String(sf.feedBrand || shop.tax?.businessName || title),
     condition,
     googleCategory: typeof sf.feedGoogleCategory === 'string' ? sf.feedGoogleCategory : '',
+    map: (product) => mappedFields(product, feed.mapping),
     price: (productId, variationId, regular, current) => {
       const tiered = feed.priceTier ? resolveTierPrice(tiers, { productId, variationId, quantity: 1, customerTypes: [feed.priceTier.toLowerCase()], basePrice: current }).price : current
       return { regular: convert(regular), current: convert(Math.min(tiered, current)) }

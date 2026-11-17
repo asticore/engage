@@ -44,6 +44,8 @@ export type FeedContext = {
   googleCategory?: string
   /** Adjusts a row's prices (price tier, currency). Receives the product, the variation id and the shop prices in units. */
   price?: (productId: string, variationId: string | null, regular: number, current: number) => { regular: number; current: number }
+  /** Per-row overrides from a feed's field mapping (the product document, the row so far). */
+  map?: (product: Loose) => Partial<FeedItem>
   now?: Date
 }
 
@@ -101,11 +103,23 @@ const optionOf = (attrs: Record<string, string>, names: string[]): string => {
   return key ? attrs[key] : ''
 }
 
+function applyMap(items: FeedItem[], start: number, product: Loose, ctx: FeedContext): void {
+  if (!ctx.map) return
+  const over = ctx.map(product)
+  if (Object.keys(over).length === 0) return
+  for (let i = start; i < items.length; i++) {
+    // A mapped title on a variation keeps the variation label so rows stay distinct.
+    const title = over.title && items[i].groupId !== items[i].id && items[i].title.includes(' - ') ? `${over.title} - ${items[i].title.split(' - ').slice(1).join(' - ')}`.slice(0, 150) : over.title
+    items[i] = { ...items[i], ...over, ...(title ? { title } : {}) }
+  }
+}
+
 /** Turns published product documents (read at depth 1) into feed rows. Products without a price or a slug are skipped. */
 export function buildFeedItems(products: Loose[], ctx: FeedContext): FeedItem[] {
   const now = ctx.now ?? new Date()
   const items: FeedItem[] = []
   for (const p of products) {
+    const start = items.length
     const type = (p.productType as string) || 'simple'
     if (type === 'external' || type === 'grouped') continue
     const slug = typeof p.slug === 'string' ? p.slug : ''
@@ -151,6 +165,7 @@ export function buildFeedItems(products: Loose[], ctx: FeedContext): FeedItem[] 
           size: optionOf(attrs, ['size']),
         })
       }
+      applyMap(items, start, p, ctx)
       continue
     }
     const info = priceInfo(p as never, now)
@@ -168,6 +183,7 @@ export function buildFeedItems(products: Loose[], ctx: FeedContext): FeedItem[] 
       color: '',
       size: '',
     })
+    applyMap(items, start, p, ctx)
   }
   // A feed row without an image is rejected by both platforms.
   return items.filter((i) => i.imageLink)
