@@ -74,6 +74,20 @@ export type FormSettingsDoc = {
     protectSignIn?: boolean | null
     botDetection?: string | null
     botMinScore?: number | null
+    modeSignIn?: string | null
+    modeRegister?: string | null
+    modeReset?: string | null
+    modeResetConfirm?: string | null
+    modePasswordlessRequest?: string | null
+    modePasswordlessVerify?: string | null
+    modeComments?: string | null
+    modeChatbot?: string | null
+    modeReviews?: string | null
+    modeBackInStock?: string | null
+    modeRsvp?: string | null
+    modeOfflineOrder?: string | null
+    failureThreshold?: number | null
+    failureWindowMinutes?: number | null
     blockedWords?: string | null
     maxLinks?: number | null
     blockedSenders?: string | null

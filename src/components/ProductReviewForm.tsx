@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
+
 /** Public review form. `website` is a honeypot: hidden from people, filled in by bots. */
 export function ProductReviewForm({ productId }: { productId: number }) {
   const [state, setState] = useState<{ busy: boolean; done: boolean; message: string; errors: Record<string, string> }>({ busy: false, done: false, message: '', errors: {} })
@@ -21,6 +23,8 @@ export function ProductReviewForm({ productId }: { productId: number }) {
           rating: Number(form.get('rating')),
           text: form.get('text'),
           website: form.get('website'),
+          'cf-turnstile-response': form.get('cf-turnstile-response') ?? undefined,
+          'g-recaptcha-response': form.get('g-recaptcha-response') ?? undefined,
         }),
       })
       const body = (await res.json().catch((): null => null)) as { ok?: boolean; message?: string; errors?: Record<string, string> } | null
@@ -62,6 +66,7 @@ export function ProductReviewForm({ productId }: { productId: number }) {
         <textarea name="text" rows={4} maxLength={4000} required className="mt-1 block w-full border border-[var(--color-line)] p-2" />
         {error('text')}
       </label>
+      <PlaceCaptcha place="reviews" refreshKey={state.message} />
       <div aria-hidden style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
         <label>
           Leave this empty

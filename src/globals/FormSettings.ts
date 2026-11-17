@@ -1,5 +1,7 @@
 import type { GlobalConfig } from '@/engine'
 
+import { CAPTCHA_PLACES, modeFieldOf } from '@/features/security/captchaPlaces'
+
 import { adminOnlyFieldAccess, isAdmin } from '../access/ecommerceAccess'
 import { decryptSecretHook, encryptSecretHook } from '../utilities/secretField'
 
@@ -153,6 +155,40 @@ export const FormSettings: GlobalConfig = {
             description: 'Scores below this count as a bot. 30 is Cloudflare\'s own "likely automated" line.',
             condition: (_, s) => s?.botDetection === 'challenge' || s?.botDetection === 'block',
           },
+        },
+        ...CAPTCHA_PLACES.map((place) => ({
+          name: modeFieldOf(place.id),
+          label: `Challenge: ${place.label}`,
+          type: 'select' as const,
+          defaultValue: 'default',
+          options: [
+            { label: 'Same as before (follows the switches above)', value: 'default' },
+            { label: 'Off', value: 'off' },
+            { label: 'Always', value: 'always' },
+            { label: 'Only after repeated failures from the same address', value: 'failures' },
+          ],
+          admin: {
+            description:
+              place.kind === 'auth'
+                ? 'When this step asks for the challenge. Needs the challenge switched on and its keys saved; without keys nothing is asked. A low bot score can still ask.'
+                : 'When this place asks for the challenge. Places without a failed step count every try instead of failures.',
+          },
+        })),
+        {
+          name: 'failureThreshold',
+          type: 'number',
+          defaultValue: 3,
+          min: 1,
+          max: 50,
+          admin: { description: 'For the "only after repeated failures" places: how many failures (or tries) from one address before the challenge is asked.' },
+        },
+        {
+          name: 'failureWindowMinutes',
+          type: 'number',
+          defaultValue: 15,
+          min: 1,
+          max: 1440,
+          admin: { description: 'How long those failures are counted, in minutes.' },
         },
         {
           name: 'blockedWords',

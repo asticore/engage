@@ -310,6 +310,12 @@ export type ResolvedFormSettings = {
   protectSignIn: boolean
   botDetection: 'off' | 'challenge' | 'block'
   botMinScore: number
+  /** Mode of each place that can ask for the CAPTCHA (Task 19a). */
+  placeModes: Record<import('@/features/security/captchaPlaces').PlaceId, import('@/features/security/captchaPlaces').PlaceMode>
+  /** Failures (or tries) from one address before "after failures" places ask for the challenge. */
+  failureThreshold: number
+  /** How long those failures are counted, in minutes. */
+  failureWindowMinutes: number
   /** One word or phrase per line. A submission containing one is discarded as spam. */
   blockedWords: string
   /** Most links a submission may contain. 0 means no limit. */

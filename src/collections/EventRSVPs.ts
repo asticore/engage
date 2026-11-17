@@ -7,6 +7,7 @@ import { stampCancellation } from '../features/editScreens/rsvpStatus'
 import { rsvpConfirmationAfterChange } from '../features/email/rsvpConfirmation'
 import { webhookRsvpAfterChange } from '../features/webhooks/hooks'
 import { checkRsvpTier } from '../features/editScreens/rsvpTier'
+import { checkRsvpCaptcha } from '../features/security/rsvpCaptcha'
 import { rsvpCheckInFields, rsvpStatusFields, rsvpTicketTierField } from '../features/editScreens/fields'
 
 export const EventRSVPs: CollectionConfig = {
@@ -68,7 +69,7 @@ export const EventRSVPs: CollectionConfig = {
     { name: 'reminderSentAt', type: 'date', admin: { hidden: true, readOnly: true, description: 'When the event reminder was sent.' } },
   ],
   hooks: {
-    beforeChange: [checkEventCapacity, checkRsvpTier, stampCancellation],
+    beforeChange: [checkRsvpCaptcha, checkEventCapacity, checkRsvpTier, stampCancellation],
     afterChange: [verifyEventCapacity, rsvpConfirmationAfterChange, webhookRsvpAfterChange],
   },
   timestamps: true,

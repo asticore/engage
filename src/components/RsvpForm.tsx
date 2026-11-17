@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
+
 /** One ticket type as the form shows it. Built on the server from the event's tiers and their sales. */
 export type RsvpTierOption = {
   name: string
@@ -29,6 +31,7 @@ export type RsvpFormText = {
 export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOption[]; text: RsvpFormText }> = ({ eventID, tiers = [], text }) => {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [attempts, setAttempts] = useState(0)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -37,6 +40,11 @@ export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOpti
 
     const form = e.currentTarget
     const formData = new FormData(form)
+    const tokens: Record<string, string> = {}
+    for (const field of ['cf-turnstile-response', 'g-recaptcha-response']) {
+      const value = formData.get(field)
+      if (typeof value === 'string' && value) tokens[`x-${field}`] = value
+    }
 
     try {
       const res = await fetch('/api/event-rsvps', {
@@ -48,7 +56,7 @@ export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOpti
           notes: formData.get('notes') || undefined,
           ticketTier: tiers.length > 0 ? formData.get('ticketTier') : undefined,
         }),
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...tokens },
         method: 'POST',
       })
 
@@ -63,6 +71,7 @@ export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOpti
       form.reset()
     } catch (err) {
       setStatus('error')
+      setAttempts((n) => n + 1)
       setError(err instanceof Error ? err.message : text.error)
     }
   }
@@ -111,6 +120,7 @@ export const RsvpForm: React.FC<{ eventID: string | number; tiers?: RsvpTierOpti
         {text.notes}
         <textarea name="notes" rows={3} className="textarea" />
       </label>
+      <PlaceCaptcha place="rsvp" refreshKey={attempts} />
       {error && <p className="form-error">{error}</p>}
       <button type="submit" className="btn btn--primary" disabled={status === 'submitting'}>
         {status === 'submitting' ? text.sending : text.submit}

@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import React, { useActionState, useState } from 'react'
 
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
+
 import {
   confirmLinkAction,
   forgotPasswordAction,
@@ -222,6 +224,7 @@ export const ResetPasswordForm: React.FC<{ token: string; rules: PasswordRules }
   return (
     <form action={action} className="account-form">
       <input type="hidden" name="token" value={token} />
+      <PlaceCaptcha place="resetConfirm" />
       <label>
         {tx('auth.newPassword')}
         <input name="password" type="password" autoComplete="new-password" minLength={rules.minLength} required aria-describedby="password-hint" />
@@ -315,6 +318,7 @@ export const PasswordlessPanel: React.FC<{ magicLink: boolean; emailCode: boolea
       <form action={action} className="account-form">
         <input type="hidden" name="next" value={next} />
         <input type="hidden" name="area" value={place} />
+        <PlaceCaptcha place="passwordlessRequest" />
         <label>
           {tx('auth.email')}
           <input name="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} />
@@ -348,6 +352,7 @@ export const VerifyCodeForm: React.FC<{ email: string; next: string; place?: 'ac
       <input type="hidden" name="email" value={email} />
       <input type="hidden" name="next" value={next} />
       <input type="hidden" name="area" value={place} />
+      <PlaceCaptcha place="passwordlessVerify" />
       <label>
         {tx('auth.code')}
         <input name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} autoFocus required />

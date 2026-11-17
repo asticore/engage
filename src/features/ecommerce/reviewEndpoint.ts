@@ -55,6 +55,11 @@ export const reviewEndpoint: Endpoint = {
     const input = (await req.json?.().catch((): null => null)) as ReviewInput | null
     if (!input || typeof input !== 'object') return json({ ok: false, message: 'Invalid request.' }, 400)
 
+    const { authCaptchaRefusal, captchaFormFrom } = await import('@/features/security/authCaptcha')
+    const address = (req as unknown as Request).headers?.get?.('cf-connecting-ip') ?? undefined
+    const challenge = await authCaptchaRefusal(engine as never, captchaFormFrom(input, (req as unknown as Request).headers), address, 'reviews')
+    if (challenge) return json({ ok: false, message: challenge }, 400)
+
     const checked = checkReview(input)
     // A bot gets the same answer as a person, and nothing is stored.
     if (checked.ok === false) {

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
-import { AuthCaptcha } from '@/features/security/AuthCaptcha'
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
 
 import { initials, MAX_CONTENT, type CommentNode } from '../core'
 
@@ -36,12 +36,13 @@ const Thread: React.FC<{ nodes: CommentNode[]; onReply: (id: number) => void; cl
 )
 
 /** Comments under a blog post: the list and the form. English only. */
-export const CommentsSection: React.FC<{ postId: number; captcha?: { provider: 'turnstile' | 'recaptcha'; siteKey: string } | null }> = ({ postId, captcha }) => {
+export const CommentsSection: React.FC<{ postId: number }> = ({ postId }) => {
   const [data, setData] = useState<Loaded | null>(null)
   const [parent, setParent] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [failed, setFailed] = useState(false)
+  const [attempts, setAttempts] = useState(0)
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/comments?post=${postId}`)
@@ -70,6 +71,7 @@ export const CommentsSection: React.FC<{ postId: number; captcha?: { provider: '
             const res = await fetch('/api/comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...values, post: postId, parent }) })
             const out = (await res.json().catch((): null => null)) as { ok?: boolean; status?: string; error?: string } | null
             setBusy(false)
+            setAttempts((n) => n + 1)
             setFailed(!res.ok || !out?.ok)
             if (!res.ok || !out?.ok) return setMessage(out?.error ?? 'That did not work. Please try again.')
             form.reset()
@@ -106,7 +108,7 @@ export const CommentsSection: React.FC<{ postId: number; captcha?: { provider: '
               <input name="website" tabIndex={-1} autoComplete="off" />
             </label>
           </div>
-          {captcha ? <AuthCaptcha provider={captcha.provider} siteKey={captcha.siteKey} /> : null}
+          <PlaceCaptcha place="comments" refreshKey={attempts} />
           <button type="submit" className="btn btn--primary" disabled={busy}>
             Post comment
           </button>

@@ -222,6 +222,7 @@ import * as migration_20270317_240000_affiliate_links from './20270317_240000_af
 import * as migration_20270316_440000_media_quotas from './20270316_440000_media_quotas';
 import * as migration_20270316_360000_auth_captcha from './20270316_360000_auth_captcha';
 import * as migration_20270317_260000_bot_detection from './20270317_260000_bot_detection';
+import * as migration_20270317_270000_captcha_modes from './20270317_270000_captcha_modes';
 import * as migration_20270316_420000_org_transfer_delegation from './20270316_420000_org_transfer_delegation';
 import * as migration_20270317_130000_username_sign_in from './20270317_130000_username_sign_in';
 
@@ -1350,5 +1351,10 @@ export const migrations = [
     up: migration_20270317_260000_rate_rules.up,
     down: migration_20270317_260000_rate_rules.down,
     name: '20270317_260000_rate_rules',
+  },
+  {
+    up: migration_20270317_270000_captcha_modes.up,
+    down: migration_20270317_270000_captcha_modes.down,
+    name: '20270317_270000_captcha_modes',
   },
 ];
