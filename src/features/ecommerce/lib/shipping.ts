@@ -1,5 +1,5 @@
 import { toCents } from './money'
-import { parsePickupLocations, type PickupLocation } from './pickup'
+import { parsePickupLocations, pickupClosedOn, type PickupLocation } from './pickup'
 
 export type ShippingAddress = { country?: string | null; state?: string | null; postalCode?: string | null }
 
@@ -66,6 +66,8 @@ export type ShippingOption = {
   taxable: boolean
   /** Local pickup with locations: the place this option collects from. Its id ends in the location number. */
   pickup?: PickupLocation
+  /** Local pickup: the location's hours say it is closed on the day the quote was made. Checkout shows a note; the order is still allowed. */
+  closedToday?: boolean
 }
 
 const norm = (v: string | null | undefined): string => (v ?? '').trim().toUpperCase()
@@ -197,7 +199,7 @@ export function quoteShipping(cart: ShippingCart, address: ShippingAddress, zone
     const locations = method.type === 'local_pickup' ? parsePickupLocations(method.pickupLocations) : []
     if (locations.length > 0) {
       // One option per location; the id is `${zoneId}:${methodIndex}:${locationIndex}` so checkout sends the choice back unchanged.
-      locations.forEach((pickup, at) => options.push({ id: `${zone.id}:${index}:${at}`, zoneId: zone.id, zoneName: zone.name, type: method.type, title: `${method.title}: ${pickup.name}`, costCents: cost as number, taxable: false, pickup }))
+      locations.forEach((pickup, at) => options.push({ id: `${zone.id}:${index}:${at}`, zoneId: zone.id, zoneName: zone.name, type: method.type, title: `${method.title}: ${pickup.name}`, costCents: cost as number, taxable: false, pickup, ...(pickupClosedOn(pickup.hours, new Date().getDay()) ? { closedToday: true } : {}) }))
       return
     }
     options.push({

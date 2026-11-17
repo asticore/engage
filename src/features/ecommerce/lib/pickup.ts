@@ -27,3 +27,34 @@ export function pickupLines(location: Partial<PickupLocation> | null | undefined
   if (!location?.name) return []
   return [location.name, location.address ?? '', location.hours ? `Hours: ${location.hours}` : '', location.instructions ?? ''].filter(Boolean)
 }
+
+const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+const dayIndex = (word: string): number => DAYS.indexOf(word.toLowerCase().slice(0, 3))
+
+/**
+ * Is a pickup place closed on this weekday? Reads hours text such as "Mon-Fri 9-5; Sat 10-2" or "Sun closed".
+ * Returns true only when the text names days and none of them covers `weekday` (0 = Sunday), or the day is marked closed.
+ * Text with no day names (for example "9-5 daily") is never reported as closed.
+ */
+export function pickupClosedOn(hours: string | null | undefined, weekday: number): boolean {
+  if (!hours) return false
+  const open = new Set<number>()
+  const closed = new Set<number>()
+  let sawDay = false
+  for (const part of hours.split(/[;,]/)) {
+    const match = part.match(/^\s*([a-z]{3,9})(?:\s*(?:-|to|–)\s*([a-z]{3,9}))?\b(.*)$/i)
+    if (!match) continue
+    const from = dayIndex(match[1])
+    if (from < 0) continue
+    const to = match[2] ? dayIndex(match[2]) : from
+    if (to < 0) continue
+    sawDay = true
+    const isClosed = /\bclosed\b/i.test(match[3])
+    for (let d = from; ; d = (d + 1) % 7) {
+      ;(isClosed ? closed : open).add(d)
+      if (d === to) break
+    }
+  }
+  if (!sawDay) return false
+  return closed.has(weekday) || !open.has(weekday)
+}

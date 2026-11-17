@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { renderPackingSlipHtml } from '@/features/ecommerce/lib/invoice'
-import { parsePickupLocations, pickupLines } from '@/features/ecommerce/lib/pickup'
+import { parsePickupLocations, pickupClosedOn, pickupLines } from '@/features/ecommerce/lib/pickup'
 import { quoteShipping, type ShippingZone } from '@/features/ecommerce/lib/shipping'
 import { renderOrderEmail } from '@/features/ecommerce/server/emails'
 
@@ -39,5 +39,20 @@ describe('local pickup', () => {
     const html = renderPackingSlipHtml({ id: 5, lineItems: [], shippingMethod: { title: 'Pickup: Brisbane', pickup: { name: 'Brisbane', address: '1 Main St' } } } as never, { name: 'Shop' })
     expect(html).toContain('Collect from')
     expect(html).toContain('1 Main St')
+  })
+  it('reads which weekdays a place is closed', () => {
+    expect(pickupClosedOn('Mon-Fri 9-5; Sat 10-2', 0)).toBe(true)
+    expect(pickupClosedOn('Mon-Fri 9-5; Sat 10-2', 6)).toBe(false)
+    expect(pickupClosedOn('Mon-Fri 9-5, Sun closed', 0)).toBe(true)
+    expect(pickupClosedOn('Fri-Mon 10-4', 6)).toBe(false)
+    expect(pickupClosedOn('Fri-Mon 10-4', 3)).toBe(true)
+    expect(pickupClosedOn('9-5 daily', 0)).toBe(false)
+    expect(pickupClosedOn('', 0)).toBe(false)
+  })
+  it('puts the collection point on the order confirmation unless the template places it', () => {
+    const order = { id: 5, status: 'processing', amount: 1000, shippingAddress: { firstName: 'Sam' }, shippingMethod: { type: 'local_pickup', title: 'Pickup', pickup: { name: 'Brisbane', address: '1 Main St' } } }
+    expect(renderOrderEmail('processing', order, {}).text).toContain('Collect from:\nBrisbane\n1 Main St')
+    expect(renderOrderEmail('processing', { ...order, shippingMethod: null }, {}).text).not.toContain('Collect from')
+    expect(renderOrderEmail('processing', order, { bodyOverride: 'Hi {{pickup_location}}', pickupLocation: 'X' }).text).not.toContain('Collect from')
   })
 })
