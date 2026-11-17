@@ -9,6 +9,7 @@ import { BYPASS_COOKIE, verifyBypass } from './ipBypass'
 import { readIpRulesCached } from './ipRulesStore'
 import { matchRateRule } from './routeRules'
 import { readRateRulesCached } from './routeRulesStore'
+import { currentCspBuilder, refreshCspBuilder } from './cspBuilderStore'
 import { isDirectoryListingRequest, isProbePath } from './probePaths'
 import { classifyRoute, clientKey, hit, hitShared, limitFor } from './rateLimit'
 import { readSecuritySettingsFromD1, type SecuritySettings } from './settings'
@@ -139,7 +140,7 @@ export function applySecurityHeaders(
   settings: SecuritySettings,
   pathname: string,
 ): NextResponse {
-  for (const [name, value] of Object.entries(securityHeaders(settings, pathname))) {
+  for (const [name, value] of Object.entries(securityHeaders(settings, pathname, currentCspBuilder()))) {
     response.headers.set(name, value)
   }
 
@@ -201,6 +202,8 @@ export function normaliseRequestPath(pathname: string): string {
 export async function securityMiddleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
   const settings = await readSecuritySettingsFromD1()
+  // Held in isolate memory for 30 seconds; header building below reads the last value synchronously. Fails open to off.
+  await refreshCspBuilder()
   // Old /admin/collections/<content> URLs move to /admin/content (permanent, query kept).
   const movedAdminPath = request.method === 'GET' || request.method === 'HEAD' ? legacyCollectionRedirect(pathname, request.nextUrl.search) : null
   if (movedAdminPath) return applySecurityHeaders(NextResponse.redirect(new URL(movedAdminPath, request.url), 308), settings, pathname)

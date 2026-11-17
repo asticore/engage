@@ -34,10 +34,10 @@ const NONCE_OR_HASH = /^'(nonce-[A-Za-z0-9+/=_-]+|sha(256|384|512)-[A-Za-z0-9+/=
 const SCHEME = /^[a-z][a-z0-9+.-]*:$/i
 const HOST = /^(https?:\/\/)?(\*\.)?([a-z0-9-]+\.)*[a-z0-9-]+(:(\d{1,5}|\*))?(\/[^\s'"]*)?$/i
 
-type Directive = { name: string; sources: string[] }
+export type Directive = { name: string; sources: string[] }
 
 /** Splits a policy into directives, lower-casing the names and dropping empty parts. */
-function parsePolicy(policy: string): Directive[] {
+export function parsePolicy(policy: string): Directive[] {
   return policy
     .split(';')
     .map((part) => part.trim())

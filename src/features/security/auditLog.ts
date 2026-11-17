@@ -37,6 +37,7 @@ export type AuditAction =
   | 'ip.blocked'
   | 'ip.rule'
   | 'rate-rule'
+  | 'csp.builder'
   | 'user.banned'
   | 'user.unbanned'
   | 'user.bulk'

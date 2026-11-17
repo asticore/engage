@@ -70,6 +70,7 @@ const PurchaseLimitsView = lazyView(() => import('@/admin/views/PurchaseLimitsVi
 const AuthenticationView = lazyView(() => import('@/admin/views/AuthenticationView').then((mod) => mod.AuthenticationView))
 const RateRulesView = lazyView(() => import('@/admin/views/RateRulesView').then((mod) => mod.RateRulesView))
 const IpRulesView = lazyView(() => import('@/admin/views/IpRulesView').then((mod) => mod.IpRulesView))
+const CspBuilderView = lazyView(() => import('@/admin/views/CspBuilderView').then((mod) => mod.CspBuilderView))
 const UserBansView = lazyView(() => import('@/admin/views/UserBansView').then((mod) => mod.UserBansView))
 const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').then((mod) => mod.AffiliatesView))
 const SsoView = lazyView(() => import('@/admin/views/SsoView').then((mod) => mod.SsoView))
@@ -269,6 +270,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'authentication', Component: AuthenticationView, path: '/authentication', meta: { title: 'Authentication', description: 'Every sign-in method with its status and a link to change it.' } },
   { key: 'rate-rules', Component: RateRulesView, path: '/security/rate-rules', meta: { title: 'Rate limit rules', description: 'Limit requests per address to a path.' } },
   { key: 'ip-rules', Component: IpRulesView, path: '/security/ip-lists', meta: { title: 'IP lists', description: 'Block or allow addresses and ranges.' } },
+  { key: 'csp-builder', Component: CspBuilderView, path: '/security/csp', meta: { title: 'Content-Security-Policy builder', description: 'Pick allowed sources per directive, test in report-only mode, and allow reported hosts.' } },
   { key: 'user-bans', Component: UserBansView, path: '/security/bans', meta: { title: 'Banned accounts', description: 'Ban and unban accounts.' } },
   { key: 'affiliates', Component: AffiliatesView, path: '/affiliates', meta: { title: 'Affiliates', description: 'Partners with referral links and the visits they bring.' } },
   { key: 'sso', Component: SsoView, path: '/sso', meta: { title: 'Single sign-on', description: 'Per-organisation OpenID Connect sign-in with verified domains.' } },
