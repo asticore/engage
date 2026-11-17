@@ -30,6 +30,7 @@ import dynamic from 'next/dynamic'
  * reference per path.
  */
 const SlugComponent = dynamic(() => import('@/fields/slug/SlugComponent').then((mod) => mod.SlugComponent))
+const SchemaFactsField = dynamic(() => import('@/fields/schemaFacts/SchemaFactsField').then((mod) => mod.SchemaFactsField))
 const OpenVisualEditorButton = dynamic(() => import('@/fields/visualEditor/OpenVisualEditorButton').then((mod) => mod.OpenVisualEditorButton))
 const DocumentLockControl = dynamic(() => import('@/fields/locks/DocumentLockControl').then((mod) => mod.DocumentLockControl))
 const CustomFieldsPanel = dynamic(() => import('@/fields/customFields/CustomFieldsPanel').then((mod) => mod.CustomFieldsPanel))
@@ -74,6 +75,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentType<any>> = {
   '@/features/siteTemplates/admin/ConditionsField#ConditionsField': ConditionsField,
   '@/features/socialFeeds/admin/TestConnectionField#TestConnectionField': TestConnectionField,
   '@/fields/slug/SlugComponent#SlugComponent': SlugComponent,
+  '@/fields/schemaFacts/SchemaFactsField#SchemaFactsField': SchemaFactsField,
   '@/fields/visualEditor/OpenVisualEditorButton#OpenVisualEditorButton': OpenVisualEditorButton,
   '@/fields/locks/DocumentLockControl#DocumentLockControl': DocumentLockControl,
   '@/fields/customFields/CustomFieldsPanel#CustomFieldsPanel': CustomFieldsPanel,
