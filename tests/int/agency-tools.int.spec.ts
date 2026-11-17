@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest'
 
 import { CADENCES, isReportDue, parseRecipients, reportCsv, reportEmail, summaryLines, toCadence, toPreset, type ReportData } from '@/features/clientReports/core'
-import { DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
+import { idsAddedAfterCopy, DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
 import { cleanHost, cleanName, describeRollout, franchiseLocks, toLockChoice, toStatus } from '@/features/franchising/core'
 import { CRON_JOBS } from '@/features/cron/registry'
 import { JOB_RUNNERS } from '@/features/cron/jobs'
 import { FEATURE_MAP } from '@/features/registry'
 
 describe('agency demos (22g)', () => {
+  it('lists only records added after the copy, by slug', () => {
+    const docs = [{ id: 1, slug: 'home' }, { id: 2, slug: 'new-page' }, { id: 3 }, { id: 4, slug: '' }]
+    expect(idsAddedAfterCopy(docs, new Set(['home']))).toEqual([2])
+    expect(idsAddedAfterCopy(docs, new Set(['home', 'new-page']))).toEqual([])
+  })
   const now = new Date('2027-03-17T12:00:00Z')
   it('never resets when the schedule is off', () => {
     expect(isResetDue('off', null, now)).toBe(false)

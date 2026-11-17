@@ -2,7 +2,7 @@ import type { Engine } from '@/engine'
 import { applyImport } from '@/features/settingsTransfer/import'
 import { renderExport } from '@/features/settingsTransfer/export'
 
-import { DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, MAX_SNAPSHOT_BYTES, demoPassword, describeBytes, isEmail, isResetDue } from './core'
+import { DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, MAX_SNAPSHOT_BYTES, RESET_CLEAN_COLLECTIONS, demoPassword, describeBytes, idsAddedAfterCopy, isEmail, isResetDue } from './core'
 import * as store from './store'
 
 export type SnapshotResult = { ok: true; size: number } | { ok: false; error: string }
@@ -19,19 +19,43 @@ export async function takeSnapshot(engine: Engine, d1: store.D1, now: Date): Pro
 
 export type ResetResult = { ok: boolean; message: string }
 
+/** Deletes pages, posts and products that are not in the saved copy (matched by slug). A section the copy lacks is left alone. */
+export async function removeAddedContent(engine: Engine, snapshot: { content?: Record<string, unknown> }): Promise<{ removed: number; errors: number }> {
+  let removed = 0
+  let errors = 0
+  for (const { collection, section } of RESET_CLEAN_COLLECTIONS) {
+    const saved = snapshot.content?.[section]
+    if (!Array.isArray(saved)) continue
+    const keep = new Set(saved.map((item) => (item as { slug?: unknown }).slug).filter((v): v is string => typeof v === 'string'))
+    const found = await engine.find({ collection, limit: 1000, depth: 0, overrideAccess: true } as never)
+    for (const id of idsAddedAfterCopy((found.docs ?? []) as { id: number | string; slug?: unknown }[], keep)) {
+      try {
+        await engine.delete({ collection, id, overrideAccess: true } as never)
+        removed += 1
+      } catch {
+        errors += 1
+      }
+    }
+  }
+  return { removed, errors }
+}
+
 /**
- * Puts the demo back to the saved copy: settings, pages, posts, products and the rest are written back from it.
- * Items added after the copy was taken are left alone (an import adds and updates, it does not delete).
+ * Puts the demo back to the saved copy: settings, pages, posts, products and the rest are written back from it, then
+ * pages, posts and products added after the copy was taken are deleted (matched by slug).
  */
 export async function resetFromSnapshot(engine: Engine, d1: store.D1, now: Date): Promise<ResetResult> {
   const body = await store.snapshotBody(d1)
   if (!body) return { ok: false, message: 'No demo copy is saved yet. Save one first.' }
   let result: ResetResult
   try {
-    const report = await applyImport(engine, JSON.parse(body), { sections: [...DEMO_IMPORT_SECTIONS] })
-    const errors = report.sections.reduce((n, s) => n + s.errors, 0)
+    const saved = JSON.parse(body) as { content?: Record<string, unknown> }
+    const report = await applyImport(engine, saved, { sections: [...DEMO_IMPORT_SECTIONS] })
+    const cleaned = await removeAddedContent(engine, saved)
+    const errors = report.sections.reduce((n, s) => n + s.errors, 0) + cleaned.errors
     const updated = report.sections.reduce((n, s) => n + s.updated + s.created, 0)
-    result = errors > 0 ? { ok: false, message: `Reset finished with ${errors} error(s); ${updated} item(s) restored.` } : { ok: true, message: `Reset done; ${updated} item(s) restored.` }
+    const tail = `${updated} item(s) restored, ${cleaned.removed} added item(s) deleted.`
+    result = errors > 0 ? { ok: false, message: `Reset finished with ${errors} error(s); ${tail}` } : { ok: true, message: `Reset done; ${tail}` }
   } catch (error) {
     result = { ok: false, message: `Reset failed: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300) }
   }

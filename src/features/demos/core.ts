@@ -63,3 +63,15 @@ export function describeBytes(n: number): string {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`
   return `${(n / 1024 / 1024).toFixed(1)} MB`
 }
+
+/** Collections a reset cleans up: anything with a slug that is not in the saved copy was added after it and is removed. */
+export const RESET_CLEAN_COLLECTIONS = [
+  { collection: 'pages', section: 'pages' },
+  { collection: 'posts', section: 'posts' },
+  { collection: 'products', section: 'products' },
+] as const
+
+/** The ids of records that are not in the saved copy (matched by slug). A record with no slug is never touched. */
+export function idsAddedAfterCopy(existing: { id: number | string; slug?: unknown }[], keepSlugs: ReadonlySet<string>): (number | string)[] {
+  return existing.filter((doc) => typeof doc.slug === 'string' && doc.slug !== '' && !keepSlugs.has(doc.slug)).map((doc) => doc.id)
+}
