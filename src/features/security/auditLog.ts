@@ -17,7 +17,8 @@ import type { SecuritySettings } from './settings'
  * failure is logged to the console, which is where an operator will look.
  */
 
-export const AUDIT_TABLE = 'eg_audit_log'
+export { AUDIT_TABLE, PROTECTED_AUDIT_ACTIONS, ACTIVITY_HIDDEN_ACTIONS } from './auditConstants'
+import { ACTIVITY_HIDDEN_ACTIONS, AUDIT_TABLE } from './auditConstants'
 
 export type AuditAction =
   | 'login.success'
@@ -267,6 +268,14 @@ const clip = (value: unknown, max: number): string | null => {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text
 }
 
+export type AuditDrainPayload = { action: string; actorEmail: string; collection: string; documentId: string; ip: string; detail: string; createdAt: string }
+let auditSink: ((payload: AuditDrainPayload) => void) | null = null
+
+/** Registered once by the engine (server only), so this module never imports the webhook code itself. */
+export function setAuditSink(sink: ((payload: AuditDrainPayload) => void) | null): void {
+  auditSink = sink
+}
+
 export async function recordAuditEvent(entry: AuditEntry, settings: SecuritySettings): Promise<void> {
   if (!settings.featureEnabled || !settings.auditLog.enabled) return
 
@@ -295,6 +304,12 @@ export async function recordAuditEvent(entry: AuditEntry, settings: SecuritySett
         now,
       )
       .run()
+
+    // Audit log drain: every ordinary entry is also offered to the registered sink (webhooks subscribed to `audit.recorded`).
+    // The noisy request-level entries and the webhook system's own entries are left out, so the drain cannot loop.
+    if (auditSink && !ACTIVITY_HIDDEN_ACTIONS.includes(entry.action) && !entry.action.startsWith('webhook.') && entry.collectionSlug !== 'webhooks') {
+      auditSink({ action: entry.action, actorEmail: entry.actorEmail ?? '', collection: entry.collectionSlug ?? '', documentId: String(entry.documentId ?? ''), ip: entry.ip ?? '', detail: clip(withImpersonating(entry), 1000) ?? '', createdAt: now })
+    }
   } catch (error) {
     console.error(JSON.stringify({ level: 'warn', msg: 'Audit entry not written', error: String(error) }))
   }
@@ -352,20 +367,3 @@ export function auditContext(request: Request): Pick<AuditEntry, 'ip' | 'userAge
   }
 }
 
-/**
- * Entries the activity log's clear never removes: consent decisions are the
- * proof a visitor agreed (kept for the cookie consent screen and its own
- * retention), privacy requests and erasures are the proof a request was
- * handled, and a clear record is the proof that a clear happened.
- */
-export const PROTECTED_AUDIT_ACTIONS: readonly AuditAction[] = [
-  'consent.update',
-  'privacy.request',
-  'privacy.decide',
-  'privacy.erase',
-  'privacy.export',
-  'activity.cleared',
-]
-
-/** Noise kept out of the activity screen (blocked probes and rate limits fill it fast). They still live in the table and the retention rule covers them. */
-export const ACTIVITY_HIDDEN_ACTIONS: readonly AuditAction[] = ['consent.update', 'rate-limit.blocked', 'probe.blocked', 'ip.blocked', 'api-key.used']

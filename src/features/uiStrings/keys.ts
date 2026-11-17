@@ -3212,6 +3212,7 @@ export const UI_STRING_SOURCE = {
   "webhooks.event.affiliate.approved": "Affiliate approved",
   "webhooks.event.affiliate.commission.earned": "Affiliate commission earned",
   "webhooks.event.affiliate.payout.recorded": "Affiliate payout recorded",
+  "webhooks.event.audit.recorded": "Activity log entry",
   "affiliate.email.approved.subject": "You are approved as an affiliate",
   "affiliate.email.approved.body": "Hi {name},\n\nYou are approved. You earn {pct}% commission on orders from people who follow your link and buy within {days} days.\n\nYour link: {link}\nYour private results page: {dashboard}\n\nKeep the results link private: anyone who has it can see your results. Please say clearly that your link is an affiliate link when you share it.",
   "affiliate.email.commission.subject": "You earned a commission of {amount}",
