@@ -200,3 +200,21 @@ export async function markDueNotified(d1: D1, id: number, dueDate: string): Prom
 export async function getPerson(d1: D1, id: number): Promise<Person | null> {
   return (await listPeople(d1)).find((p) => p.id === id) ?? null
 }
+
+/** The newest activity entry id (0 when there is none), so a caller can later read only what one request added. */
+export async function latestActivityId(d1: D1): Promise<number> {
+  return Number((await all(d1, 'SELECT COALESCE(MAX(id), 0) AS id FROM eg_task_activity'))[0]?.id ?? 0)
+}
+
+/** Activity entries added after `afterId`, oldest first, across every board. */
+export async function activitySince(d1: D1, afterId: number): Promise<(Activity & { boardId: number })[]> {
+  return (await all(d1, 'SELECT id, board_id, card_id, user_id, action, detail, created_at FROM eg_task_activity WHERE id > ?1 ORDER BY id LIMIT 50', afterId)).map((r) => ({
+    id: Number(r.id),
+    boardId: Number(r.board_id),
+    cardId: r.card_id === null ? null : Number(r.card_id),
+    userId: r.user_id === null ? null : Number(r.user_id),
+    action: String(r.action ?? ''),
+    detail: String(r.detail ?? ''),
+    createdAt: String(r.created_at ?? ''),
+  }))
+}
