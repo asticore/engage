@@ -6,7 +6,25 @@ import { describe, expect, it } from 'vitest'
 
 import { parseStoredReview, serializeStoredReview, transition, resetOnEdit, type ReviewActor, type ReviewDocState } from '@/features/approval/stateMachine'
 import { coveredBy, isAway, mayActOnStep, namedUserIds, parseStandIns, validateWorkflowInput, type ApprovalWorkflow } from '@/features/approval/workflows'
-import { draftFromRecord, payloadFromDraft, setStandIn } from '@/features/approval/workflowForm'
+import { approverCandidates, draftFromRecord, payloadFromDraft, setStandIn } from '@/features/approval/workflowForm'
+
+describe('approver picker candidates', () => {
+  it('includes staff and custom-role holders, leaves out plain customers', () => {
+    const list = approverCandidates([
+      { id: 1, name: 'Admin', roles: ['admin'] },
+      { id: 2, name: 'Cus', roles: ['customer'] },
+      { id: 3, email: 'legal@example.com', roles: ['customer'], customRole: 5 },
+      { id: 4, name: ' Pop ', roles: [], customRole: { id: 6 } },
+      { id: 5, roles: [] },
+      { id: 'x', roles: ['admin'] },
+    ])
+    expect(list).toEqual([
+      { id: 1, name: 'Admin' },
+      { id: 3, name: 'legal@example.com' },
+      { id: 4, name: 'Pop' },
+    ])
+  })
+})
 
 const NOW = '2026-11-17T10:00:00.000Z'
 
