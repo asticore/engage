@@ -12,6 +12,8 @@ import { formatAmount, formatDate, orderForCustomer, ordersForCustomer, portalFo
 import { readPreferences } from '../preferences'
 import { isOrderStatus } from '@/features/ecommerce/lib/orderStatus'
 import { ReorderButton } from './ReorderButton'
+import { MyAppointments } from '@/features/bookings/MyAppointments'
+import { getFeatureFlags } from '@/utilities/features'
 import { AccountShell } from './AccountShell'
 import { TwoFactorPanel } from '@/features/security/components/TwoFactorPanel'
 import { PasskeysPanel } from '@/features/passkeys/components/PasskeysPanel'
@@ -416,6 +418,7 @@ export const BookingsScreen: React.FC = async () => {
           </article>
         ))
       ) : null}
+      {confirmed && (await getFeatureFlags()).bookings ? <MyAppointments email={String(user.email)} /> : null}
     </AccountShell>
   )
 }
