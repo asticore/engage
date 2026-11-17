@@ -19,4 +19,7 @@ describe('language switcher style', () => {
     expect(switcherLabel('de', 'Deutsch', 'flag').text).toBe('')
     expect(switcherLabel('xx', 'Xish', 'flag')).toEqual({ text: 'Xish', flag: '' })
   })
+  it('accepts the dropdown layout', () => {
+    expect(switcherOptions({ layout: 'dropdown' }).layout).toBe('dropdown')
+  })
 })

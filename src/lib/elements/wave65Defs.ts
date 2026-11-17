@@ -95,7 +95,7 @@ export const WAVE65_ELEMENTS: ElementDef[] = [
     fields: [
       text('label', 'Accessible label', { width: 'half' }),
       { name: 'display', label: 'Show', type: 'select', width: 'half', options: [{ label: 'Language name', value: 'name' }, { label: 'Short code (EN)', value: 'code' }, { label: 'Flag and name', value: 'flag-name' }, { label: 'Flag only', value: 'flag' }], helpText: 'Flags show a country, not a language: the name stays as the accessible label.' },
-      { name: 'layout', label: 'Layout', type: 'select', width: 'half', options: [{ label: 'In a row', value: 'row' }, { label: 'As a list', value: 'list' }] },
+      { name: 'layout', label: 'Layout', type: 'select', width: 'half', options: [{ label: 'In a row', value: 'row' }, { label: 'As a list', value: 'list' }, { label: 'As a dropdown', value: 'dropdown' }] },
       { name: 'hover', label: 'Hover effect', type: 'select', width: 'half', options: [{ label: 'Underline', value: 'underline' }, { label: 'Background', value: 'background' }, { label: 'None', value: 'none' }] },
       { name: 'align', label: 'Align', type: 'select', width: 'half', options: [{ label: 'Start', value: 'start' }, { label: 'Center', value: 'center' }, { label: 'End', value: 'end' }] },
     ],
