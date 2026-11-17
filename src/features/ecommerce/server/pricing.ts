@@ -17,7 +17,7 @@ import { fetchLiveRates, normaliseShippingConfig } from '../shipping/registry'
 import { computeOrderTotals, type OrderTotals, type PricedLine } from '../lib/totals'
 import { loadPreordersEnabled } from './shopExtra'
 import { loadWholesaleConfig } from './wholesale'
-import { minOrderShortfallCents, pricesHiddenFor, productAllowedFor } from '../lib/wholesale'
+import { DEFAULT_HIDDEN_PRICE_TEXT, minOrderShortfallCents, pricesHiddenFor, productAllowedFor } from '../lib/wholesale'
 import { isNonShipping } from '../lib/service'
 import { donationLine, withDonationAddOns } from '../lib/donations'
 import { addOnSummary, parseAddOnInputs, priceAddOns, normaliseAddOnDefs, type AddOnChoice } from '../lib/addOns'
@@ -392,7 +392,7 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
   if (wholesaleCfg.enabled) {
     const types = Array.isArray(input.customerRoles) ? input.customerRoles : []
     const buyer = { signedIn: input.signedIn ?? types.length > 0, types }
-    if (pricesHiddenFor(wholesaleCfg, buyer)) throw new CheckoutError(wholesaleCfg.hiddenText)
+    if (pricesHiddenFor(wholesaleCfg, buyer)) throw new CheckoutError(wholesaleCfg.hiddenText || DEFAULT_HIDDEN_PRICE_TEXT)
     if (lines.some((l) => (l as unknown as { wholesaleOnly?: boolean }).wholesaleOnly === true && !productAllowedFor(wholesaleCfg, true, buyer))) {
       throw new CheckoutError('Some items in your cart are for wholesale accounts only.')
     }

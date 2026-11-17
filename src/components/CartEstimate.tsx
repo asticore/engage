@@ -3,6 +3,7 @@
 import React, { useEffect, useId, useState } from 'react'
 
 import { useCart } from '@/engine/commerce/react'
+import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
 import { useDisplayMoney } from '@/components/DisplayCurrencyContext'
 
 type Quote = {
@@ -26,6 +27,7 @@ const KEY = 'engage-cart-estimate'
 export const CartEstimate: React.FC<{ compact?: boolean }> = ({ compact }) => {
   const { cart, cartRef } = useCart()
   const money = useDisplayMoney()
+  const tx = useStoreText()
   const uid = useId()
   const [country, setCountry] = useState('')
   const [postcode, setPostcode] = useState('')
@@ -114,7 +116,7 @@ export const CartEstimate: React.FC<{ compact?: boolean }> = ({ compact }) => {
       <div role="status" aria-live="polite">
         {error ? <p className="m-0 text-[#b3261e]">{error}</p> : null}
         {quote?.wholesaleMinOrder && quote.wholesaleMinOrder.shortfallCents > 0 ? (
-          <p className="m-0" role="status">Wholesale orders start at {money(quote.wholesaleMinOrder.minCents / 100)}. Add {money(quote.wholesaleMinOrder.shortfallCents / 100)} more to check out.</p>
+          <p className="m-0" role="status">{tx('store.wholesale.minOrder', { min: money(quote.wholesaleMinOrder.minCents / 100), more: money(quote.wholesaleMinOrder.shortfallCents / 100) })}</p>
         ) : null}
         {quote?.couponError ? <p className="m-0 text-[#b3261e]">{quote.couponError}</p> : null}
         {quote ? (

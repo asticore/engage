@@ -17,7 +17,7 @@ export type WholesaleConfig = {
   role: string
   hidePrices: boolean
   hideFrom: HideFrom
-  /** Shown instead of a hidden price. */
+  /** The owner's own wording for a hidden price. Blank means use the translated store text. */
   hiddenText: string
   /** Smallest cart subtotal a wholesale buyer can check out with, in cents. Null means no minimum. */
   minOrderCents: number | null
@@ -33,7 +33,7 @@ export const WHOLESALE_OFF: WholesaleConfig = {
   role: DEFAULT_WHOLESALE_ROLE,
   hidePrices: false,
   hideFrom: 'guests',
-  hiddenText: DEFAULT_HIDDEN_PRICE_TEXT,
+  hiddenText: '',
   minOrderCents: null,
   applyOpen: false,
 }
@@ -49,7 +49,7 @@ export function normaliseWholesaleConfig(doc: unknown): WholesaleConfig {
     role,
     hidePrices: d.wholesaleHidePrices === true,
     hideFrom: d.wholesaleHideFrom === 'non-wholesale' ? 'non-wholesale' : 'guests',
-    hiddenText: text || DEFAULT_HIDDEN_PRICE_TEXT,
+    hiddenText: text,
     minOrderCents: Number.isFinite(minDollars) && minDollars > 0 ? Math.round(minDollars * 100) : null,
     applyOpen: d.wholesaleApplyOpen === true,
   }

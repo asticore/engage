@@ -262,11 +262,16 @@ export async function sendDecisionEmail(application: { email: string; company: s
     if (!application.email) return
     const { sendEmail } = await import('@/features/email')
     const approved = status === 'approved'
-    const lines = approved
-      ? [`Good news: your wholesale account for ${application.company} is approved.`, 'Sign in to see wholesale prices and products.']
-      : [`Thank you for applying for a wholesale account for ${application.company}. We are not able to approve it at the moment.`]
+    // The applicant's own language when they have chosen one, otherwise English.
+    const { localeForRecipient } = await import('@/features/email/recipientLocale')
+    const { loadStrings, t: uiT } = await import('@/features/uiStrings')
+    const engine = (await import('@/engine')).getEngine
+    const locale = await localeForRecipient((await engine()) as never, application.email)
+    await loadStrings(locale)
+    const kind = approved ? 'approved' : 'rejected'
+    const lines = [uiT(`email.wholesale.${kind}.body`, locale, { company: application.company })]
     if (note.trim()) lines.push('', note.trim())
-    await sendEmail({ to: application.email, template: 'wholesale.decision', subject: approved ? 'Your wholesale account is approved' : 'About your wholesale application', text: lines.join('\n') })
+    await sendEmail({ to: application.email, template: 'wholesale.decision', subject: uiT(`email.wholesale.${kind}.subject`, locale), text: lines.join('\n') })
   } catch {
     /* notification only */
   }

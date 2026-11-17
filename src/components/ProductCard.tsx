@@ -1,4 +1,7 @@
 import Image from 'next/image'
+import { storeTexts } from '@/features/uiStrings/storeTextsServer'
+import { translateWith } from '@/features/uiStrings/t'
+import type { UiStringKey } from '@/features/uiStrings/keys'
 import Link from 'next/link'
 import React from 'react'
 
@@ -35,6 +38,8 @@ export async function ProductCard({
   // Wholesale mode: hidden prices show the shop's text instead (lib/wholesale.ts). Read once per request.
   const { cfg, buyer } = await wholesaleViewer()
   const priceHidden = pricesHiddenFor(cfg, buyer)
+  const storeDict = priceHidden ? await storeTexts() : null
+  const tx = (key: UiStringKey) => (storeDict ? translateWith(storeDict, key) : '')
   const imageURL = getImageURL(product)
   const catalogue = product as unknown as CatalogueProduct
   const range = priceRange(catalogue)
@@ -81,7 +86,7 @@ export async function ProductCard({
         </span>
         <h3>{product.title}</h3>
         <p className="mt-1 font-[family-name:var(--font-display)] text-[1.25rem]">
-          {priceHidden ? <span className="text-[0.85rem] opacity-70">{cfg.hiddenText}</span> : <ProductCardPrice info={info} range={range} variable={variable} fallback={product.priceInAUD} />}
+          {priceHidden ? <span className="text-[0.85rem] opacity-70">{cfg.hiddenText || tx('store.wholesale.hiddenPrice')}</span> : <ProductCardPrice info={info} range={range} variable={variable} fallback={product.priceInAUD} />}
           {soldOut ? <span className="ml-2 text-[0.65rem] uppercase tracking-[0.1em] opacity-60">Sold out</span> : null}
         </p>
         {showShortDescription && product.shortDescription && (
