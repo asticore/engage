@@ -107,6 +107,6 @@ export async function createDemoFromStarter(engine: Engine, d1: store.D1, starte
     return { ok: false, error: `Could not create the template: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300) }
   }
   const snapshot = await takeSnapshot(engine, d1, now)
-  if (!snapshot.ok) return { ok: false, error: `The "${starter.label}" template is on, but the demo copy was not saved. ${snapshot.error}` }
+  if ('error' in snapshot) return { ok: false, error: `The "${starter.label}" template is on, but the demo copy was not saved. ${snapshot.error}` }
   return { ok: true, templateId, message: `The "${starter.label}" starter is on across the site and the demo copy is saved.` }
 }

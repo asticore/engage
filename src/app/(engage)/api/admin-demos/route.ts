@@ -58,7 +58,7 @@ export async function POST(request: Request): Promise<Response> {
   }
   if (body.action === 'starter') {
     const result = await createDemoFromStarter(g.context.engine, d1, body.starterId, now)
-    return result.ok ? json({ ok: true, message: result.message, templateId: result.templateId }) : json({ error: result.error }, 400)
+    return 'error' in result ? json({ error: result.error }, 400) : json({ ok: true, message: result.message, templateId: result.templateId })
   }
   if (body.action === 'reset') {
     const result = await resetFromSnapshot(g.context.engine, d1, now)
