@@ -77,6 +77,7 @@ export const NAV_STRUCTURE: NavGroupDef[] = [
       { slug: 'store-credits', type: 'collections' },
       { slug: 'store-credit', type: 'view', href: '/store-credit', label: 'Add or deduct credit' },
       { slug: 'shop-reports', type: 'view', href: '/shop-reports', label: 'Shop reports' },
+      { slug: 'outbound-clicks', type: 'view', href: '/outbound-clicks', label: 'Outbound clicks' },
       { slug: 'credit-ledger', type: 'collections' },
       { slug: 'shipping-manifests', type: 'collections' },
       { slug: 'orders', type: 'collections' },

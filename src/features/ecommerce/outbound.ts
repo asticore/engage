@@ -48,3 +48,20 @@ export async function readProductClicks(productId: number, fromDay: string): Pro
     return []
   }
 }
+
+export type ClickReportRow = { productId: number; title: string; source: string; clicks: number }
+
+/** Clicks per product and source from a day onward across all products, busiest first. */
+export async function readAllClicks(fromDay: string, limit = 200): Promise<ClickReportRow[]> {
+  const db = await getDb()
+  if (!db) return []
+  try {
+    const { results } = await db
+      .prepare(`SELECT c.product_id AS product_id, p.title AS title, c.source AS source, SUM(c.clicks) AS clicks FROM \`${OUTBOUND_TABLE}\` c LEFT JOIN eg_products p ON p.id = c.product_id WHERE c.day >= ? GROUP BY c.product_id, c.source ORDER BY clicks DESC LIMIT ?`)
+      .bind(fromDay, Math.min(500, Math.max(1, limit)))
+      .all<{ product_id: number; title: string | null; source: string; clicks: number }>()
+    return (results ?? []).map((r) => ({ productId: Number(r.product_id), title: r.title ? String(r.title) : `Product #${r.product_id}`, source: String(r.source), clicks: Number(r.clicks) }))
+  } catch {
+    return []
+  }
+}
