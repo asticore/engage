@@ -2,7 +2,7 @@ import { CheckoutError } from '@/features/ecommerce/server/pricing'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { hitShared } from '@/features/security/rateLimit'
 import { getFeatureFlags } from '@/utilities/features'
-import { addressKey, normaliseEmail, refusal, type Prior, type Rule } from './logic'
+import { addressKey, isExempt, normaliseEmail, refusal, type Prior, type Rule } from './logic'
 import * as store from './store'
 
 export type LimitCheck = {
@@ -45,7 +45,7 @@ export async function enforcePurchaseLimits(check: LimitCheck, now = new Date())
   for (const line of check.lines) {
     const productId = Number(line.productId)
     if (!Number.isInteger(productId) || productId <= 0) continue
-    for (const rule of rules.filter((r) => ruleApplies(r, productId))) {
+    for (const rule of rules.filter((r) => ruleApplies(r, productId) && !isExempt(r, emailKey))) {
       const needed: number[] = []
       if (rule.maxQty !== null) needed.push(rule.windowDays > 0 ? now.getTime() - rule.windowDays * 86_400_000 : 0)
       if (rule.cooldownHours > 0) needed.push(now.getTime() - rule.cooldownHours * 3_600_000)
