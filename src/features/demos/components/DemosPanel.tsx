@@ -75,8 +75,9 @@ export const DemosPanel: React.FC = () => {
             {(data?.choices ?? []).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </label>
-        <label>Note for the team<br /><input type="text" maxLength={200} value={banner} onChange={(e) => setBanner(e.target.value)} /></label>
+        <label>Banner shown to visitors (empty for none)<br /><input type="text" maxLength={200} value={banner} onChange={(e) => setBanner(e.target.value)} /></label>
         <button type="submit" disabled={busy}>Save</button>
+        {banner && <p style={{ flexBasis: '100%' }}>Visitors see this strip at the top of every page of the site while Agency demos is on.</p>}
       </form>
 
       <section aria-labelledby="demo-accounts">
