@@ -1,7 +1,7 @@
 /** Task 21f: the blog's RSS 2.0 feed. Pure: posts in, XML out. */
 
-export type FeedPost = { title: string; slug: string; date: string; excerpt: string; html: string; author: string; categories: string[] }
-export type FeedInput = { title: string; link: string; selfUrl: string; description: string; baseUrl: string; mode: 'summary' | 'full'; posts: FeedPost[] }
+export type FeedPost = { title: string; slug: string; date: string; excerpt: string; html: string; author: string; categories: string[]; image?: { url: string; mime?: string } }
+export type FeedInput = { title: string; link: string; selfUrl: string; description: string; baseUrl: string; mode: 'summary' | 'full'; posts: FeedPost[]; blogBase?: string }
 
 export const FEED_LIMIT = 30
 
@@ -18,7 +18,7 @@ const rfc822 = (iso: string): string => {
 
 export function buildRss(input: FeedInput): string {
   const items = input.posts.slice(0, FEED_LIMIT).map((p) => {
-    const url = `${input.baseUrl}/blog/${encodeURIComponent(p.slug)}`
+    const url = `${input.baseUrl}/${input.blogBase || 'blog'}/${encodeURIComponent(p.slug)}`
     const date = rfc822(p.date)
     return [
       '<item>',
@@ -29,6 +29,7 @@ export function buildRss(input: FeedInput): string {
       p.author ? `<dc:creator>${esc(clean(p.author))}</dc:creator>` : '',
       ...p.categories.map((c) => `<category>${esc(clean(c))}</category>`),
       `<description>${cdata(clean(p.excerpt))}</description>`,
+      p.image ? `<enclosure url="${esc(p.image.url)}" length="0" type="${esc(p.image.mime || 'image/jpeg')}"/><media:content url="${esc(p.image.url)}" medium="image"/>` : '',
       input.mode === 'full' && p.html ? `<content:encoded>${cdata(clean(p.html))}</content:encoded>` : '',
       '</item>',
     ].filter(Boolean).join('')
@@ -36,7 +37,7 @@ export function buildRss(input: FeedInput): string {
   const newest = input.posts.map((p) => Date.parse(p.date)).filter(Number.isFinite).sort((a, b) => b - a)[0]
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:media="http://search.yahoo.com/mrss/">',
     '<channel>',
     `<title>${esc(clean(input.title))}</title>`,
     `<link>${esc(input.link)}</link>`,

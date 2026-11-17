@@ -1,3 +1,4 @@
+import { withArchiveFeed } from '@/features/blog/feedLink'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -67,7 +68,8 @@ export async function generateMetadata({ params, searchParams }: Params): Promis
   if (!term) return { title: 'Not found', robots: { index: false, follow: false } }
   const meta = await buildMetadata({ title: term.name, path: categoryPath(term.slug, page, await readBlogBase()) })
   // Paged archives past page 1 stay out of the index; the canonical points at the page itself.
-  return page > 1 ? { ...meta, robots: { index: false, follow: true } } : meta
+  const withFeed = await withArchiveFeed(meta, 'category', term.slug)
+  return page > 1 ? { ...withFeed, robots: { index: false, follow: true } } : withFeed
 }
 
 export default async function CategoryArchivePage({ params, searchParams }: Params) {
