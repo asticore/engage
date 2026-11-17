@@ -89,6 +89,51 @@ export async function cardLinkedPurchases(d1: D1, productId: number, matchedOrde
   }
 }
 
+/** How long a place claimed at checkout is kept for a payment that never finishes. */
+export const CLAIM_MINUTES = 10
+
+/**
+ * Claims a place for a cart that is about to pay (one row per cart and product, replaced on a retry). The caller claims
+ * FIRST and counts after, so two orders racing for the last place cannot both read "free": whichever claims second sees
+ * the other's claim. Both can see each other and both be refused (safe); both can never pass. Never throws.
+ */
+export async function claimPlace(d1: D1, c: { cartId: number; productId: number; qty: number; who: Identity }, nowIso: string): Promise<void> {
+  const expires = new Date(Date.parse(nowIso) + CLAIM_MINUTES * 60_000).toISOString()
+  try {
+    await run(d1, 'DELETE FROM eg_purchase_limit_claims WHERE expires_at < ?1', nowIso)
+    await run(
+      d1,
+      'INSERT OR REPLACE INTO eg_purchase_limit_claims (cart_id, product_id, email_key, user_id, address_key, qty, created_at, expires_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)',
+      c.cartId, c.productId, c.who.emailKeys[0] ?? '', c.who.userId, c.who.addressKey, c.qty, nowIso, expires,
+    )
+  } catch {
+    /* no claim table: the check runs as it did before claims */
+  }
+}
+
+export async function releaseClaim(d1: D1, cartId: number, productId: number): Promise<void> {
+  await run(d1, 'DELETE FROM eg_purchase_limit_claims WHERE cart_id = ?1 AND product_id = ?2', cartId, productId).catch((): null => null)
+}
+
+/** Other carts' live claims on the product by the same person (same account, email or address), skipping carts already ordered (those orders count themselves). */
+export async function concurrentClaims(d1: D1, productId: number, who: Identity, cartId: number, nowIso: string): Promise<Prior[]> {
+  try {
+    const rows = await all(
+      d1,
+      `SELECT c.qty AS qty, c.created_at AS created_at, c.email_key AS email_key, c.user_id AS user_id, c.address_key AS address_key
+       FROM eg_purchase_limit_claims c
+       WHERE c.product_id = ?1 AND c.cart_id != ?2 AND c.expires_at >= ?3
+         AND NOT EXISTS (SELECT 1 FROM eg_orders o WHERE o.cart_id = c.cart_id)`,
+      productId, cartId, nowIso,
+    )
+    return rows
+      .filter((r) => who.emailKeys.includes(String(r.email_key)) || (who.userId !== null && r.user_id !== null && Number(r.user_id) === who.userId) || (who.addressKey !== '' && String(r.address_key) === who.addressKey))
+      .map((r) => ({ qty: Number(r.qty ?? 1), atMs: Date.parse(String(r.created_at)) || 0 }))
+  } catch {
+    return []
+  }
+}
+
 export async function logBlock(d1: D1, b: { ruleId: number | null; productId: number | null; reason: string; emailKey: string; detail: string }, nowIso: string): Promise<void> {
   await run(d1, 'INSERT INTO eg_purchase_limit_blocks (rule_id, product_id, reason, email_key, detail, created_at) VALUES (?1,?2,?3,?4,?5,?6)', b.ruleId, b.productId, b.reason, b.emailKey, b.detail.slice(0, 500), nowIso)
 }

@@ -195,6 +195,7 @@ import * as migration_20270317_265000_composite_products from './20270317_265000
 import * as migration_20270318_110000_webhook_audit_options from './20270318_110000_webhook_audit_options';
 import * as migration_20270318_100000_wholesale from './20270318_100000_wholesale';
 import * as migration_20270318_110000_purchase_limit_message_exempt from './20270318_110000_purchase_limit_message_exempt';
+import * as migration_20270318_240000_limit_claims from './20270318_240000_limit_claims';
 import * as migration_20270318_230000_card_prints from './20270318_230000_card_prints';
 import * as migration_20270318_110000_bot_rules from './20270318_110000_bot_rules';
 import * as migration_20270316_390000_dam from './20270316_390000_dam';
@@ -1506,5 +1507,10 @@ export const migrations = [
     up: migration_20270318_230000_quote_email_templates.up,
     down: migration_20270318_230000_quote_email_templates.down,
     name: '20270318_230000_quote_email_templates',
+  },
+  {
+    up: migration_20270318_240000_limit_claims.up,
+    down: migration_20270318_240000_limit_claims.down,
+    name: '20270318_240000_limit_claims',
   },
 ];

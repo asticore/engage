@@ -306,7 +306,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: [],
     globals: [],
-    tables: ['purchase_limit_rules', 'purchase_limit_blocks', 'purchase_card_prints'],
+    tables: ['purchase_limit_rules', 'purchase_limit_blocks', 'purchase_card_prints', 'purchase_limit_claims'],
     implemented: true,
   },
   {
