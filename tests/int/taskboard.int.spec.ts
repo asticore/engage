@@ -214,9 +214,9 @@ describe('taskboard boards scoped to a company or team (18j)', () => {
     const [whole, team] = [await store.getBoard(d1, wholeId), await store.getBoard(d1, teamId)]
     expect(whole).toMatchObject({ organizationId: 'o1', teamId: null })
     const member = { id: 2, isAdmin: false }
-    const plain = { userId: 2, memberships: [{ organizationId: 'o1', role: 'member', teamIds: [] }] }
+    const plain = { userId: 2, memberships: [{ organizationId: 'o1', role: 'member', teamIds: [] as string[] }] }
     const inTeam = { userId: 2, memberships: [{ organizationId: 'o1', role: 'member', teamIds: ['t1'] }] }
-    const manager = { userId: 2, memberships: [{ organizationId: 'o1', role: 'admin', teamIds: [] }] }
+    const manager = { userId: 2, memberships: [{ organizationId: 'o1', role: 'admin', teamIds: [] as string[] }] }
     expect(canAccessBoard(whole!, member)).toBe(false)
     expect(canAccessBoard(whole!, member, plain)).toBe(true)
     expect(canAccessBoard(team!, member, plain)).toBe(false)
