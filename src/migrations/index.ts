@@ -240,6 +240,7 @@ import * as migration_20270318_120000_approval_review_due_days from './20270318_
 import * as migration_20270318_130000_member_dunning_emails from './20270318_130000_member_dunning_emails';
 import * as migration_20270318_140000_order_bump from './20270318_140000_order_bump';
 import * as migration_20270318_150000_service_staff from './20270318_150000_service_staff';
+import * as migration_20270318_160000_booking_reminders from './20270318_160000_booking_reminders';
 
 export const migrations = [
   {
@@ -1446,5 +1447,10 @@ export const migrations = [
     up: migration_20270318_150000_service_staff.up,
     down: migration_20270318_150000_service_staff.down,
     name: '20270318_150000_service_staff',
+  },
+  {
+    up: migration_20270318_160000_booking_reminders.up,
+    down: migration_20270318_160000_booking_reminders.down,
+    name: '20270318_160000_booking_reminders',
   },
 ];

@@ -177,3 +177,12 @@ export async function listBookings(d1: D1, filter: { status?: string; from?: num
   const sql = `SELECT * FROM eg_bookings${where.length ? ` WHERE ${where.join(' AND ')}` : ''} ORDER BY start_ms DESC LIMIT ${Math.max(1, Math.min(limit, 500))}`
   return (await all(d1, sql, ...args)).map(toBooking)
 }
+
+/** Confirmed bookings that start within `withinMs` of now and have not had their reminder yet, soonest first. */
+export async function dueReminders(d1: D1, nowMs: number, withinMs: number, limit = 100): Promise<Booking[]> {
+  const rows = await all(d1, "SELECT * FROM eg_bookings WHERE status = 'confirmed' AND reminder_sent_at IS NULL AND start_ms > ?1 AND start_ms <= ?2 ORDER BY start_ms ASC LIMIT ?3", nowMs, nowMs + withinMs, Math.max(1, Math.min(limit, 500)))
+  return rows.map(toBooking)
+}
+export async function markReminded(d1: D1, id: number, nowIso: string): Promise<void> {
+  await run(d1, 'UPDATE eg_bookings SET reminder_sent_at = ?1 WHERE id = ?2', nowIso, id)
+}

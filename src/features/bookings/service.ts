@@ -66,6 +66,16 @@ export function confirmationEmail(booking: store.Booking, typeTitle: string, ori
   return { subject, text, html }
 }
 
+/** The reminder sent a day before. The cancel link is only in the confirmation email (only its hash is stored), so this one points back to it. */
+export function reminderEmail(booking: store.Booking, typeTitle: string, siteName: string): { subject: string; text: string; html: string } {
+  const when = localText(booking.startMs, booking.timeZone)
+  const subject = `Reminder: ${typeTitle} on ${when}`
+  const text = `Hi ${booking.customerName},\n\nA reminder of your booking.\n\n${typeTitle}\n${when} (${booking.timeZone})\nBooking number ${booking.number}\n\nNeed to cancel? Use the link in your confirmation email.\n\n${siteName}`
+  const esc = (v: string): string => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5"><p>Hi ${esc(booking.customerName)},</p><p>A reminder of your booking.</p><p><strong>${esc(typeTitle)}</strong><br>${esc(when)} (${esc(booking.timeZone)})<br>Booking number ${esc(booking.number)}</p><p>Need to cancel? Use the link in your confirmation email.</p><p>${esc(siteName)}</p></div>`
+  return { subject, text, html }
+}
+
 export function bookingIcs(booking: store.Booking, typeTitle: string, location: string, origin: string): string {
   return buildEventIcs({ uid: `booking-${booking.number}@${new URL(origin).host}`, stamp: new Date(), start: new Date(booking.startMs), end: new Date(booking.endMs), summary: typeTitle, location: location || undefined, url: origin })
 }
