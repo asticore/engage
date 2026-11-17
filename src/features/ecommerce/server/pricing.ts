@@ -16,6 +16,8 @@ import { DEFAULT_TAX_SETTINGS, type TaxClass, type TaxRate, type TaxSettings } f
 import { fetchLiveRates, normaliseShippingConfig } from '../shipping/registry'
 import { computeOrderTotals, type OrderTotals, type PricedLine } from '../lib/totals'
 import { loadPreordersEnabled } from './shopExtra'
+import { loadWholesaleConfig } from './wholesale'
+import { minOrderShortfallCents, pricesHiddenFor, productAllowedFor } from '../lib/wholesale'
 import { isNonShipping } from '../lib/service'
 import { donationLine, withDonationAddOns } from '../lib/donations'
 import { addOnSummary, parseAddOnInputs, priceAddOns, normaliseAddOnDefs, type AddOnChoice } from '../lib/addOns'
@@ -276,7 +278,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       requiresShipping: !virtual,
       cartonSize: packagingStep(p as never) > 1 ? packagingStep(p as never) : null,
       // carried for the order snapshot
-      ...({ variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices, donation: donationLine(p as never) } as object),
+      ...({ wholesaleOnly: p.wholesaleOnly === true, variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices, donation: donationLine(p as never) } as object),
     } as PricedLine)
   }
   // The stock pools this cart draws on, read by priceCart for the stock hold (kept off the line list's own entries).
@@ -337,6 +339,8 @@ export type PriceInput = {
   customerRoles?: string[] | null
   /** The shopper ticked gift wrap; only honoured when the shop offers it (lib/giftWrap.ts). */
   giftWrap?: boolean
+  /** Whether the buyer is signed in, for wholesale mode. Left out: signed in when they have any customer type. */
+  signedIn?: boolean
 }
 
 type LiveResult = { options: ShippingOption[]; liveOn: boolean }
@@ -383,6 +387,18 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
   const tierCtx = await loadTierContext(input.items, input.customerRoles)
   const giftWrapCents = input.giftWrap === true ? giftWrapFee(normaliseGiftWrap(await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null)), true) : 0
   const lines = await loadPricedLines(engine, input.items, undefined, shopRules.addOnsOn, tierCtx)
+  // Wholesale mode (Task 11d): hidden prices, wholesale-only products and the minimum order are checked here, so the quote and the checkout agree.
+  const wholesaleCfg = await loadWholesaleConfig(engine)
+  if (wholesaleCfg.enabled) {
+    const types = Array.isArray(input.customerRoles) ? input.customerRoles : []
+    const buyer = { signedIn: input.signedIn ?? types.length > 0, types }
+    if (pricesHiddenFor(wholesaleCfg, buyer)) throw new CheckoutError(wholesaleCfg.hiddenText)
+    if (lines.some((l) => (l as unknown as { wholesaleOnly?: boolean }).wholesaleOnly === true && !productAllowedFor(wholesaleCfg, true, buyer))) {
+      throw new CheckoutError('Some items in your cart are for wholesale accounts only.')
+    }
+    const shortfall = input.strict ? minOrderShortfallCents(wholesaleCfg, buyer, lines.reduce((sum, l) => sum + l.unitCents * l.quantity, 0)) : 0
+    if (shortfall > 0) throw new CheckoutError(`Wholesale orders start at $${((wholesaleCfg.minOrderCents ?? 0) / 100).toFixed(2)}. Add $${(shortfall / 100).toFixed(2)} more to check out.`)
+  }
   // Dynamic pricing rules run before coupons (see lib/totals.ts). Gift cards are never discounted.
   const ruleResult =
     shopRules.rulesOn && shopRules.rules.length > 0

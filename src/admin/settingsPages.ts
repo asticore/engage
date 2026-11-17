@@ -128,6 +128,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
       { kind: 'link', label: 'Shop settings', href: '/shop-settings', description: 'Units, payments, shipping, invoices, gift cards, checkout and emails', type: 'view' },
       { kind: 'link', label: 'Categories', href: '/categories', description: 'Nested categories for the shop and the blog: add, move and reorder.', type: 'view' },
       { kind: 'link', label: 'Display currencies', href: '/display-currencies', description: 'Show prices in other currencies. Shoppers always pay in the shop currency.', type: 'view' },
+      { kind: 'link', label: 'Wholesale', href: '/wholesale', description: 'Approve wholesale applications and tag customers. Wholesale mode, hidden prices and the minimum order are in Shop switches.', type: 'view' },
       { kind: 'link', label: 'Price tiers', href: '/price-tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.', type: 'view' },
       { kind: 'link', label: 'Product feeds', href: '/product-feeds', description: 'Feeds for Google, Meta, Pinterest and others, each with its own address, currency and price tier.', type: 'view' },
       { kind: 'link', label: 'Pricing preview', href: '/pricing-preview', description: 'See what a customer would pay for a cart, with the tiers and pricing rules that apply.', type: 'view' },

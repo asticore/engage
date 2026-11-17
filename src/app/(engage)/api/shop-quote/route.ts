@@ -43,6 +43,7 @@ export async function POST(request: Request): Promise<Response> {
         cartId,
         giftWrap: body.giftWrap === true,
         customerRoles: await customerTypesForUser(auth.user),
+        signedIn: Boolean(auth.user),
       },
       config,
     )

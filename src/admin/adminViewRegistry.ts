@@ -72,6 +72,7 @@ const RateRulesView = lazyView(() => import('@/admin/views/RateRulesView').then(
 const IpRulesView = lazyView(() => import('@/admin/views/IpRulesView').then((mod) => mod.IpRulesView))
 const CspBuilderView = lazyView(() => import('@/admin/views/CspBuilderView').then((mod) => mod.CspBuilderView))
 const UserBansView = lazyView(() => import('@/admin/views/UserBansView').then((mod) => mod.UserBansView))
+const WholesaleView = lazyView(() => import('@/admin/views/WholesaleView').then((mod) => mod.WholesaleView))
 const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').then((mod) => mod.AffiliatesView))
 const SsoView = lazyView(() => import('@/admin/views/SsoView').then((mod) => mod.SsoView))
 const AgentAccessView = lazyView(() => import('@/admin/views/AgentAccessView').then((mod) => mod.AgentAccessView))
@@ -287,6 +288,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'media-search', Component: MediaSearchView, path: '/media-search', meta: { title: 'Media search', description: 'Search media by words, type, folder, tag, collection, size, date, status, licence and custom details.' } },
   { key: 'past-due-members', Component: PastDueMembersView, path: '/past-due-members', meta: { title: 'Past due members', description: 'Members whose renewal payment failed, with retry and end controls.' } },
   { key: 'pricingPreview', Component: PricingPreviewView, path: '/pricing-preview', meta: { title: 'Pricing preview', description: 'What a customer would pay for a cart, using the real checkout calculation.' } },
+  { key: 'wholesale', Component: WholesaleView, path: '/wholesale', meta: { title: 'Wholesale', description: 'Approve wholesale applications and tag customers.' } },
   { key: 'priceTiers', Component: PriceTiersView, path: '/price-tiers', meta: { title: 'Price tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.' } },
   {
     key: 'shopSettings',

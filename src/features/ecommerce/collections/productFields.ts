@@ -375,6 +375,16 @@ export const packagingFields: Field[] = [
   },
 ]
 
+/** Wholesale-only products (lib/wholesale.ts): shown and sold only to approved wholesale accounts and admins while wholesale mode is on. */
+export const wholesaleFields: Field[] = [
+  {
+    name: 'wholesaleOnly',
+    type: 'checkbox',
+    defaultValue: false,
+    admin: { description: 'Only approved wholesale accounts can see and buy this product (admins always can). Needs Wholesale mode in Shop switches; with that off this is ignored.' },
+  },
+]
+
 export const ratingFields: Field[] = [
   { name: 'ratingAverage', type: 'number', admin: { readOnly: true, position: 'sidebar', description: 'Average of approved reviews.' } },
   { name: 'ratingCount', type: 'number', defaultValue: 0, admin: { readOnly: true, position: 'sidebar' } },
@@ -401,6 +411,7 @@ export const catalogueFields: Field[] = [
   ...limitFields,
   ...donationFields,
   ...packagingFields,
+  ...wholesaleFields,
   ...shippingFields,
   ...typeSpecificFields,
   ...preorderFields,

@@ -169,6 +169,25 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
   }
 }
 
+/** The view with every price taken out, for visitors who may not see prices (wholesale mode). Nothing price-like reaches the browser. */
+export function withoutPrices(view: ProductView): ProductView {
+  return {
+    ...view,
+    price: null,
+    regular: null,
+    onSale: false,
+    salePercent: null,
+    priceMin: null,
+    priceMax: null,
+    purchasable: false,
+    variations: view.variations.map((v): VariationView => ({ ...v, price: null, regular: null, onSale: false, purchasable: false })),
+    buyerPrice: { enabled: false, suggested: null, minimum: null },
+    donation: null,
+    addOns: view.addOns.map((a) => ({ ...a })),
+    pricingNotes: [],
+  }
+}
+
 /** schema.org Offer(s) for a product view, for JSON-LD. */
 export function offersJsonLd(view: ProductView, currency = 'AUD', url?: string): Record<string, unknown> | null {
   if (view.price === null) return null

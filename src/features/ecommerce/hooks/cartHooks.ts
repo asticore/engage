@@ -93,6 +93,16 @@ export const beforeChangeCart = async ({ data, originalDoc, operation, req }: Re
           continue
         }
       }
+      // Wholesale-only products (Task 11d) can only be added by an approved wholesale account. A line already in the cart can still be tidied.
+      if (product && (product as { wholesaleOnly?: boolean }).wholesaleOnly === true && !before.includes(`${productId}|${item.variation ?? ''}|${item.quantity}`)) {
+        const { loadWholesaleConfig, buyerFromHeaders } = await import('../server/wholesale')
+        const { productAllowedFor } = await import('../lib/wholesale')
+        const wholesale = await loadWholesaleConfig(engine as never)
+        if (wholesale.enabled && !productAllowedFor(wholesale, true, await buyerFromHeaders(engine as never, (req as { headers?: Headers }).headers))) {
+          errors.push({ path: `items.${index}`, message: 'This product is for wholesale accounts only.' })
+          continue
+        }
+      }
       if (product && (product as { productType?: string }).productType === 'giftcard') {
         // A gift card is priced from the buyer's amount, checked against the shop's limits and recipient rules.
         const shop = (await engine.findGlobal({ slug: 'shop-settings', depth: 0, overrideAccess: true }).catch((): null => null)) as { giftCards?: unknown } | null

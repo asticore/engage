@@ -205,6 +205,7 @@ export const ShopExtraSettings: GlobalConfig = {
                 { label: 'Cart subtotal', value: 'subtotal' },
                 { label: 'Items in a category', value: 'category' },
                 { label: 'Customers with a role or company', value: 'role' },
+                { label: 'Customers with a tag', value: 'tag' },
                 { label: 'Customer lifetime spend', value: 'lifetimeSpend' },
                 { label: 'Customer number of past orders', value: 'orderCount' },
                 { label: 'Shipping country', value: 'country' },
@@ -225,7 +226,7 @@ export const ShopExtraSettings: GlobalConfig = {
             { name: 'minQuantity', type: 'number', min: 1, admin: { width: '50%', condition: (data) => data?.appliesWhen === 'quantity', description: 'The buyer must order this many of one item (or more) at once. Blank means 1.' } },
             { name: 'minSubtotal', type: 'number', min: 0, admin: { width: '50%', condition: (data) => data?.appliesWhen === 'subtotal', description: 'Dollars. The cart must reach this total.' } },
             { name: 'category', type: 'text', admin: { width: '50%', condition: (data) => data?.appliesWhen === 'category', description: 'The category slug, e.g. prints.' } },
-            { name: 'customerRole', type: 'text', admin: { width: '50%', condition: (data) => data?.appliesWhen === 'role', description: 'A role name (e.g. wholesale), a company name, or company:<slug>. Only signed-in customers with it get the discount.' } },
+            { name: 'customerRole', type: 'text', admin: { width: '50%', condition: (data) => data?.appliesWhen === 'role' || data?.appliesWhen === 'tag', description: 'For "role": a role name (e.g. wholesale), a company name, or company:<slug>. For "tag": the customer tag (e.g. vip), set on the Wholesale screen. Only signed-in customers with it get the discount.' } },
             { name: 'minLifetimeSpend', type: 'number', min: 0, admin: { width: '50%', condition: (data) => data?.appliesWhen === 'lifetimeSpend', description: 'Dollars. What the customer has paid in earlier orders (matched by email).' } },
             { name: 'minOrders', type: 'number', min: 1, admin: { width: '50%', condition: (data) => data?.appliesWhen === 'orderCount', description: 'How many paid orders the customer must already have. Blank means 1.' } },
             { name: 'country', type: 'text', maxLength: 2, admin: { width: '50%', condition: (data) => data?.appliesWhen === 'country', description: 'Two letter country code the order ships to, e.g. AU.' } },
@@ -236,6 +237,39 @@ export const ShopExtraSettings: GlobalConfig = {
             { name: 'showOnProduct', type: 'checkbox', defaultValue: false, admin: { description: 'Show this offer as a note under the quantity box on the product page.' } },
           ],
         },
+      ],
+    },
+    {
+      type: 'collapsible',
+      label: 'Wholesale mode',
+      admin: { initCollapsed: true },
+      fields: [
+        {
+          name: 'wholesaleEnabled',
+          type: 'checkbox',
+          label: 'Turn on wholesale mode',
+          defaultValue: false,
+          admin: {
+            description:
+              'Approved wholesale accounts get the wholesale role (set price tiers and pricing rules for it), can see wholesale-only products and must reach the minimum order. Applications are reviewed on the Wholesale screen. Off by default: with it off, every wholesale option below is ignored.',
+          },
+        },
+        { name: 'wholesaleRole', type: 'text', label: 'Wholesale role name', defaultValue: 'wholesale', admin: { description: 'The customer type approved accounts get. Price tiers and pricing rules that name this role apply to them. Leave as wholesale unless your tiers use another name.' } },
+        { name: 'wholesaleHidePrices', type: 'checkbox', label: 'Hide prices', defaultValue: false, admin: { description: 'Hide prices in the shop and stop the cart pricing for people who may not see them (see the next choice). The product page, shop pages, product cards and the cart show the text below instead.' } },
+        {
+          name: 'wholesaleHideFrom',
+          type: 'select',
+          label: 'Hide prices from',
+          defaultValue: 'guests',
+          options: [
+            { label: 'Signed-out visitors', value: 'guests' },
+            { label: 'Everyone except approved wholesale accounts', value: 'non-wholesale' },
+          ],
+          admin: { condition: (data) => Boolean(data?.wholesaleHidePrices) },
+        },
+        { name: 'wholesaleHiddenPriceText', type: 'text', label: 'Text shown instead of a price', admin: { condition: (data) => Boolean(data?.wholesaleHidePrices), description: 'For example "Sign in to see prices". Blank uses that wording.' } },
+        { name: 'wholesaleMinOrder', type: 'number', label: 'Minimum order value for wholesale accounts', min: 0, admin: { description: 'Dollars, before shipping and tax. A wholesale account cannot check out with less. Blank or 0 means no minimum. Retail customers are not affected.' } },
+        { name: 'wholesaleApplyOpen', type: 'checkbox', label: 'Accept wholesale applications', defaultValue: false, admin: { description: 'Show the application form at /account/wholesale to signed-in customers. Each application waits on the Wholesale screen until you approve or reject it; approving also creates a company account for the applicant.' } },
       ],
     },
     {
