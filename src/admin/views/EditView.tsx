@@ -25,6 +25,7 @@ import { FormLayoutSummary } from './FormLayoutSummary'
 import { summariseFormLayout } from '@/features/forms/layoutSummary'
 import { pageLiveHref, loadFormUsage, withUsageLinks } from '@/features/forms/pageUsageServer'
 import { FormPagesCard } from './FormUsage'
+import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 
 type AdminEngine = Awaited<ReturnType<typeof getAdminContext>>['engine']
 
@@ -219,13 +220,30 @@ export async function EditView({ collectionSlug, id }: { collectionSlug: string;
         })()
       : null
 
+  // Users: how and when the account last signed in (set at every sign-in; blank for accounts that have not signed in since it was added).
+  const lastLoginCard =
+    collectionSlug === 'users' && id !== undefined && docRecord
+      ? (() => {
+          const rec = docRecord as { lastLoginMethod?: unknown; lastLoginAt?: unknown }
+          const method = typeof rec.lastLoginMethod === 'string' ? rec.lastLoginMethod : ''
+          const at = typeof rec.lastLoginAt === 'string' ? new Date(rec.lastLoginAt) : null
+          const when = at && !Number.isNaN(at.getTime()) ? at.toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : ''
+          return (
+            <CollapsibleCard id="last-login" title={ui.t('lastLogin.title')} className="doc-group-card">
+              <p className="doc-muted">{method && when ? ui.t('lastLogin.line', { method, time: when }) : ui.t('lastLogin.never')}</p>
+            </CollapsibleCard>
+          )
+        })()
+      : null
+
   const editForm = (
     <EditForm
       beforeFields={
-        formSummary || formPagesCard ? (
+        formSummary || formPagesCard || lastLoginCard ? (
           <>
             {formSummary}
             {formPagesCard}
+            {lastLoginCard}
           </>
         ) : undefined
       }
