@@ -94,20 +94,40 @@ export async function LanguageSwitcherElement(props: P): Promise<React.ReactElem
   const d = await languageData()
   if (!d) return null
   const o = switcherOptions(props)
+  const items = d.offered.map((code) => {
+    const name = localeNativeName(code)
+    const { text, flag } = switcherLabel(code, name, o.display)
+    return { code, name, text, flag }
+  })
+  const link = (item: (typeof items)[number]) => (
+    <a href={localisedHref(d.paths[item.code] ?? d.rest, item.code, d.settings)} hrefLang={item.code} lang={item.code} aria-current={item.code === d.current ? 'true' : undefined} aria-label={item.text ? undefined : item.name} title={item.name}>
+      {item.flag ? <span aria-hidden="true">{item.flag}</span> : null}{item.flag && item.text ? ' ' : ''}{item.text}
+    </a>
+  )
+  // The dropdown is a native details element: no script, opens with the keyboard, and the current language is the button.
+  if (o.layout === 'dropdown') {
+    const current = items.find((item) => item.code === d.current) ?? items[0]
+    return (
+      <nav aria-label={str(props.label) || 'Language'}>
+        <details className={`be-el-65-lang-dd hover-${o.hover} align-${o.align}`}>
+          <summary aria-label={`${str(props.label) || 'Language'}: ${current?.name ?? ''}`}>
+            {current?.flag ? <span aria-hidden="true">{current.flag}</span> : null}{current?.flag && current.text ? ' ' : ''}{current?.text || current?.name}
+          </summary>
+          <ul>
+            {items.map((item) => (
+              <li key={item.code}>{link(item)}</li>
+            ))}
+          </ul>
+        </details>
+      </nav>
+    )
+  }
   return (
     <nav aria-label={str(props.label) || 'Language'}>
       <ul className={`be-el-65-lang is-${o.layout} hover-${o.hover} align-${o.align}`}>
-        {d.offered.map((code) => {
-          const name = localeNativeName(code)
-          const { text, flag } = switcherLabel(code, name, o.display)
-          return (
-            <li key={code}>
-              <a href={localisedHref(d.paths[code] ?? d.rest, code, d.settings)} hrefLang={code} lang={code} aria-current={code === d.current ? 'true' : undefined} aria-label={text ? undefined : name} title={name}>
-                {flag ? <span aria-hidden="true">{flag}</span> : null}{flag && text ? ' ' : ''}{text}
-              </a>
-            </li>
-          )
-        })}
+        {items.map((item) => (
+          <li key={item.code}>{link(item)}</li>
+        ))}
       </ul>
     </nav>
   )
