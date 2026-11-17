@@ -26,6 +26,9 @@ export const WEBHOOK_EVENTS = [
   'subscription.started',
   'subscription.cancelled',
   'subscription.payment_failed',
+  'task.assigned',
+  'task.commented',
+  'task.due',
 ] as const
 
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number]
@@ -58,6 +61,9 @@ export const EVENT_LABEL_KEYS: Record<WebhookEvent, string> = {
   'subscription.started': 'webhooks.event.subscription.started',
   'subscription.cancelled': 'webhooks.event.subscription.cancelled',
   'subscription.payment_failed': 'webhooks.event.subscription.payment_failed',
+  'task.assigned': 'webhooks.event.task.assigned',
+  'task.commented': 'webhooks.event.task.commented',
+  'task.due': 'webhooks.event.task.due',
 }
 
 /** The fields each event may send. `values` on form.submitted is the entry's answers, as the form webhook sends them. */
@@ -83,6 +89,9 @@ export const EVENT_FIELDS: Record<WebhookEvent, readonly string[]> = {
   'subscription.started': ['id', 'customerEmail', 'productName', 'status', 'startedAt'],
   'subscription.cancelled': ['id', 'customerEmail', 'productName', 'status', 'endedAt'],
   'subscription.payment_failed': ['id', 'customerEmail', 'productName', 'status', 'nextPaymentAt'],
+  'task.assigned': ['id', 'boardId', 'title', 'assigneeId', 'dueDate', 'priority', 'createdAt'],
+  'task.commented': ['id', 'boardId', 'title', 'assigneeId', 'dueDate', 'priority', 'createdAt'],
+  'task.due': ['id', 'boardId', 'title', 'assigneeId', 'dueDate', 'priority', 'createdAt'],
 }
 
 /** Keeps only the fields an event allows. Missing fields are left out; `undefined` never reaches the body. */

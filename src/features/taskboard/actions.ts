@@ -8,6 +8,10 @@ export type Deps = {
   siteName: () => Promise<string>
   sendEmail: (args: { to: string; subject: string; html: string; text: string; template: string }) => Promise<unknown>
   textToHtml: (text: string) => string
+  /** Raises a site event (webhooks and notification rules). Optional so tests can leave it out. */
+  emit?: (event: 'task.assigned' | 'task.commented', data: Record<string, unknown>) => Promise<void>
+  /** True when a notification rule is switched on for the event: then the rule sends the email, not the built-in one. */
+  hasRule?: (event: 'task.assigned' | 'task.commented') => Promise<boolean>
 }
 export type Result = { status: number; body: Record<string, unknown> }
 
@@ -21,6 +25,9 @@ async function notifyAssignee(deps: Deps, actor: Actor, board: Board, card: { id
   try {
     const person = (await store.listPeople(deps.d1)).find((p) => p.id === assigneeId)
     if (!person?.email) return
+    if (deps.emit) await deps.emit('task.assigned', { id: card.id, boardId: board.id, title: card.title, assigneeId, dueDate: card.dueDate, priority: card.priority, createdAt: deps.nowIso, email: person.email, boardName: board.name, person: actor.label }).catch((): void => undefined)
+    // A switched-on notification rule for "Task assigned" owns the email; without one the built-in plain email goes out.
+    if (deps.hasRule && (await deps.hasRule('task.assigned').catch((): boolean => false))) return
     const mail = assignmentEmail({ siteName: await deps.siteName(), boardName: board.name, card, assignedBy: actor.label })
     await deps.sendEmail({ to: person.email, subject: mail.subject, text: mail.text, html: deps.textToHtml(mail.text), template: 'taskboard.assigned' })
   } catch {
@@ -109,6 +116,20 @@ export async function runAction(deps: Deps, actor: Actor, body: Record<string, u
       if (!text) return fail(400, 'Write a comment first.')
       await store.addComment(d1, card.id, actor.id, text, nowIso)
       await store.logActivity(d1, { boardId, cardId: card.id, userId: actor.id, action: 'card.commented', detail: card.title }, nowIso)
+      // Tell the person the task is given to (not when they wrote the comment themselves).
+      if (deps.emit && card.assigneeId && card.assigneeId !== actor.id) {
+        const person = await store.getPerson(d1, card.assigneeId).catch((): null => null)
+        if (person?.email) await deps.emit('task.commented', { id: card.id, boardId, title: card.title, assigneeId: card.assigneeId, dueDate: card.dueDate, priority: card.priority, createdAt: nowIso, email: person.email, boardName: board.name, person: actor.label }).catch((): void => undefined)
+      }
+      return ok()
+    }
+    case 'archive-card':
+    case 'restore-card': {
+      const card = await store.getCard(d1, Number(body.cardId))
+      if (!card || card.boardId !== boardId) return fail(404, 'That task is not on this board.')
+      const archiving = action === 'archive-card'
+      await store.setArchived(d1, card.id, archiving ? nowIso : null)
+      await store.logActivity(d1, { boardId, cardId: card.id, userId: actor.id, action: archiving ? 'card.archived' : 'card.restored', detail: card.title }, nowIso)
       return ok()
     }
     default:

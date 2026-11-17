@@ -103,4 +103,34 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const base = await loadShopCurrency(engine as never)
     await refreshDisplayRates((await rawD1()) as never, base, now)
   },
+  'taskboard-due': async ({ engine, now }) => {
+    const { getFeatureFlags } = await import('@/utilities/features')
+    if (!(await getFeatureFlags()).taskboard) return 'feature off'
+    const [{ rawD1 }, { sendEmail }, { textToHtml }, { emitWebhookEvent }, { listRules }, { rulesFor }, { runTaskDueReminders }] = await Promise.all([
+      import('@/features/ecommerce/server/db'),
+      import('@/features/email'),
+      import('@/features/email/renderTemplate'),
+      import('@/features/webhooks/emit'),
+      import('@/features/notifications/store'),
+      import('@/features/notifications/rules'),
+      import('@/features/taskboard/dueReminders'),
+    ])
+    const d1 = (await rawD1()) as never
+    return runTaskDueReminders({
+      d1,
+      now,
+      siteName: async () => {
+        try {
+          const g = (await (engine as unknown as { findGlobal: (a: unknown) => Promise<{ businessName?: unknown }> }).findGlobal({ slug: 'site-details', depth: 0, overrideAccess: true }))
+          return typeof g.businessName === 'string' ? g.businessName : ''
+        } catch {
+          return ''
+        }
+      },
+      sendEmail: (args) => sendEmail(args),
+      textToHtml,
+      emit: (event, data) => emitWebhookEvent(event, data),
+      hasRule: async (event) => rulesFor(await listRules(d1), event).length > 0,
+    })
+  },
 }

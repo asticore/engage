@@ -63,6 +63,7 @@ const OutboundClicksView = lazyView(() => import('@/admin/views/OutboundClicksVi
 const ShopReportsView = lazyView(() => import('@/admin/views/ShopReportsView').then((mod) => mod.ShopReportsView))
 const NotificationsView = lazyView(() => import('@/admin/views/NotificationsView').then((mod) => mod.NotificationsView))
 const TaskboardView = lazyView(() => import('@/admin/views/TaskboardView').then((mod) => mod.TaskboardView))
+const MyTasksView = lazyView(() => import('@/admin/views/MyTasksView').then((mod) => mod.MyTasksView))
 const BulkCreateView = lazyView(() => import('@/admin/views/BulkCreateView').then((mod) => mod.BulkCreateView))
 const BookingsView = lazyView(() => import('@/admin/views/BookingsView').then((mod) => mod.BookingsView))
 const QuotesView = lazyView(() => import('@/admin/views/QuotesView').then((mod) => mod.QuotesView))
@@ -262,6 +263,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'displayCurrencies', Component: DisplayCurrenciesView, path: '/display-currencies', meta: { title: 'Display currencies', description: 'Show prices in other currencies. Shoppers always pay in the shop currency.' } },
   { key: 'notifications', Component: NotificationsView, path: '/notifications', meta: { title: 'Notifications', description: 'Send an email or push when an order is paid, a form is sent, a booking is made and more.' } },
   { key: 'taskboard', Component: TaskboardView, path: '/taskboard', meta: { title: 'Taskboard', description: 'Kanban boards where tasks are given to admin and staff users.' } },
+  { key: 'my-tasks', Component: MyTasksView, path: '/my-tasks', meta: { title: 'My tasks', description: 'Open tasks given to you on every taskboard you can open.' } },
   { key: 'settingLocks', Component: SettingLocksView, path: '/design-locks', meta: { title: 'Design locks', description: 'Lock design settings in the visual builder and the email builder.' } },
   { key: 'productFeeds', Component: ProductFeedsView, path: '/product-feeds', meta: { title: 'Product feeds', description: 'Feeds for Google, Meta, Pinterest and others, each with a secret address.' } },
   { key: 'bulkCreate', Component: BulkCreateView, path: '/bulk-create', meta: { title: 'Bulk create', description: 'Make many draft pages, posts or products from a list or CSV.' } },

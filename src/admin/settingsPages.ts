@@ -253,6 +253,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
       { kind: 'link', label: 'Media search', href: '/media-search', description: 'Find files by words, type, folder, tag, collection, size, date, shape, status, licence and custom details; save searches and smart collections. Needs the Asset manager feature.', type: 'view' },
       { kind: 'link', label: 'Past due members', href: '/past-due-members', description: 'Members whose renewal payment failed, with retry now and end now. Retry days and grace period are in Members settings. Switch the feature on in Site Settings.', type: 'view' },
       { kind: 'link', label: 'Taskboard', href: '/taskboard', description: 'Kanban boards where tasks are given to admin and staff users. Switch the feature on in Site Settings.', type: 'view' },
+      { kind: 'link', label: 'My tasks', href: '/my-tasks', description: 'Open tasks given to you on every taskboard you can open.', type: 'view' },
       { kind: 'link', label: 'Unused tables', href: '/unused-tables', description: 'Super admin: tables of sections that are switched off, with row counts and size. Export, then delete one at a time.', type: 'view' },
       { kind: 'link', label: 'Reference sources', href: '/references', description: 'Shine and Spark: pinned versions and whether a newer one exists.', type: 'view' },
       { kind: 'link', label: 'Site health', href: '/site-health', description: 'Storage, scheduled job health, versions and warnings.', type: 'view' },

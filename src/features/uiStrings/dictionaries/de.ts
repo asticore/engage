@@ -4179,6 +4179,21 @@ const de: UiDictionary = {
   "themeStyle.r.effect": "Vorgeschlagener Effekt: {label}. {help} Wenden Sie ihn über die Effektauswahl im visuellen Editor an.",
   "themeStyle.r.effectNone": "Für diese Auswahl wird kein Effekt vorgeschlagen.",
   "themeStyle.r.variation": "Variation: Die genauen Farbtöne werden für diese Website leicht verschoben, sodass eine andere Website mit derselben Auswahl eine andere Palette erhält.",
+  "webhooks.event.task.assigned": "Aufgabe zugewiesen",
+  "webhooks.event.task.commented": "Aufgabe kommentiert",
+  "webhooks.event.task.due": "Aufgabe bald fällig",
+  "tb.archive": "Archivieren",
+  "tb.restore": "Wiederherstellen",
+  "tb.showArchived": "Archivierte anzeigen",
+  "tb.archived": "Archiviert",
+  "tb.act.archived": "archiviert",
+  "tb.act.restored": "wiederhergestellt",
+  "tb.mine.link": "Alle meine Aufgaben",
+  "tb.mine.openBoard": "Aufgabenboard öffnen",
+  "tb.mine.empty": "Nichts wartet auf dich.",
+  "update.updateNow": "Jetzt aktualisieren",
+  "update.updating": "Wird aktualisiert…",
+  "update.failed": "Die Aktualisierung hat nicht funktioniert.",
 }
 
 export default de

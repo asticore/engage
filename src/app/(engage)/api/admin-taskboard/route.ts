@@ -32,6 +32,10 @@ export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const boards = (await store.listBoards(d1)).filter((b) => canAccessBoard(b, access.me))
   const people = await store.listPeople(d1)
+  if (url.searchParams.get('mine') === '1') {
+    const cards = await store.cardsForPerson(d1, access.me.id, boards.map((b) => b.id))
+    return json({ me: { id: access.me.id, isAdmin: access.me.isAdmin }, cards })
+  }
   const boardId = Number(url.searchParams.get('board'))
   const board = boards.find((b) => b.id === boardId)
   const out: Record<string, unknown> = { boards, me: { id: access.me.id, isAdmin: access.me.isAdmin }, people }
@@ -61,6 +65,14 @@ export async function POST(request: Request): Promise<Response> {
       nowIso: new Date().toISOString(),
       textToHtml,
       sendEmail: (args) => sendEmail(args),
+      emit: async (event, data) => {
+        const { emitWebhookEvent } = await import('@/features/webhooks/emit')
+        await emitWebhookEvent(event, data)
+      },
+      hasRule: async (event) => {
+        const [{ listRules }, { rulesFor }] = await Promise.all([import('@/features/notifications/store'), import('@/features/notifications/rules')])
+        return rulesFor(await listRules(d1 as never), event).length > 0
+      },
       siteName: async () => {
         try {
           const g = (await engine.findGlobal({ slug: 'site-details', depth: 0, overrideAccess: true })) as { businessName?: unknown }

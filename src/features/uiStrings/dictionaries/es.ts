@@ -4178,6 +4178,21 @@ const es: UiDictionary = {
   "themeStyle.r.effect": "Efecto sugerido: {label}. {help} Aplícalo desde el selector de efectos del editor visual.",
   "themeStyle.r.effectNone": "No se sugiere ningún efecto para estas selecciones.",
   "themeStyle.r.variation": "Variación: los tonos exactos se ajustan para este sitio, así que otro sitio con las mismas selecciones obtiene una paleta distinta.",
+  "webhooks.event.task.assigned": "Tarea asignada",
+  "webhooks.event.task.commented": "Tarea comentada",
+  "webhooks.event.task.due": "Tarea próxima a vencer",
+  "tb.archive": "Archivar",
+  "tb.restore": "Restaurar",
+  "tb.showArchived": "Mostrar archivadas",
+  "tb.archived": "Archivadas",
+  "tb.act.archived": "archivado",
+  "tb.act.restored": "restaurado",
+  "tb.mine.link": "Todas mis tareas",
+  "tb.mine.openBoard": "Abrir el tablero de tareas",
+  "tb.mine.empty": "No hay nada esperando por ti.",
+  "update.updateNow": "Actualizar ahora",
+  "update.updating": "Actualizando…",
+  "update.failed": "La actualización no funcionó.",
 }
 
 export default es

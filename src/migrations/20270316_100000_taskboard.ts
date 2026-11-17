@@ -34,7 +34,9 @@ export const TASKBOARD_STATEMENTS = [
   \`position\` integer NOT NULL DEFAULT 0,
   \`created_by\` integer,
   \`updated_at\` text,
-  \`created_at\` text
+  \`created_at\` text,
+  \`archived_at\` text,
+  \`due_notified\` text
 )`,
   `CREATE TABLE IF NOT EXISTS \`eg_task_comments\` (
   \`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,

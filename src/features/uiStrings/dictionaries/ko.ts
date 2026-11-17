@@ -4178,6 +4178,21 @@ const ko: UiDictionary = {
   "themeStyle.r.effect": "추천 효과: {label}. {help} 비주얼 편집기의 효과 선택기에서 적용하세요.",
   "themeStyle.r.effectNone": "이 선택 항목에는 추천 효과가 없습니다.",
   "themeStyle.r.variation": "변형: 이 사이트에 맞게 정확한 색조가 조정되므로, 같은 선택 항목을 쓴 다른 사이트는 다른 팔레트를 받게 됩니다.",
+  "webhooks.event.task.assigned": "작업 할당됨",
+  "webhooks.event.task.commented": "작업에 댓글 달림",
+  "webhooks.event.task.due": "작업 마감 임박",
+  "tb.archive": "보관",
+  "tb.restore": "복원",
+  "tb.showArchived": "보관된 항목 표시",
+  "tb.archived": "보관됨",
+  "tb.act.archived": "보관함",
+  "tb.act.restored": "복원함",
+  "tb.mine.link": "내 작업 전체",
+  "tb.mine.openBoard": "작업 보드 열기",
+  "tb.mine.empty": "회원님을 기다리는 항목이 없습니다.",
+  "update.updateNow": "지금 업데이트",
+  "update.updating": "업데이트 중…",
+  "update.failed": "업데이트하지 못했습니다.",
 }
 
 export default ko

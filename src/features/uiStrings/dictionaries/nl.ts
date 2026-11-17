@@ -4178,6 +4178,21 @@ const nl: UiDictionary = {
   "themeStyle.r.effect": "Voorgesteld effect: {label}. {help} Pas het toe via de effectkiezer in de visuele editor.",
   "themeStyle.r.effectNone": "Voor deze keuzes wordt geen effect voorgesteld.",
   "themeStyle.r.variation": "Variatie: de exacte tinten zijn voor deze site verschoven, dus een andere site met dezelfde keuzes krijgt een ander palet.",
+  "webhooks.event.task.assigned": "Taak toegewezen",
+  "webhooks.event.task.commented": "Reactie op taak",
+  "webhooks.event.task.due": "Taak bijna verlopen",
+  "tb.archive": "Archiveren",
+  "tb.restore": "Herstellen",
+  "tb.showArchived": "Gearchiveerde tonen",
+  "tb.archived": "Gearchiveerd",
+  "tb.act.archived": "gearchiveerd",
+  "tb.act.restored": "hersteld",
+  "tb.mine.link": "Al mijn taken",
+  "tb.mine.openBoard": "Taakbord openen",
+  "tb.mine.empty": "Er wacht niets op jou.",
+  "update.updateNow": "Nu bijwerken",
+  "update.updating": "Bijwerken…",
+  "update.failed": "De update is mislukt.",
 }
 
 export default nl

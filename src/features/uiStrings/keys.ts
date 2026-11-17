@@ -4230,6 +4230,21 @@ export const UI_STRING_SOURCE = {
   "themeStyle.r.effect": "Suggested effect: {label}. {help} Apply it from the Effects picker in the visual editor.",
   "themeStyle.r.effectNone": "No effect is suggested for these picks.",
   "themeStyle.r.variation": "Variation: the exact shades are shifted for this site, so another site with the same picks gets a different palette.",
+  "webhooks.event.task.assigned": "Task assigned",
+  "webhooks.event.task.commented": "Task commented on",
+  "webhooks.event.task.due": "Task due soon",
+  "tb.archive": "Archive",
+  "tb.restore": "Restore",
+  "tb.showArchived": "Show archived",
+  "tb.archived": "Archived",
+  "tb.act.archived": "archived",
+  "tb.act.restored": "restored",
+  "tb.mine.link": "All my tasks",
+  "tb.mine.openBoard": "Open the taskboard",
+  "tb.mine.empty": "Nothing is waiting for you.",
+  "update.updateNow": "Update now",
+  "update.updating": "Updating…",
+  "update.failed": "The update did not work.",
 } as const
 
 export type UiStringKey = keyof typeof UI_STRING_SOURCE

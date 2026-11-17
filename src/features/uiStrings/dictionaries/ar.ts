@@ -4178,6 +4178,21 @@ const ar: UiDictionary = {
   "themeStyle.r.effect": "التأثير المقترح: {label}. {help} طبّقه من منتقي التأثيرات في المحرر المرئي.",
   "themeStyle.r.effectNone": "لا يُقترح أي تأثير لهذه الاختيارات.",
   "themeStyle.r.variation": "التنويع: تُعدَّل درجات الألوان الدقيقة لهذا الموقع، لذلك يحصل موقع آخر بالاختيارات نفسها على لوحة ألوان مختلفة.",
+  "webhooks.event.task.assigned": "تم تعيين المهمة",
+  "webhooks.event.task.commented": "تم التعليق على المهمة",
+  "webhooks.event.task.due": "المهمة مستحقة قريبًا",
+  "tb.archive": "أرشفة",
+  "tb.restore": "استعادة",
+  "tb.showArchived": "عرض المؤرشفة",
+  "tb.archived": "مؤرشفة",
+  "tb.act.archived": "أُرشفت",
+  "tb.act.restored": "اُستعيدت",
+  "tb.mine.link": "كل مهامي",
+  "tb.mine.openBoard": "فتح لوحة المهام",
+  "tb.mine.empty": "لا يوجد شيء في انتظارك.",
+  "update.updateNow": "التحديث الآن",
+  "update.updating": "جارٍ التحديث…",
+  "update.failed": "لم ينجح التحديث.",
 }
 
 export default ar

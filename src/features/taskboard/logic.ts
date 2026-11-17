@@ -19,6 +19,8 @@ export type Card = {
   labels: string[]
   priority: Priority
   position: number
+  /** Hidden from the board once archived; kept so it can be restored. */
+  archived: boolean
 }
 
 export type Board = { id: number; name: string; memberIds: number[] }
@@ -86,7 +88,7 @@ export function moveCard(cards: Card[], cardId: number, toColumn: number, toInde
 }
 
 /** The cards to show for the "My tasks" filter. */
-export const myTasks = (cards: Card[], userId: number): Card[] => cards.filter((c) => c.assigneeId === userId)
+export const myTasks = (cards: Card[], userId: number): Card[] => cards.filter((c) => c.assigneeId === userId && !c.archived)
 
 export const isOverdue = (card: Pick<Card, 'dueDate'>, todayIso: string): boolean => Boolean(card.dueDate) && (card.dueDate as string) < todayIso
 

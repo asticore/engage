@@ -4,8 +4,10 @@ import pkg from '../../../../../package.json'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { checkReferenceUpdates } from '@/features/references/references'
 import { checkForUpdate, type UpdateCheck } from '@/features/updates/check'
+import { oneClickConfig } from '@/features/updates/oneClick'
 
-type Answer = UpdateCheck & { referencesOutdated: Array<{ id: string; name: string; current: string | null; latest: string | null }> }
+type Answer = UpdateCheck & { referencesOutdated: Array<{ id: string; name: string; current: string | null; latest: string | null }>; oneClick: boolean }
+const oneClickOn = (): boolean => Boolean(oneClickConfig(process.env.UPDATE_REPO, process.env.UPDATE_GITHUB_TOKEN))
 
 export const dynamic = 'force-dynamic'
 
@@ -22,12 +24,12 @@ export async function GET(request: Request): Promise<Response> {
   if (!hasAdminPanelAccess(ctx.user)) return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
   if (!ctx.isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   const refresh = new URL(request.url).searchParams.get('refresh') === '1'
-  if (!refresh && cached && Date.now() - cached.at < TTL_MS) return NextResponse.json(cached.value, { headers: { 'Cache-Control': 'no-store' } })
+  if (!refresh && cached && Date.now() - cached.at < TTL_MS) return NextResponse.json({ ...cached.value, oneClick: oneClickOn() }, { headers: { 'Cache-Control': 'no-store' } })
   const value = await checkForUpdate(pkg.version, process.env.UPDATE_REPO)
   const referencesOutdated = (await checkReferenceUpdates().catch((): Awaited<ReturnType<typeof checkReferenceUpdates>> => []))
     .filter((source) => source.outdated)
     .map(({ id, name, current, latest }) => ({ id, name, current, latest }))
-  const answer: Answer = { ...value, referencesOutdated }
+  const answer: Answer = { ...value, referencesOutdated, oneClick: oneClickOn() }
   if (!value.error) cached = { at: Date.now(), value: answer }
   return NextResponse.json(answer, { headers: { 'Cache-Control': 'no-store' } })
 }

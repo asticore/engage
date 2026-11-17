@@ -4178,6 +4178,21 @@ const ja: UiDictionary = {
   "themeStyle.r.effect": "おすすめのエフェクト: {label}。{help} ビジュアルエディターのエフェクト選択から適用してください。",
   "themeStyle.r.effectNone": "これらの選択内容におすすめのエフェクトはありません。",
   "themeStyle.r.variation": "バリエーション: このサイト用に色合いがわずかに調整されるため、同じ選択内容でも別のサイトでは異なる配色になります。",
+  "webhooks.event.task.assigned": "タスクを割り当て",
+  "webhooks.event.task.commented": "タスクにコメント",
+  "webhooks.event.task.due": "タスクの期限が近い",
+  "tb.archive": "アーカイブ",
+  "tb.restore": "復元",
+  "tb.showArchived": "アーカイブを表示",
+  "tb.archived": "アーカイブ済み",
+  "tb.act.archived": "アーカイブした",
+  "tb.act.restored": "復元した",
+  "tb.mine.link": "自分のタスクすべて",
+  "tb.mine.openBoard": "タスクボードを開く",
+  "tb.mine.empty": "あなたの対応待ちのものはありません。",
+  "update.updateNow": "今すぐ更新",
+  "update.updating": "更新中…",
+  "update.failed": "更新に失敗しました。",
 }
 
 export default ja

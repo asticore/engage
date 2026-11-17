@@ -28,6 +28,8 @@ export type EmptyPlan = {
   withheld: { table: string; reason: string }[]
   refusals: string[]
   errors: { table: string; error: string }[]
+  /** Uploaded files removed with the rows, when that second step was chosen (media only). */
+  filesDeleted?: number
 }
 
 const blank = (feature: string, dryRun: boolean): EmptyPlan => ({ ok: false, dryRun, feature, tables: [], emptied: [], withheld: [], refusals: [], errors: [] })
