@@ -267,7 +267,7 @@ export async function handleReviewGet(args: {
   // The people a review can be handed to. Names only, never addresses: this reaches the browser.
   const canReassign = allowed.reassign && loaded.state.status === 'in_review' && settings.enabled
   const reviewerChoices = canReassign
-    ? (await reviewerUsers(args.engine, ref.collection, loaded.state.requestedBy).catch(() => [])).filter((person) => person.id !== args.viewer.id).slice(0, 200).map((person) => ({ id: person.id, name: person.name }))
+    ? (await reviewerUsers(args.engine, ref.collection, loaded.state.requestedBy).catch((): Array<{ id: number; name: string; email: string }> => [])).filter((person) => person.id !== args.viewer.id).slice(0, 200).map((person) => ({ id: person.id, name: person.name }))
     : []
 
   return json(200, {
