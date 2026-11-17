@@ -267,3 +267,6 @@
   color: var(--theme-error-500, #b42318);
   font-size: 12px;
 }
+
+.sa-sitewide__list { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.5rem; }
+.sa-sitewide__item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
