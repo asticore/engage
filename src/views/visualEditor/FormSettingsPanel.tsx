@@ -1,12 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { STYLE_PRESETS } from '@/features/forms/config'
 import { CUSTOMER_FIELDS, NO_CHECKOUT, type CustomerField } from '@/features/forms/checkoutHandoff'
 import { WebhookDeliveryLog, WebhookTestButton } from './FormWebhookTools'
+import { FormEditorContext } from './formInputs'
 import type { FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from '@/features/forms/types'
 
 /**
@@ -39,6 +40,29 @@ const uid = (): string => `x${Math.random().toString(36).slice(2, 8)}`
 
 export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, embedKey, formStatus, hasUnpublishedChanges, isAdmin, busy, onPublish, onUnpublish }) => {
   const t = useAdminT()
+  const { fields: fieldChoices } = useContext(FormEditorContext)
+  const [products, setProducts] = useState<{ id: number; title: string }[]>([])
+  useEffect(() => {
+    if (!(config.checkout || NO_CHECKOUT).enabled) return
+    let live = true
+    fetch('/api/products?limit=500&depth=0&sort=title', { credentials: 'include' })
+      .then(async (res) => {
+        const body = (await res.json().catch(() => ({}))) as { docs?: { id: number; title?: string }[] }
+        if (live) setProducts((body.docs ?? []).filter((p) => Number.isInteger(Number(p.id))).map((p) => ({ id: Number(p.id), title: p.title || `Product ${p.id}` })))
+      })
+      .catch((): void => undefined)
+    return () => {
+      live = false
+    }
+  }, [config.checkout])
+  /** A field name picked from this form's fields; a name typed earlier that no longer matches stays selectable. */
+  const fieldSelect = (value: string, onPick: (name: string) => void) => (
+    <select value={value} onChange={(event) => onPick(event.target.value)}>
+      <option value="">None</option>
+      {value && !fieldChoices.some((f) => f.name === value) ? <option value={value}>{value}</option> : null}
+      {fieldChoices.map((f) => <option key={f.name} value={f.name}>{f.label}</option>)}
+    </select>
+  )
   const set = <K extends keyof FormConfig>(key: K, value: FormConfig[K]) => onChange({ ...config, [key]: value })
   const style = config.style || {}
   const steps = config.steps || {}
@@ -145,8 +169,12 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
             <>
               <p className="ve-panel__hint">This replaces the thank you message or address above. The entry is still saved first.</p>
               <label className="ve-field ve-field--full">
-                <span>Product number (from the Products list)</span>
-                <input type="number" min={1} value={checkout.productId ?? ''} onChange={(event) => setCheckout({ productId: event.target.value === '' ? null : Number(event.target.value) })} />
+                <span>Product</span>
+                <select value={checkout.productId ?? ''} onChange={(event) => setCheckout({ productId: event.target.value === '' ? null : Number(event.target.value) })}>
+                  <option value="">None</option>
+                  {checkout.productId && !products.some((p) => p.id === checkout.productId) ? <option value={checkout.productId}>Product {checkout.productId}</option> : null}
+                  {products.map((p) => <option key={p.id} value={p.id}>{p.title} (#{p.id})</option>)}
+                </select>
               </label>
               <label className="ve-field ve-field--full">
                 <span>Variation id (optional)</span>
@@ -157,15 +185,15 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
                 <input type="number" min={1} value={checkout.quantity} onChange={(event) => setCheckout({ quantity: Number(event.target.value) || 1 })} />
               </label>
               <label className="ve-field ve-field--full">
-                <span>Or choose the product from a field (field name)</span>
-                <input type="text" value={checkout.choiceField} onChange={(event) => setCheckout({ choiceField: event.target.value })} />
+                <span>Or choose the product from a field</span>
+                {fieldSelect(checkout.choiceField, (name) => setCheckout({ choiceField: name }))}
                 <span className="ve-field__help">A choice or dropdown field whose option values are product numbers, such as 12, or 12:variationId. It overrides the product above.</span>
               </label>
-              <p className="ve-panel__hint">Fill the checkout from these fields (type the field name, leave blank to skip):</p>
+              <p className="ve-panel__hint">Fill the checkout from these fields (pick a field, or None to skip):</p>
               {CUSTOMER_FIELDS.map((field) => (
                 <label className="ve-field ve-field--full" key={field}>
                   <span>{{ email: 'Email', name: 'Full name', phone: 'Phone', line1: 'Street address', city: 'Suburb or city', state: 'State', postcode: 'Postcode', country: 'Country (2 letter code)', note: 'Order note' }[field]}</span>
-                  <input type="text" value={checkout.map[field] || ''} onChange={(event) => setMap(field, event.target.value)} />
+                  {fieldSelect(checkout.map[field] || '', (name) => setMap(field, name))}
                 </label>
               ))}
             </>
