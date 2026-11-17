@@ -6,7 +6,7 @@ const int = (v: unknown, min: number, max: number): number | null => {
   return v !== '' && v !== null && v !== undefined && Number.isFinite(n) && n >= min && n <= max ? n : null
 }
 
-export type Rule = { id: number; title: string; productId: number | null; maxQty: number | null; windowDays: number; cooldownHours: number; requireVerified: boolean; active: boolean }
+export type Rule = { id: number; title: string; productId: number | null; maxQty: number | null; windowDays: number; cooldownHours: number; requireVerified: boolean; active: boolean; message: string; exemptEmails: string }
 export type RuleInput = Omit<Rule, 'id'>
 
 /** One person, however they type their address: lower case, no +tag, no dots at Gmail. */
@@ -35,7 +35,9 @@ export function parseRule(raw: unknown): { ok: true; value: RuleInput } | { ok: 
   const cooldownHours = int(r.cooldownHours, 0, 8760) ?? 0
   const requireVerified = r.requireVerified === true
   if (maxQty === null && cooldownHours === 0 && !requireVerified) return { ok: false, error: 'Set a most per person, a wait between orders, or require a verified account.' }
-  return { ok: true, value: { title, productId: Number.isInteger(product) && product > 0 ? product : null, maxQty, windowDays, cooldownHours, requireVerified, active: r.active !== false } }
+  // The exceptions list: one email per line (commas also work), stored in the same normalised form checkout compares.
+  const exemptEmails = String(r.exemptEmails ?? '').split(/[\s,;]+/).map((e) => e.trim()).filter((e) => e.includes('@')).map(normaliseEmail).slice(0, 200).join('\n')
+  return { ok: true, value: { title, productId: Number.isInteger(product) && product > 0 ? product : null, maxQty, windowDays, cooldownHours, requireVerified, active: r.active !== false, message: text(r.message, 300), exemptEmails } }
 }
 
 export type Prior = { qty: number; atMs: number }
@@ -44,8 +46,19 @@ export type Context = { productTitle: string; wantQty: number; prior: Prior[]; v
 const DAY = 86_400_000
 const HOUR = 3_600_000
 
+/** True when the buyer's normalised email is on the rule's exceptions list. */
+export const isExempt = (rule: Pick<Rule, 'exemptEmails'>, emailKey: string): boolean => Boolean(emailKey) && rule.exemptEmails.split('\n').includes(emailKey)
+
+/** The rule's own wording when it has one ({{product}} is the product name), else the built-in sentence. */
+export const ruleMessage = (rule: Pick<Rule, 'message'>, fallback: string, productTitle: string): string => (rule.message ? rule.message.replace(/\{\{\s*product\s*\}\}/g, productTitle) : fallback)
+
 /** The sentence to show the buyer when this rule refuses the order, or null when it allows it. */
-export function refusal(rule: Pick<Rule, 'maxQty' | 'windowDays' | 'cooldownHours' | 'requireVerified'>, ctx: Context): string | null {
+export function refusal(rule: Pick<Rule, 'maxQty' | 'windowDays' | 'cooldownHours' | 'requireVerified'> & Partial<Pick<Rule, 'message'>>, ctx: Context): string | null {
+  const said = refusalBuiltIn(rule, ctx)
+  return said === null ? null : ruleMessage({ message: rule.message ?? '' }, said, ctx.productTitle)
+}
+
+function refusalBuiltIn(rule: Pick<Rule, 'maxQty' | 'windowDays' | 'cooldownHours' | 'requireVerified'>, ctx: Context): string | null {
   const now = ctx.now.getTime()
   if (rule.requireVerified && !ctx.verified) return `${ctx.productTitle} can only be bought with a signed-in account whose email is verified.`
   if (rule.cooldownHours > 0) {

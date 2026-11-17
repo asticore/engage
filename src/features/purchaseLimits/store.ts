@@ -7,15 +7,15 @@ type Row = Record<string, unknown>
 const all = async (d1: D1, sql: string, ...args: unknown[]): Promise<Row[]> => (await d1.prepare(sql).bind(...args).all<Row>()).results
 const run = (d1: D1, sql: string, ...args: unknown[]) => d1.prepare(sql).bind(...args).run()
 
-const toRule = (r: Row): Rule => ({ id: Number(r.id), title: String(r.title ?? ''), productId: r.product_id === null || r.product_id === undefined ? null : Number(r.product_id), maxQty: r.max_qty === null || r.max_qty === undefined ? null : Number(r.max_qty), windowDays: Number(r.window_days ?? 0), cooldownHours: Number(r.cooldown_hours ?? 0), requireVerified: Number(r.require_verified) !== 0, active: Number(r.active) !== 0 })
+const toRule = (r: Row): Rule => ({ id: Number(r.id), title: String(r.title ?? ''), productId: r.product_id === null || r.product_id === undefined ? null : Number(r.product_id), maxQty: r.max_qty === null || r.max_qty === undefined ? null : Number(r.max_qty), windowDays: Number(r.window_days ?? 0), cooldownHours: Number(r.cooldown_hours ?? 0), requireVerified: Number(r.require_verified) !== 0, active: Number(r.active) !== 0, message: String(r.message ?? ''), exemptEmails: String(r.exempt_emails ?? '') })
 
 export async function listRules(d1: D1, onlyActive = false): Promise<Rule[]> {
   return (await all(d1, `SELECT * FROM eg_purchase_limit_rules${onlyActive ? ' WHERE active = 1' : ''} ORDER BY id`)).map(toRule)
 }
 export async function saveRule(d1: D1, id: number | null, v: RuleInput, nowIso: string): Promise<void> {
-  const a = [v.title, v.productId, v.maxQty, v.windowDays, v.cooldownHours, v.requireVerified ? 1 : 0, v.active ? 1 : 0, nowIso]
-  if (id) await run(d1, 'UPDATE eg_purchase_limit_rules SET title=?1, product_id=?2, max_qty=?3, window_days=?4, cooldown_hours=?5, require_verified=?6, active=?7, updated_at=?8 WHERE id=?9', ...a, id)
-  else await run(d1, 'INSERT INTO eg_purchase_limit_rules (title, product_id, max_qty, window_days, cooldown_hours, require_verified, active, updated_at, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?8)', ...a)
+  const a = [v.title, v.productId, v.maxQty, v.windowDays, v.cooldownHours, v.requireVerified ? 1 : 0, v.active ? 1 : 0, nowIso, v.message, v.exemptEmails]
+  if (id) await run(d1, 'UPDATE eg_purchase_limit_rules SET title=?1, product_id=?2, max_qty=?3, window_days=?4, cooldown_hours=?5, require_verified=?6, active=?7, updated_at=?8, message=?9, exempt_emails=?10 WHERE id=?11', ...a, id)
+  else await run(d1, 'INSERT INTO eg_purchase_limit_rules (title, product_id, max_qty, window_days, cooldown_hours, require_verified, active, updated_at, created_at, message, exempt_emails) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?8,?9,?10)', ...a)
 }
 export async function deleteRule(d1: D1, id: number): Promise<void> {
   await run(d1, 'DELETE FROM eg_purchase_limit_rules WHERE id = ?1', id)

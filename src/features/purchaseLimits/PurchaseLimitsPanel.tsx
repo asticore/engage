@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react'
 
-type Rule = { id: number; title: string; productId: number | null; maxQty: number | null; windowDays: number; cooldownHours: number; requireVerified: boolean; active: boolean }
+type Rule = { id: number; title: string; productId: number | null; maxQty: number | null; windowDays: number; cooldownHours: number; requireVerified: boolean; active: boolean; message: string; exemptEmails: string }
 type Block = { id: number; productId: number | null; reason: string; emailKey: string; detail: string; createdAt: string }
 type Data = { rules: Rule[]; products: { id: number; title: string }[]; blocks: Block[]; counts: { today: number; week: number } }
 
-const blank = { id: 0, title: '', productId: null as number | null, maxQty: '' as number | '', windowDays: 0, cooldownHours: 0, requireVerified: false, active: true }
+const blank = { id: 0, title: '', productId: null as number | null, maxQty: '' as number | '', windowDays: 0, cooldownHours: 0, requireVerified: false, active: true, message: '', exemptEmails: '' }
 
 /** Per-person limits on products and event tickets, and the attempts they refused. */
 export function PurchaseLimitsPanel() {
@@ -42,7 +42,7 @@ export function PurchaseLimitsPanel() {
   const num = (key: 'maxQty' | 'windowDays' | 'cooldownHours', label: string) => (
     <label className="field">{label}<input className="input" type="number" min={0} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value === '' ? '' : Number(e.target.value) } as typeof form)} /></label>
   )
-  const describe = (r: Rule): string => [r.maxQty !== null ? `most ${r.maxQty} per person${r.windowDays ? ` in ${r.windowDays} days` : ''}` : '', r.cooldownHours ? `wait ${r.cooldownHours} hours between orders` : '', r.requireVerified ? 'verified account only' : ''].filter(Boolean).join(', ')
+  const describe = (r: Rule): string => [r.maxQty !== null ? `most ${r.maxQty} per person${r.windowDays ? ` in ${r.windowDays} days` : ''}` : '', r.cooldownHours ? `wait ${r.cooldownHours} hours between orders` : '', r.requireVerified ? 'verified account only' : '', r.exemptEmails ? `${r.exemptEmails.split('\n').length} trusted customer(s) exempt` : ''].filter(Boolean).join(', ')
 
   return (
     <div className="stack">
@@ -81,6 +81,8 @@ export function PurchaseLimitsPanel() {
             {num('cooldownHours', 'Wait between orders (hours, 0: none)')}
           </div>
           <label className="field"><span><input type="checkbox" checked={form.requireVerified} onChange={(e) => setForm({ ...form, requireVerified: e.target.checked })} /> Only signed-in people with a verified email</span></label>
+          <label className="field">Message shown when this rule refuses an order (blank: built-in wording; {'{{product}}'} is the product name)<input className="input" maxLength={300} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} /></label>
+          <label className="field">Trusted customers the rule never refuses (one email per line)<textarea className="input" rows={3} value={form.exemptEmails} onChange={(e) => setForm({ ...form, exemptEmails: e.target.value })} /></label>
           <div className="cluster">
             <button type="button" className="btn" onClick={() => void post({ action: 'saveRule', ...form, id: form.id || undefined }, 'Saved.').then((ok) => { if (ok) setForm(blank) })}>{form.id ? 'Save changes' : 'Add rule'}</button>
             {form.id ? <button type="button" className="btn" onClick={() => setForm(blank)}>Cancel</button> : null}
