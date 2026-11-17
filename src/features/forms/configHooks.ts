@@ -7,6 +7,7 @@ import { generateEmbedKey, normaliseFormConfig } from './config'
 import { sanitiseLayout } from './layout'
 import type { FormConfig, FormWebhook } from './types'
 import { isSafeWebhookUrl } from './webhooks'
+import { COMING_SOON_FORM_KEY } from './comingSoonKey'
 
 /**
  * The write and read rules for the form's own columns.
@@ -59,7 +60,9 @@ export const formsBeforeChange: CollectionBeforeChangeHook = async ({ data, req,
   // The public embed key is minted once and never changed, so a printed or
   // published embed snippet keeps working.
   if (operation === 'create') {
-    draft.embedKey = generateEmbedKey()
+    // The built-in Coming soon form (comingSoon.ts) asks for its fixed key through the request context.
+    const builtIn = (req as { context?: Record<string, unknown> } | undefined)?.context?.builtInEmbedKey
+    draft.embedKey = builtIn === COMING_SOON_FORM_KEY ? COMING_SOON_FORM_KEY : generateEmbedKey()
     if (draft.formStatus === undefined) draft.formStatus = 'draft'
   } else if (typeof original.embedKey === 'string' && original.embedKey) {
     draft.embedKey = original.embedKey

@@ -4142,6 +4142,13 @@ const nl: UiDictionary = {
   "signins.to": "Tot",
   "signins.apply": "Tonen",
   "signins.reset": "Laatste 30 dagen",
+  // Coming soon screen: email signup
+  'comingSoon.signup.label': 'Ontvang een e-mail zodra we live gaan',
+  'comingSoon.signup.placeholder': 'Je e-mailadres',
+  'comingSoon.signup.button': 'Houd me op de hoogte',
+  'comingSoon.signup.sending': 'Versturen...',
+  'comingSoon.signup.thanks': 'Bedankt. We mailen je zodra we live gaan.',
+  'comingSoon.signup.error': 'We konden je e-mailadres niet opslaan. Probeer het opnieuw.',
 }
 
 export default nl

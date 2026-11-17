@@ -4194,6 +4194,13 @@ export const UI_STRING_SOURCE = {
   "themeStyle.confirm": "Apply this theme? This replaces your current colours, text, buttons and layout. It is not saved until you choose Save changes.",
   "themeStyle.applied": "The theme made from your picks is applied to the editor. Review it, then choose Save changes.",
   "themeStyle.use": "Use this theme",
+  // Coming soon screen: email signup (public text)
+  'comingSoon.signup.label': 'Get an email when we launch',
+  'comingSoon.signup.placeholder': 'Your email address',
+  'comingSoon.signup.button': 'Notify me',
+  'comingSoon.signup.sending': 'Sending...',
+  'comingSoon.signup.thanks': 'Thanks. We will email you when we launch.',
+  'comingSoon.signup.error': 'We could not save your email. Please try again.',
 } as const
 
 export type UiStringKey = keyof typeof UI_STRING_SOURCE
