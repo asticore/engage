@@ -238,6 +238,7 @@ import * as migration_20270318_200000_product_feed_mapping from './20270318_2000
 import * as migration_20270318_100000_taskboard_archive_due from './20270318_100000_taskboard_archive_due';
 import * as migration_20270318_120000_approval_review_due_days from './20270318_120000_approval_review_due_days';
 import * as migration_20270318_130000_member_dunning_emails from './20270318_130000_member_dunning_emails';
+import * as migration_20270318_140000_order_bump from './20270318_140000_order_bump';
 
 export const migrations = [
   {
@@ -1434,5 +1435,10 @@ export const migrations = [
     up: migration_20270318_130000_member_dunning_emails.up,
     down: migration_20270318_130000_member_dunning_emails.down,
     name: '20270318_130000_member_dunning_emails',
+  },
+  {
+    up: migration_20270318_140000_order_bump.up,
+    down: migration_20270318_140000_order_bump.down,
+    name: '20270318_140000_order_bump',
   },
 ];
