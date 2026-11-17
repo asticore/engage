@@ -4,7 +4,7 @@ type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T
 export type D1 = { prepare: (sql: string) => Stmt }
 type Row = Record<string, unknown>
 
-const toRule = (r: Row): IpRule => ({ id: Number(r.id), kind: (['allow', 'country-allow', 'country-block'].includes(String(r.kind)) ? String(r.kind) : 'block') as IpRuleKind, entry: String(r.entry ?? ''), reason: String(r.reason ?? ''), expiresAt: r.expires_at ? String(r.expires_at) : null, createdAt: String(r.created_at ?? '') })
+const toRule = (r: Row): IpRule => ({ id: Number(r.id), kind: (['allow', 'country-allow', 'country-block', 'message'].includes(String(r.kind)) ? String(r.kind) : 'block') as IpRuleKind, entry: String(r.entry ?? ''), reason: String(r.reason ?? ''), expiresAt: r.expires_at ? String(r.expires_at) : null, createdAt: String(r.created_at ?? '') })
 
 export async function listRules(d1: D1): Promise<IpRule[]> {
   const res = await d1.prepare('SELECT id, kind, entry, reason, expires_at, created_at FROM eg_ip_rules ORDER BY id DESC LIMIT 2000').all<Row>()
@@ -20,6 +20,12 @@ export async function setCountries(d1: D1, kind: 'country-allow' | 'country-bloc
   await d1.prepare("DELETE FROM eg_ip_rules WHERE kind IN ('country-allow','country-block')").bind().run()
   if (!kind) return
   for (const code of codes) await d1.prepare('INSERT OR IGNORE INTO eg_ip_rules (kind, entry, reason, expires_at, created_at) VALUES (?1,?2,\'\',NULL,?3)').bind(kind, code, nowIso).run()
+}
+
+/** Replaces the custom block message. Empty text removes it. */
+export async function setMessage(d1: D1, text: string, nowIso: string): Promise<void> {
+  await d1.prepare("DELETE FROM eg_ip_rules WHERE kind = 'message'").bind().run()
+  if (text) await d1.prepare("INSERT OR IGNORE INTO eg_ip_rules (kind, entry, reason, expires_at, created_at) VALUES ('message',?1,'',NULL,?2)").bind(text, nowIso).run()
 }
 
 export async function deleteRules(d1: D1, ids: number[]): Promise<void> {

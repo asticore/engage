@@ -3,7 +3,7 @@
  * matching an address, and the allow-first decision. No I/O, so every rule is testable on its own.
  */
 
-export type IpRuleKind = 'allow' | 'block' | 'country-allow' | 'country-block'
+export type IpRuleKind = 'allow' | 'block' | 'country-allow' | 'country-block' | 'message'
 export type IpRule = { id: number; kind: IpRuleKind; entry: string; reason: string; expiresAt: string | null; createdAt: string }
 export type Parsed = { v: 4 | 6; value: bigint; bits: number }
 
@@ -62,7 +62,7 @@ export function decideIp(ip: string, rules: readonly IpRule[], now = Date.now())
 }
 
 /** One entry per line (or comma separated); `#` starts a comment. Returns valid entries and the ones that were refused. */
-export function parseBulk(text: string): { entries: string[]; rejected: string[] } {
+export function parseBulk(text: string, limit = 500): { entries: string[]; rejected: string[] } {
   const entries: string[] = []
   const rejected: string[] = []
   for (const raw of text.split(/[\n,;]+/)) {
@@ -72,7 +72,7 @@ export function parseBulk(text: string): { entries: string[]; rejected: string[]
       if (!entries.includes(line.toLowerCase())) entries.push(line.toLowerCase())
     } else rejected.push(line.slice(0, 60))
   }
-  return { entries: entries.slice(0, 500), rejected: rejected.slice(0, 20) }
+  return { entries: entries.slice(0, limit), rejected: rejected.slice(0, 20) }
 }
 
 export const MAX_RULES = 2000
@@ -107,4 +107,14 @@ export function decideCountry(header: string | null | undefined, rules: readonly
   const blocked = rules.filter((r) => r.kind === 'country-block').map((r) => r.entry)
   if (allowed.length > 0) return allowed.includes(country) ? 'allow' : 'block'
   return blocked.includes(country) ? 'block' : 'allow'
+}
+
+export const BLOCK_MESSAGE_MAX = 300
+export const DEFAULT_BLOCK_MESSAGE = 'Access denied.'
+export const DEFAULT_COUNTRY_MESSAGE = 'This site is not available in your country.'
+
+/** The admin's own plain text message for blocked visitors, or null to use the built-in one. */
+export function customBlockMessage(rules: readonly IpRule[]): string | null {
+  const text = rules.find((r) => r.kind === 'message')?.entry.trim()
+  return text ? text.slice(0, BLOCK_MESSAGE_MAX) : null
 }

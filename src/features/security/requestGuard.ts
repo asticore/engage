@@ -4,7 +4,8 @@ import type { NextRequest } from 'next/server'
 import { audit, auditContext } from './auditLog'
 import { FINGERPRINT_HEADERS, securityHeaders } from './headers'
 import { SESSION_COOKIE, isSessionExpired } from './loginProtection'
-import { decideCountry, decideIp } from './ipRules'
+import { customBlockMessage, DEFAULT_BLOCK_MESSAGE, DEFAULT_COUNTRY_MESSAGE, decideCountry, decideIp } from './ipRules'
+import { BYPASS_COOKIE, verifyBypass } from './ipBypass'
 import { readIpRulesCached } from './ipRulesStore'
 import { matchRateRule } from './routeRules'
 import { readRateRulesCached } from './routeRulesStore'
@@ -236,15 +237,18 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
   if (process.env.SECURITY_IP_RULES_OFF !== '1') {
     const ip = clientKey(request)
     const ipRules = await readIpRulesCached()
-    const byIp = ip === 'unknown' ? 'none' : decideIp(ip, ipRules)
+    // A browser an admin marked as a bypass (signed cookie) skips both lists.
+    const bypass = await verifyBypass(request.cookies.get(BYPASS_COOKIE)?.value, process.env.ENGAGE_SECRET ?? '')
+    const byIp = bypass ? 'allow' : ip === 'unknown' ? 'none' : decideIp(ip, ipRules)
+    const message = customBlockMessage(ipRules)
     if (byIp === 'block') {
       void audit({ action: 'ip.blocked', detail: pathname, ...auditContext(request) }, settings)
-      return new NextResponse('Access denied.', { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } })
+      return new NextResponse(message ?? DEFAULT_BLOCK_MESSAGE, { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } })
     }
     // Country rules (whole site). An allow-listed address skips them.
     if (byIp !== 'allow' && ipRules.some((r) => r.kind === 'country-allow' || r.kind === 'country-block') && decideCountry(request.headers.get('cf-ipcountry'), ipRules) === 'block') {
       void audit({ action: 'ip.blocked', detail: `country ${pathname}`, ...auditContext(request) }, settings)
-      return new NextResponse('This site is not available in your country.', { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } })
+      return new NextResponse(message ?? DEFAULT_COUNTRY_MESSAGE, { status: 403, headers: { 'content-type': 'text/plain; charset=utf-8' } })
     }
   }
 
