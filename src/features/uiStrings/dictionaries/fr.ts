@@ -1571,6 +1571,9 @@ const fr: UiDictionary = {
   'media.preview': "Aperçu",
   'media.folder': "Dossier",
   'media.alt': "Alt",
+  'media.tags': "Étiquettes",
+  'media.tagsNone': "Aucune étiquette pour le moment. Créez-en sur la page des étiquettes de médias.",
+  'media.tagsHelp': "Cochez les étiquettes de ce fichier. Chaque changement est enregistré aussitôt.",
   'media.show': "Afficher",
   // --- admin leftovers (import content view) ---
   'importContent.title': "Importer pages et articles",

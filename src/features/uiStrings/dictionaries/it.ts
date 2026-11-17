@@ -1571,6 +1571,9 @@ const it: UiDictionary = {
   'media.preview': "Anteprima",
   'media.folder': "Cartella",
   'media.alt': "Alt",
+  'media.tags': "Tag",
+  'media.tagsNone': "Ancora nessun tag. Crea i tag nella pagina dei tag multimediali.",
+  'media.tagsHelp': "Seleziona i tag di questo file. Ogni modifica viene salvata subito.",
   'media.show': "Mostra",
   // --- admin leftovers (import content view) ---
   'importContent.title': "Importa pagine e post",

@@ -1571,6 +1571,9 @@ const ar: UiDictionary = {
   'media.preview': "معاينة",
   'media.folder': "المجلد",
   'media.alt': "النص البديل",
+  'media.tags': "الوسوم",
+  'media.tagsNone': "لا توجد وسوم بعد. أنشئ وسومًا في صفحة وسوم الوسائط.",
+  'media.tagsHelp': "حدّد الوسوم الخاصة بهذا الملف. يتم حفظ كل تغيير فورًا.",
   'media.show': "عرض",
   // --- admin leftovers (import content view) ---
   'importContent.title': "استيراد الصفحات والمنشورات",

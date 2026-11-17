@@ -1571,6 +1571,9 @@ const ru: UiDictionary = {
   'media.preview': "Предпросмотр",
   'media.folder': "Папка",
   'media.alt': "Alt",
+  'media.tags': "Теги",
+  'media.tagsNone': "Тегов пока нет. Создайте теги на странице тегов медиа.",
+  'media.tagsHelp': "Отметьте теги этого файла. Каждое изменение сохраняется сразу.",
   'media.show': "Показать",
   // --- admin leftovers (import content view) ---
   'importContent.title': "Импорт страниц и записей",

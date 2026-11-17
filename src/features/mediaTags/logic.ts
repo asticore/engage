@@ -118,3 +118,15 @@ export function parseFilesCsv(text: string): Array<{ filename: string; paths: st
     .map((r) => ({ filename: String(r[0] ?? '').trim(), paths: String(r[1] ?? '').split(';').map((p) => p.split('>').map((x) => x.replace(/\s+/g, ' ').trim()).filter(Boolean)).filter((p) => p.length > 0) }))
     .filter((r) => r.filename)
 }
+
+export type TagChip = { id: number; label: string; title: string; color: string }
+
+/** Chips for a file's tag ids: known tags only, sorted by path, label is the tag's own name. */
+export function chipsFor(tags: Tag[], ids: number[] | undefined): TagChip[] {
+  const out: TagChip[] = []
+  for (const id of ids ?? []) {
+    const t = tags.find((x) => x.id === id)
+    if (t) out.push({ id: t.id, label: t.name, title: pathOf(tags, t.id), color: t.color })
+  }
+  return out.sort((a, b) => a.title.localeCompare(b.title))
+}

@@ -12,7 +12,8 @@ import * as folderStore from '@/features/media/folderRecordsStore'
 import { getAdminContext } from '@/admin/auth'
 import { MediaFolderTree } from './MediaFolderTree'
 import { rawD1 } from '@/features/ecommerce/server/db'
-import { pathOf, type Tag } from '@/features/mediaTags/logic'
+import { chipsFor, pathOf, type Tag } from '@/features/mediaTags/logic'
+import { TagChips } from '@/features/mediaTags/TagChips'
 import * as tagStore from '@/features/mediaTags/store'
 import * as damStore from '@/features/dam/store'
 import { getFeatureFlags } from '@/utilities/features'
@@ -270,6 +271,16 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
     // No folder records: show everything, as before.
   }
 
+  // Tag chips for this page of files (only when Media tags is on).
+  let tagIdsByMedia: Record<number, number[]> = {}
+  if (allTags.length > 0) {
+    try {
+      tagIdsByMedia = await tagStore.tagsForMedia((await rawD1()) as never as tagStore.D1, docs.map((d) => Number(d.id)).filter((n) => Number.isInteger(n)))
+    } catch {
+      tagIdsByMedia = {}
+    }
+  }
+
   const galleryDocs: GalleryDoc[] = docs.map((doc) => ({
     id: String(doc.id),
     url: typeof doc.url === 'string' ? doc.url : undefined,
@@ -282,6 +293,7 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
     originalSize: typeof doc.originalSize === 'number' ? doc.originalSize : undefined,
     optimizedSize: typeof doc.optimizedSize === 'number' ? doc.optimizedSize : undefined,
     outputFormat: typeof doc.outputFormat === 'string' ? doc.outputFormat : undefined,
+    tagChips: chipsFor(allTags, tagIdsByMedia[Number(doc.id)]),
   }))
 
   const page = pager.page
@@ -505,6 +517,7 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
                 ))}
                 <th className="px-[calc(var(--base)*0.6)] py-[calc(var(--base)*0.5)] font-medium text-[var(--theme-elevation-600)]">{ui.t('media.folder')}</th>
                 <th className="px-[calc(var(--base)*0.6)] py-[calc(var(--base)*0.5)] font-medium text-[var(--theme-elevation-600)]">{ui.t('media.alt')}</th>
+                {allTags.length > 0 ? <th className="px-[calc(var(--base)*0.6)] py-[calc(var(--base)*0.5)] font-medium text-[var(--theme-elevation-600)]">{ui.t('media.tags')}</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -536,6 +549,11 @@ export async function MediaGalleryView(props: MediaGalleryViewProps) {
                     <td className="max-w-[calc(var(--base)*14)] truncate px-[calc(var(--base)*0.6)] py-[calc(var(--base)*0.4)] text-[var(--theme-elevation-600)]">
                       {typeof doc.alt === 'string' ? doc.alt : ''}
                     </td>
+                    {allTags.length > 0 ? (
+                      <td className="px-[calc(var(--base)*0.6)] py-[calc(var(--base)*0.4)]">
+                        <TagChips chips={chipsFor(allTags, tagIdsByMedia[Number(doc.id)])} />
+                      </td>
+                    ) : null}
                   </tr>
                 )
               })}

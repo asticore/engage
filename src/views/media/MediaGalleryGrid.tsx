@@ -18,6 +18,9 @@ import { VideoLinkForm } from './VideoLinkForm'
 
 import { INLINE_IMAGE_TYPES } from '@/features/media/fileTypes'
 
+import { TagChips } from '@/features/mediaTags/TagChips'
+import type { TagChip } from '@/features/mediaTags/logic'
+
 import { FileIcon } from './FileIcon'
 import { StockPhotoDialog } from './StockPhotoDialog'
 
@@ -33,6 +36,7 @@ export interface GalleryDoc {
   originalSize?: number
   optimizedSize?: number
   outputFormat?: string
+  tagChips?: TagChip[]
 }
 
 /** What the site is set to output, read on the server and passed down (see MediaGalleryView). */
@@ -528,6 +532,7 @@ export function MediaGalleryGrid({
                 </div>
                 <div className="flex flex-col gap-[calc(var(--base)*0.1)] px-[calc(var(--base)*0.5)] pt-[calc(var(--base)*0.4)]">
                   <span className="truncate text-[calc(var(--base)*0.72)] font-medium text-[var(--theme-elevation-900)]">{doc.filename ?? doc.id}</span>
+                  <TagChips chips={doc.tagChips} />
                   {sizeLabel(doc) ? <span className="text-[calc(var(--base)*0.65)] text-[var(--theme-elevation-500)]">{sizeLabel(doc)}</span> : null}
                   {target && (optimisationOn || isVideoMimeType(doc.mimeType)) ? (
                     <span className="truncate text-[calc(var(--base)*0.65)] text-[var(--theme-elevation-500)]" title="What Optimise does to this file">{target}</span>

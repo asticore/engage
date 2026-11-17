@@ -1570,6 +1570,9 @@ const zhHans: UiDictionary = {
   'media.preview': "预览",
   'media.folder': "文件夹",
   'media.alt': "替代文本",
+  'media.tags': "标签",
+  'media.tagsNone': "还没有标签。请在媒体标签页面创建标签。",
+  'media.tagsHelp': "勾选此文件的标签。每次更改都会立即保存。",
   'media.show': "显示",
   // --- admin leftovers (import content view) ---
   'importContent.title': "导入页面和文章",

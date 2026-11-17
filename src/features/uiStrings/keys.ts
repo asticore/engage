@@ -1647,6 +1647,9 @@ export const UI_STRING_SOURCE = {
   'media.preview': "Preview",
   'media.folder': "Folder",
   'media.alt': "Alt",
+  'media.tags': "Tags",
+  'media.tagsNone': "No tags yet. Make tags on the Media tags page.",
+  'media.tagsHelp': "Tick the tags this file carries. Each change saves at once.",
   'media.show': "Show",
   // --- admin leftovers (import content view) ---
   'importContent.title': "Import pages and posts",
