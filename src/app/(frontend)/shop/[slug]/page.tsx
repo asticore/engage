@@ -35,20 +35,20 @@ import { normaliseGiftCardSettings } from '@/features/ecommerce/lib/storedValue'
 import { showBackInStockForm } from '@/features/ecommerce/lib/backInStock'
 import { aggregateRatingJsonLd, summariseRatings } from '@/features/ecommerce/reviews'
 import { buildProductView, offersJsonLd, withoutPrices } from '@/features/ecommerce/storefront'
-import { loadPreordersEnabled } from '@/features/ecommerce/server/shopExtra'
-import { loadShopRulesConfig } from '@/features/ecommerce/server/pricingRules'
+import { preordersEnabledFrom } from '@/features/ecommerce/server/shopExtra'
+import { shopRulesConfigFrom } from '@/features/ecommerce/server/pricingRules'
 import { productPageNotes } from '@/features/ecommerce/lib/pricingRules'
 import { currencyFromShopSettings } from '@/features/ecommerce/lib/shopCurrency'
 import { tierNotes, variationTierNotes } from '@/features/ecommerce/lib/priceTiers'
 import { variationLabel } from '@/features/ecommerce/catalogue'
 import { loadTierContext } from '@/features/ecommerce/server/pricing'
-import { pricesHiddenFor, productAllowedFor, wholesaleMoq } from '@/features/ecommerce/lib/wholesale'
-import { wholesaleViewer } from '@/features/ecommerce/server/wholesale'
+import { normaliseWholesaleConfig, pricesHiddenFor, productAllowedFor, wholesaleMoq } from '@/features/ecommerce/lib/wholesale'
+import { currentBuyer } from '@/features/ecommerce/server/wholesale'
 import { PasswordGate } from '@/components/PasswordGate'
 import { getPasswordGateState } from '@/features/visibility/gate'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { getEngine } from '@/lib/engine'
-import { loadPromoBadges } from '@/features/ecommerce/lib/promoBadges'
+import { promoBadgesFrom } from '@/features/ecommerce/lib/promoBadges'
 import { getFeatureFlags } from '@/utilities/features'
 import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
 import { sourceSlugFor } from '@/features/multilingual/slugIndex'
@@ -113,7 +113,9 @@ export default async function ProductPage({
 
   const { slug: requested } = await params
   const engine = await getEngine()
-  const promoBadges = await loadPromoBadges(engine)
+  // One read of the shop extra switches serves the badges, wholesale, pre-orders and rules below (the speed spec counts reads).
+  const shopExtra = await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null)
+  const promoBadges = promoBadgesFrom(shopExtra)
   const requestLocale = await currentRequestLocale()
   // A source slug with a translation is redirected to the translated URL; a translated slug answers for its product.
   const slug = await sourceSlugFor(requestLocale, 'shop', requested, { redirect: true })
@@ -125,7 +127,8 @@ export default async function ProductPage({
   if (!(await contentAvailableHere((product as { availableDomains?: unknown }).availableDomains))) notFound()
 
   // Wholesale mode (Task 11d): wholesale-only products do not exist for anyone else, and hidden prices are removed before rendering.
-  const { cfg: wholesaleCfg, buyer } = await wholesaleViewer()
+  const wholesaleCfg = normaliseWholesaleConfig(shopExtra)
+  const buyer = wholesaleCfg.enabled ? await currentBuyer() : { signedIn: false, types: [] as string[] }
   if (!productAllowedFor(wholesaleCfg, (product as { wholesaleOnly?: unknown }).wholesaleOnly, buyer)) notFound()
   const priceHidden = pricesHiddenFor(wholesaleCfg, buyer)
 
@@ -159,12 +162,12 @@ export default async function ProductPage({
 
   const catalogue = product as unknown as CatalogueProduct & Record<string, unknown>
   const mediaUrls = new Map<number, string>(images.filter((img) => img.url).map((img) => [img.id, img.url as string]))
-  const preordersOn = await loadPreordersEnabled(engine)
+  const preordersOn = preordersEnabledFrom(shopExtra)
   // A bundle's price and stock come from the products inside it (server/bundles.ts), so they replace the bundle's own fields here.
   const bundle = catalogue.productType === 'bundle' ? await bundleStorefrontFields(engine as never, product as never, new Date(), preordersOn) : null
   // A kit's steps and what each item adds to the price are worked out from the items on offer (server/composite.ts).
   const composite = catalogue.productType === 'composite' ? await compositeStorefront(engine as never, product as never, new Date(), preordersOn) : null
-  const shopRules = await loadShopRulesConfig(engine)
+  const shopRules = shopRulesConfigFrom(shopExtra)
   // Quantity breaks open to everyone, plus the viewer's own customer-type tiers (wholesale) when they are signed in. The page is rendered per request.
   const tierCtx = await loadTierContext([{ product: product.id }], buyer.types)
   const noteLocale = priceLocale(await publicLocale())
