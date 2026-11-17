@@ -58,3 +58,13 @@ describe('comments core', () => {
     expect(h).not.toContain('1.2.3.4')
   })
 })
+
+import { moderatorMailText } from '@/features/comments/moderatorMail'
+describe('moderator email', () => {
+  it('shortens long comments and links to the admin', () => {
+    const m = moderatorMailText({ name: 'Ann', content: 'x'.repeat(400), postId: 7 }, 'https://s/admin/comments')
+    expect(m.text).toContain('Ann commented on blog post #7')
+    expect(m.text).toContain('...')
+    expect(m.text).toContain('https://s/admin/comments')
+  })
+})
