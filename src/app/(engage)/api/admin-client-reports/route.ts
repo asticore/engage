@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { newToken } from '@/features/affiliates/core'
 import { CADENCES, MAX_NAME, MAX_RECIPIENTS, MAX_REPORTS, PRESETS, SECTIONS, parseRecipients, parseSections, reportCsv, toCadence, toDay, toPreset } from '@/features/clientReports/core'
-import { buildReport, reportLink, sendReport } from '@/features/clientReports/service'
+import { buildReport, reportLink, reportPdf, sendReport } from '@/features/clientReports/service'
 import * as store from '@/features/clientReports/store'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { adminRequestRefusal } from '@/features/forms/origin'
@@ -37,7 +37,7 @@ function options(body: Record<string, unknown>): { ok: true; preset: ReturnType<
 
 const text = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
-/** GET: every report with its share link. GET ?csv=<id> downloads that report's numbers as CSV. */
+/** GET: every report with its share link. GET ?csv=<id> downloads that report's numbers as CSV, ?pdf=<id> as a PDF. */
 export async function GET(request: Request): Promise<Response> {
   const g = await guard(request, false)
   if (!g.context) return g.response
@@ -48,6 +48,13 @@ export async function GET(request: Request): Promise<Response> {
     if (!report) return json({ error: 'Report not found.' }, 404)
     const data = await buildReport(g.context.engine, d1 as never, report, new Date())
     return new Response(reportCsv(data), { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="client-report-${report.id}.csv"`, 'Cache-Control': 'no-store' } })
+  }
+  const pdfId = Number(new URL(request.url).searchParams.get('pdf'))
+  if (pdfId) {
+    const report = await store.findById(d1, pdfId)
+    if (!report) return json({ error: 'Report not found.' }, 404)
+    const pdf = await reportPdf(g.context.engine, d1 as never, report, report, new Date())
+    return new Response(pdf, { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="client-report-${report.id}.pdf"`, 'Cache-Control': 'no-store' } })
   }
   const origin = await requestSiteOrigin()
   const reports = (await store.listReports(d1)).map((r) => ({ ...r, link: reportLink(origin, r.token) }))

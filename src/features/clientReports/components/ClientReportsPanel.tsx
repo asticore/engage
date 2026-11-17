@@ -107,6 +107,7 @@ export const ClientReportsPanel: React.FC = () => {
                 <td style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <button type="button" disabled={busy || r.revoked} onClick={() => void copy(r)}>Copy link</button>
                   <a href={`/api/admin-client-reports?csv=${r.id}`} download>CSV</a>
+                  <a href={`/api/admin-client-reports?pdf=${r.id}`} download>PDF</a>
                   <button type="button" disabled={busy || !r.recipients} onClick={() => void post({ action: 'send', id: r.id }, 'Sent.')}>Email now</button>
                   <button type="button" disabled={busy} onClick={() => void post({ action: r.revoked ? 'restore' : 'revoke', id: r.id }, r.revoked ? 'Link switched on.' : 'Link switched off.')}>{r.revoked ? 'Switch link on' : 'Switch link off'}</button>
                   <button type="button" disabled={busy} onClick={() => void post({ action: 'rotate', id: r.id }, 'New link made. The old one no longer works.')}>New link</button>

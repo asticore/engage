@@ -1,6 +1,11 @@
+import { deflateSync } from 'node:zlib'
+
 import { describe, expect, it } from 'vitest'
 
-import { CADENCES, isReportDue, parseRecipients, parseSections, reportCsv, reportEmail, reportTables, summaryLines, toCadence, toDay, toPreset, wantsSection, withViewerRange, type ReportData } from '@/features/clientReports/core'
+import { buildPdf } from '@/features/apiBuilder/pdf'
+import { parseLogo } from '@/features/clientReports/logo'
+
+import { CADENCES, isReportDue, parseRecipients, parseSections, reportCsv, reportEmail, reportPdfLines, reportTables, summaryLines, toCadence, toDay, toPreset, wantsSection, withViewerRange, type ReportData } from '@/features/clientReports/core'
 import { copyKey, picturesAddedAfterCopy, idsAddedAfterCopy, DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
 import { cleanHost, cleanName, describeRollout, franchiseLocks, toLockChoice, toStatus } from '@/features/franchising/core'
 import { assetFilePath, collectRefs, pageFilePath, rewriteRefs, rootPrefix, sitemapPaths, stripScripts } from '@/features/demos/staticExport'
@@ -166,6 +171,64 @@ describe('client reports sections, dates and Google numbers (17f)', () => {
     expect(off.find((l) => l.label === 'Website traffic')?.value).toContain('not connected')
     expect(reportEmail('A', d, '', 'https://x.test/logo.png').html).toContain('<img src="https://x.test/logo.png"')
     expect(reportEmail('A', d, '', 'javascript:x').html).not.toContain('<img')
+  })
+})
+
+describe('client report PDF and logo (17f)', () => {
+  const crc = new Uint8Array(4)
+  const chunk = (type: string, data: Uint8Array): Uint8Array => {
+    const out = new Uint8Array(12 + data.length)
+    new DataView(out.buffer).setUint32(0, data.length)
+    out.set(new TextEncoder().encode(type), 4)
+    out.set(data, 8)
+    out.set(crc, 8 + data.length)
+    return out
+  }
+  const png = (width: number, height: number, colour: number, interlace = 0): Uint8Array => {
+    const ihdr = new Uint8Array(13)
+    const dv = new DataView(ihdr.buffer)
+    dv.setUint32(0, width)
+    dv.setUint32(4, height)
+    ihdr[8] = 8
+    ihdr[9] = colour
+    ihdr[12] = interlace
+    const channels = colour === 0 ? 1 : 3
+    const raw = new Uint8Array(height * (1 + width * channels))
+    const parts = [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', new Uint8Array(0))]
+    const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0))
+    let at = 0
+    for (const p of parts) {
+      out.set(p, at)
+      at += p.length
+    }
+    return out
+  }
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 4, 0, 0, 0xff, 0xc0, 0, 17, 8, 0, 20, 0, 40, 3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1, 0xff, 0xd9, 0, 0, 0, 0])
+  it('reads a plain PNG and a baseline JPEG, and refuses what it cannot draw', () => {
+    expect(parseLogo(png(40, 20, 2))).toMatchObject({ width: 40, height: 20, components: 3, filter: 'FlateDecode' })
+    expect(parseLogo(png(10, 10, 0))).toMatchObject({ components: 1 })
+    expect(parseLogo(png(10, 10, 6))).toBeNull()
+    expect(parseLogo(png(10, 10, 2, 1))).toBeNull()
+    expect(parseLogo(jpeg)).toMatchObject({ width: 40, height: 20, components: 3, filter: 'DCTDecode' })
+    expect(parseLogo(new Uint8Array(100))).toBeNull()
+  })
+  it('writes a PDF with the report lines, with and without a logo', () => {
+    const data: ReportData = { range: { from: '2027-03-01', to: '2027-03-30', days: 30 }, currency: 'AUD', sales: null, forms: { submissions: 7 }, content: null }
+    const lines = reportPdfLines('Acme', data)
+    const plain = new TextDecoder('latin1').decode(buildPdf(lines, 'Acme'))
+    expect(plain.startsWith('%PDF-1.4')).toBe(true)
+    expect(plain).toContain('Form entries: 7')
+    expect(plain).not.toContain('/Im1')
+    const withLogo = new TextDecoder('latin1').decode(buildPdf(lines, 'Acme', parseLogo(png(40, 20, 2))))
+    expect(withLogo).toContain('/Subtype /Image')
+    expect(withLogo).toContain('/Predictor 15')
+    expect(withLogo).toContain('/Im1 Do')
+    expect(withLogo).toContain('Form entries: 7')
+  })
+  it('adds a PDF link to the email', () => {
+    const data: ReportData = { range: { from: '2027-03-01', to: '2027-03-30', days: 30 }, currency: 'AUD', sales: null, forms: null, content: null }
+    expect(reportEmail('A', data, 'https://x.test/r', '', 'https://x.test/r.pdf').html).toContain('Download as PDF')
+    expect(reportEmail('A', data, 'https://x.test/r').html).not.toContain('Download as PDF')
   })
 })
 

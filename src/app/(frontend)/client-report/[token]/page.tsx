@@ -60,7 +60,7 @@ export default async function ClientReportPage({ params, searchParams }: { param
             </table>
           </section>
         ))}
-        <p><a href={`/api/client-report?token=${token}&${dates}`}>Download as CSV</a></p>
+        <p><a href={`/api/client-report?token=${token}&${dates}`}>Download as CSV</a> · <a href={`/api/client-report?token=${token}&${dates}&format=pdf`}>Download as PDF</a></p>
       </main>
     </div>
   )
