@@ -107,6 +107,7 @@ export const serviceFields: Field[] = [
     fields: [
       { name: 'isService', type: 'checkbox', defaultValue: false, admin: { description: 'This is a service, not a thing in a box. No shipping step at checkout, and it keeps price, options, quantity breaks and add-ons.' } },
       { name: 'serviceDuration', type: 'number', min: 0, admin: { condition: (data) => Boolean(data?.isService), description: 'How long it takes, in minutes. Shown on the product page.' } },
+      { name: 'serviceStaff', type: 'text', admin: { condition: (data) => Boolean(data?.isService), description: 'Who does it, or what is used, for example "Sam" or "Treatment room 2". Shown on the product page as With.' } },
     ],
   },
 ]

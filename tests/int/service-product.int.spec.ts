@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { durationText, isNonShipping, isService, serviceDetail } from '@/features/ecommerce/lib/service'
+import { durationText, isNonShipping, isService, serviceBadge, serviceDetail, serviceDetails } from '@/features/ecommerce/lib/service'
 
 describe('service products', () => {
   it('formats a duration', () => {
@@ -23,5 +23,16 @@ describe('service products', () => {
     expect(serviceDetail({ isService: true, serviceDuration: 60 })).toEqual({ name: 'Duration', values: ['1 hour'] })
     expect(serviceDetail({ isService: true })).toBeNull()
     expect(serviceDetail({ isService: false, serviceDuration: 60 })).toBeNull()
+  })
+
+  it('lists who does it and badges the card', () => {
+    expect(serviceDetails({ isService: true, serviceDuration: 30, serviceStaff: ' Sam ' })).toEqual([
+      { name: 'Duration', values: ['30 minutes'] },
+      { name: 'With', values: ['Sam'] },
+    ])
+    expect(serviceDetails({ isService: false, serviceStaff: 'Sam' })).toEqual([])
+    expect(serviceBadge({ isService: true, serviceDuration: 60 })).toBe('Service · 1 hour')
+    expect(serviceBadge({ isService: true })).toBe('Service')
+    expect(serviceBadge({})).toBe('')
   })
 })
