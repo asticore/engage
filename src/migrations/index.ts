@@ -246,6 +246,7 @@ import * as migration_20270318_160000_booking_reminders from './20270318_160000_
 import * as migration_20270318_170000_event_max_per_person from './20270318_170000_event_max_per_person';
 import * as migration_20270318_180000_paid_bookings from './20270318_180000_paid_bookings';
 import * as migration_20270318_190000_bid_mode from './20270318_190000_bid_mode';
+import * as migration_20270318_210000_waiting_list from './20270318_210000_waiting_list';
 
 export const migrations = [
   {
@@ -1482,5 +1483,10 @@ export const migrations = [
     up: migration_20270318_210000_approval_stand_ins.up,
     down: migration_20270318_210000_approval_stand_ins.down,
     name: '20270318_210000_approval_stand_ins',
+  },
+  {
+    up: migration_20270318_210000_waiting_list.up,
+    down: migration_20270318_210000_waiting_list.down,
+    name: '20270318_210000_waiting_list',
   },
 ];

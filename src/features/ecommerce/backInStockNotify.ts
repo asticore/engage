@@ -11,6 +11,7 @@ import { localeForRecipient } from '@/features/email/recipientLocale'
 import { configuredSiteOrigin } from '@/utilities/siteOrigin'
 import { loadStrings, t } from '@/features/uiStrings'
 import type { VariationRow } from './variations'
+import { loadWaitingListSettings, offerReleasedPlaces } from './waitingList'
 
 type Doc = Record<string, unknown>
 type EngineLike = {
@@ -26,6 +27,8 @@ export async function notifyBackInStock(engine: EngineLike, product: { id: numbe
   const settings = await engine.findGlobal({ slug: 'shop-settings', depth: 0, overrideAccess: true }).catch((): null => null)
   const storefront = (settings?.storefront ?? {}) as { backInStock?: boolean | null }
   if (storefront.backInStock === false) return 0
+  // In "In order" mode the free places are offered to the first people in line instead (waitingList.ts).
+  if ((await loadWaitingListSettings(engine as never)).mode === 'ordered') return offerReleasedPlaces(engine as never, product as never)
 
   const { docs } = await engine.find({
     collection: 'stock-subscriptions',
@@ -65,8 +68,14 @@ export async function notifyBackInStock(engine: EngineLike, product: { id: numbe
 export const backInStockAfterChange: CollectionAfterChangeHook = async ({ doc, previousDoc, req }) => {
   if (!previousDoc || !doc || (doc as { _status?: string })._status === 'draft') return doc
   try {
+    const engine = (req as unknown as { engine: EngineLike }).engine
+    // In order mode any save can free places (more stock added, a hold ended), so it offers on every save.
+    if ((await loadWaitingListSettings(engine as never)).mode === 'ordered') {
+      await offerReleasedPlaces(engine as never, doc as never)
+      return doc
+    }
     const back = restockedVariations(previousDoc as never, doc as never)
-    if (back.length > 0) await notifyBackInStock((req as unknown as { engine: EngineLike }).engine, doc as never, back)
+    if (back.length > 0) await notifyBackInStock(engine, doc as never, back)
   } catch {
     /* notification only */
   }

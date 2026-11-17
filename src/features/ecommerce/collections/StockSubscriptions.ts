@@ -15,8 +15,8 @@ export const StockSubscriptions: CollectionConfig = {
   admin: {
     group: 'Ecommerce',
     useAsTitle: 'email',
-    defaultColumns: ['email', 'product', 'status', 'createdAt', 'notifiedAt'],
-    description: 'People waiting to hear when an out-of-stock product is back. Each one is emailed once, then marked Sent.',
+    defaultColumns: ['email', 'product', 'status', 'createdAt', 'notifiedAt', 'holdUntil'],
+    description: 'People waiting to hear when an out-of-stock product is back, in the order they signed up. Each one is emailed once. With the waiting list set to In order, each is offered a held place in turn.',
   },
   access: {
     create: () => false,
@@ -35,12 +35,16 @@ export const StockSubscriptions: CollectionConfig = {
       type: 'select',
       defaultValue: 'pending',
       index: true,
-      admin: { position: 'sidebar', readOnly: true, description: 'Pending waits for stock. Sent means the email has gone.' },
+      admin: { position: 'sidebar', readOnly: true, description: 'Pending waits for stock. Sent means the email has gone. Offered means a place is held for them until the hold ends. Purchased, or Expired when they did not buy in time and the place went to the next person.' },
       options: [
         { label: 'Pending', value: 'pending' },
         { label: 'Sent', value: 'sent' },
+        { label: 'Offered', value: 'offered' },
+        { label: 'Purchased', value: 'purchased' },
+        { label: 'Expired', value: 'expired' },
       ],
     },
     { name: 'notifiedAt', type: 'date', admin: { readOnly: true, position: 'sidebar', date: { pickerAppearance: 'dayAndTime' } } },
+    { name: 'holdUntil', type: 'date', admin: { readOnly: true, position: 'sidebar', description: 'When the held place goes to the next person.', date: { pickerAppearance: 'dayAndTime' } } },
   ],
 }

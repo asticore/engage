@@ -161,6 +161,8 @@ export const storefrontGroup: Field = {
     toggle('crossSellsInCart', 'Show cross-sells in the cart', 'Suggest the "Cross-sells" chosen on each product (Linked products) under the cart items.'),
     toggle('wishlist', 'Wishlist', 'Show a Save for later heart on product pages. Saved items are kept in the visitor\'s browser.'),
     toggle('backInStock', 'Back-in-stock sign-up', 'Show an "Email me when it is back" form on out-of-stock products, and send the email when stock returns.'),
+    { name: 'waitingListMode', type: 'select', defaultValue: 'all', options: [{ label: 'Email everyone at once', value: 'all' }, { label: 'In order, with a held place', value: 'ordered' }], admin: { description: 'When stock returns: email every sign-up at once, or offer the free places to the first people in line, each for a limited time. A held place cannot be bought by anyone else.' } },
+    { name: 'waitingListHoldHours', type: 'number', defaultValue: 24, min: 1, max: 336, admin: { description: 'Hours a person has to buy a held place before it goes to the next in line (In order only).' } },
     toggle('feedsEnabled', 'Product feeds', 'Publish /feeds/google-merchant.xml (Google Merchant Center) and /feeds/meta-catalog.csv (Facebook and Instagram catalogue) from your published products.', false),
     { name: 'feedBrand', type: 'text', admin: { description: 'Brand name sent in the feeds. Leave blank to use the business name.' } },
     { name: 'feedGoogleCategory', type: 'text', admin: { description: 'Optional Google product category, for example "Apparel & Accessories > Clothing". Applied to every product in the Google feed.' } },

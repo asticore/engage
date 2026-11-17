@@ -6,7 +6,7 @@
  */
 
 import { effectivePrice, type PriceFields } from './pricing'
-import { canPurchase, computeStockStatus, type StockFields, type StockStatus } from './stock'
+import { allowsBackorders, canPurchase, computeStockStatus, type StockFields, type StockStatus } from './stock'
 import { decodeAttributeValues, findVariation, type VariationRow } from './variations'
 import { packagingError } from './lib/packaging'
 import { quantityError, validateNamedPrice } from './lib/qtyLimits'
@@ -56,6 +56,14 @@ export type CartLine =
     }
   | { ok: false; error: string }
 
+const HELD_MESSAGE = 'The remaining places are held for people on the waiting list. Please try again later.'
+
+/** True when buying `total` would take a place the waiting list holds for someone else. */
+function isHeldBack(stock: StockFields, total: number, held: number): boolean {
+  if (held <= 0 || !stock.manageStock || allowsBackorders(stock)) return false
+  return Number(stock.stockQty ?? 0) - held < total
+}
+
 const isPublished = (product: CatalogueProduct): boolean => product._status == null || product._status === 'published'
 
 /** Label such as "Red, M" for a variation. */
@@ -67,7 +75,8 @@ export function variationLabel(variation: VariationRow): string {
  * Validates and prices one cart line. `alreadyInCart` is the quantity of the same product (or
  * variation) already in the cart, so the stock and maximum checks cover the new total.
  * `priceCents` is the buyer's own amount, used only for name-your-price simple products.
- * `preordersOn` is the shop-wide pre-order switch (on by default).
+ * `preordersOn` is the shop-wide pre-order switch (on by default). `heldForOthers` is how many places of this item
+ * the waiting list holds for other people (see waitingList.ts); managed stock without backorders must leave them free.
  */
 export function resolveCartLine(
   product: CatalogueProduct | null | undefined,
@@ -77,6 +86,7 @@ export function resolveCartLine(
   alreadyInCart = 0,
   priceCents: number | null = null,
   preordersOn = true,
+  heldForOthers = 0,
 ): CartLine {
   if (!product || !isPublished(product)) return { ok: false, error: 'This product is not available.' }
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 999) return { ok: false, error: 'Invalid quantity.' }
@@ -100,6 +110,7 @@ export function resolveCartLine(
     // A variation that does not manage its own stock draws on the product's.
     const stock: StockFields = variation.manageStock ? variation : product.manageStock ? product : variation
     if (!canPurchase(stock, total) && !preorder) return { ok: false, error: 'That option is out of stock.' }
+    if (!preorder && isHeldBack(stock, total, heldForOthers)) return { ok: false, error: HELD_MESSAGE }
     const resolved = effectivePrice(variationPriceFields(product, variation), now)
     if (resolved === null) return { ok: false, error: 'This option has no price.' }
     return {
@@ -115,6 +126,7 @@ export function resolveCartLine(
   }
 
   if (!canPurchase(product, total) && !preorder) return { ok: false, error: 'This product is out of stock.' }
+  if (!preorder && isHeldBack(product, total, heldForOthers)) return { ok: false, error: HELD_MESSAGE }
   if ((product.nameYourPrice || product.isDonation) && type === 'simple') {
     // The buyer's amount is checked here against the shop's minimum; the browser's value is never trusted as is.
     const named = validateNamedPrice(priceCents, { minPrice: product.minPrice != null ? Math.floor(product.minPrice * 100 + 1e-9) : null })
