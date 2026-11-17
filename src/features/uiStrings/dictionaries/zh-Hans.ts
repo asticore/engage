@@ -1347,6 +1347,8 @@ const zhHans: UiDictionary = {
   "email.abandonedCart.body": "您在 {site_name} 的购物车里还有商品，它们仍在等您。",
   "email.backInStock.subject": "已重新到货：{label}",
   "email.backInStock.body": "好消息，{label} 已重新到货。\n\n在此查看：{url}\n\n您曾要求我们通知您，因此这是我们就此发送的唯一一封邮件。",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "邮件和短信连接",
   'settings.link.email-and-text-connections.description': "邮件和短信服务商在\"集成\"页面中连接。此处从不显示密钥。",

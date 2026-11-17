@@ -28,6 +28,7 @@ import { resolveComposite } from './composite'
 import { parseCompositePicks } from '../lib/composite'
 import { resolveTierPrice, type PriceTier } from '../lib/priceTiers'
 import { listPriceTiers } from './priceTiers'
+import { loadHeldForOthers } from '../waitingList'
 
 type Doc = Record<string, unknown>
 export type PricingEngine = {
@@ -142,12 +143,13 @@ export async function loadTierContext(items: CartItemInput[], customerTypes: str
   }
 }
 
-export async function loadPricedLines(engine: PricingEngine, items: CartItemInput[], now = new Date(), addOnsOn = true, tierCtx?: TierContext): Promise<PricedLine[]> {
+export async function loadPricedLines(engine: PricingEngine, items: CartItemInput[], now = new Date(), addOnsOn = true, tierCtx?: TierContext, buyerEmail?: string | null): Promise<PricedLine[]> {
   const lines: PricedLine[] = []
   let giftSettings: ReturnType<typeof normaliseGiftCardSettings> | null = null
   const inCart = new Map<string, number>() // the same product listed twice must be available for the sum
   const pools = new Map<string, { available: number; quantity: number }>() // stock pools to hold at checkout (Task 23e)
   const preordersOn = await loadPreordersEnabled(engine) // one read per cart, shop-wide switch
+  const held = await loadHeldForOthers(engine as never, items, buyerEmail, now) // places the waiting list holds for other people
   for (const [i, item] of items.entries()) {
     const productId = idOf(item.product)
     if (!productId) continue
@@ -212,7 +214,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       continue
     }
     const stockKey = `${productId}:${item.variation ?? ''}`
-    const resolved = resolveCartLine(product, item.variation ?? null, quantity, now, inCart.get(stockKey) ?? 0, item.priceCents ?? null, preordersOn)
+    const resolved = resolveCartLine(product, item.variation ?? null, quantity, now, inCart.get(stockKey) ?? 0, item.priceCents ?? null, preordersOn, held.get(stockKey) ?? 0)
     inCart.set(stockKey, (inCart.get(stockKey) ?? 0) + (Number.isInteger(quantity) ? quantity : 0))
     if (resolved.ok && product && Number.isInteger(quantity)) {
       const pool = stockPool(product as never, resolved.variationId)
@@ -386,7 +388,7 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
   const shopRules = await loadShopRulesConfig(engine) // one read per checkout: add-on switch and pricing rules
   const tierCtx = await loadTierContext(input.items, input.customerRoles)
   const giftWrapCents = input.giftWrap === true ? giftWrapFee(normaliseGiftWrap(await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null)), true) : 0
-  const lines = await loadPricedLines(engine, input.items, undefined, shopRules.addOnsOn, tierCtx)
+  const lines = await loadPricedLines(engine, input.items, undefined, shopRules.addOnsOn, tierCtx, input.email)
   // Wholesale mode (Task 11d): hidden prices, wholesale-only products and the minimum order are checked here, so the quote and the checkout agree.
   const wholesaleCfg = await loadWholesaleConfig(engine)
   if (wholesaleCfg.enabled) {

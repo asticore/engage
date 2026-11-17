@@ -1348,6 +1348,8 @@ const es: UiDictionary = {
   "email.abandonedCart.body": "Dejaste algunos artículos en tu carrito en {site_name}. Todavía te esperan.",
   "email.backInStock.subject": "De nuevo disponible: {label}",
   "email.backInStock.body": "Buenas noticias. {label} vuelve a estar disponible.\n\nVerlo aquí: {url}\n\nPediste que te avisáramos, así que este es el único correo que te enviaremos al respecto.",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "Conexiones de correo y SMS",
   'settings.link.email-and-text-connections.description': "Los proveedores de correo y SMS se conectan en la página de Integraciones. Las claves nunca se muestran aquí.",

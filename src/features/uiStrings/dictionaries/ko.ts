@@ -1348,6 +1348,8 @@ const ko: UiDictionary = {
   "email.abandonedCart.body": "{site_name} 장바구니에 상품이 남아 있습니다. 여전히 기다리고 있어요.",
   "email.backInStock.subject": "재입고되었습니다: {label}",
   "email.backInStock.body": "반가운 소식입니다. {label}이(가) 다시 입고되었습니다.\n\n여기에서 확인하세요: {url}\n\n재입고 알림을 요청하셨기에 이 메일이 이 내용에 대해 보내는 유일한 메일입니다.",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "이메일 및 문자 연결",
   'settings.link.email-and-text-connections.description': "이메일 및 문자 제공업체는 통합 페이지에서 연결합니다. 키는 여기에 표시되지 않습니다.",

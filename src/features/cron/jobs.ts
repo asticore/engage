@@ -29,6 +29,9 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { sweepStockHolds } = await import('@/features/ecommerce/server/stockHold')
     const connect = await import('@/cms/db/connect')
     await sweepStockHolds((await connect.resolveD1Binding().catch((): null => null)) as never)
+    // Waiting-list holds that ran out pass their places to the next person in line.
+    const { sweepWaitingList } = await import('@/features/ecommerce/waitingList')
+    await sweepWaitingList(engine as never).catch((): number => 0)
   },
   pagespeed: async ({ engine, db }) => {
     const { runDueTests } = await import('@/features/pagespeed/queue')

@@ -1348,6 +1348,8 @@ const ar: UiDictionary = {
   "email.abandonedCart.body": "تركت بعض العناصر في سلة التسوق الخاصة بك في {site_name}. ما زالت في انتظارك.",
   "email.backInStock.subject": "متوفر مجددًا: {label}",
   "email.backInStock.body": "أخبار سارة. {label} متوفر مجددًا.\n\nشاهده هنا: {url}\n\nلقد طلبت منا إخبارك، لذلك فهذه هي الرسالة الوحيدة التي سنرسلها بخصوص ذلك.",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "اتصالات البريد الإلكتروني والرسائل النصية",
   'settings.link.email-and-text-connections.description': "يتم ربط مزودي البريد الإلكتروني والرسائل النصية من صفحة التكاملات. لا تُعرض المفاتيح هنا أبدًا.",

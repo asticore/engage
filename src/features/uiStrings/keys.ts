@@ -1390,6 +1390,8 @@ export const UI_STRING_SOURCE = {
   "email.abandonedCart.body": "You left some items in your cart at {site_name}. They are still waiting for you.",
   "email.backInStock.subject": "Back in stock: {label}",
   "email.backInStock.body": "Good news. {label} is back in stock.\n\nSee it here: {url}\n\nYou asked us to let you know, so this is the only email we will send about it.",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "Email and text connections",
   'settings.link.email-and-text-connections.description': "Email and text providers are connected on the Integrations page. Keys are never shown here.",

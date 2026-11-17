@@ -206,6 +206,9 @@ async function takeStock(engine: Engine, order: Doc, orderId: number): Promise<{
     await addOrderNote(engine, orderId, { type: 'internal', text: `Stock was not updated (will retry): ${result.failed.join('; ')}`, author: 'System' })
     return { oversold: false }
   }
+  // A buyer who held a waiting-list place has used it.
+  const { markOfferPurchased } = await import('../waitingList')
+  await markOfferPurchased(engine as never, order.customerEmail, lines)
   if (result.oversold.length > 0) {
     await runChanges(d1, `UPDATE eg_orders SET status = 'on-hold' WHERE id = ?1 AND status = 'processing'`, orderId)
     await flagAttention(engine, orderId, `Oversold: not enough stock for ${result.oversold.join(', ')}. The order is on hold.`)
