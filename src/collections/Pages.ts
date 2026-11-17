@@ -3,6 +3,7 @@ import { pageSlugRedirectAfterChange } from '@/features/redirects/slugChange'
 import { domainScopedAccess, domainWriteGuard } from '@/features/domains/access'
 import { domainSiteDefault } from '@/features/domains/hooks'
 import { availableDomainsField } from '@/features/domains/field'
+import { getSignInPaths } from '@/features/security/settings'
 import { slugClaimsConflict } from '@/features/domains/scope'
 import { machineAutoDraftAfterChange } from '@/features/multilingual/machine/autoDraft'
 import { outdatedAfterChange } from '@/features/multilingual/outdated'
@@ -85,6 +86,14 @@ export const Pages: CollectionConfig = {
       ) => {
         const slug = typeof value === 'string' && value.length > 0 ? value : slugify(String(data?.title || ''))
         if (!slug) return 'A slug or title is required.'
+
+        // A top-level page at a custom sign-in address would be hidden behind the sign-in (Task 19l).
+        if (!data?.parent) {
+          const signIn = await getSignInPaths().catch((): null => null)
+          if (signIn && (signIn.customer === `/${slug}` || signIn.member === `/${slug}`)) {
+            return 'That address is used by a sign-in page (Settings > Security or Members). Choose another slug or change the sign-in URL first.'
+          }
+        }
 
         const parentId = data?.parent
           ? typeof data.parent === 'object'

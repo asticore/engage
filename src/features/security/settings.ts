@@ -1,6 +1,7 @@
 import type { FeatureKey } from '@/features/registry'
 
 import { DEFAULT_ADMIN_PATH, resolveAdminRoot } from './adminPath'
+import { CUSTOMER_SIGN_IN_PATH_ENV, MEMBER_SIGN_IN_PATH_ENV, resolveSignInPaths, type SignInPlace } from './signInPath'
 import { DEFAULT_PASSWORD_POLICY, HISTORY_LIMIT, MAX_POLICY_LENGTH, type PasswordPolicy } from './passwordPolicyDefaults'
 
 /**
@@ -547,6 +548,16 @@ export async function readSecuritySettingsFromD1(): Promise<SecuritySettings> {
 export async function getAdminRoot(): Promise<string> {
   const settings = await readSecuritySettingsFromD1()
   return resolveAdminRoot(settings.adminPath, process.env.ENGAGE_ADMIN_PATH)
+}
+
+/** The sign-in paths in use (env, then saved settings, then defaults), for server code that must avoid them. */
+export async function getSignInPaths(): Promise<Record<SignInPlace, string>> {
+  const settings = await readSecuritySettingsFromD1()
+  return resolveSignInPaths(
+    settings.signInPaths,
+    { customer: process.env[CUSTOMER_SIGN_IN_PATH_ENV], member: process.env[MEMBER_SIGN_IN_PATH_ENV] },
+    await getAdminRoot(),
+  )
 }
 
 /** Drops the isolate's copy so the next request re-reads. Called after a save. */
