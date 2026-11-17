@@ -7,7 +7,6 @@ import { fieldLabel } from '@/admin/fields/shared'
 import { PermissionTable } from './PermissionTable'
 import type { PermissionMatrix, PermissionOverrides } from '@/features/roles/permissions'
 import { effectiveMatrix, sanitizeOverrides } from '@/features/roles/permissions'
-import styles from '@/admin/admin.module.css'
 
 type UserPermissionOverridesFieldProps = {
   field: Field
@@ -122,7 +121,7 @@ export function UserPermissionOverridesField({ field, path, readOnly }: UserPerm
       )}
 
       {error && (
-        <div className={styles.error}>
+        <div className="eg-roles-error">
           {error}
         </div>
       )}

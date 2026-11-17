@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildTagTree, descendantIds, exportFilesCsv, exportTagsCsv, parseFilesCsv, parseTag, parseTagsCsv, pathOf, type Tag } from '@/features/mediaTags/logic'
+import { chipsFor, buildTagTree, descendantIds, exportFilesCsv, exportTagsCsv, parseFilesCsv, parseTag, parseTagsCsv, pathOf, type Tag } from '@/features/mediaTags/logic'
 
 const tags: Tag[] = [
   { id: 1, name: 'Products', parentId: null, color: '#112233' },
@@ -36,5 +36,11 @@ describe('media tags', () => {
     expect(parseTagsCsv(csv).find((r) => r.path.length === 1 && r.path[0] === 'Products')?.color).toBe('#112233')
     const files = exportFilesCsv(tags, [{ filename: 'a, b.jpg', tagIds: [3, 4] }])
     expect(parseFilesCsv(files)).toEqual([{ filename: 'a, b.jpg', paths: [['Press'], ['Products', 'Summer', 'Beach']] }])
+  })
+  it('makes sorted chips for a file and skips unknown tags', () => {
+    const chips = chipsFor(tags, [4, 3, 99])
+    expect(chips.map((c) => c.label)).toEqual(['Press', 'Beach'])
+    expect(chips[1].title).toBe('Products > Summer > Beach')
+    expect(chipsFor(tags, undefined)).toEqual([])
   })
 })

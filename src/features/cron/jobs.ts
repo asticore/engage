@@ -13,7 +13,11 @@ export type JobRunner = (ctx: JobContext) => Promise<unknown>
 export const JOB_RUNNERS: Record<string, JobRunner> = {
   schedules: async ({ engine, db, now }) => {
     const { runDueSchedules } = await import('@/features/schedule/runDue')
-    return runDueSchedules(engine as never, db as never, now.toISOString())
+    const result = await runDueSchedules(engine as never, db as never, now.toISOString())
+    // Reviews that have waited past their workflow's due days are chased on the same timer (never fails the run).
+    const { runOverdueReviewReminders } = await import('@/features/approval/overdue')
+    await runOverdueReviewReminders(engine as never, now).catch((): number => 0)
+    return result
   },
   'abandoned-carts': async ({ engine }) => {
     const { runAbandonedCartReminders } = await import('@/features/ecommerce/server/abandoned')
@@ -25,6 +29,9 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { sweepStockHolds } = await import('@/features/ecommerce/server/stockHold')
     const connect = await import('@/cms/db/connect')
     await sweepStockHolds((await connect.resolveD1Binding().catch((): null => null)) as never)
+    // Waiting-list holds that ran out pass their places to the next person in line.
+    const { sweepWaitingList } = await import('@/features/ecommerce/waitingList')
+    await sweepWaitingList(engine as never).catch((): number => 0)
   },
   pagespeed: async ({ engine, db }) => {
     const { runDueTests } = await import('@/features/pagespeed/queue')
@@ -54,9 +61,20 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { deliverDueGiftCards } = await import('@/features/ecommerce/server/storedValue')
     await deliverDueGiftCards(engine as never)
   },
-  'scheduled-emails': async ({ engine, now }) => {
+  'scheduled-emails': async ({ engine, env, now }) => {
     const { runScheduledEmails } = await import('@/features/email/scheduledEmails')
     await runScheduledEmails(engine as never, now)
+    // Booking reminders go out on the same timer (never fails the run).
+    const { runBookingReminders } = await import('@/features/bookings/reminders')
+    const { sendEmail } = await import('@/features/email')
+    const site = (await (engine as never as { findGlobal: (a: unknown) => Promise<{ siteName?: string } | null> }).findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch((): null => null)) ?? {}
+    const { runQuoteSweep } = await import('@/features/quotes/expiry')
+    return {
+      bookingHolds: await (await import('@/features/bookings/payment')).releaseExpiredHolds(env.D1 as never, now),
+      bookingReminders: await runBookingReminders(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never),
+      quotes: await runQuoteSweep(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never, engine as never),
+      auctions: await (await import('@/features/quotes/auctions')).runAuctionSweep(env.D1 as never, engine, now, (await import('@/utilities/siteOrigin')).configuredSiteOrigin()),
+    }
   },
   'shipment-tracking': async ({ engine, now }) => {
     const { pollTracking } = await import('@/features/ecommerce/server/tracking')
@@ -64,7 +82,11 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
   },
   'member-dunning': async ({ engine, now }) => {
     const { sweepDunning } = await import('@/features/members/dunningRun')
-    return sweepDunning(engine as never, now)
+    const dunning = await sweepDunning(engine as never, now)
+    // Once a day (03:00 UTC): warn people whose saved card is about to expire.
+    if (now.getUTCHours() !== 3) return dunning
+    const { sweepCardExpiry } = await import('@/features/billing/cardExpiry')
+    return { ...dunning, cardExpiry: await sweepCardExpiry(engine as never, now) }
   },
   'demo-reset': async ({ engine, env, now }) => {
     const { getFeatureFlags } = await import('@/utilities/features')
@@ -102,5 +124,35 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { refreshDisplayRates } = await import('@/features/ecommerce/server/displayRates')
     const base = await loadShopCurrency(engine as never)
     await refreshDisplayRates((await rawD1()) as never, base, now)
+  },
+  'taskboard-due': async ({ engine, now }) => {
+    const { getFeatureFlags } = await import('@/utilities/features')
+    if (!(await getFeatureFlags()).taskboard) return 'feature off'
+    const [{ rawD1 }, { sendEmail }, { textToHtml }, { emitWebhookEvent }, { listRules }, { rulesFor }, { runTaskDueReminders }] = await Promise.all([
+      import('@/features/ecommerce/server/db'),
+      import('@/features/email'),
+      import('@/features/email/renderTemplate'),
+      import('@/features/webhooks/emit'),
+      import('@/features/notifications/store'),
+      import('@/features/notifications/rules'),
+      import('@/features/taskboard/dueReminders'),
+    ])
+    const d1 = (await rawD1()) as never
+    return runTaskDueReminders({
+      d1,
+      now,
+      siteName: async () => {
+        try {
+          const g = (await (engine as unknown as { findGlobal: (a: unknown) => Promise<{ businessName?: unknown }> }).findGlobal({ slug: 'site-details', depth: 0, overrideAccess: true }))
+          return typeof g.businessName === 'string' ? g.businessName : ''
+        } catch {
+          return ''
+        }
+      },
+      sendEmail: (args) => sendEmail(args),
+      textToHtml,
+      emit: (event, data) => emitWebhookEvent(event, data),
+      hasRule: async (event) => rulesFor(await listRules(d1), event).length > 0,
+    })
   },
 }

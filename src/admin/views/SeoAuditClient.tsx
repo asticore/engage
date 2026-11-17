@@ -10,11 +10,12 @@ import type { Status } from '@/features/seo/analysis/types'
 import { AUDIT_COLLECTIONS, type AuditCollection, type AuditRow, type AuditSummary } from '@/features/seo/audit'
 import { DEFAULT_AUDIT_FILTERS, filterAuditRows, sortAuditRows, type AuditFilters, type ScoreFilter, type SortKey } from '@/features/seo/auditFilters'
 import { changedSeoRows, rowKey, type SeoEditField, type SeoEditMap } from '@/features/seo/auditEdits'
+import type { SitewideCheck } from '@/features/seo/sitewideChecks'
 import { BrokenLinksPanel } from './BrokenLinksPanel'
 import './seo-audit.css'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
-type AuditResponse = { rows: AuditRow[]; summary: AuditSummary }
+type AuditResponse = { rows: AuditRow[]; summary: AuditSummary; sitewide?: SitewideCheck[] }
 type LoadState = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: AuditResponse }
 
 const COLLECTION_LABEL: Record<AuditCollection, string> = { pages: 'Pages', posts: 'Blog', products: 'Products', events: 'Events' }
@@ -37,6 +38,24 @@ function StatusDot({ status }: { status: Status }) {
   const t = useAdminT()
   const text = STATUS_KEY[status] ? t(STATUS_KEY[status]) : 'For information'
   return <Tooltip text={text}><span className={`sa-dot sa-dot--${status}`} role="img" aria-label={text} /></Tooltip>
+}
+
+function SitewideLights({ checks }: { checks: SitewideCheck[] }) {
+  if (checks.length === 0) return null
+  return (
+    <section className="sa-sitewide" aria-label="Site-wide checks">
+      <h2 className="sa-results__heading">Site-wide checks</h2>
+      <ul className="sa-sitewide__list">
+        {checks.map((c) => (
+          <li key={c.id} className="sa-sitewide__item">
+            <StatusDot status={c.status} />
+            <strong>{c.label}</strong>
+            <span className="sa-muted">{c.message}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
 function SummaryTile({ value, label }: { value: number; label: string }) {
@@ -350,6 +369,7 @@ export function SeoAuditClient({ collections }: { collections: AuditCollection[]
 
       {state.status === 'ready' && (
         <>
+          <SitewideLights checks={state.data.sitewide ?? []} />
           <SummaryCards summary={state.data.summary} />
 
           <CollapsibleCard id="seo-audit-filters" title={t('se.lit.filters')}>

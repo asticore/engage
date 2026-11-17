@@ -1,7 +1,7 @@
 import { winsSlot, type Busy, type Override, type Rule } from './engine'
 import { type BookingStatus, type CustomerInput, type TypeInput } from './logic'
 
-type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T[] }>; run: () => Promise<{ meta?: { last_row_id?: number } }> } }
+type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T[] }>; run: () => Promise<{ meta?: { last_row_id?: number; changes?: number } }> } }
 export type D1 = { prepare: (sql: string) => Stmt }
 type Row = Record<string, unknown>
 
@@ -27,6 +27,11 @@ export type Booking = {
   customerPhone: string
   notes: string
   cancelledAt: string | null
+  amountCents: number
+  paymentIntentId: string | null
+  paidAt: string | null
+  refundedCents: number
+  createdAtMs: number
 }
 
 const toResource = (r: Row): Resource => ({ id: Number(r.id), title: String(r.title ?? ''), timeZone: String(r.time_zone ?? 'Australia/Sydney'), active: Number(r.active) !== 0 })
@@ -45,6 +50,8 @@ const toType = (r: Row): BookingType => ({
   minNoticeMinutes: Number(r.min_notice_minutes ?? 60),
   maxAdvanceDays: Number(r.max_advance_days ?? 60),
   capacity: Number(r.capacity ?? 1),
+  priceCents: Number(r.price_cents ?? 0),
+  refundHours: Number(r.refund_hours ?? 24),
 })
 const toBooking = (r: Row): Booking => ({
   id: Number(r.id),
@@ -63,6 +70,11 @@ const toBooking = (r: Row): Booking => ({
   customerPhone: String(r.customer_phone ?? ''),
   notes: String(r.notes ?? ''),
   cancelledAt: r.cancelled_at ? String(r.cancelled_at) : null,
+  amountCents: Number(r.amount_cents ?? 0),
+  paymentIntentId: r.payment_intent_id ? String(r.payment_intent_id) : null,
+  paidAt: r.paid_at ? String(r.paid_at) : null,
+  refundedCents: Number(r.refunded_cents ?? 0),
+  createdAtMs: r.created_at ? Date.parse(String(r.created_at)) || 0 : 0,
 })
 
 export async function listResources(d1: D1): Promise<Resource[]> {
@@ -98,9 +110,9 @@ export async function getTypeBySlug(d1: D1, slug: string): Promise<BookingType |
 export async function saveType(d1: D1, id: number | null, t: TypeInput, nowIso: string): Promise<string | null> {
   const clash = await all(d1, 'SELECT id FROM eg_booking_types WHERE slug = ?1', t.slug)
   if (clash[0] && Number(clash[0].id) !== id) return `The address "${t.slug}" is already used by another booking type.`
-  const v = [t.title, t.slug, t.description, t.resourceId, t.durationMinutes, t.stepMinutes, t.bufferBeforeMinutes, t.bufferAfterMinutes, t.minNoticeMinutes, t.maxAdvanceDays, t.capacity, t.locationText, t.active ? 1 : 0, nowIso]
-  if (id) await run(d1, 'UPDATE eg_booking_types SET title=?1, slug=?2, description=?3, resource_id=?4, duration_minutes=?5, step_minutes=?6, buffer_before=?7, buffer_after=?8, min_notice_minutes=?9, max_advance_days=?10, capacity=?11, location_text=?12, active=?13, updated_at=?14 WHERE id=?15', ...v, id)
-  else await run(d1, 'INSERT INTO eg_booking_types (title, slug, description, resource_id, duration_minutes, step_minutes, buffer_before, buffer_after, min_notice_minutes, max_advance_days, capacity, location_text, active, updated_at, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?14)', ...v)
+  const v = [t.title, t.slug, t.description, t.resourceId, t.durationMinutes, t.stepMinutes, t.bufferBeforeMinutes, t.bufferAfterMinutes, t.minNoticeMinutes, t.maxAdvanceDays, t.capacity, t.locationText, t.active ? 1 : 0, nowIso, t.priceCents, t.refundHours]
+  if (id) await run(d1, 'UPDATE eg_booking_types SET title=?1, slug=?2, description=?3, resource_id=?4, duration_minutes=?5, step_minutes=?6, buffer_before=?7, buffer_after=?8, min_notice_minutes=?9, max_advance_days=?10, capacity=?11, location_text=?12, active=?13, updated_at=?14, price_cents=?15, refund_hours=?16 WHERE id=?17', ...v, id)
+  else await run(d1, 'INSERT INTO eg_booking_types (title, slug, description, resource_id, duration_minutes, step_minutes, buffer_before, buffer_after, min_notice_minutes, max_advance_days, capacity, location_text, active, updated_at, created_at, price_cents, refund_hours) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?14,?15,?16)', ...v)
   return null
 }
 export async function deleteType(d1: D1, id: number): Promise<void> {
@@ -127,11 +139,11 @@ export async function deleteOverride(d1: D1, id: number): Promise<void> {
 
 /** Confirmed and completed bookings of a resource that overlap a time range, as busy blocks. */
 export async function busyFor(d1: D1, resourceId: number, fromMs: number, toMs: number): Promise<Busy[]> {
-  const rows = await all(d1, "SELECT start_ms, end_ms, units FROM eg_bookings WHERE resource_id = ?1 AND status IN ('confirmed','completed') AND start_ms < ?3 AND end_ms > ?2", resourceId, fromMs, toMs)
+  const rows = await all(d1, "SELECT start_ms, end_ms, units FROM eg_bookings WHERE resource_id = ?1 AND status IN ('pending_payment','confirmed','completed') AND start_ms < ?3 AND end_ms > ?2", resourceId, fromMs, toMs)
   return rows.map((r) => ({ startMs: Number(r.start_ms), endMs: Number(r.end_ms), units: Number(r.units ?? 1) }))
 }
 
-export type NewBooking = { number: string; typeId: number; resourceId: number; startMs: number; endMs: number; timeZone: string; capacity: number; manageTokenHash: string; customer: CustomerInput }
+export type NewBooking = { number: string; typeId: number; resourceId: number; startMs: number; endMs: number; timeZone: string; capacity: number; manageTokenHash: string; customer: CustomerInput; amountCents?: number }
 
 /**
  * Saves a booking with insert-then-verify (see winsSlot): insert, look at every row overlapping it, and take the
@@ -140,11 +152,11 @@ export type NewBooking = { number: string; typeId: number; resourceId: number; s
 export async function createBooking(d1: D1, b: NewBooking, nowIso: string): Promise<Booking | null> {
   const inserted = await run(
     d1,
-    "INSERT INTO eg_bookings (number, type_id, resource_id, status, start_at, end_at, start_ms, end_ms, units, time_zone, customer_name, customer_email, customer_phone, notes, manage_token_hash, updated_at, created_at) VALUES (?1,?2,?3,'confirmed',?4,?5,?6,?7,1,?8,?9,?10,?11,?12,?13,?14,?14)",
-    b.number, b.typeId, b.resourceId, new Date(b.startMs).toISOString(), new Date(b.endMs).toISOString(), b.startMs, b.endMs, b.timeZone, b.customer.name, b.customer.email, b.customer.phone, b.customer.notes, b.manageTokenHash, nowIso,
+    "INSERT INTO eg_bookings (number, type_id, resource_id, status, start_at, end_at, start_ms, end_ms, units, time_zone, customer_name, customer_email, customer_phone, notes, manage_token_hash, amount_cents, updated_at, created_at) VALUES (?1,?2,?3,?15,?4,?5,?6,?7,1,?8,?9,?10,?11,?12,?13,?16,?14,?14)",
+    b.number, b.typeId, b.resourceId, new Date(b.startMs).toISOString(), new Date(b.endMs).toISOString(), b.startMs, b.endMs, b.timeZone, b.customer.name, b.customer.email, b.customer.phone, b.customer.notes, b.manageTokenHash, nowIso, (b.amountCents ?? 0) > 0 ? 'pending_payment' : 'confirmed', b.amountCents ?? 0,
   )
   const id = Number(inserted.meta?.last_row_id ?? 0)
-  const overlapping = (await all(d1, "SELECT id, units FROM eg_bookings WHERE resource_id = ?1 AND status IN ('confirmed','completed') AND start_ms < ?3 AND end_ms > ?2", b.resourceId, b.startMs, b.endMs)).map((r) => ({ id: Number(r.id), units: Number(r.units ?? 1) }))
+  const overlapping = (await all(d1, "SELECT id, units FROM eg_bookings WHERE resource_id = ?1 AND status IN ('pending_payment','confirmed','completed') AND start_ms < ?3 AND end_ms > ?2", b.resourceId, b.startMs, b.endMs)).map((r) => ({ id: Number(r.id), units: Number(r.units ?? 1) }))
   if (!id || !winsSlot(id, overlapping, b.capacity)) {
     if (id) await run(d1, 'DELETE FROM eg_bookings WHERE id = ?1', id)
     return null
@@ -176,4 +188,32 @@ export async function listBookings(d1: D1, filter: { status?: string; from?: num
   }
   const sql = `SELECT * FROM eg_bookings${where.length ? ` WHERE ${where.join(' AND ')}` : ''} ORDER BY start_ms DESC LIMIT ${Math.max(1, Math.min(limit, 500))}`
   return (await all(d1, sql, ...args)).map(toBooking)
+}
+
+/** Confirmed bookings that start within `withinMs` of now and have not had their reminder yet, soonest first. */
+export async function dueReminders(d1: D1, nowMs: number, withinMs: number, limit = 100): Promise<Booking[]> {
+  const rows = await all(d1, "SELECT * FROM eg_bookings WHERE status = 'confirmed' AND reminder_sent_at IS NULL AND start_ms > ?1 AND start_ms <= ?2 ORDER BY start_ms ASC LIMIT ?3", nowMs, nowMs + withinMs, Math.max(1, Math.min(limit, 500)))
+  return rows.map(toBooking)
+}
+export async function markReminded(d1: D1, id: number, nowIso: string): Promise<void> {
+  await run(d1, 'UPDATE eg_bookings SET reminder_sent_at = ?1 WHERE id = ?2', nowIso, id)
+}
+
+/** A person's bookings by the email they booked with, newest first. Callers must only pass an address the signed-in account has confirmed. */
+export async function listBookingsByEmail(d1: D1, email: string, limit = 100): Promise<Booking[]> {
+  const rows = await all(d1, 'SELECT * FROM eg_bookings WHERE lower(customer_email) = ?1 ORDER BY start_ms DESC LIMIT ?2', email.trim().toLowerCase(), Math.max(1, Math.min(limit, 200)))
+  return rows.map(toBooking)
+}
+
+/** Moves an unpaid booking to confirmed once its payment arrived. Returns true only for the call that did the move, so a replayed webhook does nothing twice. */
+export async function markPaid(d1: D1, id: number, intentId: string, nowIso: string): Promise<boolean> {
+  const res = await d1.prepare("UPDATE eg_bookings SET status = 'confirmed', payment_intent_id = ?1, paid_at = ?2, updated_at = ?2 WHERE id = ?3 AND status = 'pending_payment'").bind(intentId, nowIso, id).run()
+  return ((res.meta as { changes?: number } | undefined)?.changes ?? 0) > 0
+}
+export async function setRefunded(d1: D1, id: number, refundedCents: number, nowIso: string): Promise<void> {
+  await run(d1, 'UPDATE eg_bookings SET refunded_cents = ?1, updated_at = ?2 WHERE id = ?3', refundedCents, nowIso, id)
+}
+/** Unpaid bookings whose hold has run out (still pending_payment). */
+export async function pendingPayment(d1: D1, limit = 200): Promise<Booking[]> {
+  return (await all(d1, "SELECT * FROM eg_bookings WHERE status = 'pending_payment' ORDER BY id LIMIT ?1", limit)).map(toBooking)
 }

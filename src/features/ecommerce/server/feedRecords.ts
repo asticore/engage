@@ -1,9 +1,10 @@
+import { parseMapping, parseRefreshMinutes } from '../lib/feedMapping'
 import { isFeedChannel, type FeedInput, type FeedRecord } from '../lib/feedRecords'
 
 type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T[] }>; run: () => Promise<unknown> } }
 export type D1 = { prepare: (sql: string) => Stmt }
 
-const COLUMNS = 'id, name, channel, token, currency, price_tier, category, tag, include_out_of_stock, enabled'
+const COLUMNS = 'id, name, channel, token, currency, price_tier, category, tag, include_out_of_stock, enabled, mapping, refresh_minutes'
 
 const toFeed = (r: Record<string, unknown>): FeedRecord | null => {
   if (!isFeedChannel(r.channel)) return null
@@ -18,6 +19,8 @@ const toFeed = (r: Record<string, unknown>): FeedRecord | null => {
     tag: String(r.tag ?? ''),
     includeOutOfStock: Number(r.include_out_of_stock) === 1,
     enabled: Number(r.enabled) !== 0,
+    mapping: parseMapping(r.mapping),
+    refreshMinutes: parseRefreshMinutes(r.refresh_minutes),
   }
 }
 
@@ -53,11 +56,11 @@ export async function getFeed(d1: D1, id: number): Promise<FeedRecord | null> {
 }
 
 export async function saveFeed(d1: D1, id: number | null, feed: FeedInput, nowIso: string): Promise<void> {
-  const values = [feed.name, feed.channel, feed.currency, feed.priceTier, feed.category, feed.tag, feed.includeOutOfStock ? 1 : 0, feed.enabled ? 1 : 0, nowIso]
+  const values = [feed.name, feed.channel, feed.currency, feed.priceTier, feed.category, feed.tag, feed.includeOutOfStock ? 1 : 0, feed.enabled ? 1 : 0, nowIso, JSON.stringify(feed.mapping), feed.refreshMinutes]
   if (id) {
-    await d1.prepare('UPDATE eg_product_feeds SET name=?1, channel=?2, currency=?3, price_tier=?4, category=?5, tag=?6, include_out_of_stock=?7, enabled=?8, updated_at=?9 WHERE id=?10').bind(...values, id).run()
+    await d1.prepare('UPDATE eg_product_feeds SET name=?1, channel=?2, currency=?3, price_tier=?4, category=?5, tag=?6, include_out_of_stock=?7, enabled=?8, updated_at=?9, mapping=?10, refresh_minutes=?11 WHERE id=?12').bind(...values, id).run()
   } else {
-    await d1.prepare('INSERT INTO eg_product_feeds (name, channel, currency, price_tier, category, tag, include_out_of_stock, enabled, updated_at, created_at, token) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?9,?10)').bind(...values, newFeedToken()).run()
+    await d1.prepare('INSERT INTO eg_product_feeds (name, channel, currency, price_tier, category, tag, include_out_of_stock, enabled, updated_at, created_at, token, mapping, refresh_minutes) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?9,?12,?10,?11)').bind(...values, newFeedToken()).run()
   }
 }
 

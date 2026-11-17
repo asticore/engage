@@ -18,6 +18,7 @@
 @layer shine.tokens, shine.reset, shine.base, shine.components, shine.utilities, base, components, utilities;
 @import url('../../styles/engage-utilities.css');
 @import './custom.css';
+@import './module-styles.css';
 @import './list-popovers.css';
 @import './visibility-control.css';
 @import './edit-lock.css';

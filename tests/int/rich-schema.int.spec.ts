@@ -44,3 +44,22 @@ describe('rich structured data', () => {
     expect(buildPageJsonLd({ ...base })?.mainEntity).toBeUndefined()
   })
 })
+
+describe('facts editor and page check', () => {
+  it('lists form fields for every rich type that match the requirements', async () => {
+    const { FACT_FIELDS, RICH_REQUIREMENTS, RICH_TYPES } = await import('@/features/seo/richTypes')
+    for (const t of RICH_TYPES) {
+      const keys = FACT_FIELDS[t].map((d) => d.key)
+      for (const k of [...RICH_REQUIREMENTS[t].must, ...RICH_REQUIREMENTS[t].should]) expect(keys).toContain(k)
+    }
+  })
+
+  it('adds a missing facts check to the page analysis', async () => {
+    const { seoChecks } = await import('@/features/seo/analysis/analyze')
+    const base = { title: 'T', slug: 't', metaTitle: 'T', metaDescription: '', keyphrase: '', text: '', headings: [] as { level: number; text: string }[], links: [] as { href: string; internal: boolean }[], images: [] as { alt: string }[] }
+    const bad = seoChecks({ ...base, schemaType: 'Recipe', schemaFacts: '{"name":"Pancakes"}' }).find((c) => c.id === 'rich-facts')
+    expect(bad?.status).toBe('bad')
+    expect(bad?.message).toContain('image')
+    expect(seoChecks({ ...base, schemaType: 'WebPage' }).some((c) => c.id === 'rich-facts')).toBe(false)
+  })
+})

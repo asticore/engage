@@ -32,7 +32,7 @@ export const validateWorkflowBeforeChange: CollectionBeforeChangeHook = async (a
     overrideAccess: true,
   })
   const selfId = operation === 'update' ? Number(originalDoc?.id) : null
-  const wantedUsers = namedUserIds(Array.isArray(merged.steps) ? (merged.steps as Array<{ approverUsers?: unknown }>) : [], merged.authorRoutes)
+  const wantedUsers = namedUserIds(Array.isArray(merged.steps) ? (merged.steps as Array<{ approverUsers?: unknown }>) : [], merged.authorRoutes, merged.standIns, merged.sectionRoutes)
   const knownUsers = new Set<number>()
   if (wantedUsers.length > 0) {
     const found = await req.engine.find({ collection: 'users', where: { id: { in: wantedUsers } }, limit: wantedUsers.length, depth: 0, overrideAccess: true })
@@ -90,6 +90,13 @@ export const ApprovalWorkflows: CollectionConfig = {
       admin: { description: 'When on, one person who can approve two steps may approve both in the same review. Off keeps each step to a different person.' },
     },
     {
+      name: 'reviewDueDays',
+      type: 'number',
+      min: 0,
+      max: 365,
+      admin: { description: 'Days a review may wait. Past this the document shows as overdue and the approvers get one reminder email. Blank or 0 means no limit.' },
+    },
+    {
       name: 'submitterRoles',
       type: 'json',
       admin: { description: 'Role slugs that may submit. Empty means anyone who can edit this content.' },
@@ -98,6 +105,16 @@ export const ApprovalWorkflows: CollectionConfig = {
       name: 'authorRoutes',
       type: 'json',
       admin: { description: 'Per-author approvers: { "<author user id>": [approver user ids] }. That author\'s work is approved by those people at every step.' },
+    },
+    {
+      name: 'sectionRoutes',
+      type: 'json',
+      admin: { description: 'Per-section approvers: { "<section>": [approver user ids] }. A section is the top-level page a page sits under, or a post\'s first category (lower case). Work in that section is approved by those people at every step, unless the author has a route of their own.' },
+    },
+    {
+      name: 'standIns',
+      type: 'json',
+      admin: { description: 'Stand-ins: [{ "userId": reviewer, "standInId": cover, "until": "YYYY-MM-DD" or null }]. While the reviewer is away the stand-in may approve what the reviewer could.' },
     },
     {
       name: 'steps',

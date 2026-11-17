@@ -3,7 +3,14 @@
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useMemo } from 'react'
 
-export type PreviewDevice = 'desktop' | 'mobile'
+/** The preview widths: a computer window, a phone, and the usual content width of three mail apps. */
+export type PreviewDevice = 'desktop' | 'mobile' | 'gmail' | 'outlook' | 'apple'
+export const PREVIEW_WIDTHS: Record<Exclude<PreviewDevice, 'desktop'>, { label: string; width: number }> = {
+  mobile: { label: 'Phone', width: 375 },
+  gmail: { label: 'Gmail', width: 640 },
+  outlook: { label: 'Outlook', width: 560 },
+  apple: { label: 'Apple Mail', width: 700 },
+}
 export type PreviewTheme = 'light' | 'dark'
 
 type Props = {
@@ -32,9 +39,11 @@ export function PreviewPane({ html, device, theme, onDevice, onTheme }: Props) {
           <button type="button" className="ed-button ed-button--quiet" aria-pressed={device === 'desktop'} onClick={() => onDevice('desktop')}>
             Computer
           </button>
-          <button type="button" className="ed-button ed-button--quiet" aria-pressed={device === 'mobile'} onClick={() => onDevice('mobile')}>
-            Phone
-          </button>
+          {(Object.keys(PREVIEW_WIDTHS) as Exclude<PreviewDevice, 'desktop'>[]).map((id) => (
+            <button key={id} type="button" className="ed-button ed-button--quiet" aria-pressed={device === id} onClick={() => onDevice(id)}>
+              {PREVIEW_WIDTHS[id].label}
+            </button>
+          ))}
         </div>
         <div className="ed-segment">
           <button type="button" className="ed-button ed-button--quiet" aria-pressed={theme === 'light'} onClick={() => onTheme('light')}>
@@ -45,7 +54,7 @@ export function PreviewPane({ html, device, theme, onDevice, onTheme }: Props) {
           </button>
         </div>
       </div>
-      <div className={`ed-preview__frame ed-preview__frame--${device}`}>
+      <div className={`ed-preview__frame ed-preview__frame--${device}`} style={device === 'desktop' ? undefined : { width: PREVIEW_WIDTHS[device].width }}>
         <iframe title="Email preview" sandbox="" srcDoc={srcDoc} className="ed-preview__iframe" />
       </div>
     </div>

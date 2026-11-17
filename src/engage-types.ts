@@ -1421,6 +1421,7 @@ export interface Form {
      * Turn off for a form people genuinely fill in fast.
      */
     minimumFillTime?: ('inherit' | 'off') | null;
+    botDetection?: ('inherit' | 'off' | 'challenge' | 'block') | null;
     turnstile?: ('inherit' | 'on' | 'off') | null;
   };
   /**
@@ -4122,6 +4123,7 @@ export interface FormsSelect<T extends boolean = true> {
     | {
         honeypot?: T;
         minimumFillTime?: T;
+        botDetection?: T;
         turnstile?: T;
       };
   payment?:
@@ -7214,7 +7216,11 @@ export interface FormSetting {
     protectSignIn?: boolean | null;
     botDetection?: ('off' | 'challenge' | 'block') | null;
     botMinScore?: number | null;
+    botFingerprints?: string | null;
+    botAllowedCategories?: string | null;
     modeSignIn?: ('default' | 'off' | 'always' | 'failures') | null;
+    modeAdminSignIn?: ('default' | 'off' | 'always' | 'failures') | null;
+    modeCardCheckout?: ('default' | 'off' | 'always' | 'failures') | null;
     modeRegister?: ('default' | 'off' | 'always' | 'failures') | null;
     modeReset?: ('default' | 'off' | 'always' | 'failures') | null;
     modeResetConfirm?: ('default' | 'off' | 'always' | 'failures') | null;
@@ -8315,7 +8321,11 @@ export interface FormSettingsSelect<T extends boolean = true> {
         protectSignIn?: T;
         botDetection?: T;
         botMinScore?: T;
+        botFingerprints?: T;
+        botAllowedCategories?: T;
         modeSignIn?: T;
+        modeAdminSignIn?: T;
+        modeCardCheckout?: T;
         modeRegister?: T;
         modeReset?: T;
         modeResetConfirm?: T;

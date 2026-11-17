@@ -1075,6 +1075,12 @@ export const productsBundleItems = generateArrayTable(Products.slug, productsGen
 const productsAddOnsField = productsGenerated.arrayFields.find((f) => f.name === 'addOns')
 if (!productsAddOnsField) throw new Error('products: the addOns array is missing from the catalogue fields.')
 export const productsAddOns = generateArrayTable(Products.slug, productsGenerated.tableName, productsAddOnsField).table
+// Composite products (kit choices): the items to pick from and the optional step rules, see collections/productComposite.ts.
+const productsCompositeOptionsField = productsGenerated.arrayFields.find((f) => f.name === 'compositeOptions')
+const productsCompositeRulesField = productsGenerated.arrayFields.find((f) => f.name === 'compositeRules')
+if (!productsCompositeOptionsField || !productsCompositeRulesField) throw new Error('products: the composite arrays are missing from the catalogue fields.')
+export const productsCompositeOptions = generateArrayTable(Products.slug, productsGenerated.tableName, productsCompositeOptionsField).table
+export const productsCompositeRules = generateArrayTable(Products.slug, productsGenerated.tableName, productsCompositeRulesField).table
 
 const [productsBlocksField] = productsGenerated.blocksFields
 const productsBlockDefs = generateBlockTables(Products.slug, productsGenerated.tableName, productsBlocksField)
@@ -1102,6 +1108,11 @@ export const productsVersionsBundleItems = generateArrayTable(Products.slug, pro
 const productsVersionsAddOnsField = productsVersionsGenerated.arrayFields.find((f) => f.name === 'addOns')
 if (!productsVersionsAddOnsField) throw new Error('products versions: the addOns array is missing.')
 export const productsVersionsAddOns = generateArrayTable(Products.slug, productsVersionsGenerated.tableName, productsVersionsAddOnsField, true, true).table
+const productsVersionsCompositeOptionsField = productsVersionsGenerated.arrayFields.find((f) => f.name === 'compositeOptions')
+const productsVersionsCompositeRulesField = productsVersionsGenerated.arrayFields.find((f) => f.name === 'compositeRules')
+if (!productsVersionsCompositeOptionsField || !productsVersionsCompositeRulesField) throw new Error('products versions: the composite arrays are missing.')
+export const productsVersionsCompositeOptions = generateArrayTable(Products.slug, productsVersionsGenerated.tableName, productsVersionsCompositeOptionsField, true, true).table
+export const productsVersionsCompositeRules = generateArrayTable(Products.slug, productsVersionsGenerated.tableName, productsVersionsCompositeRulesField, true, true).table
 
 const [productsVersionsBlocksField] = productsVersionsGenerated.blocksFields
 const productsVersionsBlockDefs = generateBlockTables(Products.slug, productsVersionsGenerated.tableName, productsVersionsBlocksField, true, true)

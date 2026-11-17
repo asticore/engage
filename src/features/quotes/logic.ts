@@ -1,5 +1,6 @@
 /** Input rules, statuses and email wording for quote, bid and item requests. Pure, shared by the public and admin routes. */
 import { fillTemplate, textToHtml, type TemplateValues } from '@/features/email/renderTemplate'
+import { EMAIL_TEMPLATE_DEFAULTS } from '@/features/email/templateDefaults'
 
 export { hashToken, isManageToken as isQuoteToken, newManageToken as newQuoteToken } from '@/features/bookings/logic'
 
@@ -55,6 +56,10 @@ export function parseRequest(raw: unknown): { ok: true; value: RequestInput } | 
   }
 }
 
+/** Whether the account page offers "Open quote" for a request: it has a quote and is not expired, declined or closed. */
+export const portalCanOpen = (r: { status: string; totalCents: number | null; validUntil: string | null }, now: Date): boolean =>
+  r.totalCents !== null && ['quoted', 'countered', 'accepted'].includes(effectiveStatus(r.status as QuoteStatus, r.validUntil, now))
+
 export type QuoteLine = { description: string; quantity: number; unitCents: number }
 export type QuoteInput = { lines: QuoteLine[]; validUntil: string; terms: string; message: string }
 
@@ -100,19 +105,42 @@ export const effectiveStatus = (status: QuoteStatus, validUntil: string | null, 
 export type ActivityEntry = { at: string; by: 'customer' | 'staff' | 'system'; text: string }
 
 /** Email wording. Tags like {{name}} are filled per customer; staff can also use them in their own message. */
-export const QUOTE_EMAILS = {
-  received: { subject: 'We got your {{kindLabel}} ({{number}})', body: 'Hi {{name}},\n\nThanks, we have your {{kindLabel}} ({{number}}). We will get back to you soon.\n\n{{siteName}}' },
-  adminNew: { subject: 'New {{kindLabel}} {{number}} from {{name}}', body: '{{name}} ({{email}}) sent a {{kindLabel}}.\n\n{{details}}\n\nOpen it in Quotes and requests.' },
-  quote: { subject: 'Your quote {{number}} from {{siteName}}', body: 'Hi {{name}},\n\n{{message}}\n\nTotal: {{total}}. Valid until {{validUntil}}.\n\nSee the quote, accept it or reply with a counter-offer:\n{{link}}\n\n{{siteName}}' },
-  counter: { subject: 'Counter-offer on {{number}} from {{name}}', body: '{{name}} ({{email}}) replied to quote {{number}}.\n\n{{note}}' },
-  accepted: { subject: 'Quote {{number}} accepted by {{name}}', body: '{{name}} accepted quote {{number}} for {{total}}. Order {{orderNumber}} is waiting for payment.' },
-  declined: { subject: 'Quote {{number}} declined by {{name}}', body: '{{name}} declined quote {{number}}.' },
+export const QUOTE_TEMPLATE_KEYS = {
+  received: 'quoteReceived',
+  adminNew: 'quoteAdminNew',
+  quote: 'quoteSent',
+  expiring: 'quoteExpiring',
+  bidLost: 'quoteBidLost',
+  counter: 'quoteCounter',
+  accepted: 'quoteAccepted',
+  declined: 'quoteDeclined',
 } as const
-export type QuoteEmailKey = keyof typeof QUOTE_EMAILS
+export type QuoteEmailKey = keyof typeof QUOTE_TEMPLATE_KEYS
+
+/** The built-in wording: it lives with the other automatic emails (src/features/email/templateDefaults.ts) so Email templates can edit it. */
+export const QUOTE_EMAILS = Object.fromEntries(Object.entries(QUOTE_TEMPLATE_KEYS).map(([key, template]) => [key, EMAIL_TEMPLATE_DEFAULTS[template]])) as Record<QuoteEmailKey, { subject: string; body: string }>
 
 export function renderQuoteEmail(key: QuoteEmailKey, values: TemplateValues, bodyOverride?: string): { subject: string; text: string; html: string } {
   const t = QUOTE_EMAILS[key]
   const subject = fillTemplate(t.subject, values).replace(/[\r\n]+/g, ' ')
   const body = fillTemplate(t.body, { ...values, message: fillTemplate(bodyOverride || 'Thanks for asking. Here is your quote.', values) })
   return { subject, text: body, html: textToHtml(body) }
+}
+
+/** Why an offer on a product is refused, or null. Terms come from the product's Offers section. Pure. */
+export function bidRefusal(terms: { minimumCents: number; endsAt: string | null }, offerCents: number | null, now: Date): string | null {
+  if (terms.endsAt && Date.parse(terms.endsAt) <= now.getTime()) return 'Offers on this product have closed.'
+  if (terms.minimumCents > 0 && (offerCents ?? 0) < terms.minimumCents) return `The lowest offer taken is ${(terms.minimumCents / 100).toFixed(2)}.`
+  return null
+}
+
+/** The winning offer when offers close: the highest, and the earliest of equal ones. Null when there are none. Pure. */
+export function auctionWinner(bids: { id: number; offerCents: number | null }[]): number | null {
+  let best: { id: number; offerCents: number } | null = null
+  for (const bid of bids) {
+    const cents = bid.offerCents ?? 0
+    if (cents <= 0) continue
+    if (!best || cents > best.offerCents || (cents === best.offerCents && bid.id < best.id)) best = { id: bid.id, offerCents: cents }
+  }
+  return best?.id ?? null
 }

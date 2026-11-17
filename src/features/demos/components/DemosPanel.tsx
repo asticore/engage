@@ -3,11 +3,13 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { describeBytes, type ResetEvery } from '../core'
+import { StaticExportPanel } from './StaticExportPanel'
 
 type Loaded = {
   settings: { resetEvery: ResetEvery; lastResetAt: string | null; lastResult: string; banner: string }
   snapshot: { takenAt: string; size: number } | null
   choices: { value: ResetEvery; label: string }[]
+  starters?: { id: string; kind: string; label: string }[]
 }
 
 /** Admin screen for agency demos: saved copy, reset, demo accounts and the package download. English only. */
@@ -16,6 +18,7 @@ export const DemosPanel: React.FC = () => {
   const [every, setEvery] = useState<ResetEvery>('off')
   const [banner, setBanner] = useState('')
   const [email, setEmail] = useState('')
+  const [starter, setStarter] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -52,14 +55,14 @@ export const DemosPanel: React.FC = () => {
       <section aria-labelledby="demo-copy">
         <h2 id="demo-copy">Saved demo copy</h2>
         <p>
-          {data?.snapshot ? `Saved ${new Date(data.snapshot.takenAt).toLocaleString()} (${describeBytes(data.snapshot.size)}).` : 'No copy saved yet.'} The copy holds settings, header and footer, redirects, page templates, field groups, pages, posts, products and picture details. It never holds users, roles, customers or keys.
+          {data?.snapshot ? `Saved ${new Date(data.snapshot.takenAt).toLocaleString()} (${describeBytes(data.snapshot.size)}).` : 'No copy saved yet.'} The copy holds settings, header and footer, redirects, page templates, field groups, pages, posts, products and pictures (the picture files are kept too, up to 500 files of 15 MB each). It never holds users, roles, customers or keys.
         </p>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button type="button" disabled={busy} onClick={() => void post({ action: 'snapshot' }, 'Demo copy saved.')}>Save the site as the demo copy</button>
           <button type="button" disabled={busy || !data?.snapshot} onClick={() => void post({ action: 'reset' }, 'Demo reset.')}>Reset to the saved copy now</button>
           <a href="/api/admin-demos?download=package" download>Download as an importable package</a>
         </div>
-        <p>A reset writes everything in the copy back. Items added after the copy was saved stay. Import a package on a client site from Settings, Export and import.</p>
+        <p>A reset writes everything in the copy back and deletes pages, posts, products and pictures added after the copy was saved. Pictures that were deleted are put back. Import a package on a client site from Settings, Export and import.</p>
         {data?.settings.lastResetAt && <p>Last reset {new Date(data.settings.lastResetAt).toLocaleString()}: {data.settings.lastResult}</p>}
       </section>
 
@@ -75,9 +78,30 @@ export const DemosPanel: React.FC = () => {
             {(data?.choices ?? []).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </label>
-        <label>Note for the team<br /><input type="text" maxLength={200} value={banner} onChange={(e) => setBanner(e.target.value)} /></label>
+        <label>Banner shown to visitors (empty for none)<br /><input type="text" maxLength={200} value={banner} onChange={(e) => setBanner(e.target.value)} /></label>
         <button type="submit" disabled={busy}>Save</button>
+        {banner && <p style={{ flexBasis: '100%' }}>Visitors see this strip at the top of every page of the site while Agency demos is on.</p>}
       </form>
+
+      <section aria-labelledby="demo-starter">
+        <h2 id="demo-starter">Start a demo from a starter</h2>
+        <p>Pick a starter layout. It is switched on across the site for its type and the site is saved as the demo copy, in one step.</p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            void post({ action: 'starter', starterId: starter }, 'Demo started.')
+          }}
+          style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'end' }}
+        >
+          <label>Starter<br />
+            <select required value={starter} onChange={(e) => setStarter(e.target.value)}>
+              <option value="" disabled>Choose a starter</option>
+              {(data?.starters ?? []).map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+          </label>
+          <button type="submit" disabled={busy || !starter}>Create demo from starter</button>
+        </form>
+      </section>
 
       <section aria-labelledby="demo-accounts">
         <h2 id="demo-accounts">Demo account</h2>
@@ -98,6 +122,8 @@ export const DemosPanel: React.FC = () => {
           <button type="submit" disabled={busy}>Create view-only account</button>
         </form>
       </section>
+
+      <StaticExportPanel />
     </div>
   )
 }

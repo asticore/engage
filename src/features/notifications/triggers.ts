@@ -6,7 +6,7 @@ import type { WebhookEvent } from '@/features/webhooks/events'
  * Triggers reuse the site's event names (the same ones webhooks use), so every place that raises an event can notify.
  */
 
-export type NotificationTrigger = Extract<WebhookEvent, 'order.created' | 'order.paid' | 'order.refunded' | 'form.submitted' | 'booking.made' | 'user.registered' | 'content.published' | 'stock.low' | 'course.enrolled' | 'subscription.started' | 'subscription.cancelled' | 'subscription.payment_failed'>
+export type NotificationTrigger = Extract<WebhookEvent, 'order.created' | 'order.paid' | 'order.refunded' | 'form.submitted' | 'booking.made' | 'user.registered' | 'content.published' | 'stock.low' | 'course.enrolled' | 'subscription.started' | 'subscription.cancelled' | 'subscription.payment_failed' | 'task.assigned' | 'task.commented' | 'task.due'>
 
 export const NOTIFICATION_TRIGGERS: { key: NotificationTrigger; label: string; recipients: ('customer' | 'admin' | 'custom')[] }[] = [
   { key: 'order.created', label: 'Order placed', recipients: ['customer', 'admin', 'custom'] },
@@ -21,6 +21,10 @@ export const NOTIFICATION_TRIGGERS: { key: NotificationTrigger; label: string; r
   { key: 'subscription.started', label: 'Subscription started', recipients: ['customer', 'admin', 'custom'] },
   { key: 'subscription.cancelled', label: 'Subscription cancelled', recipients: ['customer', 'admin', 'custom'] },
   { key: 'subscription.payment_failed', label: 'Subscription payment failed', recipients: ['customer', 'admin', 'custom'] },
+  // For the task events "customer" means the person the task is given to.
+  { key: 'task.assigned', label: 'Task assigned', recipients: ['customer', 'admin', 'custom'] },
+  { key: 'task.commented', label: 'Task commented on', recipients: ['customer', 'admin', 'custom'] },
+  { key: 'task.due', label: 'Task due soon', recipients: ['customer', 'admin', 'custom'] },
 ]
 
 export type MergeTag = { tag: string; label: string }
@@ -43,6 +47,9 @@ export const MERGE_TAGS: Record<NotificationTrigger, MergeTag[]> = {
   'subscription.started': [...COMMON, { tag: 'subscription_id', label: 'Subscription number' }, { tag: 'product_name', label: 'Product' }, { tag: 'customer_email', label: 'Customer email' }, { tag: 'status', label: 'Status' }],
   'subscription.cancelled': [...COMMON, { tag: 'subscription_id', label: 'Subscription number' }, { tag: 'product_name', label: 'Product' }, { tag: 'customer_email', label: 'Customer email' }, { tag: 'status', label: 'Status' }],
   'subscription.payment_failed': [...COMMON, { tag: 'subscription_id', label: 'Subscription number' }, { tag: 'product_name', label: 'Product' }, { tag: 'customer_email', label: 'Customer email' }, { tag: 'status', label: 'Status' }],
+  'task.assigned': [...COMMON, { tag: 'task_title', label: 'Task title' }, { tag: 'board_name', label: 'Board name' }, { tag: 'due_date', label: 'Due date' }, { tag: 'priority', label: 'Priority' }, { tag: 'person', label: 'Person who made the change' }],
+  'task.commented': [...COMMON, { tag: 'task_title', label: 'Task title' }, { tag: 'board_name', label: 'Board name' }, { tag: 'due_date', label: 'Due date' }, { tag: 'priority', label: 'Priority' }, { tag: 'person', label: 'Person who made the change' }],
+  'task.due': [...COMMON, { tag: 'task_title', label: 'Task title' }, { tag: 'board_name', label: 'Board name' }, { tag: 'due_date', label: 'Due date' }, { tag: 'priority', label: 'Priority' }, { tag: 'person', label: 'Person who made the change' }],
 }
 
 export const isNotificationTrigger = (value: unknown): value is NotificationTrigger => typeof value === 'string' && NOTIFICATION_TRIGGERS.some((t) => t.key === value)
@@ -77,6 +84,10 @@ export function notificationValues(event: NotificationTrigger, data: Record<stri
     case 'subscription.cancelled':
     case 'subscription.payment_failed':
       return { ...base, subscription_id: text(data.id), product_name: text(data.productName), customer_email: text(data.customerEmail), status: text(data.status) }
+    case 'task.assigned':
+    case 'task.commented':
+    case 'task.due':
+      return { ...base, task_title: text(data.title), board_name: text(data.boardName), due_date: text(data.dueDate), priority: text(data.priority), person: text(data.person) }
   }
 }
 

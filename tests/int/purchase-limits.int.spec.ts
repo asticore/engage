@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { addressKey, normaliseEmail, parseRule, refusal, type Context } from '@/features/purchaseLimits/logic'
+import { addressKey, isExempt, normaliseEmail, parseRule, refusal, type Context } from '@/features/purchaseLimits/logic'
 
 const now = new Date('2026-03-10T12:00:00Z')
 const hoursAgo = (h: number): number => now.getTime() - h * 3_600_000
@@ -39,5 +39,14 @@ describe('purchase limit rules', () => {
     const verified = { maxQty: null as number | null, windowDays: 0, cooldownHours: 0, requireVerified: true }
     expect(refusal(verified, ctx({ verified: false }))).toContain('verified')
     expect(refusal(verified, ctx())).toBeNull()
+  })
+  it('uses the rule message and the trusted list', () => {
+    const rule = { maxQty: 1, windowDays: 0, cooldownHours: 0, requireVerified: false, message: 'Sorry, one {{product}} each.' }
+    expect(refusal(rule, ctx({ prior: [{ qty: 1, atMs: hoursAgo(1) }] }))).toBe('Sorry, one Tee each.')
+    const parsed = parseRule({ title: 'x', maxQty: 1, message: ' Hi ', exemptEmails: 'A.B+x@Example.com, bad,\nJo@gmail.com' })
+    expect(parsed.ok && parsed.value).toMatchObject({ message: 'Hi', exemptEmails: 'a.b@example.com\njo@gmail.com' })
+    expect(isExempt({ exemptEmails: 'jo@gmail.com' }, 'jo@gmail.com')).toBe(true)
+    expect(isExempt({ exemptEmails: 'jo@gmail.com' }, 'x@gmail.com')).toBe(false)
+    expect(isExempt({ exemptEmails: '' }, '')).toBe(false)
   })
 })

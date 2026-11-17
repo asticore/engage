@@ -172,6 +172,15 @@ export const Events: CollectionConfig = {
       },
     },
     {
+      name: 'maxPerPerson',
+      type: 'number',
+      min: 0,
+      admin: {
+        position: 'sidebar',
+        description: 'Most places one email address can book on this event, counting every booking. Leave blank or 0 for no limit.',
+      },
+    },
+    {
       name: 'externalRegistrationUrl',
       type: 'text',
       admin: {

@@ -88,8 +88,9 @@ export async function importFiles(d1: D1, text: string, nowIso: string): Promise
   let linked = 0
   let missing = 0
   for (const row of rows) {
-    const file = (await all(d1, 'SELECT id FROM eg_media WHERE filename = ?1 LIMIT 1', row.filename))[0]
-    if (!file) { missing++; continue }
+    // Two files can share a filename (the export lists them once with both files' tags), so every match gets the tags.
+    const files = await all(d1, 'SELECT id FROM eg_media WHERE filename = ?1', row.filename)
+    if (files.length === 0) { missing++; continue }
     for (const path of row.paths) {
       let parentId: number | null = null
       for (const name of path) {
@@ -101,7 +102,7 @@ export async function importFiles(d1: D1, text: string, nowIso: string): Promise
         }
         parentId = found.id
       }
-      if (parentId !== null) { await assign(d1, [Number(file.id)], [parentId], false); linked++ }
+      if (parentId !== null) { await assign(d1, files.map((f) => Number(f.id)), [parentId], false); linked++ }
     }
   }
   return { linked, missing }

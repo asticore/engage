@@ -2,7 +2,6 @@
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import React, { useCallback, useMemo, useState } from 'react'
-import styles from '@/admin/admin.module.css'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { APPROVAL_COLLECTIONS, MAX_APPROVALS_PER_STEP, isApprovalCollection, type ApprovalCollection } from '@/features/approval/workflows'
 import {
@@ -16,6 +15,8 @@ import {
   payloadFromDraft,
   roleChoices,
   setAuthorRoute,
+  setSectionRoute,
+  setStandIn,
   toggleRole,
   toggleUser,
   unwrapDoc,
@@ -30,11 +31,15 @@ type RoleRow = { id: number; name: string; slug: string; builtIn?: boolean; perm
 
 export type Person = { id: number; name: string }
 
+export type SectionOptions = Partial<Record<'pages' | 'posts', Array<{ key: string; label: string }>>>
+
 type Props = {
   workflows: WorkflowRecord[]
   roles: RoleRow[]
   /** Staff users who can be named as approvers. */
   people?: Person[]
+  /** Sections that can be given their own approvers: top-level pages and post categories. */
+  sections?: SectionOptions
   canEdit: boolean
   /** The master switch under Settings > Security. Workflows do nothing while it is off. */
   approvalEnabled: boolean
@@ -74,6 +79,7 @@ function WorkflowForm({
   draft,
   choices,
   people,
+  sections,
   knownRoles,
   others,
   canEdit,
@@ -89,6 +95,7 @@ function WorkflowForm({
   draft: WorkflowDraft
   choices: RoleChoice[]
   people: Person[]
+  sections: SectionOptions
   knownRoles: string[]
   others: Array<{ id: number; collection: string; active: boolean }>
   canEdit: boolean
@@ -108,6 +115,14 @@ function WorkflowForm({
   const disabled = !canEdit || busy
   const [routeAuthor, setRouteAuthor] = useState(0)
   const [routeApprover, setRouteApprover] = useState(0)
+  const [sectionKey, setSectionKey] = useState('')
+  const [sectionApprover, setSectionApprover] = useState(0)
+  const sectionOptions = draft.collection === 'pages' || draft.collection === 'posts' ? (sections[draft.collection] ?? []) : []
+  const sectionLabel = (key: string) => sectionOptions.find((option) => option.key === key)?.label ?? key
+  const [awayUser, setAwayUser] = useState(0)
+  const [coverUser, setCoverUser] = useState(0)
+  const [awayUntil, setAwayUntil] = useState('')
+  const personName = (id: number) => people.find((p) => p.id === id)?.name ?? `User ${id}`
   const roleName = (slug: string) => choices.find((choice) => choice.slug === slug)
 
   const setStep = (index: number, patch: Partial<WorkflowDraft['steps'][number]>) =>
@@ -130,11 +145,11 @@ function WorkflowForm({
       <div className="rw-grid">
         <label className="rw-field" htmlFor={`${idBase}-name`}>
           <span>Name</span>
-          <input id={`${idBase}-name`} className={styles.input} type="text" maxLength={120} value={draft.name} disabled={disabled} onChange={(event) => onChange({ ...draft, name: event.target.value })} placeholder="Editorial then legal" />
+          <input id={`${idBase}-name`} className="eg-roles-input" type="text" maxLength={120} value={draft.name} disabled={disabled} onChange={(event) => onChange({ ...draft, name: event.target.value })} placeholder="Editorial then legal" />
         </label>
         <label className="rw-field" htmlFor={`${idBase}-collection`}>
           <span>Content type</span>
-          <select id={`${idBase}-collection`} className={styles.input} value={draft.collection} disabled={disabled} onChange={(event) => onChange({ ...draft, collection: event.target.value as ApprovalCollection })}>
+          <select id={`${idBase}-collection`} className="eg-roles-input" value={draft.collection} disabled={disabled} onChange={(event) => onChange({ ...draft, collection: event.target.value as ApprovalCollection })}>
             {APPROVAL_COLLECTIONS.map((value) => (
               <option key={value} value={value}>
                 {COLLECTION_LABELS[value]}
@@ -156,6 +171,11 @@ function WorkflowForm({
         <span>Let one person approve more than one step of the same review. Off keeps each step to a different person.</span>
       </label>
 
+      <label className="rw-check">
+        <span>Days a review may wait before it is overdue (0 for no limit). The approvers get one reminder email when it passes.</span>
+        <input type="number" min={0} max={365} value={draft.reviewDueDays ?? 0} disabled={disabled} onChange={(event) => onChange({ ...draft, reviewDueDays: Math.max(0, Number(event.target.value) || 0) })} />
+      </label>
+
       <RolePicker
         legend="Who can submit"
         hint="Leave all unticked to let anyone who can edit this content submit it. Admins can always submit."
@@ -172,27 +192,97 @@ function WorkflowForm({
           {Object.entries(draft.authorRoutes).map(([author, approvers]) => (
             <p key={author} className="rw-hint">
               {people.find((p) => p.id === Number(author))?.name ?? `User ${author}`} is approved by {approvers.map((id) => people.find((p) => p.id === id)?.name ?? `User ${id}`).join(', ')}{' '}
-              <button type="button" className={styles.btnSecondary} onClick={() => onChange({ ...draft, authorRoutes: setAuthorRoute(draft.authorRoutes, Number(author), []) })}>Remove</button>
+              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, authorRoutes: setAuthorRoute(draft.authorRoutes, Number(author), []) })}>Remove</button>
             </p>
           ))}
           <div className="rw-grid">
             <label className="rw-field" htmlFor={`${idBase}-route-author`}>
               <span>Author</span>
-              <select id={`${idBase}-route-author`} className={styles.input} value={routeAuthor} onChange={(event) => setRouteAuthor(Number(event.target.value))}>
+              <select id={`${idBase}-route-author`} className="eg-roles-input" value={routeAuthor} onChange={(event) => setRouteAuthor(Number(event.target.value))}>
                 <option value={0}>Pick…</option>
                 {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </label>
             <label className="rw-field" htmlFor={`${idBase}-route-approver`}>
               <span>Approved by</span>
-              <select id={`${idBase}-route-approver`} className={styles.input} value={routeApprover} onChange={(event) => setRouteApprover(Number(event.target.value))}>
+              <select id={`${idBase}-route-approver`} className="eg-roles-input" value={routeApprover} onChange={(event) => setRouteApprover(Number(event.target.value))}>
                 <option value={0}>Pick…</option>
                 {people.filter((p) => p.id !== routeAuthor).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </label>
           </div>
-          <button type="button" className={styles.btnSecondary} disabled={!routeAuthor || !routeApprover} onClick={() => { onChange({ ...draft, authorRoutes: setAuthorRoute(draft.authorRoutes, routeAuthor, [...new Set([...(draft.authorRoutes[String(routeAuthor)] ?? []), routeApprover])]) }); setRouteApprover(0) }}>
+          <button type="button" className="eg-roles-btnSecondary" disabled={!routeAuthor || !routeApprover} onClick={() => { onChange({ ...draft, authorRoutes: setAuthorRoute(draft.authorRoutes, routeAuthor, [...new Set([...(draft.authorRoutes[String(routeAuthor)] ?? []), routeApprover])]) }); setRouteApprover(0) }}>
             Add
+          </button>
+        </fieldset>
+      )}
+
+      {people.length > 0 && sectionOptions.length > 0 && (
+        <fieldset className="rw-roles" disabled={disabled}>
+          <legend>{t('approval.workflow.section.legend')}</legend>
+          <p className="rw-hint">
+            {draft.collection === 'pages' ? t('approval.workflow.section.hintPages') : t('approval.workflow.section.hintPosts')} {t('approval.workflow.section.hintRule')}
+          </p>
+          {Object.entries(draft.sectionRoutes).map(([key, approvers]) => (
+            <p key={key} className="rw-hint">
+              {t('approval.workflow.section.row', { section: sectionLabel(key), people: approvers.map(personName).join(', ') })}{' '}
+              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, sectionRoutes: setSectionRoute(draft.sectionRoutes, key, []) })}>{t('approval.workflow.remove')}</button>
+            </p>
+          ))}
+          <div className="rw-grid">
+            <label className="rw-field" htmlFor={`${idBase}-section`}>
+              <span>{t('approval.workflow.section.field')}</span>
+              <select id={`${idBase}-section`} className="eg-roles-input" value={sectionKey} onChange={(event) => setSectionKey(event.target.value)}>
+                <option value="">{t('approval.workflow.pick')}</option>
+                {sectionOptions.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
+              </select>
+            </label>
+            <label className="rw-field" htmlFor={`${idBase}-section-approver`}>
+              <span>{t('approval.workflow.approvedBy')}</span>
+              <select id={`${idBase}-section-approver`} className="eg-roles-input" value={sectionApprover} onChange={(event) => setSectionApprover(Number(event.target.value))}>
+                <option value={0}>{t('approval.workflow.pick')}</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+          </div>
+          <button type="button" className="eg-roles-btnSecondary" disabled={!sectionKey || !sectionApprover} onClick={() => { const key = sectionKey.trim().toLowerCase(); onChange({ ...draft, sectionRoutes: setSectionRoute(draft.sectionRoutes, key, [...new Set([...(draft.sectionRoutes[key] ?? []), sectionApprover])]) }); setSectionApprover(0) }}>
+            {t('approval.workflow.add')}
+          </button>
+        </fieldset>
+      )}
+
+      {people.length > 1 && (
+        <fieldset className="rw-roles" disabled={disabled}>
+          <legend>{t('approval.workflow.standIn.legend')}</legend>
+          <p className="rw-hint">{t('approval.workflow.standIn.hint')}</p>
+          {draft.standIns.map((entry) => (
+            <p key={entry.userId} className="rw-hint">
+              {entry.until ? t('approval.workflow.standIn.row', { name: personName(entry.userId), cover: personName(entry.standInId), date: entry.until }) : t('approval.workflow.standIn.rowOpen', { name: personName(entry.userId), cover: personName(entry.standInId) })}{' '}
+              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, standIns: setStandIn(draft.standIns, entry.userId, null, null) })}>{t('approval.workflow.remove')}</button>
+            </p>
+          ))}
+          <div className="rw-grid">
+            <label className="rw-field" htmlFor={`${idBase}-away-user`}>
+              <span>{t('approval.workflow.standIn.away')}</span>
+              <select id={`${idBase}-away-user`} className="eg-roles-input" value={awayUser} onChange={(event) => setAwayUser(Number(event.target.value))}>
+                <option value={0}>{t('approval.workflow.pick')}</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+            <label className="rw-field" htmlFor={`${idBase}-cover-user`}>
+              <span>{t('approval.workflow.standIn.coveredBy')}</span>
+              <select id={`${idBase}-cover-user`} className="eg-roles-input" value={coverUser} onChange={(event) => setCoverUser(Number(event.target.value))}>
+                <option value={0}>{t('approval.workflow.pick')}</option>
+                {people.filter((p) => p.id !== awayUser).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+            <label className="rw-field" htmlFor={`${idBase}-away-until`}>
+              <span>{t('approval.workflow.standIn.until')}</span>
+              <input id={`${idBase}-away-until`} className="eg-roles-input" type="date" value={awayUntil} onChange={(event) => setAwayUntil(event.target.value)} />
+            </label>
+          </div>
+          <button type="button" className="eg-roles-btnSecondary" disabled={!awayUser || !coverUser} onClick={() => { onChange({ ...draft, standIns: setStandIn(draft.standIns, awayUser, coverUser, awayUntil || null) }); setAwayUser(0); setCoverUser(0); setAwayUntil('') }}>
+            {t('approval.workflow.standIn.add')}
           </button>
         </fieldset>
       )}
@@ -207,13 +297,13 @@ function WorkflowForm({
               <div className="rw-step-head">
                 <strong>Step {index + 1}</strong>
                 <span className="rw-step-actions">
-                  <button type="button" className={styles.btnSecondary} disabled={disabled || index === 0} aria-label={t('aria.stepMoveUp', { n: index + 1 })} onClick={() => onChange({ ...draft, steps: moveStep(draft.steps, index, index - 1) })}>
+                  <button type="button" className="eg-roles-btnSecondary" disabled={disabled || index === 0} aria-label={t('aria.stepMoveUp', { n: index + 1 })} onClick={() => onChange({ ...draft, steps: moveStep(draft.steps, index, index - 1) })}>
                     Up
                   </button>
-                  <button type="button" className={styles.btnSecondary} disabled={disabled || index === draft.steps.length - 1} aria-label={t('aria.stepMoveDown', { n: index + 1 })} onClick={() => onChange({ ...draft, steps: moveStep(draft.steps, index, index + 1) })}>
+                  <button type="button" className="eg-roles-btnSecondary" disabled={disabled || index === draft.steps.length - 1} aria-label={t('aria.stepMoveDown', { n: index + 1 })} onClick={() => onChange({ ...draft, steps: moveStep(draft.steps, index, index + 1) })}>
                     Down
                   </button>
-                  <button type="button" className={styles.btnSecondary} disabled={disabled || draft.steps.length <= 1} aria-label={t('aria.stepRemove', { n: index + 1 })} onClick={() => onChange({ ...draft, steps: draft.steps.filter((_, i) => i !== index) })}>
+                  <button type="button" className="eg-roles-btnSecondary" disabled={disabled || draft.steps.length <= 1} aria-label={t('aria.stepRemove', { n: index + 1 })} onClick={() => onChange({ ...draft, steps: draft.steps.filter((_, i) => i !== index) })}>
                     Remove
                   </button>
                 </span>
@@ -221,13 +311,13 @@ function WorkflowForm({
               <div className="rw-grid">
                 <label className="rw-field" htmlFor={`${idBase}-step-${step.key}-name`}>
                   <span>Step name</span>
-                  <input id={`${idBase}-step-${step.key}-name`} className={styles.input} type="text" maxLength={120} value={step.name} disabled={disabled} onChange={(event) => setStep(index, { name: event.target.value })} placeholder="Legal review" />
+                  <input id={`${idBase}-step-${step.key}-name`} className="eg-roles-input" type="text" maxLength={120} value={step.name} disabled={disabled} onChange={(event) => setStep(index, { name: event.target.value })} placeholder="Legal review" />
                 </label>
                 <label className="rw-field" htmlFor={`${idBase}-step-${step.key}-count`}>
                   <span>Approvals needed</span>
                   <input
                     id={`${idBase}-step-${step.key}-count`}
-                    className={styles.input}
+                    className="eg-roles-input"
                     type="number"
                     min={1}
                     max={MAX_APPROVALS_PER_STEP}
@@ -268,7 +358,7 @@ function WorkflowForm({
           )
         })}
       </ol>
-      <button type="button" className={styles.btnSecondary} disabled={disabled || !canAddStep(draft.steps)} onClick={() => onChange({ ...draft, steps: [...draft.steps, emptyStep()] })}>
+      <button type="button" className="eg-roles-btnSecondary" disabled={disabled || !canAddStep(draft.steps)} onClick={() => onChange({ ...draft, steps: [...draft.steps, emptyStep()] })}>
         + Add step
       </button>
 
@@ -280,23 +370,23 @@ function WorkflowForm({
         </ul>
       )}
       {error && (
-        <div className={styles.error} role="alert">
+        <div className="eg-roles-error" role="alert">
           {error}
         </div>
       )}
 
       {canEdit && (
         <div className="rw-actions">
-          <button type="submit" className={styles.btnPrimary} disabled={busy}>
+          <button type="submit" className="eg-roles-btnPrimary" disabled={busy}>
             {busy ? 'Saving...' : saveLabel}
           </button>
           {onCancel && (
-            <button type="button" className={styles.btnSecondary} disabled={busy} onClick={onCancel}>
+            <button type="button" className="eg-roles-btnSecondary" disabled={busy} onClick={onCancel}>
               Cancel
             </button>
           )}
           {onDelete && (
-            <button type="button" className={styles.btnDanger} disabled={busy} onClick={onDelete}>
+            <button type="button" className="eg-roles-btnDanger" disabled={busy} onClick={onDelete}>
               {confirmDelete ? 'Confirm delete?' : 'Delete'}
             </button>
           )}
@@ -311,7 +401,7 @@ function WorkflowForm({
  * Every write goes through /api/approval-workflows, which only admins may write to; the same
  * rules the form checks are checked again on the server.
  */
-export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [], canEdit, approvalEnabled }: Props) {
+export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [], sections = {}, canEdit, approvalEnabled }: Props) {
   const t = useAdminT()
   const [workflows, setWorkflows] = useState<WorkflowRecord[]>(initial)
   const [drafts, setDrafts] = useState<Record<number, WorkflowDraft>>({})
@@ -426,7 +516,7 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [],
           </p>
         )}
         {canEdit && !creating && (
-          <button type="button" className={styles.btnPrimary} onClick={() => setCreating(emptyDraft())}>
+          <button type="button" className="eg-roles-btnPrimary" onClick={() => setCreating(emptyDraft())}>
             + New workflow
           </button>
         )}
@@ -439,6 +529,7 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [],
             draft={creating}
             choices={choices}
             people={people}
+            sections={sections}
             knownRoles={knownRoles}
             others={summaries}
             canEdit={canEdit}
@@ -466,6 +557,7 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [],
               draft={draft}
               choices={choices}
               people={people}
+              sections={sections}
               knownRoles={knownRoles}
               others={summaries}
               canEdit={canEdit}
@@ -494,10 +586,10 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [],
                 <p>
                   {offer.count} {offer.count === 1 ? 'document is' : 'documents are'} in review ({COLLECTION_LABELS[offer.collection]}) at the step {offer.count === 1 ? 'it was' : 'they were'} at before this change. Move {offer.count === 1 ? 'it' : 'them'} to step 1 of this workflow? Approvals are cleared and each one gets a history row.
                 </p>
-                <button type="button" className={styles.btnPrimary} disabled={moving} onClick={() => void moveInReview()}>
+                <button type="button" className="eg-roles-btnPrimary" disabled={moving} onClick={() => void moveInReview()}>
                   {moving ? 'Moving...' : 'Move to step 1'}
                 </button>
-                <button type="button" className={styles.btnSecondary} disabled={moving} onClick={() => setOffer(null)}>
+                <button type="button" className="eg-roles-btnSecondary" disabled={moving} onClick={() => setOffer(null)}>
                   Leave them where they are
                 </button>
               </div>

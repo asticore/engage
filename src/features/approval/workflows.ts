@@ -54,12 +54,23 @@ export type ApprovalWorkflow = {
   steps: WorkflowStep[]
   /** One person may approve more than one step of a review round. Off by default (separation of duties). */
   allowRepeatApprover: boolean
+  /** Days a review may wait before it is overdue and the approvers are reminded. 0 means no limit. */
+  reviewDueDays?: number
   /** Per-author approvers. An author listed here has their work approved by these people, whatever the step says. */
   authorRoutes?: AuthorRoutes
+  /** Reviewers who are away and who covers for them. */
+  standIns?: StandIn[]
+  /** Per-section approvers (pages: the top-level page; posts: the first category). An author route still wins over a section route. */
+  sectionRoutes?: SectionRoutes
 }
 
+/** A reviewer who is away and the person who covers for them. `until` is the last day away (YYYY-MM-DD); null means until removed. */
+export type StandIn = { userId: number; standInId: number; until: string | null }
+
+export const MAX_STAND_INS = 50
+
 /** What the state machine needs from a workflow. */
-export type WorkflowRule = Pick<ApprovalWorkflow, 'steps' | 'submitterRoles'> & { authorRoutes?: AuthorRoutes }
+export type WorkflowRule = Pick<ApprovalWorkflow, 'steps' | 'submitterRoles'> & { authorRoutes?: AuthorRoutes; sectionRoutes?: SectionRoutes }
 
 /** Shown to non-admins while the workflows cannot be read. */
 export const WORKFLOWS_UNAVAILABLE_MESSAGE = 'Approval workflows could not be loaded; try again.'
@@ -125,9 +136,51 @@ export function parseAuthorRoutes(value: unknown): AuthorRoutes {
   return out
 }
 
+const DAY = /^\d{4}-\d{2}-\d{2}$/
+
+/** Stand-ins from a json field: an array or JSON text. Rows with a bad user, the same user twice over, or a bad date are dropped. */
+export function parseStandIns(value: unknown): StandIn[] {
+  let raw: unknown = value
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw)
+    } catch {
+      return []
+    }
+  }
+  if (!Array.isArray(raw)) return []
+  const out: StandIn[] = []
+  const seen = new Set<number>()
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue
+    const row = entry as Record<string, unknown>
+    const userId = Number(row.userId)
+    const standInId = Number(row.standInId)
+    if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(standInId) || standInId <= 0 || userId === standInId) continue
+    if (seen.has(userId)) continue
+    const until = typeof row.until === 'string' && DAY.test(row.until) ? row.until : null
+    seen.add(userId)
+    out.push({ userId, standInId, until })
+  }
+  return out.slice(0, MAX_STAND_INS)
+}
+
+/** True while the reviewer is away: no end date, or today is on or before it. `today` is YYYY-MM-DD. */
+export const isAway = (standIn: StandIn, today: string): boolean => standIn.until === null || today <= standIn.until
+
+/** The reviewers this person is covering for right now. */
+export function coveredBy(standIns: readonly StandIn[] | undefined, personId: number, today: string): number[] {
+  return (standIns ?? []).filter((entry) => entry.standInId === personId && isAway(entry, today)).map((entry) => entry.userId)
+}
+
 /** Every user id a workflow names, so the loader can read their names and a save can check they exist. */
-export function namedUserIds(steps: ReadonlyArray<{ approverUsers?: unknown }>, routes: unknown): number[] {
+export function namedUserIds(steps: ReadonlyArray<{ approverUsers?: unknown }>, routes: unknown, standIns?: unknown, sectionRoutes?: unknown): number[] {
   const ids = new Set<number>()
+  for (const list of Object.values(parseSectionRoutes(sectionRoutes))) for (const id of list) ids.add(id)
+  for (const entry of parseStandIns(standIns)) {
+    ids.add(entry.userId)
+    ids.add(entry.standInId)
+  }
   for (const step of steps) for (const id of parseUserIds(step.approverUsers)) ids.add(id)
   const parsed = parseAuthorRoutes(routes)
   for (const [author, list] of Object.entries(parsed)) {
@@ -141,10 +194,38 @@ export function namedUserIds(steps: ReadonlyArray<{ approverUsers?: unknown }>, 
  * The people who must approve this step for this author's work, or an empty list when the roles decide. An author with a
  * route is approved by that route at every step; otherwise the step's own named people apply.
  */
-export function namedApprovers(workflow: WorkflowRule, step: WorkflowStep, requestedBy: number | null): number[] {
+export function namedApprovers(workflow: WorkflowRule, step: WorkflowStep, requestedBy: number | null, section: string | null = null): number[] {
   const route = requestedBy !== null ? workflow.authorRoutes?.[String(requestedBy)] : undefined
   if (route && route.length > 0) return route
+  const sectionRoute = section ? workflow.sectionRoutes?.[section] : undefined
+  if (sectionRoute && sectionRoute.length > 0) return sectionRoute
   return step.approverUsers ?? []
+}
+
+/** Section key (a top-level page id, or a post's first category in lower case) to the people who approve that section's work. */
+export type SectionRoutes = Record<string, number[]>
+
+export const MAX_SECTION_KEY_LENGTH = 120
+
+/** { "<section>": [approver ids] } from a json field, dropping rows with no section key or no approvers. Keys are trimmed and lower-cased. */
+export function parseSectionRoutes(value: unknown): SectionRoutes {
+  let raw: unknown = value
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw)
+    } catch {
+      return {}
+    }
+  }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+  const out: SectionRoutes = {}
+  for (const [key, ids] of Object.entries(raw as Record<string, unknown>)) {
+    const clean = key.trim().toLowerCase()
+    if (!clean || clean.length > MAX_SECTION_KEY_LENGTH) continue
+    const list = parseUserIds(ids)
+    if (list.length > 0) out[clean] = list
+  }
+  return out
 }
 
 const toBool = (value: unknown): boolean => value === true || value === 1 || value === '1' || value === 'true'
@@ -191,7 +272,10 @@ export function parseWorkflow(doc: unknown, roleNames: ReadonlyMap<string, strin
     submitterRoles: parseRoleList(row.submitterRoles),
     steps,
     allowRepeatApprover: toBool(row.allowRepeatApprover),
+    reviewDueDays: Math.max(0, Math.min(365, Math.floor(Number(row.reviewDueDays) || 0))),
     authorRoutes: parseAuthorRoutes(row.authorRoutes),
+    standIns: parseStandIns(row.standIns),
+    sectionRoutes: parseSectionRoutes(row.sectionRoutes),
   }
 }
 
@@ -199,10 +283,13 @@ export function parseWorkflow(doc: unknown, roleNames: ReadonlyMap<string, strin
  * True when the user may act at this step. Admins always may. With named people (from the author's route or the step) only
  * those people may, plus the step's roles when it keeps them as a fallback; with none named the roles decide.
  */
-export function mayActOnStep(step: WorkflowStep, roleSlugs: readonly string[], isAdmin: boolean, who?: { userId: number; named: readonly number[] }): boolean {
+export function mayActOnStep(step: WorkflowStep, roleSlugs: readonly string[], isAdmin: boolean, who?: { userId: number; named: readonly number[]; alsoUserIds?: readonly number[] }): boolean {
   if (isAdmin) return true
   const byRole = step.approverRoles.some((slug) => roleSlugs.includes(slug))
-  if (who && who.named.length > 0) return who.named.includes(who.userId) || (step.alsoRoles === true && byRole)
+  if (who && who.named.length > 0) {
+    const named = who.named.includes(who.userId) || (who.alsoUserIds ?? []).some((id) => who.named.includes(id))
+    return named || (step.alsoRoles === true && byRole)
+  }
   return byRole
 }
 
@@ -226,11 +313,12 @@ const listNames = (names: string[]): string => {
 }
 
 /** "Step 2 of 3 (Legal review), waiting on Legal or Editor." Used wherever people are told what is awaited. */
-export function describeAwaiting(workflow: WorkflowRule, step: number, requestedBy: number | null = null): string {
+export function describeAwaiting(workflow: WorkflowRule, step: number, requestedBy: number | null = null, section: string | null = null): string {
   const index = clampStep(step, workflow.steps.length)
   const current = workflow.steps[index]
   const routed = requestedBy !== null && (workflow.authorRoutes?.[String(requestedBy)]?.length ?? 0) > 0
-  return `Step ${index + 1} of ${workflow.steps.length} (${current.name}), waiting on ${routed ? 'the approver named for this author' : listNames(current.approverNames)}.`
+  const sectionRouted = !routed && Boolean(section) && (workflow.sectionRoutes?.[section as string]?.length ?? 0) > 0
+  return `Step ${index + 1} of ${workflow.steps.length} (${current.name}), waiting on ${routed ? 'the approver named for this author' : sectionRouted ? 'the approver named for this section' : listNames(current.approverNames)}.`
 }
 
 export type WorkflowInput = {
@@ -240,7 +328,10 @@ export type WorkflowInput = {
   submitterRoles?: unknown
   steps?: unknown
   allowRepeatApprover?: unknown
+  reviewDueDays?: unknown
   authorRoutes?: unknown
+  standIns?: unknown
+  sectionRoutes?: unknown
 }
 
 /**
@@ -295,6 +386,33 @@ export function validateWorkflowInput(
       for (const id of list) if (!knownUsers.has(id)) problems.push({ path: 'authorRoutes', message: `Approver by author: user ${id} does not exist.` })
       if (list.includes(Number(author))) problems.push({ path: 'authorRoutes', message: 'An author cannot be their own approver.' })
     }
+  }
+
+  if (knownUsers) {
+    for (const [section, list] of Object.entries(parseSectionRoutes(input.sectionRoutes))) {
+      for (const id of list) if (!knownUsers.has(id)) problems.push({ path: 'sectionRoutes', message: `Approver by section "${section}": user ${id} does not exist.` })
+    }
+  }
+
+  if (Array.isArray(input.standIns)) {
+    if (input.standIns.length > MAX_STAND_INS) problems.push({ path: 'standIns', message: `Use at most ${MAX_STAND_INS} stand-ins.` })
+    for (const entry of input.standIns) {
+      const row = (entry && typeof entry === 'object' ? entry : {}) as Record<string, unknown>
+      const userId = Number(row.userId)
+      const standInId = Number(row.standInId)
+      if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(standInId) || standInId <= 0) {
+        problems.push({ path: 'standIns', message: 'Stand-in: pick the reviewer and the person who covers.' })
+        continue
+      }
+      if (userId === standInId) problems.push({ path: 'standIns', message: 'A reviewer cannot be their own stand-in.' })
+      if (row.until !== null && row.until !== undefined && row.until !== '' && !(typeof row.until === 'string' && DAY.test(row.until))) problems.push({ path: 'standIns', message: 'Stand-in: the away until date is not valid.' })
+      if (knownUsers) {
+        if (!knownUsers.has(userId)) problems.push({ path: 'standIns', message: `Stand-in: user ${userId} does not exist.` })
+        if (!knownUsers.has(standInId)) problems.push({ path: 'standIns', message: `Stand-in: user ${standInId} does not exist.` })
+      }
+    }
+    const ids = input.standIns.map((entry) => Number((entry as Record<string, unknown> | null)?.userId)).filter((id) => Number.isInteger(id))
+    if (new Set(ids).size !== ids.length) problems.push({ path: 'standIns', message: 'Each reviewer can have only one stand-in.' })
   }
 
   if (toBool(input.active) && isApprovalCollection(input.collection)) {
@@ -390,7 +508,7 @@ export async function loadActiveWorkflows(engine: EngineLike | null | undefined)
       return { workflows: {}, unknown: false }
     }
     const names = await loadRoleNames(engine)
-    const userNames = await loadUserNames(engine, active.flatMap((doc) => namedUserIds(Array.isArray(doc.steps) ? (doc.steps as Array<{ approverUsers?: unknown }>) : [], doc.authorRoutes)))
+    const userNames = await loadUserNames(engine, active.flatMap((doc) => namedUserIds(Array.isArray(doc.steps) ? (doc.steps as Array<{ approverUsers?: unknown }>) : [], doc.authorRoutes, doc.standIns, doc.sectionRoutes)))
     const parsed = active.map((doc) => parseWorkflow(doc, names, userNames))
     if (parsed.some((workflow) => workflow === null)) {
       if (lastKnownGood) return { workflows: groupActive(lastKnownGood), unknown: false }

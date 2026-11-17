@@ -14,6 +14,7 @@ import { PREORDER_LABEL } from '@/features/ecommerce/lib/preorder'
 import { imageForSelection } from '@/features/ecommerce/lib/variationImage'
 import type { AddOnView } from '@/features/ecommerce/lib/addOns'
 import { ProductAddOns, type AddOnValues } from './ProductAddOns'
+import { CompositePicker, type CompositeView } from './CompositePicker'
 import { PricingRuleNotes } from './PricingRuleNotes'
 import { PreorderNotice } from './PreorderNotice'
 import { useVariationImage } from './VariationImageProvider'
@@ -127,7 +128,7 @@ function AddControl({ productId, variationId, disabled, label, limits, buyerPric
   )
 }
 
-export function ProductPurchase({ productId, view, grouped = [], giftConfig }: { productId: number; view: ProductView; grouped?: GroupedChild[]; giftConfig?: GiftCardConfig }) {
+export function ProductPurchase({ productId, view, grouped = [], giftConfig, composite, hiddenPriceText }: { productId: number; view: ProductView; grouped?: GroupedChild[]; giftConfig?: GiftCardConfig; composite?: CompositeView | null; hiddenPriceText?: string }) {
   const t = useStoreText()
   const [selection, setSelection] = useState<Record<string, string>>({})
   const { setImageUrl } = useVariationImage()
@@ -138,8 +139,15 @@ export function ProductPurchase({ productId, view, grouped = [], giftConfig }: {
     return view.variations.find((variation) => view.options.every((option) => (variation.attributes[option.name] ?? '').toLowerCase() === selection[option.name].toLowerCase())) ?? null
   }, [selection, view])
 
+  // Wholesale mode: the page already removed the prices; show the shop's text instead of the buy controls.
+  if (hiddenPriceText) return <p className="my-4">{hiddenPriceText}</p>
+
   if (view.type === 'giftcard') {
     return giftConfig ? <GiftCardForm productId={productId} config={giftConfig} /> : <p>{t('store.giftCardsUnavailable')}</p>
+  }
+
+  if (view.type === 'composite') {
+    return composite ? <CompositePicker productId={productId} view={composite} disabled={!view.purchasable} /> : <p>{t('store.productUnavailable')}</p>
   }
 
   if (view.type === 'external') {

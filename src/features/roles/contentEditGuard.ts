@@ -239,7 +239,7 @@ function applyReviewFieldRules(data: Record<string, unknown>, originalDoc: Recor
   const contentChanged = stored.hash === null || stored.hash !== contentHash
 
   const next = resetOnEdit(
-    { status, requestedBy: relationId(originalDoc.reviewRequestedBy), approvals: stored.approvals, step: Math.max(0, Math.floor(Number(originalDoc.reviewStep)) || 0) },
+    { status, requestedBy: relationId(originalDoc.reviewRequestedBy), approvals: stored.approvals, step: Math.max(0, Math.floor(Number(originalDoc.reviewStep)) || 0), assignee: stored.assignee ?? null },
     contentChanged,
   )
   data.reviewStatus = next.status
@@ -250,6 +250,7 @@ function applyReviewFieldRules(data: Record<string, unknown>, originalDoc: Recor
   data.reviewApprovals = serializeStoredReview({
     hash: next.status === 'in_review' ? contentHash : null,
     approvals: next.approvals,
+    assignee: next.status === 'in_review' ? (next.assignee ?? null) : null,
   })
 
   // A live save that takes content out of review writes a history row after the save (see

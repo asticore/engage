@@ -58,6 +58,15 @@ async function applyStock(engine: Engine, lines: LineItem[], sign: 1 | -1, only?
     try {
       const product = await engine.findByID({ collection: 'products', id: productId, depth: 0, overrideAccess: true, draft: false })
       if (!product) continue
+      if (product.productType === 'composite') {
+        // A kit takes stock from each item that was picked: the snapshot taken at checkout (a kit with no snapshot has nothing to give back).
+        const contents = Array.isArray(line.bundleContents) ? line.bundleContents : []
+        const sub = await applyStock(engine, bundleStockLines(contents, qty), sign)
+        out.oversold.push(...sub.oversold)
+        out.failed.push(...sub.failed)
+        out.applied.push({ line, qty })
+        continue
+      }
       if (product.productType === 'bundle') {
         // A bundle takes stock from each product inside it: the snapshot taken at checkout, else the bundle's current contents.
         const contents = Array.isArray(line.bundleContents) ? line.bundleContents : bundleComponentRows(product.bundleItems).map((row): BundleContent => ({ productId: row.productId, quantity: row.quantity, title: `Item ${row.productId}` }))
@@ -197,6 +206,9 @@ async function takeStock(engine: Engine, order: Doc, orderId: number): Promise<{
     await addOrderNote(engine, orderId, { type: 'internal', text: `Stock was not updated (will retry): ${result.failed.join('; ')}`, author: 'System' })
     return { oversold: false }
   }
+  // A buyer who held a waiting-list place has used it.
+  const { markOfferPurchased } = await import('../waitingList')
+  await markOfferPurchased(engine as never, order.customerEmail, lines)
   if (result.oversold.length > 0) {
     await runChanges(d1, `UPDATE eg_orders SET status = 'on-hold' WHERE id = ?1 AND status = 'processing'`, orderId)
     await flagAttention(engine, orderId, `Oversold: not enough stock for ${result.oversold.join(', ')}. The order is on hold.`)

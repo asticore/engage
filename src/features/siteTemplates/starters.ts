@@ -126,6 +126,28 @@ export const STARTERS: TemplateStarter[] = [
     ],
   },
   {
+    id: 'coming-soon-countdown',
+    kind: 'coming-soon',
+    label: 'Countdown and signup',
+    description: 'A heading, a short message, a countdown to the launch date and the email signup.',
+    blocks: () => [
+      section([
+        heading("We're launching soon"),
+        copy('Something new is on its way. Leave your email and we will tell you the moment we open.'),
+        // No date on purpose: a Countdown with a blank date counts down to the launch date set under Site pages and maintenance.
+        el('countdown', { target: '', expiredText: 'We are open.' }),
+        el('coming-soon-signup'),
+      ]),
+    ],
+  },
+  {
+    id: 'maintenance-simple',
+    kind: 'maintenance',
+    label: 'Back soon',
+    description: 'A heading and a short message.',
+    blocks: () => [section([heading("We'll be back soon"), copy('We are making a few improvements. Please check back shortly.')])],
+  },
+  {
     id: 'header-logo-menu',
     kind: 'header',
     label: 'Logo and menu',

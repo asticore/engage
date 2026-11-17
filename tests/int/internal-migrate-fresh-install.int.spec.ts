@@ -887,7 +887,7 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     const { createD1WebhookStore } = await import('@/features/webhooks/store')
     const store = createD1WebhookStore(async () => proxy.env.D1 as never)
     const at = '2026-10-30T00:00:00.000Z'
-    const config = { name: 'Orders', description: '', url: 'https://hooks.example.com/in', events: ['order.paid'] as ('order.paid')[], template: null as string | null, enabled: true, ratePerMinute: 60 }
+    const config = { name: 'Orders', description: '', url: 'https://hooks.example.com/in', events: ['order.paid'] as ('order.paid')[], template: null as string | null, enabled: true, ratePerMinute: 60, auditActions: [] as string[], auditRedact: [] as never[] }
     const id = await store.insert(config, 'enc:v1:00:00:00', at)
     expect(await store.findById(id)).toMatchObject({ id, name: 'Orders', events: ['order.paid'], enabled: true, ratePerMinute: 60 })
     expect((await store.activeFor('order.paid')).map((w) => w.id)).toEqual([id])
@@ -1087,6 +1087,17 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(cols.filter((c) => c === 'two_factor_backup_hashes')).toHaveLength(1)
   })
 
+  it('adds the S3 backup endpoint column once', async () => {
+    const mod = await import('@/migrations/20270318_110000_backup_s3_endpoint')
+    const { drizzle } = await import('drizzle-orm/d1')
+    const db = drizzle(proxy.env.D1) as never
+    const engine = { logger: consoleLogger } as never
+    await mod.up({ db, engine } as never)
+    await mod.up({ db, engine } as never)
+    const cols = ((await proxy.env.D1.prepare('PRAGMA table_info(`eg_backup_settings`)').all()).results as { name: string }[]).map((r) => r.name)
+    expect(cols.filter((c) => c === 'destination_s3_endpoint')).toHaveLength(1)
+  })
+
   it('creates the signed-in device sessions table with its indexes', async () => {
     expect(tables).toContain('eg_user_sessions')
     const cols = ((await proxy.env.D1.prepare('PRAGMA table_info(`eg_user_sessions`)').all()).results as { name: string }[]).map((r) => r.name)
@@ -1207,6 +1218,17 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(await columnsOf('eg_products_bundle_items')).toEqual(expect.arrayContaining(['_order', '_parent_id', 'product_id', 'quantity']))
     expect(await columnsOf('_eg_products_v_version_bundle_items')).toEqual(expect.arrayContaining(['_parent_id', 'product_id', 'quantity', '_uuid']))
     expect(await columnsOf('eg_shop_extra_settings')).toEqual(expect.arrayContaining(['recommendations_enabled', 'recommendations_max']))
+  })
+
+  it('creates the composite product tables and the cart pick column (task 11b)', async () => {
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    for (const table of ['eg_products_composite_options', '_eg_products_v_version_composite_options', 'eg_products_composite_rules', '_eg_products_v_version_composite_rules']) expect(tables, table).toContain(table)
+    expect(await columnsOf('eg_products_composite_options')).toEqual(expect.arrayContaining(['_order', '_parent_id', 'component', 'product_id', 'price_mode', 'price_value', 'is_default']))
+    expect(await columnsOf('_eg_products_v_version_composite_rules')).toEqual(expect.arrayContaining(['_parent_id', 'component', 'description', 'required', 'min_choices', 'max_choices', '_uuid']))
+    expect(await columnsOf('eg_carts_items')).toContain('composite')
   })
 
   it('creates the cron run history table with its columns (wave 17)', async () => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
-type Check = { current: string; latest: string | null; updateAvailable: boolean; links: { changelog: string; start: string; sameRepo: boolean }; referencesOutdated?: Array<{ id: string; name: string; current: string | null; latest: string | null }> }
+type Check = { current: string; latest: string | null; updateAvailable: boolean; links: { changelog: string; start: string; sameRepo: boolean }; oneClick?: boolean; referencesOutdated?: Array<{ id: string; name: string; current: string | null; latest: string | null }> }
 
 const SEEN_KEY = 'engage-update-dismissed'
 
@@ -15,6 +15,8 @@ export function UpdateNotice() {
   const t = useAdminT()
   const [check, setCheck] = useState<Check | null>(null)
   const [started, setStarted] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   useEffect(() => {
     let live = true
@@ -46,6 +48,18 @@ export function UpdateNotice() {
     setCheck(null)
   }
 
+  const applyNow = async (): Promise<void> => {
+    setApplying(true)
+    try {
+      const res = await fetch('/api/admin-update-apply', { method: 'POST' })
+      const body = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string }
+      setResult({ ok: res.ok && body.ok === true, message: body.message ?? t('update.failed') })
+    } catch {
+      setResult({ ok: false, message: t('update.failed') })
+    }
+    setApplying(false)
+  }
+
   return (
     <div role="dialog" aria-label={t('update.aria')} data-testid="update-notice" style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 1000, maxWidth: 340 }} className="card">
       <div className="card-body stack">
@@ -60,7 +74,9 @@ export function UpdateNotice() {
             {t('update.references', { names: (check.referencesOutdated ?? []).map((r) => r.name).join(', ') })}
           </span>
         )}
+        {result ? <span role="status" className={result.ok ? 'text-muted' : 'badge'}>{result.message}</span> : null}
         <div className="cluster">
+          {check.updateAvailable && check.latest && check.oneClick && !result?.ok ? <button type="button" className="btn" disabled={applying} onClick={() => void applyNow()}>{applying ? t('update.updating') : t('update.updateNow')}</button> : null}
           {check.updateAvailable && check.latest && (
             <>
               <a

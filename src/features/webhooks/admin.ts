@@ -39,6 +39,8 @@ export async function setWebhookEnabledRecord(store: WebhookStore, id: number, e
     template: existing.template,
     enabled,
     ratePerMinute: existing.ratePerMinute,
+    auditActions: existing.auditActions,
+    auditRedact: existing.auditRedact,
   }
   await store.update(id, config, at)
   const saved = await store.findById(id)

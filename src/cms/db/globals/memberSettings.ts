@@ -63,6 +63,16 @@ export type MemberSettingsDoc = {
     welcomeSubject?: string | null
     welcomeBody?: string | null
     expiryReminderDays?: number | null
+    dunningFailedSubject?: string | null
+    dunningFailedBody?: string | null
+    dunningRetrySubject?: string | null
+    dunningRetryBody?: string | null
+    dunningEndedSubject?: string | null
+    dunningEndedBody?: string | null
+    dunningDowngradedSubject?: string | null
+    dunningDowngradedBody?: string | null
+    dunningRecoveredSubject?: string | null
+    dunningRecoveredBody?: string | null
   }
   updatedAt: string
   createdAt: string

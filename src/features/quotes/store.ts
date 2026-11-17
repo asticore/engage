@@ -94,6 +94,16 @@ export async function listRequests(d1: D1, filter: { status?: string }, limit = 
   return (await all(d1, sql, ...(filter.status ? [filter.status] : []))).map(toRequest)
 }
 
+/** A customer's requests by the email on them, newest first. Callers pass only a confirmed account email. */
+export async function listByEmail(d1: D1, email: string, limit = 50): Promise<QuoteRequest[]> {
+  return (await all(d1, `SELECT * FROM eg_quote_requests WHERE lower(email) = ?1 ORDER BY id DESC LIMIT ${Math.max(1, Math.min(limit, 200))}`, email.trim().toLowerCase())).map(toRequest)
+}
+/** Replaces the private link of a request that has a quote. The link in an earlier email stops working. */
+export async function setTokenHash(d1: D1, id: number, tokenHash: string, nowIso: string): Promise<boolean> {
+  const res = await run(d1, 'UPDATE eg_quote_requests SET token_hash = ?1, updated_at = ?2 WHERE id = ?3 AND quote_total_cents IS NOT NULL', tokenHash, nowIso, id)
+  return (res.meta?.changes ?? 0) > 0
+}
+
 /** Adds an activity line. Read-modify-write: the log is a note for staff, not a ledger. */
 export async function addActivity(d1: D1, id: number, by: ActivityEntry['by'], text: string, nowIso: string): Promise<void> {
   const current = await getRequest(d1, id)
@@ -131,4 +141,24 @@ export async function expireOverdue(d1: D1, nowIso: string): Promise<number> {
 }
 export async function deleteRequest(d1: D1, id: number): Promise<void> {
   await run(d1, 'DELETE FROM eg_quote_requests WHERE id = ?1', id)
+}
+
+/** Open quotes whose validity ends within `withinMs` of now, soonest first. */
+export async function listExpiring(d1: D1, nowIso: string, untilIso: string, limit = 100): Promise<QuoteRequest[]> {
+  const rows = await all(d1, "SELECT * FROM eg_quote_requests WHERE status IN ('quoted','countered') AND valid_until IS NOT NULL AND valid_until > ?1 AND valid_until <= ?2 ORDER BY valid_until ASC LIMIT ?3", nowIso, untilIso, Math.max(1, Math.min(limit, 500)))
+  return rows.map(toRequest)
+}
+
+/** The Offers settings of one product (minimum in cents, end time and title), or null when the product is gone. */
+export async function productBidTerms(d1: D1, productId: number): Promise<{ title: string; minimumCents: number; endsAt: string | null } | null> {
+  const rows = await all(d1, "SELECT title, json_extract(bid, '$.minimum') AS bid_minimum, json_extract(bid, '$.endsAt') AS bid_ends_at FROM eg_products WHERE id = ?1", productId)
+  if (!rows[0]) return null
+  return { title: String(rows[0].title ?? ''), minimumCents: Math.round(Number(rows[0].bid_minimum ?? 0) * 100), endsAt: rows[0].bid_ends_at ? String(rows[0].bid_ends_at) : null }
+}
+/** Products that have unanswered offers. */
+export async function productsWithOpenBids(d1: D1): Promise<number[]> {
+  return (await all(d1, "SELECT DISTINCT product_id FROM eg_quote_requests WHERE kind = 'bid' AND status = 'new' AND product_id IS NOT NULL LIMIT 200")).map((r) => Number(r.product_id))
+}
+export async function openBidsFor(d1: D1, productId: number): Promise<QuoteRequest[]> {
+  return (await all(d1, "SELECT * FROM eg_quote_requests WHERE kind = 'bid' AND status = 'new' AND product_id = ?1 ORDER BY id LIMIT 500", productId)).map(toRequest)
 }

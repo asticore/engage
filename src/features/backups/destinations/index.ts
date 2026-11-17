@@ -45,6 +45,21 @@ export type ResolvedDestination = {
 const normalisePrefix = (value: string | undefined): string =>
   (value ?? '').trim().replace(/^\/+|\/+$/g, '')
 
+/**
+ * Returns '' when unset, the https origin when valid, or null when the value is
+ * not an https URL (plain http would send signed backups in the clear).
+ */
+export function normaliseEndpoint(value: string | undefined): string | null {
+  const text = (value ?? '').trim()
+  if (!text) return ''
+  try {
+    const url = new URL(text)
+    return url.protocol === 'https:' ? url.origin : null
+  } catch {
+    return null
+  }
+}
+
 export function resolveDestination(settings: BackupSettings): ResolvedDestination {
   const destination = settings.destination
 
@@ -84,8 +99,16 @@ export function resolveDestination(settings: BackupSettings): ResolvedDestinatio
   } else {
     region = (destination.region ?? '').trim()
     if (!region) missing.push('region')
-    endpoint = `https://s3.${region}.amazonaws.com`
-    label = `S3 ${bucket} (${region})`
+    const custom = normaliseEndpoint(destination.endpoint)
+    if (custom === null) {
+      return {
+        ok: false,
+        unsupported: false,
+        error: 'The endpoint must be a full https address such as https://s3.wasabisys.com.',
+      }
+    }
+    endpoint = custom || `https://s3.${region}.amazonaws.com`
+    label = custom ? `S3 ${bucket} (${new URL(custom).host})` : `S3 ${bucket} (${region})`
   }
 
   if (missing.length > 0) {

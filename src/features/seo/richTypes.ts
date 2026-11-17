@@ -121,3 +121,42 @@ export const buildRichNode = (type: RichType, f: Facts, ctx: RichContext): Recor
       })
   }
 }
+
+export type FactInput = 'text' | 'number' | 'date' | 'lines'
+export type FactDef = { key: string; label: string; input: FactInput; hint?: string }
+
+/** Form fields per rich type for the facts editor. Keys match RICH_REQUIREMENTS and buildRichNode. */
+export const FACT_FIELDS: Record<RichType, FactDef[]> = {
+  Recipe: [
+    { key: 'name', label: 'Name', input: 'text' }, { key: 'image', label: 'Image address', input: 'text' },
+    { key: 'ingredients', label: 'Ingredients', input: 'lines', hint: 'One per line' }, { key: 'steps', label: 'Steps', input: 'lines', hint: 'One per line' },
+    { key: 'prepTime', label: 'Prep time', input: 'text', hint: 'For example PT10M' }, { key: 'cookTime', label: 'Cook time', input: 'text', hint: 'For example PT30M' },
+    { key: 'yield', label: 'Yield', input: 'text' }, { key: 'ratingValue', label: 'Rating', input: 'number' }, { key: 'ratingCount', label: 'Rating count', input: 'number' },
+  ],
+  JobPosting: [
+    { key: 'title', label: 'Job title', input: 'text' }, { key: 'description', label: 'Description', input: 'text' }, { key: 'datePosted', label: 'Date posted', input: 'date' },
+    { key: 'validThrough', label: 'Valid through', input: 'date' }, { key: 'company', label: 'Company', input: 'text' }, { key: 'location', label: 'Location', input: 'text' },
+    { key: 'employmentType', label: 'Employment type', input: 'text', hint: 'For example FULL_TIME' }, { key: 'salaryMin', label: 'Salary from', input: 'number' },
+    { key: 'salaryMax', label: 'Salary to', input: 'number' }, { key: 'currency', label: 'Currency', input: 'text' }, { key: 'salaryUnit', label: 'Salary unit', input: 'text', hint: 'YEAR, MONTH, HOUR' },
+  ],
+  HowTo: [
+    { key: 'name', label: 'Name', input: 'text' }, { key: 'steps', label: 'Steps', input: 'lines', hint: 'One per line' },
+    { key: 'totalTime', label: 'Total time', input: 'text', hint: 'For example PT20M' }, { key: 'image', label: 'Image address', input: 'text' },
+  ],
+  SoftwareApplication: [
+    { key: 'name', label: 'Name', input: 'text' }, { key: 'category', label: 'Category', input: 'text' }, { key: 'operatingSystem', label: 'Operating system', input: 'text' },
+    { key: 'price', label: 'Price', input: 'number' }, { key: 'currency', label: 'Currency', input: 'text' }, { key: 'ratingValue', label: 'Rating', input: 'number' }, { key: 'ratingCount', label: 'Rating count', input: 'number' },
+  ],
+  Review: [
+    { key: 'itemName', label: 'Item reviewed', input: 'text' }, { key: 'itemType', label: 'Item type', input: 'text', hint: 'For example Book, Product' },
+    { key: 'ratingValue', label: 'Rating', input: 'number' }, { key: 'bestRating', label: 'Best rating', input: 'number' }, { key: 'author', label: 'Author', input: 'text' },
+  ],
+  Person: [
+    { key: 'name', label: 'Name', input: 'text' }, { key: 'jobTitle', label: 'Job title', input: 'text' }, { key: 'image', label: 'Image address', input: 'text' },
+    { key: 'sameAs', label: 'Profiles', input: 'lines', hint: 'One address per line' },
+  ],
+  LocalBusiness: [
+    { key: 'name', label: 'Name', input: 'text' }, { key: 'address', label: 'Address', input: 'text' }, { key: 'telephone', label: 'Telephone', input: 'text' },
+    { key: 'openingHours', label: 'Opening hours', input: 'lines', hint: 'One per line, like Mo-Fr 09:00-17:00' }, { key: 'image', label: 'Image address', input: 'text' }, { key: 'priceRange', label: 'Price range', input: 'text' },
+  ],
+}

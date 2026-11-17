@@ -31,6 +31,9 @@ import { getSitePages, isSignedInAdmin } from '@/features/site/pages'
 import { launchReached } from '@/features/site/pagesShape'
 import { BYPASS_COOKIE, shouldShowMaintenance } from '@/features/site/maintenance'
 import { MaintenanceScreen } from '@/features/site/MaintenanceScreen'
+import { setScreenContext, withLaunchDate } from '@/features/site/screenContext'
+import { renderWithTemplate } from '@/features/siteTemplates/render'
+import { comingSoonSignupFor } from '@/features/forms/comingSoonSignup'
 import { STAGING_NOINDEX, isStaging } from '@/features/site/staging'
 import { buildFontCss, preloadLinks, remoteStylesheetUrls, resolveThemeFont } from '@/features/fonts/css'
 import { buildBuiltInFontCss } from '@/features/fonts/builtIn'
@@ -41,13 +44,14 @@ import { BODY_FONT_VARS, FONT_FACE_VARS, HEADING_FONT_VARS } from '@/features/fo
 import { buildThemeStylesCss } from '@/features/themeStyles/css'
 import { loadThemeStyles } from '@/features/themeStyles/store'
 import { SiteEffects } from '@/components/site/SiteEffects'
-import { EffixLoader } from '@/components/site/EffixLoader'
+import { SparkLoader } from '@/components/site/SparkLoader'
 import { siteEffectsFor } from '@/components/site/siteEffectsConfig'
 import { renderChromeTemplates, renderSidebarTemplates, requestPathOf, type ChromeScope } from '@/features/siteTemplates/chrome'
 import { SidebarLayout } from '@/features/siteTemplates/SidebarLayout'
 import { AffiliateCapture } from '@/features/affiliates/components/AffiliateCapture.server'
 import { SiteChatbot } from '@/features/chatbot/components/ChatWidget.server'
 import { ImpersonationBanner } from '@/features/impersonation/components/ImpersonationBanner'
+import { DemoBanner } from '@/features/demos/components/DemoBanner'
 import { directionFor } from '@/features/multilingual/detect'
 import { LOCALE_HEADER, requestLocale } from '@/features/multilingual/routing'
 import { isPortalPath } from '@/features/multilingual/portal'
@@ -222,6 +226,23 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // Internal links on this page (blocks, menus, cards) carry the locale prefix. The portal never does.
   // Internal links point at a translated slug where the page has one (localizedSlugs.ts).
   setRequestLinkLocale(portal ? null : locale, multilingual, portal ? null : await localeLinkPaths(locale))
+  // The email signup on the coming soon screen, read only while that screen is up.
+  const comingSoonSignup = showMaintenance && maintenance.mode === 'comingSoon' ? await comingSoonSignupFor(locale) : null
+
+  // The maintenance or coming soon screen: the built-in one, or the matching screen template with the built-in one in its content slot.
+  let screen: React.ReactNode = null
+  if (showMaintenance) {
+    const isComingSoon = maintenance.mode === 'comingSoon'
+    const launchAt = isComingSoon ? maintenance.launchAt : null
+    setScreenContext({ launchAt, signup: comingSoonSignup })
+    screen = await renderWithTemplate({
+      kind: isComingSoon ? 'coming-soon' : 'maintenance',
+      ctx: {},
+      content: <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} launchAt={launchAt} signup={comingSoonSignup} />,
+      transformBlocks: withLaunchDate(launchAt),
+      replaceContent: true,
+    })
+  }
 
   // Header / footer templates (Site templates). Null for each when none matches, and the built-in ones draw.
   // Conditions can scope a template by host and language too: the host without its port, and the page's language (the default one when the site is not multilingual).
@@ -268,6 +289,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       </head>
       <body>
         <ImpersonationBanner />
+        <DemoBanner />
         <AffiliateCapture />
         <SiteChatbot />
         <SeoScripts country={country} />
@@ -302,7 +324,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           )}
           <AdPlacements position="header" />
           <main>
-            {showMaintenance ? <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} launchAt={maintenance.mode === 'comingSoon' ? maintenance.launchAt : null} /> : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
+            {showMaintenance ? screen : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
           </main>
           <AdPlacements position="footer" />
           {chrome.footer ? (
@@ -329,7 +351,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         </DisplayCurrencyProvider>
         </ShopCurrencyProvider>
         {siteEffects && <SiteEffects config={siteEffects} />}
-        <EffixLoader />
+        <SparkLoader />
         <SeoBodyScripts />
       </body>
     </html>

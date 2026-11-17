@@ -10,8 +10,12 @@ import {
   MAX_WORKFLOW_STEPS,
   parseAuthorRoutes,
   parseRoleList,
+  parseSectionRoutes,
+  parseStandIns,
+  type SectionRoutes,
   parseUserIds,
   type AuthorRoutes,
+  type StandIn,
   validateWorkflowInput,
   type ApprovalCollection,
 } from './workflows'
@@ -33,9 +37,12 @@ export type WorkflowDraft = {
   collection: ApprovalCollection
   active: boolean
   allowRepeatApprover: boolean
+  reviewDueDays?: number
   submitterRoles: string[]
   steps: DraftStep[]
   authorRoutes: AuthorRoutes
+  standIns: StandIn[]
+  sectionRoutes: SectionRoutes
 }
 
 /** A workflow as the REST API returns it. */
@@ -45,9 +52,12 @@ export type WorkflowRecord = {
   collection?: string
   active?: boolean | null
   allowRepeatApprover?: boolean | null
+  reviewDueDays?: number | null
   submitterRoles?: unknown
   steps?: Array<{ id?: string; name?: string | null; approverRoles?: unknown; approvalsNeeded?: number | null; approverUsers?: unknown; alsoRoles?: boolean | null }> | null
   authorRoutes?: unknown
+  standIns?: unknown
+  sectionRoutes?: unknown
 }
 
 export type RoleChoice = { slug: string; name: string; builtIn: boolean; canApprove: boolean }
@@ -63,9 +73,12 @@ export const emptyDraft = (collection: ApprovalCollection = 'pages'): WorkflowDr
   collection,
   active: false,
   allowRepeatApprover: false,
+  reviewDueDays: 0,
   submitterRoles: [],
   steps: [emptyStep()],
   authorRoutes: {},
+  standIns: [],
+  sectionRoutes: {},
 })
 
 export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
@@ -76,6 +89,7 @@ export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
     collection,
     active: record.active === true,
     allowRepeatApprover: record.allowRepeatApprover === true,
+    reviewDueDays: Number.isFinite(Number(record.reviewDueDays)) ? Math.max(0, Number(record.reviewDueDays)) : 0,
     submitterRoles: parseRoleList(record.submitterRoles),
     steps: (record.steps ?? []).map((step) => ({
       key: step.id || newStepKey(),
@@ -86,6 +100,8 @@ export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
       alsoRoles: step.alsoRoles === true,
     })),
     authorRoutes: parseAuthorRoutes(record.authorRoutes),
+    standIns: parseStandIns(record.standIns),
+    sectionRoutes: parseSectionRoutes(record.sectionRoutes),
   }
 }
 
@@ -96,6 +112,7 @@ export function payloadFromDraft(draft: WorkflowDraft): Record<string, unknown> 
     collection: draft.collection,
     active: draft.active,
     allowRepeatApprover: draft.allowRepeatApprover,
+    reviewDueDays: (draft.reviewDueDays ?? 0) > 0 ? Math.min(365, Math.floor(draft.reviewDueDays ?? 0)) : null,
     submitterRoles: draft.submitterRoles,
     steps: draft.steps.map((step) => ({
       name: step.name.trim(),
@@ -105,6 +122,8 @@ export function payloadFromDraft(draft: WorkflowDraft): Record<string, unknown> 
       alsoRoles: step.alsoRoles,
     })),
     authorRoutes: draft.authorRoutes,
+    standIns: draft.standIns,
+    sectionRoutes: draft.sectionRoutes,
   }
 }
 
@@ -140,6 +159,41 @@ export function setAuthorRoute(routes: AuthorRoutes, author: number, approvers: 
   if (approvers.length === 0) delete next[String(author)]
   else next[String(author)] = approvers
   return next
+}
+
+/**
+ * People who can be named as approvers or stand-ins: anyone with a staff role, and anyone with a custom role
+ * (which can carry its own approval rights even when their built-in role is only customer). Plain customers are left out.
+ */
+export function approverCandidates(users: ReadonlyArray<{ id: number | string; name?: string | null; email?: string | null; roles?: unknown; customRole?: unknown }>): Array<{ id: number; name: string }> {
+  const out: Array<{ id: number; name: string }> = []
+  for (const user of users) {
+    const id = Number(user.id)
+    if (!Number.isInteger(id) || id <= 0) continue
+    const staff = Array.isArray(user.roles) && user.roles.some((role) => typeof role === 'string' && role !== 'customer')
+    const rawCustom = typeof user.customRole === 'object' && user.customRole !== null ? (user.customRole as { id?: unknown }).id : user.customRole
+    const custom = Number.isInteger(Number(rawCustom)) && Number(rawCustom) > 0
+    if (!staff && !custom) continue
+    out.push({ id, name: user.name?.trim() || user.email || `User ${id}` })
+  }
+  return out
+}
+
+/** Sets who approves one section's work. An empty list removes the section's route. */
+export function setSectionRoute(routes: SectionRoutes, section: string, approvers: number[]): SectionRoutes {
+  const key = section.trim().toLowerCase()
+  const next = { ...routes }
+  if (!key) return next
+  if (approvers.length === 0) delete next[key]
+  else next[key] = approvers
+  return next
+}
+
+/** Sets who covers for one reviewer. A null stand-in removes the reviewer's row; one reviewer has at most one. */
+export function setStandIn(list: StandIn[], userId: number, standInId: number | null, until: string | null): StandIn[] {
+  const rest = list.filter((entry) => entry.userId !== userId)
+  if (standInId === null || standInId === userId) return rest
+  return [...rest, { userId, standInId, until }]
 }
 
 /** Adds or removes a slug from a role list, keeping the order stable. */

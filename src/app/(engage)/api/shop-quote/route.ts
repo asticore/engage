@@ -1,4 +1,5 @@
 import { customerTypesForUser } from '@/features/ecommerce/server/customerTypes'
+import { wholesaleMinOrderNotice } from '@/features/ecommerce/server/wholesale'
 import { NextResponse } from 'next/server'
 
 import { getEngine } from '@/engine'
@@ -43,6 +44,7 @@ export async function POST(request: Request): Promise<Response> {
         cartId,
         giftWrap: body.giftWrap === true,
         customerRoles: await customerTypesForUser(auth.user),
+        signedIn: Boolean(auth.user),
       },
       config,
     )
@@ -86,6 +88,8 @@ export async function POST(request: Request): Promise<Response> {
         // One generic message: never say whether a code exists, is used up, or how often this email used it.
         couponError: totals.couponError ? 'Coupon not valid' : null,
         fields: config.fields.filter((f) => f.enabled),
+        // Wholesale accounts: how far the cart is under the minimum order (checkout refuses it). Null for everyone else.
+        wholesaleMinOrder: await wholesaleMinOrderNotice(engine, auth.user, totals.subtotalCents),
       },
       { headers: { 'Cache-Control': 'no-store' } },
     )

@@ -78,6 +78,15 @@ export const inGrace = (m: Pick<MembershipDoc, 'status' | 'graceEndsAt'>, now: D
 
 export type DunningEmailKind = 'failed' | 'retry' | 'ended' | 'downgraded' | 'recovered'
 
+/** The site's own wording for one dunning email (Members, Emails), falling back to the built-in text for a blank subject or body. */
+export function dunningWording(kind: DunningEmailKind, emails: Record<string, unknown> | null | undefined): { subject: string; body: string } {
+  const base = DUNNING_EMAILS[kind]
+  const key = kind.charAt(0).toUpperCase() + kind.slice(1)
+  const subject = emails?.[`dunning${key}Subject`]
+  const body = emails?.[`dunning${key}Body`]
+  return { subject: typeof subject === 'string' && subject.trim() ? subject.trim() : base.subject, body: typeof body === 'string' && body.trim() ? body.trim() : base.body }
+}
+
 /** The wording. {{tags}} are filled per member; the link lets them update the card. */
 export const DUNNING_EMAILS: Record<DunningEmailKind, { subject: string; body: string }> = {
   failed: { subject: 'Your {{tier}} payment did not go through', body: 'Hi {{name}},\n\nWe could not take the payment for your {{tier}} membership. You keep your access until {{graceEnds}} while we try again.\n\nPlease update your card here:\n{{link}}\n\n{{siteName}}' },

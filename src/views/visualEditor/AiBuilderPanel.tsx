@@ -69,7 +69,11 @@ export type AiBuilderPanelProps = {
   onReplaceSelected: (sections: SectionNode[], sectionId: string | undefined) => boolean
   /** The dialog has its own title, so the panel's heading is hidden there. Defaults to true. */
   showTitle?: boolean
+  /** Set when the editor was opened from the site planner's Fill this page with AI: the planned page's brief and sections, and the next planned page. */
+  plannerFill?: PlannerFill | null
 }
+
+export type PlannerFill = { brief: string; title: string; nextHref: string | null; nextTitle: string | null }
 
 type Step = 'brief' | 'questions' | 'outline' | 'result'
 type ProviderLoad = { status: 'loading' } | { status: 'error'; message: string } | { status: 'ready'; providers: AiProviders }
@@ -97,7 +101,7 @@ function messageOf(err: unknown): string {
   return 'Could not reach the AI builder. Check your connection and try again.'
 }
 
-export const AiBuilderPanel: React.FC<AiBuilderPanelProps> = ({ pageTitle, selectedSection, onInsertAtEnd, onReplaceSelected, showTitle = true }) => {
+export const AiBuilderPanel: React.FC<AiBuilderPanelProps> = ({ pageTitle, selectedSection, onInsertAtEnd, onReplaceSelected, showTitle = true, plannerFill }) => {
   const t = useAdminT()
   const ids = useId()
   const [load, setLoad] = useState<ProviderLoad>({ status: 'loading' })
@@ -116,6 +120,14 @@ export const AiBuilderPanel: React.FC<AiBuilderPanelProps> = ({ pageTitle, selec
   const [busy, setBusy] = useState<'plan' | 'build' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [inserted, setInserted] = useState(false)
+  // Opened from the site planner: start with the planned page's brief and sections, as a whole page. Once only.
+  const seededFill = useRef<string | null>(null)
+  useEffect(() => {
+    if (!plannerFill || seededFill.current === plannerFill.brief) return
+    seededFill.current = plannerFill.brief
+    setBrief(plannerFill.brief)
+    setModeChoice('page')
+  }, [plannerFill])
   const abortRef = useRef<AbortController | null>(null)
   const [usage, setUsage] = useState<AiUsage | null>(null)
   const [elapsed, setElapsed] = useState(0)

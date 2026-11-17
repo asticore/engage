@@ -1,13 +1,64 @@
+import { deflateSync } from 'node:zlib'
+
 import { describe, expect, it } from 'vitest'
 
-import { CADENCES, isReportDue, parseRecipients, reportCsv, reportEmail, summaryLines, toCadence, toPreset, type ReportData } from '@/features/clientReports/core'
-import { DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
+import { buildPdf } from '@/features/apiBuilder/pdf'
+import { parseLogo } from '@/features/clientReports/logo'
+
+import { CADENCES, isReportDue, parseRecipients, parseSections, reportCsv, reportEmail, reportPdfLines, reportTables, summaryLines, toCadence, toDay, toPreset, wantsSection, withViewerRange, type ReportData } from '@/features/clientReports/core'
+import { copyKey, picturesAddedAfterCopy, idsAddedAfterCopy, DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
 import { cleanHost, cleanName, describeRollout, franchiseLocks, toLockChoice, toStatus } from '@/features/franchising/core'
+import { assetFilePath, collectRefs, pageFilePath, rewriteRefs, rootPrefix, sitemapPaths, stripScripts } from '@/features/demos/staticExport'
 import { CRON_JOBS } from '@/features/cron/registry'
 import { JOB_RUNNERS } from '@/features/cron/jobs'
 import { FEATURE_MAP } from '@/features/registry'
 
+describe('static export (17g)', () => {
+  const origin = 'https://demo.test'
+  const html = '<html><head><link rel="stylesheet" href="/styles.css"><script src="/_next/a.js"></script></head><body><a href="/about#x">About</a><a href="https://other.test/">Out</a><img src="/api/media/file/a.jpg" srcset="/a.jpg 1x, /a2.jpg 2x"></body></html>'
+  it('names pages and assets', () => {
+    expect(pageFilePath('/')).toBe('index.html')
+    expect(pageFilePath('/shop/hats/')).toBe('shop/hats/index.html')
+    expect(assetFilePath('/a/b.css', '')).toBe('assets/a/b.css')
+    expect(assetFilePath('/_next/image', '?url=x&w=64', 'image/webp')).toMatch(/^assets\/_next\/image-[a-z0-9]+\.webp$/)
+    expect(rootPrefix('shop/hats/index.html')).toBe('../../')
+  })
+  it('finds same-site references only', () => {
+    expect(collectRefs(html, origin, 'html').sort()).toEqual(['/_next/a.js', '/a.jpg', '/a2.jpg', '/about', '/api/media/file/a.jpg', '/styles.css'])
+    expect(collectRefs('a{background:url("/f.woff2")} b{background:url(data:x)}', origin, 'css')).toEqual(['/f.woff2'])
+  })
+  it('strips scripts and rewrites links relative', () => {
+    const clean = stripScripts(html)
+    expect(clean).not.toContain('<script')
+    const map = { pages: new Map([['/about', 'about/index.html']]), assets: new Map([['/styles.css', 'assets/styles.css'], ['/a.jpg', 'assets/a.jpg']]) }
+    const out = rewriteRefs(clean, origin, 'shop/index.html', map, 'html')
+    expect(out).toContain('href="../assets/styles.css"')
+    expect(out).toContain('href="../about/index.html#x"')
+    expect(out).toContain('href="https://other.test/"')
+    expect(out).toContain('../assets/a.jpg 1x, /a2.jpg 2x')
+  })
+  it('reads page paths from a sitemap', () => {
+    expect(sitemapPaths('<urlset><url><loc>https://demo.test/</loc></url><url><loc>https://demo.test/a</loc></url><url><loc>https://x.test/b</loc></url></urlset>', origin)).toEqual(['/', '/a'])
+  })
+})
+
 describe('agency demos (22g)', () => {
+  it('keeps picture copies under their own prefix and finds pictures added later', () => {
+    expect(copyKey('a.jpg')).toBe('demo-copy/a.jpg')
+    expect(picturesAddedAfterCopy([{ filename: 'a.jpg' }, { filename: 'b.jpg' }, {}], new Set(['a.jpg']))).toEqual([{ filename: 'b.jpg' }])
+  })
+  it('lists only records added after the copy, by slug', () => {
+    const docs = [{ id: 1, slug: 'home' }, { id: 2, slug: 'new-page' }, { id: 3 }, { id: 4, slug: '' }]
+    expect(idsAddedAfterCopy(docs, new Set(['home']))).toEqual([2])
+    expect(idsAddedAfterCopy(docs, new Set(['home', 'new-page']))).toEqual([])
+  })
+  it('every starter can start a demo', async () => {
+    const { STARTERS, getStarter } = await import('@/features/siteTemplates/starters')
+    for (const s of STARTERS) {
+      expect(getStarter(s.id)?.blocks().length).toBeGreaterThan(0)
+    }
+    expect(getStarter('nope')).toBeUndefined()
+  })
   const now = new Date('2027-03-17T12:00:00Z')
   it('never resets when the schedule is off', () => {
     expect(isResetDue('off', null, now)).toBe(false)
@@ -87,6 +138,97 @@ describe('client reports (22f)', () => {
     expect(mail.html).toContain('&lt;b&gt;')
     expect(mail.html).not.toContain('Open the full report')
     expect(reportEmail('Acme', data, 'https://x.test/client-report/t').html).toContain('Open the full report')
+  })
+})
+
+describe('client reports sections, dates and Google numbers (17f)', () => {
+  const base: ReportData = { range: { from: '2027-03-01', to: '2027-03-30', days: 30 }, currency: 'AUD', sales: null, forms: null, content: null }
+  it('parses sections and treats none as all', () => {
+    expect(parseSections('traffic, bogus, search, traffic')).toEqual(['traffic', 'search'])
+    expect(parseSections(5)).toEqual([])
+    expect(wantsSection([], 'sales')).toBe(true)
+    expect(wantsSection(['traffic'], 'sales')).toBe(false)
+  })
+  it('accepts only real calendar days and lets a viewer pick dates', () => {
+    expect(toDay('2027-02-30')).toBe('')
+    expect(toDay('2027-03-01')).toBe('2027-03-01')
+    const spec = { preset: '30d' as const, rangeFrom: '', rangeTo: '' }
+    expect(withViewerRange(spec, '2027-03-05', '2027-03-01')).toBe(spec)
+    expect(withViewerRange(spec, '2027-03-01', '2027-03-05')).toEqual({ preset: 'custom', rangeFrom: '2027-03-01', rangeTo: '2027-03-05' })
+    expect(toPreset('custom')).toBe('custom')
+  })
+  it('shows traffic and search lines and tables, or why they are missing', () => {
+    const d: ReportData = {
+      ...base,
+      traffic: { state: 'ok', data: { users: 10, sessions: 14, topPages: [{ path: '/a', views: 9 }], channels: [{ channel: 'Organic Search', sessions: 8 }] } },
+      search: { state: 'ok', data: { clicks: 5, impressions: 100, ctr: 0.05, position: 7.2, topQueries: [{ key: 'shoes', clicks: 3, impressions: 40 }], topPages: [] } },
+    }
+    const labels = summaryLines(d).map((l) => l.label)
+    expect(labels).toEqual(expect.arrayContaining(['Visitors', 'Search clicks', 'Click-through rate']))
+    expect(reportTables(d).map((t) => t.title)).toEqual(['Top pages by views', 'Where visitors came from', 'Top search queries'])
+    expect(reportCsv(d)).toContain('shoes')
+    const off = summaryLines({ ...base, traffic: { state: 'unavailable', message: 'Google is not connected on this site.' } })
+    expect(off.find((l) => l.label === 'Website traffic')?.value).toContain('not connected')
+    expect(reportEmail('A', d, '', 'https://x.test/logo.png').html).toContain('<img src="https://x.test/logo.png"')
+    expect(reportEmail('A', d, '', 'javascript:x').html).not.toContain('<img')
+  })
+})
+
+describe('client report PDF and logo (17f)', () => {
+  const crc = new Uint8Array(4)
+  const chunk = (type: string, data: Uint8Array): Uint8Array => {
+    const out = new Uint8Array(12 + data.length)
+    new DataView(out.buffer).setUint32(0, data.length)
+    out.set(new TextEncoder().encode(type), 4)
+    out.set(data, 8)
+    out.set(crc, 8 + data.length)
+    return out
+  }
+  const png = (width: number, height: number, colour: number, interlace = 0): Uint8Array => {
+    const ihdr = new Uint8Array(13)
+    const dv = new DataView(ihdr.buffer)
+    dv.setUint32(0, width)
+    dv.setUint32(4, height)
+    ihdr[8] = 8
+    ihdr[9] = colour
+    ihdr[12] = interlace
+    const channels = colour === 0 ? 1 : 3
+    const raw = new Uint8Array(height * (1 + width * channels))
+    const parts = [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(raw)), chunk('IEND', new Uint8Array(0))]
+    const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0))
+    let at = 0
+    for (const p of parts) {
+      out.set(p, at)
+      at += p.length
+    }
+    return out
+  }
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 4, 0, 0, 0xff, 0xc0, 0, 17, 8, 0, 20, 0, 40, 3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1, 0xff, 0xd9, 0, 0, 0, 0])
+  it('reads a plain PNG and a baseline JPEG, and refuses what it cannot draw', () => {
+    expect(parseLogo(png(40, 20, 2))).toMatchObject({ width: 40, height: 20, components: 3, filter: 'FlateDecode' })
+    expect(parseLogo(png(10, 10, 0))).toMatchObject({ components: 1 })
+    expect(parseLogo(png(10, 10, 6))).toBeNull()
+    expect(parseLogo(png(10, 10, 2, 1))).toBeNull()
+    expect(parseLogo(jpeg)).toMatchObject({ width: 40, height: 20, components: 3, filter: 'DCTDecode' })
+    expect(parseLogo(new Uint8Array(100))).toBeNull()
+  })
+  it('writes a PDF with the report lines, with and without a logo', () => {
+    const data: ReportData = { range: { from: '2027-03-01', to: '2027-03-30', days: 30 }, currency: 'AUD', sales: null, forms: { submissions: 7 }, content: null }
+    const lines = reportPdfLines('Acme', data)
+    const plain = new TextDecoder('latin1').decode(buildPdf(lines, 'Acme'))
+    expect(plain.startsWith('%PDF-1.4')).toBe(true)
+    expect(plain).toContain('Form entries: 7')
+    expect(plain).not.toContain('/Im1')
+    const withLogo = new TextDecoder('latin1').decode(buildPdf(lines, 'Acme', parseLogo(png(40, 20, 2))))
+    expect(withLogo).toContain('/Subtype /Image')
+    expect(withLogo).toContain('/Predictor 15')
+    expect(withLogo).toContain('/Im1 Do')
+    expect(withLogo).toContain('Form entries: 7')
+  })
+  it('adds a PDF link to the email', () => {
+    const data: ReportData = { range: { from: '2027-03-01', to: '2027-03-30', days: 30 }, currency: 'AUD', sales: null, forms: null, content: null }
+    expect(reportEmail('A', data, 'https://x.test/r', '', 'https://x.test/r.pdf').html).toContain('Download as PDF')
+    expect(reportEmail('A', data, 'https://x.test/r').html).not.toContain('Download as PDF')
   })
 })
 

@@ -7,6 +7,7 @@
 import type { AnalysisInput, AnalysisResult, Check, Status } from './types'
 import { countPhrase, hasAllWords, rawWords, words } from './keyphrase'
 import { readabilityChecks } from './readability'
+import { isRichType, parseFacts, validateRich } from '../richTypes'
 
 const TITLE_MIN = 30
 const TITLE_MAX = 60
@@ -147,6 +148,15 @@ function imageAltCheck(input: AnalysisInput, checks: Check[]): void {
     : check('image-alt', 'Image alt text', 'ok', `${missing} image(s) have no alt text. Describe each one for screen readers and search.`))
 }
 
+function factsCheck(input: AnalysisInput, checks: Check[]): void {
+  if (!isRichType(input.schemaType)) return
+  const { missing, recommended } = validateRich(input.schemaType, parseFacts(input.schemaFacts))
+  const label = 'Page type facts'
+  if (missing.length > 0) checks.push(check('rich-facts', label, 'bad', `Missing required facts for ${input.schemaType}: ${missing.join(', ')}.`))
+  else if (recommended.length > 0) checks.push(check('rich-facts', label, 'ok', `Add these recommended facts: ${recommended.join(', ')}.`))
+  else checks.push(check('rich-facts', label, 'good', 'All facts for the page type are filled in.'))
+}
+
 /** The SEO checks. Keyphrase checks are left out when no keyphrase is set. */
 export function seoChecks(input: AnalysisInput): Check[] {
   const phrase = words(input.keyphrase ?? '')
@@ -162,6 +172,7 @@ export function seoChecks(input: AnalysisInput): Check[] {
   lengthChecks(input, checks)
   linkChecks(input, checks)
   imageAltCheck(input, checks)
+  factsCheck(input, checks)
   return checks
 }
 

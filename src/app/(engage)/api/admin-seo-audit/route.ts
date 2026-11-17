@@ -7,6 +7,23 @@ import { parseSeoEdits, seoEditData, type SeoEditRow } from '@/features/seo/audi
 
 export const dynamic = 'force-dynamic'
 
+/** Gathers the inputs for the site-wide checks. A failed read leaves that light out rather than the whole audit. */
+async function loadSitewideChecks(titles: string[]) {
+  const [{ buildRobotsTxt }, { buildSitemapEntries }, { getSeoContext }, { buildSitewideChecks }] = await Promise.all([
+    import('@/features/seo/robots'), import('@/features/seo/sitemap'), import('@/features/seo/settings'), import('@/features/seo/sitewideChecks'),
+  ])
+  const context = await getSeoContext().catch((): null => null)
+  const robotsText = await buildRobotsTxt().catch((): null => null)
+  const entries = await buildSitemapEntries().catch((): null => null)
+  return buildSitewideChecks({
+    baseUrl: context?.baseUrl ?? '',
+    robotsText,
+    sitemapEnabled: context?.settings?.sitemap?.enabled !== false,
+    sitemapCount: entries ? entries.length : null,
+    titles,
+  })
+}
+
 const json = (body: unknown, status = 200): Response => NextResponse.json(body, { status, headers: { 'Cache-Control': 'no-store' } })
 
 /**
@@ -24,7 +41,9 @@ export async function GET(): Promise<Response> {
     if (allowed.length === 0) return json({ error: 'Unauthorised' }, 401)
 
     const rows = await loadAuditRows(context.engine as unknown as AuditFindEngine, allowed)
-    return json({ rows, summary: summariseAuditRows(rows) })
+    // Site-wide lights are for admins; a role that only reads some places gets the rows alone.
+    const sitewide = context.isAdmin ? await loadSitewideChecks(rows.map((row) => row.metaTitle || row.title)) : []
+    return json({ rows, summary: summariseAuditRows(rows), sitewide })
   } catch (error) {
     console.error('admin-seo-audit GET error:', error)
     return json({ error: 'Internal server error' }, 500)

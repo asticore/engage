@@ -10,7 +10,7 @@ import { canPurchase, computeStockStatus, stockMessage, type StockFields, type S
 import { decodeAttributeValues, resolveAttributes, splitValues, type ProductAttributeRow, type VariationRow } from './variations'
 import { PREORDER_STOCK_MESSAGE, preorderInfo, type PreorderInfo } from './lib/preorder'
 import { normaliseAddOnDefs, type AddOnView } from './lib/addOns'
-import { serviceDetail } from './lib/service'
+import { serviceDetails } from './lib/service'
 import { donationView, withDonationAddOns, type DonationView } from './lib/donations'
 import { packagingLimits } from './lib/packaging'
 
@@ -32,7 +32,7 @@ export type VariationView = {
 import { outboundHref } from './outboundShared'
 
 export type ProductView = {
-  type: 'simple' | 'variable' | 'grouped' | 'external' | 'giftcard' | 'bundle'
+  type: 'simple' | 'variable' | 'grouped' | 'external' | 'giftcard' | 'bundle' | 'composite'
   price: number | null
   regular: number | null
   onSale: boolean
@@ -134,8 +134,7 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
       values: splitValues(row.values) as string[],
     }))
     .filter((row) => row.name && row.values.length > 0)
-  const serviceRow = serviceDetail(product as never)
-  if (serviceRow) details.unshift(serviceRow)
+  details.unshift(...serviceDetails(product as never))
 
   const price = type === 'variable' && prices.length > 0 ? Math.min(...prices) : own.price
   return {
@@ -150,7 +149,7 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
     stockMessage: type === 'variable' ? '' : preorder.active ? PREORDER_STOCK_MESSAGE : stockMessage(product),
     // A name-your-price product has no fixed price to show, so it is purchasable whenever it is in stock.
     // A pre-order is purchasable while out of stock.
-    purchasable: (type === 'simple' || type === 'bundle') && (own.price !== null || product.nameYourPrice === true || product.isDonation === true) && (canPurchase(product, 1) || preorder.active),
+    purchasable: (type === 'simple' || type === 'bundle' || type === 'composite') && (own.price !== null || product.nameYourPrice === true || product.isDonation === true) && (canPurchase(product, 1) || preorder.active),
     sku: product.sku || null,
     options: options.filter((option) => option.values.length > 0),
     details,
@@ -166,6 +165,25 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
     addOns: withDonationAddOns(product, buildOptions.addOnsOn === false ? [] : normaliseAddOnDefs(product.addOns)),
     donation: type === 'simple' ? donationView(product) : null,
     pricingNotes: buildOptions.pricingNotes ?? [],
+  }
+}
+
+/** The view with every price taken out, for visitors who may not see prices (wholesale mode). Nothing price-like reaches the browser. */
+export function withoutPrices(view: ProductView): ProductView {
+  return {
+    ...view,
+    price: null,
+    regular: null,
+    onSale: false,
+    salePercent: null,
+    priceMin: null,
+    priceMax: null,
+    purchasable: false,
+    variations: view.variations.map((v): VariationView => ({ ...v, price: null, regular: null, onSale: false, purchasable: false })),
+    buyerPrice: { enabled: false, suggested: null, minimum: null },
+    donation: null,
+    addOns: view.addOns.map((a) => ({ ...a })),
+    pricingNotes: [],
   }
 }
 

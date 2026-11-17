@@ -52,8 +52,13 @@ export const ReviewQueueTable: React.FC<{ rows: ReviewQueueRow[]; now?: number; 
         </Link>
       ),
       type: APPROVAL_SINGULAR[row.collection],
-      sentBy: row.requestedBy,
-      waiting: now === undefined ? formatDate(row.requestedAt) : formatRelativeTime(row.requestedAt, now),
+      sentBy: row.assignedTo ? `${row.requestedBy} (${t('approval.queue.handedTo')} ${row.assignedTo})` : row.requestedBy,
+      waiting: (
+        <>
+          {now === undefined ? formatDate(row.requestedAt) : formatRelativeTime(row.requestedAt, now)}
+          {row.overdue ? <span className="ml-2 rounded-[3px] bg-[var(--theme-error-100,#fde8e8)] px-[6px] py-[1px] text-[calc(var(--base)*0.66)] font-semibold uppercase text-[var(--theme-error-700,#b42318)]">Overdue</span> : null}
+        </>
+      ),
     },
   }))
 

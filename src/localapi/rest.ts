@@ -192,6 +192,7 @@ import { readRegistry, versionsRegistry } from './registry'
 import { getMediaObjectResponse } from './storage'
 import type { UploadFile } from './uploads'
 import { parseAddOnInputs } from '@/features/ecommerce/lib/addOns'
+import { parseCompositePicks, storeCompositePicks } from '@/features/ecommerce/lib/composite'
 
 /** This app's one real `auth: true` collection - see this file's header for why this is a hardcoded constant rather than a config lookup. */
 const AUTH_COLLECTION_SLUG = 'users'
@@ -1124,7 +1125,7 @@ async function handleGlobalAccess(engine: Engine, globalSlug: string, request: R
 /* verified by hand in the `where` clause/prior lookup.                     */
 /* -------------------------------------------------------------------------- */
 
-type CartItemRow = { id?: string; product?: number | { id: number } | null; variation?: string | null; quantity?: number; priceCents?: number | null; customAmount?: number | null; giftName?: string; giftEmail?: string; giftSenderName?: string; giftMessage?: string; giftSendAt?: string; addOns?: string | null }
+type CartItemRow = { id?: string; product?: number | { id: number } | null; variation?: string | null; quantity?: number; priceCents?: number | null; customAmount?: number | null; giftName?: string; giftEmail?: string; giftSenderName?: string; giftMessage?: string; giftSendAt?: string; addOns?: string | null; composite?: string | null }
 
 function cartItemProductId(item: CartItemRow): number | null {
   if (item.product && typeof item.product === 'object') return item.product.id
@@ -1170,7 +1171,9 @@ async function handleCartAddItem(engine: Engine, cartId: number, request: Reques
   // Product add-on answers: kept as sent here; the cart hook checks them against the product and stores the accepted ones.
   const addOnsInput = parseAddOnInputs(item.addOns)
   const addOnsJson = addOnsInput.length > 0 ? JSON.stringify(addOnsInput) : null
-  const existingIndex = isGift ? -1 : items.findIndex((existing) => cartItemProductId(existing) === productId && (existing.variation || null) === variation && existing.customAmount == null && (existing.priceCents ?? null) === priceCents && (existing.addOns || null) === addOnsJson)
+  // Composite (kit) picks: kept as sent here; the cart hook checks them against the product and stores the accepted ones.
+  const compositeJson = storeCompositePicks(parseCompositePicks(item.composite))
+  const existingIndex = isGift ? -1 : items.findIndex((existing) => cartItemProductId(existing) === productId && (existing.variation || null) === variation && existing.customAmount == null && (existing.priceCents ?? null) === priceCents && (existing.addOns || null) === addOnsJson && (existing.composite || null) === compositeJson)
   let updatedItems: CartItemRow[]
   let message: string
   if (existingIndex !== -1) {
@@ -1178,7 +1181,7 @@ async function handleCartAddItem(engine: Engine, cartId: number, request: Reques
     updatedItems[existingIndex] = { ...updatedItems[existingIndex], quantity: (updatedItems[existingIndex].quantity ?? 0) + quantity }
     message = 'Item quantity updated'
   } else {
-    updatedItems = [...items, { product: productId, ...(variation ? { variation } : {}), ...(priceCents !== null ? { priceCents } : {}), ...(addOnsJson ? { addOns: addOnsJson } : {}), ...giftFields, quantity }]
+    updatedItems = [...items, { product: productId, ...(variation ? { variation } : {}), ...(priceCents !== null ? { priceCents } : {}), ...(addOnsJson ? { addOns: addOnsJson } : {}), ...(compositeJson ? { composite: compositeJson } : {}), ...giftFields, quantity }]
     message = 'Item added to cart'
   }
   const updatedCart = await engine.update({ collection: 'carts', id: cartId, data: { items: updatedItems }, user, req })
@@ -1370,6 +1373,12 @@ async function handlePaymentsStripeInitiate(engine: Engine, request: Request, us
   const limited = hit(`initiate:${clientKey(request)}`, 20)
   if (limited.limited) return Response.json({ message: 'Too many requests. Try again in a moment.' }, { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } })
   const { data } = await readRequestBody(request)
+  // Task 19a: the CAPTCHA before a card payment starts (place "cardCheckout"; off unless Form settings turn it on). Only the request is checked, never an order or payment record.
+  {
+    const { authCaptchaRefusal, captchaFormFrom } = await import('@/features/security/authCaptcha')
+    const refused = await authCaptchaRefusal(engine as never, captchaFormFrom(data), request.headers.get('cf-connecting-ip') ?? undefined, 'cardCheckout')
+    if (refused) return Response.json({ message: refused }, { status: 400 })
+  }
   const resolved = await resolvePaymentsCart(engine, data, user)
   if (resolved instanceof Response) return resolved
   const { cart, customerEmail } = resolved
@@ -1463,6 +1472,17 @@ async function handlePaymentsStripeWebhooks(engine: Engine, request: Request): P
     if (event && (event.type === 'payment_intent.succeeded' || event.type === 'payment_intent.payment_failed')) {
       // Shop orders: idempotent, so a replay or a race with the browser confirm is harmless.
       const intent = event.data.object as Stripe.PaymentIntent
+      if (intent.metadata?.bookingId && event.type === 'payment_intent.succeeded') {
+        // A paid booking (src/features/bookings/payment.ts). Idempotent too.
+        try {
+          const { onBookingPaid } = await import('@/features/bookings/payment')
+          const { rawD1 } = await import('@/features/ecommerce/server/db')
+          await onBookingPaid((await rawD1()) as never, engine as never, intent, new URL(request.url).origin)
+        } catch (err) {
+          console.error(`Booking payment webhook failed: ${err instanceof Error ? err.message : String(err)}`)
+          returnStatus = 500
+        }
+      }
       if (intent.metadata?.orderID) {
         try {
           if (event.type === 'payment_intent.succeeded') await finalizePaidIntent(engine, intent)
@@ -1555,7 +1575,15 @@ async function handleLogin(engine: Engine, collection: string, request: Request)
       // The check never stops a normal sign-in.
     }
   }
+  // Task 19a: the CAPTCHA on the admin sign-in (place "adminSignIn"; off unless Form settings turn it on).
+  const captchaIp = request.headers.get('cf-connecting-ip') ?? undefined
+  if (collection === 'users') {
+    const { authCaptchaRefusal, captchaFormFrom } = await import('@/features/security/authCaptcha')
+    const refused = await authCaptchaRefusal(engine as never, captchaFormFrom(data), captchaIp, 'adminSignIn')
+    if (refused) return Response.json({ errors: [{ message: refused }] }, { status: 400 })
+  }
   const result = await engine.login({ collection, data: { email: stringField(data, 'email'), password: stringField(data, 'password') }, client: sessionClient(request) }).catch(async (err: unknown): Promise<never> => {
+    if (collection === 'users') await import('@/features/security/authCaptcha').then((m) => m.noteCaptchaFailure(engine as never, 'adminSignIn', captchaIp))
     await recordAuthEvent(engine, { action: err instanceof LockedAuth ? 'login.locked' : 'login.failed', collectionSlug: collection, actorEmail: address, detail: 'password step' }, auditContext(request))
     throw err
   })

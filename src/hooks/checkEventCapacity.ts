@@ -1,5 +1,6 @@
 import type { CollectionAfterChangeHook, CollectionBeforeChangeHook } from '@/engine'
 
+import { perPersonRefusal } from '../features/events/perPersonLimit'
 import { activeRsvps } from '../features/editScreens/rsvpStatus'
 import { guestsByTier } from '../features/editScreens/tierSales'
 import { parseTiers } from '../features/editScreens/tiers'
@@ -40,7 +41,10 @@ export const checkEventCapacity: CollectionBeforeChangeHook = async ({ data, req
     req,
   })
 
-  if (!event || typeof event.capacity !== 'number' || event.capacity <= 0) {
+  if (!event) return data
+  const hasCapacity = typeof event.capacity === 'number' && event.capacity > 0
+  const hasPersonLimit = typeof event.maxPerPerson === 'number' && event.maxPerPerson > 0
+  if (!hasCapacity && !hasPersonLimit) {
     return data
   }
 
@@ -51,15 +55,19 @@ export const checkEventCapacity: CollectionBeforeChangeHook = async ({ data, req
     req,
   })
 
+  const personRefusal = perPersonRefusal(event.maxPerPerson, activeRsvps(existing.docs as RsvpRow[]) as { email?: unknown; guestCount?: unknown }[], data.email, typeof data.guestCount === 'number' ? data.guestCount : 1)
+  if (personRefusal) throw new Error(personRefusal)
+  if (!hasCapacity) return data
+
   const guestsSoFar = activeRsvps(existing.docs as RsvpRow[]).reduce(
     (sum, doc) => sum + (typeof doc.guestCount === 'number' ? doc.guestCount : 1),
     0,
   )
   const incomingGuests = typeof data.guestCount === 'number' ? data.guestCount : 1
 
-  if (guestsSoFar + incomingGuests > event.capacity) {
+  if (guestsSoFar + incomingGuests > (event.capacity as number)) {
     throw new Error(
-      `Sorry, this event is at capacity. Only ${Math.max(event.capacity - guestsSoFar, 0)} spot(s) remaining.`,
+      `Sorry, this event is at capacity. Only ${Math.max((event.capacity as number) - guestsSoFar, 0)} spot(s) remaining.`,
     )
   }
 

@@ -11,6 +11,10 @@ import {
   productsVersionsBundleItems,
   productsAddOns,
   productsVersionsAddOns,
+  productsCompositeOptions,
+  productsCompositeRules,
+  productsVersionsCompositeOptions,
+  productsVersionsCompositeRules,
   productsVersionsAttributes,
   productsVersionsVariations,
   productsBlockTypes,
@@ -89,7 +93,7 @@ export type ProductVersion = {
 // comment for the versioned-side gap this closed).
 const catalogueRels = { images: 'media', faqs: 'faqs', downloads: 'media', groupedProducts: 'products', upsells: 'products', crossSells: 'products' }
 
-const baseOps = createCollectionOps(products, Products, { attributes: productsAttributes, variations: productsVariations, bundleItems: productsBundleItems, addOns: productsAddOns }, {
+const baseOps = createCollectionOps(products, Products, { attributes: productsAttributes, variations: productsVariations, bundleItems: productsBundleItems, addOns: productsAddOns, compositeOptions: productsCompositeOptions, compositeRules: productsCompositeRules }, {
   relsTable: { table: productsRels, targetColumns: productsRelsTargetColumns },
   topLevelRelsFieldTargets: catalogueRels,
   blocksFields: { layout: { blockTypes: productsBlockTypes } },
@@ -97,7 +101,7 @@ const baseOps = createCollectionOps(products, Products, { attributes: productsAt
 })
 
 const versionsOps = createVersionsOps(productsVersions, productsGenerated.groupFields, {
-  arrayTables: { attributes: productsVersionsAttributes, variations: productsVersionsVariations, bundleItems: productsVersionsBundleItems, addOns: productsVersionsAddOns },
+  arrayTables: { attributes: productsVersionsAttributes, variations: productsVersionsVariations, bundleItems: productsVersionsBundleItems, addOns: productsVersionsAddOns, compositeOptions: productsVersionsCompositeOptions, compositeRules: productsVersionsCompositeRules },
   relsTable: { table: productsVersionsRels, targetColumns: productsVersionsRelsTargetColumns },
   topLevelRelsFieldTargets: catalogueRels,
   blocksFields: { layout: { blockTypes: productsVersionsBlockTypes } },

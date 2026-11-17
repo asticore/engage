@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { getEngine } from '@/engine'
 import { refuseWhileImpersonating } from '@/features/impersonation/policy'
 import { clientKey, hit } from '@/features/security/rateLimit'
+import { authCaptchaRefusal, captchaFormFrom } from '@/features/security/authCaptcha'
 import { CheckoutError } from '@/features/ecommerce/server/pricing'
 import { createPayPalCheckout } from '@/features/ecommerce/payments/paypalCheckout'
 import { PayPalError } from '@/features/ecommerce/payments/paypalAdapter'
@@ -29,6 +30,9 @@ export async function POST(request: Request): Promise<Response> {
   }
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>
   const engine = await getEngine()
+  // The bot challenge for the buy step (place "cardCheckout", shared with the card payment; off unless Form settings turn it on).
+  const challenge = await authCaptchaRefusal(engine as never, captchaFormFrom(body, request.headers), request.headers.get('cf-connecting-ip') ?? undefined, 'cardCheckout')
+  if (challenge) return NextResponse.json({ error: challenge }, { status: 400 })
   const cartId = Number(body.cartID)
   if (!Number.isInteger(cartId) || typeof body.secret !== 'string' || !body.secret) return NextResponse.json({ error: 'Cart not found.' }, { status: 404 })
   const cart = (await engine.findByID({ collection: 'carts', id: cartId, depth: 0, overrideAccess: true })) as

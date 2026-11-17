@@ -1,4 +1,4 @@
-import { DEFAULT_COLUMNS, isPriority, type Board, type Card, type ColumnInput, type Person } from './logic'
+import { DEFAULT_COLUMNS, isPriority, type Board, type Card, type CardInput, type ColumnInput, type Person } from './logic'
 
 type Stmt = { bind: (...args: unknown[]) => { all: <T>() => Promise<{ results: T[] }>; run: () => Promise<{ meta?: { last_row_id?: number } }> } }
 export type D1 = { prepare: (sql: string) => Stmt }
@@ -29,6 +29,7 @@ const toCard = (r: Row): Card => ({
   labels: json<unknown[]>(r.labels, []).map(String),
   priority: isPriority(r.priority) ? r.priority : 'normal',
   position: Number(r.position ?? 0),
+  archived: Boolean(r.archived_at),
 })
 
 export type Column = { id: number; boardId: number; name: string; position: number }
@@ -125,7 +126,7 @@ export async function nextPosition(d1: D1, columnId: number): Promise<number> {
   return Number(rows[0]?.next ?? 0)
 }
 
-export async function createCard(d1: D1, boardId: number, columnId: number, card: Omit<Card, 'id' | 'boardId' | 'columnId' | 'position'>, userId: number, nowIso: string): Promise<number> {
+export async function createCard(d1: D1, boardId: number, columnId: number, card: CardInput, userId: number, nowIso: string): Promise<number> {
   const position = await nextPosition(d1, columnId)
   const result = await run(
     d1,
@@ -137,7 +138,7 @@ export async function createCard(d1: D1, boardId: number, columnId: number, card
   return id
 }
 
-export async function updateCard(d1: D1, id: number, card: Omit<Card, 'id' | 'boardId' | 'columnId' | 'position'>, nowIso: string): Promise<void> {
+export async function updateCard(d1: D1, id: number, card: CardInput, nowIso: string): Promise<void> {
   await run(d1, 'UPDATE eg_task_cards SET title=?1, description=?2, assignee_id=?3, due_date=?4, labels=?5, priority=?6, updated_at=?7 WHERE id=?8', card.title, card.description, card.assigneeId, card.dueDate, JSON.stringify(card.labels), card.priority, nowIso, id)
 }
 
@@ -162,4 +163,58 @@ export async function listComments(d1: D1, cardId: number): Promise<Comment[]> {
 
 export async function addComment(d1: D1, cardId: number, userId: number, body: string, nowIso: string): Promise<void> {
   await run(d1, 'INSERT INTO eg_task_comments (card_id, user_id, body, created_at) VALUES (?1,?2,?3,?4)', cardId, userId, body, nowIso)
+}
+
+/** Archives a card (hidden from the board) or, with null, restores it. */
+export async function setArchived(d1: D1, id: number, archivedAt: string | null): Promise<void> {
+  await run(d1, 'UPDATE eg_task_cards SET archived_at = ?1, updated_at = COALESCE(?1, updated_at) WHERE id = ?2', archivedAt, id)
+}
+
+/** Open cards given to one person, across the boards they may open. Archived cards are left out. */
+export async function cardsForPerson(d1: D1, userId: number, boardIds: number[]): Promise<(Card & { boardName: string; columnName: string })[]> {
+  if (boardIds.length === 0) return []
+  const marks = boardIds.map((_, i) => `?${i + 2}`).join(',')
+  const rows = await all(
+    d1,
+    `SELECT k.*, b.name AS board_name, c.name AS column_name FROM eg_task_cards k JOIN eg_task_boards b ON b.id = k.board_id LEFT JOIN eg_task_columns c ON c.id = k.column_id WHERE k.assignee_id = ?1 AND k.archived_at IS NULL AND k.board_id IN (${marks}) ORDER BY (k.due_date IS NULL), k.due_date, k.id`,
+    userId,
+    ...boardIds,
+  )
+  return rows.map((r) => ({ ...toCard(r), boardName: String(r.board_name ?? ''), columnName: String(r.column_name ?? '') }))
+}
+
+/** Cards to remind about: given to someone, not archived, not in the board's last (done) column, due on or before `untilIso`, and not reminded for this due date yet. */
+export async function cardsDueForReminder(d1: D1, untilIso: string): Promise<(Card & { boardName: string })[]> {
+  const rows = await all(
+    d1,
+    `SELECT k.*, b.name AS board_name FROM eg_task_cards k JOIN eg_task_boards b ON b.id = k.board_id WHERE k.assignee_id IS NOT NULL AND k.archived_at IS NULL AND k.due_date IS NOT NULL AND k.due_date <= ?1 AND (k.due_notified IS NULL OR k.due_notified <> k.due_date) AND k.column_id <> COALESCE((SELECT c2.id FROM eg_task_columns c2 WHERE c2.board_id = k.board_id ORDER BY c2.position DESC, c2.id DESC LIMIT 1), 0) ORDER BY k.due_date LIMIT 100`,
+    untilIso,
+  )
+  return rows.map((r) => ({ ...toCard(r), boardName: String(r.board_name ?? '') }))
+}
+
+export async function markDueNotified(d1: D1, id: number, dueDate: string): Promise<void> {
+  await run(d1, 'UPDATE eg_task_cards SET due_notified = ?1 WHERE id = ?2', dueDate, id)
+}
+
+export async function getPerson(d1: D1, id: number): Promise<Person | null> {
+  return (await listPeople(d1)).find((p) => p.id === id) ?? null
+}
+
+/** The newest activity entry id (0 when there is none), so a caller can later read only what one request added. */
+export async function latestActivityId(d1: D1): Promise<number> {
+  return Number((await all(d1, 'SELECT COALESCE(MAX(id), 0) AS id FROM eg_task_activity'))[0]?.id ?? 0)
+}
+
+/** Activity entries added after `afterId`, oldest first, across every board. */
+export async function activitySince(d1: D1, afterId: number): Promise<(Activity & { boardId: number })[]> {
+  return (await all(d1, 'SELECT id, board_id, card_id, user_id, action, detail, created_at FROM eg_task_activity WHERE id > ?1 ORDER BY id LIMIT 50', afterId)).map((r) => ({
+    id: Number(r.id),
+    boardId: Number(r.board_id),
+    cardId: r.card_id === null ? null : Number(r.card_id),
+    userId: r.user_id === null ? null : Number(r.user_id),
+    action: String(r.action ?? ''),
+    detail: String(r.detail ?? ''),
+    createdAt: String(r.created_at ?? ''),
+  }))
 }

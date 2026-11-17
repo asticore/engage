@@ -33,6 +33,7 @@ export type AuditAction =
   | 'consent.update'
   | 'rate-limit.blocked'
   | 'captcha.failed'
+  | 'bot.flagged'
   | 'probe.blocked'
   | 'ip.blocked'
   | 'ip.rule'
@@ -40,6 +41,9 @@ export type AuditAction =
   | 'csp.builder'
   | 'user.banned'
   | 'user.unbanned'
+  | 'wholesale.approved'
+  | 'wholesale.rejected'
+  | 'customer.tags-changed'
   | 'user.bulk'
   | 'two-factor.enrolled'
   | 'two-factor.failed'
@@ -132,6 +136,7 @@ export const AUTH_AUDIT_ACTIONS: readonly AuditAction[] = [
   'session.expired',
   'rate-limit.blocked',
   'captcha.failed',
+  'bot.flagged',
   'password.changed',
   'password.reset',
   'email.verified',

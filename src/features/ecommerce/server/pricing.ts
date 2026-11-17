@@ -16,14 +16,19 @@ import { DEFAULT_TAX_SETTINGS, type TaxClass, type TaxRate, type TaxSettings } f
 import { fetchLiveRates, normaliseShippingConfig } from '../shipping/registry'
 import { computeOrderTotals, type OrderTotals, type PricedLine } from '../lib/totals'
 import { loadPreordersEnabled } from './shopExtra'
+import { loadWholesaleConfig } from './wholesale'
+import { DEFAULT_HIDDEN_PRICE_TEXT, minOrderShortfallCents, pricesHiddenFor, productAllowedFor } from '../lib/wholesale'
 import { isNonShipping } from '../lib/service'
 import { donationLine, withDonationAddOns } from '../lib/donations'
 import { addOnSummary, parseAddOnInputs, priceAddOns, normaliseAddOnDefs, type AddOnChoice } from '../lib/addOns'
 import { applyPricingRules } from '../lib/pricingRules'
 import { loadShopRulesConfig } from './pricingRules'
 import { resolveBundle } from './bundles'
+import { resolveComposite } from './composite'
+import { parseCompositePicks } from '../lib/composite'
 import { resolveTierPrice, type PriceTier } from '../lib/priceTiers'
 import { listPriceTiers } from './priceTiers'
+import { loadHeldForOthers } from '../waitingList'
 
 type Doc = Record<string, unknown>
 export type PricingEngine = {
@@ -76,6 +81,7 @@ export type CartItemInput = {
   priceCents?: number | null
   /** Product add-on answers: [{id, value}] (or the JSON text they are stored as). Checked against the product here. */
   addOns?: unknown
+  composite?: unknown
   /** Gift card lines: amount in cents chosen by the buyer, and who receives it. Validated here, never trusted. */
   customAmount?: number | null
   giftName?: string | null
@@ -137,12 +143,13 @@ export async function loadTierContext(items: CartItemInput[], customerTypes: str
   }
 }
 
-export async function loadPricedLines(engine: PricingEngine, items: CartItemInput[], now = new Date(), addOnsOn = true, tierCtx?: TierContext): Promise<PricedLine[]> {
+export async function loadPricedLines(engine: PricingEngine, items: CartItemInput[], now = new Date(), addOnsOn = true, tierCtx?: TierContext, buyerEmail?: string | null): Promise<PricedLine[]> {
   const lines: PricedLine[] = []
   let giftSettings: ReturnType<typeof normaliseGiftCardSettings> | null = null
   const inCart = new Map<string, number>() // the same product listed twice must be available for the sum
   const pools = new Map<string, { available: number; quantity: number }>() // stock pools to hold at checkout (Task 23e)
   const preordersOn = await loadPreordersEnabled(engine) // one read per cart, shop-wide switch
+  const held = await loadHeldForOthers(engine as never, items, buyerEmail, now) // places the waiting list holds for other people
   for (const [i, item] of items.entries()) {
     const productId = idOf(item.product)
     if (!productId) continue
@@ -175,12 +182,39 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
         shippingClass: idOf(b.shippingClass),
         requiresShipping: !virtual,
         // carried for the order snapshot: what one bundle holds, so later edits to the bundle do not change its stock
-        ...({ variationId: null, bundleContents: bundle.contents } as object),
+        ...({ wholesaleOnly: b.wholesaleOnly === true, variationId: null, bundleContents: bundle.contents } as object),
+      } as PricedLine)
+      continue
+    }
+    if (product && product.productType === 'composite') {
+      // A kit is priced from its base price plus the picked items; their stock goes through the same `inCart` tally as single products.
+      const kitKey = `${productId}:`
+      const kit = await resolveComposite(engine, product as Doc, parseCompositePicks(item.composite), quantity, now, inCart, inCart.get(kitKey) ?? 0, preordersOn)
+      if (!kit.ok) throw new CheckoutError((kit as { error: string }).error)
+      inCart.set(kitKey, (inCart.get(kitKey) ?? 0) + quantity)
+      for (const pool of kit.pools) pools.set(pool.key, { available: pool.available, quantity: (pools.get(pool.key)?.quantity ?? 0) + pool.quantity })
+      const k = product as Doc
+      const virtualKit = isNonShipping(k as never) || k.category === 'digital'
+      lines.push({
+        key: String(i),
+        productId: String(productId),
+        name: `${String(k.title ?? 'Kit')} (${kit.summary})`,
+        sku: typeof k.sku === 'string' ? k.sku : null,
+        unitCents: kit.unitCents,
+        quantity,
+        taxClass: (['standard', 'reduced', 'zero'].includes(String(k.taxClass)) ? k.taxClass : 'standard') as TaxClass,
+        categories: k.category ? [String(k.category)] : [],
+        onSale: false,
+        weightGrams: kit.weightGrams,
+        shippingClass: idOf(k.shippingClass),
+        requiresShipping: !virtualKit,
+        // carried for the order snapshot: the items picked for one kit, so stock and refunds follow what was sold
+        ...({ variationId: null, bundleContents: kit.contents } as object),
       } as PricedLine)
       continue
     }
     const stockKey = `${productId}:${item.variation ?? ''}`
-    const resolved = resolveCartLine(product, item.variation ?? null, quantity, now, inCart.get(stockKey) ?? 0, item.priceCents ?? null, preordersOn)
+    const resolved = resolveCartLine(product, item.variation ?? null, quantity, now, inCart.get(stockKey) ?? 0, item.priceCents ?? null, preordersOn, held.get(stockKey) ?? 0)
     inCart.set(stockKey, (inCart.get(stockKey) ?? 0) + (Number.isInteger(quantity) ? quantity : 0))
     if (resolved.ok && product && Number.isInteger(quantity)) {
       const pool = stockPool(product as never, resolved.variationId)
@@ -246,7 +280,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
       requiresShipping: !virtual,
       cartonSize: packagingStep(p as never) > 1 ? packagingStep(p as never) : null,
       // carried for the order snapshot
-      ...({ variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices, donation: donationLine(p as never) } as object),
+      ...({ wholesaleOnly: p.wholesaleOnly === true, variationId, priceTier: tierNote, preorder: resolved.ok && resolved.preorder ? { releaseDate: p.preorderReleaseDate ?? null, note: p.preorderNote ?? null } : null, addOns: addOnChoices, donation: donationLine(p as never) } as object),
     } as PricedLine)
   }
   // The stock pools this cart draws on, read by priceCart for the stock hold (kept off the line list's own entries).
@@ -307,6 +341,8 @@ export type PriceInput = {
   customerRoles?: string[] | null
   /** The shopper ticked gift wrap; only honoured when the shop offers it (lib/giftWrap.ts). */
   giftWrap?: boolean
+  /** Whether the buyer is signed in, for wholesale mode. Left out: signed in when they have any customer type. */
+  signedIn?: boolean
 }
 
 type LiveResult = { options: ShippingOption[]; liveOn: boolean }
@@ -352,7 +388,19 @@ export async function priceCart(engine: PricingEngine, input: PriceInput, cfg?: 
   const shopRules = await loadShopRulesConfig(engine) // one read per checkout: add-on switch and pricing rules
   const tierCtx = await loadTierContext(input.items, input.customerRoles)
   const giftWrapCents = input.giftWrap === true ? giftWrapFee(normaliseGiftWrap(await engine.findGlobal({ slug: 'shop-extra-settings', depth: 0, overrideAccess: true }).catch((): null => null)), true) : 0
-  const lines = await loadPricedLines(engine, input.items, undefined, shopRules.addOnsOn, tierCtx)
+  const lines = await loadPricedLines(engine, input.items, undefined, shopRules.addOnsOn, tierCtx, input.email)
+  // Wholesale mode (Task 11d): hidden prices, wholesale-only products and the minimum order are checked here, so the quote and the checkout agree.
+  const wholesaleCfg = await loadWholesaleConfig(engine)
+  if (wholesaleCfg.enabled) {
+    const types = Array.isArray(input.customerRoles) ? input.customerRoles : []
+    const buyer = { signedIn: input.signedIn ?? types.length > 0, types }
+    if (pricesHiddenFor(wholesaleCfg, buyer)) throw new CheckoutError(wholesaleCfg.hiddenText || DEFAULT_HIDDEN_PRICE_TEXT)
+    if (lines.some((l) => (l as unknown as { wholesaleOnly?: boolean }).wholesaleOnly === true && !productAllowedFor(wholesaleCfg, true, buyer))) {
+      throw new CheckoutError('Some items in your cart are for wholesale accounts only.')
+    }
+    const shortfall = input.strict ? minOrderShortfallCents(wholesaleCfg, buyer, lines.reduce((sum, l) => sum + l.unitCents * l.quantity, 0)) : 0
+    if (shortfall > 0) throw new CheckoutError(`Wholesale orders start at $${((wholesaleCfg.minOrderCents ?? 0) / 100).toFixed(2)}. Add $${(shortfall / 100).toFixed(2)} more to check out.`)
+  }
   // Dynamic pricing rules run before coupons (see lib/totals.ts). Gift cards are never discounted.
   const ruleResult =
     shopRules.rulesOn && shopRules.rules.length > 0

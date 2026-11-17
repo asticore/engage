@@ -1,0 +1,2 @@
+/*! Spark pricing v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark pricing v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-pricing [data-spark-period][aria-checked=true]{font-weight:600}.spark-pricing [data-spark-show-on]:not([hidden]){animation:spark-pricing-in var(--spark-duration, .4s) var(--spark-ease, ease) both}@keyframes spark-pricing-in{0%{opacity:0;transform:translateY(4px) scale(.9)}}@media (prefers-reduced-motion: reduce){.spark-pricing [data-spark-show-on]:not([hidden]){animation:none}}}

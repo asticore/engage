@@ -2,7 +2,7 @@ import { CheckoutError } from '@/features/ecommerce/server/pricing'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { hitShared } from '@/features/security/rateLimit'
 import { getFeatureFlags } from '@/utilities/features'
-import { addressKey, normaliseEmail, refusal, type Prior, type Rule } from './logic'
+import { addressKey, isExempt, normaliseEmail, refusal, type Prior, type Rule } from './logic'
 import * as store from './store'
 
 export type LimitCheck = {
@@ -30,6 +30,14 @@ export async function enforcePurchaseLimits(check: LimitCheck, now = new Date())
   } catch {
     return
   }
+  await checkRules(d1, rules, check, now)
+}
+
+/**
+ * The check itself, on a database and rules already loaded. Places are claimed before they are counted (see
+ * store.claimPlace), so two orders racing for the last allowed place cannot both pass.
+ */
+export async function checkRules(d1: store.D1, rules: Rule[], check: LimitCheck, now = new Date()): Promise<void> {
   const emailKey = normaliseEmail(check.email)
   // A buy-step throttle: one person cannot fire the pricing step again and again to probe or hoard.
   if (rules.length > 0) {
@@ -45,13 +53,18 @@ export async function enforcePurchaseLimits(check: LimitCheck, now = new Date())
   for (const line of check.lines) {
     const productId = Number(line.productId)
     if (!Number.isInteger(productId) || productId <= 0) continue
-    for (const rule of rules.filter((r) => ruleApplies(r, productId))) {
+    for (const rule of rules.filter((r) => ruleApplies(r, productId) && !isExempt(r, emailKey))) {
       const needed: number[] = []
       if (rule.maxQty !== null) needed.push(rule.windowDays > 0 ? now.getTime() - rule.windowDays * 86_400_000 : 0)
       if (rule.cooldownHours > 0) needed.push(now.getTime() - rule.cooldownHours * 3_600_000)
+      // Claim the place first, then count orders and the other carts' claims.
+      const claimed = needed.length > 0 && check.cartId !== null
+      if (claimed) await store.claimPlace(d1, { cartId: check.cartId as number, productId, qty: line.quantity, who }, now.toISOString())
       const prior: Prior[] = needed.length > 0 ? await store.priorPurchases(d1, productId, who, check.cartId, normaliseEmail, addressKey, Math.min(...needed)).catch((): Prior[] => []) : []
+      if (claimed) prior.push(...(await store.concurrentClaims(d1, productId, who, check.cartId as number, now.toISOString())))
       const message = refusal(rule, { productTitle: line.name, wantQty: line.quantity, prior, verified, now })
       if (message) {
+        if (claimed) await store.releaseClaim(d1, check.cartId as number, productId)
         await store.logBlock(d1, { ruleId: rule.id, productId, reason: rule.requireVerified && !verified ? 'unverified' : 'limit', emailKey, detail: message }, now.toISOString()).catch((): null => null)
         throw new CheckoutError(message)
       }

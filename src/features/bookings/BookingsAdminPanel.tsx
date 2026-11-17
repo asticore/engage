@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from 'react'
 
 type Override = { id: number; date: string; kind: 'open' | 'closed'; start: string | null; end: string | null; note: string }
 type Resource = { id: number; title: string; timeZone: string; active: boolean; hours: string; overrides: Override[] }
-type BType = { id: number; title: string; slug: string; description: string; resourceId: number | null; locationText: string; active: boolean; durationMinutes: number; stepMinutes: number; bufferBeforeMinutes: number; bufferAfterMinutes: number; minNoticeMinutes: number; maxAdvanceDays: number; capacity: number }
+type BType = { id: number; title: string; slug: string; description: string; resourceId: number | null; locationText: string; active: boolean; durationMinutes: number; stepMinutes: number; bufferBeforeMinutes: number; bufferAfterMinutes: number; minNoticeMinutes: number; maxAdvanceDays: number; capacity: number; priceCents: number; refundHours: number }
 type Booking = { id: number; number: string; typeId: number; status: string; startAt: string; timeZone: string; customerName: string; customerEmail: string; customerPhone: string; notes: string }
 
-const blankType = { id: 0, title: '', slug: '', description: '', resourceId: null as number | null, locationText: '', active: true, durationMinutes: 30, stepMinutes: 30, bufferBeforeMinutes: 0, bufferAfterMinutes: 0, minNoticeMinutes: 60, maxAdvanceDays: 60, capacity: 1 }
+const blankType = { id: 0, title: '', slug: '', description: '', resourceId: null as number | null, locationText: '', active: true, durationMinutes: 30, stepMinutes: 30, bufferBeforeMinutes: 0, bufferAfterMinutes: 0, minNoticeMinutes: 60, maxAdvanceDays: 60, capacity: 1, priceCents: 0, refundHours: 24 }
 
 /** Booking types, the people or places that are booked with their weekly hours, and the bookings made. */
 export function BookingsAdminPanel() {
@@ -138,6 +138,8 @@ export function BookingsAdminPanel() {
             {num('minNoticeMinutes', 'Least notice (minutes)')}
             {num('maxAdvanceDays', 'Book up to (days ahead)')}
             {num('capacity', 'People per time')}
+            {num('priceCents', 'Price in cents (0 is free)')}
+            {num('refundHours', 'Full refund if cancelled this many hours before')}
           </div>
           <label className="field"><span><input type="checkbox" checked={type.active} onChange={(e) => setType({ ...type, active: e.target.checked })} /> Taking bookings</span></label>
           <div className="cluster">
@@ -151,6 +153,7 @@ export function BookingsAdminPanel() {
       <label className="field">Show
         <select className="input" value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="">All</option>
+          <option value="pending_payment">Waiting for payment</option>
           <option value="confirmed">Confirmed</option>
           <option value="completed">Completed</option>
           <option value="no_show">No show</option>

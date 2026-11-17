@@ -18,6 +18,9 @@ import { VideoLinkForm } from './VideoLinkForm'
 
 import { INLINE_IMAGE_TYPES } from '@/features/media/fileTypes'
 
+import { TagChips } from '@/features/mediaTags/TagChips'
+import type { TagChip } from '@/features/mediaTags/logic'
+
 import { FileIcon } from './FileIcon'
 import { StockPhotoDialog } from './StockPhotoDialog'
 
@@ -33,6 +36,7 @@ export interface GalleryDoc {
   originalSize?: number
   optimizedSize?: number
   outputFormat?: string
+  tagChips?: TagChip[]
 }
 
 /** What the site is set to output, read on the server and passed down (see MediaGalleryView). */
@@ -240,6 +244,31 @@ export function MediaGalleryGrid({
     )
   }
 
+  const aiTag = async (ids: number[]) => {
+    setBusy('aitag')
+    setNotice(null)
+    let tagged = 0
+    let failed = 0
+    let firstError = ''
+    for (let i = 0; i < ids.length; i += ALT_BATCH) {
+      const result = await postJson<{ results: Array<{ status: string; reason?: string }> }>('/api/admin-media-ai-tags', {
+        ids: ids.slice(i, i + ALT_BATCH),
+        provider,
+        apply: true,
+      })
+      if (result.ok === false) return finish('error', result.error)
+      for (const item of result.data.results) {
+        if (item.status === 'tagged') tagged += 1
+        else if (item.status === 'failed') {
+          failed += 1
+          firstError = firstError || item.reason || ''
+        }
+      }
+    }
+    setSelected(new Set())
+    finish(failed > 0 ? 'error' : 'ok', `Added AI tags to ${tagged} file${tagged === 1 ? '' : 's'}.${failed ? ` ${failed} failed${firstError ? `: ${firstError}` : ''}` : ''}`)
+  }
+
   const moveTo = async (ids: number[], folder: string) => {
     setBusy('move')
     setNotice(null)
@@ -391,6 +420,9 @@ export function MediaGalleryGrid({
               <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => tagIds(selectedIds, true)}>
                 Remove tag
               </button>
+              <button type="button" className={buttonClass} disabled={busy !== null} onClick={() => aiTag(selectedIds)}>
+                {busy === 'aitag' ? 'Tagging...' : 'AI tag'}
+              </button>
             </span>
           ) : null}
           {damOn ? (
@@ -528,6 +560,7 @@ export function MediaGalleryGrid({
                 </div>
                 <div className="flex flex-col gap-[calc(var(--base)*0.1)] px-[calc(var(--base)*0.5)] pt-[calc(var(--base)*0.4)]">
                   <span className="truncate text-[calc(var(--base)*0.72)] font-medium text-[var(--theme-elevation-900)]">{doc.filename ?? doc.id}</span>
+                  <TagChips chips={doc.tagChips} />
                   {sizeLabel(doc) ? <span className="text-[calc(var(--base)*0.65)] text-[var(--theme-elevation-500)]">{sizeLabel(doc)}</span> : null}
                   {target && (optimisationOn || isVideoMimeType(doc.mimeType)) ? (
                     <span className="truncate text-[calc(var(--base)*0.65)] text-[var(--theme-elevation-500)]" title="What Optimise does to this file">{target}</span>

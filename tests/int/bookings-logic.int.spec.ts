@@ -43,7 +43,7 @@ describe('bookings input rules', () => {
   })
   it('lets a customer cancel only a confirmed booking that has not started', () => {
     const now = new Date('2026-03-01T00:00:00Z')
-    const base = { id: 1, number: 'BK-1', typeId: 1, resourceId: 1, status: 'confirmed' as const, startAt: '', endAt: '', startMs: now.getTime() + 3_600_000, endMs: 0, units: 1, timeZone: 'UTC', customerName: '', customerEmail: '', customerPhone: '', notes: '', cancelledAt: null as string | null }
+    const base = { id: 1, number: 'BK-1', typeId: 1, resourceId: 1, status: 'confirmed' as const, startAt: '', endAt: '', startMs: now.getTime() + 3_600_000, endMs: 0, units: 1, timeZone: 'UTC', customerName: '', customerEmail: '', customerPhone: '', notes: '', cancelledAt: null as string | null, amountCents: 0, paymentIntentId: null as string | null, paidAt: null as string | null, refundedCents: 0, createdAtMs: 0 }
     expect(cancelError(base, now)).toBeNull()
     expect(cancelError({ ...base, startMs: now.getTime() - 1 }, now)).toContain('started')
     expect(cancelError({ ...base, status: 'cancelled' }, now)).toContain('already')

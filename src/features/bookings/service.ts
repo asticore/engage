@@ -38,7 +38,7 @@ export async function createForType(d1: store.D1, type: store.BookingType, start
   const token = newManageToken()
   const booking = await store.createBooking(
     d1,
-    { number: newBookingNumber(), typeId: type.id, resourceId: resource.id, startMs, endMs: startMs + type.durationMinutes * 60_000, timeZone: resource.timeZone, capacity: type.capacity, manageTokenHash: await hashToken(token), customer },
+    { number: newBookingNumber(), typeId: type.id, resourceId: resource.id, startMs, endMs: startMs + type.durationMinutes * 60_000, timeZone: resource.timeZone, capacity: type.capacity, manageTokenHash: await hashToken(token), customer, amountCents: type.priceCents },
     now.toISOString(),
   )
   if (!booking) return { ok: false, status: 409, error: TAKEN_MESSAGE }
@@ -63,6 +63,16 @@ export function confirmationEmail(booking: store.Booking, typeTitle: string, ori
   const text = `Hi ${booking.customerName},\n\nYour booking is confirmed.\n\n${typeTitle}\n${when} (${booking.timeZone})\nBooking number ${booking.number}\n\nAdd to your calendar: ${calendar}\nNeed to cancel? ${manage}\n\n${siteName}`
   const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5"><p>Hi ${esc(booking.customerName)},</p><p>Your booking is confirmed.</p><p><strong>${esc(typeTitle)}</strong><br>${esc(when)} (${esc(booking.timeZone)})<br>Booking number ${esc(booking.number)}</p><p><a href="${calendar}">Add to your calendar</a><br><a href="${manage}">Need to cancel?</a></p><p>${esc(siteName)}</p></div>`
+  return { subject, text, html }
+}
+
+/** The reminder sent a day before. The cancel link is only in the confirmation email (only its hash is stored), so this one points back to it. */
+export function reminderEmail(booking: store.Booking, typeTitle: string, siteName: string): { subject: string; text: string; html: string } {
+  const when = localText(booking.startMs, booking.timeZone)
+  const subject = `Reminder: ${typeTitle} on ${when}`
+  const text = `Hi ${booking.customerName},\n\nA reminder of your booking.\n\n${typeTitle}\n${when} (${booking.timeZone})\nBooking number ${booking.number}\n\nNeed to cancel? Use the link in your confirmation email.\n\n${siteName}`
+  const esc = (v: string): string => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const html = `<div style="font-family:system-ui,sans-serif;font-size:15px;line-height:1.5"><p>Hi ${esc(booking.customerName)},</p><p>A reminder of your booking.</p><p><strong>${esc(typeTitle)}</strong><br>${esc(when)} (${esc(booking.timeZone)})<br>Booking number ${esc(booking.number)}</p><p>Need to cancel? Use the link in your confirmation email.</p><p>${esc(siteName)}</p></div>`
   return { subject, text, html }
 }
 

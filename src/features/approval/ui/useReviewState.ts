@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 export type ReviewHistoryRow = {
   id: number | string
-  action: 'submitted' | 'approved' | 'changes_requested' | 'comment' | 'published' | 'withdrawn'
+  action: 'submitted' | 'approved' | 'changes_requested' | 'comment' | 'published' | 'withdrawn' | 'reassigned' | 'reset'
   note: string | null
   /** The workflow step this event belongs to, when a workflow was active. */
   step?: string | null
@@ -41,11 +41,16 @@ export type ReviewState = {
     requestChanges: boolean
     comment: boolean
     publish: boolean
+    reassign?: boolean
   }
+  /** Who the review was handed to, when it was reassigned. */
+  assignee?: { id: number; name: string } | null
+  /** People the review can be handed to (names only). Present when the viewer may reassign. */
+  reviewerChoices?: Array<{ id: number; name: string }>
   history: ReviewHistoryRow[]
 }
 
-export type ReviewAction = 'submit' | 'approve' | 'request_changes' | 'comment' | 'withdraw' | 'publish'
+export type ReviewAction = 'submit' | 'approve' | 'request_changes' | 'comment' | 'withdraw' | 'publish' | 'reassign'
 
 /**
  * The review state of one document, read from /api/admin-review, and the way to change it.
@@ -91,7 +96,7 @@ export function useReviewState(collectionSlug: string, id: number | undefined, t
   const refresh = useCallback(() => setVersion((value) => value + 1), [])
 
   const act = useCallback(
-    async (action: ReviewAction, extra: { note?: string; alsoPublish?: boolean } = {}): Promise<boolean> => {
+    async (action: ReviewAction, extra: { note?: string; alsoPublish?: boolean; assignTo?: number | null } = {}): Promise<boolean> => {
       if (id === undefined) return false
       setPending(action)
       setActError(null)

@@ -25,6 +25,9 @@ export interface AnalysisInput {
   siteName?: string
   /** A cornerstone item is checked more strictly (see analyze.ts). */
   cornerstone?: boolean
+  /** Chosen page type and its facts (Recipe, Job posting and so on), for the missing facts check. */
+  schemaType?: string
+  schemaFacts?: unknown
 }
 
 export interface AnalysisResult {

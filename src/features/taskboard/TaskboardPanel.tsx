@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
+import { useAdminHref } from '@/admin/adminRoute/AdminRouteProvider'
 import type { UiStringKey } from '@/features/uiStrings'
 
 import { PRIORITIES, isOverdue, myTasks, type Board, type Card, type Person } from './logic'
@@ -14,7 +15,7 @@ type Draft = { cardId?: number; columnId: number; title: string; description: st
 const API = '/api/admin-taskboard'
 type T = (key: UiStringKey, vars?: Record<string, string | number>) => string
 const personName = (t: T, people: Person[], id: number | null): string => (id === null ? t('tb.nobody') : (people.find((p) => p.id === id)?.name || people.find((p) => p.id === id)?.email || t('tb.user', { id })))
-const ACTIVITY_LABEL: Record<string, UiStringKey> = { 'card.created': 'tb.act.created', 'card.moved': 'tb.act.moved', 'card.assigned': 'tb.act.assigned', 'card.commented': 'tb.act.commented', 'card.deleted': 'tb.act.deleted', 'board.created': 'tb.act.boardCreated' }
+const ACTIVITY_LABEL: Record<string, UiStringKey> = { 'card.created': 'tb.act.created', 'card.moved': 'tb.act.moved', 'card.assigned': 'tb.act.assigned', 'card.commented': 'tb.act.commented', 'card.deleted': 'tb.act.deleted', 'board.created': 'tb.act.boardCreated', 'card.archived': 'tb.act.archived', 'card.restored': 'tb.act.restored' }
 /** An assignment entry is stored as "to user 7" or "unassigned": show the person's name in the reader's language. */
 function activityDetail(t: T, people: Person[], action: string, detail: string): string {
   if (action !== 'card.assigned') return detail
@@ -28,7 +29,9 @@ export function TaskboardPanel() {
   const t = useAdminT() as T
   const [data, setData] = useState<Data | null>(null)
   const [boardId, setBoardId] = useState<number | null>(null)
+  const adminHref = useAdminHref()
   const [mine, setMine] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
   const [comment, setComment] = useState('')
@@ -69,7 +72,10 @@ export function TaskboardPanel() {
   if (!data) return <p className="text-muted">{message || t('tb.loading')}</p>
   const people = data.people
   const columns = data.columns ?? []
-  const cards = mine ? myTasks(data.cards ?? [], data.me.id) : (data.cards ?? [])
+  const allCards = data.cards ?? []
+  const archivedCount = allCards.filter((c) => c.archived).length
+  const visible = showArchived ? allCards : allCards.filter((c) => !c.archived)
+  const cards = mine ? myTasks(visible, data.me.id) : visible
   const today = new Date().toISOString().slice(0, 10)
 
   const openCard = (card: Card): void => {
@@ -99,6 +105,8 @@ export function TaskboardPanel() {
           {data.boards.length === 0 ? <option value="">{t('tb.noBoards')}</option> : null}
           {data.boards.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
+        <a className="btn" href={adminHref('/my-tasks')}>{t('tb.mine.link')}</a>
+        {archivedCount > 0 ? <label className="cluster"><input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> {t('tb.showArchived')} ({archivedCount})</label> : null}
         <label className="cluster"><input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} /> {t('tb.myTasks')}</label>
         {data.me.isAdmin ? (
           <>
@@ -121,6 +129,7 @@ export function TaskboardPanel() {
                       <button type="button" className="card-body stack" style={{ textAlign: 'left', width: '100%', background: 'none', border: 0, cursor: 'pointer' }} onClick={() => openCard(card)}>
                         <span>{card.title}</span>
                         <span className="cluster">
+                          {card.archived ? <span className="badge">{t('tb.archived')}</span> : null}
                           {card.priority !== 'normal' ? <span className="badge">{t(`tb.priority.${card.priority}` as UiStringKey)}</span> : null}
                           {card.labels.map((l) => <span key={l} className="badge">{l}</span>)}
                           {card.dueDate ? <span className={isOverdue(card, today) ? 'badge' : 'text-muted'}>{isOverdue(card, today) ? t('tb.overdue') : t('tb.due')} {card.dueDate}</span> : null}
@@ -165,6 +174,7 @@ export function TaskboardPanel() {
             <div className="cluster">
               <button type="button" className="btn" onClick={() => void saveCard()}>{t('tb.saveTask')}</button>
               <button type="button" className="btn" onClick={() => setDraft(null)}>{t('tb.close')}</button>
+              {draft.cardId ? <button type="button" className="btn" onClick={() => void post({ action: allCards.find((c) => c.id === draft.cardId)?.archived ? 'restore-card' : 'archive-card', cardId: draft.cardId }).then((ok) => ok && setDraft(null))}>{allCards.find((c) => c.id === draft.cardId)?.archived ? t('tb.restore') : t('tb.archive')}</button> : null}
               {draft.cardId ? <button type="button" className="btn" onClick={() => { if (window.confirm(t('tb.deleteTaskConfirm'))) void post({ action: 'delete-card', cardId: draft.cardId }).then(() => setDraft(null)) }}>{t('tb.delete')}</button> : null}
             </div>
             {draft.cardId ? (

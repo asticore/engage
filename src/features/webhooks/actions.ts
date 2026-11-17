@@ -26,6 +26,8 @@ export type WebhookView = {
   template: string | null
   enabled: boolean
   ratePerMinute: number
+  auditActions: string[]
+  auditRedact: string[]
   createdAt: string
   updatedAt: string
   last: { status: string; at: string; statusCode: number | null; error: string | null } | null
@@ -73,6 +75,8 @@ const toView = (w: WebhookRecord, last: DeliveryRecord | null): WebhookView => (
   template: w.template,
   enabled: w.enabled,
   ratePerMinute: w.ratePerMinute,
+  auditActions: w.auditActions,
+  auditRedact: w.auditRedact,
   createdAt: w.createdAt,
   updatedAt: w.updatedAt,
   last: last ? { status: last.status, at: last.updatedAt, statusCode: last.lastStatusCode, error: last.lastError } : null,

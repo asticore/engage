@@ -1,5 +1,6 @@
 import type { Field } from '@/engine'
 import { addOnFields } from './productAddOns'
+import { compositeFields } from './productComposite'
 import { subscriptionFields } from '../subscriptions/fields'
 
 /**
@@ -21,7 +22,7 @@ export const productTypeField: Field = {
   name: 'productType',
   type: 'select',
   defaultValue: 'simple',
-  admin: { description: 'Simple: one price. Variable: options such as size or colour, each with its own price and stock. Grouped: a set of related products. External: sold on another site. Gift card: the buyer chooses an amount and the card is emailed to the recipient (set amounts in Shop settings > Gift cards). Bundle: several products sold together (see Bundle contents).' },
+  admin: { description: 'Simple: one price. Variable: options such as size or colour, each with its own price and stock. Grouped: a set of related products. External: sold on another site. Gift card: the buyer chooses an amount and the card is emailed to the recipient (set amounts in Shop settings > Gift cards). Bundle: several products sold together (see Bundle contents). Composite: the buyer picks items for each step of a kit (see Kit choices).' },
   options: [
     { label: 'Simple product', value: 'simple' },
     { label: 'Variable product', value: 'variable' },
@@ -29,6 +30,7 @@ export const productTypeField: Field = {
     { label: 'External / affiliate product', value: 'external' },
     { label: 'Gift card', value: 'giftcard' },
     { label: 'Bundle', value: 'bundle' },
+    { label: 'Composite (build your own kit)', value: 'composite' },
   ],
 }
 
@@ -74,7 +76,7 @@ export const inventoryFields: Field[] = [
   {
     type: 'collapsible',
     label: 'Stock',
-    admin: { condition: (data) => data?.productType !== 'grouped' && data?.productType !== 'external' && data?.productType !== 'bundle' },
+    admin: { condition: (data) => data?.productType !== 'grouped' && data?.productType !== 'external' && data?.productType !== 'bundle' && data?.productType !== 'composite' },
     fields: [
       { name: 'manageStock', type: 'checkbox', defaultValue: false, admin: { description: 'Track a quantity for this product. For a variable product, tick it on each variation instead (or here to share one stock pool).' } },
       {
@@ -105,6 +107,7 @@ export const serviceFields: Field[] = [
     fields: [
       { name: 'isService', type: 'checkbox', defaultValue: false, admin: { description: 'This is a service, not a thing in a box. No shipping step at checkout, and it keeps price, options, quantity breaks and add-ons.' } },
       { name: 'serviceDuration', type: 'number', min: 0, admin: { condition: (data) => Boolean(data?.isService), description: 'How long it takes, in minutes. Shown on the product page.' } },
+      { name: 'serviceStaff', type: 'text', admin: { condition: (data) => Boolean(data?.isService), description: 'Who does it, or what is used, for example "Sam" or "Treatment room 2". Shown on the product page as With.' } },
     ],
   },
 ]
@@ -373,6 +376,48 @@ export const packagingFields: Field[] = [
   },
 ]
 
+/** Wholesale-only products (lib/wholesale.ts): shown and sold only to approved wholesale accounts and admins while wholesale mode is on. */
+export const wholesaleFields: Field[] = [
+  {
+    name: 'wholesaleOnly',
+    type: 'checkbox',
+    defaultValue: false,
+    admin: { description: 'Only approved wholesale accounts can see and buy this product (admins always can). Needs Wholesale mode in Shop switches; with that off this is ignored.' },
+  },
+]
+
+/** Order bump: one tick-box offer on the checkout when this product is in the cart (api/shop-order-bump). */
+export const orderBumpFields: Field[] = [
+  {
+    type: 'collapsible',
+    label: 'Order bump',
+    admin: { initCollapsed: true },
+    fields: [
+      { name: 'orderBumpProduct', type: 'relationship', relationTo: 'products', admin: { description: 'A simple product offered as a tick-box at checkout while this product is in the cart. Blank means no offer.' } },
+      { name: 'orderBumpHeadline', type: 'text', admin: { description: 'Offer wording, for example "Add gift packaging for $5". Blank uses the product title and price.' } },
+    ],
+  },
+]
+
+/** Offers (bids), stored as one JSON column `bid` ({ minimum, endsAt }) to stay under D1's 100-column limit: visitors make an offer on the product page; an end date makes it an auction where the highest offer wins (features/quotes/auctions.ts). */
+export const bidFields: Field[] = [
+  {
+    type: 'collapsible',
+    label: 'Offers (bids)',
+    admin: { initCollapsed: true, condition: (data) => data?.productType === 'simple' },
+    fields: [
+      {
+        name: 'bid',
+        type: 'json',
+        admin: {
+          components: { Field: '@/features/quotes/components/BidTermsField#BidTermsField' },
+          description: 'The lowest offer taken (shop currency, blank or 0 means any) and when offers close. At close the highest offer is sent a quote at its price and the others are told they were not successful. No end time means staff pick the winner.',
+        },
+      },
+    ],
+  },
+]
+
 export const ratingFields: Field[] = [
   { name: 'ratingAverage', type: 'number', admin: { readOnly: true, position: 'sidebar', description: 'Average of approved reviews.' } },
   { name: 'ratingCount', type: 'number', defaultValue: 0, admin: { readOnly: true, position: 'sidebar' } },
@@ -399,11 +444,15 @@ export const catalogueFields: Field[] = [
   ...limitFields,
   ...donationFields,
   ...packagingFields,
+  ...wholesaleFields,
+  ...orderBumpFields,
+  ...bidFields,
   ...shippingFields,
   ...typeSpecificFields,
   ...preorderFields,
   ...variationFields,
   ...bundleFields,
+  ...compositeFields,
   ...addOnFields,
   ...subscriptionFields,
   ...linkedProductFields,

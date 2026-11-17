@@ -30,6 +30,19 @@ export async function POST(request: Request): Promise<Response> {
   const result = await createForType(d1, type, String(body.start ?? ''), customer.value, new Date())
   if (result.ok === false) return json({ error: result.error }, result.status)
   const origin = new URL(request.url).origin
+  if (result.booking.status === 'pending_payment') {
+    // A priced booking holds its time while the customer pays on Stripe's page; the webhook confirms it and sends the email.
+    try {
+      const { getEngine } = await import('@/lib/engine')
+      const { createBookingCheckout } = await import('@/features/bookings/payment')
+      const payUrl = await createBookingCheckout((await getEngine()) as never, result.booking, type.title, result.token, origin)
+      if (payUrl) return json({ ok: true, number: result.booking.number, payUrl, manageUrl: `${origin}/book/manage/${result.token}`, start: result.booking.startAt })
+    } catch {
+      // Fall through: release the time below.
+    }
+    await store.setBookingStatus(d1, result.booking.id, 'cancelled', new Date().toISOString())
+    return json({ error: 'Card payment is not available right now. Please try again later or contact us.' }, 503)
+  }
   try {
     const { getEngine } = await import('@/lib/engine')
     const site = (await ((await getEngine()) as never as { findGlobal: (a: unknown) => Promise<{ siteName?: string }> }).findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch((): { siteName?: string } => ({}))) ?? {}

@@ -1,0 +1,2 @@
+/*! Spark magnetic v0.4.0 | MIT | https://github.com/asticore/spark */
+/*! Spark magnetic v0.4.0 | MIT | https://github.com/asticore/spark */@layer shine,spark;@layer spark{.spark-magnetic.is-magnetic{translate:var(--spark-mx, 0px) var(--spark-my, 0px);transition:translate .3s cubic-bezier(.22,1,.36,1)}}

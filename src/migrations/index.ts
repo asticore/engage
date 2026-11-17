@@ -190,11 +190,21 @@ import * as migration_20270317_250000_login_seen from './20270317_250000_login_s
 import * as migration_20270317_260000_rate_rules from './20270317_260000_rate_rules';
 import * as migration_20270317_280000_sign_in_paths from './20270317_280000_sign_in_paths';
 import * as migration_20270318_100000_csp_builder from './20270318_100000_csp_builder';
+import * as migration_20270317_270000_product_feed_cache from './20270317_270000_product_feed_cache';
+import * as migration_20270317_265000_composite_products from './20270317_265000_composite_products';
+import * as migration_20270318_110000_webhook_audit_options from './20270318_110000_webhook_audit_options';
+import * as migration_20270318_100000_wholesale from './20270318_100000_wholesale';
+import * as migration_20270318_110000_purchase_limit_message_exempt from './20270318_110000_purchase_limit_message_exempt';
+import * as migration_20270318_240000_limit_claims from './20270318_240000_limit_claims';
+import * as migration_20270318_230000_card_prints from './20270318_230000_card_prints';
+import * as migration_20270318_110000_bot_rules from './20270318_110000_bot_rules';
+import * as migration_20270317_290000_blog_base from './20270317_290000_blog_base';
 import * as migration_20270316_390000_dam from './20270316_390000_dam';
 import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
 import * as migration_20270317_100000_demos from './20270317_100000_demos';
 import * as migration_20270317_110000_client_reports from './20270317_110000_client_reports';
+import * as migration_20270318_250000_client_report_options from './20270318_250000_client_report_options';
 import * as migration_20270317_120000_franchising from './20270317_120000_franchising';
 import * as migration_20270316_428000_mini_cart from './20270316_428000_mini_cart';
 import * as migration_20270317_150000_stock_hold from './20270317_150000_stock_hold';
@@ -225,8 +235,25 @@ import * as migration_20270316_440000_media_quotas from './20270316_440000_media
 import * as migration_20270316_360000_auth_captcha from './20270316_360000_auth_captcha';
 import * as migration_20270317_260000_bot_detection from './20270317_260000_bot_detection';
 import * as migration_20270317_270000_captcha_modes from './20270317_270000_captcha_modes';
+import * as migration_20270317_280000_captcha_followups from './20270317_280000_captcha_followups';
+import * as migration_20270318_110000_backup_s3_endpoint from './20270318_110000_backup_s3_endpoint';
 import * as migration_20270316_420000_org_transfer_delegation from './20270316_420000_org_transfer_delegation';
 import * as migration_20270317_130000_username_sign_in from './20270317_130000_username_sign_in';
+import * as migration_20270318_200000_product_feed_mapping from './20270318_200000_product_feed_mapping';
+import * as migration_20270318_100000_taskboard_archive_due from './20270318_100000_taskboard_archive_due';
+import * as migration_20270318_120000_approval_review_due_days from './20270318_120000_approval_review_due_days';
+import * as migration_20270318_210000_approval_stand_ins from './20270318_210000_approval_stand_ins';
+import * as migration_20270318_220000_approval_section_routes from './20270318_220000_approval_section_routes';
+import * as migration_20270318_230000_quote_email_templates from './20270318_230000_quote_email_templates';
+import * as migration_20270318_130000_member_dunning_emails from './20270318_130000_member_dunning_emails';
+import * as migration_20270318_140000_order_bump from './20270318_140000_order_bump';
+import * as migration_20270318_150000_service_staff from './20270318_150000_service_staff';
+import * as migration_20270318_160000_booking_reminders from './20270318_160000_booking_reminders';
+import * as migration_20270318_170000_event_max_per_person from './20270318_170000_event_max_per_person';
+import * as migration_20270318_180000_paid_bookings from './20270318_180000_paid_bookings';
+import * as migration_20270318_190000_bid_mode from './20270318_190000_bid_mode';
+import * as migration_20270318_210000_waiting_list from './20270318_210000_waiting_list';
+import * as migration_20270318_200000_bid_json_column from './20270318_200000_bid_json_column';
 
 export const migrations = [
   {
@@ -1365,8 +1392,143 @@ export const migrations = [
     name: '20270317_280000_sign_in_paths',
   },
   {
+    up: migration_20270318_100000_taskboard_archive_due.up,
+    down: migration_20270318_100000_taskboard_archive_due.down,
+    name: '20270318_100000_taskboard_archive_due',
+  },
+  {
+    up: migration_20270317_280000_captcha_followups.up,
+    down: migration_20270317_280000_captcha_followups.down,
+    name: '20270317_280000_captcha_followups',
+  },
+  {
     up: migration_20270318_100000_csp_builder.up,
     down: migration_20270318_100000_csp_builder.down,
     name: '20270318_100000_csp_builder',
+  },
+  {
+    up: migration_20270317_270000_product_feed_cache.up,
+    down: migration_20270317_270000_product_feed_cache.down,
+    name: '20270317_270000_product_feed_cache',
+  },
+  {
+    up: migration_20270317_265000_composite_products.up,
+    down: migration_20270317_265000_composite_products.down,
+    name: '20270317_265000_composite_products',
+  },
+  {
+    up: migration_20270318_110000_webhook_audit_options.up,
+    down: migration_20270318_110000_webhook_audit_options.down,
+    name: '20270318_110000_webhook_audit_options',
+  },
+  {
+    up: migration_20270318_200000_product_feed_mapping.up,
+    down: migration_20270318_200000_product_feed_mapping.down,
+    name: '20270318_200000_product_feed_mapping',
+  },
+  {
+    up: migration_20270318_100000_wholesale.up,
+    down: migration_20270318_100000_wholesale.down,
+    name: '20270318_100000_wholesale',
+  },
+  {
+    up: migration_20270318_110000_purchase_limit_message_exempt.up,
+    down: migration_20270318_110000_purchase_limit_message_exempt.down,
+    name: '20270318_110000_purchase_limit_message_exempt',
+  },
+  {
+    up: migration_20270318_110000_bot_rules.up,
+    down: migration_20270318_110000_bot_rules.down,
+    name: '20270318_110000_bot_rules',
+  },
+  {
+    up: migration_20270318_120000_approval_review_due_days.up,
+    down: migration_20270318_120000_approval_review_due_days.down,
+    name: '20270318_120000_approval_review_due_days',
+  },
+  {
+    up: migration_20270318_130000_member_dunning_emails.up,
+    down: migration_20270318_130000_member_dunning_emails.down,
+    name: '20270318_130000_member_dunning_emails',
+  },
+  {
+    up: migration_20270318_140000_order_bump.up,
+    down: migration_20270318_140000_order_bump.down,
+    name: '20270318_140000_order_bump',
+  },
+  {
+    up: migration_20270318_150000_service_staff.up,
+    down: migration_20270318_150000_service_staff.down,
+    name: '20270318_150000_service_staff',
+  },
+  {
+    up: migration_20270318_160000_booking_reminders.up,
+    down: migration_20270318_160000_booking_reminders.down,
+    name: '20270318_160000_booking_reminders',
+  },
+  {
+    up: migration_20270318_170000_event_max_per_person.up,
+    down: migration_20270318_170000_event_max_per_person.down,
+    name: '20270318_170000_event_max_per_person',
+  },
+  {
+    up: migration_20270318_180000_paid_bookings.up,
+    down: migration_20270318_180000_paid_bookings.down,
+    name: '20270318_180000_paid_bookings',
+  },
+  {
+    up: migration_20270318_190000_bid_mode.up,
+    down: migration_20270318_190000_bid_mode.down,
+    name: '20270318_190000_bid_mode',
+  },
+  {
+    up: migration_20270318_110000_backup_s3_endpoint.up,
+    down: migration_20270318_110000_backup_s3_endpoint.down,
+    name: '20270318_110000_backup_s3_endpoint',
+  },
+  {
+    up: migration_20270318_210000_approval_stand_ins.up,
+    down: migration_20270318_210000_approval_stand_ins.down,
+    name: '20270318_210000_approval_stand_ins',
+  },
+  {
+    up: migration_20270318_210000_waiting_list.up,
+    down: migration_20270318_210000_waiting_list.down,
+    name: '20270318_210000_waiting_list',
+  },
+  {
+    up: migration_20270318_220000_approval_section_routes.up,
+    down: migration_20270318_220000_approval_section_routes.down,
+    name: '20270318_220000_approval_section_routes',
+  },
+  {
+    up: migration_20270318_230000_card_prints.up,
+    down: migration_20270318_230000_card_prints.down,
+    name: '20270318_230000_card_prints',
+  },
+  {
+    up: migration_20270318_230000_quote_email_templates.up,
+    down: migration_20270318_230000_quote_email_templates.down,
+    name: '20270318_230000_quote_email_templates',
+  },
+  {
+    up: migration_20270318_240000_limit_claims.up,
+    down: migration_20270318_240000_limit_claims.down,
+    name: '20270318_240000_limit_claims',
+  },
+  {
+    up: migration_20270318_200000_bid_json_column.up,
+    down: migration_20270318_200000_bid_json_column.down,
+    name: '20270318_200000_bid_json_column',
+  },
+  {
+    up: migration_20270317_290000_blog_base.up,
+    down: migration_20270317_290000_blog_base.down,
+    name: '20270317_290000_blog_base',
+  },
+  {
+    up: migration_20270318_250000_client_report_options.up,
+    down: migration_20270318_250000_client_report_options.down,
+    name: '20270318_250000_client_report_options',
   },
 ];

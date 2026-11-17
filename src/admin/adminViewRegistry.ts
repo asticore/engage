@@ -63,6 +63,7 @@ const OutboundClicksView = lazyView(() => import('@/admin/views/OutboundClicksVi
 const ShopReportsView = lazyView(() => import('@/admin/views/ShopReportsView').then((mod) => mod.ShopReportsView))
 const NotificationsView = lazyView(() => import('@/admin/views/NotificationsView').then((mod) => mod.NotificationsView))
 const TaskboardView = lazyView(() => import('@/admin/views/TaskboardView').then((mod) => mod.TaskboardView))
+const MyTasksView = lazyView(() => import('@/admin/views/MyTasksView').then((mod) => mod.MyTasksView))
 const BulkCreateView = lazyView(() => import('@/admin/views/BulkCreateView').then((mod) => mod.BulkCreateView))
 const BookingsView = lazyView(() => import('@/admin/views/BookingsView').then((mod) => mod.BookingsView))
 const QuotesView = lazyView(() => import('@/admin/views/QuotesView').then((mod) => mod.QuotesView))
@@ -72,6 +73,7 @@ const RateRulesView = lazyView(() => import('@/admin/views/RateRulesView').then(
 const IpRulesView = lazyView(() => import('@/admin/views/IpRulesView').then((mod) => mod.IpRulesView))
 const CspBuilderView = lazyView(() => import('@/admin/views/CspBuilderView').then((mod) => mod.CspBuilderView))
 const UserBansView = lazyView(() => import('@/admin/views/UserBansView').then((mod) => mod.UserBansView))
+const WholesaleView = lazyView(() => import('@/admin/views/WholesaleView').then((mod) => mod.WholesaleView))
 const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').then((mod) => mod.AffiliatesView))
 const SsoView = lazyView(() => import('@/admin/views/SsoView').then((mod) => mod.SsoView))
 const AgentAccessView = lazyView(() => import('@/admin/views/AgentAccessView').then((mod) => mod.AgentAccessView))
@@ -203,7 +205,7 @@ export const CUSTOM_ADMIN_VIEWS = [
     key: 'references',
     Component: ReferencesView,
     path: '/references',
-    meta: { title: 'Reference sources', description: 'The shared sources Engage follows (Shine, Effix), their pinned versions and whether a newer one exists.' },
+    meta: { title: 'Reference sources', description: 'The shared sources Engage follows (Shine, Spark), their pinned versions and whether a newer one exists.' },
   },
   {
     key: 'unusedTables',
@@ -261,6 +263,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'displayCurrencies', Component: DisplayCurrenciesView, path: '/display-currencies', meta: { title: 'Display currencies', description: 'Show prices in other currencies. Shoppers always pay in the shop currency.' } },
   { key: 'notifications', Component: NotificationsView, path: '/notifications', meta: { title: 'Notifications', description: 'Send an email or push when an order is paid, a form is sent, a booking is made and more.' } },
   { key: 'taskboard', Component: TaskboardView, path: '/taskboard', meta: { title: 'Taskboard', description: 'Kanban boards where tasks are given to admin and staff users.' } },
+  { key: 'my-tasks', Component: MyTasksView, path: '/my-tasks', meta: { title: 'My tasks', description: 'Open tasks given to you on every taskboard you can open.' } },
   { key: 'settingLocks', Component: SettingLocksView, path: '/design-locks', meta: { title: 'Design locks', description: 'Lock design settings in the visual builder and the email builder.' } },
   { key: 'productFeeds', Component: ProductFeedsView, path: '/product-feeds', meta: { title: 'Product feeds', description: 'Feeds for Google, Meta, Pinterest and others, each with a secret address.' } },
   { key: 'bulkCreate', Component: BulkCreateView, path: '/bulk-create', meta: { title: 'Bulk create', description: 'Make many draft pages, posts or products from a list or CSV.' } },
@@ -287,6 +290,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'media-search', Component: MediaSearchView, path: '/media-search', meta: { title: 'Media search', description: 'Search media by words, type, folder, tag, collection, size, date, status, licence and custom details.' } },
   { key: 'past-due-members', Component: PastDueMembersView, path: '/past-due-members', meta: { title: 'Past due members', description: 'Members whose renewal payment failed, with retry and end controls.' } },
   { key: 'pricingPreview', Component: PricingPreviewView, path: '/pricing-preview', meta: { title: 'Pricing preview', description: 'What a customer would pay for a cart, using the real checkout calculation.' } },
+  { key: 'wholesale', Component: WholesaleView, path: '/wholesale', meta: { title: 'Wholesale', description: 'Approve wholesale applications and tag customers.' } },
   { key: 'priceTiers', Component: PriceTiersView, path: '/price-tiers', meta: { title: 'Price tiers', description: 'Wholesale prices and quantity breaks. Shoppers always pay in the shop currency.' } },
   {
     key: 'shopSettings',

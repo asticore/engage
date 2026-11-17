@@ -16,6 +16,7 @@ import {
   type WebhookView,
   type WebhooksData,
 } from '../actions'
+import { AUDIT_REDACT_FIELDS } from '../core'
 import { EVENT_LABEL_KEYS, type WebhookEvent } from '../events'
 import { WebhookTransfer } from './WebhookTransfer'
 
@@ -35,9 +36,12 @@ type Draft = {
   template: string
   enabled: boolean
   ratePerMinute: number
+  /** One rule per line or comma separated; the server reads the text. */
+  auditActions: string
+  auditRedact: string[]
 }
 
-const blank = (defaultRate: number): Draft => ({ id: null, name: '', description: '', url: '', events: [], template: '', enabled: true, ratePerMinute: defaultRate })
+const blank = (defaultRate: number): Draft => ({ id: null, name: '', description: '', url: '', events: [], template: '', enabled: true, ratePerMinute: defaultRate, auditActions: '', auditRedact: [] })
 
 const draftFrom = (w: WebhookView): Draft => ({
   id: w.id,
@@ -48,6 +52,8 @@ const draftFrom = (w: WebhookView): Draft => ({
   template: w.template ?? '',
   enabled: w.enabled,
   ratePerMinute: w.ratePerMinute,
+  auditActions: w.auditActions.join('\n'),
+  auditRedact: w.auditRedact,
 })
 
 const toggle = <T,>(list: T[], item: T): T[] => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item])
@@ -283,6 +289,24 @@ export const WebhooksPanel: React.FC<{ initial: WebhooksData }> = ({ initial }) 
               </label>
             ))}
           </fieldset>
+
+          {draft.events.includes('audit.recorded') ? (
+            <fieldset style={{ display: 'grid', gap: '0.5rem' }}>
+              <legend>{t('webhooks.section.audit')}</legend>
+              <label>
+                {t('webhooks.field.auditActions')}
+                <textarea value={draft.auditActions} onChange={(ev) => set('auditActions', ev.target.value)} rows={4} maxLength={2000} style={{ fontFamily: 'monospace' }} placeholder={'user.\nsettings.update'} />
+              </label>
+              <small>{t('webhooks.field.auditActionsHelp')}</small>
+              <strong>{t('webhooks.field.auditRedact')}</strong>
+              {AUDIT_REDACT_FIELDS.map((field) => (
+                <label key={field} style={{ display: 'block' }}>
+                  <input type="checkbox" checked={draft.auditRedact.includes(field)} onChange={() => set('auditRedact', toggle(draft.auditRedact, field))} /> {field}
+                </label>
+              ))}
+              <small>{t('webhooks.field.auditRedactHelp')}</small>
+            </fieldset>
+          ) : null}
 
           <fieldset style={{ display: 'grid', gap: '0.5rem' }}>
             <legend>{t('webhooks.section.payload')}</legend>

@@ -38,6 +38,9 @@ export async function POST(request: Request): Promise<Response> {
   if (body?.action !== 'cancel') return json({ error: 'Unknown action.' }, 400)
   const error = cancelError(found.booking, new Date())
   if (error) return json({ error }, 409)
-  await store.setBookingStatus(found.d1, found.booking.id, 'cancelled', new Date().toISOString())
-  return json(await view(found.d1, { ...found.booking, status: 'cancelled' }))
+  const { getEngine } = await import('@/lib/engine')
+  const { cancelWithRefund } = await import('@/features/bookings/payment')
+  const outcome = await cancelWithRefund(found.d1, (await getEngine()) as never, found.booking)
+  if (!outcome.cancelled) return json({ error: outcome.note }, 503)
+  return json({ ...(await view(found.d1, { ...found.booking, status: 'cancelled' })), note: outcome.note })
 }

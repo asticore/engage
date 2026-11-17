@@ -32,6 +32,10 @@ export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url)
   const boards = (await store.listBoards(d1)).filter((b) => canAccessBoard(b, access.me))
   const people = await store.listPeople(d1)
+  if (url.searchParams.get('mine') === '1') {
+    const cards = await store.cardsForPerson(d1, access.me.id, boards.map((b) => b.id))
+    return json({ me: { id: access.me.id, isAdmin: access.me.isAdmin }, cards })
+  }
   const boardId = Number(url.searchParams.get('board'))
   const board = boards.find((b) => b.id === boardId)
   const out: Record<string, unknown> = { boards, me: { id: access.me.id, isAdmin: access.me.isAdmin }, people }
@@ -55,12 +59,21 @@ export async function POST(request: Request): Promise<Response> {
   const { sendEmail } = await import('@/features/email')
   const { textToHtml } = await import('@/features/email/renderTemplate')
   const engine = await getEngine()
+  const activityMark = await store.latestActivityId(d1).catch((): number => 0)
   const result = await runAction(
     {
       d1,
       nowIso: new Date().toISOString(),
       textToHtml,
       sendEmail: (args) => sendEmail(args),
+      emit: async (event, data) => {
+        const { emitWebhookEvent } = await import('@/features/webhooks/emit')
+        await emitWebhookEvent(event, data)
+      },
+      hasRule: async (event) => {
+        const [{ listRules }, { rulesFor }] = await Promise.all([import('@/features/notifications/store'), import('@/features/notifications/rules')])
+        return rulesFor(await listRules(d1 as never), event).length > 0
+      },
       siteName: async () => {
         try {
           const g = (await engine.findGlobal({ slug: 'site-details', depth: 0, overrideAccess: true })) as { businessName?: unknown }
@@ -73,5 +86,18 @@ export async function POST(request: Request): Promise<Response> {
     access.me,
     body,
   )
+  // Everything this request added to the board's own activity trail is also written to the main Activity log.
+  if (result.status === 200) {
+    try {
+      const [{ taskboardAuditEntry }, { audit, auditContext }, { getSecuritySettings }] = await Promise.all([import('@/features/taskboard/activityLog'), import('@/features/security/auditLog'), import('@/features/security/settings')])
+      const settings = await getSecuritySettings(engine as unknown as Parameters<typeof getSecuritySettings>[0])
+      const user = access.ctx.user as { email?: string }
+      for (const row of await store.activitySince(d1, activityMark)) {
+        await audit({ ...taskboardAuditEntry(row, { id: access.me.id, email: user.email }), ...auditContext(request) }, settings)
+      }
+    } catch {
+      // The board's own trail already has it; the Activity log write is best effort.
+    }
+  }
   return json(result.body, result.status)
 }

@@ -4,6 +4,7 @@ import { getAdminContext } from '@/admin/auth'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { feedPath, parseFeedInput, renderFeed, validateFeed } from '@/features/ecommerce/lib/feedRecords'
 import { rawD1 } from '@/features/ecommerce/server/db'
+import { clearFeedCache } from '@/features/ecommerce/server/feedCache'
 import { deleteFeed, getFeed, listFeeds, rotateFeedToken, saveFeed } from '@/features/ecommerce/server/feedRecords'
 import { loadFeedFor } from '@/features/ecommerce/server/feeds'
 
@@ -54,11 +55,13 @@ export async function POST(request: Request): Promise<Response> {
     if (!hasId) return json({ error: 'Pick a feed.' }, 400)
     if (body.action === 'rotate') await rotateFeedToken(d1, id, now)
     else await deleteFeed(d1, id)
+    await clearFeedCache(d1, id)
     return json({ ok: true })
   }
   const parsed = parseFeedInput(body)
   if (parsed.ok === false) return json({ error: parsed.error }, 400)
   if (hasId && !(await getFeed(d1, id).catch((): null => null))) return json({ error: 'Feed not found.' }, 404)
   await saveFeed(d1, hasId ? id : null, parsed.feed, now)
+  if (hasId) await clearFeedCache(d1, id)
   return json({ ok: true })
 }

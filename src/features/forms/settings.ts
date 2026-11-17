@@ -50,6 +50,8 @@ export const DEFAULT_FORM_SETTINGS: ResolvedFormSettings = {
   protectSignIn: false,
   botDetection: 'off',
   botMinScore: 30,
+  botFingerprints: '',
+  botAllowedCategories: '',
   placeModes: defaultPlaceModes(),
   failureThreshold: DEFAULT_FAILURE_THRESHOLD,
   failureWindowMinutes: DEFAULT_FAILURE_WINDOW_MINUTES,
@@ -82,6 +84,8 @@ type SettingsDoc = {
     protectSignIn?: boolean
     botDetection?: string
     botMinScore?: number
+    botFingerprints?: string
+    botAllowedCategories?: string
     failureThreshold?: number
     failureWindowMinutes?: number
     blockedWords?: string
@@ -155,6 +159,8 @@ export const getFormSettings = async (engine: EngineLike): Promise<ResolvedFormS
     protectSignIn: bool(doc.spam?.protectSignIn, DEFAULT_FORM_SETTINGS.protectSignIn),
     botDetection: normaliseBotMode(doc.spam?.botDetection),
     botMinScore: num(doc.spam?.botMinScore, DEFAULT_FORM_SETTINGS.botMinScore),
+    botFingerprints: text(doc.spam?.botFingerprints, ''),
+    botAllowedCategories: text(doc.spam?.botAllowedCategories, ''),
     placeModes: readPlaceModes(doc.spam),
     failureThreshold: Math.max(1, Math.min(50, Math.floor(num(doc.spam?.failureThreshold, DEFAULT_FAILURE_THRESHOLD)))),
     failureWindowMinutes: Math.max(1, Math.min(1440, Math.floor(num(doc.spam?.failureWindowMinutes, DEFAULT_FAILURE_WINDOW_MINUTES)))),
@@ -177,6 +183,7 @@ export const resolveForForm = (form: FormDoc, settings: ResolvedFormSettings): R
     ...settings,
     honeypot: override(form?.spam?.honeypot, settings.honeypot),
     turnstile: override(form?.spam?.turnstile, settings.turnstile),
+    botDetection: form?.spam?.botDetection && form.spam.botDetection !== 'inherit' ? normaliseBotMode(form.spam.botDetection) : settings.botDetection,
     // Off means no wait at all, so this cannot go through `override` - it is a
     // number gated by a three-state choice, not a boolean.
     minimumFillTimeSeconds:

@@ -7,15 +7,15 @@ type Row = Record<string, unknown>
 const all = async (d1: D1, sql: string, ...args: unknown[]): Promise<Row[]> => (await d1.prepare(sql).bind(...args).all<Row>()).results
 const run = (d1: D1, sql: string, ...args: unknown[]) => d1.prepare(sql).bind(...args).run()
 
-const toRule = (r: Row): Rule => ({ id: Number(r.id), title: String(r.title ?? ''), productId: r.product_id === null || r.product_id === undefined ? null : Number(r.product_id), maxQty: r.max_qty === null || r.max_qty === undefined ? null : Number(r.max_qty), windowDays: Number(r.window_days ?? 0), cooldownHours: Number(r.cooldown_hours ?? 0), requireVerified: Number(r.require_verified) !== 0, active: Number(r.active) !== 0 })
+const toRule = (r: Row): Rule => ({ id: Number(r.id), title: String(r.title ?? ''), productId: r.product_id === null || r.product_id === undefined ? null : Number(r.product_id), maxQty: r.max_qty === null || r.max_qty === undefined ? null : Number(r.max_qty), windowDays: Number(r.window_days ?? 0), cooldownHours: Number(r.cooldown_hours ?? 0), requireVerified: Number(r.require_verified) !== 0, active: Number(r.active) !== 0, message: String(r.message ?? ''), exemptEmails: String(r.exempt_emails ?? '') })
 
 export async function listRules(d1: D1, onlyActive = false): Promise<Rule[]> {
   return (await all(d1, `SELECT * FROM eg_purchase_limit_rules${onlyActive ? ' WHERE active = 1' : ''} ORDER BY id`)).map(toRule)
 }
 export async function saveRule(d1: D1, id: number | null, v: RuleInput, nowIso: string): Promise<void> {
-  const a = [v.title, v.productId, v.maxQty, v.windowDays, v.cooldownHours, v.requireVerified ? 1 : 0, v.active ? 1 : 0, nowIso]
-  if (id) await run(d1, 'UPDATE eg_purchase_limit_rules SET title=?1, product_id=?2, max_qty=?3, window_days=?4, cooldown_hours=?5, require_verified=?6, active=?7, updated_at=?8 WHERE id=?9', ...a, id)
-  else await run(d1, 'INSERT INTO eg_purchase_limit_rules (title, product_id, max_qty, window_days, cooldown_hours, require_verified, active, updated_at, created_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?8)', ...a)
+  const a = [v.title, v.productId, v.maxQty, v.windowDays, v.cooldownHours, v.requireVerified ? 1 : 0, v.active ? 1 : 0, nowIso, v.message, v.exemptEmails]
+  if (id) await run(d1, 'UPDATE eg_purchase_limit_rules SET title=?1, product_id=?2, max_qty=?3, window_days=?4, cooldown_hours=?5, require_verified=?6, active=?7, updated_at=?8, message=?9, exempt_emails=?10 WHERE id=?11', ...a, id)
+  else await run(d1, 'INSERT INTO eg_purchase_limit_rules (title, product_id, max_qty, window_days, cooldown_hours, require_verified, active, updated_at, created_at, message, exempt_emails) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?8,?9,?10)', ...a)
 }
 export async function deleteRule(d1: D1, id: number): Promise<void> {
   await run(d1, 'DELETE FROM eg_purchase_limit_rules WHERE id = ?1', id)
@@ -31,22 +31,107 @@ export type Identity = { emailKeys: string[]; userId: number | null; addressKey:
 export async function priorPurchases(d1: D1, productId: number, who: Identity, excludeCartId: number | null, normalise: (email: string) => string, addressOf: (line1: unknown, postal: unknown) => string, sinceMs: number): Promise<Prior[]> {
   const rows = await all(
     d1,
-    `SELECT i.quantity AS quantity, o.created_at AS created_at, o.customer_email AS email, o.customer_id AS customer_id, o.shipping_address_address_line1 AS line1, o.shipping_address_postal_code AS postal, o.cart_id AS cart_id
+    `SELECT i.quantity AS quantity, o.created_at AS created_at, o.customer_email AS email, o.customer_id AS customer_id, o.shipping_address_address_line1 AS line1, o.shipping_address_postal_code AS postal, o.cart_id AS cart_id, o.id AS order_id
      FROM eg_orders_items i JOIN eg_orders o ON o.id = i._parent_id
      WHERE i.product_id = ?1 AND o.status NOT IN ('cancelled','refunded','failed') AND o.created_at >= ?2
      ORDER BY o.id DESC LIMIT 2000`,
     productId, new Date(sinceMs).toISOString(),
   )
   const out: Prior[] = []
+  const matchedOrders = new Set<number>()
   for (const r of rows) {
     if (excludeCartId !== null && r.cart_id !== null && Number(r.cart_id) === excludeCartId) continue
     const sameUser = who.userId !== null && r.customer_id !== null && Number(r.customer_id) === who.userId
     const sameEmail = Boolean(r.email) && who.emailKeys.includes(normalise(String(r.email)))
     const key = addressOf(r.line1, r.postal)
     const sameAddress = who.addressKey !== '' && key === who.addressKey
-    if (sameUser || sameEmail || sameAddress) out.push({ qty: Number(r.quantity ?? 1), atMs: Date.parse(String(r.created_at)) || 0 })
+    if (sameUser || sameEmail || sameAddress) {
+      out.push({ qty: Number(r.quantity ?? 1), atMs: Date.parse(String(r.created_at)) || 0 })
+      matchedOrders.add(Number(r.order_id))
+    }
   }
+  // Same card: another order paid with a card this buyer's earlier orders used is the same person under another name.
+  out.push(...(await cardLinkedPurchases(d1, productId, [...matchedOrders], excludeCartId, sinceMs)))
   return out
+}
+
+/** Records the card fingerprint (from Stripe) a paid order was paid with. Once per order and card. */
+export async function recordCardPrint(d1: D1, orderId: number, fingerprint: string, nowIso: string): Promise<void> {
+  if (!fingerprint) return
+  await run(d1, 'INSERT OR IGNORE INTO eg_purchase_card_prints (order_id, fingerprint, created_at) VALUES (?1,?2,?3)', orderId, fingerprint.slice(0, 80), nowIso)
+}
+
+/**
+ * Orders for the product paid with a card that one of `matchedOrders` was paid with, other than those orders and the
+ * order made from this cart. Never throws: with the table missing (limits off, or nothing recorded yet) there is no link.
+ */
+export async function cardLinkedPurchases(d1: D1, productId: number, matchedOrders: number[], excludeCartId: number | null, sinceMs: number): Promise<Prior[]> {
+  if (matchedOrders.length === 0) return []
+  try {
+    const marks = matchedOrders.map((_, i) => `?${i + 1}`).join(',')
+    const prints = (await all(d1, `SELECT DISTINCT fingerprint FROM eg_purchase_card_prints WHERE order_id IN (${marks}) LIMIT 50`, ...matchedOrders)).map((r) => String(r.fingerprint))
+    if (prints.length === 0) return []
+    const printMarks = prints.map((_, i) => `?${i + 3}`).join(',')
+    const rows = await all(
+      d1,
+      `SELECT DISTINCT i.id AS item_id, i.quantity AS quantity, o.created_at AS created_at, o.id AS order_id, o.cart_id AS cart_id
+       FROM eg_orders_items i JOIN eg_orders o ON o.id = i._parent_id JOIN eg_purchase_card_prints c ON c.order_id = o.id
+       WHERE i.product_id = ?1 AND o.status NOT IN ('cancelled','refunded','failed') AND o.created_at >= ?2 AND c.fingerprint IN (${printMarks})
+       LIMIT 2000`,
+      productId, new Date(sinceMs).toISOString(), ...prints,
+    )
+    const known = new Set(matchedOrders)
+    return rows
+      .filter((r) => !known.has(Number(r.order_id)) && !(excludeCartId !== null && r.cart_id !== null && Number(r.cart_id) === excludeCartId))
+      .map((r) => ({ qty: Number(r.quantity ?? 1), atMs: Date.parse(String(r.created_at)) || 0 }))
+  } catch {
+    return []
+  }
+}
+
+/** How long a place claimed at checkout is kept for a payment that never finishes. */
+export const CLAIM_MINUTES = 10
+
+/**
+ * Claims a place for a cart that is about to pay (one row per cart and product, replaced on a retry). The caller claims
+ * FIRST and counts after, so two orders racing for the last place cannot both read "free": whichever claims second sees
+ * the other's claim. Both can see each other and both be refused (safe); both can never pass. Never throws.
+ */
+export async function claimPlace(d1: D1, c: { cartId: number; productId: number; qty: number; who: Identity }, nowIso: string): Promise<void> {
+  const expires = new Date(Date.parse(nowIso) + CLAIM_MINUTES * 60_000).toISOString()
+  try {
+    await run(d1, 'DELETE FROM eg_purchase_limit_claims WHERE expires_at < ?1', nowIso)
+    await run(
+      d1,
+      'INSERT OR REPLACE INTO eg_purchase_limit_claims (cart_id, product_id, email_key, user_id, address_key, qty, created_at, expires_at) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)',
+      c.cartId, c.productId, c.who.emailKeys[0] ?? '', c.who.userId, c.who.addressKey, c.qty, nowIso, expires,
+    )
+  } catch {
+    /* no claim table: the check runs as it did before claims */
+  }
+}
+
+export async function releaseClaim(d1: D1, cartId: number, productId: number): Promise<void> {
+  await run(d1, 'DELETE FROM eg_purchase_limit_claims WHERE cart_id = ?1 AND product_id = ?2', cartId, productId).catch((): null => null)
+}
+
+/** Other carts' live claims on the product by the same person (same account, email or address), skipping carts already ordered (those orders count themselves). */
+export async function concurrentClaims(d1: D1, productId: number, who: Identity, cartId: number, nowIso: string): Promise<Prior[]> {
+  try {
+    const rows = await all(
+      d1,
+      `SELECT c.qty AS qty, c.created_at AS created_at, c.email_key AS email_key, c.user_id AS user_id, c.address_key AS address_key
+       FROM eg_purchase_limit_claims c
+       WHERE c.product_id = ?1 AND c.cart_id != ?2 AND c.expires_at >= ?3
+         AND NOT EXISTS (SELECT 1 FROM eg_orders o WHERE o.cart_id = c.cart_id)`,
+      productId, cartId, nowIso,
+    )
+    return rows
+      .filter((r) => who.emailKeys.includes(String(r.email_key)) || (who.userId !== null && r.user_id !== null && Number(r.user_id) === who.userId) || (who.addressKey !== '' && String(r.address_key) === who.addressKey))
+      .map((r) => ({ qty: Number(r.qty ?? 1), atMs: Date.parse(String(r.created_at)) || 0 }))
+  } catch {
+    return []
+  }
 }
 
 export async function logBlock(d1: D1, b: { ruleId: number | null; productId: number | null; reason: string; emailKey: string; detail: string }, nowIso: string): Promise<void> {

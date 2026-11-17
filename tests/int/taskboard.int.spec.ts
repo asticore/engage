@@ -5,11 +5,13 @@ import { describe, expect, it } from 'vitest'
 import { runAction, type Actor, type Deps } from '@/features/taskboard/actions'
 import { assignablePeople, assignmentEmail, canAccessBoard, isOverdue, moveCard, myTasks, parseCardInput, parseColumns, type Card } from '@/features/taskboard/logic'
 import * as store from '@/features/taskboard/store'
+import { taskboardAuditEntry } from '@/features/taskboard/activityLog'
+import { dueSoonCutoff, runTaskDueReminders } from '@/features/taskboard/dueReminders'
 import { TASKBOARD_STATEMENTS } from '@/migrations/20270316_100000_taskboard'
 import { FEATURES } from '@/features/registry'
 import { ownerOfTable } from '@/features/featureTables'
 
-const card = (id: number, columnId: number, position: number): Card => ({ id, boardId: 1, columnId, title: `c${id}`, description: '', assigneeId: null, dueDate: null, labels: [], priority: 'normal', position })
+const card = (id: number, columnId: number, position: number): Card => ({ id, boardId: 1, columnId, title: `c${id}`, description: '', assigneeId: null, dueDate: null, labels: [], priority: 'normal', position, archived: false })
 
 describe('taskboard rules', () => {
   it('moves a card between and within columns with a consistent order', () => {
@@ -125,3 +127,78 @@ describe('taskboard actions', () => {
     expect(after.cards.find((c) => c.id === Number(made.body.id))?.columnId).toBe(cols[0].id)
   })
 })
+
+describe('taskboard archive, my tasks, events and due reminders', () => {
+  const boardWithCard = async (extra: Record<string, unknown> = {}) => {
+    const ctx = setup()
+    const id = Number((await runAction(ctx.deps, admin, { action: 'create-board', name: 'Launch' })).body.id)
+    const cols = (await store.boardData(ctx.d1, id)).columns
+    const made = await runAction(ctx.deps, admin, { action: 'save-card', boardId: id, columnId: cols[0].id, card: { title: 'Write copy', assigneeId: 2, ...extra } })
+    return { ...ctx, id, cols, cardId: Number(made.body.id) }
+  }
+  it('archives and restores a card, and archived cards leave My tasks', async () => {
+    const { d1, deps, id, cardId } = await boardWithCard()
+    expect((await store.cardsForPerson(d1, 2, [id])).map((c) => c.id)).toEqual([cardId])
+    expect((await runAction(deps, editor, { action: 'archive-card', boardId: id, cardId })).status).toBe(200)
+    expect((await store.getCard(d1, cardId))?.archived).toBe(true)
+    expect(await store.cardsForPerson(d1, 2, [id])).toEqual([])
+    expect((await runAction(deps, editor, { action: 'restore-card', boardId: id, cardId })).status).toBe(200)
+    expect((await store.getCard(d1, cardId))?.archived).toBe(false)
+    expect((await store.boardData(d1, id)).activity.map((a) => a.action)).toEqual(expect.arrayContaining(['card.archived', 'card.restored']))
+  })
+  it('raises task.assigned and task.commented, and a switched on rule owns the email', async () => {
+    const ctx = setup()
+    const events: string[] = []
+    let rule = false
+    const deps: Deps = { ...ctx.deps, emit: async (event, data) => { events.push(`${event}:${String(data.email)}`) }, hasRule: async () => rule }
+    const id = Number((await runAction(deps, admin, { action: 'create-board', name: 'B' })).body.id)
+    const col = (await store.boardData(ctx.d1, id)).columns[0]
+    const made = await runAction(deps, admin, { action: 'save-card', boardId: id, columnId: col.id, card: { title: 'T', assigneeId: 2 } })
+    expect(events).toEqual(['task.assigned:ed@x.test'])
+    expect(ctx.sent).toHaveLength(1)
+    await runAction(deps, admin, { action: 'add-comment', boardId: id, cardId: Number(made.body.id), body: 'hi' })
+    expect(events).toEqual(['task.assigned:ed@x.test', 'task.commented:ed@x.test'])
+    rule = true
+    await runAction(deps, admin, { action: 'save-card', boardId: id, columnId: col.id, card: { title: 'T2', assigneeId: 2 } })
+    expect(events).toHaveLength(3)
+    expect(ctx.sent).toHaveLength(1)
+  })
+  it('reminds once per due date, skips done and archived cards, and again after the date changes', async () => {
+    const ctx = await boardWithCard({ dueDate: '2027-03-17' })
+    const done = await runAction(ctx.deps, admin, { action: 'save-card', boardId: ctx.id, columnId: ctx.cols[3].id, card: { title: 'Finished', assigneeId: 2, dueDate: '2027-03-01' } })
+    expect(done.status).toBe(200)
+    const events: string[] = []
+    const sent: string[] = []
+    const now = new Date('2027-03-16T10:00:00Z')
+    const deps = { d1: ctx.d1, now, siteName: async () => 'S', textToHtml: (t: string) => t, sendEmail: async (a: { subject: string }) => { sent.push(a.subject) }, emit: async (e: string) => { events.push(e) }, hasRule: async () => false }
+    expect(dueSoonCutoff(now)).toBe('2027-03-17')
+    expect(await runTaskDueReminders(deps)).toEqual({ reminded: 1 })
+    expect(sent).toEqual(['Due soon: Write copy'])
+    expect(events).toEqual(['task.due'])
+    expect(await runTaskDueReminders(deps)).toEqual({ reminded: 0 })
+    await runAction(ctx.deps, admin, { action: 'save-card', boardId: ctx.id, cardId: ctx.cardId, card: { title: 'Write copy', assigneeId: 2, dueDate: '2027-03-16' } })
+    expect(await runTaskDueReminders(deps)).toEqual({ reminded: 1 })
+    expect(sent[1]).toBe('Due soon: Write copy')
+    await runAction(ctx.deps, admin, { action: 'archive-card', boardId: ctx.id, cardId: ctx.cardId })
+    await runAction(ctx.deps, admin, { action: 'save-card', boardId: ctx.id, cardId: ctx.cardId, card: { title: 'Write copy', assigneeId: 2, dueDate: '2027-03-10' } })
+    expect(await runTaskDueReminders(deps)).toEqual({ reminded: 0 })
+  })
+})
+
+describe('taskboard entries in the main Activity log', () => {
+  it('reads only what one request added and maps it to activity entries', async () => {
+    const ctx = setup()
+    const id = Number((await runAction(ctx.deps, admin, { action: 'create-board', name: 'Launch' })).body.id)
+    const col = (await store.boardData(ctx.d1, id)).columns[0]
+    const mark = await store.latestActivityId(ctx.d1)
+    const made = await runAction(ctx.deps, admin, { action: 'save-card', boardId: id, columnId: col.id, card: { title: 'Write copy', assigneeId: 2 } })
+    await runAction(ctx.deps, admin, { action: 'delete-card', boardId: id, cardId: Number(made.body.id) })
+    const rows = await store.activitySince(ctx.d1, mark)
+    expect(rows.map((r) => r.action)).toEqual(['card.created', 'card.assigned', 'card.deleted'])
+    const entries = rows.map((r) => taskboardAuditEntry(r, { id: 1, email: 'admin@x.test' }))
+    expect(entries.map((e) => e.action)).toEqual(['create', 'update', 'delete'])
+    expect(entries[0]).toMatchObject({ collectionSlug: 'taskboard', actorEmail: 'admin@x.test', detail: `task created: Write copy (board ${id})` })
+    expect(await store.activitySince(ctx.d1, rows[rows.length - 1].id)).toEqual([])
+  })
+})
+

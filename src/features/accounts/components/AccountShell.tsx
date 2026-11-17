@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { PastDueBanner } from './PastDueBanner'
 import type { PortalStringKey } from '@/features/multilingual/portalStrings'
 
 import { accountTexts } from '../portalCopy'
@@ -71,7 +72,10 @@ export const AccountShell = async ({
         <PortalSearch links={searchScreens} settings={searchSettings} account />
         <div className="account">
           <AccountNav links={links} current={current} />
-          <div className="account-panel">{children}</div>
+          <div className="account-panel">
+            <PastDueBanner />
+            {children}
+          </div>
         </div>
       </div>
     </PortalTextProvider>

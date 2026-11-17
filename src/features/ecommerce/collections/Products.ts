@@ -1,4 +1,5 @@
 import { domainSlugValidate } from '@/features/domains/slugs'
+import { feedCacheAfterWrite } from '../feedCacheHook'
 import { webhookContentAfterChange } from '@/features/webhooks/hooks'
 import { auditAfterChange, auditAfterDelete } from '@/features/security/hooks'
 import { noAdsField } from '@/features/ads/fields'
@@ -188,7 +189,7 @@ export const Products: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [domainSiteDefault, domainWriteGuard, authorshipBeforeChange, contentEditGuard, publishGuard, catalogueBeforeChange, pageSpeedBeforeChange, embedShortLinksFor('layout')],
-    afterChange: [publishAfterChange('products'), stockAlertAfterChange, backInStockAfterChange, subscriptionAfterChange, slugRedirectAfterChange('products'), pageSpeedAfterChange('products'), indexNowAfterChange('products'), machineAutoDraftAfterChange('products'), outdatedAfterChange('products'), webhookContentAfterChange('products'), auditAfterChange],
-    afterDelete: [indexNowAfterDelete('products'), auditAfterDelete],
+    afterChange: [publishAfterChange('products'), stockAlertAfterChange, backInStockAfterChange, subscriptionAfterChange, slugRedirectAfterChange('products'), pageSpeedAfterChange('products'), indexNowAfterChange('products'), machineAutoDraftAfterChange('products'), outdatedAfterChange('products'), webhookContentAfterChange('products'), feedCacheAfterWrite, auditAfterChange],
+    afterDelete: [indexNowAfterDelete('products'), feedCacheAfterWrite, auditAfterDelete],
   },
 }

@@ -74,7 +74,11 @@ export type FormSettingsDoc = {
     protectSignIn?: boolean | null
     botDetection?: string | null
     botMinScore?: number | null
+    botFingerprints?: string | null
+    botAllowedCategories?: string | null
     modeSignIn?: string | null
+    modeAdminSignIn?: string | null
+    modeCardCheckout?: string | null
     modeRegister?: string | null
     modeReset?: string | null
     modeResetConfirm?: string | null

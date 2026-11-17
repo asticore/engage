@@ -178,8 +178,18 @@ export async function ListView({
   // Users: a Banned filter (a ban rides on the sign-in lock marker, see features/security/userBans.ts).
   const bannedView = collectionSlug === 'users' && searchParams.status === 'banned'
   const bannedClause: Where | null = bannedView ? { loginAttempts: { greater_than: BAN_MARKER - 1 } } : null
+  // Orders: a Ready for pickup filter (local pickup orders the shop has marked ready to collect).
+  const pickupView = collectionSlug === 'orders' && searchParams.status === 'ready-pickup'
+  // Orders: Delivery problem (a parcel whose tracking reached the exception status, see ecom/lib/tracking.ts).
+  const problemView = collectionSlug === 'orders' && searchParams.status === 'delivery-problem'
+  const pickupClause: Where | null = pickupView
+    ? { readyForPickup: { equals: true } }
+    : problemView
+      ? { shipments: { like: '"status":"exception"' } }
+      : null
   const baseWhere = trashClause ? (findArgs.where ? { and: [findArgs.where, trashClause] } : trashClause) : findArgs.where
-  const listWhere = bannedClause ? (baseWhere ? { and: [baseWhere, bannedClause] } : bannedClause) : baseWhere
+  const extraClause = bannedClause ?? pickupClause
+  const listWhere = extraClause ? (baseWhere ? { and: [baseWhere, extraClause] } : extraClause) : baseWhere
   const trashCount = hasTrash
     ? await context.engine.count({ collection: collectionSlug, where: { trashedAt: { exists: true } } as Where, user: context.user }).then((r) => r.totalDocs).catch(() => 0)
     : 0
@@ -365,6 +375,20 @@ export async function ListView({
           </a>
           <a aria-current={bannedView ? 'true' : undefined} href={`${adminCollectionPath(collectionSlug)}?status=banned`}>
             Banned
+          </a>
+        </nav>
+      )}
+
+      {collectionSlug === 'orders' && activeTab.view === 'list' && (
+        <nav aria-label="Order filter" className="es-trash-links">
+          <a aria-current={!pickupView && !problemView ? 'true' : undefined} href={adminCollectionPath(collectionSlug)}>
+            All
+          </a>
+          <a aria-current={pickupView ? 'true' : undefined} href={`${adminCollectionPath(collectionSlug)}?status=ready-pickup`}>
+            Ready for pickup
+          </a>
+          <a aria-current={problemView ? 'true' : undefined} href={`${adminCollectionPath(collectionSlug)}?status=delivery-problem`}>
+            Delivery problem
           </a>
         </nav>
       )}

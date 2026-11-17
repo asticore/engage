@@ -86,7 +86,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: ['products', 'product-attributes', 'product-tags', 'product-brands', 'shipping-classes', 'product-reviews', 'stock-subscriptions', 'product-subscriptions', 'gift-cards', 'store-credits', 'credit-ledger', 'shipping-manifests', 'orders', 'order-refunds', 'coupons', 'shipping-zones', 'tax-rates', 'transactions', 'carts', 'addresses'],
     globals: ['shop-settings', 'shop-extra-settings', 'shipping-settings'],
-    tables: ['products', 'product_attributes', 'product_tags', 'product_brands', 'shop_display_currencies', 'shop_price_tiers', 'coupon_reservations', 'stock_reservations', 'saved_cart_lines', 'shipping_classes', 'product_reviews', 'stock_subscriptions', 'product_subscriptions', 'gift_cards', 'store_credits', 'credit_ledger', 'shipping_manifests', 'orders', 'order_refunds', 'coupons', 'shipping_zones', 'tax_rates', 'transactions', 'carts', 'addresses', 'product_feeds'],
+    tables: ['products', 'product_attributes', 'product_tags', 'product_brands', 'shop_display_currencies', 'shop_price_tiers', 'coupon_reservations', 'stock_reservations', 'saved_cart_lines', 'shipping_classes', 'product_reviews', 'stock_subscriptions', 'product_subscriptions', 'gift_cards', 'store_credits', 'credit_ledger', 'shipping_manifests', 'orders', 'order_refunds', 'coupons', 'shipping_zones', 'tax_rates', 'transactions', 'carts', 'addresses', 'product_feeds', 'product_feed_cache', 'wholesale_applications', 'customer_tags'],
     implemented: true,
   },
   {
@@ -306,7 +306,7 @@ export const FEATURES: FeatureDef[] = [
     defaultEnabled: false,
     collections: [],
     globals: [],
-    tables: ['purchase_limit_rules', 'purchase_limit_blocks'],
+    tables: ['purchase_limit_rules', 'purchase_limit_blocks', 'purchase_card_prints', 'purchase_limit_claims'],
     implemented: true,
   },
   {
@@ -402,7 +402,7 @@ export const FEATURES: FeatureDef[] = [
   {
     key: 'clientreports',
     label: 'Client reports',
-    description: 'Make read-only report links for a client (sales, form entries and content over a date range), download the numbers as CSV and email the report on a weekly or monthly schedule.',
+    description: 'Make read-only report links for a client (sales, form entries, content, Google traffic and search numbers and page speed over a date range, with the sections chosen per report), download the numbers as CSV and email the report on a weekly or monthly schedule.',
     defaultEnabled: false,
     collections: [],
     globals: [],

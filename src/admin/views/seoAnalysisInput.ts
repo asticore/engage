@@ -32,5 +32,7 @@ export function buildSeoAnalysisInput(values: Record<string, unknown>): Analysis
     links: body.links,
     images: body.images,
     cornerstone: values['seo.cornerstone'] === true,
+    schemaType: asText(values['schemaType']),
+    schemaFacts: values['schemaFacts'],
   }
 }

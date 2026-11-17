@@ -10,7 +10,6 @@ import React, { useState } from 'react'
 import type { ComputedProgress } from './compute'
 import { GETTING_STARTED_ITEMS } from './items'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
-import styles from './GettingStartedCard.module.css'
 
 export type GettingStartedCardProps = {
   progress: ComputedProgress
@@ -23,11 +22,11 @@ export type GettingStartedCardProps = {
  */
 function ProgressBar({ percent }: { percent: number }) {
   return (
-    <div className={styles.progressContainer}>
-      <div className={styles.progressBar}>
-        <div className={styles.progressFill} style={{ width: `${percent}%` }} />
+    <div className="eg-gs-progressContainer">
+      <div className="eg-gs-progressBar">
+        <div className="eg-gs-progressFill" style={{ width: `${percent}%` }} />
       </div>
-      <span className={styles.progressLabel}>{percent}%</span>
+      <span className="eg-gs-progressLabel">{percent}%</span>
     </div>
   )
 }
@@ -62,22 +61,22 @@ function ChecklistItem({
   }
 
   return (
-    <div className={styles.item}>
-      <div className={styles.itemContent}>
-        <label className={styles.itemLabel}>
+    <div className="eg-gs-item">
+      <div className="eg-gs-itemContent">
+        <label className="eg-gs-itemLabel">
           <input
             type="checkbox"
             checked={isDone}
             onChange={handleToggle}
             disabled={isLoading}
-            className={styles.itemCheckbox}
+            className="eg-gs-itemCheckbox"
           />
-          <span className={styles.itemTitle}>{title}</span>
+          <span className="eg-gs-itemTitle">{title}</span>
         </label>
-        <p className={styles.itemHelp}>{help}</p>
+        <p className="eg-gs-itemHelp">{help}</p>
       </div>
       {!isDone && (
-        <AdminLink path={href} className={styles.itemLink}>
+        <AdminLink path={href} className="eg-gs-itemLink">
           Set up
         </AdminLink>
       )}
@@ -142,17 +141,17 @@ export const GettingStartedCard: React.FC<GettingStartedCardProps> = ({
   // The card is a CollapsibleCard (closed by default, remembered per user). Its
   // title is the card heading; the subtitle, progress and dismiss sit in the body.
   return (
-    <CollapsibleCard id="home:getting-started" title="Getting started" className={styles.card}>
-      <div className={styles.header}>
-        <div className={styles.titleArea}>
-          <p className={styles.subtitle}>
+    <CollapsibleCard id="home:getting-started" title="Getting started" className="eg-gs-card">
+      <div className="eg-gs-header">
+        <div className="eg-gs-titleArea">
+          <p className="eg-gs-subtitle">
             {progress.done} of {progress.total} tasks complete
           </p>
         </div>
-        <div className={styles.controls}>
+        <div className="eg-gs-controls">
           <button
             onClick={handleDismiss}
-            className={styles.dismissBtn}
+            className="eg-gs-dismissBtn"
             aria-label="Dismiss"
           >
             ✕
@@ -162,18 +161,18 @@ export const GettingStartedCard: React.FC<GettingStartedCardProps> = ({
 
       <ProgressBar percent={progress.percent} />
 
-      <div className={styles.content}>
+      <div className="eg-gs-content">
         {Object.entries(progress.byCategory)
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([category, counts]) => (
-            <div key={category} className={styles.category}>
-              <h3 className={styles.categoryTitle}>
+            <div key={category} className="eg-gs-category">
+              <h3 className="eg-gs-categoryTitle">
                 {category}
-                <span className={styles.categoryCount}>
+                <span className="eg-gs-categoryCount">
                   {counts.done}/{counts.total}
                 </span>
               </h3>
-              <div className={styles.items}>
+              <div className="eg-gs-items">
                 {GETTING_STARTED_ITEMS.filter((item) => item.category === category).map(
                   (item) => (
                     <ChecklistItem

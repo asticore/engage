@@ -205,6 +205,8 @@ export type FormConfig = {
   prefillKeys?: string[]
   /** End the form at the checkout with a product in the cart and details filled in. */
   checkout?: import('./checkoutHandoff').FormCheckoutConfig
+  /** Each entry also becomes a quote, offer or item request. */
+  requestFeed?: import('./requestFeed').FormRequestFeed
 }
 
 export type FormNotificationRule = {
@@ -267,6 +269,8 @@ export type FormDoc = {
     honeypot?: Inherited
     minimumFillTime?: Inherited
     turnstile?: Inherited
+    /** Bot detection for this form only: 'inherit' takes the site setting. */
+    botDetection?: 'inherit' | 'off' | 'challenge' | 'block'
   }
   payment?: FormPayment
 }
@@ -310,6 +314,10 @@ export type ResolvedFormSettings = {
   protectSignIn: boolean
   botDetection: 'off' | 'challenge' | 'block'
   botMinScore: number
+  /** JA3 or JA4 hashes that always count as a bot, one per line. */
+  botFingerprints: string
+  /** Verified bot categories that may pass, one per line. Empty means every verified bot. */
+  botAllowedCategories: string
   /** Mode of each place that can ask for the CAPTCHA (Task 19a). */
   placeModes: Record<import('@/features/security/captchaPlaces').PlaceId, import('@/features/security/captchaPlaces').PlaceMode>
   /** Failures (or tries) from one address before "after failures" places ask for the challenge. */

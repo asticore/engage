@@ -28,6 +28,10 @@ export async function notifyEvent(event: string, data: Record<string, unknown>):
             return ''
           }
         },
+        brand: async () => {
+          const { brandFromStored } = await import('@/features/email/designRender')
+          return brandFromStored(await engine.findGlobal({ slug: 'email-brand', depth: 1, overrideAccess: true }))
+        },
         sendEmail: (args) => sendEmail(args),
         sendPush: async (args) => {
           const { listSubscriptions, loadVapidKeys, removeSubscription } = await import('@/features/push/store')

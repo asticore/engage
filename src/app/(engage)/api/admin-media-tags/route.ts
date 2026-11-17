@@ -30,6 +30,8 @@ export async function GET(request: Request): Promise<Response> {
   if (denied) return denied
   const d1 = (await rawD1()) as never as store.D1
   const tags = await store.listTags(d1)
+  const mediaId = Number(new URL(request.url).searchParams.get('media'))
+  if (Number.isInteger(mediaId) && mediaId > 0) return json({ tags, selected: (await store.tagsForMedia(d1, [mediaId]))[mediaId] ?? [] })
   const kind = new URL(request.url).searchParams.get('export')
   if (kind === 'tags' || kind === 'files') {
     const csv = kind === 'tags' ? exportTagsCsv(tags) : exportFilesCsv(tags, await store.taggedFiles(d1))

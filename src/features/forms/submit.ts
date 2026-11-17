@@ -14,9 +14,10 @@ import { loadForm } from './server'
 import { FORMS_SLUG, SUBMISSIONS_SLUG, type CreateArgs, type UpdateArgs } from './slugs'
 import { SLOT_TAKEN_MESSAGE } from './slots'
 import { firstLostSlot, firstTakenSlot, slotClaimsFor } from './slotGuard'
-import { botDecision, type BotSignals } from '@/features/security/botSignals'
+import { botDecision, parseList, type BotSignals } from '@/features/security/botSignals'
 import { checkCaptcha, checkFillTime, checkHoneypot } from './spam'
 import { checkSpamRules } from './spamRules'
+import { buildRequestInput } from './requestFeed'
 import { buildHandoff, checkoutHandoffUrl, NO_CHECKOUT } from './checkoutHandoff'
 import { inspectFiles, storeFiles, getUploadBucket, type PendingFile, type StoredFile } from './upload'
 import { validateSubmission } from './validate'
@@ -117,6 +118,42 @@ function consentRecord(fields: FormFieldDef[], values: SubmissionValues, at: str
   return records
 }
 
+/** Saves the request a form entry stands for, then emails the customer and the shop as the public request form does. Does nothing when Quotes is off or the answers do not make a valid request. */
+async function feedRequest(engine: SubmitEngine, feed: NonNullable<import('./types').FormConfig['requestFeed']>, values: Record<string, unknown>, summary: string, sourceUrl: string, entryId?: number | string): Promise<void> {
+  const body = buildRequestInput(feed, values, summary, sourceUrl.slice(0, 500))
+  if (!body) return
+  const { getFeatureFlags } = await import('@/utilities/features')
+  if (!(await getFeatureFlags()).quotes) return
+  const { parseRequest, newQuoteNumber, bidRefusal } = await import('@/features/quotes/logic')
+  const parsed = parseRequest(body)
+  if (parsed.ok === false) {
+    engine.logger.info({ reason: parsed.error }, 'A form entry did not make a valid request')
+    return
+  }
+  const [{ rawD1 }, store, service, { loadShopCurrency }] = await Promise.all([
+    import('@/features/ecommerce/server/db'),
+    import('@/features/quotes/store'),
+    import('@/features/quotes/service'),
+    import('@/features/ecommerce/lib/shopCurrency'),
+  ])
+  const d1 = (await rawD1()) as never as import('@/features/quotes/store').D1
+  if (parsed.value.kind === 'bid' && parsed.value.productId) {
+    const terms = await store.productBidTerms(d1, parsed.value.productId).catch((): null => null)
+    const refusal = terms ? bidRefusal(terms, parsed.value.offerCents, new Date()) : null
+    if (refusal) {
+      engine.logger.info({ reason: refusal }, 'A form offer was refused')
+      return
+    }
+  }
+  const qEngine = await service.getEngineSafe()
+  const currency = await loadShopCurrency(qEngine as never).catch(() => 'AUD')
+  const saved = await store.createRequest(d1, newQuoteNumber(), parsed.value, currency, new Date().toISOString())
+  if (!saved) return
+  engine.logger.info({ request: saved.number, entry: entryId }, 'A form entry became a request')
+  await service.sendQuoteEmail(qEngine, 'received', saved, { to: 'customer' })
+  await service.sendQuoteEmail(qEngine, 'adminNew', saved, { to: 'admin' })
+}
+
 export async function handleSubmission(engine: SubmitEngine, input: SubmitInput): Promise<SubmitOutcome> {
   if (!(await formsEnabled(engine))) {
     // 404 rather than 403: with the feature off, this endpoint should look like
@@ -141,7 +178,7 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
     return { ok: true, status: 200, message: settings.successMessage }
   }
 
-  if (input.botSignals && botDecision(settings.botDetection, input.botSignals, settings.botMinScore) === 'block') {
+  if (input.botSignals && botDecision(settings.botDetection, input.botSignals, settings.botMinScore, { fingerprints: parseList(settings.botFingerprints), allowedCategories: parseList(settings.botAllowedCategories) }) === 'block') {
     engine.logger.info({ form: form.id, reason: 'bot-score', score: input.botSignals.score }, 'Form submission discarded as spam')
     return { ok: true, status: 200, message: settings.successMessage }
   }
@@ -280,6 +317,13 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
       }
       return { ok: false, status: 400, message: 'Please check the highlighted fields.', errors: { [lostField]: SLOT_TAKEN_MESSAGE } }
     }
+  }
+
+  // "Send as a request": the entry also becomes a quote, offer or item request (validated like the public request form).
+  if (config.requestFeed?.enabled) {
+    await feedRequest(engine, config.requestFeed, values as Record<string, unknown>, summarise(form, values), input.sourceUrl || '', submissionID).catch((error: unknown) => {
+      engine.logger.warn({ err: error, form: form.id }, 'A form entry could not be turned into a request')
+    })
   }
 
   const emails = await sendSubmissionEmails(form, values, settings, pricing, { entryId: submissionID, submittedAt })

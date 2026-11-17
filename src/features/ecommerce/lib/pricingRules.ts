@@ -14,7 +14,7 @@
 import { percentOf, toCents } from './money'
 
 export type RuleDiscountType = 'percent' | 'fixed'
-export type RuleCondition = 'quantity' | 'role' | 'subtotal' | 'category' | 'lifetimeSpend' | 'orderCount' | 'country'
+export type RuleCondition = 'quantity' | 'role' | 'subtotal' | 'category' | 'lifetimeSpend' | 'orderCount' | 'country' | 'tag'
 
 /** One rule as the server uses it. Money is cents; dates are ISO text or null. */
 export type PricingRule = {
@@ -51,7 +51,7 @@ export type PricingRuleRow = Partial<Record<keyof Omit<PricingRule, 'minSubtotal
 
 export const MAX_RULES = 50
 
-const CONDITIONS: RuleCondition[] = ['quantity', 'role', 'subtotal', 'category', 'lifetimeSpend', 'orderCount', 'country']
+const CONDITIONS: RuleCondition[] = ['quantity', 'role', 'subtotal', 'category', 'lifetimeSpend', 'orderCount', 'country', 'tag']
 
 const text = (v: unknown, max: number): string => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 const isoOrNull = (v: unknown): string | null => {
@@ -154,6 +154,10 @@ function matches(rule: PricingRule, line: RuleLine, ctx: RuleContext): boolean {
       const wanted = rule.customerRole.trim().toLowerCase()
       return wanted !== '' && (ctx.customerRoles ?? []).some((r) => r.trim().toLowerCase() === wanted)
     }
+    case 'tag': {
+      const wanted = rule.customerRole.trim().toLowerCase().replace(/^tag:/, '')
+      return wanted !== '' && (ctx.customerRoles ?? []).some((r) => r.trim().toLowerCase() === `tag:${wanted}`)
+    }
     case 'subtotal':
       return ctx.subtotalCents >= rule.minSubtotalCents
     case 'lifetimeSpend':
@@ -219,6 +223,8 @@ export function ruleNote(rule: PricingRule): string {
       return rule.category ? `${off} on ${rule.category} items.` : `${off}.`
     case 'role':
       return `${off} for ${rule.customerRole || 'selected'} customers.`
+    case 'tag':
+      return `${off} for customers tagged ${rule.customerRole.replace(/^tag:/i, '') || 'selected'}.`
     case 'lifetimeSpend':
       return `${off} once you have spent $${(rule.minLifetimeSpendCents / 100).toFixed(2)} with us.`
     case 'orderCount':
@@ -232,5 +238,5 @@ export function ruleNote(rule: PricingRule): string {
 
 /** The product page notes for live rules the shop has chosen to show. */
 export function productPageNotes(rules: PricingRule[], now: Date = new Date()): string[] {
-  return rules.filter((rule) => rule.showOnProduct && !['role', 'lifetimeSpend', 'orderCount'].includes(rule.appliesWhen) && ruleIsLive(rule, now)).map(ruleNote)
+  return rules.filter((rule) => rule.showOnProduct && !['role', 'tag', 'lifetimeSpend', 'orderCount'].includes(rule.appliesWhen) && ruleIsLive(rule, now)).map(ruleNote)
 }

@@ -18,6 +18,7 @@ import type { Product } from '@/engage-types'
 import { resolveCartLine, type CatalogueProduct } from '@/features/ecommerce/catalogue'
 import { addOnSummary, readAddOnChoices } from '@/features/ecommerce/lib/addOns'
 import { useBundleInfo } from '@/features/ecommerce/lib/useBundleInfo'
+import { useCompositeInfo } from '@/features/ecommerce/lib/useCompositeInfo'
 import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
 
 /**
@@ -35,6 +36,12 @@ export const CartLinesPart: React.FC = () => {
   const listRef = React.useRef<HTMLDivElement | null>(null)
   const items = cart?.items || []
   const bundles = useBundleInfo(items.map((item) => (typeof item.product === 'object' && item.product ? Number((item.product as { id?: unknown }).id) : 0)).filter((id) => id > 0))
+  const kits = useCompositeInfo(
+    items.flatMap((item) => {
+      const p = item.product as unknown as { id?: unknown; productType?: string } | null
+      return typeof p === 'object' && p !== null && p.productType === 'composite' ? [{ key: item.id, productId: Number(p.id), composite: item.composite }] : []
+    }),
+  )
   return (
     <div ref={listRef} tabIndex={-1} data-cart-part="lines">
       {items.length === 0 ? (
@@ -51,11 +58,13 @@ export const CartLinesPart: React.FC = () => {
           // Display only: the server prices the cart from the database (see the cart hook).
           const isBundle = typeof product === 'object' && product !== null && (product as unknown as { productType?: string }).productType === 'bundle'
           const bundle = isBundle ? bundles[String((product as { id: number }).id)] : undefined
-          const line = typeof product === 'object' && !isBundle ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, 1) : null
+          const isKit = typeof product === 'object' && product !== null && (product as unknown as { productType?: string }).productType === 'composite'
+          const kit = isKit ? kits[item.id] : undefined
+          const line = typeof product === 'object' && !isBundle && !isKit ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, 1) : null
           // Warns when the quantity in the cart can no longer be bought (stock, limits). The server decides again at checkout.
-          const whole = typeof product === 'object' && !isBundle ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, item.quantity) : null
+          const whole = typeof product === 'object' && !isBundle && !isKit ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, item.quantity) : null
           const stockWarning = whole && !whole.ok ? (whole as { error: string }).error : null
-          const unitPrice = isBundle ? (bundle && bundle.priceCents !== null ? bundle.priceCents / 100 : null) : line && line.ok ? line.unitPrice : typeof product === 'object' ? product.priceInAUD : null
+          const unitPrice = isKit ? (kit && kit.priceCents !== null ? kit.priceCents / 100 : null) : isBundle ? (bundle && bundle.priceCents !== null ? bundle.priceCents / 100 : null) : line && line.ok ? line.unitPrice : typeof product === 'object' ? product.priceInAUD : null
           return (
             <li
               key={item.id}
@@ -65,9 +74,11 @@ export const CartLinesPart: React.FC = () => {
                 <h3>{typeof product === 'object' ? product.title : t('store.item')}</h3>
                 {line && line.ok && line.variationLabel ? <p className="opacity-70">{line.variationLabel}</p> : null}
                 {readAddOnChoices(item.addOns).length > 0 ? <p className="text-[0.85rem] opacity-70">{addOnSummary(readAddOnChoices(item.addOns))}</p> : null}
+                {kit && kit.summary ? <p className="text-[0.85rem] opacity-70">{kit.summary}</p> : null}
                 <p>{money(unitPrice)}</p>
                 {isBundle && bundle ? <BundleContentsList items={bundle.contents} /> : null}
                 {stockWarning ? <p role="alert" className="text-[#b3261e]">{stockWarning}</p> : null}
+              {isKit && kit && !kit.available ? <p role="alert" className="text-[#b3261e]">This kit is not available right now.</p> : null}
               {isBundle && bundle && !bundle.available ? <p role="alert" className="text-[#b3261e]">This bundle is not available right now.</p> : null}
               </div>
               <div className="flex items-center gap-3">
@@ -100,7 +111,7 @@ export const CartLinesPart: React.FC = () => {
                   void removeItem(item.id)
                   listRef.current?.focus()
                 }}
-                disabled={isLoading || typeof product !== 'object' || readAddOnChoices(item.addOns).length > 0}
+                disabled={isLoading || typeof product !== 'object' || isKit || readAddOnChoices(item.addOns).length > 0}
                 aria-label={`Save ${typeof product === 'object' ? product.title : t('store.item')} for later`}
               >
                 Save for later
@@ -195,7 +206,8 @@ export const MiniCartLinesPart: React.FC<{ onNavigate?: () => void }> = ({ onNav
           const product = item.product as unknown as Product
           const isObj = typeof product === 'object' && product !== null
           const isBundle = isObj && (product as unknown as { productType?: string }).productType === 'bundle'
-          const line = isObj && !isBundle ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, 1) : null
+          const isKitLine = isObj && (product as unknown as { productType?: string }).productType === 'composite'
+          const line = isObj && !isBundle && !isKitLine ? resolveCartLine(product as unknown as CatalogueProduct, item.variation ?? null, 1) : null
           const unit = line && line.ok ? line.unitPrice : isObj ? product.priceInAUD : null
           const title = isObj ? product.title : 'Item'
           return (
@@ -203,7 +215,7 @@ export const MiniCartLinesPart: React.FC<{ onNavigate?: () => void }> = ({ onNav
               <div className="min-w-0">
                 <p className="m-0 truncate font-medium">{title}</p>
                 {line && line.ok && line.variationLabel ? <p className="m-0 text-[0.85rem] opacity-70">{line.variationLabel}</p> : null}
-                <p className="m-0 text-[0.85rem]">{isBundle ? '' : money(unit)}</p>
+                <p className="m-0 text-[0.85rem]">{isBundle || isKitLine ? '' : money(unit)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button type="button" aria-label={`Decrease quantity of ${title}`} className="h-7 w-7 cursor-pointer border border-[var(--color-ink)] bg-transparent" onClick={() => void decrementItem(item.id)} disabled={isLoading}>

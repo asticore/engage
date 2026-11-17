@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback, useMemo } from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
-import styles from '@/admin/admin.module.css'
 import {
   RESOURCES,
   BUILT_IN_ROLES,
@@ -35,6 +34,8 @@ interface RolesViewClientProps {
   workflows?: WorkflowRecord[]
   /** Staff who can be named as approvers. */
   people?: Array<{ id: number; name: string }>
+  /** Sections that can be given their own approvers: top-level pages and post categories. */
+  sections?: Partial<Record<'pages' | 'posts', Array<{ key: string; label: string }>>>
   /** Whether content approval is switched on in Security settings. */
   approvalEnabled?: boolean
 }
@@ -73,7 +74,7 @@ function tabStyle(active: boolean): React.CSSProperties {
 /**
  * Roles admin view client: list, select, create, edit matrix, save, delete.
  */
-export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], people = [], approvalEnabled = true }: RolesViewClientProps) {
+export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], people = [], sections = {}, approvalEnabled = true }: RolesViewClientProps) {
   const t = useAdminT()
   const [tab, setTab] = useState<RolesTab>('permissions')
 
@@ -264,8 +265,8 @@ export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], 
   }, [selectedRole, canEdit, deletingId])
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
+    <div className="eg-roles-container">
+      <div className="eg-roles-header">
         <h1>{t('roles.title')}</h1>
         <p>{t('roles.description')}</p>
       </div>
@@ -285,21 +286,22 @@ export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], 
             workflows={workflows}
             roles={roles}
             people={people}
+            sections={sections}
             canEdit={canEdit}
             approvalEnabled={approvalEnabled}
           />
         </div>
       )}
 
-      <div className={styles.rolesContainer} role="tabpanel" id="roles-panel-permissions" aria-labelledby="roles-tab-permissions" style={tab !== 'permissions' ? { display: 'none' } : undefined}>
+      <div className="eg-roles-rolesContainer" role="tabpanel" id="roles-panel-permissions" aria-labelledby="roles-tab-permissions" style={tab !== 'permissions' ? { display: 'none' } : undefined}>
         {/* Left: role list */}
-        <div className={styles.rolesList}>
-          <div className={styles.rolesHeader}>
+        <div className="eg-roles-rolesList">
+          <div className="eg-roles-rolesHeader">
             <h2>{t('roles.title')}</h2>
             {canEdit && (
               <button
                 onClick={() => setShowCreateDialog(true)}
-                className={styles.btnPrimary}
+                className="eg-roles-btnPrimary"
               >
                 {t('roles.createButton')}
               </button>
@@ -308,38 +310,38 @@ export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], 
 
           {/* Create dialog */}
           {showCreateDialog && (
-            <div className={styles.dialog}>
-              <div className={styles.dialogContent}>
+            <div className="eg-roles-dialog">
+              <div className="eg-roles-dialogContent">
                 <h3>{t('roles.createHeading')}</h3>
                 <input
                   type="text"
                   placeholder={t('roles.namePlaceholder')}
                   value={createForm.name}
                   onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                  className={styles.input}
+                  className="eg-roles-input"
                 />
                 <textarea
                   placeholder={t('roles.descriptionPlaceholder')}
                   value={createForm.description}
                   onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                  className={styles.input}
+                  className="eg-roles-input"
                   rows={3}
                 />
-                <div className={styles.dialogActions}>
+                <div className="eg-roles-dialogActions">
                   <button
                     onClick={() => {
                       setShowCreateDialog(false)
                       setCreateForm({ name: '', description: '' })
                       setErrorMsg(null)
                     }}
-                    className={styles.btnSecondary}
+                    className="eg-roles-btnSecondary"
                   >
                     {t('common.cancel')}
                   </button>
                   <button
                     onClick={handleCreate}
                     disabled={savingId === -1}
-                    className={styles.btnPrimary}
+                    className="eg-roles-btnPrimary"
                   >
                     {savingId === -1 ? t('roles.creating') : t('edit.create')}
                   </button>
@@ -353,44 +355,44 @@ export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], 
             <div
               key={role.id}
               onClick={() => setSelectedRoleId(role.id)}
-              className={`${styles.roleItem} ${selectedRoleId === role.id ? styles.roleItemActive : ''}`}
+              className={`eg-roles-roleItem ${selectedRoleId === role.id ? 'eg-roles-roleItemActive' : ''}`}
             >
-              <div className={styles.roleItemName}>{role.name}</div>
-              {role.builtIn && <span className={styles.badge}>{t('roles.builtIn')}</span>}
+              <div className="eg-roles-roleItemName">{role.name}</div>
+              {role.builtIn && <span className="eg-roles-badge">{t('roles.builtIn')}</span>}
             </div>
           ))}
         </div>
 
         {/* Right: matrix editor or empty state */}
-        <div className={styles.matrixPanel}>
+        <div className="eg-roles-matrixPanel">
           {selectedRole ? (
             <div>
-              <div className={styles.matrixHeader}>
+              <div className="eg-roles-matrixHeader">
                 <div>
                   <h2>{selectedRole.name}</h2>
-                  {selectedRole.description && <p className={styles.desc}>{selectedRole.description}</p>}
-                  {selectedRole.builtIn && <p className={styles.readOnly}>{t('roles.readOnlyBuiltIn')}</p>}
+                  {selectedRole.description && <p className="eg-roles-desc">{selectedRole.description}</p>}
+                  {selectedRole.builtIn && <p className="eg-roles-readOnly">{t('roles.readOnlyBuiltIn')}</p>}
                 </div>
                 {!selectedRole.builtIn && canEdit && (
-                  <div className={styles.matrixActions}>
+                  <div className="eg-roles-matrixActions">
                     <button
                       onClick={handleDuplicate}
                       disabled={savingId !== null}
-                      className={styles.btnSecondary}
+                      className="eg-roles-btnSecondary"
                     >
                       {t('common.duplicate')}
                     </button>
                     <button
                       onClick={handleSaveMatrix}
                       disabled={savingId !== null || selectedRole.builtIn}
-                      className={styles.btnPrimary}
+                      className="eg-roles-btnPrimary"
                     >
                       {savingId === selectedRole.id ? t('common.saving') : t('common.save')}
                     </button>
                     <button
                       onClick={handleDelete}
                       disabled={savingId !== null || selectedRole.builtIn}
-                      className={styles.btnDanger}
+                      className="eg-roles-btnDanger"
                     >
                       {deletingId === selectedRole.id ? t('roles.confirmDelete') : t('common.delete')}
                     </button>
@@ -398,7 +400,7 @@ export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], 
                 )}
               </div>
 
-              {errorMsg && <div className={styles.error}>{errorMsg}</div>}
+              {errorMsg && <div className="eg-roles-error">{errorMsg}</div>}
 
               {/* Permission matrix */}
               <PermissionTable
@@ -410,7 +412,7 @@ export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], 
               />
             </div>
           ) : (
-            <div className={styles.emptyState}>
+            <div className="eg-roles-emptyState">
               <p>{t('roles.selectRole')}</p>
             </div>
           )}

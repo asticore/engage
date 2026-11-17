@@ -37,17 +37,19 @@ export const renderTemplateBlocks = (blocks: unknown[]): React.ReactNode =>
  * Wraps a page body in the best matching site template. With no matching template, or on any error,
  * `content` comes back untouched.
  */
-export async function renderWithTemplate(args: { kind: SiteTemplateKind; ctx?: TemplateContext; content: React.ReactNode }): Promise<React.ReactNode> {
+export async function renderWithTemplate(args: { kind: SiteTemplateKind; ctx?: TemplateContext; content: React.ReactNode; /** Changes the template's blocks before they draw (the screen templates fill the launch date). */ transformBlocks?: (blocks: unknown[]) => unknown[]; /** With no content slot, draw only the template (the screen templates replace the built-in screen). */ replaceContent?: boolean }): Promise<React.ReactNode> {
   const { content } = args
   try {
     const { kind, ctx = {} } = args
     const template = await resolveSiteTemplate(kind, ctx)
     if (!template) return content
-    const blocks = await prepareTemplateBlocks(template)
+    const prepared = await prepareTemplateBlocks(template)
+    const blocks = args.transformBlocks ? args.transformBlocks(prepared) : prepared
     if (blocks.length === 0) return content
     setTemplateSlot(content)
     const rendered = renderTemplateBlocks(blocks)
     if (hasContentSlot(blocks)) return <div className="site-template" data-template-kind={kind}>{rendered}</div>
+    if (args.replaceContent) return <div className="site-template" data-template-kind={kind}>{rendered}</div>
     return (
       <div className="site-template" data-template-kind={kind}>
         {rendered}

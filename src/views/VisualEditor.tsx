@@ -6,6 +6,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { SectionColumn, SectionNode } from '@/lib/sectionTree'
 import { defaultColumns } from '@/lib/sectionTree'
+import { fillBrief, nextAfter, normalisePlan } from '@/features/sitePlanner/plan'
+import type { PlannerFill } from './visualEditor/AiBuilderPanel'
 
 import { getElementDef } from '@/lib/elements/registry'
 import { can } from '@/features/roles/permissions'
@@ -163,6 +165,31 @@ export const VisualEditorView: React.FC = () => {
   const modLabel = routeReady && /Mac|iPhone|iPad/i.test(navigator.platform || '') ? 'Cmd' : 'Ctrl'
   const [blocks, setBlocks] = useState<SectionNode[]>([])
   const [docTitle, setDocTitle] = useState('')
+  // Opened from the site planner (Fill this page with AI): the planned page's brief, and the next planned page to fill.
+  const [plannerFill, setPlannerFill] = useState<PlannerFill | null>(null)
+  useEffect(() => {
+    if (!routeReady) return
+    const params = new URLSearchParams(window.location.search)
+    const planId = Number(params.get('aiPlan'))
+    const pageKey = params.get('aiPage')
+    if (!Number.isInteger(planId) || planId < 1 || !pageKey) return
+    let cancelled = false
+    void fetch(`/api/admin-site-planner?id=${planId}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { plan?: { plan?: unknown } } | null) => {
+        if (cancelled || !data?.plan?.plan) return
+        const plan = normalisePlan(data.plan.plan)
+        const page = plan.pages.find((p) => p.id === pageKey)
+        if (!page) return
+        const next = page.pageId ? nextAfter(plan, page.pageId) : null
+        const nextHref = next?.pageId ? `${window.location.pathname.replace(/\/\d+\/?$/, `/${next.pageId}`)}?aiPlan=${planId}&aiPage=${encodeURIComponent(next.id)}` : null
+        setPlannerFill({ brief: fillBrief(page), title: page.title, nextHref, nextTitle: next?.title ?? null })
+      })
+      .catch((): void => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [routeReady])
   const [status, setStatus] = useState<string | null>(null)
   const [selectedPath, setSelectedPath] = useState<NodePath | null>(null)
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'publishing' | 'published' | 'error'>('idle')
@@ -2055,6 +2082,7 @@ export const VisualEditorView: React.FC = () => {
                   selectedSection: aiSelectedSection,
                   onInsertAtEnd: aiInsertAtEnd,
                   onReplaceSelected: aiReplaceSelected,
+                  plannerFill,
                 }
           }
           pagePanel={

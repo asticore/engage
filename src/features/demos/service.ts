@@ -2,10 +2,12 @@ import type { Engine } from '@/engine'
 import { applyImport } from '@/features/settingsTransfer/import'
 import { renderExport } from '@/features/settingsTransfer/export'
 
-import { DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, MAX_SNAPSHOT_BYTES, demoPassword, describeBytes, isEmail, isResetDue } from './core'
+import { getStarter } from '@/features/siteTemplates/starters'
+import { DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, MAX_SNAPSHOT_BYTES, RESET_CLEAN_COLLECTIONS, demoPassword, describeBytes, idsAddedAfterCopy, isEmail, isResetDue } from './core'
+import { copyPictures, restorePictures } from './pictures'
 import * as store from './store'
 
-export type SnapshotResult = { ok: true; size: number } | { ok: false; error: string }
+export type SnapshotResult = { ok: true; size: number; pictures: number } | { ok: false; error: string }
 
 /** Saves the site as it is now as the demo copy that a reset returns to. */
 export async function takeSnapshot(engine: Engine, d1: store.D1, now: Date): Promise<SnapshotResult> {
@@ -13,25 +15,52 @@ export async function takeSnapshot(engine: Engine, d1: store.D1, now: Date): Pro
   if (body.length > MAX_SNAPSHOT_BYTES) {
     return { ok: false, error: `The demo is ${describeBytes(body.length)}, over the ${describeBytes(MAX_SNAPSHOT_BYTES)} a saved copy can hold. Remove some content or download the package instead.` }
   }
+  const pictures = await copyPictures(engine)
   await store.saveSnapshot(d1, body, now.toISOString())
-  return { ok: true, size: body.length }
+  return { ok: true, size: body.length, pictures: pictures.copied }
 }
 
 export type ResetResult = { ok: boolean; message: string }
 
+/** Deletes pages, posts and products that are not in the saved copy (matched by slug). A section the copy lacks is left alone. */
+export async function removeAddedContent(engine: Engine, snapshot: { content?: Record<string, unknown> }): Promise<{ removed: number; errors: number }> {
+  let removed = 0
+  let errors = 0
+  for (const { collection, section } of RESET_CLEAN_COLLECTIONS) {
+    const saved = snapshot.content?.[section]
+    if (!Array.isArray(saved)) continue
+    const keep = new Set(saved.map((item) => (item as { slug?: unknown }).slug).filter((v): v is string => typeof v === 'string'))
+    const found = await engine.find({ collection, limit: 1000, depth: 0, overrideAccess: true } as never)
+    for (const id of idsAddedAfterCopy((found.docs ?? []) as { id: number | string; slug?: unknown }[], keep)) {
+      try {
+        await engine.delete({ collection, id, overrideAccess: true } as never)
+        removed += 1
+      } catch {
+        errors += 1
+      }
+    }
+  }
+  return { removed, errors }
+}
+
 /**
- * Puts the demo back to the saved copy: settings, pages, posts, products and the rest are written back from it.
- * Items added after the copy was taken are left alone (an import adds and updates, it does not delete).
+ * Puts the demo back to the saved copy: settings, pages, posts, products and the rest are written back from it, then
+ * pages, posts and products added after the copy was taken are deleted (matched by slug).
  */
 export async function resetFromSnapshot(engine: Engine, d1: store.D1, now: Date): Promise<ResetResult> {
   const body = await store.snapshotBody(d1)
   if (!body) return { ok: false, message: 'No demo copy is saved yet. Save one first.' }
   let result: ResetResult
   try {
-    const report = await applyImport(engine, JSON.parse(body), { sections: [...DEMO_IMPORT_SECTIONS] })
-    const errors = report.sections.reduce((n, s) => n + s.errors, 0)
+    const saved = JSON.parse(body) as { content?: Record<string, unknown> }
+    // Pictures first, so the import finds each one by file name and picture ids in settings point at the right file.
+    const pictures = await restorePictures(engine, (saved.content?.mediaMetadata as { filename?: unknown; alt?: unknown }[] | undefined) ?? [])
+    const report = await applyImport(engine, saved, { sections: [...DEMO_IMPORT_SECTIONS] })
+    const cleaned = await removeAddedContent(engine, saved)
+    const errors = report.sections.reduce((n, s) => n + s.errors, 0) + cleaned.errors + pictures.failed
     const updated = report.sections.reduce((n, s) => n + s.updated + s.created, 0)
-    result = errors > 0 ? { ok: false, message: `Reset finished with ${errors} error(s); ${updated} item(s) restored.` } : { ok: true, message: `Reset done; ${updated} item(s) restored.` }
+    const tail = `${updated} item(s) restored, ${cleaned.removed} added item(s) deleted, ${pictures.restored} picture(s) put back, ${pictures.removed} added picture(s) deleted.`
+    result = errors > 0 ? { ok: false, message: `Reset finished with ${errors} error(s); ${tail}` } : { ok: true, message: `Reset done; ${tail}` }
   } catch (error) {
     result = { ok: false, message: `Reset failed: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300) }
   }
@@ -59,4 +88,25 @@ export async function createDemoAccount(engine: Engine, email: string, host: str
     return { ok: false, error: `Could not create the account: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300) }
   }
   return { ok: true, password }
+}
+
+export type StarterResult = { ok: true; message: string; templateId: number | string } | { ok: false; error: string }
+
+/**
+ * One step from a chosen starter to a demo: creates a switched-on site template from the starter (everywhere on the
+ * site for its type), then saves the site as the demo copy. Needs no draft or editor visit first.
+ */
+export async function createDemoFromStarter(engine: Engine, d1: store.D1, starterId: unknown, now: Date): Promise<StarterResult> {
+  const starter = getStarter(starterId)
+  if (!starter) return { ok: false, error: 'Unknown starter.' }
+  let templateId: number | string
+  try {
+    const doc = await engine.create({ collection: 'site-templates', overrideAccess: true, data: { name: `Demo: ${starter.label}`, kind: starter.kind, enabled: true, conditions: [], blocks: starter.blocks() } } as never)
+    templateId = (doc as { id: number | string }).id
+  } catch (error) {
+    return { ok: false, error: `Could not create the template: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300) }
+  }
+  const snapshot = await takeSnapshot(engine, d1, now)
+  if ('error' in snapshot) return { ok: false, error: `The "${starter.label}" template is on, but the demo copy was not saved. ${snapshot.error}` }
+  return { ok: true, templateId, message: `The "${starter.label}" starter is on across the site and the demo copy is saved.` }
 }
