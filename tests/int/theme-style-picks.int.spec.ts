@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { generateTheme, hslToHex, seedNumber, STYLE_CARDS } from '@/features/themeStyles/styleCards'
+import { effectById } from '@/features/effects/catalog'
 import { applyPreset } from '@/features/themeStyles/presets'
 import { sanitizeThemeStyles } from '@/features/themeStyles/sanitize'
 import { DEFAULT_THEME_STYLES } from '@/features/themeStyles/types'
@@ -50,5 +51,32 @@ describe('theme from style picks', () => {
     expect(hslToHex(0, 100, 50)).toBe('#ff0000')
     expect(hslToHex(120, 100, 50)).toBe('#00ff00')
     expect(seedNumber('a')).toBe(seedNumber('a'))
+  })
+  it('picks a heading and body font from the installed Site fonts, and says why', () => {
+    const fonts = [
+      { id: 'lora', family: 'Lora', category: 'serif' },
+      { id: 'work-sans', family: 'Work Sans', category: 'sans-serif' },
+    ]
+    const t = generateTheme(['editorial', 'luxe'], 'x', fonts)!
+    expect(t.headingFont?.id).toBe('lora')
+    expect(t.bodyFont?.id).toBe('work-sans')
+    expect(t.data.typography.find((x) => x.id === 'h1')!.fontFamily).toBe('lora')
+    expect(t.reasons.some((r) => r.startsWith('Fonts: Lora for headings and Work Sans for text'))).toBe(true)
+    const applied = applyPreset(DEFAULT_THEME_STYLES, t.data)
+    expect(sanitizeThemeStyles(applied)).toEqual(applied)
+  })
+  it('keeps the theme fonts and says so when no matching font is installed', () => {
+    const t = generateTheme(['editorial'], 'x', [{ id: 'work-sans', family: 'Work Sans', category: 'sans-serif' }])!
+    expect(t.headingFont).toBeNull()
+    expect(t.reasons.some((r) => r.startsWith('Fonts: no serif font is installed'))).toBe(true)
+    expect(generateTheme(['editorial'], 'x')!.headingFont).toBeNull()
+  })
+  it('suggests an effect from the Effects picker for every style', () => {
+    for (const card of STYLE_CARDS) {
+      const t = generateTheme([card.id], 'site')!
+      expect(t.effect, card.id).not.toBeNull()
+      expect(effectById(t.effect!.id)).toBeDefined()
+      expect(t.reasons.some((r) => r.startsWith('Suggested effect:'))).toBe(true)
+    }
   })
 })

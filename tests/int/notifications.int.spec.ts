@@ -53,3 +53,18 @@ describe('notification rules', () => {
     expect(resolveRecipient(rule({ recipient: 'admin' }), 'c@example.com', '')).toBe('')
   })
 })
+
+describe('stock, course and subscription notifications', () => {
+  it('fills the tags for the new triggers from the event data', () => {
+    expect(notificationValues('stock.low', { kind: 'low', label: 'Mug (blue)', sku: 'M-1', qty: 2 }, 'Shop')).toMatchObject({ product: 'Mug (blue)', sku: 'M-1', qty: '2', stock_kind: 'Low stock' })
+    expect(notificationValues('stock.low', { kind: 'out', label: 'Mug', qty: 0 }, 'Shop').stock_kind).toBe('Out of stock')
+    expect(notificationValues('course.enrolled', { id: 4, courseId: 2, userId: 9, source: 'purchase' }, 'Shop')).toMatchObject({ enrolment_id: '4', course_id: '2', user_id: '9', source: 'purchase' })
+    expect(notificationValues('subscription.payment_failed', { id: 3, productName: 'Club', customerEmail: 'c@example.com', status: 'past-due' }, 'Shop')).toMatchObject({ subscription_id: '3', product_name: 'Club', customer_email: 'c@example.com', status: 'past-due' })
+    for (const key of ['stock.low', 'course.enrolled', 'subscription.started', 'subscription.cancelled', 'subscription.payment_failed'] as const) expect(MERGE_TAGS[key].length).toBeGreaterThan(2)
+  })
+  it('emails the customer when a subscription is cancelled', async () => {
+    const { d, sent } = deps([rule({ event: 'subscription.cancelled', subject: 'Ended: {{product_name}}', body: '{{status}}' })])
+    expect(await runNotifications(d, 'subscription.cancelled', { id: 3, productName: 'Club', customerEmail: 'c@example.com', status: 'cancelled' })).toBe(1)
+    expect(sent[0]).toMatchObject({ to: 'c@example.com', subject: 'Ended: Club' })
+  })
+})

@@ -13,6 +13,7 @@ import { AdsPageScope } from '@/features/ads/components/AdsPageScope'
 import { AdRichText } from '@/features/ads/components/AdRichText'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
 import { loadSiteDetails } from '@/features/site/details'
+import { listCategoriesSafe } from '@/features/categories/store'
 import { postBlockContext } from '@/lib/blockContextFrom'
 import { BlockRenderer } from '@/components/blocks/BlockRenderer'
 import { annotatePage } from '@/features/editScreens/toc'
@@ -144,7 +145,7 @@ export default async function BlogPostPage({
   const annotated = annotatePage({ body: content.content, blocks: content.layout || [] })
 
   const audioConfig = await loadPageAudioConfig((post as { pageAudio?: Parameters<typeof loadPageAudioConfig>[0] }).pageAudio)
-  setBlockContext(postBlockContext(post as unknown as Record<string, unknown>, currentPath, (await loadSiteDetails()).businessName, { authors: sw.authors }))
+  setBlockContext(postBlockContext(post as unknown as Record<string, unknown>, currentPath, (await loadSiteDetails()).businessName, { authors: sw.authors, tree: await listCategoriesSafe('blog') }))
   const body = (
     <article className="page-shell">
       <AdsPageScope collection="posts" noAds={(post as { noAds?: boolean }).noAds} />

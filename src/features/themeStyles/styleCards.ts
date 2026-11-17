@@ -4,6 +4,7 @@
  * seed (the site name, or Shuffle) shifts the colours so two sites with the same picks still differ. One style system only:
  * the result is an ordinary theme preset (colours, text, buttons, layout) that the owner reviews and saves.
  */
+import { effectById } from '@/features/effects/catalog'
 import { base } from './presets'
 import type { ButtonStyle, ThemePresetData } from './types'
 
@@ -23,19 +24,26 @@ export type StyleCard = {
   radius: number
   headings: 'heading' | 'body'
   buttonCase: 'none' | 'uppercase'
+  /** The kind of heading face that fits (matched against the category of the fonts installed in Site fonts). */
+  headingFont: 'serif' | 'sans-serif' | 'display'
+  /** Effects (ids from the Effects picker) that suit this look; one is suggested per theme. */
+  effects: string[]
 }
 
+/** The font families a theme can choose from: the ones installed in Site fonts. */
+export type FontChoice = { id: string; family: string; category?: string }
+
 export const STYLE_CARDS: StyleCard[] = [
-  { id: 'minimal', name: 'Minimal', look: 'Lots of white space, thin lines, one quiet accent.', suits: 'Suits portfolios, consultancies and anything where the content should do the talking.', hue: 220, saturation: 12, lightness: 98, accentShift: 0, radius: 2, headings: 'body', buttonCase: 'none' },
-  { id: 'editorial', name: 'Editorial', look: 'Serif style headings, calm paper tones, strong reading rhythm.', suits: 'Suits blogs, magazines and long form content because it keeps reading comfortable.', hue: 35, saturation: 28, lightness: 96, accentShift: 180, radius: 0, headings: 'heading', buttonCase: 'none' },
-  { id: 'bold', name: 'Bold', look: 'Saturated colour, big shapes, loud buttons.', suits: 'Suits events, launches and shops that want to be noticed in a scroll.', hue: 8, saturation: 82, lightness: 97, accentShift: 40, radius: 10, headings: 'body', buttonCase: 'uppercase' },
-  { id: 'playful', name: 'Playful', look: 'Rounded corners, bright friendly colours.', suits: 'Suits kids, food, hobby and community sites where warmth builds trust.', hue: 285, saturation: 65, lightness: 97, accentShift: 90, radius: 24, headings: 'heading', buttonCase: 'none' },
-  { id: 'luxe', name: 'Luxe', look: 'Deep tones, gold touches, restrained type.', suits: 'Suits jewellery, hospitality and premium products where price signals quality.', hue: 40, saturation: 45, lightness: 12, accentShift: 0, radius: 0, headings: 'heading', buttonCase: 'uppercase' },
-  { id: 'corporate', name: 'Corporate', look: 'Blue and grey, tidy grids, clear buttons.', suits: 'Suits professional services, B2B and finance where trust and clarity come first.', hue: 215, saturation: 55, lightness: 98, accentShift: 20, radius: 6, headings: 'body', buttonCase: 'none' },
-  { id: 'nature', name: 'Natural', look: 'Earth greens and sand, soft edges.', suits: 'Suits wellness, outdoors, farms and sustainable brands.', hue: 135, saturation: 30, lightness: 96, accentShift: 200, radius: 14, headings: 'heading', buttonCase: 'none' },
-  { id: 'tech', name: 'Tech dark', look: 'Dark surface, glowing accent, sharp type.', suits: 'Suits software, gaming and data products where a dark interface feels at home.', hue: 255, saturation: 70, lightness: 10, accentShift: 60, radius: 8, headings: 'body', buttonCase: 'none' },
-  { id: 'retro', name: 'Retro', look: 'Warm mustard and teal, chunky buttons.', suits: 'Suits cafes, craft makers and music, where personality beats polish.', hue: 45, saturation: 70, lightness: 95, accentShift: 160, radius: 4, headings: 'heading', buttonCase: 'uppercase' },
-  { id: 'soft', name: 'Soft pastel', look: 'Gentle pastels, generous padding, round shapes.', suits: 'Suits beauty, wedding and lifestyle sites that want a calm, welcoming feel.', hue: 340, saturation: 50, lightness: 97, accentShift: 120, radius: 18, headings: 'heading', buttonCase: 'none' },
+  { id: 'minimal', name: 'Minimal', look: 'Lots of white space, thin lines, one quiet accent.', suits: 'Suits portfolios, consultancies and anything where the content should do the talking.', hue: 220, saturation: 12, lightness: 98, accentShift: 0, radius: 2, headings: 'body', buttonCase: 'none', headingFont: 'sans-serif', effects: ['counter'] },
+  { id: 'editorial', name: 'Editorial', look: 'Serif style headings, calm paper tones, strong reading rhythm.', suits: 'Suits blogs, magazines and long form content because it keeps reading comfortable.', hue: 35, saturation: 28, lightness: 96, accentShift: 180, radius: 0, headings: 'heading', buttonCase: 'none', headingFont: 'serif', effects: ['carousel'] },
+  { id: 'bold', name: 'Bold', look: 'Saturated colour, big shapes, loud buttons.', suits: 'Suits events, launches and shops that want to be noticed in a scroll.', hue: 8, saturation: 82, lightness: 97, accentShift: 40, radius: 10, headings: 'body', buttonCase: 'uppercase', headingFont: 'display', effects: ['countdown', 'counter'] },
+  { id: 'playful', name: 'Playful', look: 'Rounded corners, bright friendly colours.', suits: 'Suits kids, food, hobby and community sites where warmth builds trust.', hue: 285, saturation: 65, lightness: 97, accentShift: 90, radius: 24, headings: 'heading', buttonCase: 'none', headingFont: 'display', effects: ['toast', 'carousel'] },
+  { id: 'luxe', name: 'Luxe', look: 'Deep tones, gold touches, restrained type.', suits: 'Suits jewellery, hospitality and premium products where price signals quality.', hue: 40, saturation: 45, lightness: 12, accentShift: 0, radius: 0, headings: 'heading', buttonCase: 'uppercase', headingFont: 'serif', effects: ['carousel'] },
+  { id: 'corporate', name: 'Corporate', look: 'Blue and grey, tidy grids, clear buttons.', suits: 'Suits professional services, B2B and finance where trust and clarity come first.', hue: 215, saturation: 55, lightness: 98, accentShift: 20, radius: 6, headings: 'body', buttonCase: 'none', headingFont: 'sans-serif', effects: ['counter', 'chart-bar'] },
+  { id: 'nature', name: 'Natural', look: 'Earth greens and sand, soft edges.', suits: 'Suits wellness, outdoors, farms and sustainable brands.', hue: 135, saturation: 30, lightness: 96, accentShift: 200, radius: 14, headings: 'heading', buttonCase: 'none', headingFont: 'serif', effects: ['carousel'] },
+  { id: 'tech', name: 'Tech dark', look: 'Dark surface, glowing accent, sharp type.', suits: 'Suits software, gaming and data products where a dark interface feels at home.', hue: 255, saturation: 70, lightness: 10, accentShift: 60, radius: 8, headings: 'body', buttonCase: 'none', headingFont: 'sans-serif', effects: ['chart-radar', 'shimmer'] },
+  { id: 'retro', name: 'Retro', look: 'Warm mustard and teal, chunky buttons.', suits: 'Suits cafes, craft makers and music, where personality beats polish.', hue: 45, saturation: 70, lightness: 95, accentShift: 160, radius: 4, headings: 'heading', buttonCase: 'uppercase', headingFont: 'display', effects: ['popup', 'toast'] },
+  { id: 'soft', name: 'Soft pastel', look: 'Gentle pastels, generous padding, round shapes.', suits: 'Suits beauty, wedding and lifestyle sites that want a calm, welcoming feel.', hue: 340, saturation: 50, lightness: 97, accentShift: 120, radius: 18, headings: 'heading', buttonCase: 'none', headingFont: 'display', effects: ['toast'] },
 ]
 
 export const isStyleCard = (id: unknown): id is string => typeof id === 'string' && STYLE_CARDS.some((c) => c.id === id)
@@ -69,10 +77,10 @@ function meanHue(hues: number[]): number {
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
 }
 
-export type GeneratedTheme = { data: ThemePresetData; reasons: string[]; dark: boolean }
+export type GeneratedTheme = { data: ThemePresetData; reasons: string[]; dark: boolean; headingFont: FontChoice | null; bodyFont: FontChoice | null; effect: { id: string; label: string } | null }
 
 /** Builds a theme from the picked styles. Needs at least one pick; unknown ids are ignored. */
-export function generateTheme(picks: string[], seed: string): GeneratedTheme | null {
+export function generateTheme(picks: string[], seed: string, fonts: FontChoice[] = []): GeneratedTheme | null {
   const cards = STYLE_CARDS.filter((c) => picks.includes(c.id))
   if (cards.length === 0) return null
   const n = seedNumber(`${seed}|${cards.map((c) => c.id).sort().join(',')}`)
@@ -86,6 +94,18 @@ export function generateTheme(picks: string[], seed: string): GeneratedTheme | n
   const radius = Math.round(avg((c) => c.radius))
   const heading: 'heading' | 'body' = cards.filter((c) => c.headings === 'heading').length * 2 >= cards.length ? 'heading' : 'body'
   const upper = cards.filter((c) => c.buttonCase === 'uppercase').length * 2 > cards.length
+
+  // Font pairing: only fonts installed in Site fonts can be named by a theme, so choose among those.
+  const wantKind = (['serif', 'sans-serif', 'display'] as const)
+    .map((k) => ({ k, n: cards.filter((c) => c.headingFont === k).length }))
+    .sort((a, b) => b.n - a.n)[0].k
+  const kindOf = (f: FontChoice) => (f.category === 'serif' ? 'serif' : f.category === 'display' || f.category === 'handwriting' ? 'display' : 'sans-serif')
+  const headings = fonts.filter((f) => kindOf(f) === wantKind)
+  const headingFont = headings.length ? headings[(n >> 13) % headings.length] : null
+  const bodies = fonts.filter((f) => kindOf(f) === 'sans-serif' && f.id !== headingFont?.id)
+  const bodyFont = bodies.length ? bodies[(n >> 17) % bodies.length] : null
+  const effectIds = [...new Set(cards.flatMap((c) => c.effects))].filter((id) => effectById(id))
+  const effectDef = effectIds.length ? effectById(effectIds[(n >> 21) % effectIds.length]) : undefined
 
   const data = base()
   const set = (id: string, value: string, darkValue?: string) => {
@@ -111,7 +131,8 @@ export function generateTheme(picks: string[], seed: string): GeneratedTheme | n
     set('secondary', hslToHex(hue, Math.min(sat, 25), 40), hslToHex(hue, 12, 70))
     set('accent', hslToHex(accentHue, clamp(sat + 15, 45, 85), 40), hslToHex(accentHue, clamp(sat + 15, 45, 85), 62))
   }
-  for (const t of data.typography) if (/^h[1-6]$/.test(t.id)) t.fontFamily = heading
+  for (const t of data.typography) if (/^h[1-6]$/.test(t.id)) t.fontFamily = headingFont ? headingFont.id : heading
+  if (bodyFont) for (const t of data.typography) if (!/^h[1-6]$/.test(t.id) && t.fontFamily === 'body') t.fontFamily = bodyFont.id
   data.buttons = data.buttons.map((b: ButtonStyle) => ({ ...b, radius, transform: upper ? 'uppercase' : 'none', letterSpacing: upper ? 1 : b.letterSpacing }))
   data.globals.forms.fieldRadius = Math.min(radius, 16)
   data.globals.images.radius = Math.min(radius, 24)
@@ -121,7 +142,11 @@ export function generateTheme(picks: string[], seed: string): GeneratedTheme | n
     cards.length > 1 ? `Your picks were blended: the colours sit between ${cards.map((c) => c.name).join(' and ')}.` : `The colours follow ${cards[0].name}.`,
     dark ? 'The page is dark because most of your picks are dark styles; the light switch for visitors still works.' : 'The page is light, with a matching dark version for visitors who prefer it.',
     `Corners are ${radius === 0 ? 'square' : radius < 8 ? 'barely rounded' : radius < 16 ? 'softly rounded' : 'very round'} and headings use the ${heading === 'heading' ? 'heading font' : 'body font'}.`,
+    headingFont
+      ? `Fonts: ${headingFont.family} for headings${bodyFont ? ` and ${bodyFont.family} for text` : ''}, chosen from your Site fonts because your picks call for ${wantKind === 'sans-serif' ? 'a clean sans serif' : wantKind === 'serif' ? 'a serif' : 'a display'} heading face.`
+      : `Fonts: no ${wantKind === 'sans-serif' ? 'sans serif' : wantKind} font is installed in Site fonts, so the theme's heading and body fonts are kept. Install one there and press Shuffle to have it picked.`,
+    effectDef ? `Suggested effect: ${effectDef.label}. ${effectDef.help} Add it from the Effects picker in the visual editor.` : 'No effect is suggested for these picks.',
     `Variation: the exact shades are shifted for this site, so another site with the same picks gets a different palette.`,
   ]
-  return { data, reasons, dark }
+  return { data, reasons, dark, headingFont, bodyFont, effect: effectDef ? { id: effectDef.id, label: effectDef.label } : null }
 }

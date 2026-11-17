@@ -6,7 +6,7 @@ import { localizeForRequest } from '@/features/multilingual/requestLinkLocale'
 export type BlockContext = {
   /** Preview as: the visitor type the preview assumes (never set on a live page). */
   audience?: 'members' | 'guests'
-  post?: { title?: unknown; date?: unknown; excerpt?: unknown; author?: unknown; featuredImage?: { url?: unknown; alt?: unknown }; categories?: string[] }
+  post?: { title?: unknown; date?: unknown; excerpt?: unknown; author?: unknown; featuredImage?: { url?: unknown; alt?: unknown }; categories?: string[]; categoryTrail?: string[]; categoryHref?: string }
   page?: { title?: unknown }
   product?: { id?: number; title?: unknown; price?: unknown; inventory?: number | null; ratingAverage?: number | null; ratingCount?: number | null; featuredImage?: { url?: unknown; alt?: unknown } }
   /** Public event fields. `location` is the venue name and address as one line. */

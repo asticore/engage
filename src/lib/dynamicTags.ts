@@ -8,7 +8,7 @@ export const MAX_TAG_INPUT = 2000
 export type DateFormat = 'short' | 'long'
 
 export type TagContext = {
-  post?: { title?: unknown; date?: unknown; excerpt?: unknown; author?: unknown }
+  post?: { title?: unknown; date?: unknown; excerpt?: unknown; author?: unknown; categoryTrail?: unknown; categoryHref?: unknown }
   page?: { title?: unknown }
   site?: { name?: unknown; year?: unknown }
   product?: { title?: unknown; price?: unknown }
@@ -21,7 +21,7 @@ export type TagContext = {
 }
 
 export const TAG_NAMES = [
-  'post.title', 'post.date', 'post.excerpt', 'post.author', 'page.title', 'site.name', 'site.year', 'product.title', 'product.price',
+  'post.title', 'post.date', 'post.excerpt', 'post.author', 'post.category_path', 'post.category_url', 'page.title', 'site.name', 'site.year', 'product.title', 'product.price',
   'event.title', 'event.date', 'event.location', 'event.summary',
 ] as const
 
@@ -65,6 +65,9 @@ function rawValue(name: string, ctx: TagContext): string {
     case 'post.date': return formatTagDate(ctx.post?.date, ctx.dateFormat, locale)
     case 'post.excerpt': return str(ctx.post?.excerpt)
     case 'post.author': return str(ctx.post?.author)
+    // The first category's place in the category tree ("Parent > Child") and its nested address; empty when not in the tree.
+    case 'post.category_path': return Array.isArray(ctx.post?.categoryTrail) ? (ctx.post.categoryTrail as unknown[]).map(str).filter(Boolean).join(' > ') : ''
+    case 'post.category_url': return str(ctx.post?.categoryHref)
     case 'page.title': return str(ctx.page?.title)
     case 'site.name': return str(ctx.site?.name)
     case 'site.year': return str(ctx.site?.year) || String(new Date().getUTCFullYear())

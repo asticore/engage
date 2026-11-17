@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig } from '@/engine'
 
 import { isAdmin } from '@/access/ecommerceAccess'
+import { webhookEnrolmentAfterChange } from '@/features/webhooks/hooks'
 
 import { isAdminUser } from '../entitlement'
 import { COURSES_SLUG, ENROLMENTS_SLUG } from '../types'
@@ -86,6 +87,7 @@ export const Enrolments: CollectionConfig = {
     },
   ],
   hooks: {
+    afterChange: [webhookEnrolmentAfterChange],
     beforeChange: [
       ({ data, operation }) => {
         // Stamped rather than defaulted so a row created by the purchase path
