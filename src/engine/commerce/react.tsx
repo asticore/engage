@@ -44,6 +44,8 @@ export type CartItemDoc = {
   quantity: number
   /** Product add-on answers, stored as JSON text (see lib/addOns.ts). */
   addOns?: string | null
+  /** Composite (kit) picks, stored as JSON text (see lib/composite.ts). */
+  composite?: string | null
 }
 
 export type CartDoc = {
@@ -71,6 +73,8 @@ export type AddItemInput = {
   giftSendAt?: string
   /** Product add-on answers, one per question the product asks. The server checks them against the product. */
   addOns?: Array<{ id: string; value: string | boolean }>
+  /** Composite (kit) picks: the step name and the chosen product for each pick. The server checks them against the product. */
+  composite?: Array<{ component: string; productId: number }>
 }
 
 type PaymentArgs = { additionalData?: Record<string, unknown> }

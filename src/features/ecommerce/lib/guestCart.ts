@@ -23,6 +23,7 @@ export type CartLine = {
   customAmount?: number | null
   giftName?: string | null
   addOns?: string | null
+  composite?: string | null
   [key: string]: unknown
 }
 
@@ -50,7 +51,8 @@ const sameLine = (a: CartLine, b: CartLine): boolean =>
   productIdOf(a) === productIdOf(b) &&
   (a.variation || null) === (b.variation || null) &&
   (a.priceCents ?? null) === (b.priceCents ?? null) &&
-  (a.addOns || null) === (b.addOns || null)
+  (a.addOns || null) === (b.addOns || null) &&
+  (a.composite || null) === (b.composite || null)
 
 /** Adds one guest line into the account lines: same purchase adds quantities, otherwise it is appended without the guest row id. */
 export const mergeLine = (target: CartLine[], line: CartLine): CartLine[] => {

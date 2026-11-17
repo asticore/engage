@@ -2,7 +2,9 @@ import type { CollectionBeforeChangeHook } from '@/engine'
 
 import { collectSkus, normaliseCatalogue } from './normalize'
 import { bundleErrors } from './lib/bundles'
+import { compositeErrors } from './lib/composite'
 import { bundleComponentErrors } from './server/bundles'
+import { compositeItemErrors } from './server/composite'
 import { galleryIds, keepGalleryVariationImages } from './lib/variationImage'
 import type { VariationRow } from './variations'
 
@@ -38,7 +40,7 @@ export const catalogueBeforeChange: CollectionBeforeChangeHook = async ({ data, 
   // A partial update (say, only the stock quantity) is checked against the whole document.
   const merged: Record<string, unknown> = { ...((originalDoc as Record<string, unknown> | undefined) ?? {}), ...incoming }
   const engine = (req as unknown as { engine: EngineLike }).engine
-  const errors = [...normaliseCatalogue(merged, selfId), ...bundleErrors(merged, selfId), ...(await bundleComponentErrors(engine as never, merged).catch((): never[] => []))]
+  const errors = [...normaliseCatalogue(merged, selfId), ...bundleErrors(merged, selfId), ...(await bundleComponentErrors(engine as never, merged).catch((): never[] => [])), ...compositeErrors(merged, selfId), ...(await compositeItemErrors(engine as never, merged).catch((): never[] => []))]
   if (errors.length > 0) await throwValidation(errors)
   for (const key of ['sku', 'gtin', 'stockQty', 'variations']) if (key in incoming) incoming[key] = merged[key]
   // A variation image must be one of this product's gallery images.

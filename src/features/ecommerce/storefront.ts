@@ -32,7 +32,7 @@ export type VariationView = {
 import { outboundHref } from './outboundShared'
 
 export type ProductView = {
-  type: 'simple' | 'variable' | 'grouped' | 'external' | 'giftcard' | 'bundle'
+  type: 'simple' | 'variable' | 'grouped' | 'external' | 'giftcard' | 'bundle' | 'composite'
   price: number | null
   regular: number | null
   onSale: boolean
@@ -150,7 +150,7 @@ export function buildProductView(product: ProductInput, now: Date = new Date(), 
     stockMessage: type === 'variable' ? '' : preorder.active ? PREORDER_STOCK_MESSAGE : stockMessage(product),
     // A name-your-price product has no fixed price to show, so it is purchasable whenever it is in stock.
     // A pre-order is purchasable while out of stock.
-    purchasable: (type === 'simple' || type === 'bundle') && (own.price !== null || product.nameYourPrice === true || product.isDonation === true) && (canPurchase(product, 1) || preorder.active),
+    purchasable: (type === 'simple' || type === 'bundle' || type === 'composite') && (own.price !== null || product.nameYourPrice === true || product.isDonation === true) && (canPurchase(product, 1) || preorder.active),
     sku: product.sku || null,
     options: options.filter((option) => option.values.length > 0),
     details,

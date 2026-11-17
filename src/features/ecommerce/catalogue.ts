@@ -13,7 +13,7 @@ import { quantityError, validateNamedPrice } from './lib/qtyLimits'
 import { checkDonationMax } from './lib/donations'
 import { isPreorderActive, type PreorderFields } from './lib/preorder'
 
-export type ProductType = 'simple' | 'variable' | 'grouped' | 'external' | 'giftcard' | 'bundle'
+export type ProductType = 'simple' | 'variable' | 'grouped' | 'external' | 'giftcard' | 'bundle' | 'composite'
 
 export type CatalogueProduct = PriceFields &
   StockFields &
@@ -85,6 +85,7 @@ export function resolveCartLine(
   if (type === 'grouped') return { ok: false, error: 'Choose one of the products in this group.' }
   // Bundles are priced from their products (server/bundles.ts), never through this single-product path.
   if (type === 'bundle') return { ok: false, error: 'Bundles are priced from the products inside them.' }
+  if (type === 'composite') return { ok: false, error: 'Choose the items for this kit before adding it to the cart.' }
   const total = quantity + Math.max(0, alreadyInCart)
   const limitError = quantityError(quantity, product, total)
   if (limitError) return { ok: false, error: limitError }

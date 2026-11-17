@@ -1209,6 +1209,17 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     expect(await columnsOf('eg_shop_extra_settings')).toEqual(expect.arrayContaining(['recommendations_enabled', 'recommendations_max']))
   })
 
+  it('creates the composite product tables and the cart pick column (task 11b)', async () => {
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    for (const table of ['eg_products_composite_options', '_eg_products_v_version_composite_options', 'eg_products_composite_rules', '_eg_products_v_version_composite_rules']) expect(tables, table).toContain(table)
+    expect(await columnsOf('eg_products_composite_options')).toEqual(expect.arrayContaining(['_order', '_parent_id', 'component', 'product_id', 'price_mode', 'price_value', 'is_default']))
+    expect(await columnsOf('_eg_products_v_version_composite_rules')).toEqual(expect.arrayContaining(['_parent_id', 'component', 'description', 'required', 'min_choices', 'max_choices', '_uuid']))
+    expect(await columnsOf('eg_carts_items')).toContain('composite')
+  })
+
   it('creates the cron run history table with its columns (wave 17)', async () => {
     expect(tables).toContain('eg_cron_runs')
     const result = await proxy.env.D1.prepare('PRAGMA table_info(`eg_cron_runs`)').all()
