@@ -1,3 +1,4 @@
+import { isOverdue } from './overdue'
 import { getAdminRoot } from '@/features/security/settings'
 import { adminCollectionPath } from '@/admin/adminPaths'
 import {
@@ -439,6 +440,8 @@ export type ReviewQueueRow = {
   href: string
   /** Workflow step the document waits at ("Step 2 of 3: Legal review"), when a workflow is active. */
   awaiting?: string
+  /** True once the review has waited longer than its workflow's due days. */
+  overdue?: boolean
 }
 
 /**
@@ -496,14 +499,16 @@ export async function loadReviewQueue({
       }
       const requester = doc.reviewRequestedBy as { name?: unknown } | number | null | undefined
       const requestedBy = requester && typeof requester === 'object' && typeof requester.name === 'string' && requester.name ? requester.name : UNKNOWN_USER
+      const requestedAt = typeof doc.reviewRequestedAt === 'string' ? doc.reviewRequestedAt : null
       rows.push({
         collection,
         id,
         title: titleOf(doc, id),
         requestedBy,
-        requestedAt: typeof doc.reviewRequestedAt === 'string' ? doc.reviewRequestedAt : null,
+        requestedAt,
         href: `${adminCollectionPath(collection, adminRoot)}/${id}`,
         ...(awaiting ? { awaiting } : {}),
+        ...(isOverdue(requestedAt, workflow?.reviewDueDays, new Date()) ? { overdue: true } : {}),
       })
     }
   }
