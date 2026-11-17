@@ -63,8 +63,8 @@ describe('sign-in path validation', () => {
     const v = validateSignInPathField('customer', 'memberSignInPath')
     const withPages = (slugs: string[]) => ({
       engine: {
-        find: async (args: { where: { and: { slug?: { equals: string } }[] } }) => ({
-          docs: slugs.filter((s) => s === args.where.and[0].slug?.equals),
+        find: async (args: Record<string, unknown>) => ({
+          docs: slugs.filter((s) => s === (args as { where: { and: { slug?: { equals: string } }[] } }).where.and[0].slug?.equals),
         }),
       },
     })
