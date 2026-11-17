@@ -68,6 +68,21 @@ button, a, input { margin: 6px; }
 <input id="s-switch" class="switch" type="checkbox" role="switch" aria-label="On off" />
 <input id="s-switch-on" class="switch" type="checkbox" role="switch" aria-label="On" checked />
 <ul class="menu" style="position:static;display:flex"><li><button id="s-menu" class="menu-item" type="button">Rename</button></li><li><a id="s-menu-active" aria-current="page" href="#">Settings</a></li></ul>
+<div id="s-card" class="card"><div class="card-body"><h3 id="s-card-title" class="card-title">Plan</h3><p id="s-card-text">Body text</p></div></div>
+<div id="s-alert" class="alert" role="alert">Saved</div>
+<div id="s-alert-danger" class="alert" role="alert" style="--sh-tone: var(--sh-danger)">Failed</div>
+<div id="s-alert-success" class="alert" role="alert" style="--sh-tone: var(--sh-success)">Done</div>
+<div id="s-alert-warning" class="alert" role="alert" style="--sh-tone: var(--sh-warning)">Careful</div>
+<div id="s-alert-solid" class="alert alert-solid" role="alert">Solid</div>
+<select id="s-select" class="select" aria-label="Pick"><option>One</option></select>
+<select id="s-select-disabled" class="select" aria-label="Pick" disabled><option>One</option></select>
+<textarea id="s-textarea" class="textarea" aria-label="Note">Hello</textarea>
+<input id="s-checkbox" class="checkbox" type="checkbox" aria-label="Tick" />
+<input id="s-checkbox-on" class="checkbox" type="checkbox" aria-label="Ticked" checked />
+<input id="s-radio" class="radio" type="radio" aria-label="Opt" />
+<input id="s-radio-on" class="radio" type="radio" aria-label="Opt on" checked />
+<ul class="tabs" role="tablist"><li><button id="s-tab" role="tab" aria-selected="false" type="button">Overview</button></li><li><button id="s-tab-selected" role="tab" aria-selected="true" type="button">Details</button></li></ul>
+<div class="accordion"><details><summary id="s-accordion">Question</summary><p>Answer</p></details></div>
 <table class="table table-hover"><tbody><tr id="s-row"><td>Row</td></tr><tr id="s-row-selected" aria-selected="true"><td>Picked</td></tr></tbody></table>
 </body></html>`
 
@@ -163,12 +178,12 @@ const states = async (page: Page, id: string) => {
 type Case = { id: string; html: string; text: string[]; disabled?: boolean; ring?: boolean; boundary?: boolean }
 const textCases = (suite: 'admin' | 'shine'): Case[] => {
   const html = suite === 'admin' ? adminHtml : shineHtml
-  const names = suite === 'admin' ? ['a-btn', 'a-btn-primary', 'a-link', 'a-tab', 'a-tab-selected'] : ['s-btn', 's-btn-outline', 's-btn-ghost', 's-btn-soft', 's-link', 's-badge', 's-badge-solid', 's-badge-outline', 's-chip', 's-menu', 's-menu-active', 's-row', 's-row-selected']
+  const names = suite === 'admin' ? ['a-btn', 'a-btn-primary', 'a-link', 'a-tab', 'a-tab-selected'] : ['s-btn', 's-btn-outline', 's-btn-ghost', 's-btn-soft', 's-link', 's-badge', 's-badge-solid', 's-badge-outline', 's-chip', 's-menu', 's-menu-active', 's-row', 's-row-selected', 's-card-title', 's-card-text', 's-alert', 's-alert-danger', 's-alert-success', 's-alert-warning', 's-alert-solid', 's-select', 's-textarea', 's-tab', 's-tab-selected', 's-accordion']
   return names.map((id) => ({ id, html, text: ['resting', 'hover', 'active', 'focus'] }))
 }
 const disabledCases = (suite: 'admin' | 'shine'): Case[] => {
   const html = suite === 'admin' ? adminHtml : shineHtml
-  const names = suite === 'admin' ? ['a-btn-disabled', 'a-btn-primary-disabled', 'a-link-disabled'] : ['s-btn-disabled', 's-btn-outline-disabled', 's-input-disabled']
+  const names = suite === 'admin' ? ['a-btn-disabled', 'a-btn-primary-disabled', 'a-link-disabled'] : ['s-btn-disabled', 's-btn-outline-disabled', 's-input-disabled', 's-select-disabled']
   return names.map((id) => ({ id, html, text: ['resting'], disabled: true }))
 }
 
@@ -212,6 +227,10 @@ describe('focus rings and boundaries (>= 3:1 against the surface)', () => {
     ['shine', shineHtml, 's-btn-outline'],
     ['shine', shineHtml, 's-link'],
     ['shine', shineHtml, 's-input'],
+    ['shine', shineHtml, 's-select'],
+    ['shine', shineHtml, 's-textarea'],
+    ['shine', shineHtml, 's-tab'],
+    ['shine', shineHtml, 's-accordion'],
   ]
   for (const theme of ['light', 'dark'] as const) {
     for (const [suite, html, id] of ringCases) {
@@ -225,7 +244,7 @@ describe('focus rings and boundaries (>= 3:1 against the surface)', () => {
           await page.keyboard.press('Tab')
           await page.focus(`#${id}`)
           const s = await probe(page, id)
-          if (id === 's-input') {
+          if (id === 's-input' || id === 's-select' || id === 's-textarea') {
             // Shine fields show focus with a tone border and glow (the outline is kept transparent for forced-colors mode).
             expect(ratio(s.border!, s.surface), `${id} focus border`).toBeGreaterThanOrEqual(3)
           } else {
@@ -237,7 +256,7 @@ describe('focus rings and boundaries (>= 3:1 against the surface)', () => {
         }
       })
     }
-    for (const id of ['s-btn-outline', 's-input']) {
+    for (const id of ['s-btn-outline', 's-input', 's-select', 's-textarea']) {
       it(`${theme}: shine #${id} boundary`, async (ctx) => {
         if (!browser) return ctx.skip()
         const page = await open(shineHtml, theme)
@@ -267,5 +286,59 @@ describe('toggle track against the surface (>= 3:1, WCAG 1.4.11)', () => {
         }
       })
     }
+  }
+})
+
+describe('checked checkbox and radio accent colour against the surface (>= 3:1; the unchecked box uses the browser border)', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    for (const id of ['s-checkbox-on', 's-radio-on']) {
+      it(`${theme}: shine #${id} fill`, async (ctx) => {
+        if (!browser) return ctx.skip()
+        const page = await open(shineHtml, theme)
+        try {
+          const s = await probe(page, id)
+          const accent = await page.$eval(`#${id}`, (el) => {
+            const c = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!
+            c.fillStyle = getComputedStyle(el).accentColor
+            c.fillRect(0, 0, 1, 1)
+            return Array.from(c.getImageData(0, 0, 1, 1).data.slice(0, 3))
+          })
+          expect(ratio(accent, s.surface), id).toBeGreaterThanOrEqual(3)
+        } finally {
+          await page.close()
+        }
+      })
+    }
+  }
+})
+
+describe('card edge', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    it(`${theme}: shine card text sits on a surface`, async (ctx) => {
+      if (!browser) return ctx.skip()
+      const page = await open(shineHtml, theme)
+      try {
+        const s = await probe(page, 's-card-text')
+        expect(ratio(s.fg, s.bg)).toBeGreaterThanOrEqual(4.5)
+      } finally {
+        await page.close()
+      }
+    })
+  }
+})
+
+describe('public block CSS (Task 15a): fixed colours that sit on the page background', () => {
+  const css = read('src/components/blocks/elements/wave66.css')
+  const colour = (selector: string) => {
+    const m = css.match(new RegExp(`${selector.replace(/[.]/g, '\\.')}\\s*\\{[^}]*?(?:color|background):\\s*(?:linear-gradient\\(90deg,\\s*)?(#[0-9a-f]{6})`, 'i'))
+    return m ? m[1] : null
+  }
+  const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+  for (const sel of ['.w66-stars span', '.w66-stars span.on', '.w66-stars span.half']) {
+    it(`star ${sel} is >= 3:1 on white`, () => {
+      const hex = colour(sel)
+      expect(hex, sel).not.toBeNull()
+      expect(ratio(rgb(hex!), [255, 255, 255])).toBeGreaterThanOrEqual(3)
+    })
   }
 })
