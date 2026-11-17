@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { CADENCES, isReportDue, parseRecipients, reportCsv, reportEmail, summaryLines, toCadence, toPreset, type ReportData } from '@/features/clientReports/core'
+import { CADENCES, isReportDue, parseRecipients, parseSections, reportCsv, reportEmail, reportTables, summaryLines, toCadence, toDay, toPreset, wantsSection, withViewerRange, type ReportData } from '@/features/clientReports/core'
 import { copyKey, picturesAddedAfterCopy, idsAddedAfterCopy, DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
 import { cleanHost, cleanName, describeRollout, franchiseLocks, toLockChoice, toStatus } from '@/features/franchising/core'
 import { assetFilePath, collectRefs, pageFilePath, rewriteRefs, rootPrefix, sitemapPaths, stripScripts } from '@/features/demos/staticExport'
@@ -133,6 +133,39 @@ describe('client reports (22f)', () => {
     expect(mail.html).toContain('&lt;b&gt;')
     expect(mail.html).not.toContain('Open the full report')
     expect(reportEmail('Acme', data, 'https://x.test/client-report/t').html).toContain('Open the full report')
+  })
+})
+
+describe('client reports sections, dates and Google numbers (17f)', () => {
+  const base: ReportData = { range: { from: '2027-03-01', to: '2027-03-30', days: 30 }, currency: 'AUD', sales: null, forms: null, content: null }
+  it('parses sections and treats none as all', () => {
+    expect(parseSections('traffic, bogus, search, traffic')).toEqual(['traffic', 'search'])
+    expect(parseSections(5)).toEqual([])
+    expect(wantsSection([], 'sales')).toBe(true)
+    expect(wantsSection(['traffic'], 'sales')).toBe(false)
+  })
+  it('accepts only real calendar days and lets a viewer pick dates', () => {
+    expect(toDay('2027-02-30')).toBe('')
+    expect(toDay('2027-03-01')).toBe('2027-03-01')
+    const spec = { preset: '30d' as const, rangeFrom: '', rangeTo: '' }
+    expect(withViewerRange(spec, '2027-03-05', '2027-03-01')).toBe(spec)
+    expect(withViewerRange(spec, '2027-03-01', '2027-03-05')).toEqual({ preset: 'custom', rangeFrom: '2027-03-01', rangeTo: '2027-03-05' })
+    expect(toPreset('custom')).toBe('custom')
+  })
+  it('shows traffic and search lines and tables, or why they are missing', () => {
+    const d: ReportData = {
+      ...base,
+      traffic: { state: 'ok', data: { users: 10, sessions: 14, topPages: [{ path: '/a', views: 9 }], channels: [{ channel: 'Organic Search', sessions: 8 }] } },
+      search: { state: 'ok', data: { clicks: 5, impressions: 100, ctr: 0.05, position: 7.2, topQueries: [{ key: 'shoes', clicks: 3, impressions: 40 }], topPages: [] } },
+    }
+    const labels = summaryLines(d).map((l) => l.label)
+    expect(labels).toEqual(expect.arrayContaining(['Visitors', 'Search clicks', 'Click-through rate']))
+    expect(reportTables(d).map((t) => t.title)).toEqual(['Top pages by views', 'Where visitors came from', 'Top search queries'])
+    expect(reportCsv(d)).toContain('shoes')
+    const off = summaryLines({ ...base, traffic: { state: 'unavailable', message: 'Google is not connected on this site.' } })
+    expect(off.find((l) => l.label === 'Website traffic')?.value).toContain('not connected')
+    expect(reportEmail('A', d, '', 'https://x.test/logo.png').html).toContain('<img src="https://x.test/logo.png"')
+    expect(reportEmail('A', d, '', 'javascript:x').html).not.toContain('<img')
   })
 })
 

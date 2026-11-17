@@ -2,10 +2,10 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 
-import type { Cadence, Preset } from '../core'
+import type { Cadence, Preset, SectionKey } from '../core'
 
-type Row = { id: number; name: string; preset: Preset; recipients: string; cadence: Cadence; lastSentAt: string | null; revoked: boolean; link: string }
-type Loaded = { reports: Row[]; presets: { value: Preset; label: string }[]; cadences: { value: Cadence; label: string }[] }
+type Row = { id: number; name: string; preset: Preset; recipients: string; cadence: Cadence; lastSentAt: string | null; revoked: boolean; link: string; sections: SectionKey[]; rangeFrom: string; rangeTo: string }
+type Loaded = { reports: Row[]; presets: { value: Preset; label: string }[]; cadences: { value: Cadence; label: string }[]; sections: { value: SectionKey; label: string }[] }
 
 /** Admin screen for client reports: make read-only links, set the email schedule, download CSV. English only. */
 export const ClientReportsPanel: React.FC = () => {
@@ -16,6 +16,9 @@ export const ClientReportsPanel: React.FC = () => {
   const [preset, setPreset] = useState<Preset>('30d')
   const [recipients, setRecipients] = useState('')
   const [cadence, setCadence] = useState<Cadence>('none')
+  const [sections, setSections] = useState<SectionKey[]>([])
+  const [rangeFrom, setRangeFrom] = useState('')
+  const [rangeTo, setRangeTo] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-client-reports')
@@ -48,11 +51,12 @@ export const ClientReportsPanel: React.FC = () => {
       <form
         onSubmit={(e) => {
           e.preventDefault()
-          void post({ action: 'create', name, preset, recipients, cadence }, 'Report created.').then((ok) => {
+          void post({ action: 'create', name, preset, recipients, cadence, sections, rangeFrom, rangeTo }, 'Report created.').then((ok) => {
             if (ok) {
               setName('')
               setRecipients('')
               setCadence('none')
+              setSections([])
             }
           })
         }}
@@ -64,6 +68,20 @@ export const ClientReportsPanel: React.FC = () => {
             {(data?.presets ?? []).map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
           </select>
         </label>
+        {preset === 'custom' && (
+          <>
+            <label>From<br /><input type="date" required value={rangeFrom} onChange={(e) => setRangeFrom(e.target.value)} /></label>
+            <label>To<br /><input type="date" required value={rangeTo} onChange={(e) => setRangeTo(e.target.value)} /></label>
+          </>
+        )}
+        <fieldset style={{ border: 0, padding: 0 }}>
+          <legend>Sections (none ticked shows all)</legend>
+          {(data?.sections ?? []).map((sec) => (
+            <label key={sec.value} style={{ marginRight: '0.75rem' }}>
+              <input type="checkbox" checked={sections.includes(sec.value)} onChange={(e) => setSections(e.target.checked ? [...sections, sec.value] : sections.filter((v) => v !== sec.value))} /> {sec.label}
+            </label>
+          ))}
+        </fieldset>
         <label>Email to (commas between addresses)<br /><input type="text" value={recipients} onChange={(e) => setRecipients(e.target.value)} /></label>
         <label>Email schedule<br />
           <select value={cadence} onChange={(e) => setCadence(e.target.value as Cadence)}>
@@ -83,7 +101,7 @@ export const ClientReportsPanel: React.FC = () => {
             {data.reports.map((r) => (
               <tr key={r.id}>
                 <td>{r.name}</td>
-                <td>{data.presets.find((p) => p.value === r.preset)?.label}</td>
+                <td>{r.preset === 'custom' ? `${r.rangeFrom} to ${r.rangeTo}` : data.presets.find((p) => p.value === r.preset)?.label}{r.sections.length > 0 ? ` (${r.sections.map((v) => data.sections.find((x) => x.value === v)?.label ?? v).join(', ')})` : ''}</td>
                 <td>{r.recipients ? `${data.cadences.find((c) => c.value === r.cadence)?.label}: ${r.recipients}` : 'No recipients'}{r.lastSentAt ? ` (last sent ${new Date(r.lastSentAt).toLocaleDateString()})` : ''}</td>
                 <td>{r.revoked ? 'Link switched off' : 'Read-only link active'}</td>
                 <td style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
