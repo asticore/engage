@@ -74,7 +74,7 @@ function memoryStore() {
 }
 
 const SECRET = 'whsec_unit_test_secret'
-const CONFIG: WebhookConfig = { name: 'Orders', description: '', url: 'https://hooks.example.com/in', events: ['order.paid', 'content.published'], template: null, enabled: true, ratePerMinute: 60 }
+const CONFIG: WebhookConfig = { name: 'Orders', description: '', url: 'https://hooks.example.com/in', events: ['order.paid', 'content.published'], template: null, enabled: true, ratePerMinute: 60, auditActions: [], auditRedact: [] }
 
 function fixture(now = Date.UTC(2026, 9, 30, 12, 0, 0), fetcher: typeof fetch = async () => new Response('ok', { status: 200 })) {
   const { store, hooks, rows } = memoryStore()
@@ -405,5 +405,39 @@ describe('webhook log redaction, DNS guard and retention', () => {
     expect(result.days).toBe(7)
     const kept = [...rows.values()].map((r) => r.deliveryId)
     expect(kept).toEqual(['recent'])
+  })
+
+  describe('activity log drain options (19i)', () => {
+    const entry = { action: 'user.ban', actorEmail: 'admin@example.com', collection: 'users', documentId: '7', ip: '203.0.113.9', detail: 'banned a@b.c', createdAt: '2026-11-17T00:00:00.000Z' }
+    const bodies = (f: ReturnType<typeof fixture>) => [...f.rows.values()].map((r) => JSON.parse(r.body) as { event: string; data: Record<string, unknown> })
+
+    it('sends only the actions in the filter, with a trailing dot matching a whole family', async () => {
+      const f = fixture()
+      await addHook(f.deps, f.store, { events: ['audit.recorded'], auditActions: ['user.', 'settings.update'] })
+      await addHook(f.deps, f.store, { name: 'Exact', events: ['audit.recorded'], auditActions: ['settings.update'] })
+      expect((await queueEvent(f.deps, 'audit.recorded', entry)).length).toBe(1)
+      expect((await queueEvent(f.deps, 'audit.recorded', { ...entry, action: 'settings.update' })).length).toBe(2)
+      expect((await queueEvent(f.deps, 'audit.recorded', { ...entry, action: 'page.delete' })).length).toBe(0)
+    })
+
+    it('sends every action when the filter is empty', async () => {
+      const f = fixture()
+      await addHook(f.deps, f.store, { events: ['audit.recorded'] })
+      expect((await queueEvent(f.deps, 'audit.recorded', { ...entry, action: 'page.delete' })).length).toBe(1)
+    })
+
+    it('empties redacted fields in the payload and keeps the rest', async () => {
+      const f = fixture()
+      await addHook(f.deps, f.store, { events: ['audit.recorded'], auditRedact: ['actorEmail', 'ip', 'detail'] })
+      await queueEvent(f.deps, 'audit.recorded', entry)
+      const data = bodies(f)[0].data
+      expect(data).toMatchObject({ action: 'user.ban', collection: 'users', documentId: '7', actorEmail: '', ip: '', detail: '' })
+    })
+
+    it('does not touch other events', async () => {
+      const f = fixture()
+      await addHook(f.deps, f.store, { events: ['order.paid'], auditActions: ['user.'], auditRedact: ['ip'] })
+      expect((await queueEvent(f.deps, 'order.paid', { id: 1, status: 'paid' })).length).toBe(1)
+    })
   })
 })

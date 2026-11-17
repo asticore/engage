@@ -14,7 +14,7 @@ export function exportWebhooks(hooks: readonly WebhookConfig[]): WebhookExport {
   return {
     format: WEBHOOK_EXPORT_FORMAT,
     version: 1,
-    webhooks: hooks.map((h) => ({ name: h.name, description: h.description, url: h.url, events: [...h.events], template: h.template, enabled: h.enabled, ratePerMinute: h.ratePerMinute })),
+    webhooks: hooks.map((h) => ({ name: h.name, description: h.description, url: h.url, events: [...h.events], template: h.template, enabled: h.enabled, ratePerMinute: h.ratePerMinute, auditActions: [...h.auditActions], auditRedact: [...h.auditRedact] })),
   }
 }
 

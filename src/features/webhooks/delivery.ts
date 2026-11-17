@@ -1,4 +1,4 @@
-import { checkWebhookUrl, DELIVERY_RETENTION_DAYS, FAILURE_ALERT_THRESHOLD, isFailingStreak, isOverRate, nextAttemptAt, REQUEST_TIMEOUT_MS, renderBody, signatureHeader, SIGNATURE_HEADER, type DeliveryStatus } from './core'
+import { auditActionMatches, redactAuditData, checkWebhookUrl, DELIVERY_RETENTION_DAYS, FAILURE_ALERT_THRESHOLD, isFailingStreak, isOverRate, nextAttemptAt, REQUEST_TIMEOUT_MS, renderBody, signatureHeader, SIGNATURE_HEADER, type DeliveryStatus } from './core'
 import { pickEventFields, TEST_EVENT, type WebhookEvent } from './events'
 import { checkDeliveryTarget } from './outbound'
 import { redactBody } from './redact'
@@ -66,7 +66,7 @@ export async function queueFor(deps: DeliveryDeps, hook: WebhookRecord, event: W
   const nowMs = clock(deps)
   const at = new Date(nowMs).toISOString()
   const deliveryId = deps.newId ? deps.newId() : newDeliveryId()
-  const payload = event === TEST_EVENT ? data : pickEventFields(event, data)
+  const payload = event === TEST_EVENT ? data : pickEventFields(event, event === 'audit.recorded' ? redactAuditData(data, hook.auditRedact) : data)
   const rendered = renderBody(hook.template, { event, id: deliveryId, occurredAt: at, data: payload })
   if (rendered.ok === false) {
     return deps.store.insertDelivery({ webhookId: hook.id, deliveryId, event, body: '', redacted: false, status: 'skipped', attempts: 0, nextAttemptAt: null, lastStatusCode: null, lastError: rendered.error }, at)
@@ -88,7 +88,12 @@ export async function queueFor(deps: DeliveryDeps, hook: WebhookRecord, event: W
 export async function queueEvent(deps: DeliveryDeps, event: WebhookEvent, data: Record<string, unknown>): Promise<number[]> {
   const hooks = await deps.store.activeFor(event)
   const ids: number[] = []
-  for (const hook of hooks) ids.push(await queueFor(deps, hook, event, data))
+  const action = typeof data.action === 'string' ? data.action : ''
+  for (const hook of hooks) {
+    // Activity log entries: a webhook with an action filter only gets the actions it listed.
+    if (event === 'audit.recorded' && !auditActionMatches(hook.auditActions, action)) continue
+    ids.push(await queueFor(deps, hook, event, data))
+  }
   return ids
 }
 

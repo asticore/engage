@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { exportWebhooks, parseWebhookImport } from '@/features/webhooks/transfer'
 
-const hook = { name: 'Orders', description: 'd', url: 'https://example.com/hook', events: ['order.created'] as never, template: null as string | null, enabled: true, ratePerMinute: 30 }
+const hook = { name: 'Orders', description: 'd', url: 'https://example.com/hook', events: ['order.created'] as never, template: null as string | null, enabled: true, ratePerMinute: 30, auditActions: [] as string[], auditRedact: [] as never[] }
 
 describe('webhook transfer', () => {
   it('exports settings only', () => {

@@ -15,6 +15,7 @@ export const webhooks = sqliteTable('eg_webhooks', {
   secret: text('secret').notNull(),
   enabled: integer('enabled').notNull().default(1),
   ratePerMinute: integer('rate_per_minute').notNull().default(60),
+  auditOptions: text('audit_options').notNull().default(''),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 })
