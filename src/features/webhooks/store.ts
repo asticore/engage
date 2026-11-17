@@ -1,5 +1,5 @@
 import type { D1Like } from '@/features/apiKeys'
-import { DEFAULT_RETENTION_DAYS, isRetentionChoice, type DeliveryStatus, type WebhookConfig } from './core'
+import { AUDIT_REDACT_FIELDS, DEFAULT_RETENTION_DAYS, isRetentionChoice, type AuditRedactField, type DeliveryStatus, type WebhookConfig } from './core'
 import type { WebhookEvent } from './events'
 
 /**
@@ -66,13 +66,27 @@ export type WebhookStore = {
   setRetentionDays(days: number, at: string): Promise<void>
 }
 
-type RawWebhook = { id: number; name: string; description: string; url: string; events: string; template: string | null; secret: string; enabled: number; rate_per_minute: number; created_at: string; updated_at: string }
+type RawWebhook = { id: number; name: string; description: string; url: string; events: string; template: string | null; secret: string; enabled: number; rate_per_minute: number; audit_options: string | null; created_at: string; updated_at: string }
 type RawDelivery = { id: number; webhook_id: number; delivery_id: string; event: string; body: string; redacted: number; status: string; attempts: number; next_attempt_at: string | null; last_status_code: number | null; last_error: string | null; created_at: string; updated_at: string }
 
-const WEBHOOK_COLUMNS = 'id, name, description, url, events, template, secret, enabled, rate_per_minute, created_at, updated_at'
+const WEBHOOK_COLUMNS = 'id, name, description, url, events, template, secret, enabled, rate_per_minute, audit_options, created_at, updated_at'
 const DELIVERY_COLUMNS = 'id, webhook_id, delivery_id, event, body, redacted, status, attempts, next_attempt_at, last_status_code, last_error, created_at, updated_at'
 const WEBHOOKS = '`eg_webhooks`'
 const DELIVERIES = '`eg_webhook_deliveries`'
+
+/** Reads the stored activity log options (`{"actions":[],"redact":[]}`). Damaged or empty text means no filter and no redaction. */
+export function parseStoredAuditOptions(text: string | null | undefined): { auditActions: string[]; auditRedact: AuditRedactField[] } {
+  try {
+    const parsed = JSON.parse(text || '{}') as { actions?: unknown; redact?: unknown }
+    const actions = Array.isArray(parsed.actions) ? parsed.actions.filter((a): a is string => typeof a === 'string') : []
+    const redact = Array.isArray(parsed.redact) ? parsed.redact.filter((f): f is AuditRedactField => (AUDIT_REDACT_FIELDS as readonly unknown[]).includes(f)) : []
+    return { auditActions: actions, auditRedact: redact }
+  } catch {
+    return { auditActions: [], auditRedact: [] }
+  }
+}
+
+const auditOptionsJson = (config: WebhookConfig): string => JSON.stringify({ actions: config.auditActions, redact: config.auditRedact })
 
 /** Parses one stored webhook. Null when its event list is damaged, so one bad row never breaks the list. */
 export function rowToWebhook(r: RawWebhook): WebhookRecord | null {
@@ -93,6 +107,7 @@ export function rowToWebhook(r: RawWebhook): WebhookRecord | null {
     secret: r.secret,
     enabled: Boolean(r.enabled),
     ratePerMinute: Number(r.rate_per_minute),
+    ...parseStoredAuditOptions(r.audit_options),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   }
@@ -150,14 +165,14 @@ export function createD1WebhookStore(getDb: () => Promise<D1Like>): WebhookStore
     async insert(config, secret, at) {
       const db = await getDb()
       const result = (await db
-        .prepare(`INSERT INTO ${WEBHOOKS} (name, description, url, events, template, secret, enabled, rate_per_minute, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-        .bind(config.name, config.description, config.url, JSON.stringify(config.events), config.template, secret, config.enabled ? 1 : 0, config.ratePerMinute, at, at)
+        .prepare(`INSERT INTO ${WEBHOOKS} (name, description, url, events, template, secret, enabled, rate_per_minute, audit_options, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .bind(config.name, config.description, config.url, JSON.stringify(config.events), config.template, secret, config.enabled ? 1 : 0, config.ratePerMinute, auditOptionsJson(config), at, at)
         .run()) as { meta?: { last_row_id?: number } }
       return Number(result.meta?.last_row_id ?? 0)
     },
     async update(id, config, at) {
       await run(
-        `UPDATE ${WEBHOOKS} SET name = ?, description = ?, url = ?, events = ?, template = ?, enabled = ?, rate_per_minute = ?, updated_at = ? WHERE id = ?`,
+        `UPDATE ${WEBHOOKS} SET name = ?, description = ?, url = ?, events = ?, template = ?, enabled = ?, rate_per_minute = ?, audit_options = ?, updated_at = ? WHERE id = ?`,
         config.name,
         config.description,
         config.url,
@@ -165,6 +180,7 @@ export function createD1WebhookStore(getDb: () => Promise<D1Like>): WebhookStore
         config.template,
         config.enabled ? 1 : 0,
         config.ratePerMinute,
+        auditOptionsJson(config),
         at,
         id,
       )

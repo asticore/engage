@@ -49,6 +49,52 @@ export type WebhookConfig = {
   template: string | null
   enabled: boolean
   ratePerMinute: number
+  /** Activity log entries only: send just these actions. A name ending in a dot (`user.`) matches every action that starts with it. Empty sends every action. */
+  auditActions: string[]
+  /** Activity log entries only: fields left out of the payload (see AUDIT_REDACT_FIELDS). */
+  auditRedact: AuditRedactField[]
+}
+
+/** The activity log fields an admin can keep out of an `audit.recorded` payload. The action, collection and time always go. */
+export const AUDIT_REDACT_FIELDS = ['actorEmail', 'ip', 'documentId', 'detail'] as const
+export type AuditRedactField = (typeof AUDIT_REDACT_FIELDS)[number]
+
+export const MAX_AUDIT_ACTIONS = 50
+const AUDIT_ACTION_PATTERN = /^[a-z0-9][a-z0-9._:-]{0,63}$/i
+
+/** True when the action passes the webhook's filter. An empty filter passes everything. */
+export function auditActionMatches(filter: readonly string[], action: string): boolean {
+  if (filter.length === 0) return true
+  return filter.some((rule) => (rule.endsWith('.') ? action.startsWith(rule) : action === rule))
+}
+
+/** Removes the redacted fields from an activity log payload. The text fields become empty strings, so the payload keeps its shape. */
+export function redactAuditData(data: Record<string, unknown>, redact: readonly AuditRedactField[]): Record<string, unknown> {
+  if (redact.length === 0) return data
+  const out = { ...data }
+  for (const field of redact) if (field in out) out[field] = ''
+  return out
+}
+
+/** Reads the activity log filter and redaction lists from admin input (arrays, or a comma or line separated string for the actions). */
+export function parseAuditOptions(rawActions: unknown, rawRedact: unknown): ValidationResult<{ auditActions: string[]; auditRedact: AuditRedactField[] }> {
+  const list: unknown[] = Array.isArray(rawActions) ? rawActions : typeof rawActions === 'string' ? rawActions.split(/[\s,]+/) : []
+  const auditActions: string[] = []
+  for (const item of list) {
+    if (typeof item !== 'string' || item.trim() === '') continue
+    const rule = item.trim()
+    if (!AUDIT_ACTION_PATTERN.test(rule)) return { ok: false, error: `"${rule.slice(0, 40)}" is not a valid activity action. Use letters, digits, dots and dashes, for example user.ban or user.` }
+    if (!auditActions.includes(rule)) auditActions.push(rule)
+  }
+  if (auditActions.length > MAX_AUDIT_ACTIONS) return { ok: false, error: `Use at most ${MAX_AUDIT_ACTIONS} activity actions in the filter.` }
+  const auditRedact: AuditRedactField[] = []
+  if (Array.isArray(rawRedact)) {
+    for (const item of rawRedact) {
+      if (!(AUDIT_REDACT_FIELDS as readonly unknown[]).includes(item)) return { ok: false, error: `"${String(item).slice(0, 40)}" is not a field that can be left out.` }
+      if (!auditRedact.includes(item as AuditRedactField)) auditRedact.push(item as AuditRedactField)
+    }
+  }
+  return { ok: true, value: { auditActions, auditRedact } }
 }
 
 /* ------------------------------------------------------------------ URLs */
@@ -292,9 +338,12 @@ export function validateWebhook(input: unknown): ValidationResult<WebhookConfig>
     ratePerMinute = n
   }
 
+  const audit = parseAuditOptions(raw.auditActions, raw.auditRedact)
+  if (audit.ok === false) return audit
+
   return {
     ok: true,
-    value: { name, description, url: url.value, events, template: template.value, enabled: raw.enabled !== false, ratePerMinute },
+    value: { name, description, url: url.value, events, template: template.value, enabled: raw.enabled !== false, ratePerMinute, ...audit.value },
   }
 }
 

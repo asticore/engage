@@ -13,6 +13,9 @@ import {
   signatureHeader,
   validateTemplate,
   validateWebhook,
+  auditActionMatches,
+  parseAuditOptions,
+  redactAuditData,
   verifySignature,
 } from '@/features/webhooks/core'
 import { buildWebhookGuideMarkdown, markdownSectionToHtml, webhookSectionMarkdown } from '@/features/webhooks/docs'
@@ -210,5 +213,25 @@ describe('affiliate webhook events (26b)', () => {
   it('sends only allowed fields', () => {
     const body = pickEventFields('affiliate.commission.earned', { id: 1, affiliateId: 2, orderId: 3, amount: 450, payableOn: 'x', token: 'secret' })
     expect(body).toEqual({ id: 1, affiliateId: 2, orderId: 3, amount: 450, payableOn: 'x' })
+  })
+})
+
+describe('activity log options (19i)', () => {
+  it('matches exact actions and dotted families', () => {
+    expect(auditActionMatches([], 'anything')).toBe(true)
+    expect(auditActionMatches(['user.'], 'user.ban')).toBe(true)
+    expect(auditActionMatches(['user.'], 'users.ban')).toBe(false)
+    expect(auditActionMatches(['user.ban'], 'user.ban.extra')).toBe(false)
+  })
+  it('reads lists from arrays or text and rejects bad names and fields', () => {
+    expect(parseAuditOptions('user.\nsettings.update, user.', ['ip', 'ip'])).toEqual({ ok: true, value: { auditActions: ['user.', 'settings.update'], auditRedact: ['ip'] } })
+    expect(parseAuditOptions(['bad action!'], []).ok).toBe(false)
+    expect(parseAuditOptions([], ['password']).ok).toBe(false)
+    expect(parseAuditOptions(undefined, undefined)).toEqual({ ok: true, value: { auditActions: [], auditRedact: [] } })
+  })
+  it('redacts without changing the input', () => {
+    const data = { action: 'a', ip: '1.2.3.4' }
+    expect(redactAuditData(data, ['ip'])).toEqual({ action: 'a', ip: '' })
+    expect(data.ip).toBe('1.2.3.4')
   })
 })
