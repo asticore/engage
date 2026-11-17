@@ -155,6 +155,11 @@ function WorkflowForm({
         <span>Let one person approve more than one step of the same review. Off keeps each step to a different person.</span>
       </label>
 
+      <label className="rw-check">
+        <span>Days a review may wait before it is overdue (0 for no limit). The approvers get one reminder email when it passes.</span>
+        <input type="number" min={0} max={365} value={draft.reviewDueDays ?? 0} disabled={disabled} onChange={(event) => onChange({ ...draft, reviewDueDays: Math.max(0, Number(event.target.value) || 0) })} />
+      </label>
+
       <RolePicker
         legend="Who can submit"
         hint="Leave all unticked to let anyone who can edit this content submit it. Admins can always submit."

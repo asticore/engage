@@ -13,7 +13,11 @@ export type JobRunner = (ctx: JobContext) => Promise<unknown>
 export const JOB_RUNNERS: Record<string, JobRunner> = {
   schedules: async ({ engine, db, now }) => {
     const { runDueSchedules } = await import('@/features/schedule/runDue')
-    return runDueSchedules(engine as never, db as never, now.toISOString())
+    const result = await runDueSchedules(engine as never, db as never, now.toISOString())
+    // Reviews that have waited past their workflow's due days are chased on the same timer (never fails the run).
+    const { runOverdueReviewReminders } = await import('@/features/approval/overdue')
+    await runOverdueReviewReminders(engine as never, now).catch((): number => 0)
+    return result
   },
   'abandoned-carts': async ({ engine }) => {
     const { runAbandonedCartReminders } = await import('@/features/ecommerce/server/abandoned')

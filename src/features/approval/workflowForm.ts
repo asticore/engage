@@ -33,6 +33,7 @@ export type WorkflowDraft = {
   collection: ApprovalCollection
   active: boolean
   allowRepeatApprover: boolean
+  reviewDueDays?: number
   submitterRoles: string[]
   steps: DraftStep[]
   authorRoutes: AuthorRoutes
@@ -45,6 +46,7 @@ export type WorkflowRecord = {
   collection?: string
   active?: boolean | null
   allowRepeatApprover?: boolean | null
+  reviewDueDays?: number | null
   submitterRoles?: unknown
   steps?: Array<{ id?: string; name?: string | null; approverRoles?: unknown; approvalsNeeded?: number | null; approverUsers?: unknown; alsoRoles?: boolean | null }> | null
   authorRoutes?: unknown
@@ -63,6 +65,7 @@ export const emptyDraft = (collection: ApprovalCollection = 'pages'): WorkflowDr
   collection,
   active: false,
   allowRepeatApprover: false,
+  reviewDueDays: 0,
   submitterRoles: [],
   steps: [emptyStep()],
   authorRoutes: {},
@@ -76,6 +79,7 @@ export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
     collection,
     active: record.active === true,
     allowRepeatApprover: record.allowRepeatApprover === true,
+    reviewDueDays: Number.isFinite(Number(record.reviewDueDays)) ? Math.max(0, Number(record.reviewDueDays)) : 0,
     submitterRoles: parseRoleList(record.submitterRoles),
     steps: (record.steps ?? []).map((step) => ({
       key: step.id || newStepKey(),
@@ -96,6 +100,7 @@ export function payloadFromDraft(draft: WorkflowDraft): Record<string, unknown> 
     collection: draft.collection,
     active: draft.active,
     allowRepeatApprover: draft.allowRepeatApprover,
+    reviewDueDays: (draft.reviewDueDays ?? 0) > 0 ? Math.min(365, Math.floor(draft.reviewDueDays ?? 0)) : null,
     submitterRoles: draft.submitterRoles,
     steps: draft.steps.map((step) => ({
       name: step.name.trim(),

@@ -90,6 +90,13 @@ export const ApprovalWorkflows: CollectionConfig = {
       admin: { description: 'When on, one person who can approve two steps may approve both in the same review. Off keeps each step to a different person.' },
     },
     {
+      name: 'reviewDueDays',
+      type: 'number',
+      min: 0,
+      max: 365,
+      admin: { description: 'Days a review may wait. Past this the document shows as overdue and the approvers get one reminder email. Blank or 0 means no limit.' },
+    },
+    {
       name: 'submitterRoles',
       type: 'json',
       admin: { description: 'Role slugs that may submit. Empty means anyone who can edit this content.' },
