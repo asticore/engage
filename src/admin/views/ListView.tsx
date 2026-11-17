@@ -1,4 +1,5 @@
 import { UsersBulkBar } from './UsersBulkBar'
+import { BAN_MARKER } from '@/features/security/userBans'
 import type { Where } from '@/engine'
 import { adminHref } from '@/features/security/adminPath'
 import { domainScopeWhere } from '@/features/domains/access'
@@ -174,7 +175,11 @@ export async function ListView({
   const hasTrash = bulkCollection !== null && bulkCollection !== 'orders'
   const trashView = hasTrash && searchParams.trash === '1'
   const trashClause = hasTrash ? { trashedAt: { exists: trashView } } : null
-  const listWhere = trashClause ? (findArgs.where ? { and: [findArgs.where, trashClause] } : trashClause) : findArgs.where
+  // Users: a Banned filter (a ban rides on the sign-in lock marker, see features/security/userBans.ts).
+  const bannedView = collectionSlug === 'users' && searchParams.status === 'banned'
+  const bannedClause: Where | null = bannedView ? { loginAttempts: { greater_than: BAN_MARKER - 1 } } : null
+  const baseWhere = trashClause ? (findArgs.where ? { and: [findArgs.where, trashClause] } : trashClause) : findArgs.where
+  const listWhere = bannedClause ? (baseWhere ? { and: [baseWhere, bannedClause] } : bannedClause) : baseWhere
   const trashCount = hasTrash
     ? await context.engine.count({ collection: collectionSlug, where: { trashedAt: { exists: true } } as Where, user: context.user }).then((r) => r.totalDocs).catch(() => 0)
     : 0
@@ -351,6 +356,17 @@ export async function ListView({
             </a>
           ))}
         </div>
+      )}
+
+      {collectionSlug === 'users' && activeTab.view === 'list' && (
+        <nav aria-label="Account status" className="es-trash-links">
+          <a aria-current={!bannedView ? 'true' : undefined} href={adminCollectionPath(collectionSlug)}>
+            All
+          </a>
+          <a aria-current={bannedView ? 'true' : undefined} href={`${adminCollectionPath(collectionSlug)}?status=banned`}>
+            Banned
+          </a>
+        </nav>
       )}
 
       {/* Trash (pages, posts, events) */}
