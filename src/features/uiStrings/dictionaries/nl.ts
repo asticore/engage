@@ -4136,6 +4136,12 @@ const nl: UiDictionary = {
   "themeStyle.confirm": "Dit thema toepassen? Dit vervangt je huidige kleuren, teksten, knoppen en indeling. Het wordt pas opgeslagen als je Wijzigingen opslaan kiest.",
   "themeStyle.applied": "Het thema op basis van je keuzes is toegepast in de editor. Bekijk het en kies daarna Wijzigingen opslaan.",
   "themeStyle.use": "Dit thema gebruiken",
+  "auth.test": "Testen",
+  "signins.title": "Aanmeldingen, {from} tot {to}",
+  "signins.from": "Van",
+  "signins.to": "Tot",
+  "signins.apply": "Tonen",
+  "signins.reset": "Laatste 30 dagen",
 }
 
 export default nl

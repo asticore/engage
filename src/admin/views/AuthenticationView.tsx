@@ -9,7 +9,10 @@ import { getFeatureFlags } from '@/utilities/features'
 
 import { MATRIX_METHODS, methodAllowed, readMatrix } from '@/features/security/authMatrix'
 
-import { AreaToggle, AuthMethodToggle } from './AuthMethodToggle'
+import { getAdminUi } from '@/admin/i18n/serverUi'
+import { testKind } from '@/features/security/authMethodTest'
+
+import { AreaToggle, AuthMethodTest, AuthMethodToggle } from './AuthMethodToggle'
 
 const BADGE = { on: 'On', off: 'Off', 'needs-setup': 'Needs setup' } as const
 
@@ -19,6 +22,7 @@ export async function AuthenticationView() {
   const root = await getAdminRoot()
   if (!context.user) redirect(adminHref('/login', root))
   if (!context.isAdmin) return <p>Only an admin can see the authentication overview.</p>
+  const ui = await getAdminUi()
   const [settings, social] = await Promise.all([getSecuritySettings(context.engine as never), readSocialConfig(context.engine as never)])
   const featureOn = Boolean((await getFeatureFlags()).agents)
   let activeTokens = 0
@@ -62,6 +66,7 @@ export async function AuthenticationView() {
               <td>{row.detail}</td>
               <td>
                 <a href={adminHref(row.href, root)}>Open</a>
+                {testKind(row.id) ? <AuthMethodTest id={row.id} label={row.label} text={ui.t('auth.test')} /> : null}
               </td>
             </tr>
           ))}

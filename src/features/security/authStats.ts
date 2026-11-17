@@ -65,15 +65,15 @@ export async function loadAuthStats(db: D1Like, days: number, now: Date): Promis
 export type AccountCounts = { signUps: number; activeSessions: number }
 
 /** New accounts in the last `days` days and sessions that have not expired. Null when the tables cannot be read. */
-export async function loadAccountCounts(db: D1Like, days: number, now: Date): Promise<AccountCounts | null> {
+export async function loadAccountCounts(db: D1Like, days: number, now: Date, until?: string): Promise<AccountCounts | null> {
   try {
     const since = `${lastDays(days, now)[0]}T00:00:00.000Z`
     const count = async (sql: string, value: string): Promise<number> => {
-      const { results } = await db.prepare(sql).bind(value).all()
+      const { results } = await db.prepare(sql).bind(value, ...(until && sql.includes('created_at') ? [until] : [])).all()
       return Number((results?.[0] as { n?: number } | undefined)?.n ?? 0)
     }
     const [signUps, activeSessions] = await Promise.all([
-      count('SELECT COUNT(*) AS n FROM `eg_users` WHERE created_at >= ?', since),
+      count(`SELECT COUNT(*) AS n FROM \`eg_users\` WHERE created_at >= ?${until ? ' AND created_at < ?' : ''}`, since),
       count('SELECT COUNT(*) AS n FROM `eg_users_sessions` WHERE expires_at > ?', now.toISOString()),
     ])
     return { signUps, activeSessions }

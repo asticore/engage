@@ -4136,6 +4136,12 @@ const ar: UiDictionary = {
   "themeStyle.confirm": "هل تريد تطبيق هذه السمة؟ ستحل محل الألوان والنصوص والأزرار والتخطيط الحالية. لن تُحفظ حتى تختار حفظ التغييرات.",
   "themeStyle.applied": "تم تطبيق السمة التي أنشأتها من اختياراتك على المحرر. راجعها ثم اختر حفظ التغييرات.",
   "themeStyle.use": "استخدام هذه السمة",
+  "auth.test": "اختبار",
+  "signins.title": "عمليات تسجيل الدخول، من {from} إلى {to}",
+  "signins.from": "من",
+  "signins.to": "إلى",
+  "signins.apply": "عرض",
+  "signins.reset": "آخر 30 يومًا",
 }
 
 export default ar

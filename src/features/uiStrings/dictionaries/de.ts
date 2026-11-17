@@ -4137,6 +4137,12 @@ const de: UiDictionary = {
   "themeStyle.confirm": "Dieses Design übernehmen? Es ersetzt deine aktuellen Farben, Texte, Buttons und dein Layout. Es wird erst gespeichert, wenn du Änderungen speichern wählst.",
   "themeStyle.applied": "Das Design aus deinen Auswahlen ist im Editor übernommen. Prüfe es und wähle dann Änderungen speichern.",
   "themeStyle.use": "Dieses Design verwenden",
+  "auth.test": "Testen",
+  "signins.title": "Anmeldungen, {from} bis {to}",
+  "signins.from": "Von",
+  "signins.to": "Bis",
+  "signins.apply": "Anzeigen",
+  "signins.reset": "Letzte 30 Tage",
 }
 
 export default de

@@ -138,8 +138,8 @@ Built: a feature section `taskboard` (Site Settings, Features; off by default) a
 
 ### Task 18. Authentication: methods, accounts and one settings screen (new, 14 Nov 2026)
 Same conventions as Tasks 11 to 17 (off by default, migrations plus fresh-install specs, Shine, thirteen languages, WCAG AA, a Live checks live check).
-- [ ] 18b leftovers: a Test button per method (provider config check, email send), and SMS and SSO rows once built.
-- [ ] 18c leftovers: a date range picker (fixed 30 days now), and per-method detail for each social provider.
+- [ ] 18b leftovers: SMS rows once built.
+- [ ] 18c leftovers: per-method detail for each social provider.
 - [ ] **18f SMS sign-in and SMS two-factor (wanted, decided 14 Nov).** Scope: a Twilio connection in Integrations (account SID, auth token, sending number or messaging service, Test button, spend cap, per-number rate limit, country allow list), then: SMS code as a second factor next to the authenticator app and email code (user chooses their factors; admin picks which factors are allowed and which are required per role), phone number sign-in with SMS code, number verification, backup codes still work. Done when: a member enrols a phone, signs in with password plus SMS code, and the same works for staff; failures and sends are in the audit log. Code: `src/features/sms/twilio.ts` (sending only today), `src/features/security/twoFactor*.ts`, `SecondFactorChoice.tsx`, `src/features/passwordless/core.ts`, Integrations screen.
 - [ ] 18l leftovers: an SMS row in the matrix once 23f exists.
 - [ ] 18j leftovers: use the access helper (`src/features/organizations/access.ts`) in the shop orders list, form submissions, approval requests and taskboard once each has organisation and team columns (Task 7 and the later approval and taskboard items).
@@ -862,6 +862,7 @@ Every built item that still needs a live check is listed here, in groups. Tick a
 - [ ] Task 17i webhook transfer: on the Webhooks screen press Export settings, delete one webhook, press Import settings with the file, and check it returns switched off with a new secret (rotate shows it). Check the file contains no secret.
 - [ ] Task 18e last used: sign in on the member sign-in page with Google (or another provider), sign out, return to the page and check Last used shows beside that button; sign in with a password and check it moves to the password button.
 - [ ] Task 18c sign-in cards: with Security on, open the dashboard as admin and check Failed sign-ins and Sign-in methods used show; fail a sign-in once and check today's bar rises.
+- [ ] Live check 18b-18c (Test button and sign-in date range): on Settings > Security > Authentication press Test on Magic link (a test email arrives at your address) and on Google without a secret (reads Missing). On the dashboard pick From and To dates in the Sign-ins card and press Show; the charts and counts follow, and Last 30 days resets it.
 - [ ] Task 18b overview: open Settings > Security > Authentication overview as admin and check each method shows the right status; switch on Google without a client secret and check it reads Needs setup.
 - [ ] Task 19h disposable email: switch on the new setting in Members settings and try to join with a Mailinator address; check the clear refusal. Switch it off and check it is accepted.
 - [ ] Task 23c free-shipping bar: set a Free over amount method on a shipping zone, add items below the threshold and check the bar and message on the cart page, then add more and check it reads You have free shipping.

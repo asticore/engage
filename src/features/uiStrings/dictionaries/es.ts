@@ -4136,6 +4136,12 @@ const es: UiDictionary = {
   "themeStyle.confirm": "¿Aplicar este tema? Reemplaza tus colores, textos, botones y diseño actuales. No se guarda hasta que elijas Guardar cambios.",
   "themeStyle.applied": "El tema creado con tus elecciones se ha aplicado al editor. Revísalo y luego elige Guardar cambios.",
   "themeStyle.use": "Usar este tema",
+  "auth.test": "Probar",
+  "signins.title": "Inicios de sesión, {from} a {to}",
+  "signins.from": "Desde",
+  "signins.to": "Hasta",
+  "signins.apply": "Mostrar",
+  "signins.reset": "Últimos 30 días",
 }
 
 export default es

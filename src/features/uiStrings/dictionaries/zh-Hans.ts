@@ -4135,6 +4135,12 @@ const zhHans: UiDictionary = {
   "themeStyle.confirm": "应用此主题？这将替换你当前的颜色、文字、按钮和布局。在你选择“保存更改”之前不会保存。",
   "themeStyle.applied": "根据你的选择生成的主题已应用到编辑器。请检查后选择“保存更改”。",
   "themeStyle.use": "使用此主题",
+  "auth.test": "测试",
+  "signins.title": "登录,{from} 至 {to}",
+  "signins.from": "从",
+  "signins.to": "至",
+  "signins.apply": "显示",
+  "signins.reset": "最近30天",
 }
 
 export default zhHans
