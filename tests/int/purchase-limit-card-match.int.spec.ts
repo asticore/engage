@@ -37,7 +37,7 @@ beforeEach(() => {
   order(4, 'cancelled@y.com', '99 Elsewhere Rd', 3, 'cancelled')
 })
 
-const who = { emailKeys: ['a@x.com'], userId: null, addressKey: addressKey('1 First Street', '4000') }
+const who: store.Identity = { emailKeys: ['a@x.com'], userId: null, addressKey: addressKey('1 First Street', '4000') }
 const prior = () => store.priorPurchases(d1Over(db), 7, who, null, normaliseEmail, addressKey, 0)
 
 describe('card fingerprint match', () => {
