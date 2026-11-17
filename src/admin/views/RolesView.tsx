@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 import { getAdminContext } from '@/admin/auth'
 import { loadApprovalSettings } from '@/features/approval/settings'
-import type { WorkflowRecord } from '@/features/approval/workflowForm'
+import { approverCandidates, type WorkflowRecord } from '@/features/approval/workflowForm'
 import { RolesViewClient } from './RolesViewClient'
 
 /**
@@ -37,15 +37,17 @@ export async function RolesView() {
     .find({ collection: 'approval-workflows', limit: 200, depth: 0, sort: 'name', overrideAccess: true })
     .then((result) => (result.docs || []) as unknown as WorkflowRecord[])
     .catch((): WorkflowRecord[] => [])
-  // Staff who can be named as approvers: anyone who is not just a customer.
-  const people = await context.engine
-    .find({ collection: 'users', limit: 500, depth: 0, sort: 'name', overrideAccess: true })
-    .then((result) =>
-      ((result.docs || []) as unknown as Array<{ id: number; name?: string; email?: string; roles?: string[] }>)
-        .filter((u) => Array.isArray(u.roles) && u.roles.some((r) => r !== 'customer'))
-        .map((u) => ({ id: Number(u.id), name: u.name || u.email || `User ${u.id}` })),
-    )
-    .catch((): Array<{ id: number; name: string }> => [])
+  // People who can be named as approvers: staff roles and custom-role holders, not plain customers. Read in pages so a big user list is not cut at 500.
+  const people: Array<{ id: number; name: string }> = []
+  try {
+    for (let page = 1; page <= 10; page++) {
+      const result = await context.engine.find({ collection: 'users', limit: 500, page, depth: 0, sort: 'name', overrideAccess: true })
+      people.push(...approverCandidates((result.docs || []) as unknown as Parameters<typeof approverCandidates>[0]))
+      if (!(result as { hasNextPage?: boolean }).hasNextPage) break
+    }
+  } catch {
+    // an empty picker is shown
+  }
   const approvalEnabled = (await loadApprovalSettings(context.engine as never)).enabled
 
   return (

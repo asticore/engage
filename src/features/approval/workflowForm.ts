@@ -154,6 +154,24 @@ export function setAuthorRoute(routes: AuthorRoutes, author: number, approvers: 
   return next
 }
 
+/**
+ * People who can be named as approvers or stand-ins: anyone with a staff role, and anyone with a custom role
+ * (which can carry its own approval rights even when their built-in role is only customer). Plain customers are left out.
+ */
+export function approverCandidates(users: ReadonlyArray<{ id: number | string; name?: string | null; email?: string | null; roles?: unknown; customRole?: unknown }>): Array<{ id: number; name: string }> {
+  const out: Array<{ id: number; name: string }> = []
+  for (const user of users) {
+    const id = Number(user.id)
+    if (!Number.isInteger(id) || id <= 0) continue
+    const staff = Array.isArray(user.roles) && user.roles.some((role) => typeof role === 'string' && role !== 'customer')
+    const rawCustom = typeof user.customRole === 'object' && user.customRole !== null ? (user.customRole as { id?: unknown }).id : user.customRole
+    const custom = Number.isInteger(Number(rawCustom)) && Number(rawCustom) > 0
+    if (!staff && !custom) continue
+    out.push({ id, name: user.name?.trim() || user.email || `User ${id}` })
+  }
+  return out
+}
+
 /** Sets who covers for one reviewer. A null stand-in removes the reviewer's row; one reviewer has at most one. */
 export function setStandIn(list: StandIn[], userId: number, standInId: number | null, until: string | null): StandIn[] {
   const rest = list.filter((entry) => entry.userId !== userId)
