@@ -104,6 +104,7 @@ export const QUOTE_EMAILS = {
   received: { subject: 'We got your {{kindLabel}} ({{number}})', body: 'Hi {{name}},\n\nThanks, we have your {{kindLabel}} ({{number}}). We will get back to you soon.\n\n{{siteName}}' },
   adminNew: { subject: 'New {{kindLabel}} {{number}} from {{name}}', body: '{{name}} ({{email}}) sent a {{kindLabel}}.\n\n{{details}}\n\nOpen it in Quotes and requests.' },
   quote: { subject: 'Your quote {{number}} from {{siteName}}', body: 'Hi {{name}},\n\n{{message}}\n\nTotal: {{total}}. Valid until {{validUntil}}.\n\nSee the quote, accept it or reply with a counter-offer:\n{{link}}\n\n{{siteName}}' },
+  expiring: { subject: 'Your quote {{number}} expires on {{validUntil}}', body: 'Hi {{name}},\n\nA reminder that your quote {{number}} for {{total}} is open until {{validUntil}}. To accept it or reply with a counter-offer, use the link in our earlier quote email, or reply to this message and we will send a new one.\n\n{{siteName}}' },
   counter: { subject: 'Counter-offer on {{number}} from {{name}}', body: '{{name}} ({{email}}) replied to quote {{number}}.\n\n{{note}}' },
   accepted: { subject: 'Quote {{number}} accepted by {{name}}', body: '{{name}} accepted quote {{number}} for {{total}}. Order {{orderNumber}} is waiting for payment.' },
   declined: { subject: 'Quote {{number}} declined by {{name}}', body: '{{name}} declined quote {{number}}.' },

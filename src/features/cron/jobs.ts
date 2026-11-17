@@ -65,7 +65,11 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { runBookingReminders } = await import('@/features/bookings/reminders')
     const { sendEmail } = await import('@/features/email')
     const site = (await (engine as never as { findGlobal: (a: unknown) => Promise<{ siteName?: string } | null> }).findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch((): null => null)) ?? {}
-    return { bookingReminders: await runBookingReminders(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never) }
+    const { runQuoteSweep } = await import('@/features/quotes/expiry')
+    return {
+      bookingReminders: await runBookingReminders(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never),
+      quotes: await runQuoteSweep(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never),
+    }
   },
   'shipment-tracking': async ({ engine, now }) => {
     const { pollTracking } = await import('@/features/ecommerce/server/tracking')
