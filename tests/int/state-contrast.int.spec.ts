@@ -61,6 +61,14 @@ button, a, input { margin: 6px; }
 <a id="s-link" class="link" href="#">Read more</a>
 <input id="s-input" class="input" value="Hello" />
 <input id="s-input-disabled" class="input" value="Hello" disabled />
+<span id="s-badge" class="badge">New</span>
+<span id="s-badge-solid" class="badge badge-solid">Sale</span>
+<span id="s-badge-outline" class="badge badge-outline">Draft</span>
+<span id="s-chip" class="badge badge-outline" style="--sh-tone: var(--sh-success, green)">Filter</span>
+<input id="s-switch" class="switch" type="checkbox" role="switch" aria-label="On off" />
+<input id="s-switch-on" class="switch" type="checkbox" role="switch" aria-label="On" checked />
+<ul class="menu" style="position:static;display:flex"><li><button id="s-menu" class="menu-item" type="button">Rename</button></li><li><a id="s-menu-active" aria-current="page" href="#">Settings</a></li></ul>
+<table class="table table-hover"><tbody><tr id="s-row"><td>Row</td></tr><tr id="s-row-selected" aria-selected="true"><td>Picked</td></tr></tbody></table>
 </body></html>`
 
 type Probe = { fg: Rgba; bg: Rgba; surface: Rgba; ring: string | null; ringColor: Rgba | null; border: Rgba | null; borderWidth: number }
@@ -155,7 +163,7 @@ const states = async (page: Page, id: string) => {
 type Case = { id: string; html: string; text: string[]; disabled?: boolean; ring?: boolean; boundary?: boolean }
 const textCases = (suite: 'admin' | 'shine'): Case[] => {
   const html = suite === 'admin' ? adminHtml : shineHtml
-  const names = suite === 'admin' ? ['a-btn', 'a-btn-primary', 'a-link', 'a-tab', 'a-tab-selected'] : ['s-btn', 's-btn-outline', 's-btn-ghost', 's-btn-soft', 's-link']
+  const names = suite === 'admin' ? ['a-btn', 'a-btn-primary', 'a-link', 'a-tab', 'a-tab-selected'] : ['s-btn', 's-btn-outline', 's-btn-ghost', 's-btn-soft', 's-link', 's-badge', 's-badge-solid', 's-badge-outline', 's-chip', 's-menu', 's-menu-active', 's-row', 's-row-selected']
   return names.map((id) => ({ id, html, text: ['resting', 'hover', 'active', 'focus'] }))
 }
 const disabledCases = (suite: 'admin' | 'shine'): Case[] => {
@@ -237,6 +245,23 @@ describe('focus rings and boundaries (>= 3:1 against the surface)', () => {
           const s = await probe(page, id)
           expect(s.border, `${id} has a border`).not.toBeNull()
           expect(ratio(s.border!, s.surface), `${id} border`).toBeGreaterThanOrEqual(3)
+        } finally {
+          await page.close()
+        }
+      })
+    }
+  }
+})
+
+describe('toggle track against the surface (>= 3:1, WCAG 1.4.11)', () => {
+  for (const theme of ['light', 'dark'] as const) {
+    for (const id of ['s-switch', 's-switch-on']) {
+      it(`${theme}: shine #${id} track`, async (ctx) => {
+        if (!browser) return ctx.skip()
+        const page = await open(shineHtml, theme)
+        try {
+          const s = await probe(page, id)
+          expect(ratio(s.bg, s.surface), id).toBeGreaterThanOrEqual(3)
         } finally {
           await page.close()
         }

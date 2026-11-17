@@ -31,6 +31,8 @@ const publicBody = `
   <label>Pick <select class="select"><option>One</option></select></label>
   <label><input type="checkbox" class="checkbox"> Remember me</label>
   <p><button class="btn btn-sm" disabled>Sold out</button></p>
+  <p><span class="badge">New</span> <input type="checkbox" class="switch" role="switch" aria-label="Alerts"></p>
+  <ul class="menu" style="position:static"><li><button type="button">Rename</button></li><li><a href="#">Settings</a></li></ul>
 </main>`
 
 const adminBody = `
