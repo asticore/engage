@@ -393,5 +393,10 @@ export async function finalizePaidIntent(engine: Engine, paymentIntent: Stripe.P
     return { orderId, firstTime: false }
   }
   const { firstTime } = await markOrderPaid(engine as never, orderId, { paymentIntentId: paymentIntent.id, transactionId })
+  // Purchase limits: remember which card paid, so the same card under another email or address still counts as one person.
+  if (firstTime) {
+    const { recordOrderCardPrint } = await import('@/features/purchaseLimits/cardPrint')
+    await recordOrderCardPrint(orderId, paymentIntent.id, resolveStripeSecret(await loadPaymentSettings(engine as never)))
+  }
   return { orderId, firstTime }
 }
