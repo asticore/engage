@@ -14,6 +14,32 @@ const blank = (r: Req): Draft => ({
 })
 const money = (c: number, cur: string): string => new Intl.NumberFormat('en-AU', { style: 'currency', currency: cur }).format(c / 100)
 
+/** The files a customer attached to one request, as download links. Loads when the request is shown. */
+function Attachments({ number }: { number: string }) {
+  const [files, setFiles] = useState<{ key: string; name: string; size: number }[]>([])
+  useEffect(() => {
+    let live = true
+    fetch(`/api/admin-quote-file?number=${encodeURIComponent(number)}`)
+      .then(async (res) => ((await res.json().catch(() => ({}))) as { files?: { key: string; name: string; size: number }[] }).files ?? [])
+      .then((list) => {
+        if (live) setFiles(list)
+      })
+      .catch((): void => undefined)
+    return () => {
+      live = false
+    }
+  }, [number])
+  if (files.length === 0) return null
+  return (
+    <p className="text-muted">
+      Files:{' '}
+      {files.map((f) => (
+        <a key={f.key} href={`/api/admin-quote-file?number=${encodeURIComponent(number)}&key=${encodeURIComponent(f.key)}`} style={{ marginRight: 12 }}>{f.name} ({Math.max(1, Math.round(f.size / 1024))} KB)</a>
+      ))}
+    </p>
+  )
+}
+
 /** The request inbox: what people asked for, a quote builder with merge tags like {{name}} in the message, and the activity log. */
 export function QuotesAdminPanel() {
   const [requests, setRequests] = useState<Req[] | null>(null)
@@ -68,6 +94,7 @@ export function QuotesAdminPanel() {
             <strong>{r.number} · {r.kind === 'bid' ? 'Offer' : r.kind === 'item' ? 'Item request' : 'Quote request'} · {r.status}</strong>
             <p>{r.name} ({r.email}{r.phone ? `, ${r.phone}` : ''}). Quantity {r.quantity}{r.deadline ? `, needed by ${r.deadline}` : ''}{r.offerCents ? `. Offer ${money(r.offerCents, r.currency)}` : ''}.</p>
             {r.details ? <p style={{ whiteSpace: 'pre-wrap' }}>{r.details}</p> : null}
+            <Attachments number={r.number} />
             {r.totalCents !== null ? <p className="text-muted">Quoted {money(r.totalCents, r.currency)}{r.validUntil ? `, valid until ${r.validUntil.slice(0, 10)}` : ''}.</p> : null}
             {r.counterNote || r.counterCents ? <p className="text-muted">Customer replied: {r.counterNote}{r.counterCents ? ` (would pay ${money(r.counterCents, r.currency)})` : ''}</p> : null}
             {r.orderId ? <p className="text-muted">Order {r.orderId} is in Orders. Mark it paid there when the money arrives.</p> : null}
