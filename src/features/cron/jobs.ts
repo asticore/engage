@@ -72,6 +72,10 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { runScheduledReset } = await import('@/features/demos/service')
     return runScheduledReset(engine as never, env.D1 as never, now)
   },
+  'affiliate-payable': async ({ now }) => {
+    const { sendPayableEmails } = await import('@/features/affiliates/service')
+    return sendPayableEmails(now)
+  },
   'client-reports': async ({ engine, env, now }) => {
     const { getFeatureFlags } = await import('@/utilities/features')
     if (!(await getFeatureFlags()).clientreports) return 'feature off'

@@ -3212,6 +3212,15 @@ export const UI_STRING_SOURCE = {
   "webhooks.event.affiliate.approved": "Affiliate approved",
   "webhooks.event.affiliate.commission.earned": "Affiliate commission earned",
   "webhooks.event.affiliate.payout.recorded": "Affiliate payout recorded",
+  "affiliate.email.approved.subject": "You are approved as an affiliate",
+  "affiliate.email.approved.body": "Hi {name},\n\nYou are approved. You earn {pct}% commission on orders from people who follow your link and buy within {days} days.\n\nYour link: {link}\nYour private results page: {dashboard}\n\nKeep the results link private: anyone who has it can see your results. Please say clearly that your link is an affiliate link when you share it.",
+  "affiliate.email.commission.subject": "You earned a commission of {amount}",
+  "affiliate.email.commission.body": "Hi {name},\n\nSomeone bought through your link (order #{order}). You earned {amount}.\nIt becomes payable on {date}, and is reduced if the order is refunded.\n\nSee your results: {dashboard}",
+  "affiliate.email.payout.subject": "Your payout of {amount} was recorded",
+  "affiliate.email.payout.body": "Hi {name},\n\nA payout of {amount} was recorded for you.{reference}\nIt is sent outside the site, so it may take a little while to reach you.\n\nSee your results: {dashboard}",
+  "affiliate.email.payout.reference": " Reference: {note}.",
+  "affiliate.email.payable.subject": "{amount} is now payable to you",
+  "affiliate.email.payable.body": "Hi {name},\n\nThe waiting period is over for order #{order}. {amount} is now payable to you and will be sent outside the site.\n\nSee your results: {dashboard}",
   // Webhooks: tracking event saved (added 30 Oct 2026)
   "webhooks.event.tracking-event.saved": "Tracking event saved",
   // Portal search (task 6, added 30 Oct 2026)

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { approvedEmail, commissionEmail, payoutEmail } from '@/features/affiliates/emails'
+import { approvedEmail, commissionEmail, payableEmail, payoutEmail } from '@/features/affiliates/emails'
+import { loadStrings } from '@/features/uiStrings/t'
 
 describe('affiliate emails', () => {
   it('approved email carries the link, rate and private results page', () => {
@@ -17,5 +18,21 @@ describe('affiliate emails', () => {
     const p = payoutEmail({ name: 'Sam', amountCents: 500, note: 'PAY-1', dashboard: 'd' })
     expect(p.subject).toContain('$5.00')
     expect(p.text).toContain('Reference: PAY-1.')
+  })
+  it('payable email says the waiting period is over', () => {
+    const m = payableEmail({ name: 'Sam', orderId: 9, amountCents: 2500, dashboard: 'https://x.com/d' })
+    expect(m.subject).toContain('$25.00')
+    expect(m.text).toContain('order #9')
+    expect(m.text).toContain('https://x.com/d')
+  })
+  it('is written in another language when given its strings, with every value filled in', async () => {
+    const de = await loadStrings('de')
+    const m = approvedEmail({ name: 'Sam', link: 'https://x.com/?ref=sam', dashboard: 'https://x.com/d', commissionPct: 12, cookieDays: 30 }, de)
+    expect(m.subject).toBe('Du wurdest als Partner freigegeben')
+    expect(m.text).toContain('12% Provision')
+    expect(m.text).not.toMatch(/\{\w+\}/)
+    const p = payoutEmail({ name: 'Sam', amountCents: 500, note: 'PAY-1', dashboard: 'd' }, de)
+    expect(p.text).toContain('Referenz: PAY-1.')
+    expect(p.text).not.toMatch(/\{\w+\}/)
   })
 })
