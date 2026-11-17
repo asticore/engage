@@ -4141,6 +4141,13 @@ const zhHans: UiDictionary = {
   "signins.to": "至",
   "signins.apply": "显示",
   "signins.reset": "最近30天",
+  // Coming soon screen: email signup
+  'comingSoon.signup.label': '\u4e0a\u7ebf\u65f6\u901a\u8fc7\u90ae\u4ef6\u901a\u77e5\u6211',
+  'comingSoon.signup.placeholder': '\u60a8\u7684\u90ae\u7bb1\u5730\u5740',
+  'comingSoon.signup.button': '\u901a\u77e5\u6211',
+  'comingSoon.signup.sending': '\u6b63\u5728\u63d0\u4ea4...',
+  'comingSoon.signup.thanks': '\u8c22\u8c22\u3002\u6211\u4eec\u4e0a\u7ebf\u65f6\u4f1a\u7ed9\u60a8\u53d1\u90ae\u4ef6\u3002',
+  'comingSoon.signup.error': '\u65e0\u6cd5\u4fdd\u5b58\u60a8\u7684\u90ae\u7bb1\uff0c\u8bf7\u91cd\u8bd5\u3002',
 }
 
 export default zhHans

@@ -4142,6 +4142,13 @@ const it: UiDictionary = {
   "signins.to": "A",
   "signins.apply": "Mostra",
   "signins.reset": "Ultimi 30 giorni",
+  // Coming soon screen: email signup
+  'comingSoon.signup.label': 'Ricevi un\'email quando lanciamo',
+  'comingSoon.signup.placeholder': 'Il tuo indirizzo email',
+  'comingSoon.signup.button': 'Avvisami',
+  'comingSoon.signup.sending': 'Invio in corso...',
+  'comingSoon.signup.thanks': 'Grazie. Ti scriveremo quando lanceremo.',
+  'comingSoon.signup.error': 'Non abbiamo potuto salvare la tua email. Riprova.',
 }
 
 export default it

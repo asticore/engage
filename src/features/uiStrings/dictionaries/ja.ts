@@ -4142,6 +4142,13 @@ const ja: UiDictionary = {
   "signins.to": "終了",
   "signins.apply": "表示",
   "signins.reset": "過去30日",
+  // Coming soon screen: email signup
+  'comingSoon.signup.label': '\u516c\u958b\u6642\u306b\u30e1\u30fc\u30eb\u3067\u304a\u77e5\u3089\u305b',
+  'comingSoon.signup.placeholder': '\u30e1\u30fc\u30eb\u30a2\u30c9\u30ec\u30b9',
+  'comingSoon.signup.button': '\u901a\u77e5\u3092\u53d7\u3051\u53d6\u308b',
+  'comingSoon.signup.sending': '\u9001\u4fe1\u4e2d...',
+  'comingSoon.signup.thanks': '\u3042\u308a\u304c\u3068\u3046\u3054\u3056\u3044\u307e\u3059\u3002\u516c\u958b\u6642\u306b\u30e1\u30fc\u30eb\u3067\u3054\u9023\u7d61\u3057\u307e\u3059\u3002',
+  'comingSoon.signup.error': '\u30e1\u30fc\u30eb\u30a2\u30c9\u30ec\u30b9\u3092\u4fdd\u5b58\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u3082\u3046\u4e00\u5ea6\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002',
 }
 
 export default ja

@@ -4142,6 +4142,13 @@ const ko: UiDictionary = {
   "signins.to": "종료",
   "signins.apply": "보기",
   "signins.reset": "최근 30일",
+  // Coming soon screen: email signup
+  'comingSoon.signup.label': '\ucd9c\uc2dc \uc2dc \uc774\uba54\uc77c\ub85c \uc54c\ub824 \ub4dc\ub9bd\ub2c8\ub2e4',
+  'comingSoon.signup.placeholder': '\uc774\uba54\uc77c \uc8fc\uc18c',
+  'comingSoon.signup.button': '\uc54c\ub9bc \ubc1b\uae30',
+  'comingSoon.signup.sending': '\ubcf4\ub0b4\ub294 \uc911...',
+  'comingSoon.signup.thanks': '\uac10\uc0ac\ud569\ub2c8\ub2e4. \ucd9c\uc2dc\ub418\uba74 \uc774\uba54\uc77c\ub85c \uc54c\ub824 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.',
+  'comingSoon.signup.error': '\uc774\uba54\uc77c\uc744 \uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud574 \uc8fc\uc138\uc694.',
 }
 
 export default ko

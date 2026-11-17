@@ -31,6 +31,7 @@ import { getSitePages, isSignedInAdmin } from '@/features/site/pages'
 import { launchReached } from '@/features/site/pagesShape'
 import { BYPASS_COOKIE, shouldShowMaintenance } from '@/features/site/maintenance'
 import { MaintenanceScreen } from '@/features/site/MaintenanceScreen'
+import { comingSoonSignupFor } from '@/features/forms/comingSoonSignup'
 import { STAGING_NOINDEX, isStaging } from '@/features/site/staging'
 import { buildFontCss, preloadLinks, remoteStylesheetUrls, resolveThemeFont } from '@/features/fonts/css'
 import { buildBuiltInFontCss } from '@/features/fonts/builtIn'
@@ -222,6 +223,8 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // Internal links on this page (blocks, menus, cards) carry the locale prefix. The portal never does.
   // Internal links point at a translated slug where the page has one (localizedSlugs.ts).
   setRequestLinkLocale(portal ? null : locale, multilingual, portal ? null : await localeLinkPaths(locale))
+  // The email signup on the coming soon screen, read only while that screen is up.
+  const comingSoonSignup = showMaintenance && maintenance.mode === 'comingSoon' ? await comingSoonSignupFor(locale) : null
 
   // Header / footer templates (Site templates). Null for each when none matches, and the built-in ones draw.
   // Conditions can scope a template by host and language too: the host without its port, and the page's language (the default one when the site is not multilingual).
@@ -302,7 +305,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           )}
           <AdPlacements position="header" />
           <main>
-            {showMaintenance ? <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} launchAt={maintenance.mode === 'comingSoon' ? maintenance.launchAt : null} /> : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
+            {showMaintenance ? <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} launchAt={maintenance.mode === 'comingSoon' ? maintenance.launchAt : null} signup={comingSoonSignup} /> : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
           </main>
           <AdPlacements position="footer" />
           {chrome.footer ? (

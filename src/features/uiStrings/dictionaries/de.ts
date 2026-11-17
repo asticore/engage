@@ -4143,6 +4143,13 @@ const de: UiDictionary = {
   "signins.to": "Bis",
   "signins.apply": "Anzeigen",
   "signins.reset": "Letzte 30 Tage",
+  // Coming soon screen: email signup
+  'comingSoon.signup.label': 'Per E-Mail benachrichtigen, wenn wir starten',
+  'comingSoon.signup.placeholder': 'Ihre E-Mail-Adresse',
+  'comingSoon.signup.button': 'Benachrichtigen',
+  'comingSoon.signup.sending': 'Wird gesendet...',
+  'comingSoon.signup.thanks': 'Danke. Wir melden uns per E-Mail, sobald wir starten.',
+  'comingSoon.signup.error': 'Ihre E-Mail konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.',
 }
 
 export default de
