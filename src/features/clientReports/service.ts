@@ -5,17 +5,21 @@ import { loadKpis } from '@/features/shopReports/queries'
 import { resolveRange } from '@/features/shopReports/range'
 import { requestSiteOrigin, configuredSiteOrigin } from '@/utilities/siteOrigin'
 
-import { isReportDue, parseRecipients, reportEmail, type Preset, type ReportData } from './core'
+import { isReportDue, parseRecipients, reportEmail, wantsSection, type ReportData, type SectionKey } from './core'
+import { loadSearch, loadTraffic } from './google'
 import * as store from './store'
 
 type Counter = { prepare: (sql: string) => { bind: (...a: unknown[]) => { all: <T>() => Promise<{ results: T[] }> } } }
 
 /** The numbers for one report. Each part fails soft: a section whose table is missing (feature off) is left out. */
-export async function buildReport(engine: Engine, d1: Counter, preset: Preset, now: Date): Promise<ReportData> {
-  const range = resolveRange({ preset }, now)
+export type ReportSpec = Pick<store.ClientReport, 'preset' | 'sections' | 'rangeFrom' | 'rangeTo'>
+
+export async function buildReport(engine: Engine, d1: Counter, spec: ReportSpec, now: Date): Promise<ReportData> {
+  const range = resolveRange({ preset: spec.preset, from: spec.rangeFrom, to: spec.rangeTo }, now)
+  const want = (key: SectionKey): boolean => wantsSection(spec.sections, key)
   let currency = 'AUD'
   let sales: ReportData['sales'] = null
-  try {
+  if (want('sales')) try {
     currency = await loadShopCurrency(engine as never)
     const k = await loadKpis(d1 as never, range)
     sales = { orders: k.orders, revenueCents: k.revenueCents, refundsCents: k.refundsCents, netCents: k.revenueCents - k.refundsCents, customers: k.customers, newCustomers: k.newCustomers, unitsSold: k.unitsSold }
@@ -23,7 +27,7 @@ export async function buildReport(engine: Engine, d1: Counter, preset: Preset, n
     sales = null
   }
   let forms: ReportData['forms'] = null
-  try {
+  if (want('forms')) try {
     const r = (await d1.prepare('SELECT COUNT(*) AS n FROM eg_form_submissions WHERE date(COALESCE(submitted_at, created_at)) >= ?1 AND date(COALESCE(submitted_at, created_at)) <= ?2').bind(range.from, range.to).all<{ n: number }>()).results[0]
     forms = { submissions: Number(r?.n ?? 0) }
   } catch {
@@ -37,7 +41,19 @@ export async function buildReport(engine: Engine, d1: Counter, preset: Preset, n
       return 0
     }
   }
-  return { range: { from: range.from, to: range.to, days: range.days }, currency, sales, forms, content: { pages: await count('pages'), posts: await count('posts') } }
+  let speed: ReportData['speed'] = null
+  if (want('speed')) {
+    try {
+      const r = (await d1.prepare("SELECT COUNT(*) AS n, AVG(performance) AS avg FROM eg_pagespeed_results r WHERE r.strategy = 'mobile' AND r.performance IS NOT NULL AND r.id = (SELECT MAX(r2.id) FROM eg_pagespeed_results r2 WHERE r2.collection = r.collection AND r2.doc_id = r.doc_id AND r2.strategy = 'mobile')").bind().all<{ n: number; avg: number | null }>()).results[0]
+      speed = { tested: Number(r?.n ?? 0), average: r?.avg === null || r?.avg === undefined ? null : Math.round(Number(r.avg)) }
+    } catch {
+      speed = null
+    }
+  }
+  const dayRange = { from: range.from, to: range.to }
+  const [traffic, search] = await Promise.all([want('traffic') ? loadTraffic(engine as never, dayRange) : null, want('search') ? loadSearch(engine as never, dayRange, now) : null])
+  const content = want('content') ? { pages: await count('pages'), posts: await count('posts') } : null
+  return { range: { from: range.from, to: range.to, days: range.days }, currency, sales, forms, content, traffic, search, speed }
 }
 
 export const reportLink = (origin: string, token: string): string => (origin ? `${origin.replace(/\/+$/, '')}/client-report/${token}` : '')
@@ -46,7 +62,7 @@ export const reportLink = (origin: string, token: string): string => (origin ? `
 export async function sendReport(engine: Engine, d1: store.D1, report: store.ClientReport, now: Date, origin: string): Promise<{ ok: boolean; message: string }> {
   const to = parseRecipients(report.recipients)
   if (to.length === 0) return { ok: false, message: 'This report has no valid recipients.' }
-  const data = await buildReport(engine, d1 as never, report.preset, now)
+  const data = await buildReport(engine, d1 as never, report, now)
   const mail = reportEmail(report.name, data, report.revoked ? '' : reportLink(origin, report.token))
   const result = await sendEmail({ to, subject: mail.subject, html: mail.html, text: mail.text, template: 'client-report' })
   if (!result.ok) return { ok: false, message: `The email was not sent: ${'error' in result && result.error ? result.error : 'unknown error'}` }

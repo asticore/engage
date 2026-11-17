@@ -204,6 +204,7 @@ import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
 import * as migration_20270317_100000_demos from './20270317_100000_demos';
 import * as migration_20270317_110000_client_reports from './20270317_110000_client_reports';
+import * as migration_20270318_250000_client_report_options from './20270318_250000_client_report_options';
 import * as migration_20270317_120000_franchising from './20270317_120000_franchising';
 import * as migration_20270316_428000_mini_cart from './20270316_428000_mini_cart';
 import * as migration_20270317_150000_stock_hold from './20270317_150000_stock_hold';
@@ -1524,5 +1525,10 @@ export const migrations = [
     up: migration_20270317_290000_blog_base.up,
     down: migration_20270317_290000_blog_base.down,
     name: '20270317_290000_blog_base',
+  },
+  {
+    up: migration_20270318_250000_client_report_options.up,
+    down: migration_20270318_250000_client_report_options.down,
+    name: '20270318_250000_client_report_options',
   },
 ];
