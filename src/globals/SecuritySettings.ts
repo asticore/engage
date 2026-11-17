@@ -4,6 +4,7 @@ import { adminOnlyFieldAccess, isAdmin } from '../access/ecommerceAccess'
 import { refuseSocialSwitchWithoutCredentials } from '../features/socialLogin/validate'
 import { socialLoginFields } from './socialLoginFields'
 import { validateAdminPathField } from '../features/security/adminPathValidate'
+import { validateSignInPathField } from '../features/security/signInPathValidate'
 import { validateCustomPolicyField } from '../features/security/customPolicy'
 import { SECURITY_SENSITIVE_FIELDS, sensitiveSettingsAfterChange } from '../features/security/sensitiveChanges'
 
@@ -312,6 +313,20 @@ export const SecuritySettings: GlobalConfig = {
         components: { Field: '@/admin/components/AdminUrlField#AdminUrlField' },
         description:
           'The address of the admin, one segment such as /studio-7f3 (lowercase letters, digits and hyphens, 3 to 40 characters). Leave it as /admin to keep the default. The old /admin address stops working once you change this. Recovery: set the ENGAGE_ADMIN_PATH environment variable in Cloudflare to a path, and it overrides this field. Bookmark the new address as soon as you save it, because the admin cannot be found without it.',
+      },
+    },
+    // The customer sign-in URL (the member one is on Members settings) (src/features/security/signInPath.ts, Task 19l). Column
+    // customer_sign_in_path, see src/migrations/20270317_280000_sign_in_paths.ts.
+    // Empty means the default, /account/sign-in and /account/member-sign-in.
+    {
+      name: 'customerSignInPath',
+      type: 'text',
+      label: 'Customer sign-in URL',
+      validate: validateSignInPathField('customer', '__memberNotHere'),
+      admin: {
+        placeholder: '/account/sign-in',
+        description:
+          'The address of the shop customer sign-in, one segment such as /welcome-in (lowercase letters, digits and hyphens, 3 to 40 characters). Leave empty to keep /account/sign-in. The old address redirects to the new one. It can never be the admin URL or a word the site uses. The member sign-in URL is on Members settings. Recovery: set the ENGAGE_CUSTOMER_SIGN_IN_PATH environment variable in Cloudflare, and it overrides this field. A page you create with the same address is hidden behind the sign-in.',
       },
     },
     // Admin "sign in as customer" (src/features/impersonation). Flat, like the fields above. Column

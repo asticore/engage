@@ -1,6 +1,7 @@
 import type { GlobalConfig } from '@/engine'
 
 import { isAdmin } from '../access/ecommerceAccess'
+import { validateSignInPathField } from '../features/security/signInPathValidate'
 
 /**
  * Paid membership behaviour - who can sign up, what non-members see, and how
@@ -31,6 +32,19 @@ export const MemberSettings: GlobalConfig = {
     update: isAdmin,
   },
   fields: [
+    // The member sign-in URL (src/features/security/signInPath.ts, Task 19l). Column sign_in_path, see
+    // src/migrations/20270317_280000_sign_in_paths.ts. Lives here because the Security table is out of columns.
+    {
+      name: 'signInPath',
+      type: 'text',
+      label: 'Member sign-in URL',
+      validate: validateSignInPathField('member', '__customerNotHere'),
+      admin: {
+        placeholder: '/account/member-sign-in',
+        description:
+          'The address of the member sign-in, one segment such as /members-in (lowercase letters, digits and hyphens, 3 to 40 characters). Leave empty to keep /account/member-sign-in. The old address redirects to the new one. It can never be the admin URL, a word the site uses, or the customer sign-in URL (a clash is skipped and the default is used). Recovery: set ENGAGE_MEMBER_SIGN_IN_PATH in Cloudflare, and it overrides this field. The customer sign-in URL is on the Security screen.',
+      },
+    },
     {
       type: 'group',
       name: 'registration',

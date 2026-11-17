@@ -188,6 +188,7 @@ import * as migration_20270317_230000_ip_rules from './20270317_230000_ip_rules'
 import * as migration_20270317_240000_user_bans from './20270317_240000_user_bans';
 import * as migration_20270317_250000_login_seen from './20270317_250000_login_seen';
 import * as migration_20270317_260000_rate_rules from './20270317_260000_rate_rules';
+import * as migration_20270317_280000_sign_in_paths from './20270317_280000_sign_in_paths';
 import * as migration_20270316_390000_dam from './20270316_390000_dam';
 import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
@@ -1356,5 +1357,10 @@ export const migrations = [
     up: migration_20270317_270000_captcha_modes.up,
     down: migration_20270317_270000_captcha_modes.down,
     name: '20270317_270000_captcha_modes',
+  },
+  {
+    up: migration_20270317_280000_sign_in_paths.up,
+    down: migration_20270317_280000_sign_in_paths.down,
+    name: '20270317_280000_sign_in_paths',
   },
 ];

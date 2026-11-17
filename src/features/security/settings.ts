@@ -78,6 +78,8 @@ export type SecuritySettings = {
   passwordGroups: PasswordGroupSettings
   /** Lets the account sign-in form take a username as well as an email. Off by default (Task 23g). */
   usernameSignIn: UsernameSignInSettings
+  /** The saved sign-in URLs as typed (member comes from Members settings, filled by readSecuritySettingsFromD1) (empty means the default). The env overrides are applied by resolveSignInPaths. */
+  signInPaths: { customer: string; member: string }
 }
 
 export type UsernameSignInSettings = {
@@ -250,6 +252,7 @@ export const DEFAULT_SECURITY_SETTINGS: SecuritySettings = {
   passwordGroups: DEFAULT_PASSWORD_GROUP_SETTINGS,
   emailVerification: DEFAULT_EMAIL_VERIFICATION_SETTINGS,
   usernameSignIn: DEFAULT_USERNAME_SIGN_IN_SETTINGS,
+  signInPaths: { customer: '', member: '' },
 }
 
 export const SECURITY_FEATURE_KEY: FeatureKey = 'security'
@@ -475,6 +478,7 @@ export function rowToSettings(row: SettingsRow | null, featureEnabled: boolean):
     twoFactor: twoFactorFrom((key) => row[key]),
     emailVerification: emailVerificationFrom((key) => row[key]),
     usernameSignIn: usernameSignInFrom((key) => row[key]),
+    signInPaths: { customer: asText(row.customer_sign_in_path, ''), member: '' },
   }
 }
 
@@ -505,6 +509,7 @@ export async function readSecuritySettingsFromD1(): Promise<SecuritySettings> {
   if (cached && now - cached.at < CACHE_TTL_MS) return cached.value
 
   let value = DEFAULT_SECURITY_SETTINGS
+  let memberSignInPath = ''
 
   try {
     const db = await getD1()
@@ -514,11 +519,16 @@ export async function readSecuritySettingsFromD1(): Promise<SecuritySettings> {
         .prepare(`SELECT features_security FROM \`${SITE_SETTINGS_TABLE}\` LIMIT 1`)
         .all()
 
+      // The member sign-in URL lives in Members settings (the Security table is out of columns). Optional.
+      const memberRows = await db.prepare('SELECT sign_in_path FROM `eg_member_settings` LIMIT 1').all().catch((): null => null)
+      memberSignInPath = asText((memberRows?.results?.[0] as SettingsRow | undefined)?.sign_in_path, '')
+
       const flagRow = flags.results?.[0] as SettingsRow | undefined
       value = rowToSettings(
         (settings.results?.[0] as SettingsRow) ?? null,
         asBool(flagRow?.features_security, DEFAULT_SECURITY_SETTINGS.featureEnabled),
       )
+      value = { ...value, signInPaths: { ...value.signInPaths, member: memberSignInPath } }
     }
   } catch {
     // Fails open: a missing table on a half-migrated database must not take
@@ -624,5 +634,6 @@ export async function getSecuritySettings(engine: EngineLike): Promise<SecurityS
     twoFactor: twoFactorFrom((key) => (settings as Record<string, unknown>)[camel(key)]),
     emailVerification: emailVerificationFrom((key) => (settings as Record<string, unknown>)[EMAIL_VERIFICATION_GLOBAL_KEYS[key] ?? key]),
     usernameSignIn: usernameSignInFrom((key) => (settings as Record<string, unknown>)[key === 'username_sign_in_enabled' ? 'usernameSignInEnabled' : key]),
+    signInPaths: { customer: asText((settings as Record<string, unknown>).customerSignInPath, ''), member: '' },
   }
 }
