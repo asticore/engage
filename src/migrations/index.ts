@@ -237,6 +237,7 @@ import * as migration_20270317_130000_username_sign_in from './20270317_130000_u
 import * as migration_20270318_200000_product_feed_mapping from './20270318_200000_product_feed_mapping';
 import * as migration_20270318_100000_taskboard_archive_due from './20270318_100000_taskboard_archive_due';
 import * as migration_20270318_120000_approval_review_due_days from './20270318_120000_approval_review_due_days';
+import * as migration_20270318_130000_member_dunning_emails from './20270318_130000_member_dunning_emails';
 
 export const migrations = [
   {
@@ -1428,5 +1429,10 @@ export const migrations = [
     up: migration_20270318_120000_approval_review_due_days.up,
     down: migration_20270318_120000_approval_review_due_days.down,
     name: '20270318_120000_approval_review_due_days',
+  },
+  {
+    up: migration_20270318_130000_member_dunning_emails.up,
+    down: migration_20270318_130000_member_dunning_emails.down,
+    name: '20270318_130000_member_dunning_emails',
   },
 ];

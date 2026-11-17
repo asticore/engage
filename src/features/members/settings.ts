@@ -45,7 +45,7 @@ type SettingsDoc = {
   registration?: { allowSignup?: boolean; requireEmailVerification?: boolean; blockDisposableEmail?: boolean; blockDisposableCustomers?: boolean; blockDisposableForms?: boolean; blockDisposableCheckout?: boolean; defaultTier?: string }
   access?: { redirectAfterLogin?: string; membersOnlyRedirect?: string; teaserMode?: string }
   billing?: { currency?: string; allowCancellation?: boolean; proration?: boolean; dunningRetryDays?: string; dunningGraceDays?: number; dunningEndAction?: string }
-  emails?: { welcomeSubject?: string; welcomeBody?: string; expiryReminderDays?: number }
+  emails?: { welcomeSubject?: string; welcomeBody?: string; expiryReminderDays?: number; dunningFailedSubject?: string; dunningFailedBody?: string; dunningRetrySubject?: string; dunningRetryBody?: string; dunningEndedSubject?: string; dunningEndedBody?: string; dunningDowngradedSubject?: string; dunningDowngradedBody?: string; dunningRecoveredSubject?: string; dunningRecoveredBody?: string }
 }
 
 /**
@@ -95,6 +95,16 @@ export const getMemberSettings = async (engine: EngineLike): Promise<MemberSetti
       welcomeSubject: text(doc.emails?.welcomeSubject, base.emails.welcomeSubject),
       welcomeBody: text(doc.emails?.welcomeBody, ''),
       expiryReminderDays: num(doc.emails?.expiryReminderDays, base.emails.expiryReminderDays),
+      dunningFailedSubject: text(doc.emails?.dunningFailedSubject, ''),
+      dunningFailedBody: text(doc.emails?.dunningFailedBody, ''),
+      dunningRetrySubject: text(doc.emails?.dunningRetrySubject, ''),
+      dunningRetryBody: text(doc.emails?.dunningRetryBody, ''),
+      dunningEndedSubject: text(doc.emails?.dunningEndedSubject, ''),
+      dunningEndedBody: text(doc.emails?.dunningEndedBody, ''),
+      dunningDowngradedSubject: text(doc.emails?.dunningDowngradedSubject, ''),
+      dunningDowngradedBody: text(doc.emails?.dunningDowngradedBody, ''),
+      dunningRecoveredSubject: text(doc.emails?.dunningRecoveredSubject, ''),
+      dunningRecoveredBody: text(doc.emails?.dunningRecoveredBody, ''),
     },
   }
 }

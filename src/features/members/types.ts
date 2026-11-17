@@ -93,6 +93,16 @@ export type MemberSettings = {
     welcomeSubject: string
     welcomeBody: string
     expiryReminderDays: number
+    dunningFailedSubject: string
+    dunningFailedBody: string
+    dunningRetrySubject: string
+    dunningRetryBody: string
+    dunningEndedSubject: string
+    dunningEndedBody: string
+    dunningDowngradedSubject: string
+    dunningDowngradedBody: string
+    dunningRecoveredSubject: string
+    dunningRecoveredBody: string
   }
 }
 
@@ -105,7 +115,7 @@ export const DEFAULT_MEMBER_SETTINGS: MemberSettings = {
     teaserMode: 'excerpt',
   },
   billing: { currency: 'AUD', allowCancellation: true, proration: true, dunningRetryDays: [1, 3, 5, 7], dunningGraceDays: 10, dunningEndAction: 'expire' },
-  emails: { welcomeSubject: 'Welcome aboard', welcomeBody: '', expiryReminderDays: 7 },
+  emails: { welcomeSubject: 'Welcome aboard', welcomeBody: '', expiryReminderDays: 7, dunningFailedSubject: '', dunningFailedBody: '', dunningRetrySubject: '', dunningRetryBody: '', dunningEndedSubject: '', dunningEndedBody: '', dunningDowngradedSubject: '', dunningDowngradedBody: '', dunningRecoveredSubject: '', dunningRecoveredBody: '' },
 }
 
 /** What a gated document looks like to whoever is asking for it. */

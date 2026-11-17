@@ -3,7 +3,7 @@ import type Stripe from 'stripe'
 import { fillTemplate, textToHtml } from '@/features/email/renderTemplate'
 import { configuredSiteOrigin } from '@/utilities/siteOrigin'
 
-import { afterRetry, CLEARED, DUNNING_EMAILS, dueAction, onPaymentFailed, stateOf, type DunningEmailKind, type DunningState } from './dunning'
+import { afterRetry, CLEARED, dunningWording, dueAction, onPaymentFailed, stateOf, type DunningEmailKind, type DunningState } from './dunning'
 import { findTierBySlug } from './entitlement'
 import { stripeClient } from './billing'
 import { getMemberSettings } from './settings'
@@ -60,7 +60,8 @@ async function send(engine: Engine, m: MembershipDoc, kind: DunningEmailKind, ex
   try {
     const site = (await engine.findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch((): null => null)) as { siteName?: string } | null
     const values = { name: who.name, tier: tierName(m), graceEnds: dateText(extra.graceEnds ?? m.graceEndsAt), freeTier: extra.freeTier ?? 'the free tier', link: extra.link, siteName: site?.siteName || 'Our team' }
-    const t = DUNNING_EMAILS[kind]
+    const settings = await getMemberSettings(engine as never).catch((): null => null)
+    const t = dunningWording(kind, settings?.emails as unknown as Record<string, unknown> | undefined)
     const text = fillTemplate(t.body, values)
     const { sendEmail } = await import('@/features/email')
     await sendEmail({ to: who.email, template: `membership.dunning-${kind}`, subject: fillTemplate(t.subject, values).replace(/[\r\n]+/g, ' '), text, html: textToHtml(text) })

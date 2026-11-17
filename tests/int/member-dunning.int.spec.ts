@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { afterRetry, CLEARED, dueAction, inGrace, onPaymentFailed, parseRetryDays, stateOf, type DunningSettings, type DunningState } from '@/features/members/dunning'
+import { afterRetry, CLEARED, DUNNING_EMAILS, dunningWording, dueAction, inGrace, onPaymentFailed, parseRetryDays, stateOf, type DunningSettings, type DunningState } from '@/features/members/dunning'
 import { grantsAccess } from '@/features/members/entitlement'
 
 const SETTINGS: DunningSettings = { dunningRetryDays: [1, 3, 5, 7], dunningGraceDays: 10, dunningEndAction: 'expire' }
@@ -74,5 +74,14 @@ describe('dunning schedule', () => {
     expect(state.nextAt).toBeNull()
     expect(dueAction(state, at(5))).toBe('none')
     expect(dueAction(state, at(10))).toBe('end')
+  })
+})
+
+describe('dunning wording', () => {
+  it('uses the site wording and falls back to the built-in text', () => {
+    expect(dunningWording('failed', {})).toEqual(DUNNING_EMAILS.failed)
+    expect(dunningWording('failed', { dunningFailedSubject: ' Card trouble ', dunningFailedBody: '' })).toEqual({ subject: 'Card trouble', body: DUNNING_EMAILS.failed.body })
+    expect(dunningWording('downgraded', { dunningDowngradedBody: 'Hi {{name}}' }).body).toBe('Hi {{name}}')
+    expect(dunningWording('ended', null)).toEqual(DUNNING_EMAILS.ended)
   })
 })

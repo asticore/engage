@@ -263,6 +263,56 @@ export const MemberSettings: GlobalConfig = {
               'How many days before a membership ends to send a reminder. Set to 0 to send no reminder at all.',
           },
         },
+        {
+          name: 'dunningFailedSubject',
+          type: 'text',
+          admin: { description: 'Failed payment email "failed": subject. Leave blank for the built-in wording. Tags: {{name}}, {{tier}}, {{graceEnds}}, {{freeTier}}, {{link}}, {{siteName}}.' },
+        },
+        {
+          name: 'dunningFailedBody',
+          type: 'textarea',
+          admin: { description: 'Failed payment email "failed": body. Leave blank for the built-in wording. Same tags as the subject.' },
+        },
+        {
+          name: 'dunningRetrySubject',
+          type: 'text',
+          admin: { description: 'Failed payment email "retry": subject. Leave blank for the built-in wording. Tags: {{name}}, {{tier}}, {{graceEnds}}, {{freeTier}}, {{link}}, {{siteName}}.' },
+        },
+        {
+          name: 'dunningRetryBody',
+          type: 'textarea',
+          admin: { description: 'Failed payment email "retry": body. Leave blank for the built-in wording. Same tags as the subject.' },
+        },
+        {
+          name: 'dunningEndedSubject',
+          type: 'text',
+          admin: { description: 'Failed payment email "ended": subject. Leave blank for the built-in wording. Tags: {{name}}, {{tier}}, {{graceEnds}}, {{freeTier}}, {{link}}, {{siteName}}.' },
+        },
+        {
+          name: 'dunningEndedBody',
+          type: 'textarea',
+          admin: { description: 'Failed payment email "ended": body. Leave blank for the built-in wording. Same tags as the subject.' },
+        },
+        {
+          name: 'dunningDowngradedSubject',
+          type: 'text',
+          admin: { description: 'Failed payment email "downgraded": subject. Leave blank for the built-in wording. Tags: {{name}}, {{tier}}, {{graceEnds}}, {{freeTier}}, {{link}}, {{siteName}}.' },
+        },
+        {
+          name: 'dunningDowngradedBody',
+          type: 'textarea',
+          admin: { description: 'Failed payment email "downgraded": body. Leave blank for the built-in wording. Same tags as the subject.' },
+        },
+        {
+          name: 'dunningRecoveredSubject',
+          type: 'text',
+          admin: { description: 'Failed payment email "recovered": subject. Leave blank for the built-in wording. Tags: {{name}}, {{tier}}, {{graceEnds}}, {{freeTier}}, {{link}}, {{siteName}}.' },
+        },
+        {
+          name: 'dunningRecoveredBody',
+          type: 'textarea',
+          admin: { description: 'Failed payment email "recovered": body. Leave blank for the built-in wording. Same tags as the subject.' },
+        },
       ],
     },
   ],
