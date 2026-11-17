@@ -1,5 +1,7 @@
 import type { Endpoint, EngineRequest } from '@/engine'
 
+import { DEFAULT_FORM_SETTINGS, getFormSettings } from '@/features/forms/settings'
+import { checkSpamRules } from '@/features/forms/spamRules'
 import { normalizeEmail } from './lib/email'
 import { PAID_STATUSES } from './lib/orderStatus'
 import { checkReview, REVIEW_RATE_LIMIT_PER_MINUTE, type ReviewInput } from './reviews'
@@ -71,9 +73,11 @@ export const reviewEndpoint: Endpoint = {
     const reviewer = normalizeEmail(review.email)
     if (existing.docs.some((doc) => normalizeEmail(doc.email) === reviewer)) return json({ ok: false, message: 'You have already reviewed this product.' }, 409)
 
+    // The site-wide spam rules (Settings > Forms) also apply to reviews: a hit is kept in the Spam status, not shown.
+    const siteRules = checkSpamRules({ name: review.name, email: review.email, text: Object.values(review).filter((v): v is string => typeof v === 'string') }, await getFormSettings(engine as never).catch(() => DEFAULT_FORM_SETTINGS))
     await engine.create({
       collection: 'product-reviews',
-      data: { ...review, status: 'pending', verifiedOwner: await isVerifiedOwner(engine, review.email, review.product) },
+      data: { ...review, status: siteRules.spam ? 'spam' : 'pending', verifiedOwner: await isVerifiedOwner(engine, review.email, review.product) },
       overrideAccess: true,
     })
     return json({ ok: true, message: 'Thank you. Your review will appear once it has been approved.' }, 201)
