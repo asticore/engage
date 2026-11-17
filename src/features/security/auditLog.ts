@@ -35,6 +35,7 @@ export type AuditAction =
   | 'probe.blocked'
   | 'ip.blocked'
   | 'ip.rule'
+  | 'rate-rule'
   | 'user.banned'
   | 'user.unbanned'
   | 'user.bulk'

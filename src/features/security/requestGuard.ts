@@ -6,6 +6,8 @@ import { FINGERPRINT_HEADERS, securityHeaders } from './headers'
 import { SESSION_COOKIE, isSessionExpired } from './loginProtection'
 import { decideCountry, decideIp } from './ipRules'
 import { readIpRulesCached } from './ipRulesStore'
+import { matchRateRule } from './routeRules'
+import { readRateRulesCached } from './routeRulesStore'
 import { isDirectoryListingRequest, isProbePath } from './probePaths'
 import { classifyRoute, clientKey, hit, hitShared, limitFor } from './rateLimit'
 import { readSecuritySettingsFromD1, type SecuritySettings } from './settings'
@@ -284,6 +286,22 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
         },
       })
       return applySecurityHeaders(response, settings, pathname)
+    }
+  }
+
+  // Per-route rules (Settings > Security > Rate limit rules): counted per address in D1, the most specific path wins.
+  if (process.env.SECURITY_RATE_RULES_OFF !== '1' && settings.featureEnabled) {
+    const rule = matchRateRule(await readRateRulesCached(), pathname, request.method)
+    if (rule) {
+      const decision = await hitShared(`rule:${rule.id}:${clientKey(request)}`, rule.limit, { windowMs: rule.windowSeconds * 1000 })
+      if (decision.limited) {
+        void audit({ action: 'rate-limit.blocked', detail: `rule ${rule.id} ${pathname} (${decision.count}/${decision.limit} per ${rule.windowSeconds}s)`, ...auditContext(request) }, settings)
+        const response = new NextResponse('Too many requests. Please wait a moment and try again.', {
+          status: 429,
+          headers: { 'content-type': 'text/plain; charset=utf-8', 'retry-after': String(decision.retryAfterSeconds) },
+        })
+        return applySecurityHeaders(response, settings, pathname)
+      }
     }
   }
 

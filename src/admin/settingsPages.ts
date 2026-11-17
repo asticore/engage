@@ -212,6 +212,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
       { kind: 'link', label: 'External embeds', href: '/external-embeds', description: 'Forms shown on other websites: turn embedding on, choose the websites allowed, and copy the snippet. Submissions stay in Forms.', type: 'view' },
       { kind: 'link', label: 'Webhooks', href: '/webhooks', description: 'Send signed webhooks to other systems when content, orders, forms or accounts change. Test them, see every delivery, and replay failed ones.', type: 'view' },
       { kind: 'link', label: 'Privacy requests', href: '/privacy', description: 'Customer requests to delete their data, with 30-day deadlines. Approve or reject them, and erase the data. Order totals are kept for tax records.', type: 'view' },
+      { kind: 'link', label: 'Rate limit rules', href: '/security/rate-rules', description: 'Limit requests per address to one path, such as a form or API route. Admin only.', type: 'view' },
       { kind: 'link', label: 'IP lists', href: '/security/ip-lists', description: 'Block an address or range, or allow one that must always get in. Admin only.', type: 'view' },
       { kind: 'link', label: 'Banned accounts', href: '/security/bans', description: 'Stop an account from signing in, with an internal reason and an optional end date. Signs the person out at once. Admin only.', type: 'view' },
       { kind: 'link', label: 'API keys', href: '/security/api-keys', description: 'Create and revoke keys for scripts that call the site API. Admins see and revoke every key.', type: 'view' },
