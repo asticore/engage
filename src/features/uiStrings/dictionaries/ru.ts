@@ -1348,6 +1348,8 @@ const ru: UiDictionary = {
   "email.abandonedCart.body": "Вы оставили несколько товаров в корзине магазина {site_name}. Они всё ещё ждут вас.",
   "email.backInStock.subject": "Снова в наличии: {label}",
   "email.backInStock.body": "Хорошие новости. {label} снова в наличии.\n\nПосмотреть: {url}\n\nВы попросили сообщить вам, поэтому это единственное письмо об этом.",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "Подключения почты и SMS",
   'settings.link.email-and-text-connections.description': "Почтовые и SMS-провайдеры подключаются на странице «Интеграции». Ключи здесь никогда не показываются.",

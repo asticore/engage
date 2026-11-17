@@ -1348,6 +1348,8 @@ const hi: UiDictionary = {
   "email.abandonedCart.body": "आप {site_name} पर अपनी कार्ट में कुछ सामान छोड़ गए हैं। वे अब भी आपका इंतज़ार कर रहे हैं।",
   "email.backInStock.subject": "फिर से स्टॉक में: {label}",
   "email.backInStock.body": "अच्छी खबर है। {label} फिर से स्टॉक में है।\n\nयहाँ देखें: {url}\n\nआपने सूचित करने के लिए कहा था, इसलिए इस बारे में यही एकमात्र ईमेल है जो हम भेजेंगे।",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "ईमेल और टेक्स्ट कनेक्शन",
   'settings.link.email-and-text-connections.description': "ईमेल और टेक्स्ट प्रदाता इंटीग्रेशन पेज पर जुड़ते हैं। कुंजियाँ यहाँ कभी नहीं दिखाई जातीं।",
