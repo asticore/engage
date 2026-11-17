@@ -37,13 +37,17 @@ export function BookingWidget({ slug }: { slug: string }) {
     setError('')
     try {
       const res = await fetch('/api/booking-create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: slug, start, ...form }) })
-      const body = (await res.json().catch(() => ({}))) as { error?: string; number?: string; manageUrl?: string }
+      const body = (await res.json().catch(() => ({}))) as { error?: string; number?: string; manageUrl?: string; payUrl?: string }
       if (!res.ok) {
         setError(body.error ?? 'That did not work.')
         if (res.status === 409) {
           setStart('')
           await load()
         }
+        return
+      }
+      if (body.payUrl) {
+        window.location.href = body.payUrl
         return
       }
       setDone({ number: body.number ?? '', manageUrl: body.manageUrl ?? '' })

@@ -6,7 +6,7 @@ import type { Booking } from '@/features/bookings/store'
 
 const booking = (id: number, startMs: number): Booking => ({
   id, number: `B${id}`, typeId: 1, resourceId: 1, status: 'confirmed', startAt: new Date(startMs).toISOString(), endAt: new Date(startMs + 1800000).toISOString(), startMs, endMs: startMs + 1800000, units: 1,
-  timeZone: 'Australia/Brisbane', customerName: 'Sam', customerEmail: 's@example.com', customerPhone: '', notes: '', cancelledAt: null,
+  timeZone: 'Australia/Brisbane', customerName: 'Sam', customerEmail: 's@example.com', customerPhone: '', notes: '', cancelledAt: null, amountCents: 0, paymentIntentId: null, paidAt: null, refundedCents: 0, createdAtMs: 0,
 })
 
 type Row = Record<string, unknown>

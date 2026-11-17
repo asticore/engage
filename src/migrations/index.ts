@@ -242,6 +242,7 @@ import * as migration_20270318_140000_order_bump from './20270318_140000_order_b
 import * as migration_20270318_150000_service_staff from './20270318_150000_service_staff';
 import * as migration_20270318_160000_booking_reminders from './20270318_160000_booking_reminders';
 import * as migration_20270318_170000_event_max_per_person from './20270318_170000_event_max_per_person';
+import * as migration_20270318_180000_paid_bookings from './20270318_180000_paid_bookings';
 
 export const migrations = [
   {
@@ -1458,5 +1459,10 @@ export const migrations = [
     up: migration_20270318_170000_event_max_per_person.up,
     down: migration_20270318_170000_event_max_per_person.down,
     name: '20270318_170000_event_max_per_person',
+  },
+  {
+    up: migration_20270318_180000_paid_bookings.up,
+    down: migration_20270318_180000_paid_bookings.down,
+    name: '20270318_180000_paid_bookings',
   },
 ];

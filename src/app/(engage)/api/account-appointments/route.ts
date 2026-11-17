@@ -33,6 +33,8 @@ export async function POST(request: Request): Promise<Response> {
   if (!booking || booking.customerEmail.trim().toLowerCase() !== user.email.trim().toLowerCase()) return json({ error: 'Not found' }, 404)
   const error = cancelError(booking, new Date())
   if (error) return json({ error }, 409)
-  await store.setBookingStatus(d1, booking.id, 'cancelled', new Date().toISOString())
-  return json({ ok: true, status: 'cancelled' })
+  const { cancelWithRefund } = await import('@/features/bookings/payment')
+  const outcome = await cancelWithRefund(d1, (await getEngine()) as never, booking)
+  if (!outcome.cancelled) return json({ error: outcome.note }, 503)
+  return json({ ok: true, status: 'cancelled', note: outcome.note })
 }

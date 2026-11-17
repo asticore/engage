@@ -1472,6 +1472,17 @@ async function handlePaymentsStripeWebhooks(engine: Engine, request: Request): P
     if (event && (event.type === 'payment_intent.succeeded' || event.type === 'payment_intent.payment_failed')) {
       // Shop orders: idempotent, so a replay or a race with the browser confirm is harmless.
       const intent = event.data.object as Stripe.PaymentIntent
+      if (intent.metadata?.bookingId && event.type === 'payment_intent.succeeded') {
+        // A paid booking (src/features/bookings/payment.ts). Idempotent too.
+        try {
+          const { onBookingPaid } = await import('@/features/bookings/payment')
+          const { rawD1 } = await import('@/features/ecommerce/server/db')
+          await onBookingPaid((await rawD1()) as never, engine as never, intent, new URL(request.url).origin)
+        } catch (err) {
+          console.error(`Booking payment webhook failed: ${err instanceof Error ? err.message : String(err)}`)
+          returnStatus = 500
+        }
+      }
       if (intent.metadata?.orderID) {
         try {
           if (event.type === 'payment_intent.succeeded') await finalizePaidIntent(engine, intent)
