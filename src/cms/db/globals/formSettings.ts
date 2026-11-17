@@ -72,6 +72,8 @@ export type FormSettingsDoc = {
     recaptchaSecretKey?: string | null
     recaptchaMinScore?: number | null
     protectSignIn?: boolean | null
+    botDetection?: string | null
+    botMinScore?: number | null
     blockedWords?: string | null
     maxLinks?: number | null
     blockedSenders?: string | null

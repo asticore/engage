@@ -130,6 +130,31 @@ export const FormSettings: GlobalConfig = {
           },
         },
         {
+          name: 'botDetection',
+          type: 'select',
+          defaultValue: 'off',
+          options: [
+            { label: 'Off', value: 'off' },
+            { label: 'Ask for the challenge', value: 'challenge' },
+            { label: 'Ask for the challenge and refuse the worst', value: 'block' },
+          ],
+          admin: {
+            description:
+              'Uses the Cloudflare bot score (1 to 99, low is automated) when your Cloudflare plan sends one: turn on Bot Management, or the "Add bot protection headers" managed transform. A low score makes sign-in, create account, forgot password, comments and chat ask for the challenge even if their own switch is off (needs the challenge keys). The last option also quietly discards form submissions from low scores. Search engines and other verified bots are never affected. With no score from Cloudflare, nothing changes.',
+          },
+        },
+        {
+          name: 'botMinScore',
+          type: 'number',
+          defaultValue: 30,
+          min: 1,
+          max: 99,
+          admin: {
+            description: 'Scores below this count as a bot. 30 is Cloudflare\'s own "likely automated" line.',
+            condition: (_, s) => s?.botDetection === 'challenge' || s?.botDetection === 'block',
+          },
+        },
+        {
           name: 'blockedWords',
           type: 'textarea',
           admin: { description: 'One word or phrase per line. A submission containing any of them is quietly discarded as spam.' },

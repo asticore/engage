@@ -6,6 +6,7 @@ import { normaliseFormConfig } from './config'
 import { sanitiseHtml, sanitiseLayoutHtml } from './htmlSanitize'
 import { resolveLayout } from './layout'
 import { computePrefill } from './prefill'
+import { normaliseBotMode } from '@/features/security/botSignals'
 
 /**
  * Reads the site-wide Form Settings and folds a single form's overrides into it.
@@ -46,6 +47,8 @@ export const DEFAULT_FORM_SETTINGS: ResolvedFormSettings = {
   recaptchaSecretKey: '',
   recaptchaMinScore: 0.5,
   protectSignIn: false,
+  botDetection: 'off',
+  botMinScore: 30,
   blockedWords: '',
   maxLinks: 0,
   blockedSenders: '',
@@ -73,6 +76,8 @@ type SettingsDoc = {
     recaptchaSecretKey?: string
     recaptchaMinScore?: number
     protectSignIn?: boolean
+    botDetection?: string
+    botMinScore?: number
     blockedWords?: string
     maxLinks?: number
     blockedSenders?: string
@@ -142,6 +147,8 @@ export const getFormSettings = async (engine: EngineLike): Promise<ResolvedFormS
     recaptchaSecretKey: text(doc.spam?.recaptchaSecretKey, ''),
     recaptchaMinScore: num(doc.spam?.recaptchaMinScore, DEFAULT_FORM_SETTINGS.recaptchaMinScore),
     protectSignIn: bool(doc.spam?.protectSignIn, DEFAULT_FORM_SETTINGS.protectSignIn),
+    botDetection: normaliseBotMode(doc.spam?.botDetection),
+    botMinScore: num(doc.spam?.botMinScore, DEFAULT_FORM_SETTINGS.botMinScore),
     blockedWords: text(doc.spam?.blockedWords, ''),
     maxLinks: Math.max(0, Math.min(50, Math.floor(num(doc.spam?.maxLinks, 0)))),
     blockedSenders: text(doc.spam?.blockedSenders, ''),
