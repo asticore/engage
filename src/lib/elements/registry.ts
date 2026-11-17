@@ -18,6 +18,7 @@ import { WAVE64_ELEMENTS } from './wave64Defs'
 import { WAVE65_ELEMENTS } from './wave65Defs'
 import { WAVE66_ELEMENTS } from './wave66Defs'
 import { WAVE67_ELEMENTS } from './wave67Defs'
+import { AFFILIATE_ELEMENTS } from './affiliateDefs'
 import { EMBED_CODE_ELEMENTS } from './embedCodeDefs'
 import { TEMPLATE_PART_ELEMENTS } from './templatePartDefs'
 
@@ -224,6 +225,7 @@ ELEMENTS.push(...WAVE64_ELEMENTS)
 ELEMENTS.push(...WAVE65_ELEMENTS)
 ELEMENTS.push(...WAVE66_ELEMENTS)
 ELEMENTS.push(...WAVE67_ELEMENTS)
+ELEMENTS.push(...AFFILIATE_ELEMENTS)
 ELEMENTS.push(...EMBED_CODE_ELEMENTS)
 ELEMENTS.push(...TEMPLATE_PART_ELEMENTS)
 

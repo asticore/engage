@@ -650,6 +650,22 @@ export const TEMPLATE_PRESETS: TemplatePreset[] = [
     ],
   },
   {
+    slug: 'affiliates-page',
+    name: 'Affiliates page',
+    description: 'A hero, three steps explaining the program, and the affiliate sign-up (commission summary, terms and join form). Needs Affiliates switched on.',
+    kind: 'page',
+    category: 'shop',
+    blocks: () => [
+      heroBand('Earn by sharing what you love', 'Send people our way and earn a commission on every order they place.', 'Join now', '#join'),
+      section(
+        cardCol(4, { media: 'icon', icon: 'sparkle', title: 'Get your link', text: 'Join and get your own tracked link straight away.', align: 'left' }),
+        cardCol(4, { media: 'icon', icon: 'heart', title: 'Share it', text: 'Post it on your site, your socials or in a message to a friend.', align: 'left' }),
+        cardCol(4, { media: 'icon', icon: 'check', title: 'Get paid', text: 'Earn a commission on each order, paid out once the waiting period ends.', align: 'left' }),
+      ),
+      section(col(12, [el('affiliate-join')])),
+    ],
+  },
+  {
     slug: 'landing-page-full',
     name: 'Full landing page',
     description: 'Hero, features, testimonials, pricing, FAQ and a closing call to action.',
