@@ -14,6 +14,7 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 7. Keep the Process and Lessons sections current; remove a lesson once it is enforced by a test.
 
 ## Open now (as of 2 Nov 2026)
+- Stale comment pointers (code, tiny): `src/features/bookings/engine.ts` and `src/migrations/20270316_170000_bookings.ts` still cite `docs/bookings-plan.md`, and `src/features/effects/catalog.ts` cites `docs/repo-issues`; those files now live as appendices of this file. Change the comments to say "Bookings plan appendix in docs/remaining-work.md" and "Effix appendix in docs/remaining-work.md" in the next code PR.
 - Fresh-account deploy not verified: Deploy button on a second Cloudflare account (see detail below).
 - Activity log (closed Task 18): export audit covers the activity log, products, redirects and list CSV downloads; the event RSVP, form submission, shop report, manifest, data view and consent log downloads are not yet written to the log (add `auditExport` from `src/features/security/exportAudit.ts` to each). Shop orders and other records with their own history are left out of edit logging on purpose (see `ACTIVITY_LOGGED` in `src/localapi/registry.ts`).
 - Known limits (what is left after the 1 Nov sweep: each is either "Permanent" with the reason, or waits on a live check in Live checks; everything fixable was fixed or moved into closed tasks 1 to 5):
