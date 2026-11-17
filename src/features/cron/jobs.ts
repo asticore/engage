@@ -67,6 +67,7 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const site = (await (engine as never as { findGlobal: (a: unknown) => Promise<{ siteName?: string } | null> }).findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch((): null => null)) ?? {}
     const { runQuoteSweep } = await import('@/features/quotes/expiry')
     return {
+      bookingHolds: await (await import('@/features/bookings/payment')).releaseExpiredHolds(env.D1 as never, now),
       bookingReminders: await runBookingReminders(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never),
       quotes: await runQuoteSweep(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never),
     }

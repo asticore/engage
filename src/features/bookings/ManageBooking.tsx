@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-type View = { number: string; status: string; start: string; timeZone: string; typeTitle: string; customerName: string; cancellable: boolean }
+type View = { number: string; status: string; start: string; timeZone: string; typeTitle: string; customerName: string; cancellable: boolean; note?: string }
 
 /** The page behind the private link in the confirmation email: see the booking and cancel it. */
 export function ManageBooking({ token }: { token: string }) {
@@ -42,6 +42,8 @@ export function ManageBooking({ token }: { token: string }) {
         <p className="text-muted">Booking {view.number} for {view.customerName}. Status: {view.status.replace('_', ' ')}.</p>
         {view.status === 'confirmed' ? <a className="btn" href={`/api/booking-ics?token=${token}`}>Add to calendar</a> : null}
         {view.cancellable ? <button type="button" className="btn" disabled={busy} onClick={() => void cancel()}>Cancel this booking</button> : null}
+        {view.status === 'pending_payment' ? <p className="text-muted">Waiting for payment. This time is held for you for 30 minutes. If you have just paid, refresh in a moment.</p> : null}
+        {view.note ? <p>{view.note}</p> : null}
         {error ? <p role="alert" className="badge">{error}</p> : null}
       </div>
     </div>

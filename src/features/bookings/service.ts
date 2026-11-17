@@ -38,7 +38,7 @@ export async function createForType(d1: store.D1, type: store.BookingType, start
   const token = newManageToken()
   const booking = await store.createBooking(
     d1,
-    { number: newBookingNumber(), typeId: type.id, resourceId: resource.id, startMs, endMs: startMs + type.durationMinutes * 60_000, timeZone: resource.timeZone, capacity: type.capacity, manageTokenHash: await hashToken(token), customer },
+    { number: newBookingNumber(), typeId: type.id, resourceId: resource.id, startMs, endMs: startMs + type.durationMinutes * 60_000, timeZone: resource.timeZone, capacity: type.capacity, manageTokenHash: await hashToken(token), customer, amountCents: type.priceCents },
     now.toISOString(),
   )
   if (!booking) return { ok: false, status: 409, error: TAKEN_MESSAGE }

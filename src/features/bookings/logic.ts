@@ -10,7 +10,7 @@ const int = (v: unknown, min: number, max: number, fallback: number): number => 
 
 export const slugOf = (input: string): string => input.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80)
 
-export type TypeInput = { title: string; slug: string; description: string; resourceId: number | null; locationText: string; active: boolean } & TypeRules
+export type TypeInput = { title: string; slug: string; description: string; resourceId: number | null; locationText: string; active: boolean; priceCents: number; refundHours: number } & TypeRules
 
 export function parseTypeInput(raw: unknown): { ok: true; value: TypeInput } | { ok: false; error: string } {
   if (!raw || typeof raw !== 'object') return { ok: false, error: 'Send the booking type details.' }
@@ -29,6 +29,8 @@ export function parseTypeInput(raw: unknown): { ok: true; value: TypeInput } | {
       resourceId: Number.isInteger(resource) && resource > 0 ? resource : null,
       locationText: text(r.locationText, 300),
       active: r.active !== false,
+      priceCents: int(r.priceCents, 0, 10_000_000, 0),
+      refundHours: int(r.refundHours, 0, 24 * 365, 24),
       durationMinutes: int(r.durationMinutes, 5, 1440, 30),
       stepMinutes: int(r.stepMinutes, 5, 1440, 30),
       bufferBeforeMinutes: int(r.bufferBeforeMinutes, 0, 600, 0),
@@ -78,7 +80,7 @@ export function parseCustomer(raw: unknown): { ok: true; value: CustomerInput } 
   return { ok: true, value: { name, email, phone: text(r.phone, 40), notes: text(r.notes, 1000) } }
 }
 
-export const BOOKING_STATUSES = ['confirmed', 'completed', 'no_show', 'cancelled'] as const
+export const BOOKING_STATUSES = ['pending_payment', 'confirmed', 'completed', 'no_show', 'cancelled'] as const
 export type BookingStatus = (typeof BOOKING_STATUSES)[number]
 export const isBookingStatus = (v: unknown): v is BookingStatus => typeof v === 'string' && (BOOKING_STATUSES as readonly string[]).includes(v)
 
@@ -138,4 +140,20 @@ export function parseResourceInput(raw: unknown): { ok: true; value: { title: st
     return { ok: false, error: `"${timeZone}" is not a time zone, for example Australia/Brisbane.` }
   }
   return { ok: true, value: { title, timeZone, active: r.active !== false } }
+}
+
+/** A paid booking is held for this long while the customer pays. Stripe's own minimum for a Checkout Session is 30 minutes. */
+export const HOLD_MINUTES = 30
+
+/** True while an unpaid booking still holds its time. Pure. */
+export const holdActive = (createdAtMs: number, now: Date): boolean => now.getTime() - createdAtMs < HOLD_MINUTES * 60_000
+
+/**
+ * What a customer cancelling a paid booking gets back. The whole payment when the cancel is at least `refundHours`
+ * before the start, nothing after that. A free or unpaid booking refunds nothing. Pure.
+ */
+export function refundCentsFor(args: { amountCents: number; refundedCents: number; refundHours: number; startMs: number; now: Date }): number {
+  const left = Math.max(0, args.amountCents - args.refundedCents)
+  if (left === 0) return 0
+  return args.startMs - args.now.getTime() >= args.refundHours * 3_600_000 ? left : 0
 }
