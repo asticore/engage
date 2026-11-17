@@ -2,17 +2,23 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import React from 'react'
 
+import { currentPortalLocale } from '@/features/multilingual/portalLocaleServer'
+import { loadPortalTexts } from '@/features/multilingual/portalStrings'
 import { requireCustomer } from '@/features/accounts/guards'
 import { WholesaleApplyForm } from '@/features/ecommerce/components/WholesaleApplyForm'
 import { rawD1 } from '@/features/ecommerce/server/db'
 import { currentWholesaleConfig, getApplication, type D1 } from '@/features/ecommerce/server/wholesale'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Wholesale account', robots: { index: false, follow: false } }
+export async function generateMetadata(): Promise<Metadata> {
+  const tx = await loadPortalTexts(await currentPortalLocale())
+  return { title: tx('wholesale.title'), robots: { index: false, follow: false } }
+}
 
 /** /account/wholesale: the signed-in customer's own wholesale application and its status. Only while wholesale mode is on. */
 export default async function AccountWholesalePage() {
   const { user } = await requireCustomer('/account/wholesale')
+  const tx = await loadPortalTexts(await currentPortalLocale())
   const cfg = await currentWholesaleConfig()
   if (!cfg.enabled) notFound()
   const application = await getApplication((await rawD1()) as never as D1, Number(user.id))
@@ -20,32 +26,32 @@ export default async function AccountWholesalePage() {
   if (application?.status === 'approved') {
     return (
       <div className="page-shell">
-        <h1>Wholesale account</h1>
-        <p>Your wholesale account for {application.company} is approved. Wholesale prices and products now show while you are signed in.</p>
+        <h1>{tx('wholesale.title')}</h1>
+        <p>{tx('wholesale.approved', { company: application.company })}</p>
       </div>
     )
   }
   if (application?.status === 'pending') {
     return (
       <div className="page-shell">
-        <h1>Wholesale account</h1>
-        <p>Your application for {application.company} is waiting for approval. We will approve or reject it as soon as we can.</p>
+        <h1>{tx('wholesale.title')}</h1>
+        <p>{tx('wholesale.pending', { company: application.company })}</p>
       </div>
     )
   }
   if (!cfg.applyOpen) {
     return (
       <div className="page-shell">
-        <h1>Wholesale account</h1>
-        <p>We are not taking wholesale applications right now.</p>
+        <h1>{tx('wholesale.title')}</h1>
+        <p>{tx('wholesale.closed')}</p>
       </div>
     )
   }
   return (
     <div className="page-shell">
-      <h1>Wholesale account</h1>
-      {application?.status === 'rejected' ? <p>Your last application was not approved. You can apply again with updated details.</p> : <p>Apply for a wholesale account to see wholesale prices and products. We review each application, and approving it also sets up a company account for you.</p>}
-      <WholesaleApplyForm resend={application?.status === 'rejected'} />
+      <h1>{tx('wholesale.title')}</h1>
+      <p>{application?.status === 'rejected' ? tx('wholesale.rejected') : tx('wholesale.intro')}</p>
+      <WholesaleApplyForm resend={application?.status === 'rejected'} text={{ company: tx('wholesale.company'), taxId: tx('wholesale.taxId'), phone: tx('wholesale.phone'), message: tx('wholesale.message'), apply: tx('wholesale.apply'), applyAgain: tx('wholesale.applyAgain'), done: tx('wholesale.done'), error: tx('wholesale.error') }} />
     </div>
   )
 }

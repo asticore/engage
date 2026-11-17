@@ -9,6 +9,7 @@ import { resolveTierPrice } from '../lib/priceTiers'
 import { rawD1 } from './db'
 import { listDisplayCurrencyRows } from './displayCurrencies'
 import { listPriceTiers } from './priceTiers'
+import { loadWholesaleConfig } from './wholesale'
 
 type Doc = Record<string, unknown>
 
@@ -24,6 +25,10 @@ export async function loadFeed(request: Request): Promise<{ items: FeedItem[]; t
   const shop = (await engine.findGlobal({ slug: 'shop-settings', depth: 0, overrideAccess: true }).catch((): Doc => ({}))) as { storefront?: Doc; tax?: Doc }
   const sf = shop.storefront ?? {}
   if (sf.feedsEnabled !== true) return null
+  const origin0 = new URL(request.url).origin
+  // Wholesale mode with hidden prices: a public feed has no viewer, so it would show prices to everyone. Publish no rows instead.
+  const wholesaleCfg = await loadWholesaleConfig(engine as never)
+  if (wholesaleCfg.enabled && wholesaleCfg.hidePrices) return { items: [], title: String((await engine.findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch((): Doc => ({}))).siteName || shop.tax?.businessName || 'Shop'), link: origin0 }
   const payment = (await engine.findGlobal({ slug: 'payment-settings', depth: 0, overrideAccess: true }).catch((): Doc => ({}))) as { general?: { currency?: string } }
   const site = (await engine.findGlobal({ slug: 'site-settings', depth: 0, overrideAccess: true }).catch((): Doc => ({}))) as { siteName?: string }
   const found = await engine.find({ collection: 'products', where: { _status: { equals: 'published' } }, limit: 1000, depth: 1, overrideAccess: true })

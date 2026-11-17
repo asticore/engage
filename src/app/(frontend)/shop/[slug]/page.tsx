@@ -182,7 +182,7 @@ export default async function ProductPage({
   const fullView = buildProductView(bundle ? { ...catalogue, ...bundle } : catalogue, new Date(), mediaUrls, {
     preorders: preordersOn,
     addOnsOn: shopRules.addOnsOn,
-    pricingNotes: [...(moq ? [`Wholesale minimum order: ${moq} units.`] : []), ...(shopRules.rulesOn ? productPageNotes(shopRules.rules) : []), ...breakNotes, ...variationBreakNotes],
+    pricingNotes: [...(moq ? [translateWith(await storeTexts(), 'store.wholesale.moq', { qty: moq })] : []), ...(shopRules.rulesOn ? productPageNotes(shopRules.rules) : []), ...breakNotes, ...variationBreakNotes],
   })
 
   const view = priceHidden ? withoutPrices(fullView) : fullView
@@ -246,7 +246,7 @@ export default async function ProductPage({
         <ProductTaxonomy brand={taxonomy.brand} tags={taxonomy.tags} brandLine={tx('store.productBrand')} tagsLine={tx('store.productTags')} />
 
         {bundle ? <BundleContentsList items={bundle.contents} /> : null}
-        <ProductPurchase productId={product.id} view={view} grouped={grouped} giftConfig={giftConfig} composite={priceHidden ? null : composite} hiddenPriceText={priceHidden ? wholesaleCfg.hiddenText : undefined} />
+        <ProductPurchase productId={product.id} view={view} grouped={grouped} giftConfig={giftConfig} composite={priceHidden ? null : composite} hiddenPriceText={priceHidden ? wholesaleCfg.hiddenText || translateWith(storeDict, 'store.wholesale.hiddenPrice') : undefined} />
         <SubscriptionOffer product={product} />
         {showBackInStockForm(settings, catalogue) && !view.preorder.active ? <BackInStockForm productId={product.id} /> : null}
         {wishlistEnabled(settings) && <div className="mt-4"><WishlistHeart productId={product.id} showLink /></div>}
