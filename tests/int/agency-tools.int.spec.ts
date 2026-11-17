@@ -17,6 +17,13 @@ describe('agency demos (22g)', () => {
     expect(idsAddedAfterCopy(docs, new Set(['home']))).toEqual([2])
     expect(idsAddedAfterCopy(docs, new Set(['home', 'new-page']))).toEqual([])
   })
+  it('every starter can start a demo', async () => {
+    const { STARTERS, getStarter } = await import('@/features/siteTemplates/starters')
+    for (const s of STARTERS) {
+      expect(getStarter(s.id)?.blocks().length).toBeGreaterThan(0)
+    }
+    expect(getStarter('nope')).toBeUndefined()
+  })
   const now = new Date('2027-03-17T12:00:00Z')
   it('never resets when the schedule is off', () => {
     expect(isResetDue('off', null, now)).toBe(false)
