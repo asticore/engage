@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { describeBytes, type ResetEvery } from '../core'
+import { StaticExportPanel } from './StaticExportPanel'
 
 type Loaded = {
   settings: { resetEvery: ResetEvery; lastResetAt: string | null; lastResult: string; banner: string }
@@ -121,6 +122,8 @@ export const DemosPanel: React.FC = () => {
           <button type="submit" disabled={busy}>Create view-only account</button>
         </form>
       </section>
+
+      <StaticExportPanel />
     </div>
   )
 }
