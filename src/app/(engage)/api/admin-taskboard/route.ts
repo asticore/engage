@@ -59,6 +59,7 @@ export async function POST(request: Request): Promise<Response> {
   const { sendEmail } = await import('@/features/email')
   const { textToHtml } = await import('@/features/email/renderTemplate')
   const engine = await getEngine()
+  const activityMark = await store.latestActivityId(d1).catch((): number => 0)
   const result = await runAction(
     {
       d1,
@@ -85,5 +86,18 @@ export async function POST(request: Request): Promise<Response> {
     access.me,
     body,
   )
+  // Everything this request added to the board's own activity trail is also written to the main Activity log.
+  if (result.status === 200) {
+    try {
+      const [{ taskboardAuditEntry }, { audit, auditContext }, { getSecuritySettings }] = await Promise.all([import('@/features/taskboard/activityLog'), import('@/features/security/auditLog'), import('@/features/security/settings')])
+      const settings = await getSecuritySettings(engine as unknown as Parameters<typeof getSecuritySettings>[0])
+      const user = access.ctx.user as { email?: string }
+      for (const row of await store.activitySince(d1, activityMark)) {
+        await audit({ ...taskboardAuditEntry(row, { id: access.me.id, email: user.email }), ...auditContext(request) }, settings)
+      }
+    } catch {
+      // The board's own trail already has it; the Activity log write is best effort.
+    }
+  }
   return json(result.body, result.status)
 }

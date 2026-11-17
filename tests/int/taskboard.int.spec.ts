@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import { runAction, type Actor, type Deps } from '@/features/taskboard/actions'
 import { assignablePeople, assignmentEmail, canAccessBoard, isOverdue, moveCard, myTasks, parseCardInput, parseColumns, type Card } from '@/features/taskboard/logic'
 import * as store from '@/features/taskboard/store'
+import { taskboardAuditEntry } from '@/features/taskboard/activityLog'
 import { dueSoonCutoff, runTaskDueReminders } from '@/features/taskboard/dueReminders'
 import { TASKBOARD_STATEMENTS } from '@/migrations/20270316_100000_taskboard'
 import { FEATURES } from '@/features/registry'
@@ -181,6 +182,23 @@ describe('taskboard archive, my tasks, events and due reminders', () => {
     await runAction(ctx.deps, admin, { action: 'archive-card', boardId: ctx.id, cardId: ctx.cardId })
     await runAction(ctx.deps, admin, { action: 'save-card', boardId: ctx.id, cardId: ctx.cardId, card: { title: 'Write copy', assigneeId: 2, dueDate: '2027-03-10' } })
     expect(await runTaskDueReminders(deps)).toEqual({ reminded: 0 })
+  })
+})
+
+describe('taskboard entries in the main Activity log', () => {
+  it('reads only what one request added and maps it to activity entries', async () => {
+    const ctx = setup()
+    const id = Number((await runAction(ctx.deps, admin, { action: 'create-board', name: 'Launch' })).body.id)
+    const col = (await store.boardData(ctx.d1, id)).columns[0]
+    const mark = await store.latestActivityId(ctx.d1)
+    const made = await runAction(ctx.deps, admin, { action: 'save-card', boardId: id, columnId: col.id, card: { title: 'Write copy', assigneeId: 2 } })
+    await runAction(ctx.deps, admin, { action: 'delete-card', boardId: id, cardId: Number(made.body.id) })
+    const rows = await store.activitySince(ctx.d1, mark)
+    expect(rows.map((r) => r.action)).toEqual(['card.created', 'card.assigned', 'card.deleted'])
+    const entries = rows.map((r) => taskboardAuditEntry(r, { id: 1, email: 'admin@x.test' }))
+    expect(entries.map((e) => e.action)).toEqual(['create', 'update', 'delete'])
+    expect(entries[0]).toMatchObject({ collectionSlug: 'taskboard', actorEmail: 'admin@x.test', detail: `task created: Write copy (board ${id})` })
+    expect(await store.activitySince(ctx.d1, rows[rows.length - 1].id)).toEqual([])
   })
 })
 
