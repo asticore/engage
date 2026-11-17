@@ -55,6 +55,10 @@ export function parseRequest(raw: unknown): { ok: true; value: RequestInput } | 
   }
 }
 
+/** Whether the account page offers "Open quote" for a request: it has a quote and is not expired, declined or closed. */
+export const portalCanOpen = (r: { status: string; totalCents: number | null; validUntil: string | null }, now: Date): boolean =>
+  r.totalCents !== null && ['quoted', 'countered', 'accepted'].includes(effectiveStatus(r.status as QuoteStatus, r.validUntil, now))
+
 export type QuoteLine = { description: string; quantity: number; unitCents: number }
 export type QuoteInput = { lines: QuoteLine[]; validUntil: string; terms: string; message: string }
 
