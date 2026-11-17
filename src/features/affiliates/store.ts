@@ -340,3 +340,47 @@ export async function botHitsSince(d1: D1, sinceDay: string): Promise<number> {
     return 0
   }
 }
+
+
+/* ----------------------------------------------------- short links (vanity codes) */
+
+export type ShortLink = { code: string; affiliateId: number; productId: number | null; productTitle: string; createdAt: string }
+
+export async function listShortLinks(d1: D1, affiliateId: number | null = null): Promise<ShortLink[]> {
+  try {
+    const rows = affiliateId
+      ? await all(d1, 'SELECT l.code, l.affiliate_id, l.product_id, l.created_at, p.title FROM eg_affiliate_links l LEFT JOIN eg_products p ON p.id = l.product_id WHERE l.affiliate_id = ?1 ORDER BY l.created_at DESC LIMIT 200', affiliateId)
+      : await all(d1, 'SELECT l.code, l.affiliate_id, l.product_id, l.created_at, p.title FROM eg_affiliate_links l LEFT JOIN eg_products p ON p.id = l.product_id ORDER BY l.created_at DESC LIMIT 200')
+    return rows.map((r) => ({ code: String(r.code), affiliateId: Number(r.affiliate_id), productId: r.product_id === null || r.product_id === undefined ? null : Number(r.product_id), productTitle: String(r.title ?? ''), createdAt: String(r.created_at ?? '') }))
+  } catch {
+    return []
+  }
+}
+
+/** False when the code is already used by another short link. */
+export async function addShortLink(d1: D1, v: { code: string; affiliateId: number; productId: number | null }, nowIso: string): Promise<boolean> {
+  if ((await all(d1, 'SELECT code FROM eg_affiliate_links WHERE code = ?1', v.code)).length > 0) return false
+  await d1.prepare('INSERT INTO eg_affiliate_links (code, affiliate_id, product_id, created_at) VALUES (?1,?2,?3,?4)').bind(v.code, v.affiliateId, v.productId, nowIso).run()
+  return true
+}
+
+export async function removeShortLink(d1: D1, code: string): Promise<void> {
+  await d1.prepare('DELETE FROM eg_affiliate_links WHERE code = ?1').bind(code).run()
+}
+
+/** Where a short link goes: the affiliate's referral code and the path of its product (or the home page). Null when the link is unknown. */
+export async function resolveShortLink(d1: D1, code: string): Promise<{ affiliateId: number; path: string } | null> {
+  try {
+    const link = (await all(d1, 'SELECT affiliate_id, product_id FROM eg_affiliate_links WHERE code = ?1', code))[0]
+    if (!link) return null
+    let path = '/'
+    if (link.product_id !== null && link.product_id !== undefined) {
+      const product = (await all(d1, "SELECT slug FROM eg_products WHERE id = ?1 AND _status = 'published' AND deleted_at IS NULL", Number(link.product_id)))[0]
+      const slug = String(product?.slug ?? '')
+      if (slug !== '') path = `/shop/${encodeURIComponent(slug)}`
+    }
+    return { affiliateId: Number(link.affiliate_id), path }
+  } catch {
+    return null
+  }
+}
