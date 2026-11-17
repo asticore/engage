@@ -33,6 +33,8 @@ export const MISSING_MESSAGES: Record<SiteTemplateKind, string> = {
   'archive-blog': 'No blog archive template: the blog list shows the default layout',
   'archive-shop': 'No shop archive template: the shop list shows the default layout',
   'not-found': 'No 404 template: the site shows its default "page not found" page',
+  maintenance: 'No maintenance template: the maintenance screen shows its built-in headline and message',
+  'coming-soon': 'No coming soon template: the coming soon screen shows its built-in headline, countdown and signup',
   'search-results': 'No search results template: /search shows the default results layout',
   'archive-category': 'No category archive template: category pages show the default layout',
   'archive-tag': 'No tag archive template: tag pages show the default layout',

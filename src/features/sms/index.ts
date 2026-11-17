@@ -1,4 +1,5 @@
 import { getEngine } from '@/lib/engine'
+import { isStaging } from '@/features/site/staging'
 import { loadSmsSettings } from '../email/connectionLoad'
 
 import { buildTwilioRequest, isValidPhone, parseTwilioResponse, resolveTwilio } from './twilio'
@@ -15,13 +16,15 @@ import { buildTwilioRequest, isValidPhone, parseTwilioResponse, resolveTwilio } 
 export type SmsResult = {
   ok: boolean
   id?: string
-  reason?: 'not-configured' | 'invalid-number' | 'invalid-message' | 'provider-rejected'
+  reason?: 'not-configured' | 'turned-off' | 'invalid-number' | 'invalid-message' | 'provider-rejected'
   error?: string
 }
 
 const MAX_BODY = 1600
 
 export async function sendSms(to: string, body: string): Promise<SmsResult> {
+  // A staging site holds a copy of live data: it must never text a real customer.
+  if (isStaging()) return { ok: false, reason: 'turned-off', error: 'Text messages are switched off on a staging site.' }
   try {
     const trimmedBody = typeof body === 'string' ? body.trim() : ''
     if (!trimmedBody) return { ok: false, reason: 'invalid-message', error: 'The text has no message.' }

@@ -1,4 +1,5 @@
 import { encryptPayload, vapidAuthorization, type VapidKeys } from './webpush'
+import { isStaging } from '@/features/site/staging'
 import type { StoredSubscription } from './store'
 
 export type PushSend = { sent: number; removed: string[]; failed: number }
@@ -15,6 +16,8 @@ export async function pushToAll(
   fetcher: typeof fetch = fetch,
 ): Promise<PushSend> {
   const result: PushSend = { sent: 0, removed: [], failed: 0 }
+  // A staging site holds copied subscriptions: nothing is pushed to real browsers from it.
+  if (isStaging()) return result
   const payload = JSON.stringify({ title: message.title.slice(0, 120), body: message.body.slice(0, 400), url: message.url ?? '/' })
   for (const sub of subscriptions) {
     try {

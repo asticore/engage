@@ -1,5 +1,6 @@
 import { auditActionMatches, redactAuditData, checkWebhookUrl, DELIVERY_RETENTION_DAYS, FAILURE_ALERT_THRESHOLD, isFailingStreak, isOverRate, nextAttemptAt, REQUEST_TIMEOUT_MS, renderBody, signatureHeader, SIGNATURE_HEADER, type DeliveryStatus } from './core'
 import { pickEventFields, TEST_EVENT, type WebhookEvent } from './events'
+import { isStaging } from '@/features/site/staging'
 import { checkDeliveryTarget } from './outbound'
 import { redactBody } from './redact'
 import { openSecret } from './secret'
@@ -131,6 +132,14 @@ export async function attemptDelivery(deps: DeliveryDeps, rowId: number): Promis
     const row = await store.findDelivery(rowId)
     if (!row) return { status: 'failed', statusCode: null, error: 'That delivery no longer exists.' }
     if (row.status !== 'pending') return DONE(row)
+
+    // A staging site holds copied webhooks: it must not call outside services. The row is skipped, not retried.
+    if (isStaging()) {
+      const kept = finishedBody(row.body)
+      const error = 'Webhooks are switched off on a staging site.'
+      await store.updateDelivery(rowId, { status: 'skipped', nextAttemptAt: null, lastError: error, body: kept.body, redacted: kept.redacted }, at)
+      return { status: 'skipped', statusCode: null, error }
+    }
 
     const hook = await store.findById(row.webhookId)
     if (!hook || !hook.enabled) {

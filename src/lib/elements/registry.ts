@@ -22,6 +22,7 @@ import { AFFILIATE_ELEMENTS } from './affiliateDefs'
 import { REQUEST_BUTTON_ELEMENTS } from './requestButtonDefs'
 import { EMBED_CODE_ELEMENTS } from './embedCodeDefs'
 import { TEMPLATE_PART_ELEMENTS } from './templatePartDefs'
+import { COMING_SOON_ELEMENTS } from './comingSoonDefs'
 
 /**
  * The per-element-type catalogue that lives inside the `element` block
@@ -230,6 +231,7 @@ ELEMENTS.push(...AFFILIATE_ELEMENTS)
 ELEMENTS.push(...REQUEST_BUTTON_ELEMENTS)
 ELEMENTS.push(...EMBED_CODE_ELEMENTS)
 ELEMENTS.push(...TEMPLATE_PART_ELEMENTS)
+ELEMENTS.push(...COMING_SOON_ELEMENTS)
 
 export function getElementDef(type: string): ElementDef | undefined {
   return ELEMENTS.find((e) => e.type === type)

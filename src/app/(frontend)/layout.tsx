@@ -31,6 +31,8 @@ import { getSitePages, isSignedInAdmin } from '@/features/site/pages'
 import { launchReached } from '@/features/site/pagesShape'
 import { BYPASS_COOKIE, shouldShowMaintenance } from '@/features/site/maintenance'
 import { MaintenanceScreen } from '@/features/site/MaintenanceScreen'
+import { setScreenContext, withLaunchDate } from '@/features/site/screenContext'
+import { renderWithTemplate } from '@/features/siteTemplates/render'
 import { comingSoonSignupFor } from '@/features/forms/comingSoonSignup'
 import { STAGING_NOINDEX, isStaging } from '@/features/site/staging'
 import { buildFontCss, preloadLinks, remoteStylesheetUrls, resolveThemeFont } from '@/features/fonts/css'
@@ -226,6 +228,21 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // The email signup on the coming soon screen, read only while that screen is up.
   const comingSoonSignup = showMaintenance && maintenance.mode === 'comingSoon' ? await comingSoonSignupFor(locale) : null
 
+  // The maintenance or coming soon screen: the built-in one, or the matching screen template with the built-in one in its content slot.
+  let screen: React.ReactNode = null
+  if (showMaintenance) {
+    const isComingSoon = maintenance.mode === 'comingSoon'
+    const launchAt = isComingSoon ? maintenance.launchAt : null
+    setScreenContext({ launchAt, signup: comingSoonSignup })
+    screen = await renderWithTemplate({
+      kind: isComingSoon ? 'coming-soon' : 'maintenance',
+      ctx: {},
+      content: <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} launchAt={launchAt} signup={comingSoonSignup} />,
+      transformBlocks: withLaunchDate(launchAt),
+      replaceContent: true,
+    })
+  }
+
   // Header / footer templates (Site templates). Null for each when none matches, and the built-in ones draw.
   // Conditions can scope a template by host and language too: the host without its port, and the page's language (the default one when the site is not multilingual).
   const hostName = ((await headers()).get('host') ?? '').split(':')[0].toLowerCase() || null
@@ -305,7 +322,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           )}
           <AdPlacements position="header" />
           <main>
-            {showMaintenance ? <MaintenanceScreen headline={maintenance.headline} message={maintenance.message} launchAt={maintenance.mode === 'comingSoon' ? maintenance.launchAt : null} signup={comingSoonSignup} /> : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
+            {showMaintenance ? screen : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
           </main>
           <AdPlacements position="footer" />
           {chrome.footer ? (

@@ -20,6 +20,7 @@ import { AFFILIATE_COMPONENTS } from './AffiliateServer'
 import { REQUEST_BUTTON_COMPONENTS } from './RequestButtonServer'
 import { EMBED_CODE_COMPONENTS } from './EmbedCodeServer'
 import { TEMPLATE_PART_COMPONENTS } from './TemplatePartServer'
+import { COMING_SOON_COMPONENTS } from './ComingSoonServer'
 import { DynamicTextElement } from './DynamicText'
 import SearchSuggest from './SearchSuggest'
 import { ChatWidget } from '@/features/chatbot/components/ChatWidget'
@@ -412,6 +413,7 @@ const SITE_RENDERERS: Record<string, React.ComponentType<P>> = {
   ...REQUEST_BUTTON_COMPONENTS,
   ...EMBED_CODE_COMPONENTS,
   ...TEMPLATE_PART_COMPONENTS,
+  ...COMING_SOON_COMPONENTS,
 }
 
 /**
