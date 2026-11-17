@@ -10,8 +10,10 @@ import {
   MAX_WORKFLOW_STEPS,
   parseAuthorRoutes,
   parseRoleList,
+  parseStandIns,
   parseUserIds,
   type AuthorRoutes,
+  type StandIn,
   validateWorkflowInput,
   type ApprovalCollection,
 } from './workflows'
@@ -37,6 +39,7 @@ export type WorkflowDraft = {
   submitterRoles: string[]
   steps: DraftStep[]
   authorRoutes: AuthorRoutes
+  standIns: StandIn[]
 }
 
 /** A workflow as the REST API returns it. */
@@ -50,6 +53,7 @@ export type WorkflowRecord = {
   submitterRoles?: unknown
   steps?: Array<{ id?: string; name?: string | null; approverRoles?: unknown; approvalsNeeded?: number | null; approverUsers?: unknown; alsoRoles?: boolean | null }> | null
   authorRoutes?: unknown
+  standIns?: unknown
 }
 
 export type RoleChoice = { slug: string; name: string; builtIn: boolean; canApprove: boolean }
@@ -69,6 +73,7 @@ export const emptyDraft = (collection: ApprovalCollection = 'pages'): WorkflowDr
   submitterRoles: [],
   steps: [emptyStep()],
   authorRoutes: {},
+  standIns: [],
 })
 
 export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
@@ -90,6 +95,7 @@ export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
       alsoRoles: step.alsoRoles === true,
     })),
     authorRoutes: parseAuthorRoutes(record.authorRoutes),
+    standIns: parseStandIns(record.standIns),
   }
 }
 
@@ -110,6 +116,7 @@ export function payloadFromDraft(draft: WorkflowDraft): Record<string, unknown> 
       alsoRoles: step.alsoRoles,
     })),
     authorRoutes: draft.authorRoutes,
+    standIns: draft.standIns,
   }
 }
 
@@ -145,6 +152,13 @@ export function setAuthorRoute(routes: AuthorRoutes, author: number, approvers: 
   if (approvers.length === 0) delete next[String(author)]
   else next[String(author)] = approvers
   return next
+}
+
+/** Sets who covers for one reviewer. A null stand-in removes the reviewer's row; one reviewer has at most one. */
+export function setStandIn(list: StandIn[], userId: number, standInId: number | null, until: string | null): StandIn[] {
+  const rest = list.filter((entry) => entry.userId !== userId)
+  if (standInId === null || standInId === userId) return rest
+  return [...rest, { userId, standInId, until }]
 }
 
 /** Adds or removes a slug from a role list, keeping the order stable. */

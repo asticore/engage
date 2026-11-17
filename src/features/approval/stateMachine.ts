@@ -29,13 +29,16 @@ import { clampStep, mayActOnStep, maySubmitUnder, namedApprovers, type WorkflowR
 export const REVIEW_STATUSES = ['none', 'in_review', 'changes_requested', 'approved'] as const
 export type ReviewStatus = (typeof REVIEW_STATUSES)[number]
 
-export const REVIEW_ACTIONS = ['submit', 'approve', 'request_changes', 'comment', 'withdraw', 'publish'] as const
+export const REVIEW_ACTIONS = ['submit', 'approve', 'request_changes', 'comment', 'withdraw', 'publish', 'reassign'] as const
 export type ReviewAction = (typeof REVIEW_ACTIONS)[number]
 
 /** Matches the `action` options of the review-events collection. */
-export type ReviewEventAction = 'submitted' | 'approved' | 'changes_requested' | 'comment' | 'published' | 'withdrawn' | 'reset'
+export type ReviewEventAction = 'submitted' | 'approved' | 'changes_requested' | 'comment' | 'published' | 'withdrawn' | 'reset' | 'reassigned'
 
 export type ReviewApproval = { userId: number; name: string; at: string }
+
+/** The person a review was handed to for the step it is at. They may act on that step, besides the usual approvers. */
+export type ReviewAssignee = { userId: number; name: string }
 
 export type ReviewDocState = {
   status: ReviewStatus
@@ -45,6 +48,8 @@ export type ReviewDocState = {
   approvals: ReviewApproval[]
   /** Zero-based workflow step awaiting approval. Absent means 0. */
   step?: number
+  /** Who the review was reassigned to at this step. Cleared whenever the review moves, is sent back, withdrawn or restarted. */
+  assignee?: ReviewAssignee | null
 }
 
 /** What the acting user may do on this collection, worked out by the route. */
@@ -65,6 +70,8 @@ export type ReviewActor = {
   isAdmin: boolean
   /** Role slugs the user holds (built-in and custom), used only for workflow steps. Absent means none. */
   roleSlugs?: string[]
+  /** People this user covers for right now (they are away and named this user as stand-in), with the roles those people hold. */
+  coveringFor?: { userIds: number[]; roleSlugs: string[] }
 }
 
 export type TransitionInput = {
@@ -90,6 +97,8 @@ export type TransitionInput = {
    * admins are exempt. Absent means none.
    */
   priorApprovers?: number[]
+  /** For 'reassign': the person to hand the review to, or null to hand it back to the usual approvers. */
+  assignTo?: ReviewAssignee | null
 }
 
 /** `step` is the workflow step name the event belongs to; present only when a workflow is active. */
@@ -144,9 +153,12 @@ export function transition(input: TransitionInput): TransitionResult {
   const stepBlock = (): TransitionFail | null => {
     if (!workflow || !current) return null
     const named = namedApprovers(workflow, current, state.requestedBy)
-    if (mayActOnStep(current, roleSlugs, actor.isAdmin, { userId: actor.id, named })) return null
+    const covering = actor.coveringFor?.userIds ?? []
+    // A review handed to this person (or to someone they cover for) may be acted on by them.
+    if (state.assignee && (state.assignee.userId === actor.id || covering.includes(state.assignee.userId))) return null
+    if (mayActOnStep(current, [...roleSlugs, ...(actor.coveringFor?.roleSlugs ?? [])], actor.isAdmin, { userId: actor.id, named, alsoUserIds: covering })) return null
     const routed = state.requestedBy !== null && (workflow.authorRoutes?.[String(state.requestedBy)]?.length ?? 0) > 0
-    return fail(403, `This is waiting on ${routed ? 'the approver named for this author' : describe(current.approverNames)} (step ${stepOf(state, workflow) + 1} of ${workflow.steps.length}: ${current.name}). ${named.length > 0 ? 'Only the named approver can approve this step.' : 'Your role cannot approve this step.'}`)
+    return fail(403, `This is waiting on ${state.assignee ? `${state.assignee.name}, or ` : ''}${routed ? 'the approver named for this author' : describe(current.approverNames)} (step ${stepOf(state, workflow) + 1} of ${workflow.steps.length}: ${current.name}). ${named.length > 0 ? 'Only the named approver can approve this step.' : 'Your role cannot approve this step.'}`)
   }
   const describe = (names: string[]): string => (names.length === 0 ? 'an admin' : names.join(' or '))
 
@@ -209,7 +221,7 @@ export function transition(input: TransitionInput): TransitionResult {
       const keep = (extra: Partial<ReviewDocState>): ReviewDocState => ({ status: 'in_review', requestedBy: state.requestedBy, approvals, ...(workflow ? { step: index } : {}), ...extra })
 
       if (approvals.length < stepNeeded) {
-        return { ok: true, state: keep({}), publish: false, events }
+        return { ok: true, state: keep(state.assignee ? { assignee: state.assignee } : {}), publish: false, events }
       }
 
       // The step is complete. Another step follows: move on with approvals cleared.
@@ -245,6 +257,24 @@ export function transition(input: TransitionInput): TransitionResult {
       return { ok: true, state, publish: false, events: [withStep({ action: 'comment', note })] }
     }
 
+    case 'reassign': {
+      if (!actor.can.review) return fail(403, 'Your role cannot hand a review to someone else.')
+      if (state.status !== 'in_review') return fail(409, 'Only a document in review can be reassigned.')
+      const blocked = stepBlock()
+      if (blocked) return blocked
+      const target = input.assignTo ?? null
+      if (target && target.userId === state.requestedBy && !input.allowSelfApproval) return fail(400, 'You cannot hand a review back to the person who submitted it.')
+      if (target && state.assignee?.userId === target.userId) return fail(409, `This is already assigned to ${target.name}.`)
+      const next: ReviewDocState = { ...state, assignee: target }
+      if (!target && !state.assignee) return fail(409, 'This is not assigned to anyone.')
+      return {
+        ok: true,
+        state: next,
+        publish: false,
+        events: [withStep({ action: 'reassigned', note: target ? `Handed to ${target.name}.${note ? ` ${note}` : ''}` : `Handed back to the usual approvers.${note ? ` ${note}` : ''}` })],
+      }
+    }
+
     case 'publish': {
       if (!actor.can.publish) return fail(403, 'Your role cannot publish this content.')
       if (state.status !== 'approved') return fail(409, 'Only an approved document can be published from review.')
@@ -276,7 +306,7 @@ export function resetOnEdit(state: ReviewDocState, contentChanged = false): Revi
  * content hash the approvals were given against. Rows written before that were a bare array of
  * approvals with no hash; those still read correctly, with `hash: null`.
  */
-export type StoredReview = { hash: string | null; approvals: ReviewApproval[] }
+export type StoredReview = { hash: string | null; approvals: ReviewApproval[]; assignee?: ReviewAssignee | null }
 
 export function parseStoredReview(value: unknown): StoredReview {
   let raw: unknown = value
@@ -289,15 +319,19 @@ export function parseStoredReview(value: unknown): StoredReview {
   }
   if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
     const record = raw as Record<string, unknown>
+    const who = record.assignee && typeof record.assignee === 'object' ? (record.assignee as Record<string, unknown>) : null
+    const assigneeId = Number(who?.userId)
     return {
       hash: typeof record.hash === 'string' ? record.hash : null,
       approvals: parseApprovalList(record.approvals),
+      ...(who && Number.isInteger(assigneeId) && assigneeId > 0 ? { assignee: { userId: assigneeId, name: typeof who.name === 'string' ? who.name : '' } } : {}),
     }
   }
   return { hash: null, approvals: parseApprovalList(raw) }
 }
 
 export function serializeStoredReview(review: StoredReview): StoredReview | ReviewApproval[] {
+  if (review.assignee) return { hash: review.hash, approvals: review.approvals, assignee: review.assignee }
   return review.hash === null ? review.approvals : { hash: review.hash, approvals: review.approvals }
 }
 

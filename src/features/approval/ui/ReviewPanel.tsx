@@ -23,6 +23,8 @@ const ACTION_LABELS: Record<ReviewState['history'][number]['action'], string> = 
   comment: 'Comment',
   published: 'Published',
   withdrawn: 'Withdrawn',
+  reassigned: 'Reassigned',
+  reset: 'Review started again',
 }
 
 /** True when this collection needs review before it can publish. */
@@ -162,6 +164,8 @@ export const ReviewActions: React.FC<{
 export const ReviewBox: React.FC<{ review: UseReviewState }> = ({ review }) => {
   const [comment, setComment] = useState('')
   const [posting, setPosting] = useState(false)
+  const [assignTo, setAssignTo] = useState('')
+  const [reassigning, setReassigning] = useState(false)
   const state = review.state
 
   if (review.loadError) return <p className="doc-muted">{review.loadError}</p>
@@ -184,6 +188,40 @@ export const ReviewBox: React.FC<{ review: UseReviewState }> = ({ review }) => {
         </p>
       )}
       {state.workflow?.awaiting && state.status === 'in_review' && <p className="doc-line doc-review-awaiting">{state.workflow.awaiting}</p>}
+      {state.status === 'in_review' && state.assignee && <p className="doc-line">Handed to {state.assignee.name}.</p>}
+      {state.status === 'in_review' && state.allowed.reassign && (
+        <div className="doc-review-note">
+          <label className="doc-muted" htmlFor="doc-review-reassign">
+            Hand this review to someone else
+          </label>
+          <select id="doc-review-reassign" value={assignTo} onChange={(event) => setAssignTo(event.target.value)} style={{ width: '100%', font: 'inherit' }}>
+            <option value="">Pick a person…</option>
+            {(state.reviewerChoices ?? []).map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name}
+              </option>
+            ))}
+          </select>
+          <button
+            className="btn"
+            disabled={assignTo === '' || reassigning}
+            onClick={async () => {
+              setReassigning(true)
+              const ok = await review.act('reassign', { assignTo: Number(assignTo) })
+              setReassigning(false)
+              if (ok) setAssignTo('')
+            }}
+            type="button"
+          >
+            {reassigning ? 'Handing over…' : 'Hand over'}
+          </button>
+          {state.assignee && (
+            <button className="doc-link" disabled={reassigning} onClick={() => void review.act('reassign', { assignTo: null })} type="button">
+              Hand back to the usual approvers
+            </button>
+          )}
+        </div>
+      )}
       {isGated(state) && state.status === 'in_review' && (
         <p className="doc-muted">
           Approvals{state.workflow?.step ? ` for ${state.workflow.step.name}` : ''}: {state.approvals.length} of {state.requiredApprovals}

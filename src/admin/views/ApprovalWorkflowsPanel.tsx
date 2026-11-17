@@ -15,6 +15,7 @@ import {
   payloadFromDraft,
   roleChoices,
   setAuthorRoute,
+  setStandIn,
   toggleRole,
   toggleUser,
   unwrapDoc,
@@ -107,6 +108,10 @@ function WorkflowForm({
   const disabled = !canEdit || busy
   const [routeAuthor, setRouteAuthor] = useState(0)
   const [routeApprover, setRouteApprover] = useState(0)
+  const [awayUser, setAwayUser] = useState(0)
+  const [coverUser, setCoverUser] = useState(0)
+  const [awayUntil, setAwayUntil] = useState('')
+  const personName = (id: number) => people.find((p) => p.id === id)?.name ?? `User ${id}`
   const roleName = (slug: string) => choices.find((choice) => choice.slug === slug)
 
   const setStep = (index: number, patch: Partial<WorkflowDraft['steps'][number]>) =>
@@ -197,6 +202,43 @@ function WorkflowForm({
           </div>
           <button type="button" className="eg-roles-btnSecondary" disabled={!routeAuthor || !routeApprover} onClick={() => { onChange({ ...draft, authorRoutes: setAuthorRoute(draft.authorRoutes, routeAuthor, [...new Set([...(draft.authorRoutes[String(routeAuthor)] ?? []), routeApprover])]) }); setRouteApprover(0) }}>
             Add
+          </button>
+        </fieldset>
+      )}
+
+      {people.length > 1 && (
+        <fieldset className="rw-roles" disabled={disabled}>
+          <legend>Stand-ins for reviewers who are away</legend>
+          <p className="rw-hint">While a reviewer is away, the stand-in may approve or send back anything that reviewer could, and gets the same emails. Remove the row when they are back, or set the last day away.</p>
+          {draft.standIns.map((entry) => (
+            <p key={entry.userId} className="rw-hint">
+              {personName(entry.userId)} is covered by {personName(entry.standInId)}
+              {entry.until ? ` until ${entry.until}` : ' until removed'}{' '}
+              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, standIns: setStandIn(draft.standIns, entry.userId, null, null) })}>Remove</button>
+            </p>
+          ))}
+          <div className="rw-grid">
+            <label className="rw-field" htmlFor={`${idBase}-away-user`}>
+              <span>Reviewer who is away</span>
+              <select id={`${idBase}-away-user`} className="eg-roles-input" value={awayUser} onChange={(event) => setAwayUser(Number(event.target.value))}>
+                <option value={0}>Pick…</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+            <label className="rw-field" htmlFor={`${idBase}-cover-user`}>
+              <span>Covered by</span>
+              <select id={`${idBase}-cover-user`} className="eg-roles-input" value={coverUser} onChange={(event) => setCoverUser(Number(event.target.value))}>
+                <option value={0}>Pick…</option>
+                {people.filter((p) => p.id !== awayUser).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+            <label className="rw-field" htmlFor={`${idBase}-away-until`}>
+              <span>Last day away (optional)</span>
+              <input id={`${idBase}-away-until`} className="eg-roles-input" type="date" value={awayUntil} onChange={(event) => setAwayUntil(event.target.value)} />
+            </label>
+          </div>
+          <button type="button" className="eg-roles-btnSecondary" disabled={!awayUser || !coverUser} onClick={() => { onChange({ ...draft, standIns: setStandIn(draft.standIns, awayUser, coverUser, awayUntil || null) }); setAwayUser(0); setCoverUser(0); setAwayUntil('') }}>
+            Add stand-in
           </button>
         </fieldset>
       )}
