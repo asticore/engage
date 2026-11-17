@@ -1,21 +1,21 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 type Api = {
   turnstile?: { render: (el: HTMLElement, o: { sitekey: string; callback: (t: string) => void }) => string }
   grecaptcha?: { ready: (cb: () => void) => void; execute: (key: string, o: { action: string }) => Promise<string> }
 }
 
-const load = (src: string, id: string): Promise<void> =>
+const load = (src: string, id: string): Promise<boolean> =>
   new Promise((resolve) => {
-    if (document.getElementById(id)) return resolve()
+    if (document.getElementById(id)) return resolve(true)
     const el = document.createElement('script')
     el.id = id
     el.src = src
     el.async = true
-    el.onload = () => resolve()
-    el.onerror = () => resolve()
+    el.onload = () => resolve(true)
+    el.onerror = () => resolve(false)
     document.head.appendChild(el)
   })
 
@@ -26,18 +26,21 @@ const load = (src: string, id: string): Promise<void> =>
 export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKey: string }> = ({ provider, siteKey }) => {
   const box = useRef<HTMLDivElement>(null)
   const hidden = useRef<HTMLInputElement>(null)
+  const [blocked, setBlocked] = useState(false)
 
   useEffect(() => {
     let live = true
     let timer: ReturnType<typeof setInterval> | undefined
     if (provider === 'turnstile') {
-      void load('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit', 'engage-turnstile').then(() => {
+      void load('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit', 'engage-turnstile').then((ok) => {
+        if (!ok && live) setBlocked(true)
         const api = (window as unknown as Api).turnstile
         if (!live || !api || !box.current || box.current.childElementCount > 0) return
         api.render(box.current, { sitekey: siteKey, callback: (token: string) => { if (hidden.current) hidden.current.value = token } })
       })
     } else {
-      void load(`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`, 'engage-recaptcha').then(() => {
+      void load(`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`, 'engage-recaptcha').then((ok) => {
+        if (!ok && live) setBlocked(true)
         const api = (window as unknown as Api).grecaptcha
         if (!live || !api) return
         const refresh = () => api.ready(() => void api.execute(siteKey, { action: 'auth' }).then((t) => { if (hidden.current) hidden.current.value = t }).catch((): void => undefined))
@@ -54,6 +57,9 @@ export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKe
   return (
     <>
       {provider === 'turnstile' && <div ref={box} />}
+      {blocked && (
+        <p role="alert">The security check could not load. Please turn off any content blocker for this site, reload the page and try again, or contact the site owner.</p>
+      )}
       <input ref={hidden} type="hidden" name={provider === 'turnstile' ? 'cf-turnstile-response' : 'g-recaptcha-response'} />
     </>
   )

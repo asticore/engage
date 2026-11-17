@@ -140,6 +140,8 @@ async function signInActionImpl(_state: ActionState, form: FormData): Promise<Ac
     } else if (result.needsVerification) {
       await recordAuthEvent(context.engine, { action: 'email.refused', actorEmail: address || null, detail: 'sign-in held back: email not verified' }, origin)
     }
+    const { noteCaptchaFailure } = await import('@/features/security/authCaptcha')
+    await noteCaptchaFailure(context.engine as never, 'signIn', await requestAddress())
     return { ...failed(result.message ?? 'That did not work.'), code: result.needsVerification ? 'verify-first' : undefined }
   }
 
@@ -220,7 +222,7 @@ async function registerActionImpl(_state: ActionState, form: FormData): Promise<
   if (!guard.allowed) return failed(tooManyAttempts(guard.retryAfterSeconds ?? 60))
   {
     const { authCaptchaRefusal } = await import('@/features/security/authCaptcha')
-    const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress())
+    const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress(), 'register')
     if (refused) return failed(refused)
   }
 
@@ -263,7 +265,7 @@ async function forgotPasswordActionImpl(
   if (!guard.allowed) return failed(tooManyAttempts(guard.retryAfterSeconds ?? 60))
   {
     const { authCaptchaRefusal } = await import('@/features/security/authCaptcha')
-    const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress())
+    const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress(), 'reset')
     if (refused) return failed(refused)
   }
 
@@ -289,11 +291,18 @@ async function resetPasswordActionImpl(
   const guard = await guardAttempt(context.engine, 'reset', await requestAddress())
   if (!guard.allowed) return failed(tooManyAttempts(guard.retryAfterSeconds ?? 60))
 
+  const { authCaptchaRefusal, noteCaptchaFailure } = await import('@/features/security/authCaptcha')
+  const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress(), 'resetConfirm')
+  if (refused) return failed(refused)
+
   const password = text(form, 'password')
   if (password !== text(form, 'passwordConfirm')) return failed('The two passwords do not match.')
 
   const result = await completePasswordReset(context.engine, text(form, 'token'), password)
-  if (!result.ok) return failed(result.message ?? 'That did not work.')
+  if (!result.ok) {
+    await noteCaptchaFailure(context.engine as never, 'resetConfirm', await requestAddress())
+    return failed(result.message ?? 'That did not work.')
+  }
   await recordAuthEvent(context.engine, { action: 'password.reset', actorId: result.userId ?? null, detail: 'emailed link' }, await requestClient())
 
   // No session is minted here. Whoever opened the link has proven they can
@@ -534,6 +543,11 @@ async function requestLoginActionImpl(_state: ActionState, form: FormData): Prom
   if (!byIp.allowed) return failed(tooManyAttempts(byIp.retryAfterSeconds ?? 60))
   const byEmail = await guardAttempt(context.engine, 'passwordless-request', `email:${address}`)
   if (!byEmail.allowed) return failed(tooManyAttempts(byEmail.retryAfterSeconds ?? 60))
+  {
+    const { authCaptchaRefusal } = await import('@/features/security/authCaptcha')
+    const refused = await authCaptchaRefusal(context.engine as never, form, ip, 'passwordlessRequest')
+    if (refused) return failed(refused)
+  }
 
   const client = await requestClient()
   const deps = await passwordlessDepsFor(context.engine, client)
@@ -561,10 +575,16 @@ async function verifyCodeActionImpl(_state: ActionState, form: FormData): Promis
   if (!byIp.allowed) return failed(tooManyAttempts(byIp.retryAfterSeconds ?? 60))
   const byEmail = await guardAttempt(context.engine, 'passwordless-verify', `email:${email}`)
   if (!byEmail.allowed) return failed(tooManyAttempts(byEmail.retryAfterSeconds ?? 60))
+  const { authCaptchaRefusal, noteCaptchaFailure } = await import('@/features/security/authCaptcha')
+  const refused = await authCaptchaRefusal(context.engine as never, form, await requestAddress(), 'passwordlessVerify')
+  if (refused) return failed(refused)
 
   const deps = await passwordlessDepsFor(context.engine, await requestClient())
   const outcome = await verifyCode(deps, email, text(form, 'code'))
-  if (outcome.status === 'refused') return failed(outcome.message)
+  if (outcome.status === 'refused') {
+    await noteCaptchaFailure(context.engine as never, 'passwordlessVerify', await requestAddress())
+    return failed(outcome.message)
+  }
   if (outcome.status === 'two-factor') {
     await setPendingBindingCookie(outcome.pendingBinding)
     return { status: 'idle', message: '', pendingToken: outcome.pendingToken }

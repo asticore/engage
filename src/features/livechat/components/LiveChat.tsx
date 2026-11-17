@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import { AuthCaptcha } from '@/features/security/AuthCaptcha'
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
 
 type Msg = { id: number; sender: 'visitor' | 'staff'; name: string; content: string }
 type Status = { available: boolean; welcome: string; offlineMessage: string; chat?: { status: 'open' | 'closed' | 'offline'; name: string; hasEmail: boolean }; messages?: Msg[] }
@@ -30,7 +30,7 @@ const POLL_MS = 4000
  * Talk to a person, inside the chatbot widget. While staff are online it is a live chat that polls for replies every few seconds;
  * otherwise a short form turns the message into an email to the team. English labels only for now.
  */
-export const LiveChat: React.FC<{ captcha: { provider: 'turnstile' | 'recaptcha'; siteKey: string } | null; onBack: () => void }> = ({ captcha, onBack }) => {
+export const LiveChat: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [status, setStatus] = useState<Status | null>(null)
   const [messages, setMessages] = useState<Msg[]>([])
   const [error, setError] = useState('')
@@ -149,7 +149,7 @@ export const LiveChat: React.FC<{ captcha: { provider: 'turnstile' | 'recaptcha'
               <input name="website" tabIndex={-1} autoComplete="off" />
             </label>
           </div>
-          {captcha ? <AuthCaptcha provider={captcha.provider} siteKey={captcha.siteKey} /> : null}
+          <PlaceCaptcha place="chatbot" refreshKey={error} />
           <button type="submit" className="btn btn--primary" disabled={busy}>
             {status.available ? 'Start chat' : 'Send message'}
           </button>

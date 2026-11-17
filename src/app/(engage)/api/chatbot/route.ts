@@ -5,7 +5,7 @@ import * as store from '@/features/chatbot/store'
 import { answerQuestion } from '@/features/chatbot/service'
 import { monthStart } from '@/features/ai/builderUsage'
 import { rawD1 } from '@/features/ecommerce/server/db'
-import { authCaptchaConfig, authCaptchaRefusal } from '@/features/security/authCaptcha'
+import { authCaptchaRefusal } from '@/features/security/authCaptcha'
 import { clientKey, hit } from '@/features/security/rateLimit'
 import { getEngine } from '@/lib/engine'
 import { getFeatureFlags } from '@/utilities/features'
@@ -20,8 +20,7 @@ export async function GET(): Promise<Response> {
   if (!flags.chatbot) return json({ error: 'The chatbot is not switched on.' }, 404)
   const d1 = (await rawD1()) as never as store.D1
   const s = await store.getSettings(d1)
-  const captcha = await authCaptchaConfig((await getEngine()) as never, 'chatbot')
-  return json({ live: Boolean(flags.livechat), sitewide: s.sitewide, position: s.position, name: s.name, avatar: s.avatar, greeting: s.greeting, requireConsent: s.requireConsent, consentText: s.consentText, hours: s.hours, captcha })
+  return json({ live: Boolean(flags.livechat), sitewide: s.sitewide, position: s.position, name: s.name, avatar: s.avatar, greeting: s.greeting, requireConsent: s.requireConsent, consentText: s.consentText, hours: s.hours })
 }
 
 /**

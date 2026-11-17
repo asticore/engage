@@ -2,13 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 
-import { AuthCaptcha } from '@/features/security/AuthCaptcha'
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
 
 import { LiveChat } from '@/features/livechat/components/LiveChat'
 
 import type { Handoff } from '../core'
 
-type Config = { live: boolean; sitewide: boolean; position: 'left' | 'right'; name: string; avatar: string; greeting: string; requireConsent: boolean; consentText: string; hours: string; captcha: { provider: 'turnstile' | 'recaptcha'; siteKey: string } | null }
+type Config = { live: boolean; sitewide: boolean; position: 'left' | 'right'; name: string; avatar: string; greeting: string; requireConsent: boolean; consentText: string; hours: string }
 type Line = { id: number; role: 'user' | 'assistant'; text: string; sources?: Array<{ title: string; url: string }>; handoff?: Handoff | null; messageId?: number; rated?: 1 | -1 }
 
 const TOKEN_KEY = 'eg_chat_token'
@@ -128,7 +128,7 @@ export const ChatWidget: React.FC<{ inline?: boolean }> = ({ inline = false }) =
           </button>
         </div>
       ) : live ? (
-        <LiveChat captcha={cfg.captcha} onBack={() => setLive(false)} />
+        <LiveChat onBack={() => setLive(false)} />
       ) : (
         <>
           <div ref={log} role="log" aria-live="polite" style={{ flex: 1, overflowY: 'auto', padding: '0.75rem', display: 'grid', gap: '0.5rem', alignContent: 'start' }}>
@@ -190,7 +190,7 @@ export const ChatWidget: React.FC<{ inline?: boolean }> = ({ inline = false }) =
             }}
             style={{ display: 'grid', gap: '0.5rem', padding: '0.75rem', borderTop: '1px solid var(--color-line, #ccc)' }}
           >
-            {cfg.captcha ? <AuthCaptcha provider={cfg.captcha.provider} siteKey={cfg.captcha.siteKey} /> : null}
+            <PlaceCaptcha place="chatbot" refreshKey={lines.length} />
             <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
               <label>
                 Website

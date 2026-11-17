@@ -1,9 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import type { CheckoutInput } from '@/components/CheckoutExtras'
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
 
 /** Bank transfer, cheque or cash on delivery, when the shop has switched them on. Renders nothing otherwise. */
 type Cart = { id: number; secret: string }
@@ -32,6 +33,7 @@ export const OfflinePaymentOptions: React.FC<{ cartRef: Cart | null; email: stri
   const [chosen, setChosen] = useState<string>('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const box = useRef<HTMLFieldSetElement>(null)
 
   useEffect(() => {
     let alive = true
@@ -51,6 +53,7 @@ export const OfflinePaymentOptions: React.FC<{ cartRef: Cart | null; email: stri
     if (!cartRef) return setError('Your cart is empty.')
     if (!email) return setError('Please enter your email address first.')
     setBusy(true)
+    const token = (field: string): string | undefined => box.current?.querySelector<HTMLInputElement>(`input[name="${field}"]`)?.value || undefined
     try {
       const res = await fetch('/api/shop-offline-order', {
         method: 'POST',
@@ -68,6 +71,8 @@ export const OfflinePaymentOptions: React.FC<{ cartRef: Cart | null; email: stri
           giftCardCodes: extras?.giftCardCodes,
           useStoreCredit: extras?.useStoreCredit,
           giftWrap: extras?.giftWrap,
+          'cf-turnstile-response': token('cf-turnstile-response'),
+          'g-recaptcha-response': token('g-recaptcha-response'),
         }),
       })
       const json = (await res.json().catch((): Record<string, unknown> => ({}))) as { orderID?: number; error?: string }
@@ -80,7 +85,7 @@ export const OfflinePaymentOptions: React.FC<{ cartRef: Cart | null; email: stri
   }
 
   return (
-    <fieldset className="flex flex-col gap-2 border border-[var(--color-line)] p-3">
+    <fieldset ref={box} className="flex flex-col gap-2 border border-[var(--color-line)] p-3">
       <legend className="px-1 text-[0.85rem] uppercase tracking-[0.06em]">Or pay another way</legend>
       {options.map((o) => (
         <label key={o.id} className="flex items-center gap-2">
@@ -89,6 +94,7 @@ export const OfflinePaymentOptions: React.FC<{ cartRef: Cart | null; email: stri
         </label>
       ))}
       {current.instructions && <p className="m-0 whitespace-pre-wrap text-[0.9rem] opacity-80">{current.instructions}</p>}
+      <PlaceCaptcha place="offlineOrder" refreshKey={error} />
       {error && <p className="form-error">{error}</p>}
       <button type="button" className="btn" onClick={place} disabled={busy}>
         {busy ? 'Placing order...' : `Place order to pay by ${current.label.toLowerCase()}`}

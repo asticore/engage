@@ -17,7 +17,7 @@ describe('sign-in challenge', () => {
     const on = { turnstile: true, protectSignIn: true, turnstileSiteKey: 'site', turnstileSecretKey: 'secret' }
     expect(await authCaptchaConfig(engine(on) as never)).toEqual({ provider: 'turnstile', siteKey: 'site' })
     expect(await authCaptchaConfig(engine({ ...on, turnstileSiteKey: '' }) as never)).toBeNull()
-    expect(await authCaptchaConfig(engine({ ...on, captchaProvider: 'recaptcha', recaptchaSiteKey: 'rk' }) as never)).toEqual({ provider: 'recaptcha', siteKey: 'rk' })
+    expect(await authCaptchaConfig(engine({ ...on, captchaProvider: 'recaptcha', recaptchaSiteKey: 'rk', recaptchaSecretKey: 'rs' }) as never)).toEqual({ provider: 'recaptcha', siteKey: 'rk' })
   })
   it('refuses a missing token and accepts a good one', async () => {
     const on = { turnstile: true, protectSignIn: true, turnstileSiteKey: 'site', turnstileSecretKey: 'secret' }

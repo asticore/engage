@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 
+import { PlaceCaptcha } from '@/features/security/PlaceCaptcha'
+
 /** "Email me when it is back" on an out-of-stock product. `website` is a honeypot: hidden from people, filled in by bots. */
 export function BackInStockForm({ productId }: { productId: number }) {
   const [state, setState] = useState<{ busy: boolean; done: boolean; message: string; error: string }>({ busy: false, done: false, message: '', error: '' })
@@ -14,7 +16,13 @@ export function BackInStockForm({ productId }: { productId: number }) {
       const res = await fetch('/api/shop-back-in-stock', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, email: form.get('email'), website: form.get('website') }),
+        body: JSON.stringify({
+          productId,
+          email: form.get('email'),
+          website: form.get('website'),
+          'cf-turnstile-response': form.get('cf-turnstile-response') ?? undefined,
+          'g-recaptcha-response': form.get('g-recaptcha-response') ?? undefined,
+        }),
       })
       const body = (await res.json().catch((): null => null)) as { ok?: boolean; message?: string; errors?: Record<string, string> } | null
       const error = body?.errors?.email || (res.ok ? '' : body?.message || 'Could not save your request.')
@@ -38,6 +46,7 @@ export function BackInStockForm({ productId }: { productId: number }) {
           <input name="website" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
+      <PlaceCaptcha place="backInStock" refreshKey={state.error} />
       {state.error ? <p role="alert">{state.error}</p> : null}
       <button type="submit" className="btn btn--primary justify-self-start" disabled={state.busy}>
         {state.busy ? 'Saving...' : 'Tell me when it is back'}

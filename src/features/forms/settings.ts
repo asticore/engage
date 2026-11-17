@@ -7,6 +7,7 @@ import { sanitiseHtml, sanitiseLayoutHtml } from './htmlSanitize'
 import { resolveLayout } from './layout'
 import { computePrefill } from './prefill'
 import { normaliseBotMode } from '@/features/security/botSignals'
+import { DEFAULT_FAILURE_THRESHOLD, DEFAULT_FAILURE_WINDOW_MINUTES, defaultPlaceModes, readPlaceModes } from '@/features/security/captchaPlaces'
 
 /**
  * Reads the site-wide Form Settings and folds a single form's overrides into it.
@@ -49,6 +50,9 @@ export const DEFAULT_FORM_SETTINGS: ResolvedFormSettings = {
   protectSignIn: false,
   botDetection: 'off',
   botMinScore: 30,
+  placeModes: defaultPlaceModes(),
+  failureThreshold: DEFAULT_FAILURE_THRESHOLD,
+  failureWindowMinutes: DEFAULT_FAILURE_WINDOW_MINUTES,
   blockedWords: '',
   maxLinks: 0,
   blockedSenders: '',
@@ -65,7 +69,7 @@ type SettingsDoc = {
     sendAdminNotification?: boolean
     notificationRecipients?: string
   }
-  spam?: {
+  spam?: Record<string, unknown> & {
     honeypot?: boolean
     minimumFillTimeSeconds?: number
     turnstile?: boolean
@@ -78,6 +82,8 @@ type SettingsDoc = {
     protectSignIn?: boolean
     botDetection?: string
     botMinScore?: number
+    failureThreshold?: number
+    failureWindowMinutes?: number
     blockedWords?: string
     maxLinks?: number
     blockedSenders?: string
@@ -149,6 +155,9 @@ export const getFormSettings = async (engine: EngineLike): Promise<ResolvedFormS
     protectSignIn: bool(doc.spam?.protectSignIn, DEFAULT_FORM_SETTINGS.protectSignIn),
     botDetection: normaliseBotMode(doc.spam?.botDetection),
     botMinScore: num(doc.spam?.botMinScore, DEFAULT_FORM_SETTINGS.botMinScore),
+    placeModes: readPlaceModes(doc.spam),
+    failureThreshold: Math.max(1, Math.min(50, Math.floor(num(doc.spam?.failureThreshold, DEFAULT_FAILURE_THRESHOLD)))),
+    failureWindowMinutes: Math.max(1, Math.min(1440, Math.floor(num(doc.spam?.failureWindowMinutes, DEFAULT_FAILURE_WINDOW_MINUTES)))),
     blockedWords: text(doc.spam?.blockedWords, ''),
     maxLinks: Math.max(0, Math.min(50, Math.floor(num(doc.spam?.maxLinks, 0)))),
     blockedSenders: text(doc.spam?.blockedSenders, ''),

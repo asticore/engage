@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { getEngine } from '@/engine'
 import { BACK_IN_STOCK_RATE_LIMIT_PER_MINUTE, type BackInStockInput } from '@/features/ecommerce/lib/backInStock'
 import { recordBackInStockSignup, type BackInStockEngine } from '@/features/ecommerce/backInStockSignup'
+import { authCaptchaRefusal, captchaFormFrom } from '@/features/security/authCaptcha'
 import { clientKey, hit } from '@/features/security/rateLimit'
 
 export const dynamic = 'force-dynamic'
@@ -21,6 +22,8 @@ export async function POST(request: Request): Promise<Response> {
   if (!body || typeof body !== 'object') return NextResponse.json({ ok: false, message: 'Invalid request.' }, { status: 400 })
 
   const engine = (await getEngine()) as unknown as BackInStockEngine
+  const challenge = await authCaptchaRefusal(engine as never, captchaFormFrom(body, request.headers), request.headers.get('cf-connecting-ip') ?? undefined, 'backInStock')
+  if (challenge) return NextResponse.json({ ok: false, message: challenge }, { status: 400 })
   const result = await recordBackInStockSignup(engine, body)
   if (result.kind === 'invalid') return NextResponse.json({ ok: false, message: 'Please check the form.', errors: result.errors }, { status: 400 })
   if (result.kind === 'off') return NextResponse.json({ ok: false, message: 'Back-in-stock emails are turned off.' }, { status: 403 })
