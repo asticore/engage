@@ -4,6 +4,7 @@ import { rawD1 } from '@/features/ecommerce/server/db'
 import { effectiveStatus, hashToken, isQuoteToken, parseCounter } from '@/features/quotes/logic'
 import { acceptQuote, getEngineSafe, sendQuoteEmail } from '@/features/quotes/service'
 import * as store from '@/features/quotes/store'
+import { requestSiteOrigin } from '@/utilities/siteOrigin'
 import { hitShared } from '@/features/security/rateLimit'
 import { getFeatureFlags } from '@/utilities/features'
 
@@ -48,6 +49,11 @@ export async function POST(request: Request): Promise<Response> {
       const result = await acceptQuote(l.d1, engine, current, now)
       if (result.ok === false) return json({ error: result.error }, result.status)
       break
+    }
+    case 'accept-card': {
+      const result = await acceptQuote(l.d1, engine, current, now, { origin: await requestSiteOrigin(), token: String(body?.token) })
+      if (result.ok === false) return json({ error: result.error }, result.status)
+      return json({ ...view((await store.getRequest(l.d1, current.id)) ?? current, new Date()), payUrl: result.payUrl })
     }
     case 'decline': {
       if (!(await store.moveStatus(l.d1, current.id, 'declined', ['quoted', 'countered'], iso))) return json({ error: 'This quote was already answered.' }, 409)

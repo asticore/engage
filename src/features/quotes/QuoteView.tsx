@@ -20,7 +20,7 @@ export function QuoteView({ token }: { token: string }) {
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
   const [amount, setAmount] = useState('')
-  const [done, setDone] = useState('')
+  const [done, setDone] = useState(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('paid') === '1' ? 'Thanks. Your card payment is being confirmed and we will email you a receipt.' : ''))
 
   useEffect(() => {
     void (async () => {
@@ -31,12 +31,16 @@ export function QuoteView({ token }: { token: string }) {
     })()
   }, [token])
 
-  const act = async (action: 'accept' | 'decline' | 'counter'): Promise<void> => {
+  const act = async (action: 'accept' | 'accept-card' | 'decline' | 'counter'): Promise<void> => {
     setBusy(true)
     setError('')
     try {
       const res = await fetch('/api/quote-view', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, action, note, amount }) })
-      const body = (await res.json().catch(() => ({}))) as View & { error?: string }
+      const body = (await res.json().catch(() => ({}))) as View & { error?: string; payUrl?: string }
+      if (res.ok && body.payUrl) {
+        window.location.href = body.payUrl
+        return
+      }
       if (res.ok) {
         setView(body)
         setDone(action === 'accept' ? 'Thanks. Your order is placed and the payment details are in your email.' : action === 'decline' ? 'We have let them know you declined.' : 'Your reply was sent. We will be in touch.')
@@ -66,6 +70,7 @@ export function QuoteView({ token }: { token: string }) {
           <>
             <div className="cluster">
               <button type="button" className="btn" disabled={busy} onClick={() => void act('accept')}>Accept and place order</button>
+              <button type="button" className="btn" disabled={busy} onClick={() => void act('accept-card')}>Accept and pay by card</button>
               <button type="button" className="btn" disabled={busy} onClick={() => void act('decline')}>Decline</button>
             </div>
             <label className="field">Want something changed? Tell us<textarea className="input" rows={3} value={note} onChange={(e) => setNote(e.target.value)} /></label>
