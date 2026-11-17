@@ -1571,6 +1571,9 @@ const es: UiDictionary = {
   'media.preview': "Vista previa",
   'media.folder': "Carpeta",
   'media.alt': "Alt",
+  'media.tags': "Etiquetas",
+  'media.tagsNone': "Aún no hay etiquetas. Crea etiquetas en la página de etiquetas de medios.",
+  'media.tagsHelp': "Marca las etiquetas de este archivo. Cada cambio se guarda al instante.",
   'media.show': "Mostrar",
   // --- admin leftovers (import content view) ---
   'importContent.title': "Importar páginas y entradas",

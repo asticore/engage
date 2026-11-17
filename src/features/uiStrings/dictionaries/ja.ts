@@ -1571,6 +1571,9 @@ const ja: UiDictionary = {
   'media.preview': "プレビュー",
   'media.folder': "フォルダー",
   'media.alt': "代替テキスト",
+  'media.tags': "タグ",
+  'media.tagsNone': "タグはまだありません。メディアタグのページで作成してください。",
+  'media.tagsHelp': "このファイルのタグを選択してください。変更はすぐに保存されます。",
   'media.show': "表示",
   // --- admin leftovers (import content view) ---
   'importContent.title': "ページと投稿のインポート",

@@ -1571,6 +1571,9 @@ const hi: UiDictionary = {
   'media.preview': "पूर्वावलोकन",
   'media.folder': "फ़ोल्डर",
   'media.alt': "वैकल्पिक पाठ",
+  'media.tags': "टैग",
+  'media.tagsNone': "अभी कोई टैग नहीं है। मीडिया टैग पेज पर टैग बनाएँ।",
+  'media.tagsHelp': "इस फ़ाइल के टैग चुनें। हर बदलाव तुरंत सहेजा जाता है।",
   'media.show': "दिखाएँ",
   // --- admin leftovers (import content view) ---
   'importContent.title': "पेज और पोस्ट आयात करें",

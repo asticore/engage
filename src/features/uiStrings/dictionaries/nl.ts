@@ -1571,6 +1571,9 @@ const nl: UiDictionary = {
   'media.preview': "Voorbeeld",
   'media.folder': "Map",
   'media.alt': "Alt",
+  'media.tags': "Tags",
+  'media.tagsNone': "Nog geen tags. Maak tags op de pagina Mediatags.",
+  'media.tagsHelp': "Vink de tags van dit bestand aan. Elke wijziging wordt direct opgeslagen.",
   'media.show': "Tonen",
   // --- admin leftovers (import content view) ---
   'importContent.title': "Pagina's en berichten importeren",

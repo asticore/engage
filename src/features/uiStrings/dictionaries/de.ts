@@ -1572,6 +1572,9 @@ const de: UiDictionary = {
   'media.preview': "Vorschau",
   'media.folder': "Ordner",
   'media.alt': "Alt",
+  'media.tags': "Tags",
+  'media.tagsNone': "Noch keine Tags. Lege Tags auf der Seite Medien-Tags an.",
+  'media.tagsHelp': "Wähle die Tags dieser Datei. Jede Änderung wird sofort gespeichert.",
   'media.show': "Anzeigen",
   // --- admin leftovers (import content view) ---
   'importContent.title': "Seiten und Beiträge importieren",

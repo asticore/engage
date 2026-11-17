@@ -1571,6 +1571,9 @@ const ko: UiDictionary = {
   'media.preview': "미리보기",
   'media.folder': "폴더",
   'media.alt': "대체 텍스트",
+  'media.tags': "태그",
+  'media.tagsNone': "아직 태그가 없습니다. 미디어 태그 페이지에서 만드세요.",
+  'media.tagsHelp': "이 파일의 태그를 선택하세요. 변경 사항은 즉시 저장됩니다.",
   'media.show': "표시",
   // --- admin leftovers (import content view) ---
   'importContent.title': "페이지 및 글 가져오기",

@@ -11,6 +11,7 @@ import { useDocumentInfo } from '@/engine/ui'
 
 import { MediaUploader } from '@/views/media/MediaUploader'
 import { DamAssetPanel } from '@/features/dam/DamAssetPanel'
+import { MediaTagsEdit } from '@/features/mediaTags/MediaTagsEdit'
 
 import { OrganizationVisibilitySection } from '@/admin/views/OrganizationVisibilitySection'
 
@@ -50,6 +51,7 @@ export function MediaEditPanel() {
     <>
       <MediaEditPanelInner id={Number(id)} />
       <DamAssetPanel id={Number(id)} />
+      <MediaTagsEdit id={Number(id)} />
     </>
   )
 }
