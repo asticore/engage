@@ -1,0 +1,4555 @@
+# Commit breakdown
+
+One line per commit on main (first-parent history; squashed PRs show once, merge commits stand for their branch). Newest first. Generated 17 Nov 2026 after the history clean-up; the full detail of each task is in `remaining-work-done.md`.
+
+Total: {len(out)} commits, {len(g)} active days.
+
+## 2026-11-17 (37)
+- `92a4f05fd` Affiliates: short links per affiliate and product (#389)
+- `4d7f5ad9b` Add bulk user actions: ban, unban, sign out, change role (19f first slice) (#388)
+- `5142c9eed` Audit log drain to webhooks (Task 19i first slice) (#387)
+- `e5023db9c` Ban and unban users (Task 19e first slice) (#385)
+- `c8a299015` Affiliates: sign-up element and Affiliates page template (#386)
+- `d8c4c9232` Affiliates: translated emails and now-payable email (#384)
+- `92ff53fea` Country blocking for the whole site (Task 19d) (#383)
+- `c292ac72e` IP allow and block lists (Task 19c) (#382)
+- `de653bacd` Affiliates: webhook events for joined, approved, commission earned and payout recorded (#381)
+- `d2e11c959` Affiliates: commission rates per product tag (#380)
+- `ff89abb9e` Affiliates: commission on subscription renewals with an optional time limit (#379)
+- `f86b71e26` Upgrade Next.js 16.4.3 to 16.4.6 (security patch) (#369)
+- `fd2c34e37` Affiliates: payout details and ignored bot-hit count (26b, 26a) (#378)
+- `57bcc0453` Fix main CI: lint, stale tests, table classification (#376)
+- `53b89c5be` Affiliates: shared creatives kit from the media library (26c) (#377)
+- `338972aa7` Affiliates: member dashboard at /account/affiliate (26c) (#375)
+- `cf4d90c4b` Affiliates: recent visits log (26a) (#374)
+- `0743b49a9` Affiliates: per-affiliate orders, sales, conversion and Top affiliates (26c) (#373)
+- `9f8f47416` Affiliates: product rates and sales tiers (26b) (#372)
+- `cf7941978` Bundle component holds, pre-checkout stock hold with shopper countdown, header cart dropdown preset (Task 23d, 23e) (#371)
+- `3f49e3022` Cart leftovers: empty-cart suggestions, zone bar, expiry reminder, compact lines, replace /cart (Task 23) (#370)
+- `c8385e9fd` Cart lifetime setting and per-line stock warnings (Task 23c, 23e) (#368)
+- `bf7ba78bc` Cart page built from reusable parts and four visual editor cart elements (Task 23d) (#367)
+- `36bf97c24` Saved for later follows the signed-in account (Task 23c) (#366)
+- `6eab6aad8` Gift wrap flat fee at checkout (Task 23c) (#365)
+- `ee9704ed1` Cart: order note and gift message prefilled into checkout Order notes (Task 23c) (#364)
+- `ad6bc4ca4` Docs: plan for cart note and gift message (23c) (#363)
+- `610afb306` Cart: save for later (Task 23c) (#362)
+- `95f5a83f7` Optional stock hold while a cart is in checkout (Task 23e) (#361)
+- `dc77a7136` Username sign-in (23g), password per place, member sign-in path (23l) (#360)
+- `b0c56ba6b` Last login method, external settings link, org access helper (17h, 18e, 18j)
+- `a1962f946` Fix migration registry: missing separator after merge (#358)
+- `458a9a339` Cart: mini cart drawer or dropdown, cart estimate, cart accessibility (Task 23b, 23c, 23f) (#357)
+- `18c112f3a` Task 20a: SAML 2.0, sign-in button, owner self-service SSO (#356)
+- `5d8500317` Add native live chat: staff inbox, polling widget, offline messages (Task 25b)
+- `ea68e63b5` Docs: record 22a and 22c as built, add live check for 22a (#355)
+- `0dc5821b8` Add two-step ownership transfer and delegated access (Task 22a) (#353)
+
+## 2026-11-16 (84)
+- `ed255ff2d` Docs: fold remaining-work docs into one file, renumber open tasks, live checks last (#352)
+- `78fd7151d` Affiliate product links: cloaked /go link, click log, disclosure (Task 31d) (#343)
+- `163e0fdb0` Device authorisation and an MCP endpoint for agent tokens (Tasks 25c, 25d) (#351)
+- `187cf7704` Asset manager: previews, renditions, import, storage totals and quotas (Task 29g) (#350)
+- `797db1093` SCIM 2.0 provisioning for organisations (Task 25b) (#349)
+- `dce47a6e5` Single sign-on per organisation with OpenID Connect (Task 25a) (#348)
+- `796fa6062` Add guest carts that follow sign-in, and one account cart
+- `2f5d1bcd5` Add passkey as a second sign-in step
+- `d6a0bea80` Agency demos, client reports and franchising (22g, 22f, 22d) (#347)
+- `ce9696085` Account switcher (23h) and pending two-step token browser binding (23a1) (#344)
+- `df75e2931` AI agent access: capped, revocable agent tokens with an action log (Task 25d) (#342)
+- `aeca6c5ef` OpenAPI document for the authentication endpoints (Task 23k) (#341)
+- `dd3a751e7` Design notes for 23g and the 23h switcher (#340)
+- `63daab158` Single-use two-step token and shared Google client (23a1, 23a2) (#338)
+- `8b3ad592c` More social providers, generic OpenID Connect and Google One Tap (Task 23d) (#339)
+- `109180ae8` Affiliates: approved, commission and payout emails (31c) (#337)
+- `7f6e2ed08` Access tokens, signing keys and one-time tokens (Task 23i) (#336)
+- `d939414d0` Add company theming and portal layout (Task 22c) (#335)
+- `5328d25a5` Show approximate country on new sessions (Task 23h part) (#334)
+- `e9a89e3b0` Forms: forward entries by email, form data API, better webhooks (Task 43) (#333)
+- `0344e2e3c` Who can sign in with what: per sign-in place method matrix (Task 23l) (#332)
+- `df2564c12` Media folders as records: colour, description, role and company limits, defaults (Task 29a) (#331)
+- `c539edf7d` Verify auth behaviours and record gaps (Task 23a) (#330)
+- `8ce15da9b` Authentication overview switches, sign-ups and sessions on dashboard (Tasks 23b, 23c) (#329)
+- `217b20767` Site chatbot: FAQ first, then site content, with citations, spend cap and admin (Task 30a) (#328)
+- `2b37c286c` feat(dam): private files, share links and zip download (29f) (#327)
+- `7a01bd64e` Affiliates: coupon attribution, UTM on commissions, consent category (31a) (#326)
+- `7c1d938f1` Media search, saved searches, smart collections and document text (Task 29c) (#325)
+- `f5ad16b97` Affiliates: Get started checklist and share kit (31e) (#324)
+- `eeb9e7c53` Affiliates: rate override, minimum payout, first-order-only, payout CSV (31b) (#321)
+- `95ce7a762` Media versions, safe delete and replace everywhere (Task 29d) (#323)
+- `927038b5a` Asset manager first slice: rights, collections, metadata, camera data, duplicates (Task 29) (#322)
+- `227547cd3` Docs: add Task 43, forward form submissions and form data out (#320)
+- `34a46172b` Spam rules for forms: blocked words, link limit, blocked senders (Task 26b) (#319)
+- `0d32f46d7` Move built tasks to the done file, add live-check lines (docs) (#318)
+- `8b4d2e9f2` Spam challenge on the comment form (Task 27c part) (#317)
+- `caa25a16a` Comments on blog posts with moderation (Task 27a, 27b first slice) (#316)
+- `cd6f0e6a1` Spam challenge on member sign-in, register and forgot password (Task 24a) (#315)
+- `c52abe098` Affiliate sign-up page, auto approve, terms and private dashboard link (Tasks 31c, 31e) (#314)
+- `edb571e97` Disposable email blocking for customers, forms and checkout (Task 24h) (#313)
+- `fb57ac6ca` Affiliate commissions, payouts and cookie settings (Task 31b) (#312)
+- `ae7b8ea4f` Affiliate tracking first slice (Task 31a) (#311)
+- `cd03b23ef` Remove disabled Asticore SaaS button from blog builder (Task 32a) (#310)
+- `4f45d32aa` Free-shipping progress bar on the cart page (Task 28c, part) (#309)
+- `c9fa0aeeb` Block disposable email on member sign-up (Task 24h) (#308)
+- `25a11c84a` Authentication overview screen (Task 23b, read only) (#307)
+- `bd0d99135` Dashboard sign-in cards (Task 23c, part) (#306)
+- `c3ff5d29d` Last used sign-in method badge (Task 23e) (#305)
+- `c0578f60f` Webhook settings export and import (Task 22i) (#304)
+- `89d792a9a` Send signed-in user ID to GA4 (hashed, off by default) (#303)
+- `835d699bb` Add site planner (Task 21l) (#302)
+- `7ad988e71` Add language switcher style options: display, layout, hover, align (21k) (#301)
+- `5932b633f` Add coming soon countdown mode and staging flag (21i) (#300)
+- `1a996c522` Add broken link checker to SEO audit (Task 21h) (#299)
+- `3e80c0637` Extend Slides: video slides, text animation, loop, arrows, dots, thumbnails, lazy load, phone height (21c) (#298)
+- `41446c743` Add rich structured data types (Task 21g) (#297)
+- `bfebc239d` Fix production build: lazy db import in customerStats, opaque cloudflare sockets specifier (#296)
+- `d75448d28` Add blog RSS feed with category and tag filters (Task 21f) (#295)
+- `97c227935` Add sitewide breadcrumb settings (Task 21d) (#294)
+- `8f88b9300` Remove em dashes from user-facing text and add a guard test (Task 21j) (#293)
+- `1f6dd61f8` Add Pin it share button and Pinterest Tag (Task 21b) (#292)
+- `4cb6f820d` Add A/B ideas and quick test creation in the visual editor (Task 21a) (#291)
+- `069c239b9` Extend visual editor design warnings (Task 20c) (#290)
+- `ad0502993` Add size checks and target size fixes (Task 20b) (#289)
+- `060c9b043` Add state contrast tests and fixes (Task 20a) (#288)
+- `4c9888cfe` Record decisions for Tasks 19c and 19d (#287)
+- `54323117e` Add media tags with sub-tags, bulk tagging, filter and CSV (Task 19b) (#286)
+- `d6f212038` Add media folder tree with drag and drop (Task 19a) (#285)
+- `dcfb89f2e` Add live order tracking: parcel timeline, Sendle polling, webhook, manual updates and delivery emails (18b) (#284)
+- `cb2721e9a` Add dunning for failed membership payments: grace period, retry schedule, emails and past due list (18a) (#283)
+- `d6552cd46` Let approval steps and authors name approvers (17e) (#282)
+- `e6e506d07` Add purchase limits: per-person limits, waits, verified-account rule and refused-attempt report (17d) (#281)
+- `82d3f6c7e` Add quote, bid and item requests: request page, inbox, priced quotes and accept to order (17c) (#280)
+- `c4b89ed84` Add bookings phase 1: appointment booking pages, hours, manage link and admin screen (#279)
+- `9a839c3ff` Add service products: no shipping and a duration (#278)
+- `7d631b259` Make structured data, wishlist and admin order email follow the shop currency (#277)
+- `1f3893ddc` Add donation products: suggested amounts, campaign, anonymous option, receipt text, campaign report (#276)
+- `cf12b06e5` Add checkout handoff from forms: product in cart and details prefilled (#275)
+- `cc1946b52` Add bulk create of draft pages, posts and products with clash check and undo (#274)
+- `f510f7021` Add product feeds as records with Pinterest, secret addresses, currency and price tier (#273)
+- `ce976de0f` Verify pay-later messaging and add a test (Task 16f) (#272)
+- `9e6b8fa64` Add customer-based pricing rules and a pricing preview (Task 16d) (#271)
+- `08d8d24d5` Add local pickup locations and ready for pickup email (Task 16c) (#270)
+- `4929a2a69` Add carton and pallet quantities on products (Task 16a) (#269)
+
+## 2026-11-15 (28)
+- `bd6b4b8a0` Add the taskboard (Kanban) feature section with assignees (#268)
+- `739ee1ebe` Task 12: update popup for super admins (#267)
+- `f851d48a2` Task 11: empty a section's data and stricter lazy install tests (#266)
+- `e1ff4d38e` Task 10: company limited media downloads (#265)
+- `47fe7402c` Task 9: style picks with reasons and a generated theme (#264)
+- `9ccc19135` Task 8c: design locks for the visual and email builders (#263)
+- `88c4419ff` Task 8: SMTP provider, ordered fallbacks, notification rules, web push, email MSO output (#262)
+- `ffff0c4ac` Scheduled tasks: next run, run now and turn off or on per job (#261)
+- `aded9316f` Tasks 5 and 6: regions, language and domain audit, gap tasks 41 and 42 (#260)
+- `24ca172bd` Task 4: variation tier notes, badge product picker, nested blog categories, company tiers (#259)
+- `ebfd02203` Task 3: translate 150 English-only admin strings into twelve languages (#258)
+- `618e53ede` Task 2: Effix effects picker and Reference sources screen (#257)
+- `b6f9e2f9b` Task 1: paid event tickets become bookings, refunds free them, race-safe capacity (#256)
+- `47285e3f1` docs: restore Task 39 removed by the Task 38 edit (#255)
+- `d0cd70788` docs: repo issue files for Effix and Shine, update task 40 (#254)
+- `a972e965b` docs: template repo draft, task 40 Effix and Shine for builder elements, task 38 decisions (#253)
+- `6167babff` docs: detail task 38 templates and theme builder, add 39j (#252)
+- `0a02f96fc` docs: add task 39 (timeline, feeds, calendar, custom elements, parity, AI on element) (#251)
+- `c4c5120b3` docs: add taxonomy list, load more, form styling to tasks 33c/34b (#250)
+- `6ab204560` docs: make the five control patterns explicit in task 36h (#249)
+- `4a4102231` docs: control-by-control gaps for builder settings (36e, 36h, 37a) (#248)
+- `a4484f825` docs: apply Matt's decisions to visual builder tasks 33 to 38 (#247)
+- `1a180d3e0` docs: add visual builder tasks 33 to 38 (#246)
+- `fdf198706` docs: apply Matt's decisions to tasks 27 to 32 (#245)
+- `604317e55` docs: add tasks 26 to 32 (spam, comments, cart, DAM, chatbot, affiliates, blog builder) (#244)
+- `b6bfe2146` docs: apply Matt's auth decisions to tasks 23 to 25 (#243)
+- `8a49bcd6a` docs: add authentication and security tasks 23 to 25 (#242)
+- `6c1607ece` docs: audit Matt's notes, add tasks 16 to 22 (#241)
+
+## 2026-11-11 (1)
+- `8657060c3` docs: add taskboard (Kanban) task to remaining work (#240)
+
+## 2026-11-09 (14)
+- `eb8b49da3` Replace Tailwind with Shine, reference file, default templates, pricing tiers, badges, categories (#237)
+- `86028d635` Task 10: API access categories, key rotate, usage, data feeds, drag and drop builder (#239)
+- `8e7162dc2` Feedback button: popup to choose bug or feature request (#238)
+- `54c326f8d` Update issue templates
+- `7dfc2cf87` Activity log: edits, publishes, exports, person filter, CSV and clear (#236)
+- `45b73fdbc` Company admins narrow company content to members and teams (#235)
+- `c27ec9826` Add Feedback button for super admins in admin sidebar (#234)
+- `72f7aeffe` Update repo slug references after rename to asticore/engage (#233)
+- `cf25a1e2a` Polish admin menu: Home label, name and photo, no tooltips, right-side mobile drawer (#232)
+- `2f76e9a67` Fix admin edit-form hydration error; one-push-per-request rule (#231)
+- `a9a970221` Admin: fix Getting started card, dark list toolbar, mobile hamburger, edit-page hydration (#230)
+- `42c068ca4` Admin polish: Elements panel views, sidebar controls, My preferences, page form, contrast fixes (#229)
+- `9da06d419` Visual editor: accept drops outside page body; readable language select (#228)
+- `277c15ad2` Visual editor live QA fixes + preferences access lockdown (#227)
+
+## 2026-11-08 (3)
+- `e1d71d8c1` Tasks 1-6: visual editor Elementor parity, drag fix, gap builds, walkthrough, setup questionnaire, bookings plan (#226)
+- `4bc584866` docs: visual editor Elementor-parity tasks; renumber remaining work from 1 (#225)
+- `e5700bae7` docs: add remaining work and done lists to the repo (#224)
+
+## 2026-11-04 (1)
+- `385732d7a` Patch OpenNext to inline preview-props.json (fixes Error 1101 on Next 16) (#223)
+
+## 2026-11-02 (17)
+- `b633324c9` Fresh install: apply a precomputed baseline schema (#222)
+- `143d0f56a` Type debt: typed engine surface, react-hooks fixes, any 83 to 9, eslint-disable 43 to 15 (Task 5) (#221)
+- `c86134c89` Upgrade to Next 16.4.3 on the supported OpenNext path (#220)
+- `b31b426d8` Lazy sections: tables created when a section is switched on, Unused tables screen (Task 4) (#218)
+- `51111e0ac` CI: parallel jobs and 8 spec shards (#219)
+- `269a27f8d` Type debt and bundle cut (Task 4, 5) (#217)
+- `2a41145b9` Forms: draft-only page use and external embeds per embed (Task 3) (#213)
+- `aebe98a8b` Architecture: site name from settings, Cloudflare setup script, bundle size check, schema drift test (#215)
+- `6c000938c` Portal review: account text and states, passkey two-step setting, own address confirmation, type ratchet (#216)
+- `e5b7b3c83` Webhooks: log redaction, retention, DNS guard, booking event, inbound webhooks (#214)
+- `9eba8d3ed` API builder: DELETE, custom fields, uiStrings messages, PDF guide, send to developer (#212)
+- `615e53e42` Known limits: SVG uploads behind a switch, editable Openverse hosts, View guest details (#210)
+- `65b92fb20` Settings transfer keeps relation fields; options page location rules (#211)
+- `0566c61c5` Pin legacy Fontsource fonts and add Greek and Vietnamese built-in subsets (#209)
+- `baff5d8ca` Add srcset to block pictures and move account colours to theme tokens (#208)
+- `28d6b9201` Fix SEO, redirects, consent, email, shop and ads known limits (#205)
+- `e0aa5b7d3` Known limits sweep: editing, approval and roles, custom fields, admin, locks (#206)
+
+## 2026-11-01 (19)
+- `de6f197b6` Known limits sweep: media types, transparency, multipart, ODS, fonts, import (#207)
+- `55c0b4579` Known limits: specs, schema, small leftovers (form_id, rels names, getting-started ticks) (#204)
+- `6a9e4da4e` Task 1 multisite: site switcher, Connect domain, scoped content migration (#203)
+- `e5f0c2d5e` Task 12b: media formats, video links, Stream optimise, admin progress bar (#202)
+- `058a3cc82` Task 12: speed (page reads, theme fonts, poster, img hints) (#201)
+- `706b98c78` Task 11: operations (error alert, restore spec, privacy export, policy notice, CI) (#199)
+- `822b988f6` Task 10 SEO: cornerstone, bulk SEO edits, image sitemap, links, video and FAQ data, slug redirects (#200)
+- `fb9ac705a` Task 9c: settings checks and stale-tab check on connection screens (#198)
+- `cd133841c` Task 9a: settings safety (conflict check, CSP merge, sensitive-change notice, check buttons) (#197)
+- `a260d4408` Settings UX: hub, search, reset per section, last changed, help text (#196)
+- `35e11d4cd` Task 8 shop: tags, brands, offline payments, bulk actions, review requests (#194)
+- `ef109885f` Task 7b: shipped-order text and bounce feeds for six providers (#195)
+- `7b3564e2f` Task 6 clarity: tree keys, shared tooltip, dark admin CSS, contrast (#192)
+- `c9787349f` Task 7: integrations leftovers (unsubscribe, suppression, bounces, sitemap submit) (#193)
+- `0bb267091` Portal search: own orders, bookings, subscriptions, settings, synonyms (task 5) (#191)
+- `15bb82d5c` Template library tokens, remove old template repos, blog SaaS button off (2a, 2b) (#189)
+- `2a5fe79e0` Password leftovers: role-based password permission and cache tests (17b) (#190)
+- `3037cc389` Task 4: shared admin charts, dashboard trend, CSV progress, axe on lists (#188)
+- `ec4b75949` Tracking connections: setup status and ENGAGE_SECRET fail-safe (Task 3) (#187)
+
+## 2026-10-31 (36)
+- `fe0c45250` Translate template-literal admin aria labels and chart text (Task 3) (#186)
+- `80e2a6d92` Templates task 2: template part picker, Preview as for archives and sidebars (#185)
+- `817087dfc` Finish short-link embed resolver coverage (#184)
+- `2d58e911a` Remove the typed v2 design emitter (design model step 4c) (#183)
+- `848906331` Merge pull request #182 from asticore/feat/leftovers-embed-short-links
+- `855b60793` Merge pull request #181 from asticore/feat/leftovers-i18n-embeds
+- `33ad48282` Merge pull request #180 from asticore/feat/leftovers-admin-docs
+- `a8e50a5d6` Merge pull request #178 from asticore/feat/leftovers-ai-guide
+- `983da4554` Merge pull request #179 from asticore/feat/leftovers-site-templates
+- `22d354c2d` Merge pull request #177 from asticore/feat/design-unified-model-5
+- `baa9f0536` Merge pull request #176 from asticore/feat/external-embeds
+- `0635abc28` Merge pull request #175 from asticore/feat/forms-pages-inline
+- `7cba411ec` Merge pull request #174 from asticore/feat/task5-charts-4
+- `fe2a11d21` Merge pull request #173 from asticore/feat/task5-tables-3
+- `736b3ac79` Merge pull request #172 from asticore/feat/task5-tables-charts-2
+- `f47a03b8b` Merge pull request #170 from asticore/feat/forms-editor-only
+- `12b4c626b` Merge pull request #169 from asticore/feat/templates-consolidate
+- `157402f8d` Merge pull request #168 from asticore/feat/design-unified-model-4
+- `e46477b56` Merge pull request #167 from asticore/feat/forms-visual-create
+- `8db2648ec` Merge pull request #166 from asticore/feat/design-unified-model-3
+- `e2ef71113` Merge pull request #165 from asticore/feat/design-unified-model-2
+- `0e3478e1b` Merge pull request #164 from asticore/feat/privacy-requests-2
+- `82467e9b3` Merge pull request #162 from asticore/claude/ci-workflow
+- `69791e2bb` Merge pull request #161 from asticore/feat/template-libraries-slice1
+- `6b50f0f5f` Merge pull request #160 from asticore/feat/privacy-requests
+- `e01d28664` Merge pull request #159 from asticore/feat/template-parts-2d
+- `6e0193514` Merge pull request #158 from asticore/claude/site-url-no-fallback
+- `6bf881311` Merge pull request #157 from asticore/feat/design-v2-mapping-2
+- `acdddc852` Merge pull request #156 from asticore/feat/design-v2-migration-gate
+- `cd61a8f14` Merge pull request #154 from asticore/feat/blog-builder-2a
+- `d3eeea390` Merge pull request #155 from asticore/feat/t1a-leftovers
+- `f2ed88fbc` Merge pull request #153 from asticore/claude/task2-leftovers
+- `853dda360` Merge pull request #152 from asticore/feat/portal-search
+- `8f4f50be7` Merge pull request #151 from asticore/feat/tracking-analytics-consent
+- `b3794e6d9` Merge pull request #150 from asticore/gaps-webhooks-api-tracking
+- `911bb0261` Merge pull request #54 from asticore/feat/i18n-links-slugs
+
+## 2026-10-30 (15)
+- `710761580` Merge pull request #149 from asticore/feat/webhooks-builder
+- `c29db2e87` Merge pull request #148 from asticore/feat/api-builder-ui
+- `1713e04cb` Merge pull request #147 from asticore/feat/api-builder
+- `11df16cf2` Merge pull request #146 from asticore/docs/tracking-readme
+- `2c209cf61` Merge pull request #145 from asticore/feat/add-tags-values
+- `dcb86de70` Merge pull request #144 from asticore/feat/add-tags-tools
+- `cf353261b` Merge pull request #143 from asticore/feat/connect-tags
+- `abec15637` Merge pull request #142 from asticore/feat/add-tags-followup
+- `f4f1b4ade` Merge pull request #141 from asticore/feat/add-tags
+- `a437b48d5` Merge pull request #140 from asticore/feat/tracking-b2
+- `ed568c76a` Merge pull request #138 from asticore/feat/tracking-visual-picker
+- `d0037853d` Merge pull request #137 from asticore/feat/tracking-uistrings-categories
+- `f462934c8` Merge pull request #136 from asticore/feat/tracking-tracking-page
+- `a2491c976` Merge pull request #135 from asticore/feat/tracking-events
+- `ffb8dc01f` Merge pull request #134 from asticore/feat/t3-final
+
+## 2026-10-29 (64)
+- `f1affa1cd` Merge pull request #133 from asticore/feat/domains-menus-hreflang
+- `c0e7db839` Merge pull request #132 from asticore/feat/domains-site-loaders
+- `4bd0e07ec` Merge pull request #131 from asticore/feat/domains-site-scope
+- `a3fa0ac21` Merge pull request #130 from asticore/feat/domains-3b
+- `057cae00e` Merge pull request #129 from asticore/feat/domains-3a
+- `af13e3080` Merge pull request #128 from asticore/feat/admin-hrefs
+- `090f62ab5` Merge pull request #127 from asticore/feat/domains-2b
+- `d249c35fb` Merge pull request #126 from asticore/feat/admin-url-followup
+- `cfb4d8a99` Merge pull request #125 from asticore/feat/domains-2a
+- `cbc0ef082` Merge pull request #124 from asticore/feat/admin-custom-path
+- `258e5611a` Merge pull request #123 from asticore/feat/domains-1
+- `e9b865024` Merge pull request #122 from asticore/feat/admin-noindex
+- `a107e221e` Merge pull request #121 from asticore/feat/admin-leftovers-51
+- `389af09da` Merge pull request #120 from asticore/feat/admin-leftovers-49
+- `28ab96ec2` Merge pull request #119 from asticore/feat/admin-leftovers-48
+- `dc629a72e` Merge pull request #118 from asticore/feat/admin-leftovers-47
+- `cdfaa5102` Merge pull request #117 from asticore/feat/admin-leftovers-46
+- `aaaef5f0b` Merge pull request #116 from asticore/feat/admin-leftovers-45
+- `4b7d507bb` Merge pull request #115 from asticore/feat/admin-leftovers-44
+- `be8bc38e5` Merge pull request #114 from asticore/fix/pnpm-min-release-age
+- `b37c0dc4d` Merge pull request #113 from asticore/feat/admin-leftovers-43
+- `e4c2bed48` Merge pull request #112 from asticore/feat/admin-leftovers-42
+- `af6cbbffa` Merge pull request #111 from asticore/feat/admin-leftovers-41
+- `43ad93d72` Merge pull request #110 from asticore/feat/admin-leftovers-40
+- `0b79e2a6d` Merge pull request #109 from asticore/feat/admin-leftovers-39
+- `08e997dd1` Merge pull request #108 from asticore/feat/admin-leftovers-38
+- `8c1e98bf7` Merge pull request #107 from asticore/feat/admin-leftovers-37
+- `9276a3932` Merge pull request #106 from asticore/feat/admin-leftovers-36
+- `8f6860d5f` Merge pull request #105 from asticore/feat/admin-leftovers-35
+- `a459eab91` Merge pull request #104 from asticore/feat/admin-leftovers-34
+- `d9b35b53b` Merge pull request #103 from asticore/feat/admin-leftovers-33
+- `78230b0c8` Merge pull request #102 from asticore/feat/admin-leftovers-32
+- `44aba0e3d` Merge pull request #101 from asticore/feat/admin-leftovers-31
+- `f668b0489` Merge pull request #100 from asticore/feat/admin-leftovers-28
+- `cd86bc2be` Merge pull request #99 from asticore/feat/admin-leftovers-27
+- `ab21e7a66` Merge pull request #98 from asticore/feat/admin-leftovers-26
+- `a9488ab5d` Merge pull request #97 from asticore/feat/admin-leftovers-25
+- `f56fe1946` Merge pull request #96 from asticore/feat/admin-leftovers-24
+- `e27a19545` Merge pull request #95 from asticore/feat/admin-leftovers-23
+- `fbf4ea1c8` Merge pull request #94 from asticore/feat/admin-leftovers-22
+- `127ce57d1` Merge pull request #93 from asticore/feat/admin-leftovers-21
+- `30c18defe` Merge pull request #92 from asticore/feat/admin-leftovers-20
+- `e23c82188` Merge pull request #91 from asticore/feat/admin-leftovers-19
+- `b02de719c` Merge pull request #90 from asticore/feat/admin-leftovers-18
+- `37271c2d6` Merge pull request #89 from asticore/feat/admin-leftovers-17
+- `3cd255136` Merge pull request #88 from asticore/feat/admin-leftovers-16
+- `1cf5f98d5` Merge pull request #87 from asticore/feat/storefront-strings-d
+- `05e01925b` Merge pull request #86 from asticore/feat/admin-leftovers-15
+- `5fe8864fb` Merge pull request #85 from asticore/feat/storefront-strings-c
+- `37fff6ff3` Merge pull request #84 from asticore/feat/admin-leftovers-14
+- `71bdb2d5a` Merge pull request #83 from asticore/feat/storefront-strings-b
+- `c7e2be8e8` Merge pull request #82 from asticore/feat/admin-leftovers-13
+- `7794fb365` Merge pull request #81 from asticore/feat/storefront-strings-cart
+- `333b2d4b6` Merge pull request #80 from asticore/feat/admin-leftovers-12
+- `61a893028` Merge pull request #79 from asticore/feat/storefront-overrides-ui
+- `cba35ac52` Merge pull request #78 from asticore/feat/admin-leftovers-11
+- `a810d8a95` Merge pull request #77 from asticore/feat/storefront-ui-strings
+- `3f7cceee7` Merge pull request #76 from asticore/feat/admin-leftovers-10
+- `af2a139d7` Merge pull request #75 from asticore/feat/storefront-email-strings-2
+- `efed31f3d` Merge pull request #74 from asticore/feat/admin-leftovers-9
+- `1a7b7f385` Merge pull request #73 from asticore/feat/storefront-email-strings
+- `b28868623` Merge pull request #72 from asticore/feat/admin-leftovers-8
+- `2e6850733` Merge pull request #71 from asticore/feat/admin-leftovers-7
+- `d4e62ce91` Merge pull request #70 from asticore/feat/admin-leftovers-6
+
+## 2026-10-28 (38)
+- `81ca99181` Merge pull request #69 from asticore/feat/admin-leftovers-5
+- `f1f0f3cd4` Merge pull request #68 from asticore/feat/portal-leftovers-7
+- `9cf2bcc2a` Merge pull request #67 from asticore/feat/admin-leftovers-4
+- `a935d5842` Merge pull request #66 from asticore/feat/portal-leftovers-6
+- `7c08c87bd` Merge pull request #65 from asticore/feat/admin-leftovers-3
+- `8d5f6fbd1` Merge pull request #64 from asticore/feat/portal-leftovers-5
+- `1932eb8af` Merge pull request #63 from asticore/feat/admin-leftovers-2
+- `3e9846d3f` Merge pull request #62 from asticore/feat/portal-leftovers-4
+- `3dabb7d35` Merge pull request #61 from asticore/feat/i18n-rich-text
+- `83d543dc0` Merge pull request #57 from asticore/feat/admin-leftovers
+- `e0f859bb7` Merge pull request #60 from asticore/feat/portal-leftovers-3
+- `4fec4a134` Merge pull request #58 from asticore/feat/i18n-jsonld-locale
+- `046b85cfd` Merge pull request #56 from asticore/feat/i18n-builder-canvas
+- `d309fd1b8` Merge pull request #55 from asticore/feat/portal-leftovers
+- `98ec05522` Merge pull request #53 from asticore/feat/i18n-content-coverage
+- `29702a953` Merge pull request #52 from asticore/feat/admin-ui-labels
+- `c31b99e9b` Merge pull request #51 from asticore/feat/portal-strings-a
+- `d55e01e74` Merge pull request #49 from asticore/feat/admin-ui-strings-batch3
+- `474be0a2e` Merge pull request #50 from asticore/feat/portal-strings-b
+- `ae7532e41` Merge pull request #48 from asticore/feat/admin-ui-strings-batch2
+- `90a7b12f8` Merge pull request #47 from asticore/feat/portal-strings-translations
+- `2af6fb2eb` Merge pull request #46 from asticore/feat/admin-ui-languages
+- `16123c9be` Merge pull request #45 from asticore/feat/i18n-per-page-translations
+- `8f5537acb` Merge pull request #44 from asticore/feat/i18n-portal-auto
+- `3b343fa79` Merge pull request #43 from asticore/feat/i18n-block-text
+- `884c63e42` Merge pull request #42 from asticore/feat/i18n-machine-autodraft
+- `e86270e5f` Merge pull request #41 from asticore/feat/i18n-machine-translation
+- `e0312b341` Merge pull request #40 from asticore/feat/i18n-visual-builder
+- `3a114cbc9` Merge pull request #39 from asticore/feat/i18n-publish-rule
+- `43201df43` Merge pull request #38 from asticore/feat/i18n-translations-workflow
+- `b69246154` Merge pull request #37 from asticore/feat/i18n-seo
+- `4a8b650a1` Merge pull request #36 from asticore/feat/i18n-overlay
+- `624a31137` Merge pull request #35 from asticore/feat/i18n-public-routing
+- `d2ee5aa60` Merge pull request #34 from asticore/feat/templates-leftovers
+- `c8c203bb9` Merge pull request #33 from asticore/feat/loop-templates
+- `1cc988d7e` Merge pull request #32 from asticore/feat/reusable-sections-visual
+- `440947080` Merge pull request #31 from asticore/feat/templates-hub
+- `95a7fe9b9` Merge pull request #29 from asticore/feat/admin-content-permalinks
+
+## 2026-10-27 (4)
+- `a1ee01596` Merge pull request #30 from asticore/fix/edge-node-crypto
+- `06a736a55` Merge pull request #28 from asticore/feat/templates-dashboard
+- `296ec1042` Merge pull request #27 from asticore/feat/template-widgets
+- `b25edc9c0` Merge pull request #26 from asticore/feat/users-sign-in-as-row
+
+## 2026-10-25 (9)
+- `32088cca1` Merge pull request #25 from asticore/feat/impersonation-ui
+- `590bdc0b0` Merge pull request #24 from asticore/feat/auth-limits
+- `7255310ca` Merge pull request #23 from asticore/chore/auth-tidy
+- `ffa08833a` Merge pull request #22 from asticore/fix/post-auth-test-regressions
+- `d68abd9cc` Merge pull request #18 from asticore/feat/auth-slice-5
+- `bcbf8da60` Merge pull request #17 from asticore/feat/auth-slice-4
+- `933400b13` Merge pull request #16 from asticore/feat/auth-slice-3
+- `50b354c64` Merge pull request #15 from asticore/feat/auth-slice-2
+- `5e2077d42` Merge pull request #19 from asticore/fix/cloudflare-branch-build
+
+## 2026-10-24 (13)
+- `2e23f393f` Merge pull request #3 from asticore/feat/protect-products-events
+- `5e10a260a` Merge pull request #2 from asticore/fix/ai-builder-guide-cap
+- `fe9b0cd91` Merge pull request #13 from asticore/feat/auth-audit
+- `0f1f2d07b` Merge pull request #12 from asticore/feat/auth-impersonation
+- `f3755b7f4` Merge pull request #11 from asticore/feat/auth-api-keys
+- `d303a1bda` Merge pull request #10 from asticore/feat/auth-passkeys
+- `1be56d781` Merge pull request #9 from asticore/feat/auth-magic-link
+- `264cea130` Merge pull request #8 from asticore/feat/auth-password-policy
+- `bfa61d6ff` Merge pull request #7 from asticore/feat/auth-social
+- `a24c7874b` Merge pull request #6 from asticore/feat/auth-sessions
+- `a0eddabc1` Merge pull request #5 from asticore/feat/auth-2fa
+- `96e293501` Merge pull request #4 from asticore/feat/auth-email-verification
+- `a1a6c3696` Exclude protected posts from search total count (#1)
+
+## 2026-10-23 (53)
+- `c99a75254` chore: deploy marker password protection fixes
+- `de60f0d5d` fix: password protection leaks, purge, limits
+- `68c5fae13` fix: password protection leaks, purge, limits
+- `e13b3f088` fix: password protection leaks, purge, limits
+- `cb7cd4487` fix: password protection leaks, purge, limits
+- `f32ad964d` fix: password protection leaks, purge, limits
+- `6629dbd97` fix: password protection leaks, purge, limits
+- `930432238` fix: password protection leaks, purge, limits
+- `af23f835a` fix: password protection leaks, purge, limits
+- `71ca6863f` fix: password protection leaks, purge, limits
+- `74bb02e95` fix: password protection leaks, purge, limits
+- `b144e0f83` fix: password protection leaks, purge, limits
+- `ba5da364f` fix: password protection leaks, purge, limits
+- `8a2c052dc` fix: password protection leaks, purge, limits
+- `7d36051bf` fix: password protection leaks, purge, limits
+- `966ef0298` fix: password protection leaks, purge, limits
+- `9210ad3fe` fix: password protection leaks, purge, limits
+- `9d1131b0a` fix: password protection leaks, purge, limits
+- `08b001886` fix: password protection leaks, purge, limits
+- `bfcc22434` fix: password protection leaks, purge, limits
+- `fec7861d5` fix: editor known limits, Blog labels
+- `c3b9a1284` fix: editor known limits, Blog labels
+- `0a1117a18` fix: editor known limits, Blog labels
+- `a0747626e` fix: editor known limits, Blog labels
+- `16313671b` fix: editor known limits, Blog labels
+- `52aa17fbb` fix: editor known limits, Blog labels
+- `8bd5b7353` fix: editor known limits, Blog labels
+- `33980e4ae` fix: editor known limits, Blog labels
+- `912417e31` fix: editor known limits, Blog labels
+- `dd6a3f78a` wave 71: tests/int/admin-hydration-tree.tsx
+- `fd97adafa` wave 71: tests/int/admin-dom-hydration.int.spec.ts
+- `abf17ddb2` deploy: wave 71 admin shell hydration fix
+- `723e8b099` wave 71: tests/int/admin-shell-hydration.int.spec.ts
+- `a74259f8e` wave 71: src/admin/context/NavContext.tsx
+- `1bcfe874a` wave 71: src/admin/context/ThemeContext.tsx
+- `21e30a093` deploy: wave 70 blog author/tag/author-archive switches
+- `6445d332e` wave 70: server.ts
+- `ec22857e1` wave 70: internal-migrate-fresh-install.int.spec.ts
+- `9ea358ad9` wave 70: page.tsx
+- `fe738886b` wave 70: sitemap.ts
+- `c133eb558` wave 70: blockContextFrom.ts
+- `ebec2900a` wave 70: page.tsx
+- `4bd9fadbd` wave 70: page.tsx
+- `0d41dfe45` wave 70: fresh-install-schema-coverage.int.spec.ts
+- `406f9b65d` wave 70: Users.ts
+- `ca9440b05` wave 70: Posts.ts
+- `7da59c244` wave 70: BlogSettings.ts
+- `cb4108084` wave 70: index.ts
+- `5de8b2387` wave 70: serverHook.ts
+- `72c5b210b` wave 70: blogSettings.ts
+- `e6b92b571` wave 70: blog-switches.int.spec.ts
+- `a2a41fb0c` wave 70: 20261111_100000_blog_author_tag_switches.ts
+- `6128ccb2f` wave 70: switches.ts
+
+## 2026-10-22 (139)
+- `958a2056b` deploy: wave 69 embed-code, compact library, tags/authors, cursor toggle, blog rename
+- `cd8f3b814` wave 69: visualEditor.styles.ts
+- `29ace9d52` wave 69: index.ts
+- `9da751d7e` wave 69: internal-migrate-fresh-install.int.spec.ts
+- `a27fb0cca` wave 69: wave26Defs.ts
+- `a0b866dfe` wave 69: tests/int/embed-code.int.spec.ts
+- `13bf2dec7` wave 69: SiteSettings.ts
+- `2f9684a28` wave 69: ElementLibrary.tsx
+- `07a0b20c1` wave 69: Integrations.ts
+- `1206819db` wave 69: server.ts
+- `fa445d77f` wave 69: tests/int/embed-code.int.spec.ts
+- `613dc811b` wave 69: starters.ts
+- `40f807a62` wave 69: src/lib/embedCode.ts
+- `88289e2ed` wave 69: headers.ts
+- `cad760d97` wave 69: src/app/(frontend)/blog/author/[slug]/page.tsx
+- `3f78485b4` wave 69: Users.ts
+- `a9400b59c` wave 69: Wave38Elements.tsx
+- `1e882bd3a` wave 69: src/app/(frontend)/blog/tag/[slug]/page.tsx
+- `d1055da30` wave 69: archiveQueries.ts
+- `932d11a7c` wave 69: src/app/(embed)/embed-frame/[hash]/route.ts
+- `1a7539cd2` wave 69: componentRegistry.ts
+- `3fffc7774` wave 69: tests/int/blog-tags-authors.int.spec.ts
+- `0cd87d4b0` wave 69: siteSettings.ts
+- `945039389` wave 69: page.tsx
+- `35da79b85` wave 69: src/components/blocks/elements/EmbedCodeFrame.tsx
+- `10e8655a5` wave 69: src/migrations/20261109_100000_blog_tags_authors.ts
+- `738259bac` wave 69: CanvasBlockPreview.tsx
+- `c3c98c8b8` wave 69: fresh-install-schema-coverage.int.spec.ts
+- `ffa21aa74` wave 69: src/migrations/20261110_110000_post_audio.ts
+- `9fceef1bc` wave 69: Posts.ts
+- `5e6fae235` wave 69: src/features/socialFeeds/admin/TestConnectionField.tsx
+- `64b82e358` wave 69: Wave63Server.tsx
+- `d12789ae3` wave 69: src/lib/elements/embedCodeDefs.ts
+- `08b81efd4` wave 69: wave38Defs.ts
+- `be2e2fc01` wave 69: tests/int/library-layout.int.spec.ts
+- `d992ab5f2` wave 69: wave63Defs.ts
+- `6c7f5c899` wave 69: template-preview-as.int.spec.ts
+- `4ec19e719` wave 69: src/migrations/20261110_100000_cursor_hide.ts
+- `faeaada21` wave 69: registry.ts
+- `a40ce9936` wave 69: site-effects.int.spec.ts
+- `d68ad9fd2` wave 69: sitemap.ts
+- `6f2ea099c` wave 69: src/components/blocks/elements/EmbedCodeServer.tsx
+- `91d70c71b` wave 69: tests/int/social-test-button.int.spec.ts
+- `4accf0a28` wave 69: site-effects.int.spec.ts
+- `cf1ac638f` wave 69: src/features/socialFeeds/testResult.ts
+- `e0beaacf3` wave 69: blockContextFrom.ts
+- `9d30f1836` wave 69: src/features/pageAudio/load.ts
+- `9b1f686c7` wave 69: src/components/blocks/elements/embedCode.css
+- `0f0992235` deploy: wave 68 social embeds, social feeds, page audio, rich inline, category archive, limit fixes
+- `37c1f1256` wave 68: inline-format.int.spec.ts (fix eol)
+- `e092fe805` wave 68: csp-frame-src.int.spec.ts (fix eol)
+- `8848168ee` wave 68: useSiteFonts.ts (fix eol)
+- `aa5a3c443` wave 68: dynamicTags.ts (fix eol)
+- `7b3eefe4c` wave 68: blockContextFrom.ts (fix eol)
+- `46747a703` wave 68: sitemap.ts (fix eol)
+- `35e7338f4` wave 68: TextElements.tsx (fix eol)
+- `432c06b23` wave 68: SiteTemplates.ts (fix eol)
+- `f0b468ec4` wave 68: page.tsx (fix eol)
+- `66e51f2e6` wave 68: page.tsx (fix eol)
+- `50a2b6797` wave 68: page.tsx (fix eol)
+- `5da723728` wave 68: wave38Defs.ts (fix eol)
+- `66ffb30dc` wave 68: Wave64Elements.tsx (fix eol)
+- `666f96af8` wave 68: Wave63Server.tsx (fix eol)
+- `66c24c860` wave 68: fieldTypes.ts (fix eol)
+- `e6588c263` wave 68: wave44.css (fix eol)
+- `60dc646d5` wave 68: ButtonElement.tsx (fix eol)
+- `815dcad70` wave 68: ButtonElement.tsx (fix eol)
+- `2413fc690` wave 68: ListView.tsx
+- `d17031372` wave 68: elements-wave48.int.spec.ts
+- `c91350403` wave 68: fresh-install-schema-coverage.int.spec.ts
+- `d3911ab3d` wave 68: index.ts
+- `7dc9c4b25` wave 68: Wave48Elements.tsx
+- `7451fb44e` wave 68: Wave38Elements.tsx
+- `84eb9b488` wave 68: VisualEditor.tsx
+- `f8b897384` wave 68: page.tsx
+- `56a1df23e` wave 68: CanvasFrame.tsx
+- `24e1cd0ed` wave 68: wave38Defs.ts
+- `be5d185ff` wave 68: visualEditor.styles.ts
+- `336475daf` wave 68: blockContextFrom.ts
+- `32834cd85` wave 68: src/components/blocks/elements/Wave64Client.tsx
+- `a6fe38c03` wave 68: page.tsx
+- `fff5f40e2` wave 68: src/lib/elements/wave64Util.ts
+- `fdc8e6e76` wave 68: sitemap.ts
+- `0887a1df5` wave 68: src/lib/elements/wave64Defs.ts
+- `fa4eeb90b` wave 68: CanvasInlineEditor.tsx
+- `72aba5502` wave 68: TextElements.tsx
+- `c0ff33778` wave 68: src/components/blocks/elements/DynamicText.tsx
+- `6b118e686` wave 68: src/views/visualEditor/PreviewAsPicker.tsx
+- `0e972a1b5` wave 68: FieldPanel.tsx
+- `36ffb3da0` wave 68: page.tsx
+- `339d948ca` wave 68: registry.ts
+- `d58aec898` wave 68: src/app/(engage)/api/admin-template-sample/route.ts
+- `1ce57ec2e` wave 68: src/features/socialFeeds/service.ts
+- `d91fa5a5f` wave 68: inlineEdit.ts
+- `67ec7ecc0` wave 68: tests/int/page-audio.int.spec.ts
+- `5b721b52c` wave 68: tests/int/template-preview-as.int.spec.ts
+- `e78d95d88` wave 68: dynamicTags.ts
+- `b83a05e25` wave 68: internal-migrate-fresh-install.int.spec.ts
+- `85c8735a7` wave 68: src/components/site/siteEffectsConfig.ts
+- `87355ffc2` wave 68: src/lib/embedProviders.ts
+- `8ee5f99cc` wave 68: inline-format.int.spec.ts
+- `2e7175e5f` wave 68: src/components/site/SiteEffects.tsx
+- `f1674d9c4` wave 68: tests/int/social-feeds.int.spec.ts
+- `ba8fae881` wave 68: wave44.css
+- `b41183f7f` wave 68: src/features/socialFeeds/adapters.ts
+- `a64cb1886` wave 68: tests/int/limits-known.int.spec.ts
+- `9bbaa5a10` wave 68: src/components/blocks/elements/ButtonElement.tsx
+- `ff4450be7` wave 68: tests/int/embed-providers.int.spec.ts
+- `48fefd464` wave 68: inlineFormat.ts
+- `ebf850db8` wave 68: src/app/(frontend)/blog/category/[slug]/page.tsx
+- `d98fe0f1e` wave 68: tests/int/site-effects.int.spec.ts
+- `aec509e1f` wave 68: src/features/socialFeeds/parse.ts
+- `4c473fd5c` wave 68: tests/int/rich-inline-elements.int.spec.ts
+- `83e96fd77` wave 68: src/app/(engage)/api/editor-fonts/route.ts
+- `175ce8b0e` wave 68: useSiteFonts.ts
+- `ccdec2109` wave 68: src/features/pageAudio/PageAudio.tsx
+- `48bbd1e67` wave 68: src/features/pageAudio/config.ts
+- `8394a58a5` wave 68: src/components/blocks/elements/Wave67Server.tsx
+- `e341ced66` wave 68: src/features/pageAudio/fields.ts
+- `e242cfaee` wave 68: Wave64Elements.tsx
+- `69b85ea42` wave 68: src/components/blocks/elements/EmbedConsentFrame.tsx
+- `78b454569` wave 68: Integrations.ts
+- `2bb6c7672` wave 68: src/lib/embedHosts.ts
+- `2951be1cf` wave 68: Wave63Server.tsx
+- `42626f487` wave 68: Pages.ts
+- `f233a0489` wave 68: src/components/blocks/elements/SafeInlineHtml.tsx
+- `5c55b4470` wave 68: src/features/siteTemplates/archiveQueries.ts
+- `454bd8604` wave 68: csp-frame-src.int.spec.ts
+- `b7f181431` wave 68: src/app/(engage)/api/admin-social-accounts/route.ts
+- `e606ee9bd` wave 68: src/lib/elements/wave67Defs.ts
+- `0dac9789a` wave 68: wave48Defs.ts
+- `b21c9166d` wave 68: src/migrations/20261107_100000_page_audio.ts
+- `6802a2adc` wave 68: tests/int/archive-routes.int.spec.ts
+- `8bb32aa94` wave 68: fieldTypes.ts
+- `3338eba96` wave 68: src/components/blocks/elements/social-feed.css
+- `22b6ea75c` wave 68: src/lib/blockContext.ts
+- `901674f6c` wave 68: src/migrations/20261108_100000_social_connections.ts
+- `10b74fe74` wave 68: src/features/socialFeeds/types.ts
+- `306bb56e2` deploy: retrigger wave 67 (sample route 404 live)
+
+## 2026-10-21 (159)
+- `b57370063` deploy: wave 67 template kinds, import/export, preview-as, CSP frame-src, hydration fix
+- `9ffbefce0` wave 67: admin-template-sample route
+- `d8512f9a9` wave 67: cookie-consent.int.spec.ts
+- `a9e8a2e7f` wave 67: Wave48Elements.tsx
+- `ccc05f746` wave 67: elements-wave48.int.spec.ts
+- `db89f1cf3` wave 67: page.tsx
+- `8e9014b61` wave 67: ElementLibrary.tsx
+- `10900d757` wave 67: canvasBridge.ts
+- `aebd9f7fb` wave 67: headers.ts
+- `bd917fb46` wave 67: CanvasFrame.tsx
+- `375b64758` wave 67: wave48Defs.ts
+- `a75745ac3` wave 67: VisualEditor.tsx
+- `b668d93d1` wave 67: page.tsx
+- `421a8d6f6` wave 67: src/features/siteTemplates/templateIo.ts
+- `d19f22bfe` wave 67: CanvasBlockPreview.tsx
+- `1e2aa9daa` wave 67: src/lib/blockContextFrom.ts
+- `0ca2fc89c` wave 67: site-templates.int.spec.ts
+- `ff205fc9a` wave 67: src/app/(engage)/api/admin-template-io/route.ts
+- `5bc26ae19` wave 67: tests/int/template-io.int.spec.ts
+- `ee23ec15d` wave 67: starters.ts
+- `536849893` wave 67: page.tsx
+- `902616604` wave 67: src/views/visualEditor/PreviewAsPicker.tsx
+- `1995a4b8e` wave 67: tests/int/template-preview-as.int.spec.ts
+- `92f39df5b` wave 67: StartersPanel.tsx
+- `dd4c338d0` wave 67: tests/int/csp-frame-src.int.spec.ts
+- `8dac0e018` wave 67: tests/int/editor-hydration-safe.int.spec.ts
+- `9cebefbb8` wave 67: src/lib/embedHosts.ts
+- `5995ce3ce` wave 67: tests/int/site-template-kinds.int.spec.ts
+- `e372592b3` wave 67: SiteTemplates.ts
+- `83ad9e228` wave 67: src/views/visualEditor/previewContext.ts
+- `24ce0bea1` deploy: wave 64-66
+- `2d27a5ab2` wave 64-66 visualEditor.styles.ts
+- `b640a653c` wave 64-66 wave26Defs.ts
+- `f2ce7de2a` wave 64-66 src/app/(frontend)/shop/[slug]/page.tsx
+- `717196614` wave 64-66 Wave65Elements.tsx
+- `d66aa9542` wave 64-66 src/components/blocks/elements/wave64.css
+- `44e96106c` wave 64-66 src/lib/elements/registry.ts
+- `5795a5b90` wave 64-66 src/lib/elements/wave64Defs.ts
+- `447557822` wave 64-66 wave65Defs.ts
+- `9246148ec` wave 64-66 ElementLibrary.tsx
+- `da8c90aaf` wave 64-66 src/lib/elements/wave38Defs.ts
+- `46c7a2118` wave 64-66 src/components/blocks/elements/Wave66Server.tsx
+- `e6dc43c11` wave 64-66 Wave65Server.tsx
+- `b973a7b24` wave 64-66 src/lib/elements/wave66Defs.ts
+- `2c154c9d9` wave 64-66 src/components/blocks/elements/MediaElements.tsx
+- `11603e68f` wave 64-66 wave65.css
+- `beb73590e` wave 64-66 src/components/blocks/elements/Wave66Elements.tsx
+- `6ad86e591` wave 64-66 src/components/blocks/elements/elementComponents.tsx
+- `a784bc319` wave 64-66 Wave38Elements.tsx
+- `d9e3a8419` wave 64-66 tests/int/wave65-elements.int.spec.ts
+- `47d5ef696` wave 64-66 wave64Util.ts
+- `deeb380fd` wave 64-66 tests/int/wave64-elements.int.spec.ts
+- `b8359e5f9` wave 64-66 Wave64Client.tsx
+- `8baecccc3` wave 64-66 tests/int/wave66-elements.int.spec.ts
+- `4b22547dd` wave 64-66 Wave64Elements.tsx
+- `05ad50f43` wave 64-66 src/lib/blockContext.ts
+- `6f8169cf8` wave 64-66 src/components/blocks/elements/wave66.css
+- `13422f9ac` deploy: wave 63
+- `7359ee893` wave 63 route.ts
+- `01b0da396` wave 63 starters.ts
+- `e24cd3d7e` wave 63 template-starters.int.spec.ts
+- `93f5a81ac` wave 63 client.ts
+- `2c9fda1f9` wave 63 streamParse.ts
+- `2075cd557` wave 63 AiBuilderPanel progress
+- `118e72df8` wave 63 componentRegistry.ts
+- `586ee412e` wave 63 aiBuilderState streaming
+- `74ae3eb64` wave 63 ai-stream-parse.int.spec.ts
+- `75e7da4f4` wave 63 StartersPanel.tsx
+- `1a0294c14` wave 63 SiteTemplates.ts
+- `8a2d4670b` wave 63 route.ts
+- `cd4bdb2fd` deploy: wave 62
+- `d916dc416` wave 62 ConditionsField.tsx
+- `f46fef135` wave 62 wave63Defs.ts
+- `a5013c5cd` wave 62 fresh-install-schema-coverage.int.spec.ts
+- `a5872670a` wave 62 index.ts
+- `1737041ed` wave 62 src/lib/elements/registry.ts
+- `10b533555` wave 62 src/globals/SiteSettings.ts
+- `9bcc21fbf` wave 62 Wave38Elements.tsx
+- `0a695a38e` wave 62 src/admin/componentRegistry.ts
+- `3e6ff3931` wave 62 src/admin/componentRegistry.ts
+- `47ec17843` wave 62 layout.tsx
+- `184a72c26` wave 62 src/components/blocks/elements/Wave63Server.tsx
+- `16ee88eb9` wave 62 src/app/(frontend)/blog/[slug]/page.tsx
+- `544f9440e` wave 62 internal-migrate-fresh-install spec
+- `16e7967a7` wave 62 src/lib/elements/wave38Defs.ts
+- `2b8c255fe` wave 62 src/features/siteTemplates/conditionsSummary.ts
+- `2296418b5` wave 62 src/app/(frontend)/[...slug]/page.tsx
+- `32e639450` wave 62 tests/int/site-template-conditions-ui.int.spec.ts
+- `e902be323` wave 62 layout.tsx
+- `07322c1cc` wave 62 tests/int/site-effects.int.spec.ts
+- `510cb8c48` wave 62 src/collections/SiteTemplates.ts
+- `651dd25a9` wave 62 src/lib/templateWidgets.ts
+- `1068f3770` wave 62 src/components/site/SiteEffects.tsx
+- `770198626` wave 62 page.tsx
+- `c1bb30e3c` wave 62 tests/int/template-widgets.int.spec.ts
+- `238d074aa` wave 62 src/cms/db/globals/siteSettings.ts
+- `8e95c007a` wave 62 src/migrations/20261106_100000_site_page_effects.ts
+- `fd6cef4fd` wave 62 src/lib/blockContext.ts
+- `fbf3d1d1e` wave 62 src/components/site/siteEffectsConfig.ts
+- `b0462a26d` deploy: wave 61
+- `c8f587546` wave 61 ElementLibrary.tsx
+- `8a87a0c6b` wave 61 CanvasFrame.tsx
+- `155eca94d` wave 61 src/app/(frontend)/blog/[slug]/page.tsx
+- `35dd2921e` wave 61 CanvasInlineEditor.tsx
+- `7fd461e33` wave 61 src/components/blocks/elements/HeadingElement.tsx
+- `5c3f2b6d5` wave 61 blockStyle installed font family
+- `18dc1f0a9` wave 61 DesignPanel installed fonts
+- `0a5b12990` wave 61 tests/int/inline-format.int.spec.ts
+- `758aaea27` wave 61 EditorDock.tsx
+- `0ae32a3e0` wave 61 src/views/visualEditor/pageSettings.ts
+- `108cdc075` wave 61 src/views/visualEditor/pageSettings.ts
+- `982c7c335` wave 61 src/views/visualEditor/libraryCommercePresets.ts
+- `9fa71e9bd` wave 61 page.tsx
+- `d9bcc4cf6` wave 61 VisualEditor page settings wiring
+- `74a8048ed` wave 61 src/views/visualEditor/PageSettingsPanel.tsx
+- `3d37cc81e` wave 61 inlineEdit.ts
+- `71eccddd1` wave 61 page-settings.int.spec.ts
+- `fd855d792` wave 61 src/app/(frontend)/[...slug]/page.tsx
+- `fb945d3c4` wave 61 useSiteFonts.ts
+- `c71eb7d16` wave 61 safe-inline-html.int.spec.ts
+- `6ed2bd553` wave 61 inlineEdit.ts
+- `b32993fc3` wave 61 route.ts
+- `487b7efe5` wave 61 editor-fonts.int.spec.ts
+- `b85f46523` wave 61 src/features/site/maintenance.ts
+- `4a8437178` wave 61 SafeInlineHtml.tsx
+- `05a0bacd8` wave 61 inlineFormat.ts
+- `bc2742cda` wave 61 block-context.int.spec.ts
+- `3964da262` wave 61 library-commerce-presets.int.spec.ts
+- `5c8c52124` wave 61 src/components/blocks/elements/DynamicText.tsx
+- `ccd03fc42` wave 61 blockContext.ts
+- `036db74db` wave 61 canvas-theme-css.int.spec.ts
+- `55ee380f7` fix(deploy): allow Next 15 in opennext build (support window lapsed)
+- `e85d2e9e4` deploy: wave 60
+- `07450b996` wave 60 DesignPanel fix bullet char
+- `797a6ae55` wave 60 DesignPanel hover and focus tabs
+- `452fd30e7` wave 60 blockStyle hover opacity transform focus ring
+- `3fe5827ca` wave 60 DesignPanel hover and focus tabs
+- `311705c32` wave 60 design-states.int.spec.ts
+- `dc09102fe` wave 60 designStates.ts
+- `06d55201f` wave 60 library-form-presets.int.spec.ts
+- `29e05244d` wave 60 libraryFormPresets.ts
+- `4df83f1f7` wave 60 ElementLibrary.tsx
+- `af395bf5a` wave 60 designHelpers.ts
+- `557db4d91` deploy: wave 59
+- `7a2f7c312` wave 59 DesignPanel corner radius font tokens
+- `77572c8a2` wave 59 src/views/visualEditor/ElementLibrary.tsx
+- `b6ea69495` wave 59 src/views/visualEditor/designHelpers.ts
+- `f0dcc7b48` wave 59 blockStyle per-corner radius font tokens
+- `53eaf8154` wave 59 src/components/blocks/elements/Wave38Elements.tsx
+- `8fa856cd8` wave 59 src/lib/elements/wave38Defs.ts
+- `662e66b90` wave 59 src/lib/elements/registry.ts
+- `99be52276` wave 59 src/lib/elements/registry.ts
+- `24ba8f026` wave 59 tests/int/library-form-presets.int.spec.ts
+- `7503e7045` wave 59 tests/int/dynamic-tags.int.spec.ts
+- `0b79791b3` wave 59 tests/int/design-wave59.int.spec.ts
+- `8dd2a834d` wave 59 src/views/visualEditor/libraryFormPresets.ts
+- `d9b22873f` wave 59 src/components/blocks/elements/DynamicText.tsx
+- `06392b1e8` wave 59 src/lib/elements/wave60Defs.ts
+- `f5bb30c6a` wave 59 src/lib/dynamicTags.ts
+
+## 2026-10-20 (93)
+- `8ac9c246f` chore: deploy marker wave 58
+- `e3bd18a75` feat(editor): wave 58 DesignPanel.tsx
+- `ba143bf8d` feat(editor): wave 58 Canvas.tsx
+- `5b9b5a09b` feat(editor): wave 58 VisualEditor.tsx
+- `a43d43f0c` feat(editor): wave 58 sectionLayout.ts
+- `759994e92` feat(editor): wave 58 tabs.css
+- `0eb696ce5` feat(editor): wave 58 designHelpers.ts
+- `a8afc98d0` feat(editor): wave 58 inlineEdit.ts
+- `6e9ce0995` feat(editor): wave 58 MediaPicker.tsx
+- `6d2453190` feat(editor): wave 58 FieldPanel.tsx
+- `97b773a66` feat(editor): wave 58 canvasBridge.ts
+- `dcc45092c` feat(editor): wave 58 editor-inline-quick-insert.int.spec.ts
+- `ef8e1773e` feat(editor): wave 58 useEditorShortcuts.ts
+- `5e035f9e4` feat(editor): wave 58 CanvasFrame.tsx
+- `d3b1fc1ef` feat(editor): wave 58 section-flex-grid.int.spec.ts
+- `00c1f2524` feat(editor): wave 58 QuickInsertPalette.tsx
+- `1d67f371d` feat(editor): wave 58 CanvasInlineEditor.tsx
+- `15039a480` feat(editor): wave 58 quickInsert.ts
+- `832602edb` feat(editor): wave 58 mediaPickerUpload.ts
+- `2a86a994d` feat(editor): wave 58 ve-media-picker-upload.int.spec.ts
+- `328b5c597` feat(editor): wave 58 designPanel51.css
+- `5244d808b` chore: deploy marker wave 57
+- `872bd4acc` feat(editor): wave 57 SectionBlock.tsx ascii
+- `52e92c797` feat(editor): wave 57 DesignPanel.tsx
+- `1bdca06b9` feat(editor): wave 57 SectionBlock.tsx
+- `c2edf508d` feat(editor): wave 57 SectionBlock.tsx
+- `be6d032c6` feat(editor): wave 57 SectionBlock.tsx
+- `10baffe20` feat(editor): wave 57 blockStyle.ts
+- `8dc163483` feat(editor): wave 57 SectionBlock.tsx
+- `4b26aa5cf` feat(editor): wave 57 Canvas.tsx
+- `6171be7c7` feat(editor): wave 57 sectionLayout.ts
+- `f5373765b` feat(editor): wave 57 designHelpers.ts
+- `36bf1422d` feat(editor): wave 57 StyledBlock.tsx
+- `dcf216944` feat(editor): wave 57 FieldPanel.tsx
+- `857b7d8f0` feat(editor): wave 57 PopupController.tsx
+- `90b48c3e7` feat(editor): wave 57 Wave38Elements.tsx
+- `d71cce22d` feat(editor): wave 57 visibilityRules.ts
+- `a125c4c2d` feat(editor): wave 57 wave38.css
+- `949f9ba46` feat(editor): wave 57 wave38Defs.ts
+- `00932445c` feat(editor): wave 57 SearchSuggest.tsx
+- `7f8410ce0` feat(editor): wave 57 visibility-rules.int.spec.ts
+- `0579d9ebd` feat(editor): wave 57 SectionBlock.tsx
+- `c95534f10` feat(editor): wave 57 search-suggest.int.spec.ts
+- `ae1d3e124` feat(editor): wave 57 suggest.ts
+- `25d445101` feat(editor): wave 57 section-popup.int.spec.ts
+- `7366a5a3f` feat(editor): wave 57 CanvasBlockPreview.tsx
+- `6203d200e` feat(editor): wave 57 popupTriggers.ts
+- `81f0896ee` feat(editor): wave 57 VisibilityGate.tsx
+- `4ee4079e2` feat(editor): wave 57 searchSuggestLogic.ts
+- `e88cf4f31` feat(editor): wave 57 route.ts
+- `c5cfe77df` feat(editor): wave 57 ElementLibrary.tsx
+- `9b9a7cc2f` feat(editor): wave 57 route.ts
+- `a682ef36a` feat(editor): wave 57 libraryGlobals.ts
+- `3f86ef2a4` feat(editor): wave 57 VisibilityGateLazy.tsx
+- `862fd236d` feat(editor): wave 57 visibility.css
+- `5655968c6` chore: deploy marker wave 56
+- `0e8a73c8d` feat(editor): wave 56 Wave48Elements.tsx
+- `31e3a36e1` feat(editor): wave 56 elementDefs.ts
+- `b357c902f` feat(editor): wave 56 elements-wave48.int.spec.ts
+- `8ccb81976` feat(editor): wave 56 builderGuide.ts
+- `c20114fe0` feat(editor): wave 56 wave36Defs.ts
+- `ca55d3a47` feat(editor): wave 56 template-presets-lean.int.spec.ts
+- `bfbfc9f25` feat(editor): wave 56 wave26Defs.ts
+- `688b940b1` feat(editor): wave 56 wave48.css
+- `b1d6c5fde` feat(editor): wave 56 elements-embed-consent.int.spec.ts
+- `5d43f384b` feat(editor): wave 56 LayoutElements.tsx
+- `d1a802fc4` feat(editor): wave 56 form-block-render.int.spec.ts
+- `4544b285c` feat(editor): wave 56 EmbedConsentFrame.tsx
+- `619f89b8b` chore: deploy marker wave 55
+- `e48fbe4de` feat(ai): wave 55 index.ts
+- `0e0acaf23` feat(ai): wave 55 internal-migrate-fresh-install.int.spec.ts
+- `2b197eb0a` feat(ai): wave 55 ai-builder-panel-v2.int.spec.ts
+- `d9baaddcc` feat(ai): wave 55 aiBuilderState.ts
+- `8a79b423f` feat(ai): wave 55 aiBuilder.styles.ts
+- `875dcecf3` feat(ai): wave 55 Integrations.ts
+- `65c5396b2` feat(ai): wave 55 20261105_100000_ai_builder_usage.ts
+- `85ebec4d5` feat(ai): wave 55 builderValidate.ts
+- `d2dfcd49d` feat(ai): wave 55 builderGuide.ts
+- `dc6be2f7d` feat(ai): wave 55 ai-builder-v2.int.spec.ts
+- `a98e6aaeb` feat(ai): wave 55 builderRequest.ts
+- `4fa54210e` feat(ai): wave 55 AiBuilderPanel.tsx
+- `e5dbf524e` feat(ai): wave 55 route.ts
+- `3364db31d` feat(ai): wave 55 aiBuilder.styles.ts
+- `5e1609d5b` feat(ai): wave 55 client.ts
+- `5883817b6` feat(ai): wave 55 builderMedia.ts
+- `fac91113b` feat(ai): wave 55 fresh-install-schema-coverage.int.spec.ts
+- `ef4fd145e` feat(ai): wave 55 builderUsage.ts
+- `43abcd08e` feat(ai): wave 55 models.ts
+- `469ec9f42` feat(ai): wave 55 20261105_100000_ai_builder_usage.ts
+- `9edaf1d4b` feat(ai): wave 55 builderContext.ts
+- `438554372` feat(ai): wave 55 keys.ts
+- `9afd93f85` chore: deploy marker wave 54
+- `848a8a7e8` fix(editor): wave 54 editorClipboard ascii regex
+
+## 2026-10-19 (110)
+- `ce8bf8e47` feat(editor): wave 54 Integrations.ts
+- `8bf1ebb42` feat(editor): wave 54 editorClipboard.ts
+- `ae9cae099` feat(editor): wave 54 TemplateBrowser.tsx
+- `e5624d18e` feat(editor): wave 54 ImportExportModal.tsx
+- `257fd7a23` feat(editor): wave 54 exportHtml.ts
+- `1289054c7` feat(editor): wave 54 fetch.ts
+- `b4e132a4a` feat(editor): wave 54 assets.ts
+- `ce57fbef2` feat(editor): wave 54 componentRegistry.ts
+- `8eca2e021` feat(editor): wave 54 insertAssets.ts
+- `a3988df94` feat(editor): wave 54 template-assets-export.int.spec.ts
+- `b1eba71ea` feat(editor): wave 54 route.ts
+- `3af43c0bb` feat(editor): wave 54 sanitize.ts
+- `d4b52e7ea` feat(editor): wave 54 TemplateReposTools.tsx
+- `43d7be7af` feat(editor): wave 54 CanvasBlockPreview.tsx
+- `8ba510afe` feat(editor): wave 54 route.ts
+- `d77a56da0` feat(editor): wave 54 route.ts
+- `576ee6f94` feat(editor): wave 54 index.ts
+- `483af6004` feat(editor): wave 54 unknownElement.ts
+- `60224c4c2` chore: deploy marker wave 53
+- `4bcc1e160` feat(editor): wave 53 DesignPanel.tsx
+- `071dc0569` feat(editor): wave 53 blockStyle.ts
+- `776df2561` feat(editor): wave 53 effects-wave53.int.spec.ts
+- `b21758a2c` feat(editor): wave 53 elements-wave44.int.spec.ts
+- `c902b9c92` feat(editor): wave 53 designHelpers.ts
+- `d0eb2e129` feat(editor): wave 53 StyledBlock.tsx
+- `88c3fc705` feat(editor): wave 53 Wave44Elements.tsx
+- `7fbd18bd4` feat(editor): wave 53 Canvas.tsx
+- `09586f746` feat(editor): wave 53 wave44Defs.ts
+- `fee0ae5c7` feat(editor): wave 53 CursorFx.tsx
+- `66c16154e` feat(editor): wave 53 CursorFx.tsx
+- `b372a88ee` feat(editor): wave 53 effects53.css
+- `0269a82c7` feat(editor): wave 53 wave44.css
+- `7e55f4bb8` feat(editor): wave 53 BgSlideshow.tsx
+- `743830775` feat(editor): wave 53 CursorFxLazy.tsx
+- `112ffb7a3` chore: deploy marker wave 52
+- `7d27a3980` feat(editor): wave 52 editor-warnings.int.spec.ts
+- `556464a2d` feat(editor): wave 52 visual-editor-nav-library-presets.int.spec.ts
+- `2a530aaac` feat(editor): wave 52 DesignPanel.tsx
+- `16a15e97a` feat(editor): wave 52 editor-save-chip.int.spec.ts
+- `6115551ac` feat(editor): wave 52 ElementLibrary.tsx
+- `4aa77a86e` feat(editor): wave 52 VisualEditor.tsx
+- `34a719332` feat(editor): wave 52 designWarnings.ts
+- `0ea00743d` feat(editor): wave 52 useEditorShortcuts.ts
+- `e6a14bb46` feat(editor): wave 52 StylePresets.tsx
+- `354b72550` feat(editor): wave 52 navigatorOps.ts
+- `23e0914ba` feat(editor): wave 52 SelectionPath.tsx
+- `0537c4226` feat(editor): wave 52 ShortcutsHelp.tsx
+- `7a7b8f22a` feat(editor): wave 52 NavigatorPanel.tsx
+- `33e616266` feat(editor): wave 52 CoachMarks.tsx
+- `c781e98ab` feat(editor): wave 52 stylePresets.ts
+- `ee19c6a1c` feat(editor): wave 52 saveStatusChip.css
+- `18be8406e` feat(editor): wave 52 editorWarnings.css
+- `aa9b39d6a` feat(editor): wave 52 SaveStatusChip.tsx
+- `26149e6e6` feat(editor): wave 52 navLibraryPresets.css
+- `0521ec5f3` feat(editor): wave 52 libraryRecents.ts
+- `05a2a9915` feat(editor): wave 52 EditorDock.tsx
+- `4fe91b21b` chore: deploy marker wave 51
+- `b0f777cb4` feat(editor): wave 51 blockStyle.ts
+- `e1b7a8631` feat(editor): wave 51 DesignPanel.tsx
+- `99974a222` feat(editor): wave 51 visualEditor.styles.ts
+- `946e43ea7` feat(editor): wave 51 elementUtil.ts
+- `4695ae5af` feat(editor): wave 51 ColorPickerField.tsx
+- `6d2544a81` feat(editor): wave 51 designHelpers.ts
+- `1115bd911` feat(editor): wave 51 design-wave51.int.spec.ts
+- `864cba366` feat(editor): wave 51 color-token-field.int.spec.ts
+- `d2d49a8b8` feat(editor): wave 51 designPanel51.css
+- `a2b623f22` chore: deploy marker wave 50
+- `3d2f5ae4d` feat(editor): wave 50 Wave38Elements.tsx
+- `5b3a79118` feat(editor): wave 50 builderGuide.ts
+- `66f7b4387` feat(editor): wave 50 registry.ts
+- `429340c5a` feat(editor): wave 50 Wave50Elements.tsx
+- `355a1dfed` feat(editor): wave 50 wave38Defs.ts
+- `f0802ca99` feat(editor): wave 50 elements-wave50.int.spec.ts
+- `f84c19c17` feat(editor): wave 50 navMenu.css
+- `c9fcaafe5` feat(editor): wave 50 formPresets.ts
+- `d9aec319d` feat(editor): wave 50 Wave50Server.tsx
+- `bc02d20d2` feat(editor): wave 50 wave50Defs.ts
+- `f492f74bf` feat(editor): wave 50 form-presets.int.spec.ts
+- `eeae4a217` feat(editor): wave 50 wave50.css
+- `ab3570591` chore: deploy marker wave 49
+- `9ed2d45d2` feat(editor): wave 49 templatePresets.ts
+- `ba087eb18` feat(editor): wave 49 wave26Defs.ts
+- `0db9d0a1b` feat(editor): wave 49 Wave49Elements.tsx
+- `a03d5ba50` feat(editor): wave 49 wave49Defs.ts
+- `feb9df062` feat(editor): wave 49 builderGuide.ts
+- `dd3197534` feat(editor): wave 49 elements-wave49.int.spec.ts
+- `266ba7dc5` feat(editor): wave 49 registry.ts
+- `f0c12e339` feat(editor): wave 49 Wave49Client.tsx
+- `ceb43a5ad` feat(editor): wave 49 template-presets-lean.int.spec.ts
+- `23ff92a7d` feat(editor): wave 49 wave49.css
+- `cdcd53212` feat(editor): wave 49 elementUtil.ts
+- `d2d0b1f11` feat(editor): wave 49 Wave49Elements.tsx
+- `962ed46e6` feat(editor): wave 49 wave49Defs.ts
+- `a0db1d1c8` feat(editor): wave 49 elementComponents.tsx
+- `0edcbc270` chore: deploy marker wave 48
+- `6961163be` feat(editor): wave 48 FieldPanel.tsx
+- `9c1169ee2` feat(editor): wave 48 Wave48Elements.tsx
+- `7446e321e` feat(editor): wave 48 registry.ts
+- `4b5218b92` feat(editor): wave 48 wave47Defs.ts
+- `ec0d3ff7b` feat(editor): wave 48 field-showif.int.spec.ts
+- `4be17e596` feat(editor): wave 48 wave36Defs.ts
+- `d457b7fbc` feat(editor): wave 48 elements-wave48.int.spec.ts
+- `1dbcc6da5` feat(editor): wave 48 registry.ts
+- `2cf66c223` feat(editor): wave 48 wave48Defs.ts
+- `97fd2f304` feat(editor): wave 48 wave48.css
+- `e1d143fc2` feat(editor): wave 48 wave47Defs.ts
+- `2a6c9ebaa` feat(editor): wave 48 InteractiveElements.tsx
+- `18b5d5452` feat(editor): wave 48 fieldTypes.ts
+- `3670b298d` feat(editor): wave 48 elementComponents.tsx
+- `468e7de88` feat(editor): wave 48 ShareWithPageUrl.tsx
+
+## 2026-10-18 (48)
+- `45a9e489d` chore: deploy marker wave 46
+- `d0a34d496` feat(editor): design panel
+- `588149e18` feat(editor): visual editor view
+- `f89259379` feat(editor): block style model
+- `89200c055` feat(editor): engage admin css
+- `88838d241` feat(editor): wave47 elements test
+- `bf2fa32c6` feat(editor): merge stats notice test
+- `07af2e3b0` feat(editor): AI builder panel
+- `82b9dc6a6` feat(editor): wave26 defs
+- `9ba6d11c6` feat(editor): element util
+- `01cd9cd23` test(editor): Build with AI panel integration tests
+- `56db9acb0` test(editor): heading effects integration tests
+- `18fd86f00` test(editor): list marker integration tests
+- `5e10ad850` feat(editor): section and heading effect styles
+- `8e23f397c` feat(editor): Build with AI styles
+- `56b80d300` feat(editor): Build with AI styles
+- `c76177b90` feat(editor): dock Build with AI dialog
+- `ddd76b2a0` feat(editor): wave43 element defs update
+- `814300cb2` feat(editor): wave37 element defs update
+- `37d8981df` feat(editor): wave36 element defs update
+- `0ec2f54cb` feat(editor): register wave47 element defs
+- `f0194fbec` feat(editor): register wave47 components
+- `01a036cd9` feat(editor): element dispatch update
+- `e956d1fbf` feat(editor): interactive elements renderer
+- `04a8f22bd` feat(editor): list marker renderer
+- `25ede64e1` feat(editor): heading effects renderer
+- `d0bb5c6d7` feat(editor): alert button styles
+- `1fd1cbd47` feat(editor): list marker styles
+- `b97bcd4a5` feat(editor): wave47 card styles
+- `882aed504` feat(editor): wave47 card renderer
+- `5c15f648e` feat(editor): wave47 card element definitions
+- `d7b167c39` chore: deploy marker wave 45
+- `ff28218aa` feat(editor): wire AI builder into editor
+- `889d214b9` feat(editor): AI builder panel
+- `d698dcc30` feat(editor): builder output validation
+- `a13b8d2cc` feat(editor): AI builder validation tests
+- `aa96762ba` feat(editor): AI builder panel tests
+- `0bf5ced29` feat(editor): AI builder request tests
+- `b6046ab46` feat(editor): AI builder guide tests
+- `a60fcb9c5` feat(editor): AI tab in editor dock
+- `0255d3a55` feat(editor): AI builder state helpers
+- `f690df354` feat(editor): AI builder styles
+- `b93da6746` feat(editor): AI builder API route
+- `9bdeac117` feat(editor): AI builder request parsing
+- `737b2de99` feat(editor): AI builder guide
+- `bbe1becb3` feat(editor): AI builder design keys
+- `756f8d5fe` feat(editor): AI client
+- `3b5df9b14` feat(editor): AI builder models
+
+## 2026-10-17 (246)
+- `8f06dc1ca` chore: deploy marker wave 44
+- `fc03fa4f4` feat(editor): block style
+- `ed3ab4ddf` feat(editor): template presets
+- `985631735` feat(editor): tabs css
+- `fd107efc7` test(editor): add wave 44 page-effects integration spec
+- `9d93d3ece` test(editor): add effect pack integration spec
+- `4b6403fba` feat(editor): show page-effects placeholder on canvas
+- `66fca968d` feat(editor): add wave 44 to element registry
+- `4c9b50901` feat(editor): register wave 44 components
+- `b827df34e` feat(editor): add wave 44 grain and progress styles
+- `a81835972` feat(editor): add wave 44 page-effects renderer
+- `05cbd4508` feat(editor): add wave 44 page-effects element defs
+- `12948efb9` chore: deploy marker wave 43
+- `2a65e3759` feat(editor): design panel
+- `49d35d18e` feat(editor): canvas
+- `8368e01fc` feat(editor): field panel
+- `cbaf58c1e` feat(editor): canvas
+- `06bc3c43d` feat(editor): canvas
+- `e0a6f87c6` feat(editor): canvas
+- `576e6ee66` feat(editor): canvas
+- `80ebb9c6e` feat(editor): block style
+- `1bf24d27a` feat(editor): tabs css
+- `25fae97c5` feat(editor): section block
+- `1b15bc7bd` feat(editor): section block
+- `ae3221255` feat(editor): section block
+- `9cd50b8c7` feat(editor): section layout
+- `491b6bcbe` feat(editor): wave43 element tests
+- `5d0b7834b` feat(editor): section scroll-mode tests
+- `8ba6eed24` feat(editor): pointer-fx integration tests
+- `26004ec7a` feat(editor): styled block pointer-fx wiring
+- `4c0d54b1f` feat(editor): section effects styles
+- `741adac8b` feat(editor): wave43 element styles
+- `75dd69503` feat(editor): wave43 element renderers
+- `aaed65ee0` feat(editor): wire wave43 components into element table
+- `faf5a6343` feat(editor): register wave43 elements
+- `23879cea6` feat(editor): wave43 element definitions
+- `2aae6b1b2` feat(editor): pointer-fx lazy loader
+- `73e4ba1a7` feat(editor): pointer-fx component
+- `ed24cf694` feat(editor): link-all-sides padding toggle
+- `e9e8aa2d4` feat(editor): link-all-sides padding toggle
+- `10a128b03` feat(editor): link-all-sides padding toggle
+- `b948064b0` chore: deploy marker wave 42
+- `1d85eea0b` feat(editor): hover states, convert legacy blocks DesignPanel.tsx
+- `dc5e3ab6e` feat(editor): hover states, convert legacy blocks blockStyle.ts
+- `60eb206d9` feat(editor): hover states, convert legacy blocks VisualEditor.tsx
+- `5bcbd8d7c` feat(editor): hover states, convert legacy blocks FieldPanel.tsx
+- `9757ed4e6` feat(editor): hover states, convert legacy blocks hover-state.int.spec.ts
+- `ea5f26830` feat(editor): hover states, convert legacy blocks convert-legacy.int.spec.ts
+- `a04ce4533` feat(editor): hover states, convert legacy blocks convertLegacy.ts
+- `34464c068` feat(editor): hover states, convert legacy blocks EditorDock.tsx
+- `a4c4091e4` chore: deploy marker wave 41
+- `458d1e7e6` feat(editor): search page, css-only mode fixes search-page.int.spec.ts
+- `428487086` feat(editor): search page, css-only mode fixes page.tsx
+- `cec1cf18f` feat(editor): search page, css-only mode fixes page.tsx
+- `4eeb10abf` feat(editor): search page, css-only mode fixes Wave38Elements.tsx
+- `5f3951225` feat(editor): search page, css-only mode fixes wave38Defs.ts
+- `753266b98` feat(editor): search page, css-only mode fixes wave36.css
+- `c15f8814d` feat(editor): search page, css-only mode fixes tabs.css
+- `97716572e` feat(editor): search page, css-only mode fixes SectionBlock.tsx
+- `58d7e2f35` chore: deploy marker wave 40
+- `e0cf87c26` feat(editor): column drag-resize visualEditor.styles.ts
+- `c2b7071aa` feat(editor): column drag-resize VisualEditor.tsx
+- `4b282ac32` feat(editor): column drag-resize column-resize.int.spec.ts
+- `32a983e73` feat(editor): column drag-resize Canvas.tsx
+- `38fcd5122` feat(editor): column drag-resize CanvasFrame.tsx
+- `039c638ce` feat(editor): column drag-resize columnOps.ts
+- `95b87d5f8` feat(editor): column drag-resize canvasBridge.ts
+- `575a1f721` chore: deploy marker wave 39
+- `74757d1bf` feat(editor): grid/popup modes, bg video, mask, site elements DesignPanel.tsx
+- `d22ff2e86` feat(editor): grid/popup modes, bg video, mask, site elements blockStyle.ts
+- `7c16b670b` feat(editor): grid/popup modes, bg video, mask, site elements FieldPanel.tsx
+- `b86b19fe8` feat(editor): grid/popup modes, bg video, mask, site elements Canvas.tsx
+- `8553f47bf` feat(editor): grid/popup modes, bg video, mask, site elements templatePresets.ts
+- `ecba0ff3c` feat(editor): grid/popup modes, bg video, mask, site elements bg-video-mask.int.spec.ts
+- `ffeee3d85` feat(editor): grid/popup modes, bg video, mask, site elements section-layout.int.spec.ts
+- `9617adaef` feat(editor): grid/popup modes, bg video, mask, site elements sectionLayout.ts
+- `f4ea22933` feat(editor): grid/popup modes, bg video, mask, site elements CanvasBlockPreview.tsx
+- `4ec686558` feat(editor): grid/popup modes, bg video, mask, site elements wave38Defs.ts
+- `8266dcc5f` feat(editor): grid/popup modes, bg video, mask, site elements sectionLayout.ts
+- `5da2f1fef` feat(editor): grid/popup modes, bg video, mask, site elements wave38.css
+- `58f4b80bc` feat(editor): grid/popup modes, bg video, mask, site elements Wave38Elements.tsx
+- `39226f468` feat(editor): grid/popup modes, bg video, mask, site elements effects.css
+- `697119c9a` feat(editor): grid/popup modes, bg video, mask, site elements BgVideo.tsx
+- `2fb7c0a39` feat(editor): grid/popup modes, bg video, mask, site elements StyledBlock.tsx
+- `624071111` feat(editor): grid/popup modes, bg video, mask, site elements registry.ts
+- `2168f3bed` feat(editor): grid/popup modes, bg video, mask, site elements tabs.css
+- `8fc68483b` feat(editor): grid/popup modes, bg video, mask, site elements SectionBlock.tsx
+- `42e5c796a` feat(editor): grid/popup modes, bg video, mask, site elements BlockRenderer.tsx
+- `3a153858f` feat(editor): grid/popup modes, bg video, mask, site elements renderElement.tsx
+- `98b29e68b` chore: deploy marker wave 38
+- `a26085f03` feat(editor): carousel section mode, column classes FieldPanel.tsx
+- `e5dc6003d` feat(editor): carousel section mode, column classes Canvas.tsx
+- `d4beef5f0` feat(editor): carousel section mode, column classes Canvas.tsx
+- `eabab2cb9` feat(editor): carousel section mode, column classes sectionLayout.ts
+- `cdaa66dda` feat(editor): carousel section mode, column classes tabs.css
+- `39bf86675` feat(editor): carousel section mode, column classes templatePresets.ts
+- `5c77c57c3` feat(editor): carousel section mode, column classes SectionBlock.tsx
+- `2dcdfc38c` feat(editor): wave 37 elements, page import/export VisualEditor.tsx
+- `de3078c76` feat(editor): wave 37 elements, page import/export editor-import-export.int.spec.ts
+- `d39056a2c` feat(editor): wave 37 elements, page import/export editorClipboard.ts
+- `f4e59f651` feat(editor): wave 37 elements, page import/export wave37
+- `7e17d0945` feat(editor): wave 37 elements, page import/export importExport.styles.ts
+- `55ca4650b` feat(editor): wave 37 elements, page import/export ImportExportModal.tsx
+- `ea6a14546` feat(editor): wave 37 elements, page import/export registry
+- `faef7d38c` feat(editor): wave 37 elements, page import/export wave37Defs.ts
+- `bb6b92a76` feat(editor): wave 37 elements, page import/export elementUtil
+- `7c29dca39` feat(editor): wave 37 elements, page import/export Wave37Elements.tsx
+- `2d271fb7b` feat(editor): wave 37 elements, page import/export elementComponents
+- `9f0bb9c8d` chore: deploy marker wave 36
+- `ccaa58757` feat(editor): advanced settings, wave 36 elements DesignPanel.tsx
+- `4e19c546e` feat(editor): advanced settings, wave 36 elements blockStyle.ts
+- `975b50b38` feat(editor): advanced settings, wave 36 elements Canvas.tsx
+- `f77a3ec82` feat(editor): advanced settings, wave 36 elements Canvas.tsx
+- `850acdf04` feat(editor): advanced settings, wave 36 elements Wave36Elements.tsx
+- `78b41ceeb` feat(editor): advanced settings, wave 36 elements Wave36Elements.tsx
+- `a2da8ebcf` feat(editor): advanced settings, wave 36 elements wave36Defs.ts
+- `bf60b6eb9` feat(editor): advanced settings, wave 36 elements wave36.css
+- `5288f47a9` feat(editor): advanced settings, wave 36 elements registry.ts
+- `51f102317` feat(editor): advanced settings, wave 36 elements elementUtil.ts
+- `e1c538c79` feat(editor): advanced settings, wave 36 elements elementComponents.tsx
+- `e163d64aa` chore: deploy marker wave 35
+- `c49fd39d3` feat(editor): icon picker, tab rename VisualEditor.tsx
+- `20df9d5d2` feat(editor): icon picker, tab rename FieldPanel.tsx
+- `d336fa156` feat(editor): icon picker, tab rename wave26Defs.ts
+- `a59d07488` feat(editor): icon picker, tab rename Canvas.tsx
+- `35f8be572` feat(editor): icon picker, tab rename elementUtil.ts
+- `6bf02106a` feat(editor): icon picker, tab rename IconPickerField.tsx
+- `1938b2c96` feat(editor): icon picker, tab rename MediaElements.tsx
+- `785e221e0` feat(editor): icon picker, tab rename icons.tsx
+- `b2f7bf32e` feat(editor): icon picker, tab rename CanvasFrame.tsx
+- `785e64bf4` feat(editor): icon picker, tab rename icons.tsx
+- `8c2ed6dcd` feat(editor): icon picker, tab rename tabs.css
+- `6c1f3e6e6` feat(editor): icon picker, tab rename MarketingElements.tsx
+- `8d276efe4` feat(editor): icon picker, tab rename TextElements.tsx
+- `8c46667b6` feat(editor): icon picker, tab rename canvasBridge.ts
+- `6ed6f1db6` feat(editor): icon picker, tab rename fieldTypes.ts
+- `4f381e7ef` chore: deploy marker wave 34
+- `c62f61248` feat(editor): link options, range fields blockSchemas.ts
+- `dee71c971` feat(editor): link options, range fields elementDefs.ts
+- `0b863db2f` feat(editor): link options, range fields wave26Defs.ts
+- `6eb5ce797` feat(editor): link options, range fields elementUtil.ts
+- `9f73fee21` feat(editor): link options, range fields registry.ts
+- `864b3c6bf` feat(editor): link options, range fields registry.ts
+- `d9ca014b9` feat(editor): link options, range fields HeadingElement.tsx
+- `04e5c39a8` feat(editor): link options, range fields MarketingElements.tsx
+- `cabe59095` feat(editor): link options, range fields ButtonElement.tsx
+- `a57809bbf` feat(editor): link options, range fields MediaElements.tsx
+- `f234b88e1` feat(editor): link options, range fields ButtonElement.tsx
+- `4e22132f8` feat(editor): link options, range fields TextElements.tsx
+- `c0d923e3a` feat(editor): link options, range fields LinkField.tsx
+- `8c742cb86` chore: deploy marker wave 33
+- `e29609316` feat(editor): pricing, team, feature card templates
+- `54b7adb6a` feat(editor): background overlay DesignPanel.tsx
+- `5a53aba7a` feat(editor): background overlay blockStyle.ts
+- `b9b587a83` feat(editor): background overlay Canvas.tsx
+- `03a33a22e` feat(editor): background overlay StyledBlock.tsx
+- `89b355362` chore: deploy marker wave 32
+- `9fd1e8ad6` feat(editor): wave 32 DesignPanel.tsx
+- `f20809994` feat(editor): wave 32 DesignPanel.tsx
+- `0d9ba6b8c` feat(editor): wave 32 DesignPanel.tsx
+- `50a7f18ed` feat(editor): wave 32 visualEditor.styles.ts
+- `8f15d1d4b` feat(editor): wave 32 DesignPanel.tsx
+- `b556b67b4` feat(editor): wave 32 FieldPanel.tsx
+- `3791314d6` feat(editor): wave 32 NavigatorPanel.tsx
+- `e47336838` feat(editor): wave 32 NavigatorPanel.tsx
+- `23ab3a8c9` feat(editor): wave 32 NavigatorPanel.tsx
+- `1679f83d1` feat(editor): wave 32 blockStyle.ts
+- `73157758d` feat(editor): wave 32 NavigatorPanel.tsx
+- `b133b1c81` feat(editor): wave 32 Canvas.tsx
+- `a24380ad3` feat(editor): wave 32 NavigatorPanel.tsx
+- `60555950c` feat(editor): wave 32 NavigatorPanel.tsx
+- `2e4b3c945` feat(editor): wave 32 StyledBlock.tsx
+- `56c436551` feat(editor): wave 32 registry.ts
+- `97868486f` feat(editor): wave 32 StyledBlock.tsx
+- `94f40dc8a` feat(editor): wave 32 registry.ts
+- `4670e95c7` feat(editor): wave 32 StyledBlock.tsx
+- `f979710ce` feat(editor): wave 32 registry.ts
+- `bca3fe80a` feat(editor): wave 32 StyledBlock.tsx
+- `5014382b9` feat(editor): wave 32 registry.ts
+- `f0020e067` chore: deploy marker (wave 31e)
+- `1b4379d9b` feat: DesignPanel.tsx (wave 31e)
+- `63f5029c1` feat: navigator.styles.ts (wave 31e)
+- `220a938ec` feat: NavigatorPanel.tsx (wave 31e)
+- `4035200da` feat: VisualEditor.tsx (wave 31e)
+- `b74652428` feat: blockStyle.ts (wave 31e)
+- `df7cdf2ca` feat: effects.css (wave 31e)
+- `9bf7de8e1` chore: deploy marker (wave 31d)
+- `a4527b144` feat: Canvas.tsx (wave 31d)
+- `e82f3d8d9` feat: DesignPanel.tsx (wave 31d)
+- `91b9d98c7` feat: DesignPanel.tsx (wave 31d)
+- `5afefa5f7` feat: blockStyle.ts (wave 31d)
+- `f3aa80d59` feat: Canvas.tsx (wave 31d)
+- `2b52827d7` feat: StyledBlock.tsx (wave 31d)
+- `90063d957` feat: effects.css (wave 31d)
+- `8110bf15c` feat: Canvas.tsx (wave 31d)
+- `d00de963a` feat: ParticlesBackground.tsx (wave 31d)
+- `ace96006e` feat: ParticlesLazy.tsx (wave 31d)
+- `d4dc6cea2` chore: deploy marker (wave 31c)
+- `7dbbc3616` feat: NavigatorPanel.tsx (wave 31c)
+- `72c717a2c` feat: VisualEditor.tsx (wave 31c)
+- `618f696b0` feat: navigator.styles.ts (wave 31c)
+- `8d74e63f1` feat: templatePresets.ts (wave 31c)
+- `a35e233a2` feat: wave26Defs.ts (wave 31c)
+- `d2485178d` chore: deploy marker (wave 31b)
+- `fb24a2d54` feat: sectionTree.ts (wave 31b)
+- `c0021b3d4` feat: NavigatorPanel.tsx (wave 31b)
+- `7e9fc7320` feat: navigator.styles.ts (wave 31b)
+- `0796a33a1` feat: visualEditor.styles.ts (wave 31b)
+- `092f7d76f` feat: EditorDock.tsx (wave 31b)
+- `0a27e3d5e` feat: VisualEditor.tsx (wave 31b)
+- `c9b04562e` feat: elementUtil.ts (wave 31b)
+- `e7b786cc1` feat: FieldPanel.tsx (wave 31b)
+- `c3aab3a84` feat: MediaElements.tsx (wave 31b)
+- `60eeadc78` feat: MarketingElements.tsx (wave 31b)
+- `dabc2e7ab` feat: SectionBlock.tsx (wave 31b)
+- `f55b6fd0a` chore: deploy marker (wave 31)
+- `e45e32347` fix: CanvasInlineEditor.tsx exact bytes (wave 31)
+- `898cba733` feat: visualEditor.styles.ts (wave 31)
+- `30595fcf1` feat: VisualEditor.tsx (wave 31)
+- `786c2cb4d` fix: CanvasFrame.tsx trailing newline (wave 31)
+- `44e79ca79` fix: Canvas.tsx trailing newline (wave 31)
+- `2d68f1895` feat: editorClipboard.ts (wave 31)
+- `a8a12a900` feat: blockStyle.ts (wave 31)
+- `0b9e86bab` feat: canvasBridge.ts (wave 31)
+- `cf7ca8577` feat: EditorDock.tsx (wave 31)
+- `5b28f7dd3` feat: NavigatorPanel.tsx (wave 31)
+- `b2f668b25` feat: IconPickerField.tsx (wave 31)
+- `b86896356` feat: ContextMenu.tsx (wave 31)
+- `41e276c15` feat: NavigatorPanel.tsx (wave 31)
+- `b579c244d` feat: GradientEditorField.tsx (wave 31)
+- `549ceb367` feat: ShadowPopoverField.tsx (wave 31)
+- `351c62709` feat: FieldPanel.tsx (wave 31)
+- `ea21e8eae` feat: CanvasInlineEditor.tsx (wave 31)
+- `f58a7c3f6` feat: RepeaterField.tsx (wave 31)
+- `99e9d707d` feat: CanvasFrame.tsx (wave 31)
+- `bf67fbb5c` feat: wave26Defs.ts (wave 31)
+- `101e6fb30` feat: DimensionsField.tsx (wave 31)
+- `9e1c34b74` feat: Theming.ts (wave 31)
+- `3fd066f72` feat: ColorPickerField.tsx (wave 31)
+- `4c3c0ad54` feat: Canvas.tsx (wave 31)
+- `3ce7f8831` feat: Element.ts (wave 31)
+- `f8649473e` feat: RangeSliderField.tsx (wave 31)
+- `0a2b0a3ea` feat: fieldTypes.ts (wave 31)
+- `e294c01ca` feat: TypographyPopoverField.tsx (wave 31)
+- `4ccdf260e` feat: colorResolver.ts (wave 31)
+- `a8ba59f1e` feat: LinkField.tsx (wave 31)
+
+## 2026-10-16 (120)
+- `614cde832` chore: deploy marker (wave 30)
+- `d30b67ef6` feat: SectionBlock.tsx (wave 30)
+- `e8619b816` feat: canvasBridge.ts (wave 30)
+- `0435772b4` feat: sectionTree.ts (wave 30)
+- `22e0c28b0` feat: ShortcutsHelp.tsx (wave 30)
+- `e3beb08a0` feat: StyledBlock.tsx (wave 30)
+- `708501fd4` feat: history.ts (wave 30)
+- `35305b3fe` feat: EditorDock.tsx (wave 30)
+- `1995d588f` feat: useEditorShortcuts.ts (wave 30)
+- `eec8140c1` feat: visual-editor-history-clipboard.int.spec.ts (wave 30)
+- `eae9269c4` feat: editorClipboard.ts (wave 30)
+- `8db4c5345` feat: columnOps.ts (wave 30)
+- `7d9e165aa` feat: StructurePicker.tsx (wave 30)
+- `5700e12f1` feat: ContextMenu.tsx (wave 30)
+- `eb1c17d72` feat: section-layout.int.spec.ts (wave 30)
+- `9a289d763` feat: blockSchemas.ts (wave 30)
+- `210b16113` feat: CanvasFrame.tsx (wave 30)
+- `7ee4625c5` feat: responsive-editing.int.spec.ts (wave 30)
+- `8cd382f99` feat: BlockRenderer.tsx (wave 30)
+- `1da80f038` feat: Canvas.tsx (wave 30)
+- `fb3a08964` feat: ColumnPanel.tsx (wave 30)
+- `e949b45d8` feat: blockStyle.ts (wave 30)
+- `bcd9695bd` feat: visualEditor.styles.ts (wave 30)
+- `c6c9ce853` feat: sectionLayout.ts (wave 30)
+- `135a22ad7` feat: VisualEditor.tsx (wave 30)
+- `0ca00dbbe` feat: styles.css (wave 30)
+- `8516567a3` feat: FieldPanel.tsx (wave 30)
+- `00c907fe7` feat: DesignPanel.tsx (wave 30)
+- `4aaecd3ee` chore: deploy marker (wave 29)
+- `f2805aaa0` feat: TemplateReposHelp.tsx (wave 29)
+- `268017327` feat: StyledBlock.tsx (wave 29)
+- `d9176e4a5` feat: dropSlot.ts (wave 29)
+- `82e4558e0` feat: array-field.css (wave 29)
+- `15aa3196b` feat: Canvas.tsx (wave 29)
+- `938962306` feat: BlockRenderer.tsx (wave 29)
+- `0439701d3` feat: sectionTree.ts (wave 29)
+- `867e262ef` feat: visual-editor-drop-slot.int.spec.ts (wave 29)
+- `b4308fc7e` feat: sectionLayout.ts (wave 29)
+- `e6b9281d2` feat: array-field.int.spec.ts (wave 29)
+- `5f125d095` feat: ElementLibrary.tsx (wave 29)
+- `c7813dc3f` feat: SectionBlock.tsx (wave 29)
+- `31704678b` feat: section-layout.int.spec.ts (wave 29)
+- `8e77c3730` feat: componentRegistry.ts (wave 29)
+- `d24763dc5` feat: blockStyle.ts (wave 29)
+- `6b21bd7e1` feat: CanvasBlockPreview.tsx (wave 29)
+- `940d7f2be` feat: forms.css (wave 29)
+- `77582f2c9` feat: blockSchemas.ts (wave 29)
+- `ff0cf7b19` feat: DesignPanel.tsx (wave 29)
+- `ad9a2a424` feat: TemplateBrowser.tsx (wave 29)
+- `ded5a7b23` feat: ArrayField.tsx (wave 29)
+- `356732b03` feat: visualEditor.styles.ts (wave 29)
+- `2606bf125` feat: styles.css (wave 29)
+- `1e0139ebc` feat: VisualEditor.tsx (wave 29)
+- `ce20a2f07` feat: FieldPanel.tsx (wave 29)
+- `bf4c2e0c2` feat: Integrations.ts (wave 29)
+- `b5e9948d3` chore: deploy marker (waves 25-28)
+- `d2a92b0d0` feat: elementComponents.tsx (wave 25)
+- `16ec14291` feat: template-thumbnail.int.spec.ts (wave 25)
+- `108737902` feat: route.ts (wave 25)
+- `29075e692` feat: index.ts (wave 25)
+- `575078baf` feat: visual-editor-treeops-move.int.spec.ts (wave 25)
+- `56aaa76f4` feat: 20261104_100000_template_kind_category.ts (wave 25)
+- `d0e6ecf6d` feat: canvasBridge.ts (wave 25)
+- `5c1bdc69e` feat: SaveAsTemplate.tsx (wave 25)
+- `e89addf34` feat: route.ts (wave 25)
+- `a37a6c8b5` feat: site-templates.int.spec.ts (wave 25)
+- `29aa68409` feat: ElementWithMedia.tsx (wave 25)
+- `8b3115436` feat: integrations.ts (wave 25)
+- `408e28048` feat: CanvasBlockPreview.tsx (wave 25)
+- `15cfc7758` feat: TextElements.tsx (wave 25)
+- `179b6095b` feat: elements-wave26.int.spec.ts (wave 25)
+- `8670c6288` feat: icons.tsx (wave 25)
+- `c1b07075a` feat: CanvasFrame.tsx (wave 25)
+- `b2c1b1477` feat: PageTemplates.ts (wave 25)
+- `29bb0840a` feat: template-repos.int.spec.ts (wave 25)
+- `c8c35e39d` feat: registry.ts (wave 25)
+- `81f1c5979` feat: Canvas.tsx (wave 25)
+- `8018030c2` feat: templateThumbnail.ts (wave 25)
+- `4301689f3` feat: CountdownElement.tsx (wave 25)
+- `edcc81513` feat: renderElement.tsx (wave 25)
+- `a25be262c` feat: settings.ts (wave 25)
+- `f9d326057` feat: template-repos-fresh-install.int.spec.ts (wave 25)
+- `7ed6c9473` feat: route.ts (wave 25)
+- `678756b51` feat: manifest.ts (wave 25)
+- `3229fdcfb` feat: routeAuth.ts (wave 25)
+- `473c86459` feat: MarketingElements.tsx (wave 25)
+- `e5551897b` feat: LayoutElements.tsx (wave 25)
+- `9cc6065ba` feat: InteractiveElements.tsx (wave 25)
+- `18ffe903e` feat: BlockRenderer.tsx (wave 25)
+- `c63b7d03b` feat: 20261103_100000_template_repos.ts (wave 25)
+- `59a84ecee` feat: types.ts (wave 25)
+- `8de86a643` feat: fetch.ts (wave 25)
+- `dc676a40f` feat: blockSchemas.ts (wave 25)
+- `447978419` feat: MediaElements.tsx (wave 25)
+- `a13db6638` feat: ElementLibrary.tsx (wave 25)
+- `0abc6e8ee` feat: templatePresets.ts (wave 25)
+- `8da3d6566` feat: treeOps.ts (wave 25)
+- `a9d3aeb59` feat: elementUtil.ts (wave 25)
+- `2a2eb1928` feat: fetch.ts (wave 25)
+- `6e94ce53d` feat: visualEditor.styles.ts (wave 25)
+- `c14348e22` feat: fresh-install-schema-coverage.int.spec.ts (wave 25)
+- `7d45a18b1` feat: TemplateBrowser.tsx (wave 25)
+- `261c53e99` feat: internal-migrate-fresh-install.int.spec.ts (wave 25)
+- `240416fd6` feat: wave26Defs.ts (wave 25)
+- `1f9b84059` feat: styles.css (wave 25)
+- `16f1beaaa` feat: VisualEditor.tsx (wave 25)
+- `bf916fc94` feat: Integrations.ts (wave 25)
+- `92235f6bb` feat: README.md (wave 25)
+- `975fa2a13` feat: FieldPanel.tsx (wave 25)
+- `5451d439d` feat: index.ts (wave 25)
+- `8ca12fde0` chore: deploy marker (wave 24)
+- `b0e59330d` feat: nav-structure.int.spec.ts (wave 24)
+- `8e106aa68` feat: ButtonElement.tsx (wave 24)
+- `8fc161760` feat: AdminNavClient.int.spec.ts (wave 24)
+- `6eb1f5c13` feat: navStructure.ts (wave 24)
+- `220097c15` feat: ThemeStylesClient.tsx (wave 24)
+- `52194623f` feat: SiteSettings.ts (wave 24)
+- `04f11b19d` feat: settingsPages.ts (wave 24)
+- `48f2e327d` feat: elementDefs.ts (wave 24)
+- `fd1467b12` feat: adminViewRegistry.ts (wave 24)
+
+## 2026-10-15 (109)
+- `ffc04176f` feat: internal-migrate-fresh-install.int.spec.ts (wave 23 site templates)
+- `43b4cdd01` feat: fresh-install-schema-coverage.int.spec.ts (wave 23 site templates)
+- `93dd1872f` feat: site-templates.int.spec.ts (wave 23 site templates)
+- `261b7dcee` feat: site-templates-resolve.int.spec.ts (wave 23 site templates)
+- `5e0f65994` feat: page.tsx (wave 23 site templates)
+- `58140c89b` feat: VisualEditor.tsx (wave 23 site templates)
+- `757aef9f4` feat: page.tsx (wave 23 site templates)
+- `8e3d85129` feat: 20261102_100000_site_templates.ts (wave 23 site templates)
+- `c5e9d6993` feat: page.tsx (wave 23 site templates)
+- `12713c02f` feat: siteTemplates.ts (wave 23 site templates)
+- `bfd9a4e51` feat: index.ts (wave 23 site templates)
+- `934652faa` feat: siteTemplates.ts (wave 23 site templates)
+- `96d31e7da` feat: page.tsx (wave 23 site templates)
+- `1e8e40185` feat: page.tsx (wave 23 site templates)
+- `9e38afc56` feat: registry.ts (wave 23 site templates)
+- `fe22c21f9` feat: page.tsx (wave 23 site templates)
+- `0fc19c745` feat: layout.tsx (wave 23 site templates)
+- `79bcdd6a2` feat: permissions.ts (wave 23 site templates)
+- `40048e2ea` feat: page.tsx (wave 23 site templates)
+- `9858e9d6e` feat: index.ts (wave 23 site templates)
+- `b6c941d3a` feat: page.tsx (wave 23 site templates)
+- `f1afc2ad7` feat: lockGuard.ts (wave 23 site templates)
+- `6936e9f88` feat: registry.ts (wave 23 site templates)
+- `1b1cbcc85` feat: page.tsx (wave 23 site templates)
+- `2a9bc62cd` feat: contentEditGuard.ts (wave 23 site templates)
+- `0e144caac` feat: types.ts (wave 23 site templates)
+- `00e1cc8d2` feat: README.md (wave 23 site templates)
+- `2ee327d1c` feat: types.ts (wave 23 site templates)
+- `23ed3721f` feat: CanvasBlockPreview.tsx (wave 23 site templates)
+- `553056681` feat: slot.ts (wave 23 site templates)
+- `f2f4a16c7` feat: resolve.ts (wave 23 site templates)
+- `b242f0653` feat: location.ts (wave 23 site templates)
+- `6035de586` feat: FieldGroupLocationField.tsx (wave 23 site templates)
+- `700b97f00` feat: surfaces.ts (wave 23 site templates)
+- `e32b4719f` feat: render.tsx (wave 23 site templates)
+- `75ed68e28` feat: renderElement.tsx (wave 23 site templates)
+- `fa45841c6` feat: conditions.ts (wave 23 site templates)
+- `cb359f56a` feat: navStructure.ts (wave 23 site templates)
+- `df010a654` feat: chrome.tsx (wave 23 site templates)
+- `a28c2a8a5` feat: SiteTemplates.ts (wave 23 site templates)
+- `2f42f3ebc` chore: wave 22 deploy marker
+- `49f16d745` feat: theme-styles.int.spec.ts (wave 22 theme layout and presets)
+- `4d4809a46` feat: editorLogic.ts (wave 22 theme layout and presets)
+- `20757dbd9` feat: theme-styles-admin.int.spec.ts (wave 22 theme layout and presets)
+- `28e586d70` feat: ThemeStylesPreview.tsx (wave 22 theme layout and presets)
+- `9758684f1` feat: sanitize.ts (wave 22 theme layout and presets)
+- `42fed9886` feat: PresetControls.tsx (wave 22 theme layout and presets)
+- `13fcabe2c` feat: seo-nav-wave14.int.spec.ts (wave 22 theme layout and presets)
+- `bb8b290c1` feat: nav-structure.int.spec.ts (wave 22 theme layout and presets)
+- `95adeafda` feat: css.ts (wave 22 theme layout and presets)
+- `da9718bb6` feat: AdminNavClient.int.spec.ts (wave 22 theme layout and presets)
+- `841382cb6` feat: styles.css (wave 22 theme layout and presets)
+- `0ae6e81be` feat: richtext.tsx (wave 22 theme layout and presets)
+- `f15045223` feat: LayoutControls.tsx (wave 22 theme layout and presets)
+- `86f43e2d1` feat: layout.tsx (wave 22 theme layout and presets)
+- `5d28126f2` feat: ThemeStylesClient.tsx (wave 22 theme layout and presets)
+- `2ecdf2537` feat: types.ts (wave 22 theme layout and presets)
+- `9ac8d0ed2` feat: settingsPages.ts (wave 22 theme layout and presets)
+- `29efff9e3` feat: themeStyles.css (wave 22 theme layout and presets)
+- `4a8c0f274` feat: presets.ts (wave 22 theme layout and presets)
+- `9a4f24989` feat: settingsDescriptions.ts (wave 22 theme layout and presets)
+- `478122f55` chore: wave 21 deploy marker
+- `ac935414c` feat: internal-migrate-fresh-install.int.spec.ts (wave 21 theme styles)
+- `0d8124467` feat: fresh-install-schema-coverage.int.spec.ts (wave 21 theme styles)
+- `007d262c2` feat: index.ts (wave 21 theme styles)
+- `3074e97c7` feat: richtext.tsx (wave 21 theme styles)
+- `731118759` feat: MySubscriptionsScreen.tsx (wave 21 theme styles)
+- `5d2afd9be` feat: elementDefs.ts (wave 21 theme styles)
+- `414985407` feat: StoreCreditScreen.tsx (wave 21 theme styles)
+- `095f35133` feat: themeStyles.css (wave 21 theme styles)
+- `2940926a9` feat: AccountScreens.tsx (wave 21 theme styles)
+- `6542f95bb` feat: fields.tsx (wave 21 theme styles)
+- `c54054180` feat: sanitize.ts (wave 21 theme styles)
+- `de43c431b` feat: editorLogic.ts (wave 21 theme styles)
+- `3ac99b5f0` feat: renderElement.tsx (wave 21 theme styles)
+- `fdb5c72f5` feat: ButtonElement.tsx (wave 21 theme styles)
+- `aa52eb42a` feat: TypographyControls.tsx (wave 21 theme styles)
+- `e624df58d` feat: settingsDescriptions.ts (wave 21 theme styles)
+- `b4eec4b5d` feat: ThemeStylesPreview.tsx (wave 21 theme styles)
+- `64bc064f3` feat: navStructure.ts (wave 21 theme styles)
+- `009bae1c7` feat: css.ts (wave 21 theme styles)
+- `3cd5b36c5` feat: TableControls.tsx (wave 21 theme styles)
+- `565c871af` feat: styles.css (wave 21 theme styles)
+- `32a09910e` feat: ColourRefInput.tsx (wave 21 theme styles)
+- `eba8f5e0f` feat: theme-styles.int.spec.ts (wave 21 theme styles)
+- `e1fd648c7` feat: ColourControls.tsx (wave 21 theme styles)
+- `eed3007f7` feat: layout.tsx (wave 21 theme styles)
+- `0ae26323e` feat: ButtonControls.tsx (wave 21 theme styles)
+- `6acfc8a91` feat: theme-styles-admin.int.spec.ts (wave 21 theme styles)
+- `485405f56` feat: ThemeStylesView.tsx (wave 21 theme styles)
+- `0d37d1e23` feat: types.ts (wave 21 theme styles)
+- `ecad9642c` feat: ThemeStylesClient.tsx (wave 21 theme styles)
+- `392f36424` feat: store.ts (wave 21 theme styles)
+- `45b4323d0` feat: adminViewRegistry.ts (wave 21 theme styles)
+- `b9f39e03b` feat: route.ts (wave 21 theme styles)
+- `e599fceff` feat: 20261101_100000_theme_styles.ts (wave 21 theme styles)
+- `528a02713` feat: route.ts (wave 21 theme styles)
+- `f5c2f0b4d` chore: wave 20 deploy marker
+- `57909d410` fix: foundation_features migration whitespace (wave 20)
+- `b01d0346a` feat: seo-metadata.int.spec.ts (wave 20 features default off)
+- `fe4e26ed7` feat: edit-screens.int.spec.ts (wave 20 features default off)
+- `954dee405` feat: cross-sells-currency-wave7.int.spec.ts (wave 20 features default off)
+- `059a756c5` feat: settingsSchema.ts (wave 20 features default off)
+- `5d7e51190` feat: 20260822_055217_foundation_features.ts (wave 20 features default off)
+- `d7a5c0fc0` feat: settings.ts (wave 20 features default off)
+- `c65a66553` feat: registry.ts (wave 20 features default off)
+- `9fc958df5` feat: registry.ts (wave 20 features default off)
+- `7cde5467f` fix: lint errors in google connection screen (next build)
+- `43eebd792` fix: lint errors in google admin links (next build)
+
+## 2026-10-14 (817)
+- `eaa1467c9` chore: wave 19 deploy marker
+- `ae2e5986e` feat: checkout/page.tsx (batch 4)
+- `26d9ddd89` feat: CheckoutCurrencyNote.tsx (batch 4)
+- `39ad74ba3` feat: account/subscriptions/page.tsx (batch 4)
+- `cdcfc84bc` feat: productSubscriptions.ts (batch 4)
+- `647ef7504` feat: BundleContentsList.tsx (batch 4)
+- `69ab55935` feat: displayCurrencyFormat.ts (batch 4)
+- `a344dba2c` feat: currency-switcher.css (batch 4)
+- `de1eb3049` feat: displayState.ts (batch 4)
+- `0bd02e151` feat: cache.ts (batch 4)
+- `877ddc80c` feat: fields.ts (batch 4)
+- `97b282cb4` feat: schema tables for add-ons, bundles, subscriptions (wave 19)
+- `642a3a6a0` feat: ProductCardPrice.tsx (batch 4)
+- `b445ca299` feat: DisplayCurrenciesView.tsx (batch 4)
+- `174ccbaae` feat: ShopReportsView.tsx (batch 4)
+- `b74e4ba0b` feat: csv.ts (batch 4)
+- `c09eedc41` feat: ProductRecommendations.tsx (batch 4)
+- `2c6081257` feat: pricingRules.ts (batch 4)
+- `d6ad2c6a8` feat: emailSchedule.ts (batch 4)
+- `3969c40b2` feat: 20261028_400000_display_currencies.ts (batch 4)
+- `83b4198dd` feat: productSubscriptions.ts (batch 4)
+- `466f853b4` feat: CurrencySwitcher.tsx (batch 4)
+- `d9f69d2ad` feat: AccountShell.tsx (batch 4)
+- `2880f7657` feat: rest.ts subscriptions webhook, add-ons, pricing (wave 19)
+- `0258cc043` feat: recommendations.ts (batch 4)
+- `5ca89f9c1` feat: ShopReportsChart.tsx (batch 4)
+- `9f014995f` feat: productHooks.ts (batch 4)
+- `3c6f54d23` feat: admin-shop-subscription/[id]/route.ts (batch 4)
+- `3167c6b4c` feat: ProductAddOns.tsx (batch 4)
+- `44b3887c0` feat: useBundleInfo.ts (batch 4)
+- `c8b2e2a2f` feat: SubscriptionOfferBox.tsx (batch 4)
+- `df8ab40a7` feat: manage.ts (batch 4)
+- `a36208f87` feat: shop-quote route.ts (batch 4)
+- `bcd93f8c0` feat: SubscriptionActions.tsx (batch 4)
+- `34cfc386b` feat: shopExtraSettings.ts (batch 4)
+- `2def3a7b6` feat: shop-recommendations/route.ts (batch 4)
+- `f9f4c99ea` feat: react.tsx (batch 4)
+- `01cb60d49` feat: shape.ts (batch 4)
+- `d5339a127` feat: product-addons-db.int.spec.ts (batch 4)
+- `9e0da9882` fix: products.ts no trailing newline (batch 4)
+- `49a23c224` feat: index.ts (batch 4)
+- `be30487a9` feat: SubscriptionPlanField.tsx (batch 4)
+- `6e7d073bf` feat: shop-label-and-quote-fixes.int.spec.ts (batch 4)
+- `614f61b78` feat: stripeAdapter.ts (batch 4)
+- `b4d96565b` feat: route.ts (batch 4)
+- `361fed811` feat: shop-bundles-wave19.int.spec.ts (batch 4)
+- `fbf6bf95a` feat: productHook.ts (batch 4)
+- `47d691611` feat: shared.ts (batch 4)
+- `47093518e` fix: Header.tsx trailing newline (batch 4)
+- `910c67bdb` feat: emails.ts (batch 4)
+- `8fe9daee8` feat: shop-extras-pure.int.spec.ts (batch 4)
+- `8376dd6eb` feat: start.ts (batch 4)
+- `c5a232e31` feat: displayCurrencyRows.ts (batch 4)
+- `1a9729b02` feat: report.ts (batch 4)
+- `532075b32` feat: records.ts (batch 4)
+- `be3724662` feat: totals.ts (batch 4)
+- `83af40fa2` feat: SubscriptionOffer.tsx (batch 4)
+- `1890d000e` feat: layout.tsx (batch 4)
+- `5b1710ff7` feat: ProductSubscriptions.ts (batch 4)
+- `e962a8a55` feat: shop-bundles/route.ts (batch 4)
+- `cc6af4e44` feat: displayCurrencies.ts (batch 4)
+- `970fccf2a` feat: shop-reports.css (batch 4)
+- `3ebf29437` feat: shop-recommendations-wave19.int.spec.ts (batch 4)
+- `8fed169e2` feat: productFields.ts (batch 4)
+- `3c1fcea5d` feat: schedule.ts (batch 4)
+- `c128f7796` feat: displayRates.ts (batch 4)
+- `cb8d2a050` feat: bundles.ts (batch 4)
+- `ca659ce42` feat: PricingRuleNotes.tsx (batch 4)
+- `036e0bd42` feat: productAddOns.ts (batch 4)
+- `d9978568c` feat: settingsPages.ts (batch 4)
+- `4cc2fe6d1` feat: adminViewRegistry.ts (batch 4)
+- `0a27adf23` feat: range.ts (batch 4)
+- `70b3723eb` feat: gate.ts (batch 4)
+- `dd6ea9b19` feat: route.ts (batch 4)
+- `74eafc992` feat: renewal.ts (batch 4)
+- `032c7d87e` feat: ProductPurchase.tsx (batch 4)
+- `b561de35f` feat: navStructure.ts (batch 4)
+- `0ad0cad48` feat: webhooks.ts (batch 4)
+- `92c347991` feat: CartCrossSells.tsx (batch 4)
+- `4df2bcaa5` feat: cart page.tsx (batch 4)
+- `cb940c62e` feat: 20261028_200000_product_bundles_recommendations.ts (batch 4)
+- `2f7b24acf` feat: products.ts (batch 4)
+- `319be197c` feat: fresh-install-schema-coverage.int.spec.ts (batch 4)
+- `03410aeb6` feat: orders.ts (batch 4)
+- `d0543cdc9` feat: shop-reports-db-wave19.int.spec.ts (batch 4)
+- `3c1b5c673` feat: SubscriptionAdminPanel.tsx (batch 4)
+- `2f080dd59` feat: display-currency-wave19.int.spec.ts (batch 4)
+- `dfa3353f4` feat: pricingRules.ts (batch 4)
+- `e2481f65c` feat: addOns.ts (batch 4)
+- `660524a99` feat: displayCurrency.ts (batch 4)
+- `49b084db5` feat: EmailSchedule.ts (batch 4)
+- `b62b9a068` feat: Products.ts (batch 4)
+- `e9ea2d4a2` feat: 20261028_300000_product_subscriptions.ts (batch 4)
+- `a4b8309ab` feat: ShopReportTables.tsx (batch 4)
+- `b3722431f` feat: ShopReportsPanel.tsx (batch 4)
+- `761f1aabb` feat: DisplayCurrencyContext.tsx (batch 4)
+- `f32d24438` feat: CartRecommendations.tsx (batch 4)
+- `cdbe3ea03` feat: route.ts (batch 4)
+- `94d9011f8` feat: permissions.ts (batch 4)
+- `f4f50c34e` feat: cartHooks.ts (batch 4)
+- `3dc3473a6` feat: MySubscriptionsScreen.tsx (batch 4)
+- `2dc689e58` feat: shop-subscriptions-wave19.int.spec.ts (batch 4)
+- `980d2b613` feat: coupons.ts (batch 4)
+- `cab28733a` feat: ShopExtraSettings.ts (batch 4)
+- `b32f35bec` feat: storefront.ts (batch 4)
+- `3c3b5bb38` feat: product-addons-pricing-rules.int.spec.ts (batch 4)
+- `dc77a42ff` feat: recommendations.ts (batch 4)
+- `84c806e3a` feat: bundles.ts (batch 4)
+- `221000de5` feat: pricing.ts (batch 4)
+- `cf986496f` feat: registry.ts (batch 4)
+- `cbb4e0255` feat: catalogue.ts (batch 4)
+- `db19693b0` feat: 20261028_100000_add_ons_pricing_rules.ts (batch 4)
+- `bc26b78a1` feat: queriesStock.ts (batch 4)
+- `df27fbefb` feat: registry.ts (batch 4)
+- `32082de10` feat: internal-migrate-fresh-install.int.spec.ts (batch 4)
+- `f9e5de81b` feat: queries.ts (batch 4)
+- `aead48488` feat: DisplayCurrenciesPanel.tsx (batch 4)
+- `9a8b0f7bc` feat: Header.tsx (batch 4)
+- `8e7e2dd80` feat: route.ts (batch 4)
+- `c7e48fd45` feat: index.ts (batch 4)
+- `05ac1afbe` feat: page.tsx (batch 4)
+- `439b04e43` feat: plan.ts (batch 4)
+- `f8aa7bc78` feat: stripe.ts (batch 4)
+- `878cd891d` feat: shop-reports-wave19.int.spec.ts (batch 4)
+- `0f5ffa8b3` chore: wave 18 deploy marker
+- `02e3e0c4a` feat: rest.ts stripe webhook db keys and shop currency (wave 18)
+- `17c3cd791` fix: restore exact schema index text (wave 18)
+- `c44704a41` feat: OrdersManifestPicker.tsx (batch 4)
+- `39dc55f43` feat: route.ts (batch 4)
+- `3b6156635` feat: GoogleFlagNotice.tsx (batch 4)
+- `9450b2923` feat: google-dashboard.css (batch 4)
+- `e9d629026` feat: route.ts (batch 4)
+- `7c88cb1c5` feat: state.ts (batch 4)
+- `f523c430a` feat: pageStats.ts (batch 4)
+- `62f38275b` feat: connection.ts (batch 4)
+- `961ba8b43` feat: route.ts (batch 4)
+- `24713e2c0` feat: SpeedCard.tsx (batch 4)
+- `7bbd593e5` feat: pagespeedSummary.ts (batch 4)
+- `cb068e09f` feat: route.ts (batch 4)
+- `be4b5e435` feat: oauth.ts (batch 4)
+- `e1ad1606c` feat: fetchJson.ts (batch 4)
+- `e25a14a9c` feat: types.ts (batch 4)
+- `945f43639` feat: google-state.int.spec.ts (batch 4)
+- `555438e91` feat: origin.ts (batch 4)
+- `6774a8a6e` feat: requester.ts (batch 4)
+- `7cd5dfa1f` feat: idToken.ts (batch 4)
+- `858cdecd9` feat: google-connection.css (batch 4)
+- `3867a2be7` feat: order-refunds.css (batch 4)
+- `e7567d863` feat: http.ts (batch 4)
+- `63b3f5efe` feat: widgets.ts (batch 4)
+- `ad8d48c7c` feat: common.tsx (batch 4)
+- `bd89fc364` feat: GoogleConnectionView.tsx (batch 4)
+- `72a6fa148` feat: cache.ts (batch 4)
+- `5d4aa97fc` feat: AnalyticsCard.tsx (batch 4)
+- `adcac8583` feat: GoogleConnection.ts (batch 4)
+- `e5b81e140` feat: GoogleDashboardView.tsx (batch 4)
+- `1be4baafa` feat: config.ts (batch 4)
+- `1796dbd8e` feat: index.ts (batch 4)
+- `c6e03cebe` feat: 20261027_300000_refund_lines.ts (batch 4)
+- `b1495c11e` feat: route.ts (batch 4)
+- `34e954c6e` feat: shapeUtil.ts (batch 4)
+- `d50298be7` feat: route.ts (batch 4)
+- `7983d6c74` feat: GoogleDashboardClient.tsx (batch 4)
+- `e756a96df` feat: Providers.tsx (batch 4)
+- `c13302a94` feat: catalogue.ts (batch 4)
+- `25bfb06dd` feat: route.ts (batch 4)
+- `cf39ea4bb` feat: useWidget.ts (batch 4)
+- `e746f2654` feat: adminViewRegistry.ts (batch 4)
+- `6ae3fc66c` feat: shop-refund-lines-hook.int.spec.ts (batch 4)
+- `0baab6360` feat: google-dashboard.int.spec.ts (batch 4)
+- `f09147010` feat: googleConnection.ts (batch 4)
+- `81b17cc47` feat: settingsDescriptions.ts (batch 4)
+- `6caabd45e` feat: post.ts (batch 4)
+- `c291995f2` feat: refundView.ts (batch 4)
+- `ace4f7fb5` feat: ranges.ts (batch 4)
+- `8455139dc` feat: connectionSave.ts (batch 4)
+- `14549baf9` feat: OrderRefundLines.tsx (batch 4)
+- `4a61c1ea3` feat: shopCurrency.ts (batch 4)
+- `950f07fa3` feat: auth.ts (batch 4)
+- `6e3aee31c` feat: adsense.ts (batch 4)
+- `464ffedbd` feat: format.ts (batch 4)
+- `e1fa6ce7e` feat: ups.ts (batch 4)
+- `0da733c4f` feat: OrdersManifestAction.tsx (batch 4)
+- `83c7d00f6` feat: shop-manifest-options.int.spec.ts (batch 4)
+- `ab72cecff` feat: google-lists.int.spec.ts (batch 4)
+- `eccb39fac` feat: refunds.ts (batch 4)
+- `9d0124957` feat: shop-currency.int.spec.ts (batch 4)
+- `bfda0c5f2` feat: PageGoogleStatsCard.tsx (batch 4)
+- `b9914ae82` feat: navStructure.ts (batch 4)
+- `9bf18951d` feat: GoogleConnectionClient.tsx (batch 4)
+- `00ea34ee5` feat: rest-helpers.ts (batch 4)
+- `69007093c` feat: index.ts (batch 4)
+- `d926f4a90` feat: google-auth.int.spec.ts (batch 4)
+- `0784387b9` feat: SearchConsoleCard.tsx (batch 4)
+- `8e50d8046` feat: registry.ts (batch 4)
+- `cdc99b924` feat: AdSenseCard.tsx (batch 4)
+- `26cdfe5e1` feat: searchConsole.ts (batch 4)
+- `a6d891512` feat: route.ts (batch 4)
+- `41648e1a4` feat: analytics.ts (batch 4)
+- `f700c6878` feat: pricing.ts (batch 4)
+- `05452c966` feat: shipstation-adapter.int.spec.ts (batch 4)
+- `3fb3522b1` feat: OrderPanels.tsx (batch 4)
+- `32a76f1b0` feat: LoopBlock.tsx (batch 4)
+- `d77405545` feat: status.ts (batch 4)
+- `5c7468fe2` feat: GooglePickers.tsx (batch 4)
+- `246058308` feat: shipping-dhl-ups-fedex.int.spec.ts (batch 4)
+- `04a8a3901` feat: README.md (batch 4)
+- `0b4174f65` feat: localapi-rest.int.spec.ts (batch 4)
+- `02fdc67b4` feat: permissions.ts (batch 4)
+- `79ff23bae` feat: shipstation.ts (batch 4)
+- `1438e4c98` feat: refundLines.ts (batch 4)
+- `1a104d4e1` feat: index.ts (batch 4)
+- `03240bf41` feat: 20261027_100000_google_connection.ts (batch 4)
+- `4595e548e` feat: lists.ts (batch 4)
+- `3a1ae4025` feat: shipstation-labels.ts (batch 4)
+- `8a5194508` feat: route.ts (batch 4)
+- `ccc9f41c6` feat: OrderRefundsPanel.tsx (batch 4)
+- `f7053734f` feat: dhl.ts (batch 4)
+- `4e7b2d17e` feat: route.ts (batch 4)
+- `ba8761af5` feat: EditForm.tsx (batch 4)
+- `f94bdba01` feat: internal-migrate-fresh-install.int.spec.ts (batch 4)
+- `361f638e5` feat: registry.ts (batch 4)
+- `7edbddbac` feat: manifestOptions.ts (batch 4)
+- `0f366eabc` feat: OrderRefunds.ts (batch 4)
+- `14d840250` feat: route.ts (batch 4)
+- `8ec0ce649` feat: picks.ts (batch 4)
+- `dc203aa1f` feat: fedex.ts (batch 4)
+- `c35a8b679` feat: fresh-install-schema-coverage.int.spec.ts (batch 4)
+- `7bc9c4745` feat: constants.ts (batch 4)
+- `45db55296` feat: shop-refund-lines.int.spec.ts (batch 4)
+- `d65abbecf` feat: OrderRefunds.ts (batch 4)
+- `ffe8c1d4b` feat: settingsPages.ts (batch 4)
+- `02f93a222` fix: ASCII-only regex classes in import helpers
+- `57f7463a4` fix: restore unicode escape in items.ts
+- `a79bb2214` fix: restore unicode escapes in import helpers, wave 17 deploy marker
+- `672e04471` feat: CacheToolsView.tsx (batch 4)
+- `f3e79e4fe` feat: cache-tools.css (batch 4)
+- `398fe4f80` feat: htmlSafety.ts (batch 4)
+- `d947e7c3e` feat: route.ts (batch 4)
+- `8e78ed2c1` feat: ImportContentView.tsx (batch 4)
+- `930f3bee9` feat: prefetchRules.ts (batch 4)
+- `bc2e1dbb5` feat: parse.ts (batch 4)
+- `8ffc1b050` feat: types.ts (batch 4)
+- `0ff8d7ac2` feat: epoch.ts (batch 4)
+- `7374dfe2f` feat: 20261026_400000_error_log.ts (batch 4)
+- `a248e3337` feat: forms submit route.ts (batch 4)
+- `007977e43` feat: admin-site-health route.ts (batch 4)
+- `18c1d35c0` feat: model.ts (batch 4)
+- `cb8a5a3de` feat: types.ts (batch 4)
+- `1ecbfb34f` feat: Footer.tsx (batch 4)
+- `1e2e5bef9` feat: withErrorLog.ts (batch 4)
+- `e8df84cfc` feat: speed-prefetch-wave17.int.spec.ts (batch 4)
+- `fe0b31869` feat: route.ts (batch 4)
+- `0d043f432` feat: cloudflare-worker.ts (batch 4)
+- `98fd30e7e` feat: admin-import-content route.ts (batch 4)
+- `a3673ef4c` feat: shop-paypal-webhook route.ts (batch 4)
+- `522770078` feat: route.ts (batch 4)
+- `5da81aa87` feat: runJob.ts (batch 4)
+- `6ef951994` feat: scrub.ts (batch 4)
+- `366b86887` feat: 20261026_200000_speed_cache_rules.ts (batch 4)
+- `4e076169d` feat: route.ts (batch 4)
+- `5e12edcef` feat: route.ts admin-cache-clear (batch 4)
+- `78084bf24` feat: clientReport.ts (batch 4)
+- `252f55c08` feat: schedulePlan.ts (batch 4)
+- `707b39375` feat: cache.ts (batch 4)
+- `ed9efc02b` feat: plan.ts (batch 4)
+- `46b366a4b` feat: settingsDescriptions.ts (batch 4)
+- `5d8b33509` feat: publish-scheduled route.ts (batch 4)
+- `beb500315` feat: import-content.css (batch 4)
+- `68a49a980` feat: site-health-wave17.int.spec.ts (batch 4)
+- `d90b6c7cb` feat: collect.ts (batch 4)
+- `abbfa67dd` feat: entities.ts (batch 4)
+- `738765b72` feat: markup.ts (batch 4)
+- `e4156aa0a` feat: error.tsx (batch 4)
+- `160f540dd` feat: Header.tsx (batch 4)
+- `7299076c8` feat: items.ts (batch 4)
+- `75b54f87f` feat: CacheToolsClient.tsx (batch 4)
+- `a884b4ef0` feat: fingerprint.ts (batch 4)
+- `c9e3e2c03` feat: history.ts (batch 4)
+- `ef6baeb60` feat: emailLogStore.ts (batch 4)
+- `b098a9e54` feat: scheduledCleanup.ts (batch 4)
+- `4789a3816` feat: internal-migrate-fresh-install.int.spec.ts (batch 4)
+- `09fcee176` feat: SiteHealthView.tsx (batch 4)
+- `e86942a13` feat: permissions.ts (batch 4)
+- `4f1765b33` feat: cron-runjob-wave17.int.spec.ts (batch 4)
+- `e2af8f432` feat: 20261026_100000_speed_extras.ts (batch 4)
+- `050be04e7` feat: ScheduledTasksView.tsx (batch 4)
+- `38a2bd0fc` feat: ErrorLog.ts (batch 4)
+- `78b05d2b9` feat: edgeCacheWorker.ts (batch 4)
+- `d52760034` feat: edgeCache.ts (batch 4)
+- `5852cd478` feat: storage.ts (batch 4)
+- `4dfbe4394` feat: 20261026_300000_cron_runs.ts (batch 4)
+- `dd2501fad` feat: edge-cache-worker-wave17.int.spec.ts (batch 4)
+- `3a9707814` feat: adminViewRegistry.ts (batch 4)
+- `cac372ac8` feat: htmlToBlocks.ts (batch 4)
+- `bf4c9e2e1` feat: run.ts (batch 4)
+- `21b9802c6` feat: registry.ts (batch 4)
+- `6f12df473` feat: errorLog.ts (batch 4)
+- `516b4172a` feat: cleanup-schedule-wave17.int.spec.ts (batch 4)
+- `6050df68c` feat: HeroBlock.tsx (batch 4)
+- `f22db0d3f` feat: devMode.ts (batch 4)
+- `d78a6058e` feat: runtime.ts (batch 4)
+- `08f2f7b1a` feat: speedSettings.ts (batch 4)
+- `c2e859316` feat: layout.tsx (batch 4)
+- `10d735494` feat: format.ts (batch 4)
+- `41b786539` feat: settingsPages.ts (batch 4)
+- `51d399333` feat: index.ts (batch 4)
+- `80b0ca00d` feat: wxr.ts (batch 4)
+- `5cae7d65b` feat: SpeedSettings.ts (batch 4)
+- `92c972b23` feat: import-content-wave17.int.spec.ts (batch 4)
+- `48b55e434` feat: edge-cache-wave17.int.spec.ts (batch 4)
+- `1a43cc36c` feat: csvItems.ts (batch 4)
+- `3ca53a4c8` feat: log.ts (batch 4)
+- `933fffb5e` feat: registry.ts (batch 4)
+- `05bc4a117` feat: policy.ts (batch 4)
+- `797c2cfa5` feat: fresh-install-schema-coverage.int.spec.ts (batch 4)
+- `a6036122a` feat: ImportContentClient.tsx (batch 4)
+- `00a09081e` feat: index.ts (batch 4)
+- `8fc6e84ec` feat: purge.ts (batch 4)
+- `dbdf4471c` feat: error-log-wave17.int.spec.ts (batch 4)
+- `95427ec7a` feat: lexical.ts (batch 4)
+- `fbc6236ef` feat: navStructure.ts (batch 4)
+- `378a8b670` feat: index.ts (batch 4)
+- `415ea6ed9` feat: site-health.css (batch 4)
+- `40ab42290` feat: model.ts (batch 4)
+- `de5c4e184` feat: pending.ts (batch 4)
+- `b5aef966d` chore: wave 16 deploy marker
+- `016134564` feat: custom.css (wave 16)
+- `c8a31278a` feat: email-design-wave16.int.spec.ts (wave 16)
+- `022bd60b5` feat: brevo.ts (wave 16)
+- `851596124` feat: emailBrand.ts (wave 16)
+- `a3e37e24f` feat: themeScript.ts (wave 16)
+- `de9dc9605` feat: emailSchedule.ts (wave 16)
+- `67afafefc` feat: EmailTestingClient.tsx (wave 16)
+- `2002c6e0a` feat: testRunSend.ts (wave 16)
+- `d4a7647af` feat: connectionLoad.ts (wave 16)
+- `d2507e278` feat: templateLoad.ts (wave 16)
+- `382f18aba` feat: EmailConnectionCard.tsx (wave 16)
+- `99fcbd881` feat: index.ts (wave 16)
+- `1dba1d26c` feat: providerState.ts (wave 16)
+- `ec72aa60a` feat: SendTestTextButton.tsx (wave 16)
+- `9b117540f` feat: rsvpConfirmation.ts (wave 16)
+- `2df0f1e88` feat: PreviewPane.tsx (wave 16)
+- `5e724ef0f` feat: dnsLookup.ts (wave 16)
+- `78b40801d` feat: connectionStatus.ts (wave 16)
+- `914467d83` feat: lint.ts (wave 16)
+- `0f9bf71ac` feat: ConnectionStatus.tsx (wave 16)
+- `573dcebd6` feat: fieldControls.tsx (wave 16)
+- `c20e24723` feat: EventRSVPs.ts (wave 16)
+- `8218eb189` feat: EmailDomainCard.tsx (wave 16)
+- `c58186556` feat: emailTestingApi.ts (wave 16)
+- `62c83ca9a` feat: designerSave.ts (wave 16)
+- `9bb00ca4f` feat: email-designer.css (wave 16)
+- `6ac947d91` feat: ColumnsEditor.tsx (wave 16)
+- `799fbe076` feat: 20261025_300000_email_designs.ts (wave 16)
+- `aaa2b7255` feat: notify.ts (wave 16)
+- `5993fcb83` feat: failover.ts (wave 16)
+- `2fe1ad7fa` feat: brand.ts (wave 16)
+- `1861e4417` feat: connectionRead.ts (wave 16)
+- `a37877a7f` feat: types.ts (wave 16)
+- `595782724` feat: backInStockNotify.ts (wave 16)
+- `ba8137441` feat: registry.ts (wave 16)
+- `0b8883433` feat: testSamples.ts (wave 16)
+- `94ec00cb9` feat: twilio.ts (wave 16)
+- `ce99c96bf` feat: BlockList.tsx (wave 16)
+- `2b4b0490a` feat: renderText.ts (wave 16)
+- `6f6973efe` feat: internal-migrate-fresh-install.int.spec.ts (wave 16)
+- `90f2503a3` feat: EmailDesignerClient.tsx (wave 16)
+- `8455e6807` feat: index.ts (wave 16)
+- `d231b9bfb` feat: 20261025_100000_communication_connections.ts (wave 16)
+- `cbdf6a344` feat: index.ts (wave 16)
+- `58d6d6e1f` feat: route.ts (wave 16)
+- `b403fb405` feat: testRun.ts (wave 16)
+- `948e4d514` feat: render.ts (wave 16)
+- `aefc397f7` feat: connectionMigrate.ts (wave 16)
+- `c7a28b0d3` feat: EmailSendTestsCard.tsx (wave 16)
+- `87910b559` feat: emails.ts (wave 16)
+- `31bf3c130` feat: 20261025_200000_email_schedule.ts (wave 16)
+- `6b6e3111a` feat: EmailDesignerView.tsx (wave 16)
+- `88f3e600e` feat: EmailBrand.ts (wave 16)
+- `3c358631a` feat: mandrill.ts (wave 16)
+- `164e817eb` feat: eventReminders.ts (wave 16)
+- `e254b0e69` feat: settingsPages.ts (wave 16)
+- `6ddc6f922` feat: index.ts (wave 16)
+- `e518df4a6` feat: templateDefaults.ts (wave 16)
+- `8177c064a` feat: registry.ts (wave 16)
+- `32a8514dc` feat: inline.ts (wave 16)
+- `91ce8aa8a` feat: renderBlocks.ts (wave 16)
+- `bf9ebb246` feat: dnsCheck.ts (wave 16)
+- `5ad1d08a4` feat: scheduledEmails.ts (wave 16)
+- `7b8ab155c` feat: EmailTemplates.ts (wave 16)
+- `b24adcef6` feat: validate.ts (wave 16)
+- `c0bd8725d` feat: index.ts (wave 16)
+- `d66272f01` feat: format.ts (wave 16)
+- `cb743c557` feat: types.ts (wave 16)
+- `3ab0ba007` feat: route.ts (wave 16)
+- `537469e72` feat: emails.ts (wave 16)
+- `c34b0d82e` feat: email-schedule-wave16.int.spec.ts (wave 16)
+- `43e41a073` feat: fresh-install-schema-coverage.int.spec.ts (wave 16)
+- `0d67cedc7` feat: notify.ts (wave 16)
+- `3d8ca2339` feat: LogoPicker.tsx (wave 16)
+- `e8eeb20a9` feat: communication-connections-wave16.int.spec.ts (wave 16)
+- `e7f069c20` feat: RootLayout.tsx (wave 16)
+- `9a8bfe468` feat: visualEditor.styles.ts (wave 16)
+- `717f41bca` feat: route.ts (wave 16)
+- `d9bc33550` feat: import.ts (wave 16)
+- `ff5bf19cf` feat: emailLog.ts (wave 16)
+- `d5c8e48d8` feat: email-testing-wave16.int.spec.ts (wave 16)
+- `8dbb7d00f` feat: schedule.ts (wave 16)
+- `c18520ed6` feat: connections.ts (wave 16)
+- `4446a3d08` feat: ConnectionNotice.tsx (wave 16)
+- `94de9a326` feat: ThemeContext.tsx (wave 16)
+- `6bc5ca46d` feat: index.ts (wave 16)
+- `ed34e3373` feat: permissions.ts (wave 16)
+- `5e0a5e83b` feat: storedValue.ts (wave 16)
+- `f416bd2dd` feat: EmailSchedule.ts (wave 16)
+- `8930abd7a` feat: draftRequest.ts (wave 16)
+- `12db15a89` feat: route.ts (wave 16)
+- `98438e359` feat: designRender.ts (wave 16)
+- `9d949c09a` feat: abandoned.ts (wave 16)
+- `1d9d27bdf` feat: EmailSettings.ts (wave 16)
+- `ce32baa3c` feat: route.ts (wave 16)
+- `213c03da8` feat: settings-pages.int.spec.ts (wave 16)
+- `62e76d0ff` feat: index.ts (wave 16)
+- `635fb81cc` feat: Integrations.ts (wave 16)
+- `a49bdc782` feat: BlockFields.tsx (wave 16)
+- `938beb8ea` feat: email-testing.css (wave 16)
+- `203ae3983` feat: designerModel.ts (wave 16)
+- `0cf1620ec` feat: stockAlerts.ts (wave 16)
+- `d9d5b052f` feat: adminViewRegistry.ts (wave 16)
+- `116a0074d` feat: emailTemplates.ts (wave 16)
+- `73c7b0f40` feat: stockAlerts.ts (wave 16)
+- `e96d294db` feat: EmailTestingView.tsx (wave 16)
+- `c7e894a29` feat: BrandPanel.tsx (wave 16)
+- `166509f74` feat: navStructure.ts (wave 16)
+- `592db46b8` feat: theme-script-wave16.int.spec.ts (wave 16)
+- `4c13e3113` chore: wave 15 deploy marker
+- `2253c784a` feat: registry.ts (wave 15 fix)
+- `d474df04a` feat: index.ts (wave 15 fix)
+- `d39073fc2` feat: MaintenanceScreen.tsx (wave 15)
+- `941f7aee5` feat: siteDetails.ts (wave 15)
+- `910a0ff6c` feat: 20261024_200000_site_pages.ts (wave 15)
+- `e9ecff0d3` feat: 20261024_100000_site_details.ts (wave 15)
+- `4fe17a4db` feat: EventSeries.tsx (wave 15)
+- `f98c991f4` feat: MaintenanceBypassField.tsx (wave 15)
+- `7018b5aa4` feat: pages.ts (wave 15)
+- `6f223ab37` feat: ResendEmailControl.tsx (wave 15)
+- `3031ada13` feat: email-log-wave15.int.spec.ts (wave 15)
+- `dd17c7f88` feat: EmailLog.ts (wave 15)
+- `237feb926` feat: emailLog.ts (wave 15)
+- `cfde118d8` feat: adminOrder.ts (wave 15)
+- `0e6c5ce6f` feat: not-found.tsx (wave 15)
+- `029191dcf` feat: EmailTemplates.ts (wave 15)
+- `092df3ab4` feat: EventRSVPs.ts (wave 15)
+- `fd7dac304` feat: navStructure.ts (wave 15)
+- `982f3592b` feat: 20261024_300000_email_log.ts (wave 15)
+- `5b1952b2c` feat: index.ts (wave 15)
+- `a3eff2a86` feat: details.ts (wave 15)
+- `9823b7787` feat: EventCard.tsx (wave 15)
+- `64ef85e82` feat: emails.ts (wave 15)
+- `5e293fb84` feat: index.ts (wave 15)
+- `b75fa28ab` feat: pagesShape.ts (wave 15)
+- `72950e782` feat: format.ts (wave 15)
+- `56240a04d` feat: index.ts (wave 15)
+- `935bb7270` feat: emailLogStore.ts (wave 15)
+- `9157ec037` feat: registry.ts (wave 15)
+- `56a54c748` feat: fallback.ts (wave 15)
+- `858d34a82` feat: sitePages.ts (wave 15)
+- `ed37d525b` feat: notify.ts (wave 15)
+- `d0809b300` feat: settings-pages.int.spec.ts (wave 15)
+- `dccce6bac` feat: emailLog.ts (wave 15)
+- `62144a182` feat: index.ts (wave 15)
+- `71d98554e` feat: jsonLd.ts (wave 15)
+- `fee387c73` feat: layout.tsx (wave 15)
+- `92282b20e` feat: settings.ts (wave 15)
+- `869d1212b` feat: site-pages-wave15.int.spec.ts (wave 15)
+- `33a49d466` feat: templateDefaults.ts (wave 15)
+- `45c3a52c0` feat: config.ts (wave 15)
+- `f431aa8f0` feat: types.ts (wave 15)
+- `87c67f535` feat: SeoScripts.tsx (wave 15)
+- `fa66fb523` feat: fresh-install-schema-coverage.int.spec.ts (wave 15)
+- `ae7e1e81d` feat: SitePages.ts (wave 15)
+- `6f803dedd` feat: maintenance.ts (wave 15)
+- `d28e5f7e4` feat: detailsModel.ts (wave 15)
+- `329df9ab3` feat: rsvpConfirmation.ts (wave 15)
+- `e96c745c1` feat: permissions.ts (wave 15)
+- `238d15218` feat: route.ts (wave 15)
+- `dbbf55309` feat: site-details-wave15.int.spec.ts (wave 15)
+- `a6e17f786` feat: emails.ts (wave 15)
+- `e80d111f1` feat: page.tsx (wave 15)
+- `f38d811a8` feat: registry.ts (wave 15)
+- `f273ef917` feat: templateLoad.ts (wave 15)
+- `df9bd941a` feat: renderTemplate.ts (wave 15)
+- `605f54752` feat: tables.ts (wave 15)
+- `ebb6d3c46` feat: settingsPages.ts (wave 15)
+- `9ed4f3224` feat: internal-migrate-fresh-install.int.spec.ts (wave 15)
+- `1e612e697` feat: cache.ts (wave 15)
+- `99baad99f` feat: emailTemplates.ts (wave 15)
+- `84fc9446a` feat: SiteDetails.ts (wave 15)
+- `d053aa979` feat: settingsDescriptions.ts (wave 15)
+- `7694e4196` feat: route.ts (wave 15)
+- `61496757d` feat: format.ts (wave 15)
+- `c0f919ff7` feat: email-templates-wave15.int.spec.ts (wave 15)
+- `6575d4008` feat: route.ts (wave 15)
+- `63710ab9a` feat: 20261024_400000_email_templates.ts (wave 15)
+- `2d8211c33` chore: wave 14 deploy marker
+- `724e76bed` feat: indexnow-key.txt route.ts (wave 14)
+- `5a9d73df7` feat: admin-seo-audit route.ts (wave 14)
+- `ecafdaea8` feat: indexNow.ts (wave 14)
+- `665fe3cd7` feat: indexNowKey.ts (wave 14)
+- `0665e2a40` feat: seo-nav-wave14.int.spec.ts (wave 14)
+- `78aadcf64` feat: auditFilters.ts (wave 14)
+- `eaa5cd34b` feat: Events.ts (wave 14)
+- `0d0f0cabe` feat: 20261023_100000_seo_indexnow.ts (wave 14)
+- `e18c9a576` feat: seo-audit-wave14.int.spec.ts (wave 14)
+- `4dcb578b1` feat: adminViewRegistry.ts (wave 14)
+- `2e885f68c` feat: seo-breadcrumbs-lists-wave14.int.spec.ts (wave 14)
+- `87d8b7756` feat: page.tsx (wave 14)
+- `568d50f8c` feat: events page.tsx (wave 14)
+- `034391773` feat: seo-audit.css (wave 14)
+- `f8492dc51` feat: navStructure.ts (wave 14)
+- `257a1d440` feat: audit.ts (wave 14)
+- `e18c895e0` feat: Pages.ts (wave 14)
+- `0d066e76f` feat: schemaNodes.ts (wave 14)
+- `a0405d549` feat: Posts.ts (wave 14)
+- `5fa4a10a4` feat: AdminNavClient.int.spec.ts (wave 14)
+- `91ef2a13d` feat: Products.ts (wave 14)
+- `39fed1026` feat: indexNowPayload.ts (wave 14)
+- `47e550954` feat: page.tsx (wave 14)
+- `26fa73867` feat: SeoAuditClient.tsx (wave 14)
+- `4a0ff0a31` feat: resolveEntities.ts (wave 14)
+- `0ab399223` feat: indexNowHook.ts (wave 14)
+- `7c0d39ab3` feat: index.ts (wave 14)
+- `e8392e610` feat: internal-migrate-fresh-install.int.spec.ts (wave 14)
+- `ef683f8ca` feat: seoSettings.ts (wave 14)
+- `8a97404e5` feat: nav-structure.int.spec.ts (wave 14)
+- `e5a702ec7` feat: SeoAuditView.tsx (wave 14)
+- `d3fb05a4f` feat: seo-indexnow-wave14.int.spec.ts (wave 14)
+- `45d6455d7` feat: page.tsx (wave 14)
+- `ca8f0925c` feat: SeoSettings.ts (wave 14)
+- `ca11e4361` feat: auditLoader.ts (wave 14)
+- `cbd9d429b` chore: wave 13 deploy marker
+- `14c9f4f25` fix: resolve.ts keep ascii escapes (wave 13)
+- `0b0568d49` feat: pageSchema.ts (wave 13)
+- `1e1cc6756` feat: page.tsx (wave 13)
+- `739824106` feat: page.tsx (wave 13)
+- `cd4f85d29` feat: seo-analysis.css (wave 13)
+- `30f3a9e30` feat: seoAnalysisInput.ts (wave 13)
+- `0c5375948` feat: keyphrase.ts (wave 13)
+- `c1acf1694` feat: page.tsx (wave 13)
+- `a63f74990` feat: seo.ts (wave 13)
+- `58601517e` feat: SeoAnalysisPanel.tsx (wave 13)
+- `c71f7fe9b` feat: internal-migrate-fresh-install.int.spec.ts (wave 13)
+- `bf029daeb` feat: seo-analysis-form-input-wave13.int.spec.ts (wave 13)
+- `fdc3be9ca` feat: page.tsx (wave 13)
+- `f031f2bf4` feat: pageSchemaData.ts (wave 13)
+- `e3436939f` feat: 20261022_100000_seo_focus_keyphrase.ts (wave 13)
+- `0b276b4dd` feat: PageJsonLd.tsx (wave 13)
+- `37687dd4b` feat: extract.ts (wave 13)
+- `8dbb7e441` feat: index.ts (wave 13)
+- `5eca91079` feat: types.ts (wave 13)
+- `1bc473589` feat: page.tsx (wave 13)
+- `fec931032` feat: 20261022_200000_seo_templates.ts (wave 13)
+- `f80b886c8` feat: templates.ts (wave 13)
+- `5f9a43485` feat: 20261022_200000_seo_templates.ts (wave 13)
+- `065b16408` feat: schemaNodes.ts (wave 13)
+- `9ac8aa7fe` feat: seo.ts (wave 13)
+- `4eb542ea6` feat: seo-templates-wave13.int.spec.ts (wave 13)
+- `688a43232` feat: readability.ts (wave 13)
+- `4d344f04f` feat: seo-analysis-wave13.int.spec.ts (wave 13)
+- `a46d6b845` feat: pageSchema.ts (wave 13)
+- `0ce2bcc5b` feat: analyze.ts (wave 13)
+- `915a90b7a` feat: SeoCard.tsx (wave 13)
+- `dd4f10b6e` feat: SeoSettings.ts (wave 13)
+- `b0f9a583c` feat: resolve.ts (wave 13)
+- `bb4b65bfd` feat: seo-fields.int.spec.ts (wave 13)
+- `90750e636` feat: page.tsx (wave 13)
+- `00559b60d` feat: seo-page-jsonld.int.spec.ts (wave 13)
+- `ad0a40604` feat: seo-schema-wave13.int.spec.ts (wave 13)
+- `0e9cd3fab` feat: seoSettings.ts (wave 13)
+- `a64eae771` chore: wave 12 deploy marker
+- `5db5a2348` feat: index.ts (wave 12)
+- `ac69d6271` feat: BlockRenderer.tsx (wave 12)
+- `7adcfa328` feat: navStructure.ts (wave 12)
+- `64b1d0342` feat: ReusableSection.ts (wave 12)
+- `a9fe8e029` feat: fresh-install-schema-coverage.int.spec.ts (wave 12)
+- `0cd674f73` feat: reusable-section-wave12.int.spec.ts (wave 12)
+- `86e27b112` feat: registry.ts (wave 12)
+- `d2927c9bf` feat: blockSchemas.ts (wave 12)
+- `fce858e68` feat: ParentPicker.tsx (wave 12)
+- `58f42837e` feat: index.ts (wave 12)
+- `01ee89094` feat: contentEditGuard.ts (wave 12)
+- `a51602d97` feat: ReusableSections.ts (wave 12)
+- `c5a5b1ccb` feat: internal-migrate-fresh-install.int.spec.ts (wave 12)
+- `3d662c854` feat: permissions.ts (wave 12)
+- `40fea8e36` feat: ReusableSectionBlock.tsx (wave 12)
+- `f72e7a044` feat: 20261021_100000_reusable_sections.ts (wave 12)
+- `126a1e466` feat: index.ts (wave 12)
+- `f6cdc84b4` feat: fetchAllPages.ts (wave 12)
+- `cbddb75ab` feat: reusableSections.ts (wave 12)
+- `0ff1fb345` feat: reusableSections.ts (wave 12)
+- `406f62fb9` feat: parent-picker-paging-wave12.int.spec.ts (wave 12)
+- `c14fd7656` feat: reusableSection.ts (wave 12)
+- `2cfc11286` feat: lockGuard.ts (wave 12)
+- `d14303f7d` chore: wave 11 deploy marker
+- `8fc85b655` feat: shopExtraSettings.ts (wave 11)
+- `4d5a47326` feat: PaymentSettings.ts (wave 11)
+- `e30d711c0` feat: cssEmit.ts (wave 11)
+- `e9d392679` feat: cms db index.ts (wave 11)
+- `c29c59657` feat: preorder.ts (wave 11)
+- `132a7c249` feat: cssGetters.ts (wave 11)
+- `b6cd2a4fc` feat: index.ts (wave 11)
+- `6ca5ba204` feat: templatePresets.ts (wave 11)
+- `b176dbeb3` feat: types.ts (wave 11)
+- `3f38dbc8e` feat: customCss.ts (wave 11)
+- `ca5e099c1` feat: treeOps.ts (wave 11)
+- `d94ffe564` feat: tables.ts (wave 11)
+- `663756230` feat: blockStyle.ts (wave 11)
+- `a2f293d61` feat: CheckoutForm.tsx (wave 11)
+- `900e20402` feat: navStructure.ts (wave 11)
+- `a4262fd71` feat: ShopExtraSettings.ts (wave 11)
+- `cbfcec3de` feat: shopExtra.ts (wave 11)
+- `c4bba0807` feat: internal-migrate-fresh-install.int.spec.ts (wave 11)
+- `31d715943` feat: FieldPanel.tsx (wave 11)
+- `0c204b865` feat: route.ts (wave 11)
+- `9aecbdf48` feat: design-v2-wave11-render.int.spec.ts (wave 11)
+- `b31fdf272` feat: css.ts (wave 11)
+- `df9ea02e7` feat: cartHooks.ts (wave 11)
+- `7537b0664` feat: PayPalWebhookHelp.tsx (wave 11)
+- `3082c63b5` feat: paymentSettings.ts (wave 11)
+- `cf1883557` feat: index.ts (wave 11)
+- `09b4f1931` feat: registry.ts (wave 11)
+- `a634437b0` feat: design-v2-wave11-css.int.spec.ts (wave 11)
+- `c3cf00e3f` feat: surfaces.ts (wave 11)
+- `afb692166` feat: cssLeaves.ts (wave 11)
+- `b1f60ec69` feat: formInputs.tsx (wave 11)
+- `fbcac2ccc` feat: 20261020_100000_shop_extra_settings.ts (wave 11)
+- `101a89759` feat: richTextUtil.ts (wave 11)
+- `43b35db28` feat: upgradeV1.ts (wave 11)
+- `813e26055` feat: shop-extra-preorders-wave11.int.spec.ts (wave 11)
+- `0c12b3d6e` feat: lockState.ts (wave 11)
+- `18bd7dcd8` feat: visualEditor.styles.ts (wave 11)
+- `4896492ed` feat: design-v2-wave11.int.spec.ts (wave 11)
+- `b90edf04a` feat: paypalWebhook.ts (wave 11)
+- `ed7175d8a` feat: cascade.ts (wave 11)
+- `7ee35782d` feat: visual-editor-phase0-wave11.int.spec.ts (wave 11)
+- `14c6c4723` feat: permissions.ts (wave 11)
+- `021626424` feat: paypal-webhook-wave11.int.spec.ts (wave 11)
+- `2d5592089` feat: design-v2-wave11-safety.int.spec.ts (wave 11)
+- `4e957c4ff` feat: renderElement.tsx (wave 11)
+- `111dff5d2` feat: sanitize.ts (wave 11)
+- `38f9b25a3` feat: config.ts (wave 11)
+- `18ac2e41b` feat: format.ts (wave 11)
+- `943be2df4` feat: cssCompound.ts (wave 11)
+- `26058011a` feat: VisualEditor.tsx (wave 11)
+- `ebae71486` feat: pricing.ts (wave 11)
+- `03e71b319` feat: ShopSettingsClient.tsx (wave 11)
+- `f802fca41` feat: upgrade.ts (wave 11)
+- `a32c71835` feat: blockSchemas.ts (wave 11)
+- `0e9e4ed39` feat: BlockRenderer.tsx (wave 11)
+- `12110f814` feat: page.tsx (wave 11)
+- `78a51f07b` feat: fresh-install-schema-coverage.int.spec.ts (wave 11)
+- `c5a3844e0` feat: registry.ts (wave 11)
+- `8e073c027` feat: DesignPanel.tsx (wave 11)
+- `573c71298` feat: paypalCheckout.ts (wave 11)
+- `6c063907e` feat: ShopSettingsView.tsx (wave 11)
+- `19ca48c4b` chore: wave 10 deploy marker
+- `808b33cea` feat: EventCard.tsx (wave 10)
+- `51caa0a78` feat: seriesLoad.ts (wave 10)
+- `4f80dc3d7` feat: GenerateOccurrencesField.tsx (wave 10)
+- `e72a324f3` feat: tierSales.ts (wave 10)
+- `1aaaf4900` feat: 20261019_100000_recurrence_tiers_series.ts (wave 10)
+- `5e1b40af0` feat: localDraft.ts (wave 10)
+- `f97b1fd4a` feat: EventResultsTab.tsx (wave 10)
+- `5b4936666` feat: checkin.ts (wave 10)
+- `e351f5665` feat: page.tsx (wave 10)
+- `b61ab023d` feat: index.ts (wave 10)
+- `020e430de` feat: useLocalDraft.tsx (wave 10)
+- `0c16e804e` feat: AllRsvpsTab.tsx (wave 10)
+- `c7e7a2c1d` feat: fields.ts (wave 10)
+- `df7a9343f` feat: page.tsx (wave 10)
+- `93c08c270` feat: tierLoad.ts (wave 10)
+- `00d6f4bf5` feat: findReplace.ts (wave 10)
+- `3c4efa665` feat: FindReplaceView.tsx (wave 10)
+- `8c6853b5d` feat: FormContext.tsx (wave 10)
+- `374cc06ac` feat: ics.ts (wave 10)
+- `7ffaaed7c` feat: TableOfContents.ts (wave 10)
+- `e505e3e59` feat: RsvpForm.tsx (wave 10)
+- `3f48c8455` feat: page.tsx (wave 10)
+- `703fc73d8` feat: local-draft.css (wave 10)
+- `8ec98fd95` feat: find-replace.css (wave 10)
+- `8f54bba2f` feat: admin-results-routes.int.spec.ts (wave 10)
+- `8b7ffdf8f` feat: Events.ts (wave 10)
+- `ab893f488` feat: EventCheckIn.tsx (wave 10)
+- `c8325d214` feat: index.ts (wave 10)
+- `bdf87bdad` feat: 20261019_300000_toc_block.ts (wave 10)
+- `f94633adf` feat: adminViewRegistry.ts (wave 10)
+- `017b1e982` feat: rows.ts (wave 10)
+- `41a5107c8` feat: recurrenceGenerate.ts (wave 10)
+- `211c88160` feat: BlockRenderer.tsx (wave 10)
+- `80100f6fb` feat: local-draft-wave10.int.spec.ts (wave 10)
+- `d3e9fd883` feat: event-checkin.css (wave 10)
+- `a42da35c5` feat: recurrence-tiers-wave10.int.spec.ts (wave 10)
+- `ddb2717af` feat: EventTiers.tsx (wave 10)
+- `f57e7dc18` feat: timeZone.ts (wave 10)
+- `9fbdb6ea7` feat: index.ts (wave 10)
+- `6ac6653a7` feat: event-checkin-wave10.int.spec.ts (wave 10)
+- `f120fde70` feat: route.ts (wave 10)
+- `5bded61ed` feat: EventSeries.tsx (wave 10)
+- `7f85dd7da` feat: toc.ts (wave 10)
+- `10d02e9c4` feat: edit-tabs-results.int.spec.ts (wave 10)
+- `58d322d85` feat: find-replace-toc-wave10.int.spec.ts (wave 10)
+- `691f7e51b` feat: richtext.tsx (wave 10)
+- `75502daa3` feat: FindReplaceClient.tsx (wave 10)
+- `d9ece9216` feat: route.ts (wave 10)
+- `b992bea8c` feat: settingsPages.ts (wave 10)
+- `e1561a6aa` feat: rsvpTier.ts (wave 10)
+- `59e371ab7` feat: EditForm.tsx (wave 10)
+- `4733eb93d` feat: page.tsx (wave 10)
+- `3b556ca7c` feat: FindReplaceClient.tsx (wave 10)
+- `486c9f068` feat: internal-migrate-fresh-install.int.spec.ts (wave 10)
+- `55e894fda` feat: findReplaceRun.ts (wave 10)
+- `3f6ca849f` feat: EventRSVPs.ts (wave 10)
+- `3baec1e5d` feat: page.tsx (wave 10)
+- `0208b2d2f` feat: list-section-tabs.int.spec.ts (wave 10)
+- `97afbae5f` feat: recurrence.ts (wave 10)
+- `3ec4a7108` feat: TableOfContentsBlock.tsx (wave 10)
+- `da7c8485d` feat: route.ts (wave 10)
+- `609ba36dd` chore: wave 9 deploy marker
+- `f81394789` feat: types.ts (wave 9)
+- `a8d1b27fd` feat: 20261018_100000_paypal_payments.ts (wave 9)
+- `2d324bb91` feat: totals.ts (wave 9)
+- `204c49dde` feat: preorders-variation-images-wave9.int.spec.ts (wave 9)
+- `240b25376` feat: internal-migrate-fresh-install.int.spec.ts (wave 9)
+- `9730fbf15` feat: PreorderOrderPanel.tsx (wave 9)
+- `127e4ca24` feat: route.ts (wave 9)
+- `2c6881e50` feat: 20261018_200000_preorders_variation_images.ts (wave 9)
+- `bb5c8709e` feat: PreorderNotice.tsx (wave 9)
+- `fb9aae7ca` feat: unitInput.ts (wave 9)
+- `3833788a4` feat: catalogue.ts (wave 9)
+- `94a891cdc` feat: ProductGallery.tsx (wave 9)
+- `c5100d89b` feat: VariationImagePicker.tsx (wave 9)
+- `3918fb59f` feat: VariationImageProvider.tsx (wave 9)
+- `20a1d5f22` feat: paymentMethods.ts (wave 9)
+- `bc4854046` feat: CheckoutForm.tsx (wave 9)
+- `5f999e3a5` feat: route.ts (wave 9)
+- `360677c36` feat: unit-inputs-wave9.int.spec.ts (wave 9)
+- `30ccf8348` feat: route.ts (wave 9)
+- `473305c49` feat: emails.ts (wave 9)
+- `2dd859b6f` feat: paypal-wave9.int.spec.ts (wave 9)
+- `c8dd93638` feat: route.ts (wave 9)
+- `26db4d8c4` feat: PayPalButton.tsx (wave 9)
+- `9a266d740` feat: catalogue.ts (wave 9)
+- `b771bb85e` feat: ProductPurchase.tsx (wave 9)
+- `30f988603` feat: variationImage.ts (wave 9)
+- `ae50de3bd` feat: auspost-labels-wave9.int.spec.ts (wave 9)
+- `8b1db5612` feat: pricing.ts (wave 9)
+- `4128c12f7` feat: productHooks.ts (wave 9)
+- `2777c2c0a` feat: Orders.ts (wave 9)
+- `e7b1d16c5` feat: preorder.ts (wave 9)
+- `fa5d01df1` feat: paypalCheckout.ts (wave 9)
+- `f599fc447` feat: storefront.ts (wave 9)
+- `cd2dcf690` feat: index.ts (wave 9)
+- `13d5e3e68` feat: UnitInput.tsx (wave 9)
+- `94d329a63` feat: shop-extras-pure.int.spec.ts (wave 9)
+- `2525554c0` feat: route.ts (wave 9)
+- `0b00e28f4` feat: orders.ts (wave 9)
+- `f470790e1` feat: productFields.ts (wave 9)
+- `a87c8cf0f` feat: auspost.ts (wave 9)
+- `3bad4c129` feat: page.tsx (wave 9)
+- `8fee5170a` feat: componentRegistry.ts (wave 9)
+- `b25adcbb8` feat: stripeAdapter.ts (wave 9)
+- `3c9ec5da5` feat: paypalAdapter.ts (wave 9)
+- `a6dcc0aea` feat: auspost-labels.ts (wave 9)
+- `02d36348e` chore: wave 8 deploy marker
+- `2fa380099` feat: route.ts (wave 8)
+- `b064e256f` feat: saveForLater.css (wave 8)
+- `8750f7cb0` feat: placesKey.ts (wave 8)
+- `44e6dac28` feat: formDrafts.ts (wave 8)
+- `432e4a668` feat: page.tsx (wave 8)
+- `55f826175` feat: useTakenSlots.ts (wave 8)
+- `7f82c0711` feat: placesLoader.ts (wave 8)
+- `68427e347` feat: FormDrafts.ts (wave 8)
+- `aa3169d31` feat: draftStore.ts (wave 8)
+- `7456d557f` feat: placesParse.ts (wave 8)
+- `999653474` feat: draftRequest.ts (wave 8)
+- `1372a450d` feat: FormBlockRenderer.tsx (wave 8)
+- `4fca4ebac` feat: submitRequest.ts (wave 8)
+- `5898ac3ac` feat: 20261017_200000_form_drafts.ts (wave 8)
+- `2024feb61` feat: prefill.ts (wave 8)
+- `d1104df41` feat: registry.ts (wave 8)
+- `489e82e4a` feat: slotGuard.ts (wave 8)
+- `e7c76a5fe` feat: elementDefs.ts (wave 8)
+- `553620fa4` feat: slotsEndpoint.ts (wave 8)
+- `7cbcbf2ba` feat: types.ts (wave 8)
+- `416dbf895` feat: route.ts (wave 8)
+- `4a9fff5c6` feat: PlacesAutocomplete.tsx (wave 8)
+- `5e91358a4` feat: fresh-install-schema-coverage.int.spec.ts (wave 8)
+- `51f1d386a` feat: registry.ts (wave 8)
+- `5e01e67bd` feat: index.ts (wave 8)
+- `c2d0a9eee` feat: form-slots-wave8.int.spec.ts (wave 8)
+- `06fd0c316` feat: index.ts (wave 8)
+- `040ef88b2` feat: Integrations.ts (wave 8)
+- `d27ca09ee` feat: FieldView.tsx (wave 8)
+- `a9c282555` feat: settings.ts (wave 8)
+- `74d1d7a71` feat: slots.ts (wave 8)
+- `660eec748` feat: forms-places-prefill-wave8.int.spec.ts (wave 8)
+- `84a6205e7` feat: layout.ts (wave 8)
+- `dff77c553` feat: internal-migrate-fresh-install.int.spec.ts (wave 8)
+- `83e2a0d7b` feat: form-drafts-wave8.int.spec.ts (wave 8)
+- `24d6f4c77` feat: SaveForLater.tsx (wave 8)
+- `1ea867a09` feat: FormRenderer.tsx (wave 8)
+- `b26ba2727` feat: drafts.ts (wave 8)
+- `33b67f722` feat: submit.ts (wave 8)
+- `2da83f06d` feat: Forms.ts (wave 8)
+- `b65971059` feat: slotStore.ts (wave 8)
+- `02e797410` feat: formDrafts.ts (wave 8)
+
+## 2026-10-13 (105)
+- `4c594a680` chore: wave 7 deploy marker
+- `80131a5b6` feat: stockSubscriptions.ts (wave 7)
+- `6f620b139` feat: pricing.ts (wave 7)
+- `34965f857` feat: ShopCurrencyContext.tsx (wave 7)
+- `aecb18230` feat: wishlist/page.tsx (wave 7)
+- `808040481` feat: ProductCardPrice.tsx (wave 7)
+- `213b0e029` feat: backInStockNotify.ts (wave 7)
+- `458a642e2` feat: index.ts (wave 7)
+- `e06307021` feat: useWishlist.ts (wave 7)
+- `3a4b3a545` feat: backInStockSignup.ts (wave 7)
+- `80a7b134d` feat: rest.ts (wave 7)
+- `104f4decf` feat: stockSubscriptions.ts (wave 7)
+- `700e9aaf5` feat: wishlist.ts (wave 7)
+- `55c73bf38` feat: cartHooks.ts (wave 7)
+- `47597cbe7` feat: Products.ts (wave 7)
+- `45b85cb7e` feat: page.tsx (wave 7)
+- `5d33b3b32` feat: back-in-stock-wave7.int.spec.ts (wave 7)
+- `9bab2a23b` feat: WishlistHeart.tsx (wave 7)
+- `e7a7df8f5` feat: qty-limits-wave7.int.spec.ts (wave 7)
+- `79b605dc5` feat: wishlistCards.ts (wave 7)
+- `ad896b983` feat: shop-back-in-stock route.ts (wave 7)
+- `f19be2101` feat: backInStock.ts (wave 7)
+- `971a42fb2` feat: ProductPurchase.tsx (wave 7)
+- `e4c2a5219` feat: 20261016_100000_product_qty_price_limits.ts (wave 7)
+- `1dd7dc74d` feat: route.ts (wave 7)
+- `013f227bd` feat: internal-migrate-fresh-install.int.spec.ts (wave 7)
+- `934be3e49` feat: StockSubscriptions.ts (wave 7)
+- `748cf0636` feat: money.ts (wave 7)
+- `26e16d93f` feat: route.ts (wave 7)
+- `733bf52f3` feat: CheckoutExtras.tsx (wave 7)
+- `de9dadcc2` feat: shop-wishlist-products route.ts (wave 7)
+- `5ab15d245` feat: wishlist-wave7.int.spec.ts (wave 7)
+- `093d0fb1a` feat: BackInStockForm.tsx (wave 7)
+- `4c7d5537b` feat: productFields.ts (wave 7)
+- `ef13d92eb` feat: fresh-install-schema-coverage.int.spec.ts (wave 7)
+- `c5675f7ad` feat: CheckoutExtras.tsx (wave 7)
+- `364d28a94` feat: shared.ts (wave 7)
+- `20b9bd97b` feat: cross-sells-currency-wave7.int.spec.ts (wave 7)
+- `c6ada7b9c` feat: registry.ts (wave 7)
+- `82b1a7c14` feat: permissions.ts (wave 7)
+- `d10822c9a` feat: rest.ts (wave 7)
+- `0e23d1307` feat: QtyPriceFields.tsx (wave 7)
+- `400d8b8ac` feat: page.tsx (wave 7)
+- `8bec680e9` feat: 20261016_200000_stock_subscriptions.ts (wave 7)
+- `38370668f` feat: navStructure.ts (wave 7)
+- `ab23a8760` feat: registry.ts (wave 7)
+- `7acabfa36` feat: crossSells.ts (wave 7)
+- `f17df3ed6` feat: catalogue.ts (wave 7)
+- `b6f1c82bc` feat: index.ts (wave 7)
+- `e16b5c7e4` feat: CartCrossSells.tsx (wave 7)
+- `dc9e2e558` feat: page.tsx (wave 7)
+- `745ae0860` feat: ProductCard.tsx (wave 7)
+- `f49d99a83` feat: storefront.ts (wave 7)
+- `54db4dfea` feat: qtyLimits.ts (wave 7)
+- `70385f01e` feat: layout.tsx (wave 7)
+- `acd8c9cae` feat: react.tsx (wave 7)
+- `f9f83bec6` feat: WishlistList.tsx (wave 7)
+- `d06c8c926` test: ascii-only ics test (wave 6 final)
+- `bd2218450` feat: ListView.tsx (wave 6)
+- `954e2021a` feat: pagespeed-worst.css (wave 6)
+- `3545d8e39` feat: blogOrder.ts (wave 6)
+- `354942996` feat: orderHooks.ts (wave 6)
+- `a7db698e9` feat: listQuery.ts (wave 6)
+- `706fa4f98` feat: settingsFields.ts (wave 6)
+- `045b31be8` feat: orderFilters.ts (wave 6)
+- `960971ef6` feat: ics.ts (wave 6)
+- `09999c3ff` feat: ParentPicker.tsx (wave 6)
+- `cdfabea92` feat: orders.ts (wave 6)
+- `2c0f805d5` feat: settingsPages.ts (wave 6)
+- `87bff3610` feat: store.ts (wave 6)
+- `8dce8500e` feat: edit-screens-wave6.int.spec.ts (wave 6)
+- `d6c019a8f` feat: route.ts (wave 6)
+- `0a3b41d0d` feat: page.tsx (wave 6)
+- `c8f0974be` feat: shop-numbering.int.spec.ts (wave 6)
+- `7d08a36a3` feat: WorstPagesCard.tsx (wave 6)
+- `d02c61297` feat: Orders.ts (wave 6)
+- `d341d9daf` feat: pagespeed-worst.int.spec.ts (wave 6)
+- `8b434013c` feat: page.tsx (wave 6)
+- `e09bf73d5` feat: adminOrder.ts (wave 6)
+- `4df62473c` feat: worst.ts (wave 6)
+- `39b17304a` feat: orderSearch.ts (wave 6)
+- `d255b3a19` feat: OrdersFilterBar.tsx (wave 6)
+- `ac3ce05e3` feat: SettingsPageClient.tsx (wave 6)
+- `a8d70d15c` feat: index.ts (wave 6)
+- `172e2a406` feat: route.ts (wave 6)
+- `354bde1a7` feat: PagesTreeView.tsx (wave 6)
+- `d9ca30113` feat: route.ts (wave 6)
+- `47bffc6f6` feat: ListToolbar.tsx (wave 6)
+- `903fe47a0` feat: numbering.ts (wave 6)
+- `5ecb47289` feat: route.ts (wave 6)
+- `49e9a9e67` feat: orderSearch.ts (wave 6)
+- `31c798370` feat: 20261015_200000_shop_numbering.ts (wave 6)
+- `cd1eb6458` feat: orders-filter-bar.css (wave 6)
+- `ca01d96ca` chore: trigger rebuild after list tab fix
+- `ed03e9533` fix: list section tab ids usable from server component
+- `fda7f3fd9` fix: list section tab ids usable from server component
+- `e9cdbe510` fix: list section tab ids usable from server component
+- `0dd99c9b4` feat: route.ts (batch 4)
+- `d32babbec` feat: route.ts (batch 4)
+- `75cae0080` feat: embed.ts (batch 4)
+- `94b8ef904` feat: list-section-tabs.css (batch 4)
+- `2bbd31152` feat: packing.ts (batch 4)
+- `2810bb1c6` feat: route.ts (batch 4)
+- `c4bc7a0ec` feat: route.ts (batch 4)
+- `9dd4138ff` feat: embed.ts (batch 4)
+
+## 2026-10-12 (330)
+- `c75ef651f` feat: EditForm.tsx (batch 4)
+- `d9f9a4afb` feat: DocumentPanel.tsx (batch 4)
+- `816fd7bab` feat: useDocumentSave.ts (batch 4)
+- `e5fe4c3c2` feat: submissionsApi.ts (batch 4)
+- `6d052e792` feat: shop_settings_extras.ts (batch 4)
+- `65da78798` feat: auspost.ts (batch 4)
+- `1394f2dd7` feat: submissionsApi.ts (batch 4)
+- `a1c70f2da` feat: guards.ts (batch 4)
+- `831f0a5bd` feat: useDocumentSave.ts (batch 4)
+- `a03d04cca` feat: formSettings.ts (batch 4)
+- `3849fac5b` feat: route.ts (batch 4)
+- `1308a3f3d` feat: storedValueOrder.ts (batch 4)
+- `b24157bda` feat: catalogue.ts (batch 4)
+- `72357602f` feat: route.ts (batch 4)
+- `7b7b8859c` feat: page.tsx (batch 4)
+- `1f5862318` feat: ChartSvg.tsx (batch 4)
+- `3cc42dff8` feat: DocumentPanel.tsx (batch 4)
+- `edeecff54` feat: BlockRenderer.tsx (batch 4)
+- `2416f1dd7` feat: FormSubmissions.ts (batch 4)
+- `2263eb137` feat: admin-form-file route.ts (batch 4)
+- `637ea0f3b` feat: psi.ts (batch 4)
+- `18af57f35` feat: list-section-tabs.css (batch 4)
+- `292626277` feat: DataTable.tsx (batch 4)
+- `82dad6c5e` feat: packing.ts (batch 4)
+- `176dad623` feat: shop-label-and-quote-fixes.int.spec.ts (batch 4)
+- `e587fe769` feat: DataTable.tsx (batch 4)
+- `99a505e63` feat: DataViews.ts (batch 4)
+- `6383232c4` feat: enhance.ts (batch 4)
+- `a6244a730` feat: BlockRenderer.tsx (batch 4)
+- `a65650336` feat: queue.ts (batch 4)
+- `8ae76d3dd` feat: EditForm.tsx (batch 4)
+- `62b26c6d3` feat: htmlSanitize.ts (batch 4)
+- `9126aab1a` feat: route.ts (batch 4)
+- `de225a16c` feat: route.ts (batch 4)
+- `517468b09` feat: embed.ts (batch 4)
+- `2c3aaf8e8` feat: page.tsx (batch 4)
+- `c63b17821` feat: invoiceSettings.ts (batch 4)
+- `c3f9c039a` feat: access.ts (batch 4)
+- `fc0935709` feat: slugs.ts (batch 4)
+- `bedca9987` feat: layout.tsx (batch 4)
+- `a1d7c27ad` feat: ButtonElement.tsx (batch 4)
+- `ca8857e8e` feat: validate.ts (batch 4)
+- `d041db7c5` feat: route.ts (batch 4)
+- `111c5556f` feat: readingTime.ts (batch 4)
+- `760b278e7` feat: edit-screens.int.spec.ts (batch 4)
+- `2bb24b8b9` feat: OrdersManifestAction.tsx (batch 4)
+- `234e2bf8c` feat: route.ts (batch 4)
+- `c37670776` feat: route.ts (batch 4)
+- `707fcf785` feat: useDocumentSave.ts (batch 4)
+- `d95183869` feat: shopStoredValue.ts (batch 4)
+- `03f53ea86` feat: CreditLedger.ts (batch 4)
+- `98dec1482` feat: AuthorBox.tsx (batch 4)
+- `13c855857` feat: FieldHelp.tsx (batch 4)
+- `39a8c4c15` feat: load.ts (batch 4)
+- `023158d86` feat: route.ts (batch 4)
+- `ea21b2f0b` feat: RichTextWithForms.tsx (batch 4)
+- `78114308a` feat: ABResultsOverview.tsx (batch 4)
+- `29da59f02` feat: route.ts (batch 4)
+- `d2b36df77` feat: ShopSettingsView.tsx (batch 4)
+- `35514767b` feat: types.ts (batch 4)
+- `3d354caf9` feat: origin.ts (batch 4)
+- `03f44936e` feat: dataViews.ts (batch 4)
+- `1c210e6d0` feat: 20261014_400000_data_views.ts (batch 4)
+- `cc2e253cc` feat: GridEditor.tsx (batch 4)
+- `d17fa00e0` feat: PageSpeedBadge.tsx (batch 4)
+- `b4158beb7` feat: registry.ts (batch 4)
+- `6b484adec` feat: AllRsvpsTab.tsx (batch 4)
+- `0b2a43f53` feat: shippingSettings.ts (batch 4)
+- `f68c286c9` feat: maintenance.ts (batch 4)
+- `5a610eb98` feat: server.ts (batch 4)
+- `61659706f` feat: filter.ts (batch 4)
+- `7aa799e8d` feat: route.ts (batch 4)
+- `4ebfb9a9d` feat: route.ts (batch 4)
+- `9f94d6f4a` feat: storefront.ts (batch 4)
+- `81898b992` feat: fields.ts (batch 4)
+- `69511278a` feat: AdRichText.tsx (batch 4)
+- `374286000` feat: storedValueOrder.ts (batch 4)
+- `7a51514ac` feat: route.ts (batch 4)
+- `2598e7d8b` feat: grid.ts (batch 4)
+- `f522b4f3a` feat: dataViews.css (batch 4)
+- `d7b5f0e54` feat: catalogue.ts (batch 4)
+- `7f0776ff7` feat: AllSubmissionsTab.tsx (batch 4)
+- `ce6edbcca` feat: shared.ts (batch 4)
+- `287841cde` feat: embed.ts (batch 4)
+- `237a14849` feat: shopShipping.ts (batch 4)
+- `b39393286` feat: authors.ts (batch 4)
+- `fdd27ee2a` feat: edit-screens.css (batch 4)
+- `c478b0760` feat: exportEndpoint.ts (batch 4)
+- `e9f529e38` feat: submitRequest.ts (batch 4)
+- `02fd16a18` feat: page.tsx (batch 4)
+- `0de9d11a3` feat: cartHooks.ts (batch 4)
+- `d7ee1490f` feat: shopStoredValue.ts (batch 4)
+- `a60006c93` feat: AllResultsFilters.tsx (batch 4)
+- `1143c827d` feat: 20261014_230000_remove_apparel_category.ts (batch 4)
+- `eed9d1761` fix: edit-tabs.css trailing newline (batch 4)
+- `e3ca9321b` feat: cache.ts (batch 4)
+- `bbc801794` feat: http.ts (batch 4)
+- `13c88086a` feat: route.ts (batch 4)
+- `5be9be8b3` feat: textFields.ts (batch 4)
+- `9143675fc` feat: route.ts (batch 4)
+- `8171fd121` feat: edit-tabs.css (batch 4)
+- `fa78ae2c0` feat: ChartSvg.tsx (batch 4)
+- `bb818c3a4` feat: units.ts (batch 4)
+- `f489dea26` feat: adminViewRegistry.ts (batch 4)
+- `0f23678d1` feat: 20261014_210000_gift_cards.ts (batch 4)
+- `20a7c6f15` feat: FormSubmissions.ts (batch 4)
+- `5c38a2707` feat: PayLaterMessage.tsx (batch 4)
+- `25bb2aa73` feat: overview.ts (batch 4)
+- `16cd6c6e2` feat: psi.ts (batch 4)
+- `7b888bfc1` feat: route.ts (batch 4)
+- `7cd924955` feat: tables-and-charts.md (batch 4)
+- `8fbc896e4` feat: page.tsx (batch 4)
+- `9445b1015` feat: ListSectionTabs.tsx (batch 4)
+- `eccef8f65` feat: OrderRefunds.ts (batch 4)
+- `f53c98bc5` feat: route.ts (batch 4)
+- `7656b3fb6` feat: fields.ts (batch 4)
+- `51caf8822` feat: BlockRenderer.tsx (batch 4)
+- `6d7c36aa1` feat: config.ts (batch 4)
+- `e3285dcd1` feat: registry.ts (batch 4)
+- `1323aa27c` feat: page.tsx (batch 4)
+- `9a6175d1b` feat: csv.ts (batch 4)
+- `79ccec28b` feat: prefill.ts (batch 4)
+- `03b14e6df` feat: submissionsApi.ts (batch 4)
+- `ca48e075c` feat: localapi-migrate-fresh-install.int.spec.ts (batch 4)
+- `d9b95af65` feat: 20261014_300000_pagespeed.ts (batch 4)
+- `d7878e662` feat: EventRSVPs.ts (batch 4)
+- `3e6ec46d0` feat: DataTable.tsx (batch 4)
+- `20d06ffe5` feat: formInputs.tsx (batch 4)
+- `332c2ebcc` feat: requestGuard.ts (batch 4)
+- `130690f13` feat: target.ts (batch 4)
+- `17fda4c77` feat: route.ts (batch 4)
+- `9d2fadca6` feat: embedFrame.ts (batch 4)
+- `c8f2e5c1f` feat: ShippingSettings.ts (batch 4)
+- `f67297361` feat: componentRegistry.ts (batch 4)
+- `e2f73f8a1` feat: route.ts (batch 4)
+- `472970c40` feat: headers.ts (batch 4)
+- `4444c763d` feat: types.ts (batch 4)
+- `330002ab6` feat: shop-stored-value-order.int.spec.ts (batch 4)
+- `4deb6e7e5` feat: settingsPages.ts (batch 4)
+- `115edc5a7` feat: enhance.ts (batch 4)
+- `79851ccab` feat: hooks.ts (batch 4)
+- `42170c650` feat: spam.ts (batch 4)
+- `3d6a8a32d` feat: EditorDock.tsx (batch 4)
+- `a0b4cbdfb` feat: refunds.ts (batch 4)
+- `8807a6128` feat: config.ts (batch 4)
+- `ba9ce24de` feat: route.ts (batch 4)
+- `6891fb12d` feat: htmlSanitize.ts (batch 4)
+- `f5aec0b60` feat: FormContext.tsx (batch 4)
+- `738639fa8` feat: format.ts (batch 4)
+- `226a073ef` feat: orders.ts (batch 4)
+- `5e404d59e` feat: TicketTiersField.tsx (batch 4)
+- `f2fae366c` feat: page.tsx (batch 4)
+- `4f2ce8bd8` feat: emails.ts (batch 4)
+- `02cfa2b77` feat: settingsDescriptions.ts (batch 4)
+- `2a9db9f2a` feat: paymentMethods.ts (batch 4)
+- `ac982d752` feat: forms-builder-hardening.int.spec.ts (batch 4)
+- `75e720068` feat: AccountShell.tsx (batch 4)
+- `20e5ea5b7` feat: route.ts (batch 4)
+- `057e832df` feat: route.ts (batch 4)
+- `638c956c0` feat: EditForm.tsx (batch 4)
+- `a3b017fdb` feat: FormSettingsPanel.tsx (batch 4)
+- `fd853d6f5` feat: feeds.ts (batch 4)
+- `91be05692` feat: parse.ts (batch 4)
+- `7e583805f` feat: admin-list-prefs-real-engine.int.spec.ts (batch 4)
+- `59eb36cfc` feat: sendle.ts (batch 4)
+- `4f8f9d16b` feat: DocumentPanel.tsx (batch 4)
+- `4387916a5` feat: Integrations.ts (batch 4)
+- `fcb7f7a9c` feat: catalogue.ts (batch 4)
+- `fe80148d8` feat: route.ts (batch 4)
+- `8759f3dac` feat: internal-migrate-fresh-install.int.spec.ts (batch 4)
+- `2097905a4` feat: renderElement.tsx (batch 4)
+- `2bd7b3901` feat: StoreCreditView.tsx (batch 4)
+- `4d6286605` feat: ShopSettings.ts (batch 4)
+- `710a1f16d` feat: invoice.ts (batch 4)
+- `023e58fe7` feat: config.ts (batch 4)
+- `988f51a1a` feat: admin-results-routes.int.spec.ts (batch 4)
+- `d9315f879` feat: forms-builder-hardening.int.spec.ts (batch 4)
+- `e19e9fc08` feat: catalogue.ts (batch 4)
+- `f02c33379` feat: ProductPurchase.tsx (batch 4)
+- `4ec4342c5` feat: admin-list-prefs-real-engine.int.spec.ts (batch 4)
+- `76de2e7e4` feat: requestGuard.ts (batch 4)
+- `4add3f905` feat: Orders.ts (batch 4)
+- `8b879d446` feat: types.ts (batch 4)
+- `bf1df8f4f` feat: refunds.ts (batch 4)
+- `ef37650ab` feat: FormSettingsPanel.tsx (batch 4)
+- `cc92be296` feat: types.ts (batch 4)
+- `3c44539f9` feat: paymentMethods.ts (batch 4)
+- `28732869e` feat: SpeedSettings.ts (batch 4)
+- `c83670ad2` feat: 20261014_100000_edit_screens.ts (batch 4)
+- `c0351d3ef` feat: storedValue.ts (batch 4)
+- `d5e47d824` feat: Integrations.ts (batch 4)
+- `9e024d068` feat: route.ts (batch 4)
+- `044447a25` feat: resolve.ts (batch 4)
+- `ad3562157` feat: EditView.tsx (batch 4)
+- `a634fc739` feat: PageSpeedCard.tsx (batch 4)
+- `db84a849a` feat: registry.ts (batch 4)
+- `be28d10ba` feat: feeds.ts (batch 4)
+- `0646c8b76` feat: elementDefs.ts (batch 4)
+- `68ef9e4c0` feat: ListView.tsx (batch 4)
+- `ee52f707e` feat: blockSchemas.ts (batch 4)
+- `1a4ed2fb0` feat: edit-tabs-results.int.spec.ts (batch 4)
+- `f9b65ff74` feat: index.ts (batch 4)
+- `92fb730d5` feat: PaymentSettings.ts (batch 4)
+- `f7c523e19` feat: react.tsx (batch 4)
+- `0c6ccee8e` feat: rows.ts (batch 4)
+- `1cf7914f0` feat: settingsFields.ts (batch 4)
+- `758d33573` feat: submitRequest.ts (batch 4)
+- `d29918532` feat: ShopSettingsClient.tsx (batch 4)
+- `6c3954684` feat: orders.ts (batch 4)
+- `7aa3e28c0` feat: registry.ts (batch 4)
+- `12f1755ba` feat: FieldRenderer.tsx (batch 4)
+- `d386b07fa` feat: FormSettings.ts (batch 4)
+- `97ec84340` feat: manifest.ts (batch 4)
+- `1af6d84a8` feat: shipments.ts (batch 4)
+- `64492e222` feat: pricing.ts (batch 4)
+- `61c4bd87b` feat: notify.ts (batch 4)
+- `56b986ce9` feat: EditForm.tsx (batch 4)
+- `d058b1c47` feat: DocumentPanel.tsx (batch 4)
+- `0b072ddf8` feat: viewTabs.ts (batch 4)
+- `617c13e37` feat: page.tsx (batch 4)
+- `a4a15ad0d` feat: chart.ts (batch 4)
+- `cdbd65368` feat: route.ts (batch 4)
+- `efcc3481a` feat: CheckoutExtras.tsx (batch 4)
+- `83b263385` feat: field-help.css (batch 4)
+- `ef32e006b` feat: FormRenderer.tsx (batch 4)
+- `778b49dc4` feat: layout.ts (batch 4)
+- `6cc6505c0` feat: data-views.int.spec.ts (batch 4)
+- `0877b6c6b` feat: validate.ts (batch 4)
+- `967898179` feat: Integrations.ts (batch 4)
+- `becb28c76` feat: productFields.ts (batch 4)
+- `ad1ecf188` feat: GiftCards.ts (batch 4)
+- `de172fac1` feat: ListView.tsx (batch 4)
+- `795bf5bd8` feat: storedValue.ts (batch 4)
+- `3479a0719` feat: stripeAdapter.ts (batch 4)
+- `3c272693e` feat: FormSettingsPanel.tsx (batch 4)
+- `dc610f929` feat: registry.ts (batch 4)
+- `0a6b1f4ba` feat: internal-migrate-fresh-install.int.spec.ts (batch 4)
+- `30e510210` feat: fresh-install-schema-coverage.int.spec.ts (batch 4)
+- `df0fbc1ed` feat: FieldView.tsx (batch 4)
+- `5b6486283` feat: ListToolbar.tsx (batch 4)
+- `928a684ed` feat: version-delete-real-engine.int.spec.ts (batch 4)
+- `768aae640` feat: ListView.tsx (batch 4)
+- `47bb28a67` feat: DataViewEditorField.tsx (batch 4)
+- `728ee2006` feat: list-section-tabs.int.spec.ts (batch 4)
+- `23aa5743e` feat: dataViews.ts (batch 4)
+- `9b34e20a6` feat: FieldPanel.tsx (batch 4)
+- `b509ed03f` feat: settings.ts (batch 4)
+- `2b23dfd78` feat: permissions.ts (batch 4)
+- `db9735112` feat: operations.ts (batch 4)
+- `6d0d5c703` feat: index.ts (batch 4)
+- `3b93dd42a` feat: csv.ts (batch 4)
+- `6ae2f0f91` feat: forms-builder.int.spec.ts (batch 4)
+- `740888d36` feat: VisualEditor.tsx (batch 4)
+- `526d30567` feat: route.ts (batch 4)
+- `46fccb31a` feat: Forms.ts (batch 4)
+- `d61b20d88` feat: DataViewEnhancer.tsx (batch 4)
+- `804aa57df` fix: localapi-rest.int.spec whitespace in comment block (batch 3)
+- `33db97879` feat: embed forms.js route (batch 3)
+- `7d616bc5a` feat: DataViewBlock (batch 3)
+- `edb9e4ca5` feat: shopShipping schema (batch 3)
+- `c982c27bf` feat: surfaces (batch 3)
+- `0a73b6fc4` feat: elements fieldTypes.ts (batch 3)
+- `e864c6cea` feat: forms embedD1.ts (batch 3)
+- `0152f5ceb` feat: DataViewCanvasPreview (batch 3)
+- `9bfb7c680` feat: forms shortcode.ts (batch 3)
+- `c3c76bd35` feat: tiers (batch 3)
+- `f4d8e6f54` feat: ProductGrid (batch 3)
+- `c7a527add` feat: shop-settings (batch 3)
+- `7b35fc9f9` feat: StoreCredits (batch 3)
+- `a7a7743af` feat: FormBlockRenderer.tsx (batch 3)
+- `d9da27f26` feat: feeds (batch 3)
+- `2f939a047` feat: embedScript (batch 3)
+- `a7e3ee94e` feat: shortcode (batch 3)
+- `139e93b83` feat: ShippingManifests collection (batch 3)
+- `9a16146aa` feat: route (batch 3)
+- `0e706d3bd` feat: dataViews format.ts (batch 3)
+- `409e4c0ff` feat: shipping mock (batch 3)
+- `141dfc212` feat: forms builder migration (batch 3)
+- `e67fe2e73` feat: index (batch 3)
+- `70692c2df` feat: resultsTabs (batch 3)
+- `8521613f2` feat: dataViewEditor (batch 3)
+- `ba4bd2c12` feat: EmbedCard (batch 3)
+- `ca1d9fb80` feat: forms-builder-migration (batch 3)
+- `18575acea` feat: dataViews embed (batch 3)
+- `c79bf50dd` feat: Posts collection (batch 3)
+- `6b93ad7e1` feat: GiftCardForm (batch 3)
+- `11d1bf688` feat: StoreCreditPanel.tsx (batch 3)
+- `ca0d1502e` feat: EditTabs (batch 3)
+- `0aae3e253` feat: access.ts (batch 3)
+- `eb4a1f28d` feat: submitEndpoint.ts (batch 3)
+- `5f0be20d7` test: shop-shipping-flow (batch 3)
+- `8500a41a9` feat: forms configHooks.ts (batch 3)
+- `b2ec4f091` feat: upload (batch 3)
+- `1a40698e7` test: pagespeed-route (batch 3)
+- `91f373b57` feat: Events collection (batch 3)
+- `64d14ab07` feat: DataViewView.tsx (batch 3)
+- `565ce73f3` feat: TrashBanner.tsx (batch 3)
+- `c07df7dd0` feat: CheckoutForm (batch 3)
+- `ff051ef71` feat: navStructure.ts (batch 3)
+- `5215fcf80` feat: StoreCreditScreen.tsx (batch 3)
+- `ab695c251` feat: rateLimit (batch 3)
+- `41c2862b7` feat: adminOrder.ts (batch 3)
+- `7a987147a` feat: webhooks (batch 3)
+- `ec61a6af3` feat: ShopTestButtons.tsx (batch 3)
+- `0e48218b8` feat: settings-pages int spec (batch 3)
+- `614e0d7c5` feat: route.ts (batch 3)
+- `4e2bfb1da` feat: forms.css (batch 3)
+- `52612197a` feat: totals (batch 3)
+- `ffde4dd59` feat: pagespeed.css (batch 3)
+- `2b4602b63` feat: BulkActionsBar (batch 3)
+- `7f7e79df4` feat: Pages collection (batch 3)
+- `7fd59c83c` feat: customCss.ts (batch 3)
+- `2d1d9b4bd` feat: store (batch 3)
+- `8b8f06987` feat: format (batch 3)
+- `dc5e1941f` feat: CanvasBlockPreview.tsx (batch 3)
+- `00e1476c4` feat: adminViewRegistry.ts (batch 3)
+- `cf7d10559` feat: service.ts (batch 3)
+- `4086881fa` feat: Products (batch 3)
+- `52a5af986` feat: dataViews resolve.ts (batch 3)
+- `d318192f2` feat: 20261014_220000_shipping.ts (batch 3)
+- `9a3a91a71` feat: ElementLibrary (batch 3)
+- `f6bf9b071` feat: DocumentPanel (batch 3)
+- `ae8bb3ecb` feat: bulk (batch 3)
+- `75bfe66e6` feat: OrderPanels.tsx (batch 3)
+- `e52ee7b0c` feat: rest.ts (batch 3)
+- `008b2359c` feat: operations (batch 3)
+- `eed7f10d5` feat: submit.ts (batch 3)
+- `8adc815b9` feat: localapi-rest.int.spec (batch 3)
+- `f694e3896` feat: pagespeed int spec (batch 3)
+- `7e37c9b7a` feat: shop-extras-pure int spec (batch 3)
+
+## 2026-10-11 (550)
+- `dbdcfa4b3` fix: avoid literal line-separator escapes in ads safeJson
+- `ec1f509ba` fix: restore exact file contents
+- `3bd1a1e0a` fix: restore exact file contents
+- `d0fa18661` fix: restore exact file contents
+- `4462a73c7` fix: restore exact rest.ts
+- `623b787ac` fix: restore exact file contents
+- `d945ad467` fix: restore exact file contents
+- `fa41f86f8` fix: restore exact file contents
+- `0b77c52db` fix: restore exact file contents
+- `2354a54a9` fix: restore exact file contents
+- `19ae48f5b` fix: restore exact file contents
+- `271bc4061` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `cd5bd6639` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `36a2cec8e` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c07877d66` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2b0885839` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5274ccba2` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d67e4f99e` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `93b9b4ac9` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3087a7428` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `82cd29c63` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b3e6531d6` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `67ffc7083` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3daa12ee1` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a9c7e7e84` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8379a24c9` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `32dce3ad9` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `261efd3ef` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `217964000` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9affd7f1c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8ff8a8336` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `964871d04` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `48cdec14a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c8e10a26b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a35a4b55a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `427c93798` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9764325fb` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f3f88c171` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0b15fb9db` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `35ac8f9da` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `cc108cf5d` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `193c2bab6` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c52afc58c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `408943061` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `4629a9209` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8a9a4a4c1` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9c9f38fa8` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8e0ad1aeb` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c70d6dafe` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f43bdaba7` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `e231ec7a8` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `ab8128562` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `4a2af9356` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `1eddb7258` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b5d687a06` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0081ce557` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `6758ba309` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a502e7839` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `df50732c3` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `6578fa426` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8ee8f5982` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0218671ac` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `41b8fb4e9` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `e3890b1d3` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `292a56263` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `247e3a92d` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5f939163b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `386404982` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `63302a0bc` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3292dd2d1` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a33b811bb` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `016b301cb` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d50e799a2` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `ca721c143` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0c732ebcc` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3d60a1750` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `959b0fd14` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `dc3b37641` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5a71dea56` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b1c1d7b0b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `fb6895e32` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d87648ec1` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `6d099c11b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f2cc24797` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b1e33de40` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `7f2165f1b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c727eed02` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `dc5594b4f` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b7606cfa6` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `ceff1726b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9cb95b928` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `6a1e5ee8b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `01457f192` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0bcb924d5` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d902f0c90` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c790f00a4` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `cd8ce14a1` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2e92f55ac` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2d73c9246` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `4fa400d75` fix: correct escaped middle dot and multiplication sign in AccountScreens
+- `fc4a9bbf9` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8dcc8b836` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `4dbcd0b22` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3ea68ed6a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9ada8de9a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a9abd7026` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c62dd9fcf` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a779cedb1` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3fbeaf3d1` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d9a0fff4b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3c6a3fd40` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b5422956d` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `28931bb48` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `69e227397` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `066efe12c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `38f78ce30` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `23a9673f8` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2a6a13a9c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2da2cd53b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `71da65059` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `40f9d83d7` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `43c1a1250` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2f0b915ce` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f1430dd2b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d698f1160` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `cb8682ad8` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `aeceb926e` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `deee5986b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `29b0792ef` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `afe947f64` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a4daa86e4` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f4083a92f` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `db6eaea1a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0bf611d1a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d0fc768ad` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3fc66d35f` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `412881796` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a99958918` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `90ef2637c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5bfa8f604` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `223800820` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `448b4b34c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `acd6b1914` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5aec44319` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `66f3b7f9c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `030122655` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `941a7e1d7` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8cb640efb` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5b3e1dba5` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `e4ec3b7df` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8ca32837a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `4aaf84d25` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `551c04c6d` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `ad17c8699` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b1f8922a4` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `441b208e2` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b3809301c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `cb88d89d8` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2046cc63f` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `81b5d7b92` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `052b2948e` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8fb22eb6c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `4b9359eed` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `47fa649fb` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5571acfbe` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `6a33ab8a5` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2c2985917` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `ef460013a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `065cc7d2c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `58cf18ae9` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `47d0b6e55` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `ef5d05884` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `261eb2638` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3be74747c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `cc51a7b2c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `7e822b411` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `28ab4eed4` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `52b5a7e2d` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5f0695156` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b59debc0d` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9457199a7` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a83fe9784` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `72ed8452c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `668612c58` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `61a62e314` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `14c8ee5d0` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `efe0aca92` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `fa4277e06` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `19af1a226` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `e13b5f406` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `baab42177` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `1581a4c1f` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a206148d5` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `999515c76` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `8b5e1ba0b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0afe73b30` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `987235b60` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f009495e8` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `1dfe4f116` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9b861f576` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `19a39862e` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `4634916af` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `89431d6c4` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a0979b961` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `810863c5a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9980eba23` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f114021d1` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0457bbe7a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `680d183f0` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `5d186f7ac` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `005d73f5e` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `49c9ff264` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `162b8f770` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `100347a5e` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `db0bb8428` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `bf11da4fb` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3e43f87f5` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `cf9372c2c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `9af8fff58` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c0e05ddab` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `eef75108c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a60e7adbc` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `78a2c4520` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b07c991b7` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c1c8de35e` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d2083c8b7` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `bbcc34943` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `0d54adc0a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3b6e36a15` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a29426e76` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `211f11460` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `ef6d3a2bb` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `bf302480c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `352d6d800` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `806d6dffd` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `225f1d052` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `861d0d672` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `3f22f470a` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a0044d156` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `e114c1a37` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2c6ffe4a9` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `2df862aca` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f700d62fd` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `a64d0b44b` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f3cb36ccd` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d51aa40a9` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `c7f84cd15` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f0a804bcd` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `b6a8a49fa` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `f9808b36c` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `395d703dc` feat: ads, custom role rules and locks, shop, media upload, spreadsheet import, navigation and layout fixes
+- `d017b7b0e` test: restore blank line in content-approval spec
+- `fb7887468` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `3acd1e5a2` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `8b269e872` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `d6c07955b` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `4491b0d2a` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `31e6550d5` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `ffbec3b41` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `2fd2ddd1f` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `4fc05c32e` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `35931521b` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `725e536de` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `be904066a` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `02ce43cef` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `b7273c9c6` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `f54ff8941` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `8cbfe863f` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `ac545fe21` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `f289296de` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e2a2737c6` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e8b1e4a93` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `02ca70521` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `6b6c2a668` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e427258b9` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `b43a91e4c` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e1dcefb37` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `fbac1e2bd` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `5b93ba81c` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `ce4473b58` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `75af03f46` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `f72013409` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `6923be86b` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `9b2da4f84` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `1345fb06a` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `7b5b0d13c` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `ef96fd20e` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `5807e86ab` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `cd1178702` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `5c06817d1` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e69b9f809` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `909cbaadc` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `637411b50` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `8cf3af3ed` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `811536615` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `bb4b69b9a` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `63f156119` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `d73f1e637` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `bf55ffad7` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `d3f8f8141` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `0531444a6` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `8f750e2dd` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `eb2ef98f9` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `a12981b1d` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `6831058c5` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `493938e28` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `8543ed4e9` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `df0334ac6` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `3ae8fe329` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `153793264` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `09cdcba21` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `2020856df` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `8513c0cef` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e0a6d304c` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `7fe301bb9` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `674118af1` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e3bf64134` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `24558a9ed` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `f5b6cc956` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `365800c6a` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `b6edae23c` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `14c4ce569` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `3a510e522` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `0ed402052` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `3ed6ab39f` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `a759e94ff` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `4adbf60fe` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `50cedf7c1` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `51920831e` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `b379ae6fd` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `02bf5f22e` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `311138bd0` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e7c7cc52a` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `902edf37e` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `bc270e1e7` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `34477dcb9` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `10aa865a5` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `a1c0b2674` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `17f8bcc64` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `a864da93f` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `fa6cc5cd5` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `86399eb3a` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `14700cb25` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `a963c5240` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `52e0193c5` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `88c419fcf` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `41af34875` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `53ef03970` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `8c7dbb75d` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `9fa4f8bf1` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e572f3434` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `b0c8fe002` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `f6c4fedee` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e3c15f7c2` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `6cb9a64cc` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `ea356d0ac` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `1231ebe01` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `303330e52` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `b7bad7553` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `c13cf47fd` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `ca49ed759` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `02b3826ab` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `6021af1ba` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `e70e5cbbf` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `b6ad85b52` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `3f3161af2` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `42a6b277d` feat: collapsed-by-default cards, settings tabs, approval workflows, cookie consent page, results tabs, extra fields help
+- `d2366a676` feat: site files, cookie consent, media library, approval flow, custom fields (<path>)
+- `9cf82082d` feat: site files, cookie consent, media library, approval flow, custom fields (<path>)
+- `3b8b3ef50` feat: site files, cookie consent, media library, approval flow, custom fields (<path>)
+- `698801f4d` feat: site files, cookie consent, media library, approval flow, custom fields (src/views/media/MediaGalleryGrid.tsx)
+- `826ec82db` feat: site files, cookie consent, media library, approval flow, custom fields (wrangler.jsonc)
+- `9e8254d16` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/site-files.int.spec.ts)
+- `3c138c6a7` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/site-files.int.spec.ts)
+- `5b3d0e4f3` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/site-files-fresh-install.int.spec.ts)
+- `9f3bf75d4` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/media-routes.int.spec.ts)
+- `fe20cef4c` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/media-optimise.int.spec.ts)
+- `14de36515` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/media-library-utils.int.spec.ts)
+- `694f26247` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/media-library-fresh-install.int.spec.ts)
+- `0710caca4` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/media-hardening.int.spec.ts)
+- `c6763b409` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/media-file-route.int.spec.ts)
+- `275a0fbb4` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/media-ai-client.int.spec.ts)
+- `479c88246` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/custom-fields.int.spec.ts)
+- `610a49beb` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/custom-fields.int.spec.ts)
+- `6569550e4` feat: site files, cookie consent, media library, approval flow, custom fields (src/views/dashboard/Dashboard.tsx)
+- `ec20f213c` feat: site files, cookie consent, media library, approval flow, custom fields (src/migrations/index.ts)
+- `35173871c` feat: site files, cookie consent, media library, approval flow, custom fields (src/migrations/20261011_140000_custom_fields_v2.ts)
+- `77ef75832` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/custom-fields-fresh-install.int.spec.ts)
+- `6dc563995` feat: site files, cookie consent, media library, approval flow, custom fields (src/migrations/20261011_130000_content_approval.ts)
+- `a96d3309a` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/cookie-consent.int.spec.ts)
+- `8622533be` feat: site files, cookie consent, media library, approval flow, custom fields (src/migrations/20261011_120000_media_library.ts)
+- `6e4932471` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/siteFiles.ts)
+- `bc9db746a` feat: site files, cookie consent, media library, approval flow, custom fields (src/migrations/20261011_110000_cookie_consent.ts)
+- `7358f746f` feat: site files, cookie consent, media library, approval flow, custom fields (src/migrations/20261011_100000_site_files.ts)
+- `8d9bc549a` feat: site files, cookie consent, media library, approval flow, custom fields (src/localapi/uploads.ts)
+- `9b45e92bc` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/serverRules.ts)
+- `bdde11564` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/metadata.ts)
+- `341fc7924` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/indexable.ts)
+- `0c3d24f0c` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/consent.ts)
+- `72a4031da` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/components/SeoScripts.tsx)
+- `001abbe95` feat: site files, cookie consent, media library, approval flow, custom fields (src/localapi/storage.ts)
+- `9b0599103` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/cookie-consent-fresh-install.int.spec.ts)
+- `531b438fb` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/admin/OptionsView.tsx)
+- `d3ce0a62b` feat: site files, cookie consent, media library, approval flow, custom fields (src/localapi/registry.ts)
+- `c319efc37` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/admin/OptionsForm.tsx)
+- `fa1c8be05` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/components/AnalyticsLoader.tsx)
+- `d2a99a28e` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-review/route.ts)
+- `1248a2666` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/admin/FieldGroupLocationField.tsx)
+- `f0871265f` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/admin/SiteFilesField.tsx)
+- `ff9816f67` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-review-queue/route.ts)
+- `3c0f6efed` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/admin/FieldGroupBuilderField.tsx)
+- `0b275b17a` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-media-usage/route.ts)
+- `632744dd4` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/admin/SiteFilesField.css)
+- `1e1af3074` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-media-stock/route.ts)
+- `0989811e9` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/security/requestGuard.ts)
+- `a816fba2f` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-media-stock-import/route.ts)
+- `447a75883` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/index.ts)
+- `bdc664dac` fix: restore trailing newline in src/cms/db/index.ts
+- `8964a8ad5` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/globals/securitySettings.ts)
+- `178916403` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/security/headers.ts)
+- `1a16ec566` feat: site files, cookie consent, media library, approval flow, custom fields (src/localapi/engine.ts)
+- `f3011081a` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/ui/ReviewPanel.tsx)
+- `bfb3dc441` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/imagesBinding.ts)
+- `446900782` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/security/auditLog.ts)
+- `134a1673f` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/folders.ts)
+- `12ad430b7` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/globals/mediaSettings.ts)
+- `876905dec` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-media-replace/[id]/route.ts)
+- `168b19ca2` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/stateMachine.ts)
+- `0c7c74e27` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/config.ts)
+- `94c8b0ba1` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-media-optimise/route.ts)
+- `714ca0656` feat: site files, cookie consent, media library, approval flow, custom fields (src/lib/mergeTags.ts)
+- `d8caa48f6` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/schedule/runDue.ts)
+- `8b7b12ab3` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/bulk.ts)
+- `717fb2d49` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-media-move/route.ts)
+- `aac052b49` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/settings.ts)
+- `ce0bdda53` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/roles/permissions.ts)
+- `6cf5bb4a0` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/admin/mediaApi.ts)
+- `f09df248e` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/globals/integrations.ts)
+- `3f1e8f90d` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/permissions.ts)
+- `028f153ea` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/courses/collections/Courses.ts)
+- `4c12bb5de` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/collections/reviewEvents.ts)
+- `dff4b653a` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/notify.ts)
+- `304b99493` feat: site files, cookie consent, media library, approval flow, custom fields (src/globals/SeoSettings.ts)
+- `d16f9f3bf` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/collections/products.ts)
+- `564a75a9f` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/store.ts)
+- `efafd5fca` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/handlers.ts)
+- `b8a2dde42` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/collections/posts.ts)
+- `7abcd5813` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/regions.ts)
+- `939ba836d` feat: site files, cookie consent, media library, approval flow, custom fields (src/globals/SecuritySettings.ts)
+- `ffb1b8667` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/log.ts)
+- `0299a3fb4` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/collections/pages.ts)
+- `17ffdd66e` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/fields.ts)
+- `bf390c059` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/roles/contentEditGuard.ts)
+- `ba0d6a755` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-media-folders/route.ts)
+- `bcebba95d` feat: site files, cookie consent, media library, approval flow, custom fields (src/globals/MediaSettings.ts)
+- `0baf3578f` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/collections/media.ts)
+- `4e5531d55` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/googleConsentMode.ts)
+- `d718627b4` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/registry.ts)
+- `bdadcf1a8` feat: site files, cookie consent, media library, approval flow, custom fields (src/globals/Integrations.ts)
+- `7f9078dbd` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-media-alt/route.ts)
+- `da4ee2082` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/gate.ts)
+- `763bee449` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/usage.ts)
+- `0276b2ea6` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-field-options/[slug]/route.ts)
+- `b96ef059e` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/consent.ts)
+- `09eb5189f` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/collection.ts)
+- `17259ed53` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/collections/fieldGroups.ts)
+- `e80f9c814` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/admin-field-groups/route.ts)
+- `b1fb6c484` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/ai/models.ts)
+- `7e93485b0` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/admin/review-queue/page.tsx)
+- `19b1b2b7a` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/ai/keys.ts)
+- `2624b021f` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/admin/MediaEditPanel.tsx)
+- `9c4cdf19c` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/url.ts)
+- `abdc17831` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/ai/client.ts)
+- `2a20ea17a` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/collections/events.ts)
+- `d26881298` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/consent.css)
+- `194038219` feat: site files, cookie consent, media library, approval flow, custom fields (src/admin/views/useDocumentSave.ts)
+- `8f5f6e8ae` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/admin/MediaCropField.tsx)
+- `252ef6fb1` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/ai/altText.ts)
+- `a932e190c` feat: site files, cookie consent, media library, approval flow, custom fields (src/fields/customFields/types.ts)
+- `c540785e4` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/access.ts)
+- `48aab7454` feat: site files, cookie consent, media library, approval flow, custom fields (tests/int/content-approval-fresh-install.int.spec.ts)
+- `45d64340a` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/EngageImage.tsx)
+- `64e6eacb7` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/collections/courses.ts)
+- `272827c36` feat: site files, cookie consent, media library, approval flow, custom fields (src/components/blocks/elements/HeadingElement.tsx)
+- `b7f9aefdd` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/config.ts)
+- `5e08f1eb1` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/ecommerce/collections/Products.ts)
+- `95958c9e6` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/manifest.webmanifest/route.ts)
+- `c59d285e9` feat: site files, cookie consent, media library, approval flow, custom fields (src/fields/customFields/CustomFieldsPanel.tsx)
+- `b258efe94` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/llms.txt/route.ts)
+- `6e94a49e8` feat: site files, cookie consent, media library, approval flow, custom fields (src/components/blocks/LoopBlock.tsx)
+- `100014fa6` feat: site files, cookie consent, media library, approval flow, custom fields (src/views/visualEditor/MergeTagPicker.tsx)
+- `0b856ade9` feat: site files, cookie consent, media library, approval flow, custom fields (src/fields/customFields/CustomFieldInput.tsx)
+- `9a5b77a84` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/validate.ts)
+- `f6f4d348d` feat: site files, cookie consent, media library, approval flow, custom fields (src/components/blocks/HeroBlock.tsx)
+- `0c1daec8e` feat: site files, cookie consent, media library, approval flow, custom fields (src/views/media/StockPhotoDialog.tsx)
+- `2db5e1f8a` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/GatedScript.tsx)
+- `038dd369a` feat: site files, cookie consent, media library, approval flow, custom fields (src/components/blocks/CtaBannerBlock.tsx)
+- `960307b90` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/uploadHook.ts)
+- `1dd70c215` feat: site files, cookie consent, media library, approval flow, custom fields (src/components/admin/nav/navStructure.ts)
+- `6a4cc263c` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/stringify.ts)
+- `529ddf53f` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/types.ts)
+- `309acdcee` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/ConsentManager.tsx)
+- `7542d8bfb` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/llms-full.txt/route.ts)
+- `afadaae0c` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/store.ts)
+- `4f8bf0f13` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/serverHook.ts)
+- `c7a159c86` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/consent/ConsentGate.tsx)
+- `499d34c87` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/humans.txt/route.ts)
+- `3900520ac` feat: site files, cookie consent, media library, approval flow, custom fields (src/collections/Posts.ts)
+- `5052e4e06` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/stock.ts)
+- `a59a56e68` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/server.ts)
+- `dd399ae81` feat: site files, cookie consent, media library, approval flow, custom fields (src/views/media/MediaGalleryView.tsx)
+- `f8bd172dd` feat: site files, cookie consent, media library, approval flow, custom fields (src/collections/Pages.ts)
+- `8c1aca33f` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/favicon.ico/route.ts)
+- `9c9b3a407` feat: site files, cookie consent, media library, approval flow, custom fields (src/fields/customFields.ts)
+- `7e936ed9d` feat: site files, cookie consent, media library, approval flow, custom fields (src/collections/Media.ts)
+- `25fc52277` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/app-ads.txt/route.ts)
+- `770f3546e` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/settingsTransfer/format.ts)
+- `286dbf339` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/views/ReviewQueueView.tsx)
+- `bb6c4d28f` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/ads.txt/route.ts)
+- `56bc8940d` feat: site files, cookie consent, media library, approval flow, custom fields (src/collections/FieldGroups.ts)
+- `13b927ec2` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/.well-known/security.txt/route.ts)
+- `1107d67e2` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/options.ts)
+- `c4f0cfc22` feat: site files, cookie consent, media library, approval flow, custom fields (src/admin/views/DocumentPanel.tsx)
+- `960ca6e2b` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(frontend)/layout.tsx)
+- `679c0ba3c` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/views/ReviewQueueTable.tsx)
+- `60ecdc806` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/oembed.ts)
+- `d56d45f09` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/viewer.ts)
+- `5d93396b9` feat: site files, cookie consent, media library, approval flow, custom fields (src/admin/settingsPages.ts)
+- `3b7080a78` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/approval/ui/useReviewState.ts)
+- `e6df238b5` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/sitemap.ts)
+- `20121e8d4` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/normalize.ts)
+- `26f5d37f4` feat: site files, cookie consent, media library, approval flow, custom fields (src/collections/Events.ts)
+- `9b9a8660c` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/seo/siteFilesData.ts)
+- `30db85ebb` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/optimise.ts)
+- `74d398d66` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(frontend)/blog/[slug]/page.tsx)
+- `595d13c1b` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/schema/reviewEvents.ts)
+- `6c6822fb3` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/location.ts)
+- `ae8f9e052` feat: site files, cookie consent, media library, approval flow, custom fields (src/views/media/MediaGalleryGrid.tsx)
+- `17837fcc7` feat: site files, cookie consent, media library, approval flow, custom fields (src/admin/componentRegistry.ts)
+- `af10dfb3d` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/media/library.ts)
+- `fd89864d1` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(frontend)/[...slug]/page.tsx)
+- `1b7c05593` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/index.ts)
+- `edabda27c` feat: site files, cookie consent, media library, approval flow, custom fields (src/features/customFields/conditions.ts)
+- `d97de1590` feat: site files, cookie consent, media library, approval flow, custom fields (src/cms/db/globals/seoSettings.ts)
+- `dcb53906f` feat: site files, cookie consent, media library, approval flow, custom fields (src/app/(engage)/api/consent-log/route.ts)
+- `720708015` feat: site files, cookie consent, media library, approval flow, custom fields (src/admin/adminViewRegistry.ts)
+- `da57f7205` fix: card toggle never collapsed; flatten boxes within boxes (tests/int/collapse-store.int.spec.ts)
+- `0f01c8131` fix: card toggle never collapsed; flatten boxes within boxes (src/app/(engage)/settings-page.css)
+- `99be693a0` fix: card toggle never collapsed; flatten boxes within boxes (src/admin/components/edit-collapse.css)
+- `353fd1059` fix: card toggle never collapsed; flatten boxes within boxes (src/admin/components/collapseStore.ts)
+
+## 2026-10-10 (46)
+- `8a31b6d28` feat: edit collapse, settings export/import, fonts (src/admin/settingsPages.ts)
+- `870b0da9c` feat: edit collapse, settings export/import, fonts (src/admin/components/fonts-manager.css)
+- `222843baa` feat: edit collapse, settings export/import, fonts (src/globals/SiteSettings.ts)
+- `7472431ce` feat: edit collapse, settings export/import, fonts (src/admin/componentRegistry.ts)
+- `cfbc85320` feat: edit collapse, settings export/import, fonts (tests/int/settings-transfer.int.spec.ts)
+- `ddb597325` feat: edit collapse, settings export/import, fonts (tests/int/internal-migrate-fresh-install.int.spec.ts)
+- `b3a77ca65` feat: edit collapse, settings export/import, fonts (src/admin/views/SettingsTransferClient.tsx)
+- `090d1a6f2` feat: edit collapse, settings export/import, fonts (src/migrations/20261010_100000_site_fonts.ts)
+- `c859aebe2` feat: edit collapse, settings export/import, fonts (tests/int/fresh-install-schema-coverage.int.spec.ts)
+- `66f1a6df0` feat: edit collapse, settings export/import, fonts (src/admin/views/SeoCard.tsx)
+- `ea58faeb9` feat: edit collapse, settings export/import, fonts (tests/int/fonts.int.spec.ts)
+- `9c473c31c` feat: edit collapse, settings export/import, fonts (src/features/settingsTransfer/import.ts)
+- `e3d75b1f5` feat: edit collapse, settings export/import, fonts (src/features/fonts/installed.ts)
+- `d2a84965f` feat: edit collapse, settings export/import, fonts (src/admin/views/EditForm.tsx)
+- `086606fa5` feat: edit collapse, settings export/import, fonts (src/features/fonts/install.ts)
+- `c56f49214` feat: edit collapse, settings export/import, fonts (src/admin/views/DocumentPanel.tsx)
+- `d2ee58696` feat: edit collapse, settings export/import, fonts (src/features/fonts/css.ts)
+- `a01819aca` feat: edit collapse, settings export/import, fonts (src/admin/components/collapseStore.ts)
+- `abe935943` feat: edit collapse, settings export/import, fonts (src/features/fonts/catalog.ts)
+- `e5e0afd54` feat: edit collapse, settings export/import, fonts (src/admin/components/SectionOutline.tsx)
+- `71ecc057a` feat: edit collapse, settings export/import, fonts (src/features/settingsTransfer/format.ts)
+- `4717be61f` feat: edit collapse, settings export/import, fonts (src/admin/components/FontsManagerField.tsx)
+- `644bfa304` feat: edit collapse, settings export/import, fonts (src/cms/db/globals/siteSettings.ts)
+- `485a1ebbf` feat: edit collapse, settings export/import, fonts (src/features/settingsTransfer/export.ts)
+- `2163af753` feat: edit collapse, settings export/import, fonts (src/app/(frontend)/layout.tsx)
+- `efee8cb71` feat: edit collapse, settings export/import, fonts (tests/int/edit-prefs.int.spec.ts)
+- `72c9fea06` feat: edit collapse, settings export/import, fonts (src/app/(engage)/api/admin-fonts-upload/route.ts)
+- `f6f8737b9` feat: edit collapse, settings export/import, fonts (src/admin/components/FontPickerField.tsx)
+- `a66c44a08` feat: edit collapse, settings export/import, fonts (src/admin/editPrefs.ts)
+- `235cbb20d` feat: edit collapse, settings export/import, fonts (src/features/settingsTransfer/crypto.ts)
+- `652b5bf6a` feat: edit collapse, settings export/import, fonts (src/app/(engage)/api/admin-fonts-search/route.ts)
+- `848342e47` feat: edit collapse, settings export/import, fonts (src/admin/components/CollapsibleCard.tsx)
+- `8efeb650c` feat: edit collapse, settings export/import, fonts (src/app/(engage)/api/admin-fonts-install/route.ts)
+- `27f76327c` feat: edit collapse, settings export/import, fonts (tests/int/collapse-store.int.spec.ts)
+- `c471ac1a3` feat: edit collapse, settings export/import, fonts (src/admin/components/CollapseAllBar.tsx)
+- `46cf56674` feat: edit collapse, settings export/import, fonts (src/app/(engage)/api/admin-settings-import/route.ts)
+- `08362ebe6` feat: edit collapse, settings export/import, fonts (src/features/security/headers.ts)
+- `2ad2a9a07` feat: edit collapse, settings export/import, fonts (src/app/(engage)/api/admin-edit-prefs/route.ts)
+- `4ce1bfd1e` feat: edit collapse, settings export/import, fonts (src/migrations/index.ts)
+- `cbd9dc6a6` feat: edit collapse, settings export/import, fonts (src/admin/views/settings-transfer.css)
+- `a83ff1f6c` feat: edit collapse, settings export/import, fonts (src/app/(engage)/api/admin-settings-export/route.ts)
+- `c104a50e3` feat: edit collapse, settings export/import, fonts (src/admin/components/fontLoader.ts)
+- `fdc2f45fe` feat: edit collapse, settings export/import, fonts (src/features/fonts/types.ts)
+- `7cf755561` feat: edit collapse, settings export/import, fonts (src/admin/views/SettingsTransferView.tsx)
+- `ddd870b6e` feat: edit collapse, settings export/import, fonts (src/admin/components/edit-collapse.css)
+- `4fb92c8b9` feat: edit collapse, settings export/import, fonts (src/admin/adminViewRegistry.ts)
+
+## 2026-10-06 (87)
+- `d977b9d26` feat: integration labels, roles display, fresh-install schema check (tests/int/fresh-install-schema-coverage.int.spec.ts)
+- `7d1e3d9e9` feat: integration labels, roles display, fresh-install schema check (src/admin/views/RolesViewClient.tsx)
+- `3a36740e3` feat: integration labels, roles display, fresh-install schema check (src/admin/components/PermissionTable.tsx)
+- `028f977df` feat: integration labels, roles display, fresh-install schema check (src/globals/Integrations.ts)
+- `1842fabcc` feat(roles): wire role access into content collections (src/features/forms/collections/FormSubmissions.ts)
+- `07a260588` feat(roles): wire role access into content collections (src/access/ecommerceAccess.ts)
+- `d6531f71b` feat(roles): wire role access into content collections (src/collections/FieldGroups.ts)
+- `07e972f39` feat(roles): wire role access into content collections (src/collections/Events.ts)
+- `9691bfb8e` feat(roles): wire role access into content collections (src/collections/Faqs.ts)
+- `734359d1f` feat(roles): wire role access into content collections (src/collections/PageTemplates.ts)
+- `d482b3922` feat(roles): wire role access into content collections (src/collections/Media.ts)
+- `9bc87710a` feat(roles): wire role access into content collections (src/collections/Posts.ts)
+- `67ce1830a` feat(roles): wire role access into content collections (src/features/multilingual/translationsCollection.ts)
+- `657f4234a` feat(roles): wire role access into content collections (src/collections/Pages.ts)
+- `bfe1b08e0` feat(roles): wire role access into content collections (src/features/redirects/collection.ts)
+- `028d616b0` feat(roles): wire role access into content collections (src/features/forms/collections/Forms.ts)
+- `8d568de1e` feat(roles): wire role access into content collections (tests/int/roles-wiring.int.spec.ts)
+- `bdf2f32d1` feat: permissions v2, integrations, session watch (src/app/(engage)/admin/[[...segments]]/page.tsx)
+- `c83459abc` feat: permissions v2, integrations, session watch (src/app/(engage)/api/admin-cloudflare-purge/route.ts)
+- `87ffb6bb9` feat: permissions v2, integrations, session watch (src/admin/list/quickEdit.ts)
+- `83c0aab85` feat: permissions v2, integrations, session watch (src/features/seo/metadata.ts)
+- `685ccf21a` feat: permissions v2, integrations, session watch (src/admin/components/ColorPickerField.tsx)
+- `ddec723e6` feat: permissions v2, integrations, session watch (tests/int/session-watch.int.spec.ts)
+- `38d77361a` feat: permissions v2, integrations, session watch (src/features/courses/collections/Courses.ts)
+- `a9a3ad9bd` feat: permissions v2, integrations, session watch (src/migrations/20261009_100000_user_permission_overrides.ts)
+- `834a57e41` feat: permissions v2, integrations, session watch (tests/int/integrations-public-ids.int.spec.ts)
+- `9681bcb51` feat: permissions v2, integrations, session watch (src/admin/sessionWatchLogic.ts)
+- `27317092a` feat: permissions v2, integrations, session watch (src/collections/Posts.ts)
+- `b83dd817d` feat: permissions v2, integrations, session watch (src/admin/components/CloudflarePurgeButton.tsx)
+- `5bf10cd23` feat: permissions v2, integrations, session watch (src/app/(engage)/tailwind.css)
+- `95d52bf09` feat: permissions v2, integrations, session watch (src/views/visualEditor/EditorDock.tsx)
+- `0057a4cbc` feat: permissions v2, integrations, session watch (src/admin/SessionWatch.tsx)
+- `357e18551` feat: permissions v2, integrations, session watch (src/collections/Events.ts)
+- `4eac2d382` feat: permissions v2, integrations, session watch (src/features/roles/permissionTable.ts)
+- `fb4b39f5d` feat: permissions v2, integrations, session watch (src/features/seo/components/SeoScripts.tsx)
+- `5afa35e78` feat: permissions v2, integrations, session watch (src/features/security/headers.ts)
+- `6995b22f9` feat: permissions v2, integrations, session watch (src/admin/components/CloudflarePurgeOnPublishField.tsx)
+- `8bb950006` feat: permissions v2, integrations, session watch (src/admin/settingsPages.ts)
+- `1881a794b` feat: permissions v2, integrations, session watch (tests/int/cloudflare-purge.int.spec.ts)
+- `5a9c20d8e` feat: permissions v2, integrations, session watch (src/features/integrations/publicIds.ts)
+- `8c527e97f` feat: permissions v2, integrations, session watch (tests/int/list-quick-edit.int.spec.ts)
+- `fa59f1ee6` feat: permissions v2, integrations, session watch (src/admin/componentRegistry.ts)
+- `90b20f5e6` feat: permissions v2, integrations, session watch (src/admin/RootLayout.tsx)
+- `8bca5e788` feat: permissions v2, integrations, session watch (src/admin/views/LoginView.tsx)
+- `b5cdfddba` feat: permissions v2, integrations, session watch (src/globals/SiteSettings.ts)
+- `8c62a6548` feat: permissions v2, integrations, session watch (src/collections/Users.ts)
+- `ecc223cb2` feat: permissions v2, integrations, session watch (src/globals/Integrations.ts)
+- `e49345c89` feat: permissions v2, integrations, session watch (src/features/courses/collections/Lessons.ts)
+- `4eea2d9e7` feat: permissions v2, integrations, session watch (tests/int/permissions-v2.int.spec.ts)
+- `7150ab537` feat: permissions v2, integrations, session watch (tests/int/permission-table.int.spec.ts)
+- `232cf9234` feat: permissions v2, integrations, session watch (src/migrations/index.ts)
+- `33a3c640f` feat: permissions v2, integrations, session watch (src/features/seo/components/AnalyticsLoader.tsx)
+- `91e0ed146` feat: permissions v2, integrations, session watch (src/admin/components/UserPermissionOverridesField.tsx)
+- `8eccae17f` feat: permissions v2, integrations, session watch (tests/int/internal-migrate-fresh-install.int.spec.ts)
+- `52b933542` feat: permissions v2, integrations, session watch (src/app/(engage)/list-row-actions.css)
+- `e13ed8c47` feat: permissions v2, integrations, session watch (src/collections/Pages.ts)
+- `5c5709d5a` feat: permissions v2, integrations, session watch (src/admin/views/RolesViewClient.tsx)
+- `b7a133bb7` feat: permissions v2, integrations, session watch (src/migrations/20261008_100000_integrations_expand.ts)
+- `93a58197a` feat: permissions v2, integrations, session watch (tests/int/settings-pages.int.spec.ts)
+- `9bc8f3a36` feat: permissions v2, integrations, session watch (src/features/ecommerce/collections/Products.ts)
+- `e654fc7a5` feat: permissions v2, integrations, session watch (tests/int/content-edit-guard.int.spec.ts)
+- `61bee864b` feat: permissions v2, integrations, session watch (src/features/roles/contentEditGuard.ts)
+- `58e6b67da` feat: permissions v2, integrations, session watch (src/admin/components/PermissionTable.tsx)
+- `439affc95` feat: permissions v2, integrations, session watch (src/globals/SeoSettings.ts)
+- `f8d902593` feat: permissions v2, integrations, session watch (src/features/speed/purge.ts)
+- `9c4911fe9` feat: permissions v2, integrations, session watch (src/features/roles/permissions.ts)
+- `acdd277a7` feat: permissions v2, integrations, session watch (src/views/VisualEditor.tsx)
+- `612245af4` feat: permissions v2, integrations, session watch (src/admin/views/ListRowActions.tsx)
+- `3a42c23db` feat: permissions v2, integrations, session watch (src/admin/views/ListView.tsx)
+- `18d858432` feat: permissions v2, integrations, session watch (src/views/visualEditor/FieldPanel.tsx)
+- `b6614e28a` fix(redirects): CSV quoting round trip
+- `13684860e` feat: tests/unit/redirects-csv.spec.ts
+- `462550f6f` feat: src/admin/list/cellFormatting.ts
+- `5a75ebeed` feat: src/app/(engage)/api/admin-redirects-csv/route.ts
+- `b7b821b09` feat: src/collections/Users.ts
+- `78468b17a` feat: tests/int/internal-migrate-fresh-install.int.spec.ts
+- `24e40945c` feat: src/migrations/index.ts
+- `52a250457` feat: src/migrations/20261007_100000_users_authorship.ts
+- `dfdf63d32` feat: src/admin/views/ListToolbar.tsx
+- `6d392254b` feat: src/admin/list/listPrefs.ts
+- `8cb50ef74` feat: tests/int/cellFormatting.int.spec.ts
+- `a1c1f0cee` feat: tests/int/admin-list-view.int.spec.ts
+- `f80e8060d` feat: src/features/redirects/csv.ts
+- `07a34af8b` feat: src/app/(engage)/api/admin-redirects-test/route.ts
+- `29e17811c` feat: tests/int/dateFormatter.int.spec.ts
+- `6790cdc3a` feat: tests/int/redirects-api.int.spec.ts
+- `d2e505a70` feat: src/admin/list/dateFormatter.ts
+
+## 2026-10-05 (128)
+- `4d3c49366` chore: remove stray file
+- `f7ae45e7a` chore: remove stray file
+- `2ca0f0865` chore: remove stray file
+- `9f0fb322e` fix: restore admin-pages-tree spec
+- `334fca32c` fix: update tests/int/admin-edit-lock-route.int.spec.ts
+- `b1638424c` fix: update tests/int/admin-visibility-password-route.int.spec.ts
+- `83204dca7` fix: restore truncated cms db index and visibility password route
+- `d6de5416b` fix: restore src/migrations/index.ts
+- `c327bbe82` fix: restore tests/int/getting-started.int.spec.ts
+- `46e3dc5c7` fix: restore tests/int/preview-link-route.int.spec.ts
+- `44f064b04` fix: restore tests/int/admin-visibility-password-route.int.spec.ts
+- `1c1dc2ea4` fix: restore src/views/dashboard/Dashboard.tsx
+- `929e7a7b8` fix: restore src/admin/adminViewRegistry.ts
+- `267789b91` fix: restore src/collections/Users.ts
+- `a3163f9b7` fix: restore src/app/(engage)/api/admin-visibility-password/route.ts
+- `981855455` fix: restore src/features/roles/resolve.ts
+- `ceb6ee0a1` fix: restore tests/int/password-admin-route.int.spec.ts
+- `15d57d371` fix: restore src/components/admin/nav/AdminNav.tsx
+- `b4006d001` fix: restore src/admin/views/HeaderFooterView.tsx
+- `0fbe520a8` fix: restore src/app/(engage)/api/admin-version-delete/route.ts
+- `3e3d58f10` fix: restore src/admin/views/RootPage.tsx
+- `d3c92eca2` fix: restore src/collections/Roles.ts
+- `a84f47f84` fix: restore src/features/pagesTree/breadcrumb.ts
+- `bb0c28d91` fix: restore tests/int/panel-preview.int.spec.ts
+- `2f898a611` fix: restore src/admin/views/EditView.tsx
+- `610483fe8` fix: restore src/app/(engage)/api/admin-edit-lock/route.ts
+- `cc40f6ebc` fix: restore tests/int/admin-version-delete-route.int.spec.ts
+- `6f89c8270` fix: restore tests/int/roles-guards.int.spec.ts
+- `ec39b636f` fix: restore src/admin/views/RolesView.tsx
+- `4f65adcaf` fix: restore file src/cms/db/collections/roles.ts
+- `7adfde959` fix: restore file tests/int/AdminNavOwnerFilter.int.spec.ts
+- `926d623d5` fix: restore file src/admin/views/SettingsPageView.tsx
+- `187a16979` fix: restore file src/features/gettingStarted/GettingStartedCard.module.css
+- `16063fa4d` fix: restore file tests/int/internal-migrate-fresh-install.int.spec.ts
+- `a66e39f28` fix: restore file tests/int/admin-edit-lock-route.int.spec.ts
+- `3355f684c` fix: restore file r3.txt
+- `c8fdb2fec` fix: restore file r0.txt
+- `af74d58f1` fix: restore file r2.txt
+- `b296755ec` feat: roles, getting-started checklist, fixes (part 3)
+- `aeb5e09db` feat: roles, getting-started checklist, fixes (part 3)
+- `6f285ddb0` feat: roles, getting-started checklist, fixes (part 3)
+- `1d8dd2256` feat: roles, getting-started checklist, fixes (part 3)
+- `902eb6ce9` feat: roles, getting-started checklist, fixes (part 3)
+- `6431a18ea` feat: roles, getting-started checklist, fixes (part 3)
+- `003e2c469` feat: roles, getting-started checklist, fixes (part 3)
+- `07bb968ed` feat: roles, getting-started checklist, fixes (part 2)
+- `8e4d68f55` feat: roles, getting-started checklist, fixes (part 3)
+- `2adb05b46` feat: roles, getting-started checklist, fixes (part 2)
+- `e40531d81` feat: roles, getting-started checklist, fixes (part 1)
+- `a77801130` feat: roles, getting-started checklist, fixes (part 0)
+- `8e4bd8248` fix(db): delete versioned docs cleanly, read blocks in parallel
+- `9b866bda3` test(pages): deleting pages that were parents
+- `f08643942` fix(pages): parent picker search focuses immediately
+- `592a09c9a` fix(pages): parent picker loads pages reliably on mount
+- `4ddf837f7` fix(pages): parent picker label, homepage path, dark overlay
+- `76e75ddc3` fix(pages): parent picker label, homepage path, dark overlay
+- `cbce1c9a5` fix(pages): restore eslint rule name in tree client
+- `53d043a7d` feat(pages): tree drop-inside fix and parent picker popup
+- `80085df8e` feat(pages): tree drop-inside fix and parent picker popup
+- `3fe7f9127` feat(pages): tree drop-inside fix and parent picker popup
+- `0f4063e2d` feat(pages): tree drop-inside fix and parent picker popup
+- `3c554adc7` feat(pages): tree drop-inside fix and parent picker popup
+- `aa01db03e` feat(pages): tree drop-inside fix and parent picker popup
+- `e036f8bad` test(auth): restore full spec; tamper the first signature character so the test is deterministic
+- `bfab7e2da` feat(pages): enable Tree tab on the Pages list
+- `e932b0595` feat(pages): enable Tree tab on the Pages list
+- `156c61c24` feat(pages): enable Tree tab on the Pages list
+- `916edb5e6` test(pages): tree API, component, homepage switch; harden flaky specs
+- `792ca548e` test(pages): tree API, component, homepage switch; harden flaky specs
+- `6ad784628` feat(pages): tree view, tree API, homepage switch fix
+- `c4c1e9e00` test(pages): tree API, component, homepage switch; harden flaky specs
+- `d661365ba` feat(pages): tree view, tree API, homepage switch fix
+- `fd2a50222` test(pages): tree API, component, homepage switch; harden flaky specs
+- `57d3e9c32` feat(pages): tree view, tree API, homepage switch fix
+- `ea49f806a` feat(pages): tree view, tree API, homepage switch fix
+- `ae3ceefaf` test(pages): tree API, component, homepage switch; harden flaky specs
+- `3899658ff` test(pages): tree API, component, homepage switch; harden flaky specs
+- `4c4f62d5b` feat(pages): tree view, tree API, homepage switch fix
+- `34f549f18` feat(pages): tree view, tree API, homepage switch fix
+- `c2e393b98` test(pages): tree API, component, homepage switch; harden flaky specs
+- `9b00693ad` feat(pages): tree view, tree API, homepage switch fix
+- `767c5470d` feat(pages): sort_order column and field for tree ordering
+- `afc4d0c55` feat(pages): sort_order column and field for tree ordering
+- `0a0862bb6` feat(pages): sort_order column and field for tree ordering
+- `cad51dc40` feat(pages): sort_order column and field for tree ordering
+- `ce581250f` fix(redirects): call ctx.waitUntil as a method so hit counts record
+- `823a4bf83` test(schedule): restore full runDue spec with longer timeout
+- `c392cd22d` feat(redirects): wire collection, middleware hook and migration
+- `bf494919f` feat(redirects): wire collection, middleware hook and migration
+- `b111c7e6a` feat(redirects): wire collection, middleware hook and migration
+- `3e2e11706` test(redirects): collection, validation, resolver, tree planner specs
+- `b8312f822` test(redirects): collection, validation, resolver, tree planner specs
+- `5ddac1ad5` test(redirects): collection, validation, resolver, tree planner specs
+- `e53a07aa2` test(redirects): collection, validation, resolver, tree planner specs
+- `f3e07ef74` test(redirects): collection, validation, resolver, tree planner specs
+- `f4b30022a` feat(redirects): wire collection, middleware hook and migration
+- `460b89147` feat(redirects): wire collection, middleware hook and migration
+- `c301036b7` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `f84a0e2f7` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `299d2db43` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `acb425b18` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `467e99223` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `3d647037e` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `50d0d7f97` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `29bc8a9a6` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `71455e138` feat(redirects): collection, validation, resolver, migration; pages tree planner
+- `cc375481a` fix(admin): settings and header-footer headings readable in dark theme
+- `408847771` fix(admin): settings and header-footer headings readable in dark theme
+- `af70e79c4` chore(admin): remove settings overview test
+- `ec5830beb` chore(admin): remove settings overview css
+- `49325c47f` chore(admin): remove nested nav css
+- `33e671222` chore(admin): remove settings overview
+- `60cc916f3` chore(admin): remove settings overview
+- `04485c0bc` feat(admin): flat settings nav and dashboard
+- `2f1385dda` feat(admin): flat settings pages
+- `48ce77dc3` feat(admin): flat settings nav and dashboard
+- `1d536c47b` test(admin): flat settings tests
+- `fe3387685` feat(admin): flat settings pages
+- `351d934c1` feat(admin): flat settings pages
+- `60f0f7176` feat(admin): flat settings nav and dashboard
+- `c3b4df36f` test(admin): flat settings tests
+- `52a966b94` feat(admin): flat settings pages
+- `22cb574eb` feat(admin): flat settings nav and dashboard
+- `e3fab6893` feat(admin): flat settings pages
+- `c5e698e52` test(admin): flat settings tests
+- `5244b7f8e` feat(admin): flat settings nav and dashboard
+- `3fb0ada93` feat(admin): flat settings pages
+- `8257f3ca6` feat(admin): flat settings pages
+
+## 2026-10-04 (24)
+- `cbe1c3672` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `790bbea8b` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `b44e842d7` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `1ce59f03c` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `5e1f3fbe8` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `6214a4c06` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `988c5df02` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `8951ea2fd` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `84cad268b` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `189b629d2` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `f8dffaa36` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `9878f1c9e` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `f043f1b90` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `ca4c6d58a` feat(admin): nested settings accordion, sectioned dashboard, combined header and footer page
+- `93904db7b` feat(admin): group settings nav and add settings overview
+- `9a7c355fc` feat(admin): group settings nav and add settings overview
+- `ff5532fb7` feat(admin): group settings nav and add settings overview
+- `5d6433edf` feat(admin): group settings nav and add settings overview
+- `a8766bc98` feat(admin): group settings nav and add settings overview
+- `052af22a9` feat(admin): group settings nav and add settings overview
+- `c0e906760` feat(admin): group settings nav and add settings overview
+- `517451e17` feat(admin): group settings nav and add settings overview
+- `0df44487b` feat(admin): group settings nav and add settings overview
+- `b2286a91a` feat(admin): group settings nav and add settings overview
+
+## 2026-10-03 (126)
+- `18553daa3` test(admin): tests for password protection and unlock
+- `a5cb25a5e` test(admin): schedule and edit lock banner tests
+- `9ef5ae39e` test(admin): tests for visibility, schedule, edit lock and worker wrapper
+- `af25e5810` test(admin): schedule and edit lock banner tests
+- `99dd4db98` test(admin): tests for password protection and unlock
+- `7cbbcf28e` test(admin): tests for visibility, schedule, edit lock and worker wrapper
+- `84bb67ffb` test(admin): schedule and edit lock banner tests
+- `477af93d5` test(admin): tests for password protection and unlock
+- `0ebb9b81c` test(admin): schedule and edit lock banner tests
+- `60cb61dc0` test(admin): tests for visibility, schedule, edit lock and worker wrapper
+- `343ef783c` test(admin): tests for password protection and unlock
+- `37a98782c` test(admin): tests for visibility, schedule, edit lock and worker wrapper
+- `25bdd5648` feat(worker): use wrapper entry and add 5 minute cron trigger for scheduled publishing
+- `4cfb03e0b` feat(worker): wrapper entry with scheduled handler for scheduled publishing
+- `60f95d199` fix(db): reset schedule done flags when a date changes (null-safe)
+- `77a89b11a` feat(admin): visibility password, schedule, edit lock and events seo
+- `da870865c` feat(admin): visibility password, schedule, edit lock and events seo
+- `f2d195f65` test(admin): tests for visibility, schedule, edit lock, worker wrapper
+- `5a9bbb687` feat(admin): visibility password, schedule, edit lock panels and routes
+- `cbd11010a` feat(admin): visibility password, schedule, edit lock and events seo
+- `afbc929f1` feat(admin): visibility password, schedule, edit lock and events seo
+- `6ac28e24c` feat(admin): visibility password, schedule, edit lock panels and routes
+- `0f9e04963` feat(admin): visibility password, schedule, edit lock and events seo
+- `6499643b7` feat(admin): visibility password, schedule, edit lock panels and routes
+- `512ff1b45` feat(admin): visibility password, schedule, edit lock and events seo
+- `a0aadd53a` feat(admin): visibility password, schedule, edit lock panels and routes
+- `a30831c30` feat(admin): visibility password, schedule, edit lock and events seo
+- `5b29110fb` feat(admin): visibility password, schedule, edit lock panels and routes
+- `6fb2e5b3f` feat(admin): visibility password, schedule, edit lock and events seo
+- `310a4dba6` feat(admin): visibility password, schedule, edit lock panels and routes
+- `c5372796e` feat(admin): visibility password, schedule, edit lock and events seo
+- `bd4120485` feat(admin): visibility password, schedule, edit lock and events seo
+- `2d5ff9529` feat(admin): visibility password, schedule, edit lock and events seo
+- `6dafd580f` feat(admin): visibility password, schedule, edit lock panels and routes
+- `2d6cf147d` feat(admin): visibility password, schedule, edit lock panels and routes
+- `cb20123b8` feat(admin): visibility password, schedule, edit lock and events seo
+- `4097458fa` test(admin): tests for visibility, schedule, edit lock, worker wrapper
+- `be8020015` feat(admin): visibility password, schedule, edit lock panels and routes
+- `cd3beea62` feat(admin): visibility password, schedule, edit lock and events seo
+- `7d16dfc04` feat(admin): visibility password, schedule, edit lock panels and routes
+- `8d8d0f3bb` feat(admin): visibility password, schedule, edit lock panels and routes
+- `b9d5f8ab7` feat(admin): visibility password, schedule, edit lock panels and routes
+- `e2bf55cff` feat(admin): visibility password, schedule, edit lock panels and routes
+- `d2716fcf6` feat(admin): visibility password, schedule, edit lock and events seo
+- `4001e8eb9` test(admin): tests for visibility, schedule, edit lock, worker wrapper
+- `67b593233` feat(admin): visibility password, schedule, edit lock panels and routes
+- `37c0c994d` feat(admin): visibility password, schedule, edit lock panels and routes
+- `eb732ba47` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `f3c0ce991` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `9ec8697a5` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `1ffac7319` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `d2e283612` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `b0e256699` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `c9346757f` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `0301160b2` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `dccaa5df8` feat(db): migration for content passwords, scheduled publishes, edit locks, events seo
+- `0061fbe98` feat(admin): visibility control and preview build fixes
+- `9cc960f2c` feat(admin): visibility control and preview build fixes
+- `04e6a0895` feat(admin): visibility control and preview build fixes
+- `2ab697e15` feat(admin): visibility control and preview build fixes
+- `d4fb55846` feat(admin): visibility control and preview build fixes
+- `1f38bcf90` feat(admin): visibility control and preview build fixes
+- `3130acba4` feat(admin): visibility control and preview build fixes
+- `262b7f4a2` fix(admin): restore reviewed previewToken implementation
+- `5952f9c8e` fix(admin): restore reviewed preview slice files
+- `2de6f7d2e` fix(admin): restore reviewed preview slice files
+- `1d47dcdf2` fix(admin): restore reviewed preview slice files
+- `32be9d5ca` feat(admin): signed draft preview links
+- `e6a4831ac` feat(admin): signed draft preview links
+- `ec9e6c5b2` feat(admin): signed draft preview links
+- `b077c5fc9` feat(admin): signed draft preview links
+- `4c8aee13f` feat(admin): signed draft preview links
+- `b564670c3` feat(admin): signed draft preview links
+- `ad91a72cb` test(admin): preview link tests and preview page
+- `063c19e90` test(admin): preview link tests and preview page
+- `cb83d1015` test(admin): preview link tests and preview page
+- `eed6d0a6c` test(admin): preview link tests and preview page
+- `7b182e5c5` test(admin): preview link tests and preview page
+- `0830ca126` feat(admin): real delete permission, one visual-editor button, compare versions
+- `a6ab40a66` feat(admin): real delete permission, one visual-editor button, compare versions
+- `c975ce084` feat(admin): real delete permission, one visual-editor button, compare versions
+- `a85067ad8` feat(admin): real delete permission, one visual-editor button, compare versions
+- `ab5a1a723` feat(admin): real delete permission, one visual-editor button, compare versions
+- `5169f177a` test(admin): delete permission, panel button, version diff
+- `f68f0d465` test(admin): delete permission, panel button, version diff
+- `0b45dc2e4` feat(admin): real delete permission, one visual-editor button, compare versions
+- `1007588b1` test(admin): delete permission, panel button, version diff
+- `66b840134` test(admin): delete permission, panel button, version diff
+- `612361b9f` test(admin): delete permission, panel button, version diff
+- `21d64e3ff` test(admin): version history delete
+- `b6c122c10` feat(admin): delete entries in version history
+- `88112c01a` test(admin): version history delete
+- `66701e105` feat(admin): delete entries in version history
+- `56403b203` feat(admin): delete entries in version history
+- `ead3e4943` test(admin): version history delete
+- `4dc974d01` test(admin-list): prefs owner matching, new where shape
+- `7ce803034` fix(admin-list): save default prefs (polymorphic user), validator accepts polymorphic relationTo
+- `1a33b8431` test(admin-list): prefs real-engine round trip, polymorphic validator
+- `f8b84a5e4` fix(admin-list): save default prefs (polymorphic user), validator accepts polymorphic relationTo
+- `799a7f512` test(admin-list): prefs real-engine round trip, polymorphic validator
+- `88f0ddcef` fix(admin-list): save default prefs (polymorphic user), validator accepts polymorphic relationTo
+- `167064222` test(admin-list): prefs real-engine round trip, polymorphic validator
+- `643e7bee2` fix(admin-list): save default prefs (polymorphic user), validator accepts polymorphic relationTo
+- `8072da91e` fix(admin-list): ignore empty filter values
+- `5d51fe3ed` fix(admin-list): ignore empty filter values
+- `7821db01a` fix(admin-list): ignore empty filter values
+- `96b79aa6f` fix(admin-list): anchor filter/columns popovers right
+- `0c159fd84` fix(admin-list): anchor filter/columns popovers right
+- `d4efd1eef` fix(admin-list): users email column, multi-select labels
+- `07b950c36` fix(admin-list): users email column, multi-select labels
+- `ed05f9941` fix(admin-list): users email column, multi-select labels
+- `b4bebb977` fix(admin-list): users email column, multi-select labels
+- `cd55c0d74` fix(admin-list): filter chip link instead of handler, format system dates
+- `36e368f41` fix(admin-list): filter chip link instead of handler, format system dates
+- `9831c5751` fix(admin-list): filter chip link instead of handler, format system dates
+- `fdf5838cf` fix(admin-list): filter chip link instead of handler, format system dates
+- `778c4a2b6` fix(admin): resolve version author ids to names
+- `59e2ffc69` fix(admin): resolve version author ids to names
+- `973a3298d` fix(admin): resolve version author ids to names
+- `0218d9de4` fix(admin): resolve version author ids to names
+- `e19c053c2` fix(engine): restore operations.ts and pass id and data to field validators
+- `c8e4db6d6` fix(engine): pass id and data to field validators (page slug self-conflict)
+- `5f52a194a` fix(engine): pass id and data to field validators (page slug self-conflict)
+- `cd6167e47` fix(engine): pass id and data to field validators (page slug self-conflict)
+- `3900a6fba` fix(engine): pass id and data to field validators (page slug self-conflict)
+- `4af0583c5` fix(engine): pass id and data to field validators (page slug self-conflict)
+
+## 2026-10-02 (103)
+- `5d68e95ea` feat(admin): access card, schema tab, revision authors
+- `1da67bc80` feat(admin): access card, schema tab, revision authors
+- `eaef9305f` feat(admin): access card, schema tab, revision authors
+- `9a8250b6b` feat(admin): access card, schema tab, revision authors
+- `054ef04fe` feat(admin): access card, schema tab, revision authors
+- `f6c2361d5` feat(admin): access card, schema tab, revision authors
+- `48f30fa22` feat(admin): access card, schema tab, revision authors
+- `d9692eb8a` fix(admin): page type placeholder and test updates
+- `33ea0c7ef` fix(admin): page type placeholder and test updates
+- `6e95c0bb9` fix(admin): page type placeholder and test updates
+- `ef94b22e8` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `7fe70c097` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `409d56eed` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `79dde86d0` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `8353fa367` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `2d9b73b9e` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `4df1e3fd4` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `1f4153f49` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `f24c0228d` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `d0e761f0f` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `2f82ccd2d` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `6606b21ef` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `954de5ebe` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `9dc090448` fix(admin): live-check fixes (dates, authorship rows, page type placeholder, embedded views)
+- `ef1a5fef8` feat(admin): hide authorship fields, page type box
+- `a174b0c10` feat(admin): hide authorship fields, page type box
+- `a046ccc02` feat(admin): list view, authorship, page type, page JSON-LD
+- `8c7077f81` feat(admin): list view, authorship, page type, page JSON-LD
+- `8f90bd942` feat(admin): list view, authorship, page type, page JSON-LD
+- `f6c4f5e0c` feat(admin): list view, authorship, page type, page JSON-LD
+- `fa0ac845b` feat(admin): list view, authorship, page type, page JSON-LD
+- `c0a7dd825` feat(admin): list view, authorship, page type, page JSON-LD
+- `3ce965ec3` feat(admin): list view, authorship, page type, page JSON-LD
+- `07606cd2f` feat(admin): list view, authorship, page type, page JSON-LD
+- `e8cea2d02` feat(admin): list view, authorship, page type, page JSON-LD
+- `e0df047c7` feat(admin): list view, authorship, page type, page JSON-LD
+- `ad95e2131` feat(admin): list view, authorship, page type, page JSON-LD
+- `5dcb11673` feat(admin): list view, authorship, page type, page JSON-LD
+- `1e1b0a0aa` feat(admin): list view, authorship, page type, page JSON-LD
+- `a9242b951` feat(admin): list view, authorship, page type, page JSON-LD
+- `506f92d8b` feat(admin): list view, authorship, page type, page JSON-LD
+- `22f641c77` feat(admin): list view, authorship, page type, page JSON-LD
+- `ddea46fdb` feat(admin): list view, authorship, page type, page JSON-LD
+- `394133806` feat(admin): list view, authorship, page type, page JSON-LD
+- `6d4d04e55` feat(admin): list view, authorship, page type, page JSON-LD
+- `96a4a7e78` feat(admin): list view, authorship, page type, page JSON-LD
+- `313f64fd9` feat(admin): list view, authorship, page type, page JSON-LD
+- `15ee02291` feat(admin): list view, authorship, page type, page JSON-LD
+- `def6f19b7` feat(admin): list view, authorship, page type, page JSON-LD
+- `b3bd9898e` feat(admin): list view, authorship, page type, page JSON-LD
+- `2cf478614` feat(admin): list view, authorship, page type, page JSON-LD
+- `17432bad9` feat(admin): list view, authorship, page type, page JSON-LD
+- `3d98826e2` feat(admin): list view, authorship, page type, page JSON-LD
+- `0063eec36` feat(admin): list view, authorship, page type, page JSON-LD
+- `f53bfa584` feat(admin): list view, authorship, page type, page JSON-LD
+- `c3bd9141d` feat(admin): list view, authorship, page type, page JSON-LD
+- `0bd3ec982` feat(admin): list view, authorship, page type, page JSON-LD
+- `e1dcca477` feat(admin): list view, authorship, page type, page JSON-LD
+- `0ca21f225` feat(admin): list view, authorship, page type, page JSON-LD
+- `3dc5b32af` feat(admin): list view, authorship, page type, page JSON-LD
+- `3511032a2` feat(admin): list view, authorship, page type, page JSON-LD
+- `3c2be78f7` feat(admin): list view, authorship, page type, page JSON-LD
+- `e753bcc0d` test(seo): align robots assertions with the unified metadata builder
+- `687ada5bc` style(admin): social image preview
+- `29020d904` test(admin): social image helpers
+- `dd6c40a8a` feat(admin): social image preview, size warning and which-image note
+- `705bb1c3a` feat(admin): social image preview, size warning and which-image note
+- `b6b82c533` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `50deb4a0d` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `bf33546dc` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `5d5a5d592` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `abc5d1341` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `55c80d726` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `33b891174` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `f38dc735a` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `0b9c9ed75` fix(seo): pass the page path to metadata so canonical and og:url are set
+- `420b9aa15` test(seo): buildMetadata with the SEO feature on and off
+- `16f6853e6` test(seo): metadata coverage
+- `84af3b6b0` fix(seo): use the meta title and emit canonical, og:url, site name and X handle on pages
+- `24e9bfd42` test(db): assert authorship, page type and product SEO columns
+- `a2ab9147e` feat(db): idempotent migration for authorship, page type and product SEO columns
+- `bd186ea50` feat(db): idempotent migration for authorship, page type and product SEO columns
+- `c90f05a02` test(seo): metadata fallbacks and regression guards
+- `cbad92ee5` test(seo): seo group field list
+- `b8b8ccf49` test(admin): seo group split
+- `c3be3e8da` chore(seo): type generateMetadata return
+- `3998bb12f` feat(seo): blog posts pass their featured image to metadata
+- `8e1653ed3` feat(seo): buildMetadata honours the new SEO fields
+- `36a9bcaa5` feat(seo): emit social title, X card and nofollow
+- `3795f9542` feat(seo): resolve social title, image and X card
+- `95d861988` feat(seo): document SEO type gains social fields
+- `a2a082060` style(admin): SEO card and snippet preview
+- `09c613bce` feat(admin): render the SEO card in the middle column
+- `b2ade60e9` feat(admin): SEO card with SEO and Social tabs and snippet preview
+- `baa0e81f2` feat(seo): canonical, nofollow and social fields on documents
+- `1c8e4f8b5` test(db): do not hardcode the migration count
+- `746830623` test(db): assert SEO social columns and idempotent re-run
+- `9b3c7d64f` feat(db): idempotent migration for SEO social columns
+- `a90d4a4c0` feat(db): idempotent migration for SEO social columns
+- `571fdef58` test(admin): settings split for the edit screen
+- `8ba328226` feat(admin): settings card in the middle column of the edit screen
+- `244004c02` feat(admin): settings card in the middle column of the edit screen
+- `15ddd7010` feat(admin): settings card in the middle column of the edit screen
+
+## 2026-10-01 (15)
+- `640d23882` fix(admin): keep the breadcrumb clear of the nav toggle
+- `f2397bfcd` test(admin): field label fallback
+- `d632853ec` fix(admin): keep the breadcrumb clear of the nav toggle
+- `888d7c45d` fix(admin): opening an existing page no longer rewrites its slug from the title
+- `dd12dd731` fix(admin): label fields from their name when the config sets no label
+- `a76d6ebf7` style(admin): edit screen layout and panel styles
+- `0062ab349` test(admin): edit screen field split and blocks-unchanged rule
+- `5204d443c` feat(pages): sections no longer required on create (the visual editor builds them)
+- `b358fc393` feat(admin): route /collections/:slug/:id/versions
+- `1eca627a7` feat(admin): breadcrumb, document title and panel data on the edit screen
+- `dba279fa9` feat(admin): two-column edit screen, visual blocks field replaced by a content card
+- `ef7f93afa` feat(admin): versions screen for a document
+- `04c5ff56d` feat(admin): versions list with restore
+- `e6e651b5d` feat(admin): right-hand publish and overview panel for documents
+- `1f349a247` feat(admin): shared save/publish/duplicate/delete hook for the edit screen
+
+## 2026-09-30 (20)
+- `3f4967c47` fix(admin): scale admin type and spacing down to the intended 17px base unit
+- `722d8cc47` chore: remove every remaining trace of Payload
+- `0c39cb69c` test: restore cms/db tests on migrated local D1 - tests/int/cms-db-carts-orders-transactions.int.spec.ts
+- `5113702a7` test: restore cms/db tests on migrated local D1 - tests/int/cms-db-addresses.int.spec.ts
+- `4bec48771` test: restore cms/db tests on migrated local D1 - tests/helpers/migratedDb.ts
+- `7e87b1ebc` docs: README for self-initialising deploy, drop Payload-era scripts
+- `e9b4939f6` feat: self-initialising deploy - package.json
+- `489f131a6` feat: self-initialising deploy - src/migrations/runInternalMigrate.ts
+- `b469c1e9b` feat: self-initialising deploy - src/seed/seedHomeAndTemplates.ts
+- `4e642275c` feat: self-initialising deploy - src/engine/index.ts
+- `9164a0a25` feat: self-initialising deploy - src/cms/db/connect.ts
+- `8cc86a8f3` feat: self-initialising deploy - .env.example
+- `c389c70f3` test: drop freshInstall helper (SQL folded into runInternalMigrate)
+- `cb9a22a30` chore: fold blocks/rels SQL into runInternalMigrate (part4)
+- `c49d28bea` chore: fold blocks/rels SQL into runInternalMigrate (part3)
+- `c20d3ee58` chore: fold blocks/rels SQL into runInternalMigrate (part2)
+- `2543dcde0` chore: fold blocks/rels SQL into runInternalMigrate (part1)
+- `6c554c93a` feat: self-initialising deploy - internal-migrate-fresh-install.int.spec.ts
+- `8d5c4703f` feat: self-initialising deploy - blocksRelsTables.ts
+- `fd51af01f` feat: self-initialising deploy - ensureInitialised.ts
+
+## 2026-09-29 (78)
+- `eb7b9255d` chore: remove Payload entirely (oracle tests, devDeps, aliases); commit generated engage-types.ts
+- `4dab030f5` fix(admin): add auto labels for payload-preferences and payload-locked-documents (admin 500)
+- `3f9faf62f` chore: drop payload build/CLI scripts; payload packages are devDependencies (parity-test oracle only)
+- `6ea4ac7c7` chore: remove one-off table-rename generator (renames already applied via migrations)
+- `a914e0324` chore: remove courses selfTest script that ran on real Payload
+- `60d45cd88` chore: remove accounts selfTest script that ran on real Payload
+- `de9ad0749` refactor: remove dead generated admin importMap
+- `af740710e` refactor: remove withPayload vendor seam
+- `89d674db9` refactor: remove r2Storage vendor seam
+- `4955c5f19` refactor: remove src/engage.config.ts (real-Payload config now lives in tests/helpers as a test-only oracle)
+- `6a0b3b226` test: real-Payload oracle config moved out of src (test-only)
+- `15e7a7a5c` test: oracle D1 adapter (test-only, routes to src/cms/db)
+- `a29a1a26f` chore: point config aliases at the test-only oracle config
+- `3035f77d3` refactor: plain Next config, no vendor wrapper
+- `7f2ce82e1` test: rest parity spec imports vendor routes directly
+- `36cebfe6b` test: rewrite api slug route wiring test for the Payload-free route
+- `cde98b9fe` test: seedUser uses the oracle config alias
+- `b37639562` refactor: use engine types instead of vendor types
+- `0d820990e` refactor: use engine types instead of vendor types
+- `dd56977a7` refactor: retype findByID id for own engine
+- `54b6f991d` refactor: retype findByID id for own engine
+- `ee7905a5b` refactor: cast engine config collections via unknown
+- `45af5c857` refactor: admin not-found no longer takes vendor config/importMap
+- `022a5cfbc` refactor: admin page no longer takes vendor config/importMap
+- `d68e38a5f` refactor: admin layout no longer takes vendor config/importMap
+- `5f79e55f6` refactor: engine seam exports own types, no vendor re-exports
+- `b6c212695` refactor: layouts seam exports RootLayout only
+- `2d890898d` refactor: engine routes seam re-exports nothing
+- `3fc6a78ec` refactor: own PREFERENCE_KEYS and formatAdminURL
+- `1d9e05127` refactor: migration primitives from drizzle-orm and own types
+- `57c622f51` refactor: richTextEditor is a no-op factory (no vendor editor)
+- `8079cee5c` feat: own config-authoring types (no vendor import)
+- `6f371e09d` test: implicit auth field injection
+- `0f961dae7` feat: deterministic implicit auth field injection
+- `64329e2b6` fix: apply implicit auth fields to users config deterministically (no buildConfig side effect)
+- `e63f118d9` test: custom collection endpoints dispatcher
+- `e9cd09ba6` feat: custom collection endpoints dispatcher
+- `953a95cb9` refactor: make /api REST route Payload-free (own custom endpoints, 404 for unknown)
+- `02c1249b9` refactor: remove Payload graphql-playground route
+- `493250949` refactor: remove graphql-playground from CSP policy-free prefixes
+- `bb5aba26d` refactor: drop GRAPHQL_* re-exports from engine routes seam
+- `6fbfe514f` refactor: make /api/graphql Payload-free, 501 for unsupported operations
+- `7ec18ac6e` fix: restore full localapi-rest test file with Stage 7 versions tests (repair truncated push)
+- `b89566428` fix: restore full rest.ts with Stage 7 versions endpoints (repair mangled push)
+- `a2aed19b4` feat: Stage 7 versions REST endpoints (tests/int/localapi-rest.int.spec.ts)
+- `f56cf2b31` feat: Stage 7 versions REST endpoints (src/localapi/rest.ts)
+- `09395806f` feat: Stage 7 versions REST endpoints (src/localapi/registry.ts)
+- `292cec24e` feat: Stage 7 versions REST endpoints (src/cms/db/collections/products.ts)
+- `9b150a82b` feat: Stage 7 versions REST endpoints (src/cms/db/collections/courses.ts)
+- `29910ffc2` feat: Stage 7 versions REST endpoints (src/cms/db/collections/events.ts)
+- `a5cb83c86` feat: Stage 7 versions REST endpoints (src/cms/db/collections/pages.ts)
+- `460ad8878` feat: Stage 7 versions REST endpoints (src/cms/db/collections/posts.ts)
+- `cffe2329c` feat: Stage 7 versions REST endpoints (src/cms/db/generic.ts)
+- `1d71603c5` fix: correct stray backtick in registry.ts header comment (Stage 7 push fix)
+- `c69dea98a` feat: register payload-preferences/locked-documents in db barrel + schema + registry (Stage 7)
+- `7906a8033` feat: register payload-preferences/locked-documents in db barrel + schema + registry (Stage 7)
+- `3ff5bf346` feat: register payload-preferences/locked-documents in db barrel + schema + registry (Stage 7)
+- `ff6ee8df2` test: add payload-locked-documents integration test (Stage 7)
+- `9cee0b148` feat: add payload-preferences/locked-documents db ops (Stage 7)
+- `c608ff977` feat: add payload-preferences/locked-documents db ops (Stage 7)
+- `bf797b4c8` feat: add payload-preferences/locked-documents config + tests (Stage 7)
+- `7cc38c823` feat: add payload-preferences/locked-documents config + tests (Stage 7)
+- `064d00922` feat: add payload-preferences/locked-documents config + tests (Stage 7)
+- `cf4fed11c` tests: add /api/access unit tests (Stage 7)
+- `787e62880` tests: add /api/access route-wiring parity tests (Stage 7)
+- `5885431c6` localapi: fix trailing-space alignment in rest.ts access comment
+- `846c8684a` localapi: implement /api/access, per-collection access/:id?, per-global access (Stage 7)
+- `37cbe271d` localapi: implement bulk PATCH/POST update and DELETE endpoints (Stage 7)
+- `eeafe8f70` localapi: update dispatcher header comment for bulk update/delete (Stage 7)
+- `aa61f6935` tests: add bulk PATCH/DELETE unit tests (Stage 7)
+- `7a6203e02` tests: fix bulk-delete wiring test for new handleRestRequest behavior (Stage 7)
+- `e40fd24e7` localapi: fix missing trailing newline in rest.ts
+- `604093a2e` localapi: fix accidental extra brace in rest.ts
+- `b3135f44c` localapi: add unique field metadata to FieldConfigLike for duplicate endpoint (Stage 7)
+- `352025ec5` localapi: implement POST /:id/duplicate endpoint matching real Payload wire behavior (Stage 7)
+- `158e0161f` tests: add unit tests for POST /:id/duplicate endpoint
+- `e2f4b12ab` tests: update duplicate-endpoint wiring test for new handleRestRequest behavior
+- `60b995f6b` localapi: implement POST /:id/duplicate endpoint (Stage 7)
+
+## 2026-09-28 (11)
+- `21a44ad22` admin: CSS for WordPress-style rail flyout + top-right theme toggler
+- `23a68d5f8` admin: add top-right ThemeToggler (light/dark/auto)
+- `5ece7aedb` admin: add ThemeContext (light/dark/auto preference)
+- `e1a5267ec` admin: add per-nav-group icon set for the collapsed rail
+- `207fd8270` admin: collapsed-rail nav groups get a WordPress-style hover flyout
+- `1ecb01530` admin: export ThemeProvider/useTheme from context barrel
+- `10e045164` admin: wire ThemeProvider + ThemeToggler into RootLayout
+- `7979b3135` chore: remove TemplateDefaultWrapper.tsx, superseded by AdminShell.tsx
+- `bb2f1729d` feat: full custom admin rebuild - part 2 (views, nav client, CSS)
+- `9921f67cb` feat: full custom admin rebuild - drop @payloadcms/next/css, add real collapsible sidebar + single admin font
+- `f613f9784` fix: admin template-default grid wrapper, mobile nav toggle, edit-form CSS classes
+
+## 2026-09-27 (54)
+- `d4c6f8019` feat: from-scratch EcommerceProvider/useCart/useAddresses/usePayments hooks
+- `134d85471` feat: define Currency type from scratch, no longer from plugin-ecommerce
+- `31d1e215d` refactor: simplify Providers.tsx for the new from-scratch EcommerceProvider
+- `307ea3ea5` fix: drop redundant confirmOrder cast (new typed usePayments hook)
+- `a2f58d217` fix: cast cart item product through unknown (new typed useCart hook)
+- `1da76a2b6` refactor: remove plugin-backed stripeAdapterClient re-export (no longer used)
+- `2082ac539` refactor: remove plugin-backed commerce react.ts (replaced by react.tsx)
+- `cb4511797` chore: remove @payloadcms/plugin-ecommerce dependency
+- `5f412e353` fix: cast transactions relationTo as CollectionSlug (transactions no longer a real collection)
+- `5734e4639` fix: retype accounts/orders.ts against OrderDoc (Order no longer in @/engage-types)
+- `363f39fe9` fix: retype accounts/addresses.ts against AddressDoc (Address no longer in @/engage-types)
+- `e4493a102` test: only compare products against real Payload labels (other 4 ecommerce collections no longer real)
+- `87d0e6acc` feat: add ecommerce GraphQL hybrid dispatcher (handleEcommerceGraphQL)
+- `45432806e` test: convert carts/orders/transactions cms/db test to self-consistency
+- `4cbcaa7e8` fix: cast order/cart relationTo as CollectionSlug (orders/carts no longer real collections)
+- `0fc678bb9` test: convert addresses cms/db test to self-consistency (addresses no longer a real Payload collection)
+- `88167b854` test: exclude orders/carts/transactions/addresses from real-Payload registry parity loop
+- `3a0762aba` feat: wire ecommerce GraphQL hybrid dispatcher into the graphql route
+- `a76b3ac55` test: add unit tests for the ecommerce GraphQL hybrid dispatcher
+- `9473ff616` chore: remove dead shopPlugin() re-export seam (shopPlugin fully removed)
+- `d02cb73b6` test: exclude orders/carts/transactions/addresses from real-Payload engine parity loop
+- `bb8d58725` chore: regenerate importMap.js (shopPlugin removed, PriceCell/PriceInput now point at this app's own components)
+- `99ccc2ffb` feat: remove shopPlugin() call, register Products stub to satisfy InvalidFieldRelationship
+- `b1ec1fc28` feat: reproduce POST /payments/stripe/webhooks in this app's own dispatcher (rest.ts)
+- `49df9eddf` test: cover POST /payments/stripe/webhooks dispatch (rest.ts companion)
+- `efda73c5d` fix: reproduce the Stripe webhook route so real shopPlugin() isn't needed for membership billing
+- `e68990bc8` fix: give the account portal's off-canvas nav wrapper its own CSS
+- `6049b757d` feat: add off-canvas drawer CSS for the account portal nav (mobile only)
+- `ab0c5fe88` feat: wire AccountShell's nav to the new off-canvas AccountNav component
+- `37a6056ed` feat: add expanding off-canvas menu to the account portal nav
+- `7ba68f076` fix: update Stripe PaymentIntent amount assertion for cents-conversion fix
+- `7dbd83797` fix: stripeAdapter - convert cart.subtotal (dollars) to Stripe's cents amount
+- `d89fb7d49` fix: cart page - drop real-plugin useCurrency (same cents bug), use formatPriceInAUD
+- `79e5ea0cf` fix: event ticket price display - use formatPriceInAUD
+- `a3fc5eacf` fix: shop product page price display - use formatPriceInAUD
+- `690554ee9` docs: PriceInput - update comment now that priceInAUD's unit is confirmed dollars
+- `a8c9f9964` fix: admin PriceCell - use formatPriceInAUD, not cents-based formatCurrency
+- `9fcd5de9f` fix: LoopBlock price merge tag - use formatPriceInAUD, not cents-based formatCurrency
+- `120ac42df` fix: ProductCard price display - use formatPriceInAUD, not cents-based formatCurrency
+- `7022267a6` fix: mergeTags product price - priceInAUD is whole dollars, not cents
+- `7295021c7` fix: split formatPriceInAUD (whole units) from formatCurrency (cents)
+- `5e91aee0c` feat: wire priceInAUD to PriceCell/PriceInput; document unit-convention ambiguity
+- `e6c67e9d8` feat: generic admin.components.Cell override support in ListView
+- `17f0d14ff` feat: register PriceInput field override
+- `ed8017354` feat: add PriceInput ($-prefixed cosmetic wrapper) for Products' priceInAUD
+- `70d881460` feat: add formatPriceCell for Products' priceInAUD admin list column
+- `2dab2c6c2` feat: add server-side admin.components.Cell registry (ListView had none)
+- `04b4ee3ef` fix: Transactions cross-customer read leak, and a third false-premise hook gap
+- `a50587df4` fix: Products read access was unconditional public, real plugin gates non-admin reads on published status
+- `83b10ee48` fix: restore read-operations.ts full content (subagent push truncated it to just the header comment)
+- `a2ea2f21c` fix: restore operations.ts full content (subagent push truncated it to just the header comment)
+- `c5b9100cf` fix: restore auth.ts full content (subagent push truncated it to just the header comment)
+- `869f1d5fe` fix(localapi): users never stripped salt/hash/sessions/2FA-secret on read
+- `1bac13b6b` fix(localapi): users never stripped salt/hash/sessions/2FA-secret on read
+
+## 2026-09-26 (14)
+- `127ab8abe` fix(localapi): users never stripped salt/hash/sessions/2FA-secret on read
+- `a349eeeae` fix(localapi): users never stripped salt/hash/sessions/2FA-secret on read
+- `f390003ce` fix(ecommerce): orders cross-customer read leak + status/field-access parity
+- `bb1e41cc6` fix(ecommerce): address-book ownership + enforce REST read access everywhere
+- `65bcc9b0e` fix(localapi): hash users' password on create/update (What's left #6)
+- `9a7adbd4a` feat(admin): live admin.condition reactivity (Stage 11 Phase 3)
+- `9f81a95c7` feat(admin): real repeatable-row UI for array/blocks fields (Stage 11 Phase 3)
+- `a8da609e7` fix(localapi): restore operations.ts after accidental truncation on main
+- `4035fab65` dummy
+- `7755de48f` Testing
+- `4ff0ac675` fix(localapi): force own validator for relationship/upload fields, bypassing real Payload's broken default
+- `e4f1f50db` feat(admin): real search-select picker for relationship/upload fields (Stage 11 Phase 3)
+- `59a488417` feat(admin): draft/publish UI for versioned collections (Stage 11 Phase 2)
+- `7a074bd8c` fix(admin): fix live-boot bugs found via manual e2e verification of Stage 11
+
+## 2026-09-25 (4)
+- `4303a6da3` feat(admin): Stage 11 Phase 1 - live RootPage/RootLayout replace @payloadcms/next
+- `db527c348` feat(admin): Stage 11 Phase 1 - generic FieldRenderer + scalar field renderers
+- `4b757f327` feat(admin): Stage 11 Phase 1 - componentRegistry.ts replaces generated importMap.js
+- `873c31f44` feat(admin): Stage 11 Phase 1 - engine/ui.ts seam now backed by from-scratch context/UI primitives
+
+## 2026-09-24 (5)
+- `78e28cbd1` feat(ecommerce): Stripe cart-checkout payment flow (Stage 10 Layer 3)
+- `97d24cb34` Ecommerce Layer 2: carts `status` virtual field (closes out Layer 2)
+- `77f3ba53a` Stage 10 Ecommerce Layer 2: add the 5 custom cart REST endpoints
+- `3c3a51aff` Stage 10 Ecommerce Layer 2: cart secret access + hooks (fixes broken guest carts)
+- `dccf122e9` Fix production build: self-host fonts, fix invalid richText admin option
+
+## 2026-09-23 (7)
+- `e1878c783` Finish Stage 10 Layer 1 push-corruption fix: schema/index.ts
+- `74f1c432e` Continue Stage 10 Layer 1 push-corruption fix: generic.ts, schema/index.ts
+- `d3c9cdf71` Continue Stage 10 Layer 1 push-corruption fix: cms/db/index.ts, generic.ts, schema/index.ts
+- `77e4356fc` Fix Stage 10 Layer 1 push corruption; add versioned top-level rels support
+- `eea5d286d` Add ecommerce registry, Addresses config, and integration tests
+- `1733a7b8b` Add ecommerce collection configs (Carts, Orders, Products, Transactions, shared)
+- `570fd3d9e` Add ecommerce (Stage 10) Layer 1: DB layer for products/carts/orders/transactions/addresses, plus shared schema-generator support for trash/soft-delete, unnamed presentational groups, and top-level hasMany fields on versioned collections.
+
+## 2026-09-18 (13)
+- `74f9f1eba` Fix a transcription typo in the previous commit's push (cab9fdc)
+- `cab9fdc46` Fix admin-panel login/global-update 500s: handle multipart/form-data bodies
+- `d678f7fb1` Fix a transcription typo in the previous commit's push (45f9261)
+- `45f92619a` Uploads stage: wire multipart create/update + GET /api/media/file/:filename into the REST layer
+- `2134a2780` Uploads stage: engine-level file support for the media collection
+- `7f4a96d3e` Rich Text stage: from-scratch RichText renderer, verified byte-for-byte parity, flip src/engine/editor/react.ts
+- `35d15f243` REST/GraphQL Stage 7: wire handleRestRequest into the [...slug] catch-all as the hybrid dispatcher
+- `767fa7f2e` localapi: real-Payload REST parity tests for Stage 7 sub-step 3, fix 2 gaps they caught
+- `37c9bd065` localapi: add REST handler layer (Stage 7 sub-step 3, not yet wired)
+- `58038f47e` localapi: add hand-rolled bracket-notation query parser (Stage 7 sub-step 2)
+- `1bbbd7ef8` REST/GraphQL Stage: extend auth engine with logout/refreshToken/unlockUser
+- `29978c6c2` Fix broken deploy: restore missing closing backtick in visualEditor.styles.ts
+- `4c76cec05` Recolor site + admin portal + visual editor from gold/brown to blues/greys
+
+## 2026-09-17 (15)
+- `90b3d3aa2` Refactor fresh-install spec onto shared helper; add table-set-equality and login smoke-flow proofs
+- `6c85f9a72` Add fresh-install proof suite: table-set-equality and login smoke flow
+- `d7cdbcf06` Fix fresh-install gap: run the 5 foundation migrations too
+- `461de2217` Update README env-var docs for ENGAGE_SECRET-only deploy button
+- `5d59edb30` Make ENGAGE_SECRET the only secret the deploy button asks for
+- `975eb2366` Remove SQL file superseded by src/migrations/schema/lockedDocumentsRelsSchema.ts
+- `fb0c9b289` Fix broken deploy: revert non-idempotent locked-documents-rels SQL, route it through applySchemaAdditions instead
+- `9abae5269` Fresh-install acceptance: fix INTERNAL_ROUTE_KEY propagation, add 5th SQL fix to deploy:database, document all deploy-button secrets
+- `dc0ba57bd` Stage 6e recovery: correctly repoint final 16 test files' @/engine import to tests/int/helpers/realEngine (batch 2b/3, remaining 8)
+- `4067a8d2c` Stage 6e recovery: correctly repoint final 16 test files' @/engine import to tests/int/helpers/realEngine (batch 2/3)
+- `4e7a52dcc` Stage 6e recovery: correctly repoint 17 more test files' @/engine import to tests/int/helpers/realEngine (batch 1/3)
+- `56d8ad5ec` Stage 6e recovery: correctly repoint 18 test files' @/engine import to tests/int/helpers/realEngine (batch 0/3)
+- `020c407d1` Stage 6e: repoint 17 parity/db test files' @/engine import to tests/int/helpers/realEngine.ts (batch 2/4)
+- `1b64ff2a0` Stage 6e: repoint 17 parity/db test files' @/engine import to tests/int/helpers/realEngine.ts (batch 1/4)
+- `a54ef2481` Stage 6e: flip @/engine's Engine to createEngine(), fix cascading type errors
+
+## 2026-09-16 (4)
+- `0c1743bfb` Add Stage 6d full parity coverage: all 21 collections + 17 globals through createEngine()
+- `e344536b0` Fix previous commit: restore real file contents (previous push accidentally sent placeholder text instead of the actual Stage 6c files)
+- `0c6eb680d` Add Stage 6c Engine interface + createEngine() factory - the standalone replacement for @/engine's getPayload()-backed Engine
+- `233a4a8a1` Add Stage 6a engine-cutover registry: full read/write wiring for all 21 collections + 17 globals
+
+## 2026-09-15 (7)
+- `6b889e720` Add db.migrate replacement (src/localapi/migrate.ts), fresh-install acceptance proof, and standalone CLI script
+- `b459d80ad` Add config/collections shim (src/localapi/config.ts) + write-both-ways parity proof
+- `697fbd0d9` Fix flaky timeout in auth-parity lockout test (test-only, no behavior change)
+- `e7b3ace61` Add logger shim (src/localapi/logger.ts) + write-both-ways parity proof
+- `9e2d8b8e7` Add write-both-ways parity proof for Stage 2 Auth module
+- `f9d68fc5e` Add Stage 2 Auth local API module (login/resetPassword/forgotPassword/verifyAuth)
+- `20769ca7b` fix: add findUsersPaginated (closes read-registry gap for Users)
+
+## 2026-09-14 (20)
+- `f345ecd84` test: add Local API operations tests (stage 1d/4, Local API core)
+- `2a905a796` feat: add Local API read operations (stage 1d/4, Local API core)
+- `9caebe007` feat: add Local API write/read operations layer (stage 1d/4, Local API core)
+- `b647a1725` feat: add access-control executor and hook runner (stages 1b/1c, Local API core)
+- `7ec7ad106` feat: add field-validation lookup table (stage 1a, Local API core)
+- `7da713765` test: prove Courses double-write fix and adapter cutover
+- `506db0241` test: prove Posts double-write fix and adapter cutover
+- `e84090a93` test: prove Pages double-write fix and adapter cutover
+- `ee624fa43` test: prove Events double-write fix and adapter cutover
+- `8ec91fd22` feat: wire Events/Pages/Posts/Courses into engageD1Adapter
+- `c5abda7f8` feat: add plain baseOps exports for Events/Pages/Posts/Courses adapter cutover
+- `e47d7ef8d` fix: correct cms-db-courses.int.spec.ts content from previous push
+- `380d6119a` engage.config: wire lessons/enrolments/lesson-progress into engageD1Adapter (2/2)
+- `58af3e226` cms/db: add findXPaginated re-exports for lessons/enrolments/lesson-progress (1/2)
+- `631469471` tests: add cuts-over-cleanly tests for media/page-templates/field-groups/forms/form-submissions/memberships/ab-tests (3/3)
+- `5fcc86136` engage.config.ts: wire media/page-templates/field-groups/forms/form-submissions/memberships/ab-tests into engageD1Adapter (2/3)
+- `475f26e99` cms/db collections: add findXPaginated re-exports for media/page-templates/field-groups/forms/form-submissions/memberships/ab-tests (1/3)
+- `b7bef9e6f` tests: add cuts-over-cleanly tests for event-rsvps/membership-tiers/audit-log/backups/translations (3/3)
+- `ac2b0de8d` engage.config.ts: wire event-rsvps/membership-tiers/audit-log/backups/translations into engageD1Adapter (2/3)
+- `d5af3b8ed` cms/db collections: add findXPaginated re-exports for event-rsvps/membership-tiers/audit-log/backups/translations (1/3)
+
+## 2026-09-13 (6)
+- `3c0f30bfa` cms/db/generic.ts: add applyAtomicIncrements and serializeDates for Users' cutover (5/5)
+- `d380d4b5a` tests/int/cms-db-users: prove atomic $inc and a real lockout cycle through engageD1Adapter (4/5)
+- `1b05422c1` engage.config.ts: fix missing trailing newline from prior push (3b/5)
+- `4c9c78000` engage.config.ts: wire users into engageD1Adapter (3/5)
+- `a9e496bda` cms/db/index.ts: update Phase 14 status - Users now cut over (2/5)
+- `eaaea04ce` cms/db/collections/users.ts: add full-row paginated find + create (1/5)
+
+## 2026-09-10 (9)
+- `60dcc8fa2` fix: restore local comment wrapping in generic.ts's two splitSpecialFields from prior push
+- `57f891d8e` fix: restore dropped word in schema/index.ts comment from prior push
+- `27ddebdfc` schema/generate.ts: add generateAuthSessionsTable (7/7)
+- `2561796f4` generic.ts: honor explicit updatedAt:null in updateByID (6/7)
+- `b432adf31` Wire usersSessions into schema/index.ts (5/6)
+- `3dcb5b15e` Document why Users' live adapter cutover is deliberately not wired in yet (4/5)
+- `8fbeef009` Update index.ts/engage.config.ts doc comments for Users' auth-row work (3/4)
+- `a0b7aaf94` Wire Users' auth-row support into generic.ts/schema, update doc comments (2/2)
+- `3c423eeb6` Model Users' full auth row (hash/salt/lockout/2FA columns + sessions child table)
+
+## 2026-09-09 (9)
+- `d3b86ca0c` Fix admin edit-page 500s; add gallery/list toggle to Media, calendar/list toggle to Events
+- `889b7e172` Cut over Faqs collection to src/cms/db adapter (4/4): engage.config.ts + tests
+- `f17ba1577` Cut over Faqs collection to src/cms/db adapter (3/3): generic.ts + engage.config.ts + tests
+- `cf41482b2` Cut over Faqs collection to src/cms/db adapter (2/2)
+- `9b041e0cc` Cut over Faqs collection to src/cms/db adapter
+- `bf507fe7e` Add integration tests for cms/db globals: header, footer, languageSettings, seoSettings, speedSettings, mediaSettings, backupSettings (Phase 20)
+- `d68c6caa0` Add cms/db globals ops: header, footer, languageSettings, seoSettings, speedSettings, mediaSettings, backupSettings (Phase 20)
+- `413f3efaa` Add cms/db generic ops, schema wiring, and barrel export (Phase 20)
+- `4c4611c22` Add cms/db core data-layer generator/ops files (Phase 20 top-level group array/select support)
+
+## 2026-09-08 (16)
+- `83c8a9651` Phase 19: add 9 new global ops files + tests (BlogSettings, ShopSettings, SiteSettings, MemberSettings, SecuritySettings, Integrations, EmailSettings, PaymentSettings, FormSettings)
+- `adac3c3f9` Phase 19 (retry 2): fix incomplete push - wire cms/db/schema/index.ts for 9 new globals (BlogSettings, ShopSettings, SiteSettings, MemberSettings, SecuritySettings, Integrations, EmailSettings, PaymentSettings, FormSettings)
+- `b8ba56aec` Phase 19 (retry): fix incomplete push - wire cms/db/index.ts and schema/index.ts exports for 9 new globals
+- `a45f734e2` Phase 19: wire 9 more globals (BlogSettings, ShopSettings, SiteSettings, MemberSettings, SecuritySettings, Integrations, EmailSettings, PaymentSettings, FormSettings) + fix flattenGroups null-omission bug
+- `e7b82b40b` Fix Media gallery build error: setState-in-effect rejected by eslint
+- `cf689dd94` Media gallery view: add Media.ts wiring + the two view components
+- `15f56ab3b` Media: gallery view with a small/medium/large size toggle
+- `d6a8dc8a2` Fix Phase 18 push (final): generic.ts byte-exact with local, verified via programmatic patch + diff before this push
+- `bb558cba8` Fix Phase 18 push (cont): correct generic.ts to byte-exact match with local (createJoinOps doc comment wording only, no logic change)
+- `8a9daee6b` Fix Phase 18 push (cont): restore real content for src/cms/db/generic.ts
+- `838801924` Fix Phase 18 push (cont): restore real content for src/cms/db/schema/generate.ts
+- `7ddbb812d` Fix Phase 18 push (cont): restore real content for src/cms/db/schema/index.ts
+- `a80c26a09` Fix Phase 18 push (cont): restore real content for src/cms/db/index.ts
+- `066e36018` Fix Phase 18 push (cont): restore real content for cms-db-faq-settings.int.spec.ts
+- `6436b5cca` Fix Phase 18 push: previous commit accidentally wrote PLACEHOLDER content
+- `f9b2ff24c` cms/db Phase 18: globals capability + FaqSettings proof
+
+## 2026-09-07 (13)
+- `29b746c66` cms/db Phase 17 (cont): barrel exports and parity tests
+- `ec3236c80` cms/db Phase 17 (cont): schema/index.ts FieldGroups/Forms table generation
+- `89faaff07` cms/db Phase 17 (cont): generic.ts, schema/index.ts, index.ts, tests
+- `02a0837b6` cms/db Phase 17: model FieldGroups and Forms - nested array-in-array
+- `ec7d9835c` cms/db Phase 16: model Translations, Memberships, FormSubmissions, ABTests
+- `00f1b292f` cms/db Phase 15: add missing db/index.ts barrel exports
+- `46e953d5d` cms/db Phase 15: model AuditLog + Backups, scalar-only collections
+- `8a11e4638` cms/db Phase 14: model Users, this app's only auth-enabled collection
+- `f9d3a8481` cms/db Phase 13: Enrolments + LessonProgress close out Courses family
+- `b5acfd05f` cms/db Phase 12: model Media, this app's only upload-enabled collection
+- `8434a6ba3` cms/db Phase 11: build out Lessons (content blocks + resources array)
+- `efda5c867` cms/db Phase 10: bring Courses in from zero, fix join-sort assumption
+- `b943d7d12` cms/db: wire createDraftOps onto Posts, third drafts-collection proof
+
+## 2026-09-06 (28)
+- `a8ebe48fd` cms/db: wire createDraftOps onto Pages, second drafts-collection proof
+- `061cc0617` docs: note gitignored pnpm-lock.yaml as the real Cloudflare install fix
+- `76ebb9806` cms/db Phase 9: draft/publish policy (createDraftOps), proven against Events
+- `530a97a25` cms/db Phase 8: join fields resolved for real (proven against Events)
+- `3af6ea154` cms/db Phase 7: versioned array fields (proven against Posts)
+- `d96060eb2` cms/db Phase 6: versioned blocks/rels child tables (proven against Pages)
+- `fe482273a` cms/db Phase 5: group fields + versions/drafts (_&lt;table&gt;_v table)
+- `b22487f87` cms/db Phase 4: blocks fields + hasMany/polymorphic relationship rels tables
+- `9c1538c83` CMS data-layer clone: row/collapsible flattening + array fields as child tables
+- `edb15b2df` Remove hand-written Faqs schema, superseded by the generator
+- `2a1cd3ba9` Generalize CMS data-layer clone: schema generator + generic CRUD, second collection proven
+- `973d6b122` Fix stray indentation from previous commit's push
+- `eb8376bd5` Start CMS's own data layer: hand-cloned drizzle adapter for Faqs, proven against real local D1
+- `9b18c1446` Bump stripe/@stripe/stripe-js/@stripe/react-stripe-js to their current majors
+- `51b392e24` Fix @opennextjs/cloudflare/next/payload peer dependency deadlock; bump payload family + safe patch versions
+- `7c8e3e2bf` Fix ab-track route pulling admin UI into its bundle via the abTesting barrel
+- `9b3455c55` Remove orphaned unused translations.css duplicate (batch 15)
+- `e37346b78` Remove orphaned unused database.css duplicate (batch 15)
+- `c1cc8aa93` Remove orphaned unused abResults.css duplicate (batch 15)
+- `5b4d7f18c` Remove orphaned unused customFields.css duplicate (batch 14)
+- `6d6f92767` Remove unused customFields.styles.ts (batch 14)
+- `e1b324453` Tailwind migration (14/N): Custom Fields panel
+- `72a694eb7` Remove unused abResults.styles.ts (batch 13)
+- `f8ead1a0a` Tailwind migration (13/N): A/B results admin view
+- `38288172a` Remove unused translations.styles.ts (batch 12)
+- `224542661` Tailwind migration (12/N): Translations admin view
+- `ed3b71af2` Remove unused database.styles.ts (batch 11)
+- `061bbd289` Tailwind migration (11/N): Database admin view
+
+## 2026-09-05 (63)
+- `8d036fb48` Remove orphaned unused dashboard.css duplicate (batch 10)
+- `3c2e8bccc` Remove unused dashboard.styles.ts (batch 10)
+- `41cfdf57a` Tailwind migration (10/N): Dashboard admin view
+- `b5ea4aad7` Fix courses screens broken by earlier Tailwind migration batches
+- `ed3acf465` Tailwind migration (9/N): ImageText, CtaBanner, Gallery, RichText, FaqBlock
+- `52c6d725b` Tailwind migration (8/N): FAQ list and page
+- `5d4f4dca1` Tailwind migration (7/N): blog archive and post pages
+- `0f7ac4653` Tailwind migration (6/N): breadcrumbs, shop category filters
+- `88637bd2f` Tailwind migration (5/N): RSVP/checkout forms, cart page
+- `e27fb9bca` Tailwind migration (4/N): product/event detail pages, add-to-cart confirm
+- `878ccea80` Tailwind migration (3/N): ProductCard, EventCard
+- `65ae85603` Tailwind migration (2/N): page-shell, hero, home sections, product/event grid
+- `ab7630ac9` Tailwind migration (1/N): Header, Footer, announcement bar
+- `540dbb072` Add Tailwind CSS v4 infra (frontend + admin views), no visual changes yet
+- `631ca86ff` Sweep deprecated vendor-named aliases from the engine seam (batch 3/3): courses, forms, members webhooks, seed, dashboard
+- `202b1733f` Sweep deprecated vendor-named aliases from the engine seam (batch 2/3): accounts feature
+- `b3ca313d7` Sweep deprecated vendor-named aliases from the engine seam (batch 1/3): blocks, collections, admin nav, engage.config, engine editor/commerce
+- `49e5a7340` Pin package manager to pnpm to fix Cloudflare Workers Build failure
+- `2ea98bebb` Repoint imports to the engine seam (final): fix-blocks-rels-tables migration
+- `7b497dc2d` Repoint imports to the engine seam (batch 13/13): ab-testing migration, seed home/templates, format-slug/secret-field utilities
+- `aa58a85e1` Repoint imports to the engine seam (batch 12/13): audit log/multilingual/backups/members migrations
+- `a06b80c91` Repoint imports to the engine seam (batch 11/13): event capacity hook, initial/event-url/seed/builder-schema/settings-schema/rename migrations
+- `fc0d6c5fc` Repoint imports to the engine seam (batch 10/13): seo/shop/site/speed settings globals
+- `731423d46` Repoint imports to the engine seam (batch 9/13): payment/security settings globals
+- `36c571a67` Repoint imports to the engine seam (batch 8/13): header/language/media/member settings globals
+- `317fc210a` Repoint imports to the engine seam (batch 7/13): email/faq/footer/form settings globals
+- `a004e3f09` Repoint imports to the engine seam (batch 6/13): translations view, audit log collection/hooks, custom fields, seo/slug/visual-editor fields, blog settings
+- `739d6024a` Repoint imports to the engine seam (batch 5/13): members access/tiers/memberships/gate field/webhooks, translations collection
+- `b335a17c8` Repoint imports to the engine seam (batch 4/13): courses queries/settings, email test button, feature toggle field, forms block/submissions/export/slugs/submit
+- `edaa50ec5` Repoint imports to the engine seam (batch 3/13): courses enrolments/lesson progress/lessons collections, entitlement, progress
+- `1c2e1b3e6` Repoint imports to the engine seam (batch 2/13): orders/preferences/rateLimit/session, backups collection, database view, courses collection
+- `4764340c2` Repoint imports to the engine seam (batch 1/13): AB results view, accounts access/addresses/auth/bookings/guards
+- `58b7ce605` Repoint imports to the engine seam (10/12): backup settings, forms migration, profile
+- `6b7643adf` Repoint imports to the engine seam (9/12): forms collection, backup panel, integrations global
+- `ae0d1bb87` Repoint imports to the engine seam (8/12): engage.config.ts, AB tests collection
+- `55f4429f3` Repoint imports to the engine seam (7/12): site settings/nav migration, two-factor auth
+- `acf1529e0` Repoint imports to the engine seam (6/12): ecommerce/events migration, dashboard view
+- `68ebc7692` Repoint imports to the engine seam (5/12): courses migration, dashboard data, currencies
+- `5f02a2615` Repoint imports to the engine seam (4/12): migrations batch 1
+- `62efa5807` Repoint imports to the engine seam (3/12): components, admin nav
+- `93cf0b18c` Repoint imports to the engine seam (2/12): blocks, collections, AddToCartButton
+- `49e467620` Repoint app-level imports to the engine seam (1/12)
+- `f9f2022f8` Delete leftover scaffold route (booted the whole engine per request for a placeholder response)
+- `edb824dc0` package.json: drop payload-totp, move dotenv to devDeps, trim deploy:database
+- `486f8ee81` Dependency diet: drop payload-totp, gate deploy:database to remote-only SQL
+- `bcdafa31b` Add engine isolation seam (src/engine/)
+- `705c46fd7` Resolve element:<type> picks in buildNode, add Content-tab fields for element nodes
+- `4fb9966fe` Wire element library card, node build, and Content-tab fields into the visual editor
+- `527ce9e7f` Wire element block into visual editor + D1 schema
+- `ed865831c` Add element block architecture (Phase 1) + Heading vertical slice (Phase 2)
+- `3e3ea703f` Add element block architecture (Phase 1) + Heading vertical slice (Phase 2), fix README deploy button
+- `da6a975b6` Fix invisible green tokens in canvas iframe + Elementor-style open insert panel + drop Hero from element library (file set 2 of 2)
+- `835146bfc` Fix invisible green tokens in canvas iframe + Elementor-style open insert panel + drop Hero from element library
+- `883ed684a` Visual editor: wire green selection/insert CSS + Design panel border/shadow (file set 2 of 2)
+- `ad35384db` Visual editor: green selection/add affordances + working library drag-and-drop
+- `71e14213b` Restore reviewed editor CSS (finish file set)
+- `f153d0699` Restore reviewed FieldPanel + editor CSS (finish file set)
+- `c22c852ff` Restore reviewed dock/canvas/panel design (finish previous commit's file set)
+- `4c4ed00df` Visual editor: drag-to-add, responsive column widths, dock collapse, divider fix
+- `fe8e8098b` Visual editor: remove tabs, enhance circle buttons, integrate element browser
+- `5645cff55` Visual editor: drag-to-add, responsive column widths, dock collapse, divider fix
+- `d5181241f` Visual editor: drag-to-add, responsive column widths, dock collapse, divider fix
+- `f7688061c` Fix build-breaking bare > in JSX text (ElementLibrary)
+
+## 2026-09-02 (10)
+- `a03a252ca` Visual editor: dock instead of popup, tablet preview, blue dark mode
+- `79202993c` Load real front-end CSS into the visual editor canvas
+- `8fe349afe` Load real front-end CSS into the visual editor canvas
+- `cbaa64cbd` Fix blank document-edit views: guard against extension DOM crashes
+- `c1595b583` Add error boundary to admin so a broken screen shows its real error instead of a blank page
+- `59846edc8` Fix: production D1 was never receiving the newer feature migrations
+- `866867a4f` Fix build-breaking ESLint error in ElementLibrary
+- `023ffcf4a` Visual editor Phase 0: fix Lessons builder, wire up Form block rendering, add unsaved-changes guard, remove dead code, safeguard rich text from silent flattening
+- `3d319c6ef` Fix build crash: payload CLI can't import raw .css from admin components
+- `23d9db865` Fix build crash: payload CLI can't import raw .css from admin components
+
+## 2026-08-31 (19)
+- `0df5d4fc0` Add A/B testing and customer accounts, part 19
+- `1a6e8a53d` Add A/B testing and customer accounts, part 18
+- `c61de8e69` Add A/B testing and customer accounts, part 17
+- `99ee0cd4a` Add A/B testing and customer accounts, part 16
+- `e0d81d8a5` Add A/B testing and customer accounts, part 15
+- `767c091d9` Add A/B testing and customer accounts, part 14
+- `1f4aafecc` Add A/B testing and customer accounts, part 13
+- `f04465804` Add A/B testing and customer accounts, part 12
+- `5d06e57aa` Add A/B testing and customer accounts, part 11
+- `c083b8fbc` Add A/B testing and customer accounts, part 10
+- `4343fc96a` Add A/B testing and customer accounts, part 9
+- `747f50498` Add A/B testing and customer accounts, part 8
+- `6e1735263` Add A/B testing and customer accounts, part 7
+- `e4a087b2c` Add A/B testing and customer accounts, part 6
+- `68addf0b1` Add A/B testing and customer accounts, part 5
+- `2e31f1322` Add A/B testing and customer accounts, part 4
+- `dc94c461b` Add A/B testing and customer accounts, part 3
+- `20f23e9cc` Add A/B testing and customer accounts, part 2
+- `feed8e493` Add A/B testing and the customer account area
+
+## 2026-08-30 (28)
+- `0abdd521b` Add memberships and courses, part 12
+- `61d9bdf16` Add memberships and courses, part 11
+- `65eeb257d` Add memberships and courses, part 10
+- `091e1d898` Add memberships and courses, part 9
+- `d255eb3c7` Add memberships and courses, part 8
+- `9cc2ec6a3` Add memberships and courses, part 7
+- `a15c5e164` Add memberships and courses, part 6
+- `38de2cf79` Add memberships and courses, part 5
+- `7649bb276` Add memberships and courses, part 4
+- `b656428d4` Add memberships and courses, part 3
+- `bc8a77675` Add memberships and courses, part 2
+- `c34241c41` Add memberships and courses
+- `88618cf61` Add forms, multilingual, backups and cleanup, part 16
+- `27a782306` Add forms, multilingual, backups and cleanup, part 15
+- `db5625aa5` Add forms, multilingual, backups and cleanup, part 14
+- `9b8a08350` Add forms, multilingual, backups and cleanup, part 13
+- `2e0f58194` Add forms, multilingual, backups and cleanup, part 12
+- `fd9fc9c05` Add forms, multilingual, backups and cleanup, part 11
+- `83a585e29` Add forms, multilingual, backups and cleanup, part 10
+- `d2350e0dd` Add forms, multilingual, backups and cleanup, part 9
+- `fc48d54d3` Add forms, multilingual, backups and cleanup, part 8
+- `fa30b880f` Add forms, multilingual, backups and cleanup, part 7
+- `4bf8ed834` Add forms, multilingual, backups and cleanup, part 6
+- `c0bbc6d9d` Add forms, multilingual, backups and cleanup, part 5
+- `7567a200a` Add forms, multilingual, backups and cleanup, part 4
+- `75a3026db` Add forms, multilingual, backups and cleanup, part 3
+- `c13fa303a` Add forms, multilingual, backups and cleanup, part 2
+- `398ed984d` Add forms, multilingual, backups and the database cleanup tool
+
+## 2026-08-28 (11)
+- `177ba9e02` Wire feature settings, part 13: remove superseded robots route
+- `c7639ad76` Wire feature settings, part 12: remove superseded sitemap route
+- `7d6224ec2` Wire feature settings, part 11
+- `f71cd7b5f` Wire feature settings, part 10
+- `1fabaf08b` Wire feature settings, part 9
+- `b92f1c125` Wire feature settings, part 8
+- `36bb2abc1` Wire feature settings, part 7
+- `8d90e1551` Wire feature settings, part 6
+- `5d7b8aeb4` Wire feature settings, part 5
+- `40fdb45b0` Wire feature settings, part 4
+- `2a902e577` Wire feature settings, part 3
+
+## 2026-08-27 (2)
+- `4a21ad5d0` Wire feature settings, part 2
+- `faf0441c7` Ship the first wave of feature wiring, and close two access holes
+
+## 2026-08-26 (9)
+- `4749f8c30` Replace the dashboard card grid with a real admin dashboard (part 2)
+- `67dfa8fad` Replace the dashboard card grid with a real admin dashboard
+- `84d2785fa` Skip schema entries for renamed engine tables
+- `5e63a22ae` Rename the engine's own tables to eg_, and fix the portal (part 6)
+- `4b24cda0b` Rename the engine's own tables to eg_, and fix the portal (part 5)
+- `71a318a37` Rename the engine's own tables to eg_, and fix the portal (part 4)
+- `7a71ea512` Rename the engine's own tables to eg_, and fix the portal (part 3)
+- `227b5e2a6` Rename the engine's own tables to eg_, and fix the portal (part 2)
+- `05cf454a8` Rename the engine's own tables to eg_, and fix the portal
+
+## 2026-08-25 (31)
+- `80a4b501e` Rename all application tables to the eg_ prefix (email + backup settings)
+- `a3da35943` Rename all application tables to the eg_ prefix (SEO + security settings)
+- `055f769e2` Rename all application tables to the eg_ prefix (globals 3/3)
+- `738d6f128` Rename all application tables to the eg_ prefix (globals 2/3)
+- `446afe55d` Rename all application tables to the eg_ prefix (globals 1/3)
+- `fdae60771` Rename all application tables to the eg_ prefix (collections)
+- `bc2c413fd` Rename all application tables to the eg_ prefix (app routes)
+- `66b3cb189` Rename all application tables to the eg_ prefix (config + rename generator)
+- `12b3f2089` Rename all application tables to the eg_ prefix (config, mapping, generator)
+- `cb284c58b` Rename all application tables to the eg_ prefix
+- `a242113bb` Remove engine branding from migration comments
+- `54fc649ae` Remove engine branding from migration comments
+- `1f29f3d38` Remove engine branding from migration comments
+- `9b681ca60` Remove engine branding from migration comments
+- `5fa1937fd` Remove engine branding from migration comments
+- `51ee7d7e9` Remove engine branding from migration comments
+- `7b7529dcd` Remove engine branding from migration comments
+- `0927c0b2f` Remove engine branding from migration comments
+- `c2ec8f3a6` Remove engine branding from migration comments
+- `988417958` Remove the superseded client module
+- `d8fdbc43e` Remove the superseded config file
+- `5a6d04d48` Remove the superseded admin stylesheet
+- `661bf1473` Remove the superseded import map
+- `90df16e6b` Remove the superseded internal-seed route
+- `4d46b9b69` Remove the superseded internal-migrate route
+- `70985fef2` Remove the superseded GraphQL playground route
+- `95c794f14` Remove the superseded GraphQL route
+- `7246c5541` Remove the superseded REST API route
+- `ae96d4754` Remove the superseded admin not-found route
+- `78ce03461` Remove the superseded admin page route
+- `924296ed5` Remove the superseded admin route group layout
+
+## 2026-08-24 (35)
+- `249ca0047` Remove engine branding from comments and config prose
+- `70cac0f13` Remove engine branding from comments and config prose
+- `bc2ea313e` Rename the CMS integration layer to Asticore Engage
+- `30fffffcd` Remove engine branding from comments and config prose
+- `6a12e6671` Remove engine branding from comments and config prose
+- `f88a4abb7` Remove engine branding from comments and config prose
+- `1d77642f6` Rename the CMS integration layer to Asticore Engage
+- `d07ce9f63` Rename the CMS integration layer to Asticore Engage
+- `d1d53e87a` Rename the CMS integration layer to Asticore Engage
+- `594a195b9` Remove engine branding from comments and config prose
+- `460a63591` Remove engine branding from comments and config prose
+- `60c037aed` Rename the CMS integration layer to Asticore Engage
+- `e24247b2f` Rename the CMS integration layer to Asticore Engage
+- `475a3fb9c` Remove engine branding from comments and config prose
+- `b04f0d305` Rename the CMS integration layer to Asticore Engage
+- `13280ae27` Rename the CMS integration layer to Asticore Engage
+- `31ab381f9` Rewrite the README and set explicit admin metadata
+- `250a155c8` Rename the CMS integration layer to Asticore Engage
+- `dbc29ce18` Give the settings globals explicit labels
+- `cfc71f115` Give the settings globals explicit labels
+- `dbdb65d4c` Give the settings globals explicit labels
+- `6b93ec0af` Use each global's own label in the sidebar
+- `33478134e` Fix unreadable dark mode in the admin theme
+- `3a7a467c4` Ignore local design scratch
+- `378fe1a06` Add the Asticore admin theme stylesheet
+- `cc637665f` Restyle the admin portal with the Asticore theme
+- `4893c0fb9` Remove the generated types file now that it is gitignored
+- `0c8f76d43` Stop committing the generated Payload types
+- `e9e00c52b` Add the generated settings schema definitions
+- `79df8232d` Add the settings schema migration and share the idempotent apply logic
+- `b9a98720a` Register the settings globals and style the sidebar dashboard link
+- `520fa32e6` Add the feature registry and make the sidebar feature-aware
+- `91a584363` Add the security, language, payment and form settings globals
+- `0c44b54ce` Add the email, backup and member settings globals
+- `eca0b51f7` Add the SEO, speed and media settings globals
+
+## 2026-08-23 (25)
+- `0fc2ea4af` Stop the seed migration from breaking the migration chain
+- `405aac2e5` Remove the obsolete SortableBlock, replaced by the recursive canvas
+- `3289c1357` Add the generated page-builder schema additions
+- `fb7fb3658` Add the element library, merge tag picker and block tree helpers
+- `5c4a82a6b` Add the Design tab controls for the visual editor
+- `e48f2990c` Add the recursive editor canvas and the builder schema migration
+- `2b6bec284` Add the design, section tree and merge tag models
+- `d79f9ff50` Add the custom fields editing panel and shared inputs
+- `ef8d8ea2f` Render sections, loops and per-block design settings on the site
+- `14e8a355f` Replace the admin sidebar with a grouped, collapsible navigation
+- `0f6bb54a2` Add Section and Loop blocks, field groups and a schema migrate endpoint
+- `c99c57dba` Style the nested canvas, element library and design controls
+- `f51989c2b` Split the block field panel into Content and Design tabs
+- `cdec9cfb3` Correct the escaped emoji icon literals in the editor block schemas
+- `2a43f15ac` Rework the visual editor around a nested block tree
+- `1d0cbda2c` Regenerate Payload types for sections, loops and custom fields
+- `5969704c1` Register field groups, the grouped admin nav and the builder migration
+- `a9f718bab` Route every block through the design wrapper and extend global settings
+- `8b69b3c9c` Add custom fields to content collections and a page template starter
+- `719c288b6` Split the block library into content blocks and layout containers
+- `c3564b048` Register new admin components and add design controls to content blocks
+- `8224dae31` Add frontend styles for design controls, sections, columns and loops
+- `8ddb7be42` Render builder blocks on the homepage, shop archive and product pages
+- `dd46c70f6` Add dependencies and frontend page updates for the new page builder
+- `f1d748e23` Fix seed migration to run against real prod D1, add insert-between + mobile/desktop preview to visual editor
+
+## 2026-08-22 (24)
+- `761f191ee` Remove stale combined SQL file, replaced by the 4 part files
+- `bee496f0c` Split blocks/rels schema-fix SQL into 4 smaller files, run all 4 in deploy:database
+- `6ef4dd8a4` Add idempotent raw-SQL copy of blocks/rels schema fix, applied via wrangler d1 execute --remote in deploy:database
+- `f86a39eb3` fix: revert remote:true (it broke next build) and apply blocks/rels schema fix via raw wrangler d1 execute instead
+- `e99ab7540` fix: mark D1/R2 bindings remote:true so payload migrate hits real production data
+- `762f7e876` Fix 500 errors on products/posts/shop/blog/faq settings: add missing blocks + rels tables
+- `126a19328` Seed Home page + starter templates, wire FAQ knowledge-base into visual editor, rebrand admin to Asticore Engage, collapse blocks/array fields by default
+- `06b83dd00` Ignore locally-generated pnpm-lock.yaml
+- `2a6134638` Add slug auto-populate, drag-and-drop visual editor, and template infra
+- `a3a0efff3` Add live slug auto-populate to Pages, Posts, Events, Products
+- `b25f3022f` Point Deploy to Cloudflare button at this repo and document client-template reuse
+- `90bac67c3` Rewrite Header/Footer components for menus/dropdowns/socials/announcement bar, add FAQ block+list, theme CSS, and blog/shop/FAQ styling
+- `16221e6a8` Gate shop/events routes on feature flags, add shop layout settings and product FAQs
+- `543317696` Remove old [slug] route, replaced by [...slug] for nested pages
+- `61284b03e` Add nested page routing, editable homepage, blog/FAQ routes, sitemap/robots, and Header/Footer-driven layout
+- `db6163fb5` Regenerate payload-types.ts for Header/Footer/Blog/FAQ/Shop settings and page hierarchy
+- `4f233a9e1` Add page hierarchy/homepage/template fields to Pages, register new collections/globals, add foundation-features migration
+- `15f2c7474` Add page-hierarchy resolver, SEO metadata helper, and feature-flag helper
+- `faf9c3a54` Add Blog/FAQ/Shop settings globals; extend Site Settings with theme, SEO defaults, and feature toggles
+- `8c880fd5e` Add Header and Footer globals (menu with dropdowns, layout, socials, announcement bar)
+- `c9ff5c830` Add Posts (blog) and Page Templates collections
+- `d3f074227` Add FAQ block/collection, shared block library, and reusable SEO field group
+- `3cfbd2961` Remove Navigation global, replaced by the new Header global's menu field
+- `456d273f5` Remove single-segment page route, replaced by catch-all [...slug] for nested pages
+
+## 2026-08-19 (8)
+- `c2b189c93` Wire theming/nav into layout, register new migration, regenerate types
+- `f1179023f` Add block render components, dynamic page route, and header/footer/layout wiring
+- `d84ead793` Add site-wide theming, navigation, page builder, and secure integrations settings
+- `cfbdd48c3` Fix build: render data-backed pages dynamically instead of at build time
+- `f1fdcd369` Fix Cloudflare build (drop remote D1 preview session) and add external registration links for events
+- `bc851c2bd` Remove write-access test file
+- `ea469348d` Add Eventbrite-style events, wire up ecommerce plugin, build homepage
+- `b38a04fea` test: confirm write access after reconnecting Github Account connector
+
+## 2026-08-02 (15)
+- `0f480057b` Disable payloadTotp for users collection
+- `b678cf856` Comment out staging environment configuration
+- `ee4537179` Refactor R2 bucket configuration and clean comments
+- `531a29224` Comment out payloadTotp import
+- `1d42a62ec` Add observability settings to wrangler.jsonc
+- `95185b953` Enable products in ecommerce plugin configuration
+- `a37155fcc` Refactor ecommercePlugin and stripeAdapter imports
+- `842d6740f` Refactor ecommerce plugin configuration in payload.config.ts
+- `cb6ad938f` Upgrade dependencies in package.json
+- `fb8b63848` Refactor Users collection field definition
+- `b1d2924e5` Add middleware to append x-pathname header
+- `479c68b2b` Add ecommerce and TOTP plugins to payload config
+- `6cd077c55` Create ecommerceAccess.ts
+- `7926a4eab` Add roles field to Users collection
+- `fa8816fe9` Update dependencies and scripts in package.json
+
+## 2026-08-01 (5)
+- `8b89f2ecc` Update payload.config.ts
+- `9112e57c6` Update layout.tsx with async generateViewport
+- `c817c08b1` Declare module for @payloadcms/next/css
+- `dae3cd762` Add TypeScript declaration for CSS modules
+- `c795b17c1` Update build script in package.json
+
+## 2026-07-31 (1)
+- `4d3c873af` source repo import
