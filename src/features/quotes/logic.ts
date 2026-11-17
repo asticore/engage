@@ -105,6 +105,7 @@ export const QUOTE_EMAILS = {
   adminNew: { subject: 'New {{kindLabel}} {{number}} from {{name}}', body: '{{name}} ({{email}}) sent a {{kindLabel}}.\n\n{{details}}\n\nOpen it in Quotes and requests.' },
   quote: { subject: 'Your quote {{number}} from {{siteName}}', body: 'Hi {{name}},\n\n{{message}}\n\nTotal: {{total}}. Valid until {{validUntil}}.\n\nSee the quote, accept it or reply with a counter-offer:\n{{link}}\n\n{{siteName}}' },
   expiring: { subject: 'Your quote {{number}} expires on {{validUntil}}', body: 'Hi {{name}},\n\nA reminder that your quote {{number}} for {{total}} is open until {{validUntil}}. To accept it or reply with a counter-offer, use the link in our earlier quote email, or reply to this message and we will send a new one.\n\n{{siteName}}' },
+  bidLost: { subject: 'Your offer {{number}} was not successful', body: 'Hi {{name}},\n\nThanks for your offer ({{number}}). Offers have closed and another offer was higher, so yours was not successful this time.\n\n{{siteName}}' },
   counter: { subject: 'Counter-offer on {{number}} from {{name}}', body: '{{name}} ({{email}}) replied to quote {{number}}.\n\n{{note}}' },
   accepted: { subject: 'Quote {{number}} accepted by {{name}}', body: '{{name}} accepted quote {{number}} for {{total}}. Order {{orderNumber}} is waiting for payment.' },
   declined: { subject: 'Quote {{number}} declined by {{name}}', body: '{{name}} declined quote {{number}}.' },
@@ -116,4 +117,22 @@ export function renderQuoteEmail(key: QuoteEmailKey, values: TemplateValues, bod
   const subject = fillTemplate(t.subject, values).replace(/[\r\n]+/g, ' ')
   const body = fillTemplate(t.body, { ...values, message: fillTemplate(bodyOverride || 'Thanks for asking. Here is your quote.', values) })
   return { subject, text: body, html: textToHtml(body) }
+}
+
+/** Why an offer on a product is refused, or null. Terms come from the product's Offers section. Pure. */
+export function bidRefusal(terms: { minimumCents: number; endsAt: string | null }, offerCents: number | null, now: Date): string | null {
+  if (terms.endsAt && Date.parse(terms.endsAt) <= now.getTime()) return 'Offers on this product have closed.'
+  if (terms.minimumCents > 0 && (offerCents ?? 0) < terms.minimumCents) return `The lowest offer taken is ${(terms.minimumCents / 100).toFixed(2)}.`
+  return null
+}
+
+/** The winning offer when offers close: the highest, and the earliest of equal ones. Null when there are none. Pure. */
+export function auctionWinner(bids: { id: number; offerCents: number | null }[]): number | null {
+  let best: { id: number; offerCents: number } | null = null
+  for (const bid of bids) {
+    const cents = bid.offerCents ?? 0
+    if (cents <= 0) continue
+    if (!best || cents > best.offerCents || (cents === best.offerCents && bid.id < best.id)) best = { id: bid.id, offerCents: cents }
+  }
+  return best?.id ?? null
 }

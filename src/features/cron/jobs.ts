@@ -70,6 +70,7 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
       bookingHolds: await (await import('@/features/bookings/payment')).releaseExpiredHolds(env.D1 as never, now),
       bookingReminders: await runBookingReminders(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never),
       quotes: await runQuoteSweep(env.D1 as never, now, site.siteName || 'Our team', sendEmail as never),
+      auctions: await (await import('@/features/quotes/auctions')).runAuctionSweep(env.D1 as never, engine, now, (await import('@/utilities/siteOrigin')).configuredSiteOrigin()),
     }
   },
   'shipment-tracking': async ({ engine, now }) => {
