@@ -75,3 +75,15 @@ export const RESET_CLEAN_COLLECTIONS = [
 export function idsAddedAfterCopy(existing: { id: number | string; slug?: unknown }[], keepSlugs: ReadonlySet<string>): (number | string)[] {
   return existing.filter((doc) => typeof doc.slug === 'string' && doc.slug !== '' && !keepSlugs.has(doc.slug)).map((doc) => doc.id)
 }
+
+/** Picture files kept for a reset live in the same bucket under this prefix. */
+export const COPY_KEY_PREFIX = 'demo-copy/'
+export const copyKey = (filename: string): string => `${COPY_KEY_PREFIX}${filename}`
+/** Bounds for the kept copies so one demo cannot fill the bucket. */
+export const MAX_COPIED_PICTURES = 500
+export const MAX_PICTURE_BYTES = 15 * 1024 * 1024
+
+/** Pictures not in the saved copy (matched by file name). */
+export function picturesAddedAfterCopy<T extends { filename?: unknown }>(live: T[], keepNames: ReadonlySet<string>): T[] {
+  return live.filter((d) => typeof d.filename === 'string' && d.filename !== '' && !keepNames.has(d.filename))
+}

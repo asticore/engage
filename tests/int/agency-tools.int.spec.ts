@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
 import { CADENCES, isReportDue, parseRecipients, reportCsv, reportEmail, summaryLines, toCadence, toPreset, type ReportData } from '@/features/clientReports/core'
-import { idsAddedAfterCopy, DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
+import { copyKey, picturesAddedAfterCopy, idsAddedAfterCopy, DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, cleanBanner, demoPassword, describeBytes, isEmail, isResetDue, toResetEvery } from '@/features/demos/core'
 import { cleanHost, cleanName, describeRollout, franchiseLocks, toLockChoice, toStatus } from '@/features/franchising/core'
 import { CRON_JOBS } from '@/features/cron/registry'
 import { JOB_RUNNERS } from '@/features/cron/jobs'
 import { FEATURE_MAP } from '@/features/registry'
 
 describe('agency demos (22g)', () => {
+  it('keeps picture copies under their own prefix and finds pictures added later', () => {
+    expect(copyKey('a.jpg')).toBe('demo-copy/a.jpg')
+    expect(picturesAddedAfterCopy([{ filename: 'a.jpg' }, { filename: 'b.jpg' }, {}], new Set(['a.jpg']))).toEqual([{ filename: 'b.jpg' }])
+  })
   it('lists only records added after the copy, by slug', () => {
     const docs = [{ id: 1, slug: 'home' }, { id: 2, slug: 'new-page' }, { id: 3 }, { id: 4, slug: '' }]
     expect(idsAddedAfterCopy(docs, new Set(['home']))).toEqual([2])

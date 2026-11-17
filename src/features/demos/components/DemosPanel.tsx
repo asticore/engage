@@ -52,14 +52,14 @@ export const DemosPanel: React.FC = () => {
       <section aria-labelledby="demo-copy">
         <h2 id="demo-copy">Saved demo copy</h2>
         <p>
-          {data?.snapshot ? `Saved ${new Date(data.snapshot.takenAt).toLocaleString()} (${describeBytes(data.snapshot.size)}).` : 'No copy saved yet.'} The copy holds settings, header and footer, redirects, page templates, field groups, pages, posts, products and picture details. It never holds users, roles, customers or keys.
+          {data?.snapshot ? `Saved ${new Date(data.snapshot.takenAt).toLocaleString()} (${describeBytes(data.snapshot.size)}).` : 'No copy saved yet.'} The copy holds settings, header and footer, redirects, page templates, field groups, pages, posts, products and pictures (the picture files are kept too, up to 500 files of 15 MB each). It never holds users, roles, customers or keys.
         </p>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button type="button" disabled={busy} onClick={() => void post({ action: 'snapshot' }, 'Demo copy saved.')}>Save the site as the demo copy</button>
           <button type="button" disabled={busy || !data?.snapshot} onClick={() => void post({ action: 'reset' }, 'Demo reset.')}>Reset to the saved copy now</button>
           <a href="/api/admin-demos?download=package" download>Download as an importable package</a>
         </div>
-        <p>A reset writes everything in the copy back and deletes pages, posts and products added after the copy was saved. Import a package on a client site from Settings, Export and import.</p>
+        <p>A reset writes everything in the copy back and deletes pages, posts, products and pictures added after the copy was saved. Pictures that were deleted are put back. Import a package on a client site from Settings, Export and import.</p>
         {data?.settings.lastResetAt && <p>Last reset {new Date(data.settings.lastResetAt).toLocaleString()}: {data.settings.lastResult}</p>}
       </section>
 
