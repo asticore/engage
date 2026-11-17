@@ -5,8 +5,12 @@ import { loadKpis } from '@/features/shopReports/queries'
 import { resolveRange } from '@/features/shopReports/range'
 import { requestSiteOrigin, configuredSiteOrigin } from '@/utilities/siteOrigin'
 
-import { isReportDue, parseRecipients, reportEmail, wantsSection, type ReportData, type SectionKey } from './core'
+import { buildPdf, type PdfLogo } from '@/features/apiBuilder/pdf'
+import { storedLogo } from '@/features/email/designRender'
+
+import { isReportDue, parseRecipients, reportEmail, reportPdfLines, wantsSection, type ReportData, type SectionKey } from './core'
 import { loadSearch, loadTraffic } from './google'
+import { MAX_LOGO_BYTES, parseLogo } from './logo'
 import * as store from './store'
 
 type Counter = { prepare: (sql: string) => { bind: (...a: unknown[]) => { all: <T>() => Promise<{ results: T[] }> } } }
@@ -56,6 +60,33 @@ export async function buildReport(engine: Engine, d1: Counter, spec: ReportSpec,
   return { range: { from: range.from, to: range.to, days: range.days }, currency, sales, forms, content, traffic, search, speed }
 }
 
+/** The logo chosen under Email settings (the brand logo), as an address for the email and, when it is a JPEG or a plain PNG, as a PDF image. */
+export async function loadLogo(engine: Engine): Promise<{ url: string; pdf: PdfLogo | null }> {
+  try {
+    const stored = storedLogo(await engine.findGlobal({ slug: 'email-brand', depth: 1, overrideAccess: true } as never))
+    if (!stored?.url) return { url: '', pdf: null }
+    let pdf: PdfLogo | null = null
+    try {
+      const res = await fetch(stored.url, { signal: AbortSignal.timeout(5000) })
+      const declared = Number(res.headers.get('content-length') ?? 0)
+      if (res.ok && declared <= MAX_LOGO_BYTES) pdf = parseLogo(new Uint8Array(await res.arrayBuffer()))
+    } catch {
+      pdf = null
+    }
+    return { url: stored.url, pdf }
+  } catch {
+    return { url: '', pdf: null }
+  }
+}
+
+/** The report as a PDF file, with the brand logo when there is one that can be drawn. */
+export async function reportPdf(engine: Engine, d1: Counter, report: store.ClientReport, spec: ReportSpec, now: Date): Promise<Uint8Array<ArrayBuffer>> {
+  const [data, logo] = await Promise.all([buildReport(engine, d1, spec, now), loadLogo(engine)])
+  return buildPdf(reportPdfLines(report.name, data), report.name, logo.pdf)
+}
+
+export const reportPdfLink = (origin: string, token: string): string => (origin ? `${origin.replace(/\/+$/, '')}/api/client-report?token=${token}&format=pdf` : '')
+
 export const reportLink = (origin: string, token: string): string => (origin ? `${origin.replace(/\/+$/, '')}/client-report/${token}` : '')
 
 /** Emails one report to its recipients. Returns a short result for the screen and the cron log. */
@@ -63,7 +94,8 @@ export async function sendReport(engine: Engine, d1: store.D1, report: store.Cli
   const to = parseRecipients(report.recipients)
   if (to.length === 0) return { ok: false, message: 'This report has no valid recipients.' }
   const data = await buildReport(engine, d1 as never, report, now)
-  const mail = reportEmail(report.name, data, report.revoked ? '' : reportLink(origin, report.token))
+  const logo = await loadLogo(engine)
+  const mail = reportEmail(report.name, data, report.revoked ? '' : reportLink(origin, report.token), logo.url, report.revoked ? '' : reportPdfLink(origin, report.token))
   const result = await sendEmail({ to, subject: mail.subject, html: mail.html, text: mail.text, template: 'client-report' })
   if (!result.ok) return { ok: false, message: `The email was not sent: ${'error' in result && result.error ? result.error : 'unknown error'}` }
   await store.markSent(d1, report.id, now.toISOString())

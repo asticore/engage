@@ -119,9 +119,28 @@ function hardWrap(text: string, maxChars: number): string[] {
   return out
 }
 
-/** Builds the PDF file. `title` goes into the document information. */
-export function buildPdf(lines: PdfLine[], title: string): Uint8Array<ArrayBuffer> {
-  const rows = rowsOf(lines)
+/** An image drawn at the top of the first page. `data` is already in the form the filter expects (a JPEG file, or PNG zlib data with PNG predictors). */
+export type PdfLogo = { width: number; height: number; components: 1 | 3; filter: 'DCTDecode' | 'FlateDecode'; data: Uint8Array }
+
+const LOGO_MAX_W = 160
+const LOGO_MAX_H = 48
+
+/** Size the logo is drawn at in points: fits the box, never enlarged past its own pixels. */
+export function logoSize(logo: Pick<PdfLogo, 'width' | 'height'>): { w: number; h: number } {
+  const scale = Math.min(LOGO_MAX_W / logo.width, LOGO_MAX_H / logo.height, 1)
+  return { w: logo.width * scale, h: logo.height * scale }
+}
+
+const latin1 = (bytes: Uint8Array): string => {
+  let out = ''
+  for (let i = 0; i < bytes.length; i += 8192) out += String.fromCharCode(...bytes.subarray(i, i + 8192))
+  return out
+}
+
+/** Builds the PDF file. `title` goes into the document information. A logo, when given, sits above the text on the first page. */
+export function buildPdf(lines: PdfLine[], title: string, logo?: PdfLogo | null): Uint8Array<ArrayBuffer> {
+  const size = logo ? logoSize(logo) : null
+  const rows = rowsOf(logo ? [{ text: '', style: 'gap' as const }, ...Array(Math.ceil((size?.h ?? 0) / 8)).fill({ text: '', style: 'gap' as const }), ...lines] : lines)
   // Pages: a list of content streams.
   const pages: string[][] = []
   let current: string[] = []
@@ -143,8 +162,10 @@ export function buildPdf(lines: PdfLine[], title: string): Uint8Array<ArrayBuffe
 
   const pageCount = pages.length
   // Object ids: 1 catalog, 2 pages, 3-5 fonts, 6 info, then a page and a content stream per page.
-  const pageId = (i: number): number => 7 + i * 2
-  const contentId = (i: number): number => 8 + i * 2
+  const imageId = 7
+  const first = logo ? 8 : 7
+  const pageId = (i: number): number => first + i * 2
+  const contentId = (i: number): number => first + 1 + i * 2
   const objects: string[] = []
   objects[1] = '<< /Type /Catalog /Pages 2 0 R >>'
   objects[2] = `<< /Type /Pages /Kids [${pages.map((_, i) => `${pageId(i)} 0 R`).join(' ')}] /Count ${pageCount} >>`
@@ -152,10 +173,17 @@ export function buildPdf(lines: PdfLine[], title: string): Uint8Array<ArrayBuffe
   objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'
   objects[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>'
   objects[6] = `<< /Title (${escapePdf(winAnsi(title))}) /Producer (Engage API builder) >>`
+  if (logo) {
+    const decode = logo.filter === 'FlateDecode' ? ` /DecodeParms << /Predictor 15 /Colors ${logo.components} /BitsPerComponent 8 /Columns ${logo.width} >>` : ''
+    const bytes = latin1(logo.data)
+    objects[imageId] = `<< /Type /XObject /Subtype /Image /Width ${logo.width} /Height ${logo.height} /ColorSpace /${logo.components === 3 ? 'DeviceRGB' : 'DeviceGray'} /BitsPerComponent 8 /Filter /${logo.filter}${decode} /Length ${bytes.length} >>\nstream\n${bytes}\nendstream`
+  }
   pages.forEach((content, i) => {
     const footer = `BT /F1 8 Tf 1 0 0 1 ${PAGE_W - MARGIN - 40} 30 Tm (${i + 1} / ${pageCount}) Tj ET`
-    const stream = [...content, footer].join('\n')
-    objects[pageId(i)] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents ${contentId(i)} 0 R >>`
+    const image = logo && size && i === 0 ? [`q ${size.w.toFixed(1)} 0 0 ${size.h.toFixed(1)} ${MARGIN} ${(PAGE_H - MARGIN - size.h + 8).toFixed(1)} cm /Im1 Do Q`] : []
+    const stream = [...image, ...content, footer].join('\n')
+    const xobject = logo && i === 0 ? ` /XObject << /Im1 ${imageId} 0 R >>` : ''
+    objects[pageId(i)] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >>${xobject} >> /Contents ${contentId(i)} 0 R >>`
     objects[contentId(i)] = `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`
   })
 

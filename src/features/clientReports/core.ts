@@ -166,13 +166,25 @@ export function reportCsv(d: ReportData): string {
 
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-export function reportEmail(name: string, d: ReportData, link: string, logoUrl = ''): { subject: string; html: string; text: string } {
+export function reportEmail(name: string, d: ReportData, link: string, logoUrl = '', pdfLink = ''): { subject: string; html: string; text: string } {
   const lines = summaryLines(d)
   const tables = reportTables(d)
   const logo = /^https?:\/\//i.test(logoUrl) ? `<p><img src="${esc(logoUrl)}" alt="" style="max-height:48px;max-width:200px"></p>` : ''
   const tableHtml = tables.map((t) => `<h2>${esc(t.title)}</h2><table cellpadding="6" style="border-collapse:collapse"><tr>${t.head.map((h) => `<th align="left">${esc(h)}</th>`).join('')}</tr>${t.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`).join('')
-  const html = `${logo}<h1>${esc(name)}</h1><table cellpadding="6" style="border-collapse:collapse">${lines.map((l) => `<tr><th align="left">${esc(l.label)}</th><td>${esc(l.value)}</td></tr>`).join('')}</table>${tableHtml}${link ? `<p><a href="${esc(link)}">Open the full report</a></p>` : ''}`
+  const html = `${logo}<h1>${esc(name)}</h1><table cellpadding="6" style="border-collapse:collapse">${lines.map((l) => `<tr><th align="left">${esc(l.label)}</th><td>${esc(l.value)}</td></tr>`).join('')}</table>${tableHtml}${link ? `<p><a href="${esc(link)}">Open the full report</a></p>` : ''}${pdfLink ? `<p><a href="${esc(pdfLink)}">Download as PDF</a></p>` : ''}`
   const tableText = tables.map((t) => `\n\n${t.title}\n${t.rows.map((r) => r.join(' | ')).join('\n')}`).join('')
-  const text = `${name}\n\n${lines.map((l) => `${l.label}: ${l.value}`).join('\n')}${tableText}${link ? `\n\nFull report: ${link}` : ''}`
+  const text = `${name}\n\n${lines.map((l) => `${l.label}: ${l.value}`).join('\n')}${tableText}${link ? `\n\nFull report: ${link}` : ''}${pdfLink ? `\nPDF: ${pdfLink}` : ''}`
   return { subject: `${name}: report for ${d.range.from} to ${d.range.to}`, html, text }
+}
+
+/** The report as lines for the PDF writer: title, the summary, then each table. */
+export function reportPdfLines(name: string, d: ReportData): { text: string; style: 'title' | 'h2' | 'body' | 'gap' }[] {
+  const out: { text: string; style: 'title' | 'h2' | 'body' | 'gap' }[] = [{ text: name, style: 'title' }, { text: '', style: 'gap' }]
+  for (const l of summaryLines(d)) out.push({ text: `${l.label}: ${l.value}`, style: 'body' })
+  for (const t of reportTables(d)) {
+    out.push({ text: t.title, style: 'h2' })
+    out.push({ text: t.head.join('   |   '), style: 'body' })
+    for (const r of t.rows) out.push({ text: r.join('   |   '), style: 'body' })
+  }
+  return out
 }
