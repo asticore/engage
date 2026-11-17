@@ -1348,6 +1348,8 @@ const nl: UiDictionary = {
   "email.abandonedCart.body": "Je hebt nog artikelen in je winkelmandje bij {site_name} staan. Ze wachten nog op je.",
   "email.backInStock.subject": "Weer op voorraad: {label}",
   "email.backInStock.body": "Goed nieuws. {label} is weer op voorraad.\n\nBekijk het hier: {url}\n\nJe vroeg om een melding, dus dit is de enige e-mail die we hierover sturen.",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "E-mail- en sms-verbindingen",
   'settings.link.email-and-text-connections.description': "E-mail- en sms-providers worden verbonden op de pagina Integraties. Sleutels worden hier nooit getoond.",

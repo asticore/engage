@@ -1348,6 +1348,8 @@ const ja: UiDictionary = {
   "email.abandonedCart.body": "{site_name} のカートに商品が残っています。まだお待ちしています。",
   "email.backInStock.subject": "再入荷しました: {label}",
   "email.backInStock.body": "朗報です。{label} が再入荷しました。\n\nこちらからご覧いただけます: {url}\n\nご希望により再入荷のお知らせをお送りしています。このメールはこの件に関する唯一のお知らせです。",
+  "email.waitingList.subject": "A place is held for you: {label}",
+  "email.waitingList.body": "Good news. A place on {label} has opened up and we are holding it for you for {hours} hours.\n\nBuy it here: {url}\n\nIf you do not buy in time, the place goes to the next person on the list.",
   // --- admin leftovers (settings link cards) ---
   'settings.link.email-and-text-connections.label': "メールとSMSの接続",
   'settings.link.email-and-text-connections.description': "メールとSMSのプロバイダーは「連携」ページで接続します。キーはここには表示されません。",
