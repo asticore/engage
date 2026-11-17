@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { audit, auditContext } from '@/features/security/auditLog'
-import { decideCountry, decideIp, MAX_RULES, parseBulk, parseCountries, type IpRule, type IpRuleKind } from '@/features/security/ipRules'
+import { downloadForImport, ImportError, parseImportAddress } from '@/features/dam/importUrl'
+import { BYPASS_COOKIE, BYPASS_SECONDS, signBypass } from '@/features/security/ipBypass'
+import { BLOCK_MESSAGE_MAX, decideCountry, decideIp, MAX_RULES, parseBulk, parseCountries, type IpRule, type IpRuleKind } from '@/features/security/ipRules'
 import * as store from '@/features/security/ipRulesStore'
 import { clientKey } from '@/features/security/rateLimit'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
@@ -35,7 +37,8 @@ export async function GET(request: Request): Promise<Response> {
     const lines = ['kind,entry,reason,expires_at,created_at', ...rules.map((r) => [r.kind, r.entry, r.reason, r.expiresAt ?? '', r.createdAt].map(csvCell).join(','))]
     return new Response(lines.join('\n'), { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="ip-rules.csv"', 'Cache-Control': 'no-store' } })
   }
-  return json({ rules, yourAddress: clientKey(request), yourCountry: request.headers.get('cf-ipcountry') ?? '' })
+  const bypass = (request.headers.get('cookie') ?? '').includes(`${BYPASS_COOKIE}=`)
+  return json({ rules, bypass, yourAddress: clientKey(request), yourCountry: request.headers.get('cf-ipcountry') ?? '' })
 }
 
 /** POST { action: 'add', kind, entries (text), reason?, expiresAt? } | { action: 'delete', ids } */
@@ -49,9 +52,20 @@ export async function POST(request: Request): Promise<Response> {
   const settings = await readSecuritySettingsFromD1()
   const ctx = auditContext(request)
 
-  if (body.action === 'add') {
+  if (body.action === 'add' || body.action === 'import') {
+    const isImport = body.action === 'import'
     const kind: IpRuleKind = body.kind === 'allow' ? 'allow' : 'block'
-    const parsed = parseBulk(typeof body.entries === 'string' ? body.entries.slice(0, 20000) : '')
+    let text = typeof body.entries === 'string' ? body.entries.slice(0, isImport ? 1_000_000 : 20000) : ''
+    if (isImport && typeof body.url === 'string' && body.url.trim()) {
+      try {
+        const { url } = parseImportAddress(body.url.trim())
+        const file = await downloadForImport(url, 1_000_000, false)
+        text = new TextDecoder().decode(file.data)
+      } catch (error) {
+        return json({ error: error instanceof ImportError ? error.message : 'The list could not be downloaded.' }, error instanceof ImportError ? error.status : 502)
+      }
+    }
+    const parsed = parseBulk(text, isImport ? MAX_RULES : 500)
     if (parsed.entries.length === 0) return json({ error: parsed.rejected.length ? `Not a valid address or range: ${parsed.rejected.join(', ')}` : 'Enter at least one address.' }, 400)
     const existing = await store.listRules(d1).catch((): IpRule[] => [])
     if (existing.length + parsed.entries.length > MAX_RULES) return json({ error: `The lists can hold at most ${MAX_RULES} entries.` }, 400)
@@ -66,7 +80,7 @@ export async function POST(request: Request): Promise<Response> {
     const expiresAt = typeof body.expiresAt === 'string' && !Number.isNaN(Date.parse(body.expiresAt)) ? new Date(body.expiresAt).toISOString() : null
     for (const entry of parsed.entries) await store.addRule(d1, { kind, entry, reason, expiresAt }, now)
     store.resetIpRulesCache()
-    void audit({ action: 'ip.rule', detail: `${kind} ${parsed.entries.length} added`, ...ctx }, settings)
+    void audit({ action: 'ip.rule', detail: `${kind} ${parsed.entries.length} ${isImport ? 'imported' : 'added'}`, ...ctx }, settings)
     return json({ ok: true, added: parsed.entries.length, rejected: parsed.rejected })
   }
   if (body.action === 'countries') {
@@ -84,6 +98,22 @@ export async function POST(request: Request): Promise<Response> {
     store.resetIpRulesCache()
     void audit({ action: 'ip.rule', detail: mode ? `${mode} ${parsed.codes.length} countries` : 'countries cleared', ...ctx }, settings)
     return json({ ok: true })
+  }
+  if (body.action === 'message') {
+    const text = typeof body.message === 'string' ? body.message.replace(/[\u0000-\u001f]+/g, ' ').trim().slice(0, BLOCK_MESSAGE_MAX) : ''
+    await store.setMessage(d1, text, now)
+    store.resetIpRulesCache()
+    void audit({ action: 'ip.rule', detail: text ? 'block message set' : 'block message cleared', ...ctx }, settings)
+    return json({ ok: true })
+  }
+  if (body.action === 'bypass') {
+    const on = body.on !== false
+    const token = on ? await signBypass(process.env.ENGAGE_SECRET ?? '', String(g.context.user?.id ?? '')) : null
+    if (on && !token) return json({ error: 'The bypass needs ENGAGE_SECRET to be set on the server.' }, 400)
+    void audit({ action: 'ip.rule', detail: on ? 'admin bypass on' : 'admin bypass off', ...ctx }, settings)
+    const res = NextResponse.json({ ok: true, bypass: on }, { headers: { 'Cache-Control': 'no-store' } })
+    res.cookies.set(BYPASS_COOKIE, token ?? '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: on ? BYPASS_SECONDS : 0 })
+    return res
   }
   if (body.action === 'delete') {
     const ids = Array.isArray(body.ids) ? body.ids.map((n) => Math.floor(Number(n))).filter((n) => Number.isFinite(n) && n > 0) : []

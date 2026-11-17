@@ -7,6 +7,7 @@ import { getAdminUi } from '@/admin/i18n/serverUi'
 import { AUTH_AUDIT_ACTIONS } from '@/features/security/auditLog'
 import { auditPageHref, parseAuditFilter } from '@/features/security/auditQuery'
 import { listAuthAuditPage } from '@/features/security/auditStore'
+import { BlockIpButton } from '@/features/security/components/BlockIpButton'
 import { SortableTable } from '@/admin/table/SortableTable'
 
 /**
@@ -89,7 +90,7 @@ export async function SecurityAuditView({ searchParams }: { searchParams?: Recor
                   account,
                   item,
                   detail: row.detail ?? '-',
-                  address: row.ip ?? '-',
+                  address: row.ip ? <BlockIpButton ip={row.ip} /> : '-',
                   browser: row.userAgent ?? '-',
                 },
               }

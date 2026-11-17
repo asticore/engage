@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { decideCountry, decideIp, matches, parseBulk, parseCountries, parseEntry, parseIp, type IpRule } from '@/features/security/ipRules'
+import { signBypass, verifyBypass } from '@/features/security/ipBypass'
+import { countryOptions } from '@/features/security/countryNames'
+import { customBlockMessage, decideCountry, decideIp, matches, parseBulk, parseCountries, parseEntry, parseIp, type IpRule } from '@/features/security/ipRules'
 
 const rule = (kind: IpRule['kind'], entry: string, expiresAt: string | null = null): IpRule => ({ id: 1, kind, entry, reason: '', expiresAt, createdAt: '' })
 
@@ -52,5 +54,28 @@ describe('ip rules', () => {
     expect(decideCountry('US', [])).toBe('allow')
     expect(parseCountries('au, nz xx bad1 AU').codes).toEqual(['AU', 'NZ', 'XX'])
     expect(parseCountries('bad1').rejected).toEqual(['bad1'])
+  })
+})
+
+describe('ip bypass, message and country names', () => {
+  it('signs and verifies the admin bypass cookie', async () => {
+    const t = (await signBypass('s3cret', 7, 1_000_000))!
+    expect(await verifyBypass(t, 's3cret', 1_000_000)).toBe(true)
+    expect(await verifyBypass(t, 'other', 1_000_000)).toBe(false)
+    expect(await verifyBypass(t.replace('7.', '8.'), 's3cret', 1_000_000)).toBe(false)
+    expect(await verifyBypass(t, 's3cret', 1_000_000 + 31 * 24 * 3600 * 1000)).toBe(false)
+    expect(await verifyBypass(undefined, 's3cret')).toBe(false)
+    expect(await signBypass('', 7)).toBeNull()
+    expect(await verifyBypass(t, '')).toBe(false)
+  })
+  it('reads the custom message', () => {
+    expect(customBlockMessage([rule('block', '1.2.3.4')])).toBeNull()
+    expect(customBlockMessage([rule('message', 'Call us')])).toBe('Call us')
+    expect(decideIp('1.2.3.4', [rule('message', '1.2.3.4')])).toBe('none')
+  })
+  it('lists countries by name', () => {
+    const list = countryOptions()
+    expect(list.find((c) => c.code === 'AU')?.name).toBe('Australia')
+    expect(list.at(-1)?.code).toBe('XX')
   })
 })
