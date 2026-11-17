@@ -3,6 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 import { getAdminContext } from '@/admin/auth'
 import { loadApprovalSettings } from '@/features/approval/settings'
+import { loadSectionChoices } from '@/features/approval/sections'
 import { approverCandidates, type WorkflowRecord } from '@/features/approval/workflowForm'
 import { RolesViewClient } from './RolesViewClient'
 
@@ -48,6 +49,7 @@ export async function RolesView() {
   } catch {
     // an empty picker is shown
   }
+  const sections = await loadSectionChoices(context.engine as never)
   const approvalEnabled = (await loadApprovalSettings(context.engine as never)).enabled
 
   return (
@@ -56,6 +58,7 @@ export async function RolesView() {
       canEdit={context.isAdmin}
       workflows={workflowDocs}
       people={people}
+      sections={sections}
       approvalEnabled={approvalEnabled}
     />
   )

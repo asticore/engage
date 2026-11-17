@@ -2,6 +2,7 @@ import { configuredSiteOrigin } from '@/utilities/siteOrigin'
 
 import { APPROVAL_SINGULAR, loadApprovalSettings, type ApprovalCollection } from './settings'
 import { notifyOverdue } from './notify'
+import { sectionKeyOf } from './sections'
 import { parseWorkflow, WORKFLOWS_SLUG } from './workflows'
 
 /** The note on the review event that marks "reminded": one per review round, found again by the sweep so nobody is emailed twice. */
@@ -67,7 +68,8 @@ export async function runOverdueReviewReminders(engine: EngineLike, now = new Da
         const title = String(doc.title ?? doc.name ?? `${APPROVAL_SINGULAR[collection]} ${id}`)
         const step = Math.max(0, Math.min(workflow.steps.length - 1, Number(doc.reviewStep) || 0))
         const requesterId = doc.reviewRequestedBy && typeof doc.reviewRequestedBy === 'object' ? Number((doc.reviewRequestedBy as { id?: unknown }).id) : Number(doc.reviewRequestedBy) || null
-        const sent = await notifyOverdue({ engine, settings, collection, id, title, workflow, step, requesterId, origin, days, requestedAt }).catch((): string[] => [])
+        const section = Object.keys(workflow.sectionRoutes ?? {}).length > 0 ? await sectionKeyOf(engine, collection, doc) : null
+        const sent = await notifyOverdue({ engine, settings, collection, id, title, workflow, step, requesterId, origin, days, requestedAt, section }).catch((): string[] => [])
         await engine.create({
           collection: 'review-events',
           data: { collection, docId: id, docTitle: title, action: 'comment', note: OVERDUE_NOTE, step: workflow.steps[step]?.name ?? '', actorName: 'System' },

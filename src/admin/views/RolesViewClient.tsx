@@ -34,6 +34,8 @@ interface RolesViewClientProps {
   workflows?: WorkflowRecord[]
   /** Staff who can be named as approvers. */
   people?: Array<{ id: number; name: string }>
+  /** Sections that can be given their own approvers: top-level pages and post categories. */
+  sections?: Partial<Record<'pages' | 'posts', Array<{ key: string; label: string }>>>
   /** Whether content approval is switched on in Security settings. */
   approvalEnabled?: boolean
 }
@@ -72,7 +74,7 @@ function tabStyle(active: boolean): React.CSSProperties {
 /**
  * Roles admin view client: list, select, create, edit matrix, save, delete.
  */
-export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], people = [], approvalEnabled = true }: RolesViewClientProps) {
+export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], people = [], sections = {}, approvalEnabled = true }: RolesViewClientProps) {
   const t = useAdminT()
   const [tab, setTab] = useState<RolesTab>('permissions')
 
@@ -284,6 +286,7 @@ export function RolesViewClient({ roles: initialRoles, canEdit, workflows = [], 
             workflows={workflows}
             roles={roles}
             people={people}
+            sections={sections}
             canEdit={canEdit}
             approvalEnabled={approvalEnabled}
           />

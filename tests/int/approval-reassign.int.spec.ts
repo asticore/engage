@@ -5,8 +5,9 @@
 import { describe, expect, it } from 'vitest'
 
 import { parseStoredReview, serializeStoredReview, transition, resetOnEdit, type ReviewActor, type ReviewDocState } from '@/features/approval/stateMachine'
-import { coveredBy, isAway, mayActOnStep, namedUserIds, parseStandIns, validateWorkflowInput, type ApprovalWorkflow } from '@/features/approval/workflows'
-import { approverCandidates, draftFromRecord, payloadFromDraft, setStandIn } from '@/features/approval/workflowForm'
+import { coveredBy, describeAwaiting, isAway, mayActOnStep, namedApprovers, namedUserIds, parseSectionRoutes, parseStandIns, validateWorkflowInput, type ApprovalWorkflow } from '@/features/approval/workflows'
+import { approverCandidates, draftFromRecord, payloadFromDraft, setSectionRoute, setStandIn } from '@/features/approval/workflowForm'
+import { sectionKeyOf } from '@/features/approval/sections'
 
 describe('approver picker candidates', () => {
   it('includes staff and custom-role holders, leaves out plain customers', () => {
@@ -111,6 +112,64 @@ describe('reassigning a review', () => {
     // Without an assignee the stored shape is unchanged.
     expect(serializeStoredReview({ hash: null, approvals: [] })).toEqual([])
     expect(parseStoredReview([]).assignee).toBeUndefined()
+  })
+})
+
+describe('a person per section', () => {
+  const step = FLOW.steps[0]
+  const routed: ApprovalWorkflow = { ...FLOW, sectionRoutes: { '12': [7], news: [8] }, authorRoutes: { '3': [9] } }
+
+  it('reads routes with keys trimmed and lower-cased, dropping empty ones', () => {
+    expect(parseSectionRoutes({ ' News ': [8, '8'], '': [1], blank: [], bad: 'x' })).toEqual({ news: [8] })
+    expect(parseSectionRoutes('nope')).toEqual({})
+  })
+
+  it('the section route replaces the step approvers; an author route still wins; no section means the step decides', () => {
+    expect(namedApprovers(routed, step, 4, '12')).toEqual([7])
+    expect(namedApprovers(routed, step, 3, '12')).toEqual([9])
+    expect(namedApprovers(routed, step, 4, null)).toEqual([])
+    expect(namedApprovers(routed, step, 4, 'other')).toEqual([])
+  })
+
+  it('only the named person (or an admin) may approve a routed section, and the message says so', () => {
+    const state = inReview({ requestedBy: 4, section: '12' })
+    expect(run(state, 'approve', actor(7, []), { workflow: routed })).toMatchObject({ ok: true })
+    const blocked = run(state, 'approve', actor(5, ['editor']), { workflow: routed })
+    expect(blocked).toMatchObject({ ok: false, status: 403 })
+    expect(blocked).toMatchObject({ error: expect.stringContaining('the approver named for this section') })
+    expect(run(state, 'approve', actor(1, ['admin'], { isAdmin: true }), { workflow: routed })).toMatchObject({ ok: true })
+    // A document in another section is decided by the step's roles.
+    expect(run(inReview({ requestedBy: 4, section: 'other' }), 'approve', actor(5, ['editor']), { workflow: routed })).toMatchObject({ ok: true })
+  })
+
+  it('says who is awaited', () => {
+    expect(describeAwaiting(routed, 0, 4, '12')).toContain('the approver named for this section')
+    expect(describeAwaiting(routed, 0, 3, '12')).toContain('the approver named for this author')
+    expect(describeAwaiting(routed, 0, 4, null)).toContain('Editor')
+  })
+
+  it('works out a page section from its top-level page and a post section from its first category', async () => {
+    const pages: Record<number, Record<string, unknown>> = { 12: { id: 12, parent: null }, 20: { id: 20, parent: 12 }, 21: { id: 21, parent: { id: 20 } } }
+    const engine = {
+      findByID: async (args: Record<string, unknown>): Promise<Record<string, unknown> | null> => pages[Number(args.id)] ?? null,
+      find: async (): Promise<{ docs: Array<Record<string, unknown>> }> => ({ docs: [] }),
+    }
+    expect(await sectionKeyOf(engine, 'pages', { id: 21, parent: 20 })).toBe('12')
+    expect(await sectionKeyOf(engine, 'pages', { id: 12 })).toBe('12')
+    expect(await sectionKeyOf(engine, 'posts', { id: 1, categories: [{ name: ' News ' }, { name: 'Other' }] })).toBe('news')
+    expect(await sectionKeyOf(engine, 'posts', { id: 1, categories: [] })).toBeNull()
+    expect(await sectionKeyOf(engine, 'events', { id: 1 })).toBeNull()
+  })
+
+  it('validates the named people, and the form adds and removes rows', () => {
+    const base = { name: 'W', collection: 'pages', steps: [{ name: 'S', approverRoles: ['editor'], approvalsNeeded: 1 }] }
+    const messages = (routes: unknown) => validateWorkflowInput({ ...base, sectionRoutes: routes }, new Set(['editor']), [], null, new Set([7])).map((p) => p.message)
+    expect(messages({ '12': [7] })).toEqual([])
+    expect(messages({ '12': [99] })).toContain('Approver by section "12": user 99 does not exist.')
+    expect(namedUserIds([], {}, [], { '12': [7] })).toEqual([7])
+    expect(setSectionRoute({}, ' News ', [8])).toEqual({ news: [8] })
+    expect(setSectionRoute({ news: [8] }, 'news', [])).toEqual({})
+    expect(payloadFromDraft(draftFromRecord({ id: 1, name: 'W', collection: 'pages', steps: [], sectionRoutes: { news: [8] } })).sectionRoutes).toEqual({ news: [8] })
   })
 })
 

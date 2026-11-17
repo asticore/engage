@@ -50,6 +50,8 @@ export type ReviewDocState = {
   step?: number
   /** Who the review was reassigned to at this step. Cleared whenever the review moves, is sent back, withdrawn or restarted. */
   assignee?: ReviewAssignee | null
+  /** The document's section (see sections.ts), worked out by the route and never stored. Only used to pick section approvers. */
+  section?: string | null
 }
 
 /** What the acting user may do on this collection, worked out by the route. */
@@ -152,13 +154,14 @@ export function transition(input: TransitionInput): TransitionResult {
   /** A reviewer may act only on the step the document is at. Without a workflow anyone with review rights may. */
   const stepBlock = (): TransitionFail | null => {
     if (!workflow || !current) return null
-    const named = namedApprovers(workflow, current, state.requestedBy)
+    const named = namedApprovers(workflow, current, state.requestedBy, state.section ?? null)
     const covering = actor.coveringFor?.userIds ?? []
     // A review handed to this person (or to someone they cover for) may be acted on by them.
     if (state.assignee && (state.assignee.userId === actor.id || covering.includes(state.assignee.userId))) return null
     if (mayActOnStep(current, [...roleSlugs, ...(actor.coveringFor?.roleSlugs ?? [])], actor.isAdmin, { userId: actor.id, named, alsoUserIds: covering })) return null
     const routed = state.requestedBy !== null && (workflow.authorRoutes?.[String(state.requestedBy)]?.length ?? 0) > 0
-    return fail(403, `This is waiting on ${state.assignee ? `${state.assignee.name}, or ` : ''}${routed ? 'the approver named for this author' : describe(current.approverNames)} (step ${stepOf(state, workflow) + 1} of ${workflow.steps.length}: ${current.name}). ${named.length > 0 ? 'Only the named approver can approve this step.' : 'Your role cannot approve this step.'}`)
+    const sectionRouted = !routed && Boolean(state.section) && (workflow.sectionRoutes?.[state.section as string]?.length ?? 0) > 0
+    return fail(403, `This is waiting on ${state.assignee ? `${state.assignee.name}, or ` : ''}${routed ? 'the approver named for this author' : sectionRouted ? 'the approver named for this section' : describe(current.approverNames)} (step ${stepOf(state, workflow) + 1} of ${workflow.steps.length}: ${current.name}). ${named.length > 0 ? 'Only the named approver can approve this step.' : 'Your role cannot approve this step.'}`)
   }
   const describe = (names: string[]): string => (names.length === 0 ? 'an admin' : names.join(' or '))
 

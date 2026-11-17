@@ -10,7 +10,9 @@ import {
   MAX_WORKFLOW_STEPS,
   parseAuthorRoutes,
   parseRoleList,
+  parseSectionRoutes,
   parseStandIns,
+  type SectionRoutes,
   parseUserIds,
   type AuthorRoutes,
   type StandIn,
@@ -40,6 +42,7 @@ export type WorkflowDraft = {
   steps: DraftStep[]
   authorRoutes: AuthorRoutes
   standIns: StandIn[]
+  sectionRoutes: SectionRoutes
 }
 
 /** A workflow as the REST API returns it. */
@@ -54,6 +57,7 @@ export type WorkflowRecord = {
   steps?: Array<{ id?: string; name?: string | null; approverRoles?: unknown; approvalsNeeded?: number | null; approverUsers?: unknown; alsoRoles?: boolean | null }> | null
   authorRoutes?: unknown
   standIns?: unknown
+  sectionRoutes?: unknown
 }
 
 export type RoleChoice = { slug: string; name: string; builtIn: boolean; canApprove: boolean }
@@ -74,6 +78,7 @@ export const emptyDraft = (collection: ApprovalCollection = 'pages'): WorkflowDr
   steps: [emptyStep()],
   authorRoutes: {},
   standIns: [],
+  sectionRoutes: {},
 })
 
 export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
@@ -96,6 +101,7 @@ export function draftFromRecord(record: WorkflowRecord): WorkflowDraft {
     })),
     authorRoutes: parseAuthorRoutes(record.authorRoutes),
     standIns: parseStandIns(record.standIns),
+    sectionRoutes: parseSectionRoutes(record.sectionRoutes),
   }
 }
 
@@ -117,6 +123,7 @@ export function payloadFromDraft(draft: WorkflowDraft): Record<string, unknown> 
     })),
     authorRoutes: draft.authorRoutes,
     standIns: draft.standIns,
+    sectionRoutes: draft.sectionRoutes,
   }
 }
 
@@ -170,6 +177,16 @@ export function approverCandidates(users: ReadonlyArray<{ id: number | string; n
     out.push({ id, name: user.name?.trim() || user.email || `User ${id}` })
   }
   return out
+}
+
+/** Sets who approves one section's work. An empty list removes the section's route. */
+export function setSectionRoute(routes: SectionRoutes, section: string, approvers: number[]): SectionRoutes {
+  const key = section.trim().toLowerCase()
+  const next = { ...routes }
+  if (!key) return next
+  if (approvers.length === 0) delete next[key]
+  else next[key] = approvers
+  return next
 }
 
 /** Sets who covers for one reviewer. A null stand-in removes the reviewer's row; one reviewer has at most one. */

@@ -15,6 +15,7 @@ import {
   payloadFromDraft,
   roleChoices,
   setAuthorRoute,
+  setSectionRoute,
   setStandIn,
   toggleRole,
   toggleUser,
@@ -30,11 +31,15 @@ type RoleRow = { id: number; name: string; slug: string; builtIn?: boolean; perm
 
 export type Person = { id: number; name: string }
 
+export type SectionOptions = Partial<Record<'pages' | 'posts', Array<{ key: string; label: string }>>>
+
 type Props = {
   workflows: WorkflowRecord[]
   roles: RoleRow[]
   /** Staff users who can be named as approvers. */
   people?: Person[]
+  /** Sections that can be given their own approvers: top-level pages and post categories. */
+  sections?: SectionOptions
   canEdit: boolean
   /** The master switch under Settings > Security. Workflows do nothing while it is off. */
   approvalEnabled: boolean
@@ -74,6 +79,7 @@ function WorkflowForm({
   draft,
   choices,
   people,
+  sections,
   knownRoles,
   others,
   canEdit,
@@ -89,6 +95,7 @@ function WorkflowForm({
   draft: WorkflowDraft
   choices: RoleChoice[]
   people: Person[]
+  sections: SectionOptions
   knownRoles: string[]
   others: Array<{ id: number; collection: string; active: boolean }>
   canEdit: boolean
@@ -108,6 +115,10 @@ function WorkflowForm({
   const disabled = !canEdit || busy
   const [routeAuthor, setRouteAuthor] = useState(0)
   const [routeApprover, setRouteApprover] = useState(0)
+  const [sectionKey, setSectionKey] = useState('')
+  const [sectionApprover, setSectionApprover] = useState(0)
+  const sectionOptions = draft.collection === 'pages' || draft.collection === 'posts' ? (sections[draft.collection] ?? []) : []
+  const sectionLabel = (key: string) => sectionOptions.find((option) => option.key === key)?.label ?? key
   const [awayUser, setAwayUser] = useState(0)
   const [coverUser, setCoverUser] = useState(0)
   const [awayUntil, setAwayUntil] = useState('')
@@ -201,6 +212,40 @@ function WorkflowForm({
             </label>
           </div>
           <button type="button" className="eg-roles-btnSecondary" disabled={!routeAuthor || !routeApprover} onClick={() => { onChange({ ...draft, authorRoutes: setAuthorRoute(draft.authorRoutes, routeAuthor, [...new Set([...(draft.authorRoutes[String(routeAuthor)] ?? []), routeApprover])]) }); setRouteApprover(0) }}>
+            Add
+          </button>
+        </fieldset>
+      )}
+
+      {people.length > 0 && sectionOptions.length > 0 && (
+        <fieldset className="rw-roles" disabled={disabled}>
+          <legend>A different approver for a section</legend>
+          <p className="rw-hint">
+            {draft.collection === 'pages' ? 'A page belongs to the top-level page it sits under.' : 'A post belongs to its first category.'} Work in that section is approved by the people named, at every step, unless its author has an approver of their own.
+          </p>
+          {Object.entries(draft.sectionRoutes).map(([key, approvers]) => (
+            <p key={key} className="rw-hint">
+              {sectionLabel(key)} is approved by {approvers.map(personName).join(', ')}{' '}
+              <button type="button" className="eg-roles-btnSecondary" onClick={() => onChange({ ...draft, sectionRoutes: setSectionRoute(draft.sectionRoutes, key, []) })}>Remove</button>
+            </p>
+          ))}
+          <div className="rw-grid">
+            <label className="rw-field" htmlFor={`${idBase}-section`}>
+              <span>Section</span>
+              <select id={`${idBase}-section`} className="eg-roles-input" value={sectionKey} onChange={(event) => setSectionKey(event.target.value)}>
+                <option value="">Pick…</option>
+                {sectionOptions.map((option) => <option key={option.key} value={option.key}>{option.label}</option>)}
+              </select>
+            </label>
+            <label className="rw-field" htmlFor={`${idBase}-section-approver`}>
+              <span>Approved by</span>
+              <select id={`${idBase}-section-approver`} className="eg-roles-input" value={sectionApprover} onChange={(event) => setSectionApprover(Number(event.target.value))}>
+                <option value={0}>Pick…</option>
+                {people.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </label>
+          </div>
+          <button type="button" className="eg-roles-btnSecondary" disabled={!sectionKey || !sectionApprover} onClick={() => { const key = sectionKey.trim().toLowerCase(); onChange({ ...draft, sectionRoutes: setSectionRoute(draft.sectionRoutes, key, [...new Set([...(draft.sectionRoutes[key] ?? []), sectionApprover])]) }); setSectionApprover(0) }}>
             Add
           </button>
         </fieldset>
@@ -357,7 +402,7 @@ function WorkflowForm({
  * Every write goes through /api/approval-workflows, which only admins may write to; the same
  * rules the form checks are checked again on the server.
  */
-export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [], canEdit, approvalEnabled }: Props) {
+export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [], sections = {}, canEdit, approvalEnabled }: Props) {
   const t = useAdminT()
   const [workflows, setWorkflows] = useState<WorkflowRecord[]>(initial)
   const [drafts, setDrafts] = useState<Record<number, WorkflowDraft>>({})
@@ -485,6 +530,7 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [],
             draft={creating}
             choices={choices}
             people={people}
+            sections={sections}
             knownRoles={knownRoles}
             others={summaries}
             canEdit={canEdit}
@@ -512,6 +558,7 @@ export function ApprovalWorkflowsPanel({ workflows: initial, roles, people = [],
               draft={draft}
               choices={choices}
               people={people}
+              sections={sections}
               knownRoles={knownRoles}
               others={summaries}
               canEdit={canEdit}
