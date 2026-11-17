@@ -132,3 +132,9 @@ export async function expireOverdue(d1: D1, nowIso: string): Promise<number> {
 export async function deleteRequest(d1: D1, id: number): Promise<void> {
   await run(d1, 'DELETE FROM eg_quote_requests WHERE id = ?1', id)
 }
+
+/** Open quotes whose validity ends within `withinMs` of now, soonest first. */
+export async function listExpiring(d1: D1, nowIso: string, untilIso: string, limit = 100): Promise<QuoteRequest[]> {
+  const rows = await all(d1, "SELECT * FROM eg_quote_requests WHERE status IN ('quoted','countered') AND valid_until IS NOT NULL AND valid_until > ?1 AND valid_until <= ?2 ORDER BY valid_until ASC LIMIT ?3", nowIso, untilIso, Math.max(1, Math.min(limit, 500)))
+  return rows.map(toRequest)
+}
