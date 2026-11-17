@@ -478,6 +478,7 @@
 
 import crypto from 'crypto'
 
+import { notifySignIn } from '@/features/security/loginAlert'
 import { requiresSecondFactor, verifySecondFactor } from '@/features/security/twoFactor'
 import {
   checkSession,
@@ -1033,6 +1034,7 @@ async function deviceIsTrusted(db: AuthDbOps, userId: number, client: SessionCli
 async function finishLogin(db: AuthDbOps, row: AuthUserRow, now: number, secret: string, email: string = row.email, client?: SessionClient, override?: SessionOverride, method?: string): Promise<LoginResult> {
   const { sid, row: rowAfterSession } = await mintSession(db, row, now, override ? undefined : cleanLoginMethod(method))
   const device = await openDeviceSession(db, row.id, now, override?.label ? { ...client, label: override.label } : client, override?.ttlSeconds)
+  if (!override && !client?.skipSession) notifySignIn({ userId: row.id, email, userAgent: client?.userAgent ?? null, country: client?.country ?? null, ip: client?.ip ?? null, at: new Date(now).toISOString() })
 
   let finalRow = rowAfterSession
   if (needsAttemptsReset(row)) {
