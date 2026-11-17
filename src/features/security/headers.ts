@@ -2,6 +2,7 @@ import { EMBED_FRAME_SOURCES } from '@/lib/embedHosts'
 import { EMBED_CODE_CSP, isEmbedFramePath } from '@/lib/embedCode'
 import { DEFAULT_SECURITY_SETTINGS, type SecuritySettings } from './settings'
 import { mergeCustomPolicy } from './customPolicy'
+import { builderHeaders, type CspBuilderConfig } from './cspBuilder'
 
 /**
  * Turns the Headers section of the Security screen into the actual response
@@ -109,6 +110,7 @@ const isNoCachePath = (pathname: string): boolean =>
 export function securityHeaders(
   settings: SecuritySettings = DEFAULT_SECURITY_SETTINGS,
   pathname = '/',
+  builder: CspBuilderConfig | null = null,
 ): HeaderMap {
   const headers: HeaderMap = {}
 
@@ -153,6 +155,14 @@ export function securityHeaders(
 
   if (csp) {
     headers['Content-Security-Policy'] = csp
+  }
+
+  // The guided builder (Security > Content-Security-Policy builder) layers on top of the policy above, on public pages only:
+  // the admin, the embed frame document and the shareable data page keep their own rules.
+  if (builder && csp && !isPolicyFreePath(pathname) && !isEmbedFramePath(pathname) && !isFrameablePath(pathname)) {
+    const built = builderHeaders(csp, builder)
+    if (built.enforce) headers['Content-Security-Policy'] = built.enforce
+    if (built.reportOnly) headers['Content-Security-Policy-Report-Only'] = built.reportOnly
   }
 
   // The Embed code frame document (third-party snippet) has its own relaxed, sandboxed policy; the site policy is untouched.
