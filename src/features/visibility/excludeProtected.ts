@@ -55,8 +55,11 @@ export async function excludeProtected<T extends { id?: number | string | null }
 ): Promise<T[]> {
   try {
     const ids = await getProtectedIds(collection, viewer)
-    if (ids.size === 0) return docs
-    return docs.filter((doc) => !ids.has(Number(doc.id)))
+    const open = ids.size === 0 ? docs : docs.filter((doc) => !ids.has(Number(doc.id)))
+    if (collection !== 'products') return open
+    // Wholesale-only products (Task 11d): hidden from everyone but approved wholesale accounts and admins while wholesale mode is on.
+    const { visibleToViewer } = await import('@/features/ecommerce/server/wholesale')
+    return visibleToViewer(open as Array<T & { wholesaleOnly?: unknown }>)
   } catch {
     return []
   }
@@ -79,8 +82,15 @@ export function excludeProtectedAccess(collection: ProtectedCollection, base: Ac
         getEngine: async () => (await (await import('@/lib/engine')).getEngine()) as never,
       }
       const ids = await getProtectedIds(collection, viewer)
-      if (ids.size === 0) return result
-      return { and: [result, { id: { not_in: [...ids] } }] } as typeof result
+      const clauses: unknown[] = ids.size > 0 ? [{ id: { not_in: [...ids] } }] : []
+      // Wholesale-only products (Task 11d) are readable by approved wholesale accounts only while wholesale mode is on.
+      if (collection === 'products') {
+        const { wholesaleReadClause } = await import('@/features/ecommerce/server/wholesale')
+        const wholesale = await wholesaleReadClause(user)
+        if (wholesale) clauses.push(wholesale)
+      }
+      if (clauses.length === 0) return result
+      return { and: [result, ...clauses] } as typeof result
     } catch {
       return false
     }

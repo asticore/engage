@@ -148,6 +148,7 @@ export async function buildOrderDraft(args: InitiateStripePaymentArgs): Promise<
       cartId: cart.id,
       giftWrap: checkout.giftWrap === true,
       customerRoles: await customerTypesForUser(user as unknown as { id?: number; roles?: string[] } | null | undefined),
+      signedIn: Boolean(user),
     },
   )
   const { totals, config, lines } = priced

@@ -32,6 +32,8 @@ import { childrenOf, findBySlug } from '@/features/categories/tree'
 import { slugify } from '@/utilities/formatSlug'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
 import { productArchiveItems } from '@/lib/blockContextFrom'
+import { pricesHiddenFor } from '@/features/ecommerce/lib/wholesale'
+import { wholesaleViewer } from '@/features/ecommerce/server/wholesale'
 import type { Product, ShopSetting } from '@/engage-types'
 
 export async function generateMetadata() {
@@ -100,12 +102,15 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   const locale = await currentRequestLocale()
   const open = await applyTranslationsToDocs(await excludeProtected('products', scanned), 'products', locale)
   const facetSource = facetResult ? await applyTranslationsToDocs(await excludeProtected('products', facetResult.docs), 'products', locale) : open
+  // Wholesale mode: with prices hidden, nothing price-like reaches the list, the filters or the archive elements.
+  const { cfg: wholesaleCfg, buyer: wholesaleBuyer } = await wholesaleViewer()
+  const priceHidden = pricesHiddenFor(wholesaleCfg, wholesaleBuyer)
   const matchingAttributes = open.filter((product) => matchesAttributeFilters(product as never, filters))
   // The brand, tag and search params are applied by the query above. The price and sort are applied here, before paging.
   const matching = matchingAttributes
   const pool = matching.map((product) => {
     const p = product as unknown as { title?: unknown; shortDescription?: unknown; priceInAUD?: unknown; createdAt?: unknown; tags?: unknown }
-    return { product, title: String(p.title ?? ''), excerpt: typeof p.shortDescription === 'string' ? p.shortDescription : '', price: p.priceInAUD, date: p.createdAt, categories: [] as string[], tags: tagNames(p.tags) }
+    return { product, title: String(p.title ?? ''), excerpt: typeof p.shortDescription === 'string' ? p.shortDescription : '', price: priceHidden ? undefined : p.priceInAUD, date: p.createdAt, categories: [] as string[], tags: tagNames(p.tags) }
   })
   const kept = filterArchiveItems(pool, { ...archiveFilters, category: '' })
   const ordered = archiveFilters.sort === 'newest' ? kept.map((k) => k.product) : sortArchiveItems(kept, archiveFilters.sort).map((k) => k.product)
@@ -253,7 +258,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       basePath: archiveBase,
       page: paged.page,
       pages: paged.pages,
-      items: productArchiveItems(products),
+      items: productArchiveItems(products).map((item) => (priceHidden ? { ...item, price: undefined } : item)),
       kind: 'products',
       filters: { ...archiveFilters, category: category ?? '' },
       facets: { categories: shopCategories, tags: tagChoices },

@@ -32,6 +32,14 @@ export type ShopExtraSettingsDoc = {
   stockHoldEnabled?: boolean | null
   stockHoldMinutes?: number | null
   stockHoldInCart?: boolean | null
+  /** Wholesale mode (lib/wholesale.ts). Off unless wholesaleEnabled is true. */
+  wholesaleEnabled?: boolean | null
+  wholesaleRole?: string | null
+  wholesaleHidePrices?: boolean | null
+  wholesaleHideFrom?: 'guests' | 'non-wholesale' | null
+  wholesaleHiddenPriceText?: string | null
+  wholesaleMinOrder?: number | null
+  wholesaleApplyOpen?: boolean | null
   promoBadgesEnabled?: boolean | null
   promoBadges?: Record<string, unknown>[] | null
   updatedAt: string

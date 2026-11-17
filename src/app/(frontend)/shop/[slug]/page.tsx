@@ -34,7 +34,7 @@ import type { CatalogueProduct } from '@/features/ecommerce/catalogue'
 import { normaliseGiftCardSettings } from '@/features/ecommerce/lib/storedValue'
 import { showBackInStockForm } from '@/features/ecommerce/lib/backInStock'
 import { aggregateRatingJsonLd, summariseRatings } from '@/features/ecommerce/reviews'
-import { buildProductView, offersJsonLd } from '@/features/ecommerce/storefront'
+import { buildProductView, offersJsonLd, withoutPrices } from '@/features/ecommerce/storefront'
 import { loadPreordersEnabled } from '@/features/ecommerce/server/shopExtra'
 import { loadShopRulesConfig } from '@/features/ecommerce/server/pricingRules'
 import { productPageNotes } from '@/features/ecommerce/lib/pricingRules'
@@ -42,6 +42,8 @@ import { currencyFromShopSettings } from '@/features/ecommerce/lib/shopCurrency'
 import { tierNotes, variationTierNotes } from '@/features/ecommerce/lib/priceTiers'
 import { variationLabel } from '@/features/ecommerce/catalogue'
 import { loadTierContext } from '@/features/ecommerce/server/pricing'
+import { pricesHiddenFor, productAllowedFor, wholesaleMoq } from '@/features/ecommerce/lib/wholesale'
+import { wholesaleViewer } from '@/features/ecommerce/server/wholesale'
 import { PasswordGate } from '@/components/PasswordGate'
 import { getPasswordGateState } from '@/features/visibility/gate'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
@@ -122,6 +124,11 @@ export default async function ProductPage({
   }
   if (!(await contentAvailableHere((product as { availableDomains?: unknown }).availableDomains))) notFound()
 
+  // Wholesale mode (Task 11d): wholesale-only products do not exist for anyone else, and hidden prices are removed before rendering.
+  const { cfg: wholesaleCfg, buyer } = await wholesaleViewer()
+  if (!productAllowedFor(wholesaleCfg, (product as { wholesaleOnly?: unknown }).wholesaleOnly, buyer)) notFound()
+  const priceHidden = pricesHiddenFor(wholesaleCfg, buyer)
+
   const gateState = await getPasswordGateState({ collection: 'products', id: product.id, cookies: await cookies() })
   if (gateState === 'locked') {
     return <PasswordGate collection="products" currentPath={`/shop/${slug}`} id={product.id} wrongPassword={sp.pw === 'wrong'} />
@@ -158,24 +165,27 @@ export default async function ProductPage({
   // A kit's steps and what each item adds to the price are worked out from the items on offer (server/composite.ts).
   const composite = catalogue.productType === 'composite' ? await compositeStorefront(engine as never, product as never, new Date(), preordersOn) : null
   const shopRules = await loadShopRulesConfig(engine)
-  // Public quantity breaks only: this page is the same for everyone, so wholesale (customer-type) prices are never listed here.
-  const tierCtx = await loadTierContext([{ product: product.id }], [])
+  // Quantity breaks open to everyone, plus the viewer's own customer-type tiers (wholesale) when they are signed in. The page is rendered per request.
+  const tierCtx = await loadTierContext([{ product: product.id }], buyer.types)
   const noteLocale = priceLocale(await publicLocale())
-  const breakNotes = typeof catalogue.priceInAUD === 'number' ? tierNotes(tierCtx.tiers, { productId: String(product.id), variationId: null, customerTypes: [], basePrice: catalogue.priceInAUD }, (units) => formatPriceInAUD(units, currencyFromShopSettings(settings), noteLocale)) : []
+  const breakNotes = typeof catalogue.priceInAUD === 'number' ? tierNotes(tierCtx.tiers, { productId: String(product.id), variationId: null, customerTypes: buyer.types, basePrice: catalogue.priceInAUD }, (units) => formatPriceInAUD(units, currencyFromShopSettings(settings), noteLocale)) : []
   const fmtMoney = (units: number) => formatPriceInAUD(units, currencyFromShopSettings(settings), noteLocale)
   const variationBreakNotes = variationTierNotes(
     tierCtx.tiers,
-    { productId: String(product.id), customerTypes: [] },
+    { productId: String(product.id), customerTypes: buyer.types },
     (Array.isArray(catalogue.variations) ? catalogue.variations : [])
       .filter((v): v is NonNullable<typeof v> & { id: string } => Boolean(v && typeof v.id === 'string'))
       .map((v) => ({ id: v.id, label: variationLabel(v), price: typeof v.priceInAUD === 'number' ? v.priceInAUD : typeof catalogue.priceInAUD === 'number' ? catalogue.priceInAUD : 0 })),
     fmtMoney,
   )
-  const view = buildProductView(bundle ? { ...catalogue, ...bundle } : catalogue, new Date(), mediaUrls, {
+  const moq = wholesaleCfg.enabled ? wholesaleMoq(tierCtx.tiers, String(product.id), null, buyer) : null
+  const fullView = buildProductView(bundle ? { ...catalogue, ...bundle } : catalogue, new Date(), mediaUrls, {
     preorders: preordersOn,
     addOnsOn: shopRules.addOnsOn,
-    pricingNotes: [...(shopRules.rulesOn ? productPageNotes(shopRules.rules) : []), ...breakNotes, ...variationBreakNotes],
+    pricingNotes: [...(moq ? [`Wholesale minimum order: ${moq} units.`] : []), ...(shopRules.rulesOn ? productPageNotes(shopRules.rules) : []), ...breakNotes, ...variationBreakNotes],
   })
+
+  const view = priceHidden ? withoutPrices(fullView) : fullView
 
   const asDocs = (value: unknown): Array<Record<string, unknown> & { id: number }> =>
     (Array.isArray(value) ? value : []).filter((entry): entry is Record<string, unknown> & { id: number } => typeof entry === 'object' && entry !== null)
@@ -186,7 +196,7 @@ export default async function ProductPage({
     ? groupedOpen
         .filter((child) => child._status === 'published' && child.id !== product.id)
         .slice(0, 50)
-        .map((child) => ({ id: child.id, title: String(child.title ?? ''), slug: typeof child.slug === 'string' ? child.slug : null, view: buildProductView(child as unknown as CatalogueProduct, new Date(), new Map(), { preorders: preordersOn }) }))
+        .map((child) => ({ id: child.id, title: String(child.title ?? ''), slug: typeof child.slug === 'string' ? child.slug : null, view: priceHidden ? withoutPrices(buildProductView(child as unknown as CatalogueProduct, new Date(), new Map(), { preorders: preordersOn })) : buildProductView(child as unknown as CatalogueProduct, new Date(), new Map(), { preorders: preordersOn }) }))
     : []
   const upsells = (await excludeProtected('products', asDocs(catalogue.upsells))).filter((item) => item._status === 'published' && item.id !== product.id).slice(0, 4) as unknown as Product[]
 
@@ -209,7 +219,7 @@ export default async function ProductPage({
     ...(aggregateRatingJsonLd(ratings) ? { aggregateRating: aggregateRatingJsonLd(ratings) } : {}),
   }
 
-  setBlockContext(productBlockContext(product as unknown as Record<string, unknown>, `/shop/${slug}`))
+  setBlockContext(productBlockContext(priceHidden ? ({ ...product, priceInAUD: undefined } as unknown as Record<string, unknown>) : (product as unknown as Record<string, unknown>), `/shop/${slug}`))
   const body = (
     <VariationImageProvider>
     <div className="page-shell grid grid-cols-[1.1fr_0.9fr] gap-14 max-[900px]:grid-cols-1">
@@ -236,7 +246,7 @@ export default async function ProductPage({
         <ProductTaxonomy brand={taxonomy.brand} tags={taxonomy.tags} brandLine={tx('store.productBrand')} tagsLine={tx('store.productTags')} />
 
         {bundle ? <BundleContentsList items={bundle.contents} /> : null}
-        <ProductPurchase productId={product.id} view={view} grouped={grouped} giftConfig={giftConfig} composite={composite} />
+        <ProductPurchase productId={product.id} view={view} grouped={grouped} giftConfig={giftConfig} composite={priceHidden ? null : composite} hiddenPriceText={priceHidden ? wholesaleCfg.hiddenText : undefined} />
         <SubscriptionOffer product={product} />
         {showBackInStockForm(settings, catalogue) && !view.preorder.active ? <BackInStockForm productId={product.id} /> : null}
         {wishlistEnabled(settings) && <div className="mt-4"><WishlistHeart productId={product.id} showLink /></div>}
