@@ -67,6 +67,7 @@ const BookingsView = lazyView(() => import('@/admin/views/BookingsView').then((m
 const QuotesView = lazyView(() => import('@/admin/views/QuotesView').then((mod) => mod.QuotesView))
 const PurchaseLimitsView = lazyView(() => import('@/admin/views/PurchaseLimitsView').then((mod) => mod.PurchaseLimitsView))
 const AuthenticationView = lazyView(() => import('@/admin/views/AuthenticationView').then((mod) => mod.AuthenticationView))
+const RateRulesView = lazyView(() => import('@/admin/views/RateRulesView').then((mod) => mod.RateRulesView))
 const IpRulesView = lazyView(() => import('@/admin/views/IpRulesView').then((mod) => mod.IpRulesView))
 const UserBansView = lazyView(() => import('@/admin/views/UserBansView').then((mod) => mod.UserBansView))
 const AffiliatesView = lazyView(() => import('@/admin/views/AffiliatesView').then((mod) => mod.AffiliatesView))
@@ -264,6 +265,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'quotes', Component: QuotesView, path: '/quotes', meta: { title: 'Quotes and requests', description: 'Quote, offer and item requests, and the quotes sent back.' } },
   { key: 'purchase-limits', Component: PurchaseLimitsView, path: '/purchase-limits', meta: { title: 'Purchase limits', description: 'Per-person limits, waits between orders and refused attempts.' } },
   { key: 'authentication', Component: AuthenticationView, path: '/authentication', meta: { title: 'Authentication', description: 'Every sign-in method with its status and a link to change it.' } },
+  { key: 'rate-rules', Component: RateRulesView, path: '/security/rate-rules', meta: { title: 'Rate limit rules', description: 'Limit requests per address to a path.' } },
   { key: 'ip-rules', Component: IpRulesView, path: '/security/ip-lists', meta: { title: 'IP lists', description: 'Block or allow addresses and ranges.' } },
   { key: 'user-bans', Component: UserBansView, path: '/security/bans', meta: { title: 'Banned accounts', description: 'Ban and unban accounts.' } },
   { key: 'affiliates', Component: AffiliatesView, path: '/affiliates', meta: { title: 'Affiliates', description: 'Partners with referral links and the visits they bring.' } },
