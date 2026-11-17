@@ -4,10 +4,12 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { useEffect, useState } from 'react'
 
 import { STARTER_PRESETS } from '@/features/themeStyles/presets'
-import { generateTheme, STYLE_CARDS, type FontChoice } from '@/features/themeStyles/styleCards'
+import { rememberSuggestedEffect } from '@/features/effects/suggested'
+import { formatReasons, generateTheme, STYLE_CARDS, type FontChoice } from '@/features/themeStyles/styleCards'
 import { LIMITS, type ThemePreset, type ThemeStyles } from '@/features/themeStyles/types'
 
 import { addPreset, applyPresetData, deletePreset, renamePreset, resolveColour, uniqueSlug } from './editorLogic'
+import { StyleThumb } from './StyleThumb'
 import { TextField } from './fields'
 
 type Props = { styles: ThemeStyles; onChange: (next: ThemeStyles) => void; onNotice: (text: string) => void }
@@ -81,6 +83,7 @@ export function PresetControls({ styles, onChange, onNotice }: Props) {
             const on = picks.includes(card.id)
             return (
               <label key={card.id} className="ts-item">
+                <StyleThumb card={card} />
                 <h4 className="ts-item__title"><input type="checkbox" checked={on} onChange={() => setPicks(on ? picks.filter((x) => x !== card.id) : [...picks, card.id])} /> {cardText(card.id, 'name')}</h4>
                 <p className="text-muted">{cardText(card.id, 'look')}</p>
                 {on ? <p>{cardText(card.id, 'suits')}</p> : null}
@@ -96,7 +99,7 @@ export function PresetControls({ styles, onChange, onNotice }: Props) {
               ))}
             </div>
             <ul>
-              {generated.reasons.map((reason) => <li key={reason}>{reason}</li>)}
+              {formatReasons(generated.reasonItems, (key) => tt(key as never)).map((reason) => <li key={reason}>{reason}</li>)}
             </ul>
             <div className="ts-inline">
               <label>{tt('themeStyle.unique')} <input className="ts-input" value={seed} onChange={(e) => setSeed(e.target.value)} /></label>
@@ -107,6 +110,7 @@ export function PresetControls({ styles, onChange, onNotice }: Props) {
                 onClick={() => {
                   if (!window.confirm(tt('themeStyle.confirm'))) return
                   onChange(applyPresetData(styles, generated.data))
+                  rememberSuggestedEffect(generated.effect?.id ?? null)
                   onNotice(tt('themeStyle.applied'))
                 }}
               >

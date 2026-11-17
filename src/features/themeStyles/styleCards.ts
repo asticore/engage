@@ -4,6 +4,7 @@
  * seed (the site name, or Shuffle) shifts the colours so two sites with the same picks still differ. One style system only:
  * the result is an ordinary theme preset (colours, text, buttons, layout) that the owner reviews and saves.
  */
+import { UI_STRING_SOURCE, type UiStringKey } from '@/features/uiStrings/keys'
 import { effectById } from '@/features/effects/catalog'
 import { base } from './presets'
 import type { ButtonStyle, ThemePresetData } from './types'
@@ -77,7 +78,16 @@ function meanHue(hues: number[]): number {
   return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360
 }
 
-export type GeneratedTheme = { data: ThemePresetData; reasons: string[]; dark: boolean; headingFont: FontChoice | null; bodyFont: FontChoice | null; effect: { id: string; label: string } | null }
+/** One line of the explanation: a text key (themeStyle.r.*) and its values. A value is plain text, a text key, or a list of keys. */
+export type ReasonItem = { key: string; vars?: Record<string, string | { key: string } | { keys: string[] }> }
+
+/** Fills the explanation lines. `translate` turns a text key into its text (English from the key table, or the admin's language). */
+export function formatReasons(items: ReasonItem[], translate: (key: string) => string): string[] {
+  const value = (v: string | { key: string } | { keys: string[] }): string => (typeof v === 'string' ? v : 'key' in v ? translate(v.key) : v.keys.map(translate).join(', '))
+  return items.map((item) => translate(item.key).replace(/\{(\w+)\}/g, (whole, name: string) => (item.vars && name in item.vars ? value(item.vars[name]) : whole)))
+}
+
+export type GeneratedTheme = { data: ThemePresetData; reasons: string[]; reasonItems: ReasonItem[]; dark: boolean; headingFont: FontChoice | null; bodyFont: FontChoice | null; effect: { id: string; label: string } | null }
 
 /** Builds a theme from the picked styles. Needs at least one pick; unknown ids are ignored. */
 export function generateTheme(picks: string[], seed: string, fonts: FontChoice[] = []): GeneratedTheme | null {
@@ -137,16 +147,21 @@ export function generateTheme(picks: string[], seed: string, fonts: FontChoice[]
   data.globals.forms.fieldRadius = Math.min(radius, 16)
   data.globals.images.radius = Math.min(radius, 24)
 
-  const reasons = [
-    ...cards.map((c) => `${c.name}: ${c.suits}`),
-    cards.length > 1 ? `Your picks were blended: the colours sit between ${cards.map((c) => c.name).join(' and ')}.` : `The colours follow ${cards[0].name}.`,
-    dark ? 'The page is dark because most of your picks are dark styles; the light switch for visitors still works.' : 'The page is light, with a matching dark version for visitors who prefer it.',
-    `Corners are ${radius === 0 ? 'square' : radius < 8 ? 'barely rounded' : radius < 16 ? 'softly rounded' : 'very round'} and headings use the ${heading === 'heading' ? 'heading font' : 'body font'}.`,
+  const kindKey = wantKind === 'sans-serif' ? 'sans' : wantKind
+  const effectText = effectDef ? { label: effectDef.label, help: effectDef.help } : null
+  const reasonItems: ReasonItem[] = [
+    ...cards.map((c): ReasonItem => ({ key: 'themeStyle.r.card', vars: { name: { key: `themeStyle.${c.id}.name` }, suits: { key: `themeStyle.${c.id}.suits` } } })),
+    cards.length > 1
+      ? { key: 'themeStyle.r.blend', vars: { names: { keys: cards.map((c) => `themeStyle.${c.id}.name`) } } }
+      : { key: 'themeStyle.r.follow', vars: { name: { key: `themeStyle.${cards[0].id}.name` } } },
+    { key: dark ? 'themeStyle.r.dark' : 'themeStyle.r.light' },
+    { key: 'themeStyle.r.corners', vars: { corners: { key: `themeStyle.corner.${radius === 0 ? 'square' : radius < 8 ? 'barely' : radius < 16 ? 'soft' : 'round'}` }, font: { key: `themeStyle.font.${heading}` } } },
     headingFont
-      ? `Fonts: ${headingFont.family} for headings${bodyFont ? ` and ${bodyFont.family} for text` : ''}, chosen from your Site fonts because your picks call for ${wantKind === 'sans-serif' ? 'a clean sans serif' : wantKind === 'serif' ? 'a serif' : 'a display'} heading face.`
-      : `Fonts: no ${wantKind === 'sans-serif' ? 'sans serif' : wantKind} font is installed in Site fonts, so the theme's heading and body fonts are kept. Install one there and press Shuffle to have it picked.`,
-    effectDef ? `Suggested effect: ${effectDef.label}. ${effectDef.help} Add it from the Effects picker in the visual editor.` : 'No effect is suggested for these picks.',
-    `Variation: the exact shades are shifted for this site, so another site with the same picks gets a different palette.`,
+      ? { key: bodyFont ? 'themeStyle.r.fontsBoth' : 'themeStyle.r.fontsHeading', vars: { heading: headingFont.family, body: bodyFont?.family ?? '', kind: { key: `themeStyle.kind.${kindKey}` } } }
+      : { key: 'themeStyle.r.fontsNone', vars: { kind: { key: `themeStyle.kindNoun.${kindKey}` } } },
+    effectText ? { key: 'themeStyle.r.effect', vars: { label: effectText.label, help: effectText.help } } : { key: 'themeStyle.r.effectNone' },
+    { key: 'themeStyle.r.variation' },
   ]
-  return { data, reasons, dark, headingFont, bodyFont, effect: effectDef ? { id: effectDef.id, label: effectDef.label } : null }
+  const reasons = formatReasons(reasonItems, (key) => UI_STRING_SOURCE[key as UiStringKey] ?? key)
+  return { data, reasons, reasonItems, dark, headingFont, bodyFont, effect: effectDef ? { id: effectDef.id, label: effectDef.label } : null }
 }

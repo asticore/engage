@@ -1,6 +1,8 @@
 import { isNotificationTrigger, NOTIFICATION_TRIGGERS, type NotificationTrigger } from './triggers'
 
 export type NotificationChannel = 'email' | 'push'
+/** 'plain' sends simple paragraphs; 'brand' wraps the wording in the Email design brand (logo, colours, footer). */
+export type NotificationLayout = 'plain' | 'brand'
 export type NotificationRecipient = 'customer' | 'admin' | 'custom'
 
 export type NotificationRule = {
@@ -12,6 +14,7 @@ export type NotificationRule = {
   customTo: string
   subject: string
   body: string
+  layout: NotificationLayout
   enabled: boolean
 }
 
@@ -35,7 +38,7 @@ export function parseRule(input: unknown): { ok: true; rule: NotificationRule } 
   if (!subject) return { ok: false, error: channel === 'push' ? 'Add the notification title.' : 'Add a subject.' }
   if (!body) return { ok: false, error: 'Add the message.' }
   const id = Number(r.id)
-  return { ok: true, rule: { ...(Number.isInteger(id) && id > 0 ? { id } : {}), name, event: r.event, channel, recipient: channel === 'push' ? 'admin' : recipient, customTo: recipient === 'custom' ? customTo : '', subject, body, enabled: r.enabled !== false } }
+  return { ok: true, rule: { ...(Number.isInteger(id) && id > 0 ? { id } : {}), name, event: r.event, channel, recipient: channel === 'push' ? 'admin' : recipient, customTo: recipient === 'custom' ? customTo : '', subject, body, layout: channel === 'email' && r.layout === 'brand' ? 'brand' : 'plain', enabled: r.enabled !== false } }
 }
 
 /** Who an email rule goes to for this event, or '' when there is nobody (no customer address, no admin address). */

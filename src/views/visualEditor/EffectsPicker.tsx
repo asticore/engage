@@ -1,8 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
-import { applyEffect, currentEffect, EFFECT_CATALOG, readEffectOptions } from '@/features/effects/catalog'
+import { applyEffect, currentEffect, effectById, EFFECT_CATALOG, readEffectOptions } from '@/features/effects/catalog'
+import { readSuggestedEffect } from '@/features/effects/suggested'
 
 /**
  * Effects picker for the Design panel: choose an Spark effect and set its options. It writes the effect's `spark-` class
@@ -14,6 +15,10 @@ export const EffectsPicker: React.FC<{
   onChange: (next: { cssClasses: string | undefined; customAttrs: string | undefined }) => void
 }> = ({ cssClasses, customAttrs, onChange }) => {
   const effect = currentEffect(cssClasses)
+  // Suggested by the style picks in Theming; applied only when the owner presses Apply.
+  const [suggested, setSuggested] = useState<string | null>(null)
+  useEffect(() => setSuggested(readSuggestedEffect()), [])
+  const suggestion = suggested && suggested !== effect?.id ? effectById(suggested) : undefined
   const values = effect ? readEffectOptions(effect, customAttrs) : {}
   const groups = [...new Set(EFFECT_CATALOG.map((e) => e.group))]
   const setOption = (attr: string, value: string) => onChange(applyEffect({ cssClasses, customAttrs }, effect?.id ?? null, { ...values, [attr]: value }))
@@ -35,6 +40,12 @@ export const EffectsPicker: React.FC<{
           </optgroup>
         ))}
       </select>
+      {suggestion && (
+        <p className="ve-row__help">
+          Suggested by your style picks: {suggestion.label}.{' '}
+          <button type="button" className="ve-btn" onClick={() => onChange(applyEffect({ cssClasses, customAttrs }, suggestion.id))}>Apply</button>
+        </p>
+      )}
       {effect && <p className="ve-row__help">{effect.help} Adds the class <code>{effect.className}</code>. Runs on the live page, not in the editor.</p>}
       {effect?.options.map((option) => (
         <div key={option.attr} className="ve-row">
