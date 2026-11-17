@@ -14,6 +14,7 @@ import { loadForm } from './server'
 import { FORMS_SLUG, SUBMISSIONS_SLUG, type CreateArgs, type UpdateArgs } from './slugs'
 import { SLOT_TAKEN_MESSAGE } from './slots'
 import { firstLostSlot, firstTakenSlot, slotClaimsFor } from './slotGuard'
+import { botDecision, type BotSignals } from '@/features/security/botSignals'
 import { checkCaptcha, checkFillTime, checkHoneypot } from './spam'
 import { checkSpamRules } from './spamRules'
 import { buildHandoff, checkoutHandoffUrl, NO_CHECKOUT } from './checkoutHandoff'
@@ -84,6 +85,8 @@ export type SubmitInput = {
   turnstileToken?: unknown
   recaptchaToken?: unknown
   ip?: string
+  /** Cloudflare bot score for the request, when the plan sends one. */
+  botSignals?: BotSignals
   userAgent?: string
   /** Where the form was sent from: the embedding site's origin or the page URL. */
   sourceUrl?: string
@@ -135,6 +138,11 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
     engine.logger.info({ form: form.id, reason: honeypot.reason }, 'Form submission discarded as spam')
     // 200 with the ordinary success message: a bot told it was blocked learns
     // to work around the block. A person can never see this path.
+    return { ok: true, status: 200, message: settings.successMessage }
+  }
+
+  if (input.botSignals && botDecision(settings.botDetection, input.botSignals, settings.botMinScore) === 'block') {
+    engine.logger.info({ form: form.id, reason: 'bot-score', score: input.botSignals.score }, 'Form submission discarded as spam')
     return { ok: true, status: 200, message: settings.successMessage }
   }
 

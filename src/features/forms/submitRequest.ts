@@ -6,6 +6,7 @@ import { checkOrigin, checkSiteOrigin, corsHeaders } from './origin'
 import { loadForm } from './server'
 import type { PendingFile } from './upload'
 import { MAX_FILES_PER_FIELD } from './upload'
+import { currentBotSignals } from '@/features/security/botSignals'
 
 /**
  * The HTTP side of a submission, shared by the public route
@@ -182,6 +183,7 @@ export async function handleSubmitRequest(request: Request, engine: Engine, idOr
     // CF-Connecting-IP is set by the edge and cannot be forged; the others are
     // fallbacks for local development, where neither is present.
     ip: clientIp(request),
+    botSignals: await currentBotSignals(),
     userAgent: request.headers.get('user-agent') || undefined,
     sourceUrl: decision.origin || request.headers.get('referer') || (typeof source === 'string' ? source : undefined) || undefined,
     embed: embed ? { id: embed.id, name: embed.name } : undefined,

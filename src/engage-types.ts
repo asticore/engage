@@ -7212,6 +7212,8 @@ export interface FormSetting {
      * Also require the challenge below on member sign-in, create account and forgot password. Needs the challenge switched on and its keys saved; if the keys are missing, sign-in still works.
      */
     protectSignIn?: boolean | null;
+    botDetection?: ('off' | 'challenge' | 'block') | null;
+    botMinScore?: number | null;
     blockedWords?: string | null;
     maxLinks?: number | null;
     blockedSenders?: string | null;
@@ -8297,6 +8299,8 @@ export interface FormSettingsSelect<T extends boolean = true> {
         honeypot?: T;
         minimumFillTimeSeconds?: T;
         protectSignIn?: T;
+        botDetection?: T;
+        botMinScore?: T;
         blockedWords?: T;
         maxLinks?: T;
         blockedSenders?: T;
