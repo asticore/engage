@@ -3,9 +3,10 @@ import { applyImport } from '@/features/settingsTransfer/import'
 import { renderExport } from '@/features/settingsTransfer/export'
 
 import { DEMO_EXPORT_OPTIONS, DEMO_IMPORT_SECTIONS, MAX_SNAPSHOT_BYTES, RESET_CLEAN_COLLECTIONS, demoPassword, describeBytes, idsAddedAfterCopy, isEmail, isResetDue } from './core'
+import { copyPictures, restorePictures } from './pictures'
 import * as store from './store'
 
-export type SnapshotResult = { ok: true; size: number } | { ok: false; error: string }
+export type SnapshotResult = { ok: true; size: number; pictures: number } | { ok: false; error: string }
 
 /** Saves the site as it is now as the demo copy that a reset returns to. */
 export async function takeSnapshot(engine: Engine, d1: store.D1, now: Date): Promise<SnapshotResult> {
@@ -13,8 +14,9 @@ export async function takeSnapshot(engine: Engine, d1: store.D1, now: Date): Pro
   if (body.length > MAX_SNAPSHOT_BYTES) {
     return { ok: false, error: `The demo is ${describeBytes(body.length)}, over the ${describeBytes(MAX_SNAPSHOT_BYTES)} a saved copy can hold. Remove some content or download the package instead.` }
   }
+  const pictures = await copyPictures(engine)
   await store.saveSnapshot(d1, body, now.toISOString())
-  return { ok: true, size: body.length }
+  return { ok: true, size: body.length, pictures: pictures.copied }
 }
 
 export type ResetResult = { ok: boolean; message: string }
@@ -50,11 +52,13 @@ export async function resetFromSnapshot(engine: Engine, d1: store.D1, now: Date)
   let result: ResetResult
   try {
     const saved = JSON.parse(body) as { content?: Record<string, unknown> }
+    // Pictures first, so the import finds each one by file name and picture ids in settings point at the right file.
+    const pictures = await restorePictures(engine, (saved.content?.mediaMetadata as { filename?: unknown; alt?: unknown }[] | undefined) ?? [])
     const report = await applyImport(engine, saved, { sections: [...DEMO_IMPORT_SECTIONS] })
     const cleaned = await removeAddedContent(engine, saved)
-    const errors = report.sections.reduce((n, s) => n + s.errors, 0) + cleaned.errors
+    const errors = report.sections.reduce((n, s) => n + s.errors, 0) + cleaned.errors + pictures.failed
     const updated = report.sections.reduce((n, s) => n + s.updated + s.created, 0)
-    const tail = `${updated} item(s) restored, ${cleaned.removed} added item(s) deleted.`
+    const tail = `${updated} item(s) restored, ${cleaned.removed} added item(s) deleted, ${pictures.restored} picture(s) put back, ${pictures.removed} added picture(s) deleted.`
     result = errors > 0 ? { ok: false, message: `Reset finished with ${errors} error(s); ${tail}` } : { ok: true, message: `Reset done; ${tail}` }
   } catch (error) {
     result = { ok: false, message: `Reset failed: ${error instanceof Error ? error.message : String(error)}`.slice(0, 300) }
