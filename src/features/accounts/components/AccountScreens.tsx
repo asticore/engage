@@ -40,6 +40,7 @@ import { isLocaleRoutable } from '@/features/multilingual/routing'
 import { localeNativeName } from '@/features/multilingual/locales'
 import { portalText, portalTextFor, type PortalStringKey } from '@/features/multilingual/portalStrings'
 import { currentPortalLocale } from '@/features/multilingual/portalLocaleServer'
+import { pickupLines } from '@/features/ecommerce/lib/pickup'
 import { TRACKING_LABELS } from '@/features/ecommerce/lib/tracking'
 
 /**
@@ -181,6 +182,8 @@ export const OrderScreen: React.FC<{ id: string }> = async ({ id }) => {
     shippingTotal?: number
     taxTotal?: number
     pricesIncludeTax?: boolean
+    readyForPickup?: boolean
+    shippingMethod?: { type?: string; pickup?: { name?: string; address?: string; hours?: string; instructions?: string } | null } | null
     shipments?: { carrier?: string; trackingNumber?: string; trackingUrl?: string; tracking?: { status: string; events: { at: string; text: string; location?: string }[] } }[]
   } | null
   const notes = (full?.notes ?? []).filter((n) => n.type === 'customer')
@@ -226,6 +229,14 @@ export const OrderScreen: React.FC<{ id: string }> = async ({ id }) => {
           </table>
         )}
       </section>
+
+      {full?.shippingMethod?.type === 'local_pickup' && full.shippingMethod.pickup?.name ? (
+        <section className="account-section">
+          <h2>Collect from</h2>
+          <p>{pickupLines(full.shippingMethod.pickup).map((line, n) => (<React.Fragment key={n}>{n > 0 ? <br /> : null}{line}</React.Fragment>))}</p>
+          <p><strong>{full.readyForPickup ? 'Ready to collect' : 'We will email you when it is ready'}</strong></p>
+        </section>
+      ) : null}
 
       {(full?.shipments ?? []).filter((s) => s.trackingNumber).map((s, i) => (
         <section key={s.trackingNumber ?? i} className="account-section">

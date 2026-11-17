@@ -17,7 +17,7 @@ export type Quote = {
   taxLines: { name: string; ratePct: number; taxCents: number }[]
   pricesIncludeTax: boolean
   totalCents: number
-  shippingOptions: { id: string; title: string; costCents: number }[]
+  shippingOptions: { id: string; title: string; costCents: number; closedToday?: boolean }[]
   coupon: { code: string } | null
   couponError: string | null
   fields: QuoteField[]
@@ -187,7 +187,7 @@ export function CheckoutExtras({ cartRef, email, onChange, initial }: { cartRef:
           <legend className="text-[0.85rem] uppercase">{t('store.shipping')}</legend>
           {quote.shippingOptions.map((o) => (
             <label key={o.id} className="flex gap-2">
-              <input type="radio" name="shipping" checked={shipId === o.id} onChange={() => setShipId(o.id)} /> {o.title} - {o.costCents === 0 ? 'Free' : money(o.costCents)}
+              <input type="radio" name="shipping" checked={shipId === o.id} onChange={() => setShipId(o.id)} /> {o.title} - {o.costCents === 0 ? 'Free' : money(o.costCents)}{o.closedToday ? ' (closed today)' : ''}
             </label>
           ))}
         </fieldset>
