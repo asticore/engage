@@ -5,7 +5,7 @@
 
 import { cache } from 'react'
 
-import { filterWholesaleVisible, isWholesaleBuyer, normaliseTags, normaliseWholesaleConfig, tagType, WHOLESALE_OFF, type ApplicationInput, type ApplicationStatus, type Buyer, type WholesaleConfig } from '../lib/wholesale'
+import { filterWholesaleVisible, isWholesaleBuyer, minOrderShortfallCents, normaliseTags, normaliseWholesaleConfig, tagType, WHOLESALE_OFF, type ApplicationInput, type ApplicationStatus, type Buyer, type WholesaleConfig } from '../lib/wholesale'
 
 type Engine = { findGlobal(a: unknown): Promise<unknown> }
 
@@ -240,4 +240,34 @@ export async function wholesaleReadClause(user: { id?: number | string | null; r
     if (isWholesaleBuyer(cfg, { signedIn: true, types: await customerTypesForUser(user as never) })) return null
   }
   return { wholesaleOnly: { not_equals: true } }
+}
+
+/** For the cart quote: the wholesale minimum and how far the cart is under it, or null when it does not apply. Never throws. */
+export async function wholesaleMinOrderNotice(engine: Engine, user: { id?: number | string | null; roles?: unknown } | null | undefined, subtotalCents: number): Promise<{ minCents: number; shortfallCents: number } | null> {
+  try {
+    const cfg = await loadWholesaleConfig(engine)
+    if (!cfg.enabled || cfg.minOrderCents === null || !user) return null
+    const { customerTypesForUser } = await import('./customerTypes')
+    const buyer = { signedIn: true, types: await customerTypesForUser(user as never) }
+    if (!isWholesaleBuyer(cfg, buyer)) return null
+    return { minCents: cfg.minOrderCents, shortfallCents: minOrderShortfallCents(cfg, buyer, subtotalCents) }
+  } catch {
+    return null
+  }
+}
+
+/** Tells an applicant their wholesale application was decided. Never throws: a mail failure must not undo the decision. */
+export async function sendDecisionEmail(application: { email: string; company: string }, status: 'approved' | 'rejected', note: string): Promise<void> {
+  try {
+    if (!application.email) return
+    const { sendEmail } = await import('@/features/email')
+    const approved = status === 'approved'
+    const lines = approved
+      ? [`Good news: your wholesale account for ${application.company} is approved.`, 'Sign in to see wholesale prices and products.']
+      : [`Thank you for applying for a wholesale account for ${application.company}. We are not able to approve it at the moment.`]
+    if (note.trim()) lines.push('', note.trim())
+    await sendEmail({ to: application.email, template: 'wholesale.decision', subject: approved ? 'Your wholesale account is approved' : 'About your wholesale application', text: lines.join('\n') })
+  } catch {
+    /* notification only */
+  }
 }

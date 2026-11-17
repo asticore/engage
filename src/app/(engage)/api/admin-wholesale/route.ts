@@ -52,10 +52,12 @@ export async function POST(request: Request): Promise<Response> {
       // Approving sets up the applicant's company account (they own it) the first time; a company that cannot be made does not stop the approval.
       const organizationId = application.organizationId ?? (await store.createCompanyFor({ id: userId }, application.company, now))
       await store.decideApplication(d1, userId, { status: 'approved', by: me.email ?? '', note, organizationId }, now)
+      await store.sendDecisionEmail(application, 'approved', note)
       void audit({ action: 'wholesale.approved', detail: `user ${userId} (${application.company})`, ...ctx }, settings)
       return json({ ok: true, companyCreated: Boolean(organizationId) })
     }
     await store.decideApplication(d1, userId, { status: 'rejected', by: me.email ?? '', note }, now)
+    await store.sendDecisionEmail(application, 'rejected', note)
     void audit({ action: 'wholesale.rejected', detail: `user ${userId} (${application.company})`, ...ctx }, settings)
     return json({ ok: true })
   }

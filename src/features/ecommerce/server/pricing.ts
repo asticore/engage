@@ -180,7 +180,7 @@ export async function loadPricedLines(engine: PricingEngine, items: CartItemInpu
         shippingClass: idOf(b.shippingClass),
         requiresShipping: !virtual,
         // carried for the order snapshot: what one bundle holds, so later edits to the bundle do not change its stock
-        ...({ variationId: null, bundleContents: bundle.contents } as object),
+        ...({ wholesaleOnly: b.wholesaleOnly === true, variationId: null, bundleContents: bundle.contents } as object),
       } as PricedLine)
       continue
     }

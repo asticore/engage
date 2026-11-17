@@ -14,6 +14,7 @@ type Quote = {
   shippingOptions?: Array<{ id: string; title: string; costCents: number }>
   coupon?: { code?: string } | null
   couponError?: string | null
+  wholesaleMinOrder?: { minCents: number; shortfallCents: number } | null
 }
 
 const KEY = 'engage-cart-estimate'
@@ -112,6 +113,9 @@ export const CartEstimate: React.FC<{ compact?: boolean }> = ({ compact }) => {
       </button>
       <div role="status" aria-live="polite">
         {error ? <p className="m-0 text-[#b3261e]">{error}</p> : null}
+        {quote?.wholesaleMinOrder && quote.wholesaleMinOrder.shortfallCents > 0 ? (
+          <p className="m-0" role="status">Wholesale orders start at {money(quote.wholesaleMinOrder.minCents / 100)}. Add {money(quote.wholesaleMinOrder.shortfallCents / 100)} more to check out.</p>
+        ) : null}
         {quote?.couponError ? <p className="m-0 text-[#b3261e]">{quote.couponError}</p> : null}
         {quote ? (
           <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
