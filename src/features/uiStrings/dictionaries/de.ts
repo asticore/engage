@@ -3136,6 +3136,7 @@ const de: UiDictionary = {
   "webhooks.event.affiliate.approved": "Partner freigegeben",
   "webhooks.event.affiliate.commission.earned": "Partnerprovision verdient",
   "webhooks.event.affiliate.payout.recorded": "Partnerauszahlung erfasst",
+  "webhooks.event.audit.recorded": "Aktivitätsprotokoll-Eintrag",
   "affiliate.email.approved.subject": "Du wurdest als Partner freigegeben",
   "affiliate.email.approved.body": "Hallo {name},\n\ndu wurdest freigegeben. Du erhältst {pct}% Provision auf Bestellungen von Personen, die deinem Link folgen und innerhalb von {days} Tagen kaufen.\n\nDein Link: {link}\nDeine private Ergebnisseite: {dashboard}\n\nHalte den Ergebnislink privat: Jeder, der ihn hat, kann deine Ergebnisse sehen. Bitte weise beim Teilen deutlich darauf hin, dass es sich um einen Partnerlink handelt.",
   "affiliate.email.commission.subject": "Du hast eine Provision von {amount} verdient",

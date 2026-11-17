@@ -3135,6 +3135,7 @@ const ru: UiDictionary = {
   "webhooks.event.affiliate.approved": "Партнёр одобрен",
   "webhooks.event.affiliate.commission.earned": "Партнёрская комиссия начислена",
   "webhooks.event.affiliate.payout.recorded": "Партнёрская выплата записана",
+  "webhooks.event.audit.recorded": "Запись журнала действий",
   "affiliate.email.approved.subject": "Вы одобрены как партнёр",
   "affiliate.email.approved.body": "Здравствуйте, {name}!\n\nВы одобрены. Вы получаете {pct}% комиссии с заказов людей, которые перешли по вашей ссылке и купили в течение {days} дн.\n\nВаша ссылка: {link}\nВаша личная страница результатов: {dashboard}\n\nНе показывайте ссылку на результаты другим: любой, у кого она есть, видит ваши результаты. Делясь ссылкой, ясно указывайте, что она партнёрская.",
   "affiliate.email.commission.subject": "Вы заработали комиссию {amount}",

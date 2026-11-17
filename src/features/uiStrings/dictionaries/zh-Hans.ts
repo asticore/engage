@@ -3134,6 +3134,7 @@ const zhHans: UiDictionary = {
   "webhooks.event.affiliate.approved": "联盟会员已批准",
   "webhooks.event.affiliate.commission.earned": "联盟佣金已产生",
   "webhooks.event.affiliate.payout.recorded": "联盟付款已记录",
+  "webhooks.event.audit.recorded": "活动日志记录",
   "affiliate.email.approved.subject": "你已被批准成为联盟会员",
   "affiliate.email.approved.body": "{name}，你好：\n\n你已获批准。通过你的链接并在 {days} 天内下单的订单，你可获得 {pct}% 的佣金。\n\n你的链接：{link}\n你的私人成果页面：{dashboard}\n\n请保密成果链接：任何拿到链接的人都能看到你的成果。分享你的链接时，请明确说明这是联盟链接。",
   "affiliate.email.commission.subject": "你获得了 {amount} 的佣金",
