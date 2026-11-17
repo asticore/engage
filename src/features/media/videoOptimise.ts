@@ -31,7 +31,7 @@ export async function optimiseStoredVideo(
   settings: VideoSettings,
   creds: StreamCredentials | null,
   origin: string,
-  deps: { update: UpdateMedia; fetch: StreamFetch; io?: StorageIO },
+  deps: { update: UpdateMedia; fetch: StreamFetch; io?: StorageIO; isRestricted?: (doc: StoredMedia) => Promise<boolean> },
 ): Promise<VideoOptimiseResult> {
   const before = typeof doc.filesize === 'number' ? doc.filesize : null
   const result = (status: VideoOptimiseResult['status'], extra: Partial<VideoOptimiseResult> = {}): VideoOptimiseResult => ({
@@ -52,6 +52,10 @@ export async function optimiseStoredVideo(
   }
   if (target === 'webm') {
     return result('skipped', { reason: 'Cloudflare Stream does not make WebM, so this video is kept as it is.' })
+  }
+  // A file limited to a company or marked private must never be handed to Stream: Stream keeps its own copy at an address that skips the member check.
+  if (deps.isRestricted && (await deps.isRestricted(doc).catch(() => true))) {
+    return result('skipped', { reason: 'This video is limited to a company or private, so it is not copied to Cloudflare Stream. Remove the limit to convert it.' })
   }
   if (!creds) {
     return result('needs-stream', {

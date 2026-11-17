@@ -49,6 +49,7 @@ export const FeatureCleanupCard: React.FC<{
 
   const [emptyPlan, setEmptyPlan] = React.useState<EmptyPlan | null>(null)
   const [emptyTyped, setEmptyTyped] = React.useState('')
+  const [resetCounters, setResetCounters] = React.useState(false)
   const emptyPhrase = emptyPhraseFor(feature.key)
 
   const previewEmpty = async (): Promise<void> => {
@@ -59,19 +60,24 @@ export const FeatureCleanupCard: React.FC<{
   }
   const downloadCopy = async (): Promise<void> => {
     setBusy(true)
-    const result = await exportSectionAction(feature.key)
+    // Each part holds up to 5000 rows a table; a bigger section downloads as several numbered files.
+    let pages = 1
+    for (let page = 0; page < pages; page++) {
+      const result = await exportSectionAction(feature.key, page)
+      if (!result.ok) break
+      pages = result.pages ?? 1
+      const url = URL.createObjectURL(new Blob([result.json], { type: 'application/json' }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = pages > 1 ? `${feature.key}-data-part-${page + 1}-of-${pages}.json` : `${feature.key}-data.json`
+      link.click()
+      URL.revokeObjectURL(url)
+    }
     setBusy(false)
-    if (!result.ok) return
-    const url = URL.createObjectURL(new Blob([result.json], { type: 'application/json' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${feature.key}-data.json`
-    link.click()
-    URL.revokeObjectURL(url)
   }
   const emptyNow = async (): Promise<void> => {
     setBusy(true)
-    setEmptyPlan(await emptySectionAction({ feature: feature.key, confirm: emptyTyped, execute: true }))
+    setEmptyPlan(await emptySectionAction({ feature: feature.key, confirm: emptyTyped, execute: true, resetCounters }))
     setEmptyTyped('')
     setBusy(false)
   }
@@ -198,6 +204,10 @@ export const FeatureCleanupCard: React.FC<{
                         type="text"
                         value={emptyTyped}
                       />
+                    </label>
+                    <label className="flex items-center gap-[calc(var(--base)*0.35)]">
+                      <input checked={resetCounters} onChange={(event) => setResetCounters(event.target.checked)} type="checkbox" />
+                      <span>Also restart the numbering, so new records start again at 1</span>
                     </label>
                     <button className={`${buttonBaseClassName} border-[var(--theme-error-500,var(--theme-elevation-800))] text-[var(--theme-error-500,var(--theme-elevation-800))]`} disabled={busy || emptyTyped !== emptyPhrase} onClick={emptyNow} type="button">
                       Empty the data

@@ -48,7 +48,7 @@ async function selectTables(db: CleanupDb, flags: FeatureFlags, key: FeatureKey)
   return { tables: dropOrder(tables), withheld }
 }
 
-export async function runEmptyFeature(db: CleanupDb, flags: FeatureFlags, request: { feature: string; confirm?: string; execute?: boolean }): Promise<EmptyPlan> {
+export async function runEmptyFeature(db: CleanupDb, flags: FeatureFlags, request: { feature: string; confirm?: string; execute?: boolean; resetCounters?: boolean }): Promise<EmptyPlan> {
   const plan = blank(request.feature, request.execute !== true)
   const feature = FEATURES.find((entry) => entry.key === request.feature)
   if (!feature) {
@@ -76,6 +76,8 @@ export async function runEmptyFeature(db: CleanupDb, flags: FeatureFlags, reques
     try {
       await db.run(`DELETE FROM \`${table}\``)
       plan.emptied.push(table)
+      // Optional second step: ids start again at 1. A table without AUTOINCREMENT has no row in sqlite_sequence, so this is then a no-op.
+      if (request.resetCounters === true) await db.run(`DELETE FROM sqlite_sequence WHERE name = '${table.replace(/'/g, "''")}'`).catch((): undefined => undefined)
     } catch (error) {
       plan.errors.push({ table, error: error instanceof Error ? error.message : String(error) })
     }
@@ -86,20 +88,24 @@ export async function runEmptyFeature(db: CleanupDb, flags: FeatureFlags, reques
 
 export const MAX_SECTION_EXPORT_ROWS = 5000
 
-export type SectionExport = { ok: boolean; reason?: string; feature: string; tables: { table: string; rows: number; totalRows: number; truncated: boolean }[]; json: string }
+export type SectionExport = { ok: boolean; reason?: string; feature: string; /** The part returned (0 first) and how many parts the largest table needs. */ page?: number; pages?: number; tables: { table: string; rows: number; totalRows: number; truncated: boolean }[]; json: string }
 
-/** Every row of the tables that would be emptied, as one JSON file (up to 5000 rows a table), for the download offered first. */
-export async function exportFeatureData(db: CleanupDb, flags: FeatureFlags, feature: string): Promise<SectionExport> {
+/** Every row of the tables that would be emptied, as one JSON file (up to 5000 rows a table a part; ask for the next part with `page`), for the download offered first. */
+export async function exportFeatureData(db: CleanupDb, flags: FeatureFlags, feature: string, page = 0): Promise<SectionExport> {
   const found = FEATURES.find((entry) => entry.key === feature)
   if (!found) return { ok: false, reason: 'unknown', feature, tables: [], json: '' }
   const { tables } = await selectTables(db, flags, found.key)
+  const part = Number.isInteger(page) && page > 0 ? page : 0
+  const offset = part * MAX_SECTION_EXPORT_ROWS
+  let pages = 1
   const out: SectionExport['tables'] = []
   const data: Record<string, unknown[]> = {}
   for (const table of tables) {
     const totalRows = await db.countRows(table).catch((): number => 0)
-    const rows = totalRows === 0 ? [] : await db.all(`SELECT * FROM \`${table}\` LIMIT ${MAX_SECTION_EXPORT_ROWS}`)
+    pages = Math.max(pages, Math.ceil(totalRows / MAX_SECTION_EXPORT_ROWS))
+    const rows = totalRows <= offset ? [] : await db.all(`SELECT * FROM \`${table}\` ORDER BY rowid LIMIT ${MAX_SECTION_EXPORT_ROWS} OFFSET ${offset}`)
     data[table] = rows
-    out.push({ table, rows: rows.length, totalRows, truncated: totalRows > rows.length })
+    out.push({ table, rows: rows.length, totalRows, truncated: totalRows > offset + rows.length })
   }
-  return { ok: true, feature, tables: out, json: JSON.stringify({ section: feature, exportedAt: new Date().toISOString(), tables: out, data }, null, 2) }
+  return { ok: true, feature, page: part, pages, tables: out, json: JSON.stringify({ section: feature, part: part + 1, of: pages, exportedAt: new Date().toISOString(), tables: out, data }, null, 2) }
 }

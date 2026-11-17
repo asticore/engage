@@ -34,3 +34,14 @@ export async function decideMediaAccess(d1: D1Like, filename: string, viewer: { 
     return { allow: false, status: 403 }
   }
 }
+
+/** True when the request comes from a browser navigation (a link or address bar), not a script fetch or an image tag. */
+export function isBrowserNavigation(accept: string | null): boolean {
+  return Boolean(accept && /\btext\/html\b/i.test(accept))
+}
+
+/** Where a signed out browser is sent to sign in and then come back to the file. Same path is only ever a site path. */
+export function mediaSignInRedirect(pathAndQuery: string): string {
+  const back = pathAndQuery.startsWith('/') && !pathAndQuery.startsWith('//') ? pathAndQuery : '/'
+  return `/account/sign-in?redirect=${encodeURIComponent(back)}`
+}

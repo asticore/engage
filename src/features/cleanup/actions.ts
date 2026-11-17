@@ -76,16 +76,16 @@ export async function tidyIndexNamesAction(execute: boolean): Promise<IndexTidyR
 }
 
 /** Download offer before emptying a section: its rows as JSON. Admin only; changes nothing. */
-export async function exportSectionAction(feature: string): Promise<SectionExport> {
+export async function exportSectionAction(feature: string, page = 0): Promise<SectionExport> {
   const none: SectionExport = { ok: false, reason: 'not-permitted', feature, tables: [], json: '' }
   if (!(await hasAdminSession(await headers()))) return none
   const db = await getCleanupDb()
   if (!db) return { ...none, reason: 'no-database' }
-  return exportFeatureData(db, await getFeatureFlags(), feature)
+  return exportFeatureData(db, await getFeatureFlags(), feature, page)
 }
 
 /** Empties a section's data (rows only, tables stay). Plans unless execute is set; the typed phrase is checked again here. Always audited. */
-export async function emptySectionAction(request: { feature: string; confirm?: string; execute?: boolean }): Promise<EmptyPlan> {
+export async function emptySectionAction(request: { feature: string; confirm?: string; execute?: boolean; resetCounters?: boolean }): Promise<EmptyPlan> {
   const dryRun = request.execute !== true
   const refuse = (reason: string): EmptyPlan => ({ ok: false, dryRun, feature: request.feature, tables: [], emptied: [], withheld: [], refusals: [reason], errors: [] })
   if (!(await hasAdminSession(await headers()))) return refuse('Not permitted.')
