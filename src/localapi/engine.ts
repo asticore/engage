@@ -111,6 +111,7 @@ import { generateUploadFields, type UploadFile } from './uploads'
 import { attachCustomRole } from '@/features/roles/customRoleCache'
 import { defaultUserSessionStore } from '@/features/security/userSessionStore'
 import { audit, setAuditSink } from '@/features/security/auditLog'
+import { setLoginAlertSink } from '@/features/security/loginAlert'
 import { readSecuritySettingsFromD1 } from '@/features/security/settings'
 import { pendingTokenOps } from '@/features/security/pendingTokenStore'
 import { emailOtpOps, trustedDeviceOps } from '@/features/security/twoFactorRuntime'
@@ -123,6 +124,27 @@ import { findUserAuthRowByID, findUserAuthRowsPaginated, updateUserAuthRow } fro
 import { getDb } from '@/cms/db/connect'
 import { ensureMigrationsTable, type EngineDb } from '@/migrations/schema/engineBootstrap'
 import { migrations as ALL_MIGRATIONS } from '@/migrations'
+
+// New-device and new-country sign-in emails (Task 19g). Lazy and best effort; LOGIN_ALERTS_OFF=1 switches it off.
+setLoginAlertSink((event) => {
+  if (process.env.LOGIN_ALERTS_OFF === '1') return
+  void (async () => {
+    const [{ rawD1 }, store, alert, { sendEmail }] = await Promise.all([
+      import('@/features/ecommerce/server/db'),
+      import('@/features/security/loginAlertStore'),
+      import('@/features/security/loginAlert'),
+      import('@/features/email'),
+    ])
+    const d1 = (await rawD1()) as never as Parameters<typeof store.listSeen>[0]
+    const device = alert.deviceKey(event.userAgent)
+    const country = alert.cleanCountry(event.country)
+    const kind = alert.decideAlert(await store.listSeen(d1, event.userId), { device, country })
+    await store.markSeen(d1, event.userId, device, country, event.at)
+    if (!kind) return
+    const mail = alert.alertText(kind, { device, country, at: event.at })
+    await sendEmail({ to: event.email, subject: mail.subject, template: 'security.new-sign-in', text: mail.text })
+  })().catch((): void => undefined)
+})
 
 // Audit log drain (Task 19i): hand ordinary audit entries to the webhook system. Loaded lazily so the audit writer stays free of webhook code.
 setAuditSink((payload) => {
