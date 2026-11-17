@@ -21,6 +21,7 @@ import {
   type SignInPlace,
 } from '@/features/security/signInPath'
 import { DEFAULT_BLOG_BASE, isUnderPath } from '@/features/seo/permalinks'
+import { parseFeedAddress } from '@/features/blog/feedAddress'
 import { readBlogBase } from '@/features/seo/permalinkStore'
 
 /**
@@ -93,6 +94,13 @@ async function serveAdminAware(request: NextRequest): Promise<NextResponse> {
   }
   // The blog address (SEO settings, Permalinks): a custom one is served by the /blog folder, and /blog redirects to it.
   const blog = await readBlogBase()
+  const feed = parseFeedAddress(pathname, blog)
+  if (feed && isPlainNavigation(request)) {
+    const target = new URL(request.url)
+    target.pathname = '/feed.xml'
+    target.search = `?${feed.query}=${encodeURIComponent(feed.slug)}`
+    return NextResponse.rewrite(target)
+  }
   if (blog !== DEFAULT_BLOG_BASE) {
     const custom = `/${blog}`
     const fallback = `/${DEFAULT_BLOG_BASE}`
