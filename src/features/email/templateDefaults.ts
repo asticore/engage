@@ -21,6 +21,14 @@ export type EmailTemplateKey =
   | 'approvalDecision'
   | 'rsvpConfirmation'
   | 'eventReminder'
+  | 'quoteReceived'
+  | 'quoteAdminNew'
+  | 'quoteSent'
+  | 'quoteExpiring'
+  | 'quoteBidLost'
+  | 'quoteCounter'
+  | 'quoteAccepted'
+  | 'quoteDeclined'
 
 export type EmailTemplate = { subject: string; body: string }
 
@@ -113,5 +121,37 @@ export const EMAIL_TEMPLATE_DEFAULTS: Record<EmailTemplateKey, EmailTemplate> = 
       'Guests: {{guestCount}}',
       'See you there.',
     ].join('\n\n'),
+  },
+  quoteReceived: {
+    subject: 'We got your {{kindLabel}} ({{number}})',
+    body: 'Hi {{name}},\n\nThanks, we have your {{kindLabel}} ({{number}}). We will get back to you soon.\n\n{{siteName}}',
+  },
+  quoteAdminNew: {
+    subject: 'New {{kindLabel}} {{number}} from {{name}}',
+    body: '{{name}} ({{email}}) sent a {{kindLabel}}.\n\n{{details}}\n\nOpen it in Quotes and requests.',
+  },
+  quoteSent: {
+    subject: 'Your quote {{number}} from {{siteName}}',
+    body: 'Hi {{name}},\n\n{{message}}\n\nTotal: {{total}}. Valid until {{validUntil}}.\n\nSee the quote, accept it or reply with a counter-offer:\n{{link}}\n\n{{siteName}}',
+  },
+  quoteExpiring: {
+    subject: 'Your quote {{number}} expires on {{validUntil}}',
+    body: 'Hi {{name}},\n\nA reminder that your quote {{number}} for {{total}} is open until {{validUntil}}. To accept it or reply with a counter-offer, use the link in our earlier quote email, or reply to this message and we will send a new one.\n\n{{siteName}}',
+  },
+  quoteBidLost: {
+    subject: 'Your offer {{number}} was not successful',
+    body: 'Hi {{name}},\n\nThanks for your offer ({{number}}). Offers have closed and another offer was higher, so yours was not successful this time.\n\n{{siteName}}',
+  },
+  quoteCounter: {
+    subject: 'Counter-offer on {{number}} from {{name}}',
+    body: '{{name}} ({{email}}) replied to quote {{number}}.\n\n{{note}}',
+  },
+  quoteAccepted: {
+    subject: 'Quote {{number}} accepted by {{name}}',
+    body: '{{name}} accepted quote {{number}} for {{total}}. Order {{orderNumber}} is waiting for payment.',
+  },
+  quoteDeclined: {
+    subject: 'Quote {{number}} declined by {{name}}',
+    body: '{{name}} declined quote {{number}}.',
   },
 }

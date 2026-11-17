@@ -207,6 +207,14 @@ export const TEMPLATE_LABELS: Record<string, string> = {
   approvalDecision: 'Review decision',
   rsvpConfirmation: 'Event booking confirmation',
   eventReminder: 'Event reminder',
+  quoteReceived: 'Quote request received (to customer)',
+  quoteAdminNew: 'New request (to you)',
+  quoteSent: 'Quote sent (to customer)',
+  quoteExpiring: 'Quote expiring soon (to customer)',
+  quoteBidLost: 'Offer not successful (to customer)',
+  quoteCounter: 'Counter-offer (to you)',
+  quoteAccepted: 'Quote accepted (to you)',
+  quoteDeclined: 'Quote declined (to you)',
 }
 
 export const templateLabel = (key: string): string => TEMPLATE_LABELS[key] ?? key

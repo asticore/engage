@@ -50,6 +50,14 @@ export const TEST_SAMPLE_VALUES: Record<string, TemplateValues> = {
     eventDate: 'Saturday 12 September 2026, 18:30',
     link: `${SITE}/events/summer-open-evening`,
   },
+  quoteReceived: { name: 'Sam', number: 'QR-A1B2C3', kindLabel: 'quote request', siteName: 'Example Co' },
+  quoteAdminNew: { name: 'Sam', email: 'sam@example.com', number: 'QR-A1B2C3', kindLabel: 'quote request', details: '20 branded mugs, delivered by 1 December.' },
+  quoteSent: { name: 'Sam', number: 'QR-A1B2C3', message: 'Thanks for asking. Here is your quote.', total: '$360.00', validUntil: '1 December 2026', link: `${SITE}/quote/sample`, siteName: 'Example Co' },
+  quoteExpiring: { name: 'Sam', number: 'QR-A1B2C3', total: '$360.00', validUntil: '1 December 2026', siteName: 'Example Co' },
+  quoteBidLost: { name: 'Sam', number: 'QR-A1B2C3', siteName: 'Example Co' },
+  quoteCounter: { name: 'Sam', email: 'sam@example.com', number: 'QR-A1B2C3', note: 'Could you do it for less?\n\nWould pay: $320.00' },
+  quoteAccepted: { name: 'Sam', number: 'QR-A1B2C3', total: '$360.00', orderNumber: '1042' },
+  quoteDeclined: { name: 'Sam', number: 'QR-A1B2C3' },
 }
 
 /** A generic sample for any template that has no specific one. */
@@ -72,6 +80,14 @@ export const TEMPLATE_LABELS: Record<string, string> = {
   approvalDecision: 'Approval decision',
   rsvpConfirmation: 'Booking confirmed',
   eventReminder: 'Event reminder',
+  quoteReceived: 'Quote request received (to customer)',
+  quoteAdminNew: 'New request (to you)',
+  quoteSent: 'Quote sent (to customer)',
+  quoteExpiring: 'Quote expiring soon (to customer)',
+  quoteBidLost: 'Offer not successful (to customer)',
+  quoteCounter: 'Counter-offer (to you)',
+  quoteAccepted: 'Quote accepted (to you)',
+  quoteDeclined: 'Quote declined (to you)',
 }
 
 /** The subject of a test send, so it is never mistaken for a real email. */

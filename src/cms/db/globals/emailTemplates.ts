@@ -19,6 +19,14 @@ export type EmailTemplatesDoc = {
   approvalDecision?: TemplateGroup
   rsvpConfirmation?: TemplateGroup
   eventReminder?: TemplateGroup
+  quoteReceived?: TemplateGroup
+  quoteAdminNew?: TemplateGroup
+  quoteSent?: TemplateGroup
+  quoteExpiring?: TemplateGroup
+  quoteBidLost?: TemplateGroup
+  quoteCounter?: TemplateGroup
+  quoteAccepted?: TemplateGroup
+  quoteDeclined?: TemplateGroup
   updatedAt: string
   createdAt: string
 }
