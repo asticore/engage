@@ -8,6 +8,16 @@ Editors sign in at `/admin` to build pages, run the shop, publish events and pos
 
 The button installs the **lean install** in [`installer/`](installer/): a tiny repository (config file plus a build step) that downloads the latest [release](https://github.com/asticore/engage/releases) of this project, so nothing needs re-pulling. The admin shows an update bar when a newer release exists, takes a backup, updates, and offers a migration if the database changed (see [`installer/README.md`](installer/README.md)). Releases are made by tagging `vX.Y.Z` (`.github/workflows/release.yml`; `node scripts/make-release.mjs` builds the same files locally). The release source is configurable with `UPDATE_SOURCE` / `source` in `engage.config.json`, so the project can move. To deploy the whole repository from a clone instead (local installs, development), use the steps below.
 
+### Quick start (your own site)
+
+1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up) (or sign in).
+2. Click the **Deploy to Cloudflare** button above and follow the prompts. Cloudflare creates the site's Worker, database and storage in your account and asks for a few settings (the secrets listed under `cloudflare.bindings`; generate each with `openssl rand -hex 32`, and set `SITE_URL` to your address).
+3. Open the Worker's address, go to `/admin` and create the first admin account.
+4. Connect your domain: in Cloudflare, Workers & Pages, your site, Settings, Domains & Routes, Add, Custom domain (the domain must be on your Cloudflare account). Then set `SITE_URL` to the new address.
+5. Optional: to update with one click from the admin, set `UPDATE_REPO` (your site's repository) and `UPDATE_GITHUB_TOKEN` (a token limited to that repository with Contents read and write). Without them, update by retrying the build in Cloudflare.
+
+When a new release is out, the admin shows an update popup; after updating, a bar offers **Run migration** if the database needs it.
+
 Full-repository deploy button (clones everything): [![Deploy full repository](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/engage)
 
 The deploy button builds the Worker from `wrangler.jsonc` and asks for the variables listed under `cloudflare.bindings` in `package.json` (see [Environment variables](#environment-variables)). `wrangler.jsonc` holds this project's own live D1 database ID and R2 bucket name, so a deploy to another Cloudflare account needs those replaced first: run `pnpm run setup:cloudflare` (see [Fresh Cloudflare account](#fresh-cloudflare-account-or-restoring-a-deploy)). The button alone on a new account has not been verified from this repo. Once a deploy is live, the first request to the new site detects the empty database and runs the full schema migration and starter-content seed by itself (`src/migrations/ensureInitialised.ts`), then `/admin` lets you create the first admin user. Use `pnpm run deploy:full` for later upgrades to an existing database.
