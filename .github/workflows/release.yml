@@ -44,6 +44,12 @@ jobs:
         env:
           ENFORCE_FREE_LIMIT: ${{ vars.ENFORCE_FREE_LIMIT }}
       - name: Publish
-        run: gh release create "$GITHUB_REF_NAME" release/worker.js release/assets.tar.gz release/manifest.json --title "$GITHUB_REF_NAME" --notes-file notes.md
+        run: |
+          files="release/worker.js release/assets.tar.gz release/manifest.json"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" $files --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" $files --title "$GITHUB_REF_NAME" --notes-file notes.md
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
