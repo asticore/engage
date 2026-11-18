@@ -18,6 +18,8 @@
  */
 import { resolveD1Binding } from '@/cms/db/connect'
 import { consoleLogger } from '@/localapi/logger'
+import pkg from '../../package.json'
+import { setAppliedVersion } from '@/features/updates/state'
 import { runInternalMigrate } from '@/migrations/runInternalMigrate'
 import { seedHomeAndTemplates } from '@/seed/seedHomeAndTemplates'
 import type { Engine } from '@/localapi/engine'
@@ -37,6 +39,7 @@ async function initialise(engine: Engine): Promise<void> {
   consoleLogger.info('Fresh database detected - running first-run migrations and seed.')
   const { errorCount } = await runInternalMigrate(db, consoleLogger)
   if (errorCount > 0) throw new Error(`First-run migration finished with ${errorCount} error(s).`)
+  await setAppliedVersion(db, pkg.version)
   await seedHomeAndTemplates(engine)
 }
 

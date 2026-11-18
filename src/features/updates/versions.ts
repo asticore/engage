@@ -5,6 +5,11 @@
 
 export const UPSTREAM_REPO = 'asticore/engage'
 
+/** The release source. Set UPDATE_SOURCE ("owner/name" or a github.com URL) to move the project; default is the upstream above. */
+export function upstreamRepo(setting?: unknown): string {
+  return repoSlug(setting)?.toLowerCase() ?? UPSTREAM_REPO
+}
+
 export type Version = [number, number, number]
 
 /** `v1.2.3`, `1.2.3` or `1.2.3-beta` to numbers. Anything else is not a version. */
@@ -40,13 +45,13 @@ export type UpdateLinks = { changelog: string; start: string; sameRepo: boolean 
  * releases page. A fork (set with UPDATE_REPO) updates by syncing the fork with upstream: Start opens GitHub's compare page
  * that brings the fork's main up to date, and a deploy from the fork follows.
  */
-export function updateLinks(fork: unknown, latestTag: string | null): UpdateLinks {
+export function updateLinks(fork: unknown, latestTag: string | null, source: string = UPSTREAM_REPO): UpdateLinks {
   const own = repoSlug(fork)
-  const changelog = latestTag ? `https://github.com/${UPSTREAM_REPO}/releases/tag/${encodeURIComponent(latestTag)}` : `https://github.com/${UPSTREAM_REPO}/releases`
-  if (own && own.toLowerCase() !== UPSTREAM_REPO) {
-    return { changelog, start: `https://github.com/${own}/compare/main...${UPSTREAM_REPO.split('/')[0]}:main`, sameRepo: false }
+  const changelog = latestTag ? `https://github.com/${source}/releases/tag/${encodeURIComponent(latestTag)}` : `https://github.com/${source}/releases`
+  if (own && own.toLowerCase() !== source) {
+    return { changelog, start: `https://github.com/${own}/compare/main...${source.split('/')[0]}:main`, sameRepo: false }
   }
-  return { changelog, start: `https://github.com/${UPSTREAM_REPO}/releases`, sameRepo: true }
+  return { changelog, start: `https://github.com/${source}/releases`, sameRepo: true }
 }
 
 /** The latest version from a GitHub releases/latest answer, or from a package.json, whichever it is. */

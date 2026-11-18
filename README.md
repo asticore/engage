@@ -4,7 +4,11 @@ The public **Grace & Gatsby** website and the **Asticore Engage** content portal
 
 Editors sign in at `/admin` to build pages, run the shop, publish events and posts, and configure the site. Visitors get the storefront rendered from the same content.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/engage)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/engage/tree/main/installer)
+
+The button installs the **lean install** in [`installer/`](installer/): a tiny repository (config file plus a build step) that downloads the latest [release](https://github.com/asticore/engage/releases) of this project, so nothing needs re-pulling. The admin shows an update bar when a newer release exists, takes a backup, updates, and offers a migration if the database changed (see [`installer/README.md`](installer/README.md)). Releases are made by tagging `vX.Y.Z` (`.github/workflows/release.yml`; `node scripts/make-release.mjs` builds the same files locally). The release source is configurable with `UPDATE_SOURCE` / `source` in `engage.config.json`, so the project can move. To deploy the whole repository from a clone instead (local installs, development), use the steps below.
+
+Full-repository deploy button (clones everything): [![Deploy full repository](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/engage)
 
 The deploy button builds the Worker from `wrangler.jsonc` and asks for the variables listed under `cloudflare.bindings` in `package.json` (see [Environment variables](#environment-variables)). `wrangler.jsonc` holds this project's own live D1 database ID and R2 bucket name, so a deploy to another Cloudflare account needs those replaced first: run `pnpm run setup:cloudflare` (see [Fresh Cloudflare account](#fresh-cloudflare-account-or-restoring-a-deploy)). The button alone on a new account has not been verified from this repo. Once a deploy is live, the first request to the new site detects the empty database and runs the full schema migration and starter-content seed by itself (`src/migrations/ensureInitialised.ts`), then `/admin` lets you create the first admin user. Use `pnpm run deploy:full` for later upgrades to an existing database.
 

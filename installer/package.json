@@ -1,0 +1,51 @@
+{
+  "name": "engage-site",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Lean Engage install. Downloads the release named in engage.config.json; nothing else lives here.",
+  "scripts": {
+    "build": "node scripts/install.mjs",
+    "deploy": "node scripts/install.mjs && wrangler deploy",
+    "dev": "node scripts/install.mjs && wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "~4.129.0"
+  },
+  "cloudflare": {
+    "bindings": {
+      "ENGAGE_SECRET": {
+        "description": "Signs sessions and encrypts secret settings fields. Generate a random string using `openssl rand -hex 32`."
+      },
+      "INTERNAL_ROUTE_KEY": {
+        "description": "Guards the internal maintenance routes (migrate/seed/backup). Generate with `openssl rand -hex 32`."
+      },
+      "SITE_URL": {
+        "description": "Public site URL, e.g. https://your-domain.example. Used for sitemap.xml, robots.txt and canonical/OG URLs."
+      },
+      "STRIPE_SECRET_KEY": {
+        "description": "Stripe secret key. Leave unset to deploy with the Shop feature off."
+      },
+      "STRIPE_PUBLISHABLE_KEY": {
+        "description": "Stripe publishable key. Leave unset to deploy with the Shop feature off."
+      },
+      "STRIPE_WEBHOOK_SECRET": {
+        "description": "Stripe webhook signing secret. Leave unset to deploy with the Shop feature off."
+      },
+      "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": {
+        "description": "Same value as STRIPE_PUBLISHABLE_KEY, exposed to the browser. Leave unset to deploy with the Shop feature off."
+      },
+      "ENGAGE_LOG_LEVEL": {
+        "description": "Optional: debug | info | warn | error. Defaults to info in production."
+      },
+      "UPDATE_REPO": {
+        "description": "This site's own GitHub repository (owner/name, the one the Deploy button created). Lets the admin update with one click. Optional."
+      },
+      "UPDATE_GITHUB_TOKEN": {
+        "description": "Fine-grained GitHub token limited to that repository with Contents read and write. Optional; without it, update by retrying the build in Cloudflare."
+      },
+      "ENGAGE_SOURCE_TOKEN": {
+        "description": "Only if the Engage source repository is private: a token with read access to it. Leave empty otherwise."
+      }
+    }
+  }
+}

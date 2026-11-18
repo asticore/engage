@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
-type Check = { current: string; latest: string | null; updateAvailable: boolean; links: { changelog: string; start: string; sameRepo: boolean }; oneClick?: boolean; referencesOutdated?: Array<{ id: string; name: string; current: string | null; latest: string | null }> }
+type Check = { current: string; latest: string | null; updateAvailable: boolean; links: { changelog: string; start: string; sameRepo: boolean }; oneClick?: boolean; manifest?: { notes: string; requiresMigration: boolean; destructive: boolean }; referencesOutdated?: Array<{ id: string; name: string; current: string | null; latest: string | null }> }
 
 const SEEN_KEY = 'engage-update-dismissed'
 
@@ -69,6 +69,10 @@ export function UpdateNotice() {
             <span className="text-muted">{t('update.body', { current: check.current, how: check.links.sameRepo ? t('update.howSame') : t('update.howFork') })}</span>
           </>
         )}
+        {check.updateAvailable && check.manifest?.notes ? (
+          <span className="text-muted" data-testid="update-notice-notes" style={{ whiteSpace: 'pre-wrap' }}>{check.manifest.notes.slice(0, 400)}</span>
+        ) : null}
+        {check.updateAvailable && check.manifest?.destructive ? <span className="badge" data-testid="update-notice-destructive">This release changes existing data. A backup is taken first.</span> : null}
         {(check.referencesOutdated ?? []).length > 0 && (
           <span className="text-muted" data-testid="update-notice-references">
             {t('update.references', { names: (check.referencesOutdated ?? []).map((r) => r.name).join(', ') })}
