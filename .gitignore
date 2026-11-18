@@ -73,3 +73,7 @@ src/migrations/*.json
 # chosen ends up implemented in src/app/(engage)/custom.css, which is the
 # thing worth version-controlling.
 /mockups/
+
+# lean release output
+/release
+/.release-bundle-*

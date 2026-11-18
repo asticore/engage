@@ -1,0 +1,49 @@
+name: Release
+
+# Tag vX.Y.Z (same number as package.json) to publish a release the lean installs can update to.
+# Attaches worker.js, assets.tar.gz and manifest.json. Release notes come from the matching CHANGELOG.md section.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      NODE_OPTIONS: --no-deprecation --max-old-space-size=8000
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --no-frozen-lockfile
+      - name: Check tag matches package.json
+        run: |
+          [ "v$(node -p "require('./package.json').version")" = "${GITHUB_REF_NAME}" ] || { echo "Tag ${GITHUB_REF_NAME} does not match package.json version"; exit 1; }
+      - name: Previous manifest
+        run: |
+          prev=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || true)
+          [ -n "$prev" ] && gh release download "$prev" --pattern manifest.json --dir prev || true
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: pnpm exec opennextjs-cloudflare build
+      - name: Notes
+        run: node -e "const t=require('fs').readFileSync('CHANGELOG.md','utf8');const v=process.env.GITHUB_REF_NAME.slice(1);const m=t.split(new RegExp('^## '+v.replace(/\./g,'\\\\.')+'\\\\s*$','m'))[1]||'';require('fs').writeFileSync('notes.md',m.split(/^## /m)[0].trim())"
+      - name: Build release files
+        run: node scripts/make-release.mjs --prev prev/manifest.json --notes "$(cat notes.md)"
+      - name: Fail if the Worker is over the free plan limit
+        run: node -e "const m=require('./release/manifest.json');console.log('worker gzip KiB',m.workerGzipKiB);if(m.workerGzipKiB>3072&&process.env.ENFORCE_FREE_LIMIT==='1')process.exit(1)"
+        env:
+          ENFORCE_FREE_LIMIT: ${{ vars.ENFORCE_FREE_LIMIT }}
+      - name: Publish
+        run: gh release create "$GITHUB_REF_NAME" release/worker.js release/assets.tar.gz release/manifest.json --title "$GITHUB_REF_NAME" --notes-file notes.md
+        env:
+          GH_TOKEN: ${{ github.token }}
