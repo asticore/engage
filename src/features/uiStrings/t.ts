@@ -54,9 +54,15 @@ export async function loadRawStrings(
   const cached = raw.get(primary)
   if (cached) return cached
 
-  const mod = await DICTIONARY_LOADERS[primary as Exclude<AdminUiLocale, 'en'>]()
-  raw.set(primary, mod.default)
-  return mod.default
+  try {
+    const mod = await DICTIONARY_LOADERS[primary as Exclude<AdminUiLocale, 'en'>]()
+    raw.set(primary, mod.default)
+    return mod.default
+  } catch (error) {
+    // A missing static file must never break a page: show English for this request and retry on the next.
+    console.error(`ui-strings: could not load "${primary}", using English`, error)
+    return {}
+  }
 }
 
 /**
