@@ -6,7 +6,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { build } from 'esbuild'
+import { tsImport } from 'tsx/esm/api'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SRC = path.join(ROOT, 'src/features/uiStrings/dictionaries')
@@ -17,14 +17,7 @@ fs.mkdirSync(OUT, { recursive: true })
 let stale = 0
 for (const file of fs.readdirSync(SRC).filter((f) => f.endsWith('.ts') && f !== 'portal.ts').sort()) {
   const locale = file.replace(/\.ts$/, '')
-  const res = await build({
-    entryPoints: [path.join(SRC, file)], bundle: true, write: false, format: 'esm', platform: 'node', logLevel: 'silent',
-    alias: { '@': path.join(ROOT, 'src') },
-  })
-  const tmp = path.join(ROOT, `.gen-${locale}.mjs`)
-  fs.writeFileSync(tmp, res.outputFiles[0].text)
-  const dict = (await import(pathToFileURL(tmp).href)).default
-  fs.rmSync(tmp)
+  const dict = (await tsImport(pathToFileURL(path.join(SRC, file)).href, import.meta.url)).default
   const json = JSON.stringify(Object.fromEntries(Object.entries(dict).sort(([a], [b]) => (a < b ? -1 : 1))))
   const target = path.join(OUT, `${locale}.json`)
   if (check) {
