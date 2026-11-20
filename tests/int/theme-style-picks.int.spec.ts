@@ -89,7 +89,7 @@ describe('theme from style picks', () => {
     }
     for (const k of keys) expect(k in UI_STRING_SOURCE, k).toBe(true)
     expect(formatReasons(t.reasonItems, (k) => `<${k}>`).some((r) => r.includes('{'))).toBe(false)
-    for (const locale of ['de', 'es', 'fr', 'it', 'nl', 'pt', 'ru', 'ja', 'ko', 'zh-Hans', 'hi', 'ar']) {
+    for (const locale of ['de', 'es', 'fr', 'it', 'nl', 'pt', 'ru', 'ja', 'ko', 'zh-Hans', 'hi', 'ar', 'he']) {
       const dict = (await import(`@/features/uiStrings/dictionaries/${locale}`)).default as Record<string, string>
       for (const k of Object.keys(UI_STRING_SOURCE).filter((x) => x.startsWith('themeStyle.r.'))) {
         for (const ph of UI_STRING_SOURCE[k as keyof typeof UI_STRING_SOURCE].match(/\{\w+\}/g) ?? []) expect(dict[k], `${locale} ${k}`).toContain(ph)

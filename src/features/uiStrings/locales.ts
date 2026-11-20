@@ -22,6 +22,7 @@ export const ADMIN_UI_LOCALES = [
   'ar',
   'hi',
   'ru',
+  'he',
 ] as const
 
 export type AdminUiLocale = (typeof ADMIN_UI_LOCALES)[number]
@@ -29,7 +30,7 @@ export type AdminUiLocale = (typeof ADMIN_UI_LOCALES)[number]
 export const DEFAULT_ADMIN_UI_LOCALE: AdminUiLocale = 'en'
 
 /** Right-to-left scripts. Drives `dir` on the admin's <html>. */
-export const RTL_ADMIN_UI_LOCALES: ReadonlySet<AdminUiLocale> = new Set<AdminUiLocale>(['ar'])
+export const RTL_ADMIN_UI_LOCALES: ReadonlySet<AdminUiLocale> = new Set<AdminUiLocale>(['ar', 'he'])
 
 export const ADMIN_UI_LOCALE_LABELS: Record<AdminUiLocale, { label: string; native: string }> = {
   en: { label: 'English', native: 'English' },
@@ -45,6 +46,7 @@ export const ADMIN_UI_LOCALE_LABELS: Record<AdminUiLocale, { label: string; nati
   ar: { label: 'Arabic', native: 'العربية' },
   hi: { label: 'Hindi', native: 'हिन्दी' },
   ru: { label: 'Russian', native: 'Русский' },
+  he: { label: 'Hebrew', native: 'עברית' },
 }
 
 /** Case-insensitive match onto a supported admin locale. */
@@ -85,7 +87,9 @@ export function matchAcceptLanguage(header: string | null | undefined): AdminUiL
     const exact = findAdminUiLocale(entry.tag)
     if (exact) return exact
 
-    const [base = '', ...rest] = entry.tag.toLowerCase().split('-')
+    const [rawBase = '', ...rest] = entry.tag.toLowerCase().split('-')
+    // Browsers still send the retired code `iw` for Hebrew.
+    const base = rawBase === 'iw' ? 'he' : rawBase
     // Chinese written in Simplified script or from the mainland / Singapore. Traditional-script tags are not supported.
     if (base === 'zh') {
       const script = rest.find((part) => part.length === 4)?.toLowerCase()
