@@ -20,6 +20,7 @@ export type ReleaseManifest = {
   /** Release asset names and sha256 checks. */
   assets: { worker: string; assetsArchive: string; workerSha256: string; assetsSha256: string }
   /** gzip size of the worker in KiB (Cloudflare's free plan allows 3072). */
+  workerKiB: number
   workerGzipKiB: number
 }
 
@@ -42,6 +43,7 @@ export function parseManifest(input: unknown): ReleaseManifest {
       workerSha256: String(assets.workerSha256 ?? ''),
       assetsSha256: String(assets.assetsSha256 ?? ''),
     },
+    workerKiB: Number(m.workerKiB ?? 0),
     workerGzipKiB: Number(m.workerGzipKiB ?? 0),
   }
 }

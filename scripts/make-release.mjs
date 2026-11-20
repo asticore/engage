@@ -55,7 +55,10 @@ function main() {
   const prev = arg('--prev') && fs.existsSync(arg('--prev')) ? JSON.parse(fs.readFileSync(arg('--prev'), 'utf8')) : null
   const added = prev ? diffMigrations(migrations, prev.migrations ?? []) : []
   const destructive = added.some((m) => isDestructive(fs.readFileSync(path.join(migDir, `${m}.ts`), 'utf8')))
-  const workerGzipKiB = Math.round(zlib.gzipSync(fs.readFileSync(path.join(OUT, 'worker.js'))).length / 1024)
+  const workerBytes = fs.readFileSync(path.join(OUT, 'worker.js'))
+  const workerGzipKiB = Math.round(zlib.gzipSync(workerBytes).length / 1024)
+  // Cloudflare's limit is the uncompressed size (64 MiB on Free and Paid); gzip is for reference only.
+  const workerKiB = Math.round(workerBytes.length / 1024)
 
   const manifest = {
     version: pkg.version,
@@ -66,10 +69,11 @@ function main() {
     destructive,
     minFromVersion: pkg.engage?.minFromVersion ?? '0.0.0',
     assets: { worker: 'worker.js', assetsArchive: 'assets.tar.gz', workerSha256: sha256(path.join(OUT, 'worker.js')), assetsSha256: sha256(path.join(OUT, 'assets.tar.gz')) },
+    workerKiB,
     workerGzipKiB,
   }
   fs.writeFileSync(path.join(OUT, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`)
-  console.log(`Release ${manifest.version}: worker ${workerGzipKiB} KiB gzip (free plan limit 3072), ${added.length} new migration(s).`)
+  console.log(`Release ${manifest.version}: worker ${workerKiB} KiB uncompressed (Cloudflare limit 65536), ${workerGzipKiB} KiB gzip, ${added.length} new migration(s).`)
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main()
