@@ -3,6 +3,8 @@
   "main": "cloudflare-worker.ts",
   "name": "gracengatsby",
   "compatibility_date": "2025-08-15",
+  // Minify the Worker script: 8.0 to 6.9 MiB gzip (Task 39), same behaviour, faster cold start.
+  "minify": true,
   "compatibility_flags": [
     // Enable Node.js API
     // see https://developers.cloudflare.com/workers/configuration/compatibility-flags/#nodejs-compatibility-flag
