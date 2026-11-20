@@ -3,7 +3,7 @@
  * statements that request runs and how long they take, and adds `x-d1-count` and `x-d1-ms` to the response.
  * Nothing about the queries themselves is exposed. Without the request header nothing is wrapped.
  */
-export type D1Timing = { count: number; ms: number; trace?: string[] }
+export type D1Timing = { count: number; ms: number; trace?: string[]; t0?: number }
 
 type AnyFn = (...args: unknown[]) => unknown
 
@@ -15,7 +15,7 @@ const timed = async (timing: D1Timing, run: () => unknown, label = ''): Promise<
     const took = Date.now() - start
     timing.count += 1
     timing.ms += took
-    timing.trace?.push(`${took}ms ${label}`)
+    timing.trace?.push(`@${start - (timing.t0 ?? start)}+${took}ms ${label}`)
   }
 }
 
@@ -37,8 +37,28 @@ export function wrapD1(db: Record<string, unknown>, timing: D1Timing): unknown {
     get(target, prop) {
       const value = target[prop as string]
       if (typeof value !== 'function') return value
-      if (prop === 'prepare') return (sql: string) => wrapStatement((value as AnyFn).call(target, sql) as Record<string, unknown>, timing, sql.replace(/\s+/g, ' ').slice(0, 90))
+      if (prop === 'prepare') return (sql: string) => wrapStatement((value as AnyFn).call(target, sql) as Record<string, unknown>, timing, sql.replace(/\s+/g, ' ').slice(0, 55))
       if (prop === 'batch' || prop === 'exec') return (...args: unknown[]) => timed(timing, () => (value as AnyFn).apply(target, args))
+      return (value as AnyFn).bind(target)
+    },
+  })
+}
+
+const TRACED_METHODS = ['fetch', 'get', 'head', 'list', 'put', 'delete']
+
+/** Times the methods of a non-D1 binding (assets, R2, images) so the trace shows every outside wait. */
+function wrapBinding(name: string, binding: Record<string, unknown>, timing: D1Timing): unknown {
+  return new Proxy(binding, {
+    get(target, prop) {
+      const value = target[prop as string]
+      if (typeof value !== 'function') return value
+      if (typeof prop === 'string' && TRACED_METHODS.includes(prop)) {
+        return (...args: unknown[]) => {
+          const first = args[0]
+          const arg = typeof first === 'string' ? first : first instanceof Request ? first.url : ''
+          return timed({ count: 0, ms: 0, trace: timing.trace, t0: timing.t0 }, () => (value as AnyFn).apply(target, args), `${name}.${prop} ${arg.slice(0, 50)}`)
+        }
+      }
       return (value as AnyFn).bind(target)
     },
   })
@@ -50,7 +70,19 @@ export function envWithD1Timing(env: unknown, timing: D1Timing): unknown {
   const db = source?.D1 as Record<string, unknown> | undefined
   if (!source || !db || typeof db.prepare !== 'function') return env
   const wrapped = wrapD1(db, timing)
-  return new Proxy(source, { get: (target, prop) => (prop === 'D1' ? wrapped : target[prop as string]) })
+  timing.t0 = Date.now()
+  const others = new Map<string, unknown>()
+  return new Proxy(source, {
+    get: (target, prop) => {
+      if (prop === 'D1') return wrapped
+      const value = target[prop as string]
+      if (timing.trace && typeof prop === 'string' && value && typeof value === 'object' && TRACED_METHODS.some((m) => typeof (value as Record<string, unknown>)[m] === 'function')) {
+        if (!others.has(prop)) others.set(prop, wrapBinding(prop, value as Record<string, unknown>, timing))
+        return others.get(prop)
+      }
+      return value
+    },
+  })
 }
 
 export function addTimingHeaders(response: Response, timing: D1Timing): Response {
