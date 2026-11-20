@@ -4,8 +4,8 @@
  * Running the ~140 migrations one by one on an empty database is slow because
  * almost every one of them first looks at the schema (table and column
  * existence checks) before it changes anything. The RESULT of all of them is
- * fixed, so a fresh install applies it directly: `freshBaseline.generated.ts`
- * holds the final DDL (tables, then indexes) plus the few seed rows the
+ * fixed, so a fresh install applies it directly. `public/baseline/fresh-baseline.json` (read through
+ * `loadBaseline.ts`) holds the final DDL (tables, then indexes) plus the few seed rows the
  * migrations write, and the names of every migration it stands for. They are
  * recorded in `eg_migrations` as already run, so only migrations added AFTER
  * the baseline was generated run afterwards, exactly as on any other install.
@@ -22,7 +22,7 @@
 import { ownerOfTable } from '@/features/featureTables'
 import type { FeatureKey } from '@/features/registry'
 
-import { FRESH_BASELINE } from './freshBaseline.generated'
+import { loadFreshBaseline } from './loadBaseline'
 
 export type BaselineSeed = { table: string; columns: string[]; rows: (string | number | null)[][] }
 
@@ -76,21 +76,22 @@ export type ApplyBaselineResult = { tables: number; indexes: number; seeds: numb
 export async function applyFreshBaseline(
   db: D1Database,
   deferred: Set<FeatureKey>,
-  baseline: FreshBaseline = FRESH_BASELINE,
+  baseline?: FreshBaseline,
 ): Promise<ApplyBaselineResult> {
+  const source = baseline ?? (await loadFreshBaseline())
   const wanted = (table: string): boolean => {
     const owner = ownerOfTable(table)
     return owner === 'core' || !deferred.has(owner)
   }
-  const tables = baseline.tables.filter((entry) => wanted(entry.table))
-  const indexes = baseline.indexes.filter((entry) => wanted(entry.table))
+  const tables = source.tables.filter((entry) => wanted(entry.table))
+  const indexes = source.indexes.filter((entry) => wanted(entry.table))
   await runBatched(db, tables.map((entry) => db.prepare(idempotent(entry.sql))))
   await runBatched(db, indexes.map((entry) => db.prepare(idempotent(entry.sql))))
 
   const now = new Date().toISOString()
   const inserts: D1PreparedStatement[] = []
   let seeds = 0
-  for (const seed of baseline.seeds) {
+  for (const seed of source.seeds) {
     if (SKIP_SEEDS.has(seed.table) || !wanted(seed.table)) continue
     const cols = seed.columns.map((c) => `\`${c}\``).join(', ')
     const marks = seed.columns.map(() => '?').join(', ')
@@ -105,7 +106,7 @@ export async function applyFreshBaseline(
   // What provisioning a held-back feature replays later.
   const touchedWrites: D1PreparedStatement[] = []
   for (const feature of deferred) {
-    const names = baseline.touched[feature]
+    const names = source.touched[feature]
     if (names?.length) {
       touchedWrites.push(db.prepare(`UPDATE eg_feature_tables SET migrations = ? WHERE feature = ?`).bind(JSON.stringify([...names].sort()), feature))
     }
@@ -114,11 +115,11 @@ export async function applyFreshBaseline(
 
   // One batch (one transaction): either every migration is recorded or none is.
   await db.batch(
-    baseline.migrations.map((entry) =>
+    source.migrations.map((entry) =>
       db.prepare(`INSERT INTO eg_migrations (name, batch, updated_at, created_at) VALUES (?, ?, ?, ?)`).bind(entry.name, entry.batch, now, now),
     ),
   )
-  return { tables: tables.length, indexes: indexes.length, seeds, migrations: baseline.migrations.length }
+  return { tables: tables.length, indexes: indexes.length, seeds, migrations: source.migrations.length }
 }
 
 /**
@@ -129,9 +130,10 @@ export async function applyFreshBaseline(
  * names are held back once the `eg_` tables exist (see `deferTables`), so it only adds what is missing.
  * Tables the baseline does not know (a section added after it was generated) are left to the replay.
  */
-export async function applyFeatureBaseline(db: D1Database, feature: FeatureKey, baseline: FreshBaseline = FRESH_BASELINE): Promise<number> {
-  const tables = baseline.tables.filter((entry) => ownerOfTable(entry.table) === feature)
-  const indexes = baseline.indexes.filter((entry) => ownerOfTable(entry.table) === feature)
+export async function applyFeatureBaseline(db: D1Database, feature: FeatureKey, baseline?: FreshBaseline): Promise<number> {
+  const source = baseline ?? (await loadFreshBaseline())
+  const tables = source.tables.filter((entry) => ownerOfTable(entry.table) === feature)
+  const indexes = source.indexes.filter((entry) => ownerOfTable(entry.table) === feature)
   await runBatched(db, tables.map((entry) => db.prepare(idempotent(entry.sql))))
   await runBatched(db, indexes.map((entry) => db.prepare(idempotent(entry.sql))))
   return tables.length
