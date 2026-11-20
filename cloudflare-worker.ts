@@ -51,8 +51,10 @@ export default {
     const run = (e: unknown) =>
       withEdgeCache(request, e, ctx, (req, e2, c) => (openNextWorker as OpenNextWorker).fetch(req, e2, c))
     // Debug only: `x-eg-timing: 1` on a request reports how many D1 statements ran and how long they took.
-    if (request.headers.get('x-eg-timing') !== '1') return run(env)
-    const timing: D1Timing = { count: 0, ms: 0 }
+    const mode = request.headers.get('x-eg-timing')
+    if (mode !== '1' && mode !== '2') return run(env)
+    // Mode 2 also lists each statement (first 90 characters, no values) with its time.
+    const timing: D1Timing = { count: 0, ms: 0, trace: mode === '2' ? [] : undefined }
     return addTimingHeaders(await run(envWithD1Timing(env, timing)), timing)
   },
   async scheduled(_event: unknown, env: CronEnv, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<void> {

@@ -3,28 +3,30 @@
  * statements that request runs and how long they take, and adds `x-d1-count` and `x-d1-ms` to the response.
  * Nothing about the queries themselves is exposed. Without the request header nothing is wrapped.
  */
-export type D1Timing = { count: number; ms: number }
+export type D1Timing = { count: number; ms: number; trace?: string[] }
 
 type AnyFn = (...args: unknown[]) => unknown
 
-const timed = async (timing: D1Timing, run: () => unknown): Promise<unknown> => {
+const timed = async (timing: D1Timing, run: () => unknown, label = ''): Promise<unknown> => {
   const start = Date.now()
   try {
     return await run()
   } finally {
+    const took = Date.now() - start
     timing.count += 1
-    timing.ms += Date.now() - start
+    timing.ms += took
+    timing.trace?.push(`${took}ms ${label}`)
   }
 }
 
-const wrapStatement = (statement: Record<string, unknown>, timing: D1Timing): unknown =>
+const wrapStatement = (statement: Record<string, unknown>, timing: D1Timing, sql = ''): unknown =>
   new Proxy(statement, {
     get(target, prop) {
       const value = target[prop as string]
       if (typeof value !== 'function') return value
-      if (prop === 'bind') return (...args: unknown[]) => wrapStatement((value as AnyFn).apply(target, args) as Record<string, unknown>, timing)
+      if (prop === 'bind') return (...args: unknown[]) => wrapStatement((value as AnyFn).apply(target, args) as Record<string, unknown>, timing, sql)
       if (prop === 'first' || prop === 'all' || prop === 'run' || prop === 'raw') {
-        return (...args: unknown[]) => timed(timing, () => (value as AnyFn).apply(target, args))
+        return (...args: unknown[]) => timed(timing, () => (value as AnyFn).apply(target, args), sql)
       }
       return (value as AnyFn).bind(target)
     },
@@ -35,7 +37,7 @@ export function wrapD1(db: Record<string, unknown>, timing: D1Timing): unknown {
     get(target, prop) {
       const value = target[prop as string]
       if (typeof value !== 'function') return value
-      if (prop === 'prepare') return (sql: string) => wrapStatement((value as AnyFn).call(target, sql) as Record<string, unknown>, timing)
+      if (prop === 'prepare') return (sql: string) => wrapStatement((value as AnyFn).call(target, sql) as Record<string, unknown>, timing, sql.replace(/\s+/g, ' ').slice(0, 90))
       if (prop === 'batch' || prop === 'exec') return (...args: unknown[]) => timed(timing, () => (value as AnyFn).apply(target, args))
       return (value as AnyFn).bind(target)
     },
@@ -56,6 +58,7 @@ export function addTimingHeaders(response: Response, timing: D1Timing): Response
     const headers = new Headers(response.headers)
     headers.set('x-d1-count', String(timing.count))
     headers.set('x-d1-ms', String(timing.ms))
+    if (timing.trace) headers.set('x-d1-trace', timing.trace.join(' | ').replace(/[^\x20-\x7e]/g, '?').slice(0, 7000))
     return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
   } catch {
     return response
