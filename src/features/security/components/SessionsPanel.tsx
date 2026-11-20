@@ -9,8 +9,8 @@ import {
   adminRevokeSessionAction,
   revokeOtherSessionsAction,
   revokeSessionAction,
-} from '../userSessionActions'
-import { markEmailVerifiedAction } from '../emailVerificationActions'
+} from '../userSessionActions.client'
+import { markEmailVerifiedAction } from '../emailVerificationActions.client'
 import type { SessionOutcome, SessionView } from '../userSessionService'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 import { TrustedDevicesList } from './TrustedDevicesList'

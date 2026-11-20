@@ -4,7 +4,7 @@ import React from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
-import { dropUnusedTableAction, exportUnusedTableAction } from './unusedActions'
+import { dropUnusedTableAction, exportUnusedTableAction } from './unusedActions.client'
 import { formatBytes } from './size'
 import type { UnusedTable } from './unusedTables'
 

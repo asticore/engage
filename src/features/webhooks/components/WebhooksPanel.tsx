@@ -15,7 +15,7 @@ import {
   type DeliveryView,
   type WebhookView,
   type WebhooksData,
-} from '../actions'
+} from '../actions.client'
 import { AUDIT_REDACT_FIELDS } from '../core'
 import { EVENT_LABEL_KEYS, type WebhookEvent } from '../events'
 import { WebhookTransfer } from './WebhookTransfer'

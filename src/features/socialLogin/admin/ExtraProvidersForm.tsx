@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 
-import { saveExtraProviderAction, saveOneTapAction } from '../extraActions'
+import { saveExtraProviderAction, saveOneTapAction } from '../extraActions.client'
 
 /**
  * Settings > Security > More sign-in providers: one card per provider that is stored apart from the

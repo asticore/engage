@@ -13,7 +13,7 @@ import {
   unassignApiCategoryAction,
   type CategoryActionResult,
   type CategoryView,
-} from '../actions'
+} from '../actions.client'
 import type { ScopeCollection } from '../core'
 import { buildScopes, type ScopeMode } from '../scopePicker'
 

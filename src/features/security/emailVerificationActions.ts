@@ -1,4 +1,3 @@
-'use server'
 
 import { refuseWhileImpersonating } from '@/features/impersonation/policy'
 import { headers } from 'next/headers'

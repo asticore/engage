@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 import { localiseMessage } from '@/features/accounts/messages'
 
-import { unlinkSocialAction } from '../actions'
+import { unlinkSocialAction } from '../actions.client'
 import type { ConnectionView } from '../connections'
 
 /**

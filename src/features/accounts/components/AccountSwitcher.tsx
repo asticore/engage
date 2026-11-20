@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { accountContext } from '../session'
-import { addAccountAction, switchAccountAction } from '../switcherActions'
+import { RpcForm } from '@/features/rpc/RpcForm'
 import { listOtherAccounts } from '../switcher'
 import { accountTexts } from '../portalCopy'
 
@@ -31,20 +31,20 @@ export const AccountSwitcher = async (): Promise<React.ReactElement | null> => {
           <ul className="account-switcher__list">
             {others.map((account) => (
               <li key={account.id}>
-                <form action={switchAccountAction}>
+                <RpcForm rpcModule="features/accounts/switcherActions" rpcFn="switchAccountAction">
                   <input type="hidden" name="id" value={account.id} />
                   <button type="submit">
                     {tx('switcher.switchTo')} {account.email}
                   </button>
-                </form>
+                </RpcForm>
               </li>
             ))}
           </ul>
         ) : null}
         {user ? (
-          <form action={addAccountAction}>
+          <RpcForm rpcModule="features/accounts/switcherActions" rpcFn="addAccountAction">
             <button type="submit">{tx('switcher.add')}</button>
-          </form>
+          </RpcForm>
         ) : null}
       </section>
     )

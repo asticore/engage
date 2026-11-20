@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from 'react'
 
-import { exportWebhooksAction, importWebhooksAction } from '../actions'
+import { exportWebhooksAction, importWebhooksAction } from '../actions.client'
 
 /** Export and import buttons for the webhooks list. English only. Imported webhooks arrive switched off. */
 export const WebhookTransfer: React.FC<{ onImported: () => void | Promise<void>; canImport: boolean }> = ({ onImported, canImport }) => {

@@ -1,4 +1,3 @@
-'use server'
 
 import { getAdminContext } from '@/admin/auth'
 import { isOverdue, PRIVACY_STATUS_LABEL_KEYS, type PrivacyStatus } from './core'

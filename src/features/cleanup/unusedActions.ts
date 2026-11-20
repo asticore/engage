@@ -1,4 +1,3 @@
-'use server'
 
 /**
  * What the Unused tables screen calls. Same boundary as actions.ts: the admin

@@ -4,7 +4,7 @@ import React, { useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
-import { createEmbed, updateEmbed } from '@/features/forms/embedActions'
+import { createEmbed, updateEmbed } from '@/features/forms/embedActions.client'
 import { embedOutputs, parseAllowedOrigins, type EmbedAdminRow } from '@/features/forms/embedAdmin'
 import type { EmbedFont, EmbedRadius, EmbedTheme } from '@/features/forms/embeds'
 

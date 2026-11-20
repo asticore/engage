@@ -10,7 +10,7 @@ import { portalFormatLocale } from '@/features/accounts/orders'
 import { currentPortalLocale } from '@/features/multilingual/portalLocaleServer'
 import { portalTextFor, type PortalStringKey } from '@/features/multilingual/portalStrings'
 
-import { switchOrganizationAction } from '../actions'
+import { RpcForm } from '@/features/rpc/RpcForm'
 import { ORG_ACTIONS, BUILT_IN_ROLES, isBuiltInRole } from '../permissions'
 import { DELEGABLE_ACTIONS, previewOwnershipTransfer } from '../service'
 import { brandingCss, brandingOf, hasBranding, layoutOf, plainMetadata, visibleSections, type PortalSection } from '../branding'
@@ -106,7 +106,7 @@ export const OrganizationsListScreen: React.FC = async () => {
     <AccountShell title={tx('orgs.title')} current={START}>
       <OrganizationStyles />
       {orgs.length > 1 ? (
-        <form action={switchOrganizationAction} className="org-switcher">
+        <RpcForm rpcModule="features/organizations/actions" rpcFn="switchOrganizationAction" className="org-switcher">
           <label>
             {tx('orgs.workingIn')}
             <select name="organizationId" defaultValue={active?.id ?? ''}>
@@ -120,7 +120,7 @@ export const OrganizationsListScreen: React.FC = async () => {
           <button type="submit" className="btn btn--ghost">
             {tx('orgs.switch')}
           </button>
-        </form>
+        </RpcForm>
       ) : null}
       {orgs.length === 0 ? (
         <p className="account-empty">{tx('orgs.none')}</p>

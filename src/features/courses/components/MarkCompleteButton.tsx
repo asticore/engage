@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 
 import { usePortalText } from '@/features/accounts/components/PortalText'
 
-import { setLessonCompleteAction } from '../actions'
+import { setLessonCompleteAction } from '../actions.client'
 import type { MarkOutcome } from '../progress'
 
 /**

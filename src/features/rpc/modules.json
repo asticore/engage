@@ -1,0 +1,23 @@
+[
+  "features/accounts/actions",
+  "features/accounts/switcherActions",
+  "features/apiBuilder/actions",
+  "features/apiBuilder/portalGuide",
+  "features/apiKeys/actions",
+  "features/cleanup/actions",
+  "features/cleanup/unusedActions",
+  "features/courses/actions",
+  "features/forms/embedActions",
+  "features/impersonation/actions",
+  "features/organizations/actions",
+  "features/privacy/actions",
+  "features/privacy/customerActions",
+  "features/security/authMethodActions",
+  "features/security/emailVerificationActions",
+  "features/security/twoFactorActions",
+  "features/security/userSessionActions",
+  "features/socialLogin/actions",
+  "features/socialLogin/extraActions",
+  "features/webhooks/actions",
+  "features/webhooks/inboundActions"
+]

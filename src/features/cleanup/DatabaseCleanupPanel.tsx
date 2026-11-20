@@ -2,7 +2,7 @@
 
 import React from 'react'
 
-import { cleanupFeatureAction, emptySectionAction, exportSectionAction, tidyIndexNamesAction } from './actions'
+import { cleanupFeatureAction, emptySectionAction, exportSectionAction, tidyIndexNamesAction } from './actions.client'
 import { emptyPhraseFor, type EmptyPlan } from './emptyData'
 import { confirmationPhraseFor, type CleanupPlan } from './cleanup'
 import { formatBytes } from './size'

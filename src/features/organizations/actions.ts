@@ -1,4 +1,3 @@
-'use server'
 
 import { revalidatePath } from 'next/cache'
 import { cookies, headers } from 'next/headers'

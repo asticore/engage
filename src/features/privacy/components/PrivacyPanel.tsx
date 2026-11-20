@@ -4,7 +4,7 @@ import React, { useState, useTransition } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings/keys'
-import { approvePrivacyAction, erasePrivacyAction, loadPrivacyAction, rejectPrivacyAction, type PrivacyActionResult, type PrivacyData } from '../actions'
+import { approvePrivacyAction, erasePrivacyAction, loadPrivacyAction, rejectPrivacyAction, type PrivacyActionResult, type PrivacyData } from '../actions.client'
 import { PRIVACY_STATUS_LABEL_KEYS } from '../core'
 
 /**

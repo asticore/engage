@@ -1,4 +1,3 @@
-'use server'
 
 /**
  * What the lesson page's mark-complete button calls.

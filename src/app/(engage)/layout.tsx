@@ -2,6 +2,8 @@ import { RootLayout } from '@/engine/next/layouts'
 import { headers } from 'next/headers'
 import React from 'react'
 
+import { RpcProvider } from '@/features/rpc/RpcProvider'
+
 // Stage 12 (full custom rebuild): the admin no longer imports
 // `the vendor package` at all - custom.css + admin.css (imported below)
 // are now this admin's entire visual system, built from scratch. Inter is
@@ -31,6 +33,11 @@ type Args = {
   children: React.ReactNode
 }
 
-const Layout = ({ children }: Args) => <RootLayout>{children}</RootLayout>
+const Layout = ({ children }: Args) => (
+  <RootLayout>
+    <RpcProvider />
+    {children}
+  </RootLayout>
+)
 
 export default Layout

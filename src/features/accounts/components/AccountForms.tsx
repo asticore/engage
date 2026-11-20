@@ -15,7 +15,7 @@ import {
   sendOwnConfirmationAction,
   setDefaultAddressAction,
   signOutAction,
-} from '../actions'
+} from '../actions.client'
 import type { AddressInput } from '../addresses'
 import { IDLE, type ActionState } from '../types'
 import { Note, SubmitButton } from './FormBits'

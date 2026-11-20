@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 
-import { impersonatedEmailAction, stopImpersonationAction } from '../actions'
+import { RpcForm } from '@/features/rpc/RpcForm'
+import { impersonatedEmailAction } from '../actions'
 import { isImpersonating } from '../policy'
 
 /**
@@ -33,7 +34,7 @@ export async function ImpersonationBanner() {
       }}
     >
       <span>You are viewing as {email ?? 'a customer'}. Changes you make here are made on their account.</span>
-      <form action={stopImpersonationAction}>
+      <RpcForm rpcModule="features/impersonation/actions" rpcFn="stopImpersonationAction">
         <button
           type="submit"
           style={{
@@ -48,7 +49,7 @@ export async function ImpersonationBanner() {
         >
           Stop
         </button>
-      </form>
+      </RpcForm>
     </div>
   )
 }

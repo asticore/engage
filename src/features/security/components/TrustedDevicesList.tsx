@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 
-import { revokeAllTrustedDevicesAction, revokeTrustedDeviceAction, twoFactorPanelOptionsAction } from '../twoFactorActions'
+import { revokeAllTrustedDevicesAction, revokeTrustedDeviceAction, twoFactorPanelOptionsAction } from '../twoFactorActions.client'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 import { localiseMessage } from '@/features/accounts/messages'
 import type { TrustedDeviceView } from '../trustedDevices'

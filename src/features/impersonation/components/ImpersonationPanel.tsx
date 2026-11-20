@@ -6,7 +6,7 @@ import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { SortableTable } from '@/admin/table/SortableTable'
 import type { UiStringKey } from '@/features/uiStrings'
 
-import { startImpersonationAction } from '../actions'
+import { startImpersonationAction } from '../actions.client'
 import type { HistoryEntry } from '../service'
 
 /**

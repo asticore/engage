@@ -36,7 +36,7 @@ import {
   teamMembershipAction,
   transferOwnershipAction,
   updateOrganizationAction,
-} from '../actions'
+} from '../actions.client'
 
 /**
  * The organisation forms. Each posts to a server action that re-checks the
