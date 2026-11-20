@@ -1,5 +1,6 @@
 /**
- * The theme's built-in heading and body faces, loaded only when the theme picks them.
+ * The theme's built-in heading and body faces, loaded only when the theme picks them. No font is a package dependency:
+ * every file comes from the jsDelivr CDN (or, when chosen in Speed, from this site's own copy made on first request).
  *
  * Before this, the frontend layout imported every built-in family (six
  * Fontsource families, Inter included) for every visitor, whatever the theme
@@ -38,6 +39,8 @@ const LATIN_CYRILLIC_VIETNAMESE: readonly BuiltInSubset[] = [...LATIN_CYRILLIC, 
  */
 
 export const BUILT_IN_FACES: Readonly<Record<string, BuiltInFace>> = {
+  // The default face for new sites (heading and body). Everything else is added by the owner: a Google or Fontsource CDN family or an uploaded file (Theming > Fonts).
+  opensans: { family: 'Open Sans', id: 'open-sans', version: '5.3.0', weights: [400, 500, 600, 700], subsets: ['latin', 'latin-ext', 'cyrillic', 'greek', 'vietnamese', 'hebrew'] },
   cormorant: { family: 'Cormorant Garamond', id: 'cormorant-garamond', version: '5.3.0', weights: [400, 500, 600, 700], subsets: LATIN_CYRILLIC_VIETNAMESE },
   playfair: { family: 'Playfair Display', id: 'playfair-display', version: '5.3.0', weights: [400, 600, 700], subsets: LATIN_CYRILLIC_VIETNAMESE },
   cinzel: { family: 'Cinzel', id: 'cinzel', version: '5.3.0', weights: [400, 600], subsets: ['latin', 'latin-ext'] },

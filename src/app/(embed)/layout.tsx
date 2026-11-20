@@ -28,13 +28,13 @@ export default async function EmbedLayout({ children }: { children: React.ReactN
   const settings = (await engine.findGlobal({ slug: 'site-settings', depth: 0 }).catch((): null => null)) as SiteSetting | null
   const theme = settings?.theme
   const customFonts = sanitizeInstalledFonts((theme as { customFonts?: unknown } | null | undefined)?.customFonts)
-  const heading = resolveThemeFont(theme?.headingFont, HEADING_FONT_VARS, 'cormorant', customFonts)
-  const body = resolveThemeFont(theme?.bodyFont, BODY_FONT_VARS, 'jost', customFonts)
+  const heading = resolveThemeFont(theme?.headingFont, HEADING_FONT_VARS, 'opensans', customFonts)
+  const body = resolveThemeFont(theme?.bodyFont, BODY_FONT_VARS, 'opensans', customFonts)
   const fontsInUse = [heading.installed, body.installed]
     .filter((font): font is InstalledFont => font !== null)
     .filter((font, index, all) => all.findIndex((other) => other.id === font.id) === index)
-  const builtInHeading = Object.hasOwn(HEADING_FONT_VARS, theme?.headingFont || '') ? theme?.headingFont : 'cormorant'
-  const builtInBody = Object.hasOwn(BODY_FONT_VARS, theme?.bodyFont || '') ? theme?.bodyFont : 'jost'
+  const builtInHeading = Object.hasOwn(HEADING_FONT_VARS, theme?.headingFont || '') ? theme?.headingFont : 'opensans'
+  const builtInBody = Object.hasOwn(BODY_FONT_VARS, theme?.bodyFont || '') ? theme?.bodyFont : 'opensans'
   const builtInFontsCss = buildBuiltInFontCss([heading.installed ? null : builtInHeading, body.installed ? null : builtInBody], { selfHost: await readSelfHostBuiltInFonts() })
   const fontCss = [builtInFontsCss, buildFontCss(fontsInUse)].filter(Boolean).join('\n')
   const googleStylesheets = remoteStylesheetUrls(fontsInUse)

@@ -458,7 +458,7 @@ describe('settings import', () => {
       customFonts: Array<{ id: string }>
     }
     expect(written.customFonts.map((font) => font.id)).toEqual(['lora'])
-    expect(written.headingFont).toBe('cormorant')
+    expect(written.headingFont).toBe('opensans')
     expect(written.bodyFont).toBe('lora')
   })
 

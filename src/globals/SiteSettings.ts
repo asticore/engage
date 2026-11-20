@@ -116,11 +116,11 @@ export const SiteSettings: GlobalConfig = {
           type: 'row',
           fields: [
             {
-              // Stores a built-in key (cormorant, playfair, ...) or the id of a
+              // Stores a built-in key (opensans, ...) or the id of a
               // font installed in customFonts below. FontPickerField lists both.
               name: 'headingFont',
               type: 'text',
-              defaultValue: 'cormorant',
+              defaultValue: 'opensans',
               admin: {
                 width: '50%',
                 description: 'Built-in font or one installed below.',
@@ -131,7 +131,7 @@ export const SiteSettings: GlobalConfig = {
             {
               name: 'bodyFont',
               type: 'text',
-              defaultValue: 'jost',
+              defaultValue: 'opensans',
               admin: {
                 width: '50%',
                 description: 'Built-in font or one installed below.',

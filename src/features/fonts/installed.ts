@@ -35,15 +35,18 @@ export const BUILT_IN_FONTS: ReadonlyArray<{
   family: string
   label: string
   category: string
-  role: 'heading' | 'body'
+  role: 'heading' | 'body' | 'both'
+  /** Kept so sites that already picked it keep working; no longer offered as a new choice in the pickers. */
+  legacy?: boolean
   fontsourceId: string
 }> = [
-  { value: 'cormorant', family: 'Cormorant Garamond', label: 'Cormorant Garamond (elegant serif)', category: 'serif', role: 'heading', fontsourceId: 'cormorant-garamond' },
-  { value: 'playfair', family: 'Playfair Display', label: 'Playfair Display (bold serif)', category: 'serif', role: 'heading', fontsourceId: 'playfair-display' },
-  { value: 'cinzel', family: 'Cinzel', label: 'Cinzel (Art Deco display)', category: 'serif', role: 'heading', fontsourceId: 'cinzel' },
-  { value: 'jost', family: 'Jost', label: 'Jost (geometric sans)', category: 'sans-serif', role: 'body', fontsourceId: 'jost' },
-  { value: 'montserrat', family: 'Montserrat', label: 'Montserrat', category: 'sans-serif', role: 'body', fontsourceId: 'montserrat' },
-  { value: 'inter', family: 'Inter', label: 'Inter', category: 'sans-serif', role: 'body', fontsourceId: 'inter' },
+  { value: 'opensans', family: 'Open Sans', label: 'Open Sans (default)', category: 'sans-serif', role: 'both', fontsourceId: 'open-sans' },
+  { value: 'cormorant', family: 'Cormorant Garamond', label: 'Cormorant Garamond (elegant serif)', category: 'serif', role: 'heading', fontsourceId: 'cormorant-garamond', legacy: true },
+  { value: 'playfair', family: 'Playfair Display', label: 'Playfair Display (bold serif)', category: 'serif', role: 'heading', fontsourceId: 'playfair-display', legacy: true },
+  { value: 'cinzel', family: 'Cinzel', label: 'Cinzel (Art Deco display)', category: 'serif', role: 'heading', fontsourceId: 'cinzel', legacy: true },
+  { value: 'jost', family: 'Jost', label: 'Jost (geometric sans)', category: 'sans-serif', role: 'body', fontsourceId: 'jost', legacy: true },
+  { value: 'montserrat', family: 'Montserrat', label: 'Montserrat', category: 'sans-serif', role: 'body', fontsourceId: 'montserrat', legacy: true },
+  { value: 'inter', family: 'Inter', label: 'Inter', category: 'sans-serif', role: 'body', fontsourceId: 'inter', legacy: true },
 ]
 
 /** Ids an installed font may not take, because the theme already knows them. */

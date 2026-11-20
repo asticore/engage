@@ -270,7 +270,7 @@ function slugSpec(collection: string): UpsertSpec {
 /* -------------------------------------------------------------------------- */
 
 /** Built-in fonts a heading or body font falls back to when its uploaded font is not imported. */
-const BUILT_IN_FONT_DEFAULTS = { headingFont: 'cormorant', bodyFont: 'jost' } as const
+const BUILT_IN_FONT_DEFAULTS = { headingFont: 'opensans', bodyFont: 'opensans' } as const
 
 /**
  * Font files are not in the export, so local and uploaded fonts cannot be

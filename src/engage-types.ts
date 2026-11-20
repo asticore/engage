@@ -4833,8 +4833,8 @@ export interface SiteSetting {
      * Page background.
      */
     backgroundColor?: string | null;
-    headingFont?: ('cormorant' | 'playfair' | 'cinzel') | null;
-    bodyFont?: ('jost' | 'montserrat' | 'inter') | null;
+    headingFont?: ('opensans' | 'cormorant' | 'playfair' | 'cinzel') | null;
+    bodyFont?: ('opensans' | 'jost' | 'montserrat' | 'inter') | null;
     buttonStyle?: ('solid' | 'outline' | 'pill') | null;
     cornerStyle?: ('sharp' | 'soft' | 'round') | null;
     hoverEffect?: ('none' | 'fade' | 'underline' | 'color-shift' | 'lift') | null;
