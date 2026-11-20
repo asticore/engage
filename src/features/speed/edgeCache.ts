@@ -183,18 +183,33 @@ export function isCacheableRequest(url: string, headers: HeadersLike, method: st
  * copies are kept apart. Query strings never reach this point (only stripped
  * parameters get this far, and those are dropped).
  */
-export function cacheKeyFor(url: string, epoch: number, mobile: boolean): string {
+export function cacheKeyFor(url: string, epoch: number, mobile: boolean, variant = ''): string {
   const parsed = new URL(url)
   const version = Number.isFinite(epoch) && epoch > 0 ? Math.floor(epoch) : 1
   const key = new URL(`${parsed.origin}${parsed.pathname}`)
   key.searchParams.set('v', String(version))
   if (mobile) key.searchParams.set('m', '1')
+  if (variant) key.searchParams.set('x', variant)
   return key.toString()
+}
+
+/**
+ * What the HTML can depend on besides the URL when the visitor has no cookie: the language the layout picks from
+ * Accept-Language on an unprefixed URL, and whether the visitor's country needs the opt-in cookie banner
+ * (cf-ipcountry). Both are folded into a few buckets so the cache stays small.
+ */
+export function visitorVariant(acceptLanguage: string | null | undefined, country: string | null | undefined, optIn: (c: string | null | undefined) => boolean): string {
+  const lang = (acceptLanguage || '').split(',')[0]?.split(';')[0]?.trim().toLowerCase().slice(0, 12) || '-'
+  const c = (country || '').trim().toUpperCase()
+  const region = /^[A-Z]{2}$/.test(c) ? (optIn(c) ? 'o' : 'n') : 'u'
+  return `${lang}.${region}`
 }
 
 export function isMobileUserAgent(userAgent: string | null | undefined): boolean {
   return Boolean(userAgent) && MOBILE_UA.test(userAgent as string)
 }
+
+const NEXT_DYNAMIC_DEFAULT = 'private,no-cache,no-store,max-age=0,must-revalidate'
 
 /** Only a plain 200 HTML page is worth keeping: no cookies set, nothing marked private or no-store. */
 export function isCacheableResponse(status: number, headers: HeadersLike): boolean {
@@ -202,7 +217,10 @@ export function isCacheableResponse(status: number, headers: HeadersLike): boole
   const type = headers.get('content-type') || ''
   if (!/^\s*text\/html/i.test(type)) return false
   if (headers.get('set-cookie')) return false
-  const control = (headers.get('cache-control') || '').toLowerCase()
+  const control = (headers.get('cache-control') || '').toLowerCase().replace(/\s+/g, '')
+  // Next.js stamps this exact value on every dynamic page. It is a framework default, not a decision
+  // by the app, so it does not block caching; the request checks (no session or unlock cookie) already ran.
+  if (control === NEXT_DYNAMIC_DEFAULT) return true
   if (control.includes('no-store') || control.includes('private')) return false
   return true
 }

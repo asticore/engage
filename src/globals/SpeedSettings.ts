@@ -60,7 +60,7 @@ export const SpeedSettings: GlobalConfig = {
             {
               name: 'pageCache',
               type: 'checkbox',
-              defaultValue: false,
+              defaultValue: true,
               admin: {
                 width: '50%',
                 description:
