@@ -32,11 +32,13 @@ export function FontPickerField({ field, path, readOnly }: FontPickerFieldProps)
   const installedValue = useFormFields(([fields]) => fields?.[customPath]?.value)
   const installed = sanitizeInstalledFonts(installedValue)
 
-  const builtIns = BUILT_IN_FONTS.filter((font) => font.role === role)
+  const roleFonts = BUILT_IN_FONTS.filter((font) => font.role === role || font.role === 'both')
   const builtInIds = new Set(BUILT_IN_FONTS.map((font) => font.value))
   const installedForRole = installed.filter((font) => !builtInIds.has(font.id))
-  const fallback = builtIns[0]
+  const fallback = roleFonts[0]
   const current = typeof value === 'string' ? value : ''
+  // Older built-in faces stay listed only while a site still uses one.
+  const builtIns = roleFonts.filter((font) => !font.legacy || font.value === current)
   const selectedBuiltIn = builtIns.find((font) => font.value === current)
   const selectedInstalled = installedForRole.find((font) => font.id === current)
   const selectedValue = selectedBuiltIn?.value ?? selectedInstalled?.id ?? fallback.value

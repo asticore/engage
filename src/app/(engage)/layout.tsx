@@ -4,18 +4,11 @@ import React from 'react'
 
 import { RpcProvider } from '@/features/rpc/RpcProvider'
 
-// Stage 12 (full custom rebuild): the admin no longer imports
-// `the vendor package` at all - custom.css + admin.css (imported below)
-// are now this admin's entire visual system, built from scratch. Inter is
-// the admin's one single font (self-hosted via @fontsource, same as the
-// frontend's own body text - see (frontend)/layout.tsx for the identical
-// pattern) - before this, the admin loaded no custom font at all and fell
-// back to the raw OS system-font stack.
-import '@fontsource/inter/400.css'
-import '@fontsource/inter/500.css'
-import '@fontsource/inter/600.css'
-import '@fontsource/inter/700.css'
+// The admin's one font is Open Sans from the jsDelivr CDN (no font package is bundled): see buildBuiltInFontCss.
+import { buildBuiltInFontCss } from '@/features/fonts/builtIn'
 import './admin.css'
+
+const ADMIN_FONT_CSS = buildBuiltInFontCss(['opensans'])
 
 export const generateViewport = async () => {
   const headersList = await headers()
@@ -35,6 +28,7 @@ type Args = {
 
 const Layout = ({ children }: Args) => (
   <RootLayout>
+    <style dangerouslySetInnerHTML={{ __html: ADMIN_FONT_CSS }} />
     <RpcProvider />
     {children}
   </RootLayout>

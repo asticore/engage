@@ -55,3 +55,21 @@ describe('built-in theme fonts', () => {
     }
   })
 })
+
+describe('default font and no font packages', () => {
+  it('Open Sans is a built-in face loaded from the pinned jsDelivr files, including Hebrew', () => {
+    const css = buildBuiltInFontCss(['opensans'])
+    expect(css).toContain('font-family: "Open Sans"')
+    expect(css).toContain('https://cdn.jsdelivr.net/npm/@fontsource/open-sans@5.3.0/files/open-sans-latin-400-normal.woff2')
+    expect(css).toContain('open-sans-hebrew-700-normal.woff2')
+    expect(css).toContain('unicode-range: U+0307-0308, U+0590-05FF')
+  })
+
+  it('no @fontsource package is a dependency, so no font is bundled into the app', async () => {
+    const { readFileSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> }
+    const names = [...Object.keys(pkg.dependencies ?? {}), ...Object.keys(pkg.devDependencies ?? {})]
+    expect(names.filter((n) => n.startsWith('@fontsource'))).toEqual([])
+  })
+})

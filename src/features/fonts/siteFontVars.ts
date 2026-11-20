@@ -5,6 +5,7 @@
  */
 
 export const FONT_FACE_VARS =
+  "--font-opensans: 'Open Sans', sans-serif; " +
   "--font-cormorant: 'Cormorant Garamond', serif; " +
   "--font-playfair: 'Playfair Display', serif; " +
   "--font-cinzel: 'Cinzel', serif; " +
@@ -13,12 +14,14 @@ export const FONT_FACE_VARS =
   "--font-inter: 'Inter', sans-serif;"
 
 export const HEADING_FONT_VARS: Record<string, string> = {
+  opensans: 'var(--font-opensans)',
   cormorant: 'var(--font-cormorant)',
   playfair: 'var(--font-playfair)',
   cinzel: 'var(--font-cinzel)',
 }
 
 export const BODY_FONT_VARS: Record<string, string> = {
+  opensans: 'var(--font-opensans)',
   jost: 'var(--font-jost)',
   montserrat: 'var(--font-montserrat)',
   inter: 'var(--font-inter)',

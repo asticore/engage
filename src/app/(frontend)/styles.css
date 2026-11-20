@@ -11,8 +11,8 @@
   --color-gold-light: #00a9ff;
   --color-line: rgba(31, 34, 48, 0.12);
   --max-width: 1180px;
-  --font-display: 'Cormorant Garamond', serif;
-  --font-body: 'Jost', sans-serif;
+  --font-display: 'Open Sans', sans-serif;
+  --font-body: 'Open Sans', sans-serif;
 }
 
 * {

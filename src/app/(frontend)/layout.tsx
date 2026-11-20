@@ -163,14 +163,14 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // Only the installed fonts actually picked for heading or body get CSS,
   // links and preloads; the built-in faces are added below from features/fonts/builtIn.ts.
   const customFonts = sanitizeInstalledFonts((theme as { customFonts?: unknown } | null | undefined)?.customFonts)
-  const heading = resolveThemeFont(theme?.headingFont, HEADING_FONT_VARS, 'cormorant', customFonts)
-  const body = resolveThemeFont(theme?.bodyFont, BODY_FONT_VARS, 'jost', customFonts)
+  const heading = resolveThemeFont(theme?.headingFont, HEADING_FONT_VARS, 'opensans', customFonts)
+  const body = resolveThemeFont(theme?.bodyFont, BODY_FONT_VARS, 'opensans', customFonts)
   const fontsInUse = [heading.installed, body.installed]
     .filter((font): font is InstalledFont => font !== null)
     .filter((font, index, all) => all.findIndex((other) => other.id === font.id) === index)
   // A built-in face is loaded only when the theme uses it (a value that is not a known face falls back, as resolveThemeFont does).
-  const builtInHeading = Object.hasOwn(HEADING_FONT_VARS, theme?.headingFont || '') ? theme?.headingFont : 'cormorant'
-  const builtInBody = Object.hasOwn(BODY_FONT_VARS, theme?.bodyFont || '') ? theme?.bodyFont : 'jost'
+  const builtInHeading = Object.hasOwn(HEADING_FONT_VARS, theme?.headingFont || '') ? theme?.headingFont : 'opensans'
+  const builtInBody = Object.hasOwn(BODY_FONT_VARS, theme?.bodyFont || '') ? theme?.bodyFont : 'opensans'
   const builtInFontsCss = buildBuiltInFontCss([heading.installed ? null : builtInHeading, body.installed ? null : builtInBody], { selfHost: await readSelfHostBuiltInFonts() })
   const fontCss = [builtInFontsCss, buildFontCss(fontsInUse)].filter(Boolean).join('\n')
   const googleStylesheets = remoteStylesheetUrls(fontsInUse)

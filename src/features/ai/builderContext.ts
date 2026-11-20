@@ -9,6 +9,7 @@ import { loadThemeStyles } from '@/features/themeStyles/store'
 import type { GuideContext } from './builderGuide'
 
 const FONT_LABELS: Record<string, string> = {
+  opensans: 'Open Sans',
   cormorant: 'Cormorant Garamond',
   playfair: 'Playfair Display',
   cinzel: 'Cinzel',
