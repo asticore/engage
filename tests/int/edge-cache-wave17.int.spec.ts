@@ -243,6 +243,8 @@ describe('isCacheableResponse', () => {
     ['no-store blocks storing', 200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' }, false],
     ['private blocks storing', 200, { 'Content-Type': 'text/html', 'Cache-Control': 'private, max-age=0' }, false],
     ['NO-STORE in caps blocks storing', 200, { 'Content-Type': 'text/html', 'Cache-Control': 'NO-STORE' }, false],
+    ['Next default dynamic header is not a block', 200, { 'Content-Type': 'text/html', 'Cache-Control': 'private, no-cache, no-store, max-age=0, must-revalidate' }, true],
+    ['Next default plus Set-Cookie still blocks', 200, { 'Content-Type': 'text/html', 'Set-Cookie': 'a=1', 'Cache-Control': 'private, no-cache, no-store, max-age=0, must-revalidate' }, false],
   ])('%s', (_name, status, hdrs, expected) => {
     expect(isCacheableResponse(status as number, headers(hdrs as Record<string, string>))).toBe(expected)
   })
@@ -259,5 +261,25 @@ describe('clampTtl', () => {
     ['normal value kept', 3600, 3600],
   ])('%s', (_name, value, expected) => {
     expect(clampTtl(value as number | null | undefined)).toBe(expected)
+  })
+})
+
+describe('fresh install defaults and visitor variants', () => {
+  it('no saved Speed row means page cache on when the Speed feature is on', async () => {
+    const { toEdgeSettings } = await import('@/features/speed/edgeCacheWorker')
+    expect(toEdgeSettings({ rowId: null, speedOn: 1 } as never)?.enabled).toBe(true)
+    expect(toEdgeSettings({ rowId: null, speedOn: 0 } as never)?.enabled).toBe(false)
+  })
+  it('a saved row with the switch off stays off', async () => {
+    const { toEdgeSettings } = await import('@/features/speed/edgeCacheWorker')
+    expect(toEdgeSettings({ rowId: 1, pageCache: 0, speedOn: 1, ttl: 300, epoch: 1 } as never)?.enabled).toBe(false)
+  })
+  it('keys differ by language and consent region', async () => {
+    const { visitorVariant } = await import('@/features/speed/edgeCache')
+    const optIn = (c: string | null | undefined) => c === 'DE'
+    expect(visitorVariant('he-IL,he;q=0.9', 'IL', optIn)).toBe('he-il.n')
+    expect(visitorVariant('en', 'DE', optIn)).toBe('en.o')
+    expect(visitorVariant(null, null, optIn)).toBe('-.u')
+    expect(cacheKeyFor(`${BASE}/`, 1, false, 'en.o')).toBe(`${BASE}/?v=1&x=en.o`)
   })
 })

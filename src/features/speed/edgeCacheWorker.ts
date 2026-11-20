@@ -10,11 +10,13 @@
  * query also checks the "speed" feature flag, so with the feature off nothing
  * is read from the cache and no header is added.
  */
+import { isOptInCountry } from '../consent/regions'
 import {
   clampTtl,
   cacheKeyFor,
   isCacheableResponse,
   isMobileUserAgent,
+  visitorVariant,
   parseRuleLines,
   requestVerdict,
   type EdgeRules,
@@ -41,6 +43,7 @@ type WaitUntilCtx = { waitUntil(promise: Promise<unknown>): void }
 type Handler = (request: Request, env: unknown, ctx: unknown) => Promise<Response>
 
 type SettingsRow = {
+  rowId?: unknown
   pageCache: unknown
   ttl: unknown
   epoch: unknown
@@ -54,16 +57,17 @@ type SettingsRow = {
 
 /** One query, aliased to the names used below. speedOn reads the feature flag from Site Settings. */
 const SETTINGS_SQL = [
-  'SELECT caching_page_cache AS pageCache,',
-  ' caching_cache_ttl_seconds AS ttl,',
-  ' cache_epoch AS epoch,',
-  ' caching_never_cache_paths AS paths,',
-  ' caching_never_cache_cookies AS cookies,',
-  ' caching_never_cache_query_strings AS queries,',
-  ' caching_cache_mobile_separately AS mobile,',
-  ' caching_cache_logged_in_users AS loggedIn,',
-  ' (SELECT features_speed FROM eg_site_settings LIMIT 1) AS speedOn',
-  ' FROM eg_speed_settings LIMIT 1',
+  'SELECT s.id AS rowId, s.caching_page_cache AS pageCache,',
+  ' s.caching_cache_ttl_seconds AS ttl,',
+  ' s.cache_epoch AS epoch,',
+  ' s.caching_never_cache_paths AS paths,',
+  ' s.caching_never_cache_cookies AS cookies,',
+  ' s.caching_never_cache_query_strings AS queries,',
+  ' s.caching_cache_mobile_separately AS mobile,',
+  ' s.caching_cache_logged_in_users AS loggedIn,',
+  ' f.features_speed AS speedOn',
+  ' FROM (SELECT features_speed FROM eg_site_settings LIMIT 1) f',
+  ' LEFT JOIN (SELECT * FROM eg_speed_settings LIMIT 1) s ON 1',
 ].join('')
 
 const MEMO_MS = 10000
@@ -75,6 +79,20 @@ const truthy = (value: unknown): boolean => value === 1 || value === true || val
 
 export const toEdgeSettings = (row: SettingsRow | null): EdgeSettings | null => {
   if (!row) return null
+  // No saved Speed settings yet (a fresh install): the page cache is on by default, with the default time.
+  // Saving the Speed settings page writes a row, and from then on the admin's choice decides.
+  if (row.rowId === null) {
+    return {
+      enabled: truthy(row.speedOn),
+      ttlSeconds: clampTtl(undefined),
+      epoch: 1,
+      mobileSeparately: false,
+      cacheLoggedInUsers: false,
+      neverCachePaths: [],
+      neverCacheCookies: [],
+      neverCacheQueryStrings: [],
+    }
+  }
   const epochNumber = Number(row.epoch)
   return {
     enabled: truthy(row.speedOn) && truthy(row.pageCache),
@@ -184,7 +202,12 @@ export async function withEdgeCache(request: Request, env: unknown, ctx: unknown
   try {
     cache = openCache()
     const mobile = settings.mobileSeparately && isMobileUserAgent(request.headers.get('user-agent'))
-    key = cacheKeyFor(request.url, settings.epoch, mobile)
+    key = cacheKeyFor(
+      request.url,
+      settings.epoch,
+      mobile,
+      visitorVariant(request.headers.get('accept-language'), request.headers.get('cf-ipcountry'), isOptInCountry),
+    )
     if (cache) {
       const hit = await cache.match(key)
       if (hit) {

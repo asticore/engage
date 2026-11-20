@@ -140,7 +140,7 @@ describe('withEdgeCache', () => {
     expect(response.headers.get('x-edge-cache')).toBe('MISS')
     expect(await response.text()).toBe('<p>hi</p>')
     expect(work.waitUntil).toHaveBeenCalledTimes(1)
-    expect(cache.put).toHaveBeenCalledWith(`${BASE}/about?v=5`, expect.any(Response))
+    expect(cache.put).toHaveBeenCalledWith(`${BASE}/about?v=5&x=-.u`, expect.any(Response))
   })
 
   it('serves a stored copy as HIT without calling the handler', async () => {
@@ -209,7 +209,7 @@ describe('withEdgeCache', () => {
     cache.match.mockResolvedValueOnce(undefined)
     const handler = vi.fn(async () => htmlResponse())
     await withEdgeCache(new Request(`${BASE}/about?utm_source=news`), liveEnv(), ctx(), handler)
-    expect(cache.match).toHaveBeenCalledWith(`${BASE}/about?v=5`)
+    expect(cache.match).toHaveBeenCalledWith(`${BASE}/about?v=5&x=-.u`)
   })
 })
 
