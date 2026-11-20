@@ -10,6 +10,7 @@
 
 // @ts-ignore - generated at build time by opennextjs-cloudflare
 import openNextWorker from './.open-next/worker.js'
+import { addTimingHeaders, envWithD1Timing, type D1Timing } from './src/features/speed/d1Timing'
 import { withEdgeCache } from './src/features/speed/edgeCacheWorker'
 
 // Durable Object classes must stay top-level exports of the Worker entry.
@@ -46,8 +47,14 @@ export async function runScheduled(worker: OpenNextWorker, env: CronEnv, ctx: un
 }
 
 export default {
-  fetch: (request: Request, env: unknown, ctx: unknown) =>
-    withEdgeCache(request, env, ctx, (req, e, c) => (openNextWorker as OpenNextWorker).fetch(req, e, c)),
+  async fetch(request: Request, env: unknown, ctx: unknown): Promise<Response> {
+    const run = (e: unknown) =>
+      withEdgeCache(request, e, ctx, (req, e2, c) => (openNextWorker as OpenNextWorker).fetch(req, e2, c))
+    // Debug only: `x-eg-timing: 1` on a request reports how many D1 statements ran and how long they took.
+    if (request.headers.get('x-eg-timing') !== '1') return run(env)
+    const timing: D1Timing = { count: 0, ms: 0 }
+    return addTimingHeaders(await run(envWithD1Timing(env, timing)), timing)
+  },
   async scheduled(_event: unknown, env: CronEnv, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<void> {
     ctx.waitUntil(runScheduled(openNextWorker as OpenNextWorker, env, ctx))
   },
