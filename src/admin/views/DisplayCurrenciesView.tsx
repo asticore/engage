@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { DisplayCurrenciesPanel } from '@/features/ecommerce/admin/DisplayCurrenciesPanel'
+import { DisplayCurrenciesPanel } from '@/features/ecommerce/admin/DisplayCurrenciesPanel.nossr'
 
 /** /admin/display-currencies: the extra currencies shoppers can view prices in. Linked from Shop settings. */
 export async function DisplayCurrenciesView() {

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { loadBuilderAction } from '@/features/apiBuilder/actions'
-import { ApiBuilderPanel } from '@/features/apiBuilder/components/ApiBuilderPanel'
+import { ApiBuilderPanel } from '@/features/apiBuilder/components/ApiBuilderPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { resolveAccess } from '@/features/roles/permissions'

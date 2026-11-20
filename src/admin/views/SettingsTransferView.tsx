@@ -2,7 +2,7 @@ import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 import { getAdminContext } from '@/admin/auth'
-import { SettingsTransferClient } from './SettingsTransferClient'
+import { SettingsTransferClient } from './SettingsTransferClient.nossr'
 
 /**
  * Server wrapper for the "Export and import" admin view. Only admins may open

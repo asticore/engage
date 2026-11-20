@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { AUDIT_COLLECTIONS, type AuditCollection } from '@/features/seo/audit'
-import { SeoAuditClient } from './SeoAuditClient'
+import { SeoAuditClient } from './SeoAuditClient.nossr'
 
 /**
  * Server wrapper for the SEO audit at /admin/seo-audit. Anyone who can read at

@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { NotificationsPanel } from '@/features/notifications/NotificationsPanel'
+import { NotificationsPanel } from '@/features/notifications/NotificationsPanel.nossr'
 
 /** /admin/notifications: rules that send an email or push when something happens. Admin only. */
 export async function NotificationsView() {

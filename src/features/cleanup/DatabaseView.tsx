@@ -3,7 +3,7 @@ import type { AdminViewServerProps } from '@/engine'
 
 import { getFeatureFlags } from '@/utilities/features'
 
-import { FeatureCleanupCard, IndexTidyCard } from './DatabaseCleanupPanel'
+import { FeatureCleanupCard, IndexTidyCard } from './DatabaseCleanupPanel.nossr'
 import { getCleanupDb } from './guard'
 import { planIndexRenames } from './indexNames'
 import { formatBytes } from './size'

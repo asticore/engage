@@ -21,9 +21,10 @@ import { describeSaving, formatBytes } from '@/features/media/admin/mediaApi'
 import { siteImageFormat, videoFormatOf } from '@/features/media/formats'
 import { streamCredentials } from '@/features/media/stream'
 
-import { MediaGalleryGrid, type GalleryDoc } from './MediaGalleryGrid'
+import { MediaGalleryGrid } from './MediaGalleryGrid.nossr'
+import { type GalleryDoc } from './MediaGalleryGrid'
 import { FileIcon } from './FileIcon'
-import { MediaPageUploader } from './MediaUploader'
+import { MediaPageUploader } from './MediaUploader.nossr'
 
 /** The slice of the engine this view reads. Typed loosely so it does not depend on the engine's generics. */
 type MediaFinder = {

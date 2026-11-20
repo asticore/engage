@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { MediaSearchPanel } from '@/features/dam/MediaSearchPanel'
+import { MediaSearchPanel } from '@/features/dam/MediaSearchPanel.nossr'
 import { getFeatureFlags } from '@/utilities/features'
 
 /** /admin/media-search: search the media library by every detail. Anyone who can read media. */

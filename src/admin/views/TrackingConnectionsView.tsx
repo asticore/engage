@@ -12,7 +12,7 @@ import { toTrackingConnectionStatus } from '@/features/tracking/connect/status'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 
-import { TrackingConnectionsClient } from './TrackingConnectionsClient'
+import { TrackingConnectionsClient } from './TrackingConnectionsClient.nossr'
 
 /**
  * Server wrapper for /admin/tracking-connections. Admins and users with the

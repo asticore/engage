@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { CspBuilderPanel } from '@/features/security/components/CspBuilderPanel'
+import { CspBuilderPanel } from '@/features/security/components/CspBuilderPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 

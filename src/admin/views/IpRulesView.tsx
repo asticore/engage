@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { IpRulesPanel } from '@/features/security/components/IpRulesPanel'
+import { IpRulesPanel } from '@/features/security/components/IpRulesPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { ChatbotPanel } from '@/features/chatbot/components/ChatbotPanel'
+import { ChatbotPanel } from '@/features/chatbot/components/ChatbotPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getFeatureFlags } from '@/utilities/features'

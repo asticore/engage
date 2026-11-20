@@ -5,7 +5,8 @@ import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { brandFromStored, designedBlocks, storedLogo } from '@/features/email/designRender'
 import { DESIGNABLE_TEMPLATE_KEYS, designField } from '@/features/email/designerSave'
 import { EMAIL_TEMPLATE_DEFAULTS } from '@/features/email/templateDefaults'
-import { EmailDesignerClient, type DesignerTemplate } from './email-designer/EmailDesignerClient'
+import { EmailDesignerClient } from './email-designer/EmailDesignerClient.nossr'
+import { type DesignerTemplate } from './email-designer/EmailDesignerClient'
 import { starterBlocks, templateLabel } from './email-designer/designerModel'
 
 type Stored = Record<string, unknown>

@@ -40,7 +40,7 @@ const DatabaseView = lazyView(() => import('@/features/cleanup/DatabaseView').th
 const ReferencesView = lazyView(() => import('@/features/references/ReferencesView').then((mod) => mod.ReferencesView))
 const UnusedTablesView = lazyView(() => import('@/features/cleanup/UnusedTablesView').then((mod) => mod.UnusedTablesView))
 const ABResultsView = lazyView(() => import('@/features/abTesting/components/ABResultsView').then((mod) => mod.ABResultsView))
-const VisualEditorView = lazyView(() => import('@/views/VisualEditor').then((mod) => mod.VisualEditorView))
+const VisualEditorView = lazyView(() => import('@/admin/ui/NoSsrVisualEditor').then((mod) => mod.NoSsrVisualEditor))
 const RolesView = lazyView(() => import('@/admin/views/RolesView').then((mod) => mod.RolesView))
 const SettingsTransferView = lazyView(() => import('@/admin/views/SettingsTransferView').then((mod) => mod.SettingsTransferView))
 const InterfaceLanguagesView = lazyView(() => import('@/admin/views/InterfaceLanguagesView').then((mod) => mod.InterfaceLanguagesView))

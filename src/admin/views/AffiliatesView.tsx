@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { AffiliatesPanel } from '@/features/affiliates/components/AffiliatesPanel'
+import { AffiliatesPanel } from '@/features/affiliates/components/AffiliatesPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getFeatureFlags } from '@/utilities/features'

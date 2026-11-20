@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { FIND_REPLACE_COLLECTIONS, type FindReplaceCollection } from '@/features/editScreens/findReplace'
-import { FindReplaceClient } from './FindReplaceClient'
+import { FindReplaceClient } from './FindReplaceClient.nossr'
 
 const LABELS: Record<FindReplaceCollection, string> = {
   pages: 'Pages',

@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { TaskboardPanel } from '@/features/taskboard/TaskboardPanel'
+import { TaskboardPanel } from '@/features/taskboard/TaskboardPanel.nossr'
 import { getFeatureFlags } from '@/utilities/features'
 
 /** /admin/taskboard: Kanban boards with assignees. Needs the Taskboard feature switched on in Site Settings. */
