@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { BulkCreatePanel } from '@/features/bulkCreate/BulkCreatePanel'
+import { BulkCreatePanel } from '@/features/bulkCreate/BulkCreatePanel.nossr'
 
 /** /admin/bulk-create: make many draft pages, posts or products at once from a list or CSV. */
 export async function BulkCreateView() {

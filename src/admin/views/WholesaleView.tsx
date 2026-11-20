@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { WholesalePanel } from '@/features/ecommerce/components/WholesalePanel'
+import { WholesalePanel } from '@/features/ecommerce/components/WholesalePanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { CommentsPanel } from '@/features/comments/components/CommentsPanel'
+import { CommentsPanel } from '@/features/comments/components/CommentsPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getFeatureFlags } from '@/utilities/features'

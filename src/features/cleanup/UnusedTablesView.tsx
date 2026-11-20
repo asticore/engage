@@ -9,7 +9,7 @@ import { getFeatureFlags } from '@/utilities/features'
 
 import { getCleanupDb } from './guard'
 import { formatBytes } from './size'
-import { UnusedTablesPanel } from './UnusedTablesPanel'
+import { UnusedTablesPanel } from './UnusedTablesPanel.nossr'
 import { listUnusedTables } from './unusedTables'
 
 const rootClassName =

@@ -4,7 +4,7 @@ import { getAdminUi } from '@/admin/i18n/serverUi'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { StoreCreditPanel } from '@/features/ecommerce/admin/StoreCreditPanel'
+import { StoreCreditPanel } from '@/features/ecommerce/admin/StoreCreditPanel.nossr'
 
 /** /admin/store-credit: look up a customer, then add or deduct store credit with a reason. */
 export async function StoreCreditView() {

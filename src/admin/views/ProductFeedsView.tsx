@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { ProductFeedsPanel } from '@/features/ecommerce/admin/ProductFeedsPanel'
+import { ProductFeedsPanel } from '@/features/ecommerce/admin/ProductFeedsPanel.nossr'
 
 /** /admin/product-feeds: feeds for Google, Meta, Pinterest and others, each with a secret address. Admin only. */
 export async function ProductFeedsView() {

@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess, isAdminUser } from '@/admin/auth'
 import { impersonationHistoryAction } from '@/features/impersonation/actions'
-import { ImpersonationPanel } from '@/features/impersonation/components/ImpersonationPanel'
+import { ImpersonationPanel } from '@/features/impersonation/components/ImpersonationPanel.nossr'
 import { getSecuritySettings } from '@/features/security/settings'
 import { getEngine } from '@/lib/engine'
 

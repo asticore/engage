@@ -2,7 +2,7 @@ import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { CacheToolsClient } from './CacheToolsClient'
+import { CacheToolsClient } from './CacheToolsClient.nossr'
 
 /**
  * Server wrapper for /admin/cache-tools: clear the saved page copies now, and

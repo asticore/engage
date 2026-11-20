@@ -4,7 +4,8 @@ import type { ReviewQueueRow } from '@/features/approval/handlers'
 import { formatRelativeTime } from '@/views/dashboard/dashboardData'
 import { APPROVAL_SINGULAR } from '@/features/approval/settings'
 import { UI_STRING_SOURCE, type UiStringKey } from '@/features/uiStrings/keys'
-import { SortableTable, type SortableColumn, type SortableRow } from '@/admin/table/SortableTable'
+import { SortableTable } from '@/admin/table/SortableTable'
+import { type SortableColumn, type SortableRow } from '@/admin/table/SortableTable'
 
 /** English unless the caller passes its translator (server views use getAdminUi().t). */
 const englishT = (key: UiStringKey): string => UI_STRING_SOURCE[key]

@@ -31,7 +31,7 @@ import { loadReviewQueue, type ReviewEngine } from '@/features/approval/handlers
 import { viewerFromContext } from '@/features/approval/viewer'
 import { ReviewQueueTable } from '@/features/approval/views/ReviewQueueTable'
 import { getAdminUi } from '@/admin/i18n/serverUi'
-import { GettingStartedCard } from '@/features/gettingStarted/GettingStartedCard'
+import { GettingStartedCard } from '@/features/gettingStarted/GettingStartedCard.nossr'
 import { policyReviewCanShow } from '@/features/privacy/notice/policyReview'
 import { PolicyReviewNotice } from '@/features/privacy/notice/PolicyReviewNotice'
 import { SetupQuestionnaireHost } from '@/admin/views/setup/SetupQuestionnaireHost'

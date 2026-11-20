@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { PurchaseLimitsPanel } from '@/features/purchaseLimits/PurchaseLimitsPanel'
+import { PurchaseLimitsPanel } from '@/features/purchaseLimits/PurchaseLimitsPanel.nossr'
 import { getFeatureFlags } from '@/utilities/features'
 
 /** /admin/purchase-limits: per-person limits, waits between orders and the attempts they refused. Admin only. */

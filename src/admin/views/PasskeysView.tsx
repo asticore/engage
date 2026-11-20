@@ -6,7 +6,7 @@ import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { passkeyDepsFor } from '@/features/accounts/passkeysWiring'
 import { requestClient } from '@/features/accounts/session'
 import { listPasskeys } from '@/features/passkeys'
-import { PasskeysPanel } from '@/features/passkeys/components/PasskeysPanel'
+import { PasskeysPanel } from '@/features/passkeys/components/PasskeysPanel.nossr'
 import { getEngine } from '@/lib/engine'
 
 /**

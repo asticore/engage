@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { DemosPanel } from '@/features/demos/components/DemosPanel'
+import { DemosPanel } from '@/features/demos/components/DemosPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getFeatureFlags } from '@/utilities/features'

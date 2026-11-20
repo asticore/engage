@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { BUILT_IN_FONTS, sanitizeInstalledFonts } from '@/features/fonts/installed'
 import { loadThemeStyles } from '@/features/themeStyles/store'
-import { ThemeStylesClient } from './ThemeStylesClient'
+import { ThemeStylesClient } from './ThemeStylesClient.nossr'
 
 /**
  * Server wrapper for /admin/theme-styles. Administrators only. Loads the saved

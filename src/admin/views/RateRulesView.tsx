@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { RateRulesPanel } from '@/features/security/components/RateRulesPanel'
+import { RateRulesPanel } from '@/features/security/components/RateRulesPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 
