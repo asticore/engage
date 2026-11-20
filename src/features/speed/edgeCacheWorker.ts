@@ -81,7 +81,7 @@ export const toEdgeSettings = (row: SettingsRow | null): EdgeSettings | null => 
   if (!row) return null
   // No saved Speed settings yet (a fresh install): the page cache is on by default, with the default time.
   // Saving the Speed settings page writes a row, and from then on the admin's choice decides.
-  if (row.rowId === null || row.rowId === undefined) {
+  if (row.rowId === null) {
     return {
       enabled: truthy(row.speedOn),
       ttlSeconds: clampTtl(undefined),
