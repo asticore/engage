@@ -23,6 +23,11 @@ import {
 import { DEFAULT_BLOG_BASE, isUnderPath } from '@/features/seo/permalinks'
 import { parseFeedAddress } from '@/features/blog/feedAddress'
 import { readBlogBase } from '@/features/seo/permalinkStore'
+import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
+import { readDomainsFromD1 } from '@/features/domains/store'
+import { readIpRulesCached } from '@/features/security/ipRulesStore'
+import { readRateRulesCached } from '@/features/security/routeRulesStore'
+import { refreshCspBuilder } from '@/features/security/cspBuilderStore'
 
 /**
  * Host routing (features/domains) wraps locale routing (features/multilingual), which wraps the
@@ -42,6 +47,7 @@ import { readBlogBase } from '@/features/seo/permalinkStore'
  * it is the worst place for logic to accumulate quietly.
  */
 export async function middleware(request: NextRequest) {
+  await warmSettingCaches()
   const served = await domainMiddleware(request, (routed) => serveAdminAware(routed))
   // The locale strip rewrites the path, so the stripped path (x-pathname) is checked as well as the request path.
   const { pathname } = request.nextUrl
@@ -60,6 +66,24 @@ export async function middleware(request: NextRequest) {
   // A staging site is never indexed, whatever the page says.
   if (isStaging()) response.headers.set('X-Robots-Tag', STAGING_NOINDEX)
   return response
+}
+
+/**
+ * Starts every per-isolate settings read the pipeline needs at the same time. They used to run one after
+ * another, and with the database far from the Worker each is a full round trip (about 165 ms from Sydney
+ * to a Denver primary). Reads already cached cost nothing; the rest now share one round trip. A failed
+ * read is ignored here: the step that needs it reads it again and handles the failure as before.
+ */
+async function warmSettingCaches(): Promise<void> {
+  await Promise.allSettled([
+    readDomainsFromD1(),
+    readMultilingualSettingsFromD1(),
+    readSecuritySettingsFromD1(),
+    readIpRulesCached(),
+    readRateRulesCached(),
+    refreshCspBuilder(),
+    readBlogBase(),
+  ])
 }
 
 async function adminRootFor(): Promise<string> {
