@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { PastDuePanel } from '@/features/members/PastDuePanel'
+import { PastDuePanel } from '@/features/members/PastDuePanel.nossr'
 import { getFeatureFlags } from '@/utilities/features'
 
 /** /admin/past-due-members: members whose renewal payment failed. Admin only. */

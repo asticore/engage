@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { ShopReportsPanel } from '@/features/shopReports/ShopReportsPanel'
+import { ShopReportsPanel } from '@/features/shopReports/ShopReportsPanel.nossr'
 
 /** /admin/shop-reports: sales, customers, products, coupons, payments, locations, low stock and abandoned carts. */
 export async function ShopReportsView() {

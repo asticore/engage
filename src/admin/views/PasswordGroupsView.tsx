@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { PasswordGroupsClient } from '@/admin/views/PasswordGroupsClient'
+import { PasswordGroupsClient } from '@/admin/views/PasswordGroupsClient.nossr'
 import { canManagePasswords } from '@/features/visibility/passwordAccess'
 
 /**

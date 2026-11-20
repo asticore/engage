@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { SettingLocksPanel } from '@/features/roles/SettingLocksPanel'
+import { SettingLocksPanel } from '@/features/roles/SettingLocksPanel.nossr'
 
 /** /admin/design-locks: lock design settings in the visual builder and the email builder. Admin only. */
 export async function SettingLocksView() {

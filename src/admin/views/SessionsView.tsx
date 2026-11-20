@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { SessionsPanel } from '@/features/security/components/SessionsPanel'
+import { SessionsPanel } from '@/features/security/components/SessionsPanel.nossr'
 import { SESSION_COOKIE } from '@/features/security/loginProtection'
 import { viewOwnSessions, type SessionActor } from '@/features/security/userSessionService'
 import { defaultUserSessionStore } from '@/features/security/userSessionStore'

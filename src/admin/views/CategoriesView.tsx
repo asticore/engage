@@ -5,7 +5,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { getFeatureFlags } from '@/utilities/features'
 import { getEngine } from '@/lib/engine'
 import { listCategoriesSafe } from '@/features/categories/store'
-import { CategoriesClient } from './CategoriesClient'
+import { CategoriesClient } from './CategoriesClient.nossr'
 
 /**
  * The category tree at /admin/categories: add, rename, move, reorder and delete nested categories for the shop

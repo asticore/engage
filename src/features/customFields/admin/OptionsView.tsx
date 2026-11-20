@@ -6,7 +6,7 @@ import { getOptionValues, isValidOptionSlug } from '../options'
 import { collectMediaIds } from '../stringify'
 import { editorRoles } from '../adminRoles'
 import { matchesLocation, optionsPageContext } from '../location'
-import { OptionsForm } from './OptionsForm'
+import { OptionsForm } from './OptionsForm.nossr'
 import type { FieldGroupDoc } from '@/fields/customFields/types'
 
 /**

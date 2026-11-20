@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { loadPrivacyAction } from '@/features/privacy/actions'
-import { PrivacyPanel } from '@/features/privacy/components/PrivacyPanel'
+import { PrivacyPanel } from '@/features/privacy/components/PrivacyPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { resolveAccess } from '@/features/roles/permissions'

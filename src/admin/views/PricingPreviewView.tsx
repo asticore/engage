@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { PricingPreviewPanel } from '@/features/ecommerce/admin/PricingPreviewPanel'
+import { PricingPreviewPanel } from '@/features/ecommerce/admin/PricingPreviewPanel.nossr'
 
 /** /admin/pricing-preview: what a customer would pay for a cart, using the real checkout calculation. Admin only. */
 export async function PricingPreviewView() {

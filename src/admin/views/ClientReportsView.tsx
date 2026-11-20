@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { ClientReportsPanel } from '@/features/clientReports/components/ClientReportsPanel'
+import { ClientReportsPanel } from '@/features/clientReports/components/ClientReportsPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getFeatureFlags } from '@/utilities/features'

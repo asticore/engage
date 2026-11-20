@@ -9,7 +9,7 @@ import { listActivityCollections, listActivityPage } from '@/features/security/a
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 
-import { ActivityClearPanel } from './ActivityClearPanel'
+import { ActivityClearPanel } from './ActivityClearPanel.nossr'
 
 const EVENTS = ['create', 'update', 'publish', 'unpublish', 'delete', 'settings.update', 'export', 'login.success', 'login.failed', 'logout', 'password.changed', 'api-key.created', 'api-key.revoked', 'impersonation.started', 'privacy.erase', 'activity.cleared']
 

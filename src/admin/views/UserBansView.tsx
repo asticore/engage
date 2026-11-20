@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { UserBansPanel } from '@/features/security/components/UserBansPanel'
+import { UserBansPanel } from '@/features/security/components/UserBansPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 
