@@ -196,6 +196,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
     sections: [
       { kind: 'global', slug: 'speed-settings' },
       { kind: 'link', label: 'Cache tools', href: '/cache-tools', description: 'Clear saved page copies now, and switch Cloudflare development mode on or off.', type: 'view' },
+      { kind: 'link', label: 'Front-end files', href: '/frontend-files', description: 'Add Bootstrap, Tailwind, Font Awesome or any other stylesheet or script by its web address, for the public site and customer portal. Shine and Spark load from their releases. Admin only.', type: 'view' },
     ],
   },
   {

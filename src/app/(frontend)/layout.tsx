@@ -45,6 +45,7 @@ import { buildThemeStylesCss } from '@/features/themeStyles/css'
 import { loadThemeStyles } from '@/features/themeStyles/store'
 import { SiteEffects } from '@/components/site/SiteEffects'
 import { SparkLoader } from '@/components/site/SparkLoader'
+import { FrontendAssetsBody, FrontendAssetsHead, ShineLink } from '@/features/frontendAssets/FrontendAssetsHead'
 import { siteEffectsFor } from '@/components/site/siteEffectsConfig'
 import { renderChromeTemplates, renderSidebarTemplates, requestPathOf, type ChromeScope } from '@/features/siteTemplates/chrome'
 import { SidebarLayout } from '@/features/siteTemplates/SidebarLayout'
@@ -276,6 +277,8 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     >
       <head>
         <SpeedHead />
+        <ShineLink />
+        <FrontendAssetsHead portal={portal} />
         {(showMaintenance || isStaging()) && <meta name="robots" content={isStaging() ? STAGING_NOINDEX : 'noindex'} />}
         {googleStylesheets.length > 0 && <link rel="preconnect" href="https://fonts.googleapis.com" />}
         {googleStylesheets.length > 0 && <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />}
@@ -354,6 +357,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         </ShopCurrencyProvider>
         {siteEffects && <SiteEffects config={siteEffects} />}
         <SparkLoader />
+        <FrontendAssetsBody portal={portal} />
         <SeoBodyScripts />
       </body>
     </html>
