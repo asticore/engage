@@ -1,4 +1,5 @@
-@import url('../../styles/shine/shine.css');
+/* Shine is loaded from its GitHub release in the page head (features/frontendAssets); only the layer order is declared here so the rules below keep their place. */
+@layer shine.tokens, shine.reset, shine.base, shine.components, shine.utilities;
 @import url('../../styles/a11y-states.css');
 @import url('../../styles/engage-utilities.css');
 

@@ -39,6 +39,7 @@ export type AuditAction =
   | 'ip.rule'
   | 'rate-rule'
   | 'csp.builder'
+  | 'frontend-assets.save'
   | 'user.banned'
   | 'user.unbanned'
   | 'wholesale.approved'

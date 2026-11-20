@@ -18,6 +18,8 @@ import { legacyCollectionRedirect } from '@/admin/adminPaths'
 import { readServerRules, type ServerRules } from '@/features/seo/serverRules'
 import { isBlockedPath } from '@/features/seo/siteFiles'
 import { readAdsCspAdditions } from '@/features/ads/d1'
+import { assetCspAdditions, extendPolicy } from '@/features/frontendAssets/config'
+import { readFrontendAssets } from '@/features/frontendAssets/store'
 import { readEmbedFrameDecision } from '@/features/forms/embedD1'
 import { applyEmbedFrame, embedPathKey } from '@/features/forms/embedFrame'
 import { extendCsp, type CspAdditions } from '@/features/ads/builders'
@@ -211,6 +213,8 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
   const rules = await readServerRules()
   // Ad hosts are added to the default CSP of public pages, and only while Ads is on.
   const adsCsp = isAppPath(pathname) ? null : await readAdsCspAdditions().catch((): null => null)
+  // Hosts of the extra front-end files (Settings, Frontend files) are added the same way. Never read for admin or API paths.
+  const assetsCsp = isAppPath(pathname) ? null : assetCspAdditions(await readFrontendAssets())
 
   // Preserved from the original middleware: the frontend layout reads this to
   // know which page it is rendering.
@@ -219,6 +223,10 @@ export async function securityMiddleware(request: NextRequest): Promise<NextResp
     response.headers.append('x-pathname', pathname)
     applySecurityHeaders(response, settings, pathname)
     if (adsCsp) applyAdsCsp(response, adsCsp)
+    if (assetsCsp) {
+      const current = response.headers.get('Content-Security-Policy')
+      if (current) response.headers.set('Content-Security-Policy', extendPolicy(current, assetsCsp))
+    }
     return applyServerResponseHeaders(response, rules, pathname)
   }
 
