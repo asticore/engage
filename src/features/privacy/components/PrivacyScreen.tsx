@@ -7,7 +7,7 @@ import { loadStrings, t } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
 import { PRIVACY_STATUS_LABEL_KEYS } from '../core'
 import { privacyBinding } from '../binding'
-import { requestDeletionAction } from '../customerActions'
+import { RpcForm } from '@/features/rpc/RpcForm'
 
 /**
  * /account/privacy: download the customer's data, or ask for it to be deleted. The deletion form
@@ -60,7 +60,7 @@ export const PrivacyScreen = async ({ deletion }: { deletion?: string }) => {
             </p>
           </>
         ) : (
-          <form action={requestDeletionAction}>
+          <RpcForm rpcModule="features/privacy/customerActions" rpcFn="requestDeletionAction">
             <p>
               <label>
                 {tr('privacy.delete.password')}{' '}
@@ -71,7 +71,7 @@ export const PrivacyScreen = async ({ deletion }: { deletion?: string }) => {
             <p>
               <button type="submit">{tr('privacy.delete.button')}</button>
             </p>
-          </form>
+          </RpcForm>
         )}
       </section>
     </AccountShell>

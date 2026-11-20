@@ -14,7 +14,7 @@ import {
   type InboundData,
   type InboundView,
   type ReceiptView,
-} from '../inboundActions'
+} from '../inboundActions.client'
 import { EVENT_LABEL_KEYS, type WebhookEvent } from '../events'
 
 /**

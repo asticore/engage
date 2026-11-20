@@ -13,7 +13,7 @@ import {
   regenerateBackupCodesAction,
   twoFactorPanelOptionsAction,
   type TwoFactorActionResult,
-} from '../twoFactorActions'
+} from '../twoFactorActions.client'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 import { localiseMessage } from '@/features/accounts/messages'
 

@@ -1,4 +1,3 @@
-'use server'
 
 /**
  * What the admin screen's buttons call.

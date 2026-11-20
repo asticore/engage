@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 
 import { usePortalText } from '@/features/accounts/components/PortalText'
 
-import { myApiGuideAction, type PortalGuide } from '../portalGuide'
+import { myApiGuideAction, type PortalGuide } from '../portalGuide.client'
 
 /** The customer's API guide in the members portal: only the endpoints their account can call. Loaded on demand. */
 export const ApiGuidePanel: React.FC = () => {

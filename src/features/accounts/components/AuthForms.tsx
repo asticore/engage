@@ -16,7 +16,7 @@ import {
   signInAction,
   signInCodeAction,
   verifyEmailAction,
-} from '../actions'
+} from '../actions.client'
 import { IDLE, type ActionState } from '../types'
 import { Note, SubmitButton } from './FormBits'
 import { usePortalText } from './PortalText'

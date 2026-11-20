@@ -60,6 +60,7 @@ import { localeLinkPaths } from '@/features/multilingual/slugIndex'
 import { currentPortalLocale } from '@/features/multilingual/portalLocaleServer'
 import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
 
+import { RpcProvider } from '@/features/rpc/RpcProvider'
 import './styles.css'
 import '@/styles/product-badges.css'
 
@@ -323,6 +324,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           />
           )}
           <AdPlacements position="header" />
+          <RpcProvider />
           <main>
             {showMaintenance ? screen : <SidebarLayout left={sidebars.left} right={rightSidebar}>{children}</SidebarLayout>}
           </main>

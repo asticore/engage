@@ -1,4 +1,3 @@
-'use server'
 
 import { collectionConfigs, globalConfigs } from '@/localapi/registry'
 import { createApiKey, listApiKeys, revokeApiKey, isActive, type ApiKeyRow, type ApiKeyDeps } from '@/features/apiKeys'

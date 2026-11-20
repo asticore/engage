@@ -15,7 +15,7 @@ import {
   setEnabledAction,
   setPublicDocsAction,
   type BuilderData,
-} from '../actions'
+} from '../actions.client'
 import { FILTER_OPERATORS, endpointPath, type ApiEndpoint, type ApiEndpointConfig, type FilterOperator, type RequiredRole } from '../core'
 import { FieldDropPicker } from './FieldDropPicker'
 import type { CallLogEntry } from '../store'

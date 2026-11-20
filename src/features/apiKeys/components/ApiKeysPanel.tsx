@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
-import { apiKeyScopeChoicesAction, createMyApiKey, keyUsageAction, myApiCategoryAction, revokeApiKeyAction, rotateApiKeyAction, type ApiKeyView } from '../actions'
+import { apiKeyScopeChoicesAction, createMyApiKey, keyUsageAction, myApiCategoryAction, revokeApiKeyAction, rotateApiKeyAction, type ApiKeyView } from '../actions.client'
 import type { CategoryLimits } from '../categories'
 import type { KeyUsageDay } from '../categoryStore'
 import { buildScopes, type ScopeMode } from '../scopePicker'

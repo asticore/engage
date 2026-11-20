@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 
-import { sendChallengeEmailAction, twoFactorChallengeOptionsAction, type TwoFactorChallengeOptions } from '../twoFactorActions'
+import { sendChallengeEmailAction, twoFactorChallengeOptionsAction, type TwoFactorChallengeOptions } from '../twoFactorActions.client'
 import { secondStepPasskeyAvailable, secondStepWithPasskey } from '@/features/passkeys/client'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 import './twoFactorExtras.css'

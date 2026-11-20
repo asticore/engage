@@ -1,4 +1,3 @@
-'use server'
 
 import { createWebhookRecord, deleteWebhookRecord, setWebhookEnabledRecord, updateWebhookRecord } from './admin'
 import { MAX_WEBHOOKS, newSigningSecret, MAX_RATE_PER_MINUTE, DEFAULT_RATE_PER_MINUTE, MAX_ATTEMPTS, MAX_PAYLOAD_BYTES, MERGE_TAGS } from './core'

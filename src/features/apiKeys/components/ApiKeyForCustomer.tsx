@@ -5,7 +5,7 @@ import React, { useState } from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { usePortalText } from '@/features/accounts/components/PortalText'
 
-import { createApiKeyForUserAction } from '../actions'
+import { createApiKeyForUserAction } from '../actions.client'
 
 /**
  * Admin screen block: make a key for a customer. The key is tied to the customer's account and limited

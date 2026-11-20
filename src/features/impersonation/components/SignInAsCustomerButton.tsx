@@ -2,7 +2,7 @@
 
 import { useId, useRef, useState, type FormEvent } from 'react'
 
-import { startImpersonationAction } from '../actions'
+import { startImpersonationAction } from '../actions.client'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 /**

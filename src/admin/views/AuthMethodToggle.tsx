@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 
-import { setMethodAreaAction, testAuthMethodAction, toggleAuthMethodAction } from '@/features/security/authMethodActions'
+import { setMethodAreaAction, testAuthMethodAction, toggleAuthMethodAction } from '@/features/security/authMethodActions.client'
 
 /** One accessible switch for a method on the Authentication overview. */
 export function AuthMethodToggle({ id, label, on }: { id: string; label: string; on: boolean }) {
