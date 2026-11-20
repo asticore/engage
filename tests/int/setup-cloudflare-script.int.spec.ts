@@ -140,3 +140,26 @@ describe('setup-cloudflare: setup run', () => {
     expect(result.text).toBe(live)
   })
 })
+
+describe('enableReadReplication', () => {
+  it('patches the database when a token and account are given', async () => {
+    const { enableReadReplication } = await import('../../scripts/setup-cloudflare.mjs')
+    let seen: { url: string; init: RequestInit } | null = null
+    const fetchImpl = (async (url: string, init: RequestInit) => {
+      seen = { url, init }
+      return { ok: true, status: 200 }
+    }) as unknown as typeof fetch
+    const line = await enableReadReplication({ accountId: 'acc', databaseId: 'db1', token: 't', fetchImpl })
+    expect(line).toContain('switched on')
+    expect(seen!.url).toContain('/accounts/acc/d1/database/db1')
+    expect(String(seen!.init.body)).toContain('"auto"')
+  })
+  it('explains the manual step without a token and survives a failure', async () => {
+    const { enableReadReplication } = await import('../../scripts/setup-cloudflare.mjs')
+    expect(await enableReadReplication({ accountId: '', databaseId: 'db1', token: '' })).toContain('dashboard')
+    const boom = (async () => {
+      throw new Error('x')
+    }) as unknown as typeof fetch
+    expect(await enableReadReplication({ accountId: 'a', databaseId: 'd', token: 't', fetchImpl: boom })).toContain('Could not')
+  })
+})

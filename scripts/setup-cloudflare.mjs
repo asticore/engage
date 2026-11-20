@@ -174,7 +174,27 @@ function runWrangler(args) {
   })
 }
 
-function main() {
+/**
+ * Turns on D1 read replication for the database (Cloudflare API: PATCH read_replication.mode "auto"), so anonymous
+ * page views read from the replica nearest the visitor. Needs CLOUDFLARE_API_TOKEN (D1 edit) and CLOUDFLARE_ACCOUNT_ID.
+ * Returns a line to print. Failure is reported, never thrown: the site works with replication off.
+ */
+export async function enableReadReplication({ accountId, databaseId, token, fetchImpl = fetch }) {
+  const manual = 'Switch on D1 read replication in the Cloudflare dashboard (D1, your database, Settings, Read replication) for faster page loads far from the database.'
+  if (!accountId || !token || !databaseId) return `Read replication not switched on automatically (set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to do it). ${manual}`
+  try {
+    const res = await fetchImpl(`https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}`, {
+      method: 'PATCH',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ read_replication: { mode: 'auto' } }),
+    })
+    return res.ok ? 'D1 read replication switched on.' : `Could not switch on D1 read replication (HTTP ${res.status}). ${manual}`
+  } catch {
+    return `Could not switch on D1 read replication. ${manual}`
+  }
+}
+
+async function main() {
   const configPath = path.join(ROOT, 'wrangler.jsonc')
   const probe = parseArgs(process.argv.slice(2), fs.readFileSync(configPath, 'utf8'), path.basename(ROOT))
   if (probe.help) {
@@ -194,12 +214,13 @@ function main() {
   } else {
     console.log(`${path.relative(ROOT, probe.config)} already has these values; nothing to write.`)
   }
+  console.log(await enableReadReplication({ accountId: process.env.CLOUDFLARE_ACCOUNT_ID, databaseId: result.databaseId, token: process.env.CLOUDFLARE_API_TOKEN }))
   console.log('Next: review the diff, then run pnpm run deploy:full (or the deploy button) for this account.')
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   try {
-    main()
+    await main()
   } catch (error) {
     console.error(error instanceof Error ? error.message : error)
     process.exit(1)
