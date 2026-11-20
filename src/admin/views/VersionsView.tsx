@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { adminCollectionPath } from '@/admin/adminPaths'
 import { notFound, redirect } from 'next/navigation'
 import { getAdminContext, getCollectionConfig, hasAdminPanelAccess } from '@/admin/auth'
-import { VersionsList } from './VersionsList'
+import { VersionsList } from './VersionsList.nossr'
 import { getAdminUi } from '@/admin/i18n/serverUi'
 
 /**

@@ -28,7 +28,7 @@ import { translationKey } from '../store'
 import { TranslationEditor, type EditorCell, type EditorField } from './TranslationEditor'
 import { TranslationsOverview } from './TranslationsOverview'
 import { loadAssignableUsers, loadOverviewData } from './translationsData'
-import { ListToolbar } from '@/admin/views/ListToolbar'
+import { ListToolbar } from '@/admin/views/ListToolbar.nossr'
 
 /**
  * `/admin/translations` - every translatable item, one status per language.

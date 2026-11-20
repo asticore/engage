@@ -4,9 +4,9 @@ import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess, isAdminUser } from '@/admin/auth'
 import { listAllApiKeys, listApiCategoriesAction, listMyApiKeys } from '@/features/apiKeys/actions'
-import { ApiCategoriesPanel } from '@/features/apiKeys/components/ApiCategoriesPanel'
+import { ApiCategoriesPanel } from '@/features/apiKeys/components/ApiCategoriesPanel.nossr'
 import { ApiKeyForCustomer } from '@/features/apiKeys/components/ApiKeyForCustomer'
-import { ApiKeysPanel } from '@/features/apiKeys/components/ApiKeysPanel'
+import { ApiKeysPanel } from '@/features/apiKeys/components/ApiKeysPanel.nossr'
 import { getSecuritySettings } from '@/features/security/settings'
 import { getEngine } from '@/lib/engine'
 

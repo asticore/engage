@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { PriceTiersPanel } from '@/features/ecommerce/admin/PriceTiersPanel'
+import { PriceTiersPanel } from '@/features/ecommerce/admin/PriceTiersPanel.nossr'
 import { PriceTiersHeading } from '@/features/ecommerce/admin/PriceTiersHeading'
 
 /** /admin/price-tiers: prices by quantity and customer type. Linked from Shop settings. */

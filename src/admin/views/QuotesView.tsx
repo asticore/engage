@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { QuotesAdminPanel } from '@/features/quotes/QuotesAdminPanel'
+import { QuotesAdminPanel } from '@/features/quotes/QuotesAdminPanel.nossr'
 import { getFeatureFlags } from '@/utilities/features'
 
 /** /admin/quotes: requests for quotes, offers and items, and the quotes sent back. Admin only. */

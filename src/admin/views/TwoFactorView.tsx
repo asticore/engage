@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { TwoFactorPanel } from '@/features/security/components/TwoFactorPanel'
+import { TwoFactorPanel } from '@/features/security/components/TwoFactorPanel.nossr'
 import { backupCodesRemaining, isEnrolled } from '@/features/security/twoFactor'
 import { defaultTwoFactorStore } from '@/features/security/twoFactorStore'
 

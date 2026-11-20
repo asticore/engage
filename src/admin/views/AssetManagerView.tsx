@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { AssetManagerPanel } from '@/features/dam/AssetManagerPanel'
+import { AssetManagerPanel } from '@/features/dam/AssetManagerPanel.nossr'
 import { getFeatureFlags } from '@/utilities/features'
 
 /** /admin/asset-manager: collections, custom metadata fields, licence expiry and the asset manager settings. Admin only. */

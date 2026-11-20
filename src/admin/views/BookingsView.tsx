@@ -3,7 +3,7 @@ import { getAdminRoot } from '@/features/security/settings'
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { BookingsAdminPanel } from '@/features/bookings/BookingsAdminPanel'
+import { BookingsAdminPanel } from '@/features/bookings/BookingsAdminPanel.nossr'
 import { getFeatureFlags } from '@/utilities/features'
 
 /** /admin/bookings: booking types, who is booked and when they are open, and the bookings made. Admin only. */

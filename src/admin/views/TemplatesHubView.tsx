@@ -28,7 +28,7 @@ import {
   type HubRow,
   type HubSourceDoc,
 } from '@/features/templatesHub/rows'
-import { ListToolbar } from './ListToolbar'
+import { ListToolbar } from './ListToolbar.nossr'
 import { HeaderFooterSettings } from './HeaderFooterView'
 
 const HUB_READ_LIMIT = 1000

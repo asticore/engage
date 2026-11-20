@@ -5,7 +5,7 @@ import { getAdminContext } from '@/admin/auth'
 import { loadApprovalSettings } from '@/features/approval/settings'
 import { loadSectionChoices } from '@/features/approval/sections'
 import { approverCandidates, type WorkflowRecord } from '@/features/approval/workflowForm'
-import { RolesViewClient } from './RolesViewClient'
+import { RolesViewClient } from './RolesViewClient.nossr'
 
 /**
  * Server component wrapper for roles admin view.

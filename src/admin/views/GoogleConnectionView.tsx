@@ -8,7 +8,7 @@ import { readGoogleConnection } from '@/features/google/auth'
 import { redirectUriFor } from '@/features/google/constants'
 import { publicOrigin } from '@/features/google/origin'
 import { currentVersions } from '@/features/integrations/staleTab'
-import { GoogleConnectionClient } from './GoogleConnectionClient'
+import { GoogleConnectionClient } from './GoogleConnectionClient.nossr'
 
 /**
  * Server wrapper for /admin/google-connection. Administrators only. Reads the

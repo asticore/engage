@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
-import { LiveChatPanel } from '@/features/livechat/components/LiveChatPanel'
+import { LiveChatPanel } from '@/features/livechat/components/LiveChatPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getFeatureFlags } from '@/utilities/features'

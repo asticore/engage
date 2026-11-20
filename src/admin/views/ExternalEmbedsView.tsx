@@ -7,7 +7,8 @@ import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getAdminUi } from '@/admin/i18n/serverUi'
 
-import { ExternalEmbedsPanel, NewEmbedForm, type ThemeColour } from './ExternalEmbedsPanel'
+import { ExternalEmbedsPanel, NewEmbedForm } from './ExternalEmbedsPanel.nossr'
+import { type ThemeColour } from './ExternalEmbedsPanel'
 
 /** /admin/external-embeds. Forms read permission to see it; the Forms integrations permission (or admin) to change it. */
 export async function ExternalEmbedsView() {

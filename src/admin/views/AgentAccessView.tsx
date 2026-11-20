@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 
 import { getAdminContext } from '@/admin/auth'
-import { AgentAccessPanel } from '@/features/agentAccess/components/AgentAccessPanel'
+import { AgentAccessPanel } from '@/features/agentAccess/components/AgentAccessPanel.nossr'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getFeatureFlags } from '@/utilities/features'
