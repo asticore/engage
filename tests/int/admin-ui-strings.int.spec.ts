@@ -126,10 +126,18 @@ describe('user setting beats the browser', () => {
   })
 })
 
+describe('Hebrew browser tags', () => {
+  it('matches he, he-IL and the retired iw', () => {
+    expect(matchAcceptLanguage('he-IL,en;q=0.5')).toBe('he')
+    expect(matchAcceptLanguage('iw')).toBe('he')
+  })
+})
+
 describe('right-to-left direction', () => {
-  it('Arabic is rtl and everything else is ltr', () => {
+  it('Arabic and Hebrew are rtl and everything else is ltr', () => {
     expect(directionFor('ar')).toBe('rtl')
-    for (const locale of ADMIN_UI_LOCALES.filter((code) => code !== 'ar')) {
+    expect(directionFor('he')).toBe('rtl')
+    for (const locale of ADMIN_UI_LOCALES.filter((code) => code !== 'ar' && code !== 'he')) {
       expect(directionFor(locale), locale).toBe('ltr')
     }
   })

@@ -59,6 +59,7 @@ describe('admin UI reference table coverage', () => {
         'ar',
         'hi',
         'ru',
+        'he',
       ]),
     )
   })

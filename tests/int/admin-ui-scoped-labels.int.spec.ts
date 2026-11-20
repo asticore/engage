@@ -46,7 +46,7 @@ describe('adminFieldLabel: per-group labels for shared field names', () => {
 
 describe('admin aria labels in the reference table', () => {
   it('translates the aria strings in every language', async () => {
-    for (const locale of ['de', 'es', 'fr', 'it', 'ja', 'ko', 'nl', 'pt', 'ru', 'zh-Hans', 'ar', 'hi']) {
+    for (const locale of ['de', 'es', 'fr', 'it', 'ja', 'ko', 'nl', 'pt', 'ru', 'zh-Hans', 'ar', 'hi', 'he']) {
       const dict = await loadStrings(locale)
       expect(dict['aria.trash'], locale).toBeTruthy()
       expect(dict['aria.conditionsJson'], locale).toBeTruthy()

@@ -66,4 +66,5 @@ export const DICTIONARY_LOADERS: Record<
   ar: load('ar'),
   hi: load('hi'),
   ru: load('ru'),
+  he: load('he'),
 }
