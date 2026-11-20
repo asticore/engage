@@ -96,3 +96,27 @@ export function addTimingHeaders(response: Response, timing: D1Timing): Response
     return response
   }
 }
+
+/**
+ * Debug only (trace mode 2): times outgoing `fetch` calls made while the request runs, so the trace shows
+ * every wait on another server. The original fetch is restored when `restore()` is called. Concurrent
+ * traced requests in one isolate may see each other's calls; it is a diagnostic, not a measurement tool.
+ */
+export function traceGlobalFetch(timing: D1Timing): () => void {
+  const original = globalThis.fetch
+  if (!timing.trace || typeof original !== 'function') return () => undefined
+  const traced = ((input: RequestInfo | URL, init?: RequestInit) => {
+    let label = ''
+    try {
+      const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url)
+      label = `fetch ${url.host}${url.pathname}`.slice(0, 60)
+    } catch {
+      label = 'fetch ?'
+    }
+    return timed({ count: 0, ms: 0, trace: timing.trace, t0: timing.t0 }, () => original(input, init), label) as Promise<Response>
+  }) as typeof fetch
+  globalThis.fetch = traced
+  return () => {
+    if (globalThis.fetch === traced) globalThis.fetch = original
+  }
+}
