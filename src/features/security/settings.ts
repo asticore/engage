@@ -1,3 +1,4 @@
+import { shareInflight } from '@/lib/shareInflight'
 import type { FeatureKey } from '@/features/registry'
 
 import { DEFAULT_ADMIN_PATH, resolveAdminRoot } from './adminPath'
@@ -505,7 +506,7 @@ async function getD1(): Promise<D1Database | null> {
   }
 }
 
-export async function readSecuritySettingsFromD1(): Promise<SecuritySettings> {
+async function readSecuritySettingsFromD1Impl(): Promise<SecuritySettings> {
   const now = Date.now()
   if (cached && now - cached.at < CACHE_TTL_MS) return cached.value
 
@@ -648,3 +649,6 @@ export async function getSecuritySettings(engine: EngineLike): Promise<SecurityS
     signInPaths: { customer: asText((settings as Record<string, unknown>).customerSignInPath, ''), member: '' },
   }
 }
+
+/** Concurrent callers share one read (see shareInflight). */
+export const readSecuritySettingsFromD1: () => Promise<SecuritySettings> = shareInflight(readSecuritySettingsFromD1Impl)

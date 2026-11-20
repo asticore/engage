@@ -1,3 +1,4 @@
+import { shareInflight } from '@/lib/shareInflight'
 import type { FeatureKey } from '@/features/registry'
 
 import { DEFAULT_LOCALE, isKnownLocale } from './locales'
@@ -175,7 +176,7 @@ async function readActiveLocaleRows(db: D1Database): Promise<string[]> {
   }
 }
 
-export async function readMultilingualSettingsFromD1(): Promise<MultilingualSettings> {
+async function readMultilingualSettingsFromD1Impl(): Promise<MultilingualSettings> {
   const now = Date.now()
   if (cached && now - cached.at < CACHE_TTL_MS) return cached.value
 
@@ -224,3 +225,6 @@ export async function readMultilingualSettingsFromD1(): Promise<MultilingualSett
 export function invalidateMultilingualSettingsCache(): void {
   cached = null
 }
+
+/** Concurrent callers share one read (see shareInflight). */
+export const readMultilingualSettingsFromD1: () => Promise<MultilingualSettings> = shareInflight(readMultilingualSettingsFromD1Impl)

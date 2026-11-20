@@ -1,3 +1,4 @@
+import { shareInflight } from '@/lib/shareInflight'
 import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
 
 import { normaliseDomains, type SiteDomain } from './model'
@@ -26,7 +27,7 @@ async function getD1(): Promise<D1Database | null> {
   }
 }
 
-export async function readDomainsFromD1(): Promise<SiteDomain[]> {
+async function readDomainsFromD1Impl(): Promise<SiteDomain[]> {
   const now = Date.now()
   if (cached && now - cached.at < CACHE_TTL_MS) return cached.value
 
@@ -54,3 +55,6 @@ export async function readDomainsFromD1(): Promise<SiteDomain[]> {
 export function invalidateDomainsCache(): void {
   cached = null
 }
+
+/** Concurrent callers share one read (see shareInflight). */
+export const readDomainsFromD1: () => Promise<SiteDomain[]> = shareInflight(readDomainsFromD1Impl)

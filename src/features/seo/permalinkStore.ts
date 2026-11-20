@@ -1,3 +1,4 @@
+import { shareInflight } from '@/lib/shareInflight'
 import { DEFAULT_BLOG_BASE, resolveBlogBase } from './permalinks'
 
 /**
@@ -23,7 +24,7 @@ async function getD1(): Promise<D1Database | null> {
   }
 }
 
-export async function readBlogBase(): Promise<string> {
+async function readBlogBaseImpl(): Promise<string> {
   const now = Date.now()
   if (cached && now - cached.at < CACHE_TTL_MS) return cached.value
 
@@ -46,3 +47,6 @@ export async function readBlogBase(): Promise<string> {
 export function invalidateBlogBaseCache(): void {
   cached = null
 }
+
+/** Concurrent callers share one read (see shareInflight). */
+export const readBlogBase: () => Promise<string> = shareInflight(readBlogBaseImpl)
