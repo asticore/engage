@@ -61,19 +61,18 @@
   "images": {
     "binding": "IMAGES",
   },
+  // Matt (20 Nov 2026): observability stays OFF. Every deploy applies this block, so any `enabled: true` here
+  // switches it back on in the dashboard. Do not turn it on without asking.
   "observability": {
     "enabled": false,
-    "head_sampling_rate": 1,
     "logs": {
-      "enabled": true,
-      "head_sampling_rate": 1,
-      "persist": true,
-      "invocation_logs": true,
+      "enabled": false,
+      "invocation_logs": false,
+      "persist": false,
     },
     "traces": {
       "enabled": false,
-      "persist": true,
-      "head_sampling_rate": 1,
+      "persist": false,
     },
   },
   "triggers": {
