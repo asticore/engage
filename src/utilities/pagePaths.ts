@@ -2,6 +2,7 @@ import { cache } from 'react'
 
 import type { Page } from '@/engage-types'
 import { getEngine } from '@/lib/engine'
+import { memoByEpoch } from '@/features/speed/renderMemo'
 import { requestHost } from '@/features/domains/request'
 import { availableOnHost, pickForHost } from '@/features/domains/scope'
 
@@ -39,16 +40,18 @@ export const getAllResolvedPagesAnyDomain = cache(async (): Promise<ResolvedPage
  * Every published page row, read once per request and shared by both resolved lists above. Both lists walk the same
  * rows (they differ only in which domain they keep), so the second list costs no extra read.
  */
-const publishedPageRows = cache(async (): Promise<Page[]> => {
-  const engine = await getEngine()
-  const { docs } = await engine.find({
-    collection: 'pages',
-    where: { _status: { equals: 'published' } },
-    limit: 0,
-    depth: 0,
-  })
-  return docs as unknown as Page[]
-})
+const publishedPageRows = cache(async (): Promise<Page[]> =>
+  memoByEpoch('published-page-rows', async () => {
+    const engine = await getEngine()
+    const { docs } = await engine.find({
+      collection: 'pages',
+      where: { _status: { equals: 'published' } },
+      limit: 0,
+      depth: 0,
+    })
+    return docs as unknown as Page[]
+  }),
+)
 
 async function loadResolvedPages(host: string | null, narrow: boolean): Promise<ResolvedPage[]> {
   const rows = await publishedPageRows()
