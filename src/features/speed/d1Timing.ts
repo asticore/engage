@@ -138,7 +138,7 @@ export async function traceMark(label: string): Promise<void> {
 }
 
 /** Makes `timing` the one marks are written to, until the returned function is called. */
-export function useTimingForMarks(timing: D1Timing): () => void {
+export function startTimingMarks(timing: D1Timing): () => void {
   const holder = globalThis as { __egTiming?: D1Timing }
   holder.__egTiming = timing
   return () => {
