@@ -255,6 +255,7 @@ import * as migration_20270318_190000_bid_mode from './20270318_190000_bid_mode'
 import * as migration_20270318_210000_waiting_list from './20270318_210000_waiting_list';
 import * as migration_20270319_100000_taskboard_org_scope from './20270319_100000_taskboard_org_scope';
 import * as migration_20270320_100000_admin_two_step_and_30_day_sessions from './20270320_100000_admin_two_step_and_30_day_sessions';
+import * as migration_20270321_100000_update_popup_probe from './20270321_100000_update_popup_probe';
 import * as migration_20270318_200000_bid_json_column from './20270318_200000_bid_json_column';
 
 export const migrations = [
@@ -1542,5 +1543,10 @@ export const migrations = [
     up: migration_20270320_100000_admin_two_step_and_30_day_sessions.up,
     down: migration_20270320_100000_admin_two_step_and_30_day_sessions.down,
     name: '20270320_100000_admin_two_step_and_30_day_sessions',
+  },
+  {
+    up: migration_20270321_100000_update_popup_probe.up,
+    down: migration_20270321_100000_update_popup_probe.down,
+    name: '20270321_100000_update_popup_probe',
   },
 ];
