@@ -10,6 +10,7 @@
  * query also checks the "speed" feature flag, so with the feature off nothing
  * is read from the cache and no header is added.
  */
+import { publishEpoch } from './epochState'
 import { isOptInCountry } from '../consent/regions'
 import {
   clampTtl,
@@ -120,6 +121,7 @@ export async function loadEdgeSettings(db: D1Like | undefined): Promise<EdgeSett
       }
     })().then((value) => {
       memo = { at: Date.now(), value }
+      publishEpoch(value && value.enabled ? value.epoch : undefined)
       return value
     })
     pending = load.finally((): void => {
