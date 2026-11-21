@@ -3,10 +3,16 @@ import { NextResponse } from 'next/server'
 import pkg from '../../../../../package.json'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { checkForUpdate, type UpdateCheck } from '@/features/updates/check'
-import { oneClickConfig } from '@/features/updates/oneClick'
+import { isLeanInstall, oneClickConfig } from '@/features/updates/oneClick'
 import { upstreamRepo } from '@/features/updates/versions'
 
 type Answer = UpdateCheck & { oneClick: boolean }
+/**
+ * A site deployed straight from the upstream repository (not a lean install, not a fork) gets every release on its next deploy,
+ * so there is nothing for its admin to do and the Worker-update popup must never show. Its own version number lags the tags, which
+ * is why "newer release exists" cannot be trusted there.
+ */
+const selfUpdating = (links: { sameRepo: boolean }): boolean => !isLeanInstall(process.env.ENGAGE_INSTALL) && links.sameRepo
 const oneClickOn = (): boolean => Boolean(oneClickConfig(process.env.UPDATE_REPO, process.env.UPDATE_GITHUB_TOKEN))
 
 export const dynamic = 'force-dynamic'
@@ -27,6 +33,7 @@ export async function GET(request: Request): Promise<Response> {
   if (!refresh && cached && Date.now() - cached.at < TTL_MS) return NextResponse.json({ ...cached.value, oneClick: oneClickOn() }, { headers: { 'Cache-Control': 'no-store' } })
   const value = await checkForUpdate(pkg.version, process.env.UPDATE_REPO, fetch, new Date(), upstreamRepo(process.env.UPDATE_SOURCE))
   const answer: Answer = { ...value, oneClick: oneClickOn() }
+  if (selfUpdating(value.links)) answer.updateAvailable = false
   if (!value.error) cached = { at: Date.now(), value: answer }
   return NextResponse.json(answer, { headers: { 'Cache-Control': 'no-store' } })
 }
