@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { SHINE_CSS_FALLBACK, SHINE_CSS_INTEGRITY, SHINE_CSS_URL } from './builtin'
+import { SHINE_CSS_FALLBACK, SHINE_CSS_URL } from './builtin'
 import { assetsFor, type FrontendAsset } from './config'
 import { readFrontendAssets } from './store'
 
@@ -14,7 +14,7 @@ export function ShineLink(): React.ReactElement {
   return (
     <>
       <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
-      <link rel="stylesheet" href={SHINE_CSS_URL} integrity={SHINE_CSS_INTEGRITY} crossOrigin="anonymous" data-fallback={SHINE_CSS_FALLBACK} />
+      <link rel="stylesheet" href={SHINE_CSS_URL} crossOrigin="anonymous" data-fallback={SHINE_CSS_FALLBACK} />
       <script dangerouslySetInnerHTML={{ __html: swap }} />
     </>
   )

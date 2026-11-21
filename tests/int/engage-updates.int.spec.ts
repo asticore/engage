@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { checkForUpdate } from '@/features/updates/check'
 import { parseManifest } from '@/features/updates/manifest'
 import { isLeanInstall, oneClickConfig, pinInstallVersion } from '@/features/updates/oneClick'
-import { isMigrationPending } from '@/features/updates/state'
+import { isMigrationPending, pendingMigrationNames } from '@/features/updates/state'
 import { updateLinks, upstreamRepo } from '@/features/updates/versions'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })
@@ -70,5 +70,27 @@ describe('pinInstallVersion', () => {
   it('flags lean installs', () => {
     expect(isLeanInstall('lean')).toBe(true)
     expect(isLeanInstall(undefined)).toBe(false)
+  })
+})
+
+describe('pendingMigrationNames', () => {
+  const dbWith = (table: boolean, names: string[]) =>
+    ({
+      prepare: (sql: string) => ({
+        first: async () => (table ? { name: 'eg_migrations' } : null),
+        all: async () => ({ results: sql.includes('FROM eg_migrations') ? names.map((name) => ({ name })) : [] }),
+      }),
+    }) as unknown as D1Database
+  it('lists only migrations not yet recorded', async () => {
+    expect(await pendingMigrationNames(dbWith(true, ['a', 'b']), ['a', 'b'])).toEqual([])
+    expect(await pendingMigrationNames(dbWith(true, ['a']), ['a', 'b'])).toEqual(['b'])
+    expect(await pendingMigrationNames(dbWith(false, []), ['a'])).toEqual(['a'])
+  })
+})
+
+describe('manifest requiresWorkerUpdate', () => {
+  it('defaults to true for older manifests and honours false', () => {
+    expect(parseManifest({ version: '1.2.0' }).requiresWorkerUpdate).toBe(true)
+    expect(parseManifest({ version: '1.4.0', requiresWorkerUpdate: false }).requiresWorkerUpdate).toBe(false)
   })
 })

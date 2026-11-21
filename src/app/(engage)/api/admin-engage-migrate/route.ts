@@ -4,9 +4,9 @@ import { NextResponse } from 'next/server'
 import pkg from '../../../../../package.json'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { adminRequestRefusal } from '@/features/forms/origin'
-import { getAppliedVersion, isMigrationPending, setAppliedVersion } from '@/features/updates/state'
+import { getAppliedVersion, pendingMigrationNames, setAppliedVersion } from '@/features/updates/state'
 import { consoleLogger } from '@/localapi/logger'
-import { runInternalMigrate } from '@/migrations/runInternalMigrate'
+import { EARLY_MIGRATIONS, LATE_MIGRATIONS, runInternalMigrate } from '@/migrations/runInternalMigrate'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,13 +16,15 @@ async function guard(): Promise<Response | null> {
   return ctx.isAdmin ? null : NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 }
 
-/** GET: { running, applied, pending }. Super admins only. */
+/** GET: { running, applied, pending, pendingNames }. `pending` is true only when a migration this code runs is not yet recorded. Super admins only. */
 export async function GET(): Promise<Response> {
   const denied = await guard()
   if (denied) return denied
   const { env } = await getCloudflareContext({ async: true })
   const applied = env.D1 ? await getAppliedVersion(env.D1).catch((): null => null) : null
-  return NextResponse.json({ running: pkg.version, applied, pending: isMigrationPending(applied, pkg.version) }, { headers: { 'Cache-Control': 'no-store' } })
+  const expected = [...EARLY_MIGRATIONS, ...LATE_MIGRATIONS].map((m) => m.name)
+  const pendingNames = env.D1 ? await pendingMigrationNames(env.D1, expected).catch((): string[] => []) : []
+  return NextResponse.json({ running: pkg.version, applied, pending: pendingNames.length > 0, pendingNames }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
 /** POST: run the additive/replay-safe migrations for the running version, then record it. */

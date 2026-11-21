@@ -38,7 +38,6 @@ import { resolveTourAutoStart } from '@/features/adminTour/preference'
 import { THEME_SCRIPT } from '@/admin/context/themeScript'
 import { ImpersonationBanner } from '@/features/impersonation/components/ImpersonationBanner'
 import { StagingBanner } from '@/admin/components/StagingBanner'
-import { MigrationBar } from '@/admin/components/MigrationBar'
 import { AdminUiProvider } from './i18n/AdminUiProvider'
 import { AdminRouteProvider } from './adminRoute/AdminRouteProvider'
 import { getAdminRoot } from '@/features/security/settings'
@@ -87,7 +86,6 @@ export async function RootLayout({ children }: { children: ReactNode; config?: u
                       {/* Shown on every admin page while signed in as a customer. Renders nothing otherwise. */}
                       <StagingBanner />
                       <ImpersonationBanner />
-                      <MigrationBar />
                       <main className="admin-shell__content">{children}</main>
                     </div>
                   </AdminShell>

@@ -11,9 +11,9 @@ import { assetCspAdditions, assetsFor, cleanUrl, extendPolicy, MAX_ASSETS, norma
 const sri = (file: string): string => `sha384-${createHash('sha384').update(readFileSync(join(process.cwd(), 'public', file))).digest('base64')}`
 
 describe('Shine and Spark release references', () => {
-  it('point at release tags on jsDelivr, not at the deployment', () => {
-    expect(SHINE_CSS_URL).toMatch(/^https:\/\/cdn\.jsdelivr\.net\/gh\/asticore\/shine@v\d+\.\d+\.\d+\/dist\/shine\.min\.css$/)
-    expect(SPARK_BASE_URL).toMatch(/^https:\/\/cdn\.jsdelivr\.net\/gh\/asticore\/spark@v\d+\.\d+\.\d+\/dist\/$/)
+  it('point at the stable major channel of the releases on jsDelivr, not at the deployment', () => {
+    expect(SHINE_CSS_URL).toMatch(/^https:\/\/cdn\.jsdelivr\.net\/gh\/asticore\/shine@v\d+\/dist\/shine\.min\.css$/)
+    expect(SPARK_BASE_URL).toMatch(/^https:\/\/cdn\.jsdelivr\.net\/gh\/asticore\/spark@v\d+\/dist\/$/)
   })
   it('the bundled fallback copies match the integrity hashes', () => {
     expect(sri(SHINE_CSS_FALLBACK)).toBe(SHINE_CSS_INTEGRITY)
