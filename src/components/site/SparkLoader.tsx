@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-import { SPARK_BASE_URL, SPARK_FALLBACK_BASE as FALLBACK, SPARK_LOADER_INTEGRITY } from '@/features/frontendAssets/builtin'
+import { SPARK_BASE_URL, SPARK_FALLBACK_BASE as FALLBACK } from '@/features/frontendAssets/builtin'
 
 /**
  * Starts Spark (asticore/spark, see reference/references.json) only on pages that use a `spark-` class. The loader then
@@ -35,11 +35,8 @@ function start(base: string, onError?: () => void): void {
   script.id = 'spark-auto'
   script.src = `${base}spark.auto.min.js`
   script.defer = true
-  // The release file is checked against its hash; a mismatch or an unreachable CDN falls back to the bundled copy.
-  if (base === SPARK_BASE) {
-    script.integrity = SPARK_LOADER_INTEGRITY
-    script.crossOrigin = 'anonymous'
-  }
+  // Stable channel URL (no integrity hash, so new releases arrive without a deploy); an unreachable CDN falls back to the bundled copy.
+  if (base === SPARK_BASE) script.crossOrigin = 'anonymous'
   script.dataset.sparkBase = base
   script.onerror = () => {
     script.remove()

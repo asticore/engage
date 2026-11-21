@@ -7,12 +7,12 @@
  * file to public/vendor, and update reference/references.json.
  */
 
-export const SHINE_VERSION = 'v1.0.0'
+export const SHINE_VERSION = 'v1'
 export const SHINE_CSS_URL = `https://cdn.jsdelivr.net/gh/asticore/shine@${SHINE_VERSION}/dist/shine.min.css`
 export const SHINE_CSS_INTEGRITY = 'sha384-MAlmG3nB3VsUmWPn+V1OXN7lLLLKcwjHt80cciS4D091Z8Z3oVFSXYyHoAd1PYg8'
 export const SHINE_CSS_FALLBACK = '/vendor/shine/shine.min.css'
 
-export const SPARK_VERSION = 'v0.4.0'
+export const SPARK_VERSION = 'v0'
 export const SPARK_BASE_URL = `https://cdn.jsdelivr.net/gh/asticore/spark@${SPARK_VERSION}/dist/`
 export const SPARK_LOADER_INTEGRITY = 'sha384-D1bxc+iw2iTH+2BbjI16rTqlleeYxpxIatKsatenS0Zj6UUBVaT6Pdz+X2e1VDQW'
 export const SPARK_FALLBACK_BASE = '/vendor/spark/'

@@ -4,27 +4,43 @@ import { useEffect, useState } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
-type Check = { current: string; latest: string | null; updateAvailable: boolean; links: { changelog: string; start: string; sameRepo: boolean }; oneClick?: boolean; manifest?: { notes: string; requiresMigration: boolean; destructive: boolean }; referencesOutdated?: Array<{ id: string; name: string; current: string | null; latest: string | null }> }
+type Check = { current: string; latest: string | null; updateAvailable: boolean; links: { changelog: string; start: string; sameRepo: boolean }; oneClick?: boolean; manifest?: { notes: string; requiresMigration: boolean; requiresWorkerUpdate?: boolean; destructive: boolean } }
+type Migrate = { pending?: boolean }
 
 const SEEN_KEY = 'engage-update-dismissed'
 
-const seenValue = (body: Check): string => `${body.updateAvailable ? body.latest : ''}|${(body.referencesOutdated ?? []).map((r) => `${r.id}@${r.latest}`).join(',')}`
+/** A new Worker release needs action only when the manifest says the Worker changed. No manifest: unknown, so ask. */
+const needsWorker = (c: Check): boolean => c.updateAvailable && Boolean(c.latest) && c.manifest?.requiresWorkerUpdate !== false
 
-/** The update popup for super admins: appears when a newer Engage is released. Update opens the update page, then the changelog link stays. */
+const seenValue = (body: Check): string => (needsWorker(body) ? String(body.latest) : '')
+
+/**
+ * The one update popup (super admins only). It shows only when this install needs action: the database has migrations to run,
+ * or a release that changes the Worker is available. Releases that change only static files (admin assets, builder scripts,
+ * Shine, Spark) reach installs through stable URLs and never prompt.
+ */
 export function UpdateNotice() {
   const t = useAdminT()
   const [check, setCheck] = useState<Check | null>(null)
+  const [migrate, setMigrate] = useState(false)
+  const [migrating, setMigrating] = useState(false)
+  const [migrateError, setMigrateError] = useState('')
   const [started, setStarted] = useState(false)
   const [applying, setApplying] = useState(false)
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   useEffect(() => {
     let live = true
-    fetch('/api/admin-update-check', { cache: 'no-store' })
-      .then((res) => (res.ok ? (res.json() as Promise<Check>) : null))
+    fetch('/api/admin-engage-migrate', { cache: 'no-store', credentials: 'same-origin' })
+      .then((res) => (res.ok ? (res.json() as Promise<Migrate>) : null))
       .then((body) => {
-        const outdated = body?.referencesOutdated ?? []
-        if (!live || !body || ((!body.updateAvailable || !body.latest) && outdated.length === 0)) return
+        if (live && body?.pending) setMigrate(true)
+      })
+      .catch((): void => undefined)
+    fetch('/api/admin-update-check', { cache: 'no-store' })
+      .then((res) => (res.ok ? (res.json() as Promise<Check> ) : null))
+      .then((body) => {
+        if (!live || !body || !needsWorker(body)) return
         try {
           if (window.localStorage.getItem(SEEN_KEY) === seenValue(body)) return
         } catch {
@@ -38,14 +54,28 @@ export function UpdateNotice() {
     }
   }, [])
 
-  if (!check) return null
+  const runMigration = async (): Promise<void> => {
+    setMigrating(true)
+    setMigrateError('')
+    try {
+      const res = await fetch('/api/admin-engage-migrate', { method: 'POST', credentials: 'same-origin' })
+      if (res.ok) window.location.reload()
+      else setMigrateError('The migration did not finish. Nothing was dropped. Try again, or restore the backup taken before the update.')
+    } catch {
+      setMigrateError('Could not reach the site. Try again.')
+    }
+    setMigrating(false)
+  }
+
+  if (!check && !migrate) return null
   const dismiss = () => {
     try {
-      window.localStorage.setItem(SEEN_KEY, seenValue(check))
+      if (check) window.localStorage.setItem(SEEN_KEY, seenValue(check))
     } catch {
       // Not remembered; fine.
     }
     setCheck(null)
+    setMigrate(false)
   }
 
   const applyNow = async (): Promise<void> => {
@@ -63,25 +93,30 @@ export function UpdateNotice() {
   return (
     <div role="dialog" aria-label={t('update.aria')} data-testid="update-notice" style={{ position: 'fixed', right: 16, bottom: 16, zIndex: 1000, maxWidth: 340 }} className="card">
       <div className="card-body stack">
-        {check.updateAvailable && check.latest && (
+        {migrate ? (
+          <>
+            <strong data-testid="migration-bar">Finish update: the database needs a quick migration.</strong>
+            <span className="text-muted">Existing data is kept.</span>
+            {migrateError ? <span role="alert">{migrateError}</span> : null}
+            <div className="cluster">
+              <button type="button" className="btn" disabled={migrating} onClick={() => void runMigration()}>{migrating ? 'Migrating…' : 'Run migration'}</button>
+            </div>
+          </>
+        ) : null}
+        {check && check.updateAvailable && check.latest && (
           <>
             <strong>{t('update.title', { version: check.latest })}</strong>
             <span className="text-muted">{t('update.body', { current: check.current, how: check.links.sameRepo ? t('update.howSame') : t('update.howFork') })}</span>
           </>
         )}
-        {check.updateAvailable && check.manifest?.notes ? (
+        {check?.updateAvailable && check.manifest?.notes ? (
           <span className="text-muted" data-testid="update-notice-notes" style={{ whiteSpace: 'pre-wrap' }}>{check.manifest.notes.slice(0, 400)}</span>
         ) : null}
-        {check.updateAvailable && check.manifest?.destructive ? <span className="badge" data-testid="update-notice-destructive">This release changes existing data. A backup is taken first.</span> : null}
-        {(check.referencesOutdated ?? []).length > 0 && (
-          <span className="text-muted" data-testid="update-notice-references">
-            {t('update.references', { names: (check.referencesOutdated ?? []).map((r) => r.name).join(', ') })}
-          </span>
-        )}
+        {check?.updateAvailable && check.manifest?.destructive ? <span className="badge" data-testid="update-notice-destructive">This release changes existing data. A backup is taken first.</span> : null}
         {result ? <span role="status" className={result.ok ? 'text-muted' : 'badge'}>{result.message}</span> : null}
         <div className="cluster">
-          {check.updateAvailable && check.latest && check.oneClick && !result?.ok ? <button type="button" className="btn" disabled={applying} onClick={() => void applyNow()}>{applying ? t('update.updating') : t('update.updateNow')}</button> : null}
-          {check.updateAvailable && check.latest && (
+          {check && check.updateAvailable && check.latest && check.oneClick && !result?.ok ? <button type="button" className="btn" disabled={applying} onClick={() => void applyNow()}>{applying ? t('update.updating') : t('update.updateNow')}</button> : null}
+          {check && check.updateAvailable && check.latest && (
             <>
               <a
                 className="btn"

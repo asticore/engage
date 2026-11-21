@@ -6,7 +6,8 @@
 //
 //   npx opennextjs-cloudflare build && node scripts/make-release.mjs [--prev path/to/previous-manifest.json] [--notes "text"]
 //
-// `requiresMigration` is true when the migration list differs from the previous release's. `destructive` is true when any
+// `requiresWorkerUpdate` is false when the Worker is byte-identical to the previous release (or --static-only is passed): installs then
+// get the new static files without any prompt. `requiresMigration` is true when the migration list differs from the previous release's. `destructive` is true when any
 // new migration file contains a DROP TABLE / DROP COLUMN (checked by name in the file, review before releasing).
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -60,12 +61,18 @@ function main() {
   // Cloudflare's limit is the uncompressed size (64 MiB on Free and Paid); gzip is for reference only.
   const workerKiB = Math.round(workerBytes.length / 1024)
 
+  // The Worker only needs redeploying when its code changed. `--static-only` forces false (asset-only release); otherwise the
+  // checksum is compared with the previous release's (no previous release counts as changed). New migrations always need the Worker.
+  const workerSha = sha256(path.join(OUT, 'worker.js'))
+  const requiresWorkerUpdate = process.argv.includes('--static-only') ? added.length > 0 : !prev || prev.assets?.workerSha256 !== workerSha || added.length > 0
+
   const manifest = {
     version: pkg.version,
     releasedAt: new Date().toISOString(),
     notes: arg('--notes') ?? '',
     migrations,
     requiresMigration: prev ? added.length > 0 : true,
+    requiresWorkerUpdate,
     destructive,
     minFromVersion: pkg.engage?.minFromVersion ?? '0.0.0',
     assets: { worker: 'worker.js', assetsArchive: 'assets.tar.gz', workerSha256: sha256(path.join(OUT, 'worker.js')), assetsSha256: sha256(path.join(OUT, 'assets.tar.gz')) },

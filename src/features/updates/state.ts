@@ -23,3 +23,16 @@ export function isMigrationPending(applied: string | null, running: string): boo
   return !a || compareVersions(a, r) < 0
 }
 
+
+/**
+ * The migrations this code would run that the database has not recorded yet. This, not the version number, decides whether an
+ * admin is asked to migrate: a release with no new migration leaves the list empty, so nothing is shown. A missing history
+ * table (fresh install) counts as everything pending.
+ */
+export async function pendingMigrationNames(db: D1Database, expected: string[]): Promise<string[]> {
+  const table = await db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='eg_migrations'`).first()
+  if (!table) return expected
+  const rows = await db.prepare('SELECT name FROM eg_migrations').all<{ name: string }>()
+  const done = new Set((rows.results ?? []).map((r) => r.name))
+  return expected.filter((name) => !done.has(name))
+}
