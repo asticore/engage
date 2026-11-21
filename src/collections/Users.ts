@@ -6,6 +6,7 @@ import { allowedDomainsField } from '@/features/domains/field'
 import { isAdmin, isAdminOrSelf, adminOnlyFieldAccess } from '../access/ecommerceAccess'
 import { validateRoleChange, sanitizeOverrides } from '@/features/roles/permissions'
 import { slugify } from '@/utilities/formatSlug'
+import { STEP_UP_COOKIE, STEP_UP_MESSAGE, grantsAdmin, hasValidStepUp, readCookie } from '@/features/security/stepUp'
 import { revokeSessionsOnPasswordChange } from '@/features/security/passwordSessionHook'
 import { enforcePasswordPolicyBeforeChange, recordPasswordAfterChange } from '@/features/security/passwordPolicyHooks'
 import { authorshipFields, authorshipBeforeChange } from '../fields/authorship'
@@ -58,6 +59,31 @@ const validateUserRoleChange: CollectionBeforeChangeHook = async (args: unknown)
 }
 
 /**
+ * Adding an administrator (a create with the admin role, or an update that adds it) needs a recent
+ * password or code confirmation from the signed-in admin making the change. Internal calls with no
+ * signed-in user, and the very first admin, are not asked. See features/security/stepUp.ts.
+ */
+const requireStepUpForAdminGrant: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
+  const { data, originalDoc, req } = args as {
+    data: { roles?: unknown }
+    originalDoc?: { roles?: string[] | null }
+    req: { user?: { id?: number | string } | null; headers?: Headers; engine: { find: (args: Record<string, unknown>) => Promise<{ docs: unknown[] }> } }
+  }
+  if (!grantsAdmin(originalDoc?.roles, data.roles)) return
+  const actorId = Number(req.user?.id)
+  if (!req.user || !Number.isInteger(actorId) || !req.headers) return
+
+  const { docs } = await req.engine.find({ collection: 'users', where: { roles: { in: ['admin'] } }, limit: 1, depth: 0, overrideAccess: true })
+  if (docs.length === 0) return
+
+  const secret = process.env.ENGAGE_SECRET || ''
+  if (secret && (await hasValidStepUp(readCookie(req.headers.get('cookie'), STEP_UP_COOKIE), actorId, secret))) return
+  const error = new Error(STEP_UP_MESSAGE)
+  Object.assign(error, { statusCode: 403 })
+  throw error
+}
+
+/**
  * Sanitizes permission overrides to remove invalid resources/actions and ensure safe storage.
  */
 const sanitizePermissionOverrides: CollectionBeforeChangeHook = async (args: unknown): Promise<void> => {
@@ -88,7 +114,7 @@ export const Users: CollectionConfig = {
   },
   auth: true,
   hooks: { afterChange: [revokeSessionsOnPasswordChange, recordPasswordAfterChange, webhookUserAfterChange] },
-  beforeChange: [allowedDomainsGuard, validateUserRoleChange, sanitizePermissionOverrides, authorshipBeforeChange, enforcePasswordPolicyBeforeChange],
+  beforeChange: [allowedDomainsGuard, requireStepUpForAdminGrant, validateUserRoleChange, sanitizePermissionOverrides, authorshipBeforeChange, enforcePasswordPolicyBeforeChange],
   fields: [
     allowedDomainsField,
     ...authorshipFields,

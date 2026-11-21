@@ -1017,6 +1017,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Magic link: sign out, "email me a link", click it. Pass = signed in. Needs site email sending.
 - [ ] Email code: sign out, "email me a code", enter it. Pass = signed in.
 - [ ] Admin two-step default and 30-day sign-in (21 Nov): sign in as an admin without two-step. Pass = sent to the setup screen, setup and sign-out work; after enrolling you stay signed in for 30 days (Settings > Security shows 43200). Sessions list can end a session.
+- [ ] Step-up for new admins (21 Nov): Users, make another user an admin and save. Pass = refused with a message pointing to Security > Confirm it is you; after confirming there with your password, the same save works within ten minutes.
 - [ ] Two-factor: Account > Security, turn on the authenticator app, scan, enter code, save backup codes. Sign out and in. Pass = code asked; a backup code works once.
 - [ ] Passkey: Account > Security, add a passkey, sign out, sign in with it. Pass = signed in.
 - [ ] API key: Account > API keys, create, copy, call `/api/pages` with it. Pass = authorised; delete it and the call fails.

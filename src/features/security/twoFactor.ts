@@ -491,6 +491,14 @@ async function proveIdentity(
   return Boolean(store.checkPassword && store.checkPassword(row, proof))
 }
 
+/** True when `proof` is the user's current password or a valid authenticator or backup code. Used by the step-up screen. */
+export async function confirmIdentity(store: TwoFactorStore, user: { id?: number | string }, proof: string): Promise<boolean> {
+  const id = Number(user?.id)
+  if (!Number.isInteger(id) || id <= 0) return false
+  const row = await store.findByID(id)
+  return row ? proveIdentity(store, row, proof) : false
+}
+
 /** Switches two-step off and wipes the secret and codes. Needs a code or the password. */
 export async function disableTwoFactor(
   store: TwoFactorStore,

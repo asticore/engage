@@ -16,3 +16,4 @@ export const beginEmailTwoFactorAction: typeof import('./twoFactorActions').begi
 export const confirmEmailTwoFactorAction: typeof import('./twoFactorActions').confirmEmailTwoFactorAction = rpc('features/security/twoFactorActions', 'confirmEmailTwoFactorAction') as never
 export const revokeTrustedDeviceAction: typeof import('./twoFactorActions').revokeTrustedDeviceAction = rpc('features/security/twoFactorActions', 'revokeTrustedDeviceAction') as never
 export const revokeAllTrustedDevicesAction: typeof import('./twoFactorActions').revokeAllTrustedDevicesAction = rpc('features/security/twoFactorActions', 'revokeAllTrustedDevicesAction') as never
+export const confirmIdentityAction: typeof import('./twoFactorActions').confirmIdentityAction = rpc('features/security/twoFactorActions', 'confirmIdentityAction') as never
