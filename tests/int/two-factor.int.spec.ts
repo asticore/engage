@@ -466,9 +466,9 @@ describe('enforcement settings', () => {
   const admin = { id: 1, roles: ['admin'], twoFactorEnabled: false }
   const customer = { id: 2, roles: ['customer'], twoFactorEnabled: false }
 
-  it('never requires or redirects with both settings off (the default)', () => {
+  it('never requires or redirects with both settings off', () => {
     for (const user of [admin, customer]) {
-      const status = assertTwoFactorSatisfied(user, settings())
+      const status = assertTwoFactorSatisfied(user, settings({ requireTwoFactorForAdmins: false }))
       expect(status.required).toBe(false)
       expect(status.mustEnrol).toBe(false)
       expect(status.enrolPath).toBeUndefined()
@@ -485,7 +485,7 @@ describe('enforcement settings', () => {
 
   it('leaves customers alone when only the admin setting is on, and the reverse', () => {
     expect(twoFactorStatus(customer, settings({ requireTwoFactorForAdmins: true })).mustEnrol).toBe(false)
-    expect(twoFactorStatus(admin, settings({ requireTwoFactorForMembers: true })).mustEnrol).toBe(false)
+    expect(twoFactorStatus(admin, settings({ requireTwoFactorForAdmins: false, requireTwoFactorForMembers: true })).mustEnrol).toBe(false)
   })
 
   it('redirects an unenrolled customer to their profile when the member setting is on', () => {
@@ -494,9 +494,14 @@ describe('enforcement settings', () => {
     expect(status.enrolPath).toBe('/account/profile')
   })
 
-  it('is satisfied once enrolled, and ignored when the Security feature is off', () => {
+  it('requires admins by default, even with the Security feature off', () => {
+    expect(twoFactorStatus(admin, settings({}, false)).mustEnrol).toBe(true)
+    expect(twoFactorStatus(customer, settings({}, false)).mustEnrol).toBe(false)
+  })
+
+  it('is satisfied once enrolled, and members are ignored when the Security feature is off', () => {
     expect(twoFactorStatus({ ...admin, twoFactorEnabled: true }, settings({ requireTwoFactorForAdmins: true })).mustEnrol).toBe(false)
-    expect(twoFactorStatus(admin, settings({ requireTwoFactorForAdmins: true }, false)).mustEnrol).toBe(false)
+    expect(twoFactorStatus(customer, settings({ requireTwoFactorForMembers: true }, false)).mustEnrol).toBe(false)
   })
 
   it('never throws', () => {
@@ -531,7 +536,7 @@ describe('grace period notice', () => {
     expect(graceNoticeFor(twoFactorStatus(admin, graceSettings(-1), { now: NOW }))).toBeNull()
     expect(graceNoticeFor(twoFactorStatus(customer, graceSettings(3), { now: NOW }))).toBeNull()
     expect(graceNoticeFor(twoFactorStatus(admin, graceSettings(3), { now: NOW, env: { ENGAGE_DISABLE_2FA_ENFORCEMENT: '1' } }))).toBeNull()
-    expect(graceNoticeFor(twoFactorStatus(admin, { ...graceSettings(3), featureEnabled: false }, { now: NOW }))).toBeNull()
+    expect(graceNoticeFor(twoFactorStatus(customer, { ...graceSettings(3), featureEnabled: false }, { now: NOW }))).toBeNull()
   })
 
   it('stops showing the notice once the grace period is over and the account is enforced', () => {

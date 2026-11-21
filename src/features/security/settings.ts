@@ -217,9 +217,9 @@ export const DEFAULT_SECURITY_SETTINGS: SecuritySettings = {
   loginProtection: {
     maxLoginAttempts: 5,
     lockoutMinutes: 15,
-    requireTwoFactorForAdmins: false,
+    requireTwoFactorForAdmins: true,
     requireTwoFactorForMembers: false,
-    sessionTimeoutMinutes: 720,
+    sessionTimeoutMinutes: 43_200,
   },
   headers: {
     hsts: true,

@@ -70,10 +70,12 @@ const isMember = (user: EnforcementUser | null | undefined): boolean =>
 
 /** Whether any setting asks this user for two-step, ignoring grace and enrolment. */
 export function isCovered(user: EnforcementUser | null | undefined, settings: SecuritySettings): boolean {
-  if (!user || !settings.featureEnabled) return false
+  if (!user) return false
   const admin = isAdmin(user)
-  const member = !admin && isMember(user)
+  // Administrators are covered even when the wider Security feature is off: it is the default protection.
   if (admin && settings.loginProtection.requireTwoFactorForAdmins) return true
+  if (!settings.featureEnabled) return false
+  const member = !admin && isMember(user)
   if (member && settings.loginProtection.requireTwoFactorForMembers) return true
   const wanted = settings.twoFactor?.requiredRoles ?? []
   return roleTokensOf(user).some((token) => wanted.includes(token))

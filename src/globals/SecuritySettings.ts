@@ -486,7 +486,7 @@ export const SecuritySettings: GlobalConfig = {
             {
               name: 'requireTwoFactorForAdmins',
               type: 'checkbox',
-              defaultValue: false,
+              defaultValue: true,
               admin: {
                 width: '50%',
                 description:
@@ -496,10 +496,10 @@ export const SecuritySettings: GlobalConfig = {
             {
               name: 'sessionTimeoutMinutes',
               type: 'number',
-              defaultValue: 720,
+              defaultValue: 43200,
               admin: {
                 width: '50%',
-                description: 'How long someone stays signed in without activity. 720 is twelve hours.',
+                description: 'How long a sign-in lasts before the password is asked for again. 43200 is 30 days. Sessions can be ended at any time from the account screen.',
               },
             },
           ],
