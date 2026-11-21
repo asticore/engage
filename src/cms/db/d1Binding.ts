@@ -26,5 +26,30 @@ export async function resolveD1Binding(): Promise<D1Database> {
     return (proxy.env as { D1: D1Database }).D1
   }
   const { env } = await getCloudflareContext({ async: true })
-  return env.D1
+  return perRequestD1(env.D1)
+}
+
+/**
+ * The engine builds its database connection once per isolate, from whichever request came first, and keeps it.
+ * Handing it the raw binding would pin every later request to that first request's binding: it could not be
+ * traced, and it could never use the read replica chosen for the current request (see
+ * features/speed/d1Replica.ts). This stand-in looks the binding up from the request that is running when each
+ * call is made. Outside a request (build time, tests) it falls back to the binding it was given.
+ */
+function perRequestD1(fallback: D1Database): D1Database {
+  const current = (): D1Database => {
+    try {
+      const live = getCloudflareContext().env?.D1
+      if (live && typeof live.prepare === 'function') return live
+    } catch {
+      // Not inside a request: use the binding we were given.
+    }
+    return fallback
+  }
+  return new Proxy(fallback, {
+    get(_target, prop) {
+      const value = (current() as unknown as Record<string | symbol, unknown>)[prop]
+      return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(current()) : value
+    },
+  })
 }
