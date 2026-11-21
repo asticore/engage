@@ -331,8 +331,8 @@ export async function gateTwoFactorEnforcement(engine: Engine, request: Request,
   try {
     const settings = await readSecuritySettingsFromD1()
     const configured =
-      settings.featureEnabled &&
-      (settings.twoFactor.requiredRoles.length > 0 || settings.loginProtection.requireTwoFactorForAdmins || settings.loginProtection.requireTwoFactorForMembers)
+      settings.loginProtection.requireTwoFactorForAdmins ||
+      (settings.featureEnabled && (settings.twoFactor.requiredRoles.length > 0 || settings.loginProtection.requireTwoFactorForMembers))
     if (!configured || isEnrolmentSafeRoute(slug)) return null
 
     const { user } = await engine.auth({ headers: request.headers, apiKeys: true }).catch((): { user: null } => ({ user: null }))

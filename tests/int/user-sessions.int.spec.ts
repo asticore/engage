@@ -256,7 +256,7 @@ describe('validating a token', () => {
     warn.mockRestore()
   })
 
-  it('a refresh carries the session id forward and extends the row', async () => {
+  it('a refresh carries the session id forward and never extends past the fixed cap', async () => {
     const store = makeStore()
     const db = makeDb([makeUser()], store)
     const { token } = await signIn(db)
@@ -264,7 +264,7 @@ describe('validating a token', () => {
     await new Promise((resolve) => setTimeout(resolve, 5))
     const refreshed = await refreshToken(db, { headers: headersFor(token as string), secret: SECRET })
     expect(verifyJWT(refreshed.token, SECRET)?.usid).toBe(store.rows[0].id)
-    expect(store.rows[0].expiresAt > before).toBe(true)
+    expect(store.rows[0].expiresAt <= before).toBe(true)
   })
 })
 

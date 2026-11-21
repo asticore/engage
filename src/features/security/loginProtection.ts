@@ -52,7 +52,7 @@ const envNumber = (name: string, fallback: number): number => {
 export function loginProtectionAuth(): LoginProtectionAuth {
   const maxLoginAttempts = envNumber(ENV_MAX_ATTEMPTS, 5)
   const lockoutMinutes = envNumber(ENV_LOCKOUT_MINUTES, 15)
-  const sessionMinutes = envNumber(ENV_SESSION_MINUTES, 720)
+  const sessionMinutes = envNumber(ENV_SESSION_MINUTES, 43_200)
 
   return {
     maxLoginAttempts,

@@ -126,9 +126,10 @@ describe('enforcement by role', () => {
   const NOW = Date.parse('2026-11-22T12:00:00.000Z')
   const required = (roles: string[], patch: Partial<SecuritySettings['twoFactor']> = {}) => withTwoFactor({ requiredRoles: roles, ...patch })
 
-  it('requires nothing with the defaults, and with the feature off', () => {
-    expect(evaluateEnforcement({ roles: ['admin'] }, withTwoFactor()).state).toBe('off')
-    expect(evaluateEnforcement({ roles: ['admin'] }, withTwoFactor({ requiredRoles: ['admin'] }, { featureEnabled: false })).state).toBe('off')
+  it('requires admins by default, and nobody else; role lists need the feature on', () => {
+    expect(evaluateEnforcement({ roles: ['admin'] }, withTwoFactor()).state).toBe('enforced')
+    expect(evaluateEnforcement({ roles: ['customer'] }, withTwoFactor()).state).toBe('off')
+    expect(evaluateEnforcement({ roles: ['editor'] }, withTwoFactor({ requiredRoles: ['editor'] }, { featureEnabled: false })).state).toBe('off')
   })
 
   it('covers built-in roles, customers and custom role slugs, and only those', () => {
@@ -136,7 +137,6 @@ describe('enforcement by role', () => {
     expect(isCovered({ roles: ['editor'] }, settings)).toBe(true)
     expect(isCovered({ roles: ['customer'] }, settings)).toBe(true)
     expect(isCovered({ roles: ['viewer'], customRoleSlug: 'Shop-Staff' }, settings)).toBe(true)
-    expect(isCovered({ roles: ['admin'] }, settings)).toBe(false)
     expect(isCovered({ roles: ['viewer'] }, settings)).toBe(false)
     expect(roleTokensOf({ roles: ['Editor'], customRoleSlug: 'X' })).toEqual(['editor', 'x'])
   })

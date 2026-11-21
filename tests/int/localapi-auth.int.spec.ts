@@ -472,7 +472,7 @@ describe('localapi/auth - refreshToken', () => {
 
     expect(db.rows[0].sessions).toHaveLength(1) // same session count, not a second one minted
     expect(db.rows[0].sessions?.[0]?.id).toBe(originalSid) // same sid
-    expect(db.rows[0].sessions?.[0]?.expiresAt).not.toBe(originalExpiresAt) // but extended
+    expect(db.rows[0].sessions?.[0]?.expiresAt).toBe(originalExpiresAt) // fixed cap: a refresh never pushes past sign-in + 30 days
     expect(result.setCookie).toBe(true)
     expect(result.user.id).toBe(1)
 

@@ -508,7 +508,7 @@ export const MAX_LOGIN_ATTEMPTS = 5
 export const LOCK_TIME_MS = 600_000
 
 /** The reference engine default, seconds (`defaults.js:127`). See `MAX_LOGIN_ATTEMPTS`'s doc comment - same provenance and same warning. */
-export const TOKEN_EXPIRATION_SECONDS = 7200
+export const TOKEN_EXPIRATION_SECONDS = 2_592_000 // 30 days; sessions are server-side rows, revocable at any time
 
 /**
  * The reference engine default (`defaults.js:128`). Always `true` for `Users` today -
@@ -1422,16 +1422,21 @@ export async function refreshToken(db: AuthDbOps, args: RefreshTokenArgs): Promi
     if (!isSessionUsable(check)) throw new AuthenticationError()
   }
 
-  const refreshed: AuthSession = { ...existing, expiresAt: new Date(now + TOKEN_EXPIRATION_SECONDS * 1000).toISOString() }
+  // Fixed cap: a session never lasts longer than TOKEN_EXPIRATION_SECONDS from sign-in, however often it is refreshed.
+  const startedAt = existing.createdAt ? Date.parse(existing.createdAt) : NaN
+  const capMs = Number.isFinite(startedAt) ? startedAt + TOKEN_EXPIRATION_SECONDS * 1000 : now + TOKEN_EXPIRATION_SECONDS * 1000
+  if (capMs <= now) throw new AuthenticationError()
+  const ttlSeconds = Math.max(1, Math.floor((capMs - now) / 1000))
+  const refreshed: AuthSession = { ...existing, expiresAt: new Date(capMs).toISOString() }
   const newSessions = [...pruneExpiredSessions(row.sessions, now).filter((session) => session.id !== sid), refreshed]
 
   const { id: _id, createdAt: _createdAt, ...rest } = row
   const updated = await db.updateByID(id, { ...rest, sessions: newSessions, updatedAt: null })
   const finalRow = updated ?? { ...row, sessions: newSessions }
 
-  if (db.sessions && usid) await extendSession(db.sessions, usid, new Date(now + TOKEN_EXPIRATION_SECONDS * 1000))
+  if (db.sessions && usid) await extendSession(db.sessions, usid, new Date(capMs))
 
-  const { token: newToken, exp } = signJWT({ id, collection: 'users', email: finalRow.email, sid, ...(usid ? { usid } : {}), ...(jti ? { jti } : {}) }, args.secret, TOKEN_EXPIRATION_SECONDS)
+  const { token: newToken, exp } = signJWT({ id, collection: 'users', email: finalRow.email, sid, ...(usid ? { usid } : {}), ...(jti ? { jti } : {}) }, args.secret, ttlSeconds)
 
   return { exp, token: newToken, user: toAuthUserDoc(finalRow), setCookie: true }
 }

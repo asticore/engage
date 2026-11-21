@@ -54,7 +54,7 @@ describe('localapi/config - unit tests (mocked collection/global configs)', () =
         lockTime: 600_000,
         loginWithUsername: false,
         maxLoginAttempts: 5,
-        tokenExpiration: 7200,
+        tokenExpiration: 2_592_000,
         useSessions: true,
         verify: false,
         strategies: [],
