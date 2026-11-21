@@ -104,6 +104,7 @@ import { runMigrations, type Drizzle as MigrateDrizzle, type MigrationEntry, typ
 import { createDocument, deleteDocument, updateDocument, updateGlobalDocument, ValidationError } from './operations'
 import { collectionConfigs, globalConfigs, readRegistry, writeRegistry } from './registry'
 import type { Doc, PaginatedDocs, Sort } from './read-operations'
+import { clearGlobalMemo, memoGlobalRead } from './requestGlobalMemo'
 import { count as readCount, find as readFind, findByID as readFindByID, findGlobal as readFindGlobal } from './read-operations'
 import { deleteMediaObject } from './storage'
 import { prepareUploadFile, storePreparedUpload, type PreparedUpload } from '@/features/media/uploadHook'
@@ -344,7 +345,9 @@ export function createEngine(): Engine {
     },
     findGlobal: async (args) => {
       const { slug, depth, overrideAccess, disableErrors, user, req } = args
-      return readFindGlobal(readRegistry, slug, { req: toLocalReq(engine, { user, req }), depth, overrideAccess, disableErrors })
+      const load = () => readFindGlobal(readRegistry, slug, { req: toLocalReq(engine, { user, req }), depth, overrideAccess, disableErrors })
+      // Shared within one page render only (see requestGlobalMemo.ts); reads that carry a user or request are never shared.
+      return memoGlobalRead(user === undefined && req === undefined ? `${slug}|${depth ?? ''}|${overrideAccess ?? ''}|${disableErrors ?? ''}` : null, load)
     },
 
     create: async (args) => {
@@ -373,7 +376,9 @@ export function createEngine(): Engine {
         finalData = { ...data, ...uploadFields, url: `/api/media/file/${encodeURIComponent(uploadFields.filename)}` }
       }
 
+      clearGlobalMemo()
       const created = await createDocument({ collection: entry.config, db, data: finalData, req: localReq, overrideAccess, draft })
+      clearGlobalMemo()
 
       // The actual byte upload happens AFTER the DB row exists - mirroring
       // the reference engine's own `afterChange` hook timing (`the vendor package
@@ -411,7 +416,9 @@ export function createEngine(): Engine {
         finalData = { ...data, ...uploadFields, url: `/api/media/file/${encodeURIComponent(uploadFields.filename)}` }
       }
 
+      clearGlobalMemo()
       const updated = await updateDocument({ collection: entry.config, db, id, data: finalData, req: localReq, overrideAccess, draft })
+      clearGlobalMemo()
 
       if (collection === MEDIA_COLLECTION_SLUG && file && updated && preparedUpdate) {
         const updatedRecord = updated as unknown as Record<string, unknown>
@@ -433,7 +440,9 @@ export function createEngine(): Engine {
       const entry = readRegistry.collections[collection]
       const db = writeRegistry.collections[collection]
       if (!entry || !db) throw new Error(`createEngine().delete: unknown collection "${collection}"`)
+      clearGlobalMemo()
       const deleted = await deleteDocument({ collection: entry.config, db, id, req: toLocalReq(engine, { user, req }), overrideAccess })
+      clearGlobalMemo()
 
       if (collection === MEDIA_COLLECTION_SLUG) {
         const filename = (deleted as Record<string, unknown>).filename
@@ -456,7 +465,12 @@ export function createEngine(): Engine {
       const entry = readRegistry.globals[slug]
       const db = writeRegistry.globals[slug]
       if (!entry || !db) throw new Error(`createEngine().updateGlobal: unknown global "${slug}"`)
-      return updateGlobalDocument({ global: entry.config, db, data, req: toLocalReq(engine, { user, req }), overrideAccess, expectedUpdatedAt })
+      clearGlobalMemo()
+      try {
+        return await updateGlobalDocument({ global: entry.config, db, data, req: toLocalReq(engine, { user, req }), overrideAccess, expectedUpdatedAt })
+      } finally {
+        clearGlobalMemo()
+      }
     },
 
     login: async (args) => {
