@@ -1,6 +1,7 @@
 
 import { refuseWhileImpersonating } from '@/features/impersonation/policy'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { STEP_UP_COOKIE, STEP_UP_MAX_AGE_S, issueStepUp } from './stepUp'
 import { pendingBindingFromCookieHeader } from './pendingBinding'
 
 import { getEngine } from '@/lib/engine'
@@ -12,6 +13,7 @@ import {
   backupCodesRemaining,
   confirmEmailEnrolment,
   confirmEnrolment,
+  confirmIdentity,
   disableTwoFactor,
   isEnrolled,
   regenerateBackupCodes,
@@ -275,4 +277,31 @@ export async function revokeAllTrustedDevicesAction(): Promise<TwoFactorActionRe
   if (!user) return SIGNED_OUT
   const count = await revokeAllTrustedDevices(defaultTrustedDeviceStore, user.id)
   return { ok: true, message: count === 0 ? 'No devices were remembered.' : `Forgot ${count} device${count === 1 ? '' : 's'}.`, devices: [] }
+}
+
+/** The "Confirm it's you" screen: password or code in, a ten minute step-up cookie out. See stepUp.ts. */
+export async function confirmIdentityAction(passwordOrCode: string): Promise<TwoFactorActionResult> {
+  const blocked = refuseWhileImpersonating(await headers())
+  if (blocked) return { ok: false, message: blocked }
+
+  const { engine, user } = await currentUser()
+  if (!user) return SIGNED_OUT
+  if (limited(user.id)) return SLOW_DOWN
+
+  const secret = process.env.ENGAGE_SECRET || ''
+  if (!secret) return { ok: false, message: 'ENGAGE_SECRET is not set on this site, so a confirmation cannot be issued.' }
+
+  if (!(await confirmIdentity(store, user, String(passwordOrCode ?? '')))) {
+    await record(engine, user, 'two-factor.failed', 'confirm')
+    return { ok: false, message: 'That password or code was not right.' }
+  }
+
+  ;(await cookies()).set(STEP_UP_COOKIE, await issueStepUp(user.id, secret), {
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    maxAge: STEP_UP_MAX_AGE_S,
+  })
+  return { ok: true, message: 'Confirmed. You have ten minutes to add or promote an administrator.' }
 }

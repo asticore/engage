@@ -98,6 +98,7 @@ const AdsOverviewView = lazyView(() => import('@/features/ads/admin/AdsViews').t
 const AdsReportView = lazyView(() => import('@/features/ads/admin/AdsViews').then((mod) => mod.AdsReportView))
 const OptionsView = lazyView(() => import('@/features/customFields/admin/OptionsView').then((mod) => mod.OptionsView))
 const TwoFactorView = lazyView(() => import('@/admin/views/TwoFactorView').then((mod) => mod.TwoFactorView))
+const ConfirmIdentityView = lazyView(() => import('@/admin/views/ConfirmIdentityView').then((mod) => mod.ConfirmIdentityView))
 const SessionsView = lazyView(() => import('@/admin/views/SessionsView').then((mod) => mod.SessionsView))
 const PasskeysView = lazyView(() => import('@/admin/views/PasskeysView').then((mod) => mod.PasskeysView))
 const ApiKeysView = lazyView(() => import('@/admin/views/ApiKeysView').then((mod) => mod.ApiKeysView))
@@ -392,6 +393,12 @@ export const CUSTOM_ADMIN_VIEWS = [
     Component: TwoFactorView,
     path: '/security/two-factor',
     meta: { title: 'Two-step sign-in', description: 'Set up an authenticator app and backup codes for your account.' },
+  },
+  {
+    key: 'confirmIdentity',
+    Component: ConfirmIdentityView,
+    path: '/security/confirm',
+    meta: { title: 'Confirm it is you', description: 'Enter your password or a code again before adding an administrator.' },
   },
   {
     key: 'sessions',
