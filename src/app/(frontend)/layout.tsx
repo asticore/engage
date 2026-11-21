@@ -88,11 +88,28 @@ export const dynamic = 'force-dynamic'
 
 type LinkSource = { label?: string | null; linkType?: string | null; page?: unknown; customUrl?: string | null; openInNewTab?: boolean | null }
 
+/** Mark a promise as handled now so an early failure waits for its own `await` instead of raising a warning. */
+function early<T>(promise: Promise<T>): Promise<T> {
+  promise.catch((): void => undefined)
+  return promise
+}
+
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
   await traceMark('layout start')
   // Cloudflare's two-letter country for the visitor; drives the cookie banner's opt-in rule.
   const country = (await headers()).get('cf-ipcountry')
+  // Every read below is independent, so start them together instead of one after another: each is a D1 round
+  // trip, and the layout used to spend most of its time waiting for them in a chain.
+  const pagesRead = early(getAllResolvedPages().catch((): ResolvedPage[] => []))
+  const anyDomainPagesRead = early(getAllResolvedPagesAnyDomain().catch((): ResolvedPage[] => []))
+  const domainRead = early(requestDomain())
+  const selfHostRead = early(readSelfHostBuiltInFonts())
+  const themeStylesRead = early(loadThemeStyles())
+  const sitePagesRead = early(getSitePages())
+  const multilingualRead = early(readMultilingualSettingsFromD1())
+  const storeTextsRead = early(storeTexts())
+  const adsRead = early(getAdsContext())
   // Site settings, header, footer and shop settings: one read each per request (see features/speed/siteSnapshot.ts).
   const snapshot = await getSiteSnapshot()
   await traceMark('layout snapshot')
@@ -102,11 +119,11 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   const { settings, header, footer } = snapshot
   await traceMark('layout pages')
-  const resolvedPages = await getAllResolvedPages().catch((): ResolvedPage[] => [])
+  const resolvedPages = await pagesRead
 
   // Menu links store a page id; see features/domains/menu.ts for a page scoped to another domain.
   const host = await requestHost()
-  const anyDomainPages = await getAllResolvedPagesAnyDomain().catch((): ResolvedPage[] => [])
+  const anyDomainPages = await anyDomainPagesRead
 
   const resolveHref = (item: LinkSource): string | null => {
     if (item.linkType === 'page') {
@@ -159,7 +176,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     links.map((link) => ({ ...link, href: localizeForRequest(link.href), children: link.children && localNav(link.children) }))
 
   // The domain this request arrived on can override the name, logo, contact and social links (features/domains).
-  const domain = await requestDomain()
+  const domain = await domainRead
   const brand = domainBrand(settings, domain)
   const logo = brand?.logo && typeof brand.logo === 'object' ? (brand.logo as Media) : null
   const theme = settings?.theme
@@ -175,7 +192,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // A built-in face is loaded only when the theme uses it (a value that is not a known face falls back, as resolveThemeFont does).
   const builtInHeading = Object.hasOwn(HEADING_FONT_VARS, theme?.headingFont || '') ? theme?.headingFont : 'opensans'
   const builtInBody = Object.hasOwn(BODY_FONT_VARS, theme?.bodyFont || '') ? theme?.bodyFont : 'opensans'
-  const builtInFontsCss = buildBuiltInFontCss([heading.installed ? null : builtInHeading, body.installed ? null : builtInBody], { selfHost: await readSelfHostBuiltInFonts() })
+  const builtInFontsCss = buildBuiltInFontCss([heading.installed ? null : builtInHeading, body.installed ? null : builtInBody], { selfHost: await selfHostRead })
   const fontCss = [builtInFontsCss, buildFontCss(fontsInUse)].filter(Boolean).join('\n')
   const googleStylesheets = remoteStylesheetUrls(fontsInUse)
   const fontPreloads = preloadLinks(fontsInUse, fontsInUse.map((font) => font.family))
@@ -193,7 +210,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // Global theme styles (colours, text, buttons, tables). A failure here must never break the page.
   let themeStylesCss = ''
   try {
-    const { styles, saved } = await loadThemeStyles()
+    const { styles, saved } = await themeStylesRead
     themeStylesCss = buildThemeStylesCss(styles, {
       saved,
       legacy: {
@@ -209,7 +226,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // Maintenance mode: while it is on, visitors get the maintenance screen in place of the page. Read only
   // when it is on, so the normal path costs nothing extra. Admin API routes, webhooks and feeds never reach
   // this layout (they are route handlers or live outside the (frontend) group).
-  const sitePages = await getSitePages()
+  const sitePages = await sitePagesRead
   const maintenance = sitePages.maintenance
   const showMaintenance = maintenance.enabled && !launchReached(maintenance.mode, maintenance.launchAt, new Date())
     ? shouldShowMaintenance({
@@ -223,7 +240,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     : false
 
   // Language for this request (null while multilingual is off: the document keeps its single-language markup).
-  const multilingual = await readMultilingualSettingsFromD1()
+  const multilingual = await multilingualRead
   // The logged-in portal takes its language from the visitor (profile, cookie, browser), never from a URL.
   const portal = isPortalPath(requestPathOf(await headers()), multilingual.activeLocales)
   const locale = portal
@@ -258,7 +275,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // Sidebars are for the public site: not the maintenance screen and not the customer portal.
   const sidebars = showMaintenance || portal ? { left: null, right: null } : await renderSidebarTemplates(requestPathOf(await headers()), chromeScope)
   // Sidebar ad slots (Ads > Placements, mode Sidebar) sit under the right sidebar; with no sidebar template they make the column alone.
-  const adsState = showMaintenance || portal ? null : await getAdsContext()
+  const adsState = showMaintenance || portal ? null : await adsRead
   const hasSidebarAds = Boolean(adsState?.config && adsState.placements.some((p) => p.enabled && p.mode === 'sidebar'))
   const sidebarAds = hasSidebarAds ? <AdPlacements position="sidebar" /> : null
   const rightSidebar = sidebars.right ? (
@@ -271,7 +288,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   )
   const siteEffects = siteEffectsFor(settings, requestPathOf(await headers()))
 
-  const storeDict = await storeTexts()
+  const storeDict = await storeTextsRead
   await traceMark('layout built')
   return (
     <html
