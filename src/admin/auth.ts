@@ -153,12 +153,14 @@ export async function buildCollectionPermissions(
   user: unknown,
   engine: Engine
 ): Promise<{ create?: boolean; read?: boolean; update?: boolean; delete?: boolean }> {
-  return {
-    create: await evaluateAccess(collection.access?.create, user, engine),
-    read: await evaluateAccess(collection.access?.read, user, engine),
-    update: await evaluateAccess(collection.access?.update, user, engine),
-    delete: await evaluateAccess(collection.access?.delete, user, engine),
-  }
+  // The four checks do not depend on each other, and an access function may read the database, so run them together.
+  const [create, read, update, del] = await Promise.all([
+    evaluateAccess(collection.access?.create, user, engine),
+    evaluateAccess(collection.access?.read, user, engine),
+    evaluateAccess(collection.access?.update, user, engine),
+    evaluateAccess(collection.access?.delete, user, engine),
+  ])
+  return { create, read, update, delete: del }
 }
 
 /**
@@ -182,16 +184,22 @@ export const getAdminContext = cache(async (): Promise<AdminContext> => {
     globals: globals.filter((g) => !isHidden(g.admin?.hidden, user)).map((g) => g.slug),
   }
 
-  const permissions: EntityPermissions = { collections: {}, globals: {} }
-  for (const collection of collections) {
-    permissions.collections![collection.slug] = await buildCollectionPermissions(collection, user, engine)
-  }
-  for (const global of globals) {
-    permissions.globals![global.slug] = { read: await evaluateAccess(global.access?.read, user, engine) }
+  // Every collection and global is checked independently, so check them all together (this used to be one
+  // awaited check after another, a long chain of database reads on every admin page) and load the custom role
+  // matrix alongside.
+  const matrixRead = loadCustomMatrix(engine, user as unknown as UserWithCustomRole)
+  matrixRead.catch((): void => undefined)
+  const [collectionChecks, globalChecks] = await Promise.all([
+    Promise.all(collections.map(async (collection) => [collection.slug, await buildCollectionPermissions(collection, user, engine)] as const)),
+    Promise.all(globals.map(async (global) => [global.slug, { read: await evaluateAccess(global.access?.read, user, engine) }] as const)),
+  ])
+  const permissions: EntityPermissions = {
+    collections: Object.fromEntries(collectionChecks),
+    globals: Object.fromEntries(globalChecks),
   }
 
   // Load custom role matrix once for this request
-  const customMatrix = await loadCustomMatrix(engine, user as unknown as UserWithCustomRole)
+  const customMatrix = await matrixRead
 
   // Build the can() function that uses role-based permissions
   const canFn = (resource: Resource, action: Action): boolean => {
