@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { checkForUpdate } from '@/features/updates/check'
 import { parseManifest } from '@/features/updates/manifest'
 import { isLeanInstall, oneClickConfig, pinInstallVersion } from '@/features/updates/oneClick'
+import { verifyConnection } from '@/features/updates/connection'
 import { isMigrationPending, pendingMigrationNames } from '@/features/updates/state'
 import { updateLinks, upstreamRepo } from '@/features/updates/versions'
 
@@ -92,5 +93,27 @@ describe('manifest requiresWorkerUpdate', () => {
   it('defaults to true for older manifests and honours false', () => {
     expect(parseManifest({ version: '1.2.0' }).requiresWorkerUpdate).toBe(true)
     expect(parseManifest({ version: '1.4.0', requiresWorkerUpdate: false }).requiresWorkerUpdate).toBe(false)
+  })
+})
+
+describe('verifyConnection', () => {
+  const ok = (body: unknown, status = 200) => async () => new Response(JSON.stringify(body), { status })
+  it('uses the one repository a token reaches and checks engage.config.json', async () => {
+    const calls: string[] = []
+    const fetcher = async (url: string) => {
+      calls.push(url)
+      return url.includes('/user/repos') ? new Response(JSON.stringify([{ full_name: 'me/site' }])) : new Response('{}')
+    }
+    expect(await verifyConnection('', 'tok', fetcher)).toEqual({ ok: true, repo: 'me/site' })
+    expect(calls[1]).toContain('/repos/me/site/contents/engage.config.json')
+  })
+  it('refuses a repository that is not an install, a refused token, and an empty token', async () => {
+    expect((await verifyConnection('me/other', 'tok', ok({}, 404))).ok).toBe(false)
+    expect((await verifyConnection('me/site', 'tok', ok({}, 403))).ok).toBe(false)
+    expect((await verifyConnection('me/site', ' ', ok({}))).ok).toBe(false)
+  })
+  it('asks for the repository when the token reaches several', async () => {
+    const r = await verifyConnection('', 'tok', ok([{ full_name: 'a/b' }, { full_name: 'c/d' }]))
+    expect(r.ok).toBe(false)
   })
 })

@@ -36,3 +36,14 @@ export async function pendingMigrationNames(db: D1Database, expected: string[]):
   const done = new Set((rows.results ?? []).map((r) => r.name))
   return expected.filter((name) => !done.has(name))
 }
+
+export async function getMeta(db: D1Database, key: string): Promise<string | null> {
+  await db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE} (key TEXT PRIMARY KEY, value TEXT NOT NULL)`)
+  const row = await db.prepare(`SELECT value FROM ${TABLE} WHERE key = ?1`).bind(key).first<{ value: string }>()
+  return row?.value || null
+}
+
+export async function setMeta(db: D1Database, key: string, value: string): Promise<void> {
+  await db.exec(`CREATE TABLE IF NOT EXISTS ${TABLE} (key TEXT PRIMARY KEY, value TEXT NOT NULL)`)
+  await db.prepare(`INSERT INTO ${TABLE} (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = ?2`).bind(key, value).run()
+}
