@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { envWithReplicaReads, usesReplica } from '@/features/speed/d1Replica'
+import { envWithReplicaReads, replicaConstraint, usesReplica } from '@/features/speed/d1Replica'
 
 const req = (url: string, method = 'GET', cookie = '') => ({
   method,
@@ -36,5 +36,24 @@ describe('envWithReplicaReads', () => {
     const env = { D1: { prepare: () => 1 } }
     expect(envWithReplicaReads(env)).toBe(env)
     expect(envWithReplicaReads(undefined)).toBe(undefined)
+  })
+})
+
+describe('replicaConstraint', () => {
+  it.each([
+    ['anonymous page', req('https://x.test/blog'), 'first-unconstrained'],
+    ['signed-in admin read', req('https://x.test/admin/pages', 'GET', 'engage-token=abc'), 'first-primary'],
+    ['signed-in page read', req('https://x.test/blog', 'GET', 'engage-token=abc'), 'first-primary'],
+    ['signed-in api', req('https://x.test/api/x', 'GET', 'engage-token=abc'), null],
+    ['signed-in write', req('https://x.test/admin/pages', 'POST', 'engage-token=abc'), null],
+    ['anonymous admin', req('https://x.test/admin/login'), null],
+  ])('%s', (_n, r, expected) => {
+    expect(replicaConstraint(r)).toBe(expected)
+  })
+  it('passes the constraint to withSession', () => {
+    const seen: string[] = []
+    const env = { D1: { withSession: (c: string) => (seen.push(c), { prepare: () => 1 }) } }
+    envWithReplicaReads(env, 'first-primary')
+    expect(seen).toEqual(['first-primary'])
   })
 })
