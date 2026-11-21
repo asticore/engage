@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { envWithReplicaReads, replicaConstraint, usesReplica } from '@/features/speed/d1Replica'
+import { envWithReplicaReads, openReplicaEnv, readBookmark, replicaConstraint, usesReplica, withBookmarkCookie } from '@/features/speed/d1Replica'
 
 const req = (url: string, method = 'GET', cookie = '') => ({
   method,
@@ -43,6 +43,8 @@ describe('replicaConstraint', () => {
   it.each([
     ['anonymous page', req('https://x.test/blog'), 'first-unconstrained'],
     ['signed-in admin read', req('https://x.test/admin/pages', 'GET', 'engage-token=abc'), 'first-primary'],
+    ['signed-in with bookmark', req('https://x.test/admin/pages', 'GET', 'engage-token=abc; eg_d1_bm=00000123-0000abcd-ffff0000'), '00000123-0000abcd-ffff0000'],
+    ['signed-in with a bad bookmark', req('https://x.test/admin/pages', 'GET', 'engage-token=abc; eg_d1_bm=bad value!'), 'first-primary'],
     ['signed-in page read', req('https://x.test/blog', 'GET', 'engage-token=abc'), 'first-primary'],
     ['signed-in api', req('https://x.test/api/x', 'GET', 'engage-token=abc'), null],
     ['signed-in write', req('https://x.test/admin/pages', 'POST', 'engage-token=abc'), null],
@@ -55,5 +57,42 @@ describe('replicaConstraint', () => {
     const env = { D1: { withSession: (c: string) => (seen.push(c), { prepare: () => 1 }) } }
     envWithReplicaReads(env, 'first-primary')
     expect(seen).toEqual(['first-primary'])
+  })
+})
+
+describe('bookmark cookie', () => {
+  const r = (method: string, url: string, cookie: string) => ({ method, url, headers: { get: (n: string) => (n.toLowerCase() === 'cookie' ? cookie : null) } })
+  const ok = () => new Response('x', { status: 200 })
+  it('reads only well-formed bookmarks', () => {
+    expect(readBookmark('a=1; eg_d1_bm=00000123-0000abcd-ffff0000')).toBe('00000123-0000abcd-ffff0000')
+    expect(readBookmark('eg_d1_bm=no')).toBeNull()
+    expect(readBookmark(null)).toBeNull()
+  })
+  it('sets the cookie from the session bookmark for signed-in reads only', () => {
+    const handle = { bookmark: () => '00000123-0000abcd-ffff0000' }
+    const set = withBookmarkCookie(r('GET', 'https://x.test/admin', 'engage-token=a'), ok(), handle)
+    expect(set.headers.get('set-cookie')).toContain('eg_d1_bm=00000123-0000abcd-ffff0000')
+    expect(set.headers.get('set-cookie')).toContain('HttpOnly')
+    const anon = withBookmarkCookie(r('GET', 'https://x.test/blog', ''), ok(), handle)
+    expect(anon.headers.get('set-cookie')).toBeNull()
+    const none = withBookmarkCookie(r('GET', 'https://x.test/admin', 'engage-token=a'), ok(), { bookmark: () => null })
+    expect(none.headers.get('set-cookie')).toBeNull()
+  })
+  it('clears the cookie after a write or api call, not after an asset read', () => {
+    const cookie = 'engage-token=a; eg_d1_bm=00000123-0000abcd-ffff0000'
+    expect(withBookmarkCookie(r('POST', 'https://x.test/admin', cookie), ok(), null).headers.get('set-cookie')).toContain('Max-Age=0')
+    expect(withBookmarkCookie(r('GET', 'https://x.test/api/x', cookie), ok(), null).headers.get('set-cookie')).toContain('Max-Age=0')
+    expect(withBookmarkCookie(r('GET', 'https://x.test/_next/static/a.js', cookie), ok(), null).headers.get('set-cookie')).toBeNull()
+  })
+  it('drops the bookmark when a read made from it ends in a server error', () => {
+    const cookie = 'engage-token=a; eg_d1_bm=00000123-0000abcd-ffff0000'
+    const failed = withBookmarkCookie(r('GET', 'https://x.test/admin', cookie), new Response('x', { status: 500 }), { bookmark: () => '00000123-0000abcd-ffff0001' })
+    expect(failed.headers.get('set-cookie')).toContain('Max-Age=0')
+  })
+  it('exposes the session bookmark through openReplicaEnv', () => {
+    const session = { prepare: () => 1, getBookmark: () => '00000123-0000abcd-ffff0000' }
+    const handle = openReplicaEnv({ D1: { withSession: () => session } }, 'first-primary')
+    expect(handle.bookmark()).toBe('00000123-0000abcd-ffff0000')
+    expect(openReplicaEnv({ D1: {} }).bookmark()).toBeNull()
   })
 })
