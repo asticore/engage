@@ -58,7 +58,7 @@ export function UpdateNotice() {
     setMigrating(true)
     setMigrateError('')
     try {
-      const res = await fetch('/api/admin-engage-migrate', { method: 'POST', credentials: 'same-origin' })
+      const res = await fetch('/api/admin-engage-migrate', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
       if (res.ok) window.location.reload()
       else setMigrateError('The migration did not finish. Nothing was dropped. Try again, or restore the backup taken before the update.')
     } catch {
@@ -81,7 +81,7 @@ export function UpdateNotice() {
   const applyNow = async (): Promise<void> => {
     setApplying(true)
     try {
-      const res = await fetch('/api/admin-update-apply', { method: 'POST' })
+      const res = await fetch('/api/admin-update-apply', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
       const body = (await res.json().catch(() => ({}))) as { ok?: boolean; message?: string }
       setResult({ ok: res.ok && body.ok === true, message: body.message ?? t('update.failed') })
     } catch {
