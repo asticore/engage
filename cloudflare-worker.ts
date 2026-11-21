@@ -10,7 +10,7 @@
 
 // @ts-ignore - generated at build time by opennextjs-cloudflare
 import openNextWorker from './.open-next/worker.js'
-import { envWithReplicaReads, replicaConstraint } from './src/features/speed/d1Replica'
+import { openReplicaEnv, replicaConstraint, withBookmarkCookie } from './src/features/speed/d1Replica'
 import { addTimingHeaders, envWithD1Timing, traceGlobalFetch, traceMark, startTimingMarks, type D1Timing } from './src/features/speed/d1Timing'
 import { withEdgeCache } from './src/features/speed/edgeCacheWorker'
 
@@ -51,9 +51,14 @@ export default {
   async fetch(request: Request, rawEnv: unknown, ctx: unknown): Promise<Response> {
     // Page views read from a nearby D1 replica when read replication is on (see d1Replica.ts).
     const constraint = replicaConstraint(request)
-    const env = constraint ? envWithReplicaReads(rawEnv, constraint) : rawEnv
-    const run = (e: unknown) =>
-      withEdgeCache(request, e, ctx, (req, e2, c) => (openNextWorker as OpenNextWorker).fetch(req, e2, c))
+    const handle = constraint ? openReplicaEnv(rawEnv, constraint) : null
+    const env = handle ? handle.env : rawEnv
+    const run = async (e: unknown): Promise<Response> =>
+      withBookmarkCookie(
+        request,
+        await withEdgeCache(request, e, ctx, (req, e2, c) => (openNextWorker as OpenNextWorker).fetch(req, e2, c)),
+        handle,
+      )
     // Debug only: `x-eg-timing: 1` on a request reports how many D1 statements ran and how long they took.
     const mode = request.headers.get('x-eg-timing')
     if (mode !== '1' && mode !== '2') return run(env)
