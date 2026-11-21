@@ -120,3 +120,28 @@ export function traceGlobalFetch(timing: D1Timing): () => void {
     if (globalThis.fetch === traced) globalThis.fetch = original
   }
 }
+
+/**
+ * Debug only (trace mode 2): drops a labelled mark into the trace. The Workers clock only moves when I/O finishes,
+ * so a mark does one cheap cache lookup to refresh it; the gap between two marks then shows the compute between them.
+ * Does nothing unless the current request is being traced.
+ */
+export async function traceMark(label: string): Promise<void> {
+  const timing = (globalThis as { __egTiming?: D1Timing }).__egTiming
+  if (!timing?.trace) return
+  try {
+    await (globalThis as { caches?: { default?: { match(req: Request): Promise<unknown> } } }).caches?.default?.match(new Request(`https://eg-trace.invalid/${Math.random()}`))
+  } catch {
+    // The mark still records below, with a stale clock.
+  }
+  timing.trace.push(`@${Date.now() - (timing.t0 ?? Date.now())}+0ms MARK ${label}`)
+}
+
+/** Makes `timing` the one marks are written to, until the returned function is called. */
+export function useTimingForMarks(timing: D1Timing): () => void {
+  const holder = globalThis as { __egTiming?: D1Timing }
+  holder.__egTiming = timing
+  return () => {
+    if (holder.__egTiming === timing) holder.__egTiming = undefined
+  }
+}

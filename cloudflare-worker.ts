@@ -11,7 +11,7 @@
 // @ts-ignore - generated at build time by opennextjs-cloudflare
 import openNextWorker from './.open-next/worker.js'
 import { envWithReplicaReads, usesReplica } from './src/features/speed/d1Replica'
-import { addTimingHeaders, envWithD1Timing, traceGlobalFetch, type D1Timing } from './src/features/speed/d1Timing'
+import { addTimingHeaders, envWithD1Timing, traceGlobalFetch, traceMark, useTimingForMarks, type D1Timing } from './src/features/speed/d1Timing'
 import { withEdgeCache } from './src/features/speed/edgeCacheWorker'
 
 // Durable Object classes must stay top-level exports of the Worker entry.
@@ -60,10 +60,13 @@ export default {
     const timing: D1Timing = { count: 0, ms: 0, trace: mode === '2' ? [] : undefined }
     const wrappedEnv = envWithD1Timing(env, timing)
     const restore = traceGlobalFetch(timing)
+    const stopMarks = useTimingForMarks(timing)
     try {
+      await traceMark('worker start')
       return addTimingHeaders(await run(wrappedEnv), timing)
     } finally {
       restore()
+      stopMarks()
     }
   },
   async scheduled(_event: unknown, env: CronEnv, ctx: { waitUntil(p: Promise<unknown>): void }): Promise<void> {
