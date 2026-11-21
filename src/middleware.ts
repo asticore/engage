@@ -22,6 +22,7 @@ import {
 } from '@/features/security/signInPath'
 import { DEFAULT_BLOG_BASE, isUnderPath } from '@/features/seo/permalinks'
 import { parseFeedAddress } from '@/features/blog/feedAddress'
+import { traceMark } from '@/features/speed/d1Timing'
 import { readBlogBase } from '@/features/seo/permalinkStore'
 import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
 import { readDomainsFromD1 } from '@/features/domains/store'
@@ -47,7 +48,9 @@ import { refreshCspBuilder } from '@/features/security/cspBuilderStore'
  * it is the worst place for logic to accumulate quietly.
  */
 export async function middleware(request: NextRequest) {
+  await traceMark('middleware start')
   await warmSettingCaches()
+  await traceMark('middleware warmed')
   const served = await domainMiddleware(request, (routed) => serveAdminAware(routed))
   // The locale strip rewrites the path, so the stripped path (x-pathname) is checked as well as the request path.
   const { pathname } = request.nextUrl
@@ -65,6 +68,7 @@ export async function middleware(request: NextRequest) {
   }
   // A staging site is never indexed, whatever the page says.
   if (isStaging()) response.headers.set('X-Robots-Tag', STAGING_NOINDEX)
+  await traceMark('middleware end')
   return response
 }
 

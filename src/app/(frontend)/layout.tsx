@@ -1,5 +1,6 @@
 // Built-in theme fonts load only when the theme picks them (features/fonts/builtIn.ts). Fontsource is no longer
 // imported here: its files are served from jsDelivr at the version pinned in builtIn.ts.
+import { traceMark } from '@/features/speed/d1Timing'
 import { requestDomain } from '@/features/domains/request'
 import { domainBrand, domainSocials } from '@/features/domains/brand'
 import React from 'react'
@@ -89,15 +90,18 @@ type LinkSource = { label?: string | null; linkType?: string | null; page?: unkn
 
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
+  await traceMark('layout start')
   // Cloudflare's two-letter country for the visitor; drives the cookie banner's opt-in rule.
   const country = (await headers()).get('cf-ipcountry')
   // Site settings, header, footer and shop settings: one read each per request (see features/speed/siteSnapshot.ts).
   const snapshot = await getSiteSnapshot()
+  await traceMark('layout snapshot')
   const storeCurrency = shopCurrency({ settings: (snapshot.shopSettings ?? {}) as Record<string, unknown> })
   // Extra display currencies (display only). Empty unless some are set up, so the shop looks the same as before.
   const displayState = await loadDisplayState(storeCurrency, (await cookies()).get(DISPLAY_CURRENCY_COOKIE)?.value)
 
   const { settings, header, footer } = snapshot
+  await traceMark('layout pages')
   const resolvedPages = await getAllResolvedPages().catch((): ResolvedPage[] => [])
 
   // Menu links store a page id; see features/domains/menu.ts for a page scoped to another domain.
@@ -268,6 +272,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   const siteEffects = siteEffectsFor(settings, requestPathOf(await headers()))
 
   const storeDict = await storeTexts()
+  await traceMark('layout built')
   return (
     <html
       lang={locale ?? 'en'}
