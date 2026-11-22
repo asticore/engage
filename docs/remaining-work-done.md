@@ -1,270 +1,2922 @@
 # Done (archive)
 
-## Done
-- **Task 10 chat button batch 5 (22 Nov 2026).** `chat-button` element (`Wave70Elements.tsx`, def in `wave70Defs.ts`): WhatsApp (`wa.me`, digits checked, prefilled text), Messenger (`m.me`) and Telegram (`t.me`) links built only from validated numbers or usernames, optional hours window in the visitor's own time (overnight wraps), optional floating corner button, opens in a new tab with `noopener`. Tests in `tests/int/wave70-elements.int.spec.ts`.
-- **Task 6 items 16m, 16n, 16o: accessibility in the SEO review, snippets and PageSpeed checklist, site audit dashboard (22 Nov 2026).** Migration `20270322_100000_seo_site_audit` adds `eg_seo_crawl_runs`, `eg_seo_crawl_pages`, `eg_seo_crawl_config`, `eg_seo_snippet_targets` and `eg_pagespeed_results.audits` (all in `CORE_TABLE_BASES`, baseline regenerated). 16m: `analysis/accessibility.ts` adds heading order, empty headings and image alt checks to `analyze()` (new `accessibility` list and score; the editor SEO tab shows an Accessibility analysis section; audit rows carry `findings` marked SEO or Accessibility and the audit list shows a badge); the rendered-page checks (landmarks, link and button names, labels, frame titles, duplicate ids, tabindex, aria-hidden focus, ARIA roles, lang, skip link) are in the catalogue `crawl/issues.ts` and run in the site audit and the page card; contrast, tap size and focus order come from the PageSpeed accessibility audits. 16n: `src/features/seo/snippets.ts` is a data-driven catalogue of Google's gallery (paragraph, list and table are judged from the content; the rest from JSON-LD with required and recommended properties; FAQ and How-to are markup only); the edit screen has a Snippets and page checks card (`ui/PageChecksCard.tsx`, route `/api/admin-seo-page`) that loads the live page, shows ticked types and types the page has, an Add a type menu, suggestions from the collection, target types saved per page, the Rich Results Test link and our own SEO, accessibility and technical checklist (passing and Not applicable rows stay). `pagespeed/checklist.ts` parses every audit of every category in the PageSpeed response (so new groups such as Agentic browsing appear without a rebuild), stores it on the newest result of a page and device, and the PageSpeed card shows it as the Full checklist (Pass, Warning, Fail, Check by hand, Not applicable). 16o: `src/features/seo/crawl/` crawls the sitemap plus every published page over the site's own address a few pages per step (`/api/admin-seo-crawl`, admin only; the screen loops the steps, the `seo-crawl` cron job continues and starts scheduled crawls), parses each page (`htmlFacts.ts`), judges it with about 60 checks (`issues.ts`: titles, descriptions, headings, thin and duplicate content, status codes and redirect chains, canonical, hreflang return links, images, structured data, Open Graph, mixed content, speed, size, orphans, depth, broken internal links, accessibility), keeps the last three runs and compares with the previous one. The SEO audit screen has a Site audit panel: health score, Errors, Warnings, Notices with the change, issue cards that filter, a table of 30 chooseable columns with sort, search and filters, a detail panel with fix hints and an editor link, CSV export, Mark noindex, Add 301 redirects and a schedule (off, daily, weekly; off by default). Tests: `tests/int/seo-site-audit.int.spec.ts`, fresh-install spec extended. Left open under Task 6: image file sizes and last modified as columns, external broken links in the audit table, the Pages list row overview, rings from our own checks.
-- **Task 10 display conditions batch 4: device, country, query parameter, cookie (22 Nov 2026).** Four more rules next to sign-in, role, URL, schedule, weekday, time and language (`src/lib/visibilityRules.ts`, keys `showDevices`, `showParam`, `showCookie`, `showCountry` in `blockStyle.ts`, controls in `DesignPanel.tsx`). Device: mobile under 600 px, tablet 600 to 899 px, desktop 900 and up, read from the window width. Query parameter and cookie: `name` or `name=value`, read in the browser (no cached page split). Country: the `/api/visibility-state` answer now includes the edge country code (never cached); unknown country hides the block. All rules fail closed when their value is unknown. Tests: `tests/int/visibility-rules.int.spec.ts`.
-- **Task 10 widgets batch 3: sitemap and age gate (22 Nov 2026).** Sitemap (`Wave70Server.tsx`, server): published pages as a tree by parent, depth 1 to 6, slug exclusions drop whole branches, members-only and no-index pages left out. Age gate (`Wave70Elements.tsx`, client): full-screen dialog, Yes/No buttons or date of birth with minimum age, answer remembered N days in the browser, skipped for crawler user agents, deny goes only to an https address or a same-site path, otherwise shows a message. Left from the age gate: per-country rules and a popup preset. Defs `wave70Defs.ts`, tests `tests/int/wave70-elements.int.spec.ts`.
-- **Task 10 widgets batch 2: product images, stock, short description, meta (22 Nov 2026).** Four server elements in `wave69Defs.ts` and `Wave69Server.tsx` (gallery island in `Wave69Elements.tsx`, styles `wave69.css`) reading the product from the block context, which now also carries sku, gtin, short description, category, all pictures (up to 20), low stock level and backorders (`blockContextFrom.ts`). Product stock shows in stock, low stock with the count (product level or the element's own), out of stock or backorder. Tests: `tests/int/wave69-elements.int.spec.ts`.
-- **Task 10 widgets batch 1: world clock, progress tracker, dark mode toggle, bigger charts (22 Nov 2026).** Three new client elements in `wave68Defs.ts` and `Wave68Elements.tsx` (styles `wave68.css`): World clock (up to 12 cities as `City | IANA zone` lines, analogue SVG or digital, 12 or 24 hour, seconds and date options, bad zones skipped), Progress tracker (steps, current step number, optional query parameter that overrides it, horizontal or vertical, `aria-current`), Dark mode toggle (switch that sets `data-theme` on the page, saves the choice in the browser, starts from the system setting). The Chart element now takes up to 100 values and accepts pasted CSV lines. Tests: `tests/int/wave68-elements.int.spec.ts`, `elements-wave48.int.spec.ts`.
-- **Step-up confirmation for adding administrators (21 Nov 2026).** Giving an account the admin role (create or update) now needs a password or authenticator code entered again in the last ten minutes: the screen `/admin/security/confirm` (Security > Confirm it is you) sets a signed httpOnly cookie (`src/features/security/stepUp.ts`, `confirmIdentityAction`), and the Users `beforeChange` hook `requireStepUpForAdminGrant` refuses with 403 and the screen's address otherwise. Not asked: the first admin, internal calls with no signed-in user. Changing your own password (current password) and turning two-step off or regenerating backup codes (password or code) already re-checked. The old 720 minute session setting moves to 30 days in the earlier migration; other values are kept. Tests: `step-up`.
-- **Admin two-step on by default and 30-day sign-ins (21 Nov 2026).** `requireTwoFactorForAdmins` now defaults on and covers administrators even when the Security section is off (`isCovered` in `twoFactorEnforcement.ts`, gate in `localapi/rest.ts`); an unenrolled admin is sent to the setup screen, the sole admin's API is never refused, and `ENGAGE_DISABLE_2FA_ENFORCEMENT` still works. Migration `20270320_100000_admin_two_step_and_30_day_sessions` turns it on for existing sites with a 7 day grace if none was set, and moves the old 720 minute default to 43200. Sessions are server-side rows (revocable from the sessions list) and last a fixed 30 days from sign-in: `TOKEN_EXPIRATION_SECONDS` is 30 days and a refresh never extends past that cap. Release installs get both through the migration. Tests: `two-factor`, `auth-slice-3`, `localapi-auth`, `user-sessions`, `fresh-baseline-parity`.
-- **Fonts never bundled; Open Sans is the default (20 Nov 2026).** All six `@fontsource/*` packages are gone from `package.json` and the lockfile; nothing imports a font package any more. The admin used to bundle Inter through `@fontsource/inter` CSS imports; `(engage)/layout.tsx` now writes the Open Sans `@font-face` rules (jsDelivr, pinned 5.3.0) and `--font-sans` is Open Sans. Open Sans is a new built-in face (latin, latin-ext, cyrillic, greek, vietnamese and hebrew subsets, 400 to 700) and the default heading and body font for new sites, the layouts' fallback, the settings import and the embed layout. The older built-in faces (Cormorant Garamond, Playfair Display, Cinzel, Jost, Montserrat, Inter) still render from the CDN for sites that already chose them, are marked `legacy`, and the heading and body pickers list them only while one is selected. More fonts are added in Theming > Fonts either from a CDN (Google Fonts or the Fontsource catalog via jsDelivr) or by uploading the font file, which is stored in Media on R2 (existing flow, `src/features/fonts/install.ts`). `tests/int/built-in-fonts.int.spec.ts` checks Open Sans and that no `@fontsource` package is a dependency. Existing sites keep their stored choice; the database default for a missing value on an old row is unchanged, so only rows with no stored font change look (to Open Sans).
-- **Shine and Spark from their releases, plus Front-end files (20 Nov 2026).** The public site and customer portal no longer bundle Shine: the layout writes a `<link>` to `asticore/shine@v1.0.0/dist/shine.min.css` on jsDelivr (a release tag, served unchanged) with a SHA-384 integrity hash, and a one-line script swaps to `public/vendor/shine/shine.min.css` if the CDN or the hash fails (`ShineLink` in `src/features/frontendAssets/FrontendAssetsHead.tsx`). `(frontend)/styles.css` only declares the Shine layer order now. Spark loads from `asticore/spark@v0.4.0` (the same commit as before) with the loader's integrity hash and the bundled fallback; its feature files are fetched by the loader without hashes. Tag, URL and hashes live in `src/features/frontendAssets/builtin.ts`; `tests/int/frontend-assets.int.spec.ts` checks the bundled copies against the hashes. The admin still bundles `src/styles/shine/shine.css` (static admin work owns that). New admin screen Settings > Speed > Front-end files (`/frontend-files`, admin only, `src/features/frontendAssets/`): add any https stylesheet or script by address with optional integrity, type, head or end of body, defer or async, scope (site, portal or both) and an on switch, with presets for Bootstrap 5.3.3, Bulma, Pico, Tailwind Play CDN, Font Awesome Free, jQuery and Alpine (hashes taken from the served files). Stored as one row in `eg_kv` (key `frontend-assets`, no migration, no baseline change), read from isolate memory for 30 s by the layout and the middleware; the admin never loads these files. The hosts are added to the default Content-Security-Policy for public pages (script-src, style-src, font-src); a hand-typed policy is left as written. Saves are audited as `frontend-assets.save`. English only for now (like the CSP builder).
-- **Hebrew admin and portal language (20 Nov 2026).** `he` joins the admin interface languages (`ADMIN_UI_LOCALES`, right to left via `RTL_ADMIN_UI_LOCALES`, so `dir="rtl"` on the admin and portal), with `dictionaries/he.ts` and `public/ui-strings/he.json` (static file, same as the others, nothing bundled in the Worker). The browser's old code `iw` maps to `he`. The public site already had Hebrew as a content language with `dir="rtl"`. Translations are machine written (live check). Tests: language suites extended.
-- **Task 16h site-wide traffic lights (17 Nov 2026).** The SEO audit screen shows five lights above the summary for admins: robots.txt (blocks everything, no Sitemap line), sitemap (off, empty), HTTPS, canonical address (not set, trailing slash) and duplicate titles (`src/features/seo/sitewideChecks.ts`, gathered in `/api/admin-seo-audit`, shown by `SitewideLights` in `SeoAuditClient.tsx`). Computed on each visit, nothing stored, no migration. Tests in `tests/int/sitewide-checks.int.spec.ts`.
-- **Task 16f feed addresses and images (17 Nov 2026).** `<blog>/category/<slug>/feed` (a nested category uses its last slug) and `<blog>/tag/<slug>/feed` are rewritten in the middleware to `/feed.xml?category=` and `?tag=` (`src/features/blog/feedAddress.ts`); category and tag pages add their own feed link to the page head unless the feed is off (`feedLink.ts`); items carry the featured image as `enclosure` and `media:content`; item links use the configured blog address. No migration. Tests in `tests/int/feed-address.int.spec.ts`.
-- **Task 16g facts editor (17 Nov 2026).** The page type facts are a form instead of JSON (`src/fields/schemaFacts/SchemaFactsField.tsx`, fields per type in `FACT_FIELDS` in `richTypes.ts`), shown for Recipe, Job posting, How-to, Software application, Review, Person and Local business, with a live list of missing required and recommended facts. The same list is a Page type facts check in the SEO analysis and the audit (`factsCheck` in `analysis/analyze.ts`). Stored value is the same JSON text, no migration. Tests in `tests/int/rich-schema.int.spec.ts`.
-- **Task 10 activity log feed and release notes (17 Nov 2026).** Every taskboard write adds its entries to the main Activity log under collection `taskboard` (`src/features/taskboard/activityLog.ts`, written by the `admin-taskboard` route from the new rows in `eg_task_activity`; created maps to create, deleted to delete, the rest to update). `CHANGELOG.md` holds the release notes (1.1.0 and 1.0.0); tagging is left for Matt's decision. Test: `taskboard`.
-- **Tasks 5 and 6 follow-ups (17 Nov):** notification rules have a look (stored as channel `email_brand` in `eg_notification_rules`, so no schema change): plain, or designed (wrapped in the Email design brand with the tags filled; stays plain until the brand is switched on). Email designer: undo and redo (`designerHistory.ts`, bursts of typing count as one step, 50 steps, Ctrl or Cmd + Z / Y), preview at Gmail, Outlook and Apple Mail content widths beside Computer and Phone, and dark mode colour checks in the lint (low text contrast, pure black text or panel, logo in dark mode, dim accent links). Style cards: drawn preview thumbnails (`StyleThumb`), the explanation lines are structured (`reasonItems`, keys `themeStyle.r.*`) and translated in the twelve languages, and the suggested effect is remembered in the browser and offered with an Apply button in the visual editor's Effects picker (never applied automatically).
-- **Tasks 8 to 10 second batch (17 Nov 2026).** Task 10: `task.assigned`, `task.commented` and `task.due` are webhook events and notification triggers (`src/features/webhooks/events.ts`, `src/features/notifications/triggers.ts`, "customer" means the assignee); a switched-on rule owns the email, otherwise the built-in plain email goes out (`hasRule` in `src/features/taskboard/actions.ts`). Card archive and restore (`archived_at` on `eg_task_cards`, migration `20270318_100000_taskboard_archive_due`, activity `card.archived`, `card.restored`, Show archived toggle). Due reminders: hourly job `taskboard-due` (`src/features/taskboard/dueReminders.ts`, column `due_notified`: once per due date, skips archived cards and the board's last column). My tasks page `/admin/my-tasks` (`MyTasksPanel`, `GET /api/admin-taskboard?mine=1`). Task 9: one click update for a fork (`src/features/updates/oneClick.ts`, `POST /api/admin-update-apply`, Worker secrets `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN`, fine-grained token with Contents read and write on the fork only; no database column because `eg_integrations` is full); version bumped to 1.1.0. Task 8: Empty the data on Media can also delete the uploaded files from R2 (`src/features/cleanup/emptyFiles.ts`; backups go to their own destination so are not touched). Tests: `taskboard`, `section-empty-files`, `update-one-click`.
-- **Tasks 7 to 10 leftovers (17 Nov 2026).** Task 7: a browser opening a company-limited download while signed out is redirected to `/account/sign-in?redirect=` (`isBrowserNavigation`, `mediaSignInRedirect` in `src/features/organizations/mediaGate.ts`, used by `handleGetMediaFile`); Cloudflare Images work stays inside R2 through the binding, and the only public copy was the temporary Stream copy, so a company-limited or private video is now never sent to Stream (`isRestricted` in `optimiseStoredVideo`, `admin-media-optimise` route). Task 8: Empty the data has an optional "restart the numbering" step (`resetCounters`, clears `sqlite_sequence`), and the download is paged in parts of 5000 rows a table (`exportFeatureData(db, flags, feature, page)`, the panel downloads every part). Task 9: update popup text through `useAdminT` (`update.*` keys, twelve languages). Task 10: all Taskboard text through `useAdminT` (`tb.*` keys, twelve languages) and activity lines name the assignee instead of a user number. Tests: `media-company-gate`, `section-empty-data`, admin UI string suites.
-- **Tasks 4, 5, 6 leftovers (17 Nov):** Task 4: `{{category_path}}` and `{{category_url}}` now fill on tag and author archives (they get the category tree), and a single post has `{{post.category_path}}` and `{{post.category_url}}` dynamic tags (`categoryTrail` and `categoryHref` in the post context); promo badge tag and category rules use a picker (`BadgeSlugField`: Product tags from `/api/product-tags`, categories Digital and Physical; typed slugs from before are kept and flagged when unknown). Task 5: five new events for webhooks and notification rules: `stock.low` (raised from `sendStockAlerts`, low and out, whatever the stock email setting says), `course.enrolled` (Enrolments afterChange), `subscription.started`, `subscription.cancelled`, `subscription.payment_failed` (Stripe subscription handler); each has an allowlist of fields, merge tags, labels in 12 languages. Task 6: style card names, descriptions and the section text are translated into the twelve languages (keys `themeStyle.*`); the generator picks a heading font and body font from the fonts installed in Site fonts (by the picks' heading kind, deterministic by seed; says so when none match and keeps the theme fonts) and suggests an effect from the Effects picker, each with a reason line. `/api/editor-fonts` now also returns each font's id and category.
-- **Task 11d wholesale mode (17 Nov):** Shop switches > Wholesale mode (off by default): role name (default `wholesale`), hide prices from signed-out visitors or from everyone but approved wholesale accounts with custom text, minimum order value for wholesale accounts, and open applications. Hidden prices are removed server side from product cards, the product page (the view sent to the browser carries no prices, JSON-LD offers and the template price merge tag are dropped), the shop archive and its filters, and the cart quote and checkout refuse with the same text (`priceCart` in `server/pricing.ts`, `signedIn` input). Products have a Wholesale only checkbox (`wholesale_only`, migration `20270318_100000_wholesale`): hidden from lists, search, related and upsells (`excludeProtected`), 404 on the product page, refused on add to cart (`cartHooks.ts`) and at checkout, and filtered from REST and GraphQL reads (`wholesaleReadClause`). Minimum order is checked at the final checkout for wholesale accounts (admins exempt). Registration: `/account/wholesale` (signed-in customers, `/api/wholesale-apply`, rate limited) stores a pending row in `eg_wholesale_applications`; the Wholesale admin screen (`/admin/wholesale`, `/api/admin-wholesale`, admin only, audited) approves, rejects or removes access, and approving creates a company account owned by the applicant. Approved accounts get the wholesale role in their customer types (`customerTypesForUser`), so existing tiers and rules by role apply. Customer tags (`eg_customer_tags`, edited on the Wholesale screen) are customer types `tag:<name>` and a pricing rule condition "Customers with a tag". The product page shows the viewer's own tiers and a Wholesale minimum order note from the lowest wholesale tier quantity. Code: `lib/wholesale.ts` (pure), `server/wholesale.ts`, `components/WholesalePanel.tsx`, `WholesaleApplyForm.tsx`, test `tests/int/wholesale.int.spec.ts`. Follow-up (17 Nov): wholesale-only now applies to bundles at checkout, approving or rejecting an application emails the applicant (`sendDecisionEmail`, template name `wholesale.decision`, plain text, the admin's optional note included), and the cart estimate shows the minimum order and how much to add (`wholesaleMinOrder` in the `/api/shop-quote` answer). Follow-up (17 Nov): with wholesale mode on and prices hidden the public product feeds publish no rows (a feed has no viewer, so prices would show to everyone); secret-address custom feeds keep their prices and still leave wholesale-only products out. The cart minimum-order notice, product page minimum note, hidden-price text (when the owner leaves it blank), apply form, account page, admin Wholesale screen, Settings link and the approve/reject emails now use the shared UI strings (`store.wholesale.*`, `portal.wholesale.*`, `wholesale.*`, `email.wholesale.*`) in all twelve languages; an owner-typed hidden-price text is shown as typed.
-- **Next.js security patch (16 Nov):** `next` 16.4.3 to 16.4.6 (same minor, clears the known-vulnerability notice that stopped the production build twice). `@opennextjs/cloudflare` stays 1.18.1 (peer range `^16.1.5`), patch file unchanged. Full OpenNext build and type check pass; live deploy check in Live checks.
-- **Task 22a (now 17a) ownership transfer and delegation (16 Nov):** accounts here are companies (organisations). Transfer is two steps: the owner picks a member (`requestOwnershipTransfer`), the member gets an email with a single-use link valid 7 days (`/account/transfer/[token]`, only a SHA-256 is stored), and the roles swap (new owner first, old owner becomes admin) only when that member, signed in as the named account, accepts; the offer can be declined or cancelled, a newer request replaces an older one, and nothing swaps if either person left meanwhile. Delegation: a real member lets another existing account act for them in one company for chosen rights and 1 hour to 90 days (`createDelegation`); rights are limited to what the delegator holds now and never include membership, role, delete or transfer rights (`DELEGABLE_ACTIONS`), a delegate cannot delegate or leave, and it ends on expiry, revoke (delegator, delegate or an owner) or when the delegator leaves. The delegate sees the company in their list with an "acting for" banner, and every change they make is audited as `organization.delegate-action` with whose rights were used. Tables `eg_org_transfers` and `eg_org_delegations` (migration `20270316_420000_org_transfer_delegation`, baseline regenerated); code in `src/features/organizations/` (`service.ts`, `store.ts`, `actions.ts`, `OrganizationScreens.tsx`); tests in the 22a block of `tests/int/organizations.int.spec.ts`. Left out: email to the delegate when access is granted, a site-administrator view of all delegations, and delegation of a person's own account outside companies (sign in as is still admin only).
-- **Task 22a ownership transfer and delegation (16 Nov):** accounts here are companies (organisations). Transfer is now two steps: the owner picks a member (`requestOwnershipTransfer`), the member gets an email with a single-use link valid 7 days (`/account/transfer/[token]`, only a SHA-256 is stored), and the roles swap (new owner first, old owner becomes admin) only when that member, signed in as the named account, accepts; the offer can be declined or cancelled, a newer request replaces an older one, and nothing swaps if either person left meanwhile. Delegation: a real member lets another existing account act for them in one company for chosen rights and 1 hour to 90 days (`createDelegation`); rights are limited to what the delegator holds now and never include membership, role, delete or transfer rights (`DELEGABLE_ACTIONS`), a delegate cannot delegate or leave, and it dies on expiry, revoke (delegator, delegate or an owner) or when the delegator leaves. The delegate sees the company in their list with an "acting for" banner, every change they make is audited as `organization.delegate-action` with whose rights were used. Tables `eg_org_transfers` and `eg_org_delegations` (migration `20270316_420000_org_transfer_delegation`, baseline regenerated); code in `src/features/organizations/service.ts`, `store.ts`, `actions.ts`, `OrganizationScreens.tsx`; tests in the 22a block of `tests/int/organizations.int.spec.ts`. Left out: delegation across a person's own account outside companies (sign in as is still admin only), email to the delegate when access is granted, and a site-administrator view of all delegations.
-- **Task 22c company theming and portal layout (16 Nov):** a company (organisation) sets its own logo (existing field), colours (main, accent, background, text), heading and body font (fixed safe stacks) and the order and visibility of the sections on its portal page; applies to every member of that company only, scoped to `.org-portal`, never the site theme. Data model decision: stored inside the organisation's own `metadata` JSON under `branding` and `layout`, so no table or migration; every value is validated on write and again on read (`src/features/organizations/branding.ts`), a free-form metadata edit keeps those keys. Owners and admins with `organization:update` use the Details section (`BrandingForm`); a site administrator overrides any company from /admin/security/organizations (`adminSaveOrganizationBranding`, works with customer organisations off, audited). Details can never be hidden. Texts in 13 languages. Tests: `tests/int/organization-branding.int.spec.ts`, 22c block in `tests/int/organizations.int.spec.ts`. Left out: a company-level admin-panel layout (the admin panel is for site staff; the company's dashboard is its portal page, which is what this configures), uploaded custom fonts, and locking a company out of changing its look.
-- **Task 18 activity log with clear (9 Nov, PR pending):** the audit log already held account-security events only; creates, edits, publishes, unpublishes and deletes on content, templates, forms, roles, shop settings records and similar collections (list in `ACTIVITY_LOGGED`, `src/localapi/registry.ts`; users log creates and deletes only; products hooked directly) now write to it, plus an `export` event on the activity, products, redirects and list CSV downloads. New screen `/security/activity` (`ActivityLogView`): filter by person (email or id; names link to that person's rows), event, collection and dates; CSV download; Clear panel (older than N days, one person, or all) that shows the count, needs the word CLEAR, and writes an `activity.cleared` record. Consent, privacy and clear records are never removed (`PROTECTED_AUDIT_ACTIONS`). Retention stays on the Security settings (`auditLog.retentionDays`, existing prune). Privacy erase now blanks email, address and browser on the customer's log rows. Spec `tests/int/activity-log.int.spec.ts`. No new table, so no migration.
-- **Task 14 member groups and companies (9 Nov):** companies already existed as organisations (members, teams, roles, invitations, per-document "visible to company"); added company-admin control over who inside the company reads each page, post, product or event: new permission `content:manage` (owners and admins have it, custom roles can carry it), table `eg_content_org_grants` (migration `20270313_100000_org_content_grants`, baseline regenerated, fresh-install specs extended), grants name members or teams and narrow only: no grants means every member (previous behaviour); owners, admins and `content:manage` holders always read; grants are dropped when a member leaves, a team is deleted or the company is deleted; the gate fails closed. Account company page has a Company content access section; strings in all 13 dictionaries. Customer types and API categories read a member's companies through `listOrgsForUser`. Files and downloads moved to open Task 14 (media is served public today). Live check in Task 20.
-- **9 Nov Task 17 feedback popup (follow-up):** the Feedback button now opens a modal (focus trapped, Esc/backdrop closes) with Report a bug / Request a feature; each opens the matching new issue page (`template=bug_report.md` + label `bug`, or `feature_request.md` + label `enhancement`) with version, admin page and language pre-filled. Issue templates now carry labels. New strings (feedback.title/bug/feature/hint/cancel) in 13 languages; test extended.
-- **9 Nov Task 17 feedback button for super admins (PR pending):** sidebar Feedback button (admin role only, next to Help) opens the new issue page of asticore/engage in a new tab, pre-filled with portal version (package.json), admin page path and admin language; `src/admin/ui/FeedbackButton.tsx`, `feedbackUrl.ts`, strings in 13 languages, test `tests/int/feedback-url.int.spec.ts`. No tables, so no migration. Live click check goes into the live checklist (Task 20).
-- **9 Nov Task 10 easy API creation, keys and feeds (PR pending):** most of it already existed (API builder, per-user keys with scopes, revoke, call log, developer guide, webhooks, members portal keys). Added: API access categories (`eg_api_categories`, `eg_api_category_members`; scopes, rate per minute, key cap; members are a person or a customer organisation; a key is narrowed to its owner's category on every request and the category's rate applies; once any category exists a customer without one cannot use or create a key, staff are unaffected), key rotate (re-checks password or code, old key dies at once, audited), per-key daily usage (`eg_api_key_usage`, 30 days, shown on the key row), admin creates a key for a customer, endpoints can be limited to categories, the customer's portal API guide lists only the endpoints their account can call, data feeds (CSV with formula defusing, JSON lines, XML; `?format=` per call), drag and drop field picker with buttons for keyboard and touch (replaces the checkbox list), webhook link from the builder. Strings in 13 languages. Live checks in Task 20 (Closed Task 10 API).
-- **8 Nov Task 1 visual editor Elementor-parity tweaks (PR #226, 8 Nov):** VE-01 to VE-15 from `the Elementor tweaks appendix of this file`: paste style guarded and device-safe, CSS id de-duplication with warning, hidden blocks faded in the editor, edit lock and overwrite check, shortcuts (Mod+S/E/I/P, Mod+Shift+C/V/H/M), context menu Edit/Navigator/Reset style, History and Revisions panel, 13 more per-device style keys, preview button, unsaved-state save buttons, Finder, padding drag handles, multi-select, text style presets in Theme styles (JSON, no migration).
-- **8 Nov Task 2 drag from the Elements bar (PR #226, 8 Nov):** root cause: the iframe pass-through flag was set in a capture-phase dragstart listener before React's setData, so dataTransfer.types was empty; now tracked in the bubble phase (`trackLibraryDrag`, `src/views/visualEditor/dropSlot.ts`).
-- **8 Nov Task 3 Elementor gap review (PR #226, 8 Nov):** `the Elementor gap review appendix of this file`; built: custom attributes with a strict allowlist, popup idle trigger and overlay/close/animation options (never impossible to close), visibility rules for weekday, time (visitor clock) and language. Left for later: dynamic link/image sources (needs a check and scope decision), scroll-linked motion (Firefox lacks view timelines).
-- **8 Nov Task 4 admin walkthrough (PR #226, 8 Nov):** once per user account (`eg_preferences` key `admin-tour`), Help button in the sidebar replays it, focus trap, 12 languages.
-- **8 Nov Task 5 fresh-install questionnaire (PR #226, 8 Nov):** dashboard dialog for admins, suggestions only turn sections on, summary before applying; migration `20270311_100000_setup_questionnaire` (existing installs marked skipped), baseline regenerated, fresh-install specs extended; translated.
-- **8 Nov Task 6 bookings research and plan (PR #226, 8 Nov):** `the Bookings plan appendix of `docs/remaining-work.md`` (gap list, data model, 4 phases, 14 decisions for Matt).
-- **Task 4 fresh-install speed (PR #222, 2 Nov):** an empty database gets a precomputed final schema (`src/migrations/baseline/`, generated) and the existing migrations are recorded as run, so only newer ones run; existing installs and lazy sections unchanged. Local fresh install 78-83 s down to 6.5-7.5 s. `tests/int/fresh-baseline-parity.int.spec.ts` proves table, column, index, foreign key and seed parity with the full run (lazy default and all sections on) and that a later migration still runs; regenerate with `REGENERATE_BASELINE=1`. Specs that test migrations pass `baseline: false`.
-- **Task 4 Next 16 upgrade (PR #220, 2 Nov):** next 15.4.11 to 16.4.3 with eslint-config-next 16.2.7; `@opennextjs/cloudflare` 1.18.1 supports `^16.1.5`, so `--dangerouslyUseUnsupportedNextVersion` is gone from `deploy`, `deploy:app` and `scripts/build.mjs`. Next 16 builds with Turbopack by default and rejects the webpack `extensionAlias`, so build, dev and the OpenNext `buildCommand` use `--webpack`. `middleware.ts` kept (deprecated but supported on the edge; the Node-runtime `proxy` rename is a separate change). tsc, eslint (0 errors), edge-middleware-graph, speed-page-queries and `next build --webpack` pass; the OpenNext build and live deploy are a Task 6 check.
-- **Task 4 lazy sections and Unused tables (PR #218, 2 Nov):** a fresh install creates core tables (pages, media, users, settings, navigation) and the sections on by default (tracking); shop, events, blog, FAQs, forms, courses, members, A/B tests, ads, backups, redirects, translations and approval get their tables the first time they are ticked in Settings > General > Features (the same migration sequence replayed with only that section's statements, run before the save lands; a failure rejects the save and the switch stays off), plus a starter template for shop, events and FAQs. Switching off keeps data and tables. Existing installs: migration `20270310_100000_feature_tables_state` marks every section that already has tables as provisioned, switches untouched (tested on a simulated older database). A lazy install plus every section provisioned equals the old install table for table, column for column. Registry `src/features/featureTables.ts` (one owner per table, derived from `FEATURES[].tables`; settings tables are core; test fails for an unclassified or doubly claimed table). Reads of a missing section table return empty (find, findByID, count; privacy export and unsubscribe guarded). Settings > Data and System > Unused tables (admin role is the super admin): rows and size estimate, JSON export, delete by typing the table name, audit entry `database.table-dropped`, refuses core, sections that are on and payment records (orders, refunds, transactions, gift cards, store credit, credit ledger, subscriptions, coupon reservations); a deleted table marks its section deferred so switching it on recreates it. `POST /api/internal-migrate?provision=all` makes every section at once. Measured locally: fresh install about 15 percent faster; the rest is the 147 migrations' own lookups (next speed target: fewer per-migration reads, or the package split); one section takes about 5 s to create. Decisions: posts stay in the Blog section; settings pages are always created; the old Database screen (per-feature cleanup) stays. Live checks in Task 6. Known: `content-types-drift` fails on main (FormSubmission embedId and embedSource not declared), not from this PR.
-- **Task 4 speed and Task 5 type debt (PR #217, 2 Nov):** `any` 167 to 83, eslint-disable 86 to 43 (ratchet baseline lowered). `src/engine/types.ts` has one named loose default (`Loose`); hook results are `unknown`, records `Record<string, unknown>`; edit-screen and lock guards are typed. `@next/next/no-img-element` is off in `eslint.config.mjs` (pictures use the site's own image pipeline; 29 directives gone, decided). Real fixes for set-state-in-effect and exhaustive-deps in SeoCard (useSyncExternalStore), SocialImageInfo, ListRowActions, PasswordGroups, GenerateVariations, useResolvedMedia, commerce provider. Speed (measured on the stale 25 Oct `.next`: admin page 510 KB gzip, public pages about 210 KB; no new build run): admin field widgets (`componentRegistry`) load on use; all admin screens in `adminViewRegistry` load when their route opens (server `lazyView`); PageSpeed and Google cards in EditForm, the popup script, the tracking picker (admins only) and the form renderer load on demand. Server rendering unchanged. Re-measure after the next build with `pnpm run bundle:size` and set the budget in Task 6. Checks: tsc, eslint, related vitest (ratchet, forms, popup, tracking picker, roles guards, edit screens, speed page queries, password groups, bundle reader).
-- **Task 5 portal review (PR #216, 2 Nov):** account read-through: the order link, bookings heading and empty state (an unconfirmed address now says why), reorder failure message, a confirmation before removing an address, autocomplete on address fields, alert role for errors, a loading state for signed-in screens, translated privacy titles; the Asticore SaaS placeholder removed. Passkey decision: new Security setting "A passkey that verified the user skips the authenticator-app code", **off by default** (migration `20270308_100000_passkey_skip_two_factor`). Correction to the old note: user-verified passkeys already skipped the code; they now do so only when this is on. RSVP decision: keep the email match; bookings and the privacy export show only for a confirmed address, and a customer can now ask for the confirmation link (it was never sent when verification is off). Ratchet: `tests/int/type-ratchet.int.spec.ts` against `tests/int/type-ratchet-baseline.json` (any 249 to 167, eslint-disable 107 to 86). Checks: tsc, eslint, related vitest (passkeys, verification, RSVP, privacy, roles, pages tree, strings, fresh-install); cookie-consent SEO cases time out at 5 s under load and pass with a longer timeout. Matt's checks are in Task 6.
-- **Task 4 architecture (PR #215, 2 Nov):** site name from Site Settings in Header, Footer, checkout, the home page and the seed (neutral default "My website"; no extra reads on page paths). `pnpm run setup:cloudflare` creates or reuses the D1 database and R2 bucket and rewrites the names and ID in `wrangler.jsonc` (idempotent; refuses to change the ID without `--replace`; live values unchanged). `pnpm run bundle:size` reads per-route first-load JS from the `.next` build against `bundle-budget.json` (the budget value is a placeholder until Task 6). Content-type drift test (`tests/int/content-types-drift.int.spec.ts`): about 230 collection fields added to `src/engage-types.ts`, two unused keys removed, stored-elsewhere keys mapped, `seo.xCard` typed as a union. README deploy steps, scripts, feature status (every feature is implemented), database cleanup and template libraries corrected. Checks: tsc, eslint, related vitest. Matt's live checks are in Task 6.
-- **Task 2 webhooks: log redaction, retention, DNS guard, booking event, inbound webhooks (PR #214, 2 Nov):** the stored body of a finished delivery has secret-looking keys and credential-shaped values replaced (a pending one keeps its exact body until sent; a redacted one cannot be replayed). Retention 7 to 365 days (default 30) on the webhooks screen, with a clean-up button; the cron job purges at that setting. Before each send the host is resolved over DNS over HTTPS and private, loopback, link-local and metadata answers are refused (limits in outbound.ts). `booking.made` fires from event RSVPs and appointment bookings. Inbound endpoints (`/api/webhooks-inbound/<token>`): HMAC per endpoint, replay window 1, 5 or 15 minutes, required Idempotency-Key, creates a draft or published page or post from a payload field, or triggers an outgoing event; request log without bodies. Migration `20270304_100000_webhook_redaction_inbound`. Decisions: inbound content is pages and posts only; "automation" means an outgoing event; the title field is a typed payload path. Checks: tsc, eslint, vitest (webhook specs, fresh-install, related forms, strings, cron, RSVP and migration specs).
-- **Task 3 forms and external embeds (PR #213, 2 Nov):** draft-only pages: a form used only in an unpublished draft lists its page on the Forms screens as a draft (the usage query reads drafts too). External embeds phase 2: a form can have several embeds, each a row in `eg_form_embeds` (migration 20270306_100000_form_embeds, which carries over existing embed keys, switch and websites, so placed snippets keep working) with its own hosted page at `/embed/<key>` (`/embed/forms/<key>` still works; numeric embed addresses do not), a source name, its own websites and a theme picked from the site's design: palette colour, heading or body font, site corner radius. The embed layout now uses the site's theme styles and fonts (it had its own colours). Submissions through an embed carry the source (`embedSource`, shown with the form in Forms). Decided: forms are still built only in the visual editor, whose form panel no longer holds the embed switch or websites (they are on Forms > External embeds); a post that is not through an embed is accepted from this site only; embed keys are random, not numeric ids; the shortcode keeps the form's own key. Live checks are in Task 6.
-- **Task 2 API gaps: DELETE, custom fields, messages, PDF, send to developer (PR #212, 2 Nov):** DELETE per endpoint, off by default (`allowDelete`); the key's owner needs delete permission for the collection; pages, posts and events move to the trash (the trash guard applies), other collections are deleted; every DELETE is audited (endpoint path, collection, id, key id, mode; no key or body). Custom fields `cf:<name>` are exposed, read and written: reads and writes follow the field groups that apply to the record for the owner's roles, hide values by their conditions, and run the collection's own save validation (400 with each field); a field no group gives the account is 403. Decided: custom fields are not filtered or sorted yet (the builder refuses them). API runtime messages are in uiStrings (`api.*`, English default, answered in Accept-Language); the admin builder's validation stays English; the 12 other dictionaries hold English for the new keys until a translation pass. PDF guide (`format=guide.pdf`, admin download and public link) is built from the Markdown guide with no library (standard Helvetica and Courier, nothing embedded, Workers-safe). "Send to developer" block: mailto and copy for the read-only public guide link, never a key. OpenAPI, Markdown and Postman include DELETE and custom field types. No migration (endpoint config is JSON). Live checks in Task 6.
-- **Task 1 leftovers: relation fields on import and export, options page rules (PR #211, 2 Nov):** pages (parent), posts (author, featured image) and products (images, brand, tags, variation pictures) export by name (slug, file name, email, template or group name) and import links them back by the same name; a name not on the site is left unlinked with a warning on the check and the apply; pages import parents first. Options pages: location rules match on user role and on a new "Field value (options page)" rule that compares another field's saved value (the form re-checks it as values change; save uses the values sent); a group with no collection rule applies to an options page when its other rules match. Permanent: public merge tags never know the viewer's roles, so a role rule adds no tag there; relation ids inside block content keep their old behaviour (only top-level, grouped and array fields of pages, posts and products are mapped). No migration.
-- **Known limits: SVG, Openverse hosts, RSVP guest details (PR #210, 2 Nov):** 3 fixed: SVG uploads behind Allow SVG uploads (off by default), each file cleaned on upload against an in-repo allow-list (scripts, event attributes, foreignObject, outside links and url(), style imports and non-picture data addresses removed; DOCTYPE, entities and processing instructions refused) and served sandboxed with nosniff; the Openverse picture host list is editable in Media settings, defaulting to the built-in list; a View guest details permission: Event RSVPs read now gives the RSVP counts (no names, emails or CSV), and View guest details adds the rows and export (editors keep it, viewers and custom roles do not by default). Permanent: a customer sees only RSVPs under their own verified address; check-in keeps its own guard. Live checks in Task 6.
+Everything that has been built and closed, moved here from `docs/remaining-work.md`. Part 1 groups every finished feature or change by category, each with a stable code (for example `SEC-007`). Part 2 is a log by date that links back to those codes. The appendices at the end are the closed planning documents, unchanged.
 
-- **Known limits sweep: Fonts (PR #209, 1 Nov):** fixed: fonts installed before 1 Nov get a pinned jsDelivr version, the latest one (what a new install gets) (migration 20270302_100000_font_versions_pinned; if jsDelivr cannot be read during the migration that font keeps its old path until it is reinstalled); built-in faces gain Vietnamese (Cormorant Garamond, Playfair Display, Montserrat, Inter) and Greek (Inter), each pinned with its unicode range. Permanent: none.
-- **Task 5 srcset and account colours (PR #208, 1 Nov):** gallery, image gallery, carousel, card, team member and image box pictures get a srcset from the ElementWithMedia candidates and a sizes attribute (no extra reads; the image block already had one). Account and portal search colours use theme roles (surface, text, error, success), so they follow the dark theme; the mobile nav scrim fades to the theme background. TODO/FIXME: none left in `src/` (nothing to clear). Decided: sizes are column-share estimates (phone full width, desktop 50vw for card top, 25vw left or right, 50vw image box, 280px team photo). Logo strip keeps one URL (fixed height, no sizes yet). Permanent: none. Live check in Task 6.
-- **Known limits sweep: Media, Import and export, Fonts, Speed (PR #207, 1 Nov):** 16 fixed: new media types (ico, heic, bmp, tiff, ogg, m4a, json, rtf, ods; JSON and RTF are downloads only); uploads over 25 MB as R2 multipart; names starting with original are served; transparent pictures become WebP instead of JPEG; ODS read as a spreadsheet; settings and template imports count streamed bytes; shop customers exportable (admin only); picture details matched by id then file name, and settings remap picture ids; fonts kept on a settings import when their files are on the site; font files of removed fonts deleted from R2 after the save; Fontsource files pinned to the version recorded at install; font subsets chosen (latin, latin-ext, cyrillic, greek, vietnamese); Google stylesheets ask only for offered weights; Speed option to self-host the built-in theme fonts; image block srcset. Permanent: SVG (no sanitiser in deps); old .xls; re-optimising keeps a picture's file name so links work; Stream makes MP4 only, JPEG XL and WebM choices keep the file, video links are URLs; the Worker reads a request into memory once; imported admin users stay editors unless allowed; font files are not in exports; customers are not recreated on import. Moved to tasks: relation fields (Task 1), JS bundle (Task 4), gallery and card srcset (Task 5).
-- **Known limits: editing, approval and roles, custom fields, admin, locks (PR #206, 1 Nov):** 18 fixed: non-publisher saves of a published page become drafts; text-only editing keeps element styling props; every publish purges the page cache; approval hash matches form and database values; custom role matrices reach the publish guards; approval writes are claimed with a conditional update; one person may approve two steps by workflow setting (off by default); edits that reset a review write a history row; a workflow change offers to move documents in review; post tags match tag rules; shared field names warn; picture and file fields checked on the server; card state saved per card and merged; a failed save opens its card; old RSVP and submission lists redirect to their tabs; old collapse rows deleted; SEO settings clear the rules cache; template locks copy to pages made from a template. Checked, no change: backup covers approval tables; template parts are lockable through site templates. Moved to Task 1: options page location rules. Permanent: RSVP rights, Openverse host list, per-isolate rules cache up to 60 s.
-- **Known limits: SEO, redirects, consent, email, shop, ads (PR #205, 1 Nov):** 17 fixed: ads in-feed and sidebar slots wired; shop coupon race closed by an atomic 30-minute hold; shop brand, tag and search filters in the database (no newest-200 scan); SES List-Unsubscribe header; suppression list admin screen; CSV quoted newlines; orphan check counts menu, header and footer; slug change redirects pages and their descendants, and courses; 404 log in Redirects > 404s; VideoObject for Vimeo and uploaded video, and a per-video upload date; consent log requests signed and rate limited; Meta and Clarity consent API on withdrawal; banner preview uses unsaved edits; banner logo from the media library; AdSense id format checked. Permanent: AdSense auto ads cannot be unloaded on client navigation; Prebid price floors need the vendor module; Cloudflare Email has no bounce feed; complaints and bounces suppress bulk mail only (deliberate); customer bulk actions and custom order statuses are not built; a YouTube playlist has no single video; GA4 or GTM without Consent Mode, TikTok and custom code are stopped only by reload. Live checks in Task 6 (Known limits sweep).
-- **Known limits: specs, schema, small leftovers (PR #204, 1 Nov):** version-delete-real-engine and schedule-publish-due build their own D1 and are back in CI, with AdminNavClient, nav-structure and heading-effects (stale expectations fixed, `server-only` alias in vitest); `scripts/checkDevD1.mts` rebuilds a local D1 stub (runs before `test:int`); migration 20270224_100000_block_form_id adds `form_id` to the twelve Form block tables (fixes "no such column"), rels legacy names media_id/faqs_id in the shadow schema, KNOWN_UNMIGRATED empty; getting-started ticks now save (the list-prefs sanitiser dropped them); blog and events listings emit an ItemList; two unused CSS rules removed; README cron line. Permanent: none in this area. Left: cookie-consent spec (still excluded), shop listing stays a plain CollectionPage.
-- **Task 1 multisite (PR #203, 1 Nov):** admin site switcher in the sidebar (shown with two or more sites; per-person choice in preferences, checked on the server; only sites the account may use; All sites only for an account with no domain limit; default is the primary site). Admin lists for pages, posts and products show the chosen site plus shared content; new content takes the chosen site when "Available on domains" is empty. Connect domain on Settings > Domains attaches a domain to the Worker through the Workers custom-domains API when account ID, Worker name, zone and token are saved in Integrations > Cloudflare; otherwise the manual steps stay. Menu links to a page scoped only to another domain output its absolute address. Migration `20270220_100000_cloudflare_worker_domains` (two columns). Migration `20270220_110000_domain_scoped_content`: one-time rewrite of older scope lists (replaces the manual re-save), unique index on (scope, slug) for posts and products, duplicate slugs get `-<id>`. Already in place, checked in code: Sites screen with per-domain name, language, primary, status and overrides (Settings > Domains), lockdown by Allowed domains, uiStrings for the picker and DNS checklist (13 dictionaries), page hreflang across domains, admin noindex (meta, X-Robots-Tag, robots.txt with the custom admin path). Decisions: switcher sits in the sidebar (the admin has no top bar); Connect domain uses the zone set in Integrations, so a domain in another zone needs its own zone (not built); other dictionaries use English for the new switcher and Connect domain strings until translated. Permanent: none. Left: Products mirror in the ecommerce plugin (vendor code). Matt's live checks in Task 6.
-- **Task 12b media formats and admin progress bar (PR #202, 1 Nov):** picture output format (follow the WebP and AVIF switches by default, Original, JPEG, WebP, AVIF; JPEG XL kept as it is because Cloudflare cannot write it) and video output format (Original, MP4, WebM), each overridable per file. Block images use the delivery URL (block media resolved in ElementWithMedia). Video links (`video/link`) added from the gallery with a title and a poster; the Video element picks an upload or a link. Optimise on videos converts to MP4 through Cloudflare Stream in steps, only with a Stream account ID and token (WebM is not made by Stream and is kept). Admin progress bar on link clicks, submits and data requests. Lazy-loaded tag editor, visual editor field panel and pages tree. Theme fonts stay on jsDelivr (self-host option later). Matt's steps are in Task 6.
-- **Task 10 SEO (PR #200, 1 Nov):** cornerstone checkbox on pages and posts; the audit checks cornerstone items more strictly (900 words, keyphrase in a subheading, internal links and alt text) and filters to them. Bulk edit of SEO titles and meta descriptions in the audit list: one request, up to 100 rows, each row written as the signed-in user with access rules on. Sitemap image entries for posts (featured image), products (images, up to 10) and events (cover). Orphan check for pages (no published content links to them) and up to five link suggestions per page by title and keyphrase words; no AI, menus not counted. VideoObject for YouTube video elements (Vimeo and uploaded files get none: no thumbnail). FAQ questions on a non-FAQPage page now go in a separate FAQPage node (before, a WebPage with questions), and /faq emits FAQPage. A published post, product or event whose slug changes gets a 301 from the old path, skipped when one exists (as the tree does). Migration 20270131_100000_seo_cornerstone. Live checks in Task 6.
-- **Task 11 operations (PR #199, 1 Nov):** error spike alert (admin email when 10 or more new errors are first seen in 15 minutes, at most one an hour; threshold and on/off in Speed settings > Error alerts; cron job `error-alert`). Restore round-trip spec now covers the approval-workflows tables (the backup table list is discovered from sqlite_master, so none is hand-kept). Privacy export adds store credit, its movements, carts and product reviews (no cart secret); erase deletes carts and clears the reviewer name and email on reviews; account menu links to `/account/privacy`. Dashboard notice "Review your privacy policy and cookie notice" (dismissed per browser; hides once the linked policy page is edited after creation). CI: 7 excluded specs now run; the rest keep a reason in `ci.yml`. Migration `20270201_100000_error_alert_settings`. Decisions: (1) gate is merges to main only with green CI; deploy path and `scripts/build.mjs` unchanged; `test` as a required status check is a Task 6 step. (2) Alert goes by email to all admins, counting new error-log entries (first seen), not repeats of an old error. (3) Restore: round trip in CI; a live drill on a copy is a monthly Task 6 step. (4) Privacy: form entries and booking entries are kept on erase and stay access-controlled (staff with permission only); payment transactions untouched; store credit kept with the accounting records; overdue requests are shown in the list only; emails English only. (5) The site admin owns the policy and cookie text; the dashboard notice reminds them. Task numbers are not renumbered yet (Task 12 onward keep their numbers).
-- **Task 12 speed (PR #201, 1 Nov):** per-request site snapshot (site settings, header, footer, shop settings; buildMetadata reuses it); published pages scanned once per request; home, post and product loaders memoised per request; query counter spec with bounds (home 14 to 11, post 11 to 9, product 11 to 9 reads, layout included). Theme fonts: only the built-in faces the theme picks, from jsDelivr pinned to @fontsource 5.3.0 (Cinzel has no Cyrillic file). Video: optional poster image; with a poster the file video uses preload none. No transcoding here (12b). Images: decoding async everywhere, lazy below the fold, high priority on the header logo and the post's featured image; R2 media stays a plain img (EngageImage's note: next/image cannot resize on Workers). Not done, by decision: no width and height attributes on block images (sizing is CSS-driven and cannot be checked visually here); no 'use client' removals (EmbedConsentFrame must stay client so the iframe never reaches server HTML); bundle size is measured in Task 6; no cross-request JSON snapshot, because the edge page cache already serves anonymous visitors and is purged on change.
-- **Task 9c settings checks (PR #198, 1 Nov):** Integrations has Check Maps key (shape only: a website-restricted key is never called from the server), Check PageSpeed key (one call with no page address, so no test runs), Check reCAPTCHA keys (site key shape; secret key by siteverify with a made-up token) and Check code format for the Search Console verification code (offline). Tracking connections and Google connection send the versions they loaded (`X-Expected-Versions`); every write route refuses with 409 and the Settings sentence when tracking-connections, google-connection or integrations moved on, before revoking or writing. Decided: Stripe and shipping carriers were already checked on Payments and Shipping (Task 8) and are unchanged; carriers without a live API (StarTrack, Couriers Please, Shippit) are labelled "Keys only" and only their keys are checked; Clarity, Meta and TikTok IDs stay format checks (Meta and TikTok sign-in is their connect check). Known limit: the version a screen keeps comes from a read just after its write, so a change in another tab within the same few milliseconds is not caught. Live checks in Task 6.
-- **Task 9a settings safety (PR #197):** every form-based global save sends the version it loaded and is refused with 409 and a "reload the page" message when the global changed in another tab or by another admin (shared in `useDocumentSave`). Custom CSP is merged into the default policy, not a replacement, and is validated on save (unknown directive or bad source gets a field error); a directive whose only source is 'none' still replaces the default for that directive. Admin URL, two-factor rules, admin passwordless and passkey access and the domain list email every admin the old and new values, who and when; decided: no second-admin confirm (single-admin sites would lock out), the audit row comes from the settings audit hook (9b). Integrations gets Check ID format (offline), Check AI keys and Check Cloudflare zone (read-only). Live checks in Task 6.
-- **Task 9b settings UX (PR #196, 1 Nov):** hub at /settings ("All settings" in nav) lists the nine settings pages, Theming, Roles, Interface languages, Translations, Cookie consent, Ads settings, Shop switches and the other settings screens, with search over every visible setting (label and help text) that links to its page and section. Decided: no global moved (the hub lists them). Reset this section per section: confirm, then the config defaults go into the form; nothing is saved until Save; fields with no default and secret-looking names are never reset. "Last changed by X on DATE" on each settings page (admins only) from the audit log; every global save now writes a settings.update row. English help text for every settings field that lacked it, in settingsDescriptions.ts (SETTINGS_FIELD_HELP); other languages come from the normal translation flow. The hub, search, reset and last-changed text is English only for now, outside the 12 dictionaries. Live checks in Task 6.
-- **Task 7 integrations, what was left (PR #195, 1 Nov):** shipped-order text, opt-in and off by default (Integrations > Text messages switch, migration `20270130_100000_sms_shipped_text`, sent with the shipped email when the first label is bought); bounce and complaint webhooks for Resend, SendGrid, Mailgun, Brevo, Mandrill and SES feed `eg_email_suppressions` (signature checked per provider; Brevo by key in the URL, as Postmark). Decided: Cloudflare Email has no bounce feed; SMTP and Gmail sending not needed; Google services and newsletter or CRM sync are in Open now as build on request. Live checks in Task 6.
-- **Task 8 shop (PR #194, 1 Nov):** offline payments (bank transfer, cheque, cash on delivery): the order is Pending payment with the method, the customer gets the instructions by email, staff press Mark payment received on the order (same paid path as a card payment; no stored transaction changed). Product tags and brands are two collections picked on the product, and both can be set in bulk. Bulk actions on products (publish, trash, tags, brand) and orders (status, with the transition rules). Review request email after an order is completed (off by default, Shop switches row). Verified buyer badge on the product page and as an admin column. Carrier live rates checked in code and pinned by a test (six carriers have built-in rates and labels). Decided: offline orders are Pending payment, not On hold; order statuses stay at seven (shipments track fulfilment); customer bulk actions are not built (personal data, privacy request flow). Brand and tags show under the short description on the product page (translated), and the shop list has Brand and Tag filters (`?brand=`, `?tag=`, kept through paging and other filters). Site search finds products by brand or tag name (newest 200 published products, each once). Migration 20270129_100000_shop_organise_offline. Live checks in Task 6.
-- **Task 7 integrations leftovers (PR #193, 1 Nov):** reminder and marketing mail (event and cart reminders) sent per recipient with a signed one-click unsubscribe link, List-Unsubscribe headers (Postmark, Resend, SendGrid, Mailgun, Brevo, Mandrill, Cloudflare) and a footer; suppression list `eg_email_suppressions` (migration 20270129) checked before bulk sends; `/api/email-unsubscribe` and Postmark bounce/complaint webhook `/api/email-events/postmark`; Search Console "Submit sitemap" (sign-in now asks for full webmasters scope). Decided: Postmark is the first bounce feed; Twilio stays the only SMS provider; no SMTP, Gmail or indexing request now. Fixed: shop-review-fixes sets SITE_URL itself. Live checks in Task 6.
-- **Task 5 portal search, later slices (PR #191, 1 Nov):** own orders by number, bookings, subscriptions (authenticated `/api/account-search`), settings fields that link to their own anchors on the profile page, and English synonyms shared with site search (`src/features/search/synonyms.ts`). Six new strings in all 12 dictionaries; no migration. Decided: synonyms are English only; site live search uses the same synonyms (`src/features/search/synonyms.ts`). Live check in Task 6.
-- **Task 17b password leftovers (PR #190, 1 Nov):** content-update roles (pages, posts, products, events) can set, clear and list passwords, with ownership still checked (`canManagePasswords`, `src/features/visibility/passwordAccess.ts`). Cache purge on set or clear was already in place (forced, tested). Protected content is never stored: unlock cookies bypass the edge and page caches, private responses are not stored; tests in `tests/int/password-permissions-cache.int.spec.ts`. Decided: a locked gate page has no protected content, so it may be shared. Better Auth is not in this repository; the accounts sign-in path already uses the same gate.
-- **Task 2a and 2b, first PR (PR #189, 1 Nov):** private library token with Test token button; migration 20270127 copies the old token; old "Template repositories" group, its fields and `/api/template-repos` routes removed; blog SaaS button disabled with a note; `site-templates-resolve` cold import moved to the preload; migration offsets in the fresh-install specs moved for the new migration. Decisions for the remaining 2a and 2b items are in their sections.
-- **Task 2a and 2b, second PR (feat/task-2ab, commit d7510dc, 1 Nov):** blog builder saved prompts and brand voice (migration 20270128), cited-only sources, per-post AI limit, featured image gallery match; template libraries Library tab filter, audit entries, version pinning; 40 new strings in all 12 dictionaries. Fresh-install order specs pass (146 tests). Live checks in Task 6.
-- **Task 4 tables and charts (PR #188, 1 Nov):** consent acceptance chart and PageSpeed trend moved onto the shared admin charts (`AdminBarChart` with a new `axisMax`; new `AdminLineChart`), both with axis text. Dashboard 30-day trend for orders and form submissions, shown only while the Shop or Forms feature is on. CSV export shows an exporting state and says when the 5000-row cap truncates (cap unchanged). axe-core 4.14.0 added; `tests/int/admin-lists-axe.int.spec.ts` runs WCAG 2.0 A and AA on ten admin lists and found one real fault (rows-per-page select had no name; fixed). Decisions: the data-views `ChartSvg` stays on its own renderer (public embeds; it draws pie and scatter, which the shared bar chart cannot, and it already prints axis text); the Ads report has no chart (a by-day table only), so nothing to move. Ten lists = pages, posts, products, orders, forms, form submissions, events, RSVPs, redirects, coupons. New text in all 12 dictionaries. Live checks in Task 6.
-- **Task 3 languages closed (PR #186, 31 Oct):** the template-literal admin aria labels (ArrayField, PagesTree, theme styles, email designer, approval workflow steps) and the shop revenue chart text now read parameterised keys in the reference table (`aria.*`, `chart.*`, `theme.contrastAgainst`) in all 12 dictionaries. Decided by Matt: the portal is not part of the translation workflow; SubscriptionOfferBox and the header, footer and menu locale on portal paths stay English. Left: the chart period words (day, week, month) stay English.
-- Task 1a Visual builder CLOSED 31 Oct: typed design emitter removed (#183, prod D1 had 0 typed rows); short-link resolver in editor paste and all block collections (#184). Decided: email designer and theme tokens stay separate models (different outputs: email HTML, site tokens). Accepted as known limits: React #418 logs once on editor load (harmless); engage-types.ts uses casts for Post.tags and User.displayName/slug; Pinterest stays link cards; Next 16 deferred to Task 4. PR #3 fresh-install specs live in Task 6.
-Finished tasks (PR numbers) first, then the visual editor waves through 71.
-- **Task 6 clarity (PR #192, 1 Nov):** tree rows move focus with plain arrows, Home, End, Left and Right (Alt+Arrow still moves); Expand all and Collapse all; shared `Tooltip` (hover, keyboard and touch focus, aria-describedby) replaces about 180 intrinsic-element `title=` attributes across admin and visual editor screens, with 67 new keys translated into all 12 dictionaries; colour sweep: about 400 literal colours in 41 admin CSS files now use `--lit-*` tokens (light values identical, dark values derived: neutrals mirrored, coloured text lifted to 4.5:1); dark rules for password groups, visibility access, blog builder errors, visibility messages and pages-tree badges; base ramp fixed (light muted text 4.93:1, dark muted 5.63:1); SEO status dots get a shape as well as colour. Left on purpose: public-site CSS (blocks, storefront, consent, forms), coloured fills kept as they were, iframe titles (accessible names), two native `<option>` titles and one `<abbr>`, and one pre-existing light contrast miss (white on #f44336 danger button, 3.7:1, light values not changed). Live checks in Task 6.
-- **Task 2 page and section templates CLOSED 31 Oct (PR #185):** template part id is a picker of site templates (`/api/admin-site-templates`; saved numeric ids still work); Preview as has an audience choice (any visitor, guest, member) on every site template kind; archive templates (blog, shop, category, tag, author) and sidebars preview with a sample post or product. Single product add to cart already had a passing render test (no change). Live checks are in Task 6.
+**Codes, not task numbers.** Old task numbers repeat (several "Task 4"s, 16a and 21a reused), so they are only kept inside the original text. Refer to a finished item by its code.
 
-- **Task 1a short-link coverage (PR #184, 31 Oct):** the editor resolves a pasted or entered short link for its own provider (`POST /api/admin-embed-resolve`; silent on failure); the save-time hook covers page templates, reusable sections, site templates, products, lessons and the blog, FAQ and shop intro blocks.
-- **Design model step 4c, typed emitter removed (PR #183, 31 Oct):** production check first (zero typed-v2 rows). Typed emitter modules, design-v2-* specs, withElementDesign removed; grouped and v1 paths unchanged.
+**Adding an entry.** Add it at the end of the right category in Part 1 with the next free number (never renumber), then add one line to the log in Part 2 under its date. Open items stay in `docs/remaining-work.md`.
 
-- **Task 20 forms and embeds (31 Oct):** #167 Form element in the visual editor (New form, Design the fields, Choose existing; the admin Forms list has no Create button; forms are not created in the admin any more; existing forms keep working); #170 form fields editor-only and RSVP verified-email; #175 pages that use a form on the Forms screens, and form fields in the page visual editor; #176 External embeds admin, first slice. Open: see Task 20.
-- **Task 2 template parts (#159, 31 Oct):** sidebar-left and sidebar-right templates in the Templates hub; a "Template part" element by template id (a part inside a part is dropped); domain and language conditions on header, footer and sidebar (priority, then specificity); hub "Where used" column.
-- **Task 2 duplicate starters (#153):** `/admin/templates` shows one starters list (New site template and Import); site template edit screen shows only Export.
-- **Task 2a blog builder, first slice (#154, 31 Oct):** "Write with AI" on the Blog list: questions, five titles, outline edit, section-by-section writing, meta, slug, tags and category, then Create draft (saved as an unpublished post). Uses the AI plumbing and spend cap. Later slices: see Task 2a.
-- **Task 2b templates hub (#153, #169, #161):** #153 blog post in Loop merge tags, tag and author archive routes, header and footer conditions; #169 templates consolidate (header and footer tab, audience, page picker); #161 template libraries slice 1 (Settings > Template libraries, Library tab, "Create page from this template", pictures to Media, old Integrations repo list copied across). Later slices: see Task 2b.
-- **Task 1a leftovers (#155):** visual editor draft recovery after session expiry (unsaved tree offered back, never auto-applied); AI usage flags `ai_builder_usage.estimated` (set when the provider sends no token counts; column present since 23 Oct). Live check in Task 6.
-- **Task 1a legacy breadcrumbs and flaky spec (#179):** saved templates with the old breadcrumbs type now render; one flaky spec fixed.
-- **Task 1a AI guide cap (#178):** fixes the `ai-builder-v2` guide text being over the 18000 cap (18080 failed on main). Live check in Task 6.
-- **Task 1a short links (#182, 31 Oct):** vm.tiktok.com, vt.tiktok.com, pin.it and on.soundcloud.com resolve to their canonical address on save (SSRF-guarded resolver; 5 hops, 5 s), so the embed renders as an iframe. Admin route POST `/api/admin-embed-resolve` is ready. Left: editor paste field and other collections (Task 1a).
-- **Task 1a visual builder (18 to 23 Oct):** waves 48 to 71 shipped and pushed (wave 68 embeds and social-feed, wave 69 embed-code and blog tags and authors, waves 70 and 71 blog switches); PR #2 (AI builder guide cap 17000 to 18000, 24 Oct).
-- **Visual editor closed 23 Oct 2026, except Task 1a:** fixed 23 Oct: embed ratio field shown only for providers that follow it; provider select uses real option groups; AI builder usage rows flagged estimated when no token counts; embed-code identical snippets verified harmless; 'Posts' renamed 'Blog' across admin; migration `20261111` registry row present in prod eg_migrations. Verified live earlier: wave 68 and 69 library UI, routes, CSP, migrations, blog-settings fields.
-- **Task 3 and 4 leftovers (31 Oct, PR #181):** about 50 hard-coded admin aria-labels (fonts manager, email designer, theme styles, cookie consent, results tabs, shop settings, layout controls, ListView Trash link, ConditionsField) now read the reference table in all 12 dictionaries. Meta and TikTok pixel fields get their own labels per group (`label.field.metaPixel.*`, `label.field.tiktokPixel.*`). Left: template-literal aria-labels (Task 3).
-- **Task 3 languages, locale links (#54 merged 30 Oct):** locale-prefixed links, rich-text links and translated slugs per locale (#59 and #139 folded in). Only its live check remains (Task 6).
-- **Task 3 languages (28 Oct):** #35 routing; #36 translation overlay on 11 routes; #37 SEO (hreflang, canonical, sitemap, og:locale); #38 Translations page, reviewers and workflow; #39 publish rule; #40 builder language and translate panel; #41 machine translation (Google, DeepL, AI) with monthly limit; #42 machine drafts; #43 block text; #44 portal auto-language; #45 one row per page; #46 per-user admin language; #47 to #51 admin batches and portal strings in 12 languages; #52 admin labels; #53 and #55 to #113 builder, storefront, email and admin text; #115 to #121 and #134 admin leftovers.
-- **Task 2 templates (through 27 Oct):** Theming DONE; site template kinds, resolver and 'Template content' element (waves 23, 62 to 68); conditions editor (wave 62); starters (waves 63, 68); PR #27 archive grid and pagination; PR #28 Templates dashboard, tabs and coverage panel; Preview-as and import/export (wave 67). Public pages return 200 without any template.
-- **Task 2c (27 Oct):** collections under their menu groups (for example /admin/content/pages, /admin/shop/orders); old /admin/collections links 308-redirect. PRs #29, #30.
-- **Task 2b Templates hub (28 Oct):** PR #31 one Templates table with Suggested missing (phase 1); #32 reusable sections open in the visual builder; #33 loop templates, loop-grid and archive-filter; #34 archive filters, per-item merge tags, old list pages redirect to /admin/templates.
-- **Task 3 tracking connections code (PR #187, 1 Nov):** Settings > Tracking connections shows a setup status for Google, Meta and TikTok (Done or Missing for app ID or client ID, app secret, ENGAGE_SECRET, sign-in; values never shown). Saving an app secret without ENGAGE_SECRET is refused with a message; the encrypted-field hook refuses to encrypt without ENGAGE_SECRET instead of using an empty key. Connect flows re-tested (80 tests). Decision: task numbers kept as they are, so the gap at 3 is intentional while other tasks are in flight. Live checks in Task 6.
-- **Task 4 tracking (29 and 30 Oct):** #135 to #138 and #140 (events collection, consent-gated runtime, TikTok/Meta/GA4/GTM switches, Settings > Tracking, visual picker); #141 and #142 Add tags editor and follow-up; #143 to #145 tracking connections, editor suggestions, values and Add all; #151 GA4/GTM consent split (Analytics-only loads GA4 and GTM; Marketing-only does not).
-- **Task 5 tables and charts, slice 1 (PR #171, 31 Oct):** shop revenue chart value axis with grid; audit and PageSpeed empty and error text translated (12 dictionaries). #172 empty-state text on the review queue, API keys, email testing screens.
-- **Task 5 tables and charts, slice 2 (PRs #173 and #174, 31 Oct):** Export CSV on generic lists (visible columns, every filtered row, up to 5000); one sortable admin table (`SortableTable`) on five admin screens; one shared admin bar chart (`AdminBarChart`) with the shop revenue chart on it; lightweight table structure spec. Decisions taken: no new bulk actions; products and redirects keep their own export.
-- **Task 6 portal search, slice 1 (#152):** search on /account finds orders, site pages and products. Live check in Task 6.
-- **Task 13 privacy requests (#160, #164):** `/account/privacy` download (JSON, no secrets), deletion request with password and email confirmation, admin approve then Erase, completion email, `privacy.*` audit entries. #164 follow-up. Open decisions: closed in Task 11 (PR #199).
-- **Task 13 CI workflow (#162):** `.github/workflows/ci.yml` `test` job on PRs and main (tsc, eslint, about 390 test files). Open decisions: closed in Task 11 (PR #199).
-- **Task 15 SITE_URL fallback removed (#158):** the hard-coded production domain fallback is gone; SITE_URL is required for canonical and mail links. Live check in Task 6.
-- **Design model steps 1 to 3 (#165, #166, #168); step 4 data side (#177):** grouped design storage, migration `20270126_100000_design_grouped`, write hooks. #163 closed via #165. Open items: Task 1a.
-- **Task 16 and 3 polish (#180):** README deploy checklist; blog wizard placeholder. Live check in Task 6.
-- **Task 6 admin hardening and multi-domain (29 Oct):** #122 to #132: admin noindex; custom admin URL; Settings > Domains (host routing, per-domain language, canonical, hreflang, sitemap, robots, redirect to primary, allow-admin); content 'Available on domains'; users and roles 'Allowed domains' with the `domains` permission; per-domain overrides (#129); domain checklist (#130); per-domain page scoping (#131, #132). Open items: Task 6.
-- **Task 19 API and webhooks (30 Oct):** API builder #147 and #148 (endpoints at /api/x/<version>/<name>, field whitelist, filters, rate limit, call log, Try it, keys, OpenAPI, Markdown, HTML and Postman downloads, optional guide link, `api` permission); webhooks builder #149 (9 events, HTTPS and SSRF guard, HMAC signing, retries, delivery log with replay and test); gap-fill #150 (failure alerts, `tracking-event.saved`, checkout wiring checked in code). Open items: Task 19.
-- **Password protection and authentication:** built and merged, including PR #3 (products and events password protection, 24 Oct). Only the Task 6 checks remain.
-- **Password protection implementation notes folded in (1 Nov):** PBKDF2-SHA256 (100000 iterations, 16-byte salt) hashes in `eg_content_passwords`; 7-day HMAC unlock cookie `eg_unlock_<collection>_<id>`; gate in `src/features/visibility/gate.ts`; admin route `/api/admin-visibility-password`; public `/api/content-unlock` (400 ms delay, safe redirect); locked pages get generic metadata, noindex and no sitemap entry. Leftovers (not blocking): cache purge when a password is set or cleared; confirm protected pages bypass the public cache; role-based permission for managing passwords. Live checks: Task 6.
-- **Accessibility and admin text:** #181 (above); #134 admin text in all dictionaries.
-- **Foundation:** undo/redo, clipboard and duplicate, drag and drop, keyboard move, autosave, lock banner, unsaved-changes guard, device-aware editing with per-device overrides, navigator, sections with columns and inner sections, import/export, column resize, sidebar hidden while editing.
-- **Design panel:** backgrounds (colour, gradient, image, parallax, video, overlay, masks, slideshow, noise, blob), typography, spacing with units and link, border and shadow, hover and focus states, advanced (transform, position, filters, scoped CSS), effects (reveal, hover, glass, pointer, Ken Burns, animated border), visibility rules (applied in browser), theme tokens, reset and "only changed", search.
-- **Section display modes:** columns, flex, tabs, accordion, carousel, grid, popup, stacked cards, horizontal scroll, sticky scroll story.
-- **Elements:** text, heading, list, quote, code (with highlighting), table, button, icon, image, image lightbox, image accordion, video, video playlist, audio, map, divider, html, embed (consent gated), anchor, card, gallery, image comparison, hotspots, counter, progress, star rating, countdown, chart, data view, social, breadcrumbs, toc, search box, nav-menu, pagination, notice, marquee, tooltip, content switcher, reviews, loop, site logo, form builder, business hours, slides, author box, post navigation, language switcher, add to cart, cart link, product rating.
-- **Wave 68 embeds:** embed element is real consent-gated iframes for Instagram, X, Facebook, TikTok, Pinterest pin, LinkedIn, Spotify and SoundCloud. Shared parser `src/lib/embedProviders.ts`; hosts in `src/lib/embedHosts.ts` feed the CSP. Spotify and SoundCloud also work in audio and video-playlist.
-- **Wave 68 social-feed:** new `social-feed` element. Connected accounts in Settings > Integrations > Social accounts: Instagram, Facebook Page, Pinterest and TikTok need tokens; YouTube channel and RSS need none. Server-side fetch, 30 min cache. X not supported (paid API).
-- **Wave 68 other:** per-page background audio in Page settings (pageAudio group; starts muted, plays on first interaction). Rich inline text for quote, button and list. Category archive route `/blog/category/[slug]`. Templates list screen has a starters panel and import.
-- **Wave 68 fixes:** hideNativeCursor option; fade-in on nested sections; installed fonts live in canvas; Preview-as picker always in top bar; product featured image in context; event dynamic tags and event block context; post.author falls back to business name.
-- **Wave 69:** `embed-code` element (third-party scripts and widgets run in a sandboxed iframe served from `/embed-frame/<hash>`, consent gated, published content only, snippet never in URL; renders where a page path exists). Elements tab one scroll with compact tiles and a Comfortable/Compact toggle. Blog tags and author displayName/slug with `/blog/tag/[slug]` and `/blog/author/[slug]` archives and sitemap; byline no longer shows email. hideNativeCursor admin toggle. Social accounts Test connection button. Page audio also on Posts. Admin menu "Posts" renamed "Blog". Duplicate breadcrumbs type fixed (template widget now `auto-breadcrumbs`).
-- **Waves 70-71 (deployed 23 Oct):** Settings > Blog switches `showAuthors`, `authorArchives` and `showTags`, all default ON; per-post `hideAuthor` checkbox; migration 20261111_100000_blog_author_tag_switches (columns added to prod D1 directly on 23 Oct; the idempotent migration will no-op later). Wave 71: admin shell hydration fix (ThemeContext and NavContext start with server-safe defaults and sync in a mount effect).
-- **Templates:** template presets, form presets (live), shop presets, site-wide page effects, template display conditions and widgets, 9 template starters (edit screen). Site-template kinds (archive-category, archive-tag, archive-author, search-results, not-found and others) with starters, template import and export.
-- **Page settings:** title, slug, status, SEO title and description, social image, noindex.
-- **Editor usability:** selection breadcrumb, Checks, save status, shortcuts and first-use tour, navigator reorder, recents and favourites, style presets, inline heading editing, "/" quick-insert, upload and paste in the media picker, Global (reusable) sections, library category filter as a single dropdown.
-- **Build with AI:** Claude or OpenAI via Integrations keys; new section, whole page and edit selected modes; plan then build; refine by chat; media matching; monthly spend cap; SSE streaming.
-- **Export and assets:** Download HTML, asset collection and relinking, server template-asset insert, repo manifest refresh.
-- **Waves 67-68 delivery:** Lottie via the embed provider; CSP frame-src allows embed, video and map hosts; React #418 hydration fixes.
-- **Waves 43 to 48 (16 to 18 Oct) and waves 30 and 31:** device-aware editing, undo/redo, shortcuts, context menu, structure picker, column panel; Theming global, colour resolver, repeater field, navigator, inline text editing, copy/paste style, and the colour, link, icon, range, dimensions, typography, shadow and gradient fields. All live.
-- **Fresh-install rules:** enforced by `tests/int/fresh-install-schema-coverage.int.spec.ts`; the thin-install gap is about repo size and fallbacks, not schema (Task 4).
+## Categories
 
-- Tasks 1 and 5 closed 2 Nov 2026 (PR #221 type debt 83 to 9 any, 43 to 15 eslint-disable). Vendor Products mirror moved to Open now as Permanent.
-- Task 4 (architecture) closed 2 Nov 2026 (PRs #215, #218, #219, #220, #222): setup script, schema source of truth, bundle budget, lazy sections, sharded CI, Next 16, baseline schema. Only the framework package split is parked as a Matt decision.
-- 9 Nov 2026: admin menu polish (Home label, no theme toggle or tooltips in the menu, name and photo in My preferences and the side menu, mobile menu slides in from the right with visible items). Better Auth: not used in this repo, so no equivalent was built.
-- 9 Nov 2026: repo renamed to `asticore/engage` (closed Task 21). Repo-slug links updated (README Deploy button, Stripe appInfo URL, template library guide URL, docs). Worker, D1, R2 names, localStorage cart key, export app id and gracengatsby.com left unchanged on purpose (renaming would break the live deploy and saved data).
-- 9 Nov 2026: closed Task 1 (reference file `reference/references.json` with shine, spark and engage-templates; Tailwind replaced by Shine CSS in the portal and on the site, vendored in `src/styles/shine`, generated utilities in `src/styles/engage-utilities.css`; Spark loader on the public site), closed Task 2 (Engage templates library listed by default on every install, switchable off, not removable), closed Task 3 (per currency rounding rules on top of the existing display currencies), closed Task 4 (price tiers: quantity breaks and customer type prices, bulk editor, table `eg_shop_price_tiers`), closed Task 5 (events and tickets audited, "Sold out" shown, gaps moved to open Task 1), closed Task 6 (promo badges on shop cards), closed Task 7 (nested categories for shop and blog, tree admin, archive pages and breadcrumbs). One PR for all seven.
-- Task 1 (events and tickets), 15 Nov 2026, PR pending: `event-rsvps` gets `order_id`, `status` and `cancelled_at` (migration `20270315_100000_event_rsvp_orders`); `markOrderPaid` books each ticket line through `src/features/events/orderRsvps.ts`; a full refund or a cancelled or refunded order cancels the bookings; capacity is settled after insert by `verifyEventCapacity` (lowest id wins); the booking email names the ticket type (`ticketLine`); `EventTiers`, `RsvpForm` and the event page use Shine classes and `events.*` keys in all thirteen languages. Tests: `tests/int/event-order-bookings.int.spec.ts`.
-- Task 2 (part), 15 Nov 2026, PR pending: Spark effects picker in the Design panel and the Reference sources admin screen with the update check. Left: real Spark catalogue, update popup tie-in, Tailwind-era classes.
-- Task 3 (part), 15 Nov 2026, PR pending: 150 English-only admin strings translated into the twelve other languages. Left: promo badge field labels, template library text, ut/api/apiBuilder strings.
-- Task 4 (part), 15 Nov 2026, PR pending: variation tier notes, badge product picker, nested blog category URLs and tree merge tags, company-based tier matching.
-- Tasks 5 and 6, 15 Nov 2026, PR pending: regions, language and domain audit in `the Regions audit appendix of `docs/remaining-work.md``; gaps are Tasks 41 and 42.
-- Task 7, 15 Nov 2026, PR pending: Scheduled tasks screen has Next run, Run now, turn off and on per job (`JobControls`, `/api/admin-cron-job`, audit logged) and a 50 run history; one runner per job in `src/features/cron/jobs.ts`; state in `eg_cron_job_state` (migration `20270315_200000_cron_job_state`); the `schedules` heartbeat job cannot be turned off. Tests: `tests/int/cron-job-state.int.spec.ts`.
-- **Blog address (16e, built 17 Nov 2026).** SEO settings > Permalinks has a Blog address (one segment, lowercase letters, digits and hyphens, 3 to 40 characters; empty or `blog` keeps `/blog`). A custom address is served from the `/blog` folder by rewrite, and a page view of `/blog` redirects (308) to it, keeping the rest of the path and query. The sitemap and the blog post, blog index, category, tag and author canonical tags use the new address at once. The save check refuses site words, the admin and sign-in addresses, and a top-level page with the same address. Migration `20270317_290000_blog_base` adds `permalinks_blog_base` to `eg_seo_settings` (baseline regenerated). Code: `src/features/seo/permalinks.ts` (pure rules), `permalinkStore.ts` (one cached D1 read, 60 seconds, dropped on save), `permalinkValidate.ts`, `src/middleware.ts`, `src/features/seo/sitemap.ts`, `src/features/siteTemplates/archiveQueries.ts`; test `tests/int/blog-base-permalinks.int.spec.ts`. Shop bases and the other leftovers are in `docs/remaining-work.md` under Task 16e.
+| Code | Category | Entries |
+|---|---|---|
+| [SPD](#cat-spd) | Speed, builds and updates | 18 |
+| [STY](#cat-sty) | Spark, Shine and fonts | 18 |
+| [SEC](#cat-sec) | Security, sign-in and privacy | 54 |
+| [INT](#cat-int) | Integrations, API and webhooks | 18 |
+| [EVT](#cat-evt) | Events, tickets and bookings | 11 |
+| [COM](#cat-com) | Commerce and shop | 51 |
+| [FRM](#cat-frm) | Forms, comments and spam | 9 |
+| [MEM](#cat-mem) | Members, companies and portal | 11 |
+| [MED](#cat-med) | Media and files | 10 |
+| [I18N](#cat-i18n) | Languages and translations | 12 |
+| [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
+| [SEO](#cat-seo) | SEO, blog and content | 24 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 42 |
+| [ADM](#cat-adm) | Admin and settings | 39 |
 
-## Tasks 1 to 3 leftovers (17 Nov 2026)
-- Task 1 ticket tier pricing: decided to build the picker. Each ticket tier on a paid event can have its own shop product (`productId` inside `ticketTiers`, no migration). The event page shows a buy button per tier; a paid order for a tier's product books that tier (`tierForLine`, `createRsvpsForOrder`); the old single ticket product and variation-label matching still work.
-- Task 2 effects: `EFFECT_CATALOG` is generated from the Spark `.meta.js` files at the pinned commit (`scripts/gen-effect-catalog.cjs`, `src/features/effects/catalogData.ts`, 96 effects including all chart types and diagrams). Reference sources check feeds the update popup (`referencesOutdated` in `/api/admin-update-check`, `src/admin/ui/UpdateNotice.tsx`).
-- Task 3 translations: promo badge field labels (`label.field.promoBadges.*`; `adminFieldLabel` now ignores array row numbers in the path); 74 `ut.*`, `api.*`, `apiBuilder.*` and `dns.*` strings translated into the twelve languages; template library manifests take an optional `languages` list (default English) and the Template libraries screen says when a library has no text in the admin language (`docs/template-libraries.md`).
+Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
 
-## Effix renamed to Spark, Shine only (17 Nov 2026)
-- Repo renamed `asticore/effix` to `asticore/spark` (v0.4.0, `efx-` became `spark-`, `data-efx-*` became `data-spark-*`, `window.Effix` became `window.Spark`). Engage now pins Spark at commit `dc0d630` (`reference/references.json`, id `spark`), `SparkLoader` loads `spark.auto.min.js` from jsDelivr and falls back to the vendored copy in `public/vendor/spark/` (core, auto loader and every feature, 1.1 MB), and `EFFECT_CATALOG` was regenerated from Spark (119 effects, `spark-` classes). Pages saved with old `efx-` classes and `data-efx-*` attributes are rewritten in the browser before Spark starts, so nothing stored needs a migration. UI labels, settings description (13 languages), CSP labels, docs and the templates draft say Spark. Closed former Task 40a and the offline copy item of Task 2.
-- Tailwind audit: no Tailwind package, config, `@apply` or `@tailwind` is left. Utility names such as `flex`, `gap-2`, `text-sm` come from Shine, and arbitrary values (`text-[12px]`) come from `src/styles/engage-utilities.css` generated by `scripts/generate-utilities.mjs`. Only the four CSS modules remain (open, Task 2).
+---
 
-- CSS modules removed (17 Nov 2026): the four `*.module.css` files (admin roles and permissions, setup questionnaire and host, Getting started card) are now global classes named `eg-<area>-<name>` in `src/app/(engage)/module-styles.css`, imported by `admin.css` on top of Shine tokens. No CSS module is left, so Shine plus the admin layer is the only style system. Task 2 is closed (open task numbers were not renumbered, to avoid clashing with parallel work).
+## Part 1: By category
 
-## Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md
-- **16a Carton and pallet quantity (built 16 Nov 2026).** Products have a Packaging group (units per carton, cartons per pallet, sell in single units, whole cartons or whole pallets, round up, minimum cartons). The cart and checkout refuse an off-size quantity with a plain message (`resolveCartLine`), or raise it to the next full carton or pallet when Round up is on (cart save hook); the storefront box steps by the carton or pallet size and shows "Sold in multiples of 12"; order lines keep the carton size, so the invoice and packing slip read "2 cartons (24 units)"; CSV import and export carry five new columns. Rules in `ecom/lib/packaging.ts`, migration `20270316_110000_product_packaging`, test `tests/int/packaging-quantity.int.spec.ts`.
-- **16c Local pickup method (built 16 Nov 2026).** The existing Local pickup shipping method takes a list of locations (one per line: name, address, hours, instructions). Checkout shows one choice per location (the option id carries the location, so every payment method works unchanged), the order keeps the chosen place, the packing slip says "Collect from", and ticking "Ready for pickup" on the order emails the customer once (Shop switches: on by default, wording editable). Done as a tick box plus a timestamp, not a new order status, because paid-status lists in reports, numbering, stock and course access would otherwise need changing everywhere; the order stays Processing until you complete it. Code: `ecom/lib/pickup.ts`, `lib/shipping.ts`, `server/orderHooks.ts`, migration `20270316_120000_local_pickup`, test `tests/int/local-pickup.int.spec.ts`.
-- **16d Pricing rules by customer variables and preview (built 16 Nov 2026; wholesale mode still open).** Pricing rules (Shop switches) can now match on customer lifetime spend (paid orders by email, less refunds), number of past orders and shipping country, next to the existing quantity, subtotal, category and role rules. Company or member group already worked through the role rule (a role name, a company name or `company:<slug>`; price tiers match the same way, so "match tiers by company" from Task 4 is covered). A rule "spend over 5000 gets 10 percent" shows in the rules taken off the cart and the order. New admin screen Pricing preview (`/admin/pricing-preview`, in Shop settings links) runs the real checkout calculation for a customer email, country and cart, so the preview matches the real cart. Code: `ecom/lib/pricingRules.ts`, `ecom/server/customerStats.ts`, `/api/admin-pricing-preview`, migration `20270316_130000_pricing_rule_customer_conditions`, tests `tests/int/pricing-rules-customer.int.spec.ts`.
-- **16e Product feeds per channel and Pinterest (built 16 Nov 2026).** Feeds are records (table `eg_product_feeds`, lazy with the ecommerce feature) managed at Settings, Product feeds: name, channel (Google Merchant XML, Meta CSV, Pinterest CSV, generic CSV, generic XML), currency (from the display currencies, falls back to the shop currency when no usable rate), price tier (a customer type, uses the Price tiers at quantity 1), category and tag slug, include out of stock, on or off. Each feed has a secret address `/feeds/custom/<32 hex>.xml` or `.csv`, a New address button to rotate it, and a Preview of the first 20 rows plus what the channel would reject (missing columns, duplicate ids, long titles). Password protected products never appear. The two built-in feeds are unchanged. Code: `ecom/lib/feedRecords.ts`, `ecom/server/feedRecords.ts`, `loadFeedFor` in `ecom/server/feeds.ts`, `/api/admin-product-feeds`, `ProductFeedsPanel`, migration `20270316_140000_product_feeds`, `tests/int/product-feeds.int.spec.ts`.
-- **11e feed cache (built 17 Nov 2026).** Custom feed addresses now serve a stored copy instead of building the whole catalogue on every request. The built text is kept per feed and site address in table `eg_product_feed_cache` (lazy with the ecommerce feature, migration `20270317_270000_product_feed_cache`), reused for up to an hour, and cleared when any product is saved or deleted and when a feed is edited, given a new address or deleted; the next request rebuilds it (the response header `x-feed-cache` shows `hit` or `miss`). The hour limit also picks up price tier, currency rate and settings changes. Feeds over 1.5 MB are built on each request. Code: `src/features/ecommerce/server/feedCache.ts`, `feedCacheHook.ts` (Products hooks), `src/app/(frontend)/feeds/custom/[token]/route.ts`, test `tests/int/product-feed-cache.int.spec.ts`. Still open: field mapping, update schedule, Merchant API sync.
-- **11e field mapping and update schedule (built 17 Nov 2026).** Each custom feed has optional column templates for title, description, brand, GTIN, MPN, condition, Google category, product type, colour and size (text with `{field}` placeholders read from the product, dotted paths allowed, plain text used as written, a blank result keeps the built-in value, a bad condition is ignored; a mapped title on a variation keeps its variation label), and a rebuild interval of 15 or 30 minutes, 1, 6 or 24 hours (default 1 hour) that replaces the fixed hour in the feed cache. Columns `mapping` and `refresh_minutes` on `eg_product_feeds` from migration `20270318_200000_product_feed_mapping`. Edited in Settings, Product feeds. English only. Code: `src/features/ecommerce/lib/feedMapping.ts`, `feeds.ts` (`map` hook), `server/feedRecords.ts`, `ProductFeedsPanel.tsx`, test `tests/int/product-feed-mapping.int.spec.ts`.
-- **16f Pay-later messaging (already built, verified 16 Nov 2026).** The "or 4 payments of $X with Afterpay" and Klarna lines already show on the product page and the cart (`components/PayLaterMessage.tsx`), only when the method is on, the Show messaging setting is on, and the shop currency and the amount fit the provider's range; the setting hides them. Added `tests/int/pay-later-messaging.int.spec.ts` to lock the rules in. Stripe sandbox check is in Task 14.
-- **16g Bulk creation of pages, posts and products (built 16 Nov 2026).** Settings, Bulk create: pick pages, posts or products, paste one title per line or a CSV (title, slug, parent, template; or upload a file), press Check the list for a table showing every row, its address and its problem (address already used or repeated in the list, parent or template not found, parents pointing at each other, duplicate product title), then Create makes drafts for every clean row, parents first, through the signed-in user's own access rules. Up to 200 rows per batch. The result report lists created, skipped and failed rows, with Undo this batch, which removes the drafts that are still unpublished and under a day old. One audit entry per batch (`bulk.created`, `bulk.undone`). No migration. Code: `src/features/bulkCreate/{plan,run}.ts`, `BulkCreatePanel.tsx`, `/api/admin-bulk-create`, `tests/int/bulk-create.int.spec.ts`.
-- **16h Checkout handoff from forms (built 16 Nov 2026; order bump and upsell still open).** In the visual editor, Form tab, Go to checkout: switch it on and name the product (number, optional variation id, quantity) or a choice field whose option values are product numbers (`12` or `12:variationId`), and map checkout details to form field names (email, full name, phone, street, suburb, state, postcode, country, order note). After the entry is saved the visitor is sent to `/checkout?handoff=...`; the checkout adds the product to the cart, fills the email and address, puts the phone and note in the checkout fields, and removes the code from the address. The handoff only names a product and details; prices, stock and totals come from the cart as always. The settings come from the form, so a visitor can only pick products the form's own choice field offers. Code: `src/features/forms/checkoutHandoff.ts`, `submit.ts`, `config.ts`, `FormSettingsPanel.tsx`, `src/components/CheckoutForm.tsx`, `CheckoutExtras.tsx`, `tests/int/form-checkout-handoff.int.spec.ts`. No migration.
-- **16i Donations (built 16 Nov 2026; recurring and goal bar still open).** A simple product has a Donation group: tick Is a donation and the buyer sets the amount (name your price rules, so the lowest amount is the minimum price field), with suggested amounts as buttons, a largest amount checked on the server, a campaign name, an optional Give anonymously tick box, and receipt wording. The page shows Donate, the amount buttons and the tick box. The confirmation email (paid and completed) adds a thank you per donation (amount, campaign, anonymous) and the receipt wording once, where the shop puts its ABN and tax text. Order lines keep the campaign, and Shop reports has Donations by campaign with a CSV. A monthly donation is a donation product that is also a subscription product (existing subscription fields). Code: `ecom/lib/donations.ts`, `catalogue.ts`, `storefront.ts`, `server/pricing.ts`, `hooks/cartHooks.ts`, `server/emails.ts`, `shopReports/queries.ts`, `ProductPurchase.tsx`, migration `20270316_150000_product_donations`, `tests/int/donations.int.spec.ts`.
-- **16j Storefront currency sweep (built 16 Nov 2026; product screen redesign still open).** Checked every place that formats a shop price. Fixed the ones that ignored the shop currency: the product page structured data (offers were always AUD), event ticket offers in the page structured data, the Wishlist page prices, and the admin new order email total. Other AUD defaults are fallbacks that only apply when no currency is passed, and every storefront caller passes the shop currency. Pre-order behaviour (button text, release date, cart rules) is already covered by `shop-extra-preorders-wave11` and `preorders-variation-images-wave9`. Test: `tests/int/shop-currency-follow.int.spec.ts`.
-- **17a Service products (built 16 Nov 2026; deposit and booking still open).** Decision: a service is a tick box on a simple or variable product, not a separate product type, so it keeps price, options, quantity breaks, add-ons and subscriptions (a new type would have needed every one of the many simple-type checks changed). The Service group has Is a service and a duration in minutes. A service is never shipped (no weight, no shipping step, no shipment label; the existing Virtual flag works the same way) and its page shows a Duration row. It appears in orders and the account like any product. Code: `ecom/lib/service.ts`, `productFields.ts` (serviceFields), `server/pricing.ts`, `server/shipments.ts`, `storefront.ts`, migration `20270316_160000_service_products`, `tests/int/service-product.int.spec.ts`.
-- **17b Booking pages, phase 1 (built 16 Nov 2026 on the proposed defaults in `the Bookings plan appendix of `docs/remaining-work.md``; free appointments only).** New feature Bookings (off by default, switch on in Site Settings, Features; five lazy tables). Settings, Bookings: add a person or place (with a time zone), write weekly hours as lines like `mon-fri 09:00-17:00`, change single days (closed all day, closed for lunch, open extra hours), add booking types (name, address, who it is booked with, length, start every N minutes, gap before and after, least notice, how far ahead, people per time, location), and see the bookings with Completed, No show and Cancel. Public page `/book/<address>`: pick a day, pick a time, give name and email; times are checked again on booking, and two people asking for the last place cannot both get it (insert, then verify). The confirmation email has an add-to-calendar link (`/api/booking-ics`) and a private link `/book/manage/<token>` to cancel before it starts; only a hash of the link is stored. The slot engine is pure and tested across the Sydney and London daylight saving changes. Slot, create and manage routes are rate limited. Code: `src/features/bookings/{engine,logic,store,service}.ts`, `BookingWidget.tsx`, `ManageBooking.tsx`, `BookingsAdminPanel.tsx`, `/api/booking-*`, `/api/admin-bookings`, migration `20270316_170000_bookings`, tests `bookings-engine`, `bookings-logic`.
-- **17c Quote, bid and item requests (built 16 Nov 2026; card payment, bid auctions and form feed still open).** New feature Quotes and requests (off by default, switch on in Site Settings, Features; one lazy table `eg_quote_requests`). Public page `/request-quote?kind=quote|bid|item&product=<id>&title=<name>` (and the `RequestForm` component) takes name, email, phone, quantity, details, needed-by date and, for an offer, the amount; it has a hidden bot field and is rate limited. The customer gets a received email and the shop's admin email gets a notice. Settings, Quotes and requests is the inbox: filter by status, write a quote (lines, price each, days open, terms, and an email message that can use merge tags such as `{{name}}`, `{{total}}`, `{{validUntil}}` and `{{link}}`), send it, decline or close a request, and read the activity log. Sending makes a fresh private link `/quote/<token>` (only its hash is stored). The customer reads the quote, accepts, declines or sends a counter-offer (a note and an optional amount, which puts the request back in front of staff). Accepting is atomic (a double click makes one order) and creates a Pending payment order on the first offline method the shop has switched on, with the payment instructions emailed; staff mark it paid with the usual order action. Quotes past their date show as expired at once and are closed when the inbox is opened. Code: `src/features/quotes/{logic,store,service}.ts`, `RequestForm.tsx`, `QuoteView.tsx`, `QuotesAdminPanel.tsx`, `/api/quote-request`, `/api/quote-view`, `/api/admin-quotes`, `app/(frontend)/{request-quote,quote/[token]}`, migration `20270316_180000_quotes`, `tests/int/quotes-logic.int.spec.ts`.
-- **17d Purchase limits against hoarders and bots (built 16 Nov 2026; waiting list, card fingerprint and bot challenge still open).** New feature Purchase limits (off by default, switch on in Site Settings, Features; two lazy tables). Settings, Purchase limits: add rules for all products or one product (event tickets are products): most per person (over N days or ever), a wait in hours between orders, and an option to need a signed-in account with a verified email. A person is matched by account, by email (ignoring +tags and Gmail dots) and by delivery address; paid orders and orders still waiting for payment count, cancelled, refunded and failed ones do not, and the order already made from the same cart is not counted twice. The check runs when the order is priced (`buildOrderDraft`, so card, PayPal and offline checkouts all pass through it) and refuses with a clear sentence such as the limit and how many more can be ordered. A throttle of 20 checkout attempts per email per minute stops probing. Every refusal goes to a report with counts for the last day and week. If the feature is off or its tables cannot be read, orders go through. Code: `src/features/purchaseLimits/{logic,store,enforce}.ts`, `PurchaseLimitsPanel.tsx`, `/api/admin-purchase-limits`, hook in `ecom/payments/stripeAdapter.ts`, migration `20270316_190000_purchase_limits`, `tests/int/purchase-limits.int.spec.ts`.
-- **17e Approval assigned to a named person (built 16 Nov 2026; reassign, due date and reminders still open).** Settings, Roles, Approval workflows: each step can now name people as well as roles. Naming anyone means only they (and admins) can approve or send back that step; a tick box keeps the roles as a fallback. A workflow can also name a different approver for an author: that author's work is approved by the person named, at every step, whatever the step says, and nobody else (except admins) can approve it. A step may be named people only (no role). Saving checks the people exist and an author is not their own approver. The submit email and the next-step email go to the named people (and the roles too when the fallback is on), the waiting text and the refusal message name the person, and the history already records who approved. Per content type is the existing one active workflow per type. Code: `src/features/approval/{workflows,stateMachine,notify,handlers,workflowCollection,workflowForm}.ts`, `src/admin/views/{ApprovalWorkflowsPanel,RolesView,RolesViewClient}.tsx`, migration `20270316_200000_approval_named_approvers` (columns `approver_users`, `also_roles`, `author_routes`), `tests/int/approval-named-approvers.int.spec.ts`.
-- **18a Dunning and retry for failed membership payments (built 16 Nov 2026; card-expiring warning and live Stripe test still open).** Settings, Members, Billing has three new settings: retry days (default `1,3,5,7`, days after the first failure), grace days (default 10, access kept) and what happens at the end (end the membership, or move to the free tier, which is the default tier in Registration). A failed renewal (`invoice.payment_failed`) now starts a run on the membership (started, attempts, next retry, access-until, all shown read-only): the member keeps access through the grace period (`grantsAccess` reads it), gets a failed-payment email with an update-card link (the Stripe billing portal when it is set up, otherwise the account page), and the hourly `member-dunning` job retries the open invoice on each retry day and emails again. When the grace period ends still unpaid the membership ends or moves to the free tier, the Stripe subscription is cancelled (the id is dropped first so the cancel webhook cannot undo a downgrade) and the member is told. A paid invoice or an active subscription clears the run and sends one thanks email. Each step is added to the membership's internal notes as a log. Settings, Past due members lists the chase with Retry card now and End now. The schedule is pure and tested by moving a clock through retries to the end. Code: `src/features/members/{dunning,dunningRun,webhooks,entitlement,settings}.ts`, `PastDuePanel.tsx`, `/api/admin-member-dunning`, cron job `member-dunning`, migration `20270316_210000_member_dunning`, `tests/int/member-dunning.int.spec.ts`.
-- **18b Live order tracking (built 16 Nov 2026; Sendle polling and a webhook built, other carriers need live checks or the webhook).** Each parcel on an order now carries a tracking timeline (status, events with time, text and place) saved inside the shipment, so no new table. Five states: label created, in transit, out for delivery, delivered, delivery problem. Sources: the hourly `shipment-tracking` job asks carriers that can answer (Sendle is built in: `track` on the carrier adapter, a new optional method) about undelivered parcels shipped in the last 45 days; a webhook `POST /api/shipment-tracking` (secret in the `TRACKING_WEBHOOK_SECRET` setting, header `x-tracking-secret`, absent secret means the address does not exist) takes updates from any carrier or tracking service (ShipStation, AfterShip, a carrier portal); and staff can add an update by hand on the order (the Shipping panel, for carriers that cannot be asked). The customer is emailed once each when a parcel is out for delivery, delivered, or has a problem (delivered also covers a missed out-for-delivery), switched by Shop switches, Email the customer as their parcel moves. The timeline shows on the admin order and on the customer's order page (`/account/orders/<id>`). Delivered is final; repeat scans change nothing. Code: `ecom/lib/tracking.ts` (pure), `ecom/server/tracking.ts`, `ecom/shipping/{types,sendle}.ts`, `/api/shipment-tracking`, `/api/admin-order-tracking/[id]`, `ecom/admin/OrderPanels.tsx`, `accounts/components/AccountScreens.tsx`, cron job, migration `20270316_220000_shipment_tracking`, `tests/int/shipment-tracking.int.spec.ts`.
-- **19a Media tree view (built 16 Nov 2026).** The media page has a left-hand collapsible folder tree (above the gallery on narrow screens): "All files" plus nested folders with file counts, the current folder highlighted, a breadcrumb, and tree keys (Up and Down, Right to open, Left to close or go to the parent, Enter to show, F2 rename, Delete remove). Drag files from the gallery (the selected ones, or just the one you grab) onto a folder, or drag a folder onto another folder or onto "All files" to move it with everything inside. New, Rename and Delete folder buttons: delete never removes files, they move up one level. Only the `folder` text on each file changes, so file addresses and links stay valid; renames use exact prefix tests at a slash, so `a` never touches `ab` or `a_b`. No new table, so no migration. Code: `src/features/media/folderTree.ts` (pure), `/api/admin-media-folders` (GET counts, POST rename, move, delete), `src/views/media/MediaFolderTree.tsx`, `MediaGalleryView.tsx`, `MediaGalleryGrid.tsx` (drag source), `tests/int/media-folder-tree.int.spec.ts`.
-- **19b Media tags and sub-tags (built 16 Nov 2026; switch on under Site Settings, Features, Media tags).** A tree of tags (parent and child) each with a colour. Tag manager at Settings, Media tags (`/admin/media-tags`): add, edit (rename, recolour, move inside another tag; a tag cannot go inside itself or repeat a name beside its siblings), delete (sub-tags move up a level, files are untouched), file counts per tag and with sub-tags. On the Media page: select files, pick a tag, Add tag or Remove tag (bulk), and a Tag filter beside the folder filter; filtering by a parent tag shows files with any of its sub-tags, and it combines with the folder filter. CSV: Download tags CSV (`tag,color`, nested as `Parent > Child`) and Download files CSV (`filename,tags` with several tags joined by `;`), and paste or choose a file to import either; import only adds, never removes, and files are matched by filename. Tags survive export and import. Code: `src/features/mediaTags/{logic,store}.ts`, `MediaTagsPanel.tsx`, `src/admin/views/MediaTagsView.tsx`, `/api/admin-media-tags`, `MediaGalleryView.tsx` and `MediaGalleryGrid.tsx`, migration `20270316_230000_media_tags` (feature key `mediatags`, tables `media_tags`, `media_tag_links`), `tests/int/media-tags.int.spec.ts`.
-- **20a State contrast tests (built 16 Nov 2026).** New `tests/int/state-contrast.int.spec.ts` loads the real admin CSS and the public Shine CSS in headless Chromium and checks, in light and dark: text of buttons, quiet buttons, links and tabs (resting, hover, pressed, keyboard focus, selected) at 4.5:1; disabled buttons, links and fields at 3:1 (we require this although WCAG exempts disabled); keyboard focus rings at 3:1 against the surface; Shine field borders at 3:1. Colours are measured after `color-mix`, transparency and element opacity, and after Shine's colour transitions finish. It found and fixed: Shine disabled buttons and fields too faint (new `src/styles/a11y-states.css`, loaded after Shine in the admin and the public site, so the vendored Shine copy is unchanged), Shine field borders far too pale (1.2:1 now 3:1+), the keyboard ring being too faint on dark in the admin, and admin disabled links (opacity 0.5 to 0.62). Code: `tests/int/state-contrast.int.spec.ts`, `src/styles/a11y-states.css`, `admin.css`, `(frontend)/styles.css`, `custom.css`.
-- **20b Size checks (built 16 Nov 2026).** New `tests/int/size-checks.int.spec.ts` renders the real admin and Shine controls (buttons in every size, fields, selects, checkboxes in labels, tabs, list toolbar, text links) in headless Chromium at 375 and 1280 px and checks: every target at least 24 by 24 px, text at least 12 px, neighbouring targets not touching, the primary action at least 44 px high on a phone, and no sideways scrolling at 640 px (200 percent zoom on desktop) and 320 px (400 percent). Fixes: buttons at least 44 px high on narrow screens and touch devices, bare text buttons at least 24 px, checkbox and radio labels at least 24 px (all in `src/styles/a11y-states.css`).
-- **20c Visual editor design warnings (built 16 Nov 2026).** The Checks panel now also flags: low text contrast when a colour is a named theme token (`var(--sh-text)` and the other Shine tokens, checked in both the light and the dark theme, so dark-mode text on a fixed light block is caught); text over a gradient background, checked against both stops; text over a picture, video or slideshow with no overlay of at least 30 percent (it cannot sample the picture, so this is an info prompt to add an overlay); the hover colours (the one you did not set falls back to the normal colour) at 4.5:1; and the keyboard focus ring colour at 3:1 against the background. Contrast messages end with a fix: Try #000000 or #ffffff text, or change the background if neither works. Unknown names (`var(--ink)`) are not checked, as before. Code: `src/views/visualEditor/designWarnings.ts`, `tests/int/editor-warnings.int.spec.ts`.
-- **21a A/B tests: suggestions and visual-editor editing (built 16 Nov 2026, partly; the on-canvas control and variant switch is not built).** In the visual editor (Navigator tab, under Checks) a new A/B tests panel, shown when editing a saved page and A/B testing is switched on: (1) Ideas for this page, from the page itself: a second headline for the first headings, a clearer label than Submit, Learn more or Click here, a different top picture, a simpler layout for crowded sections, each with a plain reason and the kind of effect to expect (no invented numbers); (2) Create test: pick a goal (a button selector is clicked, or a page path is visited), and the section is copied into a new section template that becomes Variant B, with a draft block test (50/50, original as control) on the page; (3) the page's tests with Edit variant (opens the variant's template in this same editor), Start, Stop and Open (the results screen, unchanged). Start refuses a test with no goal or a variant with no section. Code: `src/features/abTesting/suggestions.ts` (pure), `/api/admin-ab-quick`, `src/views/visualEditor/AbIdeasPanel.tsx`, `EditorDock.tsx`, `VisualEditor.tsx`, `tests/int/ab-suggestions.int.spec.ts`.
-- **21b Ads and Pinterest (built 16 Nov 2026, partly).** AdSense: checked `src/features/ads/adapters.ts`. It lists header-bidding adapters (Prebid bidders and Amazon TAM), and AdSense is not one: it is its own ad tag, so there is no AdSense unit type today. Auto ads limit stays Permanent. Not added: a display unit kind for AdSense needs a new kind on the ad unit, its own tag output and its own consent handling, which is a separate piece of work. Pinterest: the existing embed (pin) and the connected-board feed (`socialFeeds`) stay. New: (1) a Pin it button in the Share buttons element (tick Pinterest and give the picture address; with no picture the button is left out, because Pinterest needs one); (2) the Pinterest Tag: an optional Pinterest Tag ID on Tracking connections (10 to 16 digits, validated), loaded for marketing consent only and counted in the withdraw-reload rule. It is kept there because Integrations is at the column limit. Code: `wave36Defs.ts`, `Wave36Elements.tsx`, `src/globals/TrackingConnections.ts`, `AnalyticsLoader.tsx`, `SeoScripts.tsx`, migration `20270316_240000_pinterest_tag`, `tests/int/pinterest-tag-share.int.spec.ts`.
-- **21c Sliders (built 16 Nov 2026, extends the existing Slides element).** Slides now take up to 10 slides, each with a background picture or video (.mp4 or .webm, muted and looped, picture shows first and for reduced motion) and an animated text layer (fade up, slide in, zoom or none). New element options: loop (off stops at the ends), arrows, dots, thumbnails under the slider, and a separate height on phones. Only the slide in view and its neighbours load their picture or video. Autoplay stays off by default and stops on hover, focus and reduced motion. Slides saved earlier look the same. `slides`, `gallery` and the hidden `image-carousel` are kept. Code: `src/lib/elements/slidesLogic.ts` (pure), `wave65Defs.ts`, `Wave65Elements.tsx`, `wave65.css`, `tests/int/slides-settings.int.spec.ts`.
-- **21d Breadcrumb styling (built 16 Nov 2026).** New Breadcrumbs group in SEO settings: separator (/, >, a single angle, |, -, a bullet), Home label, make the current page a link, and structured data on or off. The automatic breadcrumb trail uses them, and the Auto breadcrumbs element can override the Home label and separator for one trail (block design controls cover colours and spacing as for any element). Structured data off removes the BreadcrumbList from the shop, blog, events and courses pages. The manual Breadcrumbs element gained the same separators. Code: `src/features/seo/breadcrumbSettings.ts` (pure), `src/globals/SeoSettings.ts`, `Wave63Server.tsx`, `wave63Defs.ts`, `wave36Defs.ts`, `Wave36Elements.tsx`, the four archive pages, migration `20270316_250000_breadcrumb_settings`, `tests/int/breadcrumb-settings.int.spec.ts`.
-- **21f Blog RSS (built 16 Nov 2026; the knowledgebase part is not built).** `/feed.xml` lists the newest 30 published posts as RSS 2.0 (title, link, date, author, categories, excerpt), `?category=<slug>` or `?tag=<slug>` narrows it (same slugs as the archive pages), and a Summary or Full text setting plus an on or off switch live in Blog settings. Full text converts the post's rich text to simple HTML; posts built only with page blocks fall back to the excerpt. The blog page advertises the feed so readers and browsers can find it. Code: `src/features/blog/rss.ts` (pure), `src/app/(frontend)/feed.xml/route.ts`, `BlogSettings.ts`, `blog/page.tsx`, migration `20270316_260000_blog_rss`, `tests/int/blog-rss.int.spec.ts`. Comments moved to Task 27, as before.
-- **21g Structured data (built 16 Nov 2026, the extra types).** Pages and posts can now be typed Recipe, Job posting, How-to, Software application, Review, Person or Local business (posts: Recipe, How-to, Review). A "Page type facts (JSON)" box appears for those types, and the page's structured data gets the matching node as its main entity (ingredients, steps and times for a Recipe, company, place and pay for a job, rating for a review, and so on). Properties without data are left out, and a missing-facts list per type (Google's required and recommended properties) is available from `validateRich`. Event, Product offers, Course, VideoObject, FAQPage and breadcrumbs already existed. Code: `src/features/seo/richTypes.ts` (pure builders and validator), `schemaType.ts`, `pageSchema.ts`, `PageJsonLd.tsx`, `Pages.ts`, `Posts.ts`, migration `20270316_270000_schema_facts`, `tests/int/rich-schema.int.spec.ts`.
-- **21h SEO checks (built 16 Nov 2026, the broken link checker only).** The SEO audit screen has a Broken links section: Check links reads every link in published pages, posts, products and events, checks them in batches of 20 (this site and other sites, HEAD then GET, 6 second limit, private and local addresses refused), and lists the broken ones (404 and 410) with the pages that hold them. Links to sites that refuse the check (401, 403, 429, 5xx, no answer) are listed as unsure, not broken. For a broken link on this site you type the new address and Add redirect creates a 301. Admin only. Code: `src/features/seo/linkCheck.ts`, `linkCheckSummary.ts`, `linkCheckRun.ts`, `/api/admin-seo-links`, `BrokenLinksPanel.tsx`, `tests/int/link-check.int.spec.ts`. No migration.
-- **21i Coming soon and staging (built 16 Nov 2026; signup form and the visual builder for the screen are not built).** Coming soon: under Site pages and maintenance the Screen choice is now Maintenance or Coming soon. Coming soon takes a launch date and time, shows a live countdown (days, hours, minutes, seconds) under the headline and message, and opens the site to everyone by itself when the date is reached (the page reloads at zero). Admins, the preview link, the search-engine noindex on the screen and the excluded paths work as before. Staging: set `SITE_ENV=staging` (or `STAGING=1`) in the host's environment (not in the database, so copying the live database cannot switch it on or off). On a staging site every response carries `X-Robots-Tag: noindex, nofollow, noarchive`, pages carry the matching meta tag, `/robots.txt` disallows everything, every admin page shows an orange Staging banner, email sending is refused and logged as turned off, and card payments, shop subscription checkout and membership checkout throw instead of starting. Code: `src/features/site/staging.ts`, `countdown.ts`, `LaunchCountdown.tsx`, `MaintenanceScreen.tsx`, `pagesShape.ts`, `SitePages.ts`, `StagingBanner.tsx`, middleware, robots route, `email/index.ts`, `stripeAdapter.ts`, migration `20270316_280000_coming_soon`, `tests/int/coming-soon-staging.int.spec.ts`.
-- **21j Em dashes (built 16 Nov 2026).** All em dashes are gone from user-facing text: the select placeholder (now `Select`), the empty column hint, the divider icon, the empty option in custom fields (now `None`), and the translate banner in the English keys and all eleven dictionaries (a colon now), plus the Russian strings (a colon, or a comma where the sentence read better, for example in the renewal and event reminder emails). New `tests/int/no-em-dashes.int.spec.ts` fails if one appears in any `.ts` or `.tsx` file under `src` (the only exception is the page title separator pattern in `seo/resolve.ts`, which matches the character without showing it).
-- **21k Languages (built 16 Nov 2026, the switcher style; the translations table already existed; language-specific merge tags are not built).** Language switcher element: Show (own-language name, short code, flag and name, flag only), Layout (row or list), Hover effect (underline, background, none) and Align. No placement option: it is placed only in the visual editor and in header templates, as before. Flags come from the region of the code (en-AU is Australia) or a usual country for the language, are hidden from screen readers, and the language name stays as the accessible label and tooltip. The old look is the default. The Translations overview (`TranslationsOverview.tsx`, `translationOverview.ts`) already lists every item with one status per language and filters by type, language and status, so no change there. Code: `src/features/multilingual/switcherStyle.ts` (pure), `Wave65Server.tsx`, `wave65Defs.ts`, `wave65.css`, `tests/int/switcher-style.int.spec.ts`. No migration.
-- **16k Dropdown switcher and translation progress bars (built 17 Nov 2026).** The Language switcher Layout now has As a dropdown: a native details element (no script, opens by keyboard) whose button shows the current language in the chosen Show style, with the other languages listed under it; Hover and Align apply. The Translations header shows a progress bar beside each language's approved count. Language-specific merge tags are still open. Code: `switcherStyle.ts`, `Wave65Server.tsx`, `wave65Defs.ts`, `wave65.css`, `TranslationsView.tsx`, `tests/int/switcher-style.int.spec.ts`. No migration.
-- **21l Site planner (built 16 Nov 2026, planning and draft pages; filling each page with the AI builder is not wired).** Switch Site planner on in Site Settings, under Features, then open Settings > Site planner. Describe the site; optionally Ask me questions first (the AI asks 5 to 7, you answer); Make the page plan returns a tree of up to 40 pages, each with a brief and a list of sections. Edit titles, move pages under other pages, change status (Idea, Briefed, Draft page made, Done), edit briefs and sections, add or remove pages, or ask the AI to Suggest more pages (merged in, repeats skipped). Create draft pages makes a draft for every page that has none, with the right parent, and never publishes. Progress counts and the next page to fill show at the top. It uses the Claude or OpenAI key and the monthly spend cap from Integrations (usage is counted as planner), and replies are checked before use (bad JSON, loops and duplicate slugs are repaired or refused). Admin only. Code: `src/features/sitePlanner/plan.ts` (pure), `prompts.ts`, `store.ts`, `SitePlannerPanel.tsx`, `SitePlannerView.tsx`, `/api/admin-site-planner`, feature `siteplanner` (table `site_plans`), migration `20270316_290000_site_planner`, `tests/int/site-planner.int.spec.ts`. The AI calls were not run against a real key here.
-- **22h Google Analytics user_id (built 16 Nov 2026).** In SEO settings, Analytics: switch on Send signed-in user ID to GA4 (off by default) and keep Hash the ID on (default; a keyed SHA-256 using the site secret, first 32 hex characters, so the account number never leaves the site). The ID is only added when analytics loads, so it is consent gated by the same loader, and only for signed-in users. Code: `src/features/seo/ga4User.ts`, `AnalyticsLoader.tsx`, `SeoScripts.tsx`, `SeoSettings.ts`, migration `20270316_300000_ga4_user_id`, `tests/int/ga4-user-id.int.spec.ts`.
-- **17h Google Analytics link (built 16 Nov 2026).** Settings pages can now hold an external link card (`type: 'external'`, an https address that opens in a new tab with `noopener noreferrer`, shown with a ↗ arrow, left out of the settings search). Settings > Tracking has a Google Analytics card to analytics.google.com. Code: `src/admin/settingsPages.ts`, `views/SettingsPageClient.tsx`, `views/SettingsHubView.tsx`. No migration.
-- **23b Authentication overview (built 16 Nov 2026, read only).** Settings > Security has an Authentication overview link (`/authentication`, admin only): one table with every method (password, email verification, magic link, email code, passkeys, two-step, and each social provider), its status (On, Off, Needs setup with the missing credentials named) and an Open link to the screen that owns the setting. Nothing was removed. English only. Code: `src/features/security/authMethods.ts`, `src/admin/views/AuthenticationView.tsx`, `adminViewRegistry.ts`, `settingsPages.ts`, `tests/int/auth-methods.int.spec.ts`. No migration.
-- **23c Dashboard sign-in cards (built 16 Nov 2026, part).** On the admin dashboard, admins see Failed sign-ins (a 30 day bar chart) and Sign-in methods used (password, social, email link or code, passkey) read from the audit log, shown only while Security is on. English only. Code: `src/features/security/authStats.ts`, `src/views/dashboard/Dashboard.tsx`, `tests/int/auth-stats.int.spec.ts`. No migration.
-- **23e Last used badge (built 16 Nov 2026).** The member sign-in screen remembers, in a plain cookie `eg_last_method` (one method name, one year), whether this browser last used the password form or a social provider, and shows a small "Last used" badge beside it next time (English only; blocked cookies mean no badge). Code: `src/features/accounts/lastUsed.ts`, `components/LastUsedBadge.tsx`, `AuthScreens.tsx`, `tests/int/last-used-method.int.spec.ts`. No migration.
-- **18e leftovers built (16 Nov 2026).** (1) The user record now keeps `lastLoginMethod` and `lastLoginAt` (password, magic-link, email-code, passkey, or a social provider id), written when a session is minted, carried through the two-step code; impersonation is not recorded. Migration `20270317_130000_last_login_method` adds two nullable columns on `eg_users`. (2) The Last used badge now also shows for magic link, email code and passkey buttons, and on the admin sign-in screen. (3) The account-linking rule is written above `resolveSignIn` in `src/features/socialLogin/service.ts` (link only when the provider email and the account email are both verified and match; staff never auto-link; a signed-in person may link; unlink never removes the last way in). (4) Unlinking the last provider is now also allowed when the account has a passkey or an emailed sign-in is switched on (`otherMethods.ts`). Tests: `auth-slice-3`, `last-used-method`, `social-login` specs. The last login method is stored but not yet shown on the admin user screen.
-- **18j Organisation access helper (built 16 Nov 2026).** `src/features/organizations/access.ts` is the one place to ask which companies and teams a person is in and whether they may see a record: `loadOrgAccess(d1, userId)` (two small queries; unknown person or failed lookup gives no access), `mayAccessRecord(access, { organizationId, teamId, ownerUserId })` (true, false, or null for an unscoped record so the caller applies its own rule), `orgScopeClause(orgColumn, teamColumn, access, { ownerColumn, includeUnscoped })` for SQL lists, plus `isOrgMember`, `isOrgManager`, `sharesOrg`. Rules: the owner of a record, owners and admins of its company, members of its team (or any member when it names no team). For use by the shop (orders), forms (submissions), approval (requests) and the taskboard (tasks): add nullable `organization_id` and `team_id` columns on that table, then AND the clause into the list query and call `mayAccessRecord` on single reads. Wiring each of those lists is Task 15 and Task 10. Test: `tests/int/org-access-helper.int.spec.ts` (real SQL through node:sqlite). No migration.
-- **19k Cloudflare signal rules (built 17 Nov 2026).** Form settings > Spam protection > Bot detection (when on) has two more lists. Bot fingerprints: JA3 or JA4 hashes, one per line, that always count as a bot whatever the score (read from `cf-ja3-hash` and `cf-ja4`, or the Bot Management data). Allowed verified bot categories: empty lets every verified bot through as before; with categories listed, only verified bots in those categories pass and any other verified bot (an AI crawler, say) is treated like a bot (read from `cf-verified-bot-category` or `cf.verifiedBotCategory`). Same modes apply (ask for the challenge, or refuse), on every place and on forms. No signal from the plan means no change. Code: `src/features/security/botSignals.ts` (`BotRules`, `parseList`), `authCaptcha.ts`, `forms/submit.ts`, migration `20270318_110000_bot_rules`, `tests/int/bot-detection.int.spec.ts`. Not run against live Cloudflare headers.
-- **19a and 19k follow-ups (built 17 Nov 2026).** (1) Admin sign-in has its own place, Admin sign-in, in the same modes; the admin login form draws the widget and sends the token with the password (`rest.ts` `handleLogin`, `LoginView.tsx`). (2) The card checkout has a place, Checkout: card payment; the token travels with the payment start request, and only the request is checked, never an order or payment record. (3) Accessible alternative: next to the widget a button, Can't use the security check? Answer a question instead, shows a plain question ("What is 7 plus 4?"); it also appears by itself when the widget cannot load. The answer is held in a signed token (ENGAGE_SECRET, 15 minutes); no secret means no alternative (`captchaFallback.ts`). (4) Flagged visitors: Authentication overview shows how many visitors the bot score flagged in the last 7 days, asked or refused, by place; one audit line (`bot.flagged`) per address and hour. (5) Per-form override: Forms > Spam > Bot detection (Use site setting, Off, Ask for the challenge, Ask and refuse the worst). Migration `20270317_280000_captcha_followups`, `tests/int/captcha-modes.int.spec.ts`. Not run against live keys.
-- **19a CAPTCHA modes (built 17 Nov 2026).** Form settings > Spam protection has a mode for each place: Member sign-in, Create account, Forgot password (request and new password), Magic link and email code request, Email code entry, Comments, Chat and live chat, Product reviews, Back-in-stock sign-up, Event RSVP, and bank transfer, cheque and cash orders. Modes: Same as before, Off, Always, or Only after repeated failures from the same address (threshold and window are settings; places with a failed step count failures, the others count tries). Needs the keys; no keys means nothing is asked. The widget appears in the form by itself (`/api/captcha-config`, `PlaceCaptcha`) and is replaced after each submit; a blocked script shows a message. Refused attempts are logged as `captcha.failed` in the audit log. The Cloudflare bot score (19k) now applies to every place: challenge mode asks, block mode refuses. Code: `src/features/security/{captchaPlaces,authCaptcha,PlaceCaptcha,rsvpCaptcha}.ts(x)`, `accounts/actions.ts`, review, back-in-stock, offline order, comment and chat routes, migration `20270317_270000_captcha_modes`, `tests/int/captcha-modes.int.spec.ts`. Not run against live keys.
-- **24a Challenge on sign-in, register and forgot password (built 16 Nov 2026, member screens).** Form settings, Spam protection: switch on the challenge (Turnstile or reCAPTCHA, with its keys) and Also require the challenge on sign-in, create account and forgot password. The widget appears inside those three forms, the token is checked on the server, a missing or wrong token is refused with a clear message, and it fails open when the keys are missing or the provider cannot be reached so a site is never locked out. Always on when enabled; modes after N failures, admin sign-in, magic link and email code request, reset and code entry are left. English only. Code: `src/features/security/{authCaptcha.ts,AuthCaptcha.tsx,AuthCaptchaField.tsx}`, `accounts/actions.ts`, `AuthForms.tsx`, `AuthScreens.tsx`, setting `spam.protectSignIn`, migration `20270316_360000_auth_captcha`, `tests/int/auth-captcha.int.spec.ts`. Not run against live Cloudflare or Google keys.
-- **24h Disposable email blocking (built 16 Nov 2026, member sign-up).** Members settings, Registration: switch on Refuse sign-ups from throwaway email services (off by default). A built-in list of about 65 well-known services (including subdomains) is refused with a clear message at member sign-up. Typo suggestions for common domains exist as a helper (`suggestEmail`) but are not shown anywhere yet. Code: `src/features/security/emailCheck.ts`, `src/features/members/signup.ts`, `MemberSettings.ts`, migration `20270316_310000_disposable_email`, `tests/int/email-check.int.spec.ts`.
-- **27a Comments on blog posts (built 16 Nov 2026, first slice).** Switch Comments on in Site Settings, under Features. Each published blog post then shows a Comments block under its content: the approved comments as threads (replies up to a depth you set, 1 to 5; too-deep replies sit beside their parent), initials avatars, a form with name, email (never shown) and comment, a hidden honeypot field, and a Reply button. Comments close a set number of days after the post was published (0 never). Code: `src/features/comments/{core,store}.ts`, `components/CommentsSection*.tsx`, `/api/comments`, tables `comments` and `comment_settings`, migration `20270316_370000_comments`, `tests/int/comments-core.int.spec.ts`.
-- **27b Moderation (built 16 Nov 2026, first slice).** Admin > Comments (Data and System): tabs per status with counts, bulk approve, spam, trash or delete, reply as the site team, and settings: hold every comment, hold a person's first comment, hold comments with links, or publish at once; publish signed-in people at once; blocked words (a match is marked spam); reply levels; close after days. A spam comment looks accepted to the poster. `/api/admin-comments`.
-- **28c Free-shipping progress bar (built 16 Nov 2026, part).** The cart page shows "Spend $X more for free shipping" with a progress bar (and "You have free shipping." once reached), using the lowest enabled Free over amount threshold across shipping zones. Hidden when no threshold is set. It is a hint: checkout still prices shipping from the address. English only. Code: `src/features/ecommerce/lib/freeShipping.ts`, `/api/shop-free-shipping`, `src/components/FreeShippingBar.tsx`, cart page, `tests/int/free-shipping-progress.int.spec.ts`. No migration.
-- **31a Affiliate tracking, first slice (built 16 Nov 2026).** Switch Affiliates on in Site Settings, under Features, then open Settings > Data and System > Affiliates (admin only). Add an affiliate (name, optional email and code; a code is made for you if left blank), approve or suspend, copy their link (`yoursite.com/?ref=code`) or delete. A visitor who arrives with a link for an active affiliate gets the first-party `eg_ref` cookie for 30 days (last click wins) and the landing is logged with the page and UTM source, medium and campaign. Crawlers and scripts are not logged, the route is rate limited and always answers ok so codes cannot be probed. English only. Code: `src/features/affiliates/{core,store}.ts`, `components/AffiliatesPanel.tsx`, `AffiliateCapture*.tsx` (mounted in the public layout), `/api/affiliate-visit`, `/api/admin-affiliates`, `src/admin/views/AffiliatesView.tsx`, feature `affiliates` (tables `affiliates`, `affiliate_visits`), migration `20270316_320000_affiliates`, `tests/int/affiliates-core.int.spec.ts`.
-- **31b Commissions and manual payouts (built 16 Nov 2026, first version).** On the Affiliates screen, set cookie days, which click counts (first or last), the default commission percent (10), and days before payable (30). When a buyer who carries an affiliate's `eg_ref` cookie creates an order, the order is attributed (not to the affiliate's own email). When it is paid (checkout, webhook or an admin moving it to Processing or Completed) a commission is worked out once on subtotal minus discounts and waits out the pending days; refunds reduce it in proportion and a full refund reverses it (a commission already paid is left for you to recover by hand). The table shows waiting, owed now and paid per affiliate, a Record payout button (you pay outside the site; it records the amount and note and marks those commissions paid), the recent commissions and the payouts log. An affiliate with commissions cannot be deleted, only suspended. Code: `src/features/affiliates/{commission,service,store}.ts`, hooks in `Orders.ts`, `OrderRefunds.ts` and `markOrderPaid` (`orders.ts`), `/api/admin-affiliates`, migration `20270316_330000_affiliate_commissions` (tables `affiliate_settings`, `affiliate_commissions`, `affiliate_payouts`), `tests/int/affiliate-commission.int.spec.ts`. The order hooks were not run against a real payment here.
-- **31b rules (built 16 Nov 2026).** On the Affiliates screen: a per-affiliate commission rate button (blank uses the program rate; used when a commission starts waiting), a Minimum payout setting (Record payout refuses below it), a first-order-only switch (a buyer's later orders through the same affiliate earn nothing; buyer email is stored on the commission), and a Download payouts as CSV link (spreadsheet-formula safe). Code: `src/features/affiliates/{commission,service,store}.ts`, `/api/admin-affiliates` (`rate` action, `?export=payouts`), migration `20270316_400000_affiliate_rules`, tests in `tests/int/affiliate-commission.int.spec.ts`.
-- **31e Get started checklist and share kit (built 16 Nov 2026).** The Affiliates page shows a five-step Get started list (choose rules, first affiliate, first visit, first commission, first payout) worked out from the data, hidden once all are done, and a Copy share kit button per affiliate that copies a ready message with their link, rate, cookie days and private dashboard link. Code: `setupSteps` and `shareKit` in `src/features/affiliates/core.ts`, `AffiliatesPanel.tsx`, `settingsConfigured` in `store.ts`, tests in `tests/int/affiliates-core.int.spec.ts`.
-- **31a attribution (built 16 Nov 2026).** Coupon-code attribution: each affiliate can have a coupon code (button on the Affiliates table); an order that used it and carries no link cookie is credited to that affiliate (self-referral and first-order rules still apply). UTM values from the landing are kept in a small `eg_ref_utm` cookie and stored on the commission with the attribution source (link or coupon). Consent category: a setting files the referral cookie under Necessary (default, as before) or Preferences, Analytics or Marketing; for those the visit route stores and logs nothing until the visitor has switched that category on in the cookie banner, and the capture script retries when they choose. Code: `src/features/affiliates/{core,consentGate,service,store}.ts`, `/api/affiliate-visit`, `/api/admin-affiliates` (`coupon` action), `AffiliateCapture.tsx`, migration `20270316_410000_affiliate_attribution`, tests in `tests/int/affiliates-core.int.spec.ts`.
-- **31c emails (built 16 Nov 2026).** Three plain-text emails to the affiliate's own address: approved (admin approves, or automatic approval on sign-up; carries link, rate and private results page), commission earned (when an attributed order is paid; amount and payable date) and payout recorded (amount and note). A switch on the Affiliates screen (on by default) turns them off. They are logged in the email log as `affiliate.approved`, `affiliate.commission`, `affiliate.payout`, need SITE_URL, never block approving, paying or an order, and are English only. Code: `src/features/affiliates/{emails,service}.ts` (`sendAffiliateEmail`), migration `20270316_420000_affiliate_emails`, `tests/int/affiliate-emails.int.spec.ts`.
-- **26a short links (vanity codes per product) (built 17 Nov 2026).** Choice: a vanity code is a short link, `/a/<code>`, that belongs to one affiliate and opens one product (or the home page) with that affiliate's referral code and any utm values attached, so the normal capture and attribution do the tracking. Affiliates screen, Short links adds and removes them; the affiliate's dashboard lists their own. Table `eg_affiliate_links` (migration `20270317_240000_affiliate_links`), route `app/(frontend)/a/[code]/route.ts`, store helpers `addShortLink`, `resolveShortLink`, `listShortLinks`. The destination is always a path on the site; a switched-off program, unknown code or draft product gives 404 or the home page.
-- **26e Affiliates page template and the welcome email (built 17 Nov 2026).** A new element `affiliate-join` (def `lib/elements/affiliateDefs.ts`, server renderer `components/blocks/elements/AffiliateServer.tsx`) shows the program summary, terms and join form, with switches for each part; it renders nothing while Affiliates is off. The visual editor page template Templates > Affiliates page (Shop) puts a hero, three explaining cards and that element on a page (`templatePresets.ts`; the design v1 corpus snapshot gained its entry). The automatic welcome email is the approved email, now translated (see 26c). The dashboard card idea was dropped: Matt chose the setup checklist on the Affiliates page only.
-- **26c translated affiliate emails and the now-payable email (built 17 Nov 2026).** The approved, commission and payout emails now take their wording from the interface strings (`affiliate.email.*` in `uiStrings`, all thirteen languages) and are sent in the site's default language when Languages is on, English otherwise (`emailStrings` in `affiliates/service.ts`; affiliates have no language of their own yet). A new hourly job `affiliate-payable` (`cron/registry.ts`, `cron/jobs.ts`) emails each affiliate once when a commission's waiting period ends (`sendPayableEmails`; flag column `payable_notified`, migration `20270317_230000_affiliate_payable_email`, which marks existing past-due commissions as sent so old ones are not emailed). With a waiting period of 0 days no second email is sent. The approved email is the automatic welcome email (26e).
-- **26c affiliate webhook events (built 17 Nov 2026).** Four new events in `webhooks/events.ts`: `affiliate.joined`, `affiliate.approved`, `affiliate.commission.earned` (the commission starts its waiting period) and `affiliate.payout.recorded`, each with an allowlist of fields (no token or payout details) and a label in all thirteen languages (`webhooks.event.affiliate.*` in `uiStrings`). Emitted through `emitAffiliateEvent` and `emitAffiliateStatus` in `affiliates/service.ts` from the join route, the admin create, status and payout actions and the paid-order hook. They also work as Email > Notifications triggers' source events and appear in the generated webhook guide.
-- **26b renewals and recurring commission (built 17 Nov 2026).** Affiliates settings has Commission on subscription renewals and Stop after (months, 0 for no limit); migration `20270317_210000_affiliate_recurring`. A renewal order (made by the Stripe payment webhook, `subscriptions/webhooks.ts`, only for billing reason subscription_cycle) goes to `affiliateRenewalPaid` in `affiliates/service.ts`: it finds the affiliate who earned the buyer's first non-renewal commission (`originalCommissionForEmail`, matched by buyer email), checks they are still active and the window has not passed (`renewalWindowOpen`), stores a commission with source `renewal`, then works it out like any paid order (override, product rate, tier, waiting period, emails). Refunds work as before.
-- **26b category (tag) commission rules (built 17 Nov 2026).** Choice: the shop already groups products with Product tags (a many-to-many on products; the old Digital/Physical `category` select is only a type flag), so category rates use tags. Affiliates screen has Tag rates (table `eg_affiliate_tag_rates`, migration `20270317_220000_affiliate_tag_rates`). Precedence per order line: the affiliate's own rate, the product's rate, the highest rate among the product's tags (`highestTagRate`, tag lookup in `productTagMap` reads `eg_products_rels`), then the tier or program rate.
-- **26b product and tier rates (built 17 Nov 2026).** The commission is now worked out line by line: the order discount is shared across lines in proportion to their value, a product with its own rate (Affiliates > Product rates, a product picker) earns that rate, other lines earn the program rate or the sales tier rate, and an affiliate's own rate beats both. Sales tiers are one per line ("sales in dollars, rate percent") in the settings; an affiliate's commissioned sales so far (waiting and paid) pick the tier. The blended percent is stored unrounded so refunds still reduce the commission in proportion. Code: `commissionForLines`, `parseTiers`, `tierRate` in `src/features/affiliates/commission.ts`, `service.ts`, `store.ts` (`eg_affiliate_product_rates`), migration `20270317_180000_affiliate_rates`, tests in `tests/int/affiliate-commission.int.spec.ts`.
-- **26c reports (built 17 Nov 2026).** The Affiliates page shows Orders, commissioned sales and conversion (orders per visit, reversed commissions not counted) for each affiliate and a Top affiliates table (top ten by sales). No new tables. Code: `affiliateReport` in `src/features/affiliates/commission.ts`, `/api/admin-affiliates`, `AffiliatesPanel.tsx`, tests in `tests/int/affiliate-commission.int.spec.ts`.
-- **26a visit log (built 17 Nov 2026).** The Affiliates page lists the newest 50 tracked visits (time, affiliate, landing page, UTM values). Crawlers are still not logged. Code: `recentVisits` in `src/features/affiliates/store.ts`, `/api/admin-affiliates`, `AffiliatesPanel.tsx`. No new tables.
-- **26c member portal (built 17 Nov 2026).** A signed-in member with a verified email can open `/account/affiliate` and see their own affiliate dashboard. The affiliate is matched by email, so a member only sees results for their own verified address (the private-link page still works). A member who is not an affiliate sees the Join form, and the public Affiliates page links here. The dashboard body is shared in `AffiliateDashboardView.tsx`. Uses the site sign-in and email verification, so no new tables. Code: `src/app/(frontend)/account/affiliate/page.tsx`, `findByEmail` in `store.ts`.
-- **26c creatives kit (built 17 Nov 2026).** On the Affiliates page the owner ticks up to 20 images from the media library. Each active affiliate's dashboard then shows them with a Download link and a copy-ready HTML snippet (an image linking to the affiliate's own referral link with rel sponsored nofollow; values escaped). One shared kit for everyone; pending and suspended affiliates see none; private media files stay protected by the file route. Code: `parseCreativeIds` and `bannerSnippet` in `core.ts`, `imageChoices` and `creativesByIds` in `store.ts`, `AffiliateDashboardView.tsx`, `AffiliatesPanel.tsx`, migration `20270317_190000_affiliate_creatives`, tests in `tests/int/affiliates-core.int.spec.ts`.
-- **26b payout details and 26a bot count (built 17 Nov 2026).** An affiliate can say how they want to be paid on their dashboard (plain text, 300 characters, saved with their private token); the owner sees it under their name on the Affiliates page and in a Payout details column of the payout CSV, then pays outside the site as before. Crawler and script hits on the visit route are still not logged as visits but are counted per day in `eg_affiliate_bot_hits`, and the Recent visits note shows the count for the last 7 days. Code: `src/app/(engage)/api/affiliate-payout-details/route.ts`, `PayoutDetailsForm.tsx`, `store.ts` (`setPayoutDetails`, `countBotHit`, `botHitsSince`), migration `20270317_200000_affiliate_payout_bots`.
-- **31c Affiliate dashboard, first version (built 16 Nov 2026).** Each affiliate has a private dashboard link (`/affiliates/dashboard?token=...`, 48 character token, not indexed) showing their referral link, visits, orders, waiting, payable and paid amounts and each commission. There is no sign-in for affiliates yet: copy the link from the Affiliates screen (Copy dashboard link makes one for older affiliates) and send it. Code: `src/app/(frontend)/affiliates/dashboard/page.tsx`, migration `20270316_350000_affiliate_portal`.
-- **31e Easy affiliate setup, first version (built 16 Nov 2026).** Switch Affiliates on and the defaults already work (30 day cookie, last click, 10 percent, 30 days before payable, manual payouts). A public page `/affiliates` shows the commission, cookie length, program terms (your text, or a standard template) and a join form (honeypot, rate limited, duplicate email refused); Approve new sign-ups automatically is a setting (otherwise they wait as Pending). After joining, the person sees their private dashboard link on screen. Code: `src/app/(frontend)/affiliates/page.tsx`, `JoinForm.tsx`, `/api/affiliate-join`, settings in `AffiliatesPanel.tsx`.
-- **32a Remove the Asticore SaaS button (built 16 Nov 2026).** The permanently disabled "Get suggestions from Asticore SaaS" button and its note are gone from the blog builder, with the two string keys in all thirteen dictionaries and the `.blog-ai__saas` style. Code: `BlogWizard.tsx`, `uiStrings/keys.ts`, dictionaries, `blog-builder.css`.
-- **26b Spam rules for forms (built 16 Nov 2026, forms only).** Form settings, Spam protection has Blocked words (one per line), Link limit (0 means none) and Blocked senders (email or domain per line). A submission that hits one is discarded with the normal success message, like a honeypot hit, and logged. Code: `src/features/forms/spamRules.ts`, `submit.ts`, `FormSettings.ts`, migration `20270316_380000_spam_rules`, `tests/int/spam-rules.int.spec.ts`.
-- **29b and 29e Asset manager, first slice (built 16 Nov 2026; switch on under Site Settings, Features, Asset manager).** One feature key `dam` owns every table for Task 29 (migration `20270316_390000_dam`: `media_assets`, `media_folders`, `media_collections`, `media_collection_items`, `media_meta_fields`, `media_versions`, `media_shares`, `media_activity`, `media_saved_searches`, `media_renditions`, `media_dam_settings`), so later parts of Task 29 add no schema. The media collection is untouched: per-file details live in `eg_media_assets`. **Rights and status:** each file's page has an Asset manager panel with status (draft, in review, approved, archived), licence type and terms, credit, usage notes, territory, release note, licence start and expiry and embargo date. A file with no row counts as approved with no rights. An expired, embargoed, not yet started or archived file (and, if Require approval is on, any file not approved) is flagged on its page and left out of the visual editor media picker (`/api/admin-media-dam?unusable=1`). Only an admin can approve; anyone with media access can send for review. Bulk Set status on the Media page. **Collections:** a file can be in many; create, rename and delete under Settings, Asset manager (`/admin/asset-manager`), tick them on the file's page, bulk Add to collection or Remove from collection on the Media page, and a Collection filter that combines with folder and tag. **Custom metadata:** the admin defines fields (text, select, date, number, link) with required, searchable and applies-to (images, video, audio, documents); values are validated and stored with a search text. **Camera data:** on JPEG upload the EXIF block is read (camera, lens, date taken, exposure, creator, copyright, description, GPS) and stored searchable; GPS is dropped unless Do not keep GPS is switched off; Read it from the file does existing photos. **Duplicates (part of 29d):** every upload is hashed (SHA-256 of the bytes sent); the same bytes again are reported in the upload reply (`duplicateOf`) and, if set to Refuse, rejected with 409. **Report and settings:** expired and soon-to-expire licences on the Asset manager page, activity log per file, settings for warning days, versions kept, delete warning and storage limit (the last three are stored, used by later parts). Code: `src/features/dam/{rights,metaFields,exif,hash,store,onUpload}.ts`, `DamAssetPanel.tsx`, `AssetManagerPanel.tsx`, `src/admin/views/AssetManagerView.tsx`, `/api/admin-media-dam`, hooks in `admin-media-upload`, `MediaGalleryView.tsx`, `MediaGalleryGrid.tsx`, `MediaPicker.tsx`, `tests/int/dam-logic.int.spec.ts`.
-- **29d Versions and safe delete (built 16 Nov 2026; part of the Asset manager, switch on under Site Settings, Features).** Every Replace from a file's page keeps the file being replaced as a version (stored under `versions/<id>/...`, never served by the public file route), newest few kept (Settings, Asset manager, Previous versions kept, default 5, 0 turns it off). A file's Asset manager panel lists versions with date, size and pixel size, Compare (earlier version and current side by side, pictures), Restore (the current file becomes a version first, so a restore can be undone) and Delete. Deleting a file that is in use through the media collection (the edit page, the REST API) is refused with the places listed when Warn before deleting is on; a new `beforeDelete` collection hook in `src/localapi/operations.ts` makes that possible (a throwing hook refuses the delete). The panel offers Replace everywhere (every page, post, product, setting and so on that uses the file is pointed at another file, only the changed fields are written) and Delete anyway (passes `context.allowUsedDelete`). Deleting a file removes its asset record, collection links, versions and stored version objects. Code: `src/features/dam/{versions,versionsIo,safeDelete,replaceEverywhere}.ts`, `store.ts`, `src/collections/Media.ts` hooks, `admin-media-replace/[id]/route.ts`, `admin-media-dam` actions `restoreVersion`, `deleteVersion`, `replaceEverywhere`, `deleteMedia`, `tests/int/dam-versions.int.spec.ts`, `localapi-operations.int.spec.ts`.
-- **29c Search and filters (built 16 Nov 2026; part of the Asset manager, switch on under Site Settings, Features).** Settings, Media search (`/admin/media-search`, anyone who can read media; an Advanced search link sits beside the Media page's search box): one form searches words (every word must match in the file name, alt text, caption, credit, folder, custom details, camera data or the words inside a document), type (pictures, video, audio, documents), folder (and sub-folders), collection, tag (and its sub-tags, when Media tags is on), added date range, size, minimum width and height, shape (landscape, portrait, square), status, licence state (expired, expiring soon, embargoed, any problem) and each searchable custom detail; sort by newest, oldest, name or size; 48 per page. Saved searches (Save this search, Run, Delete) and smart collections (Make a smart collection): a collection that has no fixed members and fills itself from its search whenever it is opened from the Collection filter on the Media page; files cannot be added to one by hand. Words inside documents: on upload (and Read it from the file, which also works in bulk through the API) the text of a .docx and of a PDF with plain or Flate-compressed text is read, up to 20,000 characters, and stored after a marker in the file's search text so editing its details never loses it. Every value is a bound SQL parameter. Code: `src/features/dam/{search,textExtract}.ts`, `store.ts` (`runSearch`, `smartCollectionIds`, saved searches), `MediaSearchPanel.tsx`, `src/admin/views/MediaSearchView.tsx`, `/api/admin-media-dam?search=1`, `tests/int/dam-search.int.spec.ts`, `tests/int/dam-search-db.int.spec.ts` (runs the SQL on an emulated D1).
+<a id="cat-spd"></a>
+### SPD: Speed, builds and updates
 
-**29f Private files, share links and zip (built).** Files and folders can be made private (single file, bulk, or a folder rule that new uploads inherit). A private file's public address returns the same not-found to anyone without media read access, with no-store headers. Share links (`/api/media-share/<token>`) cover a file or a collection, with expiry, optional password, and a download limit counted atomically; only a hash of the token is stored and the link is shown once. The share page lists files, offers single downloads, previews (uncounted, only for links without a password) and a zip (max 100 files / 100 MB); files whose rights are expired or unapproved are left out. Access check fails open to public if the tables are missing. Code: `src/features/dam/{access,share,zip}.ts`, `store.ts`, `src/app/(engage)/api/media-share/[token]/route.ts`, `src/localapi/rest.ts` (`handleGetMediaFile`), `DamAssetPanel.tsx`, `AssetManagerPanel.tsx`, `MediaGalleryGrid.tsx`, `tests/int/dam-private.int.spec.ts`.
-- **30a AI site chatbot, first version (built 16 Nov 2026).** Switch Chatbot on in Site Settings, under Features, and set it up in Admin > Chatbot: name, avatar, greeting, tone, brand voice, extra instructions, allowed and blocked topics, languages, opening hours and the hand-off message, contact page and email. Visitors get a corner chat button (when Show on every page is on) or the Chatbot element placed on any page in the visual editor. Answer order: the FAQ first, then pages, posts and products (published, not password protected, title and excerpt only), each answer with links to its sources. With a Claude or OpenAI key (cheap model, chosen from Integrations keys) the model writes the answer only from those numbered sources and cites them; it replies NO_ANSWER when they do not hold it, which becomes a hand-off to the contact page, email and opening hours. With no key, with AI switched off, with the shared AI spend cap reached or with the chatbot's own optional cap reached, a strong FAQ match is returned as it is and anything weaker shows page links or the hand-off. Switches, all off by default: store help (shipping, returns and policy pages as sources), order status (signed-in customers only, only their own latest three orders, read straight from the store with no AI), product recommendations. Rate limit per visitor per hour, honeypot, the Form settings spam challenge on the chat box, a consent notice before the first message, retention in days (old conversations are removed when a new chat starts, or by the Delete old conversations now button) and erase with the customer in the privacy erase. The admin sees use and spend (chatbot calls cost like the AI page builder, in the same usage table with mode chatbot), the conversation log with filters for handed off and rated not helpful, a delete per conversation, and Teach it, which saves a corrected answer as a new FAQ. Visitors rate each answer with thumbs. English labels only for now. Code: `src/features/chatbot/{core,store,service}.ts`, `components/{ChatWidget,ChatWidget.server,ChatbotPanel}.tsx`, `src/admin/views/ChatbotView.tsx`, `/api/chatbot`, `/api/admin-chatbot`, element `chatbot` in `wave38Defs.ts`, tables `chatbot_settings`, `chatbot_conversations`, `chatbot_messages`, migration `20270316_395000_chatbot`, `tests/int/chatbot-core.int.spec.ts`, `tests/int/chatbot-service.int.spec.ts`.
-- **23b switches on the Authentication overview (built 16 Nov 2026).** Magic link, email code, passkeys, email verification and each social provider (once its credentials are complete) now have an On/Off switch on `/authentication`. Admin only, refused while impersonating, written to the audit log as a settings update. A method that is off disappears from the sign-in form and is refused by the server as before. English only. Code: `src/features/security/authMethods.ts` (`togglePatch`), `authMethodActions.ts`, `src/admin/views/AuthMethodToggle.tsx`, `tests/int/auth-methods.int.spec.ts`. No migration.
-- **23c new sign-ups and active sessions (built 16 Nov 2026).** The dashboard sign-in section shows new accounts in the last 30 days and sessions not yet expired. Code: `loadAccountCounts` in `src/features/security/authStats.ts`, `src/views/dashboard/Dashboard.tsx`, `tests/int/auth-account-counts.int.spec.ts`. No migration.
-- **23a Verify auth behaviours (checked 16 Nov 2026).** Confirmed in code: admin reset of a user's 2FA (`twoFactorActions.ts`, audit `two-factor.reset`); revoke one session (`userSessionService.ts`, audit `session.revoked`); wrong second-step codes count toward the account lockout; magic link and email code entry cap attempts (`MAX_CODE_ATTEMPTS`); exactly 10 distinct backup codes, stored only as hashes (test); Users list uses the generic list view with filters and bulk selection. Delete own account is the privacy erase request flow today (self-service is 23h). Gaps became 23a1 and 23a2. Tests: `tests/int/auth-verify-23a.int.spec.ts`.
-- **29a Folders as records (built 16 Nov 2026).** A folder is now a record in `eg_media_folders` (made empty with New folder, or filled in the first time the tree is opened for folders that already hold files, parents included). Files keep their folder as a text path, so file addresses and queries are unchanged. Each folder has colour (dot in the tree), description (shown under the tree), who may use it (roles and companies from Task 10, nearest limited folder decides, admins always pass, only admins change it), default alt text start and default licence for new files (nearest folder that sets them wins), and visibility (the 29f private rule, shared with Private folders). Rename, move and delete change the paths on files and on the records in one action; a record already at the new path wins. Limited folders and their files are hidden from the tree, the gallery and the folder list for people outside the rule, and uploads or moves into them are refused with 403. Left out: a folder optimisation preset (the optimiser settings are site wide and the upload engine takes no per file override), and the rule only guards the admin side (staff); public file addresses stay governed by visibility (29f) and company gates. Code: `src/features/media/folderRecords.ts`, `folderRecordsStore.ts`, `src/views/media/MediaFolderSettings.tsx`, `MediaFolderTree.tsx`, `/api/admin-media-folders` (create, update, rename, move, delete), `admin-media-upload`, `admin-media-move`, migration `20270316_420000_media_folder_records` (adds `allowed_companies`), `tests/int/media-folder-records.int.spec.ts`.
-- **23l Who can sign in with what (built 16 Nov 2026, part).** The Authentication screen has a matrix: for the admin sign-in (staff) and the account sign-in (members and customers) the owner allows or blocks magic link, email code, passkeys and each social provider. Everything is allowed until blocked. A blocked method disappears from that form and the server refuses it (social start returns 404, emailed link and code and passkey endpoints return 403; passkeys are refused only when blocked for both places because the endpoints do not know the place). Password cannot be blocked so a site can never lock itself out. Two-step after a social sign-in already existed. Stored as one JSON row in `eg_kv`, no migration. English only. Code: `src/features/security/authMatrix.ts`, `authMethodActions.ts` (`setMethodAreaAction`), `src/admin/views/AuthMethodToggle.tsx` (`AreaToggle`), `AuthenticationView.tsx`, `socialLogin/settings.ts` (`blocked`), `accounts/passwordlessWiring.ts`, `passwordlessHttp.ts`, `passkeysHttp.ts`, `tests/int/auth-matrix.int.spec.ts`.
+<a id="spd-001"></a>
+#### SPD-001 · Fresh-install rules
 
+_Date not recorded_
 
+**Fresh-install rules:** enforced by `tests/int/fresh-install-schema-coverage.int.spec.ts`; the thin-install gap is about repo size and fallbacks, not schema (Task 4).
+
+<a id="spd-002"></a>
+#### SPD-002 · Task 15 SITE_URL fallback removed (#158)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 15 SITE_URL fallback removed (#158):** the hard-coded production domain fallback is gone; SITE_URL is required for canonical and mail links. Live check in Task 6.
+
+<a id="spd-003"></a>
+#### SPD-003 · Task 13 CI workflow (#162)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 13 CI workflow (#162):** `.github/workflows/ci.yml` `test` job on PRs and main (tsc, eslint, about 390 test files). Open decisions: closed in Task 11 (PR #199).
+
+<a id="spd-004"></a>
+#### SPD-004 · Task 12 speed (PR #201, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 12 speed (PR #201, 1 Nov):** per-request site snapshot (site settings, header, footer, shop settings; buildMetadata reuses it); published pages scanned once per request; home, post and product loaders memoised per request; query counter spec with bounds (home 14 to 11, post 11 to 9, product 11 to 9 reads, layout included). Theme fonts: only the built-in faces the theme picks, from jsDelivr pinned to @fontsource 5.3.0 (Cinzel has no Cyrillic file). Video: optional poster image; with a poster the file video uses preload none. No transcoding here (12b). Images: decoding async everywhere, lazy below the fold, high priority on the header logo and the post's featured image; R2 media stays a plain img (EngageImage's note: next/image cannot resize on Workers). Not done, by decision: no width and height attributes on block images (sizing is CSS-driven and cannot be checked visually here); no 'use client' removals (EmbedConsentFrame must stay client so the iframe never reaches server HTML); bundle size is measured in Task 6; no cross-request JSON snapshot, because the edge page cache already serves anonymous visitors and is purged on change.
+
+<a id="spd-005"></a>
+#### SPD-005 · Task 4 (architecture) closed 2 Nov 2026 (PRs #215, #218, #219, #220, #222)
+
+_Date: 2 Nov 2026_
+
+Task 4 (architecture) closed 2 Nov 2026 (PRs #215, #218, #219, #220, #222): setup script, schema source of truth, bundle budget, lazy sections, sharded CI, Next 16, baseline schema. Only the framework package split is parked as a Matt decision.
+
+<a id="spd-006"></a>
+#### SPD-006 · Tasks 1 and 5 closed 2 Nov 2026 (PR #221 type debt 83 to 9 any, 43 to 15 eslint-disable)
+
+_Date: 2 Nov 2026_
+
+Tasks 1 and 5 closed 2 Nov 2026 (PR #221 type debt 83 to 9 any, 43 to 15 eslint-disable). Vendor Products mirror moved to Open now as Permanent.
+
+<a id="spd-007"></a>
+#### SPD-007 · Task 4 architecture (PR #215, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 4 architecture (PR #215, 2 Nov):** site name from Site Settings in Header, Footer, checkout, the home page and the seed (neutral default "My website"; no extra reads on page paths). `pnpm run setup:cloudflare` creates or reuses the D1 database and R2 bucket and rewrites the names and ID in `wrangler.jsonc` (idempotent; refuses to change the ID without `--replace`; live values unchanged). `pnpm run bundle:size` reads per-route first-load JS from the `.next` build against `bundle-budget.json` (the budget value is a placeholder until Task 6). Content-type drift test (`tests/int/content-types-drift.int.spec.ts`): about 230 collection fields added to `src/engage-types.ts`, two unused keys removed, stored-elsewhere keys mapped, `seo.xCard` typed as a union. README deploy steps, scripts, feature status (every feature is implemented), database cleanup and template libraries corrected. Checks: tsc, eslint, related vitest. Matt's live checks are in Task 6.
+
+<a id="spd-008"></a>
+#### SPD-008 · Task 4 speed and Task 5 type debt (PR #217, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 4 speed and Task 5 type debt (PR #217, 2 Nov):** `any` 167 to 83, eslint-disable 86 to 43 (ratchet baseline lowered). `src/engine/types.ts` has one named loose default (`Loose`); hook results are `unknown`, records `Record<string, unknown>`; edit-screen and lock guards are typed. `@next/next/no-img-element` is off in `eslint.config.mjs` (pictures use the site's own image pipeline; 29 directives gone, decided). Real fixes for set-state-in-effect and exhaustive-deps in SeoCard (useSyncExternalStore), SocialImageInfo, ListRowActions, PasswordGroups, GenerateVariations, useResolvedMedia, commerce provider. Speed (measured on the stale 25 Oct `.next`: admin page 510 KB gzip, public pages about 210 KB; no new build run): admin field widgets (`componentRegistry`) load on use; all admin screens in `adminViewRegistry` load when their route opens (server `lazyView`); PageSpeed and Google cards in EditForm, the popup script, the tracking picker (admins only) and the form renderer load on demand. Server rendering unchanged. Re-measure after the next build with `pnpm run bundle:size` and set the budget in Task 6. Checks: tsc, eslint, related vitest (ratchet, forms, popup, tracking picker, roles guards, edit screens, speed page queries, password groups, bundle reader).
+
+<a id="spd-009"></a>
+#### SPD-009 · Task 4 lazy sections and Unused tables (PR #218, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 4 lazy sections and Unused tables (PR #218, 2 Nov):** a fresh install creates core tables (pages, media, users, settings, navigation) and the sections on by default (tracking); shop, events, blog, FAQs, forms, courses, members, A/B tests, ads, backups, redirects, translations and approval get their tables the first time they are ticked in Settings > General > Features (the same migration sequence replayed with only that section's statements, run before the save lands; a failure rejects the save and the switch stays off), plus a starter template for shop, events and FAQs. Switching off keeps data and tables. Existing installs: migration `20270310_100000_feature_tables_state` marks every section that already has tables as provisioned, switches untouched (tested on a simulated older database). A lazy install plus every section provisioned equals the old install table for table, column for column. Registry `src/features/featureTables.ts` (one owner per table, derived from `FEATURES[].tables`; settings tables are core; test fails for an unclassified or doubly claimed table). Reads of a missing section table return empty (find, findByID, count; privacy export and unsubscribe guarded). Settings > Data and System > Unused tables (admin role is the super admin): rows and size estimate, JSON export, delete by typing the table name, audit entry `database.table-dropped`, refuses core, sections that are on and payment records (orders, refunds, transactions, gift cards, store credit, credit ledger, subscriptions, coupon reservations); a deleted table marks its section deferred so switching it on recreates it. `POST /api/internal-migrate?provision=all` makes every section at once. Measured locally: fresh install about 15 percent faster; the rest is the 147 migrations' own lookups (next speed target: fewer per-migration reads, or the package split); one section takes about 5 s to create. Decisions: posts stay in the Blog section; settings pages are always created; the old Database screen (per-feature cleanup) stays. Live checks in Task 6. Known: `content-types-drift` fails on main (FormSubmission embedId and embedSource not declared), not from this PR.
+
+<a id="spd-010"></a>
+#### SPD-010 · Task 4 Next 16 upgrade (PR #220, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 4 Next 16 upgrade (PR #220, 2 Nov):** next 15.4.11 to 16.4.3 with eslint-config-next 16.2.7; `@opennextjs/cloudflare` 1.18.1 supports `^16.1.5`, so `--dangerouslyUseUnsupportedNextVersion` is gone from `deploy`, `deploy:app` and `scripts/build.mjs`. Next 16 builds with Turbopack by default and rejects the webpack `extensionAlias`, so build, dev and the OpenNext `buildCommand` use `--webpack`. `middleware.ts` kept (deprecated but supported on the edge; the Node-runtime `proxy` rename is a separate change). tsc, eslint (0 errors), edge-middleware-graph, speed-page-queries and `next build --webpack` pass; the OpenNext build and live deploy are a Task 6 check.
+
+<a id="spd-011"></a>
+#### SPD-011 · Task 4 fresh-install speed (PR #222, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 4 fresh-install speed (PR #222, 2 Nov):** an empty database gets a precomputed final schema (`src/migrations/baseline/`, generated) and the existing migrations are recorded as run, so only newer ones run; existing installs and lazy sections unchanged. Local fresh install 78-83 s down to 6.5-7.5 s. `tests/int/fresh-baseline-parity.int.spec.ts` proves table, column, index, foreign key and seed parity with the full run (lazy default and all sections on) and that a later migration still runs; regenerate with `REGENERATE_BASELINE=1`. Specs that test migrations pass `baseline: false`.
+
+<a id="spd-012"></a>
+#### SPD-012 · Next.js security patch (16 Nov)
+
+_Date: 16 Nov 2026_
+
+**Next.js security patch (16 Nov):** `next` 16.4.3 to 16.4.6 (same minor, clears the known-vulnerability notice that stopped the production build twice). `@opennextjs/cloudflare` stays 1.18.1 (peer range `^16.1.5`), patch file unchanged. Full OpenNext build and type check pass; live deploy check in Live checks.
+
+<a id="spd-013"></a>
+#### SPD-013 · Fresh install fix (PR)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+Fresh install fix (PR): bid mode terms now live in one JSON column (bid, version_bid) so the product version table is back under D1's 100-column limit; wholesale_applications and customer_tags registered under ecommerce.
+
+Task 15a (part 3, built 17 Nov 2026): the state harness now also covers cards, alerts (default, danger, success, warning, solid), selects, text areas, tabs, accordion summaries, checkboxes and radios (accent colour 3:1) in light and dark, plus focus rings and borders for selects, text areas, tabs and accordions. All passed without a Shine change. The public block CSS (`components/blocks/elements/*.css`) was scanned for fixed colours; the only failures were the star rating colours in `wave66.css` (empty star 1.6:1, filled 2.1:1), now #767676 and #b87d00 with the half star drawn as a gradient instead of opacity. Spec: `tests/int/state-contrast.int.spec.ts`.
+
+Task 14b (leftovers, built 17 Nov 2026): AI tagging. `POST /api/admin-media-ai-tags` (`src/app/(engage)/api/admin-media-ai-tags/route.ts`) asks the chosen vision model which of the site's existing tags fit each picture (`src/features/ai/tagSuggest.ts`); it never creates tags, never removes any, up to 25 pictures a request, JPEG, PNG and WebP only, same AI keys and provider picker as alt text. The Media page bulk bar has an AI tag button and a file's edit screen has Suggest tags with AI (adds and ticks the tags, untick to undo). The tag filter shows a dot in the chosen tag's colour. Files CSV import now tags every file that shares a filename (the export lists them once). Tags and files CSV imports over 1 MB are sent in pieces of up to 900,000 characters with the header repeated (`splitCsv` in `src/features/mediaTags/logic.ts`), so there is no size limit in the screen. No schema change. Specs: `tests/int/media-ai-tags.int.spec.ts`.
+
+<a id="spd-014"></a>
+#### SPD-014 · Lean installer with remote updates (built 18 Nov 2026, v1.2.0)
+
+_Date: 18 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Lean installer with remote updates (built 18 Nov 2026, v1.2.0).** The Deploy button now targets `installer/` (README): `wrangler.jsonc` (no ids, `no_bundle`, D1/R2/Images/cron, `ENGAGE_INSTALL=lean`), `engage.config.json` (`source`, `version`) and `scripts/install.mjs`, which downloads the named release from GitHub, checks sha256 and unpacks to `.engage/`. Releases come from `.github/workflows/release.yml` (tag `vX.Y.Z`) and `scripts/make-release.mjs`: worker.js (wrangler dry-run bundle), assets.tar.gz and `manifest.json` (version, notes from CHANGELOG, migration list, `requiresMigration`, `destructive`, `minFromVersion`, checksums, `workerGzipKiB`). Release source is configurable: `UPDATE_SOURCE` env or `source` in the config (`upstreamRepo` in `src/features/updates/versions.ts`), private sources with `ENGAGE_SOURCE_TOKEN`. The existing update popup (`UpdateNotice`, `admin-update-check`) now reads the manifest (notes, data-change warning). `admin-update-apply`: forks still sync upstream; a lean install takes an R2 backup (`runBackup`; failure offers continue without) then pins the version in the install repo through `pinInstallVersion` (`oneClick.ts`), and `{ rollback: true, version }` pins the previous one. `MigrationBar` and `admin-engage-migrate` show Run migration when the running version is newer than `eg_engage_meta.applied_version` (set by the migration and by first-run init). Local clones deploy as before. Worker is 10.8 MiB gzip, over the 3 MB limit; tracked under Task 39. Tests: `tests/int/engage-updates.int.spec.ts`. Verified: full OpenNext build, release script, installer run against a local release server, `wrangler deploy --dry-run` of the installed site.
+
+<a id="spd-015"></a>
+#### SPD-015 · One-click updates, tables and code separate (built 21 Nov 2026)
+
+_Date: 21 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**One-click updates, tables and code separate (built 21 Nov 2026).** The update popup no longer links to GitHub releases. It has two independent parts: "Update tables" (shown when migrations the code runs are not recorded; `/api/admin-engage-migrate`) and "Update site code" (shown only on lean installs and forks when a release changes the Worker; `/api/admin-update-apply` takes a safety backup to R2, then commits the new version to the install repository so the host redeploys). A destructive release needs its checkbox ticked first (also enforced by the API). The GitHub connection is entered once in the popup: `/api/admin-update-connect` checks the token (reads `engage.config.json`, picks the one repository a fine-grained token reaches, or takes `owner/name`) and stores repo and token encrypted in `eg_engage_meta` (`src/features/updates/connection.ts`); `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN` Worker settings still win. Sites deployed straight from the repository show neither code part.
+
+<a id="spd-016"></a>
+#### SPD-016 · Update popup live check (21 Nov 2026, PRs 531, 532)
+
+_Date: 21 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Update popup live check (21 Nov 2026, PRs 531, 532).** On gracengatsby: no bar and no popup with nothing pending; with the no-op migration `20270321_100000_update_popup_probe` pending the one popup showed, Run migration ran it, the record was written and the popup cleared. Found and fixed (PR 532): the popup's Run migration and Update now posted without a JSON content type and the admin guard refused them (403 "Send a JSON body"). Note: git-deployed sites such as gracengatsby run migrations at deploy, so the popup only matters for release-based installs.
+
+<a id="spd-017"></a>
+#### SPD-017 · One update popup, stable Shine/Spark URLs (built 21 Nov 2026)
+
+_Date: 21 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**One update popup, stable Shine/Spark URLs (built 21 Nov 2026).** The top "run migration" bar (`MigrationBar`) is gone. `UpdateNotice` (super admins only) is the only popup and shows only when action is needed: `/api/admin-engage-migrate` GET now reports `pending` from the migrations the code runs (`EARLY_MIGRATIONS` + `LATE_MIGRATIONS`) that are not recorded in `eg_migrations` (`pendingMigrationNames`, `src/features/updates/state.ts`), not from the version number, so a release without a new migration never shows it; or a newer release whose manifest says the Worker changed. `manifest.json` gains `requiresWorkerUpdate` (older manifests and a missing manifest read as true): `scripts/make-release.mjs` sets it false when the Worker checksum equals the previous release's and no migration was added, or when run with `--static-only` (asset-only release). The reference-update ("Newer version available for Spark") text no longer appears and the update check no longer calls GitHub for references. Shine and Spark now load from the stable major channel (`shine@v1`, `spark@v0` on jsDelivr), so a new Shine/Spark release reaches every page and portal with no deploy. Trade-off: a changing file cannot carry a fixed SRI hash, so the built-in two have no integrity attribute; protection is the pinned host path `cdn.jsdelivr.net/gh/asticore/` plus the bundled fallback; customer-added assets still support SRI. A runtime hash manifest was rejected: it is served from the same repo so it adds no trust.
+
+<a id="spd-018"></a>
+#### SPD-018 · 41c
+
+_Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 2026)_
+
+41c: `tests/int/d1-column-limit-guard.int.spec.ts` fails when a table comes within 5 columns of D1's 100-column limit; the four tables already there (`eg_integrations` 97, `eg_shop_settings` 100, `eg_security_settings` 100, `_eg_products_v` 99) are listed and may not grow.
+
+<a id="cat-sty"></a>
+### STY: Spark, Shine and fonts
+
+<a id="sty-001"></a>
+#### STY-001 · Design model steps 1 to 3 (#165, #166, #168); step 4 data side (#177)
+
+_Date not recorded_
+
+**Design model steps 1 to 3 (#165, #166, #168); step 4 data side (#177):** grouped design storage, migration `20270126_100000_design_grouped`, write hooks. #163 closed via #165. Open items: Task 1a.
+
+<a id="sty-002"></a>
+#### STY-002 · Design model step 4c, typed emitter removed (PR #183, 31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Design model step 4c, typed emitter removed (PR #183, 31 Oct):** production check first (zero typed-v2 rows). Typed emitter modules, design-v2-* specs, withElementDesign removed; grouped and v1 paths unchanged.
+
+<a id="sty-003"></a>
+#### STY-003 · Known limits sweep: Fonts (PR #209, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Known limits sweep: Fonts (PR #209, 1 Nov):** fixed: fonts installed before 1 Nov get a pinned jsDelivr version, the latest one (what a new install gets) (migration 20270302_100000_font_versions_pinned; if jsDelivr cannot be read during the migration that font keeps its old path until it is reinstalled); built-in faces gain Vietnamese (Cormorant Garamond, Playfair Display, Montserrat, Inter) and Greek (Inter), each pinned with its unicode range. Permanent: none.
+
+<a id="sty-004"></a>
+#### STY-004 · closed Task 1 (reference file `reference/references.json` with shine, spark and engage-tem
+
+_Date: 9 Nov 2026_
+
+9 Nov 2026: closed Task 1 (reference file `reference/references.json` with shine, spark and engage-templates; Tailwind replaced by Shine CSS in the portal and on the site, vendored in `src/styles/shine`, generated utilities in `src/styles/engage-utilities.css`; Spark loader on the public site), closed Task 2 (Engage templates library listed by default on every install, switchable off, not removable), closed Task 3 (per currency rounding rules on top of the existing display currencies), closed Task 4 (price tiers: quantity breaks and customer type prices, bulk editor, table `eg_shop_price_tiers`), closed Task 5 (events and tickets audited, "Sold out" shown, gaps moved to open Task 1), closed Task 6 (promo badges on shop cards), closed Task 7 (nested categories for shop and blog, tree admin, archive pages and breadcrumbs). One PR for all seven.
+
+<a id="sty-005"></a>
+#### STY-005 · Task 2 (part), 15 Nov 2026, PR pending
+
+_Date: 15 Nov 2026_
+
+Task 2 (part), 15 Nov 2026, PR pending: Spark effects picker in the Design panel and the Reference sources admin screen with the update check. Left: real Spark catalogue, update popup tie-in, Tailwind-era classes.
+
+<a id="sty-006"></a>
+#### STY-006 · 20b Size checks (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**20b Size checks (built 16 Nov 2026).** New `tests/int/size-checks.int.spec.ts` renders the real admin and Shine controls (buttons in every size, fields, selects, checkboxes in labels, tabs, list toolbar, text links) in headless Chromium at 375 and 1280 px and checks: every target at least 24 by 24 px, text at least 12 px, neighbouring targets not touching, the primary action at least 44 px high on a phone, and no sideways scrolling at 640 px (200 percent zoom on desktop) and 320 px (400 percent). Fixes: buttons at least 44 px high on narrow screens and touch devices, bare text buttons at least 24 px, checkbox and radio labels at least 24 px (all in `src/styles/a11y-states.css`).
+
+<a id="sty-007"></a>
+#### STY-007 · 20a State contrast tests (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**20a State contrast tests (built 16 Nov 2026).** New `tests/int/state-contrast.int.spec.ts` loads the real admin CSS and the public Shine CSS in headless Chromium and checks, in light and dark: text of buttons, quiet buttons, links and tabs (resting, hover, pressed, keyboard focus, selected) at 4.5:1; disabled buttons, links and fields at 3:1 (we require this although WCAG exempts disabled); keyboard focus rings at 3:1 against the surface; Shine field borders at 3:1. Colours are measured after `color-mix`, transparency and element opacity, and after Shine's colour transitions finish. It found and fixed: Shine disabled buttons and fields too faint (new `src/styles/a11y-states.css`, loaded after Shine in the admin and the public site, so the vendored Shine copy is unchanged), Shine field borders far too pale (1.2:1 now 3:1+), the keyboard ring being too faint on dark in the admin, and admin disabled links (opacity 0.5 to 0.62). Code: `tests/int/state-contrast.int.spec.ts`, `src/styles/a11y-states.css`, `admin.css`, `(frontend)/styles.css`, `custom.css`.
+
+<a id="sty-008"></a>
+#### STY-008 · CSS modules removed (17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Effix renamed to Spark, Shine only (17 Nov 2026)_
+
+CSS modules removed (17 Nov 2026): the four `*.module.css` files (admin roles and permissions, setup questionnaire and host, Getting started card) are now global classes named `eg-<area>-<name>` in `src/app/(engage)/module-styles.css`, imported by `admin.css` on top of Shine tokens. No CSS module is left, so Shine plus the admin layer is the only style system. Task 2 is closed (open task numbers were not renumbered, to avoid clashing with parallel work).
+
+<a id="sty-009"></a>
+#### STY-009 · Tailwind audit
+
+_Date: 17 Nov 2026 · Original group: Effix renamed to Spark, Shine only (17 Nov 2026)_
+
+Tailwind audit: no Tailwind package, config, `@apply` or `@tailwind` is left. Utility names such as `flex`, `gap-2`, `text-sm` come from Shine, and arbitrary values (`text-[12px]`) come from `src/styles/engage-utilities.css` generated by `scripts/generate-utilities.mjs`. Only the four CSS modules remain (open, Task 2).
+
+<a id="sty-010"></a>
+#### STY-010 · Repo renamed `asticore/effix` to `asticore/spark` (v0.4.0, `efx-` became `spark-`, `data-e
+
+_Date: 17 Nov 2026 · Original group: Effix renamed to Spark, Shine only (17 Nov 2026)_
+
+Repo renamed `asticore/effix` to `asticore/spark` (v0.4.0, `efx-` became `spark-`, `data-efx-*` became `data-spark-*`, `window.Effix` became `window.Spark`). Engage now pins Spark at commit `dc0d630` (`reference/references.json`, id `spark`), `SparkLoader` loads `spark.auto.min.js` from jsDelivr and falls back to the vendored copy in `public/vendor/spark/` (core, auto loader and every feature, 1.1 MB), and `EFFECT_CATALOG` was regenerated from Spark (119 effects, `spark-` classes). Pages saved with old `efx-` classes and `data-efx-*` attributes are rewritten in the browser before Spark starts, so nothing stored needs a migration. UI labels, settings description (13 languages), CSP labels, docs and the templates draft say Spark. Closed former Task 40a and the offline copy item of Task 2.
+
+<a id="sty-011"></a>
+#### STY-011 · Task 2 effects
+
+_Date: 17 Nov 2026 · Original group: Tasks 1 to 3 leftovers (17 Nov 2026)_
+
+Task 2 effects: `EFFECT_CATALOG` is generated from the Spark `.meta.js` files at the pinned commit (`scripts/gen-effect-catalog.cjs`, `src/features/effects/catalogData.ts`, 96 effects including all chart types and diagrams). Reference sources check feeds the update popup (`referencesOutdated` in `/api/admin-update-check`, `src/admin/ui/UpdateNotice.tsx`).
+
+<a id="sty-012"></a>
+#### STY-012 · Shine and Spark from their releases, plus Front-end files (20 Nov 2026)
+
+_Date: 20 Nov 2026_
+
+**Shine and Spark from their releases, plus Front-end files (20 Nov 2026).** The public site and customer portal no longer bundle Shine: the layout writes a `<link>` to `asticore/shine@v1.0.0/dist/shine.min.css` on jsDelivr (a release tag, served unchanged) with a SHA-384 integrity hash, and a one-line script swaps to `public/vendor/shine/shine.min.css` if the CDN or the hash fails (`ShineLink` in `src/features/frontendAssets/FrontendAssetsHead.tsx`). `(frontend)/styles.css` only declares the Shine layer order now. Spark loads from `asticore/spark@v0.4.0` (the same commit as before) with the loader's integrity hash and the bundled fallback; its feature files are fetched by the loader without hashes. Tag, URL and hashes live in `src/features/frontendAssets/builtin.ts`; `tests/int/frontend-assets.int.spec.ts` checks the bundled copies against the hashes. The admin still bundles `src/styles/shine/shine.css` (static admin work owns that). New admin screen Settings > Speed > Front-end files (`/frontend-files`, admin only, `src/features/frontendAssets/`): add any https stylesheet or script by address with optional integrity, type, head or end of body, defer or async, scope (site, portal or both) and an on switch, with presets for Bootstrap 5.3.3, Bulma, Pico, Tailwind Play CDN, Font Awesome Free, jQuery and Alpine (hashes taken from the served files). Stored as one row in `eg_kv` (key `frontend-assets`, no migration, no baseline change), read from isolate memory for 30 s by the layout and the middleware; the admin never loads these files. The hosts are added to the default Content-Security-Policy for public pages (script-src, style-src, font-src); a hand-typed policy is left as written. Saves are audited as `frontend-assets.save`. English only for now (like the CSP builder).
+
+<a id="sty-013"></a>
+#### STY-013 · Fonts never bundled; Open Sans is the default (20 Nov 2026)
+
+_Date: 20 Nov 2026_
+
+**Fonts never bundled; Open Sans is the default (20 Nov 2026).** All six `@fontsource/*` packages are gone from `package.json` and the lockfile; nothing imports a font package any more. The admin used to bundle Inter through `@fontsource/inter` CSS imports; `(engage)/layout.tsx` now writes the Open Sans `@font-face` rules (jsDelivr, pinned 5.3.0) and `--font-sans` is Open Sans. Open Sans is a new built-in face (latin, latin-ext, cyrillic, greek, vietnamese and hebrew subsets, 400 to 700) and the default heading and body font for new sites, the layouts' fallback, the settings import and the embed layout. The older built-in faces (Cormorant Garamond, Playfair Display, Cinzel, Jost, Montserrat, Inter) still render from the CDN for sites that already chose them, are marked `legacy`, and the heading and body pickers list them only while one is selected. More fonts are added in Theming > Fonts either from a CDN (Google Fonts or the Fontsource catalog via jsDelivr) or by uploading the font file, which is stored in Media on R2 (existing flow, `src/features/fonts/install.ts`). `tests/int/built-in-fonts.int.spec.ts` checks Open Sans and that no `@fontsource` package is a dependency. Existing sites keep their stored choice; the database default for a missing value on an old row is unchanged, so only rows with no stored font change look (to Open Sans).
+
+<a id="sty-014"></a>
+#### STY-014 · 40d third batch and data source (23 Nov 2026)
+
+_Date: 23 Nov 2026 · Original group: Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)_
+
+**40d third batch and data source (23 Nov 2026).** count-up on `spark-counter`, flip box on `spark-flip`, tooltip on Shine `data-tooltip`; the CSS counter-math and flip CSS removed. Chart and Table have a "Data from a saved table or chart" field: on the live page `DataViewBackedElement` loads the public Data view and passes its rows as CSV (`src/features/dataViews/csv.ts`). Test baselines in `merge-stats-notice.int.spec.ts` updated for the progress bar and counter markup.
+
+<a id="sty-015"></a>
+#### STY-015 · 40d second batch (23 Nov 2026)
+
+_Date: 23 Nov 2026 · Original group: Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)_
+
+**40d second batch (23 Nov 2026).** Image carousel on Shine `carousel` + `spark-carousel` (new autoplay, fade, dots and arrows fields), the gallery and image lightbox on `spark-lightbox` (React lightbox dialog and its CSS and tests removed), text ticker on `spark-marquee`, pagination links styled by Shine `pagination`.
+
+<a id="sty-016"></a>
+#### STY-016 · 40d (part)
+
+_Date: 23 Nov 2026 · Original group: Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)_
+
+**40d (part).** Countdown on `spark-countdown` (the React clock is gone), counter animate on `spark-counter`, progress bar on Shine `progress`, accordion and toggle on Shine `accordion` + `spark-collapse`, back to top on `spark-totop`. Duplicate CSS removed from `styles.css` and `wave36.css`.
+
+<a id="sty-017"></a>
+#### STY-017 · 40c Tables
+
+_Date: 23 Nov 2026 · Original group: Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)_
+
+**40c Tables.** The Table element renders Shine `table`, `table-striped`, `table-hover`, `table-bordered`, `table-compact`, `table-stack` in `table-wrap`; sort, search, column filters, paging, sticky header, column visibility, row selection and CSV download switch on `spark-table` with `data-spark-*` options. Data: CSV or the old "|" lines, 500 rows and 24 columns. Old `be-el-table` CSS removed.
+
+<a id="sty-018"></a>
+#### STY-018 · 40b Charts
+
+_Date: 23 Nov 2026 · Original group: Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)_
+
+**40b Charts.** The Chart element lists every Spark chart, diagram and visualisation (21 charts, 8 diagrams, 10 viz types from `features/effects/catalogData.ts`); option fields are generated from each effect's meta (`src/lib/elements/sparkChartFields.ts`), stored as `o_<id>_<attr>` and rendered as `data-spark-*` (`components/blocks/elements/sparkData.ts`). Data is CSV (header row = series names); the 12 value limit is gone. Charts from the first version (`chartType` bar, line, pie, radar, polar and "label | value" rows) convert when read, so no migration. Series colours follow the theme unless set; a visually hidden table repeats the data. The editor canvas starts Spark for chart and table (`views/visualEditor/SparkCanvasPreview.tsx`). Old SVG renderer and its CSS removed. Tests: `tests/int/elements-wave48.int.spec.ts`, `tests/int/spark-elements.int.spec.ts`.
+
+<a id="cat-sec"></a>
+### SEC: Security, sign-in and privacy
+
+<a id="sec-001"></a>
+#### SEC-001 · Password protection and authentication
+
+_Date: 24 Oct 2026_
+
+**Password protection and authentication:** built and merged, including PR #3 (products and events password protection, 24 Oct). Only the Task 6 checks remain.
+
+<a id="sec-002"></a>
+#### SEC-002 · Task 6 admin hardening and multi-domain (29 Oct)
+
+_Date: 29 Oct 2026_
+
+**Task 6 admin hardening and multi-domain (29 Oct):** #122 to #132: admin noindex; custom admin URL; Settings > Domains (host routing, per-domain language, canonical, hreflang, sitemap, robots, redirect to primary, allow-admin); content 'Available on domains'; users and roles 'Allowed domains' with the `domains` permission; per-domain overrides (#129); domain checklist (#130); per-domain page scoping (#131, #132). Open items: Task 6.
+
+<a id="sec-003"></a>
+#### SEC-003 · Task 13 privacy requests (#160, #164)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 13 privacy requests (#160, #164):** `/account/privacy` download (JSON, no secrets), deletion request with password and email confirmation, admin approve then Erase, completion email, `privacy.*` audit entries. #164 follow-up. Open decisions: closed in Task 11 (PR #199).
+
+<a id="sec-004"></a>
+#### SEC-004 · Password protection implementation notes folded in (1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Password protection implementation notes folded in (1 Nov):** PBKDF2-SHA256 (100000 iterations, 16-byte salt) hashes in `eg_content_passwords`; 7-day HMAC unlock cookie `eg_unlock_<collection>_<id>`; gate in `src/features/visibility/gate.ts`; admin route `/api/admin-visibility-password`; public `/api/content-unlock` (400 ms delay, safe redirect); locked pages get generic metadata, noindex and no sitemap entry. Leftovers (not blocking): cache purge when a password is set or cleared; confirm protected pages bypass the public cache; role-based permission for managing passwords. Live checks: Task 6.
+
+<a id="sec-005"></a>
+#### SEC-005 · Task 17b password leftovers (PR #190, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 17b password leftovers (PR #190, 1 Nov):** content-update roles (pages, posts, products, events) can set, clear and list passwords, with ownership still checked (`canManagePasswords`, `src/features/visibility/passwordAccess.ts`). Cache purge on set or clear was already in place (forced, tested). Protected content is never stored: unlock cookies bypass the edge and page caches, private responses are not stored; tests in `tests/int/password-permissions-cache.int.spec.ts`. Decided: a locked gate page has no protected content, so it may be shared. Better Auth is not in this repository; the accounts sign-in path already uses the same gate.
+
+<a id="sec-006"></a>
+#### SEC-006 · 18l leftovers (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**18l leftovers (built 16 Nov 2026).** Three sign-in places now: admin, customers (`/account/sign-in`) and members (`/account/member-sign-in`, same accounts, its own column in Authentication, Who can sign in with what; organisation-only pages send visitors there). The password can be blocked per customer or member place, never on the admin sign-in, and never when it would leave the place with no way in (refused when saving, and at run time the password form stays open if nothing else is left; `placeHasWayIn`, `passwordOpenFor`). The account forms now enforce the matrix on the server too (password, emailed link, emailed code, posted as a hidden `area` field); before this only the HTTP endpoints did. A blocked social provider now redirects to the sign-in with a sentence that names it ("Signing in with Google is not turned on here") instead of a bare 404; only known provider ids are echoed. Passkeys and the emailed link confirm page are still not place aware. Code: `authMatrix.ts`, `authMethods.ts`, `authMethodActions.ts`, `accounts/placeMethods.ts`, `socialLogin/http.ts`, `socialLogin/messages.ts`, `app/(frontend)/account/member-sign-in/page.tsx`, `tests/int/auth-matrix.int.spec.ts`.
+
+<a id="sec-007"></a>
+#### SEC-007 · 18g Username sign-in (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**18g Username sign-in (built 16 Nov 2026).** Optional `username` on users (lowercase, unique, 3 to 32 of letters, digits, underscore and dash, reserved words such as admin refused, empty clears it), set from the account profile (shown only while the setting is on). Authentication overview has a Username switch (`usernameSignInEnabled` on Security settings, off by default); when on, the account sign-in field reads "Email or username" and an entry without an at sign is looked up by username and turned into that account's email before the normal login, so the lockout, the audit entries and the failure text are the same as email sign-in and a username cannot be probed (a taken name and an unusable name give the same message). Admin sign-in is unchanged (email). Migration `20270317_130000_username_sign_in` (column, unique index, setting column), baseline regenerated. All 13 dictionaries have the profile strings and the field label. Code: `src/features/accounts/username.ts`, `profile.ts` (`changeUsername`), `actions.ts` (`saveUsernameAction`, `signInActionImpl`), `components/AccountForms.tsx` (`UsernameForm`), `AuthForms.tsx`, `src/collections/Users.ts`, `tests/int/username-sign-in.int.spec.ts`.
+
+<a id="sec-008"></a>
+#### SEC-008 · Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)
+
+_Date: 16 Nov 2026_
+
+**Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026).** SAML 2.0 per organisation next to OpenID Connect. Signature checking is done by xml-crypto; nothing is parsed by hand. Only the provider's pinned keys count, SHA-1 is refused, DOCTYPE is refused, content is read only from what the signature covers (stops signature wrapping), and issuer, audience, recipient, time window, InResponseTo and one-time assertion id are checked (`src/features/orgSso/saml.ts`, tests in `tests/int/org-sso-saml.int.spec.ts`). Routes: `/api/sso/saml/acs` (POST) and `/api/sso/saml/metadata/<connection id>`. Setup by pasting provider metadata XML or the fields, with certificate rotation (up to three keys). Lazy tables `eg_org_sso_saml`, `eg_saml_seen`. The sign-in page shows a Sign in with single sign-on link when a connection is ready. Organisation owners set up their own organisation's connection, domains and provisioning token on the organisation page (`/api/org-sso`, scoped by the session; shared logic in `adminActions.ts`).
+
+<a id="sec-009"></a>
+#### SEC-009 · 25c Device authorisation and 25d MCP endpoint (built 16 Nov 2026; part of AI agent access)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**25c Device authorisation and 25d MCP endpoint (built 16 Nov 2026; part of AI agent access).** Device authorisation (RFC 8628): a tool calls `POST /api/device/code` (`client_name`, `scope` read or write) and gets a device code, a short user code like BCDF-GHJK, an address and a polling interval; the admin opens Admin > AI agent access (the address carries the code), checks the code against the tool's name, confirms with their password and approves or denies; the tool polls `POST /api/device/token` with `grant_type=urn:ietf:params:oauth:grant-type:device_code` and receives a normal agent token once (waiting, slow down, denied, expired and used answers follow the RFC). Approved tokens get the scope the tool asked for with the default caps (read only unless it asked to write). Codes last 10 minutes, at most 50 wait at once, only the hash of the device code is stored, the token is held encrypted and wiped at the first collection. MCP: `POST /api/mcp` speaks Model Context Protocol (JSON-RPC over HTTP) for an agent token only, with tools list_collections, find, get, create and update (no delete). Each call is checked like the same REST request (scopes, forbidden fields) and counted against the token's daily caps and the action log. Both are off unless AI agent access is switched on. The `eg_device_codes` table is created on first use, so no migration. Not built: OAuth proxy for preview deployments (Matt marked it later). Code: `src/features/agentAccess/` (`device.ts`, `deviceStore.ts`, `mint.ts`, `mcp.ts`), routes `src/app/(engage)/api/device/{code,token}`, `api/mcp`, `admin-agents` (approve and deny), `tests/int/agent-mcp-device.int.spec.ts`.
+
+<a id="sec-010"></a>
+#### SEC-010 · 25b SCIM provisioning (built 16 Nov 2026; part of Single sign-on)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**25b SCIM provisioning (built 16 Nov 2026; part of Single sign-on).** In Admin > Single sign-on, each connection has a Provisioning (SCIM) line: Turn on makes a token for the organisation and shows it once (Make a new token replaces it, Turn off stops it). Give the identity provider the SCIM address shown on the page (`/api/scim/v2`) and the token as a bearer token. Supports SCIM 2.0 Users (list with paging and `eq` filters on userName, externalId and id; create; get; replace; patch; delete), Groups mapped to the organisation's teams (list, create, get, patch members, delete) and the discovery endpoints (ServiceProviderConfig, ResourceTypes). A token reaches only its own organisation. A new user is a customer account (created if the address has none) with an organisation membership. Deactivating or deleting removes the membership, marks the person inactive and ends their sessions; the account is never deleted and an owner is never removed (409). Staff accounts are never created, changed or removed through it. Only organisation members can be put in a group. The tables (`eg_org_scim`, `eg_org_scim_users`) are created on first use, so no migration. Needs Single sign-on switched on in Site Settings. Code: `src/features/scim/` (core, handler, store), `src/app/(engage)/api/scim/v2/[[...path]]/route.ts`, `api/admin-sso`, `tests/int/scim.int.spec.ts`.
+
+<a id="sec-011"></a>
+#### SEC-011 · 25a Single sign-on per organisation, OpenID Connect (built 16 Nov 2026; also covers the OIDC part of 22b)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**25a Single sign-on per organisation, OpenID Connect (built 16 Nov 2026; also covers the OIDC part of 22b).** Switch Single sign-on on in Site Settings, under Features. Admin > Single sign-on (`/admin/sso`, admin only): one connection per organisation with the issuer address, client ID and secret (encrypted), the role new members get (member or admin, never owner), create-on-first-sign-in, and an On switch. Give the identity provider the redirect address shown on the page. Each email domain is claimed by adding a TXT record `_engage-sso.<domain>` = `engage-sso-verify=<token>`; Check now looks it up over DNS (Cloudflare DNS-over-HTTPS) and a domain can be verified for only one connection. People sign in at `/api/sso/start` with their work email (a small form when no email is given); an unknown domain gets the same neutral answer as a failed one. The provider flow reuses the generic OpenID Connect code from 23d (discovery, PKCE, nonce, signature and issuer checks). Rules in `service.ts`: the address must be verified and on a verified domain of the connection; a linked identity signs in as its owner; an existing customer with the address is linked; a staff account is never linked this way; otherwise a customer is created when creation is on; the person is made a member of the organisation without changing an existing role. Two-step still applies. Enforcement: with Require single sign-on ticked (needs a verified domain), password sign-in for addresses on the verified domains is refused with a clear message; staff (admin, editor, viewer) are never blocked. The Authentication overview has a Single sign-on row. Privacy erase removes the links. Code: `src/features/orgSso/` (core, store, service, http, runtime, enforce, `components/SsoPanel.tsx`), routes `src/app/(engage)/api/sso/{start,callback}` and `api/admin-sso`, enforcement in `handleLogin` in `src/localapi/rest.ts`, migration `20270316_435000_org_sso`, `tests/int/org-sso.int.spec.ts`.
+
+<a id="sec-012"></a>
+#### SEC-012 · 23a1 Pending two-step token bound to the browser (built 16 Nov 2026; completes 23a1)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23a1 Pending two-step token bound to the browser (built 16 Nov 2026; completes 23a1).** The first step now sets an HttpOnly cookie `eg_pending_bind` holding a random value and puts only its SHA-256 in the pending token (`pb`). The code step and the emailed-code send refuse a token sent without the matching cookie, without counting toward the lockout and without spending a code. Every path that issues a pending token sets the cookie: password (account form and `/api/users/login`), emailed code and link, passkey, and social sign-in. Tokens issued before this change have no `pb` and are accepted until they expire (5 minutes). Code: `src/features/security/pendingBinding.ts`, `src/localapi/auth.ts` (`newPendingBinding`, `pendingBindingHolds`), `setPendingBindingCookie` in `src/features/accounts/session.ts`, tests in `tests/int/two-factor.int.spec.ts`.
+
+<a id="sec-013"></a>
+#### SEC-013 · 23h Account switcher (built 16 Nov 2026; shows on the customer account screens and the sign-in screens once so
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23h Account switcher (built 16 Nov 2026; shows on the customer account screens and the sign-in screens once someone is signed in or has another account parked).** The normal `engage-token` cookie stays the active account; the other accounts' session tokens sit in a second signed, HttpOnly, SameSite=Lax cookie `eg_other_sessions` (HMAC with `ENGAGE_SECRET`, at most 4 tokens, newest first, no duplicates). Switching re-validates the target through the engine's own session check (a revoked, expired or deleted account is dropped), parks the account being left, and writes the audit entry `login.success` (detail 'switched account'). Add another account parks the current token and opens sign-in. Logout removes only the active token and promotes none. Admin sessions are never parked or listed. The switcher shows email addresses only; the ids sent from the page are parked session ids, never account ids; the action is rate limited (`switch-account`). Four new portal strings in all thirteen languages. Code: `src/features/accounts/otherSessions.ts` (pure cookie), `switcher.ts`, `switcherActions.ts`, `components/AccountSwitcher.tsx`, wired into `AccountShell.tsx`, test `tests/int/account-switcher.int.spec.ts`.
+
+<a id="sec-014"></a>
+#### SEC-014 · 25d AI agent access, first slice (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**25d AI agent access, first slice (built 16 Nov 2026).** Switch AI agent access on in Site Settings, under Features (needs API keys switched on in Security settings). Admin > AI agent access (`/admin/agent-access`, admin only): make a token for a connected AI tool by naming it, choosing read only or read and write (never delete), picking the content it may touch (none ticked means all), a daily cap on writes and reads (defaults 200 and 5000, 0 means no cap) and an expiry; the admin confirms with their password or a two-step code and the token (`egk_...`, an ordinary API key owned by the admin) is shown once. The tool sends it as `Authorization: Bearer <token>`. Every request the token makes is checked against its scopes as before, then against its caps (over a cap returns 429 and is logged as capped, not counted), and written to an action log (time, method, path, result) shown on the page, filterable per agent, with a purge of rows older than 90 days. Admins can change caps or revoke at once (revokes the key too). A revoked grant, or a grant while the feature is off, is refused (fails closed). The Authentication overview has an AI agent access row (Off, Needs setup, On with the active token count). Privacy erase removes the owner's grants and logs. Code: `src/features/agentAccess/` (core, store, gate, `components/AgentAccessPanel.tsx`), `src/app/(engage)/api/admin-agents/route.ts`, gate call at the end of `gateApiKeyRequest` in `src/localapi/rest.ts`, migration `20270316_425000_agent_access`, `tests/int/agent-access.int.spec.ts`.
+
+<a id="sec-015"></a>
+#### SEC-015 · 23k OpenAPI for auth endpoints (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23k OpenAPI for auth endpoints (built 16 Nov 2026).** An OpenAPI 3.1 document for the sign-in side: password sign-in, two-step (code and email code), logout, refresh, forgot and reset password, unlock, `me`; emailed link and code; passkeys (options, register, login, list, rename, remove); social sign-in (providers list, start, callback, pending, One Tap); API key exchange, one-time tokens and the JWKS. Three security schemes (session cookie, API key, access token). Download `JSON` or `YAML` from the API builder page (link under the developer guide downloads) at `/api/admin-api-builder-docs?format=auth-openapi.json` or `.yaml` (admins and the `api` read permission), or with the public docs token like the other formats. The base URL is the request's own origin and no key or secret is written in. A test fails when a documented path has no route file or the documented method is not exported, when a user route is not one the REST dispatcher serves, when an operation id repeats, or a reference does not resolve. Browser-only flows (passkeys, social, One Tap) are described so a client can see what each endpoint expects; English only. Code: `src/features/apiBuilder/authOpenApi.ts`, `guideResponse.ts`, `components/ApiBuilderPanel.tsx`, `tests/int/auth-openapi.int.spec.ts`.
+
+<a id="sec-016"></a>
+#### SEC-016 · 23a2 Google connection reuses the sign-in client (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23a2 Google connection reuses the sign-in client (built 16 Nov 2026).** When the Google connection has no client ID and secret of its own, it uses the Google sign-in client from Security. The connection's redirect address must be added to that Google app. Code: `resolveGoogleClient` in `src/features/google/auth.ts`, `tests/int/google-client-fallback.int.spec.ts`. No migration.
+
+<a id="sec-017"></a>
+#### SEC-017 · 23a1 Pending two-step token single use (built 16 Nov 2026, part)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23a1 Pending two-step token single use (built 16 Nov 2026, part).** The token after the password step now carries a `jti`; a successful second step records it (in `eg_kv` as `p2fa:<jti>`, swept once expired) and a repeat is refused like a wrong code. Fails open on a database error because the lockout still guards the code. Not done: browser binding (see leftovers). Code: `src/localapi/auth.ts` (`PendingTokenOps`, `loginWithSecondFactor`), `src/features/security/pendingTokenStore.ts`, `src/localapi/engine.ts`, test in `tests/int/two-factor.int.spec.ts`. No migration.
+
+<a id="sec-018"></a>
+#### SEC-018 · 23g Guest accounts and 28a Account cart with merge on sign-in (built 16 Nov 2026; live check in Live checks)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23g Guest accounts and 28a Account cart with merge on sign-in (built 16 Nov 2026; live check in Live checks).** A signed-out visitor's cart pair (id and secret, still kept in the browser) is also remembered in an HttpOnly cookie `eg_guest_cart` (30 days, set by `POST /api/shop-cart/guest` after the pair is checked against the cart). On every page load the shop client asks `GET /api/shop-cart/session`: signed out gives `signedIn: false` and the guest cart carries on; signed in gives the account's one persistent cart (found or created, with its own secret, newest unpurchased cart of that customer) after folding the guest cart into it (same product, variation, price and add-ons add quantities; gift cards and name-your-price lines stay their own lines), then deleting the guest cart and clearing the cookie. Because every sign-in and sign-up path ends in a page load, this covers password, code, magic link, social and passkey sign-in and registration with no change to each path. The cart rules re-check stock and limits on every save; if the whole merge is refused the lines go in one at a time and refused lines are counted, shown as a notice on the cart page. The browser marks an account cart so signing out never keeps showing it. Guest carts untouched for 30 days (no customer, not purchased) are deleted by the hourly Data clean-up job. Payment and cart mutations use the account cart's secret exactly as for a guest cart. The older `/merge` endpoint is unchanged and unused. Code: `src/features/ecommerce/lib/guestCart.ts`, `src/features/ecommerce/server/accountCart.ts`, `src/app/(engage)/api/shop-cart/{session,guest}/route.ts`, `src/engine/commerce/react.tsx`, `src/features/cron/jobs.ts`. Tests: `tests/int/guest-cart.int.spec.ts`. Not built: the cookie holds only the cart pair, not a general anonymous session id (nothing else needs one yet); the notice text is English only.
+
+<a id="sec-019"></a>
+#### SEC-019 · 23g Passkey as a second sign-in step (built 16 Nov 2026; live check in Live checks)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23g Passkey as a second sign-in step (built 16 Nov 2026; live check in Live checks).** The second-step screen (customer sign-in and admin sign-in) shows "Use a passkey instead" when the account named by the pending token has a passkey and passkeys are allowed for that area in the Authentication matrix. `POST /api/passkeys/second-options` takes the pending token, reads the account from it (never from the body), and returns a challenge limited to that account's passkeys (`allowCredentials`); the challenge is a new `second` kind bound to that user id. `POST /api/passkeys/second-verify` runs the same checks as passkey sign-in (shared `checkAssertion` in `passkeys/core.ts`: origin, rpId, known credential, user handle, role and lock, user verification, signature, counter) plus a refusal when the credential belongs to another account or the challenge was issued to another account, then finishes through `loginWithSecondFactor` with `method: 'passkey'`. That method takes no code and is accepted only when the server passes `passkeyVerifiedUserId` equal to the pending token's user (an argument the REST route never sets, so the public second-step endpoint cannot use it); a refused passkey answer calls the same function without it, which counts toward the account lockout like a wrong code. The pending token is marked used on success (23a1), trusted-device cookie and landing redirect work as for a code. Audit: `passkey.login` "second step", `passkey.refused` "second step: ...". New text key `portal.auth.usePasskeyInstead` in all thirteen languages. Code: `src/features/passkeys/core.ts` (`secondStepOptions`, `verifySecondStep`), `src/features/accounts/passkeysHttp.ts`, `src/localapi/auth.ts` (`pendingTokenUser`), `SecondFactorChoice.tsx`, `src/features/passkeys/client.ts`. Tests: `tests/int/passkeys.int.spec.ts` (second sign-in step: only the account's passkeys offered, own passkey accepted, other account's passkey refused, other account's challenge refused, bad signature, locked account), `tests/int/two-factor.int.spec.ts` (passkey as the second step: single use token, refused without or with another user id, lockout, forged token).
+
+<a id="sec-020"></a>
+#### SEC-020 · 23d More social providers, generic OpenID Connect and Google One Tap (built 16 Nov 2026; every provider is off
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23d More social providers, generic OpenID Connect and Google One Tap (built 16 Nov 2026; every provider is off until its credentials are saved and it is switched on).** X (OAuth 2.0 with PKCE, Basic client auth, email only when X returns `confirmed_email`), LinkedIn (Sign In with LinkedIn using OpenID Connect, ID token checked against LinkedIn's keys), TikTok (Login Kit v2, `client_key`, profile id only, never an email, so it signs in only after being connected from a profile) and Slack (Sign in with Slack, OpenID Connect) each have a setup guide with console link, scopes and the exact redirect URL, an encrypted client secret, a button with an icon, and a Test sign-in button. A free-form OAuth 2.0 / OpenID Connect provider takes a discovery URL (or authorize, token and optional user info URLs), client ID and secret, scopes, button text, claim names for subject, email and verified, and a Trust the email switch; ID tokens must be RS256 and are checked for signature, issuer, audience and nonce, with a user info fallback when no ID token is returned. Every address must be https on a public host name (no http, IP addresses, localhost, internal names, credentials or ports), checked before any call; the discovery document is cached ten minutes. Google One Tap (Settings > Security > More sign-in providers, needs Google sign-in on and complete) shows Google's prompt on the member sign-in page; the credential is posted to `/api/social/one-tap` with a server-issued nonce and state in the signed state cookie, same-origin only, and goes through exactly the same account rules as the Google button (no staff accounts, no unverified emails, two-step still required). All providers use the existing start, callback, test, linking, unlinking, rate limit, audit and per-place method blocking (Who can sign in with what) paths, and appear on the Authentication overview with switches. Settings for the five new providers and One Tap live in table `eg_social_providers` (created on first use, secret encrypted, no migration, no column added to Security settings, whose table is full). Code: `src/features/socialLogin/` (`providers.ts`, `endpoints.ts`, `flow.ts`, `extraStore.ts`, `extraValidate.ts`, `extraActions.ts`, `admin/ExtraProvidersForm.tsx`, `components/GoogleOneTap.tsx`, `components/ProviderIcon.tsx`), `src/admin/views/SignInProvidersView.tsx`, `src/app/(engage)/api/social/one-tap/route.ts`, `tests/int/social-login-extra.int.spec.ts`. Admin text is English only. Not done: ES256 ID tokens for the free-form provider; the buttons use simple glyphs, not each brand's official artwork.
+
+<a id="sec-021"></a>
+#### SEC-021 · 23i Access tokens, signing keys and one-time tokens (built 16 Nov 2026; needs API keys switched on in Settings
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23i Access tokens, signing keys and one-time tokens (built 16 Nov 2026; needs API keys switched on in Settings > Security).** `POST /api/auth/token` trades an API key (`Authorization: Bearer egk_...`) for a signed ES256 access token (RFC 9068 shape: header `at+jwt`, claims iss, sub, aud `engage-api`, iat, exp, jti, scope, key). Optional body `scope` (space separated, narrows the key, never widens it) and `expires_in` (default 900 s, 60 to 3600). Send the token as `Authorization: Bearer <token>` anywhere an API key works: it counts as its key, so every check still runs on each request (key revoked or expired, owner locked, category limits) and revoking a key ends its tokens at once. A token cannot be exchanged for another token. Signing keys rotate by themselves every 30 days (lazy, on the next signing); a retired key stays published 25 hours so live tokens still verify, then is deleted. `/.well-known/jwks.json` publishes the public keys (empty while API keys are off); private keys are stored encrypted with the site secret. Admin: API builder page, Access tokens and signing keys (list, Rotate now). One-time tokens: `POST /api/auth/one-time-token` (purpose, optional payload up to 1 KB, `expires_in` up to 3600, default 300) returns an `egot_` token once; `POST /api/auth/one-time-token/verify` uses it up and answers `{valid, purpose, subject, payload}` (404 when unknown, wrong purpose, used or expired). Both need a staff-owned key; API purposes are stored as `app:<purpose>` so they never collide with a site purpose; only a hash is stored; claiming is one atomic update, so two simultaneous uses cannot both win. New audit actions `api-token.issued`, `one-time-token.issued`, `one-time-token.used`, `signing-key.rotated`. The tables `eg_signing_keys` and `eg_one_time_tokens` are created the first time they are used (no migration). Admin panel text is English only. Code: `src/features/apiKeys/tokens/`, `src/features/apiKeys/core.ts` (`isAccessTokenShape`), `service.ts` (`verifyAccessToken` dep), `src/localapi/engine.ts`, `src/app/(engage)/api/auth/`, `src/app/.well-known/jwks.json/route.ts`, `tests/int/api-tokens.int.spec.ts`.
+
+<a id="sec-022"></a>
+#### SEC-022 · 23h Session location and self-service delete (built 16 Nov 2026, part)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23h Session location and self-service delete (built 16 Nov 2026, part).** A new session's device label now ends with "(near Germany)" style wording from the Cloudflare country header (nothing for a missing, unknown or Tor code), shown as approximate in the sessions list. Password, emailed link or code, and passkey sign-ins record it. No migration (added to the label). Self-service delete already existed: the customer asks on `/account/privacy`, confirms by email, an admin reviews, then `src/features/privacy/erase.ts` runs. English only. Code: `withApproxPlace` in `src/features/security/userSessions.ts`, `src/localapi/rest.ts` (`sessionClient`), `src/features/accounts/session.ts`, `passkeysWiring.ts`, `passwordlessWiring.ts`, `tests/int/session-place.int.spec.ts`.
+
+<a id="sec-023"></a>
+#### SEC-023 · 23l Who can sign in with what (built 16 Nov 2026, part)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23l Who can sign in with what (built 16 Nov 2026, part).** The Authentication screen has a matrix: for the admin sign-in (staff) and the account sign-in (members and customers) the owner allows or blocks magic link, email code, passkeys and each social provider. Everything is allowed until blocked. A blocked method disappears from that form and the server refuses it (social start returns 404, emailed link and code and passkey endpoints return 403; passkeys are refused only when blocked for both places because the endpoints do not know the place). Password cannot be blocked so a site can never lock itself out. Two-step after a social sign-in already existed. Stored as one JSON row in `eg_kv`, no migration. English only. Code: `src/features/security/authMatrix.ts`, `authMethodActions.ts` (`setMethodAreaAction`), `src/admin/views/AuthMethodToggle.tsx` (`AreaToggle`), `AuthenticationView.tsx`, `socialLogin/settings.ts` (`blocked`), `accounts/passwordlessWiring.ts`, `passwordlessHttp.ts`, `passkeysHttp.ts`, `tests/int/auth-matrix.int.spec.ts`.
 
 **Task 43 Forms: forward submissions and get form data out (built 16 Nov 2026).** 43a: notification rules in the form editor now take cc (visible), bcc (hidden, one message per address) and a reply-to-the-visitor switch, next to the existing Only when condition for routing by an answer (`sendSubmissionEmails` in `src/features/forms/notify.ts`). A Forward button on each entry in the form's Submissions tab (`ForwardEntry.tsx`, `/api/admin-form-submission-forward`) emails one entry to typed addresses with a note and optional cc and bcc via the connected email provider (`forwardSubmission`); files are sent as signed links that expire after 7 days (`fileLinks.ts`, public `/api/form-file-link`, needs ENGAGE_SECRET); the forward is appended to the entry's notification status (who, when, to) and written to the activity log as an export; with no email provider the screen says none is connected. Bcc and cc are done as separate or extra recipients, not provider headers, so no provider adapter changed. 43b: `GET /api/forms/{id}` (field names, labels, types, options) and `GET /api/forms/{id}/submissions` (page, limit up to 200, since, until, status, format=csv; oldest first; spam, IP, browser, notes and assignee left out; files as signed links) with an API key holding forms:read and form-submissions:read, the key owner also needing read access to all entries, per-key rate limit (`dataApi.ts`). Webhooks gained: all answers or chosen fields, include meta (page address, consent record, status), an optional shared secret header beside the HMAC signature, files as signed links instead of storage keys, a Send test button (event `form.test`), a delivery log per form with status code and error, Re-send of one delivery (`/api/admin-form-webhooks`, `FormWebhookTools.tsx`); retries with backoff already existed. Recipes for Zapier, Make and the API are in `docs/form-data-recipes.md`, also served by the Recipes link in the delivery log. Tests: `tests/int/form-forwarding-data-api.int.spec.ts`. Leftovers: the privacy-erase and field-level redaction rules do not exist for entries yet, so the API returns what is stored; a separate per-field routing table beyond rules with one condition each is not built. Live check: Task 14 form forwarding and data API.
-- **23h Session location and self-service delete (built 16 Nov 2026, part).** A new session's device label now ends with "(near Germany)" style wording from the Cloudflare country header (nothing for a missing, unknown or Tor code), shown as approximate in the sessions list. Password, emailed link or code, and passkey sign-ins record it. No migration (added to the label). Self-service delete already existed: the customer asks on `/account/privacy`, confirms by email, an admin reviews, then `src/features/privacy/erase.ts` runs. English only. Code: `withApproxPlace` in `src/features/security/userSessions.ts`, `src/localapi/rest.ts` (`sessionClient`), `src/features/accounts/session.ts`, `passkeysWiring.ts`, `passwordlessWiring.ts`, `tests/int/session-place.int.spec.ts`.
-- **23i Access tokens, signing keys and one-time tokens (built 16 Nov 2026; needs API keys switched on in Settings > Security).** `POST /api/auth/token` trades an API key (`Authorization: Bearer egk_...`) for a signed ES256 access token (RFC 9068 shape: header `at+jwt`, claims iss, sub, aud `engage-api`, iat, exp, jti, scope, key). Optional body `scope` (space separated, narrows the key, never widens it) and `expires_in` (default 900 s, 60 to 3600). Send the token as `Authorization: Bearer <token>` anywhere an API key works: it counts as its key, so every check still runs on each request (key revoked or expired, owner locked, category limits) and revoking a key ends its tokens at once. A token cannot be exchanged for another token. Signing keys rotate by themselves every 30 days (lazy, on the next signing); a retired key stays published 25 hours so live tokens still verify, then is deleted. `/.well-known/jwks.json` publishes the public keys (empty while API keys are off); private keys are stored encrypted with the site secret. Admin: API builder page, Access tokens and signing keys (list, Rotate now). One-time tokens: `POST /api/auth/one-time-token` (purpose, optional payload up to 1 KB, `expires_in` up to 3600, default 300) returns an `egot_` token once; `POST /api/auth/one-time-token/verify` uses it up and answers `{valid, purpose, subject, payload}` (404 when unknown, wrong purpose, used or expired). Both need a staff-owned key; API purposes are stored as `app:<purpose>` so they never collide with a site purpose; only a hash is stored; claiming is one atomic update, so two simultaneous uses cannot both win. New audit actions `api-token.issued`, `one-time-token.issued`, `one-time-token.used`, `signing-key.rotated`. The tables `eg_signing_keys` and `eg_one_time_tokens` are created the first time they are used (no migration). Admin panel text is English only. Code: `src/features/apiKeys/tokens/`, `src/features/apiKeys/core.ts` (`isAccessTokenShape`), `service.ts` (`verifyAccessToken` dep), `src/localapi/engine.ts`, `src/app/(engage)/api/auth/`, `src/app/.well-known/jwks.json/route.ts`, `tests/int/api-tokens.int.spec.ts`.
-- **23d More social providers, generic OpenID Connect and Google One Tap (built 16 Nov 2026; every provider is off until its credentials are saved and it is switched on).** X (OAuth 2.0 with PKCE, Basic client auth, email only when X returns `confirmed_email`), LinkedIn (Sign In with LinkedIn using OpenID Connect, ID token checked against LinkedIn's keys), TikTok (Login Kit v2, `client_key`, profile id only, never an email, so it signs in only after being connected from a profile) and Slack (Sign in with Slack, OpenID Connect) each have a setup guide with console link, scopes and the exact redirect URL, an encrypted client secret, a button with an icon, and a Test sign-in button. A free-form OAuth 2.0 / OpenID Connect provider takes a discovery URL (or authorize, token and optional user info URLs), client ID and secret, scopes, button text, claim names for subject, email and verified, and a Trust the email switch; ID tokens must be RS256 and are checked for signature, issuer, audience and nonce, with a user info fallback when no ID token is returned. Every address must be https on a public host name (no http, IP addresses, localhost, internal names, credentials or ports), checked before any call; the discovery document is cached ten minutes. Google One Tap (Settings > Security > More sign-in providers, needs Google sign-in on and complete) shows Google's prompt on the member sign-in page; the credential is posted to `/api/social/one-tap` with a server-issued nonce and state in the signed state cookie, same-origin only, and goes through exactly the same account rules as the Google button (no staff accounts, no unverified emails, two-step still required). All providers use the existing start, callback, test, linking, unlinking, rate limit, audit and per-place method blocking (Who can sign in with what) paths, and appear on the Authentication overview with switches. Settings for the five new providers and One Tap live in table `eg_social_providers` (created on first use, secret encrypted, no migration, no column added to Security settings, whose table is full). Code: `src/features/socialLogin/` (`providers.ts`, `endpoints.ts`, `flow.ts`, `extraStore.ts`, `extraValidate.ts`, `extraActions.ts`, `admin/ExtraProvidersForm.tsx`, `components/GoogleOneTap.tsx`, `components/ProviderIcon.tsx`), `src/admin/views/SignInProvidersView.tsx`, `src/app/(engage)/api/social/one-tap/route.ts`, `tests/int/social-login-extra.int.spec.ts`. Admin text is English only. Not done: ES256 ID tokens for the free-form provider; the buttons use simple glyphs, not each brand's official artwork.
-- **23g Passkey as a second sign-in step (built 16 Nov 2026; live check in Live checks).** The second-step screen (customer sign-in and admin sign-in) shows "Use a passkey instead" when the account named by the pending token has a passkey and passkeys are allowed for that area in the Authentication matrix. `POST /api/passkeys/second-options` takes the pending token, reads the account from it (never from the body), and returns a challenge limited to that account's passkeys (`allowCredentials`); the challenge is a new `second` kind bound to that user id. `POST /api/passkeys/second-verify` runs the same checks as passkey sign-in (shared `checkAssertion` in `passkeys/core.ts`: origin, rpId, known credential, user handle, role and lock, user verification, signature, counter) plus a refusal when the credential belongs to another account or the challenge was issued to another account, then finishes through `loginWithSecondFactor` with `method: 'passkey'`. That method takes no code and is accepted only when the server passes `passkeyVerifiedUserId` equal to the pending token's user (an argument the REST route never sets, so the public second-step endpoint cannot use it); a refused passkey answer calls the same function without it, which counts toward the account lockout like a wrong code. The pending token is marked used on success (23a1), trusted-device cookie and landing redirect work as for a code. Audit: `passkey.login` "second step", `passkey.refused` "second step: ...". New text key `portal.auth.usePasskeyInstead` in all thirteen languages. Code: `src/features/passkeys/core.ts` (`secondStepOptions`, `verifySecondStep`), `src/features/accounts/passkeysHttp.ts`, `src/localapi/auth.ts` (`pendingTokenUser`), `SecondFactorChoice.tsx`, `src/features/passkeys/client.ts`. Tests: `tests/int/passkeys.int.spec.ts` (second sign-in step: only the account's passkeys offered, own passkey accepted, other account's passkey refused, other account's challenge refused, bad signature, locked account), `tests/int/two-factor.int.spec.ts` (passkey as the second step: single use token, refused without or with another user id, lockout, forged token).
-- **23g Guest accounts and 28a Account cart with merge on sign-in (built 16 Nov 2026; live check in Live checks).** A signed-out visitor's cart pair (id and secret, still kept in the browser) is also remembered in an HttpOnly cookie `eg_guest_cart` (30 days, set by `POST /api/shop-cart/guest` after the pair is checked against the cart). On every page load the shop client asks `GET /api/shop-cart/session`: signed out gives `signedIn: false` and the guest cart carries on; signed in gives the account's one persistent cart (found or created, with its own secret, newest unpurchased cart of that customer) after folding the guest cart into it (same product, variation, price and add-ons add quantities; gift cards and name-your-price lines stay their own lines), then deleting the guest cart and clearing the cookie. Because every sign-in and sign-up path ends in a page load, this covers password, code, magic link, social and passkey sign-in and registration with no change to each path. The cart rules re-check stock and limits on every save; if the whole merge is refused the lines go in one at a time and refused lines are counted, shown as a notice on the cart page. The browser marks an account cart so signing out never keeps showing it. Guest carts untouched for 30 days (no customer, not purchased) are deleted by the hourly Data clean-up job. Payment and cart mutations use the account cart's secret exactly as for a guest cart. The older `/merge` endpoint is unchanged and unused. Code: `src/features/ecommerce/lib/guestCart.ts`, `src/features/ecommerce/server/accountCart.ts`, `src/app/(engage)/api/shop-cart/{session,guest}/route.ts`, `src/engine/commerce/react.tsx`, `src/features/cron/jobs.ts`. Tests: `tests/int/guest-cart.int.spec.ts`. Not built: the cookie holds only the cart pair, not a general anonymous session id (nothing else needs one yet); the notice text is English only.
-- **23a1 Pending two-step token single use (built 16 Nov 2026, part).** The token after the password step now carries a `jti`; a successful second step records it (in `eg_kv` as `p2fa:<jti>`, swept once expired) and a repeat is refused like a wrong code. Fails open on a database error because the lockout still guards the code. Not done: browser binding (see leftovers). Code: `src/localapi/auth.ts` (`PendingTokenOps`, `loginWithSecondFactor`), `src/features/security/pendingTokenStore.ts`, `src/localapi/engine.ts`, test in `tests/int/two-factor.int.spec.ts`. No migration.
-- **23a2 Google connection reuses the sign-in client (built 16 Nov 2026).** When the Google connection has no client ID and secret of its own, it uses the Google sign-in client from Security. The connection's redirect address must be added to that Google app. Code: `resolveGoogleClient` in `src/features/google/auth.ts`, `tests/int/google-client-fallback.int.spec.ts`. No migration.
-- **23k OpenAPI for auth endpoints (built 16 Nov 2026).** An OpenAPI 3.1 document for the sign-in side: password sign-in, two-step (code and email code), logout, refresh, forgot and reset password, unlock, `me`; emailed link and code; passkeys (options, register, login, list, rename, remove); social sign-in (providers list, start, callback, pending, One Tap); API key exchange, one-time tokens and the JWKS. Three security schemes (session cookie, API key, access token). Download `JSON` or `YAML` from the API builder page (link under the developer guide downloads) at `/api/admin-api-builder-docs?format=auth-openapi.json` or `.yaml` (admins and the `api` read permission), or with the public docs token like the other formats. The base URL is the request's own origin and no key or secret is written in. A test fails when a documented path has no route file or the documented method is not exported, when a user route is not one the REST dispatcher serves, when an operation id repeats, or a reference does not resolve. Browser-only flows (passkeys, social, One Tap) are described so a client can see what each endpoint expects; English only. Code: `src/features/apiBuilder/authOpenApi.ts`, `guideResponse.ts`, `components/ApiBuilderPanel.tsx`, `tests/int/auth-openapi.int.spec.ts`.
-- **25d AI agent access, first slice (built 16 Nov 2026).** Switch AI agent access on in Site Settings, under Features (needs API keys switched on in Security settings). Admin > AI agent access (`/admin/agent-access`, admin only): make a token for a connected AI tool by naming it, choosing read only or read and write (never delete), picking the content it may touch (none ticked means all), a daily cap on writes and reads (defaults 200 and 5000, 0 means no cap) and an expiry; the admin confirms with their password or a two-step code and the token (`egk_...`, an ordinary API key owned by the admin) is shown once. The tool sends it as `Authorization: Bearer <token>`. Every request the token makes is checked against its scopes as before, then against its caps (over a cap returns 429 and is logged as capped, not counted), and written to an action log (time, method, path, result) shown on the page, filterable per agent, with a purge of rows older than 90 days. Admins can change caps or revoke at once (revokes the key too). A revoked grant, or a grant while the feature is off, is refused (fails closed). The Authentication overview has an AI agent access row (Off, Needs setup, On with the active token count). Privacy erase removes the owner's grants and logs. Code: `src/features/agentAccess/` (core, store, gate, `components/AgentAccessPanel.tsx`), `src/app/(engage)/api/admin-agents/route.ts`, gate call at the end of `gateApiKeyRequest` in `src/localapi/rest.ts`, migration `20270316_425000_agent_access`, `tests/int/agent-access.int.spec.ts`.
-- **23h Account switcher (built 16 Nov 2026; shows on the customer account screens and the sign-in screens once someone is signed in or has another account parked).** The normal `engage-token` cookie stays the active account; the other accounts' session tokens sit in a second signed, HttpOnly, SameSite=Lax cookie `eg_other_sessions` (HMAC with `ENGAGE_SECRET`, at most 4 tokens, newest first, no duplicates). Switching re-validates the target through the engine's own session check (a revoked, expired or deleted account is dropped), parks the account being left, and writes the audit entry `login.success` (detail 'switched account'). Add another account parks the current token and opens sign-in. Logout removes only the active token and promotes none. Admin sessions are never parked or listed. The switcher shows email addresses only; the ids sent from the page are parked session ids, never account ids; the action is rate limited (`switch-account`). Four new portal strings in all thirteen languages. Code: `src/features/accounts/otherSessions.ts` (pure cookie), `switcher.ts`, `switcherActions.ts`, `components/AccountSwitcher.tsx`, wired into `AccountShell.tsx`, test `tests/int/account-switcher.int.spec.ts`.
-- **23a1 Pending two-step token bound to the browser (built 16 Nov 2026; completes 23a1).** The first step now sets an HttpOnly cookie `eg_pending_bind` holding a random value and puts only its SHA-256 in the pending token (`pb`). The code step and the emailed-code send refuse a token sent without the matching cookie, without counting toward the lockout and without spending a code. Every path that issues a pending token sets the cookie: password (account form and `/api/users/login`), emailed code and link, passkey, and social sign-in. Tokens issued before this change have no `pb` and are accepted until they expire (5 minutes). Code: `src/features/security/pendingBinding.ts`, `src/localapi/auth.ts` (`newPendingBinding`, `pendingBindingHolds`), `setPendingBindingCookie` in `src/features/accounts/session.ts`, tests in `tests/int/two-factor.int.spec.ts`.
-- **22g Agency demos, first version (built 17 Nov 2026).** Switch Agency demos on in Site Settings, under Features. Admin > Agency demos: Save the site as the demo copy (settings, header and footer, redirects, page templates, field groups, pages, posts, products and picture details; never users, roles, customers or keys; capped at 1.5 MB, over that it says so), Reset to the saved copy now, a reset schedule (never, hourly, daily) run by the new "Demo reset" cron job, a view-only demo account (Viewer role, limited to the current domain, one-time password shown once), and Download as an importable package (the same file Settings, Export and import reads). English only. Code: `src/features/demos/` (`core.ts`, `store.ts`, `service.ts`, `components/DemosPanel.tsx`), `src/app/(engage)/api/admin-demos/route.ts`, `src/admin/views/DemosView.tsx`, migration `20270317_100000_demos` (tables `eg_demo_settings`, `eg_demo_snapshots`), cron job in `src/features/cron/jobs.ts`, `tests/int/agency-tools.int.spec.ts`.
-- **17g Agency demos leftovers (built 17 Nov 2026).** Reset now also deletes pages, posts and products (matched by slug) and pictures added after the copy; saving the copy keeps the picture files in the media bucket under `demo-copy/<file name>` (up to 500 files of 15 MB), and reset puts back lost pictures first so the import maps picture ids by file name. The banner text on the Agency demos screen shows to visitors as a strip above every public page (Shine classes, `DemoBanner` in the frontend layout). Start a demo from a starter: creates a switched-on site template from a chosen starter and saves the copy in one step (site templates are not part of the copy, so a reset leaves them). Export as static HTML: the browser crawls the sitemap pages without sign-in, fetches style sheets, fonts and pictures, drops scripts, rewrites links relative and downloads a zip (limits: 300 pages, 1500 files, 150 MB). Code: `src/features/demos/` (`pictures.ts`, `staticExport.ts`, `components/DemoBanner.tsx`, `components/StaticExportPanel.tsx`, `service.ts`), `tests/int/agency-tools.int.spec.ts`.
-- **22f Client reports, first version (built 17 Nov 2026).** Switch Client reports on in Site Settings. Admin > Client reports: make a named report with a period (7, 30, 90 days or this month), copy its private read-only link (`/client-report/<token>`, 192-bit token, no sign-in, noindex, numbers only: orders, revenue, refunds, net, units, customers, form entries, published pages and posts; a section whose feature is off is left out), download the numbers as CSV (admin and public link), email the report now, and set a weekly or monthly email to up to ten addresses (new "Client report emails" cron job, one failed send is not retried every hour). A link can be switched off, restored or replaced with a new one. English only. Code: `src/features/clientReports/`, `src/app/(engage)/api/admin-client-reports/route.ts`, `src/app/(engage)/api/client-report/route.ts`, `src/app/(frontend)/client-report/[token]/page.tsx`, migration `20270317_110000_client_reports` (table `eg_client_reports`).
-- **17f Client reports, sections, dates and Google numbers (built 17 Nov 2026).** Each report now has chosen sections (sales, form entries, published pages and posts, website traffic, search, page speed; none ticked shows all, so older reports are unchanged) and the period can be fixed dates ("Fixed dates" with a start and end). Traffic comes from Google Analytics and search from Search Console, read through the stored Google connection on the server, so the client opens the link with no sign-in; each range is cached for five minutes per property and dates (`src/features/clientReports/google.ts`). Search Console dates are held back three days. When Google is not connected or no property is chosen, the report says so instead of leaving a gap. The top pages, channels and search queries show as tables on the page, in the email and in the CSV. A viewer can pick other dates on the report link (`?from=&to=`, also on the CSV link). Page speed is the average of the latest stored mobile test per page. Migration `20270318_250000_client_report_options` adds `sections`, `range_from` and `range_to` to `eg_client_reports`. Specs in `tests/int/agency-tools.int.spec.ts`.
-- **17f Client reports, PDF and logo (built 17 Nov 2026).** Each report can be downloaded as a PDF: the Admin > Client reports table has a PDF link, and the report link has "Download as PDF" (`/api/client-report?token=...&format=pdf`, also with `&from=&to=`). The PDF is written without a library by the shared writer in `src/features/apiBuilder/pdf.ts`, which now takes an optional logo. The logo is the brand logo chosen under Email settings. A JPEG (grey or colour, baseline) or a plain PNG (8-bit grey or colour, not interlaced, no transparency) is drawn above the title (`src/features/clientReports/logo.ts`); a transparent, palette, WebP or SVG logo is left out of the PDF. The emailed report shows the same logo at the top (any image type the email can show) and has a "Download as PDF" link. Emails carry the link, not an attachment, because the email sender has no attachments yet. Specs in `tests/int/agency-tools.int.spec.ts`.
-- **22d Franchising, first version (built 17 Nov 2026).** Switch Franchising on in Site Settings. Admin > Franchising: add franchises (name, domain, optional owner email; one franchise per domain), pause or remove them, create the owner account (an editor limited to the franchise domain through Allowed domains, one-time password), and roll a page template out: one page per active franchise, shown only on its domain (Available on domains), with the template's blocks and section locks plus a chosen document lock (fixed layout where only text may change, fully locked, or none; unlock roles empty so only admins pass). Rolling out again updates the same pages, so head-office changes reach every franchise. The overview shows franchises, active ones and rolled-out pages. Uses the existing locks, domain scoping and Allowed domains. English only. Code: `src/features/franchising/`, `src/app/(engage)/api/admin-franchises/route.ts`, `src/admin/views/FranchisingView.tsx`, migration `20270317_120000_franchising` (tables `eg_franchises`, `eg_franchise_pages`).
 
-- **25a Single sign-on per organisation, OpenID Connect (built 16 Nov 2026; also covers the OIDC part of 22b).** Switch Single sign-on on in Site Settings, under Features. Admin > Single sign-on (`/admin/sso`, admin only): one connection per organisation with the issuer address, client ID and secret (encrypted), the role new members get (member or admin, never owner), create-on-first-sign-in, and an On switch. Give the identity provider the redirect address shown on the page. Each email domain is claimed by adding a TXT record `_engage-sso.<domain>` = `engage-sso-verify=<token>`; Check now looks it up over DNS (Cloudflare DNS-over-HTTPS) and a domain can be verified for only one connection. People sign in at `/api/sso/start` with their work email (a small form when no email is given); an unknown domain gets the same neutral answer as a failed one. The provider flow reuses the generic OpenID Connect code from 23d (discovery, PKCE, nonce, signature and issuer checks). Rules in `service.ts`: the address must be verified and on a verified domain of the connection; a linked identity signs in as its owner; an existing customer with the address is linked; a staff account is never linked this way; otherwise a customer is created when creation is on; the person is made a member of the organisation without changing an existing role. Two-step still applies. Enforcement: with Require single sign-on ticked (needs a verified domain), password sign-in for addresses on the verified domains is refused with a clear message; staff (admin, editor, viewer) are never blocked. The Authentication overview has a Single sign-on row. Privacy erase removes the links. Code: `src/features/orgSso/` (core, store, service, http, runtime, enforce, `components/SsoPanel.tsx`), routes `src/app/(engage)/api/sso/{start,callback}` and `api/admin-sso`, enforcement in `handleLogin` in `src/localapi/rest.ts`, migration `20270316_435000_org_sso`, `tests/int/org-sso.int.spec.ts`.
-- **25b SCIM provisioning (built 16 Nov 2026; part of Single sign-on).** In Admin > Single sign-on, each connection has a Provisioning (SCIM) line: Turn on makes a token for the organisation and shows it once (Make a new token replaces it, Turn off stops it). Give the identity provider the SCIM address shown on the page (`/api/scim/v2`) and the token as a bearer token. Supports SCIM 2.0 Users (list with paging and `eq` filters on userName, externalId and id; create; get; replace; patch; delete), Groups mapped to the organisation's teams (list, create, get, patch members, delete) and the discovery endpoints (ServiceProviderConfig, ResourceTypes). A token reaches only its own organisation. A new user is a customer account (created if the address has none) with an organisation membership. Deactivating or deleting removes the membership, marks the person inactive and ends their sessions; the account is never deleted and an owner is never removed (409). Staff accounts are never created, changed or removed through it. Only organisation members can be put in a group. The tables (`eg_org_scim`, `eg_org_scim_users`) are created on first use, so no migration. Needs Single sign-on switched on in Site Settings. Code: `src/features/scim/` (core, handler, store), `src/app/(engage)/api/scim/v2/[[...path]]/route.ts`, `api/admin-sso`, `tests/int/scim.int.spec.ts`.
-- **29g Previews, renditions, import, quotas (built 16 Nov 2026).** File page: inline players for video and audio and an inline sandboxed PDF preview; video tiles in the Media grid show the first frame. Asset manager, Rendition presets: named size, fit (scale-down, contain, cover, crop, pad) and format (auto, jpeg, png, webp, avif); each picture's page lists them under Download as, served by `/api/admin-media-rendition` through the Cloudflare Images binding (501 with a plain message when the account has none; nothing is stored). Import a file (`/api/admin-media-import`): an https address or a Google Drive link to one file shared as Anyone with the link; never http, credentials, odd ports or local and private hosts; redirects followed by hand and checked at every hop; size capped by the upload limit; then stored like an upload (type check, folder access and defaults from 29a, quota, duplicate check, rights default licence, activity). Activity log now also records upload by whom, import, replace (when a version is kept), and downloads by zip, rendition and share link. Storage section: totals by kind and the largest folders; site limit (MB) is now enforced on upload and import, plus per role and per company limits (stored as JSON on the settings row, use counted from uploads by the people in that role or company). Code: `src/features/dam/{importUrl,renditions,quota,quotaGuard}.ts`, `store.ts` (renditions, totals, quota use), `AssetManagerPanel.tsx`, `DamAssetPanel.tsx`, `MediaGalleryGrid.tsx`, `admin-media-rendition`, `admin-media-import`, `admin-media-dam`, `media-share/[token]`, migration `20270316_440000_media_quotas` (`quotas_json`), `tests/int/dam-previews-import-quota.int.spec.ts`.
-- **25c Device authorisation and 25d MCP endpoint (built 16 Nov 2026; part of AI agent access).** Device authorisation (RFC 8628): a tool calls `POST /api/device/code` (`client_name`, `scope` read or write) and gets a device code, a short user code like BCDF-GHJK, an address and a polling interval; the admin opens Admin > AI agent access (the address carries the code), checks the code against the tool's name, confirms with their password and approves or denies; the tool polls `POST /api/device/token` with `grant_type=urn:ietf:params:oauth:grant-type:device_code` and receives a normal agent token once (waiting, slow down, denied, expired and used answers follow the RFC). Approved tokens get the scope the tool asked for with the default caps (read only unless it asked to write). Codes last 10 minutes, at most 50 wait at once, only the hash of the device code is stored, the token is held encrypted and wiped at the first collection. MCP: `POST /api/mcp` speaks Model Context Protocol (JSON-RPC over HTTP) for an agent token only, with tools list_collections, find, get, create and update (no delete). Each call is checked like the same REST request (scopes, forbidden fields) and counted against the token's daily caps and the action log. Both are off unless AI agent access is switched on. The `eg_device_codes` table is created on first use, so no migration. Not built: OAuth proxy for preview deployments (Matt marked it later). Code: `src/features/agentAccess/` (`device.ts`, `deviceStore.ts`, `mint.ts`, `mcp.ts`), routes `src/app/(engage)/api/device/{code,token}`, `api/mcp`, `admin-agents` (approve and deny), `tests/int/agent-mcp-device.int.spec.ts`.
-- **31d Linking to affiliate products (built 16 Nov 2026).** The Buy button of an external or affiliate product now points at a cloaked short link on the site, `/go/<product id>?s=<source>` (`src/app/(frontend)/go/[id]/route.ts`): it counts the click, then 302s to the product's own address. Only published external products with an http(s) address redirect (else not found); bots and callers over 60 a minute are redirected without being counted; no-store, noindex and no-referrer headers. Clicks are counters per product, source and day in `eg_outbound_clicks` (no visitor identifier; migration `20270317_100000_outbound_clicks`, baseline regenerated). Source is the `s` value, else the page it came from on the site, else direct. The product edit page shows clicks per source for the last 30 days (`OutboundClicksField`, `GET /api/admin-outbound-clicks`). Links keep rel noopener, noreferrer, nofollow and sponsored. A disclosure line sits under the button, text `store.affiliateDisclosure` (editable as site text, all dictionaries fall back to English). Decision: cloaking is always on and the disclosure is a site text, because `eg_shop_settings` is at the 100 column limit of D1. Code: `ecommerce/outbound.ts`, `outboundShared.ts`, `storefront.ts`, `components/ProductPurchase.tsx`. Live check in Task 14.
+<a id="sec-024"></a>
+#### SEC-024 · 29a Folders as records (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**29a Folders as records (built 16 Nov 2026).** A folder is now a record in `eg_media_folders` (made empty with New folder, or filled in the first time the tree is opened for folders that already hold files, parents included). Files keep their folder as a text path, so file addresses and queries are unchanged. Each folder has colour (dot in the tree), description (shown under the tree), who may use it (roles and companies from Task 10, nearest limited folder decides, admins always pass, only admins change it), default alt text start and default licence for new files (nearest folder that sets them wins), and visibility (the 29f private rule, shared with Private folders). Rename, move and delete change the paths on files and on the records in one action; a record already at the new path wins. Limited folders and their files are hidden from the tree, the gallery and the folder list for people outside the rule, and uploads or moves into them are refused with 403. Left out: a folder optimisation preset (the optimiser settings are site wide and the upload engine takes no per file override), and the rule only guards the admin side (staff); public file addresses stay governed by visibility (29f) and company gates. Code: `src/features/media/folderRecords.ts`, `folderRecordsStore.ts`, `src/views/media/MediaFolderSettings.tsx`, `MediaFolderTree.tsx`, `/api/admin-media-folders` (create, update, rename, move, delete), `admin-media-upload`, `admin-media-move`, migration `20270316_420000_media_folder_records` (adds `allowed_companies`), `tests/int/media-folder-records.int.spec.ts`.
+
+<a id="sec-025"></a>
+#### SEC-025 · 23a Verify auth behaviours (checked 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23a Verify auth behaviours (checked 16 Nov 2026).** Confirmed in code: admin reset of a user's 2FA (`twoFactorActions.ts`, audit `two-factor.reset`); revoke one session (`userSessionService.ts`, audit `session.revoked`); wrong second-step codes count toward the account lockout; magic link and email code entry cap attempts (`MAX_CODE_ATTEMPTS`); exactly 10 distinct backup codes, stored only as hashes (test); Users list uses the generic list view with filters and bulk selection. Delete own account is the privacy erase request flow today (self-service is 23h). Gaps became 23a1 and 23a2. Tests: `tests/int/auth-verify-23a.int.spec.ts`.
+
+<a id="sec-026"></a>
+#### SEC-026 · 23c new sign-ups and active sessions (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23c new sign-ups and active sessions (built 16 Nov 2026).** The dashboard sign-in section shows new accounts in the last 30 days and sessions not yet expired. Code: `loadAccountCounts` in `src/features/security/authStats.ts`, `src/views/dashboard/Dashboard.tsx`, `tests/int/auth-account-counts.int.spec.ts`. No migration.
+
+<a id="sec-027"></a>
+#### SEC-027 · 23b switches on the Authentication overview (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23b switches on the Authentication overview (built 16 Nov 2026).** Magic link, email code, passkeys, email verification and each social provider (once its credentials are complete) now have an On/Off switch on `/authentication`. Admin only, refused while impersonating, written to the audit log as a settings update. A method that is off disappears from the sign-in form and is refused by the server as before. English only. Code: `src/features/security/authMethods.ts` (`togglePatch`), `authMethodActions.ts`, `src/admin/views/AuthMethodToggle.tsx`, `tests/int/auth-methods.int.spec.ts`. No migration.
+
+<a id="sec-028"></a>
+#### SEC-028 · 24h Disposable email blocking (built 16 Nov 2026, member sign-up)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**24h Disposable email blocking (built 16 Nov 2026, member sign-up).** Members settings, Registration: switch on Refuse sign-ups from throwaway email services (off by default). A built-in list of about 65 well-known services (including subdomains) is refused with a clear message at member sign-up. Typo suggestions for common domains exist as a helper (`suggestEmail`) but are not shown anywhere yet. Code: `src/features/security/emailCheck.ts`, `src/features/members/signup.ts`, `MemberSettings.ts`, migration `20270316_310000_disposable_email`, `tests/int/email-check.int.spec.ts`.
+
+<a id="sec-029"></a>
+#### SEC-029 · 24a Challenge on sign-in, register and forgot password (built 16 Nov 2026, member screens)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**24a Challenge on sign-in, register and forgot password (built 16 Nov 2026, member screens).** Form settings, Spam protection: switch on the challenge (Turnstile or reCAPTCHA, with its keys) and Also require the challenge on sign-in, create account and forgot password. The widget appears inside those three forms, the token is checked on the server, a missing or wrong token is refused with a clear message, and it fails open when the keys are missing or the provider cannot be reached so a site is never locked out. Always on when enabled; modes after N failures, admin sign-in, magic link and email code request, reset and code entry are left. English only. Code: `src/features/security/{authCaptcha.ts,AuthCaptcha.tsx,AuthCaptchaField.tsx}`, `accounts/actions.ts`, `AuthForms.tsx`, `AuthScreens.tsx`, setting `spam.protectSignIn`, migration `20270316_360000_auth_captcha`, `tests/int/auth-captcha.int.spec.ts`. Not run against live Cloudflare or Google keys.
+
+<a id="sec-030"></a>
+#### SEC-030 · 18e leftovers built (16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**18e leftovers built (16 Nov 2026).** (1) The user record now keeps `lastLoginMethod` and `lastLoginAt` (password, magic-link, email-code, passkey, or a social provider id), written when a session is minted, carried through the two-step code; impersonation is not recorded. Migration `20270317_130000_last_login_method` adds two nullable columns on `eg_users`. (2) The Last used badge now also shows for magic link, email code and passkey buttons, and on the admin sign-in screen. (3) The account-linking rule is written above `resolveSignIn` in `src/features/socialLogin/service.ts` (link only when the provider email and the account email are both verified and match; staff never auto-link; a signed-in person may link; unlink never removes the last way in). (4) Unlinking the last provider is now also allowed when the account has a passkey or an emailed sign-in is switched on (`otherMethods.ts`). Tests: `auth-slice-3`, `last-used-method`, `social-login` specs. The last login method is stored but not yet shown on the admin user screen.
+
+<a id="sec-031"></a>
+#### SEC-031 · 23e Last used badge (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23e Last used badge (built 16 Nov 2026).** The member sign-in screen remembers, in a plain cookie `eg_last_method` (one method name, one year), whether this browser last used the password form or a social provider, and shows a small "Last used" badge beside it next time (English only; blocked cookies mean no badge). Code: `src/features/accounts/lastUsed.ts`, `components/LastUsedBadge.tsx`, `AuthScreens.tsx`, `tests/int/last-used-method.int.spec.ts`. No migration.
+
+<a id="sec-032"></a>
+#### SEC-032 · 23c Dashboard sign-in cards (built 16 Nov 2026, part)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23c Dashboard sign-in cards (built 16 Nov 2026, part).** On the admin dashboard, admins see Failed sign-ins (a 30 day bar chart) and Sign-in methods used (password, social, email link or code, passkey) read from the audit log, shown only while Security is on. English only. Code: `src/features/security/authStats.ts`, `src/views/dashboard/Dashboard.tsx`, `tests/int/auth-stats.int.spec.ts`. No migration.
+
+<a id="sec-033"></a>
+#### SEC-033 · 23b Authentication overview (built 16 Nov 2026, read only)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**23b Authentication overview (built 16 Nov 2026, read only).** Settings > Security has an Authentication overview link (`/authentication`, admin only): one table with every method (password, email verification, magic link, email code, passkeys, two-step, and each social provider), its status (On, Off, Needs setup with the missing credentials named) and an Open link to the screen that owns the setting. Nothing was removed. English only. Code: `src/features/security/authMethods.ts`, `src/admin/views/AuthenticationView.tsx`, `adminViewRegistry.ts`, `settingsPages.ts`, `tests/int/auth-methods.int.spec.ts`. No migration.
+
+<a id="sec-034"></a>
+#### SEC-034 · Bot challenge on the PayPal buy step (12d leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Bot challenge on the PayPal buy step (12d leftover, built 17 Nov 2026).** The card payment (`/payments/stripe/initiate`) and bank transfer, cheque and cash orders already asked the Turnstile or reCAPTCHA challenge (Task 19a places `cardCheckout` and `offlineOrder`); PayPal did not. `/api/shop-paypal-create` now checks the same `cardCheckout` place (renamed Checkout: card and PayPal payment, mode kept) before reading the cart, so one setting covers both. `PayPalButton` sends the challenge token from the checkout page's widget and the widget renews after each try. Tests in `tests/int/paypal-create-captcha.int.spec.ts`.
+
+<a id="sec-035"></a>
+#### SEC-035 · Customer and member sign-in URL (19l, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Customer and member sign-in URL (19l, built 17 Nov 2026).** Settings > Security has Customer sign-in URL, and Members settings has Member sign-in URL (one segment, lowercase letters, digits and hyphens, 3 to 40 characters; empty keeps `/account/sign-in` and `/account/member-sign-in`). The routes stay at the default paths; the middleware serves a custom path by rewrite (including `/link` for emailed links), redirects a page view of the old path to the new one (form posts and server actions on the old path are still served), sends handler redirects straight to the new path, and marks the custom path noindex. Refused: the admin URL or anything under it, words the site uses (including `account` and `admin`), and the same path for both places. A bad saved value is skipped, never lost. Recovery: `ENGAGE_CUSTOMER_SIGN_IN_PATH` and `ENGAGE_MEMBER_SIGN_IN_PATH` override the fields. Code: `src/features/security/signInPath.ts`, `signInPathValidate.ts`, `src/middleware.ts`, `src/globals/SecuritySettings.ts`, migration `20270317_280000_sign_in_paths` (the member path is a column on `eg_member_settings` because `eg_security_settings` is at the 100 column limit), `tests/int/sign-in-custom-path.int.spec.ts`. Saving a custom path is refused when a top-level page already uses that slug. A locale-prefixed old path (`/fr/account/sign-in`) is not redirected on purpose: the account area never takes a language prefix (see `isPortalPath`), so those addresses were never valid. Not covered: creating a page with the slug of a custom sign-in path afterwards (the sign-in wins).
+
+<a id="sec-036"></a>
+#### SEC-036 · Audit drain filter and redaction (19i, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Audit drain filter and redaction (19i, built 17 Nov 2026).** Each webhook subscribed to Activity log entry can now list the actions it wants (one per line; a name ending in a dot such as `user.` matches the whole family; empty means all) and tick fields to leave out of the payload (`actorEmail`, `ip`, `documentId`, `detail`; they are sent as empty strings so the shape stays the same). Settings are in a new JSON column `audit_options` on `eg_webhooks` (migration `20270317_270000_webhook_audit_options`, baseline regenerated), included in webhook export and import. The filter runs when the event is queued (`queueEvent`), redaction when the payload is built (`queueFor`), so a filtered-out entry never creates a log row. Code: `src/features/webhooks/core.ts` (`auditActionMatches`, `redactAuditData`, `parseAuditOptions`), `delivery.ts`, `store.ts`, editor in `components/WebhooksPanel.tsx`; tests in `tests/int/webhooks-core.int.spec.ts` and `webhooks-delivery.int.spec.ts`. Live check in the live-check section.
+
+<a id="sec-037"></a>
+#### SEC-037 · Customer and member sign-in URL (19l, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Customer and member sign-in URL (19l, built 17 Nov 2026).** Settings > Security has Customer sign-in URL, and Members settings has Member sign-in URL (one segment, lowercase letters, digits and hyphens, 3 to 40 characters; empty keeps `/account/sign-in` and `/account/member-sign-in`). The routes stay at the default paths; the middleware serves a custom path by rewrite (including `/link` for emailed links), redirects a page view of the old path to the new one (form posts and server actions on the old path are still served), sends handler redirects straight to the new path, and marks the custom path noindex. Refused: the admin URL or anything under it, words the site uses (including `account` and `admin`), and the same path for both places. A bad saved value is skipped, never lost. Recovery: `ENGAGE_CUSTOMER_SIGN_IN_PATH` and `ENGAGE_MEMBER_SIGN_IN_PATH` override the fields. Code: `src/features/security/signInPath.ts`, `signInPathValidate.ts`, `src/middleware.ts`, `src/globals/SecuritySettings.ts`, migration `20270317_280000_sign_in_paths` (the member path is a column on `eg_member_settings` because `eg_security_settings` is at the 100 column limit), `tests/int/sign-in-custom-path.int.spec.ts`. Not done: locale-prefixed old paths (`/fr/account/sign-in`) do not redirect; a published page with the same slug as the custom path is hidden behind the sign-in.
+
+<a id="sec-038"></a>
+#### SEC-038 · Guided CSP builder (19j, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Guided CSP builder (19j, built 17 Nov 2026).** Settings > Security > Content-Security-Policy builder (`/admin/security/csp`, admin only). Mode off, report-only or enforce; per directive (default, script, style, image, font, connect, media, frame, worker, object, base, form action, frame ancestors) pick keywords, known hosts (Google Fonts, jsDelivr, GTM, Clarity, Meta Pixel, Stripe, Turnstile, reCAPTCHA, cdnjs, unpkg, chat widgets) or type a host, each added to the default policy or replacing it for that directive. Live preview, validation with the same rules as the free-text policy, and risk warnings. Report-only sends `Content-Security-Policy-Report-Only` while the normal policy keeps enforcing; enforce replaces the enforced policy. Both add `report-uri /api/csp-report`, a public endpoint (only while the builder is on, 16 KB body cap, rate limited, 300 distinct entries, browser-extension noise dropped) that fills the Violations table; Allow adds the reported host to the right directive and saves. The admin, the embed frame document and the shareable data page never get the builder's policy. The free-text policy stays and is merged first. Code: `src/features/security/cspBuilder.ts` (pure), `cspBuilderStore.ts`, `headers.ts` (third argument), `requestGuard.ts` (30 second cached read), `api/admin-csp`, `api/csp-report`, `components/CspBuilderPanel.tsx`, migration `20270318_100000_csp_builder` (`eg_csp_builder`, `eg_csp_reports`), `tests/int/csp-builder.int.spec.ts`. Live check is in Live checks.
+
+<a id="sec-039"></a>
+#### SEC-039 · Customer and member sign-in URL (19l, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Customer and member sign-in URL (19l, built 17 Nov 2026).** Settings > Security has Customer sign-in URL, and Members settings has Member sign-in URL (one segment, lowercase letters, digits and hyphens, 3 to 40 characters; empty keeps `/account/sign-in` and `/account/member-sign-in`). The routes stay at the default paths; the middleware serves a custom path by rewrite (including `/link` for emailed links), redirects a page view of the old path to the new one (form posts and server actions on the old path are still served), sends handler redirects straight to the new path, and marks the custom path noindex. Refused: the admin URL or anything under it, words the site uses (including `account` and `admin`), and the same path for both places. A bad saved value is skipped, never lost. Recovery: `ENGAGE_CUSTOMER_SIGN_IN_PATH` and `ENGAGE_MEMBER_SIGN_IN_PATH` override the fields. Code: `src/features/security/signInPath.ts`, `signInPathValidate.ts`, `src/middleware.ts`, `src/globals/SecuritySettings.ts`, migration `20270317_280000_sign_in_paths` (the member path is a column on `eg_member_settings` because `eg_security_settings` is at the 100 column limit), `tests/int/sign-in-custom-path.int.spec.ts`. Saving a custom path is refused when a top-level page already uses that slug. A locale-prefixed old path (`/fr/account/sign-in`) is not redirected on purpose: the account area never takes a language prefix (see `isPortalPath`), so those addresses were never valid. A top-level page cannot be saved with the slug of a custom sign-in path either.
+
+<a id="sec-040"></a>
+#### SEC-040 · Last sign-in on the admin user screen (18e leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Last sign-in on the admin user screen (18e leftover, built 17 Nov 2026).** The admin edit screen for a user shows a Last sign-in card with the method (password, magic link, passkey, social and so on) and the time (UTC), from the `lastLoginMethod` and `lastLoginAt` columns set at every sign-in. Accounts that have not signed in since those columns were added show a plain notice. Thirteen languages. Code: `src/admin/views/EditView.tsx` (`lastLoginCard`), keys `lastLogin.*`. No migration.
+
+Task 15a (part 2): the state harness now covers badges, chips (outline badges), menu items (resting, hover, focus, current), table rows (hover, selected) and switches (track 3:1 off and on) in light and dark, plus size checks for menu items, badges and switches at 375 and 1280 px. Specs: `tests/int/state-contrast.int.spec.ts`, `tests/int/size-checks.int.spec.ts`. No CSS change was needed. Left: other Shine components, public block CSS, 15c one-click apply.
+
+<a id="sec-041"></a>
+#### SEC-041 · IP and country blocking leftovers (19c, 19d, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**IP and country blocking leftovers (19c, 19d, built 17 Nov 2026).** The Security audit page shows a Block this IP button beside every address (confirm, adds to the block list, your own address refused). IP lists > Import a list takes a text or CSV file or an https web address (up to 1 MB, SSRF-safe download shared with media import, up to 2000 entries, bad lines reported). Admin bypass: an admin turns it on in IP lists and that browser gets a signed 30 day cookie (`eg_ip_bypass`, HMAC with ENGAGE_SECRET) that skips both IP and country rules in the middleware. Custom block message (plain text, 300 characters, stored as a `message` row). Country picker with English names and search (`Intl.DisplayNames`). Code: `ipBypass.ts`, `countryNames.ts`, `components/BlockIpButton.tsx`, `IpRulesPanel.tsx`, `/api/admin-ip-rules` (actions `import`, `message`, `bypass`), `requestGuard.ts`, `tests/int/ip-rules.int.spec.ts`.
+
+<a id="sec-042"></a>
+#### SEC-042 · Audit log drain (19i, built 17 Nov 2026, first slice)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Audit log drain (19i, built 17 Nov 2026, first slice).** Webhooks can subscribe to a new event, Activity log entry (`audit.recorded`). Every ordinary audit entry (sign-ins, setting and user changes, bans, exports and so on) is also sent, signed and retried like any webhook, with only action, actor email, collection, document id, address, detail and time. The noisy request-level entries (blocked probes and addresses, rate limits, API key use) and the webhook system's own entries are left out so the drain cannot loop. Labels in all thirteen languages. Code: `src/features/security/auditLog.ts` (`recordAuditEvent`), `src/features/webhooks/events.ts`.
+
+<a id="sec-043"></a>
+#### SEC-043 · Per-route rate limit rules (19b, built 17 Nov 2026, first slice)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Per-route rate limit rules (19b, built 17 Nov 2026, first slice).** Settings > Security > Rate limit rules (admin only): a path prefix, a method (or any), a limit and a window (10 s to 24 h), with an on/off switch and a note. Requests are counted per address in D1 (`hitShared`) and the most specific path wins; over the limit gets a 429 with Retry-After and an audit entry. Rules reach all servers within 30 s; `SECURITY_RATE_RULES_OFF=1` switches them off. Code: `src/features/security/{routeRules,routeRulesStore}.ts`, `requestGuard.ts`, `/api/admin-rate-rules`, `RateRulesPanel.tsx`, `RateRulesView.tsx`, migration `20270317_260000_rate_rules` (table `eg_rate_rules`), test `tests/int/rate-rules.int.spec.ts`. Live check: "Live check rate limit rules (19b)".
+
+<a id="sec-044"></a>
+#### SEC-044 · Bot detection (19k and 21c, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Bot detection (19k and 21c, built 17 Nov 2026).** Form settings > Spam protection > Bot detection: Off, Ask for the challenge, or Ask for the challenge and refuse the worst, with a minimum score (default 30). Reads the Cloudflare bot score from the `cf-bot-score` header or `request.cf.botManagement.score`; verified bots are never touched; no score from the plan means no change. Challenge mode makes sign-in, create account and forgot password show and require the CAPTCHA even when Protect sign-in is off (needs the keys); block mode also refuses those and quietly discards form submissions from low scores. Honeypot, fill time and probe-path blocking are unchanged. Code: `src/features/security/botSignals.ts`, `authCaptcha.ts`, `forms/submit.ts`, migration `20270317_260000_bot_detection`, `tests/int/bot-detection.int.spec.ts`. Left: see 19k leftovers.
+
+<a id="sec-045"></a>
+#### SEC-045 · Sign-in alerts (19g, built 17 Nov 2026, first slice)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Sign-in alerts (19g, built 17 Nov 2026, first slice).** Each sign-in records the device (browser and system) and country in `eg_login_seen`; a sign-in from a new country or new device emails the account owner. An account's first recorded sign-in is never alerted, so enabling it does not mail everyone. Sink pattern: `notifySignIn` in `src/localapi/auth.ts` `finishLogin`, handler registered in `src/localapi/engine.ts`. Skips impersonation and re-authentication checks. Code: `src/features/security/{loginAlert,loginAlertStore}.ts`, migration `20270317_250000_login_seen`, test `tests/int/login-alert.int.spec.ts`. Live check: "Live check sign-in alerts (19g)".
+
+<a id="sec-046"></a>
+#### SEC-046 · Bulk user actions (19f, built 17 Nov 2026, first slice)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Bulk user actions (19f, built 17 Nov 2026, first slice).** Users list (admin only) shows a bulk bar over selectable rows: ban (reason, optional days), unban, sign out everywhere, change role to editor or viewer, each with a confirm step and per-row results. Staff and member accounts only: shop customers, admins (except unban) and the person running it are refused per row. Max 100 per run. Code: `src/features/security/{userBulk,userBulkStore}.ts`, `/api/admin-user-bulk`, `src/admin/views/UsersBulkBar.tsx`, audit action `user.bulk`, test `tests/int/user-bulk.int.spec.ts`. Live check: Task 14 line "Live check bulk user actions (19f)". The Users list also has an All and Banned filter (`?status=banned`, in `src/admin/views/ListView.tsx`).
+
+<a id="sec-047"></a>
+#### SEC-047 · Ban and unban users (19e, built 17 Nov 2026, first slice)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Ban and unban users (19e, built 17 Nov 2026, first slice).** Settings > Security > Banned accounts (admin only): ban an account by email with an internal reason and optional days; it is signed out at once (every session row is deleted) and cannot sign in by any method, and sees only "This account cannot sign in." with no reason. The ban rides on the existing sign-in lock: `lock_until` is the end date (or 9999 for permanent) and `login_attempts` holds a marker (100000) no automatic lockout can reach, so an expired ban lifts itself and the sign-in code can tell a ban from a lockout. Cannot ban yourself. Audit entries `user.banned` and `user.unbanned`. Code: `src/features/security/{userBans,userBansStore}.ts`, `checkLoginPermission` in `src/localapi/auth.ts`, `/api/admin-user-bans`, `UserBansView`, migration `20270317_240000_user_bans` (table `eg_user_bans`), `tests/int/user-bans.int.spec.ts`.
+
+<a id="sec-048"></a>
+#### SEC-048 · Country blocking (19d, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Country blocking (19d, built 17 Nov 2026).** In IP lists, Countries: Off, Block these countries, or Only allow these countries, from two letter codes (XX means an unknown country, which includes missing and T1 headers). Uses Cloudflare's `cf-ipcountry` header for the whole site (pages, admin, sign-in, checkout, API); blocked visitors get a plain 403 message; addresses on the IP allow list skip it; the saving admin cannot block their own country. Stored as rows in `eg_ip_rules` (kinds `country-allow` and `country-block`), no new table. Code: `ipRules.ts` (`decideCountry`), `requestGuard.ts`, `/api/admin-ip-rules` (action `countries`), `tests/int/ip-rules.int.spec.ts`.
+
+<a id="sec-049"></a>
+#### SEC-049 · IP allow and block lists (19c, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**IP allow and block lists (19c, built 17 Nov 2026).** Settings > Security > IP lists (admin only): paste addresses or CIDR ranges (IPv4 and IPv6) into the Block or Allow list with a private reason and an optional expiry, remove entries, download a CSV. The middleware answers a plain 403 for a blocked address before any page loads; the allow list wins; an unreadable address is never blocked; the saving admin cannot block their own address; SECURITY_IP_RULES_OFF=1 in the environment switches the lists off. Changes reach every server within 30 seconds (cached read). Audit entries `ip.rule` and `ip.blocked`. Code: `src/features/security/{ipRules,ipRulesStore}.ts`, `requestGuard.ts`, `/api/admin-ip-rules`, `IpRulesView`, migration `20270317_230000_ip_rules` (table `eg_ip_rules`), `tests/int/ip-rules.int.spec.ts`.
+
+<a id="sec-050"></a>
+#### SEC-050 · 19a CAPTCHA modes (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**19a CAPTCHA modes (built 17 Nov 2026).** Form settings > Spam protection has a mode for each place: Member sign-in, Create account, Forgot password (request and new password), Magic link and email code request, Email code entry, Comments, Chat and live chat, Product reviews, Back-in-stock sign-up, Event RSVP, and bank transfer, cheque and cash orders. Modes: Same as before, Off, Always, or Only after repeated failures from the same address (threshold and window are settings; places with a failed step count failures, the others count tries). Needs the keys; no keys means nothing is asked. The widget appears in the form by itself (`/api/captcha-config`, `PlaceCaptcha`) and is replaced after each submit; a blocked script shows a message. Refused attempts are logged as `captcha.failed` in the audit log. The Cloudflare bot score (19k) now applies to every place: challenge mode asks, block mode refuses. Code: `src/features/security/{captchaPlaces,authCaptcha,PlaceCaptcha,rsvpCaptcha}.ts(x)`, `accounts/actions.ts`, review, back-in-stock, offline order, comment and chat routes, migration `20270317_270000_captcha_modes`, `tests/int/captcha-modes.int.spec.ts`. Not run against live keys.
+
+<a id="sec-051"></a>
+#### SEC-051 · 19a and 19k follow-ups (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**19a and 19k follow-ups (built 17 Nov 2026).** (1) Admin sign-in has its own place, Admin sign-in, in the same modes; the admin login form draws the widget and sends the token with the password (`rest.ts` `handleLogin`, `LoginView.tsx`). (2) The card checkout has a place, Checkout: card payment; the token travels with the payment start request, and only the request is checked, never an order or payment record. (3) Accessible alternative: next to the widget a button, Can't use the security check? Answer a question instead, shows a plain question ("What is 7 plus 4?"); it also appears by itself when the widget cannot load. The answer is held in a signed token (ENGAGE_SECRET, 15 minutes); no secret means no alternative (`captchaFallback.ts`). (4) Flagged visitors: Authentication overview shows how many visitors the bot score flagged in the last 7 days, asked or refused, by place; one audit line (`bot.flagged`) per address and hour. (5) Per-form override: Forms > Spam > Bot detection (Use site setting, Off, Ask for the challenge, Ask and refuse the worst). Migration `20270317_280000_captcha_followups`, `tests/int/captcha-modes.int.spec.ts`. Not run against live keys.
+
+<a id="sec-052"></a>
+#### SEC-052 · 19k Cloudflare signal rules (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**19k Cloudflare signal rules (built 17 Nov 2026).** Form settings > Spam protection > Bot detection (when on) has two more lists. Bot fingerprints: JA3 or JA4 hashes, one per line, that always count as a bot whatever the score (read from `cf-ja3-hash` and `cf-ja4`, or the Bot Management data). Allowed verified bot categories: empty lets every verified bot through as before; with categories listed, only verified bots in those categories pass and any other verified bot (an AI crawler, say) is treated like a bot (read from `cf-verified-bot-category` or `cf.verifiedBotCategory`). Same modes apply (ask for the challenge, or refuse), on every place and on forms. No signal from the plan means no change. Code: `src/features/security/botSignals.ts` (`BotRules`, `parseList`), `authCaptcha.ts`, `forms/submit.ts`, migration `20270318_110000_bot_rules`, `tests/int/bot-detection.int.spec.ts`. Not run against live Cloudflare headers.
+
+<a id="sec-053"></a>
+#### SEC-053 · Admin two-step on by default and 30-day sign-ins (21 Nov 2026)
+
+_Date: 21 Nov 2026_
+
+**Admin two-step on by default and 30-day sign-ins (21 Nov 2026).** `requireTwoFactorForAdmins` now defaults on and covers administrators even when the Security section is off (`isCovered` in `twoFactorEnforcement.ts`, gate in `localapi/rest.ts`); an unenrolled admin is sent to the setup screen, the sole admin's API is never refused, and `ENGAGE_DISABLE_2FA_ENFORCEMENT` still works. Migration `20270320_100000_admin_two_step_and_30_day_sessions` turns it on for existing sites with a 7 day grace if none was set, and moves the old 720 minute default to 43200. Sessions are server-side rows (revocable from the sessions list) and last a fixed 30 days from sign-in: `TOKEN_EXPIRATION_SECONDS` is 30 days and a refresh never extends past that cap. Release installs get both through the migration. Tests: `two-factor`, `auth-slice-3`, `localapi-auth`, `user-sessions`, `fresh-baseline-parity`.
+
+<a id="sec-054"></a>
+#### SEC-054 · Step-up confirmation for adding administrators (21 Nov 2026)
+
+_Date: 21 Nov 2026_
+
+**Step-up confirmation for adding administrators (21 Nov 2026).** Giving an account the admin role (create or update) now needs a password or authenticator code entered again in the last ten minutes: the screen `/admin/security/confirm` (Security > Confirm it is you) sets a signed httpOnly cookie (`src/features/security/stepUp.ts`, `confirmIdentityAction`), and the Users `beforeChange` hook `requireStepUpForAdminGrant` refuses with 403 and the screen's address otherwise. Not asked: the first admin, internal calls with no signed-in user. Changing your own password (current password) and turning two-step off or regenerating backup codes (password or code) already re-checked. The old 720 minute session setting moves to 30 days in the earlier migration; other values are kept. Tests: `step-up`.
+
+<a id="cat-int"></a>
+### INT: Integrations, API and webhooks
+
+<a id="int-001"></a>
+#### INT-001 · Wave 68 social-feed
+
+_Date not recorded_
+
+**Wave 68 social-feed:** new `social-feed` element. Connected accounts in Settings > Integrations > Social accounts: Instagram, Facebook Page, Pinterest and TikTok need tokens; YouTube channel and RSS need none. Server-side fetch, 30 min cache. X not supported (paid API).
+
+<a id="int-002"></a>
+#### INT-002 · Wave 68 embeds
+
+_Date not recorded_
+
+**Wave 68 embeds:** embed element is real consent-gated iframes for Instagram, X, Facebook, TikTok, Pinterest pin, LinkedIn, Spotify and SoundCloud. Shared parser `src/lib/embedProviders.ts`; hosts in `src/lib/embedHosts.ts` feed the CSP. Spotify and SoundCloud also work in audio and video-playlist.
+
+<a id="int-003"></a>
+#### INT-003 · Task 19 API and webhooks (30 Oct)
+
+_Date: 30 Oct 2026_
+
+**Task 19 API and webhooks (30 Oct):** API builder #147 and #148 (endpoints at /api/x/<version>/<name>, field whitelist, filters, rate limit, call log, Try it, keys, OpenAPI, Markdown, HTML and Postman downloads, optional guide link, `api` permission); webhooks builder #149 (9 events, HTTPS and SSRF guard, HMAC signing, retries, delivery log with replay and test); gap-fill #150 (failure alerts, `tracking-event.saved`, checkout wiring checked in code). Open items: Task 19.
+
+<a id="int-004"></a>
+#### INT-004 · Task 4 tracking (29 and 30 Oct)
+
+_Date: 30 Oct 2026_
+
+**Task 4 tracking (29 and 30 Oct):** #135 to #138 and #140 (events collection, consent-gated runtime, TikTok/Meta/GA4/GTM switches, Settings > Tracking, visual picker); #141 and #142 Add tags editor and follow-up; #143 to #145 tracking connections, editor suggestions, values and Add all; #151 GA4/GTM consent split (Analytics-only loads GA4 and GTM; Marketing-only does not).
+
+<a id="int-005"></a>
+#### INT-005 · Task 3 tracking connections code (PR #187, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 3 tracking connections code (PR #187, 1 Nov):** Settings > Tracking connections shows a setup status for Google, Meta and TikTok (Done or Missing for app ID or client ID, app secret, ENGAGE_SECRET, sign-in; values never shown). Saving an app secret without ENGAGE_SECRET is refused with a message; the encrypted-field hook refuses to encrypt without ENGAGE_SECRET instead of using an empty key. Connect flows re-tested (80 tests). Decision: task numbers kept as they are, so the gap at 3 is intentional while other tasks are in flight. Live checks in Task 6.
+
+<a id="int-006"></a>
+#### INT-006 · Task 7 integrations leftovers (PR #193, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 7 integrations leftovers (PR #193, 1 Nov):** reminder and marketing mail (event and cart reminders) sent per recipient with a signed one-click unsubscribe link, List-Unsubscribe headers (Postmark, Resend, SendGrid, Mailgun, Brevo, Mandrill, Cloudflare) and a footer; suppression list `eg_email_suppressions` (migration 20270129) checked before bulk sends; `/api/email-unsubscribe` and Postmark bounce/complaint webhook `/api/email-events/postmark`; Search Console "Submit sitemap" (sign-in now asks for full webmasters scope). Decided: Postmark is the first bounce feed; Twilio stays the only SMS provider; no SMTP, Gmail or indexing request now. Fixed: shop-review-fixes sets SITE_URL itself. Live checks in Task 6.
+
+<a id="int-007"></a>
+#### INT-007 · Task 7 integrations, what was left (PR #195, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 7 integrations, what was left (PR #195, 1 Nov):** shipped-order text, opt-in and off by default (Integrations > Text messages switch, migration `20270130_100000_sms_shipped_text`, sent with the shipped email when the first label is bought); bounce and complaint webhooks for Resend, SendGrid, Mailgun, Brevo, Mandrill and SES feed `eg_email_suppressions` (signature checked per provider; Brevo by key in the URL, as Postmark). Decided: Cloudflare Email has no bounce feed; SMTP and Gmail sending not needed; Google services and newsletter or CRM sync are in Open now as build on request. Live checks in Task 6.
+
+<a id="int-008"></a>
+#### INT-008 · Task 1 leftovers: relation fields on import and export, options page rules (PR #211, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 1 leftovers: relation fields on import and export, options page rules (PR #211, 2 Nov):** pages (parent), posts (author, featured image) and products (images, brand, tags, variation pictures) export by name (slug, file name, email, template or group name) and import links them back by the same name; a name not on the site is left unlinked with a warning on the check and the apply; pages import parents first. Options pages: location rules match on user role and on a new "Field value (options page)" rule that compares another field's saved value (the form re-checks it as values change; save uses the values sent); a group with no collection rule applies to an options page when its other rules match. Permanent: public merge tags never know the viewer's roles, so a role rule adds no tag there; relation ids inside block content keep their old behaviour (only top-level, grouped and array fields of pages, posts and products are mapped). No migration.
+
+<a id="int-009"></a>
+#### INT-009 · Task 2 API gaps: DELETE, custom fields, messages, PDF, send to developer (PR #212, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 2 API gaps: DELETE, custom fields, messages, PDF, send to developer (PR #212, 2 Nov):** DELETE per endpoint, off by default (`allowDelete`); the key's owner needs delete permission for the collection; pages, posts and events move to the trash (the trash guard applies), other collections are deleted; every DELETE is audited (endpoint path, collection, id, key id, mode; no key or body). Custom fields `cf:<name>` are exposed, read and written: reads and writes follow the field groups that apply to the record for the owner's roles, hide values by their conditions, and run the collection's own save validation (400 with each field); a field no group gives the account is 403. Decided: custom fields are not filtered or sorted yet (the builder refuses them). API runtime messages are in uiStrings (`api.*`, English default, answered in Accept-Language); the admin builder's validation stays English; the 12 other dictionaries hold English for the new keys until a translation pass. PDF guide (`format=guide.pdf`, admin download and public link) is built from the Markdown guide with no library (standard Helvetica and Courier, nothing embedded, Workers-safe). "Send to developer" block: mailto and copy for the read-only public guide link, never a key. OpenAPI, Markdown and Postman include DELETE and custom field types. No migration (endpoint config is JSON). Live checks in Task 6.
+
+<a id="int-010"></a>
+#### INT-010 · Task 2 webhooks: log redaction, retention, DNS guard, booking event, inbound webhooks (PR #214, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 2 webhooks: log redaction, retention, DNS guard, booking event, inbound webhooks (PR #214, 2 Nov):** the stored body of a finished delivery has secret-looking keys and credential-shaped values replaced (a pending one keeps its exact body until sent; a redacted one cannot be replayed). Retention 7 to 365 days (default 30) on the webhooks screen, with a clean-up button; the cron job purges at that setting. Before each send the host is resolved over DNS over HTTPS and private, loopback, link-local and metadata answers are refused (limits in outbound.ts). `booking.made` fires from event RSVPs and appointment bookings. Inbound endpoints (`/api/webhooks-inbound/<token>`): HMAC per endpoint, replay window 1, 5 or 15 minutes, required Idempotency-Key, creates a draft or published page or post from a payload field, or triggers an outgoing event; request log without bodies. Migration `20270304_100000_webhook_redaction_inbound`. Decisions: inbound content is pages and posts only; "automation" means an outgoing event; the title field is a typed payload path. Checks: tsc, eslint, vitest (webhook specs, fresh-install, related forms, strings, cron, RSVP and migration specs).
+
+<a id="int-011"></a>
+#### INT-011 · 9 Nov Task 10 easy API creation, keys and feeds (PR pending)
+
+_Date: 9 Nov 2026_
+
+**9 Nov Task 10 easy API creation, keys and feeds (PR pending):** most of it already existed (API builder, per-user keys with scopes, revoke, call log, developer guide, webhooks, members portal keys). Added: API access categories (`eg_api_categories`, `eg_api_category_members`; scopes, rate per minute, key cap; members are a person or a customer organisation; a key is narrowed to its owner's category on every request and the category's rate applies; once any category exists a customer without one cannot use or create a key, staff are unaffected), key rotate (re-checks password or code, old key dies at once, audited), per-key daily usage (`eg_api_key_usage`, 30 days, shown on the key row), admin creates a key for a customer, endpoints can be limited to categories, the customer's portal API guide lists only the endpoints their account can call, data feeds (CSV with formula defusing, JSON lines, XML; `?format=` per call), drag and drop field picker with buttons for keyboard and touch (replaces the checkbox list), webhook link from the builder. Strings in 13 languages. Live checks in Task 20 (Closed Task 10 API).
+
+<a id="int-012"></a>
+#### INT-012 · 25b Native live chat, first version (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**25b Native live chat, first version (built 16 Nov 2026).** Switch Live chat on in Site Settings, under Features, and set it up in Admin > Live chat: opening hours (time zone aware, overnight allowed), notify email, canned replies, retention, purge. Visitors reach it from the chatbot widget (a Talk to a person button, also after a hand-off) and see staff replies in the same window, polled every 4 seconds; staff inbox polls every 5 seconds with filters, assign, internal notes, canned replies with {name}, transcript, close, reopen and delete. Staff are online while the admin inbox is open (90 second heartbeat); outside hours or with nobody online the visitor sends an offline message that is emailed. New chats email the notify address (or shop admin) and send web push. Visitors can end a chat and email themselves the transcript (notes excluded). CAPTCHA and rate limit apply; chats link to the signed-in account and are erased with the customer in the privacy erase. Code: `src/features/livechat/{core,store,notify}.ts`, `components/{LiveChat,LiveChatPanel}.tsx`, `src/admin/views/LiveChatView.tsx`, `/api/livechat`, `/api/admin-livechat`, migration `20270316_425000_livechat`, `tests/int/livechat.int.spec.ts`.
+
+<a id="int-013"></a>
+#### INT-013 · 30a AI site chatbot, first version (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**30a AI site chatbot, first version (built 16 Nov 2026).** Switch Chatbot on in Site Settings, under Features, and set it up in Admin > Chatbot: name, avatar, greeting, tone, brand voice, extra instructions, allowed and blocked topics, languages, opening hours and the hand-off message, contact page and email. Visitors get a corner chat button (when Show on every page is on) or the Chatbot element placed on any page in the visual editor. Answer order: the FAQ first, then pages, posts and products (published, not password protected, title and excerpt only), each answer with links to its sources. With a Claude or OpenAI key (cheap model, chosen from Integrations keys) the model writes the answer only from those numbered sources and cites them; it replies NO_ANSWER when they do not hold it, which becomes a hand-off to the contact page, email and opening hours. With no key, with AI switched off, with the shared AI spend cap reached or with the chatbot's own optional cap reached, a strong FAQ match is returned as it is and anything weaker shows page links or the hand-off. Switches, all off by default: store help (shipping, returns and policy pages as sources), order status (signed-in customers only, only their own latest three orders, read straight from the store with no AI), product recommendations. Rate limit per visitor per hour, honeypot, the Form settings spam challenge on the chat box, a consent notice before the first message, retention in days (old conversations are removed when a new chat starts, or by the Delete old conversations now button) and erase with the customer in the privacy erase. The admin sees use and spend (chatbot calls cost like the AI page builder, in the same usage table with mode chatbot), the conversation log with filters for handed off and rated not helpful, a delete per conversation, and Teach it, which saves a corrected answer as a new FAQ. Visitors rate each answer with thumbs. English labels only for now. Code: `src/features/chatbot/{core,store,service}.ts`, `components/{ChatWidget,ChatWidget.server,ChatbotPanel}.tsx`, `src/admin/views/ChatbotView.tsx`, `/api/chatbot`, `/api/admin-chatbot`, element `chatbot` in `wave38Defs.ts`, tables `chatbot_settings`, `chatbot_conversations`, `chatbot_messages`, migration `20270316_395000_chatbot`, `tests/int/chatbot-core.int.spec.ts`, `tests/int/chatbot-service.int.spec.ts`.
+
+<a id="int-014"></a>
+#### INT-014 · 17h Google Analytics link (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17h Google Analytics link (built 16 Nov 2026).** Settings pages can now hold an external link card (`type: 'external'`, an https address that opens in a new tab with `noopener noreferrer`, shown with a ↗ arrow, left out of the settings search). Settings > Tracking has a Google Analytics card to analytics.google.com. Code: `src/admin/settingsPages.ts`, `views/SettingsPageClient.tsx`, `views/SettingsHubView.tsx`. No migration.
+
+<a id="int-015"></a>
+#### INT-015 · 22h Google Analytics user_id (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**22h Google Analytics user_id (built 16 Nov 2026).** In SEO settings, Analytics: switch on Send signed-in user ID to GA4 (off by default) and keep Hash the ID on (default; a keyed SHA-256 using the site secret, first 32 hex characters, so the account number never leaves the site). The ID is only added when analytics loads, so it is consent gated by the same loader, and only for signed-in users. Code: `src/features/seo/ga4User.ts`, `AnalyticsLoader.tsx`, `SeoScripts.tsx`, `SeoSettings.ts`, migration `20270316_300000_ga4_user_id`, `tests/int/ga4-user-id.int.spec.ts`.
+
+<a id="int-016"></a>
+#### INT-016 · 21b Ads and Pinterest (built 16 Nov 2026, partly)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21b Ads and Pinterest (built 16 Nov 2026, partly).** AdSense: checked `src/features/ads/adapters.ts`. It lists header-bidding adapters (Prebid bidders and Amazon TAM), and AdSense is not one: it is its own ad tag, so there is no AdSense unit type today. Auto ads limit stays Permanent. Not added: a display unit kind for AdSense needs a new kind on the ad unit, its own tag output and its own consent handling, which is a separate piece of work. Pinterest: the existing embed (pin) and the connected-board feed (`socialFeeds`) stay. New: (1) a Pin it button in the Share buttons element (tick Pinterest and give the picture address; with no picture the button is left out, because Pinterest needs one); (2) the Pinterest Tag: an optional Pinterest Tag ID on Tracking connections (10 to 16 digits, validated), loaded for marketing consent only and counted in the withdraw-reload rule. It is kept there because Integrations is at the column limit. Code: `wave36Defs.ts`, `Wave36Elements.tsx`, `src/globals/TrackingConnections.ts`, `AnalyticsLoader.tsx`, `SeoScripts.tsx`, migration `20270316_240000_pinterest_tag`, `tests/int/pinterest-tag-share.int.spec.ts`.
+
+<a id="int-017"></a>
+#### INT-017 · 18b Live order tracking (built 16 Nov 2026; Sendle polling and a webhook built, other carriers need live check
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**18b Live order tracking (built 16 Nov 2026; Sendle polling and a webhook built, other carriers need live checks or the webhook).** Each parcel on an order now carries a tracking timeline (status, events with time, text and place) saved inside the shipment, so no new table. Five states: label created, in transit, out for delivery, delivered, delivery problem. Sources: the hourly `shipment-tracking` job asks carriers that can answer (Sendle is built in: `track` on the carrier adapter, a new optional method) about undelivered parcels shipped in the last 45 days; a webhook `POST /api/shipment-tracking` (secret in the `TRACKING_WEBHOOK_SECRET` setting, header `x-tracking-secret`, absent secret means the address does not exist) takes updates from any carrier or tracking service (ShipStation, AfterShip, a carrier portal); and staff can add an update by hand on the order (the Shipping panel, for carriers that cannot be asked). The customer is emailed once each when a parcel is out for delivery, delivered, or has a problem (delivered also covers a missed out-for-delivery), switched by Shop switches, Email the customer as their parcel moves. The timeline shows on the admin order and on the customer's order page (`/account/orders/<id>`). Delivered is final; repeat scans change nothing. Code: `ecom/lib/tracking.ts` (pure), `ecom/server/tracking.ts`, `ecom/shipping/{types,sendle}.ts`, `/api/shipment-tracking`, `/api/admin-order-tracking/[id]`, `ecom/admin/OrderPanels.tsx`, `accounts/components/AccountScreens.tsx`, cron job, migration `20270316_220000_shipment_tracking`, `tests/int/shipment-tracking.int.spec.ts`.
+
+<a id="int-018"></a>
+#### INT-018 · Task 9, 28d Live review sources (built 22 Nov 2026)
+
+_Date: 22 Nov 2026_
+
+**Task 9, 28d Live review sources (built 22 Nov 2026).** Google reviews (Places API key), Facebook Page reviews (Graph token) and Yelp reviews (Fusion key) are new options in Integrations > Social accounts (each customer enters their own key; stored encrypted like the other tokens). The Reviews block has Live reviews from (the saved source) and a place, page or business ID per block (empty = the default saved with the key). Reviews are fetched on the server through a six hour memory and edge cache with stale fallback, so a visit never calls the provider; they are added after the manual reviews as one wall with the source as a badge. Review structured data is switched off while live reviews show, because search engines do not accept third-party reviews as markup. Code: `src/features/reviewSources/`, `ReviewsLive.tsx`, `/api/admin-review-sources`, `wave48Defs.ts`. Not built: Facebook reviews link back (the API gives none), per-source review counts from the provider (Google returns only five reviews).
+
+<a id="cat-evt"></a>
+### EVT: Events, tickets and bookings
+
+<a id="evt-001"></a>
+#### EVT-001 · 8 Nov Task 6 bookings research and plan (PR #226, 8 Nov)
+
+_Date: 8 Nov 2026_
+
+**8 Nov Task 6 bookings research and plan (PR #226, 8 Nov):** `the Bookings plan appendix of `docs/remaining-work.md`` (gap list, data model, 4 phases, 14 decisions for Matt).
+
+<a id="evt-002"></a>
+#### EVT-002 · Task 1 (events and tickets), 15 Nov 2026, PR pending
+
+_Date: 15 Nov 2026_
+
+Task 1 (events and tickets), 15 Nov 2026, PR pending: `event-rsvps` gets `order_id`, `status` and `cancelled_at` (migration `20270315_100000_event_rsvp_orders`); `markOrderPaid` books each ticket line through `src/features/events/orderRsvps.ts`; a full refund or a cancelled or refunded order cancels the bookings; capacity is settled after insert by `verifyEventCapacity` (lowest id wins); the booking email names the ticket type (`ticketLine`); `EventTiers`, `RsvpForm` and the event page use Shine classes and `events.*` keys in all thirteen languages. Tests: `tests/int/event-order-bookings.int.spec.ts`.
+
+<a id="evt-003"></a>
+#### EVT-003 · 17b Booking pages, phase 1 (built 16 Nov 2026 on the proposed defaults in `the Bookings plan appendix of `docs
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17b Booking pages, phase 1 (built 16 Nov 2026 on the proposed defaults in `the Bookings plan appendix of `docs/remaining-work.md``; free appointments only).** New feature Bookings (off by default, switch on in Site Settings, Features; five lazy tables). Settings, Bookings: add a person or place (with a time zone), write weekly hours as lines like `mon-fri 09:00-17:00`, change single days (closed all day, closed for lunch, open extra hours), add booking types (name, address, who it is booked with, length, start every N minutes, gap before and after, least notice, how far ahead, people per time, location), and see the bookings with Completed, No show and Cancel. Public page `/book/<address>`: pick a day, pick a time, give name and email; times are checked again on booking, and two people asking for the last place cannot both get it (insert, then verify). The confirmation email has an add-to-calendar link (`/api/booking-ics`) and a private link `/book/manage/<token>` to cancel before it starts; only a hash of the link is stored. The slot engine is pure and tested across the Sydney and London daylight saving changes. Slot, create and manage routes are rate limited. Code: `src/features/bookings/{engine,logic,store,service}.ts`, `BookingWidget.tsx`, `ManageBooking.tsx`, `BookingsAdminPanel.tsx`, `/api/booking-*`, `/api/admin-bookings`, migration `20270316_170000_bookings`, tests `bookings-engine`, `bookings-logic`.
+
+<a id="evt-004"></a>
+#### EVT-004 · 17a Service products (built 16 Nov 2026; deposit and booking still open)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17a Service products (built 16 Nov 2026; deposit and booking still open).** Decision: a service is a tick box on a simple or variable product, not a separate product type, so it keeps price, options, quantity breaks, add-ons and subscriptions (a new type would have needed every one of the many simple-type checks changed). The Service group has Is a service and a duration in minutes. A service is never shipped (no weight, no shipping step, no shipment label; the existing Virtual flag works the same way) and its page shows a Duration row. It appears in orders and the account like any product. Code: `ecom/lib/service.ts`, `productFields.ts` (serviceFields), `server/pricing.ts`, `server/shipments.ts`, `storefront.ts`, migration `20270316_160000_service_products`, `tests/int/service-product.int.spec.ts`.
+
+<a id="evt-005"></a>
+#### EVT-005 · Paid bookings (12b leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Paid bookings (12b leftover, built 17 Nov 2026).** A booking type has a price in cents and a full-refund window in hours (Settings, Bookings; migration `20270318_180000_paid_bookings` adds `price_cents`, `refund_hours` and, on bookings, `amount_cents`, `payment_intent_id`, `paid_at`, `refunded_cents`). A booking on a priced type is `pending_payment`: it holds its time (counted as busy) for 30 minutes while the customer pays on a Stripe Checkout Session (`createBookingCheckout` in `src/features/bookings/payment.ts`, session and intent metadata `bookingId` and `bookingToken`). The existing `payment_intent.succeeded` webhook in `src/localapi/rest.ts` calls `onBookingPaid`: it confirms the booking once (replays do nothing) and sends the confirmation email with the private link (taken from the metadata, because only its hash is stored); a payment that arrives after the hold was released is refunded in full. The Reminder emails cron job releases holds that ran out (`releaseExpiredHolds`). Cancelling a paid booking (private link or account page) goes through `cancelWithRefund`: full refund when the cancel is at least the refund window before the start, nothing after that (`refundCentsFor`), and the customer sees which. No hidden service product or order is made: the booking holds the payment itself, so paid bookings do not appear in Orders. Tax, partial refunds, deposits and staff-side refunds are not built. English only. Tests in `tests/int/paid-bookings.int.spec.ts`; not tested against live Stripe.
+
+<a id="evt-006"></a>
+#### EVT-006 · Event places per person (12d leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Event places per person (12d leftover, built 17 Nov 2026).** An event has Most places per person (sidebar, next to Capacity; migration `20270318_170000_event_max_per_person`, columns `max_per_person` and `version_max_per_person`). The RSVP check in `src/hooks/checkEventCapacity.ts` refuses a booking that would take one email over the limit, counting every active booking by that email with case and `+tag` ignored (`perPersonRefusal` in `src/features/events/perPersonLimit.ts`). Ticket purchases through checkout are not limited here (use a purchase limit rule on the ticket product). English only. Tests in `tests/int/event-per-person-limit.int.spec.ts`.
+
+<a id="evt-007"></a>
+#### EVT-007 · Appointments in the account portal (12b leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Appointments in the account portal (12b leftover, built 17 Nov 2026).** The Event bookings page in the account (`BookingsScreen`) lists the customer's booking-page appointments, upcoming first, with a Cancel appointment button. They are matched by booking email and shown only once the account's email is confirmed (same rule as event bookings). `src/features/bookings/MyAppointments.tsx`, `CancelAppointment.tsx`, `/api/account-appointments` (checks the booking email is the signed-in account's, then reuses `cancelError`), `listBookingsByEmail` in `store.ts`. English only. Customer reschedule is not built.
+
+<a id="evt-008"></a>
+#### EVT-008 · Booking reminder email (12b leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Booking reminder email (12b leftover, built 17 Nov 2026).** Each confirmed booking starting within the next 24 hours gets one reminder email. `runBookingReminders` in `src/features/bookings/reminders.ts` runs inside the Reminder emails cron job (every 5 minutes); `reminder_sent_at` on `eg_bookings` (migration `20270318_160000_booking_reminders`) is set before sending so nothing goes out twice. The email has no cancel link (only a hash of the manage token is stored), so it points back to the confirmation email. The lead time is fixed at 24 hours. Tests in `tests/int/booking-reminders.int.spec.ts`. English only.
+
+<a id="evt-009"></a>
+#### EVT-009 · Service staff field and card badge (12a leftovers, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Service staff field and card badge (12a leftovers, built 17 Nov 2026).** A service product has a With field (who does it or what is used). The product page lists it under Duration (`serviceDetails` in `src/features/ecommerce/lib/service.ts`) and the shop card shows a `Service · 1 hour` label (`serviceBadge`, in `ProductCard.tsx`). Migration `20270318_150000_service_staff` adds `service_staff` and `version_service_staff`. The badge on orders, deposits and booking-based selling are not built. English only.
+
+<a id="evt-010"></a>
+#### EVT-010 · Task 1 ticket tier pricing
+
+_Date: 17 Nov 2026 · Original group: Tasks 1 to 3 leftovers (17 Nov 2026)_
+
+Task 1 ticket tier pricing: decided to build the picker. Each ticket tier on a paid event can have its own shop product (`productId` inside `ticketTiers`, no migration). The event page shows a buy button per tier; a paid order for a tier's product books that tier (`tierForLine`, `createRsvpsForOrder`); the old single ticket product and variation-label matching still work.
+
+<a id="evt-011"></a>
+#### EVT-011 · 16g Event page type on posts (built 22 Nov 2026)
+
+_Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 Nov 2026)_
+
+**16g Event page type on posts (built 22 Nov 2026).** Posts can pick Event as the Page type. The facts form has Name, Starts, Ends, Venue, Venue address, Image, Ticket price, Currency, Organizer and Status; Name, Starts and Venue are required and the rest recommended, listed in the page checks like the other rich types. Emitted as the post's mainEntity Event node (`richTypes.ts`, `POST_SCHEMA_TYPES`). No migration: the page type and facts columns on posts already existed as text, so no baseline change. AggregateRating on Product was already emitted from approved shop reviews (checked 17 Nov 2026).
+
+<a id="cat-com"></a>
+### COM: Commerce and shop
+
+<a id="com-001"></a>
+#### COM-001 · Task 8 shop (PR #194, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 8 shop (PR #194, 1 Nov):** offline payments (bank transfer, cheque, cash on delivery): the order is Pending payment with the method, the customer gets the instructions by email, staff press Mark payment received on the order (same paid path as a card payment; no stored transaction changed). Product tags and brands are two collections picked on the product, and both can be set in bulk. Bulk actions on products (publish, trash, tags, brand) and orders (status, with the transition rules). Review request email after an order is completed (off by default, Shop switches row). Verified buyer badge on the product page and as an admin column. Carrier live rates checked in code and pinned by a test (six carriers have built-in rates and labels). Decided: offline orders are Pending payment, not On hold; order statuses stay at seven (shipments track fulfilment); customer bulk actions are not built (personal data, privacy request flow). Brand and tags show under the short description on the product page (translated), and the shop list has Brand and Tag filters (`?brand=`, `?tag=`, kept through paging and other filters). Site search finds products by brand or tag name (newest 200 published products, each once). Migration 20270129_100000_shop_organise_offline. Live checks in Task 6.
+
+<a id="com-002"></a>
+#### COM-002 · Task 4 (part), 15 Nov 2026, PR pending
+
+_Date: 15 Nov 2026_
+
+Task 4 (part), 15 Nov 2026, PR pending: variation tier notes, badge product picker, nested blog category URLs and tree merge tags, company-based tier matching.
+
+<a id="com-003"></a>
+#### COM-003 · 23e Stock hold at checkout (built 16 Nov 2026, part)
+
+_Date: 16 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23e Stock hold at checkout (built 16 Nov 2026, part).** Shop switches: Hold stock while a cart is in checkout (off by default) and Stock hold minutes (15). The final checkout (strict pricing) holds the stock of managed-stock products for its cart with one conditional insert into `eg_stock_reservations`, counting other carts' running holds that have not been paid; a refused hold stops checkout with a clear message. Variations that manage their own stock hold their own pool, others draw on the product's; backorder products and bundles are not held. Ended holds are swept by the abandoned-carts job. Migration `20270317_150000_stock_hold`. Code: `src/features/ecommerce/server/stockHold.ts`, `pricing.ts`, `tests/int/stock-hold.int.spec.ts`.
+
+<a id="com-004"></a>
+#### COM-004 · 23f Cart accessibility (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23f Cart accessibility (built 16 Nov 2026).** Labelled quantity and remove buttons per product, a live region announcing item count and subtotal, focus to the cart heading after Remove. The 375 px check is a live check.
+
+<a id="com-005"></a>
+#### COM-005 · 23c Coupon, shipping estimate and tax on the cart (built 16 Nov 2026, part)
+
+_Date: 16 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23c Coupon, shipping estimate and tax on the cart (built 16 Nov 2026, part).** `CartEstimate` on the cart page and in the mini cart: coupon code, country and postcode, then subtotal, discount, shipping, tax and estimated total from `/api/shop-quote`, the same server quote checkout uses, so the numbers match. Re-prices when the lines change. Code: `src/components/CartEstimate.tsx`.
+
+<a id="com-006"></a>
+#### COM-006 · 23b Mini cart drawer or dropdown (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23b Mini cart drawer or dropdown (built 16 Nov 2026).** New Shop switches settings (Settings > Shop): What the cart button does (go to the cart page, slide-out drawer, dropdown) and Open after add to cart. Any link to `/cart` (header, cart button element, locale prefixed) and add to cart on the product page, the add to cart button and the visual editor add to cart element open it. It shows lines, quantity, remove, free-shipping bar, coupon, shipping estimate and tax, cross-sells and Checkout; focus is trapped, Escape closes and returns focus, quantity changes are announced. Migration `20270316_428000_mini_cart`. Code: `src/components/MiniCart.tsx`, `src/features/ecommerce/lib/miniCart.ts`, `/api/shop-cart-ui`, `tests/int/mini-cart.int.spec.ts`. English only; effects from the Spark picker are not wired yet.
+
+<a id="com-007"></a>
+#### COM-007 · 28c Free-shipping progress bar (built 16 Nov 2026, part)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**28c Free-shipping progress bar (built 16 Nov 2026, part).** The cart page shows "Spend $X more for free shipping" with a progress bar (and "You have free shipping." once reached), using the lowest enabled Free over amount threshold across shipping zones. Hidden when no threshold is set. It is a hint: checkout still prices shipping from the address. English only. Code: `src/features/ecommerce/lib/freeShipping.ts`, `/api/shop-free-shipping`, `src/components/FreeShippingBar.tsx`, cart page, `tests/int/free-shipping-progress.int.spec.ts`. No migration.
+
+<a id="com-008"></a>
+#### COM-008 · 17d Purchase limits against hoarders and bots (built 16 Nov 2026; waiting list, card fingerprint and bot chall
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17d Purchase limits against hoarders and bots (built 16 Nov 2026; waiting list, card fingerprint and bot challenge still open).** New feature Purchase limits (off by default, switch on in Site Settings, Features; two lazy tables). Settings, Purchase limits: add rules for all products or one product (event tickets are products): most per person (over N days or ever), a wait in hours between orders, and an option to need a signed-in account with a verified email. A person is matched by account, by email (ignoring +tags and Gmail dots) and by delivery address; paid orders and orders still waiting for payment count, cancelled, refunded and failed ones do not, and the order already made from the same cart is not counted twice. The check runs when the order is priced (`buildOrderDraft`, so card, PayPal and offline checkouts all pass through it) and refuses with a clear sentence such as the limit and how many more can be ordered. A throttle of 20 checkout attempts per email per minute stops probing. Every refusal goes to a report with counts for the last day and week. If the feature is off or its tables cannot be read, orders go through. Code: `src/features/purchaseLimits/{logic,store,enforce}.ts`, `PurchaseLimitsPanel.tsx`, `/api/admin-purchase-limits`, hook in `ecom/payments/stripeAdapter.ts`, migration `20270316_190000_purchase_limits`, `tests/int/purchase-limits.int.spec.ts`.
+
+<a id="com-009"></a>
+#### COM-009 · 17c Quote, bid and item requests (built 16 Nov 2026; card payment, bid auctions and form feed still open)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17c Quote, bid and item requests (built 16 Nov 2026; card payment, bid auctions and form feed still open).** New feature Quotes and requests (off by default, switch on in Site Settings, Features; one lazy table `eg_quote_requests`). Public page `/request-quote?kind=quote|bid|item&product=<id>&title=<name>` (and the `RequestForm` component) takes name, email, phone, quantity, details, needed-by date and, for an offer, the amount; it has a hidden bot field and is rate limited. The customer gets a received email and the shop's admin email gets a notice. Settings, Quotes and requests is the inbox: filter by status, write a quote (lines, price each, days open, terms, and an email message that can use merge tags such as `{{name}}`, `{{total}}`, `{{validUntil}}` and `{{link}}`), send it, decline or close a request, and read the activity log. Sending makes a fresh private link `/quote/<token>` (only its hash is stored). The customer reads the quote, accepts, declines or sends a counter-offer (a note and an optional amount, which puts the request back in front of staff). Accepting is atomic (a double click makes one order) and creates a Pending payment order on the first offline method the shop has switched on, with the payment instructions emailed; staff mark it paid with the usual order action. Quotes past their date show as expired at once and are closed when the inbox is opened. Code: `src/features/quotes/{logic,store,service}.ts`, `RequestForm.tsx`, `QuoteView.tsx`, `QuotesAdminPanel.tsx`, `/api/quote-request`, `/api/quote-view`, `/api/admin-quotes`, `app/(frontend)/{request-quote,quote/[token]}`, migration `20270316_180000_quotes`, `tests/int/quotes-logic.int.spec.ts`.
+
+<a id="com-010"></a>
+#### COM-010 · 16j Storefront currency sweep (built 16 Nov 2026; product screen redesign still open)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16j Storefront currency sweep (built 16 Nov 2026; product screen redesign still open).** Checked every place that formats a shop price. Fixed the ones that ignored the shop currency: the product page structured data (offers were always AUD), event ticket offers in the page structured data, the Wishlist page prices, and the admin new order email total. Other AUD defaults are fallbacks that only apply when no currency is passed, and every storefront caller passes the shop currency. Pre-order behaviour (button text, release date, cart rules) is already covered by `shop-extra-preorders-wave11` and `preorders-variation-images-wave9`. Test: `tests/int/shop-currency-follow.int.spec.ts`.
+
+<a id="com-011"></a>
+#### COM-011 · 16i Donations (built 16 Nov 2026; recurring and goal bar still open)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16i Donations (built 16 Nov 2026; recurring and goal bar still open).** A simple product has a Donation group: tick Is a donation and the buyer sets the amount (name your price rules, so the lowest amount is the minimum price field), with suggested amounts as buttons, a largest amount checked on the server, a campaign name, an optional Give anonymously tick box, and receipt wording. The page shows Donate, the amount buttons and the tick box. The confirmation email (paid and completed) adds a thank you per donation (amount, campaign, anonymous) and the receipt wording once, where the shop puts its ABN and tax text. Order lines keep the campaign, and Shop reports has Donations by campaign with a CSV. A monthly donation is a donation product that is also a subscription product (existing subscription fields). Code: `ecom/lib/donations.ts`, `catalogue.ts`, `storefront.ts`, `server/pricing.ts`, `hooks/cartHooks.ts`, `server/emails.ts`, `shopReports/queries.ts`, `ProductPurchase.tsx`, migration `20270316_150000_product_donations`, `tests/int/donations.int.spec.ts`.
+
+<a id="com-012"></a>
+#### COM-012 · 16h Checkout handoff from forms (built 16 Nov 2026; order bump and upsell still open)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16h Checkout handoff from forms (built 16 Nov 2026; order bump and upsell still open).** In the visual editor, Form tab, Go to checkout: switch it on and name the product (number, optional variation id, quantity) or a choice field whose option values are product numbers (`12` or `12:variationId`), and map checkout details to form field names (email, full name, phone, street, suburb, state, postcode, country, order note). After the entry is saved the visitor is sent to `/checkout?handoff=...`; the checkout adds the product to the cart, fills the email and address, puts the phone and note in the checkout fields, and removes the code from the address. The handoff only names a product and details; prices, stock and totals come from the cart as always. The settings come from the form, so a visitor can only pick products the form's own choice field offers. Code: `src/features/forms/checkoutHandoff.ts`, `submit.ts`, `config.ts`, `FormSettingsPanel.tsx`, `src/components/CheckoutForm.tsx`, `CheckoutExtras.tsx`, `tests/int/form-checkout-handoff.int.spec.ts`. No migration.
+
+<a id="com-013"></a>
+#### COM-013 · 16f Pay-later messaging (already built, verified 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16f Pay-later messaging (already built, verified 16 Nov 2026).** The "or 4 payments of $X with Afterpay" and Klarna lines already show on the product page and the cart (`components/PayLaterMessage.tsx`), only when the method is on, the Show messaging setting is on, and the shop currency and the amount fit the provider's range; the setting hides them. Added `tests/int/pay-later-messaging.int.spec.ts` to lock the rules in. Stripe sandbox check is in Task 14.
+
+<a id="com-014"></a>
+#### COM-014 · 16e Product feeds per channel and Pinterest (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16e Product feeds per channel and Pinterest (built 16 Nov 2026).** Feeds are records (table `eg_product_feeds`, lazy with the ecommerce feature) managed at Settings, Product feeds: name, channel (Google Merchant XML, Meta CSV, Pinterest CSV, generic CSV, generic XML), currency (from the display currencies, falls back to the shop currency when no usable rate), price tier (a customer type, uses the Price tiers at quantity 1), category and tag slug, include out of stock, on or off. Each feed has a secret address `/feeds/custom/<32 hex>.xml` or `.csv`, a New address button to rotate it, and a Preview of the first 20 rows plus what the channel would reject (missing columns, duplicate ids, long titles). Password protected products never appear. The two built-in feeds are unchanged. Code: `ecom/lib/feedRecords.ts`, `ecom/server/feedRecords.ts`, `loadFeedFor` in `ecom/server/feeds.ts`, `/api/admin-product-feeds`, `ProductFeedsPanel`, migration `20270316_140000_product_feeds`, `tests/int/product-feeds.int.spec.ts`.
+
+<a id="com-015"></a>
+#### COM-015 · 16d Pricing rules by customer variables and preview (built 16 Nov 2026; wholesale mode still open)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16d Pricing rules by customer variables and preview (built 16 Nov 2026; wholesale mode still open).** Pricing rules (Shop switches) can now match on customer lifetime spend (paid orders by email, less refunds), number of past orders and shipping country, next to the existing quantity, subtotal, category and role rules. Company or member group already worked through the role rule (a role name, a company name or `company:<slug>`; price tiers match the same way, so "match tiers by company" from Task 4 is covered). A rule "spend over 5000 gets 10 percent" shows in the rules taken off the cart and the order. New admin screen Pricing preview (`/admin/pricing-preview`, in Shop settings links) runs the real checkout calculation for a customer email, country and cart, so the preview matches the real cart. Code: `ecom/lib/pricingRules.ts`, `ecom/server/customerStats.ts`, `/api/admin-pricing-preview`, migration `20270316_130000_pricing_rule_customer_conditions`, tests `tests/int/pricing-rules-customer.int.spec.ts`.
+
+<a id="com-016"></a>
+#### COM-016 · 16c Local pickup method (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16c Local pickup method (built 16 Nov 2026).** The existing Local pickup shipping method takes a list of locations (one per line: name, address, hours, instructions). Checkout shows one choice per location (the option id carries the location, so every payment method works unchanged), the order keeps the chosen place, the packing slip says "Collect from", and ticking "Ready for pickup" on the order emails the customer once (Shop switches: on by default, wording editable). Done as a tick box plus a timestamp, not a new order status, because paid-status lists in reports, numbering, stock and course access would otherwise need changing everywhere; the order stays Processing until you complete it. Code: `ecom/lib/pickup.ts`, `lib/shipping.ts`, `server/orderHooks.ts`, migration `20270316_120000_local_pickup`, test `tests/int/local-pickup.int.spec.ts`.
+
+<a id="com-017"></a>
+#### COM-017 · 16a Carton and pallet quantity (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16a Carton and pallet quantity (built 16 Nov 2026).** Products have a Packaging group (units per carton, cartons per pallet, sell in single units, whole cartons or whole pallets, round up, minimum cartons). The cart and checkout refuse an off-size quantity with a plain message (`resolveCartLine`), or raise it to the next full carton or pallet when Round up is on (cart save hook); the storefront box steps by the carton or pallet size and shows "Sold in multiples of 12"; order lines keep the carton size, so the invoice and packing slip read "2 cartons (24 units)"; CSV import and export carry five new columns. Rules in `ecom/lib/packaging.ts`, migration `20270316_110000_product_packaging`, test `tests/int/packaging-quantity.int.spec.ts`.
+
+<a id="com-018"></a>
+#### COM-018 · Quote text in other languages (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Quote text in other languages (12c leftover, built 17 Nov 2026).** 59 new UI string keys in all twelve dictionaries: `store.quote.*` for the public request form, the quote page (`QuoteView`, heading from `storeTexts()` on `/quote/[token]`, amounts and dates formatted with the visitor's locale) and the request button default text (`requestHref` takes the defaults as a third argument), and `email.quoteReceived|quoteSent|quoteExpiring|quoteBidLost` plus `email.quoteKind.*` for the customer emails. `sendQuoteEmail` and the expiry sweep look up the customer's language with `localeForRecipient` and pass it through `renderQuoteMail` to `renderEmailTemplate`, so wording the site typed in Email templates still wins. The staff emails (new request, counter-offer, accepted, declined), the account Quotes section and the admin panels stay English. No migration. Tests in `tests/int/quote-translations.int.spec.ts`.
+
+<a id="com-019"></a>
+#### COM-019 · Editable quote emails (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Editable quote emails (12c leftover, built 17 Nov 2026).** The eight quote emails (received, new request, quote sent, expiring, offer not successful, counter-offer, accepted, declined) are templates `quoteReceived`, `quoteAdminNew`, `quoteSent`, `quoteExpiring`, `quoteBidLost`, `quoteCounter`, `quoteAccepted`, `quoteDeclined` in `src/features/email/templateDefaults.ts` (the built-in wording moved there; `QUOTE_EMAILS` in `quotes/logic.ts` now reads it), with wording groups and design fields in the Email templates global (`src/globals/EmailTemplates.ts`), labels and test samples, so they show in Email templates, the email designer and test sends. `renderQuoteMail` (`src/features/quotes/mail.ts`) renders them through `renderEmailTemplate` (site wording and design, built-in wording when blank or unreadable) and fills `{{message}}` with the staff note; `sendQuoteEmail`, the expiry reminder and the auction sweep all use it. Migration `20270318_230000_quote_email_templates` adds 24 text columns to `eg_email_templates`. The baseline file was edited by hand for it (the table SQL produced by running the same ALTERs in SQLite, the migration list entry and header), because `fresh-baseline-parity` fails in the cloud container before it reaches the regeneration step (an unrelated ALTER on `_eg_products_v`); a check that the baseline columns equal the generated schema columns passed. Run `REGENERATE_BASELINE=1` on a machine where that spec runs to confirm. English only. Tests in `tests/int/quote-email-templates.int.spec.ts`.
+
+<a id="com-020"></a>
+#### COM-020 · Quote link in the account portal (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Quote link in the account portal (12c leftover, built 17 Nov 2026).** Account, Bookings has a Quotes and requests section (`src/features/quotes/MyQuotes.tsx`, shown with a confirmed email while Quotes is on) listing the customer's requests by email with status, total and valid-until date. Open quote (`OpenQuote.tsx`) posts to `/api/account-quote-link`, which checks the request's email is the account's confirmed email, makes a new private token (only its hash is stored, `setTokenHash`), notes `Opened the quote from their account.` in the activity, and answers the `/quote/<token>` address. The link in the earlier email stops working, which is the price of storing only a hash. Offered only for quoted, countered and accepted requests that are not past their date (`portalCanOpen`). English only. No migration. Tests in `tests/int/quote-portal-link.int.spec.ts`.
+
+<a id="com-021"></a>
+#### COM-021 · Files on a request (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Files on a request (12c leftover, built 17 Nov 2026).** The public request form has an Attach files box (up to 5). With files it posts multipart to `/api/quote-request`, which checks them with the Media settings allow-list and the file's own bytes (`checkQuoteFiles` in `src/features/quotes/attachments.ts`) before the request is saved, so a refused file makes no request. Files go to the media bucket under `quote-uploads/<request number>/`, a prefix the public media route refuses. No migration and no column: the request number in the key is the link, and files are listed by prefix. Admins see download links on each request (`/api/admin-quote-file`, admin only, sent as downloads with a sandbox CSP); deleting a request deletes its files. Forms feeding a request keep their own file fields on the form entry. Tests in `tests/int/quote-attachments.int.spec.ts`.
+
+<a id="com-022"></a>
+#### COM-022 · Request buttons (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Request buttons (12c leftover, built 17 Nov 2026).** A `request-button` element (Commerce, `src/lib/elements/requestButtonDefs.ts`, renderer `src/components/blocks/elements/RequestButtonServer.tsx`, a server element in `SITE_ELEMENT_TYPES`) links to `/request-quote` for a request type (quote, offer, item), with optional button text, product number, style, size and alignment. On a product page, or in the single product template, it is about the page's product (read from the block context, name passed as `title`); a product number overrides that. It renders nothing while Quotes and requests is off. No migration. English only (the default wording is the request type name). Tests in `tests/int/request-button-element.int.spec.ts`.
+
+<a id="com-023"></a>
+#### COM-023 · Form-fed requests (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Form-fed requests (12c leftover, built 17 Nov 2026).** A form built in the visual editor can feed the quotes feature: Form settings, Send as a request (`requestFeed` in the form's `formConfig`, normalised in `src/features/forms/requestFeed.ts`, no migration). The settings pick the request type (quote, offer or item), an optional product or a choice field whose option values are product numbers, and which form fields fill name, email, phone, quantity, details, needed by and offer. After the entry is stored, `feedRequest` in `src/features/forms/submit.ts` builds the same body the public request form posts, runs it through `parseRequest` and the bid minimum and end checks, saves the request, and sends the received and admin new emails. Details default to a summary of all answers. An entry that does not make a valid request (bad email, offer under the minimum) is still saved as an entry and logged, and Quotes switched off skips the request. Tests in `tests/int/form-request-feed.int.spec.ts`.
+
+<a id="com-024"></a>
+#### COM-024 · Bid mode (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Bid mode (12c leftover, built 17 Nov 2026).** A simple product has an Offers (bids) section: a minimum offer and an end time (migration `20270318_190000_bid_mode`, `bid_minimum`, `bid_ends_at` and the `version_` pair). `/api/quote-request` refuses a bid under the minimum or after the end (`bidRefusal`). When the end time passes, `runAuctionSweep` (`src/features/quotes/auctions.ts`, run inside the Reminder emails cron job) turns the highest unanswered offer (earliest wins a tie, `auctionWinner`) into a quote at its own price valid for 7 days and emails the accept link (`auctionQuote.ts`), and declines every other offer with a Your offer was not successful email (`bidLost` in `QUOTE_EMAILS`). Products with no end time are left for staff to quote or decline by hand. The offer form is still dropped on a page or product with kind bid and the product number; a built-in button on the product page is part of the open request buttons item. English only. Tests in `tests/int/quote-auctions.int.spec.ts`.
+
+<a id="com-025"></a>
+#### COM-025 · Waiting list with held places (12d leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Waiting list with held places (12d leftover, built 17 Nov 2026).** Shop switches has Waiting list mode (Emailed all at once, the old behaviour, or Offered a held place in order) and Hold hours (default 24). In order mode a restock, or any product save that frees places, offers each free place to the earliest back-in-stock sign-ups, one per person, and emails them (`src/features/ecommerce/waitingList.ts`, pure rules in `lib/waitingList.ts`). An offer sets the sign-up to Offered with a Hold until time; checkout (`resolveCartLine` through `loadPricedLines`) leaves held places free for everyone but the holder, matched on checkout email. A paid order marks the offer Purchased; the Data clean-up job ends lapsed holds (Expired) and offers the place to the next in line. Migration `20270318_210000_waiting_list` adds `waiting_list_mode` and `waiting_list_hold_hours` to `eg_shop_extra_settings` (Shop settings is at the 100-column limit) and `hold_until` to `eg_stock_subscriptions`. Needs stock tracked on the product; unmanaged stock offers one place at a time. English only. Tests in `tests/int/waiting-list.int.spec.ts` and `waiting-list-service.int.spec.ts`.
+
+<a id="com-026"></a>
+#### COM-026 · Card fingerprint match for purchase limits (12d leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Card fingerprint match for purchase limits (12d leftover, built 17 Nov 2026).** When a card payment succeeds (`finalizePaidIntent`), the card's Stripe fingerprint (an opaque id, never the number) is saved against the order in `eg_purchase_card_prints` (only while Purchase limits is on; migration `20270318_230000_card_prints`, table owned by the `limits` feature). `priorPurchases` in `src/features/purchaseLimits/store.ts` then also counts orders paid with a card that any of the buyer's matched orders (same account, email or address) used, so one person behind several emails and addresses is one person. Missing table or Stripe error means no link, never a refused sale. Capture in `purchaseLimits/cardPrint.ts`. Tests in `tests/int/purchase-limit-card-match.int.spec.ts`. Orders paid before this change have no fingerprint.
+
+<a id="com-027"></a>
+#### COM-027 · Atomic last place for purchase limits (12d leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Atomic last place for purchase limits (12d leftover, built 17 Nov 2026).** The limit check used to read earlier orders and the order was written later, so two near-simultaneous orders could both pass. `checkRules` in `src/features/purchaseLimits/enforce.ts` now claims the place first (`claimPlace`, one row per cart and product in `eg_purchase_limit_claims`, kept 10 minutes, migration `20270318_240000_limit_claims`, table owned by the `limits` feature) and only then counts orders and other carts' live claims by the same person (account, email or address). Two racing orders can both be refused but never both pass; a refused order lets go of its claim; a cart with an order is counted by the order, not its claim. An abandoned payment holds the place for up to 10 minutes. Tests in `tests/int/purchase-limit-last-place-race.int.spec.ts` (interleaved callers on an in-memory SQLite, including the old race with the claim table removed).
+
+<a id="com-028"></a>
+#### COM-028 · Quote expiry reminder and sweep (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Quote expiry reminder and sweep (12c leftover, built 17 Nov 2026).** `runQuoteSweep` in `src/features/quotes/expiry.ts` runs inside the Reminder emails cron job (every 5 minutes): it closes quotes past their validity date and emails the customer once when an open quote ends within 3 days (`expiring` wording in `QUOTE_EMAILS`). The reminder is noted in the quote activity as `Expiry reminder sent for <date>`, so a re-sent quote with a new date is reminded again. The email has no link (only a hash of the token is stored); it points back to the earlier quote email. No migration. English only. Tests in `tests/int/quote-expiry.int.spec.ts`.
+
+<a id="com-029"></a>
+#### COM-029 · Card expiry warning (13a leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Card expiry warning (13a leftover, built 17 Nov 2026).** Once a day (03:00 UTC, inside the `member-dunning` job) `sweepCardExpiry` in `src/features/billing/cardExpiry.ts` reads the card on each active membership and active or past-due shop subscription from Stripe and emails the person when it expires within 30 days, with an update-card link (Stripe billing portal, else the account page). One email per card expiry: a `Card expiry warning sent for MM/YYYY` line in the membership notes or subscription history stops repeats. English only. Tests in `tests/int/card-expiry.int.spec.ts`. Shop subscription dunning (own retry schedule and grace) is not built: shop subscriptions keep Stripe's own retries and the existing failed-payment email.
+
+<a id="com-030"></a>
+#### COM-030 · Order bump (11h leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Order bump (11h leftover, built 17 Nov 2026).** A product has an Order bump section: pick one simple product and optional wording. While that product is in the cart the checkout shows a tick-box offer (`src/components/OrderBump.tsx`, `/api/shop-order-bump`); ticking adds the product to the cart, unticking removes it. Skipped when the product is unpublished, protected, out of stock or not simple. Migration `20270318_140000_order_bump` adds `order_bump_product_id` and `order_bump_headline` (and the `version_` pair). English only.
+
+<a id="com-031"></a>
+#### COM-031 · Failed payment email wording (13a leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Failed payment email wording (13a leftover, built 17 Nov 2026).** Settings, Members, Emails has a subject and body for each of the five dunning emails (failed, retry, ended, downgraded, recovered); a blank one keeps the built-in text. Migration `20270318_130000_member_dunning_emails`; `dunningWording` in `src/features/members/dunning.ts`, used by `dunningRun.ts`. The wording lives in Members settings, not the Email templates screen (that screen's global is column-limited). English only.
+
+<a id="com-032"></a>
+#### COM-032 · Pay a quote by card (12c leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Pay a quote by card (12c leftover, built 17 Nov 2026).** The quote page has Accept and pay by card next to the offline option. `acceptQuote` in `src/features/quotes/service.ts` makes the order (payment method stripe, pending) and a Stripe Checkout session with `orderID` in the payment intent metadata, so the existing `payment_intent.succeeded` webhook marks it paid. A failed session cancels the order and puts the quote back. Tests in `tests/int/quote-card-payment.int.spec.ts`.
+
+<a id="com-033"></a>
+#### COM-033 · Purchase limit message and trusted customers (12d leftovers, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Purchase limit message and trusted customers (12d leftovers, built 17 Nov 2026).** Each rule has an editable refusal message (`{{product}}` merge field) and an exceptions list of emails the rule never refuses (stored normalised, one per line). Migration `20270318_110000_purchase_limit_message_exempt` adds `message` and `exempt_emails` to `eg_purchase_limit_rules`; logic in `src/features/purchaseLimits/logic.ts`, panel in `PurchaseLimitsPanel.tsx`. Tests in `tests/int/purchase-limits.int.spec.ts`.
+
+<a id="com-034"></a>
+#### COM-034 · Composite products (11b, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Composite products (11b, built 17 Nov 2026).** New product type Composite (build your own kit). In the product editor, Kit choices holds two lists: Items to choose from (step name, a simple product, price mode Included, Adds a price or Its own price less a percentage, default ticked) and optional Step rules (help text, required, fewest and most items; a step with no rule is required and takes one item). The product's Regular price (and sale schedule) is the starting price; each pick adds to it. The product page shows a picker (radio buttons for one-item steps, tick boxes for several) with a live total, defaults preselected and out-of-stock items disabled. Picks ride on the cart line as JSON in a new `composite` column on `eg_carts_items`; the cart hook, checkout pricing and `/api/shop-composites` (cart display) all price from the database, check the rules and stock (items are tallied across lines with bundles and single products) and keep only the accepted picks. The order line name lists the picks and the order keeps a snapshot of the picked items (`bundleContents`), so stock decrement, oversold flagging and per-line refund restock reuse the bundle path. Tax, shipping class and weight come from the kit product plus the picked items' weights. Only simple, published, non name-your-price products can be offered; saving checks this. No new `eg_products` columns (two child tables per live and versioned copy). Code: `src/features/ecommerce/lib/composite.ts`, `server/composite.ts`, `collections/productComposite.ts`, `src/components/CompositePicker.tsx`, `src/app/(engage)/api/shop-composites/route.ts`, migration `20270317_265000_composite_products`, tests `tests/int/shop-composite.int.spec.ts`. Left open: a Save for later move is disabled for kit lines, and a kit cannot yet be its own source of stock (the kit product itself holds none).
+
+<a id="com-035"></a>
+#### COM-035 · Local pickup leftovers (11c, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Local pickup leftovers (11c, built 17 Nov 2026).** Pickup hours text such as `Mon-Fri 9-5; Sat 10-2` or `Sun closed` is read by `pickupClosedOn` in `src/features/ecommerce/lib/pickup.ts`; a location closed today gets `closedToday` on its shipping option and checkout shows "(closed today)" (the order is still allowed). The order confirmation and awaiting-payment emails add a "Collect from" block (unless the template places `{{pickup_location}}`), and the account order page shows the collection point and whether it is ready. English only. Tests in `tests/int/local-pickup.int.spec.ts`.
+
+<a id="com-036"></a>
+#### COM-036 · Header cart dropdown (23d)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Header cart dropdown (23d):** Library > Commerce preset Header cart dropdown (compact lines and the subtotal with Checkout).
+
+<a id="com-037"></a>
+#### COM-037 · Pre-checkout hold and countdown (23e)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Pre-checkout hold and countdown (23e):** switch Also hold stock while shoppers view their cart (Shop switches, needs the checkout hold on; migration `20270317_200000_stock_hold_in_cart`). `/api/shop-stock-hold` (cart secret required, rate limited) takes the holds when the cart page opens (`server/cartHold.ts`) and returns when the earliest ends. `CartHoldNotice` shows the ticking countdown at the top of the cart totals; screen readers hear it only at the start and end. Holds are never taken when an item is added.
+
+<a id="com-038"></a>
+#### COM-038 · Bundle holds (23e)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Bundle holds (23e):** `resolveBundle` now returns the stock pool of each component (`pools`), merged into the cart's pools in `loadPricedLines`, so checkout holds a bundle's component stock.
+
+<a id="com-039"></a>
+#### COM-039 · Elements and /cart (23d)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 leftovers, third batch (cart lifetime follow-ups)_
+
+**Elements and /cart (23d):** `MiniCartLinesPart` is the compact list the mini cart drawer now uses and is the new Cart lines (compact) element. Switch Build the cart page in the visual editor (Shop switches) makes `/cart` show the published page with slug cart (`server/cartPage.ts`); the built-in cart is `components/CartPageClient.tsx`.
+
+<a id="com-040"></a>
+#### COM-040 · Cart expiry reminder (23e)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 leftovers, third batch (cart lifetime follow-ups)_
+
+**Cart expiry reminder (23e):** Cart expiry reminder (days before) in Shop switches, off by default. `server/cartExpiry.ts` runs in the abandoned-carts job, emails a signed-out cart's owner once, only for a known address that has not unsubscribed. Column `expiry_reminder_at` on carts, migration `20270317_190000_cart_expiry_reminder`. English only.
+
+<a id="com-041"></a>
+#### COM-041 · Free-shipping bar per zone (23c)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 leftovers, third batch (cart lifetime follow-ups)_
+
+**Free-shipping bar per zone (23c):** `/api/shop-free-shipping` takes country, state and postcode and uses the matching zone (`thresholdForAddress` in `lib/freeShipping.ts`); the bar reads the destination saved by the cart estimate and updates when it changes.
+
+<a id="com-042"></a>
+#### COM-042 · Empty cart suggestions (23c)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 leftovers, third batch (cart lifetime follow-ups)_
+
+**Empty cart suggestions (23c):** an empty cart shows You might like with the newest in-stock products (`newestProducts` in `server/recommendations.ts`, `/api/shop-recommendations` with an empty list). Follows the Show product recommendations switch.
+
+<a id="com-043"></a>
+#### COM-043 · 23e Cart lifetime setting (built 17 Nov 2026, part)
+
+_Date: 17 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23e Cart lifetime setting (built 17 Nov 2026, part).** Shop switches: Cart lifetime (days), 30 by default, 1 to 365. The clean-up job deletes untouched guest carts older than that; account and paid carts stay. Migration `20270317_180000_cart_lifetime`. Code: `lib/cartLifetime.ts`, `accountCart.ts` (`sweepGuestCarts`), `cron/jobs.ts`, tests in `tests/int/guest-cart.int.spec.ts`. Still open: the expiry reminder email.
+
+<a id="com-044"></a>
+#### COM-044 · 23c Per-line stock warnings (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23c Per-line stock warnings (built 17 Nov 2026).** The cart lines show a red message when the quantity in the cart can no longer be bought (stock or limits), using the same catalogue rules as add to cart. The server decides again at checkout. Code: `src/components/CartParts.tsx`.
+
+<a id="com-045"></a>
+#### COM-045 · 23d Cart elements for the visual editor (built 17 Nov 2026, part)
+
+_Date: 17 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23d Cart elements for the visual editor (built 17 Nov 2026, part).** The cart page is now composed from four reusable parts, each also a visual editor element in the Commerce group: Cart lines (items, quantity, remove, save for later, empty message, saved list), Cart coupon and estimate (free-shipping bar, coupon, shipping estimate, tax, note and gift message), Cart cross-sells, and Cart subtotal and checkout. The Library has a Cart layout preset that places them in two columns. Code: `src/components/CartParts.tsx`, `src/lib/elements/wave66Defs.ts`, `Wave66Server.tsx`, `libraryCommercePresets.ts`, `tests/int/wave66-elements.int.spec.ts`. No migration. The `/cart` route itself is still the app's own page built from the same parts.
+
+<a id="com-046"></a>
+#### COM-046 · 23c Gift wrap flat fee (built 17 Nov 2026, part)
+
+_Date: 17 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23c Gift wrap flat fee (built 17 Nov 2026, part).** Shop switches: Offer gift wrap at checkout (off by default) and Gift wrap fee. Checkout shows a Gift wrap tick box with the fee; the server prices it (`giftWrap` in `priceCart`, `giftWrapCents` in `computeOrderTotals`), taxes it like shipping, adds it to the total and stores it inside the order's shipping total with "Gift wrap requested." appended to the order note, so refunds, invoices and reports need no change. Migration `20270317_160000_gift_wrap`. Code: `src/features/ecommerce/lib/giftWrap.ts`, `totals.ts`, `pricing.ts`, `stripeAdapter.ts`, `CheckoutExtras.tsx`, `tests/int/gift-wrap.int.spec.ts`. The invoice shows the fee inside the Shipping line (no separate Gift wrap row yet).
+
+<a id="com-047"></a>
+#### COM-047 · 23c Cart note and gift message (built 17 Nov 2026, part)
+
+_Date: 17 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23c Cart note and gift message (built 17 Nov 2026, part).** The cart page offers an Order note and This order is a gift with a gift message, only when the Order notes checkout field is switched on (`/api/shop-checkout-fields`). They are kept in the browser and pre-filled into that field at checkout (gift message written as "Gift message: ..."), so the order carries one note; the box is cleared once an order is placed. No migration. Code: `src/components/CartNoteBox.tsx`, `src/features/ecommerce/lib/cartNote.ts`, `tests/int/cart-note.int.spec.ts`.
+
+<a id="com-048"></a>
+#### COM-048 · 23c Save for later (built 17 Nov 2026, part)
+
+_Date: 17 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23c Save for later (built 17 Nov 2026, part).** Each cart line (without add-on answers) has Save for later; saved lines are kept in this browser (local storage, up to 30), listed under the cart, and Move to cart goes through the normal add to cart so stock and limits are checked again. Not saved to the account, so it does not follow the shopper across devices. No migration. Code: `src/components/SavedForLater.tsx`, `src/features/ecommerce/lib/savedForLater.ts`, `tests/int/saved-for-later.int.spec.ts`.
+
+<a id="com-049"></a>
+#### COM-049 · 11e field mapping and update schedule (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**11e field mapping and update schedule (built 17 Nov 2026).** Each custom feed has optional column templates for title, description, brand, GTIN, MPN, condition, Google category, product type, colour and size (text with `{field}` placeholders read from the product, dotted paths allowed, plain text used as written, a blank result keeps the built-in value, a bad condition is ignored; a mapped title on a variation keeps its variation label), and a rebuild interval of 15 or 30 minutes, 1, 6 or 24 hours (default 1 hour) that replaces the fixed hour in the feed cache. Columns `mapping` and `refresh_minutes` on `eg_product_feeds` from migration `20270318_200000_product_feed_mapping`. Edited in Settings, Product feeds. English only. Code: `src/features/ecommerce/lib/feedMapping.ts`, `feeds.ts` (`map` hook), `server/feedRecords.ts`, `ProductFeedsPanel.tsx`, test `tests/int/product-feed-mapping.int.spec.ts`.
+
+<a id="com-050"></a>
+#### COM-050 · 11e feed cache (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**11e feed cache (built 17 Nov 2026).** Custom feed addresses now serve a stored copy instead of building the whole catalogue on every request. The built text is kept per feed and site address in table `eg_product_feed_cache` (lazy with the ecommerce feature, migration `20270317_270000_product_feed_cache`), reused for up to an hour, and cleared when any product is saved or deleted and when a feed is edited, given a new address or deleted; the next request rebuilds it (the response header `x-feed-cache` shows `hit` or `miss`). The hour limit also picks up price tier, currency rate and settings changes. Feeds over 1.5 MB are built on each request. Code: `src/features/ecommerce/server/feedCache.ts`, `feedCacheHook.ts` (Products hooks), `src/app/(frontend)/feeds/custom/[token]/route.ts`, test `tests/int/product-feed-cache.int.spec.ts`. Still open: field mapping, update schedule, Merchant API sync.
+
+<a id="com-051"></a>
+#### COM-051 · Task 11d wholesale mode (17 Nov)
+
+_Date: 17 Nov 2026_
+
+**Task 11d wholesale mode (17 Nov):** Shop switches > Wholesale mode (off by default): role name (default `wholesale`), hide prices from signed-out visitors or from everyone but approved wholesale accounts with custom text, minimum order value for wholesale accounts, and open applications. Hidden prices are removed server side from product cards, the product page (the view sent to the browser carries no prices, JSON-LD offers and the template price merge tag are dropped), the shop archive and its filters, and the cart quote and checkout refuse with the same text (`priceCart` in `server/pricing.ts`, `signedIn` input). Products have a Wholesale only checkbox (`wholesale_only`, migration `20270318_100000_wholesale`): hidden from lists, search, related and upsells (`excludeProtected`), 404 on the product page, refused on add to cart (`cartHooks.ts`) and at checkout, and filtered from REST and GraphQL reads (`wholesaleReadClause`). Minimum order is checked at the final checkout for wholesale accounts (admins exempt). Registration: `/account/wholesale` (signed-in customers, `/api/wholesale-apply`, rate limited) stores a pending row in `eg_wholesale_applications`; the Wholesale admin screen (`/admin/wholesale`, `/api/admin-wholesale`, admin only, audited) approves, rejects or removes access, and approving creates a company account owned by the applicant. Approved accounts get the wholesale role in their customer types (`customerTypesForUser`), so existing tiers and rules by role apply. Customer tags (`eg_customer_tags`, edited on the Wholesale screen) are customer types `tag:<name>` and a pricing rule condition "Customers with a tag". The product page shows the viewer's own tiers and a Wholesale minimum order note from the lowest wholesale tier quantity. Code: `lib/wholesale.ts` (pure), `server/wholesale.ts`, `components/WholesalePanel.tsx`, `WholesaleApplyForm.tsx`, test `tests/int/wholesale.int.spec.ts`. Follow-up (17 Nov): wholesale-only now applies to bundles at checkout, approving or rejecting an application emails the applicant (`sendDecisionEmail`, template name `wholesale.decision`, plain text, the admin's optional note included), and the cart estimate shows the minimum order and how much to add (`wholesaleMinOrder` in the `/api/shop-quote` answer). Follow-up (17 Nov): with wholesale mode on and prices hidden the public product feeds publish no rows (a feed has no viewer, so prices would show to everyone); secret-address custom feeds keep their prices and still leave wholesale-only products out. The cart minimum-order notice, product page minimum note, hidden-price text (when the owner leaves it blank), apply form, account page, admin Wholesale screen, Settings link and the approve/reject emails now use the shared UI strings (`store.wholesale.*`, `portal.wholesale.*`, `wholesale.*`, `email.wholesale.*`) in all twelve languages; an owner-typed hidden-price text is shown as typed.
+
+<a id="cat-frm"></a>
+### FRM: Forms, comments and spam
+
+<a id="frm-001"></a>
+#### FRM-001 · Task 20 forms and embeds (31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Task 20 forms and embeds (31 Oct):** #167 Form element in the visual editor (New form, Design the fields, Choose existing; the admin Forms list has no Create button; forms are not created in the admin any more; existing forms keep working); #170 form fields editor-only and RSVP verified-email; #175 pages that use a form on the Forms screens, and form fields in the page visual editor; #176 External embeds admin, first slice. Open: see Task 20.
+
+<a id="frm-002"></a>
+#### FRM-002 · Task 3 forms and external embeds (PR #213, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 3 forms and external embeds (PR #213, 2 Nov):** draft-only pages: a form used only in an unpublished draft lists its page on the Forms screens as a draft (the usage query reads drafts too). External embeds phase 2: a form can have several embeds, each a row in `eg_form_embeds` (migration 20270306_100000_form_embeds, which carries over existing embed keys, switch and websites, so placed snippets keep working) with its own hosted page at `/embed/<key>` (`/embed/forms/<key>` still works; numeric embed addresses do not), a source name, its own websites and a theme picked from the site's design: palette colour, heading or body font, site corner radius. The embed layout now uses the site's theme styles and fonts (it had its own colours). Submissions through an embed carry the source (`embedSource`, shown with the form in Forms). Decided: forms are still built only in the visual editor, whose form panel no longer holds the embed switch or websites (they are on Forms > External embeds); a post that is not through an embed is accepted from this site only; embed keys are random, not numeric ids; the shortcode keeps the form's own key. Live checks are in Task 6.
+
+<a id="frm-003"></a>
+#### FRM-003 · 26b Spam rules for forms (built 16 Nov 2026, forms only)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26b Spam rules for forms (built 16 Nov 2026, forms only).** Form settings, Spam protection has Blocked words (one per line), Link limit (0 means none) and Blocked senders (email or domain per line). A submission that hits one is discarded with the normal success message, like a honeypot hit, and logged. Code: `src/features/forms/spamRules.ts`, `submit.ts`, `FormSettings.ts`, migration `20270316_380000_spam_rules`, `tests/int/spam-rules.int.spec.ts`.
+
+<a id="frm-004"></a>
+#### FRM-004 · 27b Moderation (built 16 Nov 2026, first slice)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**27b Moderation (built 16 Nov 2026, first slice).** Admin > Comments (Data and System): tabs per status with counts, bulk approve, spam, trash or delete, reply as the site team, and settings: hold every comment, hold a person's first comment, hold comments with links, or publish at once; publish signed-in people at once; blocked words (a match is marked spam); reply levels; close after days. A spam comment looks accepted to the poster. `/api/admin-comments`.
+
+<a id="frm-005"></a>
+#### FRM-005 · 27a Comments on blog posts (built 16 Nov 2026, first slice)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**27a Comments on blog posts (built 16 Nov 2026, first slice).** Switch Comments on in Site Settings, under Features. Each published blog post then shows a Comments block under its content: the approved comments as threads (replies up to a depth you set, 1 to 5; too-deep replies sit beside their parent), initials avatars, a form with name, email (never shown) and comment, a hidden honeypot field, and a Reply button. Comments close a set number of days after the post was published (0 never). Code: `src/features/comments/{core,store}.ts`, `components/CommentsSection*.tsx`, `/api/comments`, tables `comments` and `comment_settings`, migration `20270316_370000_comments`, `tests/int/comments-core.int.spec.ts`.
+
+<a id="frm-006"></a>
+#### FRM-006 · Moderator email for new comments (22, built 17 Nov 2026, first slice)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Moderator email for new comments (22, built 17 Nov 2026, first slice).** A comment that lands Pending emails every admin address with an excerpt and a link to the Comments screen. Best effort, never blocks posting; `COMMENT_EMAILS_OFF=1` switches it off. Code: `src/features/comments/moderatorMail.ts`, `src/app/(engage)/api/comments/route.ts`, test in `tests/int/comments-core.int.spec.ts`. Live check: "Live check moderator comment email (22)".
+
+<a id="frm-007"></a>
+#### FRM-007 · Spam rules on comments and reviews (21b, built 17 Nov 2026, first slice)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Spam rules on comments and reviews (21b, built 17 Nov 2026, first slice).** The site-wide form spam rules (blocked words, link limit, blocked senders in Settings > Forms) now also run on blog comments (`src/app/(engage)/api/comments/route.ts`) and product reviews (`src/features/ecommerce/reviewEndpoint.ts`). A hit is stored with the Spam status and the poster sees the normal thank-you, so a bot learns nothing. Reuses `checkSpamRules`. Live check: "Live check spam rules on comments and reviews (21b)".
+
+<a id="frm-008"></a>
+#### FRM-008 · Site-wide CAPTCHA keys, test and look (Task 5, 21a, built 22 Nov 2026)
+
+_Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 Nov 2026)_
+
+**Site-wide CAPTCHA keys, test and look (Task 5, 21a, built 22 Nov 2026).** Form settings > Spam protection has Test CAPTCHA keys (site key shape plus a siteverify call with a made-up token, for Turnstile or reCAPTCHA, whichever is chosen; route `admin-integration-checks` check `captcha`, `checkTurnstileKeys` in `remoteChecks.ts`) and Appearance (Visible or Invisible: Turnstile `interaction-only`; reCAPTCHA v3 is always invisible), used by forms and every sign-in/place widget. When the reCAPTCHA keys are empty in Form settings, the keys on the Integrations page are used (`getFormSettings`), so one saved pair serves everything. The places list (forms, sign-in, register, reset, magic link, comments, chat, reviews, back-in-stock, RSVP, checkout, offline orders) was built in 19a; a newsletter signup is an ordinary form, so it follows the forms setting. Migration `20270322_110000_captcha_appearance`. Live check: CAPTCHA keys and look.
+
+<a id="frm-009"></a>
+#### FRM-009 · Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026)
+
+_Date: 22 Nov 2026 · Original group: Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)_
+
+**Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026).** Form settings > Spam protection has When a spam rule matches: Hold (default), Flag or Discard. Hold keeps a form entry that hit blocked words, the link limit, a blocked sender or Akismet with the Spam status (visitor sees the normal thanks; no emails, webhooks, requests or appointment slots); staff release it by setting its status to New in Form entries. Flag stores and delivers as normal with Possible spam at the start of the summary. Discard keeps nothing (the old behaviour). Reviews follow the same choice (hold = Spam status, flag = ordinary Pending, discard = nothing stored). New optional Akismet key (encrypted, admin only): when set, every form entry and review is also sent to Akismet; unreachable Akismet never blocks anyone. The Authentication page shows how many form entries, reviews and comments are held (total and this week). Code: `src/features/forms/{akismet,spamCounts,submit}.ts`, `reviewEndpoint.ts`, migration `20270322_100000_spam_rule_action`. Tests in `tests/int/spam-hold-akismet.int.spec.ts`. Live checks: spam rules (26b) and Akismet.
+
+<a id="cat-mem"></a>
+### MEM: Members, companies and portal
+
+<a id="mem-001"></a>
+#### MEM-001 · Task 6 portal search, slice 1 (#152)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 6 portal search, slice 1 (#152):** search on /account finds orders, site pages and products. Live check in Task 6.
+
+<a id="mem-002"></a>
+#### MEM-002 · Task 5 portal search, later slices (PR #191, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 5 portal search, later slices (PR #191, 1 Nov):** own orders by number, bookings, subscriptions (authenticated `/api/account-search`), settings fields that link to their own anchors on the profile page, and English synonyms shared with site search (`src/features/search/synonyms.ts`). Six new strings in all 12 dictionaries; no migration. Decided: synonyms are English only; site live search uses the same synonyms (`src/features/search/synonyms.ts`). Live check in Task 6.
+
+<a id="mem-003"></a>
+#### MEM-003 · Task 5 portal review (PR #216, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Task 5 portal review (PR #216, 2 Nov):** account read-through: the order link, bookings heading and empty state (an unconfirmed address now says why), reorder failure message, a confirmation before removing an address, autocomplete on address fields, alert role for errors, a loading state for signed-in screens, translated privacy titles; the Asticore SaaS placeholder removed. Passkey decision: new Security setting "A passkey that verified the user skips the authenticator-app code", **off by default** (migration `20270308_100000_passkey_skip_two_factor`). Correction to the old note: user-verified passkeys already skipped the code; they now do so only when this is on. RSVP decision: keep the email match; bookings and the privacy export show only for a confirmed address, and a customer can now ask for the confirmation link (it was never sent when verification is off). Ratchet: `tests/int/type-ratchet.int.spec.ts` against `tests/int/type-ratchet-baseline.json` (any 249 to 167, eslint-disable 107 to 86). Checks: tsc, eslint, related vitest (passkeys, verification, RSVP, privacy, roles, pages tree, strings, fresh-install); cookie-consent SEO cases time out at 5 s under load and pass with a longer timeout. Matt's checks are in Task 6.
+
+<a id="mem-004"></a>
+#### MEM-004 · Task 14 member groups and companies (9 Nov)
+
+_Date: 9 Nov 2026_
+
+**Task 14 member groups and companies (9 Nov):** companies already existed as organisations (members, teams, roles, invitations, per-document "visible to company"); added company-admin control over who inside the company reads each page, post, product or event: new permission `content:manage` (owners and admins have it, custom roles can carry it), table `eg_content_org_grants` (migration `20270313_100000_org_content_grants`, baseline regenerated, fresh-install specs extended), grants name members or teams and narrow only: no grants means every member (previous behaviour); owners, admins and `content:manage` holders always read; grants are dropped when a member leaves, a team is deleted or the company is deleted; the gate fails closed. Account company page has a Company content access section; strings in all 13 dictionaries. Customer types and API categories read a member's companies through `listOrgsForUser`. Files and downloads moved to open Task 14 (media is served public today). Live check in Task 20.
+
+<a id="mem-005"></a>
+#### MEM-005 · 18j Organisation access helper (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**18j Organisation access helper (built 16 Nov 2026).** `src/features/organizations/access.ts` is the one place to ask which companies and teams a person is in and whether they may see a record: `loadOrgAccess(d1, userId)` (two small queries; unknown person or failed lookup gives no access), `mayAccessRecord(access, { organizationId, teamId, ownerUserId })` (true, false, or null for an unscoped record so the caller applies its own rule), `orgScopeClause(orgColumn, teamColumn, access, { ownerColumn, includeUnscoped })` for SQL lists, plus `isOrgMember`, `isOrgManager`, `sharesOrg`. Rules: the owner of a record, owners and admins of its company, members of its team (or any member when it names no team). For use by the shop (orders), forms (submissions), approval (requests) and the taskboard (tasks): add nullable `organization_id` and `team_id` columns on that table, then AND the clause into the list query and call `mayAccessRecord` on single reads. Wiring each of those lists is Task 15 and Task 10. Test: `tests/int/org-access-helper.int.spec.ts` (real SQL through node:sqlite). No migration.
+
+<a id="mem-006"></a>
+#### MEM-006 · 18a Dunning and retry for failed membership payments (built 16 Nov 2026; card-expiring warning and live Stripe
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**18a Dunning and retry for failed membership payments (built 16 Nov 2026; card-expiring warning and live Stripe test still open).** Settings, Members, Billing has three new settings: retry days (default `1,3,5,7`, days after the first failure), grace days (default 10, access kept) and what happens at the end (end the membership, or move to the free tier, which is the default tier in Registration). A failed renewal (`invoice.payment_failed`) now starts a run on the membership (started, attempts, next retry, access-until, all shown read-only): the member keeps access through the grace period (`grantsAccess` reads it), gets a failed-payment email with an update-card link (the Stripe billing portal when it is set up, otherwise the account page), and the hourly `member-dunning` job retries the open invoice on each retry day and emails again. When the grace period ends still unpaid the membership ends or moves to the free tier, the Stripe subscription is cancelled (the id is dropped first so the cancel webhook cannot undo a downgrade) and the member is told. A paid invoice or an active subscription clears the run and sends one thanks email. Each step is added to the membership's internal notes as a log. Settings, Past due members lists the chase with Retry card now and End now. The schedule is pure and tested by moving a clock through retries to the end. Code: `src/features/members/{dunning,dunningRun,webhooks,entitlement,settings}.ts`, `PastDuePanel.tsx`, `/api/admin-member-dunning`, cron job `member-dunning`, migration `20270316_210000_member_dunning`, `tests/int/member-dunning.int.spec.ts`.
+
+<a id="mem-007"></a>
+#### MEM-007 · Task 22c company theming and portal layout (16 Nov)
+
+_Date: 16 Nov 2026_
+
+**Task 22c company theming and portal layout (16 Nov):** a company (organisation) sets its own logo (existing field), colours (main, accent, background, text), heading and body font (fixed safe stacks) and the order and visibility of the sections on its portal page; applies to every member of that company only, scoped to `.org-portal`, never the site theme. Data model decision: stored inside the organisation's own `metadata` JSON under `branding` and `layout`, so no table or migration; every value is validated on write and again on read (`src/features/organizations/branding.ts`), a free-form metadata edit keeps those keys. Owners and admins with `organization:update` use the Details section (`BrandingForm`); a site administrator overrides any company from /admin/security/organizations (`adminSaveOrganizationBranding`, works with customer organisations off, audited). Details can never be hidden. Texts in 13 languages. Tests: `tests/int/organization-branding.int.spec.ts`, 22c block in `tests/int/organizations.int.spec.ts`. Left out: a company-level admin-panel layout (the admin panel is for site staff; the company's dashboard is its portal page, which is what this configures), uploaded custom fonts, and locking a company out of changing its look.
+
+<a id="mem-008"></a>
+#### MEM-008 · Task 22a ownership transfer and delegation (16 Nov)
+
+_Date: 16 Nov 2026_
+
+**Task 22a ownership transfer and delegation (16 Nov):** accounts here are companies (organisations). Transfer is now two steps: the owner picks a member (`requestOwnershipTransfer`), the member gets an email with a single-use link valid 7 days (`/account/transfer/[token]`, only a SHA-256 is stored), and the roles swap (new owner first, old owner becomes admin) only when that member, signed in as the named account, accepts; the offer can be declined or cancelled, a newer request replaces an older one, and nothing swaps if either person left meanwhile. Delegation: a real member lets another existing account act for them in one company for chosen rights and 1 hour to 90 days (`createDelegation`); rights are limited to what the delegator holds now and never include membership, role, delete or transfer rights (`DELEGABLE_ACTIONS`), a delegate cannot delegate or leave, and it dies on expiry, revoke (delegator, delegate or an owner) or when the delegator leaves. The delegate sees the company in their list with an "acting for" banner, every change they make is audited as `organization.delegate-action` with whose rights were used. Tables `eg_org_transfers` and `eg_org_delegations` (migration `20270316_420000_org_transfer_delegation`, baseline regenerated); code in `src/features/organizations/service.ts`, `store.ts`, `actions.ts`, `OrganizationScreens.tsx`; tests in the 22a block of `tests/int/organizations.int.spec.ts`. Left out: delegation across a person's own account outside companies (sign in as is still admin only), email to the delegate when access is granted, and a site-administrator view of all delegations.
+
+<a id="mem-009"></a>
+#### MEM-009 · Task 22a (now 17a) ownership transfer and delegation (16 Nov)
+
+_Date: 16 Nov 2026_
+
+**Task 22a (now 17a) ownership transfer and delegation (16 Nov):** accounts here are companies (organisations). Transfer is two steps: the owner picks a member (`requestOwnershipTransfer`), the member gets an email with a single-use link valid 7 days (`/account/transfer/[token]`, only a SHA-256 is stored), and the roles swap (new owner first, old owner becomes admin) only when that member, signed in as the named account, accepts; the offer can be declined or cancelled, a newer request replaces an older one, and nothing swaps if either person left meanwhile. Delegation: a real member lets another existing account act for them in one company for chosen rights and 1 hour to 90 days (`createDelegation`); rights are limited to what the delegator holds now and never include membership, role, delete or transfer rights (`DELEGABLE_ACTIONS`), a delegate cannot delegate or leave, and it ends on expiry, revoke (delegator, delegate or an owner) or when the delegator leaves. The delegate sees the company in their list with an "acting for" banner, and every change they make is audited as `organization.delegate-action` with whose rights were used. Tables `eg_org_transfers` and `eg_org_delegations` (migration `20270316_420000_org_transfer_delegation`, baseline regenerated); code in `src/features/organizations/` (`service.ts`, `store.ts`, `actions.ts`, `OrganizationScreens.tsx`); tests in the 22a block of `tests/int/organizations.int.spec.ts`. Left out: email to the delegate when access is granted, a site-administrator view of all delegations, and delegation of a person's own account outside companies (sign in as is still admin only).
+
+<a id="mem-010"></a>
+#### MEM-010 · Member past-due banner (13a leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Member past-due banner (13a leftover, built 17 Nov 2026).** `src/features/accounts/components/PastDueBanner.tsx`, shown inside `AccountShell`, tells a member whose membership is past due that the payment failed and when access ends. English only.
+
+<a id="mem-011"></a>
+#### MEM-011 · 23c Saved for later follows the account (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)_
+
+**23c Saved for later follows the account (built 17 Nov 2026).** For a signed-in shopper `POST /api/shop-saved` merges the browser's saved lines into the account list (the same product and variation adds quantities, like the guest cart merge on sign-in) and returns the merged list; explicit changes (save, move back, delete) send `replace` so a delete stays deleted. Signed out it only uses the browser list. Table `eg_saved_cart_lines` (migration `20270317_170000_saved_cart_lines`), removed by the privacy erase. Code: `src/features/ecommerce/server/savedLines.ts`, `src/app/(engage)/api/shop-saved/route.ts`, `src/components/SavedForLater.tsx`, `tests/int/saved-for-later.int.spec.ts`.
+
+<a id="cat-med"></a>
+### MED: Media and files
+
+<a id="med-001"></a>
+#### MED-001 · Task 12b media formats and admin progress bar (PR #202, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 12b media formats and admin progress bar (PR #202, 1 Nov):** picture output format (follow the WebP and AVIF switches by default, Original, JPEG, WebP, AVIF; JPEG XL kept as it is because Cloudflare cannot write it) and video output format (Original, MP4, WebM), each overridable per file. Block images use the delivery URL (block media resolved in ElementWithMedia). Video links (`video/link`) added from the gallery with a title and a poster; the Video element picks an upload or a link. Optimise on videos converts to MP4 through Cloudflare Stream in steps, only with a Stream account ID and token (WebM is not made by Stream and is kept). Admin progress bar on link clicks, submits and data requests. Lazy-loaded tag editor, visual editor field panel and pages tree. Theme fonts stay on jsDelivr (self-host option later). Matt's steps are in Task 6.
+
+<a id="med-002"></a>
+#### MED-002 · Known limits sweep: Media, Import and export, Fonts, Speed (PR #207, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Known limits sweep: Media, Import and export, Fonts, Speed (PR #207, 1 Nov):** 16 fixed: new media types (ico, heic, bmp, tiff, ogg, m4a, json, rtf, ods; JSON and RTF are downloads only); uploads over 25 MB as R2 multipart; names starting with original are served; transparent pictures become WebP instead of JPEG; ODS read as a spreadsheet; settings and template imports count streamed bytes; shop customers exportable (admin only); picture details matched by id then file name, and settings remap picture ids; fonts kept on a settings import when their files are on the site; font files of removed fonts deleted from R2 after the save; Fontsource files pinned to the version recorded at install; font subsets chosen (latin, latin-ext, cyrillic, greek, vietnamese); Google stylesheets ask only for offered weights; Speed option to self-host the built-in theme fonts; image block srcset. Permanent: SVG (no sanitiser in deps); old .xls; re-optimising keeps a picture's file name so links work; Stream makes MP4 only, JPEG XL and WebM choices keep the file, video links are URLs; the Worker reads a request into memory once; imported admin users stay editors unless allowed; font files are not in exports; customers are not recreated on import. Moved to tasks: relation fields (Task 1), JS bundle (Task 4), gallery and card srcset (Task 5).
+
+<a id="med-003"></a>
+#### MED-003 · Task 5 srcset and account colours (PR #208, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 5 srcset and account colours (PR #208, 1 Nov):** gallery, image gallery, carousel, card, team member and image box pictures get a srcset from the ElementWithMedia candidates and a sizes attribute (no extra reads; the image block already had one). Account and portal search colours use theme roles (surface, text, error, success), so they follow the dark theme; the mobile nav scrim fades to the theme background. TODO/FIXME: none left in `src/` (nothing to clear). Decided: sizes are column-share estimates (phone full width, desktop 50vw for card top, 25vw left or right, 50vw image box, 280px team photo). Logo strip keeps one URL (fixed height, no sizes yet). Permanent: none. Live check in Task 6.
+
+<a id="med-004"></a>
+#### MED-004 · Known limits: SVG, Openverse hosts, RSVP guest details (PR #210, 2 Nov)
+
+_Date: 2 Nov 2026_
+
+**Known limits: SVG, Openverse hosts, RSVP guest details (PR #210, 2 Nov):** 3 fixed: SVG uploads behind Allow SVG uploads (off by default), each file cleaned on upload against an in-repo allow-list (scripts, event attributes, foreignObject, outside links and url(), style imports and non-picture data addresses removed; DOCTYPE, entities and processing instructions refused) and served sandboxed with nosniff; the Openverse picture host list is editable in Media settings, defaulting to the built-in list; a View guest details permission: Event RSVPs read now gives the RSVP counts (no names, emails or CSV), and View guest details adds the rows and export (editors keep it, viewers and custom roles do not by default). Permanent: a customer sees only RSVPs under their own verified address; check-in keeps its own guard. Live checks in Task 6.
+
+<a id="med-005"></a>
+#### MED-005 · 29g Previews, renditions, import, quotas (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**29g Previews, renditions, import, quotas (built 16 Nov 2026).** File page: inline players for video and audio and an inline sandboxed PDF preview; video tiles in the Media grid show the first frame. Asset manager, Rendition presets: named size, fit (scale-down, contain, cover, crop, pad) and format (auto, jpeg, png, webp, avif); each picture's page lists them under Download as, served by `/api/admin-media-rendition` through the Cloudflare Images binding (501 with a plain message when the account has none; nothing is stored). Import a file (`/api/admin-media-import`): an https address or a Google Drive link to one file shared as Anyone with the link; never http, credentials, odd ports or local and private hosts; redirects followed by hand and checked at every hop; size capped by the upload limit; then stored like an upload (type check, folder access and defaults from 29a, quota, duplicate check, rights default licence, activity). Activity log now also records upload by whom, import, replace (when a version is kept), and downloads by zip, rendition and share link. Storage section: totals by kind and the largest folders; site limit (MB) is now enforced on upload and import, plus per role and per company limits (stored as JSON on the settings row, use counted from uploads by the people in that role or company). Code: `src/features/dam/{importUrl,renditions,quota,quotaGuard}.ts`, `store.ts` (renditions, totals, quota use), `AssetManagerPanel.tsx`, `DamAssetPanel.tsx`, `MediaGalleryGrid.tsx`, `admin-media-rendition`, `admin-media-import`, `admin-media-dam`, `media-share/[token]`, migration `20270316_440000_media_quotas` (`quotas_json`), `tests/int/dam-previews-import-quota.int.spec.ts`.
+
+<a id="med-006"></a>
+#### MED-006 · 29c Search and filters (built 16 Nov 2026; part of the Asset manager, switch on under Site Settings, Features)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**29c Search and filters (built 16 Nov 2026; part of the Asset manager, switch on under Site Settings, Features).** Settings, Media search (`/admin/media-search`, anyone who can read media; an Advanced search link sits beside the Media page's search box): one form searches words (every word must match in the file name, alt text, caption, credit, folder, custom details, camera data or the words inside a document), type (pictures, video, audio, documents), folder (and sub-folders), collection, tag (and its sub-tags, when Media tags is on), added date range, size, minimum width and height, shape (landscape, portrait, square), status, licence state (expired, expiring soon, embargoed, any problem) and each searchable custom detail; sort by newest, oldest, name or size; 48 per page. Saved searches (Save this search, Run, Delete) and smart collections (Make a smart collection): a collection that has no fixed members and fills itself from its search whenever it is opened from the Collection filter on the Media page; files cannot be added to one by hand. Words inside documents: on upload (and Read it from the file, which also works in bulk through the API) the text of a .docx and of a PDF with plain or Flate-compressed text is read, up to 20,000 characters, and stored after a marker in the file's search text so editing its details never loses it. Every value is a bound SQL parameter. Code: `src/features/dam/{search,textExtract}.ts`, `store.ts` (`runSearch`, `smartCollectionIds`, saved searches), `MediaSearchPanel.tsx`, `src/admin/views/MediaSearchView.tsx`, `/api/admin-media-dam?search=1`, `tests/int/dam-search.int.spec.ts`, `tests/int/dam-search-db.int.spec.ts` (runs the SQL on an emulated D1).
+
+**29f Private files, share links and zip (built).** Files and folders can be made private (single file, bulk, or a folder rule that new uploads inherit). A private file's public address returns the same not-found to anyone without media read access, with no-store headers. Share links (`/api/media-share/<token>`) cover a file or a collection, with expiry, optional password, and a download limit counted atomically; only a hash of the token is stored and the link is shown once. The share page lists files, offers single downloads, previews (uncounted, only for links without a password) and a zip (max 100 files / 100 MB); files whose rights are expired or unapproved are left out. Access check fails open to public if the tables are missing. Code: `src/features/dam/{access,share,zip}.ts`, `store.ts`, `src/app/(engage)/api/media-share/[token]/route.ts`, `src/localapi/rest.ts` (`handleGetMediaFile`), `DamAssetPanel.tsx`, `AssetManagerPanel.tsx`, `MediaGalleryGrid.tsx`, `tests/int/dam-private.int.spec.ts`.
+
+<a id="med-007"></a>
+#### MED-007 · 29d Versions and safe delete (built 16 Nov 2026; part of the Asset manager, switch on under Site Settings, Fea
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**29d Versions and safe delete (built 16 Nov 2026; part of the Asset manager, switch on under Site Settings, Features).** Every Replace from a file's page keeps the file being replaced as a version (stored under `versions/<id>/...`, never served by the public file route), newest few kept (Settings, Asset manager, Previous versions kept, default 5, 0 turns it off). A file's Asset manager panel lists versions with date, size and pixel size, Compare (earlier version and current side by side, pictures), Restore (the current file becomes a version first, so a restore can be undone) and Delete. Deleting a file that is in use through the media collection (the edit page, the REST API) is refused with the places listed when Warn before deleting is on; a new `beforeDelete` collection hook in `src/localapi/operations.ts` makes that possible (a throwing hook refuses the delete). The panel offers Replace everywhere (every page, post, product, setting and so on that uses the file is pointed at another file, only the changed fields are written) and Delete anyway (passes `context.allowUsedDelete`). Deleting a file removes its asset record, collection links, versions and stored version objects. Code: `src/features/dam/{versions,versionsIo,safeDelete,replaceEverywhere}.ts`, `store.ts`, `src/collections/Media.ts` hooks, `admin-media-replace/[id]/route.ts`, `admin-media-dam` actions `restoreVersion`, `deleteVersion`, `replaceEverywhere`, `deleteMedia`, `tests/int/dam-versions.int.spec.ts`, `localapi-operations.int.spec.ts`.
+
+<a id="med-008"></a>
+#### MED-008 · 29b and 29e Asset manager, first slice (built 16 Nov 2026; switch on under Site Settings, Features, Asset mana
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**29b and 29e Asset manager, first slice (built 16 Nov 2026; switch on under Site Settings, Features, Asset manager).** One feature key `dam` owns every table for Task 29 (migration `20270316_390000_dam`: `media_assets`, `media_folders`, `media_collections`, `media_collection_items`, `media_meta_fields`, `media_versions`, `media_shares`, `media_activity`, `media_saved_searches`, `media_renditions`, `media_dam_settings`), so later parts of Task 29 add no schema. The media collection is untouched: per-file details live in `eg_media_assets`. **Rights and status:** each file's page has an Asset manager panel with status (draft, in review, approved, archived), licence type and terms, credit, usage notes, territory, release note, licence start and expiry and embargo date. A file with no row counts as approved with no rights. An expired, embargoed, not yet started or archived file (and, if Require approval is on, any file not approved) is flagged on its page and left out of the visual editor media picker (`/api/admin-media-dam?unusable=1`). Only an admin can approve; anyone with media access can send for review. Bulk Set status on the Media page. **Collections:** a file can be in many; create, rename and delete under Settings, Asset manager (`/admin/asset-manager`), tick them on the file's page, bulk Add to collection or Remove from collection on the Media page, and a Collection filter that combines with folder and tag. **Custom metadata:** the admin defines fields (text, select, date, number, link) with required, searchable and applies-to (images, video, audio, documents); values are validated and stored with a search text. **Camera data:** on JPEG upload the EXIF block is read (camera, lens, date taken, exposure, creator, copyright, description, GPS) and stored searchable; GPS is dropped unless Do not keep GPS is switched off; Read it from the file does existing photos. **Duplicates (part of 29d):** every upload is hashed (SHA-256 of the bytes sent); the same bytes again are reported in the upload reply (`duplicateOf`) and, if set to Refuse, rejected with 409. **Report and settings:** expired and soon-to-expire licences on the Asset manager page, activity log per file, settings for warning days, versions kept, delete warning and storage limit (the last three are stored, used by later parts). Code: `src/features/dam/{rights,metaFields,exif,hash,store,onUpload}.ts`, `DamAssetPanel.tsx`, `AssetManagerPanel.tsx`, `src/admin/views/AssetManagerView.tsx`, `/api/admin-media-dam`, hooks in `admin-media-upload`, `MediaGalleryView.tsx`, `MediaGalleryGrid.tsx`, `MediaPicker.tsx`, `tests/int/dam-logic.int.spec.ts`.
+
+<a id="med-009"></a>
+#### MED-009 · 19b Media tags and sub-tags (built 16 Nov 2026; switch on under Site Settings, Features, Media tags)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**19b Media tags and sub-tags (built 16 Nov 2026; switch on under Site Settings, Features, Media tags).** A tree of tags (parent and child) each with a colour. Tag manager at Settings, Media tags (`/admin/media-tags`): add, edit (rename, recolour, move inside another tag; a tag cannot go inside itself or repeat a name beside its siblings), delete (sub-tags move up a level, files are untouched), file counts per tag and with sub-tags. On the Media page: select files, pick a tag, Add tag or Remove tag (bulk), and a Tag filter beside the folder filter; filtering by a parent tag shows files with any of its sub-tags, and it combines with the folder filter. CSV: Download tags CSV (`tag,color`, nested as `Parent > Child`) and Download files CSV (`filename,tags` with several tags joined by `;`), and paste or choose a file to import either; import only adds, never removes, and files are matched by filename. Tags survive export and import. Code: `src/features/mediaTags/{logic,store}.ts`, `MediaTagsPanel.tsx`, `src/admin/views/MediaTagsView.tsx`, `/api/admin-media-tags`, `MediaGalleryView.tsx` and `MediaGalleryGrid.tsx`, migration `20270316_230000_media_tags` (feature key `mediatags`, tables `media_tags`, `media_tag_links`), `tests/int/media-tags.int.spec.ts`.
+
+<a id="med-010"></a>
+#### MED-010 · 19a Media tree view (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**19a Media tree view (built 16 Nov 2026).** The media page has a left-hand collapsible folder tree (above the gallery on narrow screens): "All files" plus nested folders with file counts, the current folder highlighted, a breadcrumb, and tree keys (Up and Down, Right to open, Left to close or go to the parent, Enter to show, F2 rename, Delete remove). Drag files from the gallery (the selected ones, or just the one you grab) onto a folder, or drag a folder onto another folder or onto "All files" to move it with everything inside. New, Rename and Delete folder buttons: delete never removes files, they move up one level. Only the `folder` text on each file changes, so file addresses and links stay valid; renames use exact prefix tests at a slash, so `a` never touches `ab` or `a_b`. No new table, so no migration. Code: `src/features/media/folderTree.ts` (pure), `/api/admin-media-folders` (GET counts, POST rename, move, delete), `src/views/media/MediaFolderTree.tsx`, `MediaGalleryView.tsx`, `MediaGalleryGrid.tsx` (drag source), `tests/int/media-folder-tree.int.spec.ts`.
+
+<a id="cat-i18n"></a>
+### I18N: Languages and translations
+
+<a id="i18n-001"></a>
+#### I18N-001 · Task 3 languages (28 Oct)
+
+_Date: 28 Oct 2026_
+
+**Task 3 languages (28 Oct):** #35 routing; #36 translation overlay on 11 routes; #37 SEO (hreflang, canonical, sitemap, og:locale); #38 Translations page, reviewers and workflow; #39 publish rule; #40 builder language and translate panel; #41 machine translation (Google, DeepL, AI) with monthly limit; #42 machine drafts; #43 block text; #44 portal auto-language; #45 one row per page; #46 per-user admin language; #47 to #51 admin batches and portal strings in 12 languages; #52 admin labels; #53 and #55 to #113 builder, storefront, email and admin text; #115 to #121 and #134 admin leftovers.
+
+<a id="i18n-002"></a>
+#### I18N-002 · Task 3 languages, locale links (#54 merged 30 Oct)
+
+_Date: 30 Oct 2026_
+
+**Task 3 languages, locale links (#54 merged 30 Oct):** locale-prefixed links, rich-text links and translated slugs per locale (#59 and #139 folded in). Only its live check remains (Task 6).
+
+<a id="i18n-003"></a>
+#### I18N-003 · Task 3 and 4 leftovers (31 Oct, PR #181)
+
+_Date: 31 Oct 2026_
+
+**Task 3 and 4 leftovers (31 Oct, PR #181):** about 50 hard-coded admin aria-labels (fonts manager, email designer, theme styles, cookie consent, results tabs, shop settings, layout controls, ListView Trash link, ConditionsField) now read the reference table in all 12 dictionaries. Meta and TikTok pixel fields get their own labels per group (`label.field.metaPixel.*`, `label.field.tiktokPixel.*`). Left: template-literal aria-labels (Task 3).
+
+<a id="i18n-004"></a>
+#### I18N-004 · Task 3 languages closed (PR #186, 31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Task 3 languages closed (PR #186, 31 Oct):** the template-literal admin aria labels (ArrayField, PagesTree, theme styles, email designer, approval workflow steps) and the shop revenue chart text now read parameterised keys in the reference table (`aria.*`, `chart.*`, `theme.contrastAgainst`) in all 12 dictionaries. Decided by Matt: the portal is not part of the translation workflow; SubscriptionOfferBox and the header, footer and menu locale on portal paths stay English. Left: the chart period words (day, week, month) stay English.
+
+<a id="i18n-005"></a>
+#### I18N-005 · Tasks 5 and 6, 15 Nov 2026, PR pending
+
+_Date: 15 Nov 2026_
+
+Tasks 5 and 6, 15 Nov 2026, PR pending: regions, language and domain audit in `the Regions audit appendix of `docs/remaining-work.md``; gaps are Tasks 41 and 42.
+
+<a id="i18n-006"></a>
+#### I18N-006 · Task 3 (part), 15 Nov 2026, PR pending
+
+_Date: 15 Nov 2026_
+
+Task 3 (part), 15 Nov 2026, PR pending: 150 English-only admin strings translated into the twelve other languages. Left: promo badge field labels, template library text, ut/api/apiBuilder strings.
+
+<a id="i18n-007"></a>
+#### I18N-007 · 21k Languages (built 16 Nov 2026, the switcher style; the translations table already existed; language-specifi
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21k Languages (built 16 Nov 2026, the switcher style; the translations table already existed; language-specific merge tags are not built).** Language switcher element: Show (own-language name, short code, flag and name, flag only), Layout (row or list), Hover effect (underline, background, none) and Align. No placement option: it is placed only in the visual editor and in header templates, as before. Flags come from the region of the code (en-AU is Australia) or a usual country for the language, are hidden from screen readers, and the language name stays as the accessible label and tooltip. The old look is the default. The Translations overview (`TranslationsOverview.tsx`, `translationOverview.ts`) already lists every item with one status per language and filters by type, language and status, so no change there. Code: `src/features/multilingual/switcherStyle.ts` (pure), `Wave65Server.tsx`, `wave65Defs.ts`, `wave65.css`, `tests/int/switcher-style.int.spec.ts`. No migration.
+
+<a id="i18n-008"></a>
+#### I18N-008 · Approval text in the other twelve languages (12e leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Approval text in the other twelve languages (12e leftover, built 17 Nov 2026).** The Hand over block and history labels in the Review box, the "handed to" note in the review queue, and the section and stand-in parts of the workflow editor now come from the admin string table (`approval.review.*`, `approval.queue.handedTo`, `approval.workflow.*` in `src/features/uiStrings/keys.ts` and all twelve dictionaries). Not translated: server messages (state machine errors, the review emails, history notes such as "Handed to Nia.") and the older author-route text of the workflow editor, which are English like the rest of the approval screens.
+
+<a id="i18n-009"></a>
+#### I18N-009 · 16k Dropdown switcher and translation progress bars (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16k Dropdown switcher and translation progress bars (built 17 Nov 2026).** The Language switcher Layout now has As a dropdown: a native details element (no script, opens by keyboard) whose button shows the current language in the chosen Show style, with the other languages listed under it; Hover and Align apply. The Translations header shows a progress bar beside each language's approved count. Language-specific merge tags are still open. Code: `switcherStyle.ts`, `Wave65Server.tsx`, `wave65Defs.ts`, `wave65.css`, `TranslationsView.tsx`, `tests/int/switcher-style.int.spec.ts`. No migration.
+
+<a id="i18n-010"></a>
+#### I18N-010 · Task 3 translations
+
+_Date: 17 Nov 2026 · Original group: Tasks 1 to 3 leftovers (17 Nov 2026)_
+
+Task 3 translations: promo badge field labels (`label.field.promoBadges.*`; `adminFieldLabel` now ignores array row numbers in the path); 74 `ut.*`, `api.*`, `apiBuilder.*` and `dns.*` strings translated into the twelve languages; template library manifests take an optional `languages` list (default English) and the Template libraries screen says when a library has no text in the admin language (`docs/template-libraries.md`).
+
+<a id="i18n-011"></a>
+#### I18N-011 · Hebrew admin and portal language (20 Nov 2026)
+
+_Date: 20 Nov 2026_
+
+**Hebrew admin and portal language (20 Nov 2026).** `he` joins the admin interface languages (`ADMIN_UI_LOCALES`, right to left via `RTL_ADMIN_UI_LOCALES`, so `dir="rtl"` on the admin and portal), with `dictionaries/he.ts` and `public/ui-strings/he.json` (static file, same as the others, nothing bundled in the Worker). The browser's old code `iw` maps to `he`. The public site already had Hebrew as a content language with `dir="rtl"`. Translations are machine written (live check). Tests: language suites extended.
+
+<a id="i18n-012"></a>
+#### I18N-012 · 41a
+
+_Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 2026)_
+
+41a: the Permalinks group and Blog address field labels are in the UI strings (`label.field.permalinks`, `label.field.blogBase`) in all 13 languages. Hints and save errors stay English: the SEO screen is English only for descriptions, and there is no translation path for field descriptions. Raise with Matt if he wants descriptions translated everywhere.
+
+<a id="cat-aff"></a>
+### AFF: Affiliates, agencies and franchising
+
+<a id="aff-001"></a>
+#### AFF-001 · 31d Linking to affiliate products (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31d Linking to affiliate products (built 16 Nov 2026).** The Buy button of an external or affiliate product now points at a cloaked short link on the site, `/go/<product id>?s=<source>` (`src/app/(frontend)/go/[id]/route.ts`): it counts the click, then 302s to the product's own address. Only published external products with an http(s) address redirect (else not found); bots and callers over 60 a minute are redirected without being counted; no-store, noindex and no-referrer headers. Clicks are counters per product, source and day in `eg_outbound_clicks` (no visitor identifier; migration `20270317_100000_outbound_clicks`, baseline regenerated). Source is the `s` value, else the page it came from on the site, else direct. The product edit page shows clicks per source for the last 30 days (`OutboundClicksField`, `GET /api/admin-outbound-clicks`). Links keep rel noopener, noreferrer, nofollow and sponsored. A disclosure line sits under the button, text `store.affiliateDisclosure` (editable as site text, all dictionaries fall back to English). Decision: cloaking is always on and the disclosure is a site text, because `eg_shop_settings` is at the 100 column limit of D1. Code: `ecommerce/outbound.ts`, `outboundShared.ts`, `storefront.ts`, `components/ProductPurchase.tsx`. Live check in Task 14.
+
+<a id="aff-002"></a>
+#### AFF-002 · 31e Easy affiliate setup, first version (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31e Easy affiliate setup, first version (built 16 Nov 2026).** Switch Affiliates on and the defaults already work (30 day cookie, last click, 10 percent, 30 days before payable, manual payouts). A public page `/affiliates` shows the commission, cookie length, program terms (your text, or a standard template) and a join form (honeypot, rate limited, duplicate email refused); Approve new sign-ups automatically is a setting (otherwise they wait as Pending). After joining, the person sees their private dashboard link on screen. Code: `src/app/(frontend)/affiliates/page.tsx`, `JoinForm.tsx`, `/api/affiliate-join`, settings in `AffiliatesPanel.tsx`.
+
+<a id="aff-003"></a>
+#### AFF-003 · 31c Affiliate dashboard, first version (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31c Affiliate dashboard, first version (built 16 Nov 2026).** Each affiliate has a private dashboard link (`/affiliates/dashboard?token=...`, 48 character token, not indexed) showing their referral link, visits, orders, waiting, payable and paid amounts and each commission. There is no sign-in for affiliates yet: copy the link from the Affiliates screen (Copy dashboard link makes one for older affiliates) and send it. Code: `src/app/(frontend)/affiliates/dashboard/page.tsx`, migration `20270316_350000_affiliate_portal`.
+
+<a id="aff-004"></a>
+#### AFF-004 · 31c emails (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31c emails (built 16 Nov 2026).** Three plain-text emails to the affiliate's own address: approved (admin approves, or automatic approval on sign-up; carries link, rate and private results page), commission earned (when an attributed order is paid; amount and payable date) and payout recorded (amount and note). A switch on the Affiliates screen (on by default) turns them off. They are logged in the email log as `affiliate.approved`, `affiliate.commission`, `affiliate.payout`, need SITE_URL, never block approving, paying or an order, and are English only. Code: `src/features/affiliates/{emails,service}.ts` (`sendAffiliateEmail`), migration `20270316_420000_affiliate_emails`, `tests/int/affiliate-emails.int.spec.ts`.
+
+<a id="aff-005"></a>
+#### AFF-005 · 31a attribution (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31a attribution (built 16 Nov 2026).** Coupon-code attribution: each affiliate can have a coupon code (button on the Affiliates table); an order that used it and carries no link cookie is credited to that affiliate (self-referral and first-order rules still apply). UTM values from the landing are kept in a small `eg_ref_utm` cookie and stored on the commission with the attribution source (link or coupon). Consent category: a setting files the referral cookie under Necessary (default, as before) or Preferences, Analytics or Marketing; for those the visit route stores and logs nothing until the visitor has switched that category on in the cookie banner, and the capture script retries when they choose. Code: `src/features/affiliates/{core,consentGate,service,store}.ts`, `/api/affiliate-visit`, `/api/admin-affiliates` (`coupon` action), `AffiliateCapture.tsx`, migration `20270316_410000_affiliate_attribution`, tests in `tests/int/affiliates-core.int.spec.ts`.
+
+<a id="aff-006"></a>
+#### AFF-006 · 31e Get started checklist and share kit (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31e Get started checklist and share kit (built 16 Nov 2026).** The Affiliates page shows a five-step Get started list (choose rules, first affiliate, first visit, first commission, first payout) worked out from the data, hidden once all are done, and a Copy share kit button per affiliate that copies a ready message with their link, rate, cookie days and private dashboard link. Code: `setupSteps` and `shareKit` in `src/features/affiliates/core.ts`, `AffiliatesPanel.tsx`, `settingsConfigured` in `store.ts`, tests in `tests/int/affiliates-core.int.spec.ts`.
+
+<a id="aff-007"></a>
+#### AFF-007 · 31b rules (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31b rules (built 16 Nov 2026).** On the Affiliates screen: a per-affiliate commission rate button (blank uses the program rate; used when a commission starts waiting), a Minimum payout setting (Record payout refuses below it), a first-order-only switch (a buyer's later orders through the same affiliate earn nothing; buyer email is stored on the commission), and a Download payouts as CSV link (spreadsheet-formula safe). Code: `src/features/affiliates/{commission,service,store}.ts`, `/api/admin-affiliates` (`rate` action, `?export=payouts`), migration `20270316_400000_affiliate_rules`, tests in `tests/int/affiliate-commission.int.spec.ts`.
+
+<a id="aff-008"></a>
+#### AFF-008 · 31b Commissions and manual payouts (built 16 Nov 2026, first version)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31b Commissions and manual payouts (built 16 Nov 2026, first version).** On the Affiliates screen, set cookie days, which click counts (first or last), the default commission percent (10), and days before payable (30). When a buyer who carries an affiliate's `eg_ref` cookie creates an order, the order is attributed (not to the affiliate's own email). When it is paid (checkout, webhook or an admin moving it to Processing or Completed) a commission is worked out once on subtotal minus discounts and waits out the pending days; refunds reduce it in proportion and a full refund reverses it (a commission already paid is left for you to recover by hand). The table shows waiting, owed now and paid per affiliate, a Record payout button (you pay outside the site; it records the amount and note and marks those commissions paid), the recent commissions and the payouts log. An affiliate with commissions cannot be deleted, only suspended. Code: `src/features/affiliates/{commission,service,store}.ts`, hooks in `Orders.ts`, `OrderRefunds.ts` and `markOrderPaid` (`orders.ts`), `/api/admin-affiliates`, migration `20270316_330000_affiliate_commissions` (tables `affiliate_settings`, `affiliate_commissions`, `affiliate_payouts`), `tests/int/affiliate-commission.int.spec.ts`. The order hooks were not run against a real payment here.
+
+<a id="aff-009"></a>
+#### AFF-009 · 31a Affiliate tracking, first slice (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**31a Affiliate tracking, first slice (built 16 Nov 2026).** Switch Affiliates on in Site Settings, under Features, then open Settings > Data and System > Affiliates (admin only). Add an affiliate (name, optional email and code; a code is made for you if left blank), approve or suspend, copy their link (`yoursite.com/?ref=code`) or delete. A visitor who arrives with a link for an active affiliate gets the first-party `eg_ref` cookie for 30 days (last click wins) and the landing is logged with the page and UTM source, medium and campaign. Crawlers and scripts are not logged, the route is rate limited and always answers ok so codes cannot be probed. English only. Code: `src/features/affiliates/{core,store}.ts`, `components/AffiliatesPanel.tsx`, `AffiliateCapture*.tsx` (mounted in the public layout), `/api/affiliate-visit`, `/api/admin-affiliates`, `src/admin/views/AffiliatesView.tsx`, feature `affiliates` (tables `affiliates`, `affiliate_visits`), migration `20270316_320000_affiliates`, `tests/int/affiliates-core.int.spec.ts`.
+
+<a id="aff-010"></a>
+#### AFF-010 · Outbound clicks report (26d, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Outbound clicks report (26d, built 17 Nov 2026).** Shop > Outbound clicks lists clicks on external and affiliate product buttons for all products over the last 30 days, by product and source. Code: `readAllClicks` in `src/features/ecommerce/outbound.ts`, `src/admin/views/OutboundClicksView.tsx`, nav entry in `navStructure.ts`. Live check: "Live check outbound clicks report (26d)".
+
+<a id="aff-011"></a>
+#### AFF-011 · 22d Franchising, first version (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**22d Franchising, first version (built 17 Nov 2026).** Switch Franchising on in Site Settings. Admin > Franchising: add franchises (name, domain, optional owner email; one franchise per domain), pause or remove them, create the owner account (an editor limited to the franchise domain through Allowed domains, one-time password), and roll a page template out: one page per active franchise, shown only on its domain (Available on domains), with the template's blocks and section locks plus a chosen document lock (fixed layout where only text may change, fully locked, or none; unlock roles empty so only admins pass). Rolling out again updates the same pages, so head-office changes reach every franchise. The overview shows franchises, active ones and rolled-out pages. Uses the existing locks, domain scoping and Allowed domains. English only. Code: `src/features/franchising/`, `src/app/(engage)/api/admin-franchises/route.ts`, `src/admin/views/FranchisingView.tsx`, migration `20270317_120000_franchising` (tables `eg_franchises`, `eg_franchise_pages`).
+
+<a id="aff-012"></a>
+#### AFF-012 · 17f Client reports, PDF and logo (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17f Client reports, PDF and logo (built 17 Nov 2026).** Each report can be downloaded as a PDF: the Admin > Client reports table has a PDF link, and the report link has "Download as PDF" (`/api/client-report?token=...&format=pdf`, also with `&from=&to=`). The PDF is written without a library by the shared writer in `src/features/apiBuilder/pdf.ts`, which now takes an optional logo. The logo is the brand logo chosen under Email settings. A JPEG (grey or colour, baseline) or a plain PNG (8-bit grey or colour, not interlaced, no transparency) is drawn above the title (`src/features/clientReports/logo.ts`); a transparent, palette, WebP or SVG logo is left out of the PDF. The emailed report shows the same logo at the top (any image type the email can show) and has a "Download as PDF" link. Emails carry the link, not an attachment, because the email sender has no attachments yet. Specs in `tests/int/agency-tools.int.spec.ts`.
+
+<a id="aff-013"></a>
+#### AFF-013 · 17f Client reports, sections, dates and Google numbers (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17f Client reports, sections, dates and Google numbers (built 17 Nov 2026).** Each report now has chosen sections (sales, form entries, published pages and posts, website traffic, search, page speed; none ticked shows all, so older reports are unchanged) and the period can be fixed dates ("Fixed dates" with a start and end). Traffic comes from Google Analytics and search from Search Console, read through the stored Google connection on the server, so the client opens the link with no sign-in; each range is cached for five minutes per property and dates (`src/features/clientReports/google.ts`). Search Console dates are held back three days. When Google is not connected or no property is chosen, the report says so instead of leaving a gap. The top pages, channels and search queries show as tables on the page, in the email and in the CSV. A viewer can pick other dates on the report link (`?from=&to=`, also on the CSV link). Page speed is the average of the latest stored mobile test per page. Migration `20270318_250000_client_report_options` adds `sections`, `range_from` and `range_to` to `eg_client_reports`. Specs in `tests/int/agency-tools.int.spec.ts`.
+
+<a id="aff-014"></a>
+#### AFF-014 · 22f Client reports, first version (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**22f Client reports, first version (built 17 Nov 2026).** Switch Client reports on in Site Settings. Admin > Client reports: make a named report with a period (7, 30, 90 days or this month), copy its private read-only link (`/client-report/<token>`, 192-bit token, no sign-in, noindex, numbers only: orders, revenue, refunds, net, units, customers, form entries, published pages and posts; a section whose feature is off is left out), download the numbers as CSV (admin and public link), email the report now, and set a weekly or monthly email to up to ten addresses (new "Client report emails" cron job, one failed send is not retried every hour). A link can be switched off, restored or replaced with a new one. English only. Code: `src/features/clientReports/`, `src/app/(engage)/api/admin-client-reports/route.ts`, `src/app/(engage)/api/client-report/route.ts`, `src/app/(frontend)/client-report/[token]/page.tsx`, migration `20270317_110000_client_reports` (table `eg_client_reports`).
+
+<a id="aff-015"></a>
+#### AFF-015 · 17g Agency demos leftovers (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17g Agency demos leftovers (built 17 Nov 2026).** Reset now also deletes pages, posts and products (matched by slug) and pictures added after the copy; saving the copy keeps the picture files in the media bucket under `demo-copy/<file name>` (up to 500 files of 15 MB), and reset puts back lost pictures first so the import maps picture ids by file name. The banner text on the Agency demos screen shows to visitors as a strip above every public page (Shine classes, `DemoBanner` in the frontend layout). Start a demo from a starter: creates a switched-on site template from a chosen starter and saves the copy in one step (site templates are not part of the copy, so a reset leaves them). Export as static HTML: the browser crawls the sitemap pages without sign-in, fetches style sheets, fonts and pictures, drops scripts, rewrites links relative and downloads a zip (limits: 300 pages, 1500 files, 150 MB). Code: `src/features/demos/` (`pictures.ts`, `staticExport.ts`, `components/DemoBanner.tsx`, `components/StaticExportPanel.tsx`, `service.ts`), `tests/int/agency-tools.int.spec.ts`.
+
+<a id="aff-016"></a>
+#### AFF-016 · 22g Agency demos, first version (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**22g Agency demos, first version (built 17 Nov 2026).** Switch Agency demos on in Site Settings, under Features. Admin > Agency demos: Save the site as the demo copy (settings, header and footer, redirects, page templates, field groups, pages, posts, products and picture details; never users, roles, customers or keys; capped at 1.5 MB, over that it says so), Reset to the saved copy now, a reset schedule (never, hourly, daily) run by the new "Demo reset" cron job, a view-only demo account (Viewer role, limited to the current domain, one-time password shown once), and Download as an importable package (the same file Settings, Export and import reads). English only. Code: `src/features/demos/` (`core.ts`, `store.ts`, `service.ts`, `components/DemosPanel.tsx`), `src/app/(engage)/api/admin-demos/route.ts`, `src/admin/views/DemosView.tsx`, migration `20270317_100000_demos` (tables `eg_demo_settings`, `eg_demo_snapshots`), cron job in `src/features/cron/jobs.ts`, `tests/int/agency-tools.int.spec.ts`.
+
+<a id="aff-017"></a>
+#### AFF-017 · 26b payout details and 26a bot count (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26b payout details and 26a bot count (built 17 Nov 2026).** An affiliate can say how they want to be paid on their dashboard (plain text, 300 characters, saved with their private token); the owner sees it under their name on the Affiliates page and in a Payout details column of the payout CSV, then pays outside the site as before. Crawler and script hits on the visit route are still not logged as visits but are counted per day in `eg_affiliate_bot_hits`, and the Recent visits note shows the count for the last 7 days. Code: `src/app/(engage)/api/affiliate-payout-details/route.ts`, `PayoutDetailsForm.tsx`, `store.ts` (`setPayoutDetails`, `countBotHit`, `botHitsSince`), migration `20270317_200000_affiliate_payout_bots`.
+
+<a id="aff-018"></a>
+#### AFF-018 · 26c creatives kit (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26c creatives kit (built 17 Nov 2026).** On the Affiliates page the owner ticks up to 20 images from the media library. Each active affiliate's dashboard then shows them with a Download link and a copy-ready HTML snippet (an image linking to the affiliate's own referral link with rel sponsored nofollow; values escaped). One shared kit for everyone; pending and suspended affiliates see none; private media files stay protected by the file route. Code: `parseCreativeIds` and `bannerSnippet` in `core.ts`, `imageChoices` and `creativesByIds` in `store.ts`, `AffiliateDashboardView.tsx`, `AffiliatesPanel.tsx`, migration `20270317_190000_affiliate_creatives`, tests in `tests/int/affiliates-core.int.spec.ts`.
+
+<a id="aff-019"></a>
+#### AFF-019 · 26c member portal (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26c member portal (built 17 Nov 2026).** A signed-in member with a verified email can open `/account/affiliate` and see their own affiliate dashboard. The affiliate is matched by email, so a member only sees results for their own verified address (the private-link page still works). A member who is not an affiliate sees the Join form, and the public Affiliates page links here. The dashboard body is shared in `AffiliateDashboardView.tsx`. Uses the site sign-in and email verification, so no new tables. Code: `src/app/(frontend)/account/affiliate/page.tsx`, `findByEmail` in `store.ts`.
+
+<a id="aff-020"></a>
+#### AFF-020 · 26a visit log (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26a visit log (built 17 Nov 2026).** The Affiliates page lists the newest 50 tracked visits (time, affiliate, landing page, UTM values). Crawlers are still not logged. Code: `recentVisits` in `src/features/affiliates/store.ts`, `/api/admin-affiliates`, `AffiliatesPanel.tsx`. No new tables.
+
+<a id="aff-021"></a>
+#### AFF-021 · 26c reports (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26c reports (built 17 Nov 2026).** The Affiliates page shows Orders, commissioned sales and conversion (orders per visit, reversed commissions not counted) for each affiliate and a Top affiliates table (top ten by sales). No new tables. Code: `affiliateReport` in `src/features/affiliates/commission.ts`, `/api/admin-affiliates`, `AffiliatesPanel.tsx`, tests in `tests/int/affiliate-commission.int.spec.ts`.
+
+<a id="aff-022"></a>
+#### AFF-022 · 26b product and tier rates (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26b product and tier rates (built 17 Nov 2026).** The commission is now worked out line by line: the order discount is shared across lines in proportion to their value, a product with its own rate (Affiliates > Product rates, a product picker) earns that rate, other lines earn the program rate or the sales tier rate, and an affiliate's own rate beats both. Sales tiers are one per line ("sales in dollars, rate percent") in the settings; an affiliate's commissioned sales so far (waiting and paid) pick the tier. The blended percent is stored unrounded so refunds still reduce the commission in proportion. Code: `commissionForLines`, `parseTiers`, `tierRate` in `src/features/affiliates/commission.ts`, `service.ts`, `store.ts` (`eg_affiliate_product_rates`), migration `20270317_180000_affiliate_rates`, tests in `tests/int/affiliate-commission.int.spec.ts`.
+
+<a id="aff-023"></a>
+#### AFF-023 · 26b category (tag) commission rules (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26b category (tag) commission rules (built 17 Nov 2026).** Choice: the shop already groups products with Product tags (a many-to-many on products; the old Digital/Physical `category` select is only a type flag), so category rates use tags. Affiliates screen has Tag rates (table `eg_affiliate_tag_rates`, migration `20270317_220000_affiliate_tag_rates`). Precedence per order line: the affiliate's own rate, the product's rate, the highest rate among the product's tags (`highestTagRate`, tag lookup in `productTagMap` reads `eg_products_rels`), then the tier or program rate.
+
+<a id="aff-024"></a>
+#### AFF-024 · 26b renewals and recurring commission (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26b renewals and recurring commission (built 17 Nov 2026).** Affiliates settings has Commission on subscription renewals and Stop after (months, 0 for no limit); migration `20270317_210000_affiliate_recurring`. A renewal order (made by the Stripe payment webhook, `subscriptions/webhooks.ts`, only for billing reason subscription_cycle) goes to `affiliateRenewalPaid` in `affiliates/service.ts`: it finds the affiliate who earned the buyer's first non-renewal commission (`originalCommissionForEmail`, matched by buyer email), checks they are still active and the window has not passed (`renewalWindowOpen`), stores a commission with source `renewal`, then works it out like any paid order (override, product rate, tier, waiting period, emails). Refunds work as before.
+
+<a id="aff-025"></a>
+#### AFF-025 · 26c affiliate webhook events (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26c affiliate webhook events (built 17 Nov 2026).** Four new events in `webhooks/events.ts`: `affiliate.joined`, `affiliate.approved`, `affiliate.commission.earned` (the commission starts its waiting period) and `affiliate.payout.recorded`, each with an allowlist of fields (no token or payout details) and a label in all thirteen languages (`webhooks.event.affiliate.*` in `uiStrings`). Emitted through `emitAffiliateEvent` and `emitAffiliateStatus` in `affiliates/service.ts` from the join route, the admin create, status and payout actions and the paid-order hook. They also work as Email > Notifications triggers' source events and appear in the generated webhook guide.
+
+<a id="aff-026"></a>
+#### AFF-026 · 26c translated affiliate emails and the now-payable email (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26c translated affiliate emails and the now-payable email (built 17 Nov 2026).** The approved, commission and payout emails now take their wording from the interface strings (`affiliate.email.*` in `uiStrings`, all thirteen languages) and are sent in the site's default language when Languages is on, English otherwise (`emailStrings` in `affiliates/service.ts`; affiliates have no language of their own yet). A new hourly job `affiliate-payable` (`cron/registry.ts`, `cron/jobs.ts`) emails each affiliate once when a commission's waiting period ends (`sendPayableEmails`; flag column `payable_notified`, migration `20270317_230000_affiliate_payable_email`, which marks existing past-due commissions as sent so old ones are not emailed). With a waiting period of 0 days no second email is sent. The approved email is the automatic welcome email (26e).
+
+<a id="aff-027"></a>
+#### AFF-027 · 26e Affiliates page template and the welcome email (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26e Affiliates page template and the welcome email (built 17 Nov 2026).** A new element `affiliate-join` (def `lib/elements/affiliateDefs.ts`, server renderer `components/blocks/elements/AffiliateServer.tsx`) shows the program summary, terms and join form, with switches for each part; it renders nothing while Affiliates is off. The visual editor page template Templates > Affiliates page (Shop) puts a hero, three explaining cards and that element on a page (`templatePresets.ts`; the design v1 corpus snapshot gained its entry). The automatic welcome email is the approved email, now translated (see 26c). The dashboard card idea was dropped: Matt chose the setup checklist on the Affiliates page only.
+
+<a id="aff-028"></a>
+#### AFF-028 · 26a short links (vanity codes per product) (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**26a short links (vanity codes per product) (built 17 Nov 2026).** Choice: a vanity code is a short link, `/a/<code>`, that belongs to one affiliate and opens one product (or the home page) with that affiliate's referral code and any utm values attached, so the normal capture and attribution do the tracking. Affiliates screen, Short links adds and removes them; the affiliate's dashboard lists their own. Table `eg_affiliate_links` (migration `20270317_240000_affiliate_links`), route `app/(frontend)/a/[code]/route.ts`, store helpers `addShortLink`, `resolveShortLink`, `listShortLinks`. The destination is always a path on the site; a switched-off program, unknown code or draft product gives 404 or the home page.
+
+<a id="cat-seo"></a>
+### SEO: SEO, blog and content
+
+<a id="seo-001"></a>
+#### SEO-001 · Task 2a blog builder, first slice (#154, 31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Task 2a blog builder, first slice (#154, 31 Oct):** "Write with AI" on the Blog list: questions, five titles, outline edit, section-by-section writing, meta, slug, tags and category, then Create draft (saved as an unpublished post). Uses the AI plumbing and spend cap. Later slices: see Task 2a.
+
+<a id="seo-002"></a>
+#### SEO-002 · Task 2a and 2b, second PR (feat/task-2ab, commit d7510dc, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 2a and 2b, second PR (feat/task-2ab, commit d7510dc, 1 Nov):** blog builder saved prompts and brand voice (migration 20270128), cited-only sources, per-post AI limit, featured image gallery match; template libraries Library tab filter, audit entries, version pinning; 40 new strings in all 12 dictionaries. Fresh-install order specs pass (146 tests). Live checks in Task 6.
+
+<a id="seo-003"></a>
+#### SEO-003 · Task 2a and 2b, first PR (PR #189, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 2a and 2b, first PR (PR #189, 1 Nov):** private library token with Test token button; migration 20270127 copies the old token; old "Template repositories" group, its fields and `/api/template-repos` routes removed; blog SaaS button disabled with a note; `site-templates-resolve` cold import moved to the preload; migration offsets in the fresh-install specs moved for the new migration. Decisions for the remaining 2a and 2b items are in their sections.
+
+<a id="seo-004"></a>
+#### SEO-004 · Task 10 SEO (PR #200, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 10 SEO (PR #200, 1 Nov):** cornerstone checkbox on pages and posts; the audit checks cornerstone items more strictly (900 words, keyphrase in a subheading, internal links and alt text) and filters to them. Bulk edit of SEO titles and meta descriptions in the audit list: one request, up to 100 rows, each row written as the signed-in user with access rules on. Sitemap image entries for posts (featured image), products (images, up to 10) and events (cover). Orphan check for pages (no published content links to them) and up to five link suggestions per page by title and keyphrase words; no AI, menus not counted. VideoObject for YouTube video elements (Vimeo and uploaded files get none: no thumbnail). FAQ questions on a non-FAQPage page now go in a separate FAQPage node (before, a WebPage with questions), and /faq emits FAQPage. A published post, product or event whose slug changes gets a 301 from the old path, skipped when one exists (as the tree does). Migration 20270131_100000_seo_cornerstone. Live checks in Task 6.
+
+<a id="seo-005"></a>
+#### SEO-005 · Known limits: SEO, redirects, consent, email, shop, ads (PR #205, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Known limits: SEO, redirects, consent, email, shop, ads (PR #205, 1 Nov):** 17 fixed: ads in-feed and sidebar slots wired; shop coupon race closed by an atomic 30-minute hold; shop brand, tag and search filters in the database (no newest-200 scan); SES List-Unsubscribe header; suppression list admin screen; CSV quoted newlines; orphan check counts menu, header and footer; slug change redirects pages and their descendants, and courses; 404 log in Redirects > 404s; VideoObject for Vimeo and uploaded video, and a per-video upload date; consent log requests signed and rate limited; Meta and Clarity consent API on withdrawal; banner preview uses unsaved edits; banner logo from the media library; AdSense id format checked. Permanent: AdSense auto ads cannot be unloaded on client navigation; Prebid price floors need the vendor module; Cloudflare Email has no bounce feed; complaints and bounces suppress bulk mail only (deliberate); customer bulk actions and custom order statuses are not built; a YouTube playlist has no single video; GA4 or GTM without Consent Mode, TikTok and custom code are stopped only by reload. Live checks in Task 6 (Known limits sweep).
+
+<a id="seo-006"></a>
+#### SEO-006 · 21l Site planner (built 16 Nov 2026, planning and draft pages; filling each page with the AI builder is not wi
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21l Site planner (built 16 Nov 2026, planning and draft pages; filling each page with the AI builder is not wired).** Switch Site planner on in Site Settings, under Features, then open Settings > Site planner. Describe the site; optionally Ask me questions first (the AI asks 5 to 7, you answer); Make the page plan returns a tree of up to 40 pages, each with a brief and a list of sections. Edit titles, move pages under other pages, change status (Idea, Briefed, Draft page made, Done), edit briefs and sections, add or remove pages, or ask the AI to Suggest more pages (merged in, repeats skipped). Create draft pages makes a draft for every page that has none, with the right parent, and never publishes. Progress counts and the next page to fill show at the top. It uses the Claude or OpenAI key and the monthly spend cap from Integrations (usage is counted as planner), and replies are checked before use (bad JSON, loops and duplicate slugs are repaired or refused). Admin only. Code: `src/features/sitePlanner/plan.ts` (pure), `prompts.ts`, `store.ts`, `SitePlannerPanel.tsx`, `SitePlannerView.tsx`, `/api/admin-site-planner`, feature `siteplanner` (table `site_plans`), migration `20270316_290000_site_planner`, `tests/int/site-planner.int.spec.ts`. The AI calls were not run against a real key here.
+
+<a id="seo-007"></a>
+#### SEO-007 · 21i Coming soon and staging (built 16 Nov 2026; signup form and the visual builder for the screen are not buil
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21i Coming soon and staging (built 16 Nov 2026; signup form and the visual builder for the screen are not built).** Coming soon: under Site pages and maintenance the Screen choice is now Maintenance or Coming soon. Coming soon takes a launch date and time, shows a live countdown (days, hours, minutes, seconds) under the headline and message, and opens the site to everyone by itself when the date is reached (the page reloads at zero). Admins, the preview link, the search-engine noindex on the screen and the excluded paths work as before. Staging: set `SITE_ENV=staging` (or `STAGING=1`) in the host's environment (not in the database, so copying the live database cannot switch it on or off). On a staging site every response carries `X-Robots-Tag: noindex, nofollow, noarchive`, pages carry the matching meta tag, `/robots.txt` disallows everything, every admin page shows an orange Staging banner, email sending is refused and logged as turned off, and card payments, shop subscription checkout and membership checkout throw instead of starting. Code: `src/features/site/staging.ts`, `countdown.ts`, `LaunchCountdown.tsx`, `MaintenanceScreen.tsx`, `pagesShape.ts`, `SitePages.ts`, `StagingBanner.tsx`, middleware, robots route, `email/index.ts`, `stripeAdapter.ts`, migration `20270316_280000_coming_soon`, `tests/int/coming-soon-staging.int.spec.ts`.
+
+<a id="seo-008"></a>
+#### SEO-008 · 21h SEO checks (built 16 Nov 2026, the broken link checker only)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21h SEO checks (built 16 Nov 2026, the broken link checker only).** The SEO audit screen has a Broken links section: Check links reads every link in published pages, posts, products and events, checks them in batches of 20 (this site and other sites, HEAD then GET, 6 second limit, private and local addresses refused), and lists the broken ones (404 and 410) with the pages that hold them. Links to sites that refuse the check (401, 403, 429, 5xx, no answer) are listed as unsure, not broken. For a broken link on this site you type the new address and Add redirect creates a 301. Admin only. Code: `src/features/seo/linkCheck.ts`, `linkCheckSummary.ts`, `linkCheckRun.ts`, `/api/admin-seo-links`, `BrokenLinksPanel.tsx`, `tests/int/link-check.int.spec.ts`. No migration.
+
+<a id="seo-009"></a>
+#### SEO-009 · 21g Structured data (built 16 Nov 2026, the extra types)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21g Structured data (built 16 Nov 2026, the extra types).** Pages and posts can now be typed Recipe, Job posting, How-to, Software application, Review, Person or Local business (posts: Recipe, How-to, Review). A "Page type facts (JSON)" box appears for those types, and the page's structured data gets the matching node as its main entity (ingredients, steps and times for a Recipe, company, place and pay for a job, rating for a review, and so on). Properties without data are left out, and a missing-facts list per type (Google's required and recommended properties) is available from `validateRich`. Event, Product offers, Course, VideoObject, FAQPage and breadcrumbs already existed. Code: `src/features/seo/richTypes.ts` (pure builders and validator), `schemaType.ts`, `pageSchema.ts`, `PageJsonLd.tsx`, `Pages.ts`, `Posts.ts`, migration `20270316_270000_schema_facts`, `tests/int/rich-schema.int.spec.ts`.
+
+<a id="seo-010"></a>
+#### SEO-010 · 21f Blog RSS (built 16 Nov 2026; the knowledgebase part is not built)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21f Blog RSS (built 16 Nov 2026; the knowledgebase part is not built).** `/feed.xml` lists the newest 30 published posts as RSS 2.0 (title, link, date, author, categories, excerpt), `?category=<slug>` or `?tag=<slug>` narrows it (same slugs as the archive pages), and a Summary or Full text setting plus an on or off switch live in Blog settings. Full text converts the post's rich text to simple HTML; posts built only with page blocks fall back to the excerpt. The blog page advertises the feed so readers and browsers can find it. Code: `src/features/blog/rss.ts` (pure), `src/app/(frontend)/feed.xml/route.ts`, `BlogSettings.ts`, `blog/page.tsx`, migration `20270316_260000_blog_rss`, `tests/int/blog-rss.int.spec.ts`. Comments moved to Task 27, as before.
+
+<a id="seo-011"></a>
+#### SEO-011 · 21d Breadcrumb styling (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21d Breadcrumb styling (built 16 Nov 2026).** New Breadcrumbs group in SEO settings: separator (/, >, a single angle, |, -, a bullet), Home label, make the current page a link, and structured data on or off. The automatic breadcrumb trail uses them, and the Auto breadcrumbs element can override the Home label and separator for one trail (block design controls cover colours and spacing as for any element). Structured data off removes the BreadcrumbList from the shop, blog, events and courses pages. The manual Breadcrumbs element gained the same separators. Code: `src/features/seo/breadcrumbSettings.ts` (pure), `src/globals/SeoSettings.ts`, `Wave63Server.tsx`, `wave63Defs.ts`, `wave36Defs.ts`, `Wave36Elements.tsx`, the four archive pages, migration `20270316_250000_breadcrumb_settings`, `tests/int/breadcrumb-settings.int.spec.ts`.
+
+<a id="seo-012"></a>
+#### SEO-012 · 16l Site planner extras (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**16l Site planner extras (built 17 Nov 2026).** Per plan: a brand voice (overrides the Build with AI one in every planner AI call) and a page template (Create draft pages starts every draft from its sections, with fresh row ids). Per page: Suggest sections (AI), drag to reorder (drop on the top or bottom half of another page; dropping on a page of another level moves it under that parent, never under its own child) with Move up and Move down buttons for the keyboard, and Fill this page with AI, which opens that page in the visual editor with the Build with AI dialog already open, set to whole page, with the page's brief and sections entered; Next planned page (in plan tree order, pages that have a draft) follows once the page is saved. A Plan diagram shows the tree as boxes and lines, the box edge showing the status. Plan settings are part of the saved plan JSON, so no migration. The planner and editor texts added here are English only for now. Code: `src/features/sitePlanner/plan.ts`, `prompts.ts`, `SitePlannerPanel.tsx`, `src/app/(engage)/api/admin-site-planner/route.ts`, `src/views/VisualEditor.tsx`, `visualEditor/AiBuilderPanel.tsx`, `EditorDock.tsx`, `tests/int/site-planner-extras.int.spec.ts`.
+
+<a id="seo-013"></a>
+#### SEO-013 · 16i Screen templates and staging blocks (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**16i Screen templates and staging blocks (built 17 Nov 2026).** Two new template kinds, Maintenance screen and Coming soon screen (Templates, tab Maintenance and coming soon), are built in the visual editor like any template. When one is in use it replaces the built-in screen; a template with a Template content element shows the built-in screen there. A Countdown element with a blank date counts down to the launch date set under Site pages and maintenance. A new Coming soon signup element draws the email box (the built-in Coming soon form; it draws nothing while that form is a Draft). Starters: Countdown and signup, Back soon. With no template the built-in screen is unchanged, and the kinds are optional so the coverage warnings do not list them. No migration. On a staging site (`SITE_ENV=staging`) text messages, web push and outgoing webhooks are now switched off too (a webhook delivery is logged as skipped). Code: `src/features/siteTemplates/kinds.ts`, `render.tsx` (`transformBlocks`, `replaceContent`), `starters.ts`, `src/features/site/screenContext.ts`, `screenCountdown.ts`, `src/lib/elements/comingSoonDefs.ts`, `ComingSoonServer.tsx`, `src/app/(frontend)/layout.tsx`, `sms/index.ts`, `push/send.ts`, `webhooks/delivery.ts`, `tests/int/screen-templates.int.spec.ts`.
+
+<a id="seo-014"></a>
+#### SEO-014 · 16i Coming soon email signup (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**16i Coming soon email signup (built 17 Nov 2026).** While the coming soon screen is up, visitors see an email box. It posts to a built-in form called Coming soon (public key `comingsoon`, created the first time it is needed and published), so each signup is an ordinary form entry: it shows under the form's Submissions, goes out with its email forwarding rules, webhooks and data API. No new list or table. To turn the signup off, set the Coming soon form to Draft (it stays in place and the screen shows no box). The box is also hidden when Forms is switched off, and when a captcha is on for forms (the screen has no challenge widget, so every signup would fail). Its text (`comingSoon.signup.*`) is in the admin reference table and all 12 other dictionaries. No migration. Code: `src/features/forms/comingSoon.ts`, `comingSoonKey.ts`, `comingSoonSignup.ts`, the create hook in `configHooks.ts` (fixed key only for this form, read from the request context), `src/features/site/ComingSoonSignup.tsx`, `MaintenanceScreen.tsx`, `src/app/(frontend)/layout.tsx`, `tests/int/coming-soon-signup.int.spec.ts`.
+
+<a id="seo-015"></a>
+#### SEO-015 · 16d Breadcrumb schema on pages and posts follows the sitewide settings (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**16d Breadcrumb schema on pages and posts follows the sitewide settings (built 17 Nov 2026).** Ordinary pages, posts, products and events already emitted a BreadcrumbList inside the page script; it now respects the SEO settings Breadcrumbs switch (structured data off removes it) and uses the sitewide Home label. No migration. Code: `src/features/seo/PageJsonLd.tsx`, `schemaNodes.ts`; test `tests/int/seo-breadcrumb-pages-posts.int.spec.ts`.
+
+18b and 18c leftovers: the Authentication overview has a Test button per method (provider configuration check for social providers, a test email to the signed-in admin for magic link, email code and email verification; `testAuthMethodAction`, `features/security/authMethodTest.ts`). The dashboard Sign-ins card has From and To date pickers (`?signinFrom=&signinTo=`, up to 365 days, `features/security/authRange.ts`) instead of a fixed 30 days. No migration; thirteen languages.
+
+<a id="seo-016"></a>
+#### SEO-016 · Blog address (16e, built 17 Nov 2026)
+
+_Date: 17 Nov 2026_
+
+**Blog address (16e, built 17 Nov 2026).** SEO settings > Permalinks has a Blog address (one segment, lowercase letters, digits and hyphens, 3 to 40 characters; empty or `blog` keeps `/blog`). A custom address is served from the `/blog` folder by rewrite, and a page view of `/blog` redirects (308) to it, keeping the rest of the path and query. The sitemap and the blog post, blog index, category, tag and author canonical tags use the new address at once. The save check refuses site words, the admin and sign-in addresses, and a top-level page with the same address. Migration `20270317_290000_blog_base` adds `permalinks_blog_base` to `eg_seo_settings` (baseline regenerated). Code: `src/features/seo/permalinks.ts` (pure rules), `permalinkStore.ts` (one cached D1 read, 60 seconds, dropped on save), `permalinkValidate.ts`, `src/middleware.ts`, `src/features/seo/sitemap.ts`, `src/features/siteTemplates/archiveQueries.ts`; test `tests/int/blog-base-permalinks.int.spec.ts`. Shop bases and the other leftovers are in `docs/remaining-work.md` under Task 16e.
+
+<a id="seo-017"></a>
+#### SEO-017 · Task 16g facts editor (17 Nov 2026)
+
+_Date: 17 Nov 2026_
+
+**Task 16g facts editor (17 Nov 2026).** The page type facts are a form instead of JSON (`src/fields/schemaFacts/SchemaFactsField.tsx`, fields per type in `FACT_FIELDS` in `richTypes.ts`), shown for Recipe, Job posting, How-to, Software application, Review, Person and Local business, with a live list of missing required and recommended facts. The same list is a Page type facts check in the SEO analysis and the audit (`factsCheck` in `analysis/analyze.ts`). Stored value is the same JSON text, no migration. Tests in `tests/int/rich-schema.int.spec.ts`.
+
+<a id="seo-018"></a>
+#### SEO-018 · Task 16f feed addresses and images (17 Nov 2026)
+
+_Date: 17 Nov 2026_
+
+**Task 16f feed addresses and images (17 Nov 2026).** `<blog>/category/<slug>/feed` (a nested category uses its last slug) and `<blog>/tag/<slug>/feed` are rewritten in the middleware to `/feed.xml?category=` and `?tag=` (`src/features/blog/feedAddress.ts`); category and tag pages add their own feed link to the page head unless the feed is off (`feedLink.ts`); items carry the featured image as `enclosure` and `media:content`; item links use the configured blog address. No migration. Tests in `tests/int/feed-address.int.spec.ts`.
+
+<a id="seo-019"></a>
+#### SEO-019 · Task 16h site-wide traffic lights (17 Nov 2026)
+
+_Date: 17 Nov 2026_
+
+**Task 16h site-wide traffic lights (17 Nov 2026).** The SEO audit screen shows five lights above the summary for admins: robots.txt (blocks everything, no Sitemap line), sitemap (off, empty), HTTPS, canonical address (not set, trailing slash) and duplicate titles (`src/features/seo/sitewideChecks.ts`, gathered in `/api/admin-seo-audit`, shown by `SitewideLights` in `SeoAuditClient.tsx`). Computed on each visit, nothing stored, no migration. Tests in `tests/int/sitewide-checks.int.spec.ts`.
+
+<a id="seo-020"></a>
+#### SEO-020 · 16p Audit columns: image file sizes and last modified (built 22 Nov 2026)
+
+_Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 Nov 2026)_
+
+**16p Audit columns: image file sizes and last modified (built 22 Nov 2026).** The crawl stores the Last-Modified header and, for the first six same-site images of each page, a HEAD request's content-length (total and largest) in the existing page JSON column (no migration). The audit table has three new columns: Image files total (KB), Largest image (KB) and Last modified. External broken links stay in the broken link checker on the same screen. Code: `crawl/runner.ts` (`imageSizes`, `lastModifiedOf`), `crawl/model.ts`, `crawl/table.ts`.
+
+<a id="seo-021"></a>
+#### SEO-021 · 16e Visitor-facing blog links follow the blog address (built 22 Nov 2026)
+
+_Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 Nov 2026)_
+
+**16e Visitor-facing blog links follow the blog address (built 22 Nov 2026).** Post list, post navigation, loop grid cards, archive cards, category, tag and author pages (post links, sub category links, breadcrumbs, pagination), blog index (pagination, collection JSON-LD), site search results and suggestions and the 404 page now build post and category links from the saved blog address (`blogPath` and `readBlogBase`, optional `blogBase` argument on `postArchiveItems`, `categoryUrl`, `categoryCrumbs`, `subCategoryLinks`, `loopItemsFromDocs`). No migration.
+
+<a id="seo-022"></a>
+#### SEO-022 · 16d Manual Breadcrumbs follows the sitewide settings (built 22 Nov 2026)
+
+_Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 Nov 2026)_
+
+**16d Manual Breadcrumbs follows the sitewide settings (built 22 Nov 2026).** The manual Breadcrumbs element now renders through a server wrapper (`ManualBreadcrumbsElement` in `Wave63Server.tsx`, reached from `BlockRenderer.tsx`). It takes the separator from SEO settings unless the element sets its own, relabels a first item called Home (address blank or /) with the Home label, and drops its BreadcrumbList JSON-LD when structured data is off. The editor canvas still draws the plain element.
+
+<a id="seo-023"></a>
+#### SEO-023 · Task 7 Add several pages on the Pages screen (22 Nov 2026)
+
+_Date: 22 Nov 2026_
+
+**Task 7 Add several pages on the Pages screen (22 Nov 2026).** Pages list header has an Add several pages button (`src/features/bulkCreate/AddSeveralPages.tsx`, loaded in the browser only). A dialog takes one title per line, an optional shared parent page, template, status (draft, or published for users with publish permission) and, when Languages is on, the language the titles are written in (saved as that language's title translation). Show the addresses runs the same plan as Bulk create (clashes, missing parents) and lists the slugs; Create makes the pages through the signed-in user's own access rules; Undo this batch works for a day while nothing is published. It reuses `/api/admin-bulk-create` (new `options` action and `defaults` field) and the Task 11g plan and run code; tests in `tests/int/bulk-create.int.spec.ts`. Live check in Live checks.
+
+<a id="seo-024"></a>
+#### SEO-024 · Task 6 items 16m, 16n, 16o: accessibility in the SEO review, snippets and PageSpeed checklist, site audit dash
+
+_Date: 22 Nov 2026_
+
+**Task 6 items 16m, 16n, 16o: accessibility in the SEO review, snippets and PageSpeed checklist, site audit dashboard (22 Nov 2026).** Migration `20270322_100000_seo_site_audit` adds `eg_seo_crawl_runs`, `eg_seo_crawl_pages`, `eg_seo_crawl_config`, `eg_seo_snippet_targets` and `eg_pagespeed_results.audits` (all in `CORE_TABLE_BASES`, baseline regenerated). 16m: `analysis/accessibility.ts` adds heading order, empty headings and image alt checks to `analyze()` (new `accessibility` list and score; the editor SEO tab shows an Accessibility analysis section; audit rows carry `findings` marked SEO or Accessibility and the audit list shows a badge); the rendered-page checks (landmarks, link and button names, labels, frame titles, duplicate ids, tabindex, aria-hidden focus, ARIA roles, lang, skip link) are in the catalogue `crawl/issues.ts` and run in the site audit and the page card; contrast, tap size and focus order come from the PageSpeed accessibility audits. 16n: `src/features/seo/snippets.ts` is a data-driven catalogue of Google's gallery (paragraph, list and table are judged from the content; the rest from JSON-LD with required and recommended properties; FAQ and How-to are markup only); the edit screen has a Snippets and page checks card (`ui/PageChecksCard.tsx`, route `/api/admin-seo-page`) that loads the live page, shows ticked types and types the page has, an Add a type menu, suggestions from the collection, target types saved per page, the Rich Results Test link and our own SEO, accessibility and technical checklist (passing and Not applicable rows stay). `pagespeed/checklist.ts` parses every audit of every category in the PageSpeed response (so new groups such as Agentic browsing appear without a rebuild), stores it on the newest result of a page and device, and the PageSpeed card shows it as the Full checklist (Pass, Warning, Fail, Check by hand, Not applicable). 16o: `src/features/seo/crawl/` crawls the sitemap plus every published page over the site's own address a few pages per step (`/api/admin-seo-crawl`, admin only; the screen loops the steps, the `seo-crawl` cron job continues and starts scheduled crawls), parses each page (`htmlFacts.ts`), judges it with about 60 checks (`issues.ts`: titles, descriptions, headings, thin and duplicate content, status codes and redirect chains, canonical, hreflang return links, images, structured data, Open Graph, mixed content, speed, size, orphans, depth, broken internal links, accessibility), keeps the last three runs and compares with the previous one. The SEO audit screen has a Site audit panel: health score, Errors, Warnings, Notices with the change, issue cards that filter, a table of 30 chooseable columns with sort, search and filters, a detail panel with fix hints and an editor link, CSV export, Mark noindex, Add 301 redirects and a schedule (off, daily, weekly; off by default). Tests: `tests/int/seo-site-audit.int.spec.ts`, fresh-install spec extended. Left open under Task 6: image file sizes and last modified as columns, external broken links in the audit table, the Pages list row overview, rings from our own checks.
+
+<a id="cat-bld"></a>
+### BLD: Visual builder, templates and elements
+
+<a id="bld-001"></a>
+#### BLD-001 · Waves 67-68 delivery
+
+_Date not recorded_
+
+**Waves 67-68 delivery:** Lottie via the embed provider; CSP frame-src allows embed, video and map hosts; React #418 hydration fixes.
+
+<a id="bld-002"></a>
+#### BLD-002 · Export and assets
+
+_Date not recorded_
+
+**Export and assets:** Download HTML, asset collection and relinking, server template-asset insert, repo manifest refresh.
+
+<a id="bld-003"></a>
+#### BLD-003 · Build with AI
+
+_Date not recorded_
+
+**Build with AI:** Claude or OpenAI via Integrations keys; new section, whole page and edit selected modes; plan then build; refine by chat; media matching; monthly spend cap; SSE streaming.
+
+<a id="bld-004"></a>
+#### BLD-004 · Editor usability
+
+_Date not recorded_
+
+**Editor usability:** selection breadcrumb, Checks, save status, shortcuts and first-use tour, navigator reorder, recents and favourites, style presets, inline heading editing, "/" quick-insert, upload and paste in the media picker, Global (reusable) sections, library category filter as a single dropdown.
+
+<a id="bld-005"></a>
+#### BLD-005 · Page settings
+
+_Date not recorded_
+
+**Page settings:** title, slug, status, SEO title and description, social image, noindex.
+
+<a id="bld-006"></a>
+#### BLD-006 · Templates
+
+_Date not recorded_
+
+**Templates:** template presets, form presets (live), shop presets, site-wide page effects, template display conditions and widgets, 9 template starters (edit screen). Site-template kinds (archive-category, archive-tag, archive-author, search-results, not-found and others) with starters, template import and export.
+
+<a id="bld-007"></a>
+#### BLD-007 · Wave 69
+
+_Date not recorded_
+
+**Wave 69:** `embed-code` element (third-party scripts and widgets run in a sandboxed iframe served from `/embed-frame/<hash>`, consent gated, published content only, snippet never in URL; renders where a page path exists). Elements tab one scroll with compact tiles and a Comfortable/Compact toggle. Blog tags and author displayName/slug with `/blog/tag/[slug]` and `/blog/author/[slug]` archives and sitemap; byline no longer shows email. hideNativeCursor admin toggle. Social accounts Test connection button. Page audio also on Posts. Admin menu "Posts" renamed "Blog". Duplicate breadcrumbs type fixed (template widget now `auto-breadcrumbs`).
+
+<a id="bld-008"></a>
+#### BLD-008 · Wave 68 fixes
+
+_Date not recorded_
+
+**Wave 68 fixes:** hideNativeCursor option; fade-in on nested sections; installed fonts live in canvas; Preview-as picker always in top bar; product featured image in context; event dynamic tags and event block context; post.author falls back to business name.
+
+<a id="bld-009"></a>
+#### BLD-009 · Wave 68 other
+
+_Date not recorded_
+
+**Wave 68 other:** per-page background audio in Page settings (pageAudio group; starts muted, plays on first interaction). Rich inline text for quote, button and list. Category archive route `/blog/category/[slug]`. Templates list screen has a starters panel and import.
+
+<a id="bld-010"></a>
+#### BLD-010 · Elements
+
+_Date not recorded_
+
+**Elements:** text, heading, list, quote, code (with highlighting), table, button, icon, image, image lightbox, image accordion, video, video playlist, audio, map, divider, html, embed (consent gated), anchor, card, gallery, image comparison, hotspots, counter, progress, star rating, countdown, chart, data view, social, breadcrumbs, toc, search box, nav-menu, pagination, notice, marquee, tooltip, content switcher, reviews, loop, site logo, form builder, business hours, slides, author box, post navigation, language switcher, add to cart, cart link, product rating.
+
+<a id="bld-011"></a>
+#### BLD-011 · Section display modes
+
+_Date not recorded_
+
+**Section display modes:** columns, flex, tabs, accordion, carousel, grid, popup, stacked cards, horizontal scroll, sticky scroll story.
+
+<a id="bld-012"></a>
+#### BLD-012 · Design panel
+
+_Date not recorded_
+
+**Design panel:** backgrounds (colour, gradient, image, parallax, video, overlay, masks, slideshow, noise, blob), typography, spacing with units and link, border and shadow, hover and focus states, advanced (transform, position, filters, scoped CSS), effects (reveal, hover, glass, pointer, Ken Burns, animated border), visibility rules (applied in browser), theme tokens, reset and "only changed", search.
+
+<a id="bld-013"></a>
+#### BLD-013 · Foundation
+
+_Date not recorded_
+
+**Foundation:** undo/redo, clipboard and duplicate, drag and drop, keyboard move, autosave, lock banner, unsaved-changes guard, device-aware editing with per-device overrides, navigator, sections with columns and inner sections, import/export, column resize, sidebar hidden while editing.
+
+<a id="bld-014"></a>
+#### BLD-014 · Waves 43 to 48 (16 to 18 Oct) and waves 30 and 31
+
+_Date: 18 Oct 2026_
+
+**Waves 43 to 48 (16 to 18 Oct) and waves 30 and 31:** device-aware editing, undo/redo, shortcuts, context menu, structure picker, column panel; Theming global, colour resolver, repeater field, navigator, inline text editing, copy/paste style, and the colour, link, icon, range, dimensions, typography, shadow and gradient fields. All live.
+
+<a id="bld-015"></a>
+#### BLD-015 · Waves 70-71 (deployed 23 Oct)
+
+_Date: 23 Oct 2026_
+
+**Waves 70-71 (deployed 23 Oct):** Settings > Blog switches `showAuthors`, `authorArchives` and `showTags`, all default ON; per-post `hideAuthor` checkbox; migration 20261111_100000_blog_author_tag_switches (columns added to prod D1 directly on 23 Oct; the idempotent migration will no-op later). Wave 71: admin shell hydration fix (ThemeContext and NavContext start with server-safe defaults and sync in a mount effect).
+
+<a id="bld-016"></a>
+#### BLD-016 · Visual editor closed 23 Oct 2026, except Task 1a
+
+_Date: 23 Oct 2026_
+
+**Visual editor closed 23 Oct 2026, except Task 1a:** fixed 23 Oct: embed ratio field shown only for providers that follow it; provider select uses real option groups; AI builder usage rows flagged estimated when no token counts; embed-code identical snippets verified harmless; 'Posts' renamed 'Blog' across admin; migration `20261111` registry row present in prod eg_migrations. Verified live earlier: wave 68 and 69 library UI, routes, CSP, migrations, blog-settings fields.
+
+<a id="bld-017"></a>
+#### BLD-017 · Task 1a visual builder (18 to 23 Oct)
+
+_Date: 23 Oct 2026_
+
+**Task 1a visual builder (18 to 23 Oct):** waves 48 to 71 shipped and pushed (wave 68 embeds and social-feed, wave 69 embed-code and blog tags and authors, waves 70 and 71 blog switches); PR #2 (AI builder guide cap 17000 to 18000, 24 Oct).
+
+<a id="bld-018"></a>
+#### BLD-018 · Task 2 templates (through 27 Oct)
+
+_Date: 27 Oct 2026_
+
+**Task 2 templates (through 27 Oct):** Theming DONE; site template kinds, resolver and 'Template content' element (waves 23, 62 to 68); conditions editor (wave 62); starters (waves 63, 68); PR #27 archive grid and pagination; PR #28 Templates dashboard, tabs and coverage panel; Preview-as and import/export (wave 67). Public pages return 200 without any template.
+
+<a id="bld-019"></a>
+#### BLD-019 · Task 2b Templates hub (28 Oct)
+
+_Date: 28 Oct 2026_
+
+**Task 2b Templates hub (28 Oct):** PR #31 one Templates table with Suggested missing (phase 1); #32 reusable sections open in the visual builder; #33 loop templates, loop-grid and archive-filter; #34 archive filters, per-item merge tags, old list pages redirect to /admin/templates.
+
+<a id="bld-020"></a>
+#### BLD-020 · Task 1a short links (#182, 31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Task 1a short links (#182, 31 Oct):** vm.tiktok.com, vt.tiktok.com, pin.it and on.soundcloud.com resolve to their canonical address on save (SSRF-guarded resolver; 5 hops, 5 s), so the embed renders as an iframe. Admin route POST `/api/admin-embed-resolve` is ready. Left: editor paste field and other collections (Task 1a).
+
+<a id="bld-021"></a>
+#### BLD-021 · Task 1a AI guide cap (#178)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 1a AI guide cap (#178):** fixes the `ai-builder-v2` guide text being over the 18000 cap (18080 failed on main). Live check in Task 6.
+
+<a id="bld-022"></a>
+#### BLD-022 · Task 1a legacy breadcrumbs and flaky spec (#179)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 1a legacy breadcrumbs and flaky spec (#179):** saved templates with the old breadcrumbs type now render; one flaky spec fixed.
+
+<a id="bld-023"></a>
+#### BLD-023 · Task 1a leftovers (#155)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 1a leftovers (#155):** visual editor draft recovery after session expiry (unsaved tree offered back, never auto-applied); AI usage flags `ai_builder_usage.estimated` (set when the provider sends no token counts; column present since 23 Oct). Live check in Task 6.
+
+<a id="bld-024"></a>
+#### BLD-024 · Task 2b templates hub (#153, #169, #161)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 2b templates hub (#153, #169, #161):** #153 blog post in Loop merge tags, tag and author archive routes, header and footer conditions; #169 templates consolidate (header and footer tab, audience, page picker); #161 template libraries slice 1 (Settings > Template libraries, Library tab, "Create page from this template", pictures to Media, old Integrations repo list copied across). Later slices: see Task 2b.
+
+<a id="bld-025"></a>
+#### BLD-025 · Task 2 duplicate starters (#153)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 2 duplicate starters (#153):** `/admin/templates` shows one starters list (New site template and Import); site template edit screen shows only Export.
+
+<a id="bld-026"></a>
+#### BLD-026 · Task 2 template parts (#159, 31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Task 2 template parts (#159, 31 Oct):** sidebar-left and sidebar-right templates in the Templates hub; a "Template part" element by template id (a part inside a part is dropped); domain and language conditions on header, footer and sidebar (priority, then specificity); hub "Where used" column.
+
+<a id="bld-027"></a>
+#### BLD-027 · Task 1a short-link coverage (PR #184, 31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Task 1a short-link coverage (PR #184, 31 Oct):** the editor resolves a pasted or entered short link for its own provider (`POST /api/admin-embed-resolve`; silent on failure); the save-time hook covers page templates, reusable sections, site templates, products, lessons and the blog, FAQ and shop intro blocks.
+
+<a id="bld-028"></a>
+#### BLD-028 · Task 2 page and section templates CLOSED 31 Oct (PR #185)
+
+_Date: 31 Oct 2026_
+
+**Task 2 page and section templates CLOSED 31 Oct (PR #185):** template part id is a picker of site templates (`/api/admin-site-templates`; saved numeric ids still work); Preview as has an audience choice (any visitor, guest, member) on every site template kind; archive templates (blog, shop, category, tag, author) and sidebars preview with a sample post or product. Single product add to cart already had a passing render test (no change). Live checks are in Task 6.
+
+<a id="bld-029"></a>
+#### BLD-029 · Task 1a Visual builder CLOSED 31 Oct
+
+_Date: 31 Oct 2026_
+
+Task 1a Visual builder CLOSED 31 Oct: typed design emitter removed (#183, prod D1 had 0 typed rows); short-link resolver in editor paste and all block collections (#184). Decided: email designer and theme tokens stay separate models (different outputs: email HTML, site tokens). Accepted as known limits: React #418 logs once on editor load (harmless); engage-types.ts uses casts for Post.tags and User.displayName/slug; Pinterest stays link cards; Next 16 deferred to Task 4. PR #3 fresh-install specs live in Task 6.
+
+Finished tasks (PR numbers) first, then the visual editor waves through 71.
+
+<a id="bld-030"></a>
+#### BLD-030 · Task 6 clarity (PR #192, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 6 clarity (PR #192, 1 Nov):** tree rows move focus with plain arrows, Home, End, Left and Right (Alt+Arrow still moves); Expand all and Collapse all; shared `Tooltip` (hover, keyboard and touch focus, aria-describedby) replaces about 180 intrinsic-element `title=` attributes across admin and visual editor screens, with 67 new keys translated into all 12 dictionaries; colour sweep: about 400 literal colours in 41 admin CSS files now use `--lit-*` tokens (light values identical, dark values derived: neutrals mirrored, coloured text lifted to 4.5:1); dark rules for password groups, visibility access, blog builder errors, visibility messages and pages-tree badges; base ramp fixed (light muted text 4.93:1, dark muted 5.63:1); SEO status dots get a shape as well as colour. Left on purpose: public-site CSS (blocks, storefront, consent, forms), coloured fills kept as they were, iframe titles (accessible names), two native `<option>` titles and one `<abbr>`, and one pre-existing light contrast miss (white on #f44336 danger button, 3.7:1, light values not changed). Live checks in Task 6.
+
+<a id="bld-031"></a>
+#### BLD-031 · 8 Nov Task 3 Elementor gap review (PR #226, 8 Nov)
+
+_Date: 8 Nov 2026_
+
+**8 Nov Task 3 Elementor gap review (PR #226, 8 Nov):** `the Elementor gap review appendix of this file`; built: custom attributes with a strict allowlist, popup idle trigger and overlay/close/animation options (never impossible to close), visibility rules for weekday, time (visitor clock) and language. Left for later: dynamic link/image sources (needs a check and scope decision), scroll-linked motion (Firefox lacks view timelines).
+
+<a id="bld-032"></a>
+#### BLD-032 · 8 Nov Task 2 drag from the Elements bar (PR #226, 8 Nov)
+
+_Date: 8 Nov 2026_
+
+**8 Nov Task 2 drag from the Elements bar (PR #226, 8 Nov):** root cause: the iframe pass-through flag was set in a capture-phase dragstart listener before React's setData, so dataTransfer.types was empty; now tracked in the bubble phase (`trackLibraryDrag`, `src/views/visualEditor/dropSlot.ts`).
+
+<a id="bld-033"></a>
+#### BLD-033 · 8 Nov Task 1 visual editor Elementor-parity tweaks (PR #226, 8 Nov)
+
+_Date: 8 Nov 2026_
+
+**8 Nov Task 1 visual editor Elementor-parity tweaks (PR #226, 8 Nov):** VE-01 to VE-15 from `the Elementor tweaks appendix of this file`: paste style guarded and device-safe, CSS id de-duplication with warning, hidden blocks faded in the editor, edit lock and overwrite check, shortcuts (Mod+S/E/I/P, Mod+Shift+C/V/H/M), context menu Edit/Navigator/Reset style, History and Revisions panel, 13 more per-device style keys, preview button, unsaved-state save buttons, Finder, padding drag handles, multi-select, text style presets in Theme styles (JSON, no migration).
+
+<a id="bld-034"></a>
+#### BLD-034 · 21c Sliders (built 16 Nov 2026, extends the existing Slides element)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21c Sliders (built 16 Nov 2026, extends the existing Slides element).** Slides now take up to 10 slides, each with a background picture or video (.mp4 or .webm, muted and looped, picture shows first and for reduced motion) and an animated text layer (fade up, slide in, zoom or none). New element options: loop (off stops at the ends), arrows, dots, thumbnails under the slider, and a separate height on phones. Only the slide in view and its neighbours load their picture or video. Autoplay stays off by default and stops on hover, focus and reduced motion. Slides saved earlier look the same. `slides`, `gallery` and the hidden `image-carousel` are kept. Code: `src/lib/elements/slidesLogic.ts` (pure), `wave65Defs.ts`, `Wave65Elements.tsx`, `wave65.css`, `tests/int/slides-settings.int.spec.ts`.
+
+<a id="bld-035"></a>
+#### BLD-035 · 21a A/B tests: suggestions and visual-editor editing (built 16 Nov 2026, partly; the on-canvas control and var
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21a A/B tests: suggestions and visual-editor editing (built 16 Nov 2026, partly; the on-canvas control and variant switch is not built).** In the visual editor (Navigator tab, under Checks) a new A/B tests panel, shown when editing a saved page and A/B testing is switched on: (1) Ideas for this page, from the page itself: a second headline for the first headings, a clearer label than Submit, Learn more or Click here, a different top picture, a simpler layout for crowded sections, each with a plain reason and the kind of effect to expect (no invented numbers); (2) Create test: pick a goal (a button selector is clicked, or a page path is visited), and the section is copied into a new section template that becomes Variant B, with a draft block test (50/50, original as control) on the page; (3) the page's tests with Edit variant (opens the variant's template in this same editor), Start, Stop and Open (the results screen, unchanged). Start refuses a test with no goal or a variant with no section. Code: `src/features/abTesting/suggestions.ts` (pure), `/api/admin-ab-quick`, `src/views/visualEditor/AbIdeasPanel.tsx`, `EditorDock.tsx`, `VisualEditor.tsx`, `tests/int/ab-suggestions.int.spec.ts`.
+
+<a id="bld-036"></a>
+#### BLD-036 · 20c Visual editor design warnings (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**20c Visual editor design warnings (built 16 Nov 2026).** The Checks panel now also flags: low text contrast when a colour is a named theme token (`var(--sh-text)` and the other Shine tokens, checked in both the light and the dark theme, so dark-mode text on a fixed light block is caught); text over a gradient background, checked against both stops; text over a picture, video or slideshow with no overlay of at least 30 percent (it cannot sample the picture, so this is an info prompt to add an overlay); the hover colours (the one you did not set falls back to the normal colour) at 4.5:1; and the keyboard focus ring colour at 3:1 against the background. Contrast messages end with a fix: Try #000000 or #ffffff text, or change the background if neither works. Unknown names (`var(--ink)`) are not checked, as before. Code: `src/views/visualEditor/designWarnings.ts`, `tests/int/editor-warnings.int.spec.ts`.
+
+<a id="bld-037"></a>
+#### BLD-037 · 16h Convert text to list or table in the visual editor (built 22 Nov 2026)
+
+_Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 Nov 2026)_
+
+**16h Convert text to list or table in the visual editor (built 22 Nov 2026).** Right-click a Text editor block of plain, unformatted text and choose Convert to bulleted list, Convert to numbered list (two or more lines; leading bullets or numbers are stripped) or Convert to table (every line has the same cells split by `|`, a tab or `;`; the first line becomes the header). The block keeps its place and id and the change is one undo step. Code: `visualEditor/convertText.ts`, menu in `VisualEditor.tsx`, tests in `tests/int/convert-text.int.spec.ts`. No migration.
+
+<a id="bld-038"></a>
+#### BLD-038 · Task 10 widgets batch 1: world clock, progress tracker, dark mode toggle, bigger charts (22 Nov 2026)
+
+_Date: 22 Nov 2026_
+
+**Task 10 widgets batch 1: world clock, progress tracker, dark mode toggle, bigger charts (22 Nov 2026).** Three new client elements in `wave68Defs.ts` and `Wave68Elements.tsx` (styles `wave68.css`): World clock (up to 12 cities as `City | IANA zone` lines, analogue SVG or digital, 12 or 24 hour, seconds and date options, bad zones skipped), Progress tracker (steps, current step number, optional query parameter that overrides it, horizontal or vertical, `aria-current`), Dark mode toggle (switch that sets `data-theme` on the page, saves the choice in the browser, starts from the system setting). The Chart element now takes up to 100 values and accepts pasted CSV lines. Tests: `tests/int/wave68-elements.int.spec.ts`, `elements-wave48.int.spec.ts`.
+
+<a id="bld-039"></a>
+#### BLD-039 · Task 10 widgets batch 2: product images, stock, short description, meta (22 Nov 2026)
+
+_Date: 22 Nov 2026_
+
+**Task 10 widgets batch 2: product images, stock, short description, meta (22 Nov 2026).** Four server elements in `wave69Defs.ts` and `Wave69Server.tsx` (gallery island in `Wave69Elements.tsx`, styles `wave69.css`) reading the product from the block context, which now also carries sku, gtin, short description, category, all pictures (up to 20), low stock level and backorders (`blockContextFrom.ts`). Product stock shows in stock, low stock with the count (product level or the element's own), out of stock or backorder. Tests: `tests/int/wave69-elements.int.spec.ts`.
+
+<a id="bld-040"></a>
+#### BLD-040 · Task 10 widgets batch 3: sitemap and age gate (22 Nov 2026)
+
+_Date: 22 Nov 2026_
+
+**Task 10 widgets batch 3: sitemap and age gate (22 Nov 2026).** Sitemap (`Wave70Server.tsx`, server): published pages as a tree by parent, depth 1 to 6, slug exclusions drop whole branches, members-only and no-index pages left out. Age gate (`Wave70Elements.tsx`, client): full-screen dialog, Yes/No buttons or date of birth with minimum age, answer remembered N days in the browser, skipped for crawler user agents, deny goes only to an https address or a same-site path, otherwise shows a message. Left from the age gate: per-country rules and a popup preset. Defs `wave70Defs.ts`, tests `tests/int/wave70-elements.int.spec.ts`.
+
+<a id="bld-041"></a>
+#### BLD-041 · Task 10 display conditions batch 4: device, country, query parameter, cookie (22 Nov 2026)
+
+_Date: 22 Nov 2026_
+
+**Task 10 display conditions batch 4: device, country, query parameter, cookie (22 Nov 2026).** Four more rules next to sign-in, role, URL, schedule, weekday, time and language (`src/lib/visibilityRules.ts`, keys `showDevices`, `showParam`, `showCookie`, `showCountry` in `blockStyle.ts`, controls in `DesignPanel.tsx`). Device: mobile under 600 px, tablet 600 to 899 px, desktop 900 and up, read from the window width. Query parameter and cookie: `name` or `name=value`, read in the browser (no cached page split). Country: the `/api/visibility-state` answer now includes the edge country code (never cached); unknown country hides the block. All rules fail closed when their value is unknown. Tests: `tests/int/visibility-rules.int.spec.ts`.
+
+<a id="bld-042"></a>
+#### BLD-042 · Task 10 chat button batch 5 (22 Nov 2026)
+
+_Date: 22 Nov 2026_
+
+**Task 10 chat button batch 5 (22 Nov 2026).** `chat-button` element (`Wave70Elements.tsx`, def in `wave70Defs.ts`): WhatsApp (`wa.me`, digits checked, prefilled text), Messenger (`m.me`) and Telegram (`t.me`) links built only from validated numbers or usernames, optional hours window in the visitor's own time (overnight wraps), optional floating corner button, opens in a new tab with `noopener`. Tests in `tests/int/wave70-elements.int.spec.ts`.
+
+<a id="cat-adm"></a>
+### ADM: Admin and settings
+
+<a id="adm-001"></a>
+#### ADM-001 · Task 2c (27 Oct)
+
+_Date: 27 Oct 2026_
+
+**Task 2c (27 Oct):** collections under their menu groups (for example /admin/content/pages, /admin/shop/orders); old /admin/collections links 308-redirect. PRs #29, #30.
+
+<a id="adm-002"></a>
+#### ADM-002 · Accessibility and admin text
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Accessibility and admin text:** #181 (above); #134 admin text in all dictionaries.
+
+<a id="adm-003"></a>
+#### ADM-003 · Task 16 and 3 polish (#180)
+
+_Date: 31 Oct 2026 (inferred from neighbouring entries)_
+
+**Task 16 and 3 polish (#180):** README deploy checklist; blog wizard placeholder. Live check in Task 6.
+
+<a id="adm-004"></a>
+#### ADM-004 · Task 5 tables and charts, slice 2 (PRs #173 and #174, 31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Task 5 tables and charts, slice 2 (PRs #173 and #174, 31 Oct):** Export CSV on generic lists (visible columns, every filtered row, up to 5000); one sortable admin table (`SortableTable`) on five admin screens; one shared admin bar chart (`AdminBarChart`) with the shop revenue chart on it; lightweight table structure spec. Decisions taken: no new bulk actions; products and redirects keep their own export.
+
+<a id="adm-005"></a>
+#### ADM-005 · Task 5 tables and charts, slice 1 (PR #171, 31 Oct)
+
+_Date: 31 Oct 2026_
+
+**Task 5 tables and charts, slice 1 (PR #171, 31 Oct):** shop revenue chart value axis with grid; audit and PageSpeed empty and error text translated (12 dictionaries). #172 empty-state text on the review queue, API keys, email testing screens.
+
+<a id="adm-006"></a>
+#### ADM-006 · Task 4 tables and charts (PR #188, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 4 tables and charts (PR #188, 1 Nov):** consent acceptance chart and PageSpeed trend moved onto the shared admin charts (`AdminBarChart` with a new `axisMax`; new `AdminLineChart`), both with axis text. Dashboard 30-day trend for orders and form submissions, shown only while the Shop or Forms feature is on. CSV export shows an exporting state and says when the 5000-row cap truncates (cap unchanged). axe-core 4.14.0 added; `tests/int/admin-lists-axe.int.spec.ts` runs WCAG 2.0 A and AA on ten admin lists and found one real fault (rows-per-page select had no name; fixed). Decisions: the data-views `ChartSvg` stays on its own renderer (public embeds; it draws pie and scatter, which the shared bar chart cannot, and it already prints axis text); the Ads report has no chart (a by-day table only), so nothing to move. Ten lists = pages, posts, products, orders, forms, form submissions, events, RSVPs, redirects, coupons. New text in all 12 dictionaries. Live checks in Task 6.
+
+<a id="adm-007"></a>
+#### ADM-007 · Task 9b settings UX (PR #196, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 9b settings UX (PR #196, 1 Nov):** hub at /settings ("All settings" in nav) lists the nine settings pages, Theming, Roles, Interface languages, Translations, Cookie consent, Ads settings, Shop switches and the other settings screens, with search over every visible setting (label and help text) that links to its page and section. Decided: no global moved (the hub lists them). Reset this section per section: confirm, then the config defaults go into the form; nothing is saved until Save; fields with no default and secret-looking names are never reset. "Last changed by X on DATE" on each settings page (admins only) from the audit log; every global save now writes a settings.update row. English help text for every settings field that lacked it, in settingsDescriptions.ts (SETTINGS_FIELD_HELP); other languages come from the normal translation flow. The hub, search, reset and last-changed text is English only for now, outside the 12 dictionaries. Live checks in Task 6.
+
+<a id="adm-008"></a>
+#### ADM-008 · Task 9a settings safety (PR #197)
+
+_Date: 1 Nov 2026 (inferred from neighbouring entries)_
+
+**Task 9a settings safety (PR #197):** every form-based global save sends the version it loaded and is refused with 409 and a "reload the page" message when the global changed in another tab or by another admin (shared in `useDocumentSave`). Custom CSP is merged into the default policy, not a replacement, and is validated on save (unknown directive or bad source gets a field error); a directive whose only source is 'none' still replaces the default for that directive. Admin URL, two-factor rules, admin passwordless and passkey access and the domain list email every admin the old and new values, who and when; decided: no second-admin confirm (single-admin sites would lock out), the audit row comes from the settings audit hook (9b). Integrations gets Check ID format (offline), Check AI keys and Check Cloudflare zone (read-only). Live checks in Task 6.
+
+<a id="adm-009"></a>
+#### ADM-009 · Task 9c settings checks (PR #198, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 9c settings checks (PR #198, 1 Nov):** Integrations has Check Maps key (shape only: a website-restricted key is never called from the server), Check PageSpeed key (one call with no page address, so no test runs), Check reCAPTCHA keys (site key shape; secret key by siteverify with a made-up token) and Check code format for the Search Console verification code (offline). Tracking connections and Google connection send the versions they loaded (`X-Expected-Versions`); every write route refuses with 409 and the Settings sentence when tracking-connections, google-connection or integrations moved on, before revoking or writing. Decided: Stripe and shipping carriers were already checked on Payments and Shipping (Task 8) and are unchanged; carriers without a live API (StarTrack, Couriers Please, Shippit) are labelled "Keys only" and only their keys are checked; Clarity, Meta and TikTok IDs stay format checks (Meta and TikTok sign-in is their connect check). Known limit: the version a screen keeps comes from a read just after its write, so a change in another tab within the same few milliseconds is not caught. Live checks in Task 6.
+
+<a id="adm-010"></a>
+#### ADM-010 · Task 11 operations (PR #199, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 11 operations (PR #199, 1 Nov):** error spike alert (admin email when 10 or more new errors are first seen in 15 minutes, at most one an hour; threshold and on/off in Speed settings > Error alerts; cron job `error-alert`). Restore round-trip spec now covers the approval-workflows tables (the backup table list is discovered from sqlite_master, so none is hand-kept). Privacy export adds store credit, its movements, carts and product reviews (no cart secret); erase deletes carts and clears the reviewer name and email on reviews; account menu links to `/account/privacy`. Dashboard notice "Review your privacy policy and cookie notice" (dismissed per browser; hides once the linked policy page is edited after creation). CI: 7 excluded specs now run; the rest keep a reason in `ci.yml`. Migration `20270201_100000_error_alert_settings`. Decisions: (1) gate is merges to main only with green CI; deploy path and `scripts/build.mjs` unchanged; `test` as a required status check is a Task 6 step. (2) Alert goes by email to all admins, counting new error-log entries (first seen), not repeats of an old error. (3) Restore: round trip in CI; a live drill on a copy is a monthly Task 6 step. (4) Privacy: form entries and booking entries are kept on erase and stay access-controlled (staff with permission only); payment transactions untouched; store credit kept with the accounting records; overdue requests are shown in the list only; emails English only. (5) The site admin owns the policy and cookie text; the dashboard notice reminds them. Task numbers are not renumbered yet (Task 12 onward keep their numbers).
+
+<a id="adm-011"></a>
+#### ADM-011 · Task 1 multisite (PR #203, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Task 1 multisite (PR #203, 1 Nov):** admin site switcher in the sidebar (shown with two or more sites; per-person choice in preferences, checked on the server; only sites the account may use; All sites only for an account with no domain limit; default is the primary site). Admin lists for pages, posts and products show the chosen site plus shared content; new content takes the chosen site when "Available on domains" is empty. Connect domain on Settings > Domains attaches a domain to the Worker through the Workers custom-domains API when account ID, Worker name, zone and token are saved in Integrations > Cloudflare; otherwise the manual steps stay. Menu links to a page scoped only to another domain output its absolute address. Migration `20270220_100000_cloudflare_worker_domains` (two columns). Migration `20270220_110000_domain_scoped_content`: one-time rewrite of older scope lists (replaces the manual re-save), unique index on (scope, slug) for posts and products, duplicate slugs get `-<id>`. Already in place, checked in code: Sites screen with per-domain name, language, primary, status and overrides (Settings > Domains), lockdown by Allowed domains, uiStrings for the picker and DNS checklist (13 dictionaries), page hreflang across domains, admin noindex (meta, X-Robots-Tag, robots.txt with the custom admin path). Decisions: switcher sits in the sidebar (the admin has no top bar); Connect domain uses the zone set in Integrations, so a domain in another zone needs its own zone (not built); other dictionaries use English for the new switcher and Connect domain strings until translated. Permanent: none. Left: Products mirror in the ecommerce plugin (vendor code). Matt's live checks in Task 6.
+
+<a id="adm-012"></a>
+#### ADM-012 · Known limits: specs, schema, small leftovers (PR #204, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Known limits: specs, schema, small leftovers (PR #204, 1 Nov):** version-delete-real-engine and schedule-publish-due build their own D1 and are back in CI, with AdminNavClient, nav-structure and heading-effects (stale expectations fixed, `server-only` alias in vitest); `scripts/checkDevD1.mts` rebuilds a local D1 stub (runs before `test:int`); migration 20270224_100000_block_form_id adds `form_id` to the twelve Form block tables (fixes "no such column"), rels legacy names media_id/faqs_id in the shadow schema, KNOWN_UNMIGRATED empty; getting-started ticks now save (the list-prefs sanitiser dropped them); blog and events listings emit an ItemList; two unused CSS rules removed; README cron line. Permanent: none in this area. Left: cookie-consent spec (still excluded), shop listing stays a plain CollectionPage.
+
+<a id="adm-013"></a>
+#### ADM-013 · Known limits: editing, approval and roles, custom fields, admin, locks (PR #206, 1 Nov)
+
+_Date: 1 Nov 2026_
+
+**Known limits: editing, approval and roles, custom fields, admin, locks (PR #206, 1 Nov):** 18 fixed: non-publisher saves of a published page become drafts; text-only editing keeps element styling props; every publish purges the page cache; approval hash matches form and database values; custom role matrices reach the publish guards; approval writes are claimed with a conditional update; one person may approve two steps by workflow setting (off by default); edits that reset a review write a history row; a workflow change offers to move documents in review; post tags match tag rules; shared field names warn; picture and file fields checked on the server; card state saved per card and merged; a failed save opens its card; old RSVP and submission lists redirect to their tabs; old collapse rows deleted; SEO settings clear the rules cache; template locks copy to pages made from a template. Checked, no change: backup covers approval tables; template parts are lockable through site templates. Moved to Task 1: options page location rules. Permanent: RSVP rights, Openverse host list, per-isolate rules cache up to 60 s.
+
+<a id="adm-014"></a>
+#### ADM-014 · 8 Nov Task 5 fresh-install questionnaire (PR #226, 8 Nov)
+
+_Date: 8 Nov 2026_
+
+**8 Nov Task 5 fresh-install questionnaire (PR #226, 8 Nov):** dashboard dialog for admins, suggestions only turn sections on, summary before applying; migration `20270311_100000_setup_questionnaire` (existing installs marked skipped), baseline regenerated, fresh-install specs extended; translated.
+
+<a id="adm-015"></a>
+#### ADM-015 · 8 Nov Task 4 admin walkthrough (PR #226, 8 Nov)
+
+_Date: 8 Nov 2026_
+
+**8 Nov Task 4 admin walkthrough (PR #226, 8 Nov):** once per user account (`eg_preferences` key `admin-tour`), Help button in the sidebar replays it, focus trap, 12 languages.
+
+<a id="adm-016"></a>
+#### ADM-016 · repo renamed to `asticore/engage` (closed Task 21). Repo-slug links updated (README Deploy
+
+_Date: 9 Nov 2026_
+
+9 Nov 2026: repo renamed to `asticore/engage` (closed Task 21). Repo-slug links updated (README Deploy button, Stripe appInfo URL, template library guide URL, docs). Worker, D1, R2 names, localStorage cart key, export app id and gracengatsby.com left unchanged on purpose (renaming would break the live deploy and saved data).
+
+<a id="adm-017"></a>
+#### ADM-017 · admin menu polish (Home label, no theme toggle or tooltips in the menu, name and photo in 
+
+_Date: 9 Nov 2026_
+
+9 Nov 2026: admin menu polish (Home label, no theme toggle or tooltips in the menu, name and photo in My preferences and the side menu, mobile menu slides in from the right with visible items). Better Auth: not used in this repo, so no equivalent was built.
+
+<a id="adm-018"></a>
+#### ADM-018 · 9 Nov Task 17 feedback button for super admins (PR pending)
+
+_Date: 9 Nov 2026_
+
+**9 Nov Task 17 feedback button for super admins (PR pending):** sidebar Feedback button (admin role only, next to Help) opens the new issue page of asticore/engage in a new tab, pre-filled with portal version (package.json), admin page path and admin language; `src/admin/ui/FeedbackButton.tsx`, `feedbackUrl.ts`, strings in 13 languages, test `tests/int/feedback-url.int.spec.ts`. No tables, so no migration. Live click check goes into the live checklist (Task 20).
+
+<a id="adm-019"></a>
+#### ADM-019 · 9 Nov Task 17 feedback popup (follow-up)
+
+_Date: 9 Nov 2026_
+
+**9 Nov Task 17 feedback popup (follow-up):** the Feedback button now opens a modal (focus trapped, Esc/backdrop closes) with Report a bug / Request a feature; each opens the matching new issue page (`template=bug_report.md` + label `bug`, or `feature_request.md` + label `enhancement`) with version, admin page and language pre-filled. Issue templates now carry labels. New strings (feedback.title/bug/feature/hint/cancel) in 13 languages; test extended.
+
+<a id="adm-020"></a>
+#### ADM-020 · Task 18 activity log with clear (9 Nov, PR pending)
+
+_Date: 9 Nov 2026_
+
+**Task 18 activity log with clear (9 Nov, PR pending):** the audit log already held account-security events only; creates, edits, publishes, unpublishes and deletes on content, templates, forms, roles, shop settings records and similar collections (list in `ACTIVITY_LOGGED`, `src/localapi/registry.ts`; users log creates and deletes only; products hooked directly) now write to it, plus an `export` event on the activity, products, redirects and list CSV downloads. New screen `/security/activity` (`ActivityLogView`): filter by person (email or id; names link to that person's rows), event, collection and dates; CSV download; Clear panel (older than N days, one person, or all) that shows the count, needs the word CLEAR, and writes an `activity.cleared` record. Consent, privacy and clear records are never removed (`PROTECTED_AUDIT_ACTIONS`). Retention stays on the Security settings (`auditLog.retentionDays`, existing prune). Privacy erase now blanks email, address and browser on the customer's log rows. Spec `tests/int/activity-log.int.spec.ts`. No new table, so no migration.
+
+<a id="adm-021"></a>
+#### ADM-021 · Task 7, 15 Nov 2026, PR pending
+
+_Date: 15 Nov 2026_
+
+Task 7, 15 Nov 2026, PR pending: Scheduled tasks screen has Next run, Run now, turn off and on per job (`JobControls`, `/api/admin-cron-job`, audit logged) and a 50 run history; one runner per job in `src/features/cron/jobs.ts`; state in `eg_cron_job_state` (migration `20270315_200000_cron_job_state`); the `schedules` heartbeat job cannot be turned off. Tests: `tests/int/cron-job-state.int.spec.ts`.
+
+<a id="adm-022"></a>
+#### ADM-022 · 32a Remove the Asticore SaaS button (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**32a Remove the Asticore SaaS button (built 16 Nov 2026).** The permanently disabled "Get suggestions from Asticore SaaS" button and its note are gone from the blog builder, with the two string keys in all thirteen dictionaries and the `.blog-ai__saas` style. Code: `BlogWizard.tsx`, `uiStrings/keys.ts`, dictionaries, `blog-builder.css`.
+
+<a id="adm-023"></a>
+#### ADM-023 · 21j Em dashes (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**21j Em dashes (built 16 Nov 2026).** All em dashes are gone from user-facing text: the select placeholder (now `Select`), the empty column hint, the divider icon, the empty option in custom fields (now `None`), and the translate banner in the English keys and all eleven dictionaries (a colon now), plus the Russian strings (a colon, or a comma where the sentence read better, for example in the renewal and event reminder emails). New `tests/int/no-em-dashes.int.spec.ts` fails if one appears in any `.ts` or `.tsx` file under `src` (the only exception is the page title separator pattern in `seo/resolve.ts`, which matches the character without showing it).
+
+<a id="adm-024"></a>
+#### ADM-024 · 17e Approval assigned to a named person (built 16 Nov 2026; reassign, due date and reminders still open)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**17e Approval assigned to a named person (built 16 Nov 2026; reassign, due date and reminders still open).** Settings, Roles, Approval workflows: each step can now name people as well as roles. Naming anyone means only they (and admins) can approve or send back that step; a tick box keeps the roles as a fallback. A workflow can also name a different approver for an author: that author's work is approved by the person named, at every step, whatever the step says, and nobody else (except admins) can approve it. A step may be named people only (no role). Saving checks the people exist and an author is not their own approver. The submit email and the next-step email go to the named people (and the roles too when the fallback is on), the waiting text and the refusal message name the person, and the history already records who approved. Per content type is the existing one active workflow per type. Code: `src/features/approval/{workflows,stateMachine,notify,handlers,workflowCollection,workflowForm}.ts`, `src/admin/views/{ApprovalWorkflowsPanel,RolesView,RolesViewClient}.tsx`, migration `20270316_200000_approval_named_approvers` (columns `approver_users`, `also_roles`, `author_routes`), `tests/int/approval-named-approvers.int.spec.ts`.
+
+<a id="adm-025"></a>
+#### ADM-025 · 16g Bulk creation of pages, posts and products (built 16 Nov 2026)
+
+_Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), moved from remaining-work.md_
+
+**16g Bulk creation of pages, posts and products (built 16 Nov 2026).** Settings, Bulk create: pick pages, posts or products, paste one title per line or a CSV (title, slug, parent, template; or upload a file), press Check the list for a table showing every row, its address and its problem (address already used or repeated in the list, parent or template not found, parents pointing at each other, duplicate product title), then Create makes drafts for every clean row, parents first, through the signed-in user's own access rules. Up to 200 rows per batch. The result report lists created, skipped and failed rows, with Undo this batch, which removes the drafts that are still unpublished and under a day old. One audit entry per batch (`bulk.created`, `bulk.undone`). No migration. Code: `src/features/bulkCreate/{plan,run}.ts`, `BulkCreatePanel.tsx`, `/api/admin-bulk-create`, `tests/int/bulk-create.int.spec.ts`.
+
+<a id="adm-026"></a>
+#### ADM-026 · 18j taskboard company scope (built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**18j taskboard company scope (built 17 Nov 2026).** A taskboard board can belong to a company and optionally one of its teams (`organization_id`, `team_id` on `eg_task_boards`, migration `20270319_100000_taskboard_org_scope`). Board settings show Company and Team pickers when Companies exist. `canAccessBoard` in `src/features/taskboard/logic.ts` follows the access helper for scoped boards (creator, company owners and admins, team members, or company members when no team); admins always open every board; unscoped boards keep the member-list rule. `src/app/(engage)/api/admin-taskboard/route.ts` loads the person's access. Test: `tests/int/taskboard.int.spec.ts`.
+
+<a id="adm-027"></a>
+#### ADM-027 · Task 14b leftovers (tag chips)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+Task 14b leftovers (tag chips): coloured tag chips on each media tile (also in the media picker, same grid) and a Tags column in the list view; a Tags box on the file edit screen with a tick per tag that saves at once (`MediaTagsEdit`, GET `/api/admin-media-tags?media=ID`); all hidden when Media tags is off. New admin strings in all 13 dictionaries. Tests: `tests/int/media-tags.int.spec.ts` (chipsFor).
+
+<a id="adm-028"></a>
+#### ADM-028 · Task 14c (S3-compatible backup target)
+
+_Date: 17 Nov 2026 (inferred from neighbouring entries) · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+Task 14c (S3-compatible backup target): the S3 backup destination has an optional Endpoint field (`destination_s3_endpoint`, migration 20270318_110000, idempotent). Empty means Amazon S3; an https origin (Backblaze B2, Wasabi, MinIO, Spaces) is used path-style with the same signer; plain http is refused. WebDAV not built. Tests: `tests/int/backup-s3-endpoint.int.spec.ts`, fresh-install spec, baseline regenerated.
+
+<a id="adm-029"></a>
+#### ADM-029 · A person per section (12e leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**A person per section (12e leftover, built 17 Nov 2026).** No section field exists, so a section is derived (`src/features/approval/sections.ts`): for pages, the top-level page a page sits under (keyed by its id, the page itself when it has no parent); for posts, the first category (trimmed, lower case). Events, courses and products have none. A workflow has `sectionRoutes` (`{ "<section>": [user ids] }`, migration `20270318_220000_approval_section_routes`, `section_routes`); the editor shows "A different approver for a section" for Pages and Posts workflows (`loadSectionChoices` feeds the pickers: up to 200 top-level pages, distinct first categories of up to 1000 posts). Priority at a step: the author's route, then the section route, then the step's own named people or roles (`namedApprovers`). The review box, the step block message and the emails say "the approver named for this section". The section is worked out per request (not stored), so moving a page under another top-level page changes who approves it; admins and stand-ins work as before. Tests in `tests/int/approval-reassign.int.spec.ts`.
+
+<a id="adm-030"></a>
+#### ADM-030 · Approver picker for non-staff people (12e leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Approver picker for non-staff people (12e leftover, built 17 Nov 2026).** The people lists on the Roles page (named approvers, per-author approvers, stand-ins) now include anyone with a custom role, not only built-in staff roles, and read users in pages of 500 up to 5000 instead of stopping at 500 (`approverCandidates` in `workflowForm.ts`, `RolesView.tsx`). Plain customers stay out. A named person still needs review permission to approve. Test in `tests/int/approval-reassign.int.spec.ts`.
+
+<a id="adm-031"></a>
+#### ADM-031 · Reassigning a review and stand-ins (12e leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Reassigning a review and stand-ins (12e leftover, built 17 Nov 2026).** Reassign: on a document in review, an approver of the current step (or an admin) picks someone in the Review box and presses Hand over (`reassign` action in `src/features/approval/stateMachine.ts` and `handlers.ts`; GET returns `assignee`, `allowed.reassign` and `reviewerChoices`, names only). The person may then approve or send back that step besides the usual approvers, gets an email (`notifyReassigned`), and the queue row shows "handed to". It is stored inside the existing `reviewApprovals` JSON (no column on content tables) and cleared when the review moves to the next step, is sent back, withdrawn or restarted by an edit; a partial approval keeps it. Hand back to the usual approvers clears it. History row `reassigned` (no migration; `action` is plain text). Stand-ins: in the workflow editor (Roles page), Stand-ins for reviewers who are away lists a reviewer, who covers, and an optional last day away (`standIns` JSON on the workflow, migration `20270318_210000_approval_stand_ins`, `stand_ins`). While away, the stand-in may act wherever that reviewer could (their roles, or their name on a named step), still needs review permission of their own, sees those reviews in the queue and gets the step and overdue emails (`withStandIns` in `notify.ts`). Admins are not affected. English only. Tests in `tests/int/approval-reassign.int.spec.ts`.
+
+<a id="adm-032"></a>
+#### ADM-032 · Overdue tag in the review queue (12e leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Overdue tag in the review queue (12e leftover, built 17 Nov 2026).** Queue rows carry `overdue` (`loadReviewQueue` in `src/features/approval/handlers.ts`, using `isOverdue` and the workflow's review due days); `ReviewQueueTable.tsx` shows an Overdue tag beside the waiting time, in the queue page and the dashboard card. English only.
+
+<a id="adm-033"></a>
+#### ADM-033 · Review due days and overdue reminder (12e leftover, built 17 Nov 2026)
+
+_Date: 17 Nov 2026 · Original group: Task 23 last leftovers (holds, countdown, header dropdown)_
+
+**Review due days and overdue reminder (12e leftover, built 17 Nov 2026).** Each approval workflow has Days a review may wait (0 for none; migration `20270318_120000_approval_review_due_days`, column `review_due_days`). `runOverdueReviewReminders` in `src/features/approval/overdue.ts` runs inside the Scheduled publishing cron job: for reviews past the due date it emails the approvers of the waiting step once and writes an `Overdue reminder sent` comment on the review history so the next run skips it. Tests in `tests/int/approval-overdue.int.spec.ts`.
+
+<a id="adm-034"></a>
+#### ADM-034 · Tasks 4, 5, 6 leftovers (17 Nov)
+
+_Date: 17 Nov 2026_
+
+**Tasks 4, 5, 6 leftovers (17 Nov):** Task 4: `{{category_path}}` and `{{category_url}}` now fill on tag and author archives (they get the category tree), and a single post has `{{post.category_path}}` and `{{post.category_url}}` dynamic tags (`categoryTrail` and `categoryHref` in the post context); promo badge tag and category rules use a picker (`BadgeSlugField`: Product tags from `/api/product-tags`, categories Digital and Physical; typed slugs from before are kept and flagged when unknown). Task 5: five new events for webhooks and notification rules: `stock.low` (raised from `sendStockAlerts`, low and out, whatever the stock email setting says), `course.enrolled` (Enrolments afterChange), `subscription.started`, `subscription.cancelled`, `subscription.payment_failed` (Stripe subscription handler); each has an allowlist of fields, merge tags, labels in 12 languages. Task 6: style card names, descriptions and the section text are translated into the twelve languages (keys `themeStyle.*`); the generator picks a heading font and body font from the fonts installed in Site fonts (by the picks' heading kind, deterministic by seed; says so when none match and keeps the theme fonts) and suggests an effect from the Effects picker, each with a reason line. `/api/editor-fonts` now also returns each font's id and category.
+
+<a id="adm-035"></a>
+#### ADM-035 · Tasks 7 to 10 leftovers (17 Nov 2026)
+
+_Date: 17 Nov 2026_
+
+**Tasks 7 to 10 leftovers (17 Nov 2026).** Task 7: a browser opening a company-limited download while signed out is redirected to `/account/sign-in?redirect=` (`isBrowserNavigation`, `mediaSignInRedirect` in `src/features/organizations/mediaGate.ts`, used by `handleGetMediaFile`); Cloudflare Images work stays inside R2 through the binding, and the only public copy was the temporary Stream copy, so a company-limited or private video is now never sent to Stream (`isRestricted` in `optimiseStoredVideo`, `admin-media-optimise` route). Task 8: Empty the data has an optional "restart the numbering" step (`resetCounters`, clears `sqlite_sequence`), and the download is paged in parts of 5000 rows a table (`exportFeatureData(db, flags, feature, page)`, the panel downloads every part). Task 9: update popup text through `useAdminT` (`update.*` keys, twelve languages). Task 10: all Taskboard text through `useAdminT` (`tb.*` keys, twelve languages) and activity lines name the assignee instead of a user number. Tests: `media-company-gate`, `section-empty-data`, admin UI string suites.
+
+<a id="adm-036"></a>
+#### ADM-036 · Tasks 8 to 10 second batch (17 Nov 2026)
+
+_Date: 17 Nov 2026_
+
+**Tasks 8 to 10 second batch (17 Nov 2026).** Task 10: `task.assigned`, `task.commented` and `task.due` are webhook events and notification triggers (`src/features/webhooks/events.ts`, `src/features/notifications/triggers.ts`, "customer" means the assignee); a switched-on rule owns the email, otherwise the built-in plain email goes out (`hasRule` in `src/features/taskboard/actions.ts`). Card archive and restore (`archived_at` on `eg_task_cards`, migration `20270318_100000_taskboard_archive_due`, activity `card.archived`, `card.restored`, Show archived toggle). Due reminders: hourly job `taskboard-due` (`src/features/taskboard/dueReminders.ts`, column `due_notified`: once per due date, skips archived cards and the board's last column). My tasks page `/admin/my-tasks` (`MyTasksPanel`, `GET /api/admin-taskboard?mine=1`). Task 9: one click update for a fork (`src/features/updates/oneClick.ts`, `POST /api/admin-update-apply`, Worker secrets `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN`, fine-grained token with Contents read and write on the fork only; no database column because `eg_integrations` is full); version bumped to 1.1.0. Task 8: Empty the data on Media can also delete the uploaded files from R2 (`src/features/cleanup/emptyFiles.ts`; backups go to their own destination so are not touched). Tests: `taskboard`, `section-empty-files`, `update-one-click`.
+
+<a id="adm-037"></a>
+#### ADM-037 · Tasks 5 and 6 follow-ups (17 Nov)
+
+_Date: 17 Nov 2026_
+
+**Tasks 5 and 6 follow-ups (17 Nov):** notification rules have a look (stored as channel `email_brand` in `eg_notification_rules`, so no schema change): plain, or designed (wrapped in the Email design brand with the tags filled; stays plain until the brand is switched on). Email designer: undo and redo (`designerHistory.ts`, bursts of typing count as one step, 50 steps, Ctrl or Cmd + Z / Y), preview at Gmail, Outlook and Apple Mail content widths beside Computer and Phone, and dark mode colour checks in the lint (low text contrast, pure black text or panel, logo in dark mode, dim accent links). Style cards: drawn preview thumbnails (`StyleThumb`), the explanation lines are structured (`reasonItems`, keys `themeStyle.r.*`) and translated in the twelve languages, and the suggested effect is remembered in the browser and offered with an Apply button in the visual editor's Effects picker (never applied automatically).
+
+<a id="adm-038"></a>
+#### ADM-038 · Task 10 activity log feed and release notes (17 Nov 2026)
+
+_Date: 17 Nov 2026_
+
+**Task 10 activity log feed and release notes (17 Nov 2026).** Every taskboard write adds its entries to the main Activity log under collection `taskboard` (`src/features/taskboard/activityLog.ts`, written by the `admin-taskboard` route from the new rows in `eg_task_activity`; created maps to create, deleted to delete, the rest to update). `CHANGELOG.md` holds the release notes (1.1.0 and 1.0.0); tagging is left for Matt's decision. Test: `taskboard`.
+
+<a id="adm-039"></a>
+#### ADM-039 · 41b
+
+_Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 2026)_
+
+41b: `tests/int/bid-terms-field.int.spec.ts` covers `BidTermsField`; every message from the Authentication overview actions (switch, allow or block, Test button and provider checks) now reads from `auth.msg.*` strings in the admin's language, in all 13 languages (`authMethodActions.ts`, `authMethodTest.ts`).
+
+---
+
+## Part 2: Log by date
+
+### 23 Nov 2026
+
+- [STY-014](#sty-014) 40d third batch and data source (23 Nov 2026)
+- [STY-015](#sty-015) 40d second batch (23 Nov 2026)
+- [STY-016](#sty-016) 40d (part)
+- [STY-017](#sty-017) 40c Tables
+- [STY-018](#sty-018) 40b Charts
+
+### 22 Nov 2026
+
+- [ADM-039](#adm-039) 41b
+- [BLD-037](#bld-037) 16h Convert text to list or table in the visual editor (built 22 Nov 2026)
+- [BLD-038](#bld-038) Task 10 widgets batch 1: world clock, progress tracker, dark mode toggle, bigger charts (22 Nov 2026)
+- [BLD-039](#bld-039) Task 10 widgets batch 2: product images, stock, short description, meta (22 Nov 2026)
+- [BLD-040](#bld-040) Task 10 widgets batch 3: sitemap and age gate (22 Nov 2026)
+- [BLD-041](#bld-041) Task 10 display conditions batch 4: device, country, query parameter, cookie (22 Nov 2026)
+- [BLD-042](#bld-042) Task 10 chat button batch 5 (22 Nov 2026)
+- [EVT-011](#evt-011) 16g Event page type on posts (built 22 Nov 2026)
+- [FRM-008](#frm-008) Site-wide CAPTCHA keys, test and look (Task 5, 21a, built 22 Nov 2026)
+- [FRM-009](#frm-009) Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026)
+- [I18N-012](#i18n-012) 41a
+- [INT-018](#int-018) Task 9, 28d Live review sources (built 22 Nov 2026)
+- [SEO-020](#seo-020) 16p Audit columns: image file sizes and last modified (built 22 Nov 2026)
+- [SEO-021](#seo-021) 16e Visitor-facing blog links follow the blog address (built 22 Nov 2026)
+- [SEO-022](#seo-022) 16d Manual Breadcrumbs follows the sitewide settings (built 22 Nov 2026)
+- [SEO-023](#seo-023) Task 7 Add several pages on the Pages screen (22 Nov 2026)
+- [SEO-024](#seo-024) Task 6 items 16m, 16n, 16o: accessibility in the SEO review, snippets and PageSpeed checklist, site audit dash
+- [SPD-018](#spd-018) 41c
+
+### 21 Nov 2026
+
+- [SEC-053](#sec-053) Admin two-step on by default and 30-day sign-ins (21 Nov 2026)
+- [SEC-054](#sec-054) Step-up confirmation for adding administrators (21 Nov 2026)
+- [SPD-015](#spd-015) One-click updates, tables and code separate (built 21 Nov 2026)
+- [SPD-016](#spd-016) Update popup live check (21 Nov 2026, PRs 531, 532)
+- [SPD-017](#spd-017) One update popup, stable Shine/Spark URLs (built 21 Nov 2026)
+
+### 20 Nov 2026
+
+- [I18N-011](#i18n-011) Hebrew admin and portal language (20 Nov 2026)
+- [STY-012](#sty-012) Shine and Spark from their releases, plus Front-end files (20 Nov 2026)
+- [STY-013](#sty-013) Fonts never bundled; Open Sans is the default (20 Nov 2026)
+
+### 18 Nov 2026
+
+- [SPD-014](#spd-014) Lean installer with remote updates (built 18 Nov 2026, v1.2.0)
+
+### 17 Nov 2026
+
+- [ADM-026](#adm-026) 18j taskboard company scope (built 17 Nov 2026)
+- [ADM-027](#adm-027) Task 14b leftovers (tag chips)
+- [ADM-028](#adm-028) Task 14c (S3-compatible backup target)
+- [ADM-029](#adm-029) A person per section (12e leftover, built 17 Nov 2026)
+- [ADM-030](#adm-030) Approver picker for non-staff people (12e leftover, built 17 Nov 2026)
+- [ADM-031](#adm-031) Reassigning a review and stand-ins (12e leftover, built 17 Nov 2026)
+- [ADM-032](#adm-032) Overdue tag in the review queue (12e leftover, built 17 Nov 2026)
+- [ADM-033](#adm-033) Review due days and overdue reminder (12e leftover, built 17 Nov 2026)
+- [ADM-034](#adm-034) Tasks 4, 5, 6 leftovers (17 Nov)
+- [ADM-035](#adm-035) Tasks 7 to 10 leftovers (17 Nov 2026)
+- [ADM-036](#adm-036) Tasks 8 to 10 second batch (17 Nov 2026)
+- [ADM-037](#adm-037) Tasks 5 and 6 follow-ups (17 Nov)
+- [ADM-038](#adm-038) Task 10 activity log feed and release notes (17 Nov 2026)
+- [AFF-010](#aff-010) Outbound clicks report (26d, built 17 Nov 2026)
+- [AFF-011](#aff-011) 22d Franchising, first version (built 17 Nov 2026)
+- [AFF-012](#aff-012) 17f Client reports, PDF and logo (built 17 Nov 2026)
+- [AFF-013](#aff-013) 17f Client reports, sections, dates and Google numbers (built 17 Nov 2026)
+- [AFF-014](#aff-014) 22f Client reports, first version (built 17 Nov 2026)
+- [AFF-015](#aff-015) 17g Agency demos leftovers (built 17 Nov 2026)
+- [AFF-016](#aff-016) 22g Agency demos, first version (built 17 Nov 2026)
+- [AFF-017](#aff-017) 26b payout details and 26a bot count (built 17 Nov 2026)
+- [AFF-018](#aff-018) 26c creatives kit (built 17 Nov 2026)
+- [AFF-019](#aff-019) 26c member portal (built 17 Nov 2026)
+- [AFF-020](#aff-020) 26a visit log (built 17 Nov 2026)
+- [AFF-021](#aff-021) 26c reports (built 17 Nov 2026)
+- [AFF-022](#aff-022) 26b product and tier rates (built 17 Nov 2026)
+- [AFF-023](#aff-023) 26b category (tag) commission rules (built 17 Nov 2026)
+- [AFF-024](#aff-024) 26b renewals and recurring commission (built 17 Nov 2026)
+- [AFF-025](#aff-025) 26c affiliate webhook events (built 17 Nov 2026)
+- [AFF-026](#aff-026) 26c translated affiliate emails and the now-payable email (built 17 Nov 2026)
+- [AFF-027](#aff-027) 26e Affiliates page template and the welcome email (built 17 Nov 2026)
+- [AFF-028](#aff-028) 26a short links (vanity codes per product) (built 17 Nov 2026)
+- [COM-018](#com-018) Quote text in other languages (12c leftover, built 17 Nov 2026)
+- [COM-019](#com-019) Editable quote emails (12c leftover, built 17 Nov 2026)
+- [COM-020](#com-020) Quote link in the account portal (12c leftover, built 17 Nov 2026)
+- [COM-021](#com-021) Files on a request (12c leftover, built 17 Nov 2026)
+- [COM-022](#com-022) Request buttons (12c leftover, built 17 Nov 2026)
+- [COM-023](#com-023) Form-fed requests (12c leftover, built 17 Nov 2026)
+- [COM-024](#com-024) Bid mode (12c leftover, built 17 Nov 2026)
+- [COM-025](#com-025) Waiting list with held places (12d leftover, built 17 Nov 2026)
+- [COM-026](#com-026) Card fingerprint match for purchase limits (12d leftover, built 17 Nov 2026)
+- [COM-027](#com-027) Atomic last place for purchase limits (12d leftover, built 17 Nov 2026)
+- [COM-028](#com-028) Quote expiry reminder and sweep (12c leftover, built 17 Nov 2026)
+- [COM-029](#com-029) Card expiry warning (13a leftover, built 17 Nov 2026)
+- [COM-030](#com-030) Order bump (11h leftover, built 17 Nov 2026)
+- [COM-031](#com-031) Failed payment email wording (13a leftover, built 17 Nov 2026)
+- [COM-032](#com-032) Pay a quote by card (12c leftover, built 17 Nov 2026)
+- [COM-033](#com-033) Purchase limit message and trusted customers (12d leftovers, built 17 Nov 2026)
+- [COM-034](#com-034) Composite products (11b, built 17 Nov 2026)
+- [COM-035](#com-035) Local pickup leftovers (11c, built 17 Nov 2026)
+- [COM-036](#com-036) Header cart dropdown (23d)
+- [COM-037](#com-037) Pre-checkout hold and countdown (23e)
+- [COM-038](#com-038) Bundle holds (23e)
+- [COM-039](#com-039) Elements and /cart (23d)
+- [COM-040](#com-040) Cart expiry reminder (23e)
+- [COM-041](#com-041) Free-shipping bar per zone (23c)
+- [COM-042](#com-042) Empty cart suggestions (23c)
+- [COM-043](#com-043) 23e Cart lifetime setting (built 17 Nov 2026, part)
+- [COM-044](#com-044) 23c Per-line stock warnings (built 17 Nov 2026)
+- [COM-045](#com-045) 23d Cart elements for the visual editor (built 17 Nov 2026, part)
+- [COM-046](#com-046) 23c Gift wrap flat fee (built 17 Nov 2026, part)
+- [COM-047](#com-047) 23c Cart note and gift message (built 17 Nov 2026, part)
+- [COM-048](#com-048) 23c Save for later (built 17 Nov 2026, part)
+- [COM-049](#com-049) 11e field mapping and update schedule (built 17 Nov 2026)
+- [COM-050](#com-050) 11e feed cache (built 17 Nov 2026)
+- [COM-051](#com-051) Task 11d wholesale mode (17 Nov)
+- [EVT-005](#evt-005) Paid bookings (12b leftover, built 17 Nov 2026)
+- [EVT-006](#evt-006) Event places per person (12d leftover, built 17 Nov 2026)
+- [EVT-007](#evt-007) Appointments in the account portal (12b leftover, built 17 Nov 2026)
+- [EVT-008](#evt-008) Booking reminder email (12b leftover, built 17 Nov 2026)
+- [EVT-009](#evt-009) Service staff field and card badge (12a leftovers, built 17 Nov 2026)
+- [EVT-010](#evt-010) Task 1 ticket tier pricing
+- [FRM-006](#frm-006) Moderator email for new comments (22, built 17 Nov 2026, first slice)
+- [FRM-007](#frm-007) Spam rules on comments and reviews (21b, built 17 Nov 2026, first slice)
+- [I18N-008](#i18n-008) Approval text in the other twelve languages (12e leftover, built 17 Nov 2026)
+- [I18N-009](#i18n-009) 16k Dropdown switcher and translation progress bars (built 17 Nov 2026)
+- [I18N-010](#i18n-010) Task 3 translations
+- [MEM-010](#mem-010) Member past-due banner (13a leftover, built 17 Nov 2026)
+- [MEM-011](#mem-011) 23c Saved for later follows the account (built 17 Nov 2026)
+- [SEC-034](#sec-034) Bot challenge on the PayPal buy step (12d leftover, built 17 Nov 2026)
+- [SEC-035](#sec-035) Customer and member sign-in URL (19l, built 17 Nov 2026)
+- [SEC-036](#sec-036) Audit drain filter and redaction (19i, built 17 Nov 2026)
+- [SEC-037](#sec-037) Customer and member sign-in URL (19l, built 17 Nov 2026)
+- [SEC-038](#sec-038) Guided CSP builder (19j, built 17 Nov 2026)
+- [SEC-039](#sec-039) Customer and member sign-in URL (19l, built 17 Nov 2026)
+- [SEC-040](#sec-040) Last sign-in on the admin user screen (18e leftover, built 17 Nov 2026)
+- [SEC-041](#sec-041) IP and country blocking leftovers (19c, 19d, built 17 Nov 2026)
+- [SEC-042](#sec-042) Audit log drain (19i, built 17 Nov 2026, first slice)
+- [SEC-043](#sec-043) Per-route rate limit rules (19b, built 17 Nov 2026, first slice)
+- [SEC-044](#sec-044) Bot detection (19k and 21c, built 17 Nov 2026)
+- [SEC-045](#sec-045) Sign-in alerts (19g, built 17 Nov 2026, first slice)
+- [SEC-046](#sec-046) Bulk user actions (19f, built 17 Nov 2026, first slice)
+- [SEC-047](#sec-047) Ban and unban users (19e, built 17 Nov 2026, first slice)
+- [SEC-048](#sec-048) Country blocking (19d, built 17 Nov 2026)
+- [SEC-049](#sec-049) IP allow and block lists (19c, built 17 Nov 2026)
+- [SEC-050](#sec-050) 19a CAPTCHA modes (built 17 Nov 2026)
+- [SEC-051](#sec-051) 19a and 19k follow-ups (built 17 Nov 2026)
+- [SEC-052](#sec-052) 19k Cloudflare signal rules (built 17 Nov 2026)
+- [SEO-012](#seo-012) 16l Site planner extras (built 17 Nov 2026)
+- [SEO-013](#seo-013) 16i Screen templates and staging blocks (built 17 Nov 2026)
+- [SEO-014](#seo-014) 16i Coming soon email signup (built 17 Nov 2026)
+- [SEO-015](#seo-015) 16d Breadcrumb schema on pages and posts follows the sitewide settings (built 17 Nov 2026)
+- [SEO-016](#seo-016) Blog address (16e, built 17 Nov 2026)
+- [SEO-017](#seo-017) Task 16g facts editor (17 Nov 2026)
+- [SEO-018](#seo-018) Task 16f feed addresses and images (17 Nov 2026)
+- [SEO-019](#seo-019) Task 16h site-wide traffic lights (17 Nov 2026)
+- [SPD-013](#spd-013) Fresh install fix (PR)
+- [STY-008](#sty-008) CSS modules removed (17 Nov 2026)
+- [STY-009](#sty-009) Tailwind audit
+- [STY-010](#sty-010) Repo renamed `asticore/effix` to `asticore/spark` (v0.4.0, `efx-` became `spark-`, `data-e
+- [STY-011](#sty-011) Task 2 effects
+
+### 16 Nov 2026
+
+- [ADM-022](#adm-022) 32a Remove the Asticore SaaS button (built 16 Nov 2026)
+- [ADM-023](#adm-023) 21j Em dashes (built 16 Nov 2026)
+- [ADM-024](#adm-024) 17e Approval assigned to a named person (built 16 Nov 2026; reassign, due date and reminders still open)
+- [ADM-025](#adm-025) 16g Bulk creation of pages, posts and products (built 16 Nov 2026)
+- [AFF-001](#aff-001) 31d Linking to affiliate products (built 16 Nov 2026)
+- [AFF-002](#aff-002) 31e Easy affiliate setup, first version (built 16 Nov 2026)
+- [AFF-003](#aff-003) 31c Affiliate dashboard, first version (built 16 Nov 2026)
+- [AFF-004](#aff-004) 31c emails (built 16 Nov 2026)
+- [AFF-005](#aff-005) 31a attribution (built 16 Nov 2026)
+- [AFF-006](#aff-006) 31e Get started checklist and share kit (built 16 Nov 2026)
+- [AFF-007](#aff-007) 31b rules (built 16 Nov 2026)
+- [AFF-008](#aff-008) 31b Commissions and manual payouts (built 16 Nov 2026, first version)
+- [AFF-009](#aff-009) 31a Affiliate tracking, first slice (built 16 Nov 2026)
+- [BLD-034](#bld-034) 21c Sliders (built 16 Nov 2026, extends the existing Slides element)
+- [BLD-035](#bld-035) 21a A/B tests: suggestions and visual-editor editing (built 16 Nov 2026, partly; the on-canvas control and var
+- [BLD-036](#bld-036) 20c Visual editor design warnings (built 16 Nov 2026)
+- [COM-003](#com-003) 23e Stock hold at checkout (built 16 Nov 2026, part)
+- [COM-004](#com-004) 23f Cart accessibility (built 16 Nov 2026)
+- [COM-005](#com-005) 23c Coupon, shipping estimate and tax on the cart (built 16 Nov 2026, part)
+- [COM-006](#com-006) 23b Mini cart drawer or dropdown (built 16 Nov 2026)
+- [COM-007](#com-007) 28c Free-shipping progress bar (built 16 Nov 2026, part)
+- [COM-008](#com-008) 17d Purchase limits against hoarders and bots (built 16 Nov 2026; waiting list, card fingerprint and bot chall
+- [COM-009](#com-009) 17c Quote, bid and item requests (built 16 Nov 2026; card payment, bid auctions and form feed still open)
+- [COM-010](#com-010) 16j Storefront currency sweep (built 16 Nov 2026; product screen redesign still open)
+- [COM-011](#com-011) 16i Donations (built 16 Nov 2026; recurring and goal bar still open)
+- [COM-012](#com-012) 16h Checkout handoff from forms (built 16 Nov 2026; order bump and upsell still open)
+- [COM-013](#com-013) 16f Pay-later messaging (already built, verified 16 Nov 2026)
+- [COM-014](#com-014) 16e Product feeds per channel and Pinterest (built 16 Nov 2026)
+- [COM-015](#com-015) 16d Pricing rules by customer variables and preview (built 16 Nov 2026; wholesale mode still open)
+- [COM-016](#com-016) 16c Local pickup method (built 16 Nov 2026)
+- [COM-017](#com-017) 16a Carton and pallet quantity (built 16 Nov 2026)
+- [EVT-003](#evt-003) 17b Booking pages, phase 1 (built 16 Nov 2026 on the proposed defaults in `the Bookings plan appendix of `docs
+- [EVT-004](#evt-004) 17a Service products (built 16 Nov 2026; deposit and booking still open)
+- [FRM-003](#frm-003) 26b Spam rules for forms (built 16 Nov 2026, forms only)
+- [FRM-004](#frm-004) 27b Moderation (built 16 Nov 2026, first slice)
+- [FRM-005](#frm-005) 27a Comments on blog posts (built 16 Nov 2026, first slice)
+- [I18N-007](#i18n-007) 21k Languages (built 16 Nov 2026, the switcher style; the translations table already existed; language-specifi
+- [INT-012](#int-012) 25b Native live chat, first version (built 16 Nov 2026)
+- [INT-013](#int-013) 30a AI site chatbot, first version (built 16 Nov 2026)
+- [INT-014](#int-014) 17h Google Analytics link (built 16 Nov 2026)
+- [INT-015](#int-015) 22h Google Analytics user_id (built 16 Nov 2026)
+- [INT-016](#int-016) 21b Ads and Pinterest (built 16 Nov 2026, partly)
+- [INT-017](#int-017) 18b Live order tracking (built 16 Nov 2026; Sendle polling and a webhook built, other carriers need live check
+- [MED-005](#med-005) 29g Previews, renditions, import, quotas (built 16 Nov 2026)
+- [MED-006](#med-006) 29c Search and filters (built 16 Nov 2026; part of the Asset manager, switch on under Site Settings, Features)
+- [MED-007](#med-007) 29d Versions and safe delete (built 16 Nov 2026; part of the Asset manager, switch on under Site Settings, Fea
+- [MED-008](#med-008) 29b and 29e Asset manager, first slice (built 16 Nov 2026; switch on under Site Settings, Features, Asset mana
+- [MED-009](#med-009) 19b Media tags and sub-tags (built 16 Nov 2026; switch on under Site Settings, Features, Media tags)
+- [MED-010](#med-010) 19a Media tree view (built 16 Nov 2026)
+- [MEM-005](#mem-005) 18j Organisation access helper (built 16 Nov 2026)
+- [MEM-006](#mem-006) 18a Dunning and retry for failed membership payments (built 16 Nov 2026; card-expiring warning and live Stripe
+- [MEM-007](#mem-007) Task 22c company theming and portal layout (16 Nov)
+- [MEM-008](#mem-008) Task 22a ownership transfer and delegation (16 Nov)
+- [MEM-009](#mem-009) Task 22a (now 17a) ownership transfer and delegation (16 Nov)
+- [SEC-006](#sec-006) 18l leftovers (built 16 Nov 2026)
+- [SEC-007](#sec-007) 18g Username sign-in (built 16 Nov 2026)
+- [SEC-008](#sec-008) Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)
+- [SEC-009](#sec-009) 25c Device authorisation and 25d MCP endpoint (built 16 Nov 2026; part of AI agent access)
+- [SEC-010](#sec-010) 25b SCIM provisioning (built 16 Nov 2026; part of Single sign-on)
+- [SEC-011](#sec-011) 25a Single sign-on per organisation, OpenID Connect (built 16 Nov 2026; also covers the OIDC part of 22b)
+- [SEC-012](#sec-012) 23a1 Pending two-step token bound to the browser (built 16 Nov 2026; completes 23a1)
+- [SEC-013](#sec-013) 23h Account switcher (built 16 Nov 2026; shows on the customer account screens and the sign-in screens once so
+- [SEC-014](#sec-014) 25d AI agent access, first slice (built 16 Nov 2026)
+- [SEC-015](#sec-015) 23k OpenAPI for auth endpoints (built 16 Nov 2026)
+- [SEC-016](#sec-016) 23a2 Google connection reuses the sign-in client (built 16 Nov 2026)
+- [SEC-017](#sec-017) 23a1 Pending two-step token single use (built 16 Nov 2026, part)
+- [SEC-018](#sec-018) 23g Guest accounts and 28a Account cart with merge on sign-in (built 16 Nov 2026; live check in Live checks)
+- [SEC-019](#sec-019) 23g Passkey as a second sign-in step (built 16 Nov 2026; live check in Live checks)
+- [SEC-020](#sec-020) 23d More social providers, generic OpenID Connect and Google One Tap (built 16 Nov 2026; every provider is off
+- [SEC-021](#sec-021) 23i Access tokens, signing keys and one-time tokens (built 16 Nov 2026; needs API keys switched on in Settings
+- [SEC-022](#sec-022) 23h Session location and self-service delete (built 16 Nov 2026, part)
+- [SEC-023](#sec-023) 23l Who can sign in with what (built 16 Nov 2026, part)
+- [SEC-024](#sec-024) 29a Folders as records (built 16 Nov 2026)
+- [SEC-025](#sec-025) 23a Verify auth behaviours (checked 16 Nov 2026)
+- [SEC-026](#sec-026) 23c new sign-ups and active sessions (built 16 Nov 2026)
+- [SEC-027](#sec-027) 23b switches on the Authentication overview (built 16 Nov 2026)
+- [SEC-028](#sec-028) 24h Disposable email blocking (built 16 Nov 2026, member sign-up)
+- [SEC-029](#sec-029) 24a Challenge on sign-in, register and forgot password (built 16 Nov 2026, member screens)
+- [SEC-030](#sec-030) 18e leftovers built (16 Nov 2026)
+- [SEC-031](#sec-031) 23e Last used badge (built 16 Nov 2026)
+- [SEC-032](#sec-032) 23c Dashboard sign-in cards (built 16 Nov 2026, part)
+- [SEC-033](#sec-033) 23b Authentication overview (built 16 Nov 2026, read only)
+- [SEO-006](#seo-006) 21l Site planner (built 16 Nov 2026, planning and draft pages; filling each page with the AI builder is not wi
+- [SEO-007](#seo-007) 21i Coming soon and staging (built 16 Nov 2026; signup form and the visual builder for the screen are not buil
+- [SEO-008](#seo-008) 21h SEO checks (built 16 Nov 2026, the broken link checker only)
+- [SEO-009](#seo-009) 21g Structured data (built 16 Nov 2026, the extra types)
+- [SEO-010](#seo-010) 21f Blog RSS (built 16 Nov 2026; the knowledgebase part is not built)
+- [SEO-011](#seo-011) 21d Breadcrumb styling (built 16 Nov 2026)
+- [SPD-012](#spd-012) Next.js security patch (16 Nov)
+- [STY-006](#sty-006) 20b Size checks (built 16 Nov 2026)
+- [STY-007](#sty-007) 20a State contrast tests (built 16 Nov 2026)
+
+### 15 Nov 2026
+
+- [ADM-021](#adm-021) Task 7, 15 Nov 2026, PR pending
+- [COM-002](#com-002) Task 4 (part), 15 Nov 2026, PR pending
+- [EVT-002](#evt-002) Task 1 (events and tickets), 15 Nov 2026, PR pending
+- [I18N-005](#i18n-005) Tasks 5 and 6, 15 Nov 2026, PR pending
+- [I18N-006](#i18n-006) Task 3 (part), 15 Nov 2026, PR pending
+- [STY-005](#sty-005) Task 2 (part), 15 Nov 2026, PR pending
+
+### 9 Nov 2026
+
+- [ADM-016](#adm-016) repo renamed to `asticore/engage` (closed Task 21). Repo-slug links updated (README Deploy
+- [ADM-017](#adm-017) admin menu polish (Home label, no theme toggle or tooltips in the menu, name and photo in 
+- [ADM-018](#adm-018) 9 Nov Task 17 feedback button for super admins (PR pending)
+- [ADM-019](#adm-019) 9 Nov Task 17 feedback popup (follow-up)
+- [ADM-020](#adm-020) Task 18 activity log with clear (9 Nov, PR pending)
+- [INT-011](#int-011) 9 Nov Task 10 easy API creation, keys and feeds (PR pending)
+- [MEM-004](#mem-004) Task 14 member groups and companies (9 Nov)
+- [STY-004](#sty-004) closed Task 1 (reference file `reference/references.json` with shine, spark and engage-tem
+
+### 8 Nov 2026
+
+- [ADM-014](#adm-014) 8 Nov Task 5 fresh-install questionnaire (PR #226, 8 Nov)
+- [ADM-015](#adm-015) 8 Nov Task 4 admin walkthrough (PR #226, 8 Nov)
+- [BLD-031](#bld-031) 8 Nov Task 3 Elementor gap review (PR #226, 8 Nov)
+- [BLD-032](#bld-032) 8 Nov Task 2 drag from the Elements bar (PR #226, 8 Nov)
+- [BLD-033](#bld-033) 8 Nov Task 1 visual editor Elementor-parity tweaks (PR #226, 8 Nov)
+- [EVT-001](#evt-001) 8 Nov Task 6 bookings research and plan (PR #226, 8 Nov)
+
+### 2 Nov 2026
+
+- [FRM-002](#frm-002) Task 3 forms and external embeds (PR #213, 2 Nov)
+- [INT-008](#int-008) Task 1 leftovers: relation fields on import and export, options page rules (PR #211, 2 Nov)
+- [INT-009](#int-009) Task 2 API gaps: DELETE, custom fields, messages, PDF, send to developer (PR #212, 2 Nov)
+- [INT-010](#int-010) Task 2 webhooks: log redaction, retention, DNS guard, booking event, inbound webhooks (PR #214, 2 Nov)
+- [MED-004](#med-004) Known limits: SVG, Openverse hosts, RSVP guest details (PR #210, 2 Nov)
+- [MEM-003](#mem-003) Task 5 portal review (PR #216, 2 Nov)
+- [SPD-005](#spd-005) Task 4 (architecture) closed 2 Nov 2026 (PRs #215, #218, #219, #220, #222)
+- [SPD-006](#spd-006) Tasks 1 and 5 closed 2 Nov 2026 (PR #221 type debt 83 to 9 any, 43 to 15 eslint-disable)
+- [SPD-007](#spd-007) Task 4 architecture (PR #215, 2 Nov)
+- [SPD-008](#spd-008) Task 4 speed and Task 5 type debt (PR #217, 2 Nov)
+- [SPD-009](#spd-009) Task 4 lazy sections and Unused tables (PR #218, 2 Nov)
+- [SPD-010](#spd-010) Task 4 Next 16 upgrade (PR #220, 2 Nov)
+- [SPD-011](#spd-011) Task 4 fresh-install speed (PR #222, 2 Nov)
+
+### 1 Nov 2026
+
+- [ADM-006](#adm-006) Task 4 tables and charts (PR #188, 1 Nov)
+- [ADM-007](#adm-007) Task 9b settings UX (PR #196, 1 Nov)
+- [ADM-008](#adm-008) Task 9a settings safety (PR #197)
+- [ADM-009](#adm-009) Task 9c settings checks (PR #198, 1 Nov)
+- [ADM-010](#adm-010) Task 11 operations (PR #199, 1 Nov)
+- [ADM-011](#adm-011) Task 1 multisite (PR #203, 1 Nov)
+- [ADM-012](#adm-012) Known limits: specs, schema, small leftovers (PR #204, 1 Nov)
+- [ADM-013](#adm-013) Known limits: editing, approval and roles, custom fields, admin, locks (PR #206, 1 Nov)
+- [BLD-030](#bld-030) Task 6 clarity (PR #192, 1 Nov)
+- [COM-001](#com-001) Task 8 shop (PR #194, 1 Nov)
+- [INT-005](#int-005) Task 3 tracking connections code (PR #187, 1 Nov)
+- [INT-006](#int-006) Task 7 integrations leftovers (PR #193, 1 Nov)
+- [INT-007](#int-007) Task 7 integrations, what was left (PR #195, 1 Nov)
+- [MED-001](#med-001) Task 12b media formats and admin progress bar (PR #202, 1 Nov)
+- [MED-002](#med-002) Known limits sweep: Media, Import and export, Fonts, Speed (PR #207, 1 Nov)
+- [MED-003](#med-003) Task 5 srcset and account colours (PR #208, 1 Nov)
+- [MEM-002](#mem-002) Task 5 portal search, later slices (PR #191, 1 Nov)
+- [SEC-004](#sec-004) Password protection implementation notes folded in (1 Nov)
+- [SEC-005](#sec-005) Task 17b password leftovers (PR #190, 1 Nov)
+- [SEO-002](#seo-002) Task 2a and 2b, second PR (feat/task-2ab, commit d7510dc, 1 Nov)
+- [SEO-003](#seo-003) Task 2a and 2b, first PR (PR #189, 1 Nov)
+- [SEO-004](#seo-004) Task 10 SEO (PR #200, 1 Nov)
+- [SEO-005](#seo-005) Known limits: SEO, redirects, consent, email, shop, ads (PR #205, 1 Nov)
+- [SPD-004](#spd-004) Task 12 speed (PR #201, 1 Nov)
+- [STY-003](#sty-003) Known limits sweep: Fonts (PR #209, 1 Nov)
+
+### 31 Oct 2026
+
+- [ADM-002](#adm-002) Accessibility and admin text
+- [ADM-003](#adm-003) Task 16 and 3 polish (#180)
+- [ADM-004](#adm-004) Task 5 tables and charts, slice 2 (PRs #173 and #174, 31 Oct)
+- [ADM-005](#adm-005) Task 5 tables and charts, slice 1 (PR #171, 31 Oct)
+- [BLD-020](#bld-020) Task 1a short links (#182, 31 Oct)
+- [BLD-021](#bld-021) Task 1a AI guide cap (#178)
+- [BLD-022](#bld-022) Task 1a legacy breadcrumbs and flaky spec (#179)
+- [BLD-023](#bld-023) Task 1a leftovers (#155)
+- [BLD-024](#bld-024) Task 2b templates hub (#153, #169, #161)
+- [BLD-025](#bld-025) Task 2 duplicate starters (#153)
+- [BLD-026](#bld-026) Task 2 template parts (#159, 31 Oct)
+- [BLD-027](#bld-027) Task 1a short-link coverage (PR #184, 31 Oct)
+- [BLD-028](#bld-028) Task 2 page and section templates CLOSED 31 Oct (PR #185)
+- [BLD-029](#bld-029) Task 1a Visual builder CLOSED 31 Oct
+- [FRM-001](#frm-001) Task 20 forms and embeds (31 Oct)
+- [I18N-003](#i18n-003) Task 3 and 4 leftovers (31 Oct, PR #181)
+- [I18N-004](#i18n-004) Task 3 languages closed (PR #186, 31 Oct)
+- [MEM-001](#mem-001) Task 6 portal search, slice 1 (#152)
+- [SEC-003](#sec-003) Task 13 privacy requests (#160, #164)
+- [SEO-001](#seo-001) Task 2a blog builder, first slice (#154, 31 Oct)
+- [SPD-002](#spd-002) Task 15 SITE_URL fallback removed (#158)
+- [SPD-003](#spd-003) Task 13 CI workflow (#162)
+- [STY-002](#sty-002) Design model step 4c, typed emitter removed (PR #183, 31 Oct)
+
+### 30 Oct 2026
+
+- [I18N-002](#i18n-002) Task 3 languages, locale links (#54 merged 30 Oct)
+- [INT-003](#int-003) Task 19 API and webhooks (30 Oct)
+- [INT-004](#int-004) Task 4 tracking (29 and 30 Oct)
+
+### 29 Oct 2026
+
+- [SEC-002](#sec-002) Task 6 admin hardening and multi-domain (29 Oct)
+
+### 28 Oct 2026
+
+- [BLD-019](#bld-019) Task 2b Templates hub (28 Oct)
+- [I18N-001](#i18n-001) Task 3 languages (28 Oct)
+
+### 27 Oct 2026
+
+- [ADM-001](#adm-001) Task 2c (27 Oct)
+- [BLD-018](#bld-018) Task 2 templates (through 27 Oct)
+
+### 24 Oct 2026
+
+- [SEC-001](#sec-001) Password protection and authentication
+
+### 23 Oct 2026
+
+- [BLD-015](#bld-015) Waves 70-71 (deployed 23 Oct)
+- [BLD-016](#bld-016) Visual editor closed 23 Oct 2026, except Task 1a
+- [BLD-017](#bld-017) Task 1a visual builder (18 to 23 Oct)
+
+### 18 Oct 2026
+
+- [BLD-014](#bld-014) Waves 43 to 48 (16 to 18 Oct) and waves 30 and 31
+
+### Date not recorded
+
+- [BLD-001](#bld-001) Waves 67-68 delivery
+- [BLD-002](#bld-002) Export and assets
+- [BLD-003](#bld-003) Build with AI
+- [BLD-004](#bld-004) Editor usability
+- [BLD-005](#bld-005) Page settings
+- [BLD-006](#bld-006) Templates
+- [BLD-007](#bld-007) Wave 69
+- [BLD-008](#bld-008) Wave 68 fixes
+- [BLD-009](#bld-009) Wave 68 other
+- [BLD-010](#bld-010) Elements
+- [BLD-011](#bld-011) Section display modes
+- [BLD-012](#bld-012) Design panel
+- [BLD-013](#bld-013) Foundation
+- [INT-001](#int-001) Wave 68 social-feed
+- [INT-002](#int-002) Wave 68 embeds
+- [SPD-001](#spd-001) Fresh-install rules
+- [STY-001](#sty-001) Design model steps 1 to 3 (#165, #166, #168); step 4 data side (#177)
+
+---
+
+## Appendices (unchanged)
 
 ## Appendix: Elementor-parity tweaks task list (closed, VE-01 to VE-15 built, PR #226)
 ### Visual editor – Elementor-parity tweaks (task list)
@@ -730,120 +3382,6 @@ Order is by value over effort. None overlaps VE-01..VE-15. All follow the Catalo
 2. Popup close rules (item 2) and time zone (item 5): as recommended?
 3. Scroll effects (item 4): is "no effect in Firefox until it ships timeline support" acceptable?
 
-- **25b Native live chat, first version (built 16 Nov 2026).** Switch Live chat on in Site Settings, under Features, and set it up in Admin > Live chat: opening hours (time zone aware, overnight allowed), notify email, canned replies, retention, purge. Visitors reach it from the chatbot widget (a Talk to a person button, also after a hand-off) and see staff replies in the same window, polled every 4 seconds; staff inbox polls every 5 seconds with filters, assign, internal notes, canned replies with {name}, transcript, close, reopen and delete. Staff are online while the admin inbox is open (90 second heartbeat); outside hours or with nobody online the visitor sends an offline message that is emailed. New chats email the notify address (or shop admin) and send web push. Visitors can end a chat and email themselves the transcript (notes excluded). CAPTCHA and rate limit apply; chats link to the signed-in account and are erased with the customer in the privacy erase. Code: `src/features/livechat/{core,store,notify}.ts`, `components/{LiveChat,LiveChatPanel}.tsx`, `src/admin/views/LiveChatView.tsx`, `/api/livechat`, `/api/admin-livechat`, migration `20270316_425000_livechat`, `tests/int/livechat.int.spec.ts`.
-### Task 20a SAML 2.0, sign-in button and self-service setup (16 Nov 2026)
-SAML 2.0 per organisation next to OpenID Connect. Signature checking is done by xml-crypto; nothing is parsed by hand. Only the provider's pinned keys count, SHA-1 is refused, DOCTYPE is refused, content is read only from what the signature covers (stops signature wrapping), and issuer, audience, recipient, time window, InResponseTo and one-time assertion id are checked (`src/features/orgSso/saml.ts`, tests in `tests/int/org-sso-saml.int.spec.ts`). Routes: `/api/sso/saml/acs` (POST) and `/api/sso/saml/metadata/<connection id>`. Setup by pasting provider metadata XML or the fields, with certificate rotation (up to three keys). Lazy tables `eg_org_sso_saml`, `eg_saml_seen`. The sign-in page shows a Sign in with single sign-on link when a connection is ready. Organisation owners set up their own organisation's connection, domains and provisioning token on the organisation page (`/api/org-sso`, scoped by the session; shared logic in `adminActions.ts`).
-- **23b Mini cart drawer or dropdown (built 16 Nov 2026).** New Shop switches settings (Settings > Shop): What the cart button does (go to the cart page, slide-out drawer, dropdown) and Open after add to cart. Any link to `/cart` (header, cart button element, locale prefixed) and add to cart on the product page, the add to cart button and the visual editor add to cart element open it. It shows lines, quantity, remove, free-shipping bar, coupon, shipping estimate and tax, cross-sells and Checkout; focus is trapped, Escape closes and returns focus, quantity changes are announced. Migration `20270316_428000_mini_cart`. Code: `src/components/MiniCart.tsx`, `src/features/ecommerce/lib/miniCart.ts`, `/api/shop-cart-ui`, `tests/int/mini-cart.int.spec.ts`. English only; effects from the Spark picker are not wired yet.
-- **23c Coupon, shipping estimate and tax on the cart (built 16 Nov 2026, part).** `CartEstimate` on the cart page and in the mini cart: coupon code, country and postcode, then subtotal, discount, shipping, tax and estimated total from `/api/shop-quote`, the same server quote checkout uses, so the numbers match. Re-prices when the lines change. Code: `src/components/CartEstimate.tsx`.
-- **23f Cart accessibility (built 16 Nov 2026).** Labelled quantity and remove buttons per product, a live region announcing item count and subtotal, focus to the cart heading after Remove. The 375 px check is a live check.
-
-- **18g Username sign-in (built 16 Nov 2026).** Optional `username` on users (lowercase, unique, 3 to 32 of letters, digits, underscore and dash, reserved words such as admin refused, empty clears it), set from the account profile (shown only while the setting is on). Authentication overview has a Username switch (`usernameSignInEnabled` on Security settings, off by default); when on, the account sign-in field reads "Email or username" and an entry without an at sign is looked up by username and turned into that account's email before the normal login, so the lockout, the audit entries and the failure text are the same as email sign-in and a username cannot be probed (a taken name and an unusable name give the same message). Admin sign-in is unchanged (email). Migration `20270317_130000_username_sign_in` (column, unique index, setting column), baseline regenerated. All 13 dictionaries have the profile strings and the field label. Code: `src/features/accounts/username.ts`, `profile.ts` (`changeUsername`), `actions.ts` (`saveUsernameAction`, `signInActionImpl`), `components/AccountForms.tsx` (`UsernameForm`), `AuthForms.tsx`, `src/collections/Users.ts`, `tests/int/username-sign-in.int.spec.ts`.
-- **18l leftovers (built 16 Nov 2026).** Three sign-in places now: admin, customers (`/account/sign-in`) and members (`/account/member-sign-in`, same accounts, its own column in Authentication, Who can sign in with what; organisation-only pages send visitors there). The password can be blocked per customer or member place, never on the admin sign-in, and never when it would leave the place with no way in (refused when saving, and at run time the password form stays open if nothing else is left; `placeHasWayIn`, `passwordOpenFor`). The account forms now enforce the matrix on the server too (password, emailed link, emailed code, posted as a hidden `area` field); before this only the HTTP endpoints did. A blocked social provider now redirects to the sign-in with a sentence that names it ("Signing in with Google is not turned on here") instead of a bare 404; only known provider ids are echoed. Passkeys and the emailed link confirm page are still not place aware. Code: `authMatrix.ts`, `authMethods.ts`, `authMethodActions.ts`, `accounts/placeMethods.ts`, `socialLogin/http.ts`, `socialLogin/messages.ts`, `app/(frontend)/account/member-sign-in/page.tsx`, `tests/int/auth-matrix.int.spec.ts`.
-- **23e Stock hold at checkout (built 16 Nov 2026, part).** Shop switches: Hold stock while a cart is in checkout (off by default) and Stock hold minutes (15). The final checkout (strict pricing) holds the stock of managed-stock products for its cart with one conditional insert into `eg_stock_reservations`, counting other carts' running holds that have not been paid; a refused hold stops checkout with a clear message. Variations that manage their own stock hold their own pool, others draw on the product's; backorder products and bundles are not held. Ended holds are swept by the abandoned-carts job. Migration `20270317_150000_stock_hold`. Code: `src/features/ecommerce/server/stockHold.ts`, `pricing.ts`, `tests/int/stock-hold.int.spec.ts`.
-- **23c Save for later (built 17 Nov 2026, part).** Each cart line (without add-on answers) has Save for later; saved lines are kept in this browser (local storage, up to 30), listed under the cart, and Move to cart goes through the normal add to cart so stock and limits are checked again. Not saved to the account, so it does not follow the shopper across devices. No migration. Code: `src/components/SavedForLater.tsx`, `src/features/ecommerce/lib/savedForLater.ts`, `tests/int/saved-for-later.int.spec.ts`.
-- **23c Cart note and gift message (built 17 Nov 2026, part).** The cart page offers an Order note and This order is a gift with a gift message, only when the Order notes checkout field is switched on (`/api/shop-checkout-fields`). They are kept in the browser and pre-filled into that field at checkout (gift message written as "Gift message: ..."), so the order carries one note; the box is cleared once an order is placed. No migration. Code: `src/components/CartNoteBox.tsx`, `src/features/ecommerce/lib/cartNote.ts`, `tests/int/cart-note.int.spec.ts`.
-- **23c Gift wrap flat fee (built 17 Nov 2026, part).** Shop switches: Offer gift wrap at checkout (off by default) and Gift wrap fee. Checkout shows a Gift wrap tick box with the fee; the server prices it (`giftWrap` in `priceCart`, `giftWrapCents` in `computeOrderTotals`), taxes it like shipping, adds it to the total and stores it inside the order's shipping total with "Gift wrap requested." appended to the order note, so refunds, invoices and reports need no change. Migration `20270317_160000_gift_wrap`. Code: `src/features/ecommerce/lib/giftWrap.ts`, `totals.ts`, `pricing.ts`, `stripeAdapter.ts`, `CheckoutExtras.tsx`, `tests/int/gift-wrap.int.spec.ts`. The invoice shows the fee inside the Shipping line (no separate Gift wrap row yet).
-- **23c Saved for later follows the account (built 17 Nov 2026).** For a signed-in shopper `POST /api/shop-saved` merges the browser's saved lines into the account list (the same product and variation adds quantities, like the guest cart merge on sign-in) and returns the merged list; explicit changes (save, move back, delete) send `replace` so a delete stays deleted. Signed out it only uses the browser list. Table `eg_saved_cart_lines` (migration `20270317_170000_saved_cart_lines`), removed by the privacy erase. Code: `src/features/ecommerce/server/savedLines.ts`, `src/app/(engage)/api/shop-saved/route.ts`, `src/components/SavedForLater.tsx`, `tests/int/saved-for-later.int.spec.ts`.
-- **23d Cart elements for the visual editor (built 17 Nov 2026, part).** The cart page is now composed from four reusable parts, each also a visual editor element in the Commerce group: Cart lines (items, quantity, remove, save for later, empty message, saved list), Cart coupon and estimate (free-shipping bar, coupon, shipping estimate, tax, note and gift message), Cart cross-sells, and Cart subtotal and checkout. The Library has a Cart layout preset that places them in two columns. Code: `src/components/CartParts.tsx`, `src/lib/elements/wave66Defs.ts`, `Wave66Server.tsx`, `libraryCommercePresets.ts`, `tests/int/wave66-elements.int.spec.ts`. No migration. The `/cart` route itself is still the app's own page built from the same parts.
-- **23c Per-line stock warnings (built 17 Nov 2026).** The cart lines show a red message when the quantity in the cart can no longer be bought (stock or limits), using the same catalogue rules as add to cart. The server decides again at checkout. Code: `src/components/CartParts.tsx`.
-- **23e Cart lifetime setting (built 17 Nov 2026, part).** Shop switches: Cart lifetime (days), 30 by default, 1 to 365. The clean-up job deletes untouched guest carts older than that; account and paid carts stay. Migration `20270317_180000_cart_lifetime`. Code: `lib/cartLifetime.ts`, `accountCart.ts` (`sweepGuestCarts`), `cron/jobs.ts`, tests in `tests/int/guest-cart.int.spec.ts`. Still open: the expiry reminder email.
-
-### Task 23 leftovers, third batch (cart lifetime follow-ups)
-
-- **Empty cart suggestions (23c):** an empty cart shows You might like with the newest in-stock products (`newestProducts` in `server/recommendations.ts`, `/api/shop-recommendations` with an empty list). Follows the Show product recommendations switch.
-- **Free-shipping bar per zone (23c):** `/api/shop-free-shipping` takes country, state and postcode and uses the matching zone (`thresholdForAddress` in `lib/freeShipping.ts`); the bar reads the destination saved by the cart estimate and updates when it changes.
-- **Cart expiry reminder (23e):** Cart expiry reminder (days before) in Shop switches, off by default. `server/cartExpiry.ts` runs in the abandoned-carts job, emails a signed-out cart's owner once, only for a known address that has not unsubscribed. Column `expiry_reminder_at` on carts, migration `20270317_190000_cart_expiry_reminder`. English only.
-- **Elements and /cart (23d):** `MiniCartLinesPart` is the compact list the mini cart drawer now uses and is the new Cart lines (compact) element. Switch Build the cart page in the visual editor (Shop switches) makes `/cart` show the published page with slug cart (`server/cartPage.ts`); the built-in cart is `components/CartPageClient.tsx`.
-
-### Task 23 last leftovers (holds, countdown, header dropdown)
-
-- **Bundle holds (23e):** `resolveBundle` now returns the stock pool of each component (`pools`), merged into the cart's pools in `loadPricedLines`, so checkout holds a bundle's component stock.
-- **Pre-checkout hold and countdown (23e):** switch Also hold stock while shoppers view their cart (Shop switches, needs the checkout hold on; migration `20270317_200000_stock_hold_in_cart`). `/api/shop-stock-hold` (cart secret required, rate limited) takes the holds when the cart page opens (`server/cartHold.ts`) and returns when the earliest ends. `CartHoldNotice` shows the ticking countdown at the top of the cart totals; screen readers hear it only at the start and end. Holds are never taken when an item is added.
-- **Header cart dropdown (23d):** Library > Commerce preset Header cart dropdown (compact lines and the subtotal with Checkout).
-- **IP allow and block lists (19c, built 17 Nov 2026).** Settings > Security > IP lists (admin only): paste addresses or CIDR ranges (IPv4 and IPv6) into the Block or Allow list with a private reason and an optional expiry, remove entries, download a CSV. The middleware answers a plain 403 for a blocked address before any page loads; the allow list wins; an unreadable address is never blocked; the saving admin cannot block their own address; SECURITY_IP_RULES_OFF=1 in the environment switches the lists off. Changes reach every server within 30 seconds (cached read). Audit entries `ip.rule` and `ip.blocked`. Code: `src/features/security/{ipRules,ipRulesStore}.ts`, `requestGuard.ts`, `/api/admin-ip-rules`, `IpRulesView`, migration `20270317_230000_ip_rules` (table `eg_ip_rules`), `tests/int/ip-rules.int.spec.ts`.
-- **Country blocking (19d, built 17 Nov 2026).** In IP lists, Countries: Off, Block these countries, or Only allow these countries, from two letter codes (XX means an unknown country, which includes missing and T1 headers). Uses Cloudflare's `cf-ipcountry` header for the whole site (pages, admin, sign-in, checkout, API); blocked visitors get a plain 403 message; addresses on the IP allow list skip it; the saving admin cannot block their own country. Stored as rows in `eg_ip_rules` (kinds `country-allow` and `country-block`), no new table. Code: `ipRules.ts` (`decideCountry`), `requestGuard.ts`, `/api/admin-ip-rules` (action `countries`), `tests/int/ip-rules.int.spec.ts`.
-- **Ban and unban users (19e, built 17 Nov 2026, first slice).** Settings > Security > Banned accounts (admin only): ban an account by email with an internal reason and optional days; it is signed out at once (every session row is deleted) and cannot sign in by any method, and sees only "This account cannot sign in." with no reason. The ban rides on the existing sign-in lock: `lock_until` is the end date (or 9999 for permanent) and `login_attempts` holds a marker (100000) no automatic lockout can reach, so an expired ban lifts itself and the sign-in code can tell a ban from a lockout. Cannot ban yourself. Audit entries `user.banned` and `user.unbanned`. Code: `src/features/security/{userBans,userBansStore}.ts`, `checkLoginPermission` in `src/localapi/auth.ts`, `/api/admin-user-bans`, `UserBansView`, migration `20270317_240000_user_bans` (table `eg_user_bans`), `tests/int/user-bans.int.spec.ts`.
-- **Bulk user actions (19f, built 17 Nov 2026, first slice).** Users list (admin only) shows a bulk bar over selectable rows: ban (reason, optional days), unban, sign out everywhere, change role to editor or viewer, each with a confirm step and per-row results. Staff and member accounts only: shop customers, admins (except unban) and the person running it are refused per row. Max 100 per run. Code: `src/features/security/{userBulk,userBulkStore}.ts`, `/api/admin-user-bulk`, `src/admin/views/UsersBulkBar.tsx`, audit action `user.bulk`, test `tests/int/user-bulk.int.spec.ts`. Live check: Task 14 line "Live check bulk user actions (19f)". The Users list also has an All and Banned filter (`?status=banned`, in `src/admin/views/ListView.tsx`).
-- **Sign-in alerts (19g, built 17 Nov 2026, first slice).** Each sign-in records the device (browser and system) and country in `eg_login_seen`; a sign-in from a new country or new device emails the account owner. An account's first recorded sign-in is never alerted, so enabling it does not mail everyone. Sink pattern: `notifySignIn` in `src/localapi/auth.ts` `finishLogin`, handler registered in `src/localapi/engine.ts`. Skips impersonation and re-authentication checks. Code: `src/features/security/{loginAlert,loginAlertStore}.ts`, migration `20270317_250000_login_seen`, test `tests/int/login-alert.int.spec.ts`. Live check: "Live check sign-in alerts (19g)".
-- **Spam rules on comments and reviews (21b, built 17 Nov 2026, first slice).** The site-wide form spam rules (blocked words, link limit, blocked senders in Settings > Forms) now also run on blog comments (`src/app/(engage)/api/comments/route.ts`) and product reviews (`src/features/ecommerce/reviewEndpoint.ts`). A hit is stored with the Spam status and the poster sees the normal thank-you, so a bot learns nothing. Reuses `checkSpamRules`. Live check: "Live check spam rules on comments and reviews (21b)".
-- **Moderator email for new comments (22, built 17 Nov 2026, first slice).** A comment that lands Pending emails every admin address with an excerpt and a link to the Comments screen. Best effort, never blocks posting; `COMMENT_EMAILS_OFF=1` switches it off. Code: `src/features/comments/moderatorMail.ts`, `src/app/(engage)/api/comments/route.ts`, test in `tests/int/comments-core.int.spec.ts`. Live check: "Live check moderator comment email (22)".
-- **Outbound clicks report (26d, built 17 Nov 2026).** Shop > Outbound clicks lists clicks on external and affiliate product buttons for all products over the last 30 days, by product and source. Code: `readAllClicks` in `src/features/ecommerce/outbound.ts`, `src/admin/views/OutboundClicksView.tsx`, nav entry in `navStructure.ts`. Live check: "Live check outbound clicks report (26d)".
-- **Bot detection (19k and 21c, built 17 Nov 2026).** Form settings > Spam protection > Bot detection: Off, Ask for the challenge, or Ask for the challenge and refuse the worst, with a minimum score (default 30). Reads the Cloudflare bot score from the `cf-bot-score` header or `request.cf.botManagement.score`; verified bots are never touched; no score from the plan means no change. Challenge mode makes sign-in, create account and forgot password show and require the CAPTCHA even when Protect sign-in is off (needs the keys); block mode also refuses those and quietly discards form submissions from low scores. Honeypot, fill time and probe-path blocking are unchanged. Code: `src/features/security/botSignals.ts`, `authCaptcha.ts`, `forms/submit.ts`, migration `20270317_260000_bot_detection`, `tests/int/bot-detection.int.spec.ts`. Left: see 19k leftovers.
-- **Per-route rate limit rules (19b, built 17 Nov 2026, first slice).** Settings > Security > Rate limit rules (admin only): a path prefix, a method (or any), a limit and a window (10 s to 24 h), with an on/off switch and a note. Requests are counted per address in D1 (`hitShared`) and the most specific path wins; over the limit gets a 429 with Retry-After and an audit entry. Rules reach all servers within 30 s; `SECURITY_RATE_RULES_OFF=1` switches them off. Code: `src/features/security/{routeRules,routeRulesStore}.ts`, `requestGuard.ts`, `/api/admin-rate-rules`, `RateRulesPanel.tsx`, `RateRulesView.tsx`, migration `20270317_260000_rate_rules` (table `eg_rate_rules`), test `tests/int/rate-rules.int.spec.ts`. Live check: "Live check rate limit rules (19b)".
-- **Audit log drain (19i, built 17 Nov 2026, first slice).** Webhooks can subscribe to a new event, Activity log entry (`audit.recorded`). Every ordinary audit entry (sign-ins, setting and user changes, bans, exports and so on) is also sent, signed and retried like any webhook, with only action, actor email, collection, document id, address, detail and time. The noisy request-level entries (blocked probes and addresses, rate limits, API key use) and the webhook system's own entries are left out so the drain cannot loop. Labels in all thirteen languages. Code: `src/features/security/auditLog.ts` (`recordAuditEvent`), `src/features/webhooks/events.ts`.
-- **Local pickup leftovers (11c, built 17 Nov 2026).** Pickup hours text such as `Mon-Fri 9-5; Sat 10-2` or `Sun closed` is read by `pickupClosedOn` in `src/features/ecommerce/lib/pickup.ts`; a location closed today gets `closedToday` on its shipping option and checkout shows "(closed today)" (the order is still allowed). The order confirmation and awaiting-payment emails add a "Collect from" block (unless the template places `{{pickup_location}}`), and the account order page shows the collection point and whether it is ready. English only. Tests in `tests/int/local-pickup.int.spec.ts`.
-
-
-- **IP and country blocking leftovers (19c, 19d, built 17 Nov 2026).** The Security audit page shows a Block this IP button beside every address (confirm, adds to the block list, your own address refused). IP lists > Import a list takes a text or CSV file or an https web address (up to 1 MB, SSRF-safe download shared with media import, up to 2000 entries, bad lines reported). Admin bypass: an admin turns it on in IP lists and that browser gets a signed 30 day cookie (`eg_ip_bypass`, HMAC with ENGAGE_SECRET) that skips both IP and country rules in the middleware. Custom block message (plain text, 300 characters, stored as a `message` row). Country picker with English names and search (`Intl.DisplayNames`). Code: `ipBypass.ts`, `countryNames.ts`, `components/BlockIpButton.tsx`, `IpRulesPanel.tsx`, `/api/admin-ip-rules` (actions `import`, `message`, `bypass`), `requestGuard.ts`, `tests/int/ip-rules.int.spec.ts`.
-- **Last sign-in on the admin user screen (18e leftover, built 17 Nov 2026).** The admin edit screen for a user shows a Last sign-in card with the method (password, magic link, passkey, social and so on) and the time (UTC), from the `lastLoginMethod` and `lastLoginAt` columns set at every sign-in. Accounts that have not signed in since those columns were added show a plain notice. Thirteen languages. Code: `src/admin/views/EditView.tsx` (`lastLoginCard`), keys `lastLogin.*`. No migration.
-
-Task 15a (part 2): the state harness now covers badges, chips (outline badges), menu items (resting, hover, focus, current), table rows (hover, selected) and switches (track 3:1 off and on) in light and dark, plus size checks for menu items, badges and switches at 375 and 1280 px. Specs: `tests/int/state-contrast.int.spec.ts`, `tests/int/size-checks.int.spec.ts`. No CSS change was needed. Left: other Shine components, public block CSS, 15c one-click apply.
-- **16d Breadcrumb schema on pages and posts follows the sitewide settings (built 17 Nov 2026).** Ordinary pages, posts, products and events already emitted a BreadcrumbList inside the page script; it now respects the SEO settings Breadcrumbs switch (structured data off removes it) and uses the sitewide Home label. No migration. Code: `src/features/seo/PageJsonLd.tsx`, `schemaNodes.ts`; test `tests/int/seo-breadcrumb-pages-posts.int.spec.ts`.
-18b and 18c leftovers: the Authentication overview has a Test button per method (provider configuration check for social providers, a test email to the signed-in admin for magic link, email code and email verification; `testAuthMethodAction`, `features/security/authMethodTest.ts`). The dashboard Sign-ins card has From and To date pickers (`?signinFrom=&signinTo=`, up to 365 days, `features/security/authRange.ts`) instead of a fixed 30 days. No migration; thirteen languages.
-- **Customer and member sign-in URL (19l, built 17 Nov 2026).** Settings > Security has Customer sign-in URL, and Members settings has Member sign-in URL (one segment, lowercase letters, digits and hyphens, 3 to 40 characters; empty keeps `/account/sign-in` and `/account/member-sign-in`). The routes stay at the default paths; the middleware serves a custom path by rewrite (including `/link` for emailed links), redirects a page view of the old path to the new one (form posts and server actions on the old path are still served), sends handler redirects straight to the new path, and marks the custom path noindex. Refused: the admin URL or anything under it, words the site uses (including `account` and `admin`), and the same path for both places. A bad saved value is skipped, never lost. Recovery: `ENGAGE_CUSTOMER_SIGN_IN_PATH` and `ENGAGE_MEMBER_SIGN_IN_PATH` override the fields. Code: `src/features/security/signInPath.ts`, `signInPathValidate.ts`, `src/middleware.ts`, `src/globals/SecuritySettings.ts`, migration `20270317_280000_sign_in_paths` (the member path is a column on `eg_member_settings` because `eg_security_settings` is at the 100 column limit), `tests/int/sign-in-custom-path.int.spec.ts`. Saving a custom path is refused when a top-level page already uses that slug. A locale-prefixed old path (`/fr/account/sign-in`) is not redirected on purpose: the account area never takes a language prefix (see `isPortalPath`), so those addresses were never valid. A top-level page cannot be saved with the slug of a custom sign-in path either.
-- **Guided CSP builder (19j, built 17 Nov 2026).** Settings > Security > Content-Security-Policy builder (`/admin/security/csp`, admin only). Mode off, report-only or enforce; per directive (default, script, style, image, font, connect, media, frame, worker, object, base, form action, frame ancestors) pick keywords, known hosts (Google Fonts, jsDelivr, GTM, Clarity, Meta Pixel, Stripe, Turnstile, reCAPTCHA, cdnjs, unpkg, chat widgets) or type a host, each added to the default policy or replacing it for that directive. Live preview, validation with the same rules as the free-text policy, and risk warnings. Report-only sends `Content-Security-Policy-Report-Only` while the normal policy keeps enforcing; enforce replaces the enforced policy. Both add `report-uri /api/csp-report`, a public endpoint (only while the builder is on, 16 KB body cap, rate limited, 300 distinct entries, browser-extension noise dropped) that fills the Violations table; Allow adds the reported host to the right directive and saves. The admin, the embed frame document and the shareable data page never get the builder's policy. The free-text policy stays and is merged first. Code: `src/features/security/cspBuilder.ts` (pure), `cspBuilderStore.ts`, `headers.ts` (third argument), `requestGuard.ts` (30 second cached read), `api/admin-csp`, `api/csp-report`, `components/CspBuilderPanel.tsx`, migration `20270318_100000_csp_builder` (`eg_csp_builder`, `eg_csp_reports`), `tests/int/csp-builder.int.spec.ts`. Live check is in Live checks.
-- **16i Coming soon email signup (built 17 Nov 2026).** While the coming soon screen is up, visitors see an email box. It posts to a built-in form called Coming soon (public key `comingsoon`, created the first time it is needed and published), so each signup is an ordinary form entry: it shows under the form's Submissions, goes out with its email forwarding rules, webhooks and data API. No new list or table. To turn the signup off, set the Coming soon form to Draft (it stays in place and the screen shows no box). The box is also hidden when Forms is switched off, and when a captcha is on for forms (the screen has no challenge widget, so every signup would fail). Its text (`comingSoon.signup.*`) is in the admin reference table and all 12 other dictionaries. No migration. Code: `src/features/forms/comingSoon.ts`, `comingSoonKey.ts`, `comingSoonSignup.ts`, the create hook in `configHooks.ts` (fixed key only for this form, read from the request context), `src/features/site/ComingSoonSignup.tsx`, `MaintenanceScreen.tsx`, `src/app/(frontend)/layout.tsx`, `tests/int/coming-soon-signup.int.spec.ts`.
-- **16i Screen templates and staging blocks (built 17 Nov 2026).** Two new template kinds, Maintenance screen and Coming soon screen (Templates, tab Maintenance and coming soon), are built in the visual editor like any template. When one is in use it replaces the built-in screen; a template with a Template content element shows the built-in screen there. A Countdown element with a blank date counts down to the launch date set under Site pages and maintenance. A new Coming soon signup element draws the email box (the built-in Coming soon form; it draws nothing while that form is a Draft). Starters: Countdown and signup, Back soon. With no template the built-in screen is unchanged, and the kinds are optional so the coverage warnings do not list them. No migration. On a staging site (`SITE_ENV=staging`) text messages, web push and outgoing webhooks are now switched off too (a webhook delivery is logged as skipped). Code: `src/features/siteTemplates/kinds.ts`, `render.tsx` (`transformBlocks`, `replaceContent`), `starters.ts`, `src/features/site/screenContext.ts`, `screenCountdown.ts`, `src/lib/elements/comingSoonDefs.ts`, `ComingSoonServer.tsx`, `src/app/(frontend)/layout.tsx`, `sms/index.ts`, `push/send.ts`, `webhooks/delivery.ts`, `tests/int/screen-templates.int.spec.ts`.
-- **16l Site planner extras (built 17 Nov 2026).** Per plan: a brand voice (overrides the Build with AI one in every planner AI call) and a page template (Create draft pages starts every draft from its sections, with fresh row ids). Per page: Suggest sections (AI), drag to reorder (drop on the top or bottom half of another page; dropping on a page of another level moves it under that parent, never under its own child) with Move up and Move down buttons for the keyboard, and Fill this page with AI, which opens that page in the visual editor with the Build with AI dialog already open, set to whole page, with the page's brief and sections entered; Next planned page (in plan tree order, pages that have a draft) follows once the page is saved. A Plan diagram shows the tree as boxes and lines, the box edge showing the status. Plan settings are part of the saved plan JSON, so no migration. The planner and editor texts added here are English only for now. Code: `src/features/sitePlanner/plan.ts`, `prompts.ts`, `SitePlannerPanel.tsx`, `src/app/(engage)/api/admin-site-planner/route.ts`, `src/views/VisualEditor.tsx`, `visualEditor/AiBuilderPanel.tsx`, `EditorDock.tsx`, `tests/int/site-planner-extras.int.spec.ts`.
-- **Customer and member sign-in URL (19l, built 17 Nov 2026).** Settings > Security has Customer sign-in URL, and Members settings has Member sign-in URL (one segment, lowercase letters, digits and hyphens, 3 to 40 characters; empty keeps `/account/sign-in` and `/account/member-sign-in`). The routes stay at the default paths; the middleware serves a custom path by rewrite (including `/link` for emailed links), redirects a page view of the old path to the new one (form posts and server actions on the old path are still served), sends handler redirects straight to the new path, and marks the custom path noindex. Refused: the admin URL or anything under it, words the site uses (including `account` and `admin`), and the same path for both places. A bad saved value is skipped, never lost. Recovery: `ENGAGE_CUSTOMER_SIGN_IN_PATH` and `ENGAGE_MEMBER_SIGN_IN_PATH` override the fields. Code: `src/features/security/signInPath.ts`, `signInPathValidate.ts`, `src/middleware.ts`, `src/globals/SecuritySettings.ts`, migration `20270317_280000_sign_in_paths` (the member path is a column on `eg_member_settings` because `eg_security_settings` is at the 100 column limit), `tests/int/sign-in-custom-path.int.spec.ts`. Not done: locale-prefixed old paths (`/fr/account/sign-in`) do not redirect; a published page with the same slug as the custom path is hidden behind the sign-in.
-- **Composite products (11b, built 17 Nov 2026).** New product type Composite (build your own kit). In the product editor, Kit choices holds two lists: Items to choose from (step name, a simple product, price mode Included, Adds a price or Its own price less a percentage, default ticked) and optional Step rules (help text, required, fewest and most items; a step with no rule is required and takes one item). The product's Regular price (and sale schedule) is the starting price; each pick adds to it. The product page shows a picker (radio buttons for one-item steps, tick boxes for several) with a live total, defaults preselected and out-of-stock items disabled. Picks ride on the cart line as JSON in a new `composite` column on `eg_carts_items`; the cart hook, checkout pricing and `/api/shop-composites` (cart display) all price from the database, check the rules and stock (items are tallied across lines with bundles and single products) and keep only the accepted picks. The order line name lists the picks and the order keeps a snapshot of the picked items (`bundleContents`), so stock decrement, oversold flagging and per-line refund restock reuse the bundle path. Tax, shipping class and weight come from the kit product plus the picked items' weights. Only simple, published, non name-your-price products can be offered; saving checks this. No new `eg_products` columns (two child tables per live and versioned copy). Code: `src/features/ecommerce/lib/composite.ts`, `server/composite.ts`, `collections/productComposite.ts`, `src/components/CompositePicker.tsx`, `src/app/(engage)/api/shop-composites/route.ts`, migration `20270317_265000_composite_products`, tests `tests/int/shop-composite.int.spec.ts`. Left open: a Save for later move is disabled for kit lines, and a kit cannot yet be its own source of stock (the kit product itself holds none).
-- **Audit drain filter and redaction (19i, built 17 Nov 2026).** Each webhook subscribed to Activity log entry can now list the actions it wants (one per line; a name ending in a dot such as `user.` matches the whole family; empty means all) and tick fields to leave out of the payload (`actorEmail`, `ip`, `documentId`, `detail`; they are sent as empty strings so the shape stays the same). Settings are in a new JSON column `audit_options` on `eg_webhooks` (migration `20270317_270000_webhook_audit_options`, baseline regenerated), included in webhook export and import. The filter runs when the event is queued (`queueEvent`), redaction when the payload is built (`queueFor`), so a filtered-out entry never creates a log row. Code: `src/features/webhooks/core.ts` (`auditActionMatches`, `redactAuditData`, `parseAuditOptions`), `delivery.ts`, `store.ts`, editor in `components/WebhooksPanel.tsx`; tests in `tests/int/webhooks-core.int.spec.ts` and `webhooks-delivery.int.spec.ts`. Live check in the live-check section.
-- **Customer and member sign-in URL (19l, built 17 Nov 2026).** Settings > Security has Customer sign-in URL, and Members settings has Member sign-in URL (one segment, lowercase letters, digits and hyphens, 3 to 40 characters; empty keeps `/account/sign-in` and `/account/member-sign-in`). The routes stay at the default paths; the middleware serves a custom path by rewrite (including `/link` for emailed links), redirects a page view of the old path to the new one (form posts and server actions on the old path are still served), sends handler redirects straight to the new path, and marks the custom path noindex. Refused: the admin URL or anything under it, words the site uses (including `account` and `admin`), and the same path for both places. A bad saved value is skipped, never lost. Recovery: `ENGAGE_CUSTOMER_SIGN_IN_PATH` and `ENGAGE_MEMBER_SIGN_IN_PATH` override the fields. Code: `src/features/security/signInPath.ts`, `signInPathValidate.ts`, `src/middleware.ts`, `src/globals/SecuritySettings.ts`, migration `20270317_280000_sign_in_paths` (the member path is a column on `eg_member_settings` because `eg_security_settings` is at the 100 column limit), `tests/int/sign-in-custom-path.int.spec.ts`. Saving a custom path is refused when a top-level page already uses that slug. A locale-prefixed old path (`/fr/account/sign-in`) is not redirected on purpose: the account area never takes a language prefix (see `isPortalPath`), so those addresses were never valid. Not covered: creating a page with the slug of a custom sign-in path afterwards (the sign-in wins).
-- **Purchase limit message and trusted customers (12d leftovers, built 17 Nov 2026).** Each rule has an editable refusal message (`{{product}}` merge field) and an exceptions list of emails the rule never refuses (stored normalised, one per line). Migration `20270318_110000_purchase_limit_message_exempt` adds `message` and `exempt_emails` to `eg_purchase_limit_rules`; logic in `src/features/purchaseLimits/logic.ts`, panel in `PurchaseLimitsPanel.tsx`. Tests in `tests/int/purchase-limits.int.spec.ts`.
-- **Member past-due banner (13a leftover, built 17 Nov 2026).** `src/features/accounts/components/PastDueBanner.tsx`, shown inside `AccountShell`, tells a member whose membership is past due that the payment failed and when access ends. English only.
-- **Review due days and overdue reminder (12e leftover, built 17 Nov 2026).** Each approval workflow has Days a review may wait (0 for none; migration `20270318_120000_approval_review_due_days`, column `review_due_days`). `runOverdueReviewReminders` in `src/features/approval/overdue.ts` runs inside the Scheduled publishing cron job: for reviews past the due date it emails the approvers of the waiting step once and writes an `Overdue reminder sent` comment on the review history so the next run skips it. Tests in `tests/int/approval-overdue.int.spec.ts`.
-- **Pay a quote by card (12c leftover, built 17 Nov 2026).** The quote page has Accept and pay by card next to the offline option. `acceptQuote` in `src/features/quotes/service.ts` makes the order (payment method stripe, pending) and a Stripe Checkout session with `orderID` in the payment intent metadata, so the existing `payment_intent.succeeded` webhook marks it paid. A failed session cancels the order and puts the quote back. Tests in `tests/int/quote-card-payment.int.spec.ts`.
-- **Failed payment email wording (13a leftover, built 17 Nov 2026).** Settings, Members, Emails has a subject and body for each of the five dunning emails (failed, retry, ended, downgraded, recovered); a blank one keeps the built-in text. Migration `20270318_130000_member_dunning_emails`; `dunningWording` in `src/features/members/dunning.ts`, used by `dunningRun.ts`. The wording lives in Members settings, not the Email templates screen (that screen's global is column-limited). English only.
-- **Order bump (11h leftover, built 17 Nov 2026).** A product has an Order bump section: pick one simple product and optional wording. While that product is in the cart the checkout shows a tick-box offer (`src/components/OrderBump.tsx`, `/api/shop-order-bump`); ticking adds the product to the cart, unticking removes it. Skipped when the product is unpublished, protected, out of stock or not simple. Migration `20270318_140000_order_bump` adds `order_bump_product_id` and `order_bump_headline` (and the `version_` pair). English only.
-- **Card expiry warning (13a leftover, built 17 Nov 2026).** Once a day (03:00 UTC, inside the `member-dunning` job) `sweepCardExpiry` in `src/features/billing/cardExpiry.ts` reads the card on each active membership and active or past-due shop subscription from Stripe and emails the person when it expires within 30 days, with an update-card link (Stripe billing portal, else the account page). One email per card expiry: a `Card expiry warning sent for MM/YYYY` line in the membership notes or subscription history stops repeats. English only. Tests in `tests/int/card-expiry.int.spec.ts`. Shop subscription dunning (own retry schedule and grace) is not built: shop subscriptions keep Stripe's own retries and the existing failed-payment email.
-- **Service staff field and card badge (12a leftovers, built 17 Nov 2026).** A service product has a With field (who does it or what is used). The product page lists it under Duration (`serviceDetails` in `src/features/ecommerce/lib/service.ts`) and the shop card shows a `Service · 1 hour` label (`serviceBadge`, in `ProductCard.tsx`). Migration `20270318_150000_service_staff` adds `service_staff` and `version_service_staff`. The badge on orders, deposits and booking-based selling are not built. English only.
-- **Booking reminder email (12b leftover, built 17 Nov 2026).** Each confirmed booking starting within the next 24 hours gets one reminder email. `runBookingReminders` in `src/features/bookings/reminders.ts` runs inside the Reminder emails cron job (every 5 minutes); `reminder_sent_at` on `eg_bookings` (migration `20270318_160000_booking_reminders`) is set before sending so nothing goes out twice. The email has no cancel link (only a hash of the manage token is stored), so it points back to the confirmation email. The lead time is fixed at 24 hours. Tests in `tests/int/booking-reminders.int.spec.ts`. English only.
-- **Appointments in the account portal (12b leftover, built 17 Nov 2026).** The Event bookings page in the account (`BookingsScreen`) lists the customer's booking-page appointments, upcoming first, with a Cancel appointment button. They are matched by booking email and shown only once the account's email is confirmed (same rule as event bookings). `src/features/bookings/MyAppointments.tsx`, `CancelAppointment.tsx`, `/api/account-appointments` (checks the booking email is the signed-in account's, then reuses `cancelError`), `listBookingsByEmail` in `store.ts`. English only. Customer reschedule is not built.
-- **Quote expiry reminder and sweep (12c leftover, built 17 Nov 2026).** `runQuoteSweep` in `src/features/quotes/expiry.ts` runs inside the Reminder emails cron job (every 5 minutes): it closes quotes past their validity date and emails the customer once when an open quote ends within 3 days (`expiring` wording in `QUOTE_EMAILS`). The reminder is noted in the quote activity as `Expiry reminder sent for <date>`, so a re-sent quote with a new date is reminded again. The email has no link (only a hash of the token is stored); it points back to the earlier quote email. No migration. English only. Tests in `tests/int/quote-expiry.int.spec.ts`.
-- **Overdue tag in the review queue (12e leftover, built 17 Nov 2026).** Queue rows carry `overdue` (`loadReviewQueue` in `src/features/approval/handlers.ts`, using `isOverdue` and the workflow's review due days); `ReviewQueueTable.tsx` shows an Overdue tag beside the waiting time, in the queue page and the dashboard card. English only.
-- **Reassigning a review and stand-ins (12e leftover, built 17 Nov 2026).** Reassign: on a document in review, an approver of the current step (or an admin) picks someone in the Review box and presses Hand over (`reassign` action in `src/features/approval/stateMachine.ts` and `handlers.ts`; GET returns `assignee`, `allowed.reassign` and `reviewerChoices`, names only). The person may then approve or send back that step besides the usual approvers, gets an email (`notifyReassigned`), and the queue row shows "handed to". It is stored inside the existing `reviewApprovals` JSON (no column on content tables) and cleared when the review moves to the next step, is sent back, withdrawn or restarted by an edit; a partial approval keeps it. Hand back to the usual approvers clears it. History row `reassigned` (no migration; `action` is plain text). Stand-ins: in the workflow editor (Roles page), Stand-ins for reviewers who are away lists a reviewer, who covers, and an optional last day away (`standIns` JSON on the workflow, migration `20270318_210000_approval_stand_ins`, `stand_ins`). While away, the stand-in may act wherever that reviewer could (their roles, or their name on a named step), still needs review permission of their own, sees those reviews in the queue and gets the step and overdue emails (`withStandIns` in `notify.ts`). Admins are not affected. English only. Tests in `tests/int/approval-reassign.int.spec.ts`.
-- **Approver picker for non-staff people (12e leftover, built 17 Nov 2026).** The people lists on the Roles page (named approvers, per-author approvers, stand-ins) now include anyone with a custom role, not only built-in staff roles, and read users in pages of 500 up to 5000 instead of stopping at 500 (`approverCandidates` in `workflowForm.ts`, `RolesView.tsx`). Plain customers stay out. A named person still needs review permission to approve. Test in `tests/int/approval-reassign.int.spec.ts`.
-- **Atomic last place for purchase limits (12d leftover, built 17 Nov 2026).** The limit check used to read earlier orders and the order was written later, so two near-simultaneous orders could both pass. `checkRules` in `src/features/purchaseLimits/enforce.ts` now claims the place first (`claimPlace`, one row per cart and product in `eg_purchase_limit_claims`, kept 10 minutes, migration `20270318_240000_limit_claims`, table owned by the `limits` feature) and only then counts orders and other carts' live claims by the same person (account, email or address). Two racing orders can both be refused but never both pass; a refused order lets go of its claim; a cart with an order is counted by the order, not its claim. An abandoned payment holds the place for up to 10 minutes. Tests in `tests/int/purchase-limit-last-place-race.int.spec.ts` (interleaved callers on an in-memory SQLite, including the old race with the claim table removed).
-- **Bot challenge on the PayPal buy step (12d leftover, built 17 Nov 2026).** The card payment (`/payments/stripe/initiate`) and bank transfer, cheque and cash orders already asked the Turnstile or reCAPTCHA challenge (Task 19a places `cardCheckout` and `offlineOrder`); PayPal did not. `/api/shop-paypal-create` now checks the same `cardCheckout` place (renamed Checkout: card and PayPal payment, mode kept) before reading the cart, so one setting covers both. `PayPalButton` sends the challenge token from the checkout page's widget and the widget renews after each try. Tests in `tests/int/paypal-create-captcha.int.spec.ts`.
-- **Card fingerprint match for purchase limits (12d leftover, built 17 Nov 2026).** When a card payment succeeds (`finalizePaidIntent`), the card's Stripe fingerprint (an opaque id, never the number) is saved against the order in `eg_purchase_card_prints` (only while Purchase limits is on; migration `20270318_230000_card_prints`, table owned by the `limits` feature). `priorPurchases` in `src/features/purchaseLimits/store.ts` then also counts orders paid with a card that any of the buyer's matched orders (same account, email or address) used, so one person behind several emails and addresses is one person. Missing table or Stripe error means no link, never a refused sale. Capture in `purchaseLimits/cardPrint.ts`. Tests in `tests/int/purchase-limit-card-match.int.spec.ts`. Orders paid before this change have no fingerprint.
-- **Waiting list with held places (12d leftover, built 17 Nov 2026).** Shop switches has Waiting list mode (Emailed all at once, the old behaviour, or Offered a held place in order) and Hold hours (default 24). In order mode a restock, or any product save that frees places, offers each free place to the earliest back-in-stock sign-ups, one per person, and emails them (`src/features/ecommerce/waitingList.ts`, pure rules in `lib/waitingList.ts`). An offer sets the sign-up to Offered with a Hold until time; checkout (`resolveCartLine` through `loadPricedLines`) leaves held places free for everyone but the holder, matched on checkout email. A paid order marks the offer Purchased; the Data clean-up job ends lapsed holds (Expired) and offers the place to the next in line. Migration `20270318_210000_waiting_list` adds `waiting_list_mode` and `waiting_list_hold_hours` to `eg_shop_extra_settings` (Shop settings is at the 100-column limit) and `hold_until` to `eg_stock_subscriptions`. Needs stock tracked on the product; unmanaged stock offers one place at a time. English only. Tests in `tests/int/waiting-list.int.spec.ts` and `waiting-list-service.int.spec.ts`.
-- **A person per section (12e leftover, built 17 Nov 2026).** No section field exists, so a section is derived (`src/features/approval/sections.ts`): for pages, the top-level page a page sits under (keyed by its id, the page itself when it has no parent); for posts, the first category (trimmed, lower case). Events, courses and products have none. A workflow has `sectionRoutes` (`{ "<section>": [user ids] }`, migration `20270318_220000_approval_section_routes`, `section_routes`); the editor shows "A different approver for a section" for Pages and Posts workflows (`loadSectionChoices` feeds the pickers: up to 200 top-level pages, distinct first categories of up to 1000 posts). Priority at a step: the author's route, then the section route, then the step's own named people or roles (`namedApprovers`). The review box, the step block message and the emails say "the approver named for this section". The section is worked out per request (not stored), so moving a page under another top-level page changes who approves it; admins and stand-ins work as before. Tests in `tests/int/approval-reassign.int.spec.ts`.
-- **Approval text in the other twelve languages (12e leftover, built 17 Nov 2026).** The Hand over block and history labels in the Review box, the "handed to" note in the review queue, and the section and stand-in parts of the workflow editor now come from the admin string table (`approval.review.*`, `approval.queue.handedTo`, `approval.workflow.*` in `src/features/uiStrings/keys.ts` and all twelve dictionaries). Not translated: server messages (state machine errors, the review emails, history notes such as "Handed to Nia.") and the older author-route text of the workflow editor, which are English like the rest of the approval screens.
-- **Event places per person (12d leftover, built 17 Nov 2026).** An event has Most places per person (sidebar, next to Capacity; migration `20270318_170000_event_max_per_person`, columns `max_per_person` and `version_max_per_person`). The RSVP check in `src/hooks/checkEventCapacity.ts` refuses a booking that would take one email over the limit, counting every active booking by that email with case and `+tag` ignored (`perPersonRefusal` in `src/features/events/perPersonLimit.ts`). Ticket purchases through checkout are not limited here (use a purchase limit rule on the ticket product). English only. Tests in `tests/int/event-per-person-limit.int.spec.ts`.
-- **Paid bookings (12b leftover, built 17 Nov 2026).** A booking type has a price in cents and a full-refund window in hours (Settings, Bookings; migration `20270318_180000_paid_bookings` adds `price_cents`, `refund_hours` and, on bookings, `amount_cents`, `payment_intent_id`, `paid_at`, `refunded_cents`). A booking on a priced type is `pending_payment`: it holds its time (counted as busy) for 30 minutes while the customer pays on a Stripe Checkout Session (`createBookingCheckout` in `src/features/bookings/payment.ts`, session and intent metadata `bookingId` and `bookingToken`). The existing `payment_intent.succeeded` webhook in `src/localapi/rest.ts` calls `onBookingPaid`: it confirms the booking once (replays do nothing) and sends the confirmation email with the private link (taken from the metadata, because only its hash is stored); a payment that arrives after the hold was released is refunded in full. The Reminder emails cron job releases holds that ran out (`releaseExpiredHolds`). Cancelling a paid booking (private link or account page) goes through `cancelWithRefund`: full refund when the cancel is at least the refund window before the start, nothing after that (`refundCentsFor`), and the customer sees which. No hidden service product or order is made: the booking holds the payment itself, so paid bookings do not appear in Orders. Tax, partial refunds, deposits and staff-side refunds are not built. English only. Tests in `tests/int/paid-bookings.int.spec.ts`; not tested against live Stripe.
-- **Bid mode (12c leftover, built 17 Nov 2026).** A simple product has an Offers (bids) section: a minimum offer and an end time (migration `20270318_190000_bid_mode`, `bid_minimum`, `bid_ends_at` and the `version_` pair). `/api/quote-request` refuses a bid under the minimum or after the end (`bidRefusal`). When the end time passes, `runAuctionSweep` (`src/features/quotes/auctions.ts`, run inside the Reminder emails cron job) turns the highest unanswered offer (earliest wins a tie, `auctionWinner`) into a quote at its own price valid for 7 days and emails the accept link (`auctionQuote.ts`), and declines every other offer with a Your offer was not successful email (`bidLost` in `QUOTE_EMAILS`). Products with no end time are left for staff to quote or decline by hand. The offer form is still dropped on a page or product with kind bid and the product number; a built-in button on the product page is part of the open request buttons item. English only. Tests in `tests/int/quote-auctions.int.spec.ts`.
-- **Form-fed requests (12c leftover, built 17 Nov 2026).** A form built in the visual editor can feed the quotes feature: Form settings, Send as a request (`requestFeed` in the form's `formConfig`, normalised in `src/features/forms/requestFeed.ts`, no migration). The settings pick the request type (quote, offer or item), an optional product or a choice field whose option values are product numbers, and which form fields fill name, email, phone, quantity, details, needed by and offer. After the entry is stored, `feedRequest` in `src/features/forms/submit.ts` builds the same body the public request form posts, runs it through `parseRequest` and the bid minimum and end checks, saves the request, and sends the received and admin new emails. Details default to a summary of all answers. An entry that does not make a valid request (bad email, offer under the minimum) is still saved as an entry and logged, and Quotes switched off skips the request. Tests in `tests/int/form-request-feed.int.spec.ts`.
-- **Request buttons (12c leftover, built 17 Nov 2026).** A `request-button` element (Commerce, `src/lib/elements/requestButtonDefs.ts`, renderer `src/components/blocks/elements/RequestButtonServer.tsx`, a server element in `SITE_ELEMENT_TYPES`) links to `/request-quote` for a request type (quote, offer, item), with optional button text, product number, style, size and alignment. On a product page, or in the single product template, it is about the page's product (read from the block context, name passed as `title`); a product number overrides that. It renders nothing while Quotes and requests is off. No migration. English only (the default wording is the request type name). Tests in `tests/int/request-button-element.int.spec.ts`.
-- **Files on a request (12c leftover, built 17 Nov 2026).** The public request form has an Attach files box (up to 5). With files it posts multipart to `/api/quote-request`, which checks them with the Media settings allow-list and the file's own bytes (`checkQuoteFiles` in `src/features/quotes/attachments.ts`) before the request is saved, so a refused file makes no request. Files go to the media bucket under `quote-uploads/<request number>/`, a prefix the public media route refuses. No migration and no column: the request number in the key is the link, and files are listed by prefix. Admins see download links on each request (`/api/admin-quote-file`, admin only, sent as downloads with a sandbox CSP); deleting a request deletes its files. Forms feeding a request keep their own file fields on the form entry. Tests in `tests/int/quote-attachments.int.spec.ts`.
-- **Quote link in the account portal (12c leftover, built 17 Nov 2026).** Account, Bookings has a Quotes and requests section (`src/features/quotes/MyQuotes.tsx`, shown with a confirmed email while Quotes is on) listing the customer's requests by email with status, total and valid-until date. Open quote (`OpenQuote.tsx`) posts to `/api/account-quote-link`, which checks the request's email is the account's confirmed email, makes a new private token (only its hash is stored, `setTokenHash`), notes `Opened the quote from their account.` in the activity, and answers the `/quote/<token>` address. The link in the earlier email stops working, which is the price of storing only a hash. Offered only for quoted, countered and accepted requests that are not past their date (`portalCanOpen`). English only. No migration. Tests in `tests/int/quote-portal-link.int.spec.ts`.
-- **Editable quote emails (12c leftover, built 17 Nov 2026).** The eight quote emails (received, new request, quote sent, expiring, offer not successful, counter-offer, accepted, declined) are templates `quoteReceived`, `quoteAdminNew`, `quoteSent`, `quoteExpiring`, `quoteBidLost`, `quoteCounter`, `quoteAccepted`, `quoteDeclined` in `src/features/email/templateDefaults.ts` (the built-in wording moved there; `QUOTE_EMAILS` in `quotes/logic.ts` now reads it), with wording groups and design fields in the Email templates global (`src/globals/EmailTemplates.ts`), labels and test samples, so they show in Email templates, the email designer and test sends. `renderQuoteMail` (`src/features/quotes/mail.ts`) renders them through `renderEmailTemplate` (site wording and design, built-in wording when blank or unreadable) and fills `{{message}}` with the staff note; `sendQuoteEmail`, the expiry reminder and the auction sweep all use it. Migration `20270318_230000_quote_email_templates` adds 24 text columns to `eg_email_templates`. The baseline file was edited by hand for it (the table SQL produced by running the same ALTERs in SQLite, the migration list entry and header), because `fresh-baseline-parity` fails in the cloud container before it reaches the regeneration step (an unrelated ALTER on `_eg_products_v`); a check that the baseline columns equal the generated schema columns passed. Run `REGENERATE_BASELINE=1` on a machine where that spec runs to confirm. English only. Tests in `tests/int/quote-email-templates.int.spec.ts`.
-- **Quote text in other languages (12c leftover, built 17 Nov 2026).** 59 new UI string keys in all twelve dictionaries: `store.quote.*` for the public request form, the quote page (`QuoteView`, heading from `storeTexts()` on `/quote/[token]`, amounts and dates formatted with the visitor's locale) and the request button default text (`requestHref` takes the defaults as a third argument), and `email.quoteReceived|quoteSent|quoteExpiring|quoteBidLost` plus `email.quoteKind.*` for the customer emails. `sendQuoteEmail` and the expiry sweep look up the customer's language with `localeForRecipient` and pass it through `renderQuoteMail` to `renderEmailTemplate`, so wording the site typed in Email templates still wins. The staff emails (new request, counter-offer, accepted, declined), the account Quotes section and the admin panels stay English. No migration. Tests in `tests/int/quote-translations.int.spec.ts`.
-- Task 14c (S3-compatible backup target): the S3 backup destination has an optional Endpoint field (`destination_s3_endpoint`, migration 20270318_110000, idempotent). Empty means Amazon S3; an https origin (Backblaze B2, Wasabi, MinIO, Spaces) is used path-style with the same signer; plain http is refused. WebDAV not built. Tests: `tests/int/backup-s3-endpoint.int.spec.ts`, fresh-install spec, baseline regenerated.
-
-- Task 14b leftovers (tag chips): coloured tag chips on each media tile (also in the media picker, same grid) and a Tags column in the list view; a Tags box on the file edit screen with a tick per tag that saves at once (`MediaTagsEdit`, GET `/api/admin-media-tags?media=ID`); all hidden when Media tags is off. New admin strings in all 13 dictionaries. Tests: `tests/int/media-tags.int.spec.ts` (chipsFor).
-- Fresh install fix (PR): bid mode terms now live in one JSON column (bid, version_bid) so the product version table is back under D1's 100-column limit; wholesale_applications and customer_tags registered under ecommerce.
-
-Task 15a (part 3, built 17 Nov 2026): the state harness now also covers cards, alerts (default, danger, success, warning, solid), selects, text areas, tabs, accordion summaries, checkboxes and radios (accent colour 3:1) in light and dark, plus focus rings and borders for selects, text areas, tabs and accordions. All passed without a Shine change. The public block CSS (`components/blocks/elements/*.css`) was scanned for fixed colours; the only failures were the star rating colours in `wave66.css` (empty star 1.6:1, filled 2.1:1), now #767676 and #b87d00 with the half star drawn as a gradient instead of opacity. Spec: `tests/int/state-contrast.int.spec.ts`.
-
-Task 14b (leftovers, built 17 Nov 2026): AI tagging. `POST /api/admin-media-ai-tags` (`src/app/(engage)/api/admin-media-ai-tags/route.ts`) asks the chosen vision model which of the site's existing tags fit each picture (`src/features/ai/tagSuggest.ts`); it never creates tags, never removes any, up to 25 pictures a request, JPEG, PNG and WebP only, same AI keys and provider picker as alt text. The Media page bulk bar has an AI tag button and a file's edit screen has Suggest tags with AI (adds and ticks the tags, untick to undo). The tag filter shows a dot in the chosen tag's colour. Files CSV import now tags every file that shares a filename (the export lists them once). Tags and files CSV imports over 1 MB are sent in pieces of up to 900,000 characters with the header repeated (`splitCsv` in `src/features/mediaTags/logic.ts`), so there is no size limit in the screen. No schema change. Specs: `tests/int/media-ai-tags.int.spec.ts`.
-- **18j taskboard company scope (built 17 Nov 2026).** A taskboard board can belong to a company and optionally one of its teams (`organization_id`, `team_id` on `eg_task_boards`, migration `20270319_100000_taskboard_org_scope`). Board settings show Company and Team pickers when Companies exist. `canAccessBoard` in `src/features/taskboard/logic.ts` follows the access helper for scoped boards (creator, company owners and admins, team members, or company members when no team); admins always open every board; unscoped boards keep the member-list rule. `src/app/(engage)/api/admin-taskboard/route.ts` loads the person's access. Test: `tests/int/taskboard.int.spec.ts`.
-- **Lean installer with remote updates (built 18 Nov 2026, v1.2.0).** The Deploy button now targets `installer/` (README): `wrangler.jsonc` (no ids, `no_bundle`, D1/R2/Images/cron, `ENGAGE_INSTALL=lean`), `engage.config.json` (`source`, `version`) and `scripts/install.mjs`, which downloads the named release from GitHub, checks sha256 and unpacks to `.engage/`. Releases come from `.github/workflows/release.yml` (tag `vX.Y.Z`) and `scripts/make-release.mjs`: worker.js (wrangler dry-run bundle), assets.tar.gz and `manifest.json` (version, notes from CHANGELOG, migration list, `requiresMigration`, `destructive`, `minFromVersion`, checksums, `workerGzipKiB`). Release source is configurable: `UPDATE_SOURCE` env or `source` in the config (`upstreamRepo` in `src/features/updates/versions.ts`), private sources with `ENGAGE_SOURCE_TOKEN`. The existing update popup (`UpdateNotice`, `admin-update-check`) now reads the manifest (notes, data-change warning). `admin-update-apply`: forks still sync upstream; a lean install takes an R2 backup (`runBackup`; failure offers continue without) then pins the version in the install repo through `pinInstallVersion` (`oneClick.ts`), and `{ rollback: true, version }` pins the previous one. `MigrationBar` and `admin-engage-migrate` show Run migration when the running version is newer than `eg_engage_meta.applied_version` (set by the migration and by first-run init). Local clones deploy as before. Worker is 10.8 MiB gzip, over the 3 MB limit; tracked under Task 39. Tests: `tests/int/engage-updates.int.spec.ts`. Verified: full OpenNext build, release script, installer run against a local release server, `wrangler deploy --dry-run` of the installed site.
-- **One update popup, stable Shine/Spark URLs (built 21 Nov 2026).** The top "run migration" bar (`MigrationBar`) is gone. `UpdateNotice` (super admins only) is the only popup and shows only when action is needed: `/api/admin-engage-migrate` GET now reports `pending` from the migrations the code runs (`EARLY_MIGRATIONS` + `LATE_MIGRATIONS`) that are not recorded in `eg_migrations` (`pendingMigrationNames`, `src/features/updates/state.ts`), not from the version number, so a release without a new migration never shows it; or a newer release whose manifest says the Worker changed. `manifest.json` gains `requiresWorkerUpdate` (older manifests and a missing manifest read as true): `scripts/make-release.mjs` sets it false when the Worker checksum equals the previous release's and no migration was added, or when run with `--static-only` (asset-only release). The reference-update ("Newer version available for Spark") text no longer appears and the update check no longer calls GitHub for references. Shine and Spark now load from the stable major channel (`shine@v1`, `spark@v0` on jsDelivr), so a new Shine/Spark release reaches every page and portal with no deploy. Trade-off: a changing file cannot carry a fixed SRI hash, so the built-in two have no integrity attribute; protection is the pinned host path `cdn.jsdelivr.net/gh/asticore/` plus the bundled fallback; customer-added assets still support SRI. A runtime hash manifest was rejected: it is served from the same repo so it adds no trust.
-- **Update popup live check (21 Nov 2026, PRs 531, 532).** On gracengatsby: no bar and no popup with nothing pending; with the no-op migration `20270321_100000_update_popup_probe` pending the one popup showed, Run migration ran it, the record was written and the popup cleared. Found and fixed (PR 532): the popup's Run migration and Update now posted without a JSON content type and the admin guard refused them (403 "Send a JSON body"). Note: git-deployed sites such as gracengatsby run migrations at deploy, so the popup only matters for release-based installs.
-- **One-click updates, tables and code separate (built 21 Nov 2026).** The update popup no longer links to GitHub releases. It has two independent parts: "Update tables" (shown when migrations the code runs are not recorded; `/api/admin-engage-migrate`) and "Update site code" (shown only on lean installs and forks when a release changes the Worker; `/api/admin-update-apply` takes a safety backup to R2, then commits the new version to the install repository so the host redeploys). A destructive release needs its checkbox ticked first (also enforced by the API). The GitHub connection is entered once in the popup: `/api/admin-update-connect` checks the token (reads `engage.config.json`, picks the one repository a fine-grained token reaches, or takes `owner/name`) and stores repo and token encrypted in `eg_engage_meta` (`src/features/updates/connection.ts`); `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN` Worker settings still win. Sites deployed straight from the repository show neither code part.
-
-### Task 7 Add several pages on the Pages screen (22 Nov 2026)
-Pages list header has an Add several pages button (`src/features/bulkCreate/AddSeveralPages.tsx`, loaded in the browser only). A dialog takes one title per line, an optional shared parent page, template, status (draft, or published for users with publish permission) and, when Languages is on, the language the titles are written in (saved as that language's title translation). Show the addresses runs the same plan as Bulk create (clashes, missing parents) and lists the slugs; Create makes the pages through the signed-in user's own access rules; Undo this batch works for a day while nothing is published. It reuses `/api/admin-bulk-create` (new `options` action and `defaults` field) and the Task 11g plan and run code; tests in `tests/int/bulk-create.int.spec.ts`. Live check in Live checks.
-### Task 4 leftovers 41a to 41c (built 22 Nov 2026)
-- 41a: the Permalinks group and Blog address field labels are in the UI strings (`label.field.permalinks`, `label.field.blogBase`) in all 13 languages. Hints and save errors stay English: the SEO screen is English only for descriptions, and there is no translation path for field descriptions. Raise with Matt if he wants descriptions translated everywhere.
-- 41b: `tests/int/bid-terms-field.int.spec.ts` covers `BidTermsField`; every message from the Authentication overview actions (switch, allow or block, Test button and provider checks) now reads from `auth.msg.*` strings in the admin's language, in all 13 languages (`authMethodActions.ts`, `authMethodTest.ts`).
-- 41c: `tests/int/d1-column-limit-guard.int.spec.ts` fails when a table comes within 5 columns of D1's 100-column limit; the four tables already there (`eg_integrations` 97, `eg_shop_settings` 100, `eg_security_settings` 100, `_eg_products_v` 99) are listed and may not grow.
-### Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)
-- **40b Charts.** The Chart element lists every Spark chart, diagram and visualisation (21 charts, 8 diagrams, 10 viz types from `features/effects/catalogData.ts`); option fields are generated from each effect's meta (`src/lib/elements/sparkChartFields.ts`), stored as `o_<id>_<attr>` and rendered as `data-spark-*` (`components/blocks/elements/sparkData.ts`). Data is CSV (header row = series names); the 12 value limit is gone. Charts from the first version (`chartType` bar, line, pie, radar, polar and "label | value" rows) convert when read, so no migration. Series colours follow the theme unless set; a visually hidden table repeats the data. The editor canvas starts Spark for chart and table (`views/visualEditor/SparkCanvasPreview.tsx`). Old SVG renderer and its CSS removed. Tests: `tests/int/elements-wave48.int.spec.ts`, `tests/int/spark-elements.int.spec.ts`.
-- **40c Tables.** The Table element renders Shine `table`, `table-striped`, `table-hover`, `table-bordered`, `table-compact`, `table-stack` in `table-wrap`; sort, search, column filters, paging, sticky header, column visibility, row selection and CSV download switch on `spark-table` with `data-spark-*` options. Data: CSV or the old "|" lines, 500 rows and 24 columns. Old `be-el-table` CSS removed.
-- **40d (part).** Countdown on `spark-countdown` (the React clock is gone), counter animate on `spark-counter`, progress bar on Shine `progress`, accordion and toggle on Shine `accordion` + `spark-collapse`, back to top on `spark-totop`. Duplicate CSS removed from `styles.css` and `wave36.css`.
-- **40d second batch (23 Nov 2026).** Image carousel on Shine `carousel` + `spark-carousel` (new autoplay, fade, dots and arrows fields), the gallery and image lightbox on `spark-lightbox` (React lightbox dialog and its CSS and tests removed), text ticker on `spark-marquee`, pagination links styled by Shine `pagination`.
-- **40d third batch and data source (23 Nov 2026).** count-up on `spark-counter`, flip box on `spark-flip`, tooltip on Shine `data-tooltip`; the CSS counter-math and flip CSS removed. Chart and Table have a "Data from a saved table or chart" field: on the live page `DataViewBackedElement` loads the public Data view and passes its rows as CSV (`src/features/dataViews/csv.ts`). Test baselines in `merge-stats-notice.int.spec.ts` updated for the progress bar and counter markup.
 
 ## Appendix: Events and tickets audit (closed Task 1, moved from remaining-work.md 22 Nov 2026)
 ### Events and tickets audit (Task 5, 9 Nov 2026)
@@ -868,13 +3406,3 @@ Checked against the code, not live.
 
 #### Fixed in this change
 - A sold-out event (no places left) showed the RSVP form or Buy ticket button; it now shows "Sold out" (`eventSaleMode`, tests in `tests/int/event-sale-mode.int.spec.ts`).
-- **Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026).** Form settings > Spam protection has When a spam rule matches: Hold (default), Flag or Discard. Hold keeps a form entry that hit blocked words, the link limit, a blocked sender or Akismet with the Spam status (visitor sees the normal thanks; no emails, webhooks, requests or appointment slots); staff release it by setting its status to New in Form entries. Flag stores and delivers as normal with Possible spam at the start of the summary. Discard keeps nothing (the old behaviour). Reviews follow the same choice (hold = Spam status, flag = ordinary Pending, discard = nothing stored). New optional Akismet key (encrypted, admin only): when set, every form entry and review is also sent to Akismet; unreachable Akismet never blocks anyone. The Authentication page shows how many form entries, reviews and comments are held (total and this week). Code: `src/features/forms/{akismet,spamCounts,submit}.ts`, `reviewEndpoint.ts`, migration `20270322_100000_spam_rule_action`. Tests in `tests/int/spam-hold-akismet.int.spec.ts`. Live checks: spam rules (26b) and Akismet.
-
-### Task 9, 28d Live review sources (built 22 Nov 2026)
-Google reviews (Places API key), Facebook Page reviews (Graph token) and Yelp reviews (Fusion key) are new options in Integrations > Social accounts (each customer enters their own key; stored encrypted like the other tokens). The Reviews block has Live reviews from (the saved source) and a place, page or business ID per block (empty = the default saved with the key). Reviews are fetched on the server through a six hour memory and edge cache with stale fallback, so a visit never calls the provider; they are added after the manual reviews as one wall with the source as a badge. Review structured data is switched off while live reviews show, because search engines do not accept third-party reviews as markup. Code: `src/features/reviewSources/`, `ReviewsLive.tsx`, `/api/admin-review-sources`, `wave48Defs.ts`. Not built: Facebook reviews link back (the API gives none), per-source review counts from the provider (Google returns only five reviews).
-- **16d Manual Breadcrumbs follows the sitewide settings (built 22 Nov 2026).** The manual Breadcrumbs element now renders through a server wrapper (`ManualBreadcrumbsElement` in `Wave63Server.tsx`, reached from `BlockRenderer.tsx`). It takes the separator from SEO settings unless the element sets its own, relabels a first item called Home (address blank or /) with the Home label, and drops its BreadcrumbList JSON-LD when structured data is off. The editor canvas still draws the plain element.
-- **16e Visitor-facing blog links follow the blog address (built 22 Nov 2026).** Post list, post navigation, loop grid cards, archive cards, category, tag and author pages (post links, sub category links, breadcrumbs, pagination), blog index (pagination, collection JSON-LD), site search results and suggestions and the 404 page now build post and category links from the saved blog address (`blogPath` and `readBlogBase`, optional `blogBase` argument on `postArchiveItems`, `categoryUrl`, `categoryCrumbs`, `subCategoryLinks`, `loopItemsFromDocs`). No migration.
-- **16g Event page type on posts (built 22 Nov 2026).** Posts can pick Event as the Page type. The facts form has Name, Starts, Ends, Venue, Venue address, Image, Ticket price, Currency, Organizer and Status; Name, Starts and Venue are required and the rest recommended, listed in the page checks like the other rich types. Emitted as the post's mainEntity Event node (`richTypes.ts`, `POST_SCHEMA_TYPES`). No migration: the page type and facts columns on posts already existed as text, so no baseline change. AggregateRating on Product was already emitted from approved shop reviews (checked 17 Nov 2026).
-- **16p Audit columns: image file sizes and last modified (built 22 Nov 2026).** The crawl stores the Last-Modified header and, for the first six same-site images of each page, a HEAD request's content-length (total and largest) in the existing page JSON column (no migration). The audit table has three new columns: Image files total (KB), Largest image (KB) and Last modified. External broken links stay in the broken link checker on the same screen. Code: `crawl/runner.ts` (`imageSizes`, `lastModifiedOf`), `crawl/model.ts`, `crawl/table.ts`.
-- **16h Convert text to list or table in the visual editor (built 22 Nov 2026).** Right-click a Text editor block of plain, unformatted text and choose Convert to bulleted list, Convert to numbered list (two or more lines; leading bullets or numbers are stripped) or Convert to table (every line has the same cells split by `|`, a tab or `;`; the first line becomes the header). The block keeps its place and id and the change is one undo step. Code: `visualEditor/convertText.ts`, menu in `VisualEditor.tsx`, tests in `tests/int/convert-text.int.spec.ts`. No migration.
-- **Site-wide CAPTCHA keys, test and look (Task 5, 21a, built 22 Nov 2026).** Form settings > Spam protection has Test CAPTCHA keys (site key shape plus a siteverify call with a made-up token, for Turnstile or reCAPTCHA, whichever is chosen; route `admin-integration-checks` check `captcha`, `checkTurnstileKeys` in `remoteChecks.ts`) and Appearance (Visible or Invisible: Turnstile `interaction-only`; reCAPTCHA v3 is always invisible), used by forms and every sign-in/place widget. When the reCAPTCHA keys are empty in Form settings, the keys on the Integrations page are used (`getFormSettings`), so one saved pair serves everything. The places list (forms, sign-in, register, reset, magic link, comments, chat, reviews, back-in-stock, RSVP, checkout, offline orders) was built in 19a; a newsletter signup is an ordinary form, so it follows the forms setting. Migration `20270322_110000_captcha_appearance`. Live check: CAPTCHA keys and look.
