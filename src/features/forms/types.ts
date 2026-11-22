@@ -330,6 +330,10 @@ export type ResolvedFormSettings = {
   maxLinks: number
   /** One email address or domain per line. A submission from one is discarded as spam. */
   blockedSenders: string
+  /** What a spam hit does: hold it in the Spam folder, flag it, or discard it. */
+  spamRuleAction: 'discard' | 'hold' | 'flag'
+  /** Akismet API key. Empty means Akismet is not used. */
+  akismetKey: string
   submitButtonLabel: string
   successMessage: string
   errorMessage: string

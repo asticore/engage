@@ -222,7 +222,37 @@ export const FormSettings: GlobalConfig = {
         {
           name: 'blockedSenders',
           type: 'textarea',
-          admin: { description: 'One email address or domain per line (for example spam.example). A submission from any of them is quietly discarded as spam.' },
+          admin: { description: 'One email address or domain per line (for example spam.example). A submission from any of them is treated as spam (see "When a spam rule matches").' },
+        },
+        {
+          name: 'spamRuleAction',
+          type: 'select',
+          defaultValue: 'hold',
+          options: [
+            { label: 'Hold in the Spam folder (visitor sees the normal thanks; you can release it)', value: 'hold' },
+            { label: 'Flag it and deliver as normal (marked "Possible spam")', value: 'flag' },
+            { label: 'Discard quietly (nothing is kept)', value: 'discard' },
+          ],
+          admin: {
+            description:
+              'What happens when blocked words, the link limit, blocked senders or Akismet say a form entry, comment or review is spam. Held entries show in the Spam view of Form entries and Product reviews, send no emails or webhooks, and can be released. Flag keeps forms and deliveries as normal but marks the entry. Reviews: flag behaves like a normal review awaiting approval.',
+          },
+        },
+        {
+          name: 'akismetKey',
+          type: 'text',
+          access: {
+            read: adminOnlyFieldAccess,
+            update: adminOnlyFieldAccess,
+          },
+          hooks: {
+            beforeChange: [encryptSecretHook],
+            afterRead: [decryptSecretHook],
+          },
+          admin: {
+            description:
+              'Akismet API key (akismet.com). When set, every form entry and review is also checked by Akismet; a hit follows the choice above. Akismet being unreachable never blocks anyone. Stored encrypted at rest, visible only to admins.',
+          },
         },
         {
           name: 'turnstile',

@@ -7243,6 +7243,11 @@ export interface FormSetting {
     blockedWords?: string | null;
     maxLinks?: number | null;
     blockedSenders?: string | null;
+    /**
+     * What happens when a spam rule matches.
+     */
+    spamRuleAction?: ('hold' | 'flag' | 'discard') | null;
+    akismetKey?: string | null;
     turnstile?: boolean | null;
     /**
      * From the Turnstile section of your Cloudflare dashboard. This one is public - it appears in the form itself.
@@ -8348,6 +8353,8 @@ export interface FormSettingsSelect<T extends boolean = true> {
         blockedWords?: T;
         maxLinks?: T;
         blockedSenders?: T;
+        spamRuleAction?: T;
+        akismetKey?: T;
         turnstile?: T;
         turnstileSiteKey?: T;
         turnstileSecretKey?: T;

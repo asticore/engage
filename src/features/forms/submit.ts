@@ -16,7 +16,8 @@ import { SLOT_TAKEN_MESSAGE } from './slots'
 import { firstLostSlot, firstTakenSlot, slotClaimsFor } from './slotGuard'
 import { botDecision, parseList, type BotSignals } from '@/features/security/botSignals'
 import { checkCaptcha, checkFillTime, checkHoneypot } from './spam'
-import { checkSpamRules } from './spamRules'
+import { checkAkismet } from './akismet'
+import { checkSpamRules, collectText } from './spamRules'
 import { buildRequestInput } from './requestFeed'
 import { buildHandoff, checkoutHandoffUrl, NO_CHECKOUT } from './checkoutHandoff'
 import { inspectFiles, storeFiles, getUploadBucket, type PendingFile, type StoredFile } from './upload'
@@ -119,6 +120,15 @@ function consentRecord(fields: FormFieldDef[], values: SubmissionValues, at: str
 }
 
 /** Saves the request a form entry stands for, then emails the customer and the shop as the public request form does. Does nothing when Quotes is off or the answers do not make a valid request. */
+/** The site address Akismet wants, from the page the form was sent from. */
+function siteOf(sourceUrl?: string): string {
+  try {
+    return sourceUrl ? new URL(sourceUrl).origin : ''
+  } catch {
+    return ''
+  }
+}
+
 async function feedRequest(engine: SubmitEngine, feed: NonNullable<import('./types').FormConfig['requestFeed']>, values: Record<string, unknown>, summary: string, sourceUrl: string, entryId?: number | string): Promise<void> {
   const body = buildRequestInput(feed, values, summary, sourceUrl.slice(0, 500))
   if (!body) return
@@ -199,13 +209,28 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
 
   const { values: sanitised, visible } = sanitiseValues(form.fields || [], input.values || {})
 
-  const rules = checkSpamRules(sanitised, settings)
-  if (rules.spam) {
+  let rules = checkSpamRules(sanitised, settings)
+  if (!rules.spam && settings.akismetKey) {
+    const texts = collectText(sanitised)
+    rules = await checkAkismet({
+      key: settings.akismetKey,
+      site: siteOf(input.sourceUrl),
+      ip: input.ip,
+      userAgent: input.userAgent,
+      email: texts.find((t) => /^[^\s@]+@[^\s@]+$/.test(t.trim())),
+      content: texts.join('\n'),
+    })
+  }
+  const held = rules.spam && settings.spamRuleAction === 'hold' && settings.storeSubmissions
+  const flagged = rules.spam && settings.spamRuleAction === 'flag'
+  if (rules.spam && !held && !flagged) {
     engine.logger.info({ form: form.id, reason: rules.reason, detail: rules.detail }, 'Form submission discarded as spam')
     return { ok: true, status: 200, message: settings.successMessage }
   }
 
   const { errors, values } = validateSubmission(form.fields || [], sanitised, visible, now)
+  // A held entry that does not validate is dropped quietly: the sender gets no hint either way.
+  if (held && Object.keys(errors).length > 0) return { ok: true, status: 200, message: settings.successMessage }
 
   // Files: any value the request sent for a file field is dropped - only what
   // we store from the uploaded bytes may appear in an entry.
@@ -242,7 +267,7 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
   }
 
   // Double-booking: a full appointment slot is refused before anything is stored.
-  const slotClaims = settings.storeSubmissions ? slotClaimsFor(form.fields || [], values, visible) : []
+  const slotClaims = settings.storeSubmissions && !held ? slotClaimsFor(form.fields || [], values, visible) : []
   const takenField = slotClaims.length > 0 ? await firstTakenSlot(engine, Number(form.id), slotClaims) : null
   if (takenField) {
     return { ok: false, status: 400, message: 'Please check the highlighted fields.', errors: { [takenField]: SLOT_TAKEN_MESSAGE } }
@@ -278,7 +303,7 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
         overrideAccess: true,
         data: {
           form: form.id,
-          summary: summarise(form, values),
+          summary: `${flagged ? '[Possible spam] ' : ''}${summarise(form, values)}`.slice(0, 500),
           values,
           submittedAt,
           ip: input.ip,
@@ -287,7 +312,7 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
           embedId: input.embed?.id,
           embedSource: input.embed?.name,
           consent: consent.length ? consent : undefined,
-          status: 'new',
+          status: held ? 'spam' : 'new',
           total: pricing.total || undefined,
           currency: pricing.total ? pricing.currency : undefined,
           lineItems: pricing.lines.length ? pricing.lines : undefined,
@@ -317,6 +342,12 @@ export async function handleSubmission(engine: SubmitEngine, input: SubmitInput)
       }
       return { ok: false, status: 400, message: 'Please check the highlighted fields.', errors: { [lostField]: SLOT_TAKEN_MESSAGE } }
     }
+  }
+
+  // A held entry stays in the Spam view: no request, no emails, no webhooks.
+  if (held) {
+    engine.logger.info({ form: form.id, reason: rules.reason, detail: rules.detail, entry: submissionID }, 'Form submission held as spam')
+    return { ok: true, status: 200, message: settings.successMessage }
   }
 
   // "Send as a request": the entry also becomes a quote, offer or item request (validated like the public request form).
