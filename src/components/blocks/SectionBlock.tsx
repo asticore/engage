@@ -13,6 +13,7 @@ import {
   stickyStepsClass,
   stickyStepsStyle,
 } from '@/lib/sectionLayout'
+import { jsonLdString, sectionSchemaJsonLd } from '@/lib/sectionSchema'
 import { columnWidthVars, parseColumns, type SectionColumn, type SectionNode } from '@/lib/sectionTree'
 
 import { autoTriggersOf, popupCloseRules } from '@/lib/popupTriggers'
@@ -207,9 +208,12 @@ export const SectionBlock: React.FC<{
     // Every panel is rendered into the HTML; only CSS (tabs) or <details> (accordion) hides it.
     const uid = `be-${safeScope(scope)}`
     const colorVar = parsedLayout?.tabsColor ? ({ '--be-tab-color': parsedLayout.tabsColor } as React.CSSProperties) : undefined
+    const ld = parsedLayout?.schemaType ? sectionSchemaJsonLd(parsed, parsedLayout.schemaType) : null
+    const ldScript = ld ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(ld) }} /> : null
     if (display === 'accordion') {
       return (
         <div className="be-acc" data-depth={depth} style={colorVar}>
+          {ldScript}
           {parsed.map((column, index) => (
             <details key={column._id || index} name={uid} className="be-acc__item" open={index === 0}>
               <summary className="be-acc__summary">{column.label || `Panel ${index + 1}`}</summary>
@@ -228,6 +232,7 @@ export const SectionBlock: React.FC<{
     }
     return (
       <div className="be-tabs" data-depth={depth} data-align={parsedLayout?.tabsAlign || 'start'} style={colorVar}>
+        {ldScript}
         {parsed.map((column, index) => (
           <input
             key={`r-${column._id || index}`}
