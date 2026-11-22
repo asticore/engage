@@ -6,24 +6,23 @@ import { SocialGlyph } from './icons'
 import { ShareWithPageUrl } from './ShareWithPageUrl'
 import { alignClass } from './TextElements'
 import { cells, flag, linkAttrs, linkHref, num, pick, str } from './elementUtil'
-import { CountUpElement } from './Wave43Elements'
 import { CircleProgressElement, ShareButtonsElement } from './Wave36Elements'
 import { StickyBarElement } from './Wave37Elements'
 import './interactive.css'
 
 type P = Record<string, unknown>
 
-/** Shared by `accordion` (one open at a time, via the shared name) and `toggle` (each item independent). */
+/** Shared by `accordion` (one open at a time, via the shared name) and `toggle` (each item independent). Shine `accordion` styles it; Spark `collapse` animates the native details. */
 const Disclosure: React.FC<{ p: P; exclusive: boolean }> = ({ p, exclusive }) => {
   const group = useId()
   const rows = cells(p.items, 2)
   const openFirst = flag(p.openFirst)
   return (
-    <div className={`el-disclosure ${exclusive ? 'el-disclosure--accordion' : 'el-disclosure--toggle'}`}>
+    <div className="accordion spark-collapse">
       {rows.map(([title, body], i) => (
         <details key={i} name={exclusive ? group : undefined} open={openFirst && i === 0}>
           <summary>{title}</summary>
-          <div className="el-disclosure__body">{body}</div>
+          <div>{body}</div>
         </details>
       ))}
     </div>
@@ -63,46 +62,47 @@ export const TabsElement: React.FC<P> = (p) => {
   )
 }
 
-/** `counter`: a large figure with prefix, suffix and a title. Static unless `animate` is on (then it counts up). */
+/**
+ * `counter`: a large figure with prefix, suffix and a title. Static unless `animate` is on; then the figure carries
+ * Spark's `spark-counter` and counts up when it scrolls into view (asticore/spark).
+ */
 export const CounterElement: React.FC<P> = (p) => {
-  if (flag(p.animate, false)) return <AnimatedCounter {...p} />
   const value = num(p.number, 0)
   const decimals = Math.round(num(p.decimals, 0, 0, 4))
-  const shown = value.toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: flag(p.separator, true) })
+  const group = flag(p.separator, true)
+  const animate = flag(p.animate, false)
+  const shown = value.toLocaleString('en-GB', { minimumFractionDigits: decimals, maximumFractionDigits: decimals, useGrouping: group })
+  const figure = animate ? (
+    <span
+      className="spark-counter"
+      data-spark-from={num(p.start, 0)}
+      data-spark-to={value}
+      data-spark-duration={Math.round(num(p.duration, 1600, 200, 5000))}
+      data-spark-decimals={decimals}
+      data-spark-separator={group ? ',' : ''}
+      data-spark-prefix={str(p.prefix) || undefined}
+      data-spark-suffix={str(p.suffix) || undefined}
+    >
+      {shown}
+    </span>
+  ) : null
   return (
     <div className={`el-counter ${alignClass(p.align ?? 'center')}`}>
       <div className="el-counter__number">
-        {str(p.prefix) && <span>{str(p.prefix)}</span>}
-        {shown}
-        {str(p.suffix) && <span>{str(p.suffix)}</span>}
+        {figure ?? (
+          <>
+            {str(p.prefix) && <span>{str(p.prefix)}</span>}
+            {shown}
+            {str(p.suffix) && <span>{str(p.suffix)}</span>}
+          </>
+        )}
       </div>
       {str(p.title) && <div className="el-counter__title">{str(p.title)}</div>}
     </div>
   )
 }
 
-/**
- * `counter` with "animate" on: the count-up element does the work (CSS @property, see wave43.css). Its formatting is
- * simpler: up to 2 decimals and no thousands separator.
- */
-const AnimatedCounter: React.FC<P> = (p) => {
-  const decimals = Math.round(num(p.decimals, 0, 0, 2))
-  return (
-    <div className={`el-counter ${alignClass(p.align ?? 'center')}`}>
-      <CountUpElement
-        start={num(p.start, 0)}
-        end={num(p.number, 0)}
-        decimals={String(decimals)}
-        prefix={str(p.prefix)}
-        suffix={str(p.suffix)}
-        label={str(p.title).trim()}
-        duration={num(p.duration, 1600)}
-      />
-    </div>
-  )
-}
-
-/** `progress-bar`: a labelled bar with an accessible progressbar role. Shape "ring" draws the circle progress instead. */
+/** `progress-bar`: a labelled Shine `progress` bar (a native progress element). Shape "ring" draws the circle progress instead. */
 export const ProgressBarElement: React.FC<P> = (p) => {
   if (pick(p.shape, ['bar', 'ring'] as const, 'bar') === 'ring') return <CircleProgressElement percent={p.percent} label={str(p.title)} />
   const pct = num(p.percent, 70, 0, 100)
@@ -113,9 +113,7 @@ export const ProgressBarElement: React.FC<P> = (p) => {
         <span>{title}</span>
         {flag(p.showPercent, true) && <span>{Math.round(pct)}%</span>}
       </div>
-      <div className="el-progress__track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)} aria-label={title}>
-        <div className="el-progress__fill" style={{ width: `${pct}%` }} />
-      </div>
+      <progress className="progress" max={100} value={Math.round(pct)} aria-label={title} />
     </div>
   )
 }

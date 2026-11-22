@@ -45,12 +45,17 @@ function start(base: string, onError?: () => void): void {
   document.body.appendChild(script)
 }
 
+/** Loads Spark once (CDN first, vendored copy if that fails). Spark then picks up `spark-` elements as they appear. */
+export function startSpark(): void {
+  if (document.getElementById('spark-auto')) return
+  upgradeLegacyEffects()
+  start(SPARK_BASE, () => start(SPARK_FALLBACK_BASE))
+}
+
 export function SparkLoader(): null {
   useEffect(() => {
-    if (document.getElementById('spark-auto')) return
     if (!document.querySelector('[class*="efx-"], [class*="spark-"]')) return
-    upgradeLegacyEffects()
-    start(SPARK_BASE, () => start(SPARK_FALLBACK_BASE))
+    startSpark()
   }, [])
   return null
 }

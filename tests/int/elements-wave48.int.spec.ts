@@ -102,7 +102,7 @@ describe('wave 48 registry shape', () => {
 
   it('exposes the requested option sets', () => {
     const byType = Object.fromEntries(WAVE48_ELEMENTS.map((e) => [e.type, Object.fromEntries(e.fields.map((f) => [f.name, f]))]))
-    expect(byType.chart!.chartType!.options!.map((o) => o.value)).toEqual(['bar', 'line', 'pie', 'radar', 'polar'])
+    expect(byType.chart!.chartType!.options!.map((o) => o.value)).toContain('chart-bar')
     expect(byType.embed!.provider!.options!.map((o) => o.value)).toEqual(['youtube', 'vimeo', 'tiktok', 'instagram', 'x', 'facebook-post', 'facebook-video', 'facebook-page', 'pinterest', 'linkedin', 'spotify', 'soundcloud', 'google-calendar', 'typeform', 'lottie', 'custom-iframe'])
     expect(byType.reviews!.layout!.options!.map((o) => o.value)).toEqual(['grid', 'list'])
     expect(byType.reviews!.items!.type).toBe('repeater')
@@ -118,60 +118,74 @@ describe('wave 48 registry shape', () => {
 })
 
 describe('chart', () => {
-  const data = 'Jan | 120\nFeb | 95\nMar | 160\nApr | 140'
+  const csv = 'Month,Sales\nJan,120\nFeb,95\nMar,160\nApr,140'
 
-  it('renders the default bar chart with an accessible name and a data table', () => {
+  it('renders the default chart as a Spark bar chart with a data table for screen readers', () => {
     const html = render('chart', WAVE48_ELEMENTS[0]!.defaultProps())
-    expect(html).toContain('<figure class="be-el-48-chart be-el-48-chart--bar">')
-    expect(html).toContain('role="img" aria-label="Sales by month"')
-    expect(count(html, '<rect')).toBe(4)
+    expect(html).toContain('class="spark-chart-bar"')
+    expect(html).toContain('data-spark-csv="Month,Sales')
+    expect(html).toContain('data-spark-title="Sales by month"')
     expect(html).toContain('<table class="be-el-48-sr">')
     expect(count(html, '<th scope="row">')).toBe(4)
-    expect(html).not.toContain('be-el-48-chart__legend')
+    expect(html).not.toContain('<svg')
   })
 
-  it('draws each chart type with its own shape', () => {
-    expect(render('chart', { chartType: 'line', data })).toContain('<polyline')
-    expect(render('chart', { chartType: 'pie', data })).toContain('be-el-48-chart--pie')
-    expect(render('chart', { chartType: 'pie', data })).toContain('<path')
-    expect(render('chart', { chartType: 'radar', data })).toContain('<polygon')
-    expect(render('chart', { chartType: 'polar', data })).toContain('<path')
-    expect(render('chart', { chartType: 'unknown', data })).toContain('be-el-48-chart--bar')
+  it('lists every Spark chart, diagram and visualisation in the picker', () => {
+    const field = WAVE48_ELEMENTS[0]!.fields.find((f) => f.name === 'chartType')!
+    const values = field.options!.map((o) => o.value)
+    for (const id of ['chart-bar', 'chart-funnel', 'chart-combo', 'chart-gauge', 'chart-treemap', 'diagram-tree', 'viz-map', 'viz-network']) expect(values).toContain(id)
+    expect(new Set(field.options!.map((o) => o.group))).toEqual(new Set(['Charts', 'Diagrams', 'Visualisations']))
   })
 
-  it('skips rows with bad numbers and keeps at most 100 points', () => {
-    const html = render('chart', { data: 'A | 5\nB | x\nC |\nD | 1e3\nE | Infinity' })
-    expect(count(html, '<th scope="row">')).toBe(2)
-    expect(html).toContain('<th scope="row">D</th>')
-    const many = Array.from({ length: 105 }, (_, i) => `L${i} | ${i + 1}`).join('\n')
-    expect(count(render('chart', { data: many }), '<th scope="row">')).toBe(100)
+  it('shows each type\'s own options only for that type', () => {
+    const fields = WAVE48_ELEMENTS[0]!.fields
+    const stacked = fields.find((f) => f.name === 'o_chart-bar_stacked')!
+    expect(stacked.type).toBe('checkbox')
+    expect(stacked.showIf).toEqual({ field: 'chartType', equals: 'chart-bar' })
+    expect(fields.find((f) => f.name === 'o_chart-pie_donut')).toBeDefined()
   })
 
-  it('renders nothing for no data, or a pie with no positive total', () => {
+  it('turns options into data-spark attributes and leaves empty ones out', () => {
+    const html = render('chart', { chartType: 'chart-bar', data: csv, 'o_chart-bar_stacked': true, 'o_chart-bar_height': 300, 'o_chart-bar_horizontal': '' })
+    expect(html).toContain('data-spark-stacked="true"')
+    expect(html).toContain('data-spark-height="300"')
+    expect(html).not.toContain('data-spark-horizontal')
+  })
+
+  it('feeds series charts labels and numbers, and other charts their own data text', () => {
+    const pie = render('chart', { chartType: 'chart-pie', data: csv })
+    expect(pie).toContain('class="spark-chart-pie"')
+    expect(pie).toContain('data-spark-labels="Jan|Feb|Mar|Apr"')
+    expect(pie).toContain('data-spark-data="120,95,160,140"')
+    expect(render('chart', { chartType: 'chart-sunburst', 'd_chart-sunburst': '{"name":"a"}' })).toContain('data-spark-data="{&quot;name&quot;:&quot;a&quot;}"')
+  })
+
+  it('converts the first version\'s "label | value" rows and bar/line/pie type names without loss', () => {
+    const html = render('chart', { chartType: 'line', data: 'Jan | 120\nFeb | 95' })
+    expect(html).toContain('class="spark-chart-line"')
+    expect(html).toContain('data-spark-csv="Item,Value\nJan,120\nFeb,95"')
+    expect(render('chart', { chartType: 'polar', data: 'A | 1\nB | 2' })).toContain('spark-chart-polar')
+  })
+
+  it('has no limit of 12 values', () => {
+    const many = ['K,V', ...Array.from({ length: 40 }, (_, i) => `r${i},${i}`)].join('\n')
+    expect(count(render('chart', { data: many }), '<th scope="row">')).toBe(40)
+  })
+
+  it('renders nothing without data and falls back to a bar chart for an unknown type', () => {
     expect(render('chart', { data: '' })).toBe('')
-    expect(render('chart', { chartType: 'pie', data: 'A | 0\nB | 0' })).toBe('')
+    expect(render('chart', { chartType: 'unknown', data: csv })).toContain('spark-chart-unknown')
+    expect(render('chart', { chartType: 'Bad Type;<x>', data: csv })).toContain('spark-chart-bar')
   })
 
-  it('drops invalid colours and falls back to the default colour', () => {
-    const html = render('chart', { data: 'A | 1', colors: 'red;background:url(x)' })
+  it('keeps only valid colours', () => {
+    const html = render('chart', { data: csv, 'o_chart-bar_colors': '#ff0000|nope;background:url(x)|#00ff00' })
+    expect(html).toContain('data-spark-colors="#ff0000|#00ff00"')
     expect(html).not.toContain('url(x)')
-    expect(html).toContain('fill="#2e3192"')
   })
 
-  it('uses the supplied colours in turn', () => {
-    const html = render('chart', { data: 'A | 1\nB | 2', colors: '#ff0000, nope, #00ff00' })
-    expect(html).toContain('fill="#ff0000"')
-    expect(html).toContain('fill="#00ff00"')
-  })
-
-  it('shows the legend and values only when asked', () => {
-    expect(render('chart', { data, showLegend: true })).toContain('be-el-48-chart__legend')
-    expect(render('chart', { data, showValues: false })).not.toContain('be-el-48-chart__value')
-    expect(render('chart', { data, chartType: 'pie', showLegend: true })).toContain('(')
-  })
-
-  it('escapes the title and labels', () => {
-    const html = render('chart', { title: '<img src=x onerror=alert(1)>', data: '<b>bold</b> | 3' })
+  it('escapes text', () => {
+    const html = render('chart', { title: '<img src=x onerror=alert(1)>', data: 'K,V\n<b>bold</b>,3' })
     expect(html).not.toContain('<img src=x')
     expect(html).toContain('&lt;img')
     expect(html).not.toContain('<b>bold')

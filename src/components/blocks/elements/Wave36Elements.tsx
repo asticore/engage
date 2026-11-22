@@ -4,6 +4,7 @@ import { safeUrl } from '@/lib/mergeTags'
 
 import { Icon, SocialGlyph } from './icons'
 import { alignClass } from './TextElements'
+import { parseCsv, sparkAttrs } from './sparkData'
 import { cells, flag, iconName, linkHref, lines, mediaOf, num, pick, ratioCss, str } from './elementUtil'
 import './wave36.css'
 
@@ -62,20 +63,37 @@ const VisuallyHidden: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 /* ---------- table ---------- */
 
-/** `table`: a real table with an optional header row, stripes and caption. Wrapped so wide tables scroll sideways. */
+/** Table text: lines with "|" between cells (the first version), or CSV from a spreadsheet. Up to 500 rows and 24 columns. */
+function tableRows(v: unknown): string[][] {
+  const text = typeof v === 'string' ? v : ''
+  const piped = text.split(/\r?\n/).some((l) => l.includes('|'))
+  const rows = piped ? cells(v, 24) : parseCsv(text)
+  return rows.slice(0, 500).map((r) => r.slice(0, 24))
+}
+
+/**
+ * `table`: a Shine table (classes `table`, `table-striped`, `table-hover`, `table-bordered`, `table-compact`,
+ * `table-stack`) in a `table-wrap` scroller. With any behaviour switched on it also carries the `spark-table` class
+ * and `data-spark-*` options, and Spark adds sort, search, column filters, paging, sticky header, column visibility,
+ * row selection and CSV download. The full table is in the HTML, so it reads and prints without scripts.
+ */
 export const TableElement: React.FC<P> = (p) => {
-  const rows = cells(p.rows, 6)
+  const rows = tableRows(p.rows)
   if (rows.length === 0) return null
   const width = Math.max(...rows.map((r) => r.length))
   const pad = (r: string[]) => Array.from({ length: width }, (_, i) => r[i] ?? '')
   const headerRow = flag(p.headerRow, true)
-  const head = headerRow ? pad(rows[0]) : null
+  const head = headerRow ? pad(rows[0]!) : null
   const body = (headerRow ? rows.slice(1) : rows).map(pad)
   const caption = str(p.caption).trim()
-  const striped = flag(p.striped, false)
+  const behaves = TABLE_BEHAVIOURS.some((k) => (k === 'page-size' ? num(p[`o_table_${k}`], 0) > 0 : flag(p[`o_table_${k}`], false)))
+  const attrs = behaves ? { ...sparkAttrs(p, 'o_table_'), 'data-spark-sort': flag(p.o_table_sort, false) ? 'true' : 'false' } : {}
+  const classes = ['table', flag(p.striped, false) && 'table-striped', flag(p.hover, false) && 'table-hover', flag(p.bordered, false) && 'table-bordered', flag(p.compact, false) && 'table-compact', flag(p.o_table_stack, false) && 'table-stack', behaves && 'spark-table']
+    .filter(Boolean)
+    .join(' ')
   return (
-    <div className="be-el-table-wrap" role="region" aria-label={caption || 'Table'} tabIndex={0}>
-      <table className={striped ? 'be-el-table be-el-table--striped' : 'be-el-table'}>
+    <div className="table-wrap" role="region" aria-label={caption || 'Table'} tabIndex={0}>
+      <table className={classes} {...attrs}>
         {caption && <caption>{caption}</caption>}
         {head && (
           <thead>
@@ -92,7 +110,9 @@ export const TableElement: React.FC<P> = (p) => {
           {body.map((r, i) => (
             <tr key={i}>
               {r.map((c, j) => (
-                <td key={j}>{c}</td>
+                <td key={j} data-label={head?.[j] || undefined}>
+                  {c}
+                </td>
               ))}
             </tr>
           ))}
@@ -101,6 +121,9 @@ export const TableElement: React.FC<P> = (p) => {
     </div>
   )
 }
+
+/** Options that turn the Spark behaviour layer on. */
+const TABLE_BEHAVIOURS = ['sort', 'search', 'filters', 'page-size', 'sticky', 'columns', 'select', 'csv']
 
 /* ---------- timeline ---------- */
 
@@ -179,14 +202,18 @@ export const BreadcrumbsElement: React.FC<P> = (p) => {
 
 /* ---------- back to top ---------- */
 
-/** `back-to-top`: a link to #top styled as a button. Inline in the flow, or fixed to the bottom-right corner. No JS. */
+/**
+ * `back-to-top`: a link to #top with Spark's `spark-totop` (asticore/spark): hidden until the visitor has scrolled a
+ * little, then it fades in and scrolls smoothly (instantly with reduced motion). Fixed to the bottom-right corner,
+ * or placed inline where the element sits. Without scripts it stays a plain link.
+ */
 export const BackToTopElement: React.FC<P> = (p) => {
   const label = str(p.label).trim() || 'Back to top'
   const name = iconName(p.icon) || 'arrow'
   const fixed = pick(p.position, ['inline', 'fixed-corner'] as const, 'inline') === 'fixed-corner'
   const link = (
-    <a href="#top" className={fixed ? 'be-el-btt be-el-btt--fixed' : 'be-el-btt'}>
-      <Icon name={name} size={18} className="be-el-btt__icon" />
+    <a href="#top" className="btn spark-totop" data-spark-fixed={fixed ? 'true' : 'false'}>
+      <Icon name={name} size={18} />
       <span>{label}</span>
     </a>
   )

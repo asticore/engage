@@ -211,7 +211,7 @@ export function buildGuide(ctx: GuideContext): string {
     'list marker: bullets|numbers|none|icon|check|arrow|dash; items {"text","href"}.',
     'counter: number, prefix, suffix, title, animate. progress-bar: percent 0-100, shape bar|ring.',
     'gallery: layout grid|masonry|carousel|logos; images left empty.',
-    'chart: chartType bar|line|pie|radar|polar; data "label | value" per line, up to 12.',
+    'chart: chartType chart-bar|chart-line|chart-pie|chart-radar|chart-polar|chart-funnel|chart-combo|chart-gauge|chart-heatmap|chart-treemap|chart-waterfall; data is CSV, header row first ("Month,Sales\\nJan,120").',
     'loop: source posts|products|events|faqs|pages; count 1-24; layout grid|list|carousel; orderBy date|title|menu order|random-stable; category text.',
     'embed: provider youtube|vimeo|x|instagram|facebook-video|google-calendar|typeform|custom-iframe; https address. X, Instagram and Facebook show a link card.',
     'reviews: items {name, rating 1-5, text, source}; layout grid|list. pagination: current, total, baseUrl with {page}.',

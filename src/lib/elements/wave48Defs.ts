@@ -1,9 +1,10 @@
 import type { EditorField } from './fieldTypes'
 import { EMBED_NAME, EMBED_PROVIDER_GROUPS } from '@/lib/embedProviders'
 import type { ElementDef } from './registry'
+import { chartFields } from './sparkChartFields'
 
 /**
- * Wave 48: four interactive elements. `chart` (bar, line, pie, radar or polar, as inline SVG), `embed` (video, calendar
+ * Wave 48: four interactive elements. `chart` (any Spark chart, diagram or visualisation), `embed` (video, calendar
  * and form iframes from a fixed host allowlist, plus link cards for social posts), `reviews` (star ratings, optional
  * Review structured data) and `pagination` (links built from a pattern).
  *
@@ -30,22 +31,12 @@ const slider = (name: string, label: string, min: number, max: number, step = 1)
 export const WAVE48_ELEMENTS: ElementDef[] = [
   {
     type: 'chart', label: 'Chart', icon: String.fromCodePoint(0x1f4ca), category: 'interactive',
-    description: 'A bar, line, pie, radar or polar area chart of up to 100 values, drawn as SVG. The same data is available to screen readers as a table.',
-    fields: [
-      select('chartType', 'Chart type', labelled([['bar', 'Bar'], ['line', 'Line'], ['pie', 'Pie'], ['radar', 'Radar'], ['polar', 'Polar area']])),
-      text('title', 'Title'),
-      area('data', 'Data', 'One row per line: "label | value". Up to 100 rows. Pasted CSV (label,value) also works. A row with a value that is not a number is skipped. Negative values count as zero.'),
-      text('colors', 'Colours', { helpText: 'Comma-separated hex colours, reused in turn. Invalid ones are dropped. Line and radar use the first colour.' }),
-      check('showLegend', 'Show legend'),
-      check('showValues', 'Show values'),
-    ],
+    description: 'Any Spark chart, diagram or visualisation: bar, line, pie, radar, scatter, combo, funnel, gauge, heatmap, treemap, sunburst, waterfall, histogram, map, network and more. Paste CSV data. The same data is available to screen readers as a table.',
+    fields: chartFields(),
     defaultProps: () => ({
-      chartType: 'bar',
+      chartType: 'chart-bar',
       title: 'Sales by month',
-      data: 'Jan | 120\nFeb | 95\nMar | 160\nApr | 140',
-      colors: '#2e3192, #00a9ff, #f5a623, #2ecc71, #e74c3c',
-      showLegend: false,
-      showValues: true,
+      data: 'Month,Sales\nJan,120\nFeb,95\nMar,160\nApr,140',
     }),
   },
   {
