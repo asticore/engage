@@ -2,6 +2,7 @@ import React from 'react'
 
 import { flag, gridSizes, mediaListOf, num, pick, ratioCss, str } from './elementUtil'
 import type { MediaRef } from './elementUtil'
+import { GalleryFilter } from './GalleryFilter'
 import { GalleryCarousel } from './Wave49Client'
 import { SparkLightbox } from './SparkLightbox'
 import type { GalleryItem } from './Wave49Client'
@@ -40,6 +41,10 @@ export const GalleryElement: React.FC<P> = (p) => {
   const captions = flag(p.captions, false)
   const autoplay = flag(p.autoplay, false)
   const label = str(p.label).trim() || 'Image gallery'
+  // Filter chips: one category per line, in the same order as the pictures (library pictures first, then address lines).
+  const cats = str(p.categories).split('\n').map((c) => c.trim().slice(0, 40))
+  const categories = Array.from(new Set(cats.filter(Boolean))).slice(0, 12)
+  const filterable = flag(p.filter, false) && categories.length > 0 && (layout === 'grid' || layout === 'masonry')
 
   // Masonry keeps each picture's own shape; the logo strip sets its own height in CSS.
   const shape = layout === 'masonry' || layout === 'logos' ? undefined : ratio === 'auto' ? (layout === 'carousel' ? '4 / 3' : undefined) : ratio
@@ -78,10 +83,14 @@ export const GalleryElement: React.FC<P> = (p) => {
   const list = (
     <ul className={`be-el-49-gallery be-el-49-gallery--${layout}${greyed ? ' be-el-49-gallery--grey' : ''}`} style={vars}>
       {items.map((m, i) => (
-        <li key={i}>{figure(m, i)}</li>
+        <li key={i} data-cat={filterable ? cats[i] || undefined : undefined}>{figure(m, i)}</li>
       ))}
     </ul>
   )
+  if (filterable) {
+    const filtered = <GalleryFilter categories={categories} allLabel={str(p.filterAll).trim() || 'All'}>{list}</GalleryFilter>
+    return lightbox ? <SparkLightbox>{filtered}</SparkLightbox> : filtered
+  }
   return lightbox ? <SparkLightbox>{list}</SparkLightbox> : list
 }
 
