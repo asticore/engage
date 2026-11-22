@@ -65,8 +65,19 @@ export const PricingTableElement: React.FC<P> = (p) => {
       <h3 className="el-pricing__title">{str(p.title, 'Plan')}</h3>
       <p className="el-pricing__price">
         <span className="el-pricing__currency">{str(p.currency, '$')}</span>
-        <span className="el-pricing__amount">{str(p.price, '0')}</span>
-        {str(p.period) && <span className="el-pricing__period">{str(p.period)}</span>}
+        {str(p.yearlyPrice).trim() ? (
+          <>
+            <span className="el-pricing__amount el-pricing__m">{str(p.price, '0')}</span>
+            <span className="el-pricing__amount el-pricing__y">{str(p.yearlyPrice)}</span>
+            {str(p.period) && <span className="el-pricing__period el-pricing__m">{str(p.period)}</span>}
+            {(str(p.yearlyPeriod) || str(p.period)) && <span className="el-pricing__period el-pricing__y">{str(p.yearlyPeriod, str(p.period))}</span>}
+          </>
+        ) : (
+          <>
+            <span className="el-pricing__amount">{str(p.price, '0')}</span>
+            {str(p.period) && <span className="el-pricing__period">{str(p.period)}</span>}
+          </>
+        )}
       </p>
       <ul className="el-pricing__features">
         {features.map((f, i) =>

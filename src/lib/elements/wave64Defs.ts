@@ -7,6 +7,16 @@ const text = (name: string, label: string, extra: Partial<EditorField> = {}): Ed
 
 export const WAVE64_ELEMENTS: ElementDef[] = [
   {
+    type: 'billing-toggle', label: 'Billing toggle', icon: String.fromCodePoint(0x1f501), category: 'marketing',
+    description: 'A monthly and yearly switch. Pricing tables on the page that have a yearly price change with it.',
+    fields: [
+      text('monthlyLabel', 'Monthly label', { width: 'half' }), text('yearlyLabel', 'Yearly label', { width: 'half' }),
+      text('saveText', 'Saving note', { helpText: 'For example "Save 20%". Leave empty for none.' }),
+      { name: 'startYearly', label: 'Start on yearly', type: 'checkbox' },
+    ],
+    defaultProps: () => ({ monthlyLabel: 'Monthly', yearlyLabel: 'Yearly', saveText: 'Save 20%', startYearly: false }),
+  },
+  {
     type: 'lottie-player', label: 'Lottie animation', icon: String.fromCodePoint(0x2728), category: 'media',
     description: 'A Lottie animation (.lottie or .json) that plays on its own, on hover or as you scroll. Loads its player only when it comes into view.',
     fields: [

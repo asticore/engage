@@ -222,6 +222,7 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
     description: 'One plan card with price, feature list and button. Place several side by side in columns.',
     fields: [
       text('title', 'Plan name'), text('currency', 'Currency', { width: 'half' }), text('price', 'Price', { width: 'half' }), text('period', 'Period (e.g. / month)'),
+      text('yearlyPrice', 'Yearly price (optional)', { width: 'half', helpText: 'Shown instead of the price when the Billing toggle on the page is set to yearly.' }), text('yearlyPeriod', 'Yearly period (e.g. / year)', { width: 'half' }),
       { name: 'features', label: 'Features', type: 'repeater', repeater: { fields: [text('text', 'Feature'), { name: 'included', label: 'Included', type: 'checkbox' }] } },
       text('buttonText', 'Button text', { width: 'half' }), { name: 'buttonUrl', label: 'Button link', type: 'link', width: 'half' },
       text('ribbon', 'Ribbon text'), { name: 'highlight', label: 'Highlight this plan', type: 'checkbox' },
