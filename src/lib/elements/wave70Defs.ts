@@ -36,3 +36,19 @@ export const WAVE70_CLIENT_ELEMENTS: ElementDef[] = [
     defaultProps: () => ({ mode: 'button', minAge: 18, heading: 'Are you over 18?', message: 'You must be 18 or older to enter this site.', denyUrl: '', rememberDays: 30 }),
   },
 ]
+
+export const WAVE70_CHAT_ELEMENTS: ElementDef[] = [
+  {
+    type: 'chat-button', label: 'Chat button', icon: String.fromCodePoint(0x1f4ac), category: 'interactive',
+    description: 'A click-to-chat button for WhatsApp, Messenger or Telegram, with an optional prefilled message and opening hours.',
+    fields: [
+      { name: 'app', label: 'App', type: 'select', width: 'half', options: labelled([['whatsapp', 'WhatsApp'], ['messenger', 'Messenger'], ['telegram', 'Telegram']]) },
+      text('contact', 'Number or username', { width: 'half', helpText: 'WhatsApp: phone number with country code. Messenger: page username. Telegram: username.' }),
+      text('label', 'Button text'),
+      text('message', 'Prefilled message', { helpText: 'WhatsApp and Telegram only.' }),
+      text('hours', 'Show only between', { width: 'half', helpText: '24 hour HH:MM-HH:MM in the visitor\'s own time, like 09:00-17:00. Empty means always.' }),
+      { name: 'floating', label: 'Float in the corner', type: 'checkbox' },
+    ],
+    defaultProps: () => ({ app: 'whatsapp', contact: '', label: 'Chat with us', message: '', hours: '', floating: false }),
+  },
+]

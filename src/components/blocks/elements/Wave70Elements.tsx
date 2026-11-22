@@ -84,6 +84,45 @@ export function AgeGateElement(props: P): React.ReactElement | null {
   )
 }
 
+/** Chat link for an app, or '' when the contact is not valid. WhatsApp digits only (7 to 15), others a username. */
+export function chatHref(app: string, contact: string, message: string): string {
+  const c = contact.trim().replace(/^@/, '')
+  const text = message.trim().slice(0, 300)
+  if (app === 'whatsapp') {
+    const digits = c.replace(/[\s()+-]/g, '')
+    if (!/^\d{7,15}$/.test(digits)) return ''
+    return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`
+  }
+  if (!/^[A-Za-z0-9._]{3,64}$/.test(c)) return ''
+  if (app === 'messenger') return `https://m.me/${c}`
+  if (app === 'telegram') return `https://t.me/${c}${text ? `?text=${encodeURIComponent(text)}` : ''}`
+  return ''
+}
+
+/** True when `minutes` (since midnight) is inside "HH:MM-HH:MM"; an empty or malformed range is always open. Overnight ranges wrap. */
+export function inChatHours(range: string, minutes: number): boolean {
+  const m = /^([01]\d|2[0-3]):([0-5]\d)-([01]\d|2[0-3]):([0-5]\d)$/.exec(range.trim())
+  if (!m) return true
+  const from = Number(m[1]) * 60 + Number(m[2]), to = Number(m[3]) * 60 + Number(m[4])
+  return from <= to ? minutes >= from && minutes < to : minutes >= from || minutes < to
+}
+
+export function ChatButtonElement(props: P): React.ReactElement | null {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const n = new Date()
+    setOpen(inChatHours(str(props.hours), n.getHours() * 60 + n.getMinutes()))
+  }, [props.hours])
+  const href = chatHref(str(props.app), str(props.contact), str(props.message))
+  if (!href || !open) return null
+  return (
+    <a className={`w70-chat${props.floating === true ? ' w70-chat--float' : ''}`} href={href} target="_blank" rel="noopener noreferrer">
+      {str(props.label) || 'Chat with us'}
+    </a>
+  )
+}
+
 export const WAVE70_COMPONENTS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   'age-gate': AgeGateElement,
+  'chat-button': ChatButtonElement,
 }
