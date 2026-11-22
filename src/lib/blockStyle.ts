@@ -12,6 +12,7 @@
 import { BUILT_IN_FONTS, fontStack, sanitizeFamily } from '@/features/fonts/installed'
 import { cleanDays, cleanLangs, cleanRoles, cleanTime, cleanUrlText, isIsoDate, rulesFromStyle } from '@/lib/visibilityRules'
 
+import { safeUrl } from '@/lib/mergeTags'
 import { isDesignV2Raw, readFlatDesign } from '@/lib/design/upgrade'
 import { DEFAULT_BREAKPOINTS, type SectionLayout } from '@/lib/sectionLayout'
 
@@ -365,6 +366,16 @@ export type BlockStyle = {
   /** Global typography preset id (theme styles, ^[a-z0-9-]{1,32}$). The wrapper gets class tp-<id>. */
   typePreset?: string
   anchorId?: string
+  /** Wrapper link: the whole block is clickable (a stretched link). Safe URL only. */
+  wrapLink?: string
+  wrapLinkNewTab?: boolean
+  wrapLinkNoFollow?: boolean
+  /** Accessible name for the wrapper link (required for screen readers). */
+  wrapLinkLabel?: string
+  /** Read more: clamp the block to this height in px with an expand and collapse button. */
+  collapseHeight?: number
+  collapseMore?: string
+  collapseLess?: string
 
   // Advanced (Elementor-style). All optional; unset emits no CSS.
   /** Transform, normal state: deg, percent, px. Emitted inline. */
@@ -475,6 +486,30 @@ function withSafeAnchor(style: BlockStyle): BlockStyle {
   return rest
 }
 
+/** Wrapper link and Read more keys: a safe URL, short plain labels, a clamped height. */
+function withSafeWrapCollapse(style: BlockStyle): BlockStyle {
+  const raw = style as Record<string, unknown>
+  const keys = ['wrapLink', 'wrapLinkNewTab', 'wrapLinkNoFollow', 'wrapLinkLabel', 'collapseHeight', 'collapseMore', 'collapseLess']
+  if (!keys.some((k) => raw[k] !== undefined)) return style
+  const out: Record<string, unknown> = { ...raw }
+  for (const k of keys) delete out[k]
+  const url = safeUrl(raw.wrapLink)
+  if (url) {
+    out.wrapLink = url
+    if (raw.wrapLinkNewTab === true) out.wrapLinkNewTab = true
+    if (raw.wrapLinkNoFollow === true) out.wrapLinkNoFollow = true
+    if (typeof raw.wrapLinkLabel === 'string' && raw.wrapLinkLabel.trim()) out.wrapLinkLabel = raw.wrapLinkLabel.trim().slice(0, 120)
+  }
+  const h = clampNum(raw.collapseHeight, 40, 1200)
+  if (h !== undefined) {
+    out.collapseHeight = Math.round(h)
+    for (const k of ['collapseMore', 'collapseLess'] as const) {
+      if (typeof raw[k] === 'string' && (raw[k] as string).trim()) out[k] = (raw[k] as string).trim().slice(0, 40)
+    }
+  }
+  return out as BlockStyle
+}
+
 /** Narrows an unknown JSON column value to a BlockStyle without throwing. */
 export function asBlockStyle(value: unknown): BlockStyle {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return EMPTY_STYLE
@@ -483,7 +518,7 @@ export function asBlockStyle(value: unknown): BlockStyle {
   // A v2 value with no groups (a stray typed value) reads as {} in readFlatDesign.
   const style = (isDesignV2Raw(value) ? readFlatDesign(value) : value) as BlockStyle
   if (Object.keys(style).length === 0) return EMPTY_STYLE
-  const fx = withSafeAnchor(withSafeUnits(sanitizeRadius(sanitizeTypography(sanitizeVisibility(sanitizeFx(sanitizeSlides(sanitizeBgVideo(style))))))))
+  const fx = withSafeWrapCollapse(withSafeAnchor(withSafeUnits(sanitizeRadius(sanitizeTypography(sanitizeVisibility(sanitizeFx(sanitizeSlides(sanitizeBgVideo(style)))))))))
   if (style.tablet === undefined && style.mobile === undefined) return fx
   // Overrides come out of JSON: keep only whitelisted, well-typed keys.
   const { tablet: rawTablet, mobile: rawMobile, ...rest } = fx

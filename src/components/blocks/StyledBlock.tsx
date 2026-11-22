@@ -24,6 +24,7 @@ import {
   type DividerShape,
 } from '@/lib/blockStyle'
 
+import { CollapseBox } from './CollapseBox'
 import { BgNoise, BgSlideshow } from './BgSlideshow'
 import { BgVideo } from './BgVideo'
 import ParticlesBackground from './ParticlesLazy'
@@ -119,7 +120,20 @@ export const StyledBlock: React.FC<{
         speed={parsed.dividerTopSpeed}
         position="top"
       />
-      <div className="be-block__content">{children}</div>
+      <div className="be-block__content">
+        {parsed.collapseHeight ? (
+          <CollapseBox height={parsed.collapseHeight} more={parsed.collapseMore} less={parsed.collapseLess}>{children}</CollapseBox>
+        ) : children}
+      </div>
+      {parsed.wrapLink && (
+        <a
+          className="be-wraplink"
+          href={parsed.wrapLink}
+          aria-label={parsed.wrapLinkLabel || undefined}
+          target={parsed.wrapLinkNewTab ? '_blank' : undefined}
+          rel={[parsed.wrapLinkNewTab && 'noopener noreferrer', parsed.wrapLinkNoFollow && 'nofollow'].filter(Boolean).join(' ') || undefined}
+        />
+      )}
       <ShapeDivider
         shape={parsed.dividerBottom}
         color={parsed.dividerBottomColor}

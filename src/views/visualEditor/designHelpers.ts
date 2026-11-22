@@ -65,7 +65,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'filterGrayscale', 'filterHue', 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],
   conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang'],
-  visibility: ['hide', 'hideOnMobile', 'hideOnDesktop', 'anchorId', 'customClass'],
+  visibility: ['hide', 'hideOnMobile', 'hideOnDesktop', 'anchorId', 'customClass', 'wrapLink', 'wrapLinkNewTab', 'wrapLinkNoFollow', 'wrapLinkLabel', 'collapseHeight', 'collapseMore', 'collapseLess'],
 }
 
 /** Words searched for each group (its title plus the control labels inside it). */

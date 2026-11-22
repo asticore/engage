@@ -107,6 +107,24 @@ export function resolveDocumentBlocks<T>(blocks: T, context: MergeContext): T {
   return walk(blocks) as T
 }
 
+/** Counts the words in plain text or in any nested rich text (Lexical) value. */
+export function countWords(value: unknown): number {
+  if (typeof value === 'string') return value.trim() ? value.trim().split(/\s+/).length : 0
+  if (Array.isArray(value)) return value.reduce<number>((n, v) => n + countWords(v), 0)
+  if (value && typeof value === 'object') {
+    const node = value as Record<string, unknown>
+    if (typeof node.text === 'string') return countWords(node.text)
+    return Object.values(node).reduce<number>((n, v) => n + countWords(v), 0)
+  }
+  return 0
+}
+
+/** "3 min read" at 220 words a minute, at least 1 minute; empty when there is no text. */
+export function readingTimeLabel(value: unknown): string {
+  const words = countWords(value)
+  return words > 0 ? `${Math.max(1, Math.round(words / 220))} min read` : ''
+}
+
 /** The tags offered in the editor's autocomplete, by source collection. */
 export const MERGE_TAG_LIBRARY: Record<string, { tag: string; label: string }[]> = {
   common: [
@@ -124,6 +142,7 @@ export const MERGE_TAG_LIBRARY: Record<string, { tag: string; label: string }[]>
   ],
   posts: [
     { tag: '{{publishedDate}}', label: 'Published date' },
+    { tag: '{{readingTime}}', label: 'Reading time' },
     { tag: '{{author}}', label: 'Author' },
   ],
   events: [
@@ -206,6 +225,7 @@ export function buildMergeContext(
   if (source === 'posts') {
     context.publishedDate = formatDate(item.publishedDate)
     context.author = str(item.author)
+    context.readingTime = readingTimeLabel(item.content ?? item.body ?? item.excerpt)
   }
 
   if (source === 'events') {
