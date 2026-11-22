@@ -31,3 +31,6 @@
 .be-el-64-pl__list button[aria-current='true'] { font-weight: 700; background: rgba(128, 128, 128, 0.15); }
 .be-el-64-pl__list button:focus-visible { outline: 2px solid #8ab4ff; outline-offset: -2px; }
 @media (max-width: 700px) { .be-el-64-pl { grid-template-columns: 1fr; } }
+
+.be-lottie { width: 100%; }
+.be-lottie:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
