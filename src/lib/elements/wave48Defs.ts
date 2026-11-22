@@ -30,11 +30,11 @@ const slider = (name: string, label: string, min: number, max: number, step = 1)
 export const WAVE48_ELEMENTS: ElementDef[] = [
   {
     type: 'chart', label: 'Chart', icon: String.fromCodePoint(0x1f4ca), category: 'interactive',
-    description: 'A bar, line, pie, radar or polar area chart of up to 12 values, drawn as SVG. The same data is available to screen readers as a table.',
+    description: 'A bar, line, pie, radar or polar area chart of up to 100 values, drawn as SVG. The same data is available to screen readers as a table.',
     fields: [
       select('chartType', 'Chart type', labelled([['bar', 'Bar'], ['line', 'Line'], ['pie', 'Pie'], ['radar', 'Radar'], ['polar', 'Polar area']])),
       text('title', 'Title'),
-      area('data', 'Data', 'One row per line: "label | value". Up to 12 rows. A row with a value that is not a number is skipped. Negative values count as zero.'),
+      area('data', 'Data', 'One row per line: "label | value". Up to 100 rows. Pasted CSV (label,value) also works. A row with a value that is not a number is skipped. Negative values count as zero.'),
       text('colors', 'Colours', { helpText: 'Comma-separated hex colours, reused in turn. Invalid ones are dropped. Line and radar use the first colour.' }),
       check('showLegend', 'Show legend'),
       check('showValues', 'Show values'),

@@ -31,14 +31,16 @@ const fmt = (n: number) => n.toLocaleString('en-GB', { maximumFractionDigits: 2 
 const CHART_TYPES = ['bar', 'line', 'pie', 'radar', 'polar'] as const
 type ChartType = (typeof CHART_TYPES)[number]
 const CHART_NAME: Record<ChartType, string> = { bar: 'Bar chart', line: 'Line chart', pie: 'Pie chart', radar: 'Radar chart', polar: 'Polar area chart' }
-const MAX_POINTS = 12
+const MAX_POINTS = 100
 
 type Point = { label: string; value: number }
 
 /** "label | value" rows. Rows with no label or a value that is not a number are skipped. Negatives count as zero. */
 function dataPoints(v: unknown): Point[] {
   const out: Point[] = []
-  for (const [label = '', raw = ''] of cells(v, 2)) {
+  // CSV paste: lines with no "|" but a comma or tab are read as "label,value" (the last separator splits).
+  const src = typeof v === 'string' && !v.includes('|') ? v.split('\n').map((l) => l.replace(/[,\t](?=[^,\t]*$)/, ' | ')).join('\n') : v
+  for (const [label = '', raw = ''] of cells(src, 2)) {
     const value = Number(raw.replace(/[,\s]/g, ''))
     if (label && raw.trim() !== '' && Number.isFinite(value)) out.push({ label, value: Math.max(0, value) })
     if (out.length === MAX_POINTS) break

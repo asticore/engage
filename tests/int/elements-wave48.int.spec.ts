@@ -139,12 +139,12 @@ describe('chart', () => {
     expect(render('chart', { chartType: 'unknown', data })).toContain('be-el-48-chart--bar')
   })
 
-  it('skips rows with bad numbers and keeps at most 12 points', () => {
+  it('skips rows with bad numbers and keeps at most 100 points', () => {
     const html = render('chart', { data: 'A | 5\nB | x\nC |\nD | 1e3\nE | Infinity' })
     expect(count(html, '<th scope="row">')).toBe(2)
     expect(html).toContain('<th scope="row">D</th>')
-    const many = Array.from({ length: 15 }, (_, i) => `L${i} | ${i + 1}`).join('\n')
-    expect(count(render('chart', { data: many }), '<th scope="row">')).toBe(12)
+    const many = Array.from({ length: 105 }, (_, i) => `L${i} | ${i + 1}`).join('\n')
+    expect(count(render('chart', { data: many }), '<th scope="row">')).toBe(100)
   })
 
   it('renders nothing for no data, or a pie with no positive total', () => {
