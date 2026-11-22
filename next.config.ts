@@ -11,11 +11,10 @@ const nextConfig = {
   // Read more: https://opennext.js.org/cloudflare/howtos/workerd
   serverExternalPackages: ['jose', 'pg-cloudflare'],
 
-  // PageSpeed (22 Nov 2026): each page linked about 18 small stylesheets, every one a render-blocking request
-  // (about 450 ms on mobile). Inlined into the HTML they cost no extra request, and the HTML is compressed.
-  experimental: {
-    inlineCss: true,
-  },
+  // experimental.inlineCss was tried for PageSpeed (22 Nov 2026, PR 545) and pushed the Worker past the
+  // 64 MiB uncompressed limit (the CSS is copied into every server bundle), so production refused the deploy.
+  // Do not turn it on again without measuring the Worker size first.
+
 
   // Your Next.js config here
   webpack: (webpackConfig: any) => {
