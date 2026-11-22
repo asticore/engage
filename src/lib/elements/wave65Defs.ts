@@ -58,6 +58,8 @@ export const WAVE65_ELEMENTS: ElementDef[] = [
       check('loop', 'Loop', 'Off stops at the first and last slide.'),
       check('arrows', 'Arrows'),
       check('dots', 'Dots'),
+      check('arrowsMobile', 'Arrows on phones', 'Follows the Arrows choice until you change it.'),
+      check('dotsMobile', 'Dots on phones', 'Follows the Dots choice until you change it.'),
       check('thumbnails', 'Thumbnails', 'Small pictures under the slider.'),
       check('autoplay', 'Autoplay', 'Off by default. Always stops on hover, on focus and for visitors who prefer reduced motion.'),
       { name: 'interval', label: 'Seconds per slide', type: 'number', width: 'half' },
@@ -69,7 +71,7 @@ export const WAVE65_ELEMENTS: ElementDef[] = [
         { heading: 'Welcome', text: 'A short line about what you do.', buttonLabel: 'Learn more', buttonUrl: '/about' },
         { heading: 'Our work', text: 'Show off a project or an offer.', buttonLabel: 'See more', buttonUrl: '/contact' },
       ],
-      autoplay: false, interval: 6, height: 420, heightMobile: 320, loop: true, arrows: true, dots: true, thumbnails: false,
+      autoplay: false, interval: 6, height: 420, heightMobile: 320, loop: true, arrows: true, dots: true, arrowsMobile: true, dotsMobile: true, thumbnails: false,
     }),
   },
   {

@@ -18,6 +18,9 @@ export type SlidesSettings = {
   loop: boolean
   arrows: boolean
   dots: boolean
+  /** Arrows and dots on phones; they follow the desktop choice until set. */
+  arrowsMobile: boolean
+  dotsMobile: boolean
   thumbnails: boolean
   height: number
   heightMobile: number
@@ -31,6 +34,8 @@ export const slidesSettings = (p: Record<string, unknown>): SlidesSettings => {
     loop: flag(p.loop, true),
     arrows: flag(p.arrows, true),
     dots: flag(p.dots, true),
+    arrowsMobile: flag(p.arrowsMobile, flag(p.arrows, true)),
+    dotsMobile: flag(p.dotsMobile, flag(p.dots, true)),
     thumbnails: flag(p.thumbnails, false),
     height,
     heightMobile: clamp(p.heightMobile, Math.min(height, 360), 160, 800),

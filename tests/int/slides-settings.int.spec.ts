@@ -6,6 +6,10 @@ describe('slides settings', () => {
   it('keeps the old look for slides saved before the new options', () => {
     expect(slidesSettings({ height: 420 })).toMatchObject({ loop: true, arrows: true, dots: true, thumbnails: false, height: 420, interval: 6 })
   })
+  it('lets arrows and dots differ on phones, following the desktop choice until set', () => {
+    expect(slidesSettings({ arrows: false })).toMatchObject({ arrows: false, arrowsMobile: false })
+    expect(slidesSettings({ arrows: true, arrowsMobile: false, dots: false, dotsMobile: true })).toMatchObject({ arrows: true, arrowsMobile: false, dots: false, dotsMobile: true })
+  })
   it('clamps heights and the interval', () => {
     expect(slidesSettings({ height: 5000, heightMobile: 10, interval: 1 })).toMatchObject({ height: 1000, heightMobile: 160, interval: 2 })
     expect(slidesSettings({ height: 'x' }).height).toBe(420)
