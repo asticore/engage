@@ -55,7 +55,7 @@ export type SnapshotBucket = {
   list(options: { prefix: string; cursor?: string; limit?: number }): Promise<{ objects: { key: string }[]; truncated: boolean; cursor?: string }>
 }
 
-export type Snapshot = { body: string; epoch: number; at: number; headers: Record<string, string> }
+export type Snapshot = { body: string; epoch: number; at: number; build: string; headers: Record<string, string> }
 
 export function readSnapshotBucket(env: unknown): SnapshotBucket | undefined {
   const candidate = (env as { R2?: SnapshotBucket } | null | undefined)?.R2
@@ -66,6 +66,7 @@ export function readSnapshotBucket(env: unknown): SnapshotBucket | undefined {
 export async function snapshotKeyFor(cacheKey: string): Promise<string> {
   const url = new URL(cacheKey)
   url.searchParams.delete('v')
+  url.searchParams.delete('b')
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(url.toString()))
   const hex = Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, '0'))
@@ -93,11 +94,11 @@ export async function readSnapshot(bucket: SnapshotBucket, key: string): Promise
   }
   if (!/^\s*text\/html/i.test(headers['content-type'] || '')) return null
   const at = Number(meta.at)
-  return { body: raw.slice(split + 1), epoch, at: Number.isFinite(at) ? at : 0, headers }
+  return { body: raw.slice(split + 1), epoch, at: Number.isFinite(at) ? at : 0, build: meta.b || '', headers }
 }
 
 /** Stores a copy of a cacheable page. Returns false when it was too large to keep. */
-export async function writeSnapshot(bucket: SnapshotBucket, key: string, epoch: number, response: Response): Promise<boolean> {
+export async function writeSnapshot(bucket: SnapshotBucket, key: string, epoch: number, response: Response, build = ''): Promise<boolean> {
   const body = await response.text()
   if (body.length > MAX_BODY_BYTES) return false
   const headers: Record<string, string> = {}
@@ -108,7 +109,7 @@ export async function writeSnapshot(bucket: SnapshotBucket, key: string, epoch: 
   const now = Math.floor(Date.now() / 1000)
   const storedEpoch = epoch >= 1_000_000_000 && now - epoch < SETTLE_SECONDS ? epoch - 1 : epoch
   await bucket.put(key, `${JSON.stringify(headers)}\n${body}`, {
-    customMetadata: { f: FORMAT, epoch: String(storedEpoch), at: String(now) },
+    customMetadata: { f: FORMAT, epoch: String(storedEpoch), at: String(now), b: build },
     httpMetadata: { contentType: headers['content-type'] || 'text/html; charset=utf-8' },
   })
   return true
@@ -126,11 +127,14 @@ export type SnapshotVerdict = 'fresh' | 'stale' | 'none'
 
 /** Fresh: serve. Stale: serve and rebuild in the background. None: build the page now. */
 export function snapshotVerdict(
-  snapshot: Pick<Snapshot, 'epoch' | 'at'>,
+  snapshot: Pick<Snapshot, 'epoch' | 'at'> & { build?: string },
   currentEpoch: number,
   ttlSeconds: number,
   nowSeconds = Math.floor(Date.now() / 1000),
+  build = '',
 ): SnapshotVerdict {
+  // Built by an older deploy: the code may have changed (a fix, new markup), so build the page again first.
+  if (build && (snapshot.build || '') !== build) return 'none'
   if (snapshot.epoch >= currentEpoch) {
     // Same rule as the edge cache: a copy is current for one cache time. After that it is served once more
     // while it rebuilds (edits made with "clear on publish" turned off still show up), and after a day it is rebuilt first.

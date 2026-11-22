@@ -185,3 +185,30 @@ describe('withEdgeCache with snapshots', () => {
     expect(bucket.get).not.toHaveBeenCalled()
   })
 })
+
+describe('cache per deploy', () => {
+  beforeEach(() => {
+    resetEdgeSettingsMemo()
+    ;(globalThis as { caches?: unknown }).caches = { default: { match: vi.fn(async () => undefined), put: vi.fn(async () => undefined) } }
+  })
+  afterEach(() => {
+    delete (globalThis as { caches?: unknown }).caches
+  })
+
+  it('rebuilds a snapshot made by an older deploy', () => {
+    expect(snapshotVerdict({ epoch: EPOCH, at: NOW - 10, build: 'old' }, EPOCH, 900, NOW, 'new')).toBe('none')
+    expect(snapshotVerdict({ epoch: EPOCH, at: NOW - 10, build: 'new' }, EPOCH, 900, NOW, 'new')).toBe('fresh')
+  })
+
+  it('keys the edge copy by deploy and stores the deploy with the snapshot', async () => {
+    const bucket = fakeBucket()
+    const work = ctx()
+    const env = { D1: fakeDb(EPOCH), R2: bucket, CF_VERSION_METADATA: { id: 'abcd-1234-ef' } }
+    await withEdgeCache(new Request(`${BASE}/about`), env, work, async () => html('<p>built</p>'))
+    await work.settle()
+    const put = (globalThis as unknown as { caches: { default: { put: ReturnType<typeof vi.fn> } } }).caches.default.put
+    expect(put.mock.calls[0][0]).toBe(`${BASE}/about?v=${EPOCH}&x=-.u&b=abcd1234ef`)
+    const key = await snapshotKeyFor(`${BASE}/about?v=${EPOCH}&x=-.u`)
+    expect((await readSnapshot(bucket, key))?.build).toBe('abcd1234ef')
+  })
+})

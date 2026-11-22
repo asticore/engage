@@ -143,6 +143,12 @@ const readD1 = (env: unknown): D1Like | undefined => {
   return candidate && typeof candidate.prepare === 'function' ? candidate : undefined
 }
 
+/** The deployed Worker version (Cloudflare's version_metadata binding), shortened. Empty when the binding is missing. */
+export const readBuild = (env: unknown): string => {
+  const id = (env as { CF_VERSION_METADATA?: { id?: unknown } } | null | undefined)?.CF_VERSION_METADATA?.id
+  return typeof id === 'string' ? id.replace(/[^A-Za-z0-9]/g, '').slice(0, 12) : ''
+}
+
 const openCache = (): CacheLike | null => {
   try {
     const store = (globalThis as { caches?: { default?: unknown } }).caches?.default
@@ -200,6 +206,7 @@ export async function withEdgeCache(request: Request, env: unknown, ctx: unknown
   }
   if (!verdict.cacheable) return tagResponse(await handler(request, env, ctx), `BYPASS(${verdict.reason})`)
 
+  const build = readBuild(env)
   let key: string | null = null
   let cache: CacheLike | null = null
   try {
@@ -210,6 +217,7 @@ export async function withEdgeCache(request: Request, env: unknown, ctx: unknown
       settings.epoch,
       mobile,
       visitorVariant(request.headers.get('accept-language'), request.headers.get('cf-ipcountry'), isOptInCountry),
+      build,
     )
     if (cache) {
       const hit = await cache.match(key)
@@ -232,13 +240,13 @@ export async function withEdgeCache(request: Request, env: unknown, ctx: unknown
       snapshotKey = await snapshotKeyFor(key)
       const snapshot = await readSnapshot(bucket, snapshotKey)
       hadSnapshot = Boolean(snapshot)
-      const verdict = snapshot ? snapshotVerdict(snapshot, settings.epoch, settings.ttlSeconds) : 'none'
+      const verdict = snapshot ? snapshotVerdict(snapshot, settings.epoch, settings.ttlSeconds, undefined, build) : 'none'
       if (snapshot && verdict === 'fresh') {
         if (cache && request.method === 'GET') keepAlive(ctx, cache.put(key, storedCopy(snapshotResponse(snapshot, settings.ttlSeconds, ''), settings.ttlSeconds)))
         return snapshotResponse(snapshot, settings.ttlSeconds, 'SNAPSHOT')
       }
       if (snapshot && verdict === 'stale') {
-        refreshInBackground(request, env, ctx, handler, { cache, key, bucket, snapshotKey, settings })
+        refreshInBackground(request, env, ctx, handler, { cache, key, bucket, snapshotKey, settings, build })
         return snapshotResponse(snapshot, settings.ttlSeconds, 'STALE')
       }
     } catch {
@@ -253,7 +261,7 @@ export async function withEdgeCache(request: Request, env: unknown, ctx: unknown
     if (isCacheableResponse(response.status, response.headers)) {
       const toStore = storedCopy(response.clone(), settings.ttlSeconds)
       if (cache) keepAlive(ctx, cache.put(key, toStore))
-      if (bucket && snapshotKey) keepAlive(ctx, writeSnapshot(bucket, snapshotKey, settings.epoch, response.clone()))
+      if (bucket && snapshotKey) keepAlive(ctx, writeSnapshot(bucket, snapshotKey, settings.epoch, response.clone(), build))
     } else if (bucket && snapshotKey && hadSnapshot) {
       // The page is gone or no longer shareable: its old snapshot must never be served again.
       keepAlive(ctx, bucket.delete(snapshotKey))
@@ -267,7 +275,7 @@ export async function withEdgeCache(request: Request, env: unknown, ctx: unknown
 /** Keys being rebuilt in this isolate, so a burst of visitors starts one rebuild, not one each. */
 const refreshing = new Set<string>()
 
-type RefreshTarget = { cache: CacheLike | null; key: string; bucket: SnapshotBucket; snapshotKey: string; settings: EdgeSettings }
+type RefreshTarget = { cache: CacheLike | null; key: string; bucket: SnapshotBucket; snapshotKey: string; settings: EdgeSettings; build: string }
 
 /**
  * Builds the page again after a stale snapshot was served, then stores the new copy. A page that is no
@@ -280,7 +288,7 @@ function refreshInBackground(request: Request, env: unknown, ctx: unknown, handl
     const fresh = await handler(new Request(request.url, { method: 'GET', headers: request.headers }), env, ctx)
     if (isCacheableResponse(fresh.status, fresh.headers)) {
       if (target.cache) await target.cache.put(target.key, storedCopy(fresh.clone(), target.settings.ttlSeconds))
-      await writeSnapshot(target.bucket, target.snapshotKey, target.settings.epoch, fresh)
+      await writeSnapshot(target.bucket, target.snapshotKey, target.settings.epoch, fresh, target.build)
     } else {
       await target.bucket.delete(target.snapshotKey)
     }
