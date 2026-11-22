@@ -1,0 +1,67 @@
+import React from 'react'
+
+import { getEngine } from '@/lib/engine'
+
+import './wave70.css'
+
+/** Wave 70 sitemap (Task 10): a tree of published, public pages. Renders nothing when the read fails. */
+
+type P = Record<string, unknown>
+export type MapPage = { id: number; title: string; slug: string; parent: number | null; isHomepage?: boolean }
+export type MapNode = { page: MapPage; href: string; children: MapNode[] }
+
+/** Builds the tree. Excluded slugs drop their whole branch. Depth 1 is the top level. Cycles and orphans are cut. */
+export function buildSitemap(pages: MapPage[], exclude: string[], maxDepth: number): MapNode[] {
+  const skip = new Set(exclude.map((s) => s.trim().replace(/^\/+|\/+$/g, '')).filter(Boolean))
+  const depth = Math.min(Math.max(Math.trunc(maxDepth) || 3, 1), 6)
+  const byParent = new Map<number | null, MapPage[]>()
+  const ids = new Set(pages.map((p) => p.id))
+  for (const p of pages) {
+    const key = p.parent !== null && ids.has(p.parent) ? p.parent : null
+    byParent.set(key, [...(byParent.get(key) ?? []), p])
+  }
+  const walk = (parent: number | null, level: number, path: string, seen: Set<number>): MapNode[] => {
+    if (level > depth) return []
+    const out: MapNode[] = []
+    for (const page of byParent.get(parent) ?? []) {
+      if (seen.has(page.id) || skip.has(page.slug)) continue
+      const href = page.isHomepage ? '/' : `${path}/${page.slug}`
+      out.push({ page, href, children: walk(page.id, level + 1, href, new Set([...seen, page.id])) })
+    }
+    return out.sort((a, b) => (a.page.isHomepage ? -1 : b.page.isHomepage ? 1 : a.page.title.localeCompare(b.page.title)))
+  }
+  return walk(null, 1, '', new Set())
+}
+
+function List({ nodes }: { nodes: MapNode[] }): React.ReactElement {
+  return (
+    <ul>
+      {nodes.map((n) => (
+        <li key={n.page.id}>
+          <a href={n.href}>{n.page.title}</a>
+          {n.children.length ? <List nodes={n.children} /> : null}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export async function SitemapElement(props: P): Promise<React.ReactElement | null> {
+  try {
+    const engine = await getEngine()
+    const { docs } = (await engine.find({ collection: 'pages', where: { _status: { equals: 'published' } }, limit: 0, depth: 0 })) as unknown as { docs: Array<Record<string, unknown>> }
+    const pages: MapPage[] = docs
+      .filter((d) => d.membersOnly && typeof d.membersOnly === 'object' ? (d.membersOnly as { enabled?: boolean }).enabled !== true : true)
+      .filter((d) => !(d.seo && typeof d.seo === 'object' && (d.seo as { noIndex?: boolean }).noIndex === true))
+      .filter((d) => typeof d.id === 'number' && typeof d.title === 'string' && (d.isHomepage === true || (typeof d.slug === 'string' && d.slug)))
+      .map((d) => ({ id: d.id as number, title: d.title as string, slug: (d.slug as string) ?? '', parent: typeof d.parent === 'number' ? d.parent : null, isHomepage: d.isHomepage === true }))
+    const tree = buildSitemap(pages, String(props.exclude ?? '').split('\n'), Number(props.maxDepth) || 3)
+    return tree.length ? <nav className="w70-sitemap" aria-label="Sitemap"><List nodes={tree} /></nav> : null
+  } catch {
+    return null
+  }
+}
+
+export const WAVE70_COMPONENTS: Record<string, React.ComponentType<P>> = {
+  sitemap: SitemapElement as never,
+}
