@@ -77,3 +77,16 @@ describe('second batch on Spark and Shine', () => {
     expect(html('gallery', { urls: 'https://cdn.example.com/a.jpg', lightbox: true })).toContain('class="spark-lightbox"')
   })
 })
+
+describe('Data view as a source', () => {
+  it('turns a view into CSV for the Chart and Table elements', async () => {
+    const { modelToCsv } = await import('@/features/dataViews/csv')
+    const model = { view: {}, data: { columns: [{ label: 'Month' }, { label: 'Sales, total' }], rows: [['Jan', 120], ['Feb, late', null]], truncated: false } } as never
+    expect(modelToCsv(model)).toBe('Month,"Sales, total"\nJan,120\n"Feb, late",')
+  })
+  it('the other switched elements render Spark and Shine markup', () => {
+    expect(renderToStaticMarkup(renderElement('flip-box', { frontTitle: 'A', backTitle: 'B' }) as React.ReactElement)).toContain('spark-flip__back')
+    expect(renderToStaticMarkup(renderElement('tooltip', { text: 'Hi', tip: 'Tip', position: 'bottom' }) as React.ReactElement)).toContain('data-tooltip="Tip" data-tooltip-pos="bottom"')
+    expect(renderToStaticMarkup(renderElement('count-up', { end: 5 }) as React.ReactElement)).toContain('spark-counter')
+  })
+})

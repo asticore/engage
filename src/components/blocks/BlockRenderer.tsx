@@ -21,6 +21,7 @@ import { TableOfContentsBlock } from './TableOfContentsBlock'
 import { AdSlot } from '@/features/ads/components/AdSlot'
 import { AdRichText } from '@/features/ads/components/AdRichText'
 import { DataViewBlock } from '@/features/dataViews/components/DataViewBlock'
+import { DataViewBackedElement } from '@/features/dataViews/components/DataViewBackedElement'
 import { RichTextWithForms } from '@/features/forms/components/RichTextWithForms'
 import { ElementWithMedia } from './elements/ElementWithMedia'
 import { MEDIA_PROP_KEYS } from './elements/elementUtil'
@@ -155,6 +156,10 @@ export const renderBlockBody = (node: SectionNode, key: string): React.ReactNode
         const raw = props.view
         const ref = raw && typeof raw === 'object' ? (raw as { id?: unknown }).id : raw
         return <DataViewBlock viewRef={typeof ref === 'number' || typeof ref === 'string' ? ref : null} />
+      }
+      // Chart and Table can take their data from a saved Data view.
+      if (['chart', 'table'].includes(get<string>('elementType')) && get<Record<string, unknown>>('props')?.view) {
+        return <DataViewBackedElement elementType={get<string>('elementType') as 'chart' | 'table'} props={get<Record<string, unknown>>('props') || {}} />
       }
       // Site elements read live site data on the server (Wave38Elements.tsx). The canvas never reaches this branch.
       if (SITE_ELEMENT_TYPES.has(get<string>('elementType'))) {

@@ -165,19 +165,20 @@ describe('outline text', () => {
 })
 
 describe('count up', () => {
-  it('puts the final number in the aria-label with prefix and suffix', () => {
+  it('renders a Spark counter with the final number, prefix and suffix', () => {
     const html = render(renderElement('count-up', { start: 0, end: 1250, prefix: '$', suffix: '+' }))
-    expect(html).toContain('aria-label="$1250+"')
-    expect(html).toContain('role="img"')
+    expect(html).toContain('class="spark-counter"')
+    expect(html).toContain('data-spark-to="1250"')
+    expect(html).toContain('data-spark-prefix="$"')
+    expect(html).toContain('data-spark-suffix="+"')
+    expect(html).toContain('>1250<')
   })
 
-  it('formats the final number to the chosen decimals and scales the counter', () => {
+  it('formats the final number to the chosen decimals', () => {
     const html = render(renderElement('count-up', { start: 1, end: 12.5, decimals: '2' }))
-    expect(html).toContain('aria-label="12.50"')
-    expect(html).toContain('--be-el-43-k:100')
-    expect(html).toContain('--be-el-43-to:1250')
-    expect(html).toContain('--be-el-43-from:100')
-    expect(html).toContain('be-el-43-count__num--d2')
+    expect(html).toContain('>12.50<')
+    expect(html).toContain('data-spark-decimals="2"')
+    expect(html).toContain('data-spark-from="1"')
   })
 
   it('shows the label below the number', () => {

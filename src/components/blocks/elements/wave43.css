@@ -287,9 +287,7 @@
   }
 }
 
-/* ---- count up ----
-   Base (and every browser without counter math): the static final number is shown.
-   Where round() and mod() work in CSS, the number is printed by counter() from the integer counter instead. */
+/* ---- count up (the number is counted by Spark) ---- */
 
 .be-el-43-count-wrap {
   display: block;
@@ -308,45 +306,6 @@
   display: block;
   margin-top: 0.4em;
   font-family: var(--font-body, sans-serif);
-}
-
-@supports (width: round(down, 1.5px, 1px)) {
-  .be-el-43-count__static {
-    display: none;
-  }
-
-  .be-el-43-count__num {
-    counter-reset: be-el-43-int calc(round(down, var(--be-el-43-s) / var(--be-el-43-k), 1)) be-el-43-frac calc(round(down, mod(var(--be-el-43-s), var(--be-el-43-k)), 1));
-  }
-
-  .be-el-43-count__num::before {
-    content: counter(be-el-43-int);
-  }
-
-  .be-el-43-count__num--d1::before {
-    content: counter(be-el-43-int) '.' counter(be-el-43-frac);
-  }
-
-  .be-el-43-count__num--d2::before {
-    content: counter(be-el-43-int) '.' counter(be-el-43-frac, decimal-leading-zero);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  @supports (width: round(down, 1.5px, 1px)) {
-    .be-el-43-count__num {
-      animation: be-el-43-count var(--be-el-43-d, 1600ms) ease-out both;
-    }
-  }
-}
-
-@keyframes be-el-43-count {
-  from {
-    --be-el-43-s: var(--be-el-43-from);
-  }
-  to {
-    --be-el-43-s: var(--be-el-43-to);
-  }
 }
 
 /* ---- draw line ---- */

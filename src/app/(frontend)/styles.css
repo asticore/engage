@@ -860,17 +860,11 @@ a {
 .el-team h3 { margin: 0; }
 .el-team__role { margin: 2px 0 8px; color: var(--color-gold); }
 .el-team .el-social { justify-content: center; }
-.el-flip { perspective: 1000px; }
-.el-flip__inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s ease; transform-style: preserve-3d; }
-.el-flip:hover .el-flip__inner,
-.el-flip:focus-within .el-flip__inner,
-.el-flip:focus .el-flip__inner { transform: rotateY(180deg); }
-.el-flip__face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; text-align: center; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.el-flip__face { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 24px; text-align: center; }
 .el-flip__face h3,
 .el-flip__face p { margin: 0; }
 .el-flip__front { background: var(--color-cream-dim); color: var(--color-ink); }
-.el-flip__back { background: var(--color-ink); color: var(--color-cream); transform: rotateY(180deg); }
-@media (prefers-reduced-motion: reduce) { .el-flip__inner { transition: none; } }
+.el-flip__back { background: var(--color-ink); color: var(--color-cream); }
 .el-cta { padding: 48px 24px; }
 .el-cta h2 { margin: 0 0 8px; }
 .el-cta p { margin: 0 0 20px; }

@@ -161,39 +161,6 @@
   outline-offset: 2px;
 }
 
-.be-el-tip__bubble {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: max-content;
-  max-width: 16rem;
-  padding: 8px 11px;
-  border-radius: 6px;
-  background: #1f2230;
-  color: #fff;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  text-align: left;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  z-index: 20;
-}
-
-.be-el-tip--top .be-el-tip__bubble {
-  bottom: calc(100% + 8px);
-}
-
-.be-el-tip--bottom .be-el-tip__bubble {
-  top: calc(100% + 8px);
-}
-
-.be-el-tip:hover .be-el-tip__bubble,
-.be-el-tip__text:focus-visible ~ .be-el-tip__bubble {
-  opacity: 1;
-  visibility: visible;
-}
-
 /* ---- image hotspots ---- */
 
 .be-el-spots {

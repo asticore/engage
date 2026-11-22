@@ -51,6 +51,7 @@ export function chartFields(): EditorField[] {
       helpText: 'Every chart, diagram and visualisation Spark offers.',
     },
     { name: 'title', label: 'Title', type: 'text', helpText: 'Shown above the chart and read by screen readers.' },
+    { name: 'view', label: 'Data from a saved table or chart', type: 'relationship', relationTo: 'data-views', helpText: 'Optional. Uses the rows of a view from Content > Tables and charts (public views only) instead of the data typed here. Shown on the live page, not on the canvas.' },
     {
       name: 'data',
       label: 'Data',

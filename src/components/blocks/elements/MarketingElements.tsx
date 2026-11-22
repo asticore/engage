@@ -129,22 +129,20 @@ export const TeamMemberElement: React.FC<P> = (p) => {
   )
 }
 
-/** `flip-box`: two faces; hover or keyboard focus turns it over (pure CSS). */
+/** `flip-box`: two faces; Spark's `spark-flip` (asticore/spark) turns it over on hover, focus or click. Without scripts both faces show in turn. */
 export const FlipBoxElement: React.FC<P> = (p) => {
   const height = num(p.height, 260, 120, 600)
   return (
-    <div className="el-flip" tabIndex={0} style={{ height }}>
-      <div className="el-flip__inner">
-        <div className="el-flip__face el-flip__front">
-          <Icon name={iconName(p.icon) || 'sparkle'} size={36} />
-          <h3>{str(p.frontTitle, 'Front')}</h3>
-          <p>{str(p.frontText)}</p>
-        </div>
-        <div className="el-flip__face el-flip__back">
-          <h3>{str(p.backTitle, 'Back')}</h3>
-          <p>{str(p.backText)}</p>
-          <Cta text={p.buttonText} url={p.buttonUrl} variant="secondary" />
-        </div>
+    <div className="spark-flip el-flip" style={{ minHeight: height }}>
+      <div className="spark-flip__front el-flip__face el-flip__front">
+        <Icon name={iconName(p.icon) || 'sparkle'} size={36} />
+        <h3>{str(p.frontTitle, 'Front')}</h3>
+        <p>{str(p.frontText)}</p>
+      </div>
+      <div className="spark-flip__back el-flip__face el-flip__back">
+        <h3>{str(p.backTitle, 'Back')}</h3>
+        <p>{str(p.backText)}</p>
+        <Cta text={p.buttonText} url={p.buttonUrl} variant="secondary" />
       </div>
     </div>
   )

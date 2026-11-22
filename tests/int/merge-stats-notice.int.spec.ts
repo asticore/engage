@@ -20,9 +20,9 @@ const BASELINE = {
   counterA: '<div class="el-counter el-align--center"><div class="el-counter__number">1,200<span>+</span></div><div class="el-counter__title">Happy customers</div></div>',
   counterB: '<div class="el-counter el-align--left"><div class="el-counter__number"><span>$</span>3.5</div></div>',
   counterEmpty: '<div class="el-counter el-align--center"><div class="el-counter__number">0</div></div>',
-  progressA: '<div class="el-progress"><div class="el-progress__head"><span>Satisfaction</span><span>90%</span></div><div class="el-progress__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="90" aria-label="Satisfaction"><div class="el-progress__fill" style="width:90%"></div></div></div>',
-  progressB: '<div class="el-progress"><div class="el-progress__head"><span>Progress</span></div><div class="el-progress__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40" aria-label="Progress"><div class="el-progress__fill" style="width:40%"></div></div></div>',
-  progressEmpty: '<div class="el-progress"><div class="el-progress__head"><span>Progress</span><span>70%</span></div><div class="el-progress__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70" aria-label="Progress"><div class="el-progress__fill" style="width:70%"></div></div></div>',
+  progressA: '<div class="el-progress"><div class="el-progress__head"><span>Satisfaction</span><span>90%</span></div><progress class="progress" max="100" value="90" aria-label="Satisfaction"></progress></div>',
+  progressB: '<div class="el-progress"><div class="el-progress__head"><span>Progress</span></div><progress class="progress" max="100" value="40" aria-label="Progress"></progress></div>',
+  progressEmpty: '<div class="el-progress"><div class="el-progress__head"><span>Progress</span><span>70%</span></div><progress class="progress" max="100" value="70" aria-label="Progress"></progress></div>',
   alertA: '<div class="el-alert el-alert--info" role="note"><strong class="el-alert__title">Good to know</strong><p>Orders placed before 2pm ship the same day.</p></div>',
   alertB: '<div class="el-alert el-alert--danger" role="alert"><p>x</p></div>',
   alertEmpty: '<div class="el-alert el-alert--info" role="note"></div>',
@@ -60,22 +60,21 @@ describe('options unset keep the old markup', () => {
 })
 
 describe('counter animate', () => {
-  it('uses the count-up markup and CSS when animate is on', () => {
+  it('uses the Spark counter when animate is on', () => {
     const out = html('counter', { number: 1200, decimals: 0, suffix: '+', title: 'Happy customers', start: 0, duration: 2000, animate: true, align: 'center' })
-    expect(out).toContain('be-el-43-count')
-    expect(out).toContain('--be-el-43-to:1200')
-    expect(out).toContain('--be-el-43-d:2000ms')
-    expect(out).toContain('aria-label="1200+"')
+    expect(out).toContain('spark-counter')
+    expect(out).toContain('data-spark-to="1200"')
+    expect(out).toContain('data-spark-duration="2000"')
+    expect(out).toContain('data-spark-suffix="+"')
     expect(out).toContain('Happy customers')
     expect(out).toContain('el-align--center')
-    expect(out).not.toContain('el-counter__number')
   })
 
-  it('clamps decimals to 2 when animated and keeps the start number', () => {
-    const out = html('counter', { number: 3.14159, decimals: 4, start: 1, animate: true })
-    expect(out).toContain('--be-el-43-from:100')
-    expect(out).toContain('--be-el-43-to:314')
-    expect(out).toContain('be-el-43-count__num--d2')
+  it('keeps the start number and decimals when animated', () => {
+    const out = html('counter', { number: 3.14159, decimals: 2, start: 1, animate: true })
+    expect(out).toContain('data-spark-from="1"')
+    expect(out).toContain('data-spark-decimals="2"')
+    expect(out).toContain('>3.14<')
   })
 })
 

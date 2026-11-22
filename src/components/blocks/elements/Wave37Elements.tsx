@@ -120,7 +120,10 @@ export const ContentSwitcherElement: React.FC<P> = (p) => {
 
 /* ---------- tooltip ---------- */
 
-/** `tooltip`: the text is focusable and points at its tip with aria-describedby. The tip is shown on hover or keyboard focus. */
+/**
+ * `tooltip`: Shine's `data-tooltip` draws the bubble on hover and keyboard focus. The text is focusable, and the tip is
+ * also in a visually hidden element that aria-describedby points at, because the bubble itself is generated content.
+ */
 export const TooltipElement: React.FC<P> = (p) => {
   const text = str(p.text).trim()
   const tip = str(p.tip).trim()
@@ -128,12 +131,12 @@ export const TooltipElement: React.FC<P> = (p) => {
   const position = pick(p.position, ['top', 'bottom'] as const, 'top')
   const id = `tip${hashId(text, tip, position)}`
   return (
-    <span className={`be-el-tip be-el-tip--${position}`}>
-      <span className="be-el-tip__text" tabIndex={0} aria-describedby={tip ? id : undefined}>
+    <span className="be-el-tip">
+      <span className="be-el-tip__text" tabIndex={0} aria-describedby={tip ? id : undefined} data-tooltip={tip || undefined} data-tooltip-pos={position === 'bottom' ? 'bottom' : undefined}>
         {text}
       </span>
       {tip && (
-        <span role="tooltip" id={id} className="be-el-tip__bubble">
+        <span role="tooltip" id={id} className="be-el-visually-hidden">
           {tip}
         </span>
       )}
