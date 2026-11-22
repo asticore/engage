@@ -35,6 +35,9 @@ export const renderElement = (elementType: string, props: Record<string, unknown
           styleName={props.styleName as string}
           size={props.size as 'sm' | 'md' | 'lg'}
           align={props.align as 'left' | 'center' | 'right'}
+          newTab={props.newTab as boolean}
+          nofollow={props.nofollow as boolean}
+          fx={props.fx as string}
         />
       )
     case 'content-slot':

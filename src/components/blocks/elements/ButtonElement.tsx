@@ -4,6 +4,7 @@ import { sanitizeSlug } from '@/features/themeStyles/sanitize'
 
 import { MARKS_NO_LINK } from '@/views/visualEditor/inlineFormat'
 
+import './interactive.css'
 import { SafeInlineHtml } from './SafeInlineHtml'
 import { flag, linkAttrs, linkHref } from './elementUtil'
 
@@ -19,24 +20,28 @@ export type ButtonElementProps = {
   newTab?: boolean
   /** Adds rel="nofollow". */
   nofollow?: boolean
+  /** Hover effect preset. Colours never change, so text and background keep their contrast. */
+  fx?: string
 }
 
 /** The class list for a button element. Exported so the output can be tested without rendering. */
-export function buttonClassName(variant: ButtonElementProps['variant'], styleName?: string, size?: ButtonElementProps['size']): string {
+export const BUTTON_FX = ['shine', 'pulse', 'lift', 'underline', 'arrow'] as const
+
+export function buttonClassName(variant: ButtonElementProps['variant'], styleName?: string, size?: ButtonElementProps['size'], fx?: string): string {
   const slug = sanitizeSlug(styleName)
   const base = variant === 'plain' ? 'btn--ghost' : variant === 'secondary' ? 'btn--secondary' : 'btn--primary'
   // The base class stays so a custom style that was deleted or mistyped still renders as a normal button.
   const style = slug && `btn--${slug}` !== base ? `${base} btn--${slug}` : base
-  return ['btn', style, size === 'sm' ? 'btn--sm' : size === 'lg' ? 'btn--lg' : ''].filter(Boolean).join(' ')
+  return ['btn', style, size === 'sm' ? 'btn--sm' : size === 'lg' ? 'btn--lg' : '', (BUTTON_FX as readonly string[]).includes(fx ?? '') ? `btn--fx-${fx}` : ''].filter(Boolean).join(' ')
 }
 
 /** The `button` element: a link styled with the site's own .btn classes. */
-export const ButtonElement: React.FC<ButtonElementProps> = ({ text, url, variant = 'primary', styleName, size, align = 'left', newTab, nofollow }) => {
+export const ButtonElement: React.FC<ButtonElementProps> = ({ text, url, variant = 'primary', styleName, size, align = 'left', newTab, nofollow, fx }) => {
   const href = linkHref(url) || '#'
   const attrs = linkAttrs({ newTab: flag(newTab), nofollow: flag(nofollow) })
   return (
     <div style={{ textAlign: align }}>
-      <a className={buttonClassName(variant, styleName, size)} href={href} {...attrs}>
+      <a className={buttonClassName(variant, styleName, size, fx)} href={href} {...attrs}>
         <SafeInlineHtml text={text || 'Button'} formats={MARKS_NO_LINK} />
       </a>
     </div>

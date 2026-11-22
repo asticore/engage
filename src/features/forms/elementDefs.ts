@@ -357,6 +357,21 @@ export const FORM_ELEMENTS: ElementDef[] = [
         type: 'text',
         helpText: 'Use a custom style from Theming > Buttons, e.g. outline',
       },
+      {
+        name: 'fx',
+        label: 'Hover effect',
+        type: 'select',
+        width: 'half',
+        options: [
+          { label: 'None', value: '' },
+          { label: 'Shine sweep', value: 'shine' },
+          { label: 'Pulse ring', value: 'pulse' },
+          { label: 'Lift', value: 'lift' },
+          { label: 'Underline slide', value: 'underline' },
+          { label: 'Arrow slide', value: 'arrow' },
+        ],
+        helpText: 'Colours stay the same, so text and background keep their contrast. Skipped for reduced motion.',
+      },
       { name: 'newTab', label: 'Open in new tab', type: 'checkbox' },
       { name: 'nofollow', label: 'Add rel=nofollow', type: 'checkbox' },
       {
