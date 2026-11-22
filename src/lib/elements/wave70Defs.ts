@@ -77,3 +77,17 @@ export const WAVE70_PRELOADER_ELEMENTS: ElementDef[] = [
     defaultProps: () => ({ spinner: 'ring', minMs: 400, background: '#ffffff' }),
   },
 ]
+
+export const WAVE70_WEATHER_ELEMENTS: ElementDef[] = [
+  {
+    type: 'weather', label: 'Weather', icon: String.fromCodePoint(0x26c5), category: 'interactive',
+    description: 'Current conditions and a 5 day forecast for a place, from Open-Meteo (no key needed). The server caches the answer, so visitors never call the provider.',
+    fields: [
+      text('place', 'Place', { helpText: 'A town name, like "Brisbane", or "latitude,longitude", like "-27.47,153.03".' }),
+      { name: 'units', label: 'Units', type: 'select', width: 'half', options: labelled([['metric', 'Celsius, km/h'], ['imperial', 'Fahrenheit, mph']]) },
+      { name: 'view', label: 'Show', type: 'select', width: 'half', options: labelled([['current', 'Current only'], ['forecast', 'Current and 5 day forecast']]) },
+      { name: 'cacheMinutes', label: 'Refresh after (minutes)', type: 'number', width: 'half', helpText: '5 to 1440.' },
+    ],
+    defaultProps: () => ({ place: 'Brisbane', units: 'metric', view: 'forecast', cacheMinutes: 30 }),
+  },
+]
