@@ -17,6 +17,9 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS",
   },
+  // The deployed version id: the page cache and page snapshots start fresh after each deploy.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+
   "d1_databases": [
     {
       "binding": "D1",

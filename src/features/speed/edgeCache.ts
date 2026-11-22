@@ -183,13 +183,15 @@ export function isCacheableRequest(url: string, headers: HeadersLike, method: st
  * copies are kept apart. Query strings never reach this point (only stripped
  * parameters get this far, and those are dropped).
  */
-export function cacheKeyFor(url: string, epoch: number, mobile: boolean, variant = ''): string {
+export function cacheKeyFor(url: string, epoch: number, mobile: boolean, variant = '', build = ''): string {
   const parsed = new URL(url)
   const version = Number.isFinite(epoch) && epoch > 0 ? Math.floor(epoch) : 1
   const key = new URL(`${parsed.origin}${parsed.pathname}`)
   key.searchParams.set('v', String(version))
   if (mobile) key.searchParams.set('m', '1')
   if (variant) key.searchParams.set('x', variant)
+  // The deployed version: a new deploy starts with empty copies, so a code change shows at once.
+  if (build) key.searchParams.set('b', build)
   return key.toString()
 }
 

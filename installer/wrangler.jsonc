@@ -8,6 +8,9 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": { "directory": ".engage/assets", "binding": "ASSETS" },
   // No ids: the Deploy button creates the database and bucket in your account and fills them in.
+  // The deployed version id: the page cache and page snapshots start fresh after each deploy.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+
   "d1_databases": [{ "binding": "D1", "database_name": "engage-site" }],
   "r2_buckets": [{ "binding": "R2", "bucket_name": "engage-site" }],
   "images": { "binding": "IMAGES" },
