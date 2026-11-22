@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { creationOrder, cycleRefs, emptyExisting, parseBulkInput, planBulk } from '@/features/bulkCreate/plan'
+import { applyBulkDefaults, creationOrder, cycleRefs, emptyExisting, parseBulkInput, planBulk } from '@/features/bulkCreate/plan'
 import { runBulk, undoBulk, type BulkEngine } from '@/features/bulkCreate/run'
 
 describe('bulk create plan', () => {
@@ -80,5 +80,15 @@ describe('bulk create run and undo', () => {
     const undone = await undoBulk(engine, {}, 'pages', [1], new Date(Date.now() + 2 * 86_400_000))
     expect(undone.removed).toBe(0)
     expect(docs.length).toBe(1)
+  })
+  it('applies the shared parent and template only to rows without their own', () => {
+    const rows = applyBulkDefaults(parseBulkInput('title,parent\nA,\nB,other\n').rows, { parent: 'services', template: '3' })
+    expect(rows.map((r) => [r.parent, r.template])).toEqual([['services', '3'], ['other', '3']])
+  })
+  it('can publish and keeps a title written in another language as a translation', async () => {
+    const { engine, docs } = fakeEngine()
+    await runBulk(engine, {}, 'pages', parseBulkInput('Uber uns').rows, { status: 'published', locale: 'de', defaultLocale: 'en-AU' })
+    expect(docs[0]._status).toBe('published')
+    expect(docs[1]).toMatchObject({ locale: 'de', sourceKind: 'collection', sourceId: 'pages:1', fieldPath: 'title' })
   })
 })

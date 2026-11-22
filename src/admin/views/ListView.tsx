@@ -1,3 +1,4 @@
+import { AddSeveralPages } from '@/features/bulkCreate/AddSeveralPages.nossr'
 import { UsersBulkBar } from './UsersBulkBar.nossr'
 import { BAN_MARKER } from '@/features/security/userBans'
 import type { Where } from '@/engine'
@@ -293,6 +294,7 @@ export async function ListView({
     <div className="list-view">
       <div className="list-header">
         <h1>{label}</h1>
+        {canCreate && collectionSlug === 'pages' && <AddSeveralPages canPublish={Boolean(context.isAdmin || context.can('pages', 'publish'))} />}
         {canCreate && (
           <Link className="btn btn--primary" href={`${adminCollectionPath(collectionSlug)}/create`}>
             Create new

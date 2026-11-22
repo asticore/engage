@@ -11,6 +11,16 @@ export const BULK_CREATE_MAX_ROWS = 200
 
 export type BulkInputRow = { ref: string; title: string; slug: string; parent: string; template: string }
 
+export type BulkDefaults = { parent?: string; template?: string; status?: 'draft' | 'published'; locale?: string }
+
+/** Fills a row's empty parent and template from the choices made above the list (pages only). A row's own value wins. */
+export function applyBulkDefaults(rows: BulkInputRow[], defaults: BulkDefaults): BulkInputRow[] {
+  const parent = (defaults.parent ?? '').trim()
+  const template = (defaults.template ?? '').trim()
+  if (!parent && !template) return rows
+  return rows.map((r) => ({ ...r, parent: r.parent.trim() || parent, template: r.template.trim() || template }))
+}
+
 export type ParsedInput = { rows: BulkInputRow[]; errors: string[] }
 
 const HEADERS = ['title', 'slug', 'parent', 'template']
