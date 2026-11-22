@@ -58,6 +58,8 @@ export const DEFAULT_FORM_SETTINGS: ResolvedFormSettings = {
   blockedWords: '',
   maxLinks: 0,
   blockedSenders: '',
+  spamRuleAction: 'hold',
+  akismetKey: '',
   submitButtonLabel: 'Submit',
   successMessage: 'Thank you - we have received your message and will be in touch shortly.',
   errorMessage: 'Sorry, something went wrong and your message was not sent. Please try again.',
@@ -91,6 +93,8 @@ type SettingsDoc = {
     blockedWords?: string
     maxLinks?: number
     blockedSenders?: string
+    spamRuleAction?: string
+    akismetKey?: string
   }
   defaults?: {
     submitButtonLabel?: string
@@ -167,11 +171,15 @@ export const getFormSettings = async (engine: EngineLike): Promise<ResolvedFormS
     blockedWords: text(doc.spam?.blockedWords, ''),
     maxLinks: Math.max(0, Math.min(50, Math.floor(num(doc.spam?.maxLinks, 0)))),
     blockedSenders: text(doc.spam?.blockedSenders, ''),
+    spamRuleAction: normaliseSpamAction(doc.spam?.spamRuleAction),
+    akismetKey: text(doc.spam?.akismetKey, ''),
     submitButtonLabel: text(doc.defaults?.submitButtonLabel, DEFAULT_FORM_SETTINGS.submitButtonLabel),
     successMessage: text(doc.defaults?.successMessage, DEFAULT_FORM_SETTINGS.successMessage),
     errorMessage: text(doc.defaults?.errorMessage, DEFAULT_FORM_SETTINGS.errorMessage),
   }
 }
+
+const normaliseSpamAction = (value: unknown): 'discard' | 'hold' | 'flag' => (value === 'discard' || value === 'flag' ? value : 'hold')
 
 const override = (choice: Inherited | undefined, inherited: boolean): boolean =>
   choice === 'on' ? true : choice === 'off' ? false : inherited

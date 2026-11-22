@@ -7,6 +7,7 @@ import { getAdminRoot, getSecuritySettings } from '@/features/security/settings'
 import { readSocialConfig } from '@/features/socialLogin/settings'
 import { getFeatureFlags } from '@/utilities/features'
 
+import { describeSpamCounts, loadSpamCounts } from '@/features/forms/spamCounts'
 import { loadBotFlags } from '@/features/security/authStats'
 import { CAPTCHA_PLACES } from '@/features/security/captchaPlaces'
 import { MATRIX_METHODS, methodAllowed, readMatrix } from '@/features/security/authMatrix'
@@ -45,6 +46,7 @@ export async function AuthenticationView() {
   const rows = describeAuthMethods(settings, social, { featureOn, apiKeysOn: settings.apiKeys.enabled, activeTokens }, { featureOn: ssoOn, connections: ssoConnections, enforced: ssoEnforced })
   const matrix = await readMatrix()
   const flagged = await import('@/features/ecommerce/server/db').then(async ({ rawD1 }) => loadBotFlags((await rawD1()) as never, 7, new Date())).catch((): null => null)
+  const spamLine = await import('@/features/ecommerce/server/db').then(async ({ rawD1 }) => describeSpamCounts(await loadSpamCounts((await rawD1()) as never, new Date()))).catch(() => '')
   const matrixRows = rows.filter((row) => (MATRIX_METHODS as readonly string[]).includes(row.id))
   return (
     <div className="settings-page">
@@ -58,6 +60,7 @@ export async function AuthenticationView() {
           {flagged.places.length > 0 && ` By place: ${flagged.places.map((p) => `${CAPTCHA_PLACES.find((c) => c.id === p.place)?.label ?? p.place} ${p.count}`).join(', ')}.`} Counted once per address and hour. Set up in Form settings, Spam protection.
         </p>
       )}
+      {spamLine && <p className="settings-page__description">{spamLine}</p>}
       <table>
         <thead>
           <tr>

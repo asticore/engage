@@ -1,10 +1,20 @@
 import type { Endpoint, EngineRequest } from '@/engine'
 
 import { DEFAULT_FORM_SETTINGS, getFormSettings } from '@/features/forms/settings'
+import { checkAkismet } from '@/features/forms/akismet'
 import { checkSpamRules } from '@/features/forms/spamRules'
 import { normalizeEmail } from './lib/email'
 import { PAID_STATUSES } from './lib/orderStatus'
 import { checkReview, REVIEW_RATE_LIMIT_PER_MINUTE, type ReviewInput } from './reviews'
+
+/** The site address Akismet wants, from the request. */
+const reviewSite = (req: EngineRequest): string => {
+  try {
+    return new URL((req as unknown as Request).url).origin
+  } catch {
+    return ''
+  }
+}
 
 /**
  * POST /api/product-reviews/submit - the public review form posts here.
@@ -79,10 +89,17 @@ export const reviewEndpoint: Endpoint = {
     if (existing.docs.some((doc) => normalizeEmail(doc.email) === reviewer)) return json({ ok: false, message: 'You have already reviewed this product.' }, 409)
 
     // The site-wide spam rules (Settings > Forms) also apply to reviews: a hit is kept in the Spam status, not shown.
-    const siteRules = checkSpamRules({ name: review.name, email: review.email, text: Object.values(review).filter((v): v is string => typeof v === 'string') }, await getFormSettings(engine as never).catch(() => DEFAULT_FORM_SETTINGS))
+    const formSettings = await getFormSettings(engine as never).catch(() => DEFAULT_FORM_SETTINGS)
+    const reviewText = Object.values(review).filter((v): v is string => typeof v === 'string')
+    let siteRules = checkSpamRules({ name: review.name, email: review.email, text: reviewText }, formSettings)
+    if (!siteRules.spam && formSettings.akismetKey) {
+      siteRules = await checkAkismet({ key: formSettings.akismetKey, site: reviewSite(req), ip: address, userAgent: (req as unknown as Request).headers?.get?.('user-agent') ?? undefined, email: review.email, name: review.name, content: reviewText.join('\n'), type: 'review' })
+    }
+    // Hold (default) keeps it in the Spam status, discard keeps nothing, flag treats it as an ordinary pending review.
+    if (siteRules.spam && formSettings.spamRuleAction === 'discard') return json({ ok: true, message: 'Thank you. Your review will appear once it has been approved.' }, 201)
     await engine.create({
       collection: 'product-reviews',
-      data: { ...review, status: siteRules.spam ? 'spam' : 'pending', verifiedOwner: await isVerifiedOwner(engine, review.email, review.product) },
+      data: { ...review, status: siteRules.spam && formSettings.spamRuleAction !== 'flag' ? 'spam' : 'pending', verifiedOwner: await isVerifiedOwner(engine, review.email, review.product) },
       overrideAccess: true,
     })
     return json({ ok: true, message: 'Thank you. Your review will appear once it has been approved.' }, 201)

@@ -95,6 +95,8 @@ export type FormSettingsDoc = {
     blockedWords?: string | null
     maxLinks?: number | null
     blockedSenders?: string | null
+    spamRuleAction?: string | null
+    akismetKey?: string | null
   } | null
   defaults?: {
     submitButtonLabel?: string | null
