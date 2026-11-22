@@ -77,3 +77,47 @@ export function suggestTests(tree: SectionNode[], limit = 5): AbIdea[] {
   const order: Record<IdeaKind, number> = { headline: 0, button: 1, image: 2, layout: 3 }
   return ideas.sort((a, b) => order[a.kind] - order[b.kind] || a.sectionIndex - b.sectionIndex).slice(0, limit)
 }
+
+export type GoalChoice =
+  | { id: string; label: string; goal: { type: 'element-clicked'; selector: string } }
+  | { id: string; label: string; goal: { type: 'page-visited'; path: string } }
+  | { id: string; label: string; goal: { type: 'form-submitted'; formId: string | null } }
+
+const refId = (v: unknown): string => {
+  if (typeof v === 'number' || typeof v === 'string') return String(v)
+  if (v && typeof v === 'object' && 'id' in v) return String((v as { id: unknown }).id)
+  return ''
+}
+
+/**
+ * What can count as a win, from the page's own content: each button with a link (clicked, and, for an internal link,
+ * visited) and each form block. The visitor of the editor picks one instead of typing a selector or a path.
+ */
+export function goalChoices(tree: SectionNode[]): GoalChoice[] {
+  const out: GoalChoice[] = []
+  const seen = new Set<string>()
+  const add = (c: GoalChoice) => {
+    if (!seen.has(c.id)) {
+      seen.add(c.id)
+      out.push(c)
+    }
+  }
+  const visit = (n: SectionNode) => {
+    const props = rec(n.props)
+    if (n.blockType === 'element' && /button|cta/i.test(str(n.elementType))) {
+      const url = str(props.url) || str(props.link)
+      const label = str(props.text) || str(props.label) || url
+      if (/^(\/|https?:\/\/)[^"\\\s]*$/.test(url)) {
+        add({ id: `click:${url}`, label: `“${label.slice(0, 50)}” button is clicked (${url.slice(0, 60)})`, goal: { type: 'element-clicked', selector: `a[href="${url}"]` } })
+        if (url.startsWith('/') && !url.startsWith('//')) add({ id: `visit:${url.split(/[?#]/)[0]}`, label: `The page ${url.split(/[?#]/)[0]} is visited`, goal: { type: 'page-visited', path: url.split(/[?#]/)[0] } })
+      }
+    }
+    if (n.blockType === 'form') {
+      const id = refId((n as Rec).form)
+      add({ id: `form:${id || 'any'}`, label: id ? `The form on this page (#${id}) is submitted` : 'A form on this page is submitted', goal: { type: 'form-submitted', formId: id || null } })
+    }
+    n.columns?.forEach((c) => (c.blocks || []).forEach(visit))
+  }
+  tree.forEach(visit)
+  return out
+}
