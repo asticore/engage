@@ -1,0 +1,25 @@
+.be-el-68-clocks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:1rem}
+.be-el-68-clock{display:flex;flex-direction:column;align-items:center;gap:.25rem;padding:1rem;border:1px solid currentColor;border-color:color-mix(in srgb,currentColor 20%,transparent);border-radius:.75rem}
+.be-el-68-city{font-weight:600}
+.be-el-68-time{font-size:1.75rem;font-variant-numeric:tabular-nums}
+.be-el-68-date{font-size:.85rem;opacity:.7}
+.be-el-68-face{width:7rem;height:7rem}
+.be-el-68-rim{fill:none;stroke:currentColor;stroke-width:2}
+.be-el-68-tick,.be-el-68-hand{stroke:currentColor}
+.be-el-68-tick{stroke-width:1.5}
+.be-el-68-sec{stroke:var(--be-accent,#e74c3c)}
+.be-el-68-steps{list-style:none;margin:0;padding:0;display:flex;gap:.5rem;counter-reset:s}
+.be-el-68-steps--v{flex-direction:column}
+.be-el-68-step{display:flex;align-items:center;gap:.5rem;flex:1;opacity:.6}
+.be-el-68-steps:not(.be-el-68-steps--v) .be-el-68-step:not(:last-child)::after{content:"";flex:1;height:2px;background:currentColor;opacity:.3;margin-left:.25rem}
+.be-el-68-step.is-done,.be-el-68-step.is-current{opacity:1}
+.be-el-68-dot{display:inline-grid;place-items:center;width:2rem;height:2rem;border-radius:50%;border:2px solid currentColor;font-weight:600;flex:none}
+.be-el-68-step.is-done .be-el-68-dot,.be-el-68-step.is-current .be-el-68-dot{background:var(--be-accent,#2e3192);border-color:var(--be-accent,#2e3192);color:#fff}
+.be-el-68-step.is-current .be-el-68-steplabel{font-weight:700}
+.be-el-68-toggle{display:inline-flex;align-items:center;gap:.5rem;background:none;border:0;padding:.25rem;cursor:pointer;color:inherit;font:inherit}
+.be-el-68-track{width:2.75rem;height:1.5rem;border-radius:999px;background:color-mix(in srgb,currentColor 30%,transparent);position:relative;transition:background .2s}
+.be-el-68-thumb{position:absolute;top:.125rem;left:.125rem;width:1.25rem;height:1.25rem;border-radius:50%;background:#fff;transition:transform .2s}
+.be-el-68-toggle[aria-checked="true"] .be-el-68-track{background:var(--be-accent,#2e3192)}
+.be-el-68-toggle[aria-checked="true"] .be-el-68-thumb{transform:translateX(1.25rem)}
+.be-el-68-toggle:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.be-el-68-track,.be-el-68-thumb{transition:none}}
