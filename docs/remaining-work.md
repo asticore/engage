@@ -13,6 +13,48 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 6. Every feature, past and future, must work on a brand new single-click install: each new table or column is created by an idempotent migration registered in `src/migrations/index.ts` and covered by `tests/int/internal-migrate-fresh-install.int.spec.ts` and `tests/int/fresh-install-schema-coverage.int.spec.ts`, so the install builds the schema itself and nobody runs SQL by hand. Features already covered: site files, cookie consent (and banner settings), media library and file upload, ads, custom role rules and locks, shop catalogue and orders, extra fields import, content approval and approval workflows, custom fields v2, site fonts, redirects, roles, visibility and schedule, backups, forms, A/B tests.
 7. Keep the Process and Lessons sections current; remove a lesson once it is enforced by a test.
 
+## Process for every task
+
+**Reply format (Matt, 31 Oct 2026):** every response to Matt has three bullet-point sections: **Done** (what was done), **Need from you** (what Matt must provide or decide), **Suggested next** (what to do next). Keep it short; details go in this document.
+
+**Push and token rule (Matt, 9 Nov 2026):** after finishing the work, push all merges to GitHub in one go and avoid GitHub Actions wherever possible (they cost extra and the limit was hit). Use Haiku subagents as much as possible to save tokens.
+
+**GitHub budget rule (Matt, 9 Nov 2026): one push per request.** Every push and every pull request runs GitHub Actions, so do all the work for one request locally (agents in worktrees, merged locally, all local checks green: tsc, the related specs, lint, and the build when it matters), then push ONCE and open ONE pull request. Never push work in progress, per-agent branches, per-file commits, fix-up commits after CI or "kick CI" commits. Run the full checks locally before the single push so CI passes first time. If CI still fails, batch every fix into one follow-up push. Do not use Codespaces, Git LFS, GitHub Packages or paid AI credit SKUs. Keep each live re-check to one deploy per request.
+
+0. Model routing to save tokens (your instruction 16 Oct): the cheapest model that can do the job. Haiku (Haiku 4.5) for reading and locating code, pushing files, single-file mechanical edits, writing tests from a clear spec and doc updates; Sonnet only for multi-file feature builds and when Haiku is rate-limited; the main session (Opus) plans, writes briefs, reviews diffs and decides. Briefs name files and ownership so agents never edit the same file in parallel.
+1. Scope lock with an acceptance checklist; read the code first (haiku Explore agents).
+2. Slices, migrations first (idempotent, appended to `src/migrations/index.ts`); new collections or globals also go into `src/cms/db/schema`.
+3. Tests with the code, including `tests/int/internal-migrate-fresh-install.int.spec.ts` (extend for every new table or column, run twice) and `tests/int/fresh-install-schema-coverage.int.spec.ts` (empty DB through `runInternalMigrate`, every schema table and column must exist, second run changes nothing). Not done unless both pass.
+4. Gates: `pnpm exec tsc --noEmit`, related specs plus the structural smoke set before pushing, fresh-install specs alone when a migration changed, `pnpm run build` (catches ESLint errors that fail Workers Builds); the full suite in chunks with a timeout each, in the background after pushing (a single full run hangs on `version-delete-real-engine`).
+5. Push once per request (see the GitHub budget rule above): merge all agent work locally, run the checks, then a single `git push` and a single pull request; after merge, `git fetch` and confirm `origin/main` has every file.
+6. Independent review agent on the diff; fix real findings, add a test per fix.
+7. Live check after the deploy (wait for `workers_list` modified_on after the last commit; D1 `SELECT name FROM eg_migrations ORDER BY id DESC`).
+8. Fresh-install gate: works on an empty DB with no rows in globals and no new secret set; new Cloudflare resources declared in `wrangler.jsonc` and the README.
+9. Update this doc (see "How this document is kept up to date") and report in plain words what changed, what was checked and what was not.
+
+Lessons: migration-order specs use `migrations.length - N` offsets, so every new migration moves them: update the offsets in the same PR (or prefer name lookups). Agents alter files when copying (quotes, glyphs, regex escapes, trailing spaces and final newlines), push wrong files, create routes in a literal `src/app/(engage)` folder: cmp everything. Keep new CSS in its own file; avoid edits to `src/cms/db/schema/generate.ts` and `schema/index.ts` (both near 60KB); do not edit `src/engage-types.ts` (230KB, cannot be pushed through the tool: cast locally instead); no `ui` field in a global modelled by `src/cms/db`; never two agents on one file at once; the cloud session cannot `git push` this repo (GitHub MCP only); do not `pkill -f vitest`; the browser tool cannot type; mock `getAdminContext()` needs `can`; hooks must skip when there is no `req.user`; Next layouts cannot export extra names. Cloudflare Builds clones within seconds of the first push, so after a multi-file push, push one last marker commit. Haiku push agents turn backslash-u escapes into raw characters: keep source ASCII (use String.fromCharCode).
+
+## Reference: build recipe and gotchas (from the Tasks 15 to 32 run, 16 Nov 2026)
+Each item is a bounded build on the booking pattern (closed Task 17b): feature flag, lazy table, store, logic and service, public route, admin panel, tests, baseline regen. Leftovers go in the task, and a "Live check <id>" line goes in the Live checks section.
+
+**Per item:** branch, migration plus registry (`FeatureKey` union, `features_<single word>` column), baseline regen twice (the `REGENERATE_BASELINE=1` run fails 4 expected, rerun without it), run the fresh-install specs, update this doc, PR, squash merge, next. Small PRs; rebase on main right before each merge. Do not run two vitest runs at once.
+
+**Column limit:** `eg_shop_settings`, `eg_integrations` and `eg_security_settings` are full; `eg_seo_settings` and `eg_tracking_connections` have room.
+
+**Browser specs** (`tests/int/state-contrast`, `size-checks`) use Playwright with the vendored Shine CSS plus `src/styles/a11y-states.css`; the Shine copy stays untouched.
+
+**Known failures on main, left alone:** `cms-db-carts-orders-transactions`, `shop-catalogue-db`, `settings-pages`, `seo-schema-wave13`, `shop-shipping-flow`, and the `workflow review handlers` block in `approval-workflows.int.spec.ts` (all a `dbName` schema import error).
+
+**Build rule (Matt, 15 Nov 2026): every merge, docs-only ones included, needs the full OpenNext build to pass:** `WORKERS_CI=1 WORKERS_CI_BRANCH=main NODE_OPTIONS="--no-deprecation --max-old-space-size=8000" npm run build > /tmp/b.log 2>&1` (about 4 minutes, must end "OpenNext build complete"). Builds must never fail. Never import `./db` or collections at top level from pricing or lib modules (import cycle). The specifier `cloudflare:sockets` must stay opaque (`smtp.ts`). For type errors in builds, give `.catch(() => x)` an explicit return type, for example `(): null => null`.
+
+**Never put Claude session links (`claude.ai/code/session_...` or `Claude-Session` lines) in commit messages or PR bodies:** they show in Cloudflare deployment details.
+
+**Parallel threads (Matt, 16 Nov 2026):** several threads work at once and merge into this file and the done file; rebase before merging and keep doc PRs docs-only.
+
+**Open question and past decisions (moved from the old decisions list):**
+- CI note (17 Nov 2026): all checks on PR #468 failed at Install dependencies with an `eslint-config-next@16.2.7` install error, on a branch whose own build passed locally. It merged anyway; if main shows the same red, the lockfile or the npm registry needs a look.
+- Passkey and RSVP decisions were made in closed Task 5 (PR #216). Blog builder decisions are in closed Task 2a. Privacy rule is in Done (closed Task 11, PR #199).
+
 ## Open now (as of 2 Nov 2026)
 - Stale comment pointers (code, tiny): `src/features/bookings/engine.ts` and `src/migrations/20270316_170000_bookings.ts` still cite `docs/bookings-plan.md`, and `src/features/effects/catalog.ts` cites `docs/repo-issues`; those files now live as appendices of this file. Change the comments to say "Bookings plan appendix in docs/remaining-work.md" and "Effix appendix in docs/remaining-work.md" in the next code PR.
 - Fresh-account deploy not verified: Deploy button on a second Cloudflare account (see detail below).
@@ -34,11 +76,17 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 
 ### Fresh-account deploy check (detail)
 Deploy button on a fresh Cloudflare account, not verified. Covers migrations `20261003_100000_visibility_schedule_lock_events_seo`, `20261005_100000_redirects`, `20261005_110000_pages_sort_order`, `20261006_100000_roles`, `20261007_100000_users_authorship`, `20261008_100000_integrations_expand`, `20261009_100000_user_permission_overrides`, `20261010_100000_site_fonts`, `20261011_100000_site_files`, `20261011_110000_cookie_consent`, `20261011_120000_media_library`, `20261011_130000_content_approval`, `20261011_140000_custom_fields_v2`; the `images` binding in `wrangler.jsonc` (Cloudflare Images transformations must be on the account, otherwise upload optimisation is skipped with a message); the cron trigger (`triggers.crons` in `wrangler.jsonc`, entry `cloudflare-worker.ts`).
+- Closed Task 7: which later integration to build next (Google services or newsletter and CRM sync, both in Open now).
+
+## Done
+Finished work is listed in `remaining-work-done.md` (same folder, the only other file), one line per task or PR. Add new Done lines there, not here.
 
 ## Tasks (in order, 44 open; renumbered 22 Nov 2026 in Matt's order)
 Open tasks are numbered 1 to 44 in the order they should be built (renumbered 22 Nov 2026 by Matt; earlier 16 Nov). Each heading shows its old number as "(was Task N)". Item letters and sub-ids elsewhere in this file (11a, 19c, 29c, live check lines) and "closed Task N" in the done file use the OLD numbers, so look them up by the "was" number. Live checks are Task 44, whose list is the last section of this file. Finished work is referred to as "closed Task N": N is the number it had when it closed, as used in the done file. The audits, plans and reports that these tasks depend on are in the Reference sections after the tasks.
 
 **Order set by Matt on 22 Nov 2026 (this is the numbering below):** first Task 39 (the old "first per Matt" speed and Worker task), then old 4, 40, 41, 21, 16, a new bulk page creation task, old 27, then old 28 to 38, then the new visual builder AI, Shine and Spark review and home page AI assistant tasks, old 42, the rest in their old order, and Live checks last.
+
+Format of Tasks 11 to 17: each item has Scope (what to build), Done when (acceptance), Code (where it builds on what exists). Every item: off by default for a new install (registered in `src/features/registry.ts`), tables created by an idempotent migration plus the two fresh-install specs, Shine classes only, text in all thirteen languages, WCAG AA in light and dark, a Live checks live-check line when done. Paths are under `src/features/ecommerce` (written `ecom/`) unless stated.
 
 ### Task 1. Speed up the portal and shrink the Worker bundle (FIRST task, set by Matt 18 Nov 2026) (was Task 39)
 **Goals (Matt, 7 Nov 2026):**
@@ -78,6 +126,7 @@ Open tasks are numbered 1 to 44 in the order they should be built (renumbered 22
   - Move work to Cloudflare services instead of bundled code: Images binding, Cron, Queues, Email routing.
   - Keep a gzip size budget per module in CI (the release manifest already records `workerGzipKiB`).
 - [ ] Done when startup time and CPU per request are measured on the deployed Worker and are inside the Free plan limits (1 s startup, 10 ms CPU), with a before and after speed comparison recorded here. (Old target, under 3 MB gzip, dropped on 20 Nov 2026: the size limit is 64 MiB uncompressed.)
+- **Decision waiting on Matt:** Closed Task 4 (parked): publish the framework as a package with thin site repos. Risk high, effort L (several weeks): the deploy button still clones the whole repo (about 13.6 MB, 424 test files) until done, and every fork would then be upgraded through a versioned package with a release process for two repos. Recommendation: defer until a second real site needs it. The Next 16 upgrade is done (PR #220).
 
 ### Task 2. Small gaps left by tasks 3 to 7 (partly done 17 Nov 2026) (was Task 4)
 Shipped history is in `docs/remaining-work-done.md`. Still open:
@@ -91,11 +140,36 @@ Matt (15 Nov): make the visual builder use his own repos instead of other platfo
 - [ ] **40d Element by element switch to Spark and Shine.** For each element that has an Spark or Shine counterpart (countdown, counter, progress bar, image carousel and slides, tabs, accordion, toggle, tooltip, back to top, ticker, flip box, popup and modal, lightbox, compare, typed and animated headline, pagination, breadcrumb), render with the Spark feature or Shine class, keep the same stored props, remove the duplicate CSS and React, and keep an automated visual check at light and dark and at 390 px. Do not remove anything without a viable replacement. Done when: the audit table in this task shows each element as Spark, Shine or intentionally custom with a reason.
 - [ ] **40e Missing from the repos (re-checked 15 Nov).** Written as issue-ready files: the Spark issues appendix of `docs/remaining-work.md` (data table behaviour, chart CSV and live data input, polar area to confirm, rating, calendar and date picker, stepper, Lottie, content timeline) and the Shine issues appendix of `docs/remaining-work.md` (data table styles, timeline, stepper, rating, skeleton, calendar). Spark already has skeleton (shimmer), toast, popup and flow charts; Shine already has tooltip and popover. Matt opens the issues. Done when: the issues exist on both repos and each item is marked added or kept in Engage.
 
+#### Reference: Design model: stored values inventory (31 Oct 2026)
+Status: steps 1 to 3 merged (#165, #166, #168). Step 4 data side merged (#177). Step 4c (typed emitter removal) merged as PR #183.
+
+Reads go through readFlatDesign and upgradeDesign (src/lib/design). Writes go through toStoredDesign (src/lib/design/storeDesign.ts) and the write hooks listed here. Migration: `20270126_100000_design_grouped` (src/migrations/20270126_100000_design_grouped.ts, registered last), helper src/lib/design/storedGrouped.ts.
+
+Where designs are stored:
+- Block `design` column (JSON text) on every block table: pages, posts, products, page_templates, site_templates, reusable_sections, blog_settings, faq_settings, shop_settings, lessons, and their `_v` version twins. Block types that carry it (src/blocks/styleField.ts): section, element, loop, hero, faq, table_of_contents, event_grid, gallery, cta_banner, rich_text, image_text, product_grid, reusable_section, form. The migration finds these tables by their `design` column, so a new block table is covered without a list.
+- Section `columns` JSON on every `*_blocks_section` table (and `_v`): each column has `design`, each nested block has `design`, sections nest.
+- Forms: eg_forms.layout and eg_forms.published_layout (JSON, same column tree as sections).
+- Not BlockStyle, not migrated: email designs (`*Design` JSON on the email-templates global, EmailBlock model in src/features/email/design); theme tokens (theming global, src/features/themeStyles); site fonts (site settings customFonts).
+- Inputs that never store a design themselves: starters (src/features/siteTemplates/starters.ts), style presets and element defs in code, the legacy converter, the clipboard, template libraries and repos (fetched from GitHub), and the AI builder. Their output is stored through normal writes, so the write hooks group it on save; readers accept flat values too.
+
+Write hooks (run on every save through the CMS): blockStyleField (src/blocks/styleField.ts), section `columns` (src/blocks/Section.ts), eg_forms layout and publishedLayout (src/features/forms/collections/Forms.ts). Each converts only v1 flat values that carry a grouped key (groupStoredV1Design); typed values and flat values with no grouped key are stored as they are.
+
+Migration rules: v1 flat (no schemaVersion, or 1) with at least one grouped key becomes {schemaVersion: 2, groups} via upgradeV1; the migration refuses any row whose flat read-back changes; schemaVersion 2 values are never rewritten; a second run changes nothing (tests/int/design-grouped-migration.int.spec.ts).
+
+Typed v2 (schemaVersion 2, no groups): no code path in src writes it (git history: only src/lib/design and tests mention it). The migration leaves any such value untouched, so it still renders through the typed emitter. Not checked against production D1 (no database access from the repo). Check before removing the typed path: count rows in the design tables and eg_forms where the JSON has "schemaVersion":2 and no "groups".
+
+Step 4 (c), typed emitter: DONE (PR #183, branch feat/design-remove-typed-emitter). Production D1 had zero typed-v2 rows (schemaVersion 2, no groups). Removed the css*.ts, cascade.ts, customCss.ts and sanitize.ts modules and the design-v2-* int specs; withElementDesign and the design/scopeId arguments of renderElement are gone. A stray typed value reads as {} (readFlatDesign, asBlockStyle).
+
+Step-3 rows with the applied dot and per-setting Reset (PR, 31 Oct): toggles (text transform, font style, decoration), ranges (background effect intensity, particles count, parallax strength, glass blur, divider speed, typography ranges), every FX slider (FxRange), selects for slideshow transition, background effect, particles, parallax direction, position, blend mode, mask, blob speed, reveal, hover effect, pointer effect, Ken Burns, animated border, and the custom rows (text, image, video loop, custom CSS, visibility sign-in). Left without a dot on purpose: the "Link all sides" checkbox (a UI helper, not a stored setting).
+
+Column write path: section layout fields and the navigator hide toggle now store grouped values (FieldPanel, NavigatorPanel). ColumnPanel already did (9e8aa8c).
+
 ### Task 4. Leftovers from the Tasks 14 to 18 thread (new, 17 Nov 2026) (was Task 41)
 Small follow-ups found while building; each is code still to do.
 - [ ] 41a Permalinks text: the SEO settings Permalinks (Blog address, 16e) is English only. Move its labels, hints and save errors into `src/features/uiStrings/keys.ts` and all 12 other dictionaries (run `tests/int/admin-ui-strings*`), or confirm the SEO screen stays English only.
 - [ ] 41b Bid terms admin field: `src/features/quotes/components/BidTermsField.tsx` has no test of its own and the Test button messages from 18b are English only like the toggle actions; add a spec for the field and translate the new action messages.
 - [ ] 41c Fresh-install guard: add a spec or check that fails when any table is within 5 columns of D1's 100-column limit (`eg_shop_settings`, `eg_integrations`, `eg_security_settings` are full already, `_eg_products_v` was the one that broke main on 17 Nov 2026), so the next feature fails in the PR instead of on main.
+- **Decision waiting on Matt:** Tasks 14 to 18 thread (17 Nov 2026), questions for Matt: (1) The bid-terms migration (`20270318_200000_bid_json_column`) was not tested against a real production `_eg_products_v` already at 100 columns: after deploy, open a product's version history and confirm old bid values still show. (2) 16i: the coming soon signup turns itself off when a form captcha is on (the screen has no challenge widget): do you want a widget added, or is turning captcha off for that form enough? (3) 14c: WebDAV backups were skipped; say if you want them later. (4) 16g and 16h facts editor and permalinks for shop bases are queued as code in Task 41 below.
 
 ### Task 5. Spam protection: site-wide CAPTCHA and spam rules (new, 15 Nov 2026) (was Task 21)
 Built today: reCAPTCHA (v2 and v3 score) and Cloudflare Turnstile on forms with per-form overrides, honeypot, fill-time check, reviews honeypot plus rate limit (reviews land Pending), and a key test for reCAPTCHA (`src/features/forms/spam.ts`, `src/features/forms/settings.ts`, `src/features/integrations/remoteChecks.ts`). Overlaps: Task 19a (CAPTCHA on login, register, reset), 24k (bot detection), 24b (rate rules), 24h (disposable email); build them together and do not duplicate.
@@ -125,12 +199,31 @@ Matt: on the Pages screen add an easy way to create several pages at once (for e
 The builder is built: "Write with AI" on the Blog list with the six steps (questions, five titles, outline edit, section-by-section writing with accept, regenerate and edit, meta, slug, tags, category and featured image match, create draft), saved prompts and brand voice (migration 20270128), cited-only sources, per-post call limit and the monthly spend cap (`src/features/blogBuilder/`, `admin/BlogWizard.tsx`, PRs #154 and d7510dc; live checks in Live checks). Left:
 - [ ] **27b Editable question sets.** The questions are fixed in the wizard. Add admin-editable question sets (add, remove, reorder, required, per post type or brand), saved with the saved prompts, with the default set kept as a reset. Same wizard for products and pages is a later option. Plan (17 Nov 2026): store the sets in a new small table (not the full Integrations table), see "Decisions waiting on Matt". Code: `src/features/blogBuilder/request.ts` (`parseBrief`), `savedPrompts.ts`, `admin/BlogWizard.tsx`.
 - [ ] **27c Live checks.** Run the Live checks blog builder checks with a real AI key, and confirm migration 20270128 on live D1.
+- **Decision waiting on Matt:** Editable blog question sets (27b), not started 17 Nov 2026: the Integrations table is at the 100-column limit, so the sets must live in a new small table `eg_blog_question_sets` (id, name, post type, questions as JSON, default flag). Say yes and it is built as such, with the default set kept as a reset; or say if you would rather keep the questions fixed.
 
 ### Task 9. Visual builder widgets: content, layout and marketing gaps (new, 15 Nov 2026) (was Task 28)
 - [ ] **28a Text and layout (mostly options).** Scope: **Element:** Snippet (insert a saved reusable HTML or merge-tag snippet by name, since WordPress shortcodes do not exist here). **Options on existing blocks:** Read more and Show more (a "collapse content" option on any block: clamp by height or characters with an expand and collapse control, accessible); Wrapper link (a "make the whole block a link" option on sections, columns and elements with new tab and nofollow); Reading time (merge tag `{{readingTime}}` from word count); Text path (text on a curve as a text effect option); Dismissible notification and toast (option on `alert` using Spark `spark-toast`); Drawer (a section display option "open as drawer" from a button or trigger, built on the modal display; today a drawer exists only inside the nav menu). **Example:** Icon label (preset of icon list and icon box). Done when: each works as a block option picked from the settings or the Spark picker, with canvas preview, keyboard and screen reader support. Code: `src/lib/blockStyle.ts`, `src/lib/design`, `src/lib/sectionLayout.ts` (`modal` display), `src/lib/mergeTags.ts`, `src/lib/elements/` (Snippet only).
 - [ ] **28b Media and interactive (options, examples and one new player).** Scope: **Options:** Image scroller and Image layers (image block options: scroll-linked pan and layered parallax using Spark `spark-parallax`, `spark-scroll`), Video popup (a lightbox option on the video block using Spark `spark-lightbox`), Inline SVG (an image option that inlines a sanitised SVG with colour and animate-on-scroll), Filterable gallery (category chips as a gallery option), Scroll navigation (Spark `spark-scrollspy` on nav menu and anchors for dot navigation), Toggle mode monthly and yearly (content switcher option bound to the pricing table). **Examples (presets of the card, image and section blocks, listed in Examples, Task 33):** Hover card, Unfold card, Interactive cards, Circle menu, Interactive circle and promo, Dropbar. **Element:** native Lottie player, because Spark has none: a small dotLottie web component loaded lazily only on pages that use it as a separate client chunk (autoplay, loop, hover and scroll-linked), checked against the Task 39 Worker size limit; if Spark gains Lottie later the element becomes an option. Done when: each works with keyboard and reduced motion and loads no JavaScript on pages that do not use it.
 - [ ] **28c Content and marketing (examples and schema options).** Scope: **Option:** Tag cloud (a display option on a taxonomy list, size by count), Button style presets (animated fills, icon slide, shine and ripple chosen from the Spark hover picker on the button block; text and background always contrast, 4.5:1 checked), FAQ schema (`FAQPage` JSON-LD option on accordion and toggle), How-To schema (`HowTo` JSON-LD option on an ordered list or steps block; pairs with Task 16g). **Examples:** Number box (counter), Ticket and offer card (card or pricing preset with perforated style and button), Promo box. Billing toggle on the pricing table comes with 33b. **Blog sidebar Example (Matt, 15 Nov: yes):** categories list plus tag cloud, inserted from Examples (Task 33). **Taxonomy list (no home before, added 15 Nov):** element for categories, tags and product categories as list, cloud or grid (count, hierarchy, hide-empty, link to archive); reuses the taxonomy data of Task 14 and 16. **Load more:** (Matt, 15 Nov: mode is the admin's choice, button or infinite scroll, per block) option on `post-list`, `archive-grid` and `loop-grid` (button or infinite scroll, no-JS fallback to `?page=N`; today only the plain next-page link at `wave50Defs.ts:35`). Done when: each validates in the Rich Results test sample and appears in Examples.
 - [ ] **28d Live review sources (keys in Integrations).** Scope: Google reviews (Places API), Facebook page reviews (Graph API token) and Yelp reviews (API key) as source options on the existing `reviews` block, with each key or token added in Integrations (Matt, 15 Nov: pulling is fine, an API key goes through Integrations), place ID or page ID per block, cached on a schedule so no per-visit API call, attribution and link rules per source terms, combined wall with source badges, `AggregateRating` schema only where policy allows. Manual reviews stay. Done when: a connected Google place fills the wall and refreshes on schedule. Code: `reviews` element, `src/features/socialFeeds`, `src/features/integrations`.
+
+#### Reference: Visual builder audit (15 Nov 2026)
+Audited the 16-section widget catalogue, the Elementor settings inventory, editor mechanics and the Phase 0 to 5 notes against `src/lib/elements/*Defs.ts`, `src/views/visualEditor`, `src/lib/design` and the docs. Matt's rule: the current builder stays, Elementor is the reference for features (not the atomic widgets, only their speed and CSS output: scoped, minimal CSS, no inline style for responsive or stateful values). Decisions on earlier skip lists (15 Nov, updated): SoundCloud, Facebook widgets, Video Playlist and Lottie are included (the first three are built); PayPal and Stripe buttons are included as a Pay button element (Task 29); Cache Settings stays skipped; Display Conditions are built in part (visibility rules by sign-in, role, URL, schedule, weekday, time and language, live check in Live checks).
+Built already (not repeated below): about 150 elements including heading, text editor, image with lightbox, button (`link`), icon, divider, video, map, alert, html and embed-code, anchor, social icons, star rating, code highlight, back to top; section display modes columns, tabs, accordion, carousel, grid, flex, modal, stack, horizontal scroll and sticky steps; animated headline and text effects, ticker, table of contents, quote, reading progress; galleries, carousel, comparison, hotspots, image accordion, image box, audio, video playlist, draw line, logo strip; flip box, content switcher, tooltip; icon box, team member, testimonial, counter, count-up, countdown, timeline, price list, table, pagination, author box; call to action, pricing table, coupon code, ad, sticky bar; reviews wall with schema; charts (bar, line, pie, radar, polar, data view), progress bar, circle progress; forms with about 25 field types, steps, presets for login, register, reset and newsletter; nav menu with mega and off-canvas styles, breadcrumbs, search with live results, language switcher; site logo, title, post title, excerpt, featured image, meta, navigation, share buttons, popup display; post list, archive grid, loop grid, archive filter, repeater; product price, rating, add to cart, cart link; social feed (Instagram, Facebook Page, Pinterest, TikTok, YouTube, RSS); embeds including Facebook, SoundCloud, Typeform, Lottie (iframe); page effects (cursor, magnetic, tilt, smooth scroll); design panel with responsive base, tablet and mobile values, units, hover states, linked sides, typography, shadows, border, radius, transform, mask, blend, z-index, custom attributes, custom CSS, parallax, particles, Ken Burns, morph, glass, sticky, shape dividers (15); undo and redo, history, clipboard across documents, navigator, context menu, save as template, shortcuts, draft recovery, device widths (tablet 820, mobile 390, desktop full), real front-end CSS in the canvas, element library side panel with search, Elements and Settings tabs, Blocks and Templates tabs; 15 site template kinds; custom field groups with `{{field:name}}`.
+**Principle (Matt, 15 Nov 2026): effects and variants are options on the base block, not separate widgets.** A card, hover card, flip card, unfold card, interactive card, ticket, number box or promo box is an example (preset) of the card or box block with Spark effects and design options switched on, not its own element. Before adding any element in Tasks 28 and 29: (1) check whether an existing block already covers it with an option (ask: is it markup that is genuinely new, new behaviour, or new data? Catalogue principle above); (2) check Spark (`asticore/spark`, `reference/references.json`): it already ships carousel, compare, countdown, counter, copy, confetti, marquee, scrollspy, toast, tooltip, totop, popup, hscroll, kenburns, morph, parallax, particles, globe, odometer, typed text, reveal, skeleton, lightbox, lazy images, flip, tilt, spotlight, glare, charts and diagrams, so those become options in the Spark picker (Task 2) and not code here; Spark has no Lottie player; (3) only if both fail add a new element, and put reusable looks in Examples (Task 33), never as extra widgets. Each item below says Option, Example or Element accordingly.
+Format of Tasks 28 to 32 as before (Scope, Done when, Code). One style system, no popup for adding elements, every new element has a canvas preview, translated labels and tests, off by default where it needs a feature section.
+
+#### Reference: Visual editor reference (23 Oct 2026)
+Editor code src/views/visualEditor/ and src/views/VisualEditor.tsx; renderers src/components/blocks/; element defs src/lib/elements/; AI builder src/features/ai/builder*.ts and src/app/(engage)/api/admin-ai-builder/route.ts.
+
+#### Reference: Catalogue principle (decided 18 Oct)
+One HTML primitive = one element. Variations are options on a base element, Design effects, section display modes, or templates built from base elements. Add a new widget only when it needs new markup, behaviour or data. Legacy types (accordion, tabs, flip-box, spacer, back-to-top and similar) are hidden but still render saved pages.
+
+Skipped by default: PayPal/Stripe buttons, WebGL.
+
+- Server-only elements (read data) use the SITE_ELEMENT_TYPES path (`wave38Defs.ts`, `SiteElement` in Wave38Elements.tsx), never `ELEMENT_COMPONENTS`. `loop` uses this.
+- Published pages are edge cached and identical for all visitors: per-visitor logic (login, roles, query rules, consent) runs in the browser.
+- Naming: nothing authored uses the old engine vendor name; engine only via `src/engine/`; export format `engage-template`. Migrations are additive and idempotent. Server components never call functions exported from 'use client' files.
 
 ### Task 10. Visual builder widgets: data, forms, navigation, site, dynamic, commerce and embeds (new, 15 Nov 2026) (was Task 29)
 - [ ] **29a Data and time widgets.** Scope: World clock (several time zones, analogue or digital, city labels, 12 or 24 hour), Weather widget (current conditions and forecast for a place; see Task 30b for the data connection), advanced chart options (up to unlimited data points, import CSV, stacked and mixed charts, series colours, tooltips; `chart` caps at 12 values today), Data table upgrades (sort, filter, search, paging, CSV download, sticky header, responsive stack; check what `table` and `data-view` already do), Progress tracker (steps with current step from the page or form step). Code: `src/lib/elements/wave48Defs.ts` (`chart`), `data-view`, `src/features/dataViews`.
@@ -192,6 +285,49 @@ Report: the Regions audit appendix, closed Task 5 gaps.
 - [ ] **35c Owner-edited email wording per language.** Let Email templates hold a version per active language, falling back to the built-in translation.
 - [ ] **35d Hard-coded English check.** A test that fails when a public component renders a literal English sentence outside the store text table.
 
+#### Reference: Regions, languages and domains audit (also source of Task 17)
+###### Regions, languages and domains audit (Tasks 5 and 6, 15 Nov 2026)
+
+Checked by reading the code, not live. Paths are under `src/`.
+
+###### Task 5. Languages and regions
+
+###### What exists
+- World locale list (`features/multilingual/locales.ts`), including regional written variants (en-AU, en-GB, en-US, pt-BR, pt-PT, zh-Hans, zh-Hant, es-ES, es-MX, fr-CA). Active locales, default locale, fallback to default, switcher in header, footer or both (`features/multilingual/settings.ts`).
+- URL prefix per language (default unprefixed), locale cookie, `Accept-Language` detection with q-weights (`detect.ts`, `routing.ts`, `middleware.ts`). A domain can serve its own language unprefixed (`features/domains`).
+- Translations in a table keyed by locale, source and field; approval workflow (a translation shows only when approved and current), outdated detection, machine translation providers, translated slugs per locale (`localizedSlugs.ts`).
+- SEO: hreflang with `x-default`, self referencing canonical, `og:locale`, sitemap variants only for locales with a publishable translation (`features/seo/localeSeo.ts`, `sitemap.ts`). Hreflang also across registered domains (`features/domains/alternates.ts`).
+- Admin text in thirteen languages (dictionaries in `features/uiStrings`); public store text with owner overrides (`storeTextsServer.ts`); built-in emails follow the recipient's locale (`email/recipientLocale.ts`, `builtInTemplates.ts`).
+- Translatable fields (`translatableFields.ts`): pages (title, slug, SEO, block text), posts (title, slug, excerpt, body, SEO), products (title, slug, description, SEO, tier text), events (title, summary, description, venue, address), reusable sections, FAQs, ticket tier names.
+
+###### Regions
+There is no region concept. What stands in for it: regional language tags, shipping zones and tax rates by country, display currencies with a manual switcher and daily rates, and a registered domain with a default language and a stored `currencyHint`.
+
+###### Gaps (new tasks below)
+1. No region entity: content, prices and promotions cannot differ per region. The only per-market lever is a domain (content `availableDomains`, language), and prices are one shop currency.
+2. Domain `currencyHint` is stored and shown but nothing reads it: a visitor on the .co.uk domain still opens in the default display currency (`features/domains/model.ts`).
+3. Not translatable: category names in the tree, navigation and menu labels, header and footer text, form labels and messages, site title and tagline, product short fields and variation attributes, post category and tag names, event SEO fields, custom fields.
+4. Owner-edited email wording (Email templates) is one language: the built-in wording translates, the owner's version does not.
+5. Public strings added by features outside the store text table (event page was fixed in Task 1) need a check page by page; there is no test that fails on a hard coded English string in a public component.
+6. No language report screen: coverage per language per collection exists in the translation overview but not per region or domain.
+
+###### Task 6. Multiple domains
+
+###### What exists
+- Domain registry (Settings > Domains): host, label, default language, primary flag, active or disabled, redirect to primary, allow admin, per-domain site name, tagline, logo, contact details and socials (`features/domains/model.ts`). Hosts are normalised, headers are set only by the edge middleware after removing client copies (`middleware.ts`).
+- Per-domain content: an "Available on domains" field on pages, posts and products with a slug uniqueness check across domains (`features/domains/field.ts`, `slugs.ts`, `hooks.ts`, `access.ts`). Unscoped content shows everywhere; unknown hosts (workers.dev, preview) are never narrowed.
+- Sitemap, robots, canonical and base URL follow the request's domain (`features/seo/settings.ts` `originFor`, `robots.ts`, `sitemap.ts`); hreflang lists the same page on other active domains.
+- Connect domain attaches a domain to the Worker through the Cloudflare custom-domains API (`features/domains/cloudflareAttach.ts`), with a manual steps fallback.
+
+###### Gaps (new tasks below)
+1. Events, FAQs, reusable sections, forms and media have no "Available on domains" field (only pages, posts and products), so an event cannot be limited to one domain.
+2. The sign-in cookie is host only (no Domain attribute, `features/accounts/session.ts`): a customer signed in on one domain is signed out on another. That is the safe default; there is no switch for shared sign-in across a family of subdomains.
+3. Email sender is site wide (`features/email/index.ts` reads one `fromEmail`): mail from domain B arrives from domain A. Per-domain contact email exists but not per-domain sender or reply-to.
+4. Header, footer and navigation are shared across domains except for the name, logo and contact overrides; no per-domain menu (the domain menu helper exists in `features/domains/menu.ts` but is not an editor setting).
+5. Per-domain analytics and consent: tracking IDs are site wide.
+6. Cloudflare routes: attaching a domain needs a token with Workers Scripts edit and Zone read for that zone; there is no check screen that confirms DNS and certificate state after attaching.
+7. Cache: page caching and the admin cache purge are not scoped per domain; a purge clears all domains.
+
 ### Task 17. Multi domain gaps (from the closed Task 6 audit, new 15 Nov 2026) (was Task 36)
 Report: the Regions audit appendix, closed Task 6 gaps.
 - [ ] **36a** "Available on domains" on events, FAQs, reusable sections and forms, with the slug check where slugs exist.
@@ -208,6 +344,7 @@ Moved here from `visual-editor-elementor-gaps.md` (8 Nov 2026 review; the other 
 - Files: `src/lib/elements/fieldTypes.ts` (`supportsMergeTags` flag already exists, line 59: set it on `link` and image fields in `registry.ts`/wave defs and make the editor honour it for those types); `FieldPanel.tsx` (show `MergeTagPicker` beside the `link` and `media` controls; for media allow a "use tag" toggle storing `{ tag: '{{image}}' }` or a plain string, decide shape in the brief before coding); renderers for `image`, `link`, `image-box`, `icon-box` etc. through one shared helper so each element does not re-implement it; `safeUrl` must be applied after resolution (block `javascript:` and `data:` except images); empty result falls back to the stored fallback (no broken link/image).
 - Tests: resolver unit tests (tag resolves, unknown tag left as is or empty per mergeTags.ts convention, `javascript:` rejected after resolution, fallback image used), a snapshot render of a loop item with a dynamic link.
 - Product decision: (a) which element fields get it (recommend: link and main image of image, image-box, hero/cta backgrounds); (b) fallback behaviour for empty values; (c) server resolution only (pages are edge cached, so no per-visitor tags here).
+- **Decision waiting on Matt:** Visual editor gap builds left for later (Tasks 37 and 38): dynamic link and image sources (which fields, fallback), scroll-linked motion (accept no effect in Firefox?).
 
 ### Task 19. Visual editor: scroll-linked motion effects (new, 16 Nov 2026) (was Task 38)
 Moved here from `visual-editor-elementor-gaps.md` (8 Nov 2026 review; the other build items shipped, see the done file). Needs Matt's decision first (see "Decisions waiting on Matt"). Detail:
@@ -230,6 +367,63 @@ Matt: after the builder review, check the Shine (styling) and Spark (effects) re
 - [ ] List new Shine and Spark features since the pinned versions, mark which already have a picker, and build the missing ones.
 - [ ] Update the pinned release references and the Issues appendix if anything should go back to the Spark or Shine repos.
 
+#### Reference: Issues to open on the Spark and Shine repos
+###### Issues to open on `asticore/spark` (Spark)
+
+Checked 15 Nov 2026 against the repo. Already there, so not listed: shimmer (skeleton loaders), toast, popup, carousel, countdown, counter, funnel/flow (sankey style) charts, timeline chart, radar, 30+ charts, 5 diagrams, 9 viz types. Keep the `spark-` prefix after the rename to Spark (decided by Matt).
+
+###### 1. Data table behaviour (`spark-table`)
+Behaviour layer for a plain Shine table: sort by column, search, per-column filter, paging, sticky header, column visibility, row selection (with select all and a `change` event), responsive stack, CSV download, empty state. Data from the existing markup or `data-spark-data` JSON or CSV. Accessible (`aria-sort`, keyboard). Used by Engage Task 40c.
+
+###### 2. Chart data input
+`data-spark-csv` (inline or URL) and a live-data adapter hook (`Spark.chartSource(name, fn)`) so a page can feed results from a form or data view without rebuilding the chart. Add stacked and mixed series options where missing. Used by Engage Task 40b.
+
+###### 3. Polar area chart
+Confirm `chart-bar` or `chart-radar` covers polar area; if not add `chart-polar`.
+
+###### 4. Star rating (`spark-rating`)
+Read-only and input modes, half stars, count, colour token, `change` event.
+
+###### 5. Calendar and date picker (`spark-calendar`)
+Month view with events from JSON or ICS, optional range picker, first day of week, locale. Used by Engage Tasks 39c and 34b.
+
+###### 6. Stepper and multi-step helper (`spark-steps`)
+Step state, next and back, validation hook, progress, URL hash sync.
+
+###### 7. Lottie player (`spark-lottie`)
+Small dotLottie player: autoplay, loop, play on scroll or hover, reduced-motion fallback. Used by Engage Task 33b.
+
+###### 8. Content timeline component
+A vertical and horizontal timeline for content (not the timeline chart): items, icons, alternating layout, reveal on scroll. Used by Engage Task 39a.
+
+###### Notes for every item
+Zero dependencies, `data-spark-*` options, Shine tokens, `prefers-reduced-motion` respected, a `.meta.js` entry so the Engage picker can list options.
+
+###### Issues to open on `asticore/shine`
+
+Checked 15 Nov 2026 against the repo. Already there, so not listed: table, tabs, accordion, modal, drawer, pagination, breadcrumb, dropdown, progress, avatar, alert, badge, tooltip, popover, carousel. Engage uses these first (Task 40d).
+
+###### 1. Data table styles
+Sortable header states (`aria-sort` arrows), selected row, sticky header, density (compact, comfortable), column resize handle, responsive stack, empty state, toolbar (search, filters, column menu), pagination bar. Pairs with Spark `spark-table`. Used by Engage Task 40c.
+
+###### 2. Timeline
+Vertical and horizontal, alternating, icon or image markers, date label, dark mode. Used by Engage Task 39a.
+
+###### 3. Stepper
+Horizontal and vertical steps with done, current and error states, connectors, small and large. Used by Engage Tasks 34a and 40.
+
+###### 4. Star rating
+Display and input styles, half stars, sizes, colour token.
+
+###### 5. Skeleton
+Static placeholder shapes (text, avatar, card) for use with Spark shimmer.
+
+###### 6. Calendar
+Month grid, today, selected, event dots, range, week start. Pairs with Spark `spark-calendar`. Used by Engage Task 39c.
+
+###### Notes for every item
+Tokens only (`--sh-*`), light and dark, no JavaScript, documented in the docs site.
+
 ### Task 22. Home page AI assistant with a site guide (new, 22 Nov 2026)
 Matt: when an AI provider is connected, signed-in people can talk to an assistant from the portal home page and tell it what to do.
 - [ ] Start suggestions on the home page (for example Create a page, Review a page or post, Check my SEO), each opening the chat with the request filled in.
@@ -247,6 +441,10 @@ Matt (18 Nov): review the Site planner (built in closed Task 16l) beyond the fir
 - [ ] **42c Themes.** Offer a few themes or style directions for the plan (colours, fonts, tone) from the existing style system and Shine; the chosen one applies to the wireframes and to the pages when created. One style system only.
 - [ ] **42d Wireframes.** For each planned page, draw a wireframe from its sections (hero, features, proof, call to action and so on) so the person sees the layout before pages are created; click a page to open its wireframe, reorder or swap sections, then Create draft pages builds them from the template library with the plan's theme.
 - Done when: a person can answer the questions, see the overview, structure, theme and a wireframe per page, adjust them, and create the draft pages from that plan. Uses Spark and Shine, not Tailwind. Extra strings in all twelve languages.
+
+#### Reference: Notes audit (14 Nov 2026)
+Audited about 130 note lines against the code. Already built (details in `docs/remaining-work-done.md` and the live checks in Live checks): PayPal checkout and webhook; Australia Post, DHL, UPS, FedEx, ShipStation and Sendle rates and labels; Resend, SES, Mailgun, Postmark, SendGrid, Cloudflare Email, Brevo and Mailchimp Transactional (as Mandrill) with test buttons and one fallback; visual email designer with merge tags; members and tiers, courses sold through a product; grouped, external, gift card, bundle, variable, downloadable and virtual products; add-ons; subscriptions; SKU and GTIN; stock, backorders, low stock alerts; scheduled sale price; shipping zones, free over, table rates, classes; tax and GST; coupons; cross-sells in the cart; upsells and recommendations; wishlist; back in stock; min and max quantity; name your price; pre-orders; variation image picker; unit-aware weight and dimensions; price tiers and pricing rules; currency switcher with day rates and default currency; Google Merchant and Meta feeds; CSV import and export; line-item refunds; invoices and packing slips; abandoned cart emails; shop reports; checkout field editor; reviews; media folders, upload of pdf, docx and video, convert to WebP or AVIF, click to optimise, Cloudflare Images and Stream; Speed toggles; scheduled and manual backups to R2 and S3; PageSpeed lab report; axe and contrast tests for hover and resting states; ads (placements, ads.txt); custom fields (ACF style); popup sections; offcanvas element; post duplicate; categories, tags, author archives, related posts; structured data (Organization, WebSite, Breadcrumb, FAQ, Article, Product, Image); SEO analysis with traffic lights and internal link suggestions; language switcher element, translate mode, translations table; forms in the visual editor with address search; Google login, 2FA, passkeys, social login; profile editing; portal search and site search; admin noindex; Microsoft Clarity; API builder with roles and categories; XML, CSV and JSON feeds; Unused tables panel; Shine and Spark; features default off for new sections.
+Reminders in the notes, read as: "Look at em dash" = Task 17 (remove em dashes from user-facing text, add a lint check); "lovable features" = Lovable-style prompt-to-site building, covered by the site planner in Task 17; "Put this in after done the other items" = the new Tasks 11 to 17 sit after the existing feature tasks and before the speed task. Duplicate lines (bulk page creation, Google sign-in, PayPal, demos) are merged into one task each.
 
 ### Task 24. Email notifications on actions, push and Cloudflare sending (partly done 15 Nov 2026) (was Task 5)
 Built: Notifications screen (Email settings, `/notifications`) with rules for order placed, order paid, order refunded, form submitted, booking made, new sign-up and page or post published; each rule picks channel (email or push), recipient (customer, shop admin address or a set address), subject and message with merge tags from one registry (`src/features/notifications/triggers.ts`). Rules run from the same event bus as webhooks (`emitWebhookEvent`). Web push: VAPID keys made on first use (private key encrypted), per browser opt in on the Notifications screen, service worker `public/engage-push-sw.js`, RFC 8291 encryption in `src/features/push/webpush.ts` (tests decrypt it). SMTP provider (`providers/smtp.ts`, over `cloudflare:sockets`, STARTTLS or TLS, AUTH PLAIN). Email settings take an ordered fallback list (`fallbackOrder`) after the single fallback. Cloudflare Email sending was already a provider. Email builder: MSO ghost table and VML button added, tests assert no flex, grid or positioning.
@@ -284,6 +482,7 @@ Built: a feature section `taskboard` (Site Settings, Features; off by default) a
 - [ ] 11h leftovers: the one-click post-purchase upsell, toggled per product (parked 17 Nov 2026 until Matt answers the question under Decisions waiting on Matt: save the card at checkout and charge off-session, or send the offer to a quick Stripe checkout; Claude recommended the quick checkout because it changes no card-saving consent; either way it needs a live Stripe test); a real link between the order and the form entry (today the entry number is added to the order note only when the Order notes checkout field is switched on); the text in the other twelve languages.
 - [ ] 11i leftovers: a monthly toggle on the donate box itself (today monthly means a separate subscription donation product), the goal progress bar element (the goal is stored; the element belongs with the commerce widgets in Task 29d), campaign totals on the product page, the receipt as a downloadable tax receipt, and the new text in the other twelve languages.
 - [ ] 11j product screen redesign, still to do: group the product fields into tabs (General, Pricing, Inventory, Shipping, Packaging, Advanced), plain labels and help text, "what is this" tooltips, hide advanced groups until the feature is on, and a first-product checklist. Not started: it rewrites the layout of the products form and needs Matt's usability check (a new user creates a variable product without help), so it is better done as its own task with a design pass first. Code: `productFields.ts` (the field groups are already collapsibles), `ecom/admin/`.
+- **Decision waiting on Matt:** One-click post-purchase upsell (11h): how should it take payment? Option A: save the card at checkout and charge it off-session (true one-click, but checkout must show Stripe's save-card consent text and it needs live Stripe testing). Option B (Claude recommended): the offer leads to a quick Stripe checkout for the upsell product, no card saving or consent change, one extra step. Option C: skip it for now. The decision card is still open in the original thread.
 
 ### Task 31. Selling modes: services, quotes, bids, hoarders, approvals (new, 14 Nov 2026) (was Task 12)
 - [ ] 12a leftovers: a deposit option (pay part now, the rest later; needs partial payments on orders), booking or quote based selling (waits on 17b and 17c), a service badge on orders, and the text in the other twelve languages.
@@ -291,6 +490,268 @@ Built: a feature section `taskboard` (Site Settings, Features; off by default) a
 - [ ] 12b phase 1 leftovers: the booking widget as a visual-editor element, a customer reschedule, staff users linked to resources, the questionnaire answers, privacy mode for clinics, roles and permission keys, webhooks, an ICS feed per resource, and the text in the other twelve languages. Phases 2 to 4 of the plan are untouched. The 14 decisions in the plan were taken as proposed (one site time zone per resource, guest bookings with a private link, email only) and are still Matt's to confirm.
 - [ ] 12c leftovers: the quote text still in English. Staff emails (new request, counter-offer, accepted, declined: `quoteAdminNew`, `quoteCounter`, `quoteAccepted`, `quoteDeclined` need `email.<key>.subject|body` keys in the 12 dictionaries; they go to the shop owner so low priority), the account Quotes section (`MyQuotes.tsx`, `OpenQuote.tsx`, via the portal strings in `dictionaries/portal.ts`) and the admin Quotes and requests panel and the form settings Send as a request section (admin strings). Same pattern as closed 12c translations in `remaining-work-done.md`; no migration.
 - [ ] **12f DocuSign (needs Matt's decision on account and plan).** Scope: send a document for signature from an order, form submission or quote (template and signer from the record), webhook marks it signed and stores the signed PDF in private media, status on the record. Done when: a quote can require a signature before payment. Code: `src/features/integrations`, `src/features/webhooks/inbound`, private media from Task 7.
+
+#### Reference: Bookings plan (phases 2 to 4 open; phase 1 shipped)
+###### Bookings and scheduling: gap list and phased plan (Task 6)
+
+Written 8 Nov 2026. Research only: no code was changed. Every "exists" claim cites a path under `/home/user/engage`. Paths below are relative to the repo root.
+
+###### Summary
+
+- Today the CMS has event RSVPs (a head count on a dated event) and a form field type "appointment" (fixed start times, weekdays, capacity per start time). Neither is a booking system.
+- There is no resource (staff, room, vehicle), no recurring availability store, no buffer, notice or cancellation rule, no reschedule, no calendar sync and no booking-specific reminder.
+- Payments exist for the shop (orders, transactions, refunds). Forms can price a submission but the last hop to checkout is explicitly not built (`src/features/forms/pricing.ts`, comment near line 120).
+- Recommendation: a new lazy "Bookings" feature with its own tables, built on a pure slot engine, reusing shop orders for money, the email and cron systems for notices, and the existing ICS builder.
+- Matt picks the first phase (see "Decisions for Matt"). Phase 1 is an MVP for one provider; Phases 2 to 4 widen it to staff, rentals and hotels, and calendar sync.
+
+###### What exists today
+
+| Capability | Where | Reusable for bookings? |
+|---|---|---|
+| Events (dated, capacity, online flag, venue, ticket product, recurrence, tiers) | `src/collections/Events.ts` (fields `startDate`, `endDate`, `location.isOnline`, `capacity`, `ticketProduct`, `rsvps`); recurrence in `src/features/editScreens/recurrence.ts`, `recurrenceGenerate.ts` (max 52 occurrences) | Partly. Good for group sessions and classes. An event is one fixed date, not a pool of open time the customer picks from. |
+| Event RSVPs (name, email, guest count, notes, reminder stamp) | `src/collections/EventRSVPs.ts`; capacity check `src/hooks/checkEventCapacity.ts` (counts guests, count-then-insert, no lock) | Partly. Pattern for capacity and owner-only read rule is reusable. Not a booking record: no status lifecycle, no resource, no price. |
+| Form field "appointment" (slot start times, weekdays, days ahead, max days ahead, capacity) | `src/features/forms/types.ts` (line 111 `appointment?`), `src/features/forms/slots.ts` (keys `YYYY-MM-DD HH:MM`, capacity 1..50), `slotStore.ts` (reads D1 via `json_extract` on `eg_form_submissions`, scan limit 2000), `slotGuard.ts` (check, insert, re-check; both racers can lose), `slotsEndpoint.ts` and `src/app/(engage)/api/form-slots/route.ts` (public, rate limited 60 per minute) | Partly. The pure helpers and the check-insert-recheck idea carry over. Storage in a JSON column of form entries cannot hold resources, durations, buffers or ranges, and no time zone is stored (times are plain text). |
+| Form entries and pricing | `src/features/forms/pricing.ts`, `submit.ts` (`paymentStatus: 'unpaid' \| 'none'`, `buildCheckoutHandoff`), `src/engage-types.ts` (~line 1420 `payment.product`: "Required by the cart handoff once it is built") | Partly. Prices a submission but does not take payment. Do not build bookings on top of form entries. |
+| Account portal "My bookings" | `src/app/(frontend)/account/bookings/page.tsx`, `src/features/accounts/bookings.ts` (reads `event-rsvps` by verified email), `src/features/accounts/access.ts` (`canSeeBookingsByEmail`), strings `portal.bookings.*` and `portal.search.bookingsHeading` in `src/features/uiStrings/dictionaries/*.ts`, search `src/features/accounts/accountSearch.ts` | Partly. The screen and email-verification rule are reusable; the data source is RSVPs only and the copy says "event bookings". Needs a second source and cancel or reschedule actions. |
+| Webhook event `booking.made` | `src/features/webhooks/events.ts` (line 16), emitted for RSVPs in `src/features/webhooks/hooks.ts` (line 92); Live checks in `docs/remaining-work.md` also expects a source `appointment` | Yes. Add cancelled, rescheduled, reminder-sent events beside it. |
+| Shop checkout, orders, payments | `src/features/ecommerce/collections/Orders.ts` (status transitions), `Transactions.ts`, `OrderRefunds.ts`, `src/features/ecommerce/server/orders.ts`, `refunds.ts`, `payments/stripeAdapter.ts`, `paypalCheckout.ts`, `offlineCheckout.ts`; payment tables are never offered for deletion (`src/features/featureTables.ts`, `PAYMENT_RECORD_BASES`) | Partly. Orders reference products by relationship, so a booking needs either a service product per booking type or an order line with no product. Decision needed (see Payments). |
+| Subscriptions and gift cards, store credit | `src/features/ecommerce/subscriptions/*`, `server/storedValue.ts` | Partly. Store credit is a possible refund target; subscriptions are not needed. |
+| Email sending, templates, log, suppression | `src/features/email/index.ts` (`sendEmail`), `renderTemplate.ts`, `emailLog.ts`, `suppression.ts`, `recipientLocale.ts`, providers in `src/features/email/providers/` (Resend, Postmark, SendGrid, Mailgun, SES, Brevo, Cloudflare and others) | Yes. Add booking templates. Email designer lists "Event booking confirmation" (`src/admin/views/email-designer/designerModel.ts` line 208). |
+| Reminder emails | `src/features/email/eventReminders.ts` (stamp `reminderSentAt` before sending, so one reminder per RSVP), `scheduledEmails.ts` (runs each tick, quiet hours), `schedule.ts` (`eventReminder.hoursBefore`, `isInQuietHours`, time zone from site `timezone`) | Partly. Same stamp-then-send pattern; needs its own sweep for bookings (several reminders, per type offsets). |
+| Cron | `wrangler.jsonc` (`triggers.crons: ["*/5 * * * *"]`), `cloudflare-worker.ts` (`scheduled` calls `/api/cron/publish-scheduled` with an HMAC key), job list `src/features/cron/registry.ts` (name, label, schedule, feature gate), run log `src/features/cron/history.ts` | Yes. Add jobs "booking-holds" (expire holds) and "booking-reminders" with `feature: 'bookings'`. Five-minute resolution is enough. |
+| ICS file | `src/features/editScreens/ics.ts` (`buildEventIcs`, `icsEscape`, `foldLine`), route `src/app/(engage)/api/events/[slug]/ics/route.ts` | Yes. Reuse for a booking attachment and per-resource feeds. No `METHOD:CANCEL` or sequence number yet. |
+| Time zones | `src/features/editScreens/timeZone.ts` (`wallTimeIn`, `zonedToUtc`, default `Australia/Sydney`, DST safe day maths), site setting `timezone` in `src/features/site/detailsModel.ts` | Yes. This is the DST-safe core the slot engine needs. Only one zone per site today. |
+| Roles and users | `src/collections/Users.ts` (roles admin, editor, viewer, customer), `src/features/roles/permissions.ts` (`can()`), custom roles | Partly. Staff could link to a user, but a hairdresser or a car has no login. Resources should be their own rows with an optional user link. |
+| Domains and regions | `src/features/domains/*` (`model.ts`, `scope.ts`, `host.ts`) | Partly. A resource or booking type should be scopable to a domain the way other content is. Not researched in depth; confirm in Phase 1 design. |
+| Feature switch and lazy tables | `src/features/registry.ts` (`FEATURES`, `FeatureDef.tables`), `src/features/featureTables.ts`, `src/features/provisionOnEnable.ts`, `src/migrations/provisioning.ts`, `src/features/starters.ts` | Yes. A `bookings` entry creates tables on first switch-on. |
+| Google connection | `src/features/google/constants.ts` (`GOOGLE_SCOPES`: openid, email, analytics.readonly, webmasters, tagmanager.readonly, adsense.readonly), `auth.ts`, `state.ts` | Partly. OAuth plumbing exists. No calendar scope, and the current scopes are read-only (Search Console is the exception). Adding a calendar scope forces every connected site to re-consent. |
+| Visual editor elements and form blocks | `src/components/blocks/elements/*`, `src/blocks/EventGrid.ts`, `src/features/forms/block.ts` | Yes. A "Booking widget" element follows the same registration as existing elements. |
+| Rate limiting, privacy erase | `src/features/accounts/rateLimit.ts`, `src/features/privacy/*`; rule that erasing an account keeps entries (`docs/remaining-work.md`, Live checks privacy item #164) | Yes. Bookings are a record of money and time; follow the same keep-or-anonymise rule. |
+
+Not found anywhere in `src`: availability rules, resource or staff scheduling, buffers, notice windows, cancellation rules, reschedule, no-show, a video-link field on a booking, calendar write access, SMS reminders (Twilio exists for shipping text only: `src/features/sms/shippedText.ts`).
+
+###### Requirements matrix
+
+| Scope item | Status | Notes |
+|---|---|---|
+| Bookings in addition to events | Partial | RSVPs and portal screen exist for events. Bookings need their own tables; events stay for dated group occasions. A booking type may optionally link to an event series later. |
+| One-off availability (specific dates) | Missing | Form field offers weekdays only. Need date overrides (extra open day, closed day). |
+| Recurring availability (weekly) | Partial | Form field: slot list plus weekdays (`forms/types.ts`). Event recurrence exists for events only. Need weekly rules with start and end windows per resource, with time zone. |
+| Capacity (single or multiple per slot) | Partial | Form slots capacity 1..50 (`forms/slots.ts`); event capacity in guests (`checkEventCapacity.ts`). Need capacity per type and per resource, and party size per booking. |
+| Digital (video link) | Missing | Events have `isOnline` only. Need a per-type link template or a manual link per booking. Auto-created Meet links belong to Phase 4. |
+| In person (location) | Partial | Event venue and address fields exist. Need locations per type or resource (and pickup and return for rentals). |
+| Free or paid | Partial | Shop orders and payments exist; form pricing stops before checkout. Need booking to order link (see Payments). |
+| Several booking types (own length, price, rules) | Missing | Need `booking_types`. |
+| Assignment: pick the person | Missing | Need resources plus a chooser on the widget. |
+| Assignment: pick the type | Missing | Widget step 1. |
+| Assignment: "anyone available" and round robin | Missing | Need strategies in the slot engine (see rules). |
+| Buffers (before, after) | Missing | |
+| Minimum notice, maximum advance | Partial | Form field has `daysAhead` and `maxDaysAhead` only. Need hours of notice and per-type values. |
+| Cancellation rules (cutoff, refund) | Missing | Orders have refunds (`server/refunds.ts`); no policy linkage. |
+| Reschedule | Missing | |
+| Calendar sync (Google) | Missing | Google OAuth exists, read-only scopes (`google/constants.ts`). Listed under Later integrations in `docs/remaining-work.md`. |
+| ICS file or feed | Partial | Per-event ICS exists (`editScreens/ics.ts`). Need per-booking attachment and per-resource feed. |
+| Email reminders | Partial | Event reminder sweep exists (`email/eventReminders.ts`). Need booking sweep, several offsets, cancellation and reschedule mail. |
+| Double-booking protection | Partial | Check, insert, re-check (`forms/slotGuard.ts`). Reusable idea; need holds with expiry so a customer in checkout keeps the slot. |
+| Questionnaire answer and business type | Missing | Task 5 has no bookings question yet apart from the mention in `docs/remaining-work.md` Task 5. |
+
+###### Industry fit
+
+The generic model has three unit modes (time slot, day range, night range), resources, and per-type rules. Each industry below is a setting of that model, not custom code.
+
+###### Car rental
+- Must support: multi-day ranges (day range mode); resources are vehicles, grouped into categories (the booked item is a category, the vehicle is assigned at pickup or automatically); pickup and return location and time; price per day with optional weekend or season rates; deposit (a part payment now, a hold or balance later); driver details as custom questions; availability blocked by service days.
+- Out of scope: damage inspection, insurance products, fuel and mileage, telematics, one-way fees between locations, driver licence checks.
+
+###### Hotels and B&Bs
+- Must support: night range mode; resources are room types with a count (inventory per night), or single rooms; check-in and check-out times; rate per night with season and weekday rules; minimum stay; guest count per room; deposit or full prepayment; arrivals list in the admin.
+- Out of scope: channel managers and OTA sync (Booking.com, Airbnb), housekeeping, room-level upgrades, tax by city, group blocks, restaurant and spa add-ons. ICS import and export (Phase 4) is the only external link.
+
+###### Hairdressers and salons
+- Must support: time slot mode; staff as resources, each with own weekly hours and days off; services as booking types with duration and price (a type can list which staff offer it); "anyone available" with round robin; buffers (clean-up time); add-ons that extend duration and price (colour toner); deposits to cut no-shows; cancellation cutoff (for example 24 hours).
+- Out of scope: product sales at the till, commission reports, loyalty points (store credit exists but is not tied in), waitlists (a later item), multi-service combos in one visit (Phase 2 may allow a simple chain; full combos later).
+
+###### General practitioners and clinics
+- Must support: time slot mode; practitioners as resources with their own calendars; appointment types (standard, long, telehealth) with length; a new-patient flag as a question; usually free or billed outside the site (paid is optional); strict privacy: emails and logs contain date, time and clinic only, never the reason for visit or any health detail; cancel and reschedule by a private link; no-show marking by staff; in-person or video (link per booking).
+- Out of scope: clinical records, medical history, Medicare or insurance claims, prescriptions, referrals, health-data compliance certification (HIPAA, GDPR special-category handling beyond what the privacy settings already offer). Matt should treat any health use as a legal check before launch.
+
+###### Proposed data model
+
+All tables are created by idempotent migrations appended to `src/migrations/index.ts`, owned by one new feature key `bookings` in `src/features/registry.ts` and `src/features/featureTables.ts`, so a fresh install creates nothing until the feature is switched on (the lazy path in `src/features/provisionOnEnable.ts`). New collections and globals also go into `src/cms/db/schema`. Table names use the `eg_` prefix. Money tables are not added: payment stays in the shop's orders and transactions (kept for accounting per `PAYMENT_RECORD_BASES`). Booking rows themselves should be added to the keep-for-accounting list when they link to an order.
+
+Unit modes, set per booking type: `slot` (minutes), `day_range` (whole days, end date exclusive of return day or inclusive, to be fixed in design), `night_range` (check-in date to check-out date).
+
+| Table | Key columns | Purpose |
+|---|---|---|
+| `eg_booking_types` | id, title, slug, unit_mode, duration_minutes, min_units, max_units, price, currency, deposit_type (none, fixed, percent), deposit_value, capacity_per_slot, party_size_max, buffer_before, buffer_after, min_notice_minutes, max_advance_days, slot_step_minutes, approval (auto, manual), mode (in_person, video, phone), location_text, video_link_template, cancel_cutoff_hours, refund_policy (full, partial_percent, none), assignment (pick, round_robin_rotation, round_robin_least_booked, any), product_id (shop product, nullable), questions (JSON), active | One row per service, appointment kind, vehicle category or room type |
+| `eg_booking_resources` | id, title, kind (staff, room, vehicle, other), user_id (nullable), quantity (units of this resource, for room types), time_zone, location_text, color, active, ics_token | Who or what is booked |
+| `eg_booking_type_resources` | type_id, resource_id, price_override, duration_override, sort | Which resources offer which type |
+| `eg_availability_rules` | id, resource_id (or global), weekday (0..6), start_time, end_time, valid_from, valid_to | Weekly recurring hours, in the resource time zone |
+| `eg_availability_overrides` | id, resource_id, date, kind (open, closed), start_time, end_time, note | One-off open or closed days (holiday, extra Saturday) |
+| `eg_rate_rules` (Phase 3) | id, type_id, resource_id nullable, date_from, date_to, weekdays, price_per_unit, min_stay | Seasonal or weekday pricing, night or day rates |
+| `eg_bookings` | id, number, type_id, resource_id, status, start_at (UTC), end_at (UTC), local_date, time_zone, units, party_size, customer_name, customer_email, customer_phone, user_id (nullable), answers (JSON), price_total, currency, deposit_paid, order_id (nullable), video_link, location_text, manage_token_hash, source, notes, cancelled_at, cancel_reason, created_at | The booking record. Date columns are UTC instants plus the zone used. |
+| `eg_booking_holds` | id, type_id, resource_id, start_at, end_at, units, session_key, expires_at | Short reservation while a customer pays; swept by cron |
+| `eg_booking_reminders` | id, booking_id, kind (confirm, reminder, cancel, reschedule), due_at, sent_at, status | Idempotent reminder queue; one row per message |
+| `eg_booking_settings` (global) | enabled defaults: hold minutes (default 15), reminder offsets, sender text, privacy mode (hide detail in email), default time zone | Site-wide switches |
+
+Status lifecycle: `pending` (awaiting payment or approval) to `confirmed` to `completed`; side exits `cancelled` (by customer or staff), `no_show`, `expired` (hold lapsed), `rescheduled` (old row kept, linked to the new one). Indexes: `(resource_id, start_at, end_at)`, `(status, start_at)`, `(customer_email)`, unique `number`.
+
+Do not store bookings as form entries or RSVPs. The portal screen reads both sources and merges them.
+
+###### Slot engine rules
+
+The engine is a pure module (like `src/features/forms/slots.ts`): inputs in, slots out, no I/O, so the browser widget, the API and the submit path give one answer. Tests belong beside it, with a matrix of DST dates.
+
+1. Start from the resource's weekly rules, apply overrides for that date (closed removes, open adds), all in the resource time zone, then convert each window to UTC with `zonedToUtc` (`src/features/editScreens/timeZone.ts`).
+2. Cut the window into starts every `slot_step_minutes`; a start is valid only if `start + duration` fits in the window.
+3. Remove starts that clash with existing `confirmed` and `pending` bookings and live holds, extended by `buffer_before` and `buffer_after` on both sides.
+4. Remove starts earlier than now + `min_notice_minutes` and later than now + `max_advance_days`.
+5. Capacity: a start stays offered while booked units (party size or units) are below `capacity_per_slot` (slots) or `quantity` (rooms and vehicle categories, counted per night or per day).
+6. Day and night ranges: a range is valid only if every unit in it has availability and any minimum or maximum length and minimum stay is met; check-out day is not counted as a night.
+7. Assignment when the customer does not pick: `rotation` (the resource with the oldest last booking), `least_booked` (fewest bookings in the next 30 days, ties by rotation), `any` (first free by sort order), `pick` (customer chooses; widget lists only free resources for that time). "Anyone available" shows the union of free starts; the resource is chosen at confirm time, after the hold.
+8. Concurrency: D1 has no row locks across statements (same limit noted in `src/features/forms/slotGuard.ts`). Use an insert-then-verify scheme: insert a hold (or pending booking) first, then recount overlapping rows in the same request and keep it only if this row is within capacity by id order; otherwise delete it and tell the customer the time was just taken. Use a D1 `batch` for the insert and the final confirm so they apply together. Holds expire (default 15 minutes) and the cron job removes them. Two racers can both lose; that is the safe side.
+9. Time zones and DST: store UTC instants and the zone name; the widget shows times in the visitor's zone with the resource zone named; a window that crosses a DST change keeps its wall-clock hours (an hour is skipped or repeated, handled by `zonedToUtc`). Reminders are computed on UTC instants, quiet hours stay in the site zone.
+10. Per-request cost: slots are computed for one resource and one date range on demand, capped (about 60 days), rate limited like `form-slots` (`src/features/accounts/rateLimit.ts` pattern). The five-minute cron is the only background work.
+
+###### Payments
+
+- Free: a booking is `confirmed` at once (or `pending` if the type needs manual approval).
+- Paid: reuse the shop. Create an order for the booking so payment, tax, receipts, refunds and accounting records stay in one place (`src/features/ecommerce/collections/Orders.ts`, `Transactions.ts`, `server/orders.ts`, adapters in `payments/`). The booking is `pending` with a hold until the order is paid, then `confirmed` by the order hook (`server/orderHooks.ts`). If the hold expires first, the booking becomes `expired`.
+- Open point: orders reference products (`Orders.ts` line items; form pricing notes the same problem at `forms/pricing.ts` ~line 120). Two options: (a) each booking type owns a hidden service product and the order carries booking details in line meta; (b) allow an order line with no product. (a) is smaller and keeps stock and reports working, so it is the proposed default (`booking_types.product_id`). Needs a check that stock is not decremented for service products.
+- Deposit: charge `deposit_value` now, record the balance as due on arrival or by a second order (Phase 3). Full: charge the total.
+- Cancellation refunds follow the type's policy: before the cutoff, full refund (or store credit), after the cutoff, per the type (none, a percentage, or keep the deposit). Refund through `server/refunds.ts` so `order_refunds` and the payment provider stay in step. Staff can override.
+- Taxes, currencies and coupons come from the shop settings; multi-currency is Task 9 and quantity and wholesale pricing is Task 10, so booking prices must not hard-code AUD.
+
+###### Notifications
+
+- Confirmation (customer and, optionally, staff): sent through `sendEmail` with a new template "Booking confirmation", an ICS attachment from `src/features/editScreens/ics.ts`, and a private manage link (token, stored hashed) to cancel or reschedule without signing in.
+- Reminders: rows in `eg_booking_reminders` created at confirm time from the type's offsets (for example 24 hours and 2 hours). The cron sweep follows the pattern in `src/features/email/eventReminders.ts` (stamp then send, so a provider failure is not retried in a loop) and the quiet hours in `scheduledEmails.ts`.
+- Cancellation and reschedule mail, with an updated ICS (`METHOD:CANCEL`, `SEQUENCE`); the ICS builder needs those two fields added.
+- Staff notice on new booking: ties into Task 18 (notifications on actions); do not build a second mechanism.
+- GP privacy mode (site setting, default on for clinic business type): subject and body show clinic name, date, time and a link only; no appointment type name, no answers, no reason. Email log rows store the same reduced text. Webhook payloads omit answers unless the admin opts in.
+- SMS reminders: out of scope for now; Twilio exists (`src/features/sms/twilio.ts`) and is a possible later channel.
+- Unsubscribe rules: booking mail is transactional and always sent (consistent with `src/app/(engage)/api/email-unsubscribe/route.ts` text "Emails about orders, bookings and sign-in still arrive"); reminders may be opt-out for marketing but not for the booking itself.
+
+###### Calendar sync
+
+- Phase 4a, no OAuth: a read-only ICS feed per resource at an unguessable token URL (`ics_token`), plus the per-booking ICS attachment. Customers and staff subscribe in Google, Apple or Outlook. Delay of a few hours is normal for subscribed feeds. Privacy: feeds show "Booked" for GP resources unless the admin opts in.
+- Phase 4b, busy-time read: the Google connection (`src/features/google/*`) would add a calendar read scope so staff Google events block slots. Needs re-consent and a Google OAuth app verification step, which is a vendor process Matt has to run.
+- Phase 4c, two-way: write bookings to the staff calendar (`calendar.events` scope), update on reschedule and cancel, optional Meet link. Needs a per-resource token store, refresh handling, and a retry queue on the five-minute cron.
+- Out of scope: Outlook and Apple two-way sync, CalDAV.
+
+###### Admin UI and public UI
+
+Admin (a new "Bookings" group, shown only when the feature is on):
+- Booking types: editor for the fields in the table above, with a plain "preview next 14 days of slots" panel.
+- Resources: list, hours editor (weekly grid plus date overrides, holidays), which types each offers, ICS link.
+- Calendar view: day, week and month per resource (the Events calendar at `src/views/events/EventsCalendarView.tsx` is a starting point), click a gap to add a booking by hand, drag to reschedule (drag could be Phase 2).
+- Bookings list: filters by status, date, resource, type, with CSV export, mark completed or no-show, cancel with or without refund, resend email. Reuse the ListView patterns in `src/admin/views/ListView.tsx` and the results tabs in `src/admin/views/results/`.
+- Check-in style "today" list (the events check-in at `src/admin/views/results/EventCheckIn.tsx` is the model).
+- Settings page: hold minutes, reminder offsets, privacy mode, default time zone.
+- Roles: new permission keys in `src/features/roles/permissions.ts` (manage types, manage all bookings, manage own bookings for a staff user linked to a resource).
+
+Public:
+- Booking widget as a visual-editor element (registered like the elements in `src/components/blocks/elements/`): steps type, resource or "anyone", date and time (or range), details, pay, confirm. Also an embeddable page `/book/[slug]`, in the same spirit as the form embeds (`src/features/forms/embedScript.ts`).
+- Manage page by private link: view, cancel, reschedule within rules.
+- Account portal "My bookings": `src/features/accounts/bookings.ts` gains the new source; copy changes from "event bookings" to "bookings" in all dictionaries (en and the translated files under `src/features/uiStrings/dictionaries/`).
+- Translations: all new strings go through `uiStrings`; mobile at 375 px is a gate (as with the portal).
+
+###### Questionnaire hook (Task 5)
+
+Add two questions to the fresh-install questionnaire (`docs/remaining-work.md` Task 5), and show the suggestions before applying:
+
+1. "Do you take bookings?" with answers: No; Appointments (by the hour); Rentals by the day; Nightly stays.
+2. "What kind of business?" with answers: Hairdresser or salon; Clinic or GP; Car rental; Hotel or B&B; Other.
+
+| Answer | Pre-ticks and presets |
+|---|---|
+| No bookings | Bookings off. Events stay governed by the events question. |
+| Appointments | Bookings on, Email on, Accounts on; Shop on only if the owner chose paid services; unit mode `slot`. |
+| Rentals by the day | Bookings on, Shop on, Accounts on; unit mode `day_range`; asks for pickup and return locations. |
+| Nightly stays | Bookings on, Shop on, Accounts on; unit mode `night_range`; check-in and check-out times. |
+| Hairdresser or salon | Staff as resources, round robin "any", buffer 10 minutes, deposit suggested, cancel cutoff 24 hours. |
+| Clinic or GP | Practitioners as resources, privacy mode on, free by default, video or in person, cancel cutoff 24 hours, no-show tracking. |
+| Car rental | Vehicle categories as resources with quantity, deposit suggested, pickup and return locations. |
+| Hotel or B&B | Room types with quantity, minimum stay field, deposit suggested. |
+| Other | Only the bookings answer applies; nothing else preset. |
+
+Skipping keeps today's defaults (bookings off). The answers only tick boxes in Settings > General > Features and set starter values; the starter booking type and resource are created by the same starter step that runs when a feature is switched on (`src/features/starters.ts`). Everything stays editable later.
+
+###### Phased plan
+
+Each phase ships behind the `bookings` feature switch, with migrations first, the two fresh-install specs extended (`tests/int/internal-migrate-fresh-install.int.spec.ts` and `tests/int/fresh-install-schema-coverage.int.spec.ts`, each run twice), `tsc`, the build, an independent review, and a live check entry in Live checks, per the process in `docs/remaining-work.md`.
+
+###### Phase 1: appointment MVP (effort L)
+Deliverables:
+- Feature `bookings`; tables `booking_types`, `booking_resources`, `availability_rules`, `availability_overrides`, `bookings`, `booking_holds`, `booking_reminders`, `booking_settings`; lazy provisioning.
+- One or a few resources, no assignment logic beyond "pick" and "only one"; weekly hours and date overrides; time slot mode; duration, price, notice, max advance, capacity 1.
+- Free and paid through a shop order (hidden service product), hold with expiry, confirm on payment.
+- Confirmation email with ICS and manage link; one reminder email; cancel by link (refund by policy: full or none).
+- Public widget element and `/book/[slug]`; admin booking types, resource hours, bookings list; portal "My bookings" shows bookings and RSVPs.
+- Cron jobs `booking-holds` and `booking-reminders` in `src/features/cron/registry.ts`; webhook events for made, cancelled.
+- Questionnaire answers wired (if Task 5 is built by then; otherwise the hook is documented only).
+
+Acceptance checks:
+- Fresh DB: no booking tables until the feature is switched on; after switch-on, a second migrate run changes nothing.
+- Two simultaneous requests for the last slot: exactly one wins, the other sees "just taken" (test with the insert-then-verify scheme).
+- A slot across a DST change in `Australia/Sydney` and one in `Europe/London` shows correct local times and the correct UTC instants.
+- Paid booking: order paid gives `confirmed`; unpaid for the hold period gives `expired` and the slot reopens.
+- Reminder sent once, even if the cron runs twice; held during quiet hours.
+- 375 px width, 16 px gutter, no sideways scroll on the widget and manage page.
+
+Risks: orders without a natural product (decision needed); D1 concurrency (mitigated, not eliminated); migration offsets in specs move with each new migration; engine file size limits noted in the Lessons (`src/engage-types.ts` not to be edited; cast locally).
+
+###### Phase 2: staff, rules, capacity and reschedule (effort L)
+Deliverables:
+- Multiple resources per type; round robin (rotation, least booked), "anyone available", "pick the person".
+- Buffers before and after, per-type notice and cancellation rules with refund percentages, capacity above 1 and party size, reschedule (customer by link, staff by drag), no-show status.
+- Cancellation and reschedule emails with updated ICS (`METHOD:CANCEL`, `SEQUENCE`); several reminder offsets.
+- Admin calendar view per resource and combined; staff user linked to a resource sees own bookings only.
+- Add-ons that extend duration and price (hairdresser).
+
+Acceptance checks: round robin spreads 20 bookings across three staff within one booking of even; buffers block adjacent starts; capacity 4 accepts four single guests or one party of four; refund amounts match policy at the cutoff minute (before and after); reschedule keeps the order and does not double charge.
+
+Risks: engine complexity grows (property-style tests recommended); staff permission keys touch `src/features/roles/permissions.ts`; reschedule of a paid booking with a price change (decision needed).
+
+###### Phase 3: day and night ranges, rates, deposits (effort L)
+Deliverables:
+- `day_range` and `night_range` modes; inventory per night or day (`quantity`); minimum and maximum length, minimum stay, check-in and check-out times.
+- `rate_rules` (seasons, weekdays, weekend); deposit or balance due later (second order or pay on arrival marked by staff).
+- Pickup and return locations (rentals); arrivals and departures list; availability calendar grid for rooms and vehicles.
+- Block-out dates (maintenance) as overrides.
+
+Acceptance checks: a 3-night stay over a rate boundary prices each night correctly; check-out day is free for the next guest; a minimum stay of 2 refuses a 1-night gap; quantity 3 accepts a fourth overlapping request only after one cancels; deposit plus balance sum to the quote.
+
+Risks: pricing edge cases (tax, currency rounding, Task 9 and Task 10 interplay); hotels expect channel managers (out of scope, set expectations); vehicle category versus specific vehicle assignment.
+
+###### Phase 4: calendar sync and feeds (effort M for 4a, L for 4b and 4c)
+Deliverables:
+- 4a: per-resource ICS feed with token, regenerate token action, privacy option; per-booking "Add to calendar" links.
+- 4b: Google Calendar busy-time read (blocks slots), with the new scope on the Google connection.
+- 4c: Google Calendar write (create, update, delete events), optional Meet link, retry queue.
+
+Acceptance checks: a feed subscribed in Google shows a new booking within the provider's refresh time and hides it after cancel; a staff event in Google blocks the slot within one cron tick; a reschedule updates the Google event, not a duplicate.
+
+Risks: Google OAuth verification and re-consent for sensitive scopes (vendor process, Matt's own console, can take weeks); refresh token expiry for apps in testing mode; tokens need encrypted storage (`ENGAGE_SECRET`); the new scope forces existing connected sites to reconnect.
+
+###### Decisions for Matt
+
+1. Which phase first? Proposed: Phase 1, then Phase 2 before Phase 3 unless a rental or hotel client is waiting.
+2. Staff and resources: separate resource rows with an optional link to a user (proposed), or staff must be users?
+3. Orders for bookings: hidden service product per booking type (proposed), or allow order lines without a product?
+4. Default refund policy: full refund before a 24-hour cutoff and none after (proposed), or partial? Refund to the card or to store credit by default?
+5. Time zone: one zone per site (as today, `Australia/Sydney` default), or per resource (proposed, needed for multi-region and franchise sites)?
+6. Manual approval: should any type need staff approval before it is confirmed (proposed: optional per type, default auto)?
+7. Hold length while paying: 15 minutes (proposed)?
+8. Customers without an account: allow guest bookings with a private manage link (proposed), or require sign-in?
+9. GP use: do you want to target clinics at all? If yes, privacy mode defaults on, and a legal and privacy review is needed before launch.
+10. Reminder channels: email only for now (proposed), or add SMS through Twilio in Phase 2?
+11. Rentals and hotels: accept the stated out-of-scope list (no channel manager, no damage or insurance handling)?
+12. Google Calendar: ICS feeds only first (proposed), and if two-way is wanted, are you willing to run the Google OAuth verification?
+13. Events: keep Events and RSVPs as they are and add Bookings beside them (proposed), or later fold RSVPs into bookings? Task 11 (selling events) overlaps and should be decided at the same time.
+14. Task 18 (notifications on actions) and Task 17 (cron screen): build the booking notices on those if they land first, or ship Phase 1 with its own simple templates?
+- **Decision waiting on Matt:** Quote emails baseline (12c, PR #460): the `eg_email_templates` columns in `public/baseline/fresh-baseline.json` were hand-edited because the fresh-baseline-parity spec cannot run in Claude's container. Run it once with `REGENERATE_BASELINE=1` on a machine where it works and commit any diff (or tell Claude to). Until then a fresh install may miss the 24 quote email columns, so check a new-account deploy: `SELECT quote_sent_subject FROM eg_email_templates` must work.
+- **Decision waiting on Matt:** Bookings (closed Task 6, the Bookings plan appendix below): pick the first phase (proposed Phase 1, appointments) and answer the 14 questions at the end of the plan; it then becomes a numbered task.
 
 ### Task 32. Memberships and shipping follow-ups (new, 14 Nov 2026) (was Task 13)
 - [ ] 13a leftovers: dunning for shop subscriptions (`ecom/subscriptions`, only members are covered), and the text in the other twelve languages. Not run against live Stripe, so retry and portal links need the Live checks check (use a Stripe test clock).
@@ -304,6 +765,7 @@ Built: a feature section `taskboard` (Site Settings, Features; off by default) a
 - **19c Backups to FTP or SFTP (decided 16 Nov 2026: option (c), keep R2 and S3, explain).** A Worker can only make HTTP requests, and FTP and SFTP need raw TCP, so neither can be spoken from here; a relay would be one more thing for the customer to run and a silent failure point for backups. The screen already refuses FTP and SFTP with a plain reason (`src/features/backups/destinations/index.ts`) instead of pretending to back up, and R2 and S3 keep their test button and restore drill. Nothing was built for this item; the reasoning is in the code comment.
 - [ ] 14c leftovers: WebDAV (Nextcloud, many hosts) needs a new store with its own upload and listing; skipped. The S3 destination now takes a custom endpoint (done, see done file).
 - **19d Decisions (recorded 16 Nov 2026, waiting for Matt to confirm).** Third-party image optimisers (ShortPixel, Imagify) are not planned because Cloudflare Images already converts and compresses. KV is not used: the Cache API is (`src/features/speed/purge.ts`, `edgeCache.ts`). If Matt wants a KV-backed cache, add a binding to `wrangler.jsonc` and the README. No code change.
+- **Decision waiting on Matt:** AI tagging (14b, built 17 Nov 2026): should the model ever be allowed to create new tags, or only pick from the ones you made? Built as pick-only (Claude recommends keeping it, so the tag tree stays yours). Also: should tag on upload (14d) be on for every new picture, or only into chosen folders?
 
 ### Task 34. Accessibility: contrast and size for every state (new, 14 Nov 2026) (was Task 15)
 - [ ] 15b leftovers: the check runs on representative controls, not whole live screens (a full-page crawl needs the running app and seed data; add it to the e2e suite when that runs in CI), icon-only buttons and the visual editor's panels, and inline links inside text are exempt by the WCAG rule.
@@ -316,6 +778,8 @@ Built: a feature section `taskboard` (Site Settings, Features; off by default) a
 - [ ] 17f leftovers: the agency role that sees several client sites with one sign-in (accounts can already be limited per domain with Allowed domains; an agency account across separate installs needs a decision), and attaching the PDF to the emailed report (the email sender has no attachments yet; today the email links to it).
 - **22i Zapier and connectors, webhook export and import built (16 Nov 2026).** On the Webhooks screen, Export settings downloads a JSON file with each webhook's settings (no signing secret, ids or delivery log), and Import settings reads one back: invalid rows are skipped and named, the 20 webhook limit holds, every imported webhook gets a fresh signing secret and arrives switched off (rotate it to see the secret, then switch on). English only. Code: `src/features/webhooks/transfer.ts`, `actions.ts` (`exportWebhooksAction`, `importWebhooksAction`), `components/WebhookTransfer.tsx`, `tests/int/webhook-transfer.int.spec.ts`. No migration.
 - [ ] 17i leftovers: Zapier app (triggers from outgoing webhooks, actions from the API with API keys; needs a Zapier developer account), industry XML feed hooks (car rental, property), FMCG and food service connectors such as Uber Eats (decision on which).
+- **Decision waiting on Matt:** Connect to own database (17e): Claude recommends staying on D1 (a Hyperdrive link to Postgres or MySQL adds a second database to run, back up and secure for read-only views only). Say yes to build the Hyperdrive read-only connection, or leave it as is.
+- **Decision waiting on Matt:** Zapier app (17i leftovers): needs a Zapier developer account from you before it can be built. Reply when you have one, or say to skip it.
 
 ### Task 36. Authentication: methods, accounts and one settings screen (new, 14 Nov 2026) (was Task 18)
 Same conventions as Tasks 11 to 17 (off by default, migrations plus fresh-install specs, Shine, thirteen languages, WCAG AA, a Live checks live check).
@@ -325,6 +789,10 @@ Same conventions as Tasks 11 to 17 (off by default, migrations plus fresh-instal
 - [ ] 18l leftovers: an SMS row in the matrix once SMS sign-in exists; password per sign-in place (not blockable today so a site cannot lock itself out; would need an env recovery path first); a separate account sign-in path for members versus customers (one account sign-in covers both today); the social start returns a plain 404 for a blocked provider instead of naming it.
 - [ ] 18j leftovers: use the access helper (`src/features/organizations/access.ts`) in the shop orders list, form submissions and approval requests once each has organisation and team columns (Task 7 and the later approval items). The taskboard is done (see `docs/remaining-work-done.md`).
 - [ ] **18h2 Account switcher follow-ups (found 17 Nov 2026; the switcher itself is built).** (1) A server-flow test for `switchTo` in `src/features/accounts/switcher.ts` (parks the account being left, drops a revoked target, refuses an admin target); only the cookie packing is tested today because the rest needs a mocked `cookies()`. (2) After 'Add another account' the sign-in screen lists the parked accounts, but a failed sign-in leaves the person signed out of the account they parked; consider a 'Back to <email>' choice there. (3) The switcher is not on admin screens by design (one admin session at a time). Done when: the test exists and passes. Code: `src/features/accounts/switcher.ts`, `switcherActions.ts`, `components/AccountSwitcher.tsx`.
+
+#### Reference: Authentication audit (14 Nov 2026)
+Better Auth is not used (not in `package.json`); sign-in is native, and the decision is to stay native and match Better Auth's feature set (Matt's earlier rule: a one-to-one equivalent). Built: two-factor (QR enrolment, confirm, hashed backup codes, email code, trusted device 30 days, require per role); sessions list with log out others; email verification and reset; password policy with Have I Been Pwned check; Google, GitHub, Apple, Discord, Microsoft and Facebook sign-in with per-provider keys and account linking; magic link and email code; passkeys; per-user API keys with scopes and rate limits; organisations, teams, invitations and per-organisation roles; impersonation with banner; D1-backed rate limiter and brute-force lockout; audit log with filters and retention; custom admin URL; Turnstile and reCAPTCHA on forms. Tasks 18 to 20 hold the gaps. Overlap rule: the Wordfence and Solid style items live in Task 19 only.
+- **Decision waiting on Matt:** Pending two-step token and social sign-in sessions: sessions made by social sign-in do not record an approximate country yet. Say if you want it added (small, no migration).
 
 ### Task 37. Security protections and admin tools (new, 14 Nov 2026) (was Task 19)
 Covers the Wordfence and Solid style list too (custom login URL, IP lists, country blocking, login emails, policy, sessions, audit log, CSP builder), so nothing is repeated elsewhere. Same conventions as above.
@@ -337,6 +805,8 @@ Covers the Wordfence and Solid style list too (custom login URL, IP lists, count
 - [ ] 19i leftovers: batching and retry rules specific to the drain (it uses the normal webhook retries), and a log endpoint that is not a webhook. Built part is in `docs/remaining-work-done.md`.
 - [ ] 19j leftovers: (1) **Script nonces and the Reporting API are written but not merged.** Branch `claude/csp-nonces-v2` on the repo holds one commit (`src/features/security/cspBuilder.ts` `makeNonce`, `applyNonce`, `builderHeaders` with report-to and `Reporting-Endpoints`; `headers.ts` and `requestGuard.ts` pass a per-response nonce, forwarded as the `x-nonce` request header and the request policy header; `src/features/security/nonce.ts` read by `SpeedHead` and `ABTracker`; a checkbox in the builder panel; 25 unit tests in `tests/int/csp-builder.int.spec.ts` that passed). Still to do: rebase on main (its docs hunks conflict, take main's and re-add the follow-up lines), run the full OpenNext build and the lint, open the PR, merge, then run the live check below. No migration, so no baseline regeneration. Done when: Report only with the nonce box ticked sends a script-src with a fresh nonce and no `'unsafe-inline'`, and `Reporting-Endpoints` is present. (2) Per-path policies. (3) A retention setting for the violation log. Built part is in `docs/remaining-work-done.md`.
 - [ ] 19k leftovers: a bot score on the other protected places (checkout, offline orders, back-in-stock, RSVP, newsletter) once 21a gives them modes, an admin count of flagged visitors, rules on Cloudflare's other signals (JA3/JA4, verified-bot category), and a per-form override of the Bot detection mode. Built part is in `docs/remaining-work-done.md`; the live check is in Live checks.
+- **Decision waiting on Matt:** CSP builder (19j): when the nonce branch is merged and Report only is clean, do you want Enforce on for public pages? It needs every pasted tag snippet and custom code block to keep working, so the proposal is to run Report only for a week, then decide. Also: should the default policy itself stop using `'unsafe-inline'` for styles (the visual editor and per-block design CSS depend on it today)? Proposal: no, leave styles as they are.
+- **Decision waiting on Matt:** Security check to run: the preferences collection declares no access rules; confirm a signed-in user cannot read or change another user's preference rows through `/api/preferences` (suggested as a separate task on 8 Nov).
 
 ### Task 38. Enterprise sign-in and AI agent access (later slice, new, 14 Nov 2026) (was Task 20)
 - [ ] 20a leftovers: role mapping from provider group claims, enforcing single sign-on for magic link, email code and the social buttons too (today only password sign-in is refused), sign-out from the provider, SAML request signing and encrypted assertions (refused today), and IdP-initiated SAML sign-in (refused on purpose). Done parts are in `docs/remaining-work-done.md`.
@@ -374,506 +844,8 @@ Priority (Matt, 15 Nov): the main goal is that any site owner can run affiliates
 - [ ] 26d leftovers: a cloak on/off switch (Shop settings has no spare columns, so cloaking is always on), a per-product disclosure override.
 
 ### Task 44. Live checks (Matt, with his own accounts)
-Matt (22 Nov 2026): live checks are now a task of their own, last in the order. The list stays in the final section of this file, `## Live checks`; work through it with Matt, tick items checked on the live site, delete each once it passes. Add new items there when a built task only needs a live check.
+Matt (22 Nov 2026): live checks are a task of their own, last in the order. Tick an item when checked on the live site; delete it once it passes. Add new items here when a built task only needs a live check.
 
-## Reference (audits, models and process)
-### Notes audit (14 Nov 2026): what Matt's notes list already has
-Audited about 130 note lines against the code. Already built (details in `docs/remaining-work-done.md` and the live checks in Live checks): PayPal checkout and webhook; Australia Post, DHL, UPS, FedEx, ShipStation and Sendle rates and labels; Resend, SES, Mailgun, Postmark, SendGrid, Cloudflare Email, Brevo and Mailchimp Transactional (as Mandrill) with test buttons and one fallback; visual email designer with merge tags; members and tiers, courses sold through a product; grouped, external, gift card, bundle, variable, downloadable and virtual products; add-ons; subscriptions; SKU and GTIN; stock, backorders, low stock alerts; scheduled sale price; shipping zones, free over, table rates, classes; tax and GST; coupons; cross-sells in the cart; upsells and recommendations; wishlist; back in stock; min and max quantity; name your price; pre-orders; variation image picker; unit-aware weight and dimensions; price tiers and pricing rules; currency switcher with day rates and default currency; Google Merchant and Meta feeds; CSV import and export; line-item refunds; invoices and packing slips; abandoned cart emails; shop reports; checkout field editor; reviews; media folders, upload of pdf, docx and video, convert to WebP or AVIF, click to optimise, Cloudflare Images and Stream; Speed toggles; scheduled and manual backups to R2 and S3; PageSpeed lab report; axe and contrast tests for hover and resting states; ads (placements, ads.txt); custom fields (ACF style); popup sections; offcanvas element; post duplicate; categories, tags, author archives, related posts; structured data (Organization, WebSite, Breadcrumb, FAQ, Article, Product, Image); SEO analysis with traffic lights and internal link suggestions; language switcher element, translate mode, translations table; forms in the visual editor with address search; Google login, 2FA, passkeys, social login; profile editing; portal search and site search; admin noindex; Microsoft Clarity; API builder with roles and categories; XML, CSV and JSON feeds; Unused tables panel; Shine and Spark; features default off for new sections.
-Reminders in the notes, read as: "Look at em dash" = Task 17 (remove em dashes from user-facing text, add a lint check); "lovable features" = Lovable-style prompt-to-site building, covered by the site planner in Task 17; "Put this in after done the other items" = the new Tasks 11 to 17 sit after the existing feature tasks and before the speed task. Duplicate lines (bulk page creation, Google sign-in, PayPal, demos) are merged into one task each.
-
-Format of Tasks 11 to 17: each item has Scope (what to build), Done when (acceptance), Code (where it builds on what exists). Every item: off by default for a new install (registered in `src/features/registry.ts`), tables created by an idempotent migration plus the two fresh-install specs, Shine classes only, text in all thirteen languages, WCAG AA in light and dark, a Live checks live-check line when done. Paths are under `src/features/ecommerce` (written `ecom/`) unless stated.
-
-### Authentication audit (14 Nov 2026): what exists
-Better Auth is not used (not in `package.json`); sign-in is native, and the decision is to stay native and match Better Auth's feature set (Matt's earlier rule: a one-to-one equivalent). Built: two-factor (QR enrolment, confirm, hashed backup codes, email code, trusted device 30 days, require per role); sessions list with log out others; email verification and reset; password policy with Have I Been Pwned check; Google, GitHub, Apple, Discord, Microsoft and Facebook sign-in with per-provider keys and account linking; magic link and email code; passkeys; per-user API keys with scopes and rate limits; organisations, teams, invitations and per-organisation roles; impersonation with banner; D1-backed rate limiter and brute-force lockout; audit log with filters and retention; custom admin URL; Turnstile and reCAPTCHA on forms. Tasks 18 to 20 hold the gaps. Overlap rule: the Wordfence and Solid style items live in Task 19 only.
-
-### Visual builder audit (15 Nov 2026): what exists
-Audited the 16-section widget catalogue, the Elementor settings inventory, editor mechanics and the Phase 0 to 5 notes against `src/lib/elements/*Defs.ts`, `src/views/visualEditor`, `src/lib/design` and the docs. Matt's rule: the current builder stays, Elementor is the reference for features (not the atomic widgets, only their speed and CSS output: scoped, minimal CSS, no inline style for responsive or stateful values). Decisions on earlier skip lists (15 Nov, updated): SoundCloud, Facebook widgets, Video Playlist and Lottie are included (the first three are built); PayPal and Stripe buttons are included as a Pay button element (Task 29); Cache Settings stays skipped; Display Conditions are built in part (visibility rules by sign-in, role, URL, schedule, weekday, time and language, live check in Live checks).
-Built already (not repeated below): about 150 elements including heading, text editor, image with lightbox, button (`link`), icon, divider, video, map, alert, html and embed-code, anchor, social icons, star rating, code highlight, back to top; section display modes columns, tabs, accordion, carousel, grid, flex, modal, stack, horizontal scroll and sticky steps; animated headline and text effects, ticker, table of contents, quote, reading progress; galleries, carousel, comparison, hotspots, image accordion, image box, audio, video playlist, draw line, logo strip; flip box, content switcher, tooltip; icon box, team member, testimonial, counter, count-up, countdown, timeline, price list, table, pagination, author box; call to action, pricing table, coupon code, ad, sticky bar; reviews wall with schema; charts (bar, line, pie, radar, polar, data view), progress bar, circle progress; forms with about 25 field types, steps, presets for login, register, reset and newsletter; nav menu with mega and off-canvas styles, breadcrumbs, search with live results, language switcher; site logo, title, post title, excerpt, featured image, meta, navigation, share buttons, popup display; post list, archive grid, loop grid, archive filter, repeater; product price, rating, add to cart, cart link; social feed (Instagram, Facebook Page, Pinterest, TikTok, YouTube, RSS); embeds including Facebook, SoundCloud, Typeform, Lottie (iframe); page effects (cursor, magnetic, tilt, smooth scroll); design panel with responsive base, tablet and mobile values, units, hover states, linked sides, typography, shadows, border, radius, transform, mask, blend, z-index, custom attributes, custom CSS, parallax, particles, Ken Burns, morph, glass, sticky, shape dividers (15); undo and redo, history, clipboard across documents, navigator, context menu, save as template, shortcuts, draft recovery, device widths (tablet 820, mobile 390, desktop full), real front-end CSS in the canvas, element library side panel with search, Elements and Settings tabs, Blocks and Templates tabs; 15 site template kinds; custom field groups with `{{field:name}}`.
-**Principle (Matt, 15 Nov 2026): effects and variants are options on the base block, not separate widgets.** A card, hover card, flip card, unfold card, interactive card, ticket, number box or promo box is an example (preset) of the card or box block with Spark effects and design options switched on, not its own element. Before adding any element in Tasks 28 and 29: (1) check whether an existing block already covers it with an option (ask: is it markup that is genuinely new, new behaviour, or new data? Catalogue principle above); (2) check Spark (`asticore/spark`, `reference/references.json`): it already ships carousel, compare, countdown, counter, copy, confetti, marquee, scrollspy, toast, tooltip, totop, popup, hscroll, kenburns, morph, parallax, particles, globe, odometer, typed text, reveal, skeleton, lightbox, lazy images, flip, tilt, spotlight, glare, charts and diagrams, so those become options in the Spark picker (Task 2) and not code here; Spark has no Lottie player; (3) only if both fail add a new element, and put reusable looks in Examples (Task 33), never as extra widgets. Each item below says Option, Example or Element accordingly.
-Format of Tasks 28 to 32 as before (Scope, Done when, Code). One style system, no popup for adding elements, every new element has a canvas preview, translated labels and tests, off by default where it needs a feature section.
-
-## Visual editor reference (moved from the closed visual-editor doc, 23 Oct 2026)
-
-Editor code src/views/visualEditor/ and src/views/VisualEditor.tsx; renderers src/components/blocks/; element defs src/lib/elements/; AI builder src/features/ai/builder*.ts and src/app/(engage)/api/admin-ai-builder/route.ts.
-
-## Design model: stored values inventory (step 4, 31 Oct 2026)
-
-Status: steps 1 to 3 merged (#165, #166, #168). Step 4 data side merged (#177). Step 4c (typed emitter removal) merged as PR #183.
-
-Reads go through readFlatDesign and upgradeDesign (src/lib/design). Writes go through toStoredDesign (src/lib/design/storeDesign.ts) and the write hooks listed here. Migration: `20270126_100000_design_grouped` (src/migrations/20270126_100000_design_grouped.ts, registered last), helper src/lib/design/storedGrouped.ts.
-
-Where designs are stored:
-- Block `design` column (JSON text) on every block table: pages, posts, products, page_templates, site_templates, reusable_sections, blog_settings, faq_settings, shop_settings, lessons, and their `_v` version twins. Block types that carry it (src/blocks/styleField.ts): section, element, loop, hero, faq, table_of_contents, event_grid, gallery, cta_banner, rich_text, image_text, product_grid, reusable_section, form. The migration finds these tables by their `design` column, so a new block table is covered without a list.
-- Section `columns` JSON on every `*_blocks_section` table (and `_v`): each column has `design`, each nested block has `design`, sections nest.
-- Forms: eg_forms.layout and eg_forms.published_layout (JSON, same column tree as sections).
-- Not BlockStyle, not migrated: email designs (`*Design` JSON on the email-templates global, EmailBlock model in src/features/email/design); theme tokens (theming global, src/features/themeStyles); site fonts (site settings customFonts).
-- Inputs that never store a design themselves: starters (src/features/siteTemplates/starters.ts), style presets and element defs in code, the legacy converter, the clipboard, template libraries and repos (fetched from GitHub), and the AI builder. Their output is stored through normal writes, so the write hooks group it on save; readers accept flat values too.
-
-Write hooks (run on every save through the CMS): blockStyleField (src/blocks/styleField.ts), section `columns` (src/blocks/Section.ts), eg_forms layout and publishedLayout (src/features/forms/collections/Forms.ts). Each converts only v1 flat values that carry a grouped key (groupStoredV1Design); typed values and flat values with no grouped key are stored as they are.
-
-Migration rules: v1 flat (no schemaVersion, or 1) with at least one grouped key becomes {schemaVersion: 2, groups} via upgradeV1; the migration refuses any row whose flat read-back changes; schemaVersion 2 values are never rewritten; a second run changes nothing (tests/int/design-grouped-migration.int.spec.ts).
-
-Typed v2 (schemaVersion 2, no groups): no code path in src writes it (git history: only src/lib/design and tests mention it). The migration leaves any such value untouched, so it still renders through the typed emitter. Not checked against production D1 (no database access from the repo). Check before removing the typed path: count rows in the design tables and eg_forms where the JSON has "schemaVersion":2 and no "groups".
-
-Step 4 (c), typed emitter: DONE (PR #183, branch feat/design-remove-typed-emitter). Production D1 had zero typed-v2 rows (schemaVersion 2, no groups). Removed the css*.ts, cascade.ts, customCss.ts and sanitize.ts modules and the design-v2-* int specs; withElementDesign and the design/scopeId arguments of renderElement are gone. A stray typed value reads as {} (readFlatDesign, asBlockStyle).
-
-Step-3 rows with the applied dot and per-setting Reset (PR, 31 Oct): toggles (text transform, font style, decoration), ranges (background effect intensity, particles count, parallax strength, glass blur, divider speed, typography ranges), every FX slider (FxRange), selects for slideshow transition, background effect, particles, parallax direction, position, blend mode, mask, blob speed, reveal, hover effect, pointer effect, Ken Burns, animated border, and the custom rows (text, image, video loop, custom CSS, visibility sign-in). Left without a dot on purpose: the "Link all sides" checkbox (a UI helper, not a stored setting).
-
-Column write path: section layout fields and the navigator hide toggle now store grouped values (FieldPanel, NavigatorPanel). ColumnPanel already did (9e8aa8c).
-
-## Catalogue principle (decided 18 Oct)
-One HTML primitive = one element. Variations are options on a base element, Design effects, section display modes, or templates built from base elements. Add a new widget only when it needs new markup, behaviour or data. Legacy types (accordion, tabs, flip-box, spacer, back-to-top and similar) are hidden but still render saved pages.
-
-Skipped by default: PayPal/Stripe buttons, WebGL.
-
-- Server-only elements (read data) use the SITE_ELEMENT_TYPES path (`wave38Defs.ts`, `SiteElement` in Wave38Elements.tsx), never `ELEMENT_COMPONENTS`. `loop` uses this.
-- Published pages are edge cached and identical for all visitors: per-visitor logic (login, roles, query rules, consent) runs in the browser.
-- Naming: nothing authored uses the old engine vendor name; engine only via `src/engine/`; export format `engage-template`. Migrations are additive and idempotent. Server components never call functions exported from 'use client' files.
-
-## Process for every task
-
-**Reply format (Matt, 31 Oct 2026):** every response to Matt has three bullet-point sections: **Done** (what was done), **Need from you** (what Matt must provide or decide), **Suggested next** (what to do next). Keep it short; details go in this document.
-
-**Push and token rule (Matt, 9 Nov 2026):** after finishing the work, push all merges to GitHub in one go and avoid GitHub Actions wherever possible (they cost extra and the limit was hit). Use Haiku subagents as much as possible to save tokens.
-
-**GitHub budget rule (Matt, 9 Nov 2026): one push per request.** Every push and every pull request runs GitHub Actions, so do all the work for one request locally (agents in worktrees, merged locally, all local checks green: tsc, the related specs, lint, and the build when it matters), then push ONCE and open ONE pull request. Never push work in progress, per-agent branches, per-file commits, fix-up commits after CI or "kick CI" commits. Run the full checks locally before the single push so CI passes first time. If CI still fails, batch every fix into one follow-up push. Do not use Codespaces, Git LFS, GitHub Packages or paid AI credit SKUs. Keep each live re-check to one deploy per request.
-
-0. Model routing to save tokens (your instruction 16 Oct): the cheapest model that can do the job. Haiku (Haiku 4.5) for reading and locating code, pushing files, single-file mechanical edits, writing tests from a clear spec and doc updates; Sonnet only for multi-file feature builds and when Haiku is rate-limited; the main session (Opus) plans, writes briefs, reviews diffs and decides. Briefs name files and ownership so agents never edit the same file in parallel.
-1. Scope lock with an acceptance checklist; read the code first (haiku Explore agents).
-2. Slices, migrations first (idempotent, appended to `src/migrations/index.ts`); new collections or globals also go into `src/cms/db/schema`.
-3. Tests with the code, including `tests/int/internal-migrate-fresh-install.int.spec.ts` (extend for every new table or column, run twice) and `tests/int/fresh-install-schema-coverage.int.spec.ts` (empty DB through `runInternalMigrate`, every schema table and column must exist, second run changes nothing). Not done unless both pass.
-4. Gates: `pnpm exec tsc --noEmit`, related specs plus the structural smoke set before pushing, fresh-install specs alone when a migration changed, `pnpm run build` (catches ESLint errors that fail Workers Builds); the full suite in chunks with a timeout each, in the background after pushing (a single full run hangs on `version-delete-real-engine`).
-5. Push once per request (see the GitHub budget rule above): merge all agent work locally, run the checks, then a single `git push` and a single pull request; after merge, `git fetch` and confirm `origin/main` has every file.
-6. Independent review agent on the diff; fix real findings, add a test per fix.
-7. Live check after the deploy (wait for `workers_list` modified_on after the last commit; D1 `SELECT name FROM eg_migrations ORDER BY id DESC`).
-8. Fresh-install gate: works on an empty DB with no rows in globals and no new secret set; new Cloudflare resources declared in `wrangler.jsonc` and the README.
-9. Update this doc (see "How this document is kept up to date") and report in plain words what changed, what was checked and what was not.
-
-Lessons: migration-order specs use `migrations.length - N` offsets, so every new migration moves them: update the offsets in the same PR (or prefer name lookups). Agents alter files when copying (quotes, glyphs, regex escapes, trailing spaces and final newlines), push wrong files, create routes in a literal `src/app/(engage)` folder: cmp everything. Keep new CSS in its own file; avoid edits to `src/cms/db/schema/generate.ts` and `schema/index.ts` (both near 60KB); do not edit `src/engage-types.ts` (230KB, cannot be pushed through the tool: cast locally instead); no `ui` field in a global modelled by `src/cms/db`; never two agents on one file at once; the cloud session cannot `git push` this repo (GitHub MCP only); do not `pkill -f vitest`; the browser tool cannot type; mock `getAdminContext()` needs `can`; hooks must skip when there is no `req.user`; Next layouts cannot export extra names. Cloudflare Builds clones within seconds of the first push, so after a multi-file push, push one last marker commit. Haiku push agents turn backslash-u escapes into raw characters: keep source ASCII (use String.fromCharCode).
-
-## Reference: build recipe and gotchas (from the Tasks 15 to 32 run, 16 Nov 2026)
-Each item is a bounded build on the booking pattern (closed Task 17b): feature flag, lazy table, store, logic and service, public route, admin panel, tests, baseline regen. Leftovers go in the task, and a "Live check <id>" line goes in the Live checks section.
-
-**Per item:** branch, migration plus registry (`FeatureKey` union, `features_<single word>` column), baseline regen twice (the `REGENERATE_BASELINE=1` run fails 4 expected, rerun without it), run the fresh-install specs, update this doc, PR, squash merge, next. Small PRs; rebase on main right before each merge. Do not run two vitest runs at once.
-
-**Column limit:** `eg_shop_settings`, `eg_integrations` and `eg_security_settings` are full; `eg_seo_settings` and `eg_tracking_connections` have room.
-
-**Browser specs** (`tests/int/state-contrast`, `size-checks`) use Playwright with the vendored Shine CSS plus `src/styles/a11y-states.css`; the Shine copy stays untouched.
-
-**Known failures on main, left alone:** `cms-db-carts-orders-transactions`, `shop-catalogue-db`, `settings-pages`, `seo-schema-wave13`, `shop-shipping-flow`, and the `workflow review handlers` block in `approval-workflows.int.spec.ts` (all a `dbName` schema import error).
-
-**Build rule (Matt, 15 Nov 2026): every merge, docs-only ones included, needs the full OpenNext build to pass:** `WORKERS_CI=1 WORKERS_CI_BRANCH=main NODE_OPTIONS="--no-deprecation --max-old-space-size=8000" npm run build > /tmp/b.log 2>&1` (about 4 minutes, must end "OpenNext build complete"). Builds must never fail. Never import `./db` or collections at top level from pricing or lib modules (import cycle). The specifier `cloudflare:sockets` must stay opaque (`smtp.ts`). For type errors in builds, give `.catch(() => x)` an explicit return type, for example `(): null => null`.
-
-**Never put Claude session links (`claude.ai/code/session_...` or `Claude-Session` lines) in commit messages or PR bodies:** they show in Cloudflare deployment details.
-
-**Parallel threads (Matt, 16 Nov 2026):** several threads work at once and merge into this file and the done file; rebase before merging and keep doc PRs docs-only.
-
-## Done
-Finished work is listed in `remaining-work-done.md` (same folder, the only other file), one line per task or PR. Add new Done lines there, not here.
-
-## Decisions waiting on Matt
-- CSP builder (19j): when the nonce branch is merged and Report only is clean, do you want Enforce on for public pages? It needs every pasted tag snippet and custom code block to keep working, so the proposal is to run Report only for a week, then decide. Also: should the default policy itself stop using `'unsafe-inline'` for styles (the visual editor and per-block design CSS depend on it today)? Proposal: no, leave styles as they are.
-- Quote emails baseline (12c, PR #460): the `eg_email_templates` columns in `public/baseline/fresh-baseline.json` were hand-edited because the fresh-baseline-parity spec cannot run in Claude's container. Run it once with `REGENERATE_BASELINE=1` on a machine where it works and commit any diff (or tell Claude to). Until then a fresh install may miss the 24 quote email columns, so check a new-account deploy: `SELECT quote_sent_subject FROM eg_email_templates` must work.
-- Connect to own database (17e): Claude recommends staying on D1 (a Hyperdrive link to Postgres or MySQL adds a second database to run, back up and secure for read-only views only). Say yes to build the Hyperdrive read-only connection, or leave it as is.
-- Zapier app (17i leftovers): needs a Zapier developer account from you before it can be built. Reply when you have one, or say to skip it.
-- Pending two-step token and social sign-in sessions: sessions made by social sign-in do not record an approximate country yet. Say if you want it added (small, no migration).
-- One-click post-purchase upsell (11h): how should it take payment? Option A: save the card at checkout and charge it off-session (true one-click, but checkout must show Stripe's save-card consent text and it needs live Stripe testing). Option B (Claude recommended): the offer leads to a quick Stripe checkout for the upsell product, no card saving or consent change, one extra step. Option C: skip it for now. The decision card is still open in the original thread.
-- Editable blog question sets (27b), not started 17 Nov 2026: the Integrations table is at the 100-column limit, so the sets must live in a new small table `eg_blog_question_sets` (id, name, post type, questions as JSON, default flag). Say yes and it is built as such, with the default set kept as a reset; or say if you would rather keep the questions fixed.
-- AI tagging (14b, built 17 Nov 2026): should the model ever be allowed to create new tags, or only pick from the ones you made? Built as pick-only (Claude recommends keeping it, so the tag tree stays yours). Also: should tag on upload (14d) be on for every new picture, or only into chosen folders?
-- CI note (17 Nov 2026): all checks on PR #468 failed at Install dependencies with an `eslint-config-next@16.2.7` install error, on a branch whose own build passed locally. It merged anyway; if main shows the same red, the lockfile or the npm registry needs a look.
-- Closed Task 7: which later integration to build next (Google services or newsletter and CRM sync, both in Open now).
-- Bookings (closed Task 6, the Bookings plan appendix below): pick the first phase (proposed Phase 1, appointments) and answer the 14 questions at the end of the plan; it then becomes a numbered task.
-- Visual editor gap builds left for later (Tasks 37 and 38): dynamic link and image sources (which fields, fallback), scroll-linked motion (accept no effect in Firefox?).
-- Security check to run: the preferences collection declares no access rules; confirm a signed-in user cannot read or change another user's preference rows through `/api/preferences` (suggested as a separate task on 8 Nov).
-- Closed Task 4 (parked): publish the framework as a package with thin site repos. Risk high, effort L (several weeks): the deploy button still clones the whole repo (about 13.6 MB, 424 test files) until done, and every fork would then be upgraded through a versioned package with a release process for two repos. Recommendation: defer until a second real site needs it. The Next 16 upgrade is done (PR #220).
-- Tasks 14 to 18 thread (17 Nov 2026), questions for Matt: (1) The bid-terms migration (`20270318_200000_bid_json_column`) was not tested against a real production `_eg_products_v` already at 100 columns: after deploy, open a product's version history and confirm old bid values still show. (2) 16i: the coming soon signup turns itself off when a form captcha is on (the screen has no challenge widget): do you want a widget added, or is turning captcha off for that form enough? (3) 14c: WebDAV backups were skipped; say if you want them later. (4) 16g and 16h facts editor and permalinks for shop bases are queued as code in Task 41 below.
-- Passkey and RSVP decisions were made in closed Task 5 (PR #216). Blog builder decisions are in closed Task 2a. Privacy rule is in Done (closed Task 11, PR #199).
-
-## Appendix: Bookings plan (phases 2 to 4 open; phase 1 shipped, see done file)
-### Bookings and scheduling: gap list and phased plan (Task 6)
-
-Written 8 Nov 2026. Research only: no code was changed. Every "exists" claim cites a path under `/home/user/engage`. Paths below are relative to the repo root.
-
-#### Summary
-
-- Today the CMS has event RSVPs (a head count on a dated event) and a form field type "appointment" (fixed start times, weekdays, capacity per start time). Neither is a booking system.
-- There is no resource (staff, room, vehicle), no recurring availability store, no buffer, notice or cancellation rule, no reschedule, no calendar sync and no booking-specific reminder.
-- Payments exist for the shop (orders, transactions, refunds). Forms can price a submission but the last hop to checkout is explicitly not built (`src/features/forms/pricing.ts`, comment near line 120).
-- Recommendation: a new lazy "Bookings" feature with its own tables, built on a pure slot engine, reusing shop orders for money, the email and cron systems for notices, and the existing ICS builder.
-- Matt picks the first phase (see "Decisions for Matt"). Phase 1 is an MVP for one provider; Phases 2 to 4 widen it to staff, rentals and hotels, and calendar sync.
-
-#### What exists today
-
-| Capability | Where | Reusable for bookings? |
-|---|---|---|
-| Events (dated, capacity, online flag, venue, ticket product, recurrence, tiers) | `src/collections/Events.ts` (fields `startDate`, `endDate`, `location.isOnline`, `capacity`, `ticketProduct`, `rsvps`); recurrence in `src/features/editScreens/recurrence.ts`, `recurrenceGenerate.ts` (max 52 occurrences) | Partly. Good for group sessions and classes. An event is one fixed date, not a pool of open time the customer picks from. |
-| Event RSVPs (name, email, guest count, notes, reminder stamp) | `src/collections/EventRSVPs.ts`; capacity check `src/hooks/checkEventCapacity.ts` (counts guests, count-then-insert, no lock) | Partly. Pattern for capacity and owner-only read rule is reusable. Not a booking record: no status lifecycle, no resource, no price. |
-| Form field "appointment" (slot start times, weekdays, days ahead, max days ahead, capacity) | `src/features/forms/types.ts` (line 111 `appointment?`), `src/features/forms/slots.ts` (keys `YYYY-MM-DD HH:MM`, capacity 1..50), `slotStore.ts` (reads D1 via `json_extract` on `eg_form_submissions`, scan limit 2000), `slotGuard.ts` (check, insert, re-check; both racers can lose), `slotsEndpoint.ts` and `src/app/(engage)/api/form-slots/route.ts` (public, rate limited 60 per minute) | Partly. The pure helpers and the check-insert-recheck idea carry over. Storage in a JSON column of form entries cannot hold resources, durations, buffers or ranges, and no time zone is stored (times are plain text). |
-| Form entries and pricing | `src/features/forms/pricing.ts`, `submit.ts` (`paymentStatus: 'unpaid' \| 'none'`, `buildCheckoutHandoff`), `src/engage-types.ts` (~line 1420 `payment.product`: "Required by the cart handoff once it is built") | Partly. Prices a submission but does not take payment. Do not build bookings on top of form entries. |
-| Account portal "My bookings" | `src/app/(frontend)/account/bookings/page.tsx`, `src/features/accounts/bookings.ts` (reads `event-rsvps` by verified email), `src/features/accounts/access.ts` (`canSeeBookingsByEmail`), strings `portal.bookings.*` and `portal.search.bookingsHeading` in `src/features/uiStrings/dictionaries/*.ts`, search `src/features/accounts/accountSearch.ts` | Partly. The screen and email-verification rule are reusable; the data source is RSVPs only and the copy says "event bookings". Needs a second source and cancel or reschedule actions. |
-| Webhook event `booking.made` | `src/features/webhooks/events.ts` (line 16), emitted for RSVPs in `src/features/webhooks/hooks.ts` (line 92); Live checks in `docs/remaining-work.md` also expects a source `appointment` | Yes. Add cancelled, rescheduled, reminder-sent events beside it. |
-| Shop checkout, orders, payments | `src/features/ecommerce/collections/Orders.ts` (status transitions), `Transactions.ts`, `OrderRefunds.ts`, `src/features/ecommerce/server/orders.ts`, `refunds.ts`, `payments/stripeAdapter.ts`, `paypalCheckout.ts`, `offlineCheckout.ts`; payment tables are never offered for deletion (`src/features/featureTables.ts`, `PAYMENT_RECORD_BASES`) | Partly. Orders reference products by relationship, so a booking needs either a service product per booking type or an order line with no product. Decision needed (see Payments). |
-| Subscriptions and gift cards, store credit | `src/features/ecommerce/subscriptions/*`, `server/storedValue.ts` | Partly. Store credit is a possible refund target; subscriptions are not needed. |
-| Email sending, templates, log, suppression | `src/features/email/index.ts` (`sendEmail`), `renderTemplate.ts`, `emailLog.ts`, `suppression.ts`, `recipientLocale.ts`, providers in `src/features/email/providers/` (Resend, Postmark, SendGrid, Mailgun, SES, Brevo, Cloudflare and others) | Yes. Add booking templates. Email designer lists "Event booking confirmation" (`src/admin/views/email-designer/designerModel.ts` line 208). |
-| Reminder emails | `src/features/email/eventReminders.ts` (stamp `reminderSentAt` before sending, so one reminder per RSVP), `scheduledEmails.ts` (runs each tick, quiet hours), `schedule.ts` (`eventReminder.hoursBefore`, `isInQuietHours`, time zone from site `timezone`) | Partly. Same stamp-then-send pattern; needs its own sweep for bookings (several reminders, per type offsets). |
-| Cron | `wrangler.jsonc` (`triggers.crons: ["*/5 * * * *"]`), `cloudflare-worker.ts` (`scheduled` calls `/api/cron/publish-scheduled` with an HMAC key), job list `src/features/cron/registry.ts` (name, label, schedule, feature gate), run log `src/features/cron/history.ts` | Yes. Add jobs "booking-holds" (expire holds) and "booking-reminders" with `feature: 'bookings'`. Five-minute resolution is enough. |
-| ICS file | `src/features/editScreens/ics.ts` (`buildEventIcs`, `icsEscape`, `foldLine`), route `src/app/(engage)/api/events/[slug]/ics/route.ts` | Yes. Reuse for a booking attachment and per-resource feeds. No `METHOD:CANCEL` or sequence number yet. |
-| Time zones | `src/features/editScreens/timeZone.ts` (`wallTimeIn`, `zonedToUtc`, default `Australia/Sydney`, DST safe day maths), site setting `timezone` in `src/features/site/detailsModel.ts` | Yes. This is the DST-safe core the slot engine needs. Only one zone per site today. |
-| Roles and users | `src/collections/Users.ts` (roles admin, editor, viewer, customer), `src/features/roles/permissions.ts` (`can()`), custom roles | Partly. Staff could link to a user, but a hairdresser or a car has no login. Resources should be their own rows with an optional user link. |
-| Domains and regions | `src/features/domains/*` (`model.ts`, `scope.ts`, `host.ts`) | Partly. A resource or booking type should be scopable to a domain the way other content is. Not researched in depth; confirm in Phase 1 design. |
-| Feature switch and lazy tables | `src/features/registry.ts` (`FEATURES`, `FeatureDef.tables`), `src/features/featureTables.ts`, `src/features/provisionOnEnable.ts`, `src/migrations/provisioning.ts`, `src/features/starters.ts` | Yes. A `bookings` entry creates tables on first switch-on. |
-| Google connection | `src/features/google/constants.ts` (`GOOGLE_SCOPES`: openid, email, analytics.readonly, webmasters, tagmanager.readonly, adsense.readonly), `auth.ts`, `state.ts` | Partly. OAuth plumbing exists. No calendar scope, and the current scopes are read-only (Search Console is the exception). Adding a calendar scope forces every connected site to re-consent. |
-| Visual editor elements and form blocks | `src/components/blocks/elements/*`, `src/blocks/EventGrid.ts`, `src/features/forms/block.ts` | Yes. A "Booking widget" element follows the same registration as existing elements. |
-| Rate limiting, privacy erase | `src/features/accounts/rateLimit.ts`, `src/features/privacy/*`; rule that erasing an account keeps entries (`docs/remaining-work.md`, Live checks privacy item #164) | Yes. Bookings are a record of money and time; follow the same keep-or-anonymise rule. |
-
-Not found anywhere in `src`: availability rules, resource or staff scheduling, buffers, notice windows, cancellation rules, reschedule, no-show, a video-link field on a booking, calendar write access, SMS reminders (Twilio exists for shipping text only: `src/features/sms/shippedText.ts`).
-
-#### Requirements matrix
-
-| Scope item | Status | Notes |
-|---|---|---|
-| Bookings in addition to events | Partial | RSVPs and portal screen exist for events. Bookings need their own tables; events stay for dated group occasions. A booking type may optionally link to an event series later. |
-| One-off availability (specific dates) | Missing | Form field offers weekdays only. Need date overrides (extra open day, closed day). |
-| Recurring availability (weekly) | Partial | Form field: slot list plus weekdays (`forms/types.ts`). Event recurrence exists for events only. Need weekly rules with start and end windows per resource, with time zone. |
-| Capacity (single or multiple per slot) | Partial | Form slots capacity 1..50 (`forms/slots.ts`); event capacity in guests (`checkEventCapacity.ts`). Need capacity per type and per resource, and party size per booking. |
-| Digital (video link) | Missing | Events have `isOnline` only. Need a per-type link template or a manual link per booking. Auto-created Meet links belong to Phase 4. |
-| In person (location) | Partial | Event venue and address fields exist. Need locations per type or resource (and pickup and return for rentals). |
-| Free or paid | Partial | Shop orders and payments exist; form pricing stops before checkout. Need booking to order link (see Payments). |
-| Several booking types (own length, price, rules) | Missing | Need `booking_types`. |
-| Assignment: pick the person | Missing | Need resources plus a chooser on the widget. |
-| Assignment: pick the type | Missing | Widget step 1. |
-| Assignment: "anyone available" and round robin | Missing | Need strategies in the slot engine (see rules). |
-| Buffers (before, after) | Missing | |
-| Minimum notice, maximum advance | Partial | Form field has `daysAhead` and `maxDaysAhead` only. Need hours of notice and per-type values. |
-| Cancellation rules (cutoff, refund) | Missing | Orders have refunds (`server/refunds.ts`); no policy linkage. |
-| Reschedule | Missing | |
-| Calendar sync (Google) | Missing | Google OAuth exists, read-only scopes (`google/constants.ts`). Listed under Later integrations in `docs/remaining-work.md`. |
-| ICS file or feed | Partial | Per-event ICS exists (`editScreens/ics.ts`). Need per-booking attachment and per-resource feed. |
-| Email reminders | Partial | Event reminder sweep exists (`email/eventReminders.ts`). Need booking sweep, several offsets, cancellation and reschedule mail. |
-| Double-booking protection | Partial | Check, insert, re-check (`forms/slotGuard.ts`). Reusable idea; need holds with expiry so a customer in checkout keeps the slot. |
-| Questionnaire answer and business type | Missing | Task 5 has no bookings question yet apart from the mention in `docs/remaining-work.md` Task 5. |
-
-#### Industry fit
-
-The generic model has three unit modes (time slot, day range, night range), resources, and per-type rules. Each industry below is a setting of that model, not custom code.
-
-##### Car rental
-- Must support: multi-day ranges (day range mode); resources are vehicles, grouped into categories (the booked item is a category, the vehicle is assigned at pickup or automatically); pickup and return location and time; price per day with optional weekend or season rates; deposit (a part payment now, a hold or balance later); driver details as custom questions; availability blocked by service days.
-- Out of scope: damage inspection, insurance products, fuel and mileage, telematics, one-way fees between locations, driver licence checks.
-
-##### Hotels and B&Bs
-- Must support: night range mode; resources are room types with a count (inventory per night), or single rooms; check-in and check-out times; rate per night with season and weekday rules; minimum stay; guest count per room; deposit or full prepayment; arrivals list in the admin.
-- Out of scope: channel managers and OTA sync (Booking.com, Airbnb), housekeeping, room-level upgrades, tax by city, group blocks, restaurant and spa add-ons. ICS import and export (Phase 4) is the only external link.
-
-##### Hairdressers and salons
-- Must support: time slot mode; staff as resources, each with own weekly hours and days off; services as booking types with duration and price (a type can list which staff offer it); "anyone available" with round robin; buffers (clean-up time); add-ons that extend duration and price (colour toner); deposits to cut no-shows; cancellation cutoff (for example 24 hours).
-- Out of scope: product sales at the till, commission reports, loyalty points (store credit exists but is not tied in), waitlists (a later item), multi-service combos in one visit (Phase 2 may allow a simple chain; full combos later).
-
-##### General practitioners and clinics
-- Must support: time slot mode; practitioners as resources with their own calendars; appointment types (standard, long, telehealth) with length; a new-patient flag as a question; usually free or billed outside the site (paid is optional); strict privacy: emails and logs contain date, time and clinic only, never the reason for visit or any health detail; cancel and reschedule by a private link; no-show marking by staff; in-person or video (link per booking).
-- Out of scope: clinical records, medical history, Medicare or insurance claims, prescriptions, referrals, health-data compliance certification (HIPAA, GDPR special-category handling beyond what the privacy settings already offer). Matt should treat any health use as a legal check before launch.
-
-#### Proposed data model
-
-All tables are created by idempotent migrations appended to `src/migrations/index.ts`, owned by one new feature key `bookings` in `src/features/registry.ts` and `src/features/featureTables.ts`, so a fresh install creates nothing until the feature is switched on (the lazy path in `src/features/provisionOnEnable.ts`). New collections and globals also go into `src/cms/db/schema`. Table names use the `eg_` prefix. Money tables are not added: payment stays in the shop's orders and transactions (kept for accounting per `PAYMENT_RECORD_BASES`). Booking rows themselves should be added to the keep-for-accounting list when they link to an order.
-
-Unit modes, set per booking type: `slot` (minutes), `day_range` (whole days, end date exclusive of return day or inclusive, to be fixed in design), `night_range` (check-in date to check-out date).
-
-| Table | Key columns | Purpose |
-|---|---|---|
-| `eg_booking_types` | id, title, slug, unit_mode, duration_minutes, min_units, max_units, price, currency, deposit_type (none, fixed, percent), deposit_value, capacity_per_slot, party_size_max, buffer_before, buffer_after, min_notice_minutes, max_advance_days, slot_step_minutes, approval (auto, manual), mode (in_person, video, phone), location_text, video_link_template, cancel_cutoff_hours, refund_policy (full, partial_percent, none), assignment (pick, round_robin_rotation, round_robin_least_booked, any), product_id (shop product, nullable), questions (JSON), active | One row per service, appointment kind, vehicle category or room type |
-| `eg_booking_resources` | id, title, kind (staff, room, vehicle, other), user_id (nullable), quantity (units of this resource, for room types), time_zone, location_text, color, active, ics_token | Who or what is booked |
-| `eg_booking_type_resources` | type_id, resource_id, price_override, duration_override, sort | Which resources offer which type |
-| `eg_availability_rules` | id, resource_id (or global), weekday (0..6), start_time, end_time, valid_from, valid_to | Weekly recurring hours, in the resource time zone |
-| `eg_availability_overrides` | id, resource_id, date, kind (open, closed), start_time, end_time, note | One-off open or closed days (holiday, extra Saturday) |
-| `eg_rate_rules` (Phase 3) | id, type_id, resource_id nullable, date_from, date_to, weekdays, price_per_unit, min_stay | Seasonal or weekday pricing, night or day rates |
-| `eg_bookings` | id, number, type_id, resource_id, status, start_at (UTC), end_at (UTC), local_date, time_zone, units, party_size, customer_name, customer_email, customer_phone, user_id (nullable), answers (JSON), price_total, currency, deposit_paid, order_id (nullable), video_link, location_text, manage_token_hash, source, notes, cancelled_at, cancel_reason, created_at | The booking record. Date columns are UTC instants plus the zone used. |
-| `eg_booking_holds` | id, type_id, resource_id, start_at, end_at, units, session_key, expires_at | Short reservation while a customer pays; swept by cron |
-| `eg_booking_reminders` | id, booking_id, kind (confirm, reminder, cancel, reschedule), due_at, sent_at, status | Idempotent reminder queue; one row per message |
-| `eg_booking_settings` (global) | enabled defaults: hold minutes (default 15), reminder offsets, sender text, privacy mode (hide detail in email), default time zone | Site-wide switches |
-
-Status lifecycle: `pending` (awaiting payment or approval) to `confirmed` to `completed`; side exits `cancelled` (by customer or staff), `no_show`, `expired` (hold lapsed), `rescheduled` (old row kept, linked to the new one). Indexes: `(resource_id, start_at, end_at)`, `(status, start_at)`, `(customer_email)`, unique `number`.
-
-Do not store bookings as form entries or RSVPs. The portal screen reads both sources and merges them.
-
-#### Slot engine rules
-
-The engine is a pure module (like `src/features/forms/slots.ts`): inputs in, slots out, no I/O, so the browser widget, the API and the submit path give one answer. Tests belong beside it, with a matrix of DST dates.
-
-1. Start from the resource's weekly rules, apply overrides for that date (closed removes, open adds), all in the resource time zone, then convert each window to UTC with `zonedToUtc` (`src/features/editScreens/timeZone.ts`).
-2. Cut the window into starts every `slot_step_minutes`; a start is valid only if `start + duration` fits in the window.
-3. Remove starts that clash with existing `confirmed` and `pending` bookings and live holds, extended by `buffer_before` and `buffer_after` on both sides.
-4. Remove starts earlier than now + `min_notice_minutes` and later than now + `max_advance_days`.
-5. Capacity: a start stays offered while booked units (party size or units) are below `capacity_per_slot` (slots) or `quantity` (rooms and vehicle categories, counted per night or per day).
-6. Day and night ranges: a range is valid only if every unit in it has availability and any minimum or maximum length and minimum stay is met; check-out day is not counted as a night.
-7. Assignment when the customer does not pick: `rotation` (the resource with the oldest last booking), `least_booked` (fewest bookings in the next 30 days, ties by rotation), `any` (first free by sort order), `pick` (customer chooses; widget lists only free resources for that time). "Anyone available" shows the union of free starts; the resource is chosen at confirm time, after the hold.
-8. Concurrency: D1 has no row locks across statements (same limit noted in `src/features/forms/slotGuard.ts`). Use an insert-then-verify scheme: insert a hold (or pending booking) first, then recount overlapping rows in the same request and keep it only if this row is within capacity by id order; otherwise delete it and tell the customer the time was just taken. Use a D1 `batch` for the insert and the final confirm so they apply together. Holds expire (default 15 minutes) and the cron job removes them. Two racers can both lose; that is the safe side.
-9. Time zones and DST: store UTC instants and the zone name; the widget shows times in the visitor's zone with the resource zone named; a window that crosses a DST change keeps its wall-clock hours (an hour is skipped or repeated, handled by `zonedToUtc`). Reminders are computed on UTC instants, quiet hours stay in the site zone.
-10. Per-request cost: slots are computed for one resource and one date range on demand, capped (about 60 days), rate limited like `form-slots` (`src/features/accounts/rateLimit.ts` pattern). The five-minute cron is the only background work.
-
-#### Payments
-
-- Free: a booking is `confirmed` at once (or `pending` if the type needs manual approval).
-- Paid: reuse the shop. Create an order for the booking so payment, tax, receipts, refunds and accounting records stay in one place (`src/features/ecommerce/collections/Orders.ts`, `Transactions.ts`, `server/orders.ts`, adapters in `payments/`). The booking is `pending` with a hold until the order is paid, then `confirmed` by the order hook (`server/orderHooks.ts`). If the hold expires first, the booking becomes `expired`.
-- Open point: orders reference products (`Orders.ts` line items; form pricing notes the same problem at `forms/pricing.ts` ~line 120). Two options: (a) each booking type owns a hidden service product and the order carries booking details in line meta; (b) allow an order line with no product. (a) is smaller and keeps stock and reports working, so it is the proposed default (`booking_types.product_id`). Needs a check that stock is not decremented for service products.
-- Deposit: charge `deposit_value` now, record the balance as due on arrival or by a second order (Phase 3). Full: charge the total.
-- Cancellation refunds follow the type's policy: before the cutoff, full refund (or store credit), after the cutoff, per the type (none, a percentage, or keep the deposit). Refund through `server/refunds.ts` so `order_refunds` and the payment provider stay in step. Staff can override.
-- Taxes, currencies and coupons come from the shop settings; multi-currency is Task 9 and quantity and wholesale pricing is Task 10, so booking prices must not hard-code AUD.
-
-#### Notifications
-
-- Confirmation (customer and, optionally, staff): sent through `sendEmail` with a new template "Booking confirmation", an ICS attachment from `src/features/editScreens/ics.ts`, and a private manage link (token, stored hashed) to cancel or reschedule without signing in.
-- Reminders: rows in `eg_booking_reminders` created at confirm time from the type's offsets (for example 24 hours and 2 hours). The cron sweep follows the pattern in `src/features/email/eventReminders.ts` (stamp then send, so a provider failure is not retried in a loop) and the quiet hours in `scheduledEmails.ts`.
-- Cancellation and reschedule mail, with an updated ICS (`METHOD:CANCEL`, `SEQUENCE`); the ICS builder needs those two fields added.
-- Staff notice on new booking: ties into Task 18 (notifications on actions); do not build a second mechanism.
-- GP privacy mode (site setting, default on for clinic business type): subject and body show clinic name, date, time and a link only; no appointment type name, no answers, no reason. Email log rows store the same reduced text. Webhook payloads omit answers unless the admin opts in.
-- SMS reminders: out of scope for now; Twilio exists (`src/features/sms/twilio.ts`) and is a possible later channel.
-- Unsubscribe rules: booking mail is transactional and always sent (consistent with `src/app/(engage)/api/email-unsubscribe/route.ts` text "Emails about orders, bookings and sign-in still arrive"); reminders may be opt-out for marketing but not for the booking itself.
-
-#### Calendar sync
-
-- Phase 4a, no OAuth: a read-only ICS feed per resource at an unguessable token URL (`ics_token`), plus the per-booking ICS attachment. Customers and staff subscribe in Google, Apple or Outlook. Delay of a few hours is normal for subscribed feeds. Privacy: feeds show "Booked" for GP resources unless the admin opts in.
-- Phase 4b, busy-time read: the Google connection (`src/features/google/*`) would add a calendar read scope so staff Google events block slots. Needs re-consent and a Google OAuth app verification step, which is a vendor process Matt has to run.
-- Phase 4c, two-way: write bookings to the staff calendar (`calendar.events` scope), update on reschedule and cancel, optional Meet link. Needs a per-resource token store, refresh handling, and a retry queue on the five-minute cron.
-- Out of scope: Outlook and Apple two-way sync, CalDAV.
-
-#### Admin UI and public UI
-
-Admin (a new "Bookings" group, shown only when the feature is on):
-- Booking types: editor for the fields in the table above, with a plain "preview next 14 days of slots" panel.
-- Resources: list, hours editor (weekly grid plus date overrides, holidays), which types each offers, ICS link.
-- Calendar view: day, week and month per resource (the Events calendar at `src/views/events/EventsCalendarView.tsx` is a starting point), click a gap to add a booking by hand, drag to reschedule (drag could be Phase 2).
-- Bookings list: filters by status, date, resource, type, with CSV export, mark completed or no-show, cancel with or without refund, resend email. Reuse the ListView patterns in `src/admin/views/ListView.tsx` and the results tabs in `src/admin/views/results/`.
-- Check-in style "today" list (the events check-in at `src/admin/views/results/EventCheckIn.tsx` is the model).
-- Settings page: hold minutes, reminder offsets, privacy mode, default time zone.
-- Roles: new permission keys in `src/features/roles/permissions.ts` (manage types, manage all bookings, manage own bookings for a staff user linked to a resource).
-
-Public:
-- Booking widget as a visual-editor element (registered like the elements in `src/components/blocks/elements/`): steps type, resource or "anyone", date and time (or range), details, pay, confirm. Also an embeddable page `/book/[slug]`, in the same spirit as the form embeds (`src/features/forms/embedScript.ts`).
-- Manage page by private link: view, cancel, reschedule within rules.
-- Account portal "My bookings": `src/features/accounts/bookings.ts` gains the new source; copy changes from "event bookings" to "bookings" in all dictionaries (en and the translated files under `src/features/uiStrings/dictionaries/`).
-- Translations: all new strings go through `uiStrings`; mobile at 375 px is a gate (as with the portal).
-
-#### Questionnaire hook (Task 5)
-
-Add two questions to the fresh-install questionnaire (`docs/remaining-work.md` Task 5), and show the suggestions before applying:
-
-1. "Do you take bookings?" with answers: No; Appointments (by the hour); Rentals by the day; Nightly stays.
-2. "What kind of business?" with answers: Hairdresser or salon; Clinic or GP; Car rental; Hotel or B&B; Other.
-
-| Answer | Pre-ticks and presets |
-|---|---|
-| No bookings | Bookings off. Events stay governed by the events question. |
-| Appointments | Bookings on, Email on, Accounts on; Shop on only if the owner chose paid services; unit mode `slot`. |
-| Rentals by the day | Bookings on, Shop on, Accounts on; unit mode `day_range`; asks for pickup and return locations. |
-| Nightly stays | Bookings on, Shop on, Accounts on; unit mode `night_range`; check-in and check-out times. |
-| Hairdresser or salon | Staff as resources, round robin "any", buffer 10 minutes, deposit suggested, cancel cutoff 24 hours. |
-| Clinic or GP | Practitioners as resources, privacy mode on, free by default, video or in person, cancel cutoff 24 hours, no-show tracking. |
-| Car rental | Vehicle categories as resources with quantity, deposit suggested, pickup and return locations. |
-| Hotel or B&B | Room types with quantity, minimum stay field, deposit suggested. |
-| Other | Only the bookings answer applies; nothing else preset. |
-
-Skipping keeps today's defaults (bookings off). The answers only tick boxes in Settings > General > Features and set starter values; the starter booking type and resource are created by the same starter step that runs when a feature is switched on (`src/features/starters.ts`). Everything stays editable later.
-
-#### Phased plan
-
-Each phase ships behind the `bookings` feature switch, with migrations first, the two fresh-install specs extended (`tests/int/internal-migrate-fresh-install.int.spec.ts` and `tests/int/fresh-install-schema-coverage.int.spec.ts`, each run twice), `tsc`, the build, an independent review, and a live check entry in Live checks, per the process in `docs/remaining-work.md`.
-
-##### Phase 1: appointment MVP (effort L)
-Deliverables:
-- Feature `bookings`; tables `booking_types`, `booking_resources`, `availability_rules`, `availability_overrides`, `bookings`, `booking_holds`, `booking_reminders`, `booking_settings`; lazy provisioning.
-- One or a few resources, no assignment logic beyond "pick" and "only one"; weekly hours and date overrides; time slot mode; duration, price, notice, max advance, capacity 1.
-- Free and paid through a shop order (hidden service product), hold with expiry, confirm on payment.
-- Confirmation email with ICS and manage link; one reminder email; cancel by link (refund by policy: full or none).
-- Public widget element and `/book/[slug]`; admin booking types, resource hours, bookings list; portal "My bookings" shows bookings and RSVPs.
-- Cron jobs `booking-holds` and `booking-reminders` in `src/features/cron/registry.ts`; webhook events for made, cancelled.
-- Questionnaire answers wired (if Task 5 is built by then; otherwise the hook is documented only).
-
-Acceptance checks:
-- Fresh DB: no booking tables until the feature is switched on; after switch-on, a second migrate run changes nothing.
-- Two simultaneous requests for the last slot: exactly one wins, the other sees "just taken" (test with the insert-then-verify scheme).
-- A slot across a DST change in `Australia/Sydney` and one in `Europe/London` shows correct local times and the correct UTC instants.
-- Paid booking: order paid gives `confirmed`; unpaid for the hold period gives `expired` and the slot reopens.
-- Reminder sent once, even if the cron runs twice; held during quiet hours.
-- 375 px width, 16 px gutter, no sideways scroll on the widget and manage page.
-
-Risks: orders without a natural product (decision needed); D1 concurrency (mitigated, not eliminated); migration offsets in specs move with each new migration; engine file size limits noted in the Lessons (`src/engage-types.ts` not to be edited; cast locally).
-
-##### Phase 2: staff, rules, capacity and reschedule (effort L)
-Deliverables:
-- Multiple resources per type; round robin (rotation, least booked), "anyone available", "pick the person".
-- Buffers before and after, per-type notice and cancellation rules with refund percentages, capacity above 1 and party size, reschedule (customer by link, staff by drag), no-show status.
-- Cancellation and reschedule emails with updated ICS (`METHOD:CANCEL`, `SEQUENCE`); several reminder offsets.
-- Admin calendar view per resource and combined; staff user linked to a resource sees own bookings only.
-- Add-ons that extend duration and price (hairdresser).
-
-Acceptance checks: round robin spreads 20 bookings across three staff within one booking of even; buffers block adjacent starts; capacity 4 accepts four single guests or one party of four; refund amounts match policy at the cutoff minute (before and after); reschedule keeps the order and does not double charge.
-
-Risks: engine complexity grows (property-style tests recommended); staff permission keys touch `src/features/roles/permissions.ts`; reschedule of a paid booking with a price change (decision needed).
-
-##### Phase 3: day and night ranges, rates, deposits (effort L)
-Deliverables:
-- `day_range` and `night_range` modes; inventory per night or day (`quantity`); minimum and maximum length, minimum stay, check-in and check-out times.
-- `rate_rules` (seasons, weekdays, weekend); deposit or balance due later (second order or pay on arrival marked by staff).
-- Pickup and return locations (rentals); arrivals and departures list; availability calendar grid for rooms and vehicles.
-- Block-out dates (maintenance) as overrides.
-
-Acceptance checks: a 3-night stay over a rate boundary prices each night correctly; check-out day is free for the next guest; a minimum stay of 2 refuses a 1-night gap; quantity 3 accepts a fourth overlapping request only after one cancels; deposit plus balance sum to the quote.
-
-Risks: pricing edge cases (tax, currency rounding, Task 9 and Task 10 interplay); hotels expect channel managers (out of scope, set expectations); vehicle category versus specific vehicle assignment.
-
-##### Phase 4: calendar sync and feeds (effort M for 4a, L for 4b and 4c)
-Deliverables:
-- 4a: per-resource ICS feed with token, regenerate token action, privacy option; per-booking "Add to calendar" links.
-- 4b: Google Calendar busy-time read (blocks slots), with the new scope on the Google connection.
-- 4c: Google Calendar write (create, update, delete events), optional Meet link, retry queue.
-
-Acceptance checks: a feed subscribed in Google shows a new booking within the provider's refresh time and hides it after cancel; a staff event in Google blocks the slot within one cron tick; a reschedule updates the Google event, not a duplicate.
-
-Risks: Google OAuth verification and re-consent for sensitive scopes (vendor process, Matt's own console, can take weeks); refresh token expiry for apps in testing mode; tokens need encrypted storage (`ENGAGE_SECRET`); the new scope forces existing connected sites to reconnect.
-
-#### Decisions for Matt
-
-1. Which phase first? Proposed: Phase 1, then Phase 2 before Phase 3 unless a rental or hotel client is waiting.
-2. Staff and resources: separate resource rows with an optional link to a user (proposed), or staff must be users?
-3. Orders for bookings: hidden service product per booking type (proposed), or allow order lines without a product?
-4. Default refund policy: full refund before a 24-hour cutoff and none after (proposed), or partial? Refund to the card or to store credit by default?
-5. Time zone: one zone per site (as today, `Australia/Sydney` default), or per resource (proposed, needed for multi-region and franchise sites)?
-6. Manual approval: should any type need staff approval before it is confirmed (proposed: optional per type, default auto)?
-7. Hold length while paying: 15 minutes (proposed)?
-8. Customers without an account: allow guest bookings with a private manage link (proposed), or require sign-in?
-9. GP use: do you want to target clinics at all? If yes, privacy mode defaults on, and a legal and privacy review is needed before launch.
-10. Reminder channels: email only for now (proposed), or add SMS through Twilio in Phase 2?
-11. Rentals and hotels: accept the stated out-of-scope list (no channel manager, no damage or insurance handling)?
-12. Google Calendar: ICS feeds only first (proposed), and if two-way is wanted, are you willing to run the Google OAuth verification?
-13. Events: keep Events and RSVPs as they are and add Bookings beside them (proposed), or later fold RSVPs into bookings? Task 11 (selling events) overlaps and should be decided at the same time.
-14. Task 18 (notifications on actions) and Task 17 (cron screen): build the booking notices on those if they land first, or ship Phase 1 with its own simple templates?
-
-## Appendix: Regions, languages and domains audit (source of Tasks 35 and 36)
-### Regions, languages and domains audit (Tasks 5 and 6, 15 Nov 2026)
-
-Checked by reading the code, not live. Paths are under `src/`.
-
-#### Task 5. Languages and regions
-
-##### What exists
-- World locale list (`features/multilingual/locales.ts`), including regional written variants (en-AU, en-GB, en-US, pt-BR, pt-PT, zh-Hans, zh-Hant, es-ES, es-MX, fr-CA). Active locales, default locale, fallback to default, switcher in header, footer or both (`features/multilingual/settings.ts`).
-- URL prefix per language (default unprefixed), locale cookie, `Accept-Language` detection with q-weights (`detect.ts`, `routing.ts`, `middleware.ts`). A domain can serve its own language unprefixed (`features/domains`).
-- Translations in a table keyed by locale, source and field; approval workflow (a translation shows only when approved and current), outdated detection, machine translation providers, translated slugs per locale (`localizedSlugs.ts`).
-- SEO: hreflang with `x-default`, self referencing canonical, `og:locale`, sitemap variants only for locales with a publishable translation (`features/seo/localeSeo.ts`, `sitemap.ts`). Hreflang also across registered domains (`features/domains/alternates.ts`).
-- Admin text in thirteen languages (dictionaries in `features/uiStrings`); public store text with owner overrides (`storeTextsServer.ts`); built-in emails follow the recipient's locale (`email/recipientLocale.ts`, `builtInTemplates.ts`).
-- Translatable fields (`translatableFields.ts`): pages (title, slug, SEO, block text), posts (title, slug, excerpt, body, SEO), products (title, slug, description, SEO, tier text), events (title, summary, description, venue, address), reusable sections, FAQs, ticket tier names.
-
-##### Regions
-There is no region concept. What stands in for it: regional language tags, shipping zones and tax rates by country, display currencies with a manual switcher and daily rates, and a registered domain with a default language and a stored `currencyHint`.
-
-##### Gaps (new tasks below)
-1. No region entity: content, prices and promotions cannot differ per region. The only per-market lever is a domain (content `availableDomains`, language), and prices are one shop currency.
-2. Domain `currencyHint` is stored and shown but nothing reads it: a visitor on the .co.uk domain still opens in the default display currency (`features/domains/model.ts`).
-3. Not translatable: category names in the tree, navigation and menu labels, header and footer text, form labels and messages, site title and tagline, product short fields and variation attributes, post category and tag names, event SEO fields, custom fields.
-4. Owner-edited email wording (Email templates) is one language: the built-in wording translates, the owner's version does not.
-5. Public strings added by features outside the store text table (event page was fixed in Task 1) need a check page by page; there is no test that fails on a hard coded English string in a public component.
-6. No language report screen: coverage per language per collection exists in the translation overview but not per region or domain.
-
-#### Task 6. Multiple domains
-
-##### What exists
-- Domain registry (Settings > Domains): host, label, default language, primary flag, active or disabled, redirect to primary, allow admin, per-domain site name, tagline, logo, contact details and socials (`features/domains/model.ts`). Hosts are normalised, headers are set only by the edge middleware after removing client copies (`middleware.ts`).
-- Per-domain content: an "Available on domains" field on pages, posts and products with a slug uniqueness check across domains (`features/domains/field.ts`, `slugs.ts`, `hooks.ts`, `access.ts`). Unscoped content shows everywhere; unknown hosts (workers.dev, preview) are never narrowed.
-- Sitemap, robots, canonical and base URL follow the request's domain (`features/seo/settings.ts` `originFor`, `robots.ts`, `sitemap.ts`); hreflang lists the same page on other active domains.
-- Connect domain attaches a domain to the Worker through the Cloudflare custom-domains API (`features/domains/cloudflareAttach.ts`), with a manual steps fallback.
-
-##### Gaps (new tasks below)
-1. Events, FAQs, reusable sections, forms and media have no "Available on domains" field (only pages, posts and products), so an event cannot be limited to one domain.
-2. The sign-in cookie is host only (no Domain attribute, `features/accounts/session.ts`): a customer signed in on one domain is signed out on another. That is the safe default; there is no switch for shared sign-in across a family of subdomains.
-3. Email sender is site wide (`features/email/index.ts` reads one `fromEmail`): mail from domain B arrives from domain A. Per-domain contact email exists but not per-domain sender or reply-to.
-4. Header, footer and navigation are shared across domains except for the name, logo and contact overrides; no per-domain menu (the domain menu helper exists in `features/domains/menu.ts` but is not an editor setting).
-5. Per-domain analytics and consent: tracking IDs are site wide.
-6. Cloudflare routes: attaching a domain needs a token with Workers Scripts edit and Zone read for that zone; there is no check screen that confirms DNS and certificate state after attaching.
-7. Cache: page caching and the admin cache purge are not scoped per domain; a purge clears all domains.
-
-## Appendix: Events and tickets audit (Task 1)
-### Events and tickets audit (Task 5, 9 Nov 2026)
-
-Checked against the code, not live.
-
-#### What exists
-- Ticket types: JSON `ticketTiers` on the event (name, description, price, capacity, sales end), ids for translation (`src/features/editScreens/tiers.ts`, `TicketTiersField.tsx`). Enforced on free RSVPs by `checkRsvpTier` (type required, on sale, room left).
-- Capacity: event-level `capacity` enforced by `checkEventCapacity` on RSVP create; per-type capacity in `tierSales.ts`; page shows spots left.
-- Free: public `RsvpForm` creates an `event-rsvps` row, sends the confirmation email (`rsvpConfirmation.ts`), fires the RSVP webhook, reminder cron, ICS file.
-- Check-in: `EventCheckIn.tsx`, `/api/admin-event-checkin`, ticket code is the RSVP id (`#42`).
-- Paid: event type `paid` plus one `ticketProduct`; page shows "Buy ticket" (AddToCartButton), normal shop checkout and order.
-
-#### Gaps
-1. Paid events have no link between order and RSVP: a paid order creates no `event-rsvps` row, so paid buyers get no booking confirmation, are not on the check-in list, and are not counted against capacity. (Needs a decision: create RSVPs from `order.paid`, plus order id column and migration.)
-2. Price tiers are display-only on paid events: one product, one price. Selling per type needs one product or variant per tier. (Decision.)
-3. Refunds: refunding an order does not cancel or free the RSVP (follows from 1). No cancel-RSVP action for free events.
-4. Capacity check counts then inserts, so two simultaneous RSVPs can both pass (D1 has no row lock).
-5. Confirmation email does not name the ticket type.
-6. `EventTiers.tsx`, `RsvpForm.tsx` and the event page use Tailwind-style utility classes, against the one-style-system rule (Shine classes). Not converted here (visual change, needs a live look).
-7. Public strings on the event page ("Ticket types", "Sold out") are English only.
-
-#### Fixed in this change
-- A sold-out event (no places left) showed the RSVP form or Buy ticket button; it now shows "Sold out" (`eventSaleMode`, tests in `tests/int/event-sale-mode.int.spec.ts`).
-
-## Appendix: Issues to open on the Spark and Shine repos (Tasks 2 and 40)
-### Issues to open on `asticore/spark` (Spark)
-
-Checked 15 Nov 2026 against the repo. Already there, so not listed: shimmer (skeleton loaders), toast, popup, carousel, countdown, counter, funnel/flow (sankey style) charts, timeline chart, radar, 30+ charts, 5 diagrams, 9 viz types. Keep the `spark-` prefix after the rename to Spark (decided by Matt).
-
-#### 1. Data table behaviour (`spark-table`)
-Behaviour layer for a plain Shine table: sort by column, search, per-column filter, paging, sticky header, column visibility, row selection (with select all and a `change` event), responsive stack, CSV download, empty state. Data from the existing markup or `data-spark-data` JSON or CSV. Accessible (`aria-sort`, keyboard). Used by Engage Task 40c.
-
-#### 2. Chart data input
-`data-spark-csv` (inline or URL) and a live-data adapter hook (`Spark.chartSource(name, fn)`) so a page can feed results from a form or data view without rebuilding the chart. Add stacked and mixed series options where missing. Used by Engage Task 40b.
-
-#### 3. Polar area chart
-Confirm `chart-bar` or `chart-radar` covers polar area; if not add `chart-polar`.
-
-#### 4. Star rating (`spark-rating`)
-Read-only and input modes, half stars, count, colour token, `change` event.
-
-#### 5. Calendar and date picker (`spark-calendar`)
-Month view with events from JSON or ICS, optional range picker, first day of week, locale. Used by Engage Tasks 39c and 34b.
-
-#### 6. Stepper and multi-step helper (`spark-steps`)
-Step state, next and back, validation hook, progress, URL hash sync.
-
-#### 7. Lottie player (`spark-lottie`)
-Small dotLottie player: autoplay, loop, play on scroll or hover, reduced-motion fallback. Used by Engage Task 33b.
-
-#### 8. Content timeline component
-A vertical and horizontal timeline for content (not the timeline chart): items, icons, alternating layout, reveal on scroll. Used by Engage Task 39a.
-
-#### Notes for every item
-Zero dependencies, `data-spark-*` options, Shine tokens, `prefers-reduced-motion` respected, a `.meta.js` entry so the Engage picker can list options.
-
-### Issues to open on `asticore/shine`
-
-Checked 15 Nov 2026 against the repo. Already there, so not listed: table, tabs, accordion, modal, drawer, pagination, breadcrumb, dropdown, progress, avatar, alert, badge, tooltip, popover, carousel. Engage uses these first (Task 40d).
-
-#### 1. Data table styles
-Sortable header states (`aria-sort` arrows), selected row, sticky header, density (compact, comfortable), column resize handle, responsive stack, empty state, toolbar (search, filters, column menu), pagination bar. Pairs with Spark `spark-table`. Used by Engage Task 40c.
-
-#### 2. Timeline
-Vertical and horizontal, alternating, icon or image markers, date label, dark mode. Used by Engage Task 39a.
-
-#### 3. Stepper
-Horizontal and vertical steps with done, current and error states, connectors, small and large. Used by Engage Tasks 34a and 40.
-
-#### 4. Star rating
-Display and input styles, half stars, sizes, colour token.
-
-#### 5. Skeleton
-Static placeholder shapes (text, avatar, card) for use with Spark shimmer.
-
-#### 6. Calendar
-Month grid, today, selected, event dots, range, week start. Pairs with Spark `spark-calendar`. Used by Engage Task 39c.
-
-#### Notes for every item
-Tokens only (`--sh-*`), light and dark, no JavaScript, documented in the docs site.
-
-## Live checks (Task 44; need Matt's own accounts; FINAL section)
 Every built item that still needs a live check is listed here, in groups. Tick an item when checked on the live site; delete it once it passes.
 
 - [ ] Live check Task 5/6 follow-ups (17 Nov): (a) Email > Notifications: a rule has "Look of the email"; with Designed picked and the brand switched on in Email design, the email arrives with your logo, colours and footer, with **bold** and links working; with the brand off it stays plain; (b) Email designer: Undo and Redo buttons (and Ctrl or Cmd + Z outside text fields) step back through edits; the preview offers Computer, Phone, Gmail, Outlook and Apple Mail widths; Checks lists low contrast, pure black text, logo-in-dark-mode and dim-link warnings when they apply; (c) Theming > Presets > Styles you like: each card shows a drawn preview, the explanation lines follow the admin language, and after Use this theme the visual editor's Effects picker shows "Suggested by your style picks" with an Apply button that only applies when pressed.
@@ -986,7 +958,7 @@ Every built item that still needs a live check is listed here, in groups. Tick a
 
 Only items not yet verified. Tick each, report failures. Grouped by area, each with how to check.
 
-### Shine, reference file, tickets, pricing, badges and categories (9 Nov 2026 PR)
+#### Shine, reference file, tickets, pricing, badges and categories (9 Nov 2026 PR)
 - [ ] Task 4 gaps: on a product with a variation tier, the product page lists it with the variation name; a badge set to Chosen products shows the product picker and saves; a nested blog category opens at /blog/category/parent/child and a post card using {{category_path}} shows the trail; a company member sees the company tier price in the cart and at checkout.
 - [ ] Effects picker and Reference sources (Task 2): in the visual editor open a block, Design > Custom, pick an effect (for example Counter), set an option, publish, and confirm the live page runs it and the CSS classes and Custom attributes fields show the `spark-` class and `data-spark-` attribute. Open Settings > Data and System > Reference sources and confirm Shine and Spark show their pinned versions and a status. Check each picker class name actually does something on the live page; fix the catalogue where it does not.
 - [ ] Paid event tickets (Task 1): on a paid event with a ticket product, buy a ticket, confirm a booking row appears (Event RSVPs, with the order number), the booking email names the ticket type, the guest is on the check-in list and the spots count drops; refund the order fully and confirm the booking shows Cancelled and the place is free again. Open a free event in light and dark and a phone width and in another language: ticket types, form and buttons are translated and look right.
@@ -1001,13 +973,13 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Events: an event with no places left shows "Sold out" (free and paid).
 - [ ] Run `tests/int/internal-migrate-fresh-install.int.spec.ts` and `tests/int/fresh-install-schema-coverage.int.spec.ts` locally (they hang in the cloud sandbox).
 
-### Repo rename follow-ups (9 Nov 2026, Matt)
+#### Repo rename follow-ups (9 Nov 2026, Matt)
 - [ ] Cloudflare dashboard > Workers & Pages > the worker > Settings > Builds: reconnect the Git repository to `asticore/engage` if it shows disconnected; confirm build and deploy commands unchanged. Pass = next push to `main` deploys.
 - [ ] GitHub > Settings > Branches: confirm the `main` rule and required `test` check still apply on `engage`.
 - [ ] Local clone: `git remote set-url origin https://github.com/asticore/engage` (folder rename optional).
 - [ ] Claude project repo setting and any webhooks or GitHub App access: point at `asticore/engage`.
 
-### Visual editor, walkthrough and setup (PR #226, 8 Nov 2026)
+#### Visual editor, walkthrough and setup (PR #226, 8 Nov 2026)
 - [ ] Drag a card from the Elements bar onto the canvas (Chrome and Safari): it lands where the blue line shows. Templates drag too.
 - [ ] Walkthrough: a new admin account sees it once on first sign-in; Skip, then sign in on another browser: it does not show again. Sidebar Help replays it.
 - [ ] Setup questions: on a fresh install the dashboard opens "Set up your site"; answers show a summary; Apply switches the ticked sections on (sidebar updates); this existing site never shows it on its own (link "Run setup questions again" on the dashboard).
@@ -1023,7 +995,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Visibility rules: weekday / time window / language hide and show on the live page.
 - [ ] Preview button opens the live page (homepage opens "/").
 
-### Webhooks (PR #214): needs a live site, a receiver you control and the admin
+#### Webhooks (PR #214): needs a live site, a receiver you control and the admin
 - [ ] Inbound page: Admin > Webhooks > Inbound webhooks > New inbound endpoint. Name "Test inbound", what it does "Create a page or post", kind Page, title field `title`, status Draft, window 5 minutes, enabled. Save and copy the signing secret shown once. Send a POST with a JSON body `{"title":"Live inbound check"}`, header `Content-Type: application/json`, header `Idempotency-Key: check-1`, and header `X-Engage-Signature: t=<unix seconds>,v1=<HMAC-SHA256 hex of "<t>.<body>" with the secret>`. Pass = answer 200 `{"status":"created"}`, a draft page titled "Live inbound check" under Pages, and the request log shows Created.
 - [ ] Duplicate: send the same request again with the same Idempotency-Key. Pass = 200 `duplicate`, no second page, the log shows Duplicate.
 - [ ] Refusal: send with a wrong secret. Pass = 401, and the log shows Refused with "The signature does not match."
@@ -1035,7 +1007,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] DNS guard on real receivers: press Test on an ordinary public webhook. Pass = OK, which shows the DNS-over-HTTPS lookup works from the live Worker. Optional: point a webhook at a host name you control that resolves to 127.0.0.1. Pass = Test reports that it resolves to a private or internal network.
 - [ ] Migration on the live database: `SELECT name FROM eg_migrations ORDER BY id DESC` lists `20270304_100000_webhook_redaction_inbound` at the top.
 
-### Accounts, sign-in and security (site: magic link, email code and passkeys ON since 25 Oct; "test 2" is "Visible to signed-in accounts"; anonymous visitors see the sign-in gate, verified 25 Oct)
+#### Accounts, sign-in and security (site: magic link, email code and passkeys ON since 25 Oct; "test 2" is "Visible to signed-in accounts"; anonymous visitors see the sign-in gate, verified 25 Oct)
 - [ ] Sign-up and verify: private window, `/account/sign-up`, register a test customer, click the email link. Pass = account page opens.
 - [ ] Password sign-in: `/account/sign-in` with that customer. Pass = lands on `/account`.
 - [ ] Protected page: signed in, open `/gotcha/test-2` (content shows); private window (gate shows).
@@ -1060,14 +1032,14 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Switch back off anything you do not want live (Security settings).
 - [ ] PR #3 (products and events password protection): run the browser check on a protected product and event.
 
-### Portal review and passkey setting (PR #216)
+#### Portal review and passkey setting (PR #216)
 - [ ] Phone width (375 px) on the 19 account routes: sign-in, register, forgot password, reset password, verify email, sign-in link, account home, orders, one order, addresses, one address, bookings, profile, privacy, store credit, subscriptions, organisations, invite. Pass = no sideways scroll, a 16 px gutter, the menu button opens and closes the drawer, the search box fits. How: browser devtools device mode at 375 px width, each route once.
 - [ ] Passkey two-step setting: Admin > Settings > Security > "A passkey that verified the user skips the authenticator-app code" is off. On an account with an authenticator app and a passkey, sign in with the passkey (PIN or fingerprint): pass = the code step appears. Switch it on and repeat: pass = signed in with no code step, and the Security audit log shows "user verified, two-step code skipped". A passkey that does not ask for the PIN still gets the code step.
 - [ ] Live migration: `SELECT name FROM eg_migrations ORDER BY id DESC` lists `20270308_100000_passkey_skip_two_factor` at the top; `PRAGMA table_info(eg_security_settings)` has `passkeys_skip_two_factor` with default 0.
 - [ ] Own confirmation with verification off: register a new customer address, open Bookings. Pass = the note "Bookings made with your email address appear here once you confirm that address." and a "Send a confirmation link" button. Press it, open the email link, press confirm. Pass = Profile says "Your email address is confirmed." and any bookings made with that address now show.
 - [ ] Remove an address: pass = "Remove this address?" appears, Cancel keeps it, OK removes it.
 
-### Operations (PR #199)
+#### Operations (PR #199)
 - [ ] Branch protection: GitHub, asticore/engage > Settings > Branches > rule for `main` > "Require status checks to pass before merging" > add the `test` check (the CI job) > save. Pass = a PR whose `test` job fails shows "Merging is blocked".
 - [ ] Uptime: Cloudflare dashboard > Notifications > add a health check on the live home page with an email alert to you. Pass = pausing the site or pointing the check at a wrong path sends you an alert email.
 - [ ] Error alert: after the deploy, Settings > Speed > Error alerts is on with threshold 10. Cause 10 new errors on a test site. Pass = one admin email arrives; a second burst within the hour sends none.
@@ -1076,17 +1048,17 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Policy notice: the admin dashboard shows "Review your privacy policy and cookie notice"; Dismiss hides it in that browser; it shows again in another browser (known limit of per-browser dismissal).
 - [ ] Migration `20270201_100000_error_alert_settings` ran on live D1 (`SELECT name FROM eg_migrations ORDER BY id DESC`).
 
-### Privacy (#160, #164)
+#### Privacy (#160, #164)
 - [ ] Customer `/account/privacy` (URL only): download JSON (no hash, salt, secret or token); request deletion with password; confirmation email; link works once; second request refused. Pass = all true.
 - [ ] Admin Settings > Privacy requests: approve, then Erase. Pass = account gone, devices signed out, orders kept with totals and no name or email, completion email sent; audit log `privacy.*` holds no personal data; blocked while impersonating.
 - [ ] #164: erase a test account with a form entry and a booking. Pass = entries stay (rule decided in closed Task 11, PR #199, Done).
 - [ ] Migration ran once on live D1 (`eg_migrations`).
 
-### Design (#165, #166, #168, #177)
+#### Design (#165, #166, #168, #177)
 - [ ] Open a page and a template at desktop, tablet and phone widths. Pass = same look at each.
 - [ ] Style panel: applied dot and Reset on border, radius, shadow, spacing and typography.
 
-### Forms (#167, #170, #175, #176, #213)
+#### Forms (#167, #170, #175, #176, #213)
 - [ ] Form element: New form, Design the fields, Choose existing. Pass = works; admin Forms list has no Create button.
 - [ ] Form fields panel on a Form block in the page editor (#175). Pass = fields edit in the editor.
 - [ ] Forms screens: the "Pages using this form" list shows the page (#175).
@@ -1097,7 +1069,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Draft-only page (#213): a page that uses a form only in an unpublished draft is listed on that form's row in Forms with the draft label. Pass = listed as a draft.
 - [ ] Form block on a page (#204): after deploy:migrate, add a Form block to a page, pick a form, save and reload. Pass = it saves with no "no such column: form_id" error.
 
-### Templates and pages (#153, #159, #169, #179)
+#### Templates and pages (#153, #159, #169, #179)
 - [ ] Blog builder slice 2a (feat/task-2ab, d7510dc), needs a real AI key: saved prompts and brand voice save and apply; sources list appears at the end of a post and [n] citations match it; featured image match offers gallery items before upload; per-post AI limit blocks at its count.
 - [ ] Template libraries hub (feat/task-2ab, d7510dc): Library tab search and filter; add, remove, switch and token test each appear in the audit log without the token; a library pinned to a /tree/<tag> address loads that version.
 - [ ] Migration 20270128 (blog builder settings) applied on live D1: `SELECT name FROM eg_migrations ORDER BY id DESC` lists it.
@@ -1117,7 +1089,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Tag and author archives and byline, with real published posts (none exist yet).
 - [ ] Visual editor draft recovery (#155): after a real session expiry, the unsaved tree is offered back and never applied automatically.
 
-### Visual editor, embeds and AI (#154, #155, #158, #178, #182)
+#### Visual editor, embeds and AI (#154, #155, #158, #178, #182)
 - [ ] Short links (#182): a page with a vm.tiktok.com link shows the video; a pin.it pin and an on.soundcloud.com track render; a bad short link stays a link card.
 - [ ] Embeds with real data: embed-code with a real widget; social-feed with a real token; page audio.
 - [ ] Lighthouse on a page with three effects.
@@ -1128,7 +1100,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Blog wizard placeholder (#180): the placeholder reads correctly in the admin.
 - [ ] README deploy checklist (#180): follow it on a clean copy; check each step.
 
-### Admin text and accessibility (#134, #181)
+#### Admin text and accessibility (#134, #181)
 - [ ] In a non-English admin language open Export and import, Theme styles preview, Import content, Form settings panel and Domains checklist. Pass = no English except sample data.
 - [ ] Screen reader pass on the editor and list screens (icon-only buttons; #181).
 - [ ] Keyboard and screen reader pass on the admin tables (#173, #174).
@@ -1264,7 +1236,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Live check 17a (Ownership transfer and delegation): as a company owner offer ownership to a member and check the email arrives, accept it signed in as that member and confirm the roles swapped; delegate a few rights to another account for an hour, open the company as that account (banner, limits), then end the delegation. What it does and where it lives are in `docs/remaining-work-done.md`.
 - [ ] Live check passkey second step, guest cart and account cart (closed Task 23g, 28a): (1) turn on Passkeys in Security, add a passkey to a customer account that also has a password, sign out, sign in with the password: the code screen shows Use a passkey instead; pick it, approve on the device, and you land signed in. Repeat on the admin sign-in with Allow admins on. Check Remember this device still works with the passkey. (2) With two accounts that each have a passkey, start sign-in as account A and answer with account B's passkey: refused with the normal message, and five refusals in a row lock A like wrong codes. Go back to the code screen after a success: the same pending screen cannot be reused. (3) Add two items as a visitor, then sign in: the cart page shows the same items with no duplicates; add the same product while signed out and signed in on a second browser and check the quantities add. Sign in on another device: the account cart is the same. Sign out: the cart is a fresh empty guest cart, not the account's. (4) Register a new account with items in the cart and confirm the cart is still there after verifying the email. (5) With stock of 5 and an account cart holding 4, merge a guest cart holding 3: the cart page shows the notice that an item could not be added. (6) In Scheduled tasks run Data clean-up with a guest cart older than 30 days (set updated_at back in D1): it is deleted, a purchased cart and an account cart stay.
 
-### Languages and tracking (#54, #134, #135 to #145, #151)
+#### Languages and tracking (#54, #134, #135 to #145, #151)
 - [ ] Languages: Settings > Languages: enable a language, add Google or DeepL key, Test connection. Translations page: one row per page, filters, bulk approve. Builder: language switch and translate mode. `/fr/` loads in French with correct hreflang. Clear inactive works. Admin language picker changes admin text. Email arrives in the customer's language. Storefront override table changes storefront text.
 - [ ] Translated slugs (#54, merged): translate a page slug to fr; `/fr/<translated>` renders and `/fr/<source>` redirects; same for a post and a product; menu, block and rich-text links on fr pages keep `/fr/`; canonical, hreflang and sitemap show translated URLs; a duplicate fr slug is refused on overlapping domains; untranslated sites unchanged.
 - [ ] Tracking (#135): Integrations Meta and TikTok switches. Fresh private window before consent = no fbq, ttq or gtag requests; after accepting marketing the TikTok snippet loads (verify in TikTok Events Manager); a click event fires once and reaches Meta Test Events; PageView goes only to dataLayer; nothing runs under /admin or /preview.
@@ -1276,21 +1248,21 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Values and Add all (#145): Add all shows progress, result count and errors; a tag's Value dropdown (fixed, cart total, product price, order total, quantity, element text or attribute, data layer variable) with smart defaults; test-mode toast shows value and currency; cart total units confirmed on the live shop (assumed cents, currency from payment settings, default AUD); GA4 receives value and currency.
 - [ ] GA4 and GTM consent (#151): private window, accept Analytics only: `googletagmanager.com/gtm.js` and `gtag/js` load, `fbq` and `ttq` do not. Marketing only: GA4 and GTM do not load. Check GTM container Marketing tags (they now run on Analytics-only without Consent Mode).
 
-### Portal search (#152)
+#### Portal search (#152)
 - [ ] `/account` signed in, type `ord`: Orders appears. Type a product name: site results link to the product. Switch to French or Japanese: placeholder and labels translate.
 - [ ] (PR #191) `/account` signed in, type `#` and one of your order numbers (for example `#12`): that order appears under "Your orders" and opens its detail page. Type part of a booking's event name: it appears under "Your bookings". Type part of a subscription's product name: it appears under "Your subscriptions".
 - [ ] (PR #191) Type `purchase` in the site search on a public page: a page about orders appears (synonym).
 - [ ] (PR #191) Type `password`: "Password" appears under "Settings" and opens the password section of `/account/profile`. Type `default address`: it appears once, linking to `/account/addresses`. Type `purchase`: Orders appears (synonym).
 - [ ] (PR #191) Switch to Japanese: the new headings ("Your orders", "Settings", "Default address") show in Japanese.
 
-### Commerce and API (#147 to #150)
+#### Commerce and API (#147 to #150)
 - [ ] API gaps (#212): (1) Admin > API builder: edit an endpoint on a collection with a custom field, tick Allow DELETE, save. (2) With a key whose owner may delete pages, DELETE a page: 200 with mode "trash", and the page sits in the trash. (3) DELETE a product (or other non-trashable record) with the same key: 200 with mode "deleted", record gone. (4) Same key, owner without delete permission: 403 and nothing changes. (5) Security audit log has one delete line per call with the endpoint path, and no key. (6) GET the endpoint: the custom field shows its value; POST a value outside the field's range: 400 with the field's message. (7) Download the PDF guide and open it; "Email developer" opens a mail draft with the guide and PDF links; "Copy message" pastes the same text.
 - [ ] API builder (#147, #148): (1) Products endpoint (title, price; filter title; sort price; POST on) via Try it = 200 with only exposed fields. (2) Key not on the key list = 403; key without products:read = 403; no key = 401. (3) Over the per-minute limit = 429 with Retry-After. (4) POST to an unexposed field = 403; `passwordHash` in body = 403. (5) Domain-locked customer sees only their domain; a locked POST cannot save unscoped content. (6) Download all 5 formats; import OpenAPI or Postman and run one request. (7) Public link works in a private window; "New link" makes the old one 404; off = 404. (8) Call log shows status, no bodies. (9) Remove the `api` permission from a role: screen and actions refuse.
 - [ ] Webhooks (#149): create a webhook on a test receiver (https only; http, private IP and redirects refused); secret shown once; Test sends a signed payload and verifies with the JS, Python or PHP snippet; edit content and see the delivery; place a real checkout and confirm order.created and order.paid fire; a failing receiver retries with backoff then marks failed; replay works; removing the `webhooks` permission blocks the screen.
 - [ ] Webhook gap-fill (#150): a receiver returning 500 turns the webhook off after 5 failed deliveries and an admin email arrives; re-enable works; editing a tracking event fires `tracking-event.saved`; a real Stripe and PayPal checkout fires `order.created` then `order.paid`, once each.
 - [ ] Shop and checkout: order statuses, refunds, invoices and shipping labels on a test order.
 
-### Admin hardening and domains (closed Task 1)
+#### Admin hardening and domains (closed Task 1)
 - [ ] Custom admin URL (Settings > Security; bookmark it first; recovery is env var ENGAGE_ADMIN_PATH). Pass = new URL works, `/admin` 404s when signed out, admin pages send noindex (robots meta or X-Robots-Tag), robots.txt disallows admin and /api.
 - [ ] Domains (Settings > Domains): add a second domain (attach it to the Worker in Cloudflare first, follow the DNS checklist). Pass = site loads on both hosts; canonical and og:url use the host you visit; hreflang lists both; redirect-to-primary works; allow-admin off blocks admin on that host.
 - [ ] Per-domain overrides: set a site name, logo, contact or social on one domain. Pass = header, footer and page title show them only on that host.
@@ -1301,7 +1273,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Settings export and import with relations (PR #211): export pages, posts and products, then import into a second site. Pass = a child page keeps its parent, a post keeps its author and featured picture, a product keeps its images; the import check warns for each name missing on that site.
 - [ ] Options page rules (PR #211): create a field group with rule "Editor role is editor" and another with "Options page is <slug>" plus "Field value (options page) <field> is <value>". Pass = the editor-role group shows on the options page to editors only; the value group shows only while that field holds the value, and it appears and hides as the value is changed on the form, before saving.
 
-### Fresh install and deploy (Open now item 1)
+#### Fresh install and deploy (Open now item 1)
 - [ ] Fresh install baseline (PR #222): the same new-account deploy as the next line. Pass = it finishes noticeably faster than before, Settings > General > Features shows the same sections, and `SELECT COUNT(*) FROM eg_migrations` in D1 is about 142.
 - [ ] Lazy sections, fresh install (PR #218): deploy to a new Cloudflare account (or a new D1 database). Pass = the site and admin load, the sidebar shows no Shop, Events, Blog or Forms entries, and Settings > Data and System > Unused tables is empty (the tables do not exist yet).
 - [ ] Lazy sections, switching on: Settings > General > Features, tick Events and save. Pass = the save succeeds (it can take several seconds), Events appears in the sidebar, you can create an event and open /events, and an "Events landing" template exists. Repeat with Shop (a "Shop landing" template) and Forms. Fail = a save error mentioning tables, or a "no such table" page.
@@ -1310,7 +1282,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Deploy on a second Cloudflare account (see Open now). Pass = migrations run, cron trigger present, upload optimisation works or skips with a message.
 - [ ] CI (#162): Actions tab shows the `test` job green on PRs and main.
 
-### Closed Task 9c settings checks (PR #198)
+#### Closed Task 9c settings checks (PR #198)
 - [ ] Maps key: Integrations, Google group. Save a real browser key and press Check Maps key. Pass = "has the shape Google uses". Type `AIza-bad`, Save, press again. Pass = "does not have the shape Google uses". Put the real key back and Save. (Shape only: a website-restricted key is not called.)
 - [ ] PageSpeed key: save the real PageSpeed Insights key and press Check PageSpeed key. Pass = "PageSpeed Insights key accepted." with no test run. Save a wrong key (starts AIza, 39 characters, not real), press again. Pass = Google's refusal shows. Put the real key back. Also check the PageSpeed Insights API is enabled for the key's project.
 - [ ] reCAPTCHA: save the site key and secret key of this site and press Check reCAPTCHA keys. Pass = the site key line is accepted and "reCAPTCHA secret key accepted." appears. Save `abc` as the secret, press again. Pass = "Google does not recognise this reCAPTCHA secret key." Put the real secret back. Check a form with reCAPTCHA still submits.
@@ -1319,7 +1291,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Stale tab, pixel picker: in tab A change any Integrations field and Save. In tab B (Tracking connections, Meta, a connected account) pick a pixel and Save. Pass = tab B shows the conflict message and the Integrations pixel ID is unchanged. Reload and pick again. Pass = saved.
 - [ ] Stale tab, Google connection: in tab A press Save client (no change needed). In tab B press Disconnect and confirm. Pass = tab B shows the conflict message and the sign-in is kept. Reload and disconnect again. Pass = disconnected.
 
-### Closed Task 9a settings safety (PR #197)
+#### Closed Task 9a settings safety (PR #197)
 - [ ] Stale tab: sign in as admin, open Integrations in two browser tabs. In tab A change a field and Save. In tab B change a different field and Save. Pass = tab B shows "These settings changed in another tab or by another admin..." and nothing is overwritten. Reload, and tab A's value is there.
 - [ ] Custom CSP: Security, Headers, Content-Security-Policy, type `img-src https://example.com` and Save. Pass = saved. Then type `scrpt-src 'self'` and Save. Pass = refused with a message naming "scrpt-src". Clear the field and Save. On a public page, DevTools, Network, the page response headers: the policy still contains `fonts.gstatic.com` and the site still loads its fonts.
 - [ ] Admin notice: needs two admin accounts with real inboxes. Security, change Admin URL (or switch "Two-factor required for admins") and Save. Pass = both admins get "Security change on this site: ..." with the old and new values, and Email log shows the send (Task 12 email first). Change it back afterwards.
@@ -1328,7 +1300,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Check AI keys: Integrations, save the real Claude and OpenAI keys, press Check AI keys. Pass = "Claude key accepted." and "OpenAI key accepted." A wrong key shows "refused this key (HTTP 401)". Nothing is generated and nothing is charged.
 - [ ] Check Cloudflare zone: save the zone ID and API token, press Check Cloudflare zone. Pass = "Connected to the zone <your domain>." The check changes nothing and purges nothing.
 
-### Closed Task 7 integrations (PR #193, PR #195)
+#### Closed Task 7 integrations (PR #193, PR #195)
 - [ ] Resend: Webhooks, Add endpoint `https://<your site host>/api/email-events/resend`. Tick Email bounced and Email complained. Copy the signing secret into a secret named `RESEND_WEBHOOK_SECRET`. Pass = Resend's test send to `bounced@resend.dev` shows that address in `SELECT * FROM eg_email_suppressions` with source `resend:Permanent`.
 - [ ] SendGrid: Settings, Mail Settings, Event Webhook. HTTP POST URL `https://<your site host>/api/email-events/sendgrid`. Tick Bounced and Spam Reports. Turn on Signed Event Webhook Requests and copy the verification key into a secret named `SENDGRID_WEBHOOK_PUBLIC_KEY`. Pass = Test Integration returns 200.
 - [ ] Mailgun: Sending, Webhooks, add `https://<your site host>/api/email-events/mailgun` for Permanent Failure and Complaint. Copy the HTTP webhook signing key (API security page) into `MAILGUN_WEBHOOK_SIGNING_KEY`. Pass = a post with a wrong signature gets 401 and a real test event is recorded.
@@ -1347,7 +1319,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Google: Settings, Google connection, Disconnect, then Connect with Google. The consent screen must ask to manage Search Console data. Pass = connected.
 - [ ] Sitemap: on the Search Console card, click Submit sitemap. Pass = success message; Google Search Console, Sitemaps shows `/sitemap.xml` as Success after a few days. Before reconnecting it shows the "reconnect" message.
 
-### Closed Task 8 shop (PR #194)
+#### Closed Task 8 shop (PR #194)
 - [ ] Bank transfer: Shop settings, Payments, Offline payment methods. Switch on Bank transfer and add the account details. At checkout with a test cart, choose "Place order to pay by bank transfer". Pass = the order is Pending payment with method Bank transfer, the customer's email has the details, and the order shows the Offline payment box.
 - [ ] Mark paid: on that order press Mark payment received. Pass = status Processing, invoice number set, the processing email is sent, and the notes say "Payment received by Bank transfer".
 - [ ] Review request: Shop settings, Shop switches, switch on "Ask for a review after an order is completed" and save. Complete a test order. Pass = the customer's email has a link per product to /shop/<slug>#reviews. Needs SITE_URL set to the full site address.
@@ -1358,12 +1330,12 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Shop list filters: on /shop, the Brand and Tag rows show the brands and tags of the products. Pick a brand, then a tag: only matching products show, the links keep both, and paging keeps them. Pass = the counts agree with the product pages.
 - [ ] Search by brand or tag: /search?q=<brand name> and /search?q=<tag name> list the products, each once.
 
-### Settings UX (PR #196)
+#### Settings UX (PR #196)
 - [ ] Hub and search: Settings > All settings lists every settings page and screen. Type "cookie banner" in the search: results such as "Banner title" show under General > Integrations (and Tracking > Integrations), and each opens its page and section. Pass = the links land on the field's section.
 - [ ] Last changed: save any setting on General. Reload /settings/site as an admin: the line "Last changed by <your email> on <date> UTC" shows under the description. Sign in as an editor who is not an admin: the line does not show.
 - [ ] Reset this section: on Blog (Content), change a field that has a default (for example Posts Per Page), press Reset this section, then Reset to defaults. Pass = the field returns to its default on screen and the page does not save until Save is pressed. Cancel on the confirm leaves values as they were.
 
-### Closed Task 10 API (categories, keys and feeds) (PR pending)
+#### Closed Task 10 API (categories, keys and feeds) (PR pending)
 - [ ] Categories: API keys screen as admin, Access categories, New category (name Partner, Read everything, 30 requests a minute, 1 key). Add a customer by email. Sign in as that customer: profile shows "Your access category is Partner" and the API guide lists only endpoints they can call. A customer outside any category sees the "not in an API access category" note and cannot create a key.
 - [ ] Rotate: as that customer create a key, enter the password, press Rotate. Pass = new key shown once, old key returns 401, the audit log has api-key.rotated.
 - [ ] Usage: call the REST API with the key a few times, press Usage on the key. Pass = today's row counts the requests and the refused ones (a 429 or a denied route).
@@ -1371,7 +1343,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Feeds: API builder, drag fields into Exposed fields and reorder them, set format to CSV data feed, save, call the endpoint with a key. Pass = CSV with the fields in that order and an X-Total-Count header; add ?format=json and ?format=xml and check each. Open the CSV in Excel: a cell starting with = shows as text.
 - [ ] Endpoint by category: tick one category on an endpoint. Pass = a key from another category gets 403 and the endpoint is missing from that customer's guide.
 
-### Closed Task 10 SEO (PR #200)
+#### Closed Task 10 SEO (PR #200)
 - [ ] Cornerstone: open a published page, tick Cornerstone content on the SEO card, Save. Pass = the SEO audit row shows "Cornerstone", and the Cornerstone only filter keeps it. Untick and Save. Pass = it drops out.
 - [ ] Bulk SEO edit: SEO audit, change the SEO title of two rows and the meta description of a third, press Save. Pass = "Saved 3 rows." and the new values are on the pages. Then sign in as an editor with no update rights on pages, change one row. Pass = "You cannot edit this." on that row.
 - [ ] Links: SEO audit, Pages with no links to them. Pass = a page nothing links to carries "No links to this page", and a page with related titles lists up to five suggestions. Check one flagged page is linked from the menu (known limit: menus are not counted).
@@ -1379,7 +1351,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Rich results: Google Rich Results Test on a page with an FAQ block and a YouTube video element, and on /faq. Pass = FAQ questions found on each, and Video found on the page with the YouTube element. No errors.
 - [ ] Slug redirect: change the slug of a published post, save. Pass = Redirects lists a 301 from /blog/old-slug to /blog/new-slug with the note "Created when the address changed", and the old address redirects.
 
-### Known limits sweep (PR #205)
+#### Known limits sweep (PR #205)
 - [ ] SES List-Unsubscribe: set the email provider to SES, send a test order email to a Gmail account, open it and choose Show original. Pass = a List-Unsubscribe header with the unsubscribe link is present.
 - [ ] Suppression list: Email, Suppression list, remove a test address that was suppressed. Pass = the row goes, and a bulk send to that address is allowed again.
 - [ ] 404 log: open a made-up address on the live site (for example /test-missing-page), then Redirects, 404s. Pass = the path is listed with a hit count. Create redirect to a real page: the old address now redirects. Dismiss removes a row.
@@ -1391,7 +1363,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] VideoObject: in Google's Rich Results Test, run one page with a Vimeo embed and one with an uploaded video. Pass = a VideoObject with a thumbnail and contentUrl (uploaded) or embedUrl (Vimeo) is detected.
 - [ ] Migrations: on the fresh account, confirm the three new migrations ran (20270223_100000_not_found_log, 20270223_110000_coupon_reservations, 20270223_120000_consent_logo) and the 404s tab and banner logo field appear.
 
-### Known limits sweep: media, import, fonts (PR #207)
+#### Known limits sweep: media, import, fonts (PR #207)
 - [ ] Large upload: Media settings, Largest upload, set 60 MB and save. Upload a file of about 60 MB to the library. Pass = it appears and opens or downloads at the same size.
 - [ ] New file types: upload a .heic, .ico, .json and .ods file. Pass = each is accepted, and the .json downloads instead of opening in the browser tab. On a site saved before 1 Nov, Media settings, Allowed file types, must list ico, heic, bmp, tiff, ods, json, rtf, ogg and m4a.
 - [ ] Self-hosted fonts: Speed, Fonts, tick Host built-in fonts, save, reload a page that uses Cormorant or Inter. Pass = the font files load from /font-files/ in the Network tab and the text shows the font. Untick it to go back to jsDelivr.
@@ -1400,7 +1372,7 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Settings import with pictures: import a settings file exported from another site (logo or favicon). Pass = the logo shows this site's copy of the picture.
 - [ ] Spreadsheets: the custom fields spreadsheet import and the data view file picker accept a .ods file. Pass = its rows appear.
 
-### Media formats, video links and admin progress bar (PR #202)
+#### Media formats, video links and admin progress bar (PR #202)
 - [ ] Picture format: Media settings, Optimisation, Output format for pictures: WebP, save. Publish a page with an Image block. In DevTools Network the picture URL has `/cdn-cgi/image/` and `format=webp`. Pass = both. (Needs the Images or Image Resizing setup from closed Task 12.)
 - [ ] File override: Media gallery, open a PNG, set Output format to Original, save. Its URL no longer has `format=`. Pass = yes.
 - [ ] Video link: Media gallery, Add video link, paste a YouTube link, give it a title. Open it, set Poster image, save. In the visual editor add a Video element and choose this item under Video from the media library, publish. The poster shows and the video plays after the usual consent. Pass = yes.
@@ -1408,44 +1380,44 @@ Only items not yet verified. Tick each, report failures. Grouped by area, each w
 - [ ] Admin progress bar: sign in to /admin, follow a few sidebar links and save a page. A thin gold bar shows at the top while each page loads and goes when the page changes. Pass = yes.
 - [ ] Portal weight: after the next deploy, paste the Workers Builds route table (see closed Task 12 below) and check the home and pages list rows; the tag editor and visual editor field panel must not be in the first-load list. Pass = table pasted.
 
-### Speed (closed Task 12, PR #201)
+#### Speed (closed Task 12, PR #201)
 - [ ] Bundle size: open the Cloudflare Workers Builds log for the latest deploy, find the route table that `next build` prints (First Load JS per route) and paste it under this heading. Pass = the table is pasted; compare the home, post and product rows with the next deploy.
 - [ ] Compression: run `curl -sI -H 'Accept-Encoding: br' https://YOUR-SITE/` and look for `content-encoding: br` (or gzip). If missing, Cloudflare dashboard, your zone, Speed, Optimization, Content Optimization: turn Brotli on. Pass = header present.
 - [ ] Video poster: visual editor, add a Video element with a .mp4 link, pick a Poster image, publish. In a private window with DevTools Network open, the poster shows and no .mp4 request appears until you press play. Pass = both.
 - [ ] Theme fonts: Design, set heading to Cinzel and body to Montserrat, publish. DevTools Network, filter "font": files come from cdn.jsdelivr.net/npm/@fontsource/ and text uses the chosen faces. Set the theme back afterwards. Pass = both.
 - [ ] Priority: DevTools Network on the home page: the header logo and, on a post with a featured picture, that picture show Priority High. Pass = yes.
 
-### Editing, approval and locks (PR #206)
+#### Editing, approval and locks (PR #206)
 - Sign in as an editor who cannot publish, open a published page, change the text and save: the live page stays as it was and the change is kept as a draft.
 - With "clear saved copies on publish" on, publish a page from the editor: the public page shows the change within seconds.
 - In a workflow with a document in review, change the workflow steps and save: the offer to move the document to step 1 appears; accept it and check the history row.
 - Edit an approved page as an editor: it goes back to review and the history shows "Edited after approval. Review starts again."
 
-### Media SVG, Openverse hosts and RSVP guest details (PR #210)
+#### Media SVG, Openverse hosts and RSVP guest details (PR #210)
 - [ ] SVG switch: Media settings > Uploads, tick Allow SVG uploads, save. Upload a plain SVG logo. Pass = it appears in the library and its link shows the picture, with Content-Security-Policy containing sandbox in the Network tab. Upload an SVG containing `<script>alert(1)</script>` and an onload attribute. Pass = it is stored with the script removed and no alert appears when its link opens. Upload an SVG with a DOCTYPE. Pass = refused with a message. Untick the switch and save, then upload an SVG. Pass = refused with 'SVG pictures are not allowed on this site'.
 - [ ] Openverse hosts: Media settings > Stock photo search > Openverse picture hosts: delete the line upload.wikimedia.org, save. Search Openverse for a Wikimedia picture and import it. Pass = refused with 'not served from a library this site can import from'. Put the line back, save, import again. Pass = imported.
 - [ ] Guest details, counts only: Settings > Roles, make a test role with Event RSVPs read and no View guest details, and no Edit on Events. Give it to a test admin-panel user. Open an event with RSVPs as that user, RSVPs tab. Pass = the counts show, the note 'Guest names and emails are hidden' shows, there is no name table and no Export CSV button.
 - [ ] Guest details, granted: tick View guest details on that role and save. Reload the same tab. Pass = names, emails and Export CSV appear. Untick it again.
 - [ ] Editors unchanged: an existing editor account opens an event's RSVPs tab and Check in. Pass = names and emails show as before and the check-in list loads and saves a check-in.
 
-### Next 16 (closed Task 4, PR #220)
+#### Next 16 (closed Task 4, PR #220)
 - 4 Nov 2026 incident: after #220 every request failed with Cloudflare Error 1101 (`Unexpected loadManifest(/.next/server/preview-props.json) call!`): OpenNext 1.18.1 and 1.20.x only inline `*-manifest`, `required-server-files` and `prefetch-hints` JSON, Next 16 also loads `preview-props.json`. Fix: PR #223 pnpm patch (`patches/@opennextjs__cloudflare.patch`) adds it to the glob. Remove the patch when OpenNext supports it. Live check after deploy: `/` and `/api/health` return 200.
 - [ ] Production deploy on Next 16 (second account first): `pnpm run deploy:app` (no unsafe flag). Pass = the OpenNext build finishes and the Worker deploys. Then smoke test: public home, a blog page, `/shop`, `/checkout`; log in to the admin (including a non-default Admin URL), open Pages and the Visual editor, save a page and publish one. Pass = page loads, the edge page cache serves it and a publish purges it, host routing and locale prefixes still work, no console errors. If anything fails, roll back to the previous Worker version in the Cloudflare dashboard.
 
-### Architecture (closed Task 4, PR #215)
+#### Architecture (closed Task 4, PR #215)
 - [ ] Setup script on a fresh account or a fork (never the production account): `pnpm run setup:cloudflare -- --dry-run`, then `pnpm run setup:cloudflare -- --replace --worker <name>`, review the diff of `wrangler.jsonc`, then `pnpm run deploy:full`. Pass = the D1 database and the R2 bucket with that name exist in the account; a second run of the script says "reuse" and writes nothing; the Worker deploys, migrations run and the Home page exists; the header shows "My website" until the name is set in Site Settings.
 - [ ] Bundle size on the live build: `pnpm run build && pnpm run bundle:size -- --require` on the production branch. Pass = per-route sizes print with no missing files. Then set `defaultRouteGzipKB` in `bundle-budget.json` to the largest route's gzip size plus about 10%, commit, and the next run reports "Within budget".
 - [ ] Brand on live: open the home page, `/checkout` and an order confirmation (or the checkout success page). Pass = the browser tab title ends with the site name saved in Site Settings (not "My website") and the header and footer show it.
 
-### Activity log (closed Task 18, PR pending)
+#### Activity log (closed Task 18, PR pending)
 - [ ] Settings, Security, Activity log (`/admin/security/activity`): edit and publish a page, delete a post, save a setting, download a list CSV; each shows with your email and the right event (publish, update, delete, settings.update, export). Click a person's name: only their rows remain. Use From and To dates and the Collection filter.
 - [ ] Same screen, Clear activity log: pick "older than 90 days", Count entries, type CLEAR, Clear now; the old rows go and one `activity.cleared` row names you and the count. Cookie consent entries and privacy records stay. The CSV link downloads the current view.
 - [ ] Erase a test customer through the privacy flow; their activity rows keep the event but lose email, address and browser.
 
-### Next.js 16.4.6 patch (closed security upgrade)
+#### Next.js 16.4.6 patch (closed security upgrade)
 - [ ] Production deploy on Next 16.4.6: run `npm run deploy`. Pass = no "known security vulnerability" notice in the build log, the Worker deploys, and public home, `/admin` login, a blog page and `/checkout` load with no console errors. If it fails, roll back to the previous Worker version in the Cloudflare dashboard.
 
-### Fresh-account deploy and setup script (last live check)
+#### Fresh-account deploy and setup script (last live check)
 - [ ] Lean installer and updates (built 18 Nov 2026; Matt created release v1.2.0): (1) confirm the Release workflow attached worker.js, assets.tar.gz and manifest.json; (2) click the new Deploy button (README, points at `installer/`) for a test site named gracengatsby, fill in the variables, and check the build downloads the release and the site boots (a fresh database migrates itself); (3) tag `v1.2.1` and check the test site's popup shows the notes, Update now backs up to R2 and commits the new version to the site's own repo (needs `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN`), Cloudflare rebuilds, and the Run migration bar appears only when the release changed the database; (4) check Roll back restores the previous version; (5) check the free-plan limit once the Worker fits (see Task 39).
 - [ ] Fresh-account deploy check and the setup script on a new Cloudflare account (the "Fresh-account deploy check (detail)" section and the Setup script item under "Architecture (closed Task 4, PR #215)"). Runs after Live checks, so it also proves the free-plan size limit on a fresh account.
 - [ ] Task 14 25a SAML and self-service (Single sign-on): with a SAML test app (Okta developer, Entra or Google Workspace custom SAML app), make a SAML 2.0 connection from Admin, Single sign-on (paste the provider metadata XML), give the provider the shown ACS address and entity ID, add and verify your domain, then use the Sign in with single sign-on link on the account sign-in page and check you land signed in. Check the same response cannot be replayed. Then, as an organisation owner (not admin), open the organisation page and check the Single sign-on section sets up a connection for that organisation only, and that a non-owner member sees no such section.
