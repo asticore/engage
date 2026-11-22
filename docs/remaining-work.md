@@ -11,6 +11,7 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 5. New requests become a numbered task in the right place (or appended at the bottom if you say "later"), with what exists today, what to build and what needs your decision.
 6. Every feature, past and future, must work on a brand new single-click install: each new table or column is created by an idempotent migration registered in `src/migrations/index.ts` and covered by `tests/int/internal-migrate-fresh-install.int.spec.ts` and `tests/int/fresh-install-schema-coverage.int.spec.ts`, so the install builds the schema itself and nobody runs SQL by hand. Features already covered: site files, cookie consent (and banner settings), media library and file upload, ads, custom role rules and locks, shop catalogue and orders, extra fields import, content approval and approval workflows, custom fields v2, site fonts, redirects, roles, visibility and schedule, backups, forms, A/B tests.
 7. Keep the Process and Lessons sections current; remove a lesson once it is enforced by a test.
+8. **Commits, squash merges and PR bodies never carry `Co-authored-by: Claude <noreply@anthropic.com>`, a Claude session link or "Generated with Claude Code" (Matt, 22 Nov 2026, said twice).** The GitHub squash merge adds the co-author line on its own, so every merge must set the commit message explicitly (title and short body, no trailer) instead of taking the default. After merging, check `git log origin/main -1` for the line.
 
 ## Process for every task
 
