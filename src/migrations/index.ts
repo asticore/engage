@@ -257,6 +257,7 @@ import * as migration_20270319_100000_taskboard_org_scope from './20270319_10000
 import * as migration_20270320_100000_admin_two_step_and_30_day_sessions from './20270320_100000_admin_two_step_and_30_day_sessions';
 import * as migration_20270322_100000_spam_rule_action from './20270322_100000_spam_rule_action';
 import * as migration_20270321_100000_update_popup_probe from './20270321_100000_update_popup_probe';
+import * as migration_20270322_100000_seo_site_audit from './20270322_100000_seo_site_audit';
 import * as migration_20270318_200000_bid_json_column from './20270318_200000_bid_json_column';
 
 export const migrations = [
@@ -1554,5 +1555,10 @@ export const migrations = [
     up: migration_20270322_100000_spam_rule_action.up,
     down: migration_20270322_100000_spam_rule_action.down,
     name: '20270322_100000_spam_rule_action',
+  },
+  {
+    up: migration_20270322_100000_seo_site_audit.up,
+    down: migration_20270322_100000_seo_site_audit.down,
+    name: '20270322_100000_seo_site_audit',
   },
 ];

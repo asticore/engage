@@ -37,6 +37,23 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     const { runDueTests } = await import('@/features/pagespeed/queue')
     await runDueTests(engine as never, db as never)
   },
+  'seo-crawl': async ({ engine, db, now }) => {
+    const store = await import('@/features/seo/crawl/store')
+    const { crawlStep, startCrawl } = await import('@/features/seo/crawl/runner')
+    const { configuredSiteOrigin } = await import('@/utilities/siteOrigin')
+    const origin = configuredSiteOrigin()
+    const handle = db as never
+    const [latest] = await store.latestRuns(handle, 1)
+    // A crawl in progress is continued a few pages at a time; otherwise a new one starts when the schedule says so.
+    if (latest && latest.status === 'running') return crawlStep(handle, latest.id, origin)
+    if (!store.scheduleDue(await store.readSchedule(handle), latest?.startedAt ?? null, now)) return null
+    const { buildCrawlTargets } = await import('@/features/seo/crawl/targets')
+    const { buildSitemapEntries } = await import('@/features/seo/sitemap')
+    const entries = (await buildSitemapEntries().catch((): null => null)) ?? []
+    const targets = await buildCrawlTargets(engine as never, origin, entries.map((e) => e.url))
+    const runId = await startCrawl(handle, 'schedule', targets)
+    return crawlStep(handle, runId, origin)
+  },
   'webhooks-retry': async ({ engine }) => {
     const { retryDueWebhooks } = await import('@/features/forms/maintenance')
     await retryDueWebhooks(engine as never)

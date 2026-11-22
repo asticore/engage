@@ -270,3 +270,20 @@
 
 .sa-sitewide__list { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.5rem; }
 .sa-sitewide__item { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+
+/* Marks a finding as SEO or Accessibility (item 16m). */
+.sa-kind {
+  display: inline-block;
+  padding: 0 0.4em;
+  border-radius: 0.6em;
+  font-size: 0.75em;
+  font-weight: 600;
+  background: var(--shine-surface-2, #eef0f3);
+  color: var(--shine-text, #1f2933);
+}
+.sa-kind--accessibility {
+  background: #e3f0ff;
+  color: #0b3d75;
+}
+[data-theme='dark'] .sa-kind { background: #2b3440; color: #e5e9ee; }
+[data-theme='dark'] .sa-kind--accessibility { background: #12365e; color: #cfe5ff; }

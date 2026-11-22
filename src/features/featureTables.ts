@@ -104,7 +104,7 @@ export const CORE_TABLE_BASES = [
   'organization_invitations', 'organization_members', 'organization_roles', 'organization_team_members',
   'organization_teams', 'organizations', 'org_delegations', 'org_transfers', 'outbound_clicks', 'page_templates', 'pages', 'pagespeed_queue', 'pagespeed_results', 'passkeys',
   'password_groups', 'payment_settings', 'preferences', 'privacy_requests', 'rate_limits', 'reusable_sections', 'roles',
-  'scheduled_publishes', 'security_settings', 'seo_settings', 'shipping_settings', 'shop_extra_settings', 'shop_settings',
+  'scheduled_publishes', 'security_settings', 'seo_settings', 'seo_crawl_runs', 'seo_crawl_pages', 'seo_crawl_config', 'seo_snippet_targets', 'shipping_settings', 'shop_extra_settings', 'shop_settings',
   'site_details', 'site_pages', 'site_settings', 'site_templates', 'social_accounts', 'speed_settings',
   'template_libraries', 'theme_styles', 'tracking_connections', 'trusted_devices', 'two_factor_email_codes',
   'user_sessions', 'users', 'webhook_deliveries', 'webhook_inbound', 'webhook_inbound_log', 'webhook_settings',

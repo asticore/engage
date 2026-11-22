@@ -416,6 +416,18 @@ describe('runInternalMigrate - fresh install on an empty D1', () => {
     )
   })
 
+  it('creates the site audit tables and the PageSpeed checklist column (Task 6)', async () => {
+    for (const table of ['eg_seo_crawl_runs', 'eg_seo_crawl_pages', 'eg_seo_crawl_config', 'eg_seo_snippet_targets']) expect(tables, table).toContain(table)
+    const columnsOf = async (table: string): Promise<string[]> => {
+      const result = await proxy.env.D1.prepare(`PRAGMA table_info(\`${table}\`)`).all()
+      return (result.results as { name: string }[]).map((r) => r.name)
+    }
+    expect(await columnsOf('eg_seo_crawl_pages')).toEqual(expect.arrayContaining(['run_id', 'path', 'state', 'status_code', 'data', 'issues', 'depth', 'in_links', 'broken_links']))
+    expect(await columnsOf('eg_seo_crawl_runs')).toEqual(expect.arrayContaining(['status', 'started_at', 'health', 'errors', 'warnings', 'notices']))
+    expect(await columnsOf('eg_seo_snippet_targets')).toEqual(expect.arrayContaining(['collection', 'doc_id', 'types']))
+    expect(await columnsOf('eg_pagespeed_results')).toContain('audits')
+  })
+
   it('creates the PageSpeed tables, list columns, API key and settings columns', async () => {
     for (const table of ['eg_pagespeed_results', 'eg_pagespeed_queue']) {
       expect(tables, table).toContain(table)

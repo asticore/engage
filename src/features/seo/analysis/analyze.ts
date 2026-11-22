@@ -7,6 +7,7 @@
 import type { AnalysisInput, AnalysisResult, Check, Status } from './types'
 import { countPhrase, hasAllWords, rawWords, words } from './keyphrase'
 import { readabilityChecks } from './readability'
+import { accessibilityChecks } from './accessibility'
 import { isRichType, parseFacts, validateRich } from '../richTypes'
 
 const TITLE_MIN = 30
@@ -182,10 +183,13 @@ export function analyze(input: AnalysisInput): AnalysisResult {
     ? seoChecks(input).map((c) => (c.status === 'ok' && CORNERSTONE_STRICT.has(c.id) ? { ...c, status: 'bad' as Status } : c))
     : seoChecks(input)
   const readability = readabilityChecks(input.text, input.headings)
+  const accessibility = accessibilityChecks(input)
   return {
     seo,
     readability,
+    accessibility,
     seoScore: scoreOf(seo),
     readabilityScore: scoreOf(readability),
+    accessibilityScore: scoreOf(accessibility),
   }
 }

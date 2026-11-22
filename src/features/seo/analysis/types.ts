@@ -33,6 +33,9 @@ export interface AnalysisInput {
 export interface AnalysisResult {
   seo: Check[]
   readability: Check[]
+  /** Accessibility checks that run in the same pass (item 16m). */
+  accessibility: Check[]
   seoScore: Status
   readabilityScore: Status
+  accessibilityScore: Status
 }

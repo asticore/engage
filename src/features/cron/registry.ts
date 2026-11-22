@@ -42,6 +42,7 @@ export const CRON_JOBS: CronJob[] = [
   { name: 'affiliate-payable', label: 'Affiliate payable emails', description: 'Emails each affiliate once when a commission has finished its waiting period and can be paid, when affiliate emails are on.', schedule: 'hourly', feature: 'affiliates', source: 'cron' },
   { name: 'client-reports', label: 'Client report emails', description: 'Emails each client report that is set to weekly or monthly when its time has come, with the link to the read-only report.', schedule: 'hourly', feature: 'clientreports', source: 'cron' },
   { name: 'taskboard-due', label: 'Taskboard due reminders', description: 'Reminds the person a task is given to, once per due date, when it is due today or tomorrow or is overdue (not for cards in the last column).', schedule: 'hourly', feature: 'taskboard', source: 'cron' },
+  { name: 'seo-crawl', label: 'SEO site audit', description: 'Crawls this site\'s own pages for the SEO dashboard on the schedule chosen there (off, daily or weekly), a few pages at a time, and works out the health score when the crawl is complete.', schedule: 'every 5 minutes', feature: 'seo', source: 'cron' },
   { name: 'backups', label: 'Backups', description: 'Takes the scheduled site backup at the time set on the Backups screen.', schedule: 'hourly (checks the backup time)', feature: 'backups', source: 'backups' },
 ]
 

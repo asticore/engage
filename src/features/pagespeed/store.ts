@@ -21,6 +21,16 @@ import {
 /** Past runs kept per document and strategy. Older ones are dropped on insert. */
 export const KEEP_PER_DOC = 60
 
+/** The checklist as stored JSON, or null when there is none or it is too long to keep whole. */
+export function auditsJson(audits: PageSpeedReport['audits']): string | null {
+  if (!audits || audits.length === 0) return null
+  const text = JSON.stringify(audits)
+  return text.length <= MAX_AUDITS_CHARS ? text : null
+}
+
+/** The stored checklist is dropped above this many characters (about 400 rows); a cut one is dropped rather than stored broken. */
+const MAX_AUDITS_CHARS = 90_000
+
 type Row = {
   id: number
   collection: string
@@ -34,6 +44,7 @@ type Row = {
   metrics: string | null
   field_data: string | null
   suggestions: string | null
+  audits?: string | null
   source: string
   fetched_at: string
 }
@@ -60,6 +71,7 @@ export function rowToResult(row: Row): StoredResult {
     metrics: parse(row.metrics, {}),
     fieldData: parse(row.field_data, null),
     suggestions: parse(row.suggestions, { opportunities: [], diagnostics: [] }),
+    audits: parse(row.audits ?? null, []),
   }
 }
 
@@ -72,13 +84,15 @@ export async function saveResult(
   const { report } = input
   await db.run(
     sql`INSERT INTO \`eg_pagespeed_results\`
-      (collection, doc_id, url, strategy, performance, accessibility, best_practices, seo, metrics, field_data, suggestions, source, fetched_at)
+      (collection, doc_id, url, strategy, performance, accessibility, best_practices, seo, metrics, field_data, suggestions, audits, source, fetched_at)
       VALUES (${input.collection}, ${input.docId}, ${input.url}, ${input.strategy}, ${report.scores.performance}, ${report.scores.accessibility},
         ${report.scores.bestPractices}, ${report.scores.seo}, ${safeJson(report.metrics, 3000)}, ${safeJson(report.fieldData, 2000)},
-        ${safeJson(report.suggestions)}, ${input.source}, ${fetchedAt})`,
+        ${safeJson(report.suggestions)}, ${auditsJson(report.audits)}, ${input.source}, ${fetchedAt})`,
   )
   const idRow = (await db.all(sql`SELECT last_insert_rowid() AS id`)) as { id: number }[]
   const id = Number(idRow[0]?.id ?? 0)
+  // Only the newest result of a page and device keeps the full checklist; older ones keep scores and history.
+  await db.run(sql`UPDATE \`eg_pagespeed_results\` SET audits = NULL WHERE collection = ${input.collection} AND doc_id = ${input.docId} AND strategy = ${input.strategy} AND id <> ${id} AND audits IS NOT NULL`)
 
   await db.run(
     sql`DELETE FROM \`eg_pagespeed_results\` WHERE collection = ${input.collection} AND doc_id = ${input.docId} AND strategy = ${input.strategy}
