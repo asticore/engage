@@ -8,6 +8,7 @@ import { insertTemplateAssets, sha256Hex, type UploadFileLike } from '@/features
 import { NO_STORE } from '@/features/templateRepos/routeAuth'
 import type { TemplateFile, TemplateRepoConfig } from '@/features/templateRepos/types'
 
+import { mapTemplateTokens, readColourMap } from './themeMap'
 import { readLibraryState, writeLibraryState, type ImportRecord, type LibraryStoreEngine } from './store'
 
 /**
@@ -93,7 +94,7 @@ export async function importItemPictures(
   template: TemplateFile,
   sourceUrl: string,
   allowRawHtml: boolean,
-): Promise<{ ok: true; tree: unknown[]; saved: number; reused: number; error?: undefined } | { ok: false; error: string; tree?: undefined; saved?: undefined; reused?: undefined }> {
+): Promise<{ ok: true; tree: unknown[]; saved: number; reused: number; themed: number; error?: undefined } | { ok: false; error: string; tree?: undefined; saved?: undefined; reused?: undefined; themed?: undefined }> {
   const engine = storeEngine(context)
   const mediaEngine = context.engine as unknown as MediaEngine
   const policy = await readUploadPolicy(mediaEngine)
@@ -143,7 +144,19 @@ export async function importItemPictures(
       context.user,
     )
   }
-  return { ok: true, tree: inserted.value.tree, saved: fresh.length, reused }
+  // The item follows the site's theme: Shine tokens become the site's own colour references (see themeMap.ts).
+  let tree = inserted.value.tree
+  let themed = 0
+  try {
+    const { loadThemeStyles } = await import('@/features/themeStyles/store')
+    const { styles } = await loadThemeStyles()
+    const result = mapTemplateTokens(tree, { siteColourIds: styles.colours.map((colour) => colour.id), hexMap: readColourMap(template.requires) })
+    tree = result.tree
+    themed = result.mapped
+  } catch {
+    // No theme table or no database in this context: the item is inserted as written.
+  }
+  return { ok: true, tree, saved: fresh.length, reused, themed }
 }
 
 /** A URL slug from a title: lower case words joined by dashes. Falls back to a short unique word. */

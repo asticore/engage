@@ -319,7 +319,8 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         onPickTemplate(tree, undefined, insertMode)
         const saved = Number((json as { saved?: number }).saved ?? 0)
         const reused = Number((json as { reused?: number }).reused ?? 0)
-        setToast(`Added "${card.name}".${saved + reused > 0 ? ` ${saved} picture${saved === 1 ? '' : 's'} saved to Media${reused > 0 ? `, ${reused} already there` : ''}.` : ''}`)
+        const themed = Number((json as { themed?: number }).themed ?? 0)
+        setToast(`Added "${card.name}".${themed > 0 ? ` ${themed} colour${themed === 1 ? '' : 's'} now follow your theme.` : ''}${saved + reused > 0 ? ` ${saved} picture${saved === 1 ? '' : 's'} saved to Media${reused > 0 ? `, ${reused} already there` : ''}.` : ''}`)
       } catch (err) {
         setToast(`Could not add "${card.name}": ${(err as Error)?.message || 'something went wrong.'}`)
       } finally {
