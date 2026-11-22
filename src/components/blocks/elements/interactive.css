@@ -19,3 +19,11 @@
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }
+
+/* Dismissible alert and toast */
+.el-alert--dismissible { position: relative; padding-right: 2.5rem; }
+.el-alert__close { position: absolute; top: .4rem; right: .5rem; min-width: 2rem; min-height: 2rem; background: none; border: 0; color: inherit; font-size: 1.4rem; line-height: 1; cursor: pointer; border-radius: 4px; }
+.el-alert__close:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+.el-alert--toast { position: fixed; right: 1rem; bottom: 1rem; z-index: 60; max-width: min(24rem, calc(100vw - 2rem)); box-shadow: 0 6px 24px rgba(0, 0, 0, .25); animation: el-toast-in .25s ease; }
+@keyframes el-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .el-alert--toast { animation: none; } }

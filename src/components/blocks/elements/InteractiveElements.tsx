@@ -2,6 +2,7 @@ import React, { useId } from 'react'
 
 import { safeUrl } from '@/lib/mergeTags'
 
+import { AlertDismiss } from './AlertDismiss'
 import { SocialGlyph } from './icons'
 import { ShareWithPageUrl } from './ShareWithPageUrl'
 import { alignClass } from './TextElements'
@@ -166,8 +167,9 @@ export const AlertElement: React.FC<P> = (p) => {
   if (placement !== 'inline') return <AlertFixed p={p} kind={kind} edge={placement === 'fixed-bottom' ? 'bottom' : 'top'} />
   const button = str(p.buttonText).trim()
   const href = linkHref(p.buttonUrl)
-  return (
-    <div className={`el-alert el-alert--${kind}`} role={kind === 'danger' ? 'alert' : 'note'}>
+  const role = kind === 'danger' ? 'alert' : 'note'
+  const body = (
+    <>
       {str(p.title) && <strong className="el-alert__title">{str(p.title)}</strong>}
       {str(p.text) && <p>{str(p.text)}</p>}
       {button && href && (
@@ -177,6 +179,19 @@ export const AlertElement: React.FC<P> = (p) => {
           </a>
         </p>
       )}
+    </>
+  )
+  const toast = flag(p.toast)
+  if (flag(p.dismissible) || toast) {
+    return (
+      <AlertDismiss className={`el-alert el-alert--${kind}`} role={role} toast={toast} autoCloseSeconds={toast && num(p.autoClose, 0, 0, 120) > 0 ? num(p.autoClose, 0, 0, 120) : undefined}>
+        {body}
+      </AlertDismiss>
+    )
+  }
+  return (
+    <div className={`el-alert el-alert--${kind}`} role={role}>
+      {body}
     </div>
   )
 }
