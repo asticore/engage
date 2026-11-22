@@ -6,6 +6,7 @@ import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { useCardOpen } from '@/admin/components/collapseStore'
 import { ChecklistPanel } from '@/features/pagespeed/ui/ChecklistPanel'
 import type { ChecklistRow } from '@/features/pagespeed/checklist'
+import { scoreBand } from '@/features/pagespeed/types'
 import '@/features/pagespeed/ui/pagespeed.css'
 import './page-checks.css'
 
@@ -27,6 +28,38 @@ type Loaded = {
 
 const CARD_ID = 'page-checks'
 const STATE_WORD: Record<Detection['state'], string> = { valid: 'Detected and valid', warnings: 'Detected, has warnings', errors: 'Detected, has errors', missing: 'Missing' }
+
+const OWN_RINGS: { key: string; label: string }[] = [
+  { key: 'seo', label: 'SEO' },
+  { key: 'accessibility', label: 'Accessibility' },
+  { key: 'best-practices', label: 'Technical' },
+]
+
+/** Rings of our own check scores (share of checks passed per group), shown without any PageSpeed key. */
+function OwnRings({ scores }: { scores: Record<string, number | null> }) {
+  const rings = OWN_RINGS.filter((r) => scores[r.key] !== undefined)
+  if (rings.length === 0) return null
+  const radius = 30
+  const circumference = 2 * Math.PI * radius
+  return (
+    <div className="ps__rings" aria-label="Our check scores">
+      {rings.map(({ key, label }) => {
+        const score = scores[key] ?? null
+        const band = scoreBand(score)
+        return (
+          <div key={key} className={`ps-ring ps-band--${band ?? 'none'}`}>
+            <svg className="ps-ring__svg" viewBox="0 0 72 72" role="img" aria-label={`${label}: ${score === null ? 'no score' : `${score} out of 100 checks passed`}`}>
+              <circle className="ps-ring__track" cx="36" cy="36" r={radius} />
+              {score !== null && <circle className="ps-ring__value" cx="36" cy="36" r={radius} strokeDasharray={`${(score / 100) * circumference} ${circumference}`} />}
+              <text className="ps-ring__text" x="36" y="37">{score === null ? '-' : score}</text>
+            </svg>
+            <span className="ps-ring__label">{label}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 function SnippetPanel({ data, onTargets, saving }: { data: Loaded; onTargets: (types: string[]) => void; saving: boolean }) {
   const detections = data.snippets ?? []
@@ -163,6 +196,7 @@ function Body({ collectionSlug, id }: { collectionSlug: string; id: number }) {
           {data.checklist && (
             <div>
               <h3 className="ps__h">SEO, accessibility and technical checks</h3>
+              {data.scores && <OwnRings scores={data.scores} />}
               <p className="ps__muted ps__help">
                 Our own checks on the live page, the same ones the site audit uses. Findings are marked by group: SEO, Accessibility or Technical. Contrast, tap size and focus order need a browser, so
                 the PageSpeed test below covers them.
