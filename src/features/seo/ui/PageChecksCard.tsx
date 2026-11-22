@@ -22,6 +22,7 @@ type Loaded = {
   catalogue: CatalogueItem[]
   checklist?: ChecklistRow[]
   scores?: Record<string, number | null>
+  crawl?: { at: string; issues: string[]; brokenLinks: string[] } | null
 }
 
 const CARD_ID = 'page-checks'
@@ -146,6 +147,19 @@ function Body({ collectionSlug, id }: { collectionSlug: string; id: number }) {
             {data.url && <span className="ps__muted">{data.url}</span>}
           </div>
           <SnippetPanel data={data} onTargets={(types) => void saveTargets(types)} saving={saving} />
+          {data.crawl && (
+            <div>
+              <h3 className="ps__h">Last site audit ({new Date(data.crawl.at).toLocaleDateString()})</h3>
+              {data.crawl.brokenLinks.length === 0 ? (
+                <p className="ps__muted">No broken internal links found on this page.</p>
+              ) : (
+                <>
+                  <p className="ps__muted">This page links to pages that return an error:</p>
+                  <ul>{data.crawl.brokenLinks.map((href) => <li key={href}>{href}</li>)}</ul>
+                </>
+              )}
+            </div>
+          )}
           {data.checklist && (
             <div>
               <h3 className="ps__h">SEO, accessibility and technical checks</h3>
