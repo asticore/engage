@@ -82,6 +82,8 @@ describe('getWorstPages (real D1)', () => {
     // (title, slug, status and the denormalised score columns), then create the PageSpeed tables with the
     // shipped migration itself. Idempotent, so it is safe on any database.
     await up({ db, engine: { logger: consoleLogger } } as never)
+    // `audits` was added to the table by the later site audit migration (20270322), which this test does not run.
+    await proxy.env.D1.prepare('ALTER TABLE eg_pagespeed_results ADD COLUMN audits text').run().catch((): void => undefined)
     await proxy.env.D1.prepare(
       'CREATE TABLE IF NOT EXISTS eg_pages (id integer PRIMARY KEY NOT NULL, title text, slug text, _status text, pagespeed_score numeric, pagespeed_at text)',
     ).run()
