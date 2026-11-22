@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { ageOn, safeDeny } from '@/components/blocks/elements/Wave70Elements'
+import { ageOn, chatHref, inChatHours, safeDeny } from '@/components/blocks/elements/Wave70Elements'
 import { buildSitemap } from '@/components/blocks/elements/Wave70Server'
 import { getElementDef } from '@/lib/elements/registry'
 import { SITE_ELEMENT_TYPES } from '@/lib/elements/wave38Defs'
@@ -41,5 +41,16 @@ describe('wave70 elements', () => {
     expect(safeDeny('//evil.com')).toBe('')
     expect(safeDeny('javascript:alert(1)')).toBe('')
     expect(safeDeny('http://example.com')).toBe('')
+  })
+  it('builds chat links and checks hours', () => {
+    expect(chatHref('whatsapp', '+61 400 000 000', 'Hi there')).toBe('https://wa.me/61400000000?text=Hi%20there')
+    expect(chatHref('whatsapp', 'abc', '')).toBe('')
+    expect(chatHref('messenger', '@mypage', '')).toBe('https://m.me/mypage')
+    expect(chatHref('telegram', 'user_1', '')).toBe('https://t.me/user_1')
+    expect(chatHref('telegram', 'a/b', '')).toBe('')
+    expect(inChatHours('09:00-17:00', 600)).toBe(true)
+    expect(inChatHours('09:00-17:00', 1030)).toBe(false)
+    expect(inChatHours('22:00-06:00', 60)).toBe(true)
+    expect(inChatHours('', 1000)).toBe(true)
   })
 })

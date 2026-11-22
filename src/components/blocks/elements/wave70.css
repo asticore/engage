@@ -10,3 +10,6 @@
 .w70-gate__box form{display:grid;gap:.75rem;margin-top:1rem}
 .w70-gate__box input{padding:.5rem;font:inherit}
 .w70-gate__box button:focus-visible{outline:2px solid #111;outline-offset:2px}
+.w70-chat{display:inline-block;padding:.6rem 1.25rem;border-radius:999px;background:#25d366;color:#0b3d1c;font-weight:600;text-decoration:none}
+.w70-chat:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.w70-chat--float{position:fixed;right:1rem;bottom:1rem;z-index:900;box-shadow:0 2px 8px rgba(0,0,0,.3)}
