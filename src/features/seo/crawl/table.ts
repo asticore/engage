@@ -69,6 +69,15 @@ export const COLUMNS: readonly ColumnDef[] = [
   { id: 'issues', label: 'Issues', numeric: true, defaultOn: true, value: (r) => r.issues.length },
 ]
 
+/** The column ids with `id` moved to position `to` (clamped). Unknown ids leave the list as it was. */
+export function moveColumn(ids: readonly string[], id: string, to: number): string[] {
+  const from = ids.indexOf(id)
+  if (from < 0) return [...ids]
+  const next = ids.filter((x) => x !== id)
+  next.splice(Math.max(0, Math.min(next.length, to)), 0, id)
+  return next
+}
+
 export const DEFAULT_COLUMNS: readonly string[] = COLUMNS.filter((c) => c.defaultOn).map((c) => c.id)
 
 export type TableFilter = { issue: string | null; search: string; type: string; severity: 'all' | 'error' | 'warning' | 'notice'; indexable: 'all' | 'yes' | 'no' }

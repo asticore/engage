@@ -5,7 +5,7 @@ import { AccordionElement, AlertElement, CounterElement, ProgressBarElement, Soc
 import { AnchorElement, DividerElement, HtmlElement, MapElement, SpacerElement } from './LayoutElements'
 import { CallToActionElement, FlipBoxElement, IconBoxElement, ImageBoxElement, PriceListElement, PricingTableElement, TeamMemberElement, TestimonialElement } from './MarketingElements'
 import { IconElement, ImageCarouselElement, ImageElement, ImageGalleryElement, LogoStripElement, VideoElement } from './MediaElements'
-import { IconListElement, ListElement, QuoteElement, TextEditorElement } from './TextElements'
+import { DefinitionListElement, IconListElement, ListElement, QuoteElement, TextEditorElement } from './TextElements'
 import { AnimatedHeadlineElement, BackToTopElement, BarChartElement, BreadcrumbsElement, CircleProgressElement, DualHeadingElement, ImageComparisonElement, PieChartElement, ShareButtonsElement, TableElement, TimelineElement } from './Wave36Elements'
 import { WAVE37_COMPONENTS } from './Wave37Elements'
 import { WAVE43_COMPONENTS } from './Wave43Elements'
@@ -27,6 +27,7 @@ export const ELEMENT_COMPONENTS: Record<string, React.ComponentType<Record<strin
   quote: QuoteElement,
   'icon-list': IconListElement,
   list: ListElement,
+  'definition-list': DefinitionListElement,
   image: ImageElement,
   video: VideoElement,
   'image-gallery': ImageGalleryElement,

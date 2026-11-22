@@ -8,12 +8,13 @@ import { lexicalToPlainText } from './richTextUtil'
  * Only plain, unformatted text is converted, and the original text stays readable in the result.
  */
 
-export type ConvertKind = 'bullets' | 'numbers' | 'table'
+export type ConvertKind = 'bullets' | 'numbers' | 'table' | 'definitions'
 
 export const CONVERT_LABELS: Record<ConvertKind, string> = {
   bullets: 'Convert to bulleted list',
   numbers: 'Convert to numbered list',
   table: 'Convert to table',
+  definitions: 'Convert to definition list',
 }
 
 const MARKER = /^\s*(?:[-*•–]|\d+[.)])\s+/
@@ -42,6 +43,20 @@ export function tableSeparator(lines: string[]): string | null {
   return null
 }
 
+const TERM_LINE = /^([^:]{1,80}):\s+(.+)$/
+
+/** Term and description for every line ("Term: description"), or null unless there are two or more lines and every one fits. */
+export function definitionPairs(lines: string[]): { term: string; definition: string }[] | null {
+  if (lines.length < 2) return null
+  const pairs: { term: string; definition: string }[] = []
+  for (const l of lines) {
+    const m = TERM_LINE.exec(l.replace(MARKER, ''))
+    if (!m) return null
+    pairs.push({ term: m[1].trim(), definition: m[2].trim() })
+  }
+  return pairs
+}
+
 /** Which conversions fit this block. Lists need two or more lines; a table needs a shared separator. */
 export function convertibleKinds(node: SectionNode | undefined): ConvertKind[] {
   const lines = textLines(node)
@@ -49,6 +64,7 @@ export function convertibleKinds(node: SectionNode | undefined): ConvertKind[] {
   const out: ConvertKind[] = []
   if (lines.length >= 2) out.push('bullets', 'numbers')
   if (tableSeparator(lines)) out.push('table')
+  if (definitionPairs(lines)) out.push('definitions')
   return out
 }
 
@@ -58,6 +74,9 @@ export function convertNode(node: SectionNode, kind: ConvertKind): SectionNode |
   const lines = textLines(node)
   const n = node as unknown as Record<string, unknown>
   const base = { blockType: 'element', _id: n._id } as Record<string, unknown>
+  if (kind === 'definitions') {
+    return { ...base, elementType: 'definition-list', props: { items: definitionPairs(lines) ?? [], align: 'left' } } as unknown as SectionNode
+  }
   if (kind === 'table') {
     const sep = tableSeparator(lines) as string
     const cell = (c: string): string => (/[",\n]/.test(c) ? `"${c.replace(/"/g, '""')}"` : c)

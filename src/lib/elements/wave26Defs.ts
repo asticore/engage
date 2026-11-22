@@ -71,6 +71,15 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
     ],
     defaultProps: () => ({ items: [{text: 'First point'}, {text: 'Second point'}, {text: 'Third point'}], marker: 'bullets', align: 'left' }),
   },
+  {
+    type: 'definition-list', label: 'Definition list', icon: '\u2263', category: 'text',
+    description: 'Terms with their descriptions (a description list), for facts, glossaries and specifications.',
+    fields: [
+      { name: 'items', label: 'Items', type: 'repeater', repeater: { fields: [text('term', 'Term'), text('definition', 'Description')] } },
+      ALIGN
+    ],
+    defaultProps: () => ({ items: [{ term: 'Term one', definition: 'What it means' }, { term: 'Term two', definition: 'What that means' }], align: 'left' }),
+  },
   // ---- media ----
   {
     type: 'image', label: 'Image', icon: '🖼', category: 'media',

@@ -41,3 +41,8 @@ ol.el-list > li { margin-bottom: var(--el-list-gap, 6px); }
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12h14' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12h14' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E");
 }
+
+.el-deflist { margin: 0; }
+.el-deflist__row { margin: 0 0 var(--el-list-gap, 0.75rem); }
+.el-deflist dt { font-weight: 600; }
+.el-deflist dd { margin: 0.125rem 0 0; }
