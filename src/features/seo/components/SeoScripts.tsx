@@ -21,6 +21,7 @@ import { TrackingPickerLazy } from '@/features/tracking/picker/TrackingPickerLaz
 import { collectionRoute } from '@/admin/adminPaths'
 import { TrackingRuntime } from '@/features/tracking/TrackingRuntime'
 import { PLATFORM_CATEGORY, type TrackingPlatform } from '@/features/tracking/events'
+import { loadPinterestTagId } from '@/features/tracking/pinterestTagId'
 import { getAdminRoot } from '@/features/security/settings'
 import { isSignedInTrackingAdmin } from '@/features/tracking/adminAccess'
 import { getAdminUi } from '@/admin/i18n/serverUi'
@@ -36,19 +37,6 @@ export type SeoScriptsProps = {
   position?: 'head' | 'bodyEnd'
   /** Two-letter country from Cloudflare's cf-ipcountry, read in the root layout. */
   country?: string | null
-}
-
-/** The Pinterest Tag ID from Tracking connections (a public ID). Blank or unreadable means no tag. */
-const loadPinterestTagId = async (): Promise<string | undefined> => {
-  try {
-    const { getEngine } = await import('@/lib/engine')
-    const engine = await getEngine()
-    const doc = (await engine.findGlobal({ slug: 'tracking-connections', depth: 0, overrideAccess: true }).catch((): null => null)) as { pinterestTagId?: unknown } | null
-    const id = typeof doc?.pinterestTagId === 'string' ? doc.pinterestTagId.trim() : ''
-    return /^\d{10,16}$/.test(id) ? id : undefined
-  } catch {
-    return undefined
-  }
 }
 
 const loadIntegrations = async (): Promise<Record<string, unknown> | null> => {
@@ -165,6 +153,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
   if (ga4MeasurementId) platforms.push('ga4')
   if (gtmContainerId) platforms.push('gtm')
   if (tiktokPixelId) platforms.push('tiktok')
+  if (pinterestTagId) platforms.push('pinterest')
   const adminPath = await getAdminRoot().catch((): string => '/admin')
   // A signed-in admin's visits are not tracked: the cookie is present whenever an admin session is open.
   const adminSignedIn = await isSignedInTrackingAdmin('read')
@@ -190,7 +179,7 @@ export const SeoScripts = async ({ position = 'head', country = null }: SeoScrip
       />
       {adminSignedIn ? <TrackingPickerLazy adminSignedIn={adminSignedIn} adminPath={adminPath} eventsRoute={collectionRoute('tracking-events')} saveEndpoint="/api/admin-tracking-events" labels={await pickerLabels()} /> : null}
       {trackingEvents.length && platforms.length ? (
-        <TrackingRuntime events={trackingEvents} platforms={platforms} siteCurrency={siteCurrency} policyVersion={consent.policyVersion} optIn={optIn} adminPath={adminPath} suppressed={adminSignedIn} categories={{ meta: categories.meta, tiktok: categories.tiktok, ga4: PLATFORM_CATEGORY.ga4, gtm: PLATFORM_CATEGORY.gtm }} />
+        <TrackingRuntime events={trackingEvents} platforms={platforms} siteCurrency={siteCurrency} policyVersion={consent.policyVersion} optIn={optIn} adminPath={adminPath} suppressed={adminSignedIn} categories={{ meta: categories.meta, tiktok: categories.tiktok, pinterest: PLATFORM_CATEGORY.pinterest, ga4: PLATFORM_CATEGORY.ga4, gtm: PLATFORM_CATEGORY.gtm }} />
       ) : null}
     </>
   )

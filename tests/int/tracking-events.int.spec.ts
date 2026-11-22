@@ -92,6 +92,15 @@ describe('platform calls and consent gating', () => {
     expect(calls).toEqual([{ platform: 'tiktok', method: 'page', args: [] }])
   })
 
+  it('maps standard events to Pinterest tag events and leaves PageView to the tag', () => {
+    const buy = platformCalls({ ...base, platformEvent: 'Purchase', value: 5, currency: 'EUR' }, ['pinterest'], eventId)
+    expect(buy).toEqual([{ platform: 'pinterest', method: 'track', args: ['checkout', { value: 5, currency: 'EUR', event_id: eventId }] }])
+    const cart = platformCalls({ ...base, platformEvent: 'AddToCart' }, ['pinterest'], eventId)
+    expect(cart[0]?.args[0]).toBe('addtocart')
+    expect(platformCalls({ ...base, triggerType: 'pageview', platformEvent: 'PageView', selector: null }, ['pinterest'], eventId)).toEqual([])
+    expect(PLATFORM_CATEGORY.pinterest).toBe('marketing')
+  })
+
   it('gates each platform on its consent category', () => {
     expect(PLATFORM_CATEGORY.meta).toBe('marketing')
     expect(PLATFORM_CATEGORY.tiktok).toBe('marketing')

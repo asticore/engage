@@ -13,7 +13,7 @@ import type { PublicTrackingEvent } from './publicEvent'
 
 type TrackerFn = (...args: unknown[]) => void
 /** The window plus the globals the tracking scripts define once they have loaded. */
-type Win = Window & { fbq?: unknown; gtag?: unknown; dataLayer?: unknown; ttq?: Record<string, TrackerFn> } & Record<string, unknown>
+type Win = Window & { fbq?: unknown; gtag?: unknown; dataLayer?: unknown; ttq?: Record<string, TrackerFn>; pintrk?: unknown } & Record<string, unknown>
 
 export type TrackingRuntimeOptions = {
   events: PublicTrackingEvent[]
@@ -64,6 +64,9 @@ export function sendCall(win: Win, call: PlatformCall): boolean {
     } else if (call.platform === 'tiktok') {
       if (!win.ttq || typeof win.ttq[call.method] !== 'function') return false
       win.ttq[call.method](...call.args)
+    } else if (call.platform === 'pinterest') {
+      if (typeof win.pintrk !== 'function') return false
+      win.pintrk(call.method, ...call.args)
     }
   } catch {
     // A platform that throws must not break the page or the other platforms.

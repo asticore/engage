@@ -7,6 +7,7 @@ import { getAdminRoot } from '@/features/security/settings'
 
 import { pickPublicIds } from '@/features/integrations/publicIds'
 import { getEngine } from '@/lib/engine'
+import { loadPinterestTagId } from '@/features/tracking/pinterestTagId'
 import { getPublicTrackingEvents } from '@/features/tracking/server'
 
 import type { TrackingDestination, TrackingPageContext } from './domains'
@@ -32,15 +33,17 @@ async function destinations(): Promise<TrackingDestination[]> {
     const integrations = (await engine.findGlobal({ slug: 'integrations', depth: 0, overrideAccess: true }).catch((): null => null)) as Record<string, unknown> | null
     const ids = pickPublicIds(integrations ?? {}, {})
     const events = (await getPublicTrackingEvents()).length
+    const pinterestId = await loadPinterestTagId()
     const on = (connected: boolean) => ({ on: connected, events: connected ? events : 0 })
     return [
       { id: 'meta', ...on(Boolean(ids.metaPixelId)) },
       { id: 'ga4', ...on(Boolean(ids.ga4MeasurementId)) },
       { id: 'gtm', ...on(Boolean(ids.gtmContainerId)) },
       { id: 'tiktok', ...on(Boolean(ids.tiktokPixelId)) },
+      { id: 'pinterest', ...on(Boolean(pinterestId)), ...(pinterestId ? { detail: pinterestId } : {}) },
     ]
   } catch {
-    return (['meta', 'ga4', 'gtm', 'tiktok'] as const).map((id) => ({ id, on: false, events: 0 }))
+    return (['meta', 'ga4', 'gtm', 'tiktok', 'pinterest'] as const).map((id) => ({ id, on: false, events: 0 }))
   }
 }
 
