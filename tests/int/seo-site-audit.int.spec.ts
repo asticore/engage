@@ -326,3 +326,15 @@ describe('PageSpeed checklist (16n)', () => {
     expect(parseChecklist({ categories: { seo: { auditRefs: [{ id: 'nope' }] } }, audits: {} })).toEqual([])
   })
 })
+
+describe('audit image sizes and last modified', () => {
+  it('reads the Last-Modified header and measures same-site images', async () => {
+    const { imageSizes, lastModifiedOf } = await import('@/features/seo/crawl/runner')
+    expect(lastModifiedOf('Wed, 21 Oct 2026 07:28:00 GMT')).toBe('2026-10-21T07:28:00.000Z')
+    expect(lastModifiedOf('nonsense')).toBeNull()
+    const fetchImpl = async (u: string): Promise<Response> => new Response(null, { status: 200, headers: { 'content-length': u.endsWith('a.jpg') ? '2048' : '4096' } })
+    const out = await imageSizes('https://x.test', [{ src: '/a.jpg' }, { src: 'https://x.test/b.jpg' }, { src: 'https://other.test/c.jpg' }], fetchImpl)
+    expect(out).toEqual({ imageBytes: 6144, largestImageBytes: 4096 })
+    expect(await imageSizes('https://x.test', [], fetchImpl)).toEqual({ imageBytes: null, largestImageBytes: null })
+  })
+})
