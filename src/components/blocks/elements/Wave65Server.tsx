@@ -1,3 +1,5 @@
+import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import React from 'react'
 
 import { switcherLabel, switcherOptions } from '@/features/multilingual/switcherStyle'
@@ -36,12 +38,15 @@ export async function AuthorBoxElement(props: P): Promise<React.ReactElement | n
 }
 
 /** The blog slug from a /blog/<slug> path, or ''. */
-export const blogSlug = (path: unknown): string => {
-  const m = /^\/blog\/([^/?#]+)\/?$/.exec(typeof path === 'string' ? path : '')
-  return m ? m[1] : ''
+export const blogSlug = (path: unknown, base = 'blog'): string => {
+  const p = typeof path === 'string' ? path : ''
+  for (const b of new Set([base, 'blog'])) {
+    if (p.startsWith(`/${b}/`) && !p.slice(b.length + 2).includes('/') ) return p.slice(b.length + 2).replace(/[?#].*$/, '')
+  }
+  return ''
 }
 
-async function neighbour(date: string, dir: 'prev' | 'next'): Promise<Neighbour | null> {
+async function neighbour(date: string, dir: 'prev' | 'next', base: string): Promise<Neighbour | null> {
   try {
     const engine = await getEngine()
     const r = (await engine.find({
@@ -51,7 +56,7 @@ async function neighbour(date: string, dir: 'prev' | 'next'): Promise<Neighbour 
       limit: 1, depth: 0,
     } as never)) as unknown as { docs?: { title?: unknown; slug?: unknown }[] }
     const d = r?.docs?.[0]
-    return d && str(d.slug) ? { title: str(d.title) || str(d.slug), href: `/blog/${encodeURIComponent(str(d.slug))}` } : null
+    return d && str(d.slug) ? { title: str(d.title) || str(d.slug), href: blogPath(base, `/${encodeURIComponent(str(d.slug))}`) } : null
   } catch {
     return null
   }
@@ -60,8 +65,9 @@ async function neighbour(date: string, dir: 'prev' | 'next'): Promise<Neighbour 
 export async function PostNavigationElement(props: P): Promise<React.ReactElement | null> {
   const ctx = getBlockContext()
   const date = typeof ctx.post?.date === 'string' ? ctx.post.date : ''
-  if (!blogSlug(ctx.path) || !date) return null
-  const [prev, next] = await Promise.all([neighbour(date, 'prev'), neighbour(date, 'next')])
+  const base = await readBlogBase()
+  if (!blogSlug(ctx.path, base) || !date) return null
+  const [prev, next] = await Promise.all([neighbour(date, 'prev', base), neighbour(date, 'next', base)])
   if (!prev && !next) return null
   const link = (n: Neighbour | null, cls: string, label: string) =>
     n ? <a className={cls} href={n.href} rel={cls.endsWith('next') ? 'next' : 'prev'}><small>{label}</small>{n.title}</a> : null

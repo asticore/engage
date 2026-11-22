@@ -4,6 +4,7 @@ import React from 'react'
 import { getBlockContext } from '@/lib/blockContext'
 import { formatTagDate, formatTagPrice } from '@/lib/dynamicTags'
 import { archivePageHref, buildBreadcrumbs, formatPostMeta } from '@/lib/templateWidgets'
+import { BreadcrumbsElement as ManualCrumbs } from './Wave36Elements'
 import { pickSeparator, resolveBreadcrumbs } from '@/features/seo/breadcrumbSettings'
 import { getSeoContext } from '@/features/seo/settings'
 import { localizeForRequest } from '@/features/multilingual/requestLinkLocale'
@@ -89,6 +90,18 @@ export async function BreadcrumbsElement(props: P): Promise<React.ReactElement |
   )
 }
 
+/** Manual `breadcrumbs`: typed trail, but the separator, Home label and structured data switch follow SEO settings. */
+export async function ManualBreadcrumbsElement(props: P): Promise<React.ReactElement | null> {
+  const site = resolveBreadcrumbs((await getSeoContext().catch((): null => null))?.settings)
+  const items = Array.isArray(props.items)
+    ? (props.items as Array<Record<string, unknown>>).map((r, i) => {
+        const home = i === 0 && /^home$/i.test(str(r?.label).trim()) && ['', '/'].includes(str(r?.url).trim())
+        return home ? { ...r, label: site.homeLabel } : r
+      })
+    : props.items
+  return <ManualCrumbs {...props} items={items} separator={pickSeparator(props.separator, site.separator)} structuredData={site.structuredData} />
+}
+
 export async function ArchiveGridElement(props: P): Promise<React.ReactElement | null> {
   const archive = getBlockContext().archive
   if (!archive || archive.items.length === 0) return null
@@ -129,6 +142,7 @@ export async function ArchiveGridElement(props: P): Promise<React.ReactElement |
 }
 
 export const WAVE63_COMPONENTS: Record<string, React.ComponentType<P>> = {
+  breadcrumbs: ManualBreadcrumbsElement as unknown as React.ComponentType<P>,
   'post-title': PostTitleElement as unknown as React.ComponentType<P>,
   'post-featured-image': PostFeaturedImageElement as unknown as React.ComponentType<P>,
   'post-excerpt': PostExcerptElement as unknown as React.ComponentType<P>,

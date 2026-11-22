@@ -175,6 +175,7 @@ export const BreadcrumbsElement: React.FC<P> = (p) => {
   }
   // "<" is escaped so a label such as "</script>" cannot end the script element early.
   const json = JSON.stringify(ld).replace(/</g, '\\u003c')
+  const schemaOn = p.structuredData !== false
   return (
     <>
       <nav className="be-el-crumbs" aria-label="Breadcrumb">
@@ -195,7 +196,7 @@ export const BreadcrumbsElement: React.FC<P> = (p) => {
           })}
         </ol>
       </nav>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />
+      {schemaOn && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />}
     </>
   )
 }

@@ -162,7 +162,8 @@ export const renderBlockBody = (node: SectionNode, key: string): React.ReactNode
         return <DataViewBackedElement elementType={get<string>('elementType') as 'chart' | 'table'} props={get<Record<string, unknown>>('props') || {}} />
       }
       // Site elements read live site data on the server (Wave38Elements.tsx). The canvas never reaches this branch.
-      if (SITE_ELEMENT_TYPES.has(get<string>('elementType'))) {
+      // Manual breadcrumbs stay a plain element on the canvas; live they read the sitewide SEO breadcrumb settings.
+      if (SITE_ELEMENT_TYPES.has(get<string>('elementType')) || get<string>('elementType') === 'breadcrumbs') {
         return <SiteElement elementType={get<string>('elementType')} props={get<Record<string, unknown>>('props') || {}} />
       }
       if (MEDIA_PROP_KEYS[get<string>('elementType')]) {
