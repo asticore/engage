@@ -4,10 +4,12 @@
  */
 
 import { createSseParser, parseBuilderEvent, type SseMessage } from '@/features/ai/streamParse'
+import type { BlogQuestionSet } from '../questionSets'
 import type { BlogBrief, BlogMeta, BlogOutlineItem } from '../request'
 
 export const BLOG_BUILDER_ENDPOINT = '/api/admin-blog-builder'
 export const BLOG_PROMPTS_ENDPOINT = '/api/admin-blog-builder/prompts'
+export const BLOG_QUESTION_SETS_ENDPOINT = '/api/admin-blog-builder/question-sets'
 export const BLOG_MEDIA_ENDPOINT = '/api/admin-blog-builder/media'
 
 export class BlogBuilderError extends Error {
@@ -93,6 +95,36 @@ export async function postSavedPrompt(
   const record = asRecord(data)
   if (!res.ok || !record?.ok) throw failureText(data, res.status)
   return Array.isArray(record.savedPrompts) ? (record.savedPrompts as BlogSavedPrompt[]) : []
+}
+
+/** The saved question sets (empty: the built-in default is in use) and whether this user may edit them. */
+export async function fetchQuestionSets(signal?: AbortSignal): Promise<{ sets: BlogQuestionSet[]; canEdit: boolean }> {
+  const res = await fetch(BLOG_QUESTION_SETS_ENDPOINT, {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+    signal,
+  })
+  const data = await readJson(res)
+  const record = asRecord(data)
+  if (!res.ok || !record?.ok) throw failureText(data, res.status)
+  return { sets: Array.isArray(record.sets) ? (record.sets as BlogQuestionSet[]) : [], canEdit: record.canEdit === true }
+}
+
+/** Saves or deletes one set, or resets to the built-in default. Returns the list as now saved. */
+export async function postQuestionSet(
+  body: { action: 'save'; set: BlogQuestionSet } | { action: 'delete'; id: string } | { action: 'reset' },
+): Promise<BlogQuestionSet[]> {
+  const res = await fetch(BLOG_QUESTION_SETS_ENDPOINT, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(body),
+  })
+  const data = await readJson(res)
+  const record = asRecord(data)
+  if (!res.ok || !record?.ok) throw failureText(data, res.status)
+  return Array.isArray(record.sets) ? (record.sets as BlogQuestionSet[]) : []
 }
 
 /** Gallery pictures that match the words given (alt text, caption, file name). Best first. */

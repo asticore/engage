@@ -21,7 +21,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [MED](#cat-med) | Media and files | 10 |
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
-| [SEO](#cat-seo) | SEO, blog and content | 24 |
+| [SEO](#cat-seo) | SEO, blog and content | 25 |
 | [BLD](#cat-bld) | Visual builder, templates and elements | 42 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
@@ -1927,6 +1927,13 @@ _Date: 22 Nov 2026_
 
 **Task 6 items 16m, 16n, 16o: accessibility in the SEO review, snippets and PageSpeed checklist, site audit dashboard (22 Nov 2026).** Migration `20270322_100000_seo_site_audit` adds `eg_seo_crawl_runs`, `eg_seo_crawl_pages`, `eg_seo_crawl_config`, `eg_seo_snippet_targets` and `eg_pagespeed_results.audits` (all in `CORE_TABLE_BASES`, baseline regenerated). 16m: `analysis/accessibility.ts` adds heading order, empty headings and image alt checks to `analyze()` (new `accessibility` list and score; the editor SEO tab shows an Accessibility analysis section; audit rows carry `findings` marked SEO or Accessibility and the audit list shows a badge); the rendered-page checks (landmarks, link and button names, labels, frame titles, duplicate ids, tabindex, aria-hidden focus, ARIA roles, lang, skip link) are in the catalogue `crawl/issues.ts` and run in the site audit and the page card; contrast, tap size and focus order come from the PageSpeed accessibility audits. 16n: `src/features/seo/snippets.ts` is a data-driven catalogue of Google's gallery (paragraph, list and table are judged from the content; the rest from JSON-LD with required and recommended properties; FAQ and How-to are markup only); the edit screen has a Snippets and page checks card (`ui/PageChecksCard.tsx`, route `/api/admin-seo-page`) that loads the live page, shows ticked types and types the page has, an Add a type menu, suggestions from the collection, target types saved per page, the Rich Results Test link and our own SEO, accessibility and technical checklist (passing and Not applicable rows stay). `pagespeed/checklist.ts` parses every audit of every category in the PageSpeed response (so new groups such as Agentic browsing appear without a rebuild), stores it on the newest result of a page and device, and the PageSpeed card shows it as the Full checklist (Pass, Warning, Fail, Check by hand, Not applicable). 16o: `src/features/seo/crawl/` crawls the sitemap plus every published page over the site's own address a few pages per step (`/api/admin-seo-crawl`, admin only; the screen loops the steps, the `seo-crawl` cron job continues and starts scheduled crawls), parses each page (`htmlFacts.ts`), judges it with about 60 checks (`issues.ts`: titles, descriptions, headings, thin and duplicate content, status codes and redirect chains, canonical, hreflang return links, images, structured data, Open Graph, mixed content, speed, size, orphans, depth, broken internal links, accessibility), keeps the last three runs and compares with the previous one. The SEO audit screen has a Site audit panel: health score, Errors, Warnings, Notices with the change, issue cards that filter, a table of 30 chooseable columns with sort, search and filters, a detail panel with fix hints and an editor link, CSV export, Mark noindex, Add 301 redirects and a schedule (off, daily, weekly; off by default). Tests: `tests/int/seo-site-audit.int.spec.ts`, fresh-install spec extended. Left open under Task 6: image file sizes and last modified as columns, external broken links in the audit table, the Pages list row overview, rings from our own checks.
 
+<a id="seo-025"></a>
+#### SEO-025 · Task 8 blog builder editable question sets (built 22 Nov 2026, was 27b)
+
+_Date: 22 Nov 2026_
+
+**Editable question sets.** Write with AI asks the questions of the chosen set. Admins press Edit questions to add sets, reword and give hints, reorder, mark required, add up to 8 custom free-text questions, remove or add back standard questions, name the post type or brand, and mark one set to use first. The topic question always stays and is required. Custom answers reach every prompt as extra notes and are saved with saved prompts. With no saved sets the built-in standard questions are used; Reset to the standard questions deletes the saved sets. Table `eg_blog_question_sets` (migration 20270322_100000, core table), `/api/admin-blog-builder/question-sets` (anyone who can use Write with AI reads, admins change), code in `src/features/blogBuilder/questionSets.ts`, `questionSetStore.ts`, `admin/QuestionSetEditor.tsx`, `admin/BlogWizard.tsx`; thirteen languages. Test: `tests/int/blog-builder-question-sets.int.spec.ts`. Live check in Live checks.
+
 <a id="cat-bld"></a>
 ### BLD: Visual builder, templates and elements
 
@@ -2516,6 +2523,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 22 Nov 2026
 
+- [SEO-025](#seo-025) Task 8 blog builder editable question sets
 - [ADM-039](#adm-039) 41b
 - [BLD-037](#bld-037) 16h Convert text to list or table in the visual editor (built 22 Nov 2026)
 - [BLD-038](#bld-038) Task 10 widgets batch 1: world clock, progress tracker, dark mode toggle, bigger charts (22 Nov 2026)

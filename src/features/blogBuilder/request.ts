@@ -27,7 +27,11 @@ export type BlogBrief = {
   length: BlogLength
   keywords: string[]
   callToAction: string
+  /** Answers to custom questions from a question set (Task 8, 27b). Notes for the model, in order. */
+  extras?: BlogExtra[]
 }
+
+export type BlogExtra = { question: string; answer: string }
 
 export type BlogOutlineItem = { heading: string; notes: string }
 
@@ -71,6 +75,9 @@ const MAX_TOPIC = 300
 const MAX_AUDIENCE = 200
 const MAX_KEYWORDS_TEXT = 300
 const MAX_CTA = 200
+export const MAX_EXTRAS = 8
+const MAX_EXTRA_QUESTION = 120
+const MAX_EXTRA_ANSWER = 300
 const MAX_TITLE = 200
 const MAX_HEADING = 120
 const MAX_NOTES = 300
@@ -121,10 +128,34 @@ export function parseBrief(value: unknown): ParseResult<BlogBrief> {
   const length = (Object.keys(BLOG_LENGTH_WORDS) as BlogLength[]).includes(b.length as BlogLength)
     ? (b.length as BlogLength)
     : 'medium'
+  const extras = parseExtras(b.extras)
+  if (extras === null) return { ok: false, error: 'One of the answers is too long.' }
   return {
     ok: true,
-    value: { topic, audience, tone, length, keywords: parseKeywords(keywordsText), callToAction },
+    value: {
+      topic,
+      audience,
+      tone,
+      length,
+      keywords: parseKeywords(keywordsText),
+      callToAction,
+      ...(extras.length ? { extras } : {}),
+    },
   }
+}
+
+/** Custom question answers: up to 8, empty answers dropped. Null when one is too long. */
+function parseExtras(value: unknown): BlogExtra[] | null {
+  if (!Array.isArray(value)) return []
+  const out: BlogExtra[] = []
+  for (const item of value.slice(0, MAX_EXTRAS)) {
+    const row = (item ?? {}) as Record<string, unknown>
+    const question = text(row.question ?? '', MAX_EXTRA_QUESTION)
+    const answer = text(row.answer ?? '', MAX_EXTRA_ANSWER)
+    if (question === null || answer === null) return null
+    if (question && answer) out.push({ question, answer })
+  }
+  return out
 }
 
 export function parseOutline(value: unknown): ParseResult<BlogOutlineItem[]> {
