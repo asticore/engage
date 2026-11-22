@@ -5,7 +5,7 @@ import { safeUrl } from '@/lib/mergeTags'
 import { Icon, SocialGlyph } from './icons'
 import { alignClass } from './TextElements'
 import { parseCsv, sparkAttrs } from './sparkData'
-import { cells, flag, iconName, linkHref, lines, mediaOf, num, pick, ratioCss, str } from './elementUtil'
+import { cells, cssColour, flag, iconName, linkHref, lines, mediaOf, num, pick, ratioCss, str } from './elementUtil'
 import './wave36.css'
 
 /**
@@ -129,36 +129,85 @@ const TABLE_BEHAVIOURS = ['sort', 'search', 'filters', 'page-size', 'sticky', 'c
 
 const ISO_DATE = /^\d{4}(-\d{2}(-\d{2})?)?$/
 
-/** `timeline`: an ordered list of dated events with a line down the side. Dates in ISO form get a datetime attribute. */
+const TIMELINE_REVEALS = ['fade', 'fade-up', 'slide-left', 'slide-right', 'zoom'] as const
+
+/**
+ * `timeline`: an ordered list of dated events on a line. Layouts: vertical, alternating (sides swap) and horizontal
+ * (scrolls sideways). Each item can have an icon, a picture, a link, its own colour and a group heading above it.
+ * Dates in ISO form get a datetime attribute. Reveal uses the Spark `spark-reveal` class. Event JSON-LD is opt-in.
+ */
 export const TimelineElement: React.FC<P> = (p) => {
-  const items = records(p.items, ['date', 'title', 'text']).filter((r) => r.date || r.title || r.text)
+  const items = records(p.items, ['date', 'group', 'title', 'text', 'icon', 'image', 'alt', 'url', 'linkLabel', 'color']).filter((r) => r.date || r.title || r.text)
   if (items.length === 0) return null
   const level = headingTag(p.tag, 'h3')
   const center = pick(p.align, ['left', 'center'] as const, 'left')
+  const layout = pick(p.layout, ['vertical', 'alternating', 'horizontal'] as const, 'vertical')
+  const reveal = str(p.reveal) ? pick(p.reveal, TIMELINE_REVEALS, 'fade-up') : ''
+  const lineColor = cssColour(p.lineColor)
+  const dotColor = cssColour(p.dotColor)
+  const rootStyle = { ...(lineColor ? { '--tl-line': lineColor } : {}), ...(dotColor ? { '--tl-dot': dotColor } : {}) } as Style
+  const ld = p.schema === true
+    ? items.filter((r) => r.title && ISO_DATE.test(r.date)).map((r) => ({
+        '@context': 'https://schema.org', '@type': 'Event', name: r.title, startDate: r.date,
+        ...(r.text ? { description: r.text } : {}), ...(absoluteUrl(r.url) ? { url: absoluteUrl(r.url) } : {}),
+      }))
+    : []
+  let lastGroup = ''
   return (
-    <ol className={`be-el-timeline be-el-timeline--${center}`}>
-      {items.map((r, i) => (
-        <li key={i} className="be-el-timeline__item">
-          {r.date && (
-            <time className="be-el-timeline__date" dateTime={ISO_DATE.test(r.date) ? r.date : undefined}>
-              {r.date}
-            </time>
-          )}
-          {r.title && <Heading level={level} className="be-el-timeline__title">{r.title}</Heading>}
-          {r.text && <p className="be-el-timeline__text">{r.text}</p>}
-        </li>
-      ))}
-    </ol>
+    <>
+      <ol className={`be-el-timeline be-el-timeline--${layout} be-el-timeline--${center}`} style={rootStyle}>
+        {items.map((r, i) => {
+          const group = r.group && r.group !== lastGroup ? r.group : ''
+          if (r.group) lastGroup = r.group
+          const href = linkHref(r.url)
+          const img = mediaOf(r.image)
+          const itemColor = cssColour(r.color)
+          const iconKey = iconName(r.icon)
+          return (
+            <li
+              key={i}
+              className={`be-el-timeline__item${reveal ? ' spark-reveal' : ''}`}
+              style={itemColor ? ({ '--tl-dot': itemColor } as Style) : undefined}
+              data-spark-reveal={reveal || undefined}
+            >
+              {group && <span className="be-el-timeline__group">{group}</span>}
+              {r.icon && (
+                <span className="be-el-timeline__icon" aria-hidden="true">
+                  <Icon name={iconKey} size={16} />
+                </span>
+              )}
+              {r.date && (
+                <time className="be-el-timeline__date" dateTime={ISO_DATE.test(r.date) ? r.date : undefined}>
+                  {r.date}
+                </time>
+              )}
+              {r.title && <Heading level={level} className="be-el-timeline__title">{r.title}</Heading>}
+              {img && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="be-el-timeline__image" src={img.url} alt={r.alt} loading="lazy" decoding="async" />
+              )}
+              {r.text && <p className="be-el-timeline__text">{r.text}</p>}
+              {href && (
+                <a className="be-el-timeline__link" href={href}>
+                  {r.linkLabel || 'Read more'}
+                </a>
+              )}
+            </li>
+          )
+        })}
+      </ol>
+      {ld.length > 0 && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, '\\u003c') }} />}
+    </>
   )
 }
-
-/* ---------- breadcrumbs ---------- */
 
 /** Full http(s) addresses only: search engines need absolute item URLs in structured data. */
 const absoluteUrl = (v: unknown): string => {
   const h = safeUrl(v)
   return h && /^https?:\/\//i.test(h) ? h : ''
 }
+
+/* ---------- breadcrumbs ---------- */
 
 /** `breadcrumbs`: a labelled nav trail plus BreadcrumbList JSON-LD built from the same items. */
 export const BreadcrumbsElement: React.FC<P> = (p) => {

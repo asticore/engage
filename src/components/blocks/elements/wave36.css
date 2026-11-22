@@ -28,7 +28,7 @@
   bottom: 6px;
   left: 5px;
   width: 2px;
-  background: var(--color-line);
+  background: var(--tl-line, var(--color-line));
 }
 
 .be-el-timeline__item {
@@ -48,7 +48,7 @@
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--color-gold);
+  background: var(--tl-dot, var(--color-gold));
   box-shadow: 0 0 0 4px var(--color-cream);
 }
 
@@ -69,6 +69,130 @@
 
 .be-el-timeline__text {
   margin: 0;
+}
+
+.be-el-timeline__group {
+  display: block;
+  margin: 0 0 8px;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.be-el-timeline__icon {
+  position: absolute;
+  top: 0;
+  left: -36px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--tl-dot, var(--color-gold));
+  color: #fff;
+}
+
+.be-el-timeline__icon + .be-el-timeline__date {
+  margin-top: 0;
+}
+
+.be-el-timeline__item:has(.be-el-timeline__icon)::before {
+  display: none;
+}
+
+.be-el-timeline__image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 6px 0;
+  border-radius: 8px;
+}
+
+.be-el-timeline__link {
+  display: inline-block;
+  margin-top: 6px;
+  text-decoration: underline;
+}
+
+/* Alternating: line in the middle, items swap sides from 700px wide. */
+@media (min-width: 700px) {
+  .be-el-timeline--alternating {
+    padding-left: 0;
+  }
+
+  .be-el-timeline--alternating::before {
+    left: 50%;
+    transform: translateX(-1px);
+  }
+
+  .be-el-timeline--alternating .be-el-timeline__item {
+    width: 50%;
+    box-sizing: border-box;
+    padding-right: 36px;
+  }
+
+  .be-el-timeline--alternating .be-el-timeline__item::before {
+    left: auto;
+    right: -6px;
+  }
+
+  .be-el-timeline--alternating .be-el-timeline__icon {
+    left: auto;
+    right: -14px;
+  }
+
+  .be-el-timeline--alternating .be-el-timeline__item:nth-child(even) {
+    margin-left: 50%;
+    padding-right: 0;
+    padding-left: 36px;
+  }
+
+  .be-el-timeline--alternating .be-el-timeline__item:nth-child(even)::before {
+    left: -6px;
+    right: auto;
+  }
+
+  .be-el-timeline--alternating .be-el-timeline__item:nth-child(even) .be-el-timeline__icon {
+    left: -14px;
+    right: auto;
+  }
+}
+
+/* Horizontal: items in a row that scrolls sideways, the line runs above them. */
+.be-el-timeline--horizontal {
+  display: flex;
+  gap: 24px;
+  padding: 28px 0 8px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+}
+
+.be-el-timeline--horizontal::before {
+  top: 11px;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 2px;
+}
+
+.be-el-timeline--horizontal .be-el-timeline__item {
+  flex: 0 0 240px;
+  padding-bottom: 0;
+  scroll-snap-align: start;
+}
+
+.be-el-timeline--horizontal .be-el-timeline__item::before {
+  top: -22px;
+  left: 0;
+}
+
+.be-el-timeline--horizontal .be-el-timeline__icon {
+  top: -30px;
+  left: 0;
+}
+
+.be-el-timeline--horizontal .be-el-timeline__item:has(.be-el-timeline__icon)::before {
+  display: none;
 }
 
 .be-el-timeline--center {

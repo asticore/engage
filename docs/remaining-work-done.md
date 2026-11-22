@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 42 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 43 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -2847,6 +2847,15 @@ _Date: 22 Nov 2026_
 
 **Where to find it:** Visual editor > Elements > Chat button (WhatsApp, Messenger, Telegram), optional floating corner button
 
+<a id="bld-043"></a>
+#### BLD-043 · Task 15 34a Timeline element (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34a Timeline (23 Nov 2026).** The `timeline` element is now in the library (no longer hidden). Layouts vertical, alternating and horizontal (sideways scroll), per item icon, picture, link, colour and group heading, line and dot colours, Spark `spark-reveal` option, opt-in Event structured data for ISO dates. Three Examples in the presets (`timeline-vertical`, `timeline-alternating`, `timeline-horizontal`). Code: `wave36Defs.ts`, `Wave36Elements.tsx`, `wave36.css`, `templatePresets.ts`, test `tests/int/timeline-element.int.spec.ts`. Leftover: items filled from a collection (posts, events, course steps) stays in Task 15 as 34a2.
+
+**Where to find it:** Visual editor > Elements > Timeline, and Templates > Timeline examples
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3207,6 +3216,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-043](#bld-043) Task 15 34a Timeline element
 - [STY-014](#sty-014) 40d third batch and data source (23 Nov 2026)
 - [STY-015](#sty-015) 40d second batch (23 Nov 2026)
 - [STY-016](#sty-016) 40d (part)
