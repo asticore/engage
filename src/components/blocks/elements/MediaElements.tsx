@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { Icon } from './icons'
-import { GalleryLightbox } from './Wave49Client'
+import { SparkLightbox } from './SparkLightbox'
 import './wave49.css'
 import { ALIGNS, alignClass } from './TextElements'
 import { flag, gridSizes, iconName, linkAttrs, linkHref, mediaListOf, mediaOf, num, parseVideoUrl, pick, pictureSizes, ratioCss, str } from './elementUtil'
@@ -36,9 +36,9 @@ export const ImageElement: React.FC<P> = (p) => {
       {href && media?.url ? (
         <a href={href} {...linkAttrs(p.link)}>{img}</a>
       ) : flag(p.lightbox, false) && media?.url ? (
-        <GalleryLightbox items={[{ url: media.url, alt }]}>
+        <SparkLightbox>
           <a href={media.url} data-be-gallery-index={0} aria-label={alt || 'Open larger image'}>{img}</a>
-        </GalleryLightbox>
+        </SparkLightbox>
       ) : (
         img
       )}
@@ -103,7 +103,16 @@ export const ImageCarouselElement: React.FC<P> = (p) => {
   const ratio = ratioCss(p.ratio)
   if (items.length === 0) return <Placeholder label="Add images to the carousel" />
   return (
-    <div className="el-carousel" role="region" aria-label={str(p.label, 'Image carousel')} tabIndex={0} style={{ ['--el-visible' as string]: String(visible) }}>
+    <div
+      className="carousel spark-carousel"
+      role="region"
+      aria-label={str(p.label, 'Image carousel')}
+      data-spark-per-view={visible > 1 ? visible : undefined}
+      data-spark-autoplay={num(p.autoplay, 0, 0, 30000) || undefined}
+      data-spark-fade={flag(p.fade, false) ? 'true' : undefined}
+      data-spark-dots={flag(p.dots, true) ? undefined : 'false'}
+      data-spark-arrows={flag(p.arrows, true) ? undefined : 'false'}
+    >
       {items.map((m, i) => (
         <div className="el-carousel__slide" key={i}>
           <img decoding="async" src={m.url || ''} srcSet={m.srcSet} sizes={m.srcSet ? pictureSizes(`${Math.ceil(100 / visible)}vw`) : undefined} alt={str(m.alt)} loading="lazy" style={{ aspectRatio: ratio === 'auto' ? '16 / 9' : ratio }} />

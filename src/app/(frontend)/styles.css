@@ -771,8 +771,6 @@ a {
 .el-gallery { display: grid; grid-template-columns: repeat(var(--el-cols, 3), minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
 .el-gallery img { display: block; width: 100%; object-fit: cover; }
 @media (max-width: 640px) { .el-gallery { grid-template-columns: repeat(min(var(--el-cols, 3), 2), minmax(0, 1fr)); } }
-.el-carousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin; }
-.el-carousel__slide { flex: 0 0 calc((100% - 12px * (var(--el-visible, 1) - 1)) / var(--el-visible, 1)); scroll-snap-align: start; }
 .el-carousel__slide img { display: block; width: 100%; object-fit: cover; }
 .el-icon { color: var(--color-gold); }
 .el-icon a { color: inherit; }

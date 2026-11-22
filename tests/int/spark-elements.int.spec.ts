@@ -2,6 +2,7 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
+import { renderElement } from '@/components/blocks/elements/renderElement'
 import { TableElement } from '@/components/blocks/elements/Wave36Elements'
 import { legacyRowsToCsv, parseCsv, sparkAttrs, sparkColors } from '@/components/blocks/elements/sparkData'
 
@@ -50,5 +51,29 @@ describe('table element on Shine and Spark', () => {
   it('renders nothing without data and escapes text', () => {
     expect(table({ rows: '' })).toBe('')
     expect(table({ rows: 'a,b\n<script>x</script>,2' })).not.toContain('<script>')
+  })
+})
+
+describe('second batch on Spark and Shine', () => {
+  const html = (type: string, props: Record<string, unknown>) => renderToStaticMarkup(renderElement(type, props) as React.ReactElement)
+  it('image carousel uses Shine carousel and Spark carousel options', () => {
+    const out = html('image-carousel', { urls: 'https://cdn.example.com/a.jpg\nhttps://cdn.example.com/b.jpg', visible: 2, autoplay: 4000, fade: true, dots: false })
+    expect(out).toContain('class="carousel spark-carousel"')
+    expect(out).toContain('data-spark-per-view="2"')
+    expect(out).toContain('data-spark-autoplay="4000"')
+    expect(out).toContain('data-spark-dots="false"')
+  })
+  it('text ticker uses Spark marquee', () => {
+    const out = html('text-ticker', { items: 'A\nB', speed: 30, direction: 'right', pauseOnHover: false })
+    expect(out).toContain('class="spark-marquee"')
+    expect(out).toContain('data-spark-speed="100"')
+    expect(out).toContain('data-spark-direction="right"')
+    expect(out).toContain('data-spark-pause="false"')
+  })
+  it('pagination list carries the Shine class', () => {
+    expect(html('pagination', { current: 2, total: 5 })).toContain('class="pagination be-el-48-pagination__list"')
+  })
+  it('gallery lightbox is the Spark lightbox wrapper', () => {
+    expect(html('gallery', { urls: 'https://cdn.example.com/a.jpg', lightbox: true })).toContain('class="spark-lightbox"')
   })
 })

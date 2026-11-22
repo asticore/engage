@@ -51,22 +51,14 @@ export const TextTickerElement: React.FC<P> = (p) => {
   const direction = pick(p.direction, ['left', 'right'] as const, 'left')
   const speed = Math.round(num(p.speed, 30, 5, 120))
   const pause = flag(p.pauseOnHover, true)
-  const list = (copy: boolean) => (
-    <ul className={copy ? 'be-el-ticker__list be-el-ticker__list--copy' : 'be-el-ticker__list'} aria-hidden={copy ? 'true' : undefined}>
-      {items.map((t, i) => (
-        <li key={i} className="be-el-ticker__item">
-          {t}
-        </li>
-      ))}
-    </ul>
-  )
-  const cls = `be-el-ticker be-el-ticker--${direction}${pause ? ' be-el-ticker--pause' : ''}`
+  // Spark's marquee speed is pixels per second; the panel keeps "seconds per loop", so 30 s is about 100 px/s.
   return (
-    <div className={cls}>
-      <div className="be-el-ticker__track" style={{ '--be-el-ticker-dur': `${speed}s` } as Style}>
-        {list(false)}
-        {list(true)}
-      </div>
+    <div className="spark-marquee" data-spark-speed={Math.round(3000 / speed)} data-spark-direction={direction} data-spark-pause={pause ? 'true' : 'false'} aria-label="Announcements" role="group">
+      {items.map((t, i) => (
+        <span key={i} className="be-el-ticker__item">
+          {t}
+        </span>
+      ))}
     </div>
   )
 }

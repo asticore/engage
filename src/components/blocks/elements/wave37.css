@@ -12,84 +12,12 @@
   border: 0;
 }
 
-/* ---- text ticker ---- */
-
-/* Base (also reduced motion): a wrapped static list. The copy is hidden. */
-.be-el-ticker {
-  overflow: hidden;
-  font-family: var(--font-body);
-}
-
-.be-el-ticker__track {
-  display: block;
-}
-
-.be-el-ticker__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 2.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
+/* ---- text ticker (moved by Spark marquee) ---- */
 
 .be-el-ticker__item {
   font-family: var(--font-display);
   font-size: 1.25rem;
   line-height: 1.4;
-}
-
-.be-el-ticker__list--copy {
-  display: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .be-el-ticker__track {
-    display: flex;
-    width: max-content;
-    animation: be-el-ticker-left var(--be-el-ticker-dur, 30s) linear infinite;
-  }
-
-  .be-el-ticker--right .be-el-ticker__track {
-    animation-name: be-el-ticker-right;
-  }
-
-  /* Each copy ends with the same padding as the gap, so the two copies join with an even space. */
-  .be-el-ticker__list {
-    flex: none;
-    flex-wrap: nowrap;
-    padding-right: 2.5rem;
-  }
-
-  .be-el-ticker__item {
-    white-space: nowrap;
-  }
-
-  .be-el-ticker__list--copy {
-    display: flex;
-  }
-
-  .be-el-ticker--pause:hover .be-el-ticker__track {
-    animation-play-state: paused;
-  }
-}
-
-@keyframes be-el-ticker-left {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@keyframes be-el-ticker-right {
-  from {
-    transform: translate3d(-50%, 0, 0);
-  }
-  to {
-    transform: translate3d(0, 0, 0);
-  }
 }
 
 /* ---- reading progress ---- */

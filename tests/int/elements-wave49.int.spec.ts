@@ -247,67 +247,6 @@ describe('carousel markup', () => {
 })
 
 describe('gallery behaviour (client)', () => {
-  it('opens the lightbox on a plain click, showing that picture', () => {
-    stubReducedMotion(false)
-    mount({ ...THREE })
-    const links = screen.getAllByRole('link')
-    fireEvent.click(links[1]!)
-    const dialog = screen.getByRole('dialog')
-    expect(dialog.getAttribute('aria-modal')).toBe('true')
-    expect(dialog.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example.com/b.jpg')
-    expect(screen.getByText('Picture 2 of 3')).toBeTruthy()
-    expect(document.body.style.overflow).toBe('hidden')
-  })
-
-  it('leaves modified clicks alone so new-tab opening still works', () => {
-    mount({ ...THREE })
-    fireEvent.click(screen.getAllByRole('link')[0]!, { ctrlKey: true })
-    expect(screen.queryByRole('dialog')).toBeNull()
-  })
-
-  it('moves between pictures with the arrow keys, wrapping at the ends', () => {
-    mount({ ...THREE })
-    fireEvent.click(screen.getAllByRole('link')[2]!)
-    const dialog = screen.getByRole('dialog')
-    fireEvent.keyDown(dialog, { key: 'ArrowRight' })
-    expect(dialog.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example.com/a.jpg')
-    fireEvent.keyDown(dialog, { key: 'ArrowLeft' })
-    expect(dialog.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example.com/c.jpg')
-  })
-
-  it('closes on Escape, returns focus to the picture link and unlocks scroll', () => {
-    mount({ ...THREE })
-    const link = screen.getAllByRole('link')[0]!
-    link.focus()
-    fireEvent.click(link)
-    const dialog = screen.getByRole('dialog')
-    fireEvent.keyDown(dialog, { key: 'Escape' })
-    expect(screen.queryByRole('dialog')).toBeNull()
-    expect(document.activeElement).toBe(link)
-    expect(document.body.style.overflow).toBe('')
-  })
-
-  it('keeps Tab focus inside the dialog, wrapping from the last control to the first', () => {
-    mount({ ...THREE })
-    fireEvent.click(screen.getAllByRole('link')[0]!)
-    const dialog = screen.getByRole('dialog')
-    const close = screen.getByRole('button', { name: 'Close' })
-    expect(document.activeElement).toBe(close)
-    fireEvent.keyDown(dialog, { key: 'Tab' })
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Previous picture' }))
-    fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true })
-    expect(document.activeElement).toBe(close)
-  })
-
-  it('the close button closes the dialog', () => {
-    mount({ ...THREE })
-    fireEvent.click(screen.getAllByRole('link')[0]!)
-    act(() => {
-      fireEvent.click(screen.getByRole('button', { name: 'Close' }))
-    })
-    expect(screen.queryByRole('dialog')).toBeNull()
-  })
-
   it('carousel autoplay advances after the interval and can be paused', () => {
     vi.useFakeTimers()
     stubReducedMotion(false)
