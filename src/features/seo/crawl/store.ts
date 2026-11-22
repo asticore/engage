@@ -194,3 +194,20 @@ export async function crawlFindingsFor(db: Drizzle, path: string): Promise<{ at:
   const hrefs = (page.data?.links ?? []).map((l) => l.href.split('#')[0].split('?')[0].replace(/^https?:\/\/[^/]+/i, '') || '/')
   return { at: run.finished_at ?? run.started_at, issues: page.issues, brokenLinks: [...new Set(hrefs.filter((h) => badPaths.has(h.length > 1 ? h.replace(/\/$/, '') : h)))] }
 }
+
+export type CrawlOverview = { snippets: string[]; issues: number; brokenLinks: number }
+
+/** What the newest finished crawl found for a set of documents of one collection, keyed by document id. Empty when there is no crawl. */
+export async function crawlOverviewFor(db: Drizzle, collection: string, ids: number[]): Promise<Map<number, CrawlOverview>> {
+  const out = new Map<number, CrawlOverview>()
+  const wanted = [...new Set(ids.filter((n) => Number.isInteger(n)))].slice(0, 200)
+  if (wanted.length === 0) return out
+  const runs = (await db.all(sql`SELECT id FROM \`eg_seo_crawl_runs\` WHERE status = 'done' ORDER BY id DESC LIMIT 1`)) as { id: number }[]
+  if (!runs[0]) return out
+  const rows = (await db.all(sql`SELECT * FROM \`eg_seo_crawl_pages\` WHERE run_id = ${runs[0].id} AND collection = ${collection} AND doc_id IN (${sql.join(wanted.map((n) => sql`${n}`), sql`, `)})`)) as RawPage[]
+  for (const raw of rows) {
+    const page = toPage(raw)
+    if (page.docId !== null) out.set(page.docId, { snippets: page.data?.snippetTypes ?? [], issues: page.issues.length, brokenLinks: page.brokenLinks })
+  }
+  return out
+}

@@ -2105,3 +2105,9 @@ button {
 .list-filter-chip-remove:hover {
   color: var(--color-error-600);
 }
+
+/* Snippets and checks list column (site audit overview) */
+.list-seo { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.list-seo__chip { padding: 1px 6px; border-radius: 999px; background: var(--theme-elevation-100, #eee); font-size: 0.75rem; }
+.list-seo__issues { font-size: 0.75rem; opacity: 0.7; }
+.list-seo__issues--warn { opacity: 1; font-weight: 600; }
