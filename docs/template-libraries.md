@@ -181,3 +181,22 @@ Each GitHub request has an 8 second timeout, redirects are refused, and public r
 4. Open **Templates > Library**, or the visual editor's templates panel, to see the two items.
 
 The example is checked by the test suite (`tests/int/template-library-example.int.spec.ts`), so it 
+
+## 4. Optional item fields (filters, kinds, themes)
+
+These fields are all optional. `library.json` and item files may declare `schemaVersion` 1 or 2.
+
+| Field | Rules |
+| --- | --- |
+| `items[].kind` | besides `section` and `page`, `site-template`, `loop` and `popup`. Engage lists them as sections and keeps the original name in `type` |
+| `items[].siteKind` | required for `site-template`; one of the Templates hub kinds (`header`, `footer`, `single-post`, `single-product`, `single-event`, `archive-blog`, `archive-shop`, `not-found`, `search-results`, `archive-category`, `archive-tag`, `archive-author`, `sidebar-left`, `sidebar-right`). A `loop` is always kind `loop` |
+| `items[].type` | `page`, `section`, `shop-page`, `header`, `footer`, `hero`, `loop`, `site-template` or `popup`: the Type filter in Templates > Examples and in the editor |
+| `items[].industry`, `items[].style` | text up to 40 characters: the Industry and Colour style filters |
+| `items[].theme` | `light`, `dark` or `both` (default `both`): the Light or dark filter; an item marked `both` follows the site theme |
+| `items[].previewDark` | path to a dark preview picture; the Dark previews switch shows it |
+| `items[].pairWith` | slug of the same design in the other theme; must be in the same library |
+
+In Templates > Examples, a **site template** or **loop** item has a **Create template (starts off)** button: it makes a
+site template of that kind switched off, so the live site does not change until you turn it on. A **popup** item
+becomes a reusable section (listed as a Popup in Templates). Items are inserted in the visual editor at the chosen
+spot, at the end of the page, or over the selected section.

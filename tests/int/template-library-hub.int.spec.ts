@@ -33,6 +33,8 @@ const item = (over: Partial<LibraryItemRow>): LibraryItemRow => ({
   style: '',
   theme: 'both',
   previewDarkUrl: '',
+  pairWith: '',
+  siteKind: '',
   ...over,
 })
 

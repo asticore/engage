@@ -56,10 +56,14 @@ export type ManifestTemplate = {
   theme?: 'light' | 'dark' | 'both'
   /** Optional dark preview picture path, shown by the light and dark switch. */
   previewDark?: string
+  /** Slug of the same design in the other theme (light and dark pair). */
+  pairWith?: string
+  /** Site templates and loops: the Templates hub kind they create (header, archive-shop, loop, ...). */
+  siteKind?: string
 }
 
 /** What a library item is, for the type filter. `page` and `section` stay the insert kinds. */
-export const LIBRARY_ITEM_TYPES = ['page', 'section', 'shop-page', 'header', 'footer', 'hero', 'loop'] as const
+export const LIBRARY_ITEM_TYPES = ['page', 'section', 'shop-page', 'header', 'footer', 'hero', 'loop', 'site-template', 'popup'] as const
 export type LibraryItemType = (typeof LIBRARY_ITEM_TYPES)[number]
 
 export type Manifest = {

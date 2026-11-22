@@ -113,7 +113,7 @@ describe('library manifest', () => {
     const bad: unknown[] = [
       null,
       library({ format: 'other' }),
-      library({ schemaVersion: 2 }),
+      library({ schemaVersion: 3 }),
       library({ name: '' }),
       library({ items: 'x' }),
       library({ items: [{ ...first, slug: 'Bad_Slug' }] }),

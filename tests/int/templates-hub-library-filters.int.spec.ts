@@ -44,7 +44,7 @@ describe('library item metadata', () => {
 
   const row = (over: Partial<LibraryItemRow>): LibraryItemRow => ({
     key: 'a', libraryId: 'l', libraryLabel: 'L', slug: 'a', title: 'A', kind: 'page', category: 'Shop', tags: [], previewUrl: '',
-    type: 'page', industry: '', style: '', theme: 'both', previewDarkUrl: '', ...over,
+    type: 'page', industry: '', style: '', theme: 'both', previewDarkUrl: '', pairWith: '', siteKind: '', ...over,
   })
 
   it('filters by type, industry, style and light or dark', () => {
@@ -58,5 +58,30 @@ describe('library item metadata', () => {
     expect(filterLibraryItems(items, { ...EMPTY_LIBRARY_FILTER, style: 'sand' }).map((i) => i.key)).toEqual(['2'])
     expect(libraryTypes(items)).toEqual(['shop-page', 'header'])
     expect(libraryValues(items, 'industry')).toEqual(['Retail'])
+  })
+})
+
+describe('library item kinds from the templates repo draft (33c)', () => {
+  const base = { slug: 'x', title: 'X', category: 'Shop', preview: 'p.png', file: 'i.json' }
+  const make = (items: Array<Record<string, unknown>>, schemaVersion = 2) => ({ format: 'engage-library', schemaVersion, name: 'L', items })
+
+  it('accepts schemaVersion 2 and lists new kinds as sections with a type', () => {
+    const result = validateLibraryManifest(make([
+      { ...base, slug: 'shop', kind: 'site-template', siteKind: 'archive-shop' },
+      { ...base, slug: 'card', kind: 'loop' },
+      { ...base, slug: 'offer', kind: 'popup' },
+    ]))
+    expect(result.ok).toBe(true)
+    expect(result.value?.items.map((i) => [i.kind, i.type, i.siteKind])).toEqual([
+      ['section', 'site-template', 'archive-shop'],
+      ['section', 'loop', 'loop'],
+      ['section', 'popup', undefined],
+    ])
+  })
+
+  it('refuses an unknown siteKind and a pairWith that is not in the library', () => {
+    expect(validateLibraryManifest(make([{ ...base, kind: 'site-template', siteKind: 'sidebar-top' }])).ok).toBe(false)
+    expect(validateLibraryManifest(make([{ ...base, kind: 'section', pairWith: 'other' }])).ok).toBe(false)
+    expect(validateLibraryManifest(make([{ ...base, kind: 'section', pairWith: 'y' }, { ...base, slug: 'y', kind: 'section', pairWith: 'x' }])).ok).toBe(true)
   })
 })

@@ -120,6 +120,8 @@ const TYPE_LABELS: Record<string, string> = {
   footer: 'Footer',
   hero: 'Hero',
   loop: 'Loop',
+  'site-template': 'Site template',
+  popup: 'Popup',
 }
 
 export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[], locks?: Locks, mode?: TemplateInsertMode) => void }> = ({ onPickTemplate }) => {

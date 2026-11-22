@@ -1,6 +1,7 @@
 import { cleanRelativePath, parseManifest, SLUG_RE } from '@/features/templateRepos/manifest'
 import { LIBRARY_ITEM_TYPES, LIMITS, type LibraryItemType, type Result, type TemplateKind } from '@/features/templateRepos/types'
 
+import { SITE_TEMPLATE_KINDS } from '@/features/siteTemplates/kinds'
 import { LIBRARY_LIMITS, type LibraryItem, type LibraryManifest } from './types'
 
 /**
@@ -28,7 +29,7 @@ const IMAGE_PATH_RE = /\.(png|jpe?g|webp)$/i
 export function validateLibraryManifest(data: unknown): Result<LibraryManifest> {
   if (!isPlainObject(data)) return fail('The library file must be a JSON object.')
   if (data.format !== 'engage-library') return fail('The library file needs "format": "engage-library".')
-  if (data.schemaVersion !== 1) return fail('The library file "schemaVersion" must be 1.')
+  if (data.schemaVersion !== 1 && data.schemaVersion !== 2) return fail('The library file "schemaVersion" must be 1 or 2.')
   const name = cleanText(data.name, 120)
   if (!name) return fail('The library file needs a "name" of up to 120 characters.')
   if (!Array.isArray(data.items)) return fail('The library file needs an "items" list.')
@@ -45,8 +46,11 @@ export function validateLibraryManifest(data: unknown): Result<LibraryManifest> 
 
     const title = cleanText(entry.title, 120)
     if (!title) return fail(`The item "${slug}" needs a title of up to 120 characters.`)
-    const kind = entry.kind
-    if (kind !== 'page' && kind !== 'section') return fail(`The item "${slug}" must have "kind": "page" or "section".`)
+    const rawKind = entry.kind
+    // site-template, loop and popup items hold a tree like a section: they list as a section, with a type saying what they make.
+    const newKind = rawKind === 'site-template' || rawKind === 'loop' || rawKind === 'popup' ? rawKind : null
+    const kind = newKind ? 'section' : rawKind
+    if (kind !== 'page' && kind !== 'section') return fail(`The item "${slug}" must have "kind": "page", "section", "site-template", "loop" or "popup".`)
 
     const category = entry.category === undefined ? 'General' : cleanText(entry.category, 60)
     if (!category) return fail(`The category of "${slug}" must be text of up to 60 characters.`)
@@ -68,7 +72,8 @@ export function validateLibraryManifest(data: unknown): Result<LibraryManifest> 
     if (!file || !file.endsWith('.json')) return fail(`The file of "${slug}" must be a .json path inside the library folder.`)
 
     const extra: Partial<LibraryItem> = {}
-    if (entry.type !== undefined) {
+    if (newKind) extra.type = newKind
+    if (entry.type !== undefined && !newKind) {
       if (typeof entry.type !== 'string' || !(LIBRARY_ITEM_TYPES as readonly string[]).includes(entry.type)) return fail(`The type of "${slug}" must be one of: ${LIBRARY_ITEM_TYPES.join(', ')}.`)
       extra.type = entry.type as LibraryItemType
     }
@@ -77,6 +82,16 @@ export function validateLibraryManifest(data: unknown): Result<LibraryManifest> 
       const clean = cleanText(entry[key], 40)
       if (!clean) return fail(`The ${key} of "${slug}" must be text of up to 40 characters.`)
       extra[key] = clean
+    }
+    if (entry.siteKind !== undefined || newKind === 'site-template') {
+      if (typeof entry.siteKind !== 'string' || !(SITE_TEMPLATE_KINDS as readonly string[]).includes(entry.siteKind)) return fail(`The siteKind of "${slug}" must be one of: ${SITE_TEMPLATE_KINDS.join(', ')}.`)
+      extra.siteKind = entry.siteKind
+    } else if (newKind === 'loop') {
+      extra.siteKind = 'loop'
+    }
+    if (entry.pairWith !== undefined) {
+      if (typeof entry.pairWith !== 'string' || !SLUG_RE.test(entry.pairWith) || entry.pairWith === slug) return fail(`The pairWith of "${slug}" must be the slug of another item.`)
+      extra.pairWith = entry.pairWith
     }
     if (entry.theme !== undefined) {
       if (entry.theme !== 'light' && entry.theme !== 'dark' && entry.theme !== 'both') return fail(`The theme of "${slug}" must be "light", "dark" or "both".`)
@@ -89,6 +104,9 @@ export function validateLibraryManifest(data: unknown): Result<LibraryManifest> 
     }
 
     items.push({ slug, title, kind: kind as TemplateKind, category, tags, preview, file, ...extra })
+  }
+  for (const item of items) {
+    if (item.pairWith && !slugs.has(item.pairWith)) return fail(`The pairWith of "${item.slug}" names "${item.pairWith}", which is not in the library.`)
   }
   let languages = ['en']
   if (data.languages !== undefined) {

@@ -71,6 +71,29 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
     }
   }
 
+  const createTemplate = async (item: LibraryItemRow) => {
+    setBusy(item.key)
+    setError(null)
+    try {
+      const res = await fetch('/api/template-libraries/create-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ library: item.libraryId, item: item.slug }),
+      })
+      const json = (await res.json().catch((): null => null)) as { ok?: boolean; error?: string; editHref?: string } | null
+      if (!res.ok || !json || json.ok === false || !json.editHref) {
+        setError(json?.error || t('templateLibraries.actionFailed'))
+        setBusy(null)
+        return
+      }
+      window.location.assign(json.editHref)
+    } catch {
+      setError(t('templateLibraries.actionFailed'))
+      setBusy(null)
+    }
+  }
+
   const libraryErrors = (listing?.libraries ?? []).filter((library) => library.error)
   const libraryCount = (listing?.libraries ?? []).filter((library) => library.enabled && !library.error).length
 
@@ -209,6 +232,10 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
             {item.kind === 'page' ? (
               <button type="button" className="btn btn--style-secondary btn--size-small" disabled={busy !== null} onClick={() => void createPage(item)}>
                 {busy === item.key ? t('templateLibraries.creating') : t('templateLibraries.createPage')}
+              </button>
+            ) : item.siteKind || item.type === 'popup' ? (
+              <button type="button" className="btn btn--style-secondary btn--size-small" disabled={busy !== null} onClick={() => void createTemplate(item)}>
+                {busy === item.key ? t('templateLibraries.creating') : item.type === 'popup' ? 'Create popup' : 'Create template (starts off)'}
               </button>
             ) : null}
           </li>

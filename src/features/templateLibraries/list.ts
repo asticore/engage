@@ -44,6 +44,8 @@ export async function listLibraries(engine: LibraryStoreEngine, options: { fresh
           industry: item.industry ?? '',
           style: item.style ?? '',
           theme: item.theme ?? 'both',
+          pairWith: item.pairWith ?? '',
+          siteKind: item.siteKind ?? '',
           previewDarkUrl: item.previewDark ? previewPathFor(row.id, item.slug, 'dark') : '',
         })
       }

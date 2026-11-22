@@ -31,6 +31,8 @@ export const LIBRARY_TYPE_LABELS: Record<string, string> = {
   footer: 'Footer',
   hero: 'Hero',
   loop: 'Loop',
+  'site-template': 'Site template',
+  popup: 'Popup',
 }
 
 /** Distinct non-empty values of one text field (industry or style), A to Z. */
