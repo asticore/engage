@@ -98,6 +98,9 @@ const slidesOf = (v: unknown): Slide[] =>
     return { heading: str(o.heading), text: str(o.text), label: str(o.buttonLabel), href: linkHref(o.buttonUrl), image: m?.url ?? '', alt: m?.alt ?? '', video: videoSrc(o.videoUrl), animation: textAnimationOf(o.textAnimation) }
   })
 
+/** Extra class that hides a control on one kind of screen. */
+export const deviceClass = (desktop: boolean, mobile: boolean): string => (desktop && mobile ? '' : desktop ? ' is-desktop-only' : ' is-mobile-only')
+
 export function SlidesElement(props: P): React.ReactElement | null {
   const slides = slidesOf(props.items)
   const [index, setIndex] = useState(0)
@@ -137,14 +140,14 @@ export function SlidesElement(props: P): React.ReactElement | null {
       ))}
       {count > 1 ? (
         <>
-          {cfg.arrows ? (
+          {cfg.arrows || cfg.arrowsMobile ? (
             <>
-              <button type="button" className="be-el-65-slides__nav is-prev" aria-label="Previous slide" disabled={!cfg.loop && index === 0} onClick={() => go(-1)}>{String.fromCodePoint(0x2039)}</button>
-              <button type="button" className="be-el-65-slides__nav is-next" aria-label="Next slide" disabled={!cfg.loop && index === count - 1} onClick={() => go(1)}>{String.fromCodePoint(0x203a)}</button>
+              <button type="button" className={`be-el-65-slides__nav is-prev${deviceClass(cfg.arrows, cfg.arrowsMobile)}`} aria-label="Previous slide" disabled={!cfg.loop && index === 0} onClick={() => go(-1)}>{String.fromCodePoint(0x2039)}</button>
+              <button type="button" className={`be-el-65-slides__nav is-next${deviceClass(cfg.arrows, cfg.arrowsMobile)}`} aria-label="Next slide" disabled={!cfg.loop && index === count - 1} onClick={() => go(1)}>{String.fromCodePoint(0x203a)}</button>
             </>
           ) : null}
-          {cfg.dots ? (
-            <div className="be-el-65-slides__dots">
+          {cfg.dots || cfg.dotsMobile ? (
+            <div className={`be-el-65-slides__dots${deviceClass(cfg.dots, cfg.dotsMobile)}`}>
               {slides.map((_, i) => <button key={i} type="button" aria-label={`Go to slide ${i + 1}`} aria-current={i === index ? 'true' : undefined} onClick={() => setIndex(i)} />)}
             </div>
           ) : null}
@@ -155,7 +158,7 @@ export function SlidesElement(props: P): React.ReactElement | null {
       <div className="be-el-65-slides__thumbs">
         {slides.map((s, i) => (
           <button key={i} type="button" aria-label={`Show slide ${i + 1}${s.heading ? `: ${s.heading}` : ''}`} aria-current={i === index ? 'true' : undefined} onClick={() => setIndex(i)}
-            style={s.image ? { backgroundImage: `url("${s.image.replace(/"/g, '%22')}")` } : undefined}>{s.image ? null : i + 1}</button>
+            style={s.image ? { backgroundImage: `url("${s.image.replace(/"/g, '%22')}")` } : undefined}>{s.image ? null : s.video ? <video src={`${s.video}#t=0.1`} muted playsInline preload="metadata" aria-hidden="true" tabIndex={-1} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} /> : i + 1}</button>
         ))}
       </div>
     ) : null}

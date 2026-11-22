@@ -7,7 +7,8 @@
 .be-el-65-hours__status { margin: 0.5rem 0 0; font-size: 0.9em; }
 .be-el-65-hours__status.is-open { color: #1a7f37; font-weight: 600; }
 .be-el-65-slides { position: relative; overflow: hidden; background: #222; color: #fff; min-height: var(--slides-h, 420px); }
-@media (max-width: 640px) { .be-el-65-slides { min-height: var(--slides-h-mobile, 320px); } }
+@media (max-width: 640px) { .be-el-65-slides { min-height: var(--slides-h-mobile, 320px); } .be-el-65-slides .is-desktop-only { display: none; } }
+@media (min-width: 641px) { .be-el-65-slides .is-mobile-only { display: none; } }
 .be-el-65-slides__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .be-el-65-slides__body { position: relative; }
 .be-el-65-slides__nav:disabled { opacity: 0.4; cursor: default; }
