@@ -50,7 +50,7 @@ export const CheckAnalyticsIdsButton: React.FC = () => {
   )
 }
 
-type RemoteProps = { check: 'ai' | 'cloudflare' | 'maps' | 'pagespeed' | 'recaptcha'; label: string; hint: string }
+type RemoteProps = { check: 'ai' | 'cloudflare' | 'maps' | 'pagespeed' | 'recaptcha' | 'captcha'; label: string; hint: string }
 
 const RemoteCheck: React.FC<RemoteProps> = ({ check, label, hint }) => {
   const modified = useFormModified()
@@ -152,4 +152,9 @@ export const CheckPageSpeedButton: React.FC = () => (
 /** The reCAPTCHA site key (shape) and secret key (a siteverify call with a made-up token). */
 export const CheckRecaptchaButton: React.FC = () => (
   <RemoteCheck check="recaptcha" label="Check reCAPTCHA keys" hint="Checks the site key's shape and asks Google to accept the secret key. No visitor is checked and nothing is recorded." />
+)
+
+/** The saved site-wide CAPTCHA keys for the chosen provider (Turnstile or reCAPTCHA). */
+export const CheckCaptchaButton: React.FC = () => (
+  <RemoteCheck check="captcha" label="Test CAPTCHA keys" hint="Checks the saved site key's shape and asks the provider to accept the saved secret key. No visitor is checked and nothing is recorded. Save first." />
 )

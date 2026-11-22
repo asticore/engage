@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
-import { checkAiKeys, checkCloudflareZone, checkGoogleKeyShape, checkPageSpeedKey, checkRecaptchaKeys } from '@/features/integrations/remoteChecks'
+import { checkAiKeys, checkCloudflareZone, checkGoogleKeyShape, checkPageSpeedKey, checkRecaptchaKeys, checkTurnstileKeys } from '@/features/integrations/remoteChecks'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic'
  * POST { check: 'cloudflare' } - the saved zone ID and API token.
  * POST { check: 'maps' } - the saved Google Maps key, by shape only (no call).
  * POST { check: 'pagespeed' } - the saved PageSpeed key, one call that runs no test.
+ * POST { check: 'captcha' } - the saved site-wide CAPTCHA keys (Form settings, Spam protection) for the chosen provider.
  * POST { check: 'recaptcha' } - the saved reCAPTCHA site key (shape) and secret key (siteverify).
  */
 export async function POST(request: Request): Promise<Response> {
@@ -19,7 +20,7 @@ export async function POST(request: Request): Promise<Response> {
     const context = await getAdminContext()
     if (!context.isAdmin) return NextResponse.json({ error: 'Only an admin may check a connection.' }, { status: 403 })
     const body = (await request.json().catch((): null => null)) as { check?: unknown } | null
-    if (body?.check !== 'ai' && body?.check !== 'cloudflare' && body?.check !== 'maps' && body?.check !== 'pagespeed' && body?.check !== 'recaptcha') {
+    if (body?.check !== 'ai' && body?.check !== 'cloudflare' && body?.check !== 'maps' && body?.check !== 'pagespeed' && body?.check !== 'recaptcha' && body?.check !== 'captcha') {
       return NextResponse.json({ error: 'Choose a check to run.' }, { status: 400 })
     }
     const { getEngine } = await import('@/lib/engine')
@@ -28,6 +29,14 @@ export async function POST(request: Request): Promise<Response> {
 
     const google = (integrations?.google ?? {}) as { mapsApiKey?: string | null; pageSpeedApiKey?: string | null }
     const recaptcha = (integrations?.recaptcha ?? {}) as { siteKey?: string | null; secretKey?: string | null }
+    if (body.check === 'captcha') {
+      const { getFormSettings } = await import('@/features/forms/settings')
+      const s = await getFormSettings(engine as never)
+      const results = s.captchaProvider === 'recaptcha'
+        ? await checkRecaptchaKeys({ siteKey: s.recaptchaSiteKey, secretKey: s.recaptchaSecretKey })
+        : await checkTurnstileKeys({ siteKey: s.turnstileSiteKey, secretKey: s.turnstileSecretKey })
+      return NextResponse.json(results, { headers: { 'Cache-Control': 'no-store' } })
+    }
     const results =
       body.check === 'ai'
         ? await checkAiKeys({

@@ -41,5 +41,5 @@ export const PlaceCaptcha: React.FC<{ place: PlaceId; refreshKey?: unknown }> = 
     }
   }, [place, refreshKey, tick])
 
-  return config ? <AuthCaptcha key={round} provider={config.provider} siteKey={config.siteKey} fallback={config.fallback ?? null} /> : null
+  return config ? <AuthCaptcha key={round} provider={config.provider} siteKey={config.siteKey} appearance={config.appearance} fallback={config.fallback ?? null} /> : null
 }

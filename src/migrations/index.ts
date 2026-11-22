@@ -259,6 +259,7 @@ import * as migration_20270322_100000_spam_rule_action from './20270322_100000_s
 import * as migration_20270321_100000_update_popup_probe from './20270321_100000_update_popup_probe';
 import * as migration_20270322_100000_seo_site_audit from './20270322_100000_seo_site_audit';
 import * as migration_20270318_200000_bid_json_column from './20270318_200000_bid_json_column';
+import * as migration_20270322_110000_captcha_appearance from './20270322_110000_captcha_appearance';
 
 export const migrations = [
   {
@@ -1560,5 +1561,8 @@ export const migrations = [
     up: migration_20270322_100000_seo_site_audit.up,
     down: migration_20270322_100000_seo_site_audit.down,
     name: '20270322_100000_seo_site_audit',
+    up: migration_20270322_110000_captcha_appearance.up,
+    down: migration_20270322_110000_captcha_appearance.down,
+    name: '20270322_110000_captcha_appearance',
   },
 ];

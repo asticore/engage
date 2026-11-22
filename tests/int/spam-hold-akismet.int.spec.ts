@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 
 import { checkAkismet } from '@/features/forms/akismet'
 import { describeSpamCounts } from '@/features/forms/spamCounts'
+import { checkTurnstileKeys } from '@/features/integrations/remoteChecks'
 
 const reply = (text: string): typeof fetch => (async () => new Response(text)) as unknown as typeof fetch
 
@@ -35,5 +36,25 @@ describe('Spam counters sentence', () => {
     expect(text).toContain('3 form entries (1 this week)')
     expect(text).toContain('1 product review (0 this week)')
     expect(text).not.toContain('comment')
+  })
+})
+
+const json = (body: unknown): typeof fetch => (async () => new Response(JSON.stringify(body))) as unknown as typeof fetch
+
+describe('Turnstile key check', () => {
+  it('accepts a good secret and site key shape', async () => {
+    const r = await checkTurnstileKeys({ siteKey: '0x4AAAAAAAabcdefghij', secretKey: 's' }, json({ success: false, 'error-codes': ['invalid-input-response'] }))
+    expect(r.siteKey.ok).toBe(true)
+    expect(r.secretKey.ok).toBe(true)
+  })
+  it('refuses a bad secret and a bad site key', async () => {
+    const r = await checkTurnstileKeys({ siteKey: 'nope', secretKey: 's' }, json({ 'error-codes': ['invalid-input-secret'] }))
+    expect(r.siteKey.ok).toBe(false)
+    expect(r.secretKey.ok).toBe(false)
+  })
+  it('reports missing keys without calling out', async () => {
+    const r = await checkTurnstileKeys({})
+    expect(r.siteKey.ok).toBe(false)
+    expect(r.secretKey.ok).toBe(false)
   })
 })

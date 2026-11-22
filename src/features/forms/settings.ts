@@ -60,6 +60,7 @@ export const DEFAULT_FORM_SETTINGS: ResolvedFormSettings = {
   blockedSenders: '',
   spamRuleAction: 'hold',
   akismetKey: '',
+  captchaAppearance: 'visible',
   submitButtonLabel: 'Submit',
   successMessage: 'Thank you - we have received your message and will be in touch shortly.',
   errorMessage: 'Sorry, something went wrong and your message was not sent. Please try again.',
@@ -95,6 +96,7 @@ type SettingsDoc = {
     blockedSenders?: string
     spamRuleAction?: string
     akismetKey?: string
+    captchaAppearance?: string
   }
   defaults?: {
     submitButtonLabel?: string
@@ -134,6 +136,20 @@ export const formsEnabled = async (engine: EngineLike): Promise<boolean> => {
  * shipped defaults rather than taking down every page that has a form on it.
  */
 export const getFormSettings = async (engine: EngineLike): Promise<ResolvedFormSettings> => {
+  const settings = await readFormSettings(engine)
+  // One place for the reCAPTCHA keys: when Form settings has none, the keys saved on the Integrations page are used.
+  if (settings.captchaProvider === 'recaptcha' && (!settings.recaptchaSiteKey || !settings.recaptchaSecretKey)) {
+    const integrations = (await engine.findGlobal({ slug: 'integrations', depth: 0 }).catch((): null => null)) as { recaptcha?: { siteKey?: string | null; secretKey?: string | null } } | null
+    return {
+      ...settings,
+      recaptchaSiteKey: settings.recaptchaSiteKey || text(integrations?.recaptcha?.siteKey, ''),
+      recaptchaSecretKey: settings.recaptchaSecretKey || text(integrations?.recaptcha?.secretKey, ''),
+    }
+  }
+  return settings
+}
+
+const readFormSettings = async (engine: EngineLike): Promise<ResolvedFormSettings> => {
   const doc = (await engine
     .findGlobal({ slug: 'form-settings', depth: 0 })
     .catch((): null => null)) as SettingsDoc | null
@@ -173,6 +189,7 @@ export const getFormSettings = async (engine: EngineLike): Promise<ResolvedFormS
     blockedSenders: text(doc.spam?.blockedSenders, ''),
     spamRuleAction: normaliseSpamAction(doc.spam?.spamRuleAction),
     akismetKey: text(doc.spam?.akismetKey, ''),
+    captchaAppearance: doc.spam?.captchaAppearance === 'invisible' ? 'invisible' : 'visible',
     submitButtonLabel: text(doc.defaults?.submitButtonLabel, DEFAULT_FORM_SETTINGS.submitButtonLabel),
     successMessage: text(doc.defaults?.successMessage, DEFAULT_FORM_SETTINGS.successMessage),
     errorMessage: text(doc.defaults?.errorMessage, DEFAULT_FORM_SETTINGS.errorMessage),
@@ -237,7 +254,7 @@ export const toPublicConfig = (
         ? { provider: 'recaptcha', siteKey: resolved.recaptchaSiteKey }
         : undefined
       : resolved.turnstileSiteKey
-        ? { provider: 'turnstile', siteKey: resolved.turnstileSiteKey }
+        ? { provider: 'turnstile', siteKey: resolved.turnstileSiteKey, appearance: resolved.captchaAppearance }
         : undefined
     : undefined
 
