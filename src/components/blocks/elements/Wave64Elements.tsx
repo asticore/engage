@@ -6,6 +6,7 @@ import { safeUrl } from '@/lib/mergeTags'
 import { LANGS, parsePlaylist, tokenize } from '@/lib/elements/wave64Util'
 
 import { flag, mediaOf, parseVideoUrl, pick, str } from './elementUtil'
+import { LottieClient } from './LottieClient'
 import { CopyButton, ImageAccordion, VideoPlaylist } from './Wave64Client'
 import type { Panel } from './Wave64Client'
 import './wave48.css'
@@ -87,7 +88,17 @@ export const VideoPlaylistElement: React.FC<P> = (p) => {
   return <VideoPlaylist items={items} label={str(p.label, 'Video playlist')} />
 }
 
+/** `lottie-player`: a native Lottie animation (.lottie or .json file). Loads its player only when in view. */
+export const LottiePlayerElement: React.FC<P> = (p) => {
+  const url = safeUrl(str(p.url)) ?? mediaOf(p.file)?.url
+  if (!url || !/^(https?:\/\/|\/)/.test(url)) return <div className="el-placeholder">Add a Lottie file (.lottie or .json)</div>
+  const mode = pick(p.mode, ['autoplay', 'hover', 'scroll'] as const, 'autoplay')
+  const height = Math.min(1000, Math.max(40, Number(p.height) || 300))
+  return <LottieClient src={url} mode={mode} loop={flag(p.loop, true)} label={str(p.label, 'Animation')} height={height} />
+}
+
 export const WAVE64_COMPONENTS: Record<string, React.ComponentType<P>> = {
+  'lottie-player': LottiePlayerElement,
   audio: AudioElement,
   'code-highlight': CodeHighlightElement,
   'image-accordion': ImageAccordionElement,

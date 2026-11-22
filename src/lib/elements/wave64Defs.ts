@@ -7,6 +7,19 @@ const text = (name: string, label: string, extra: Partial<EditorField> = {}): Ed
 
 export const WAVE64_ELEMENTS: ElementDef[] = [
   {
+    type: 'lottie-player', label: 'Lottie animation', icon: String.fromCodePoint(0x2728), category: 'media',
+    description: 'A Lottie animation (.lottie or .json) that plays on its own, on hover or as you scroll. Loads its player only when it comes into view.',
+    fields: [
+      { name: 'file', label: 'Animation file', type: 'media' },
+      text('url', 'Or animation address', { helpText: 'An https address of a .lottie or .json file. Used when no file is chosen.' }),
+      { name: 'mode', label: 'Plays', type: 'select', width: 'half', options: [{ label: 'On its own', value: 'autoplay' }, { label: 'While hovered or focused', value: 'hover' }, { label: 'Follows scrolling', value: 'scroll' }] },
+      { name: 'height', label: 'Height (px)', type: 'number', width: 'half' },
+      { name: 'loop', label: 'Loop', type: 'checkbox' },
+      text('label', 'Description for screen readers'),
+    ],
+    defaultProps: () => ({ mode: 'autoplay', height: 300, loop: true, label: 'Animation' }),
+  },
+  {
     type: 'audio', label: 'Audio', icon: String.fromCodePoint(0x1f50a), category: 'media',
     description: 'A sound file with the browser audio player, or a Spotify or SoundCloud player. Never plays by itself.',
     fields: [
