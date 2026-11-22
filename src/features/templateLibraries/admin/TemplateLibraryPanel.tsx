@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
-import { EMPTY_LIBRARY_FILTER, filterLibraryItems, isLibraryFilterActive, libraryCategories, type LibraryItemFilter } from '../filter'
+import { EMPTY_LIBRARY_FILTER, LIBRARY_TYPE_LABELS, filterLibraryItems, isLibraryFilterActive, libraryCategories, libraryTypes, libraryValues, type LibraryItemFilter } from '../filter'
 import type { LibraryItemRow, LibrarySummary } from '../types'
 
 type Listing = { ok?: boolean; error?: string; libraries?: LibrarySummary[]; items?: LibraryItemRow[] }
@@ -19,6 +19,7 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
   const [listing, setListing] = useState<Listing | null>(null)
   const [filter, setFilter] = useState<LibraryItemFilter>(EMPTY_LIBRARY_FILTER)
   const [busy, setBusy] = useState<string | null>(null)
+  const [dark, setDark] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -41,6 +42,9 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
   const allItems = useMemo(() => listing?.items ?? [], [listing])
   const items = useMemo(() => filterLibraryItems(allItems, filter), [allItems, filter])
   const categories = useMemo(() => libraryCategories(allItems), [allItems])
+  const types = useMemo(() => libraryTypes(allItems), [allItems])
+  const industries = useMemo(() => libraryValues(allItems, 'industry'), [allItems])
+  const styles = useMemo(() => libraryValues(allItems, 'style'), [allItems])
   const usableLibraries = (listing?.libraries ?? []).filter((library) => library.enabled && !library.error)
   const filterActive = isLibraryFilterActive(filter)
 
@@ -117,6 +121,51 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
             ))}
           </select>
         </label>
+        {types.length > 0 ? (
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span>Type</span>
+            <select value={filter.type} onChange={(event) => setFilter({ ...filter, type: event.target.value })} style={{ padding: '6px 8px' }}>
+              <option value="">{t('templateLibraries.filterAll')}</option>
+              {types.map((type) => (
+                <option key={type} value={type}>{LIBRARY_TYPE_LABELS[type]}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {industries.length > 0 ? (
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span>Industry</span>
+            <select value={filter.industry} onChange={(event) => setFilter({ ...filter, industry: event.target.value })} style={{ padding: '6px 8px' }}>
+              <option value="">{t('templateLibraries.filterAll')}</option>
+              {industries.map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {styles.length > 0 ? (
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span>Colour style</span>
+            <select value={filter.style} onChange={(event) => setFilter({ ...filter, style: event.target.value })} style={{ padding: '6px 8px' }}>
+              <option value="">{t('templateLibraries.filterAll')}</option>
+              {styles.map((value) => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span>Light or dark</span>
+          <select value={filter.theme} onChange={(event) => setFilter({ ...filter, theme: event.target.value as LibraryItemFilter['theme'] })} style={{ padding: '6px 8px' }}>
+            <option value="">{t('templateLibraries.filterAll')}</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <input type="checkbox" checked={dark} onChange={(event) => setDark(event.target.checked)} />
+          <span>Dark previews</span>
+        </label>
         {filterActive ? (
           <button type="button" className="btn btn--style-secondary btn--size-small" onClick={() => setFilter(EMPTY_LIBRARY_FILTER)}>
             {t('templateLibraries.clearFilters')}
@@ -143,18 +192,18 @@ export const TemplateLibraryPanel: React.FC<{ settingsHref: string }> = ({ setti
       ) : null}
 
       <ul
-        aria-label={t('templateLibraries.tabLibrary')}
+        aria-label="Examples"
         style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}
       >
         {items.map((item) => (
           <li key={item.key} style={{ border: '1px solid var(--theme-elevation-150, #ccc)', borderRadius: 6, padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {item.previewUrl ? (
-              <img src={item.previewUrl} alt="" loading="lazy" style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 4, background: '#f3f3f3' }} />
+              <img src={dark && item.previewDarkUrl ? item.previewDarkUrl : item.previewUrl} alt="" loading="lazy" style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 4, background: '#f3f3f3' }} />
             ) : null}
             <div>
               <strong>{item.title}</strong>
               <div style={{ fontSize: 12, opacity: 0.8 }}>
-                {item.kind === 'page' ? t('templateLibraries.kindPage') : t('templateLibraries.kindSection')} · {item.libraryLabel} · {item.category}
+                {LIBRARY_TYPE_LABELS[item.type] ?? (item.kind === 'page' ? t('templateLibraries.kindPage') : t('templateLibraries.kindSection'))} · {item.libraryLabel} · {item.category}{item.theme !== 'both' ? ` · ${item.theme}` : ''}
               </div>
             </div>
             {item.kind === 'page' ? (

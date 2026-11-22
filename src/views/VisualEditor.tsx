@@ -826,8 +826,25 @@ export const VisualEditorView: React.FC = () => {
   )
 
   const addTemplateBlocks = useCallback(
-    (templateBlocks: SectionNode[], templateLocks?: Locks) => insertTemplateAt(templateBlocks, insertTarget.containerPath, insertTarget.at, templateLocks),
-    [insertTarget, insertTemplateAt],
+    (templateBlocks: SectionNode[], templateLocks?: Locks, mode: 'here' | 'end' | 'replace' = 'here') => {
+      if (mode === 'end') {
+        insertTemplateAt(templateBlocks, [], blocksRef.current.length, templateLocks)
+        return
+      }
+      const path = selectedRef.current
+      if (mode === 'replace' && path && path.length > 0 && templateBlocks.length > 0 && !lockedOut(path)) {
+        const containerPath = path.slice(0, -1)
+        const at = path[path.length - 1] as number
+        if (insertBlocked(containerPath)) return
+        const fresh = templateBlocks.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
+        applyBlocks((prev) => insertNodes(updateNode(prev, path, () => null), containerPath, at, uniquifyAnchors(prev, fresh)), undefined, 'Replaced with template')
+        setSelectedPath([...containerPath, at])
+        setDockTab('settings')
+        return
+      }
+      insertTemplateAt(templateBlocks, insertTarget.containerPath, insertTarget.at, templateLocks)
+    },
+    [insertTarget, insertTemplateAt, lockedOut, insertBlocked, applyBlocks],
   )
 
   const deleteBlock = useCallback((path: NodePath) => {

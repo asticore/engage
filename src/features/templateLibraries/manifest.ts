@@ -1,5 +1,5 @@
 import { cleanRelativePath, parseManifest, SLUG_RE } from '@/features/templateRepos/manifest'
-import { LIMITS, type Result, type TemplateKind } from '@/features/templateRepos/types'
+import { LIBRARY_ITEM_TYPES, LIMITS, type LibraryItemType, type Result, type TemplateKind } from '@/features/templateRepos/types'
 
 import { LIBRARY_LIMITS, type LibraryItem, type LibraryManifest } from './types'
 
@@ -67,7 +67,28 @@ export function validateLibraryManifest(data: unknown): Result<LibraryManifest> 
     const file = cleanRelativePath(entry.file, { strict: true })
     if (!file || !file.endsWith('.json')) return fail(`The file of "${slug}" must be a .json path inside the library folder.`)
 
-    items.push({ slug, title, kind: kind as TemplateKind, category, tags, preview, file })
+    const extra: Partial<LibraryItem> = {}
+    if (entry.type !== undefined) {
+      if (typeof entry.type !== 'string' || !(LIBRARY_ITEM_TYPES as readonly string[]).includes(entry.type)) return fail(`The type of "${slug}" must be one of: ${LIBRARY_ITEM_TYPES.join(', ')}.`)
+      extra.type = entry.type as LibraryItemType
+    }
+    for (const key of ['industry', 'style'] as const) {
+      if (entry[key] === undefined) continue
+      const clean = cleanText(entry[key], 40)
+      if (!clean) return fail(`The ${key} of "${slug}" must be text of up to 40 characters.`)
+      extra[key] = clean
+    }
+    if (entry.theme !== undefined) {
+      if (entry.theme !== 'light' && entry.theme !== 'dark' && entry.theme !== 'both') return fail(`The theme of "${slug}" must be "light", "dark" or "both".`)
+      extra.theme = entry.theme
+    }
+    if (entry.previewDark !== undefined) {
+      const dark = cleanRelativePath(entry.previewDark, { strict: true })
+      if (!dark || !IMAGE_PATH_RE.test(dark)) return fail(`The previewDark of "${slug}" must be a PNG, JPEG or WebP picture path inside the library folder.`)
+      extra.previewDark = dark
+    }
+
+    items.push({ slug, title, kind: kind as TemplateKind, category, tags, preview, file, ...extra })
   }
   let languages = ['en']
   if (data.languages !== undefined) {

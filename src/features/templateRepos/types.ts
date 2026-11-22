@@ -48,7 +48,19 @@ export type ManifestTemplate = {
   preview: string
   /** Path inside the repository folder, always `templates/<slug>/template.json`. */
   file: string
+  /** Library items only (all optional): what the item is, for the picker filters. */
+  type?: LibraryItemType
+  industry?: string
+  style?: string
+  /** Which theme the item looks right in. `both` means it follows the site's theme (33d). */
+  theme?: 'light' | 'dark' | 'both'
+  /** Optional dark preview picture path, shown by the light and dark switch. */
+  previewDark?: string
 }
+
+/** What a library item is, for the type filter. `page` and `section` stay the insert kinds. */
+export const LIBRARY_ITEM_TYPES = ['page', 'section', 'shop-page', 'header', 'footer', 'hero', 'loop'] as const
+export type LibraryItemType = (typeof LIBRARY_ITEM_TYPES)[number]
 
 export type Manifest = {
   schemaVersion: 1

@@ -7,6 +7,7 @@
 
 import type { ColumnDef, ListFilter } from '@/admin/list/listQuery'
 import { adminCollectionPath } from '@/admin/adminPaths'
+import { parseSectionLayout } from '@/lib/sectionLayout'
 import { summariseConditions } from '@/features/siteTemplates/conditionsSummary'
 import { templatePartIdsIn } from '@/features/siteTemplates/nodes'
 import { KIND_LABELS, PUBLIC_PREVIEW_PATH, SITE_TEMPLATE_KINDS, type SiteTemplateKind } from '@/features/siteTemplates/kinds'
@@ -19,6 +20,8 @@ export type UsedIn = { collection: 'pages' | HubCollection; id: number | string;
 /** Type values for the two non-site collections. Site templates use their kind (header, single-post, ...). */
 export const PAGE_TEMPLATE_TYPE = 'page-template'
 export const REUSABLE_SECTION_TYPE = 'reusable-section'
+/** A reusable section whose top section is shown as a popup (display "modal"). */
+export const POPUP_TYPE = 'popup'
 
 export type HubStatus = 'on' | 'off' | 'available'
 
@@ -64,12 +67,14 @@ const HUB_SORT_FIELDS = ['name', 'type', 'status', 'priority', 'updatedAt'] as c
 const STATUS_LABELS: Record<HubStatus, string> = { on: 'On', off: 'Off', available: 'Available' }
 const PAGE_TEMPLATE_WHERE = 'Starter for new pages'
 const REUSABLE_SECTION_WHERE = 'Inserted manually'
+const POPUP_WHERE = 'Opens on its trigger wherever it is placed'
 
 /** Type labels for every hub type, in the order the type filter lists them. */
 export const HUB_TYPE_LABELS: Record<string, string> = {
   ...Object.fromEntries(SITE_TEMPLATE_KINDS.map((kind) => [kind, KIND_LABELS[kind]])),
   [PAGE_TEMPLATE_TYPE]: 'Page template',
   [REUSABLE_SECTION_TYPE]: 'Reusable section',
+  [POPUP_TYPE]: 'Popup',
 }
 
 export const HUB_COLUMNS: ColumnDef[] = [
@@ -106,18 +111,31 @@ const siteRow = (doc: HubSourceDoc, kind: SiteTemplateKind | string, usedIn: Use
   }
 }
 
+/** True when a saved section list holds a section shown as a popup. Layout may be a JSON string or an object. */
+export function holdsPopup(blocks: unknown): boolean {
+  if (!Array.isArray(blocks)) return false
+  return blocks.some((node) => {
+    if (!node || typeof node !== 'object') return false
+    const design = (node as { design?: unknown }).design
+    const layout = design && typeof design === 'object' ? (design as { layout?: unknown }).layout : undefined
+    return parseSectionLayout(layout)?.display === 'modal'
+  })
+}
+
 const plainRow = (doc: HubSourceDoc, collection: 'page-templates' | 'reusable-sections'): HubRow => {
   const isPage = collection === 'page-templates'
+  const popup = !isPage && holdsPopup(doc.blocks)
+  const type = isPage ? PAGE_TEMPLATE_TYPE : popup ? POPUP_TYPE : REUSABLE_SECTION_TYPE
   return {
     key: `${collection}:${doc.id}`,
     collection,
     id: doc.id,
     name: doc.name || `Untitled ${doc.id}`,
-    type: isPage ? PAGE_TEMPLATE_TYPE : REUSABLE_SECTION_TYPE,
-    typeLabel: isPage ? HUB_TYPE_LABELS[PAGE_TEMPLATE_TYPE] : HUB_TYPE_LABELS[REUSABLE_SECTION_TYPE],
+    type,
+    typeLabel: HUB_TYPE_LABELS[type],
     status: 'available',
     statusLabel: STATUS_LABELS.available,
-    where: isPage ? PAGE_TEMPLATE_WHERE : REUSABLE_SECTION_WHERE,
+    where: isPage ? PAGE_TEMPLATE_WHERE : popup ? POPUP_WHERE : REUSABLE_SECTION_WHERE,
     priority: null,
     updatedAt: doc.updatedAt ?? null,
     editHref: `${adminCollectionPath(collection)}/${doc.id}`,
