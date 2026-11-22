@@ -85,7 +85,7 @@ describe('wave 47 registry', () => {
     }
     expect(render(renderElement('icon-box', { title: 'Old icon box', icon: 'star' }))).toContain('el-box--icon')
     expect(render(renderElement('image-box', { title: 'Old image box' }))).toContain('el-box--image')
-    expect(render(renderElement('flip-box', { frontTitle: 'Old flip', backTitle: 'Back' }))).toContain('el-flip')
+    expect(render(renderElement('flip-box', { frontTitle: 'Old flip', backTitle: 'Back' }))).toContain('spark-flip')
   })
 
   it('default props only use declared fields, with matching value kinds', () => {

@@ -186,39 +186,31 @@ export const OutlineTextElement: React.FC<P> = (p) => {
 const COUNT_LIMIT = 1000000000
 
 /**
- * `count-up`: the number is an integer counter (scaled by 10^decimals) held in a registered custom property. The
- * animation moves that property from start to end, and CSS counter() prints it, with a decimal point and padding
- * added by the counter styles. Where counter math is not supported, the static final number shows instead. The
- * final number is also the aria-label, so screen readers never hear the intermediate values.
+ * `count-up`: Spark's `spark-counter` (asticore/spark) counts from the start to the end number when the figure scrolls
+ * into view. The final number is in the markup, so it reads correctly before the script runs and with reduced motion.
  */
 export const CountUpElement: React.FC<P> = (p) => {
   const start = num(p.start, 0, 0, COUNT_LIMIT)
   const end = num(p.end, 100, 0, COUNT_LIMIT)
   const decimals = Number(pick(str(p.decimals, '0'), ['0', '1', '2'] as const, '0'))
-  const scale = 10 ** decimals
   const prefix = str(p.prefix)
   const suffix = str(p.suffix)
   const label = str(p.label).trim()
   const duration = num(p.duration, 1600, 200, 5000)
-  const finalText = end.toFixed(decimals)
-  const counterStyle = {
-    '--be-el-43-from': Math.round(start * scale),
-    '--be-el-43-to': Math.round(end * scale),
-    '--be-el-43-s': Math.round(end * scale),
-    '--be-el-43-k': scale,
-    '--be-el-43-d': `${duration}ms`,
-  } as Style
   return (
     <div className="be-el-43-count-wrap">
-      <span className="be-el-43-count" role="img" aria-label={`${prefix}${finalText}${suffix}`}>
-        <span className="be-el-43-count__pre" aria-hidden="true">
-          {prefix}
-        </span>
-        <span className={`be-el-43-count__num be-el-43-count__num--d${decimals}`} aria-hidden="true" style={counterStyle}>
-          <span className="be-el-43-count__static">{finalText}</span>
-        </span>
-        <span className="be-el-43-count__suf" aria-hidden="true">
-          {suffix}
+      <span className="be-el-43-count">
+        <span
+          className="spark-counter"
+          data-spark-from={start}
+          data-spark-to={end}
+          data-spark-duration={Math.round(duration)}
+          data-spark-decimals={decimals}
+          data-spark-separator=""
+          data-spark-prefix={prefix || undefined}
+          data-spark-suffix={suffix || undefined}
+        >
+          {end.toFixed(decimals)}
         </span>
       </span>
       {label && <span className="be-el-43-count__label">{label}</span>}
