@@ -10,7 +10,7 @@ import { loadDataView } from '../load'
  * replace the typed data and every other option of the element still applies. Only public views are used, like the
  * Table or chart element. A private or missing view falls back to the data typed in the element.
  */
-export const DataViewBackedElement = async ({ elementType, props }: { elementType: 'chart' | 'table'; props: Record<string, unknown> }): Promise<React.ReactElement | null> => {
+export const DataViewBackedElement = async ({ elementType, props }: { elementType: 'chart' | 'table'; props: Record<string, unknown> }): Promise<React.ReactNode> => {
   const raw = props.view
   const ref = raw && typeof raw === 'object' ? (raw as { id?: unknown }).id : raw
   if (typeof ref !== 'number' && typeof ref !== 'string') return renderElement(elementType, props)
