@@ -127,6 +127,7 @@ function withIds(nodes: SectionNode[]): SectionNode[] {
 
 import { copyNodeLocks, nodeKey, pairLockKeys, parseLocks, serializeLocks, type LockEntry, type Locks, type LockUser } from '@/features/roles/locks'
 import { applyInlineEdit, inlineCandidate } from './visualEditor/inlineEdit'
+import { CONVERT_LABELS, convertNode, convertibleKinds, type ConvertKind } from './visualEditor/convertText'
 import { canInsertInto, effectiveLock, lockedKeySet, lockKeyOf, lockMapForCanvas, withNodeLock } from './visualEditor/lockState'
 import { canConvertLegacy, convertLegacyBlock } from './visualEditor/convertLegacy'
 import type { LockUi } from './visualEditor/LockControls'
@@ -844,6 +845,12 @@ export const VisualEditorView: React.FC = () => {
       const [copy] = uniquifyAnchors(prev, [cloneNode(original, nextId)])
       return insertNode(prev, containerPath, index + 1, copy)
     }, undefined, 'Duplicated')
+  }, [lockedOut, applyBlocks])
+
+  // Task 16h: turn a text block of lines into a list or table (snippet-friendly shapes).
+  const convertBlock = useCallback((path: NodePath, kind: ConvertKind) => {
+    if (lockedOut(path)) return
+    applyBlocks((prev) => updateNode(prev, path, (node) => convertNode(node, kind) ?? node), undefined, CONVERT_LABELS[kind])
   }, [lockedOut, applyBlocks])
 
   const moveBlock = useCallback((path: NodePath, direction: -1 | 1) => {
@@ -1780,6 +1787,7 @@ export const VisualEditorView: React.FC = () => {
       { id: 'paste-style', label: 'Paste style', hint: `${modLabel}+Shift+V`, disabled: !hasStyleClipboard || !canEditStyle || locked },
       { id: 'reset-style', label: 'Reset style', disabled: locked || !canEditStyle },
       { id: 'navigator', label: 'Show in Navigator' },
+      ...convertibleKinds(getNode(blocks, path)).map((kind, i) => ({ id: `convert-${kind}`, label: CONVERT_LABELS[kind], disabled: locked, divider: i === 0 })),
       { id: 'up', label: 'Move up', hint: 'Alt+Up', disabled: locked || index <= 0 },
       { id: 'down', label: 'Move down', hint: 'Alt+Down', disabled: locked || index >= list.length - 1 },
       ...(formMode ? [] : [{ id: 'template', label: 'Save as template' }]),
@@ -2215,6 +2223,7 @@ export const VisualEditorView: React.FC = () => {
             } else if (id === 'copy-style') void copyStyle(path)
             else if (id === 'paste-style') void pasteStyle(path)
             else if (id === 'reset-style') resetStyle(path)
+            else if (id.startsWith('convert-')) convertBlock(path, id.slice(8) as ConvertKind)
             else if (id === 'duplicate') duplicateBlock(path)
             else if (id === 'delete') deleteBlock(path)
             else if (id === 'up') moveBlock(path, -1)
