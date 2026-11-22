@@ -1,0 +1,12 @@
+.w70-sitemap ul{margin:0;padding-left:1.25rem}
+.w70-sitemap>ul{padding-left:0;list-style:none}
+.w70-sitemap li{margin:.25rem 0}
+.w70-gate{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:rgba(0,0,0,.85);padding:1rem}
+.w70-gate__box{background:#fff;color:#111;max-width:28rem;width:100%;padding:2rem;border-radius:.75rem;text-align:center}
+.w70-gate__box h2{margin:0 0 .5rem}
+.w70-gate__btns{display:flex;gap:.75rem;justify-content:center;margin-top:1rem}
+.w70-gate__box button{padding:.6rem 1.25rem;border-radius:.5rem;border:2px solid #2e3192;background:#2e3192;color:#fff;font:inherit;cursor:pointer}
+.w70-gate__btns button:last-child{background:#fff;color:#2e3192}
+.w70-gate__box form{display:grid;gap:.75rem;margin-top:1rem}
+.w70-gate__box input{padding:.5rem;font:inherit}
+.w70-gate__box button:focus-visible{outline:2px solid #111;outline-offset:2px}
