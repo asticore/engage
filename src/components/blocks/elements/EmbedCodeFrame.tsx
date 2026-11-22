@@ -5,7 +5,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ConsentGate } from '@/features/consent/ConsentGate'
 import { EMBED_CODE_SANDBOX, parseResizeMessage, type EmbedCodeCategory } from '@/lib/embedCode'
 
-import './embedCode.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 export type EmbedCodeFrameProps = {
   hash: string

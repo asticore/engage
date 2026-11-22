@@ -26,7 +26,7 @@ import { validateSubmission } from '../validate'
 import { FieldView } from './FieldView'
 import { SaveForLater } from './SaveForLater'
 import { RESUME_FIELD, readResumeToken } from '../drafts'
-import './forms.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /**
  * The front-end form: draws the layout tree (sections, columns, headings,

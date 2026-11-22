@@ -4,7 +4,7 @@ import { safeUrl } from '@/lib/mergeTags'
 
 import { flag, num, pick, str } from './elementUtil'
 import './wave47.css'
-import './wave50.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /**
  * Wave 50 view: the Loop element (src/lib/elements/wave50Defs.ts). This file is pure and sync: it turns a list of

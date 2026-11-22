@@ -1,0 +1,20 @@
+/*
+ * Styles of the components that public pages render, gathered into one file.
+ *
+ * Each of these used to be imported by its own component, and Next.js then shipped each as a separate
+ * stylesheet: about 15 render-blocking requests on every public page (PageSpeed, 22 Nov 2026). Imported once
+ * from the site, admin and embed layouts instead, they arrive as one request. A component listed here must
+ * not import its stylesheet itself again, or the extra request comes back.
+ */
+@import '../features/consent/consent.css';
+@import '../components/blocks/elements/embedCode.css';
+@import '../components/blocks/elements/wave66.css';
+@import '../features/ads/components/ads.css';
+@import '../components/blocks/popup.css';
+@import '../components/blocks/elements/wave50.css';
+@import '../features/dataViews/components/dataViews.css';
+@import '../features/forms/components/saveForLater.css';
+@import '../features/forms/components/forms.css';
+@import '../features/siteTemplates/sidebars.css';
+@import '../components/password-gate.css';
+@import '../components/currency-switcher.css';

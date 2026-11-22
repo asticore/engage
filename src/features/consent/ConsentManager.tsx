@@ -18,7 +18,7 @@ import type { UiStringKey } from '@/features/uiStrings/keys'
 import { activateGatedMarkup } from './gate'
 import { configureConsent, setConsentLogToken, type ConsentState, getConsentState, saveConsent, SERVER_CONSENT_STATE, subscribeConsent } from './store'
 
-import './consent.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /** Fired on window to open the Customise dialog from any script. */
 type ConsentTextKey = keyof typeof DEFAULT_CONSENT_TEXT

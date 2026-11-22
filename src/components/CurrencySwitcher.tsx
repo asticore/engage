@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 
 import { DISPLAY_CURRENCY_COOKIE } from '@/features/ecommerce/lib/displayCurrency'
 import { useDisplayCurrencyState } from '@/components/DisplayCurrencyContext'
-import './currency-switcher.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
 const YEAR_SECONDS = 31_536_000

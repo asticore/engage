@@ -6,7 +6,7 @@ import type { PublicFormConfig, SubmissionValues } from '../types'
 
 import { readResumeToken } from '../drafts'
 import { HONEYPOT_FIELD } from '../spam'
-import './saveForLater.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /**
  * "Save and continue later": a link under the form. The visitor types an email, the server emails

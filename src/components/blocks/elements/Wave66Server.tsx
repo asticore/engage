@@ -4,7 +4,7 @@ import { getBlockContext } from '@/lib/blockContext'
 
 import { CartExtrasPart, CartLinesPart, MiniCartLinesPart, CartSummaryPart, CartTotalsPart } from '@/components/CartParts'
 import { AddToCartControl, CartLinkControl } from './Wave66Elements'
-import './wave66.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /** Wave 66 shop widgets. Server components reading the product from the per-request block context (public data only). */
 
