@@ -46,7 +46,7 @@ export type TrackingPageContext = {
   destinations: TrackingDestination[]
 }
 
-export type TrackingDestinationId = 'meta' | 'ga4' | 'gtm' | 'tiktok'
+export type TrackingDestinationId = 'meta' | 'ga4' | 'gtm' | 'tiktok' | 'pinterest'
 
 /** A place the events are sent: whether it is connected on Integrations, and how many enabled events it receives. */
-export type TrackingDestination = { id: TrackingDestinationId; on: boolean; events: number }
+export type TrackingDestination = { id: TrackingDestinationId; on: boolean; events: number; detail?: string }

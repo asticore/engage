@@ -38,6 +38,8 @@ export function AssetManagerPanel() {
   const [link, setLink] = useState('')
   const [preset, setPreset] = useState({ id: 0, name: '', width: '1200', height: '0', fit: 'scale-down', format: 'auto' })
   const [importUrl, setImportUrl] = useState({ url: '', folder: '' })
+  const [pin, setPin] = useState({ account: '', pin: '', folder: '' })
+  const [pinAccounts, setPinAccounts] = useState<Array<{ value: string; label: string }>>([])
   const [pickers, setPickers] = useState<{ roles: Array<{ value: string; label: string }>; companies: Array<{ id: string; name: string }> }>({ roles: [], companies: [] })
 
   const load = useCallback(async (): Promise<void> => {
@@ -51,6 +53,12 @@ export function AssetManagerPanel() {
       const p = (await pick.json()) as { roles?: typeof pickers.roles; companies?: typeof pickers.companies }
       setPickers({ roles: p.roles ?? [], companies: p.companies ?? [] })
     }
+  }, [])
+  useEffect(() => {
+    void fetch('/api/admin-social-accounts', { cache: 'no-store' })
+      .then((r): Promise<{ options?: Array<{ value: string; label: string }> }> => (r.ok ? r.json() : Promise.resolve({ options: [] })))
+      .then((j) => setPinAccounts((j.options ?? []).filter((o) => o.label.endsWith('(pinterest)'))))
+      .catch((): void => undefined)
   }, [])
   useEffect(() => {
     void load()
@@ -243,6 +251,28 @@ export function AssetManagerPanel() {
           })()
         }}>Import</button></div>
       </div></div>
+
+      {pinAccounts.length > 0 ? (
+        <>
+          <h2>Import from Pinterest</h2>
+          <p className="text-muted">Paste a pin address to import that one picture, or leave it empty to import the latest pictures (up to 12) from the board of the connected account. Each is saved like an upload.</p>
+          <div className="card"><div className="card-body stack">
+            <label className="field">Pinterest account<select className="input" value={pin.account || pinAccounts[0]?.value} onChange={(e) => setPin({ ...pin, account: e.target.value })}>{pinAccounts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}</select></label>
+            <label className="field">Pin address (optional)<input className="input" type="url" value={pin.pin} placeholder="https://www.pinterest.com/pin/123456789/" onChange={(e) => setPin({ ...pin, pin: e.target.value })} /></label>
+            <label className="field">Folder (optional)<input className="input" value={pin.folder} onChange={(e) => setPin({ ...pin, folder: e.target.value })} /></label>
+            <div><button type="button" className="btn" onClick={() => {
+              void (async () => {
+                setMessage('')
+                const res = await fetch('/api/admin-media-pinterest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...pin, account: pin.account || pinAccounts[0]?.value }) })
+                const body = (await res.json().catch(() => ({}))) as { error?: string; imported?: number; skipped?: number }
+                if (!res.ok) return setMessage(body.error ?? 'The Pinterest import did not work.')
+                setMessage(`Imported ${body.imported ?? 0} picture(s) from Pinterest${body.skipped ? `, ${body.skipped} skipped` : ''}.`)
+                await load()
+              })()
+            }}>Import from Pinterest</button></div>
+          </div></div>
+        </>
+      ) : null}
 
       <h2>Settings</h2>
       <div className="card"><div className="card-body stack">

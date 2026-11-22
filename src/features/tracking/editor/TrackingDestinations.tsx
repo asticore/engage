@@ -10,6 +10,7 @@ const NAMES: Record<TrackingDestinationId, string> = {
   ga4: 'Google Analytics 4',
   gtm: 'Google Tag Manager',
   tiktok: 'TikTok pixel',
+  pinterest: 'Pinterest tag',
 }
 
 /**
@@ -26,7 +27,7 @@ export function TrackingDestinations({ destinations }: { destinations: TrackingD
         <tbody>
           {destinations.map((d) => (
             <tr key={d.id} style={{ borderTop: '1px solid #e5e7eb' }}>
-              <td style={{ padding: '8px 0' }}>{NAMES[d.id]}</td>
+              <td style={{ padding: '8px 0' }}>{NAMES[d.id]}{d.detail ? <> <code>{d.detail}</code></> : null}</td>
               <td style={{ padding: '8px 0', color: d.on ? '#15803d' : '#6b7280' }}>{d.on ? t('tracking.tags.on') : t('tracking.destinations.notConnected')}</td>
               <td style={{ padding: '8px 0', textAlign: 'right' }}>{d.on ? t('tracking.destinations.routed', { count: d.events }) : ''}</td>
             </tr>

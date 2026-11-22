@@ -37,13 +37,14 @@ export type UrlMatchMode = (typeof URL_MATCH_MODES)[number]
 export const VALUE_SOURCES = ['none', 'fixed', 'cartTotal', 'productPrice', 'orderTotal', 'quantity', 'elementText', 'elementAttr', 'dataLayer'] as const
 export type ValueSource = (typeof VALUE_SOURCES)[number]
 
-export const TRACKING_PLATFORMS = ['meta', 'ga4', 'gtm', 'tiktok', 'dataLayer'] as const
+export const TRACKING_PLATFORMS = ['meta', 'ga4', 'gtm', 'tiktok', 'pinterest', 'dataLayer'] as const
 export type TrackingPlatform = (typeof TRACKING_PLATFORMS)[number]
 
 /** Which consent category must be granted before a platform's tags exist. */
 export const PLATFORM_CATEGORY: Record<TrackingPlatform, 'analytics' | 'marketing'> = {
   meta: 'marketing',
   tiktok: 'marketing',
+  pinterest: 'marketing',
   ga4: 'analytics',
   gtm: 'analytics',
   dataLayer: 'analytics',
@@ -71,6 +72,17 @@ const TIKTOK_NAMES: Record<Exclude<StandardEvent, 'Custom'>, string> = {
   CompleteRegistration: 'CompleteRegistration',
   Contact: 'Contact',
   Search: 'Search',
+}
+
+/** Pinterest tag event names. PageView is sent by the tag itself (`pintrk('page')`), so it makes no call. */
+const PINTEREST_NAMES: Record<Exclude<StandardEvent, 'Custom' | 'PageView'>, string> = {
+  ViewContent: 'pagevisit',
+  AddToCart: 'addtocart',
+  Lead: 'lead',
+  Purchase: 'checkout',
+  CompleteRegistration: 'signup',
+  Contact: 'lead',
+  Search: 'search',
 }
 
 export type TrackingEventDef = {
@@ -187,6 +199,9 @@ export function platformCalls(def: TrackingEventDef, platforms: TrackingPlatform
     } else if (platform === 'tiktok') {
       if (std === 'PageView') calls.push({ platform, method: 'page', args: [] })
       else calls.push({ platform, method: 'track', args: [std ? TIKTOK_NAMES[std] : def.name, { ...params, event_id: eventId }] })
+    } else if (platform === 'pinterest') {
+      if (std === 'PageView') continue
+      calls.push({ platform, method: 'track', args: [std ? PINTEREST_NAMES[std] : 'custom', { ...params, ...(std ? {} : { event_name: def.name }), event_id: eventId }] })
     }
   }
   return calls
