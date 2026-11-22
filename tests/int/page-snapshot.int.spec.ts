@@ -56,7 +56,8 @@ const ctx = () => {
 
 const seed = async (bucket: SnapshotBucket, path: string, body: string, epoch: number, at: number) => {
   const key = await snapshotKeyFor(`${BASE}${path}?v=${epoch}&x=-.u`)
-  await bucket.put(key, body, { customMetadata: { epoch: String(epoch), at: String(at), h: JSON.stringify({ 'content-type': 'text/html; charset=utf-8' }) } })
+  const headers = { 'content-type': 'text/html; charset=utf-8', 'x-frame-options': 'SAMEORIGIN' }
+  await bucket.put(key, `${JSON.stringify(headers)}\n${body}`, { customMetadata: { f: '2', epoch: String(epoch), at: String(at) } })
   return key
 }
 
@@ -114,17 +115,23 @@ describe('withEdgeCache with snapshots', () => {
     const response = await withEdgeCache(new Request(`${BASE}/about`), { D1: fakeDb(EPOCH), R2: bucket }, ctx(), handler)
     expect(handler).not.toHaveBeenCalled()
     expect(response.headers.get('x-edge-cache')).toBe('SNAPSHOT')
+    expect(response.headers.get('x-frame-options')).toBe('SAMEORIGIN')
     expect(await response.text()).toBe('<p>snap</p>')
   })
 
   it('stores a snapshot on a miss', async () => {
     const bucket = fakeBucket()
     const work = ctx()
-    const response = await withEdgeCache(new Request(`${BASE}/about`), { D1: fakeDb(EPOCH), R2: bucket }, work, async () => html('<p>built</p>'))
+    const built = () => new Response('<p>built</p>', { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Strict-Transport-Security': 'max-age=63072000' } })
+    const response = await withEdgeCache(new Request(`${BASE}/about`), { D1: fakeDb(EPOCH), R2: bucket }, work, async () => built())
     expect(await response.text()).toBe('<p>built</p>')
     await work.settle()
     const key = await snapshotKeyFor(`${BASE}/about?v=${EPOCH}&x=-.u`)
-    expect(bucket.store.get(key)?.body).toBe('<p>built</p>')
+    expect(bucket.store.get(key)?.body.endsWith('\n<p>built</p>')).toBe(true)
+    const stored = await readSnapshot(bucket, key)
+    expect(stored?.body).toBe('<p>built</p>')
+    expect(stored?.headers['strict-transport-security']).toBe('max-age=63072000')
+    expect(stored?.headers['set-cookie']).toBeUndefined()
     expect(bucket.store.get(key)?.customMetadata.epoch).toBe(String(EPOCH))
   })
 
@@ -139,7 +146,14 @@ describe('withEdgeCache with snapshots', () => {
     expect(await response.text()).toBe('<p>old</p>')
     await work.settle()
     expect(handler).toHaveBeenCalledTimes(1)
-    expect(bucket.store.get(key)?.body).toBe('<p>new</p>')
+    expect((await readSnapshot(bucket, key))?.body).toBe('<p>new</p>')
+  })
+
+  it('ignores a snapshot in an older storage format', async () => {
+    const bucket = fakeBucket()
+    const key = await snapshotKeyFor(`${BASE}/old?v=${EPOCH}&x=-.u`)
+    await bucket.put(key, '<p>old</p>', { customMetadata: { epoch: String(EPOCH), at: String(NOW), h: '{"content-type":"text/html"}' } })
+    expect(await readSnapshot(bucket, key)).toBeNull()
   })
 
   it('drops the snapshot when the rebuilt page is gone', async () => {

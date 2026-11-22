@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 import { parsePlaceAddress, type PlaceAddress } from '../placesParse'
 import { clearPlaceListeners, loadPlacesLibrary, placesNamespace } from './placesLoader'
@@ -35,7 +35,11 @@ export const PlacesAutocomplete: React.FC<{
     handlers.current = { onText, onPlace }
   })
 
+  // Google's Places script is about 500 KB, so it loads when the visitor first uses the address box, not with the page.
+  const [wanted, setWanted] = useState(false)
+
   useEffect(() => {
+    if (!wanted) return
     let cancelled = false
     let autocomplete: unknown = null
     void loadPlacesLibrary(apiKey).then((ready) => {
@@ -58,7 +62,7 @@ export const PlacesAutocomplete: React.FC<{
       cancelled = true
       if (autocomplete) clearPlaceListeners(autocomplete)
     }
-  }, [apiKey])
+  }, [apiKey, wanted])
 
   return (
     <input
@@ -68,6 +72,8 @@ export const PlacesAutocomplete: React.FC<{
       placeholder="Street address"
       autoComplete="off"
       value={value}
+      onFocus={() => setWanted(true)}
+      onPointerEnter={() => setWanted(true)}
       onChange={(event) => onText(event.target.value)}
       onKeyDown={(event) => {
         // Enter picks a suggestion; it must not submit the whole form by accident.

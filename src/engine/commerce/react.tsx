@@ -94,6 +94,7 @@ type CartContextValue = {
   removeItem: (itemID: string) => Promise<void>
   addresses: AddressDoc[]
   addressesLoading: boolean
+  requestAddresses: () => void
   paymentsLoading: boolean
   initiatePayment: (method: string, args: PaymentArgs) => Promise<InitiatePaymentResult>
   confirmOrder: (method: string, args: PaymentArgs) => Promise<ConfirmOrderResult>
@@ -182,6 +183,9 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
   const [cartNotice, setCartNotice] = useState<string | null>(null)
   const [addresses, setAddresses] = useState<AddressDoc[]>([])
   const [addressesLoading, setAddressesLoading] = useState(true)
+  // Loaded only when a screen asks (the checkout form): a guest on any other page would otherwise get a 403 in the console.
+  const [addressesWanted, setAddressesWanted] = useState(false)
+  const requestAddresses = useCallback((): void => setAddressesWanted(true), [])
   const [paymentsLoading, setPaymentsLoading] = useState(false)
 
   // Load (or create) the guest cart once on mount - client-only.
@@ -243,6 +247,7 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
   // request is denied, which is expected and just means an empty address
   // book here, same as this component never having fetched at all.
   useEffect(() => {
+    if (!addressesWanted) return
     let cancelled = false
     void (async () => {
       try {
@@ -260,7 +265,7 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [addressesWanted])
 
   const mutateCart = useCallback(async (ref: StoredCartRef, path: string, body: Record<string, unknown>): Promise<string | null> => {
     setCartLoading(true)
@@ -395,11 +400,12 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
       removeItem,
       addresses,
       addressesLoading,
+      requestAddresses,
       paymentsLoading,
       initiatePayment,
       confirmOrder,
     }),
-    [cart, cartRef, cartNotice, cartLoading, addItem, incrementItem, decrementItem, removeItem, addresses, addressesLoading, paymentsLoading, initiatePayment, confirmOrder],
+    [cart, cartRef, cartNotice, cartLoading, addItem, incrementItem, decrementItem, removeItem, addresses, addressesLoading, requestAddresses, paymentsLoading, initiatePayment, confirmOrder],
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
@@ -427,6 +433,10 @@ export function useCart(): { cart: CartDoc | null; cartRef: { id: number; secret
 
 export function useAddresses(): { addresses: AddressDoc[]; isLoading: boolean } {
   const ctx = useCartContext('useAddresses')
+  const { requestAddresses } = ctx
+  useEffect(() => {
+    requestAddresses()
+  }, [requestAddresses])
   return { addresses: ctx.addresses, isLoading: ctx.addressesLoading }
 }
 
