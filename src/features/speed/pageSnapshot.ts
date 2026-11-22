@@ -37,11 +37,16 @@ export const SETTLE_SECONDS = 15
 /** Pages larger than this are not stored (a copy that big is better rebuilt). */
 const MAX_BODY_BYTES = 2_000_000
 
-/** Response headers worth replaying from a snapshot. Anything else is dropped. */
-const KEPT_HEADERS = ['content-type', 'content-language', 'x-robots-tag', 'vary', 'link']
+/**
+ * Headers never replayed from a snapshot: per-response transport details, cookies and our own debug headers.
+ * Everything else (security headers such as CSP, HSTS and X-Frame-Options included) is stored with the page,
+ * so a snapshot answers with exactly the headers the built page had.
+ */
+const DROPPED_HEADERS = new Set(['set-cookie', 'content-length', 'content-encoding', 'transfer-encoding', 'connection', 'date', 'age', 'cache-control', 'x-edge-cache'])
+const isDropped = (name: string): boolean => DROPPED_HEADERS.has(name) || name.startsWith('x-eg-') || name.startsWith('cf-')
 
-/** R2 customMetadata is capped at 2 KB in total, so stored headers are kept well under that. */
-const MAX_HEADER_JSON = 1500
+/** Format of the stored object: one line of JSON headers, a newline, then the HTML. Older formats are ignored. */
+const FORMAT = '2'
 
 export type SnapshotBucket = {
   get(key: string): Promise<{ text(): Promise<string>; customMetadata?: Record<string, string> } | null>
@@ -74,16 +79,21 @@ export async function readSnapshot(bucket: SnapshotBucket, key: string): Promise
   const meta = object.customMetadata || {}
   const epoch = Number(meta.epoch)
   if (!Number.isFinite(epoch)) return null
+  if (meta.f !== FORMAT) return null
+  const raw = await object.text()
+  const split = raw.indexOf('\n')
+  if (split < 0) return null
   let headers: Record<string, string> = {}
   try {
-    const parsed = JSON.parse(meta.h || '{}') as unknown
-    if (parsed && typeof parsed === 'object') headers = parsed as Record<string, string>
+    const parsed = JSON.parse(raw.slice(0, split)) as unknown
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+    headers = parsed as Record<string, string>
   } catch {
-    headers = {}
+    return null
   }
   if (!/^\s*text\/html/i.test(headers['content-type'] || '')) return null
   const at = Number(meta.at)
-  return { body: await object.text(), epoch, at: Number.isFinite(at) ? at : 0, headers }
+  return { body: raw.slice(split + 1), epoch, at: Number.isFinite(at) ? at : 0, headers }
 }
 
 /** Stores a copy of a cacheable page. Returns false when it was too large to keep. */
@@ -91,16 +101,14 @@ export async function writeSnapshot(bucket: SnapshotBucket, key: string, epoch: 
   const body = await response.text()
   if (body.length > MAX_BODY_BYTES) return false
   const headers: Record<string, string> = {}
-  for (const name of KEPT_HEADERS) {
-    const value = response.headers.get(name)
-    if (!value) continue
-    headers[name] = value
-    if (JSON.stringify(headers).length > MAX_HEADER_JSON) delete headers[name]
-  }
+  response.headers.forEach((value, name) => {
+    const key = name.toLowerCase()
+    if (!isDropped(key)) headers[key] = value
+  })
   const now = Math.floor(Date.now() / 1000)
   const storedEpoch = epoch >= 1_000_000_000 && now - epoch < SETTLE_SECONDS ? epoch - 1 : epoch
-  await bucket.put(key, body, {
-    customMetadata: { epoch: String(storedEpoch), at: String(Math.floor(Date.now() / 1000)), h: JSON.stringify(headers) },
+  await bucket.put(key, `${JSON.stringify(headers)}\n${body}`, {
+    customMetadata: { f: FORMAT, epoch: String(storedEpoch), at: String(now) },
     httpMetadata: { contentType: headers['content-type'] || 'text/html; charset=utf-8' },
   })
   return true
