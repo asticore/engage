@@ -48,6 +48,8 @@ export const ImageElement: React.FC<P> = (p) => {
 }
 
 /** `video`: YouTube (no-cookie host), Vimeo (do-not-track) or a direct mp4/webm file, always 16:9. */
+import { VideoPopup } from './VideoPopup'
+
 export const VideoElement: React.FC<P> = (p) => {
   // A video picked from the media library (upload or video link) wins over the typed link.
   const picked = mediaOf(p.video)?.url
@@ -56,6 +58,14 @@ export const VideoElement: React.FC<P> = (p) => {
   const caption = str(p.caption)
   // With a poster the browser draws the picture and fetches no video bytes until the viewer presses play.
   const poster = mediaOf(p.poster)?.url ?? undefined
+  if (source && flag(p.popup, false)) {
+    return (
+      <figure className="el-video el-video--popup">
+        <VideoPopup kind={source.kind === 'file' ? 'file' : 'embed'} src={source.src} poster={poster} title={title} />
+        {caption && <figcaption>{caption}</figcaption>}
+      </figure>
+    )
+  }
   return (
     <figure className="el-video">
       <div className="el-video__frame">

@@ -914,3 +914,15 @@ a {
 .el-canvas-hint { padding: 4px 8px; border: 1px dashed var(--color-line); font-size: 0.75rem; color: rgba(31, 34, 48, 0.55); }
 .el-flip__back .btn { color: var(--color-cream); border-color: var(--color-cream); }
 .el-progress__head { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
+
+/* Video popup: poster tile that opens the video in a dialog */
+.el-video__tile, .el-video-popup__tile { position: relative; display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; padding: 0; background: #111 center / cover no-repeat; cursor: pointer; border-radius: 4px; }
+.el-video-popup__play { position: absolute; inset: 0; margin: auto; width: 64px; height: 64px; border-radius: 50%; background: rgba(0, 0, 0, .65); color: #fff; display: grid; place-items: center; font-size: 1.6rem; transition: transform .2s ease; }
+.el-video-popup__tile:hover .el-video-popup__play, .el-video-popup__tile:focus-visible .el-video-popup__play { transform: scale(1.1); }
+.el-video-popup__tile:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.el-video-popup__dialog { width: min(960px, 94vw); padding: 0; border: 0; background: #000; border-radius: 6px; }
+.el-video-popup__dialog::backdrop { background: rgba(0, 0, 0, .75); }
+.el-video-popup__dialog iframe, .el-video-popup__dialog video { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; }
+.el-video-popup__close { position: absolute; top: 4px; right: 8px; z-index: 1; width: 36px; height: 36px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, .6); color: #fff; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.el-video-popup__close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .el-video-popup__play { transition: none; } }

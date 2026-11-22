@@ -90,6 +90,7 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
       { name: 'video', label: 'Video from the media library', type: 'media', helpText: 'An uploaded video or a video link from the Media gallery. When set, it is used instead of the link above.' },
       { name: 'poster', label: 'Poster image', type: 'media', helpText: 'Shown before the video plays. A direct file loads no video data until it is played when a poster is set.' },
       text('title', 'Title (for screen readers)'), text('caption', 'Caption'),
+      { name: 'popup', label: 'Open in a popup', type: 'checkbox', helpText: 'Shows the poster with a play button and opens the video in a popup. Nothing loads until it is played.' },
     ],
     defaultProps: () => ({ url: '', title: 'Video' }),
   },
