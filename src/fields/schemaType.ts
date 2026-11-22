@@ -125,6 +125,7 @@ export const jsonLdFor = (collection: string, value: string | null | undefined, 
       extra: { about: { '@type': 'LocalBusiness', name: ctx.siteName || ctx.title, ...(ctx.url ? { url: ctx.url } : {}) } },
     }
   }
-  if (isRichType(chosen)) return { type: 'WebPage', rich: chosen }
+  // The events collection's own default is Event; only a chosen rich type on pages and posts becomes the mainEntity.
+  if (isRichType(chosen) && chosen !== DEFAULT_SCHEMA_TYPE[collection]) return { type: 'WebPage', rich: chosen }
   return { type: chosen }
 }
