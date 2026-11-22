@@ -1561,6 +1561,8 @@ export const migrations = [
     up: migration_20270322_100000_seo_site_audit.up,
     down: migration_20270322_100000_seo_site_audit.down,
     name: '20270322_100000_seo_site_audit',
+  },
+  {
     up: migration_20270322_110000_captcha_appearance.up,
     down: migration_20270322_110000_captcha_appearance.down,
     name: '20270322_110000_captcha_appearance',
