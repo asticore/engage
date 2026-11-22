@@ -1,3 +1,4 @@
+import type { BulkDefaults } from './plan'
 import { creationOrder, cycleRefs, planBulk, type BulkCreateCollection, type BulkInputRow, type ExistingDocs, type PlannedRow } from './plan'
 
 type Doc = Record<string, unknown>
@@ -47,18 +48,25 @@ export type BulkCreateResult = { created: { id: number; title: string; slug: str
 const errorText = (e: unknown): string => (e instanceof Error ? e.message : 'Could not be saved.')
 
 /** Creates every row without a problem as a draft, parents first. Writes go through the signed-in user's own access rules. */
-export async function runBulk(engine: BulkEngine, user: unknown, collection: BulkCreateCollection, rows: BulkInputRow[]): Promise<BulkCreateResult> {
+export async function runBulk(engine: BulkEngine, user: unknown, collection: BulkCreateCollection, rows: BulkInputRow[], options: Pick<BulkDefaults, 'status' | 'locale'> & { defaultLocale?: string } = {}): Promise<BulkCreateResult> {
   const planned = await previewBulk(engine, collection, rows)
   const result: BulkCreateResult = { created: [], failed: [], skipped: planned.filter((p) => !p.ok).length }
   const ids = new Map<string, number>()
   for (const p of creationOrder(planned.filter((x) => x.ok))) {
-    const data: Record<string, unknown> = { title: p.title, slug: p.slug, _status: 'draft' }
+    const published = collection === 'pages' && options.status === 'published'
+    const data: Record<string, unknown> = { title: p.title, slug: p.slug, _status: published ? 'published' : 'draft' }
     const parent = p.batchParent ? ids.get(p.batchParent) : p.parentId
     if (parent) data.parent = parent
     if (p.templateId) data.template = p.templateId
     try {
-      const doc = await engine.create({ collection, data, draft: true, user })
+      const doc = await engine.create({ collection, data, draft: !published, user })
       ids.set(p.slug, Number(doc.id))
+      // Titles written in another language are kept as that language's title (the page's own title stays as typed).
+      if (options.locale && options.locale !== options.defaultLocale) {
+        await engine
+          .create({ collection: 'translations', data: { locale: options.locale, sourceKind: 'collection', sourceId: `${collection}:${String(doc.id)}`, fieldPath: 'title', value: p.title, sourceText: p.title }, user })
+          .catch((): null => null)
+      }
       result.created.push({ id: Number(doc.id), title: p.title, slug: p.slug })
     } catch (error) {
       result.failed.push({ ref: p.ref, title: p.title, message: errorText(error) })
