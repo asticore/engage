@@ -27,6 +27,7 @@ import { ElementWithMedia } from './elements/ElementWithMedia'
 import { MEDIA_PROP_KEYS } from './elements/elementUtil'
 import { renderElement } from './elements/renderElement'
 import { SiteElement } from './elements/Wave38Elements'
+import { ReviewsLiveElement } from './elements/ReviewsLive'
 import { SITE_ELEMENT_TYPES } from '@/lib/elements/wave38Defs'
 import { localizeBlockLinks } from '@/features/multilingual/requestLinkLocale'
 
@@ -162,6 +163,10 @@ export const renderBlockBody = (node: SectionNode, key: string): React.ReactNode
         return <DataViewBackedElement elementType={get<string>('elementType') as 'chart' | 'table'} props={get<Record<string, unknown>>('props') || {}} />
       }
       // Site elements read live site data on the server (Wave38Elements.tsx). The canvas never reaches this branch.
+      // Reviews with a connected Google, Facebook or Yelp source are fetched on the server (ReviewsLive.tsx).
+      if (get<string>('elementType') === 'reviews' && get<Record<string, unknown>>('props')?.liveSource) {
+        return <ReviewsLiveElement {...(get<Record<string, unknown>>('props') || {})} />
+      }
       if (SITE_ELEMENT_TYPES.has(get<string>('elementType'))) {
         return <SiteElement elementType={get<string>('elementType')} props={get<Record<string, unknown>>('props') || {}} />
       }

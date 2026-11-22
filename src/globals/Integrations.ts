@@ -1129,7 +1129,7 @@ export const Integrations: GlobalConfig = {
       labels: { singular: 'Social account', plural: 'Social accounts' },
       admin: {
         description:
-          'Accounts the Social feed element can show posts from. Tokens are stored encrypted, visible only to admins, and never sent to visitors. YouTube and RSS feeds need no token. X (Twitter) is not supported because its API is paid-only.',
+          'Accounts the Social feed element can show posts from. Tokens are stored encrypted, visible only to admins, and never sent to visitors. YouTube and RSS feeds need no token. X (Twitter) is not supported because its API is paid-only. The Google, Facebook and Yelp review options hold your own API key for the Reviews element; they do not appear in the Social feed picker.',
       },
       fields: [
         {
@@ -1144,6 +1144,9 @@ export const Integrations: GlobalConfig = {
             { label: 'TikTok', value: 'tiktok' },
             { label: 'YouTube channel or playlist', value: 'youtube' },
             { label: 'RSS or Atom feed', value: 'rss' },
+            { label: 'Google reviews (Places API key)', value: 'google-reviews' },
+            { label: 'Facebook Page reviews (Graph API token)', value: 'facebook-reviews' },
+            { label: 'Yelp reviews (Fusion API key)', value: 'yelp-reviews' },
           ],
         },
         { name: 'label', type: 'text', label: 'Label', admin: { description: 'Shown in the editor account picker.' } },
@@ -1153,7 +1156,7 @@ export const Integrations: GlobalConfig = {
           label: 'Account ID, handle or feed URL',
           admin: {
             description:
-              'Instagram user ID, Facebook Page ID, Pinterest board ID, TikTok (leave empty), YouTube channel ID (UC...) or playlist ID (PL...), or the full https feed URL for RSS.',
+              'Instagram user ID, Facebook Page ID, Pinterest board ID, TikTok (leave empty), YouTube channel ID (UC...) or playlist ID (PL...), or the full https feed URL for RSS. For review sources: the default Google place ID, Facebook Page ID or Yelp business ID (a Reviews block can use its own).',
           },
         },
         {
@@ -1168,7 +1171,7 @@ export const Integrations: GlobalConfig = {
             beforeChange: [encryptSecretHook],
             afterRead: [decryptSecretHook],
           },
-          admin: { description: 'Long-lived token from the provider. Not needed for YouTube or RSS. Stored encrypted at rest.' },
+          admin: { description: 'Long-lived token from the provider, or the API key for Google and Yelp reviews. Not needed for YouTube or RSS. Stored encrypted at rest.' },
         },
         { name: 'testConnection', type: 'ui', admin: { components: { Field: '@/features/socialFeeds/admin/TestConnectionField#TestConnectionField' } } },
       ],

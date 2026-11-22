@@ -71,6 +71,11 @@ export const WAVE48_ELEMENTS: ElementDef[] = [
           ],
         },
       },
+      {
+        name: 'liveSource', label: 'Live reviews from', type: 'select', optionsUrl: '/api/admin-review-sources', options: [],
+        helpText: 'Add your Google, Facebook or Yelp key under Settings > Integrations > Social accounts. Live reviews are cached for six hours and added after the reviews above. Review structured data is switched off when they show.',
+      },
+      text('liveId', 'Place, page or business ID', { helpText: 'Google place ID, Facebook Page ID or Yelp business ID. Empty = the default saved with the key.' }),
       select('layout', 'Layout', opts('grid', 'list')),
       check('showStars', 'Show stars'),
       check('jsonLd', 'Add Review structured data (JSON-LD)', 'Adds schema.org data for search engines. Only turn it on for real reviews that are shown on this page.'),
