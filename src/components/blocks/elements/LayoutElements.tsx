@@ -2,6 +2,7 @@ import React from 'react'
 
 import { sanitizeSlug } from '@/features/themeStyles/sanitize'
 
+import { MapFacade } from './MapFacade'
 import { alignClass } from './TextElements'
 import { mapEmbedSrc, num, pick, sanitizeHtml, str } from './elementUtil'
 
@@ -49,9 +50,7 @@ export const MapElement: React.FC<P> = (p) => {
   const src = mapEmbedSrc(p.address, p.embedUrl, num(p.zoom, 14, 1, 20))
   const height = num(p.height, 320, 120, 800)
   if (!src) return <div className="el-placeholder" style={{ height }}>Enter an address for the map</div>
-  return (
-    <div className="el-map" style={{ height }}>
-      <iframe src={src} title={str(p.title, 'Map')} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
-    </div>
-  )
+  const title = str(p.title, 'Map')
+  const label = str(p.address).trim() || title
+  return <MapFacade src={src} title={title} label={label} height={height} />
 }
