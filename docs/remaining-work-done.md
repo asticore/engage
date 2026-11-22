@@ -826,3 +826,26 @@ Task 14b (leftovers, built 17 Nov 2026): AI tagging. `POST /api/admin-media-ai-t
 - **Update popup live check (21 Nov 2026, PRs 531, 532).** On gracengatsby: no bar and no popup with nothing pending; with the no-op migration `20270321_100000_update_popup_probe` pending the one popup showed, Run migration ran it, the record was written and the popup cleared. Found and fixed (PR 532): the popup's Run migration and Update now posted without a JSON content type and the admin guard refused them (403 "Send a JSON body"). Note: git-deployed sites such as gracengatsby run migrations at deploy, so the popup only matters for release-based installs.
 - **One-click updates, tables and code separate (built 21 Nov 2026).** The update popup no longer links to GitHub releases. It has two independent parts: "Update tables" (shown when migrations the code runs are not recorded; `/api/admin-engage-migrate`) and "Update site code" (shown only on lean installs and forks when a release changes the Worker; `/api/admin-update-apply` takes a safety backup to R2, then commits the new version to the install repository so the host redeploys). A destructive release needs its checkbox ticked first (also enforced by the API). The GitHub connection is entered once in the popup: `/api/admin-update-connect` checks the token (reads `engage.config.json`, picks the one repository a fine-grained token reaches, or takes `owner/name`) and stores repo and token encrypted in `eg_engage_meta` (`src/features/updates/connection.ts`); `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN` Worker settings still win. Sites deployed straight from the repository show neither code part.
 
+## Appendix: Events and tickets audit (closed Task 1, moved from remaining-work.md 22 Nov 2026)
+### Events and tickets audit (Task 5, 9 Nov 2026)
+
+Checked against the code, not live.
+
+#### What exists
+- Ticket types: JSON `ticketTiers` on the event (name, description, price, capacity, sales end), ids for translation (`src/features/editScreens/tiers.ts`, `TicketTiersField.tsx`). Enforced on free RSVPs by `checkRsvpTier` (type required, on sale, room left).
+- Capacity: event-level `capacity` enforced by `checkEventCapacity` on RSVP create; per-type capacity in `tierSales.ts`; page shows spots left.
+- Free: public `RsvpForm` creates an `event-rsvps` row, sends the confirmation email (`rsvpConfirmation.ts`), fires the RSVP webhook, reminder cron, ICS file.
+- Check-in: `EventCheckIn.tsx`, `/api/admin-event-checkin`, ticket code is the RSVP id (`#42`).
+- Paid: event type `paid` plus one `ticketProduct`; page shows "Buy ticket" (AddToCartButton), normal shop checkout and order.
+
+#### Gaps
+1. Paid events have no link between order and RSVP: a paid order creates no `event-rsvps` row, so paid buyers get no booking confirmation, are not on the check-in list, and are not counted against capacity. (Needs a decision: create RSVPs from `order.paid`, plus order id column and migration.)
+2. Price tiers are display-only on paid events: one product, one price. Selling per type needs one product or variant per tier. (Decision.)
+3. Refunds: refunding an order does not cancel or free the RSVP (follows from 1). No cancel-RSVP action for free events.
+4. Capacity check counts then inserts, so two simultaneous RSVPs can both pass (D1 has no row lock).
+5. Confirmation email does not name the ticket type.
+6. `EventTiers.tsx`, `RsvpForm.tsx` and the event page use Tailwind-style utility classes, against the one-style-system rule (Shine classes). Not converted here (visual change, needs a live look).
+7. Public strings on the event page ("Ticket types", "Sold out") are English only.
+
+#### Fixed in this change
+- A sold-out event (no places left) showed the RSVP form or Buy ticket button; it now shows "Sold out" (`eventSaleMode`, tests in `tests/int/event-sale-mode.int.spec.ts`).
