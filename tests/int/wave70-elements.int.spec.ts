@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import { ageOn, chatHref, inChatHours, safeDeny } from '@/components/blocks/elements/Wave70Elements'
-import { buildSitemap } from '@/components/blocks/elements/Wave70Server'
+import { archiveKind, buildSitemap } from '@/components/blocks/elements/Wave70Server'
+import { parseLoopGridSettings } from '@/features/siteTemplates/loopGrid'
 import { getElementDef } from '@/lib/elements/registry'
 import { SITE_ELEMENT_TYPES } from '@/lib/elements/wave38Defs'
 
@@ -52,5 +53,18 @@ describe('wave70 elements', () => {
     expect(inChatHours('09:00-17:00', 1030)).toBe(false)
     expect(inChatHours('22:00-06:00', 60)).toBe(true)
     expect(inChatHours('', 1000)).toBe(true)
+  })
+  it('tells archive kinds apart', () => {
+    expect(archiveKind('/blog/category/news', '')).toBe('category')
+    expect(archiveKind('/blog/tag/x', '')).toBe('tag')
+    expect(archiveKind('/blog/author/bob', '')).toBe('author')
+    expect(archiveKind('/search', 'shoes')).toBe('search')
+    expect(archiveKind('/blog', '')).toBe('other')
+    for (const t of ['archive-title', 'preloader']) expect(getElementDef(t)).toBeTruthy()
+    expect(SITE_ELEMENT_TYPES.has('archive-title')).toBe(true)
+  })
+  it('reads the loop grid carousel option', () => {
+    expect(parseLoopGridSettings({ loopTemplate: 'a1', display: 'carousel', autoplay: 99999 })).toMatchObject({ display: 'carousel', autoplay: 30000 })
+    expect(parseLoopGridSettings({ loopTemplate: 'a1', display: 'x' }).display).toBe('grid')
   })
 })

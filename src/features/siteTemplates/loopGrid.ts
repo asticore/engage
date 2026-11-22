@@ -43,6 +43,9 @@ export type LoopGridSettings = {
   /** The URL parameter that carries this grid's page number (`page` unless the grid sets its own). */
   pageParam: string
   linkCards: boolean
+  /** `grid` (default) or `carousel` (Spark carousel, one slide per item, `columns` per view). */
+  display: 'grid' | 'carousel'
+  autoplay: number
 }
 
 /** Props from the page to settings, clamped. Unknown values fall back to the defaults. */
@@ -61,6 +64,8 @@ export function parseLoopGridSettings(p: Record<string, unknown>): LoopGridSetti
     pagination: flag(p.pagination, false),
     pageParam: loopPageParam(p.pageParam),
     linkCards: flag(p.linkCards, true),
+    display: p.display === 'carousel' ? 'carousel' : 'grid',
+    autoplay: Math.round(num(p.autoplay, 0, 0, 30000)),
   }
 }
 

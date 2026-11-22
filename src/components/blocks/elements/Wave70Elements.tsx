@@ -122,7 +122,35 @@ export function ChatButtonElement(props: P): React.ReactElement | null {
   )
 }
 
+const SPINNERS = ['ring', 'dots', 'bars', 'pulse', 'orbit', 'wave', 'square']
+const HEX = /^#[0-9a-fA-F]{3,8}$/
+
+export function PreloaderElement(props: P): React.ReactElement | null {
+  const [state, setState] = useState<'off' | 'on' | 'fading'>('off')
+  const minMs = Math.min(Math.max(Math.trunc(num(props.minMs, 400)), 0), 5000)
+  useEffect(() => {
+    if (BOT.test(navigator.userAgent) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    setState('on')
+    const started = Date.now()
+    const done = () => {
+      setTimeout(() => { setState('fading'); setTimeout(() => setState('off'), 300) }, Math.max(0, minMs - (Date.now() - started)))
+    }
+    if (document.readyState === 'complete') done()
+    else window.addEventListener('load', done, { once: true })
+    return () => window.removeEventListener('load', done)
+  }, [minMs])
+  if (state === 'off') return null
+  const bg = HEX.test(str(props.background)) ? str(props.background) : '#ffffff'
+  const type = SPINNERS.includes(str(props.spinner)) ? str(props.spinner) : 'ring'
+  return (
+    <div className={`w70-preloader${state === 'fading' ? ' is-fading' : ''}`} style={{ background: bg }} role="status" aria-live="polite">
+      <span className="spark-spinner" data-spark-type={type} data-spark-label="Loading" />
+    </div>
+  )
+}
+
 export const WAVE70_COMPONENTS: Record<string, React.ComponentType<Record<string, unknown>>> = {
   'age-gate': AgeGateElement,
   'chat-button': ChatButtonElement,
+  preloader: PreloaderElement,
 }

@@ -77,6 +77,8 @@ type Plan = {
   pagination: boolean
   linkCards: boolean
   columns: number
+  display: 'grid' | 'carousel'
+  autoplay: number
 }
 
 /** Everything the markup needs, gathered before any JSX so a failure renders nothing. */
@@ -109,6 +111,8 @@ async function planFor(props: P): Promise<Plan | null> {
       pagination: s.pagination,
       linkCards: s.linkCards,
       columns: s.columns,
+      display: s.display,
+      autoplay: s.autoplay,
     }
   } catch {
     return null
@@ -137,6 +141,24 @@ export async function LoopGridElement(props: P): Promise<React.ReactElement | nu
         {plan.page < plan.pages ? <Link href={plan.pageHref(plan.page + 1)} rel="next">Next</Link> : <span />}
       </nav>
     ) : null
+
+  if (plan.display === 'carousel') {
+    return (
+      <div className="loop-grid loop-grid--carousel">
+        <div className="carousel spark-carousel" role="region" aria-label="Items" data-spark-per-view={plan.columns > 1 ? plan.columns : undefined} data-spark-autoplay={plan.autoplay || undefined}>
+          {plan.items.map((item) => {
+            const body = renderTemplateBlocks(loopItemBlocks(plan.blocks, item))
+            return (
+              <div key={item.href} className="el-carousel__slide loop-grid__item">
+                {plan.linkCards ? <Link href={item.href} className="loop-grid__link block">{body}</Link> : body}
+              </div>
+            )
+          })}
+        </div>
+        {pager}
+      </div>
+    )
+  }
 
   return (
     <div className="loop-grid">
