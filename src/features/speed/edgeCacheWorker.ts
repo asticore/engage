@@ -11,6 +11,7 @@
  * is read from the cache and no header is added.
  */
 import { publishEpoch } from './epochState'
+import { readSnapshot, readSnapshotBucket, snapshotKeyFor, snapshotResponse, snapshotVerdict, writeSnapshot, type SnapshotBucket } from './pageSnapshot'
 import { isOptInCountry } from '../consent/regions'
 import {
   clampTtl,
@@ -222,16 +223,69 @@ export async function withEdgeCache(request: Request, env: unknown, ctx: unknown
     // A failed lookup is a miss, never an error for the visitor.
   }
 
+  // Not in this location's cache: try the shared snapshot in R2 before building the page.
+  const bucket = key ? readSnapshotBucket(env) : undefined
+  let snapshotKey: string | null = null
+  let hadSnapshot = false
+  if (bucket && key) {
+    try {
+      snapshotKey = await snapshotKeyFor(key)
+      const snapshot = await readSnapshot(bucket, snapshotKey)
+      hadSnapshot = Boolean(snapshot)
+      const verdict = snapshot ? snapshotVerdict(snapshot, settings.epoch, settings.ttlSeconds) : 'none'
+      if (snapshot && verdict === 'fresh') {
+        if (cache && request.method === 'GET') keepAlive(ctx, cache.put(key, storedCopy(snapshotResponse(snapshot, settings.ttlSeconds, ''), settings.ttlSeconds)))
+        return snapshotResponse(snapshot, settings.ttlSeconds, 'SNAPSHOT')
+      }
+      if (snapshot && verdict === 'stale') {
+        refreshInBackground(request, env, ctx, handler, { cache, key, bucket, snapshotKey, settings })
+        return snapshotResponse(snapshot, settings.ttlSeconds, 'STALE')
+      }
+    } catch {
+      // A failed snapshot read is a miss.
+    }
+  }
+
   const response = await handler(request, env, ctx)
-  if (!cache || !key || request.method !== 'GET') return tagResponse(response, 'MISS')
+  if (!key || request.method !== 'GET') return tagResponse(response, 'MISS')
 
   try {
     if (isCacheableResponse(response.status, response.headers)) {
       const toStore = storedCopy(response.clone(), settings.ttlSeconds)
-      keepAlive(ctx, cache.put(key, toStore))
+      if (cache) keepAlive(ctx, cache.put(key, toStore))
+      if (bucket && snapshotKey) keepAlive(ctx, writeSnapshot(bucket, snapshotKey, settings.epoch, response.clone()))
+    } else if (bucket && snapshotKey && hadSnapshot) {
+      // The page is gone or no longer shareable: its old snapshot must never be served again.
+      keepAlive(ctx, bucket.delete(snapshotKey))
     }
   } catch {
     // The copy could not be taken or stored. The visitor still gets the page.
   }
   return tagResponse(response, 'MISS')
+}
+
+/** Keys being rebuilt in this isolate, so a burst of visitors starts one rebuild, not one each. */
+const refreshing = new Set<string>()
+
+type RefreshTarget = { cache: CacheLike | null; key: string; bucket: SnapshotBucket; snapshotKey: string; settings: EdgeSettings }
+
+/**
+ * Builds the page again after a stale snapshot was served, then stores the new copy. A page that is no
+ * longer cacheable (unpublished, deleted, now private) loses its snapshot instead.
+ */
+function refreshInBackground(request: Request, env: unknown, ctx: unknown, handler: Handler, target: RefreshTarget): void {
+  if (refreshing.has(target.snapshotKey)) return
+  refreshing.add(target.snapshotKey)
+  const work = (async (): Promise<void> => {
+    const fresh = await handler(new Request(request.url, { method: 'GET', headers: request.headers }), env, ctx)
+    if (isCacheableResponse(fresh.status, fresh.headers)) {
+      if (target.cache) await target.cache.put(target.key, storedCopy(fresh.clone(), target.settings.ttlSeconds))
+      await writeSnapshot(target.bucket, target.snapshotKey, target.settings.epoch, fresh)
+    } else {
+      await target.bucket.delete(target.snapshotKey)
+    }
+  })().finally((): void => {
+    refreshing.delete(target.snapshotKey)
+  })
+  keepAlive(ctx, work)
 }

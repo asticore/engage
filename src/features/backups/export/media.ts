@@ -1,3 +1,4 @@
+import { isSnapshotKey } from '@/features/speed/pageSnapshot'
 import type { S3Store } from '../destinations'
 
 /**
@@ -34,6 +35,8 @@ export async function copyMedia(
     const listing = await bucket.list({ cursor, limit: 500 })
 
     for (const object of listing.objects) {
+      // Page snapshots are rebuildable copies of pages, not media.
+      if (isSnapshotKey(object.key)) continue
       if (!shouldContinue()) {
         result.failures.push('Stopped early - the run reached its time limit before every file was copied.')
         return result

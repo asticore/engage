@@ -1,3 +1,4 @@
+import { isSnapshotKey } from '@/features/speed/pageSnapshot'
 import { MAX_TABLES_COUNTED, R2_SAMPLE_LIMIT, TOP_TABLES_SHOWN } from './model'
 
 /**
@@ -68,8 +69,9 @@ export async function r2Summary(bucket: R2Bucket | undefined): Promise<R2Summary
   if (!bucket) return null
   try {
     const listing = await bucket.list({ limit: R2_SAMPLE_LIMIT })
-    const bytes = listing.objects.reduce((sum, object) => sum + Number(object.size || 0), 0)
-    return { objects: listing.objects.length, bytes, sampled: Boolean(listing.truncated) }
+    const media = listing.objects.filter((object) => !isSnapshotKey(object.key))
+    const bytes = media.reduce((sum, object) => sum + Number(object.size || 0), 0)
+    return { objects: media.length, bytes, sampled: Boolean(listing.truncated) }
   } catch {
     return null
   }
