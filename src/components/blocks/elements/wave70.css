@@ -16,3 +16,9 @@
 .w70-preloader{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;transition:opacity .3s}
 .w70-preloader.is-fading{opacity:0;pointer-events:none}
 .w70-archive-title{margin:0}
+.w70-weather__now{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;margin:0 0 .75rem}
+.w70-weather__icon{font-size:2rem}
+.w70-weather__temp{font-size:2rem;font-weight:700}
+.w70-weather__days{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(6rem,1fr));gap:.5rem}
+.w70-weather__days li{display:flex;flex-direction:column;align-items:center;gap:.25rem;padding:.5rem;border:1px solid color-mix(in srgb,currentColor 20%,transparent);border-radius:.5rem}
+.w70-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

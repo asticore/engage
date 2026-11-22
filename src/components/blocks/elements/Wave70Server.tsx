@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { getBlockContext, getRequestQuery } from '@/lib/blockContext'
+import { describeCode, loadWeather } from '@/features/weather/openMeteo'
 import { getEngine } from '@/lib/engine'
 
 import './wave70.css'
@@ -86,7 +87,36 @@ export async function ArchiveTitleElement(props: P): Promise<React.ReactElement 
   return React.createElement(tag, { className: 'w70-archive-title' }, `${prefix}${base}`)
 }
 
+export async function WeatherElement(props: P): Promise<React.ReactElement | null> {
+  const place = typeof props.place === 'string' ? props.place : ''
+  const units = props.units === 'imperial' ? 'imperial' : 'metric'
+  const w = await loadWeather(place, units, Number(props.cacheMinutes) || 30)
+  if (!w) return null
+  const deg = units === 'imperial' ? '\u00b0F' : '\u00b0C'
+  const spd = units === 'imperial' ? 'mph' : 'km/h'
+  const now = describeCode(w.now.code)
+  return (
+    <section className="w70-weather" aria-label={`Weather in ${w.place}`}>
+      <p className="w70-weather__now">
+        <span className="w70-weather__icon" aria-hidden="true">{now.icon}</span>
+        <span className="w70-weather__temp">{w.now.temp}{deg}</span>
+        <span>{w.place}: {now.label}, wind {w.now.wind} {spd}</span>
+      </p>
+      {props.view === 'current' ? null : (
+        <ul className="w70-weather__days">
+          {w.days.map((d) => {
+            const c = describeCode(d.code)
+            const day = new Date(`${d.date}T12:00:00Z`).toLocaleDateString('en-AU', { weekday: 'short', timeZone: 'UTC' })
+            return (<li key={d.date}><span>{day}</span><span aria-hidden="true">{c.icon}</span><span className="w70-sr">{c.label}</span><span>{d.max}{deg} / {d.min}{deg}</span></li>)
+          })}
+        </ul>
+      )}
+    </section>
+  )
+}
+
 export const WAVE70_COMPONENTS: Record<string, React.ComponentType<P>> = {
   sitemap: SitemapElement as never,
   'archive-title': ArchiveTitleElement as never,
+  weather: WeatherElement as never,
 }
