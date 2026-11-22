@@ -370,7 +370,7 @@ export const EditorDock: React.FC<{
                 </button>
                 {aiBuilder.plannerFill?.nextHref ? (
                   <p className="ve-dock__ai-next">
-                    <a href={aiBuilder.plannerFill.nextHref}>Next planned page: {aiBuilder.plannerFill.nextTitle}</a> (save this page first)
+                    <a href={aiBuilder.plannerFill.nextHref}>{t('planner.nextPage', { title: aiBuilder.plannerFill.nextTitle })}</a> {t('planner.saveFirst')}
                   </p>
                 ) : null}
               </div>
