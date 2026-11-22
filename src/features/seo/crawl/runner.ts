@@ -16,7 +16,7 @@ const FETCH_TIMEOUT_MS = 10_000
 const MAX_HOPS = 5
 const MAX_HTML_BYTES = 1_500_000
 
-type FetchLike = (input: string, init?: { signal?: AbortSignal; redirect?: 'manual'; headers?: Record<string, string> }) => Promise<Response>
+type FetchLike = (input: string, init?: { signal?: AbortSignal; method?: string; redirect?: 'manual'; headers?: Record<string, string> }) => Promise<Response>
 
 type EngineLike = {
   find: (args: Record<string, unknown>) => Promise<{ docs: unknown[] }>
@@ -75,6 +75,47 @@ async function fetchOnce(fetchImpl: FetchLike, url: string): Promise<{ response:
   }
 }
 
+const MAX_IMAGE_CHECKS = 6
+
+/** The Last-Modified header as an ISO date, or null when missing or not a date. */
+export function lastModifiedOf(value: string | null): string | null {
+  if (!value) return null
+  const t = Date.parse(value)
+  return Number.isNaN(t) ? null : new Date(t).toISOString()
+}
+
+/** File sizes of the first same-site images (HEAD requests, content-length), total and largest. Null when none could be measured. */
+export async function imageSizes(origin: string, images: { src: string }[], fetchImpl: FetchLike): Promise<{ imageBytes: number | null; largestImageBytes: number | null }> {
+  const own = new URL(origin)
+  const urls = new Set<string>()
+  for (const img of images) {
+    try {
+      const u = new URL(img.src, origin)
+      if (u.host === own.host && /^https?:$/.test(u.protocol)) urls.add(u.toString())
+    } catch {
+      // ignore an unusable address
+    }
+    if (urls.size >= MAX_IMAGE_CHECKS) break
+  }
+  const sizes = await Promise.all(
+    [...urls].map(async (u) => {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 3000)
+      try {
+        const r = await fetchImpl(u, { signal: controller.signal, method: 'HEAD', headers: { 'user-agent': 'Mozilla/5.0 (compatible; SiteAuditCrawler/1.0)' } })
+        const n = Number(r.headers.get('content-length'))
+        return r.ok && Number.isFinite(n) && n > 0 ? n : null
+      } catch {
+        return null
+      } finally {
+        clearTimeout(timer)
+      }
+    }),
+  )
+  const known = sizes.filter((n): n is number => n !== null)
+  return known.length ? { imageBytes: known.reduce((a, b) => a + b, 0), largestImageBytes: Math.max(...known) } : { imageBytes: null, largestImageBytes: null }
+}
+
 /** Reads at most `max` characters of the body; longer pages are cut (the facts come from the start of the page). */
 async function readText(response: Response, max: number): Promise<string> {
   const text = await response.text()
@@ -127,7 +168,7 @@ export async function crawlOne(origin: string, path: string, inSitemap: boolean,
       const html = await readText(response, MAX_HTML_BYTES)
       const facts = parseHtmlFacts(html)
       const issues = pageIssues({ path, statusCode: response.status, responseMs: ms, redirectTo: null, redirectHops: 0, inSitemap, facts, depth: null, inLinks: 0, outInternal: 0, outExternal: 0, brokenLinks: 0 })
-      return { statusCode: response.status, responseMs: ms, redirectTo: null, redirectHops: 0, bytes: new TextEncoder().encode(html).length, data: toStoredPage(facts), issues }
+      return { statusCode: response.status, responseMs: ms, redirectTo: null, redirectHops: 0, bytes: new TextEncoder().encode(html).length, data: toStoredPage(facts, { lastModified: lastModifiedOf(response.headers.get('last-modified')), ...(await imageSizes(origin, facts.images, fetchImpl)) }), issues }
     }
   } catch {
     // A timeout or network failure is reported as a 5xx for the address.

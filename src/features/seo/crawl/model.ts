@@ -17,7 +17,14 @@ export type StoredPage = SlimFacts & {
   jsonLdTypes: string[]
   snippetTypes: string[]
   ogComplete: boolean
+  /** Last-Modified response header as an ISO date, when sent (older crawls have none). */
+  lastModified?: string | null
+  /** Sum and largest of the image file sizes in bytes, from HEAD requests to the first same-site images (older crawls have none). */
+  imageBytes?: number | null
+  largestImageBytes?: number | null
 }
+
+export type PageExtras = { lastModified?: string | null; imageBytes?: number | null; largestImageBytes?: number | null }
 
 const MAX_LINKS = 250
 const clip = (text: string, max: number): string => (text.length > max ? text.slice(0, max) : text)
@@ -38,7 +45,7 @@ export function jsonLdTypesOf(blocks: unknown[]): string[] {
   return [...found].slice(0, 20)
 }
 
-export function toStoredPage(facts: HtmlFacts): StoredPage {
+export function toStoredPage(facts: HtmlFacts, extras: PageExtras = {}): StoredPage {
   const hrefs = [...new Set(facts.links.map((l) => l.href.trim()).filter(Boolean))].slice(0, MAX_LINKS)
   return {
     robots: facts.robots,
@@ -59,5 +66,8 @@ export function toStoredPage(facts: HtmlFacts): StoredPage {
     jsonLdTypes: jsonLdTypesOf(facts.jsonLd),
     snippetTypes: detectSnippetTypes(facts).filter((d) => d.state !== 'missing').map((d) => d.id),
     ogComplete: Boolean(facts.og['og:title'] && facts.og['og:image']),
+    lastModified: extras.lastModified ?? null,
+    imageBytes: extras.imageBytes ?? null,
+    largestImageBytes: extras.largestImageBytes ?? null,
   }
 }
