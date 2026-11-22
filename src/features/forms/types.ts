@@ -334,6 +334,8 @@ export type ResolvedFormSettings = {
   spamRuleAction: 'discard' | 'hold' | 'flag'
   /** Akismet API key. Empty means Akismet is not used. */
   akismetKey: string
+  /** Turnstile widget look: visible, or only when it is unsure. */
+  captchaAppearance: 'visible' | 'invisible'
   submitButtonLabel: string
   successMessage: string
   errorMessage: string
@@ -360,7 +362,7 @@ export type PublicFormConfig = {
   prefillKeys?: string[]
   /** Browser key for Google Places address lookup. Sent only when a field on this form uses it. */
   mapsKey?: string
-  captcha?: { provider: 'turnstile' | 'recaptcha'; siteKey: string }
+  captcha?: { provider: 'turnstile' | 'recaptcha'; siteKey: string; appearance?: 'visible' | 'invisible' }
   saveForLater?: boolean
   /** Set when rendered on a page of another website: posts go to this absolute origin. */
   apiBase?: string

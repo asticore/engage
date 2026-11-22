@@ -14,7 +14,7 @@ import { hitShared, peekShared } from './rateLimit'
  * Fails open when the keys are missing or the provider cannot be reached (a log line, never a locked-out site).
  */
 
-export type PublicCaptcha = { provider: 'turnstile' | 'recaptcha'; siteKey: string; fallback?: FallbackQuestion | null }
+export type PublicCaptcha = { provider: 'turnstile' | 'recaptcha'; siteKey: string; appearance?: 'visible' | 'invisible'; fallback?: FallbackQuestion | null }
 
 /** Old place names still passed by a few callers. */
 export type CaptchaPlace = PlaceId | 'signin'
@@ -61,7 +61,7 @@ export async function authCaptchaConfig(engine: EngineLike, place: CaptchaPlace 
   const d = await placeDecision(engine, place, ip, signals)
   if (!d.required) return null
   const siteKey = d.settings.captchaProvider === 'recaptcha' ? d.settings.recaptchaSiteKey : d.settings.turnstileSiteKey
-  return siteKey ? { provider: d.settings.captchaProvider, siteKey, fallback: await makeFallback().catch((): null => null) } : null
+  return siteKey ? { provider: d.settings.captchaProvider, siteKey, appearance: d.settings.captchaAppearance, fallback: await makeFallback().catch((): null => null) } : null
 }
 
 const REFUSAL = 'Please complete the challenge and try again.'

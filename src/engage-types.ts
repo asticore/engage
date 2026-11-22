@@ -7248,6 +7248,7 @@ export interface FormSetting {
      */
     spamRuleAction?: ('hold' | 'flag' | 'discard') | null;
     akismetKey?: string | null;
+    captchaAppearance?: ('visible' | 'invisible') | null;
     turnstile?: boolean | null;
     /**
      * From the Turnstile section of your Cloudflare dashboard. This one is public - it appears in the form itself.
@@ -8355,6 +8356,7 @@ export interface FormSettingsSelect<T extends boolean = true> {
         blockedSenders?: T;
         spamRuleAction?: T;
         akismetKey?: T;
+        captchaAppearance?: T;
         turnstile?: T;
         turnstileSiteKey?: T;
         turnstileSecretKey?: T;

@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 
 type Api = {
-  turnstile?: { render: (el: HTMLElement, o: { sitekey: string; callback: (t: string) => void }) => string }
+  turnstile?: { render: (el: HTMLElement, o: { sitekey: string; appearance?: string; callback: (t: string) => void }) => string }
   grecaptcha?: { ready: (cb: () => void) => void; execute: (key: string, o: { action: string }) => Promise<string> }
 }
 
@@ -23,7 +23,7 @@ const load = (src: string, id: string): Promise<boolean> =>
  * Draws the challenge inside a sign-in, register or forgot-password form and fills the hidden field the server
  * checks (`cf-turnstile-response` or `g-recaptcha-response`). reCAPTCHA v3 gets a fresh token every 90 seconds.
  */
-export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKey: string; fallback?: { question: string; token: string } | null }> = ({ provider, siteKey, fallback }) => {
+export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKey: string; appearance?: 'visible' | 'invisible'; fallback?: { question: string; token: string } | null }> = ({ provider, siteKey, appearance, fallback }) => {
   const box = useRef<HTMLDivElement>(null)
   const hidden = useRef<HTMLInputElement>(null)
   const [blocked, setBlocked] = useState(false)
@@ -37,7 +37,7 @@ export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKe
         if (!ok && live) setBlocked(true)
         const api = (window as unknown as Api).turnstile
         if (!live || !api || !box.current || box.current.childElementCount > 0) return
-        api.render(box.current, { sitekey: siteKey, callback: (token: string) => { if (hidden.current) hidden.current.value = token } })
+        api.render(box.current, { sitekey: siteKey, ...(appearance === 'invisible' ? { appearance: 'interaction-only' } : {}), callback: (token: string) => { if (hidden.current) hidden.current.value = token } })
       })
     } else {
       void load(`https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`, 'engage-recaptcha').then((ok) => {
@@ -53,7 +53,7 @@ export const AuthCaptcha: React.FC<{ provider: 'turnstile' | 'recaptcha'; siteKe
       live = false
       if (timer) clearInterval(timer)
     }
-  }, [provider, siteKey])
+  }, [provider, siteKey, appearance])
 
   return (
     <>

@@ -854,7 +854,7 @@ export const paymentSettings = paymentSettingsGenerated.table
 export const shippingSettingsGenerated = generateTable(ShippingSettings)
 export const shippingSettings = shippingSettingsGenerated.table
 
-export const formSettingsGenerated = generateTable(FormSettings)
+export const formSettingsGenerated = generateTable({ ...FormSettings, fields: stripUiFields(FormSettings.fields) })
 export const formSettings = formSettingsGenerated.table
 
 /**

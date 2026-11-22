@@ -341,6 +341,27 @@ export const FormSettings: GlobalConfig = {
           ],
         },
         {
+          name: 'captchaAppearance',
+          type: 'select',
+          defaultValue: 'visible',
+          options: [
+            { label: 'Visible (Turnstile shows its widget)', value: 'visible' },
+            { label: 'Invisible (Turnstile only shows when it is unsure; reCAPTCHA v3 is always invisible)', value: 'invisible' },
+          ],
+          admin: {
+            description: 'How the challenge looks on forms and sign-in screens. The "Can\'t use the security check?" question appears either way.',
+            condition: (_, s) => Boolean(s?.turnstile),
+          },
+        },
+        {
+          name: 'checkCaptchaKeys',
+          type: 'ui',
+          admin: {
+            condition: (_, s) => Boolean(s?.turnstile),
+            components: { Field: '@/features/integrations/admin/IntegrationChecks#CheckCaptchaButton' },
+          },
+        },
+        {
           name: 'recaptchaMinScore',
           type: 'number',
           defaultValue: 0.5,

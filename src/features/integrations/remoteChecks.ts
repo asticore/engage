@@ -111,6 +111,43 @@ export async function checkPageSpeedKey(key: string | null | undefined, fetcher:
 }
 
 /**
+ * Cloudflare Turnstile. The site key is public and only has a shape to check. The secret key goes to siteverify
+ * with a made-up token: Cloudflare answers "invalid-input-secret" for a bad secret and "invalid-input-response" for a good one.
+ */
+const TURNSTILE_SITE_KEY = /^[0-3]x[A-Za-z0-9_-]{10,60}$/
+
+export async function checkTurnstileKeys(
+  keys: { siteKey?: string | null; secretKey?: string | null },
+  fetcher: Fetcher = fetch,
+): Promise<{ siteKey: CheckResult; secretKey: CheckResult }> {
+  const siteValue = keys.siteKey?.trim() ?? ''
+  const siteKey: CheckResult = !siteValue
+    ? { ok: false, message: 'No Turnstile site key saved yet.' }
+    : TURNSTILE_SITE_KEY.test(siteValue)
+      ? { ok: true, message: 'The Turnstile site key has the shape Cloudflare uses. It is public, so nothing was sent.' }
+      : { ok: false, message: 'The Turnstile site key should start with 0x (or 1x for a test key). Copy it again from the Cloudflare dashboard, Turnstile.' }
+
+  const secret = keys.secretKey?.trim() ?? ''
+  if (!secret) return { siteKey, secretKey: { ok: false, message: 'No Turnstile secret key saved yet.' } }
+  try {
+    const response = await fetcher('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      ...withTimeout(),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ secret, response: 'connection-check' }).toString(),
+    })
+    const body = (await response.json().catch((): null => null)) as { 'error-codes'?: string[] } | null
+    const codes = Array.isArray(body?.['error-codes']) ? body['error-codes'] : []
+    if (codes.includes('invalid-input-secret')) return { siteKey, secretKey: { ok: false, message: 'Cloudflare does not recognise this Turnstile secret key.' } }
+    if (codes.includes('missing-input-secret')) return { siteKey, secretKey: { ok: false, message: 'No Turnstile secret key saved yet.' } }
+    if (response.ok && body) return { siteKey, secretKey: { ok: true, message: 'Turnstile secret key accepted. Nothing was verified for a visitor.' } }
+    return { siteKey, secretKey: { ok: false, message: `Cloudflare answered HTTP ${response.status}. Try again in a moment.` } }
+  } catch {
+    return { siteKey, secretKey: { ok: false, message: 'Could not reach Cloudflare. Try again in a moment.' } }
+  }
+}
+
+/**
  * reCAPTCHA. The site key is public and only has a shape to check. The secret key is checked with
  * siteverify and a made-up response token: Google answers "invalid-input-response" for a good secret
  * and "invalid-input-secret" for a bad one. No visitor token is needed and nothing is recorded.

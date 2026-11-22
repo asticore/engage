@@ -97,6 +97,7 @@ export type FormSettingsDoc = {
     blockedSenders?: string | null
     spamRuleAction?: string | null
     akismetKey?: string | null
+    captchaAppearance?: string | null
   } | null
   defaults?: {
     submitButtonLabel?: string | null

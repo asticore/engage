@@ -43,7 +43,7 @@ import { RESUME_FIELD, readResumeToken } from '../drafts'
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
 type CaptchaApi = {
-  turnstile?: { render: (element: HTMLElement, options: { sitekey: string; callback: (token: string) => void }) => string }
+  turnstile?: { render: (element: HTMLElement, options: { sitekey: string; appearance?: string; callback: (token: string) => void }) => string }
   grecaptcha?: { ready: (callback: () => void) => void; execute: (key: string, options: { action: string }) => Promise<string> }
 }
 
@@ -233,7 +233,7 @@ export const FormRenderer: React.FC<{
     void loadScript('https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit', 'turnstile').then(() => {
       const api = (window as unknown as CaptchaApi).turnstile
       if (cancelled || !api || !turnstileRef.current || turnstileRef.current.childElementCount > 0) return
-      api.render(turnstileRef.current, { sitekey: captcha.siteKey, callback: (token: string) => setTurnstileToken(token) })
+      api.render(turnstileRef.current, { sitekey: captcha.siteKey, ...(('appearance' in captcha && captcha.appearance === 'invisible') ? { appearance: 'interaction-only' } : {}), callback: (token: string) => setTurnstileToken(token) })
     })
     return () => {
       cancelled = true
