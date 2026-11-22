@@ -41,6 +41,7 @@ export const POST_SCHEMA_TYPES: SchemaTypeOption[] = [
   { label: 'Recipe', value: 'Recipe' },
   { label: 'How-to', value: 'HowTo' },
   { label: 'Review', value: 'Review' },
+  { label: 'Event', value: 'Event' },
 ]
 
 export const PRODUCT_SCHEMA_TYPES: SchemaTypeOption[] = [{ label: 'Product (default)', value: 'Product' }]

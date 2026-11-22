@@ -6,6 +6,12 @@ import { buildRichNode, factsError, parseFacts, validateRich } from '@/features/
 const ctx = { title: 'Page', url: 'https://x.test/p', imageUrl: 'https://x.test/i.jpg', siteName: 'Site' }
 
 describe('rich structured data', () => {
+  it('builds an event and lists missing facts', () => {
+    const n = buildRichNode('Event', { startDate: '2027-01-05T18:00', location: 'Town Hall', price: 20, eventStatus: 'EventScheduled' }, ctx)
+    expect(n).toMatchObject({ '@type': 'Event', name: 'Page', startDate: '2027-01-05T18:00', location: { name: 'Town Hall' }, offers: { price: 20 } })
+    expect(validateRich('Event', {}).missing).toEqual(['name', 'startDate', 'location'])
+  })
+
   it('builds a recipe with ingredients, steps and rating', () => {
     const n = buildRichNode('Recipe', { ingredients: 'Flour\nMilk', steps: ['Mix', 'Fry'], prepTime: 'PT10M', ratingValue: 4.5, ratingCount: 12 }, ctx)
     expect(n['@type']).toBe('Recipe')

@@ -4,9 +4,9 @@
  * facts as JSON in "schemaFacts". The node is emitted as the page's mainEntity.
  */
 
-export type RichType = 'Recipe' | 'JobPosting' | 'HowTo' | 'SoftwareApplication' | 'Review' | 'Person' | 'LocalBusiness'
+export type RichType = 'Recipe' | 'JobPosting' | 'HowTo' | 'SoftwareApplication' | 'Review' | 'Person' | 'LocalBusiness' | 'Event'
 
-export const RICH_TYPES: RichType[] = ['Recipe', 'JobPosting', 'HowTo', 'SoftwareApplication', 'Review', 'Person', 'LocalBusiness']
+export const RICH_TYPES: RichType[] = ['Recipe', 'JobPosting', 'HowTo', 'SoftwareApplication', 'Review', 'Person', 'LocalBusiness', 'Event']
 
 export const isRichType = (v: unknown): v is RichType => typeof v === 'string' && (RICH_TYPES as string[]).includes(v)
 
@@ -22,6 +22,7 @@ export const RICH_REQUIREMENTS: Record<RichType, { must: string[]; should: strin
   Review: { must: ['itemName', 'ratingValue', 'author'], should: ['itemType', 'bestRating'] },
   Person: { must: ['name'], should: ['jobTitle', 'sameAs', 'image'] },
   LocalBusiness: { must: ['name', 'address'], should: ['telephone', 'openingHours', 'image', 'priceRange'] },
+  Event: { must: ['name', 'startDate', 'location'], should: ['endDate', 'image', 'price', 'eventStatus'] },
 }
 
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : typeof v === 'number' ? String(v) : '')
@@ -119,6 +120,16 @@ export const buildRichNode = (type: RichType, f: Facts, ctx: RichContext): Recor
         '@type': 'LocalBusiness', name: str(f.name) || ctx.siteName || ctx.title, image, url: ctx.url, telephone: str(f.telephone), priceRange: str(f.priceRange),
         address: str(f.address) ? { '@type': 'PostalAddress', streetAddress: str(f.address) } : undefined, openingHours: list(f.openingHours),
       })
+    case 'Event':
+      return clean({
+        '@type': 'Event', name: str(f.name) || ctx.title, description: ctx.description, image: image ? [image] : undefined,
+        startDate: str(f.startDate), endDate: str(f.endDate),
+        eventStatus: str(f.eventStatus) ? `https://schema.org/${str(f.eventStatus)}` : undefined,
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        location: str(f.location) ? { '@type': 'Place', name: str(f.location), address: str(f.address) || str(f.location) } : undefined,
+        offers: num(f.price) !== undefined ? { '@type': 'Offer', price: num(f.price), priceCurrency: str(f.currency) || 'USD', url: ctx.url } : undefined,
+        organizer: str(f.organizer) ? { '@type': 'Organization', name: str(f.organizer) } : undefined,
+      })
   }
 }
 
@@ -158,5 +169,11 @@ export const FACT_FIELDS: Record<RichType, FactDef[]> = {
   LocalBusiness: [
     { key: 'name', label: 'Name', input: 'text' }, { key: 'address', label: 'Address', input: 'text' }, { key: 'telephone', label: 'Telephone', input: 'text' },
     { key: 'openingHours', label: 'Opening hours', input: 'lines', hint: 'One per line, like Mo-Fr 09:00-17:00' }, { key: 'image', label: 'Image address', input: 'text' }, { key: 'priceRange', label: 'Price range', input: 'text' },
+  ],
+  Event: [
+    { key: 'name', label: 'Name', input: 'text' }, { key: 'startDate', label: 'Starts', input: 'date' }, { key: 'endDate', label: 'Ends', input: 'date' },
+    { key: 'location', label: 'Venue', input: 'text' }, { key: 'address', label: 'Venue address', input: 'text' }, { key: 'image', label: 'Image address', input: 'text' },
+    { key: 'price', label: 'Ticket price', input: 'number' }, { key: 'currency', label: 'Currency', input: 'text' }, { key: 'organizer', label: 'Organizer', input: 'text' },
+    { key: 'eventStatus', label: 'Status', input: 'text', hint: 'EventScheduled, EventCancelled, EventPostponed or EventMovedOnline' },
   ],
 }
