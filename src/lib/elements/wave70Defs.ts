@@ -52,3 +52,28 @@ export const WAVE70_CHAT_ELEMENTS: ElementDef[] = [
     defaultProps: () => ({ app: 'whatsapp', contact: '', label: 'Chat with us', message: '', hours: '', floating: false }),
   },
 ]
+
+export const WAVE70_TITLE_ELEMENTS: ElementDef[] = [
+  {
+    type: 'archive-title', label: 'Archive title', icon: String.fromCodePoint(0x1f4d1), category: 'siteMeta',
+    description: 'The title of the archive being viewed: a category, tag or author name, or the search words. Elsewhere it shows the page title.',
+    fields: [
+      { name: 'level', label: 'Heading level', type: 'select', width: 'half', options: labelled([['h1', 'Heading 1'], ['h2', 'Heading 2'], ['h3', 'Heading 3'], ['h4', 'Heading 4']]) },
+      { name: 'showPrefix', label: 'Show a prefix (Category:, Tag:, Author:, Search results for)', type: 'checkbox' },
+    ],
+    defaultProps: () => ({ level: 'h1', showPrefix: true }),
+  },
+]
+
+export const WAVE70_PRELOADER_ELEMENTS: ElementDef[] = [
+  {
+    type: 'preloader', label: 'Preloader', icon: String.fromCodePoint(0x23f3), category: 'interactive',
+    description: 'A full-screen loading animation that fades out when the page has loaded. Skipped for search engines and for visitors who ask for less motion.',
+    fields: [
+      { name: 'spinner', label: 'Spinner', type: 'select', width: 'half', options: labelled([['ring', 'Ring'], ['dots', 'Dots'], ['bars', 'Bars'], ['pulse', 'Pulse'], ['orbit', 'Orbit'], ['wave', 'Wave'], ['square', 'Square']]) },
+      { name: 'minMs', label: 'Show at least (ms)', type: 'number', width: 'half' },
+      { name: 'background', label: 'Background colour', type: 'text', width: 'half', helpText: 'A hex colour like #ffffff.' },
+    ],
+    defaultProps: () => ({ spinner: 'ring', minMs: 400, background: '#ffffff' }),
+  },
+]

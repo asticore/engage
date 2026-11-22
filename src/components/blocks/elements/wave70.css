@@ -13,3 +13,6 @@
 .w70-chat{display:inline-block;padding:.6rem 1.25rem;border-radius:999px;background:#25d366;color:#0b3d1c;font-weight:600;text-decoration:none}
 .w70-chat:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .w70-chat--float{position:fixed;right:1rem;bottom:1rem;z-index:900;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.w70-preloader{position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;transition:opacity .3s}
+.w70-preloader.is-fading{opacity:0;pointer-events:none}
+.w70-archive-title{margin:0}

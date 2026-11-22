@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { getBlockContext, getRequestQuery } from '@/lib/blockContext'
 import { getEngine } from '@/lib/engine'
 
 import './wave70.css'
@@ -62,6 +63,30 @@ export async function SitemapElement(props: P): Promise<React.ReactElement | nul
   }
 }
 
+/** Which kind of archive a path belongs to, from its address. */
+export function archiveKind(path: string, q: string): 'category' | 'tag' | 'author' | 'search' | 'other' {
+  if (/\/category\//.test(path)) return 'category'
+  if (/\/tag\//.test(path)) return 'tag'
+  if (/\/author\//.test(path)) return 'author'
+  if (q) return 'search'
+  return 'other'
+}
+
+const PREFIX: Record<string, string> = { category: 'Category: ', tag: 'Tag: ', author: 'Author: ', search: 'Search results for ' }
+
+export async function ArchiveTitleElement(props: P): Promise<React.ReactElement | null> {
+  const c = getBlockContext()
+  const rawQ = getRequestQuery().q
+  const q = (Array.isArray(rawQ) ? rawQ[0] : rawQ)?.trim().slice(0, 80) ?? ''
+  const kind = archiveKind(c.path ?? '', q)
+  const base = kind === 'search' ? q : typeof c.page?.title === 'string' ? c.page.title : ''
+  if (!base) return null
+  const prefix = props.showPrefix !== false ? PREFIX[kind] ?? '' : ''
+  const tag = ['h1', 'h2', 'h3', 'h4'].includes(String(props.level)) ? String(props.level) : 'h1'
+  return React.createElement(tag, { className: 'w70-archive-title' }, `${prefix}${base}`)
+}
+
 export const WAVE70_COMPONENTS: Record<string, React.ComponentType<P>> = {
   sitemap: SitemapElement as never,
+  'archive-title': ArchiveTitleElement as never,
 }
