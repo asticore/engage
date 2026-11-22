@@ -7,7 +7,7 @@ import { evaluateRules, needsAuthState, parseRules, type VisContext, type VisRul
 const STORE_KEY = 'eg-vis-state'
 const TTL_MS = 5 * 60 * 1000
 
-type AuthState = { loggedIn: boolean | null; roles: string[] }
+type AuthState = { loggedIn: boolean | null; roles: string[]; country?: string | null }
 
 let inflight: Promise<AuthState> | null = null
 
@@ -15,9 +15,9 @@ function readCache(): AuthState | null {
   try {
     const raw = window.sessionStorage.getItem(STORE_KEY)
     if (!raw) return null
-    const v = JSON.parse(raw) as { t?: number; loggedIn?: boolean; roles?: string[] }
+    const v = JSON.parse(raw) as { t?: number; loggedIn?: boolean; roles?: string[]; country?: string | null }
     if (typeof v.t !== 'number' || Date.now() - v.t > TTL_MS || typeof v.loggedIn !== 'boolean') return null
-    return { loggedIn: v.loggedIn, roles: Array.isArray(v.roles) ? v.roles.filter((x) => typeof x === 'string') : [] }
+    return { loggedIn: v.loggedIn, roles: Array.isArray(v.roles) ? v.roles.filter((x) => typeof x === 'string') : [], country: typeof v.country === 'string' ? v.country : null }
   } catch {
     return null
   }
@@ -25,7 +25,7 @@ function readCache(): AuthState | null {
 
 function writeCache(s: AuthState): void {
   try {
-    window.sessionStorage.setItem(STORE_KEY, JSON.stringify({ t: Date.now(), loggedIn: s.loggedIn, roles: s.roles }))
+    window.sessionStorage.setItem(STORE_KEY, JSON.stringify({ t: Date.now(), loggedIn: s.loggedIn, roles: s.roles, country: s.country ?? null }))
   } catch {
     /* storage blocked: the next page just asks again */
   }
@@ -38,9 +38,9 @@ function loadAuth(): Promise<AuthState> {
   if (!inflight) {
     inflight = fetch('/api/visibility-state', { credentials: 'same-origin', cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((j: { loggedIn?: unknown; roles?: unknown } | null): AuthState => {
+      .then((j: { loggedIn?: unknown; roles?: unknown; country?: unknown } | null): AuthState => {
         if (!j || typeof j.loggedIn !== 'boolean') return { loggedIn: null, roles: [] }
-        const state = { loggedIn: j.loggedIn, roles: Array.isArray(j.roles) ? j.roles.filter((x): x is string => typeof x === 'string') : [] }
+        const state: AuthState = { loggedIn: j.loggedIn, roles: Array.isArray(j.roles) ? j.roles.filter((x): x is string => typeof x === 'string') : [], country: typeof j.country === 'string' ? j.country : null }
         writeCache(state)
         return state
       })
@@ -73,6 +73,9 @@ function apply(): void {
       day: now.getDay(),
       minutes: now.getHours() * 60 + now.getMinutes(),
       lang: document.documentElement.lang || '',
+      width: window.innerWidth,
+      cookie: document.cookie,
+      country: auth.country ?? null,
     }
     for (const { el, rules } of items) {
       if (evaluateRules(rules, ctx)) {
