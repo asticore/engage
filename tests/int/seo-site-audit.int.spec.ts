@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { parseHtmlFacts } from '@/features/seo/crawl/htmlFacts'
 import { healthScore, ISSUE_BY_ID, ISSUE_CATALOG, linkGraph, pageIssues, siteIssues, titlePixelWidth, type CrawlPage } from '@/features/seo/crawl/issues'
 import { toStoredPage } from '@/features/seo/crawl/model'
-import { COLUMNS, deltaText, filterRows, EMPTY_FILTER, indexabilityOf, issueCounts, sortRows, toCsv } from '@/features/seo/crawl/table'
+import { COLUMNS, deltaText, moveColumn, filterRows, EMPTY_FILTER, indexabilityOf, issueCounts, sortRows, toCsv } from '@/features/seo/crawl/table'
 import type { PageRow } from '@/features/seo/crawl/store'
 import { scheduleDue } from '@/features/seo/crawl/store'
 import { accessibilityChecks, headingOrderProblems } from '@/features/seo/analysis/accessibility'
@@ -336,5 +336,13 @@ describe('audit image sizes and last modified', () => {
     const out = await imageSizes('https://x.test', [{ src: '/a.jpg' }, { src: 'https://x.test/b.jpg' }, { src: 'https://other.test/c.jpg' }], fetchImpl)
     expect(out).toEqual({ imageBytes: 6144, largestImageBytes: 4096 })
     expect(await imageSizes('https://x.test', [], fetchImpl)).toEqual({ imageBytes: null, largestImageBytes: null })
+  })
+})
+
+describe('audit column order', () => {
+  it('moves a column and ignores unknown ids', () => {
+    expect(moveColumn(['a', 'b', 'c'], 'c', 0)).toEqual(['c', 'a', 'b'])
+    expect(moveColumn(['a', 'b', 'c'], 'a', 9)).toEqual(['b', 'c', 'a'])
+    expect(moveColumn(['a', 'b'], 'z', 0)).toEqual(['a', 'b'])
   })
 })

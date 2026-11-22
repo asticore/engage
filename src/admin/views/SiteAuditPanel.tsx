@@ -6,7 +6,7 @@ import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { adminCollectionPath } from '@/admin/adminPaths'
 import { ISSUE_BY_ID, type IssueDef } from '@/features/seo/crawl/issues'
 import type { PageRow, RunRow } from '@/features/seo/crawl/store'
-import { COLUMNS, DEFAULT_COLUMNS, EMPTY_FILTER, deltaText, filterRows, indexabilityOf, issueCounts, sortRows, toCsv, type TableFilter } from '@/features/seo/crawl/table'
+import { COLUMNS, DEFAULT_COLUMNS, EMPTY_FILTER, deltaText, filterRows, indexabilityOf, issueCounts, moveColumn, sortRows, toCsv, type TableFilter } from '@/features/seo/crawl/table'
 import './site-audit.css'
 
 type Loaded = { runs: RunRow[]; pages: PageRow[]; previous: RunRow | null; schedule: 'off' | 'daily' | 'weekly'; issues: IssueDef[] }
@@ -182,7 +182,7 @@ export function SiteAuditPanel() {
     URL.revokeObjectURL(url)
   }
 
-  const shownColumns = COLUMNS.filter((c) => columns.includes(c.id))
+  const shownColumns = columns.map((id) => COLUMNS.find((c) => c.id === id)).filter((c): c is (typeof COLUMNS)[number] => Boolean(c))
 
   return (
     <CollapsibleCard id="seo-site-audit" title="Site audit" className="sx">
@@ -268,7 +268,13 @@ export function SiteAuditPanel() {
               <div className="sx-columns__list">
                 {COLUMNS.map((c) => (
                   <label key={c.id}>
-                    <input type="checkbox" checked={columns.includes(c.id)} onChange={() => setColumns(columns.includes(c.id) ? columns.filter((x) => x !== c.id) : COLUMNS.map((x) => x.id).filter((x) => x === c.id || columns.includes(x)))} /> {c.label}
+                    <input type="checkbox" checked={columns.includes(c.id)} onChange={() => setColumns(columns.includes(c.id) ? columns.filter((x) => x !== c.id) : [...columns, c.id])} /> {c.label}
+                    {columns.includes(c.id) && (
+                      <>
+                        <button type="button" aria-label={`Move ${c.label} left`} disabled={columns.indexOf(c.id) === 0} onClick={() => setColumns(moveColumn(columns, c.id, columns.indexOf(c.id) - 1))}>◀</button>
+                        <button type="button" aria-label={`Move ${c.label} right`} disabled={columns.indexOf(c.id) === columns.length - 1} onClick={() => setColumns(moveColumn(columns, c.id, columns.indexOf(c.id) + 1))}>▶</button>
+                      </>
+                    )}
                   </label>
                 ))}
               </div>
@@ -291,7 +297,7 @@ export function SiteAuditPanel() {
                   <tr>
                     <th scope="col"><input type="checkbox" aria-label="Select all shown" checked={visible.length > 0 && selectedRows.length === visible.length} onChange={(event) => setSelected(event.target.checked ? new Set(visible.map((r) => r.id)) : new Set())} /></th>
                     {shownColumns.map((c) => (
-                      <th key={c.id} scope="col" aria-sort={sort.id === c.id ? (sort.desc ? 'descending' : 'ascending') : 'none'}>
+                      <th key={c.id} scope="col" draggable onDragStart={(event) => event.dataTransfer.setData('text/plain', c.id)} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); const from = event.dataTransfer.getData('text/plain'); if (columns.includes(from) && from !== c.id) setColumns(moveColumn(columns, from, columns.indexOf(c.id))) }} aria-sort={sort.id === c.id ? (sort.desc ? 'descending' : 'ascending') : 'none'}>
                         <button type="button" onClick={() => setSort({ id: c.id, desc: sort.id === c.id ? !sort.desc : c.numeric === true })}>{c.label}{sort.id === c.id ? (sort.desc ? ' ▼' : ' ▲') : ''}</button>
                       </th>
                     ))}

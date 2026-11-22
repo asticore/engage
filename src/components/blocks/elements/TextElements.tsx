@@ -90,6 +90,24 @@ const isSet = (v: unknown) => v !== undefined && v !== null && v !== ''
  * or per repeater row; a row may link. Markers are decorative (aria-hidden or CSS), so screen readers get a plain
  * ul/ol. Props that are unset are left off the markup, so saved bullets/numbers/none lists render as before.
  */
+/** `definition-list`: a description list (dl) of term and description pairs. Rows missing either side drop out. */
+export const DefinitionListElement: React.FC<P> = (p) => {
+  const rows = (Array.isArray(p.items) ? p.items : [])
+    .map((row) => (row && typeof row === 'object' ? { term: str((row as P).term).trim(), definition: str((row as P).definition).trim() } : { term: '', definition: '' }))
+    .filter((row) => row.term && row.definition)
+  if (rows.length === 0) return null
+  return (
+    <dl className={`el-deflist ${alignClass(p.align)}`}>
+      {rows.map((row, i) => (
+        <div key={i} className="el-deflist__row">
+          <dt><SafeInlineHtml text={row.term} /></dt>
+          <dd><SafeInlineHtml text={row.definition} /></dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 export const ListElement: React.FC<P> = (p) => {
   const marker = listMarker(p)
   const Tag = marker === 'numbers' ? 'ol' : 'ul'
