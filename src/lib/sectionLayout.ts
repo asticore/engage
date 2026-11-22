@@ -60,6 +60,8 @@ export type SectionLayout = {
   display?: SectionDisplay
   /** Tab bar alignment (tabs only). Unset = start. */
   tabsAlign?: 'start' | 'center' | 'end' | 'stretch'
+  /** Structured data from the panels of a tabs or accordion section: question and answer, or step by step. */
+  schemaType?: 'faq' | 'howto'
   /** Active tab / accordion accent colour (a safe CSS colour). Unset = site accent. */
   tabsColor?: string
   /** Carousel: slides visible at once (1..4). Unset = 1. */
@@ -200,6 +202,8 @@ export function parseSectionLayout(raw: unknown): SectionLayout | undefined {
   if (verticalAlign) out.verticalAlign = verticalAlign
   const display = pick(raw.display, ['tabs', 'accordion', 'carousel', 'grid', 'flex', 'modal', 'stack', 'hscroll', 'sticky-steps'] as const)
   if (display) out.display = display
+  const schemaType = pick(raw.schemaType, ['faq', 'howto'] as const)
+  if (schemaType && (display === 'tabs' || display === 'accordion')) out.schemaType = schemaType
   const tabsAlign = pick(raw.tabsAlign, ['start', 'center', 'end', 'stretch'] as const)
   if (tabsAlign) out.tabsAlign = tabsAlign
   if (typeof raw.tabsColor === 'string' && /^[#a-zA-Z0-9(),.%\s/-]{1,64}$/.test(raw.tabsColor)) out.tabsColor = raw.tabsColor

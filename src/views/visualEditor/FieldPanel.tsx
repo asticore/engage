@@ -816,6 +816,19 @@ const SectionLayoutFields: React.FC<{
             />
           </>
         )}
+        {(layout.display === 'tabs' || layout.display === 'accordion') && (
+          <SelectRow
+            label="Search engine data"
+            help="Adds FAQ or How-To structured data built from the panels: each panel title is the question or step, its text the answer. Check it in Google's Rich Results test."
+            value={layout.schemaType || ''}
+            options={[
+              { label: 'None', value: '' },
+              { label: 'FAQ (questions and answers)', value: 'faq' },
+              { label: 'How-To (steps)', value: 'howto' },
+            ]}
+            onChange={(v) => setLayout({ schemaType: (v || undefined) as 'faq' | 'howto' | undefined })}
+          />
+        )}
         {layout.display && (
           <div className="ve-row">
             <label className="ve-row__label">{t('ve.fp.activeColour')}</label>
