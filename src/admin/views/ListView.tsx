@@ -1,3 +1,7 @@
+import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { drizzle } from 'drizzle-orm/d1'
+import { crawlOverviewFor, type CrawlOverview } from '@/features/seo/crawl/store'
+import { SNIPPET_BY_ID } from '@/features/seo/snippets'
 import { AddSeveralPages } from '@/features/bulkCreate/AddSeveralPages.nossr'
 import { UsersBulkBar } from './UsersBulkBar.nossr'
 import { BAN_MARKER } from '@/features/security/userBans'
@@ -152,7 +156,12 @@ export async function ListView({
 
   // Derive all possible columns from collection fields
   const hasDrafts = Boolean((collection.versions as { drafts?: boolean } | undefined)?.drafts)
-  const allColumns = deriveColumns(collection.fields, { drafts: hasDrafts, collectionSlug })
+  const seoOverview = ['pages', 'posts', 'products', 'events'].includes(collectionSlug)
+  // Virtual column (no stored field): snippet types and check counts from the last site audit, shown for pages, posts, products and events.
+  const allColumns = [
+    ...deriveColumns(collection.fields, { drafts: hasDrafts, collectionSlug }),
+    ...(seoOverview ? [{ name: 'seoSnippets', label: 'Snippets and checks', type: 'text', sortable: false, filterable: false }] : []),
+  ]
 
   // Resolve which columns should be visible
   const { visibleColumns, visibleNames } = resolveVisibleColumns(
@@ -210,6 +219,18 @@ export async function ListView({
     user: context.user,
     depth: 1,
   })
+
+  // Snippet types and check counts from the last site audit, only when that column is shown.
+  let crawlByDoc = new Map<number, CrawlOverview>()
+  if (seoOverview && visibleColumns.some((c) => c.name === 'seoSnippets')) {
+    try {
+      const { env } = await getCloudflareContext({ async: true })
+      const ids = result.docs.map((doc) => Number((doc as { id?: unknown } | null)?.id)).filter((n) => Number.isInteger(n))
+      crawlByDoc = await crawlOverviewFor(drizzle(env.D1) as never, collectionSlug, ids)
+    } catch {
+      // No D1 binding or no crawl tables yet: the cells show a dash.
+    }
+  }
 
   // For pages collection, fetch parent info for breadcrumb titles
   const parentsByPageId: Record<number | string, { title?: string; parent?: number | string | null } | undefined> = {}
@@ -497,6 +518,20 @@ export async function ListView({
                             )
                             text = breadcrumb || text
                           }
+                        }
+
+                        if (column.name === 'seoSnippets') {
+                          const found = crawlByDoc.get(Number((doc as { id?: unknown }).id))
+                          return (
+                            <td key={column.name} className="list-td">
+                              {found ? (
+                                <span className="list-seo">
+                                  {found.snippets.map((id) => <span key={id} className="list-seo__chip">{SNIPPET_BY_ID[id]?.label ?? id}</span>)}
+                                  <span className={`list-seo__issues${found.issues > 0 ? ' list-seo__issues--warn' : ''}`}>{found.issues === 0 ? 'No issues' : `${found.issues} ${found.issues === 1 ? 'issue' : 'issues'}`}</span>
+                                </span>
+                              ) : '-'}
+                            </td>
+                          )
                         }
 
                         if (column.name === 'pagespeedScore') {
