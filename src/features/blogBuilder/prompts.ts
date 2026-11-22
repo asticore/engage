@@ -50,6 +50,7 @@ export function briefText(brief: BlogBrief): string {
     `Keywords to use naturally: ${brief.keywords.length ? brief.keywords.join(', ') : 'none given'}`,
   ]
   if (brief.callToAction) lines.push(`Call to action for the end: ${brief.callToAction}`)
+  for (const extra of brief.extras ?? []) lines.push(`${extra.question}: ${extra.answer}`)
   return lines.join('\n')
 }
 

@@ -12,16 +12,20 @@ import {
   DEFAULT_CALL_LIMIT,
   MAX_SOURCES,
   parseKeywords,
+  type BlogBrief,
   type BlogLength,
   type BlogMeta,
   type BlogOutlineItem,
   type BlogTone,
 } from '../request'
 import type { SavedPrompt } from '../savedPrompts'
+import { pickDefaultSet, offeredSets, type BlogQuestion, type BlogQuestionSet } from '../questionSets'
+import { QUESTION_LABEL_KEY, QuestionSetEditor } from './QuestionSetEditor'
 
 import {
   BlogBuilderError,
   fetchMediaMatches,
+  fetchQuestionSets,
   postBlogStep,
   postSavedPrompt,
   type BlogMediaMatch,
@@ -104,6 +108,11 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, on
   const [length, setLength] = useState<BlogLength>('medium')
   const [keywords, setKeywords] = useState('')
   const [callToAction, setCallToAction] = useState('')
+  const [questionSets, setQuestionSets] = useState<BlogQuestionSet[]>([])
+  const [canEditSets, setCanEditSets] = useState(false)
+  const [activeSetId, setActiveSetId] = useState<string>(() => pickDefaultSet([]).id)
+  const [extraAnswers, setExtraAnswers] = useState<Record<string, string>>({})
+  const [editingSets, setEditingSets] = useState(false)
   const [titles, setTitles] = useState<string[]>([])
   const [title, setTitle] = useState('')
   const [outline, setOutline] = useState<BlogOutlineItem[]>([])
@@ -130,14 +139,47 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, on
     }
   }, [])
 
-  const brief = () => ({
+  useEffect(() => {
+    const ctrl = new AbortController()
+    fetchQuestionSets(ctrl.signal)
+      .then((found) => {
+        setQuestionSets(found.sets)
+        setCanEditSets(found.canEdit)
+        setActiveSetId(pickDefaultSet(found.sets).id)
+      })
+      .catch((): void => undefined)
+    return () => ctrl.abort()
+  }, [])
+
+  const offered = offeredSets(questionSets)
+  const activeSet = offered.find((set) => set.id === activeSetId) ?? pickDefaultSet(questionSets)
+  const askedKeys = new Set(activeSet.questions.map((q) => q.key))
+  const questionLabel = (q: BlogQuestion): string => q.label || (q.key ? t(QUESTION_LABEL_KEY[q.key]) : '')
+
+  const brief = (): BlogBrief => ({
     topic: topic.trim(),
-    audience: audience.trim(),
-    tone,
-    length,
-    keywords: parseKeywords(keywords),
-    callToAction: callToAction.trim(),
+    // A standard question the set leaves out is not asked, so its field keeps the neutral default.
+    audience: askedKeys.has('audience') ? audience.trim() : '',
+    tone: askedKeys.has('tone') ? tone : ('friendly' as BlogTone),
+    length: askedKeys.has('length') ? length : ('medium' as BlogLength),
+    keywords: askedKeys.has('keywords') ? parseKeywords(keywords) : [],
+    callToAction: askedKeys.has('callToAction') ? callToAction.trim() : '',
+    extras: activeSet.questions
+      .filter((q) => !q.key)
+      .map((q) => ({ question: questionLabel(q), answer: (extraAnswers[q.id] ?? '').trim() }))
+      .filter((extra) => extra.answer),
   })
+
+  /** The first required question the admin has not answered, or null. */
+  const missingRequired = (): BlogQuestion | null => {
+    for (const q of activeSet.questions) {
+      if (!q.required) continue
+      const value =
+        q.key === 'topic' ? topic : q.key === 'audience' ? audience : q.key === 'keywords' ? keywords : q.key === 'callToAction' ? callToAction : q.key ? 'x' : (extraAnswers[q.id] ?? '')
+      if (!value.trim()) return q
+    }
+    return null
+  }
 
   /** The fields every AI step carries: the sources, and this post's key and call limit. */
   const common = () => ({ sources: sourceLines(sourcesText), draftKey, callLimit })
@@ -176,6 +218,8 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, on
 
   const goTitles = async () => {
     if (!topic.trim()) return setError(t('blog.ai.topicRequired'))
+    const missing = missingRequired()
+    if (missing) return setError(t('blog.ai.questionRequired', { question: questionLabel(missing) }))
     setStep('titles')
     const found = await run(
       'titles',
@@ -280,6 +324,14 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, on
     setLength(prompt.brief.length)
     setKeywords(prompt.brief.keywords.join(', '))
     setCallToAction(prompt.brief.callToAction)
+    // Custom answers come back for the questions of the open set that have the same wording.
+    const restored: Record<string, string> = {}
+    for (const q of activeSet.questions) {
+      if (q.key) continue
+      const found = prompt.brief.extras?.find((extra) => extra.question === questionLabel(q))
+      if (found) restored[q.id] = found.answer
+    }
+    setExtraAnswers(restored)
   }
 
   const savePrompt = async () => {
@@ -378,8 +430,67 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, on
     return <p role="alert">{t('blog.ai.noKey')}</p>
   }
 
+  const renderQuestion = (q: BlogQuestion, first: boolean): ReactNode => {
+    const label = questionLabel(q)
+    const hint = q.hint || (q.key === 'topic' ? t('blog.ai.topicHint') : q.key === 'keywords' ? t('blog.ai.keywordsHint') : q.key === 'callToAction' ? t('blog.ai.ctaHint') : '')
+    const head = (
+      <>
+        <span>{label}</span>
+        {hint ? <small>{hint}</small> : null}
+      </>
+    )
+    if (q.key === 'tone')
+      return (
+        <label key={q.id} className="blog-ai__field">
+          {head}
+          <select value={tone} onChange={(e) => setTone(e.target.value as BlogTone)}>
+            {TONES.map((value) => (
+              <option key={value} value={value}>
+                {t(TONE_KEY[value])}
+              </option>
+            ))}
+          </select>
+        </label>
+      )
+    if (q.key === 'length')
+      return (
+        <label key={q.id} className="blog-ai__field">
+          {head}
+          <select value={length} onChange={(e) => setLength(e.target.value as BlogLength)}>
+            {(Object.keys(BLOG_LENGTH_WORDS) as BlogLength[]).map((value) => (
+              <option key={value} value={value}>
+                {t(LENGTH_KEY[value], { words: BLOG_LENGTH_WORDS[value] })}
+              </option>
+            ))}
+          </select>
+        </label>
+      )
+    const multiline = q.key === 'topic'
+    const value = q.key === 'topic' ? topic : q.key === 'audience' ? audience : q.key === 'keywords' ? keywords : q.key === 'callToAction' ? callToAction : (extraAnswers[q.id] ?? '')
+    const onChange = (next: string) => {
+      if (q.key === 'topic') setTopic(next)
+      else if (q.key === 'audience') setAudience(next)
+      else if (q.key === 'keywords') setKeywords(next)
+      else if (q.key === 'callToAction') setCallToAction(next)
+      else setExtraAnswers((current) => ({ ...current, [q.id]: next }))
+    }
+    const max = q.key === 'topic' ? 300 : q.key === 'audience' || q.key === 'callToAction' ? 200 : 300
+    return (
+      <label key={q.id} className="blog-ai__field">
+        {head}
+        {multiline ? (
+          <textarea required={q.required} rows={2} maxLength={max} value={value} onChange={(e) => onChange(e.target.value)} autoFocus={first} />
+        ) : (
+          <input type="text" required={q.required} maxLength={max} value={value} onChange={(e) => onChange(e.target.value)} />
+        )}
+      </label>
+    )
+  }
+
   let body: ReactNode
-  if (step === 'brief') {
+  if (step === 'brief' && editingSets) {
+    body = <QuestionSetEditor sets={questionSets} onSets={setQuestionSets} onClose={() => { setEditingSets(false); setActiveSetId(pickDefaultSet(questionSets).id) }} />
+  } else if (step === 'brief') {
     body = (
       <form
         className="blog-ai__form"
@@ -412,68 +523,22 @@ export function BlogWizard({ canUseAi, usage, onUsage, onClose, savedPrompts, on
           </div>
         </div>
         <label className="blog-ai__field">
-          <span>{t('blog.ai.topic')}</span>
-          <small>{t('blog.ai.topicHint')}</small>
-          <textarea
-            required
-            rows={2}
-            maxLength={300}
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            autoFocus
-          />
+          <span>{t('blog.ai.questionSet')}</span>
+          <select value={activeSet.id} onChange={(e) => setActiveSetId(e.target.value)}>
+            {offered.map((set) => (
+              <option key={set.id} value={set.id}>
+                {set.name || t('blog.ai.questionSetDefault')}
+                {set.postType ? ` (${set.postType})` : ''}
+              </option>
+            ))}
+          </select>
         </label>
-        <label className="blog-ai__field">
-          <span>{t('blog.ai.audience')}</span>
-          <input
-            type="text"
-            maxLength={200}
-            value={audience}
-            onChange={(e) => setAudience(e.target.value)}
-          />
-        </label>
-        <div className="blog-ai__row">
-          <label className="blog-ai__field">
-            <span>{t('blog.ai.tone')}</span>
-            <select value={tone} onChange={(e) => setTone(e.target.value as BlogTone)}>
-              {TONES.map((value) => (
-                <option key={value} value={value}>
-                  {t(TONE_KEY[value])}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="blog-ai__field">
-            <span>{t('blog.ai.length')}</span>
-            <select value={length} onChange={(e) => setLength(e.target.value as BlogLength)}>
-              {(Object.keys(BLOG_LENGTH_WORDS) as BlogLength[]).map((value) => (
-                <option key={value} value={value}>
-                  {t(LENGTH_KEY[value], { words: BLOG_LENGTH_WORDS[value] })}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <label className="blog-ai__field">
-          <span>{t('blog.ai.keywords')}</span>
-          <small>{t('blog.ai.keywordsHint')}</small>
-          <input
-            type="text"
-            maxLength={300}
-            value={keywords}
-            onChange={(e) => setKeywords(e.target.value)}
-          />
-        </label>
-        <label className="blog-ai__field">
-          <span>{t('blog.ai.cta')}</span>
-          <small>{t('blog.ai.ctaHint')}</small>
-          <input
-            type="text"
-            maxLength={200}
-            value={callToAction}
-            onChange={(e) => setCallToAction(e.target.value)}
-          />
-        </label>
+        {canEditSets ? (
+          <button type="button" className="btn" onClick={() => setEditingSets(true)}>
+            {t('blog.ai.editQuestions')}
+          </button>
+        ) : null}
+        {activeSet.questions.map((q, index) => renderQuestion(q, index === 0))}
         <label className="blog-ai__field">
           <span>{t('blog.ai.sources')}</span>
           <small>{t('blog.ai.sourcesHint', { max: MAX_SOURCES })}</small>
