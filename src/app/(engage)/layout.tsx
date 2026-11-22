@@ -7,6 +7,7 @@ import { RpcProvider } from '@/features/rpc/RpcProvider'
 // The admin's one font is Open Sans from the jsDelivr CDN (no font package is bundled): see buildBuiltInFontCss.
 import { buildBuiltInFontCss } from '@/features/fonts/builtIn'
 import './admin.css'
+import '@/styles/public-components.css'
 
 const ADMIN_FONT_CSS = buildBuiltInFontCss(['opensans'])
 

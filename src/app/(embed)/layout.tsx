@@ -1,5 +1,7 @@
 import React from 'react'
 
+import '@/styles/public-components.css'
+
 import { buildBuiltInFontCss } from '@/features/fonts/builtIn'
 import { buildFontCss, remoteStylesheetUrls, resolveThemeFont } from '@/features/fonts/css'
 import { sanitizeInstalledFonts } from '@/features/fonts/installed'

@@ -7,7 +7,7 @@ import { ChartSvg } from './ChartSvg'
 import { DataTable } from './DataTable'
 import { DataViewEnhancer } from './DataViewEnhancer'
 
-import './dataViews.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /**
  * One table or chart, ready to place in a page, an embed or the editor preview. Presentational: the

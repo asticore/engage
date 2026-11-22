@@ -5,7 +5,7 @@ import React, { useState, useSyncExternalStore } from 'react'
 import { CATEGORY_COPY, effectiveChoices, withCategory, type CookieCategory } from './consent'
 import { type ConsentState, DEFAULT_POLICY_VERSION, getConsentState, saveConsent, SERVER_CONSENT_STATE, subscribeConsent } from './store'
 
-import './consent.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 export type ConsentGateProps = {
   /** The category that has to be granted before the children render. */

@@ -5,7 +5,7 @@ import { useCart } from '@/engine/commerce/react'
 import Link from 'next/link'
 import React, { useState } from 'react'
 
-import './wave66.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /** Wave 66 client islands: the cart button and the live cart count. Server wrappers are in Wave66Server.tsx. */
 

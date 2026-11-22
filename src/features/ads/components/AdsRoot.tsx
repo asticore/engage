@@ -3,7 +3,7 @@ import React from 'react'
 import { safeJson } from '../builders'
 import { getAdsContext } from '../server'
 import { AdsRuntime } from './AdsRuntime'
-import './ads.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /** Place once in the root layout. Renders nothing at all unless Ads is on and configured. */
 export const AdsRoot = async (): Promise<React.ReactElement | null> => {

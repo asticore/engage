@@ -2,7 +2,7 @@ import React from 'react'
 
 import { getGateOptions } from '@/features/visibility/gate'
 
-import './password-gate.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /**
  * Shown instead of the content of a protected page, post, product or event.

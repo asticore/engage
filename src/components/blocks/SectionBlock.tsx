@@ -20,7 +20,7 @@ import { autoTriggersOf, popupCloseRules } from '@/lib/popupTriggers'
 import PopupController from './PopupControllerLazy'
 import { safeScope, StyledBlock } from './StyledBlock'
 import './tabs.css'
-import './popup.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /**
  * Renders a Section: a row of columns, each holding its own stack of blocks.

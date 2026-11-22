@@ -1,6 +1,6 @@
 import React from 'react'
 
-import './sidebars.css'
+// Styles: src/styles/public-components.css (one stylesheet for public pages).
 
 /**
  * Places the left and right sidebar templates beside the page's main content. With neither sidebar it returns
