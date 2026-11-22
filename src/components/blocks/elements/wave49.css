@@ -149,64 +149,6 @@
   outline-offset: 2px;
 }
 
-/* ---- lightbox: a dark dialog over the page ---- */
-
-.be-el-49-lb {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  padding: 16px;
-  background: rgba(0, 0, 0, 0.92);
-  color: #ffffff;
-}
-
-.be-el-49-lb__panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.be-el-49-lb__img {
-  display: block;
-  max-width: 92vw;
-  max-height: 80vh;
-  object-fit: contain;
-}
-
-.be-el-49-lb__caption {
-  margin: 0;
-  text-align: center;
-}
-
-.be-el-49-lb__bar {
-  display: flex;
-  gap: 8px;
-}
-
-.be-el-49-lb__btn {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 14px;
-  font: inherit;
-  color: #ffffff;
-  background: transparent;
-  border: 1px solid #ffffff;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.be-el-49-lb__btn:focus-visible {
-  outline: 3px solid #ffffff;
-  outline-offset: 2px;
-}
-
 /* Text for screen readers only. */
 .be-el-49-sr {
   position: absolute !important;

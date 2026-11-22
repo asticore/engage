@@ -302,7 +302,7 @@ export const PaginationElement: React.FC<P> = (p) => {
 
   return (
     <nav className={`be-el-48-pagination be-el-48-pagination--${align}`} aria-label="Pagination">
-      <ul className="be-el-48-pagination__list">
+      <ul className="pagination be-el-48-pagination__list">
         <li>
           {hasPrev
             ? item(pageHref(pattern, current - 1), prevLabel, base, { rel: 'prev' })

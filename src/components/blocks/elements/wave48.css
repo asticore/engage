@@ -173,17 +173,7 @@
   stroke-width: 1.5;
 }
 
-/* ---- pagination ---- */
-
-.be-el-48-pagination__list {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
+/* ---- pagination (Shine `pagination` styles the links; only alignment is set here) ---- */
 
 .be-el-48-pagination--centre .be-el-48-pagination__list {
   justify-content: center;
@@ -191,39 +181,6 @@
 
 .be-el-48-pagination--right .be-el-48-pagination__list {
   justify-content: flex-end;
-}
-
-.be-el-48-pagination__item {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  min-height: 40px;
-  padding: 0 12px;
-  box-sizing: border-box;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
-  color: inherit;
-  text-decoration: none;
-}
-
-a.be-el-48-pagination__item:hover {
-  border-color: currentColor;
-}
-
-a.be-el-48-pagination__item:focus-visible {
-  outline: 3px solid currentColor;
-  outline-offset: 2px;
-}
-
-.be-el-48-pagination__item--current {
-  font-weight: 700;
-  background: rgba(0, 0, 0, 0.06);
-  border-color: currentColor;
-}
-
-.be-el-48-pagination__item--disabled {
-  opacity: 0.45;
 }
 
 .be-el-48-pagination__gap {

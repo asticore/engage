@@ -102,8 +102,8 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
   {
     type: 'image-carousel', label: 'Image carousel', icon: '⇄', category: 'media', hidden: true,
     description: 'Pictures in a row you swipe or scroll through.',
-    fields: [{ name: 'images', label: 'Images', type: 'mediaMulti' }, urlLines, number('visible', 'Pictures visible (1-4)'), select('ratio', 'Shape', RATIO_OPTIONS), text('label', 'Accessible name')],
-    defaultProps: () => ({ images: [], visible: 1, ratio: '16:9' }),
+    fields: [{ name: 'images', label: 'Images', type: 'mediaMulti' }, urlLines, number('visible', 'Pictures visible (1-4)'), select('ratio', 'Shape', RATIO_OPTIONS), text('label', 'Accessible name'), number('autoplay', 'Autoplay every (ms, 0 = off)'), { name: 'fade', label: 'Fade between pictures', type: 'checkbox' }, { name: 'dots', label: 'Dots', type: 'checkbox' }, { name: 'arrows', label: 'Arrows', type: 'checkbox' }],
+    defaultProps: () => ({ images: [], visible: 1, ratio: '16:9', dots: true, arrows: true }),
   },
   {
     type: 'icon', label: 'Icon', icon: '★', category: 'media',

@@ -2,7 +2,8 @@ import React from 'react'
 
 import { flag, gridSizes, mediaListOf, num, pick, ratioCss, str } from './elementUtil'
 import type { MediaRef } from './elementUtil'
-import { GalleryCarousel, GalleryLightbox } from './Wave49Client'
+import { GalleryCarousel } from './Wave49Client'
+import { SparkLightbox } from './SparkLightbox'
 import type { GalleryItem } from './Wave49Client'
 import './wave49.css'
 
@@ -71,7 +72,7 @@ export const GalleryElement: React.FC<P> = (p) => {
         ))}
       </GalleryCarousel>
     )
-    return lightbox ? <GalleryLightbox items={items}>{track}</GalleryLightbox> : track
+    return lightbox ? <SparkLightbox>{track}</SparkLightbox> : track
   }
 
   const list = (
@@ -81,7 +82,7 @@ export const GalleryElement: React.FC<P> = (p) => {
       ))}
     </ul>
   )
-  return lightbox ? <GalleryLightbox items={items}>{list}</GalleryLightbox> : list
+  return lightbox ? <SparkLightbox>{list}</SparkLightbox> : list
 }
 
 /** Components for the wave-49 elements, keyed by elementType. Spread into ELEMENT_COMPONENTS. */
