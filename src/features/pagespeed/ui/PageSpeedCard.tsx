@@ -19,6 +19,7 @@ import {
 } from '../types'
 import { AdminLineChart } from '@/admin/charts/AdminLineChart'
 import './pagespeed.css'
+import { ChecklistPanel } from './ChecklistPanel'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
@@ -174,6 +175,15 @@ function Report({ latest, previous, hasKey }: { latest: StoredResult; previous: 
           </table>
           {field.originFallback && <p className="ps__muted ps__help">This page has too little traffic for its own figures, so these describe the whole site.</p>}
         </div>
+      )}
+
+      {latest.audits && latest.audits.length > 0 ? (
+        <div>
+          <h3 className="ps__h"><Tooltip text="Every check in the PageSpeed Insights report. Passing checks and checks that do not apply stay in the list."><span>Full checklist</span></Tooltip></h3>
+          <ChecklistPanel rows={latest.audits} />
+        </div>
+      ) : (
+        <p className="ps__muted ps__help">Run the test again to see the full PageSpeed checklist.</p>
       )}
 
       {latest.suggestions.opportunities.length > 0 && (

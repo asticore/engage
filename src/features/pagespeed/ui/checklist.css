@@ -1,0 +1,18 @@
+/* The grouped checklist of a PageSpeed or page check. Classes are prefixed cl-. Dark theme keys on [data-theme='dark'] only. */
+.cl { display: flex; flex-direction: column; gap: 8px; }
+.cl__group { border: 1px solid var(--ps-line, #e4e4e7); border-radius: 6px; }
+.cl__heading { margin: 0; font-size: 14px; }
+.cl__toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; background: none; border: 0; color: inherit; font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.cl__counts { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: auto; font-weight: 400; }
+.cl__list { list-style: none; margin: 0; padding: 0 10px 8px; display: flex; flex-direction: column; gap: 4px; }
+.cl__row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; padding: 4px 0; border-top: 1px solid var(--ps-line, #e4e4e7); font-size: 13px; }
+.cl__title { flex: 1 1 14em; }
+.cl__value { font-variant-numeric: tabular-nums; color: var(--ps-muted, #71717a); }
+.cl__hint { flex-basis: 100%; color: var(--ps-muted, #71717a); font-size: 12px; }
+.cl-chip { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.cl-pass.cl-chip { background: var(--ps-good-bg, #dcfce7); color: var(--ps-good, #15803d); }
+.cl-warn.cl-chip { background: var(--ps-mid-bg, #fef3c7); color: var(--ps-mid, #b45309); }
+.cl-fail.cl-chip { background: var(--ps-poor-bg, #fee2e2); color: var(--ps-poor, #b91c1c); }
+.cl-na.cl-chip, .cl-info.cl-chip { background: var(--ps-track, #e4e4e7); color: var(--ps-muted, #52525b); }
+.cl-manual.cl-chip { background: var(--ps-mid-bg, #fef3c7); color: var(--ps-mid, #b45309); }
+.cl__row.cl-na .cl__title { color: var(--ps-muted, #71717a); }

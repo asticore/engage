@@ -51,6 +51,7 @@ import { LocalDraftRecovery } from '@/admin/edit/useLocalDraft'
 import { SettingsResetDefaults } from './SettingsResetDefaults'
 
 // Only pages, posts and the other audited collections show these cards, so their code loads on demand.
+const PageChecksCard = dynamic(() => import('@/features/seo/ui/PageChecksCard').then((mod) => mod.PageChecksCard))
 const PageSpeedCard = dynamic(() => import('@/features/pagespeed/ui/PageSpeedCard').then((mod) => mod.PageSpeedCard))
 const PageGoogleStatsCard = dynamic(() => import('@/features/google/dashboard/PageGoogleStatsCard').then((mod) => mod.PageGoogleStatsCard))
 
@@ -307,6 +308,7 @@ export const EditForm: React.FC<EditFormProps> = ({
                     <SeoCard seoField={seo} readOnly={readOnly || panel.canEditSeo === false} liveHref={panel.liveHref} />
                   </>
                 )}
+                {isPageSpeedCollection(collectionSlug) && <PageChecksCard collectionSlug={collectionSlug} id={id} />}
                 {isPageSpeedCollection(collectionSlug) && <PageSpeedCard collectionSlug={collectionSlug} id={id} />}
                 {isPageSpeedCollection(collectionSlug) && <PageGoogleStatsCard collectionSlug={collectionSlug} id={id} />}
                 {visualBlocksField && <PageContentCard count={visualBlocksCount} href={panel.visualEditorHref} isNew={id === undefined} />}

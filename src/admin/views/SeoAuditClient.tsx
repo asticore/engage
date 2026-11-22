@@ -12,6 +12,7 @@ import { DEFAULT_AUDIT_FILTERS, filterAuditRows, sortAuditRows, type AuditFilter
 import { changedSeoRows, rowKey, type SeoEditField, type SeoEditMap } from '@/features/seo/auditEdits'
 import type { SitewideCheck } from '@/features/seo/sitewideChecks'
 import { BrokenLinksPanel } from './BrokenLinksPanel'
+import { SiteAuditPanel } from './SiteAuditPanel'
 import './seo-audit.css'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
 
@@ -84,16 +85,23 @@ function SummaryCards({ summary }: { summary: AuditSummary }) {
   )
 }
 
-function ProblemList({ problems }: { problems: string[] }) {
+function ProblemList({ problems, findings }: { problems: string[]; findings?: AuditRow['findings'] }) {
   const t = useAdminT()
   if (problems.length === 0) return <span className="sa-muted">{t('se.lit.none')}</span>
   const shown = problems.slice(0, PROBLEMS_SHOWN)
   const extra = problems.length - shown.length
+  // Each finding is marked SEO or Accessibility (item 16m); rows from an older response have no kinds.
+  const kindOf = (message: string): 'seo' | 'accessibility' | null => findings?.find((f) => f.message === message)?.kind ?? null
   return (
     <ul className="sa-problems">
-      {shown.map((problem) => (
-        <li key={problem}>{problem}</li>
-      ))}
+      {shown.map((problem) => {
+        const kind = kindOf(problem)
+        return (
+          <li key={problem}>
+            {kind && <span className={`sa-kind sa-kind--${kind}`}>{kind === 'seo' ? 'SEO' : 'Accessibility'}</span>} {problem}
+          </li>
+        )
+      })}
       {extra > 0 && <li className="sa-muted">and {extra} more</li>}
     </ul>
   )
@@ -175,7 +183,7 @@ function AuditTable({ rows, edits, errors, onEdit }: { rows: AuditRow[]; edits: 
                   {changed && <div className="sa-muted">Not saved yet</div>}
                 </td>
                 <td>
-                  <ProblemList problems={row.problems} />
+                  <ProblemList problems={row.problems} findings={row.findings} />
                 </td>
                 <td>
                   {row.collection === 'pages' ? (
@@ -361,6 +369,8 @@ export function SeoAuditClient({ collections }: { collections: AuditCollection[]
           {AUDIT_COLLECTIONS.length === collections.length ? '' : ' Only the places you can edit or read are shown.'}
         </p>
       </header>
+
+      <SiteAuditPanel />
 
       <BrokenLinksPanel />
 

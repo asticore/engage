@@ -1,3 +1,4 @@
+import { parseChecklist } from './checklist'
 import {
   metricBand,
   type Band,
@@ -142,6 +143,7 @@ export function parsePsiResponse(json: unknown): PageSpeedReport | null {
     metrics: labMetrics(audits),
     fieldData: parseFieldData(root?.loadingExperience),
     suggestions: parseSuggestions(audits, obj(categories.performance)?.auditRefs),
+    audits: parseChecklist(lighthouse),
   }
 }
 

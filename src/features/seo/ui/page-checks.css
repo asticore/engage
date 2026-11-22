@@ -1,0 +1,12 @@
+/* Snippets and page checks card on the edit screen. Classes are prefixed pc-. */
+.pc__rows { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pc__row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 6px 8px; border: 1px solid var(--ps-line, #e4e4e7); border-radius: 6px; font-size: 13px; }
+.pc__target { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.pc__state { padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.pc__state--valid { background: var(--ps-good-bg, #dcfce7); color: var(--ps-good, #15803d); }
+.pc__state--warnings { background: var(--ps-mid-bg, #fef3c7); color: var(--ps-mid, #b45309); }
+.pc__state--errors { background: var(--ps-poor-bg, #fee2e2); color: var(--ps-poor, #b91c1c); }
+.pc__state--missing { background: var(--ps-track, #e4e4e7); color: var(--ps-muted, #52525b); }
+.pc__how { flex-basis: 100%; color: var(--ps-muted, #71717a); font-size: 12px; }
+.pc__add select { margin-left: 4px; }
+.pc__suggest { margin: 6px 0; font-size: 13px; }

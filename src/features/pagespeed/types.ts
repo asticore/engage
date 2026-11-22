@@ -2,6 +2,8 @@
  * PageSpeed Insights: shared types and the pure scoring helpers (no I/O, safe on server and client).
  */
 
+import type { ChecklistRow } from './checklist'
+
 export const PAGESPEED_COLLECTIONS = ['pages', 'posts', 'products', 'events'] as const
 export type PageSpeedCollection = (typeof PAGESPEED_COLLECTIONS)[number]
 
@@ -67,6 +69,8 @@ export type PageSpeedReport = {
   metrics: Metrics
   fieldData: FieldData | null
   suggestions: Suggestions
+  /** Every audit of the report (item 16n). Kept only on the newest result of a page and device. */
+  audits?: ChecklistRow[]
 }
 
 export type StoredResult = PageSpeedReport & {

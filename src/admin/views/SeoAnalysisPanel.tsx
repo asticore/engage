@@ -59,6 +59,7 @@ export function SeoAnalysisPanel({ result }: { result: AnalysisResult }) {
     <div className="seo-analysis">
       <AnalysisSection title="SEO analysis" checks={result.seo} score={result.seoScore} />
       <AnalysisSection title="Readability analysis" checks={result.readability} score={result.readabilityScore} />
+      <AnalysisSection title="Accessibility analysis" checks={result.accessibility} score={result.accessibilityScore} />
     </div>
   )
 }

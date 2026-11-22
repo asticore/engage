@@ -25,8 +25,11 @@ export type AuditRow = {
   /** The SEO title and meta description as saved (empty when not set). The audit list edits them. */
   metaTitle: string
   metaDescription: string
-  /** Messages of every check that scored 'bad', SEO first, then readability. */
+  /** Messages of every check that scored 'bad', SEO first, then readability, then accessibility. */
   problems: string[]
+  /** The same problems, each marked SEO or Accessibility (item 16m). Readability counts as SEO. */
+  findings?: { kind: 'seo' | 'accessibility'; message: string }[]
+  accessibilityScore?: Status
   noIndex: boolean
   /** Marked as cornerstone content on the SEO tab (pages and posts). */
   cornerstone: boolean
@@ -76,7 +79,13 @@ export function buildAuditRow(doc: Record<string, unknown>, collection: AuditCol
     schemaFacts: doc.schemaFacts,
   }
   const result = analyze(input)
-  const problems = [...result.seo, ...result.readability].filter((check) => check.status === 'bad').map((check) => check.message)
+  const seoProblems = [...result.seo, ...result.readability].filter((check) => check.status === 'bad').map((check) => check.message)
+  const a11yProblems = result.accessibility.filter((check) => check.status === 'bad').map((check) => check.message)
+  const problems = [...seoProblems, ...a11yProblems]
+  const findings = [
+    ...seoProblems.map((message) => ({ kind: 'seo' as const, message })),
+    ...a11yProblems.map((message) => ({ kind: 'accessibility' as const, message })),
+  ]
 
   return {
     collection,
@@ -91,6 +100,8 @@ export function buildAuditRow(doc: Record<string, unknown>, collection: AuditCol
     metaTitle: asText(seo.metaTitle),
     metaDescription,
     problems,
+    findings,
+    accessibilityScore: result.accessibilityScore,
     noIndex: seo.noIndex === true,
     cornerstone,
     orphan: false,
