@@ -10,6 +10,7 @@ import { parseHtmlFacts } from '@/features/seo/crawl/htmlFacts'
 import { ownChecklist, ownScores } from '@/features/seo/pageCheck'
 import { SNIPPET_TYPES, detectSnippetTypes, richResultsTestUrl, suggestSnippetTypes } from '@/features/seo/snippets'
 import { readTargets, writeTargets } from '@/features/seo/snippetTargets'
+import { crawlFindingsFor } from '@/features/seo/crawl/store'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -86,6 +87,7 @@ export async function GET(request: Request): Promise<Response> {
       catalogue,
       checklist,
       scores: ownScores(checklist),
+      crawl: await crawlFindingsFor(db, path).catch((): null => null),
     })
   } catch (error) {
     console.error('admin-seo-page GET error:', error)

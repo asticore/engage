@@ -180,3 +180,17 @@ export function scheduleDue(schedule: 'off' | 'daily' | 'weekly', lastStartedAt:
   return now.getTime() - new Date(lastStartedAt).getTime() >= hours * 3600_000
 }
 
+
+/** What the newest finished crawl found for one address: its failed checks and the internal links it makes that lead to error pages. */
+export async function crawlFindingsFor(db: Drizzle, path: string): Promise<{ at: string; issues: string[]; brokenLinks: string[] } | null> {
+  const runs = (await db.all(sql`SELECT * FROM \`eg_seo_crawl_runs\` WHERE status = 'done' ORDER BY id DESC LIMIT 1`)) as RawRun[]
+  const run = runs[0]
+  if (!run) return null
+  const own = (await db.all(sql`SELECT * FROM \`eg_seo_crawl_pages\` WHERE run_id = ${run.id} AND path = ${path} LIMIT 1`)) as RawPage[]
+  if (!own[0]) return null
+  const page = toPage(own[0])
+  const bad = (await db.all(sql`SELECT path FROM \`eg_seo_crawl_pages\` WHERE run_id = ${run.id} AND status_code >= 400`)) as { path: string }[]
+  const badPaths = new Set(bad.map((b) => b.path))
+  const hrefs = (page.data?.links ?? []).map((l) => l.href.split('#')[0].split('?')[0].replace(/^https?:\/\/[^/]+/i, '') || '/')
+  return { at: run.finished_at ?? run.started_at, issues: page.issues, brokenLinks: [...new Set(hrefs.filter((h) => badPaths.has(h.length > 1 ? h.replace(/\/$/, '') : h)))] }
+}
