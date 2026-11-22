@@ -19,6 +19,7 @@ import { WAVE65_ELEMENTS } from './wave65Defs'
 import { WAVE66_ELEMENTS } from './wave66Defs'
 import { WAVE67_ELEMENTS } from './wave67Defs'
 import { WAVE68_ELEMENTS } from './wave68Defs'
+import { WAVE69_ELEMENTS } from './wave69Defs'
 import { AFFILIATE_ELEMENTS } from './affiliateDefs'
 import { REQUEST_BUTTON_ELEMENTS } from './requestButtonDefs'
 import { EMBED_CODE_ELEMENTS } from './embedCodeDefs'
@@ -229,6 +230,7 @@ ELEMENTS.push(...WAVE65_ELEMENTS)
 ELEMENTS.push(...WAVE66_ELEMENTS)
 ELEMENTS.push(...WAVE67_ELEMENTS)
 ELEMENTS.push(...WAVE68_ELEMENTS)
+ELEMENTS.push(...WAVE69_ELEMENTS)
 ELEMENTS.push(...AFFILIATE_ELEMENTS)
 ELEMENTS.push(...REQUEST_BUTTON_ELEMENTS)
 ELEMENTS.push(...EMBED_CODE_ELEMENTS)
