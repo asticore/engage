@@ -1,4 +1,5 @@
 import { categoryUrl } from '@/features/categories/frontend'
+import { blogPath } from '@/features/seo/permalinks'
 import { ancestorsOf, type CategoryRow } from '@/features/categories/tree'
 import type { ArchiveItem, BlockContext } from '@/lib/blockContext'
 import { formatTagDate, formatTagPrice, resolveTags } from '@/lib/dynamicTags'
@@ -105,9 +106,9 @@ export function eventBlockContext(event: Record<string, unknown>, path: string):
 }
 
 /** Builds the context for a sample item of the given collection. */
-export function blockContextFor(collection: 'posts' | 'products' | 'events', doc: Record<string, unknown>, siteName?: string): BlockContext {
+export function blockContextFor(collection: 'posts' | 'products' | 'events', doc: Record<string, unknown>, siteName?: string, blogBase?: string): BlockContext {
   const slug = str(doc.slug)
-  if (collection === 'posts') return postBlockContext(doc, `/blog/${slug}`, siteName)
+  if (collection === 'posts') return postBlockContext(doc, blogPath(blogBase ?? '', `/${slug}`), siteName)
   if (collection === 'products') return productBlockContext(doc, `/shop/${slug}`)
   return eventBlockContext(doc, `/events/${slug}`)
 }
@@ -158,30 +159,30 @@ export function previewTextFor(elementType: string, props: Record<string, unknow
 const namesOf = (list: unknown): string[] => (Array.isArray(list) ? list : []).map((x) => str(rec(x).name).trim()).filter(Boolean)
 
 /** Archive cards for posts (public title, link, excerpt, date, featured image, author and category and tag names only). */
-export function postArchiveItems(posts: unknown[], tree: CategoryRow[] = []): ArchiveItem[] {
+export function postArchiveItems(posts: unknown[], tree: CategoryRow[] = [], blogBase?: string): ArchiveItem[] {
   return posts.map((raw) => {
     const post = rec(raw)
     const image = rec(post.featuredImage)
     return {
       title: str(post.title),
-      href: `/blog/${str(post.slug)}`,
+      href: blogPath(blogBase ?? '', `/${str(post.slug)}`),
       excerpt: str(post.excerpt) || undefined,
       date: post.publishedDate,
       image: str(image.url) ? { url: str(image.url), alt: str(image.alt) } : undefined,
       author: str(rec(post.author).displayName).trim() || undefined,
       categories: namesOf(post.categories),
-      ...categoryTreeFields(namesOf(post.categories)[0], tree),
+      ...categoryTreeFields(namesOf(post.categories)[0], tree, blogBase),
       tags: namesOf(post.tags),
     }
   })
 }
 
 /** The tree trail and nested address of a category name, or nothing when the name is not in the category tree. */
-export function categoryTreeFields(name: string | undefined, tree: CategoryRow[]): Pick<ArchiveItem, 'categoryTrail' | 'categoryHref'> {
+export function categoryTreeFields(name: string | undefined, tree: CategoryRow[], blogBase?: string): Pick<ArchiveItem, 'categoryTrail' | 'categoryHref'> {
   const wanted = (name ?? '').trim().toLowerCase()
   const node = wanted ? tree.find((r) => r.name.trim().toLowerCase() === wanted) : undefined
   if (!node) return {}
-  return { categoryTrail: ancestorsOf(tree, node.id).map((r) => r.name), categoryHref: categoryUrl('blog', tree, node.id) }
+  return { categoryTrail: ancestorsOf(tree, node.id).map((r) => r.name), categoryHref: categoryUrl('blog', tree, node.id, blogBase) }
 }
 
 /** Archive cards for products (title, link, price and first image). */

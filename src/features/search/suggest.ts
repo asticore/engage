@@ -1,3 +1,5 @@
+import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import { getEngine } from '@/lib/engine'
 import { getFeatureFlags } from '@/utilities/features'
 import { getAllResolvedPages } from '@/utilities/pagePaths'
@@ -86,9 +88,10 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
   const posts = async (): Promise<Suggestion[]> => {
     const docs = await findDocs('posts', terms, ['title', 'slug', 'excerpt'], '-publishedDate', limit)
     const out: Suggestion[] = []
+    const blogBase = await readBlogBase()
     for (const d of docs) {
       if (!d.slug || !(await isOpen('posts', d.id))) continue
-      out.push({ title: String(d.title ?? ''), url: `/blog/${d.slug}`, type: 'Post', excerpt: gated(d) ? '' : clipExcerpt(d.excerpt) })
+      out.push({ title: String(d.title ?? ''), url: blogPath(blogBase, `/${d.slug}`), type: 'Post', excerpt: gated(d) ? '' : clipExcerpt(d.excerpt) })
     }
     return out
   }
