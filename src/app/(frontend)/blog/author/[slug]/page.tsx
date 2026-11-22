@@ -71,13 +71,14 @@ export default async function AuthorArchivePage({ params, searchParams }: Params
   // Filter params (?category=&tag=&q=&sort=) narrow the posts before paging. With none, the list and pages are unchanged.
   const filters = parseArchiveFilters(query)
   const paged = paginate(filterArchivePosts(term.posts, filters), parsePage(query.page), perPage)
-  const path = `/blog/author/${term.slug}`
+  const blogBase = await readBlogBase()
+  const path = blogPath(blogBase, `/author/${term.slug}`)
   const basePath = `${path}${archiveQueryString(filters)}`
   setRequestQuery(query)
   setBlockContext({
     page: { title: term.name },
     path,
-    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(paged.items, blogTree), kind: 'posts', filters, facets: archivePostFacets(term.posts) },
+    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(paged.items, blogTree, blogBase), kind: 'posts', filters, facets: archivePostFacets(term.posts) },
   })
 
   const body = (
@@ -90,7 +91,7 @@ export default async function AuthorArchivePage({ params, searchParams }: Params
           const image = post.featuredImage && typeof post.featuredImage === 'object' ? (post.featuredImage as Media) : null
           const readTime = readingTimeLabel(post.readingTime)
           return (
-            <Link key={post.id} href={`/blog/${post.slug}`} className="blog-card block">
+            <Link key={post.id} href={blogPath(blogBase, `/${post.slug}`)} className="blog-card block">
               {image?.url && (
                 <div className="blog-card__image mb-4 overflow-hidden">
                   <Image src={image.url} alt={post.title} width={640} height={420} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />

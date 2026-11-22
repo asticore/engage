@@ -1,3 +1,5 @@
+import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import Link from 'next/link'
 import React from 'react'
 import type { Metadata } from 'next'
@@ -94,13 +96,14 @@ async function searchPosts(query: string): Promise<Found> {
     depth: 0,
   })) as unknown as { docs: Post[]; totalDocs: number }
   const visible = await excludeProtected('posts', docs, await viewerFromRequestContext())
+  const blogBase = await readBlogBase()
   const hits = visible
     .filter((post) => post.slug)
     .map((post): Hit => ({
       key: `post-${post.id}`,
       type: 'Post',
       title: post.title,
-      href: `/blog/${post.slug}`,
+      href: blogPath(blogBase, `/${post.slug}`),
       excerpt: snippet(post.excerpt),
     }))
   return { hits, total: Math.max(0, totalDocs - (docs.length - visible.length)) }

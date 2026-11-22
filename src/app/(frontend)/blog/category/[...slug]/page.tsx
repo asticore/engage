@@ -86,24 +86,25 @@ export default async function CategoryArchivePage({ params, searchParams }: Para
   // Filter params (?category=&tag=&q=&sort=) narrow the posts before paging. With none, the list and pages are unchanged.
   const filters = parseArchiveFilters(query)
   const paged = paginate(filterArchivePosts(term.posts, filters), parsePage(query.page), perPage)
-  const path = `/blog/category/${term.slug}`
+  const blogBase = await readBlogBase()
+  const path = blogPath(blogBase, `/category/${term.slug}`)
   const basePath = `${path}${archiveQueryString(filters)}`
   setRequestQuery(query)
   setBlockContext({
     page: { title: term.name },
     path,
-    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(paged.items, term.tree), kind: 'posts', filters, facets: archivePostFacets(term.posts) },
+    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(paged.items, term.tree, blogBase), kind: 'posts', filters, facets: archivePostFacets(term.posts) },
   })
 
   const body = (
     <div className="page-shell">
-      {term.nodeId !== null && <BreadcrumbsElement items={categoryCrumbs('blog', term.tree, term.nodeId)} separator=">" />}
+      {term.nodeId !== null && <BreadcrumbsElement items={categoryCrumbs('blog', term.tree, term.nodeId, blogBase)} separator=">" />}
       <div className="section-heading">
         <h1>{term.name}</h1>
       </div>
-      {term.nodeId !== null && subCategoryLinks('blog', term.tree, term.nodeId).length > 0 && (
+      {term.nodeId !== null && subCategoryLinks('blog', term.tree, term.nodeId, blogBase).length > 0 && (
         <nav aria-label="Sub categories" className="mb-6 flex flex-wrap gap-4">
-          {subCategoryLinks('blog', term.tree, term.nodeId).map((s) => <Link key={s.href} href={s.href}>{s.name}</Link>)}
+          {subCategoryLinks('blog', term.tree, term.nodeId, blogBase).map((s) => <Link key={s.href} href={s.href}>{s.name}</Link>)}
         </nav>
       )}
       <div className={`blog-archive__${settings?.archiveLayout || 'grid'}`}>
@@ -111,7 +112,7 @@ export default async function CategoryArchivePage({ params, searchParams }: Para
           const image = post.featuredImage && typeof post.featuredImage === 'object' ? (post.featuredImage as Media) : null
           const readTime = readingTimeLabel(post.readingTime)
           return (
-            <Link key={post.id} href={`/blog/${post.slug}`} className="blog-card block">
+            <Link key={post.id} href={blogPath(blogBase, `/${post.slug}`)} className="blog-card block">
               {image?.url && (
                 <div className="blog-card__image mb-4 overflow-hidden">
                   <Image src={image.url} alt={post.title} width={640} height={420} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
