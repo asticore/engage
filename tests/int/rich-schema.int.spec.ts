@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest'
 
+import { jsonLdFor } from '@/fields/schemaType'
 import { buildPageJsonLd } from '@/features/seo/pageSchema'
 import { buildRichNode, factsError, parseFacts, validateRich } from '@/features/seo/richTypes'
 
 const ctx = { title: 'Page', url: 'https://x.test/p', imageUrl: 'https://x.test/i.jpg', siteName: 'Site' }
 
 describe('rich structured data', () => {
+  it('keeps Event as the type for the events collection but a rich node for a post', () => {
+    expect(jsonLdFor('events', null, { title: 'E' })).toEqual({ type: 'Event' })
+    expect(jsonLdFor('posts', 'Event', { title: 'P' })).toEqual({ type: 'WebPage', rich: 'Event' })
+  })
+
   it('builds an event and lists missing facts', () => {
     const n = buildRichNode('Event', { startDate: '2027-01-05T18:00', location: 'Town Hall', price: 20, eventStatus: 'EventScheduled' }, ctx)
     expect(n).toMatchObject({ '@type': 'Event', name: 'Page', startDate: '2027-01-05T18:00', location: { name: 'Town Hall' }, offers: { price: 20 } })
