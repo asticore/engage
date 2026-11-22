@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/admin/auth'
 import { bumpCacheEpoch } from '@/features/speed/epoch'
 import { purgeCloudflareCache } from '@/features/speed/purge'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { clearSnapshots, readSnapshotBucket } from '@/features/speed/pageSnapshot'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +22,15 @@ export async function POST(): Promise<Response> {
 
     const epoch = await bumpCacheEpoch()
     const cloudflare = await purgeCloudflareCache()
+    // Saved page snapshots too, so a cleared cache never serves an older copy while the page rebuilds.
+    let snapshotsCleared = 0
+    try {
+      const { env } = await getCloudflareContext({ async: true })
+      const bucket = readSnapshotBucket(env)
+      if (bucket) snapshotsCleared = await clearSnapshots(bucket)
+    } catch (error) {
+      console.error('admin-cache-clear snapshots error:', error)
+    }
 
     if (epoch === null) {
       return NextResponse.json(
@@ -27,7 +38,7 @@ export async function POST(): Promise<Response> {
         { status: 500, headers: { 'Cache-Control': 'no-store' } },
       )
     }
-    return NextResponse.json({ ok: true, epoch, cloudflare }, { headers: { 'Cache-Control': 'no-store' } })
+    return NextResponse.json({ ok: true, epoch, cloudflare, snapshotsCleared }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('admin-cache-clear POST error:', error)
     return NextResponse.json({ ok: false, error: 'Something went wrong. Try again.' }, { status: 500 })

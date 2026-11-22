@@ -1,3 +1,4 @@
+import { isSnapshotKey } from '@/features/speed/pageSnapshot'
 import type { S3Store } from './destinations'
 
 import { listBackups, readManifest, prefixFor, type CataloguedBackup } from './catalogue'
@@ -375,7 +376,7 @@ export async function restoreBackup(request: RestoreRequest): Promise<RestoreRep
   let mediaPresent = 0
   if (parts.has('media')) {
     const existing = await bucket.list({ limit: 1000 })
-    mediaPresent = existing.objects.length
+    mediaPresent = existing.objects.filter((object) => !isSnapshotKey(object.key)).length
   }
 
   const notEmpty = Object.keys(occupied).length > 0 || mediaPresent > 0
