@@ -782,12 +782,6 @@ a {
 .el-logos--gray img:hover { filter: none; opacity: 1; }
 
 /* interactive */
-.el-disclosure details { border-bottom: 1px solid var(--color-line); }
-.el-disclosure summary { cursor: pointer; padding: 14px 28px 14px 0; font-weight: 600; list-style: none; position: relative; }
-.el-disclosure summary::-webkit-details-marker { display: none; }
-.el-disclosure summary::after { content: "+"; position: absolute; right: 4px; top: 12px; font-size: 1.3rem; color: var(--color-gold); }
-.el-disclosure details[open] summary::after { content: "\2212"; }
-.el-disclosure__body { padding: 0 0 16px; }
 .el-tabs { position: relative; }
 .el-tabs__radio { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
 .el-tabs__nav { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--color-line); }
@@ -821,9 +815,6 @@ a {
 .el-counter__number { font-size: 3rem; font-weight: 700; line-height: 1.1; color: var(--color-ink); }
 .el-counter__number span { font-size: 0.6em; color: var(--color-gold); }
 .el-counter__title { margin-top: 6px; font-size: 0.95rem; color: rgba(31, 34, 48, 0.7); }
-.el-progress__head { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }
-.el-progress__track { height: 10px; background: var(--color-cream-dim); border-radius: 999px; overflow: hidden; }
-.el-progress__fill { height: 100%; background: var(--color-gold); border-radius: 999px; }
 .el-rating { display: flex; align-items: center; gap: 10px; }
 .el-rating.el-align--center { justify-content: center; }
 .el-rating.el-align--right { justify-content: flex-end; }
@@ -843,12 +834,6 @@ a {
 .el-social--circle a { border-radius: 50%; }
 .el-social a:hover { background: var(--color-gold); color: var(--color-cream); }
 .el-social--plain a:hover { background: transparent; color: var(--color-gold); }
-.el-countdown { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
-.el-countdown__cell { min-width: 72px; padding: 12px; text-align: center; background: var(--color-ink); color: var(--color-cream); }
-.el-countdown__value { display: block; font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.el-countdown__label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
-.el-countdown--done,
-.el-countdown--empty { display: block; padding: 16px; text-align: center; background: var(--color-cream-dim); }
 
 /* marketing */
 .el-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
@@ -936,3 +921,4 @@ a {
 /* editor canvas hint for elements with no visible output */
 .el-canvas-hint { padding: 4px 8px; border: 1px dashed var(--color-line); font-size: 0.75rem; color: rgba(31, 34, 48, 0.55); }
 .el-flip__back .btn { color: var(--color-cream); border-color: var(--color-cream); }
+.el-progress__head { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9rem; }

@@ -3,7 +3,8 @@ import React from 'react'
 import { EMBED_NAME, EMBED_PROVIDERS, embedLayout, resolveEmbed, type EmbedProvider } from '@/lib/embedProviders'
 import { safeUrl } from '@/lib/mergeTags'
 
-import { cells, flag, mediaOf, num, pick, str, type MediaRef } from './elementUtil'
+import { flag, mediaOf, num, pick, str, type MediaRef } from './elementUtil'
+import { legacyRowsToCsv, parseCsv, sparkAttrs } from './sparkData'
 import { EmbedConsentFrame } from './EmbedConsentFrame'
 import './wave48.css'
 
@@ -16,306 +17,82 @@ import './wave48.css'
 type P = Record<string, unknown>
 
 const ELLIPSIS = String.fromCodePoint(0x2026)
-/** Used when a colour list has nothing usable in it. */
-const DEFAULT_COLOR = '#2e3192'
-
-/** A colour the SVG and CSS can take as-is: hex, rgb(...) or hsl(...). */
-const COLOR_RE = /^(#[0-9a-f]{3,8}|(?:rgb|hsl)a?\([\d\s.,%/+-]+\))$/i
-const PALETTE = ['#2e3192', '#00a9ff', '#f5a623', '#2ecc71', '#e74c3c', '#8e44ad']
-const START = -Math.PI / 2
-const f2 = (n: number) => n.toFixed(2)
-const fmt = (n: number) => n.toLocaleString('en-GB', { maximumFractionDigits: 2 })
-
 /* ---------- chart ---------- */
 
-const CHART_TYPES = ['bar', 'line', 'pie', 'radar', 'polar'] as const
-type ChartType = (typeof CHART_TYPES)[number]
-const CHART_NAME: Record<ChartType, string> = { bar: 'Bar chart', line: 'Line chart', pie: 'Pie chart', radar: 'Radar chart', polar: 'Polar area chart' }
-const MAX_POINTS = 100
+/** Charts whose data prop is CSV; Spark reads it from `data-spark-csv` (or labels and series for the ones without). */
+const CSV_CHARTS = new Set(['chart-bar', 'chart-line', 'chart-heatmap', 'chart-polar', 'chart-progress', 'chart-treemap'])
+/** Charts that take category labels plus one or more series of numbers. */
+const SERIES_CHARTS = new Set(['chart-combo', 'chart-radar', 'chart-pie', 'chart-funnel', 'chart-waterfall'])
+const CHART_ID_RE = /^(chart|diagram|viz)-[a-z]+$/
+const MAX_ROWS = 500
 
-type Point = { label: string; value: number }
-
-/** "label | value" rows. Rows with no label or a value that is not a number are skipped. Negatives count as zero. */
-function dataPoints(v: unknown): Point[] {
-  const out: Point[] = []
-  // CSV paste: lines with no "|" but a comma or tab are read as "label,value" (the last separator splits).
-  const src = typeof v === 'string' && !v.includes('|') ? v.split('\n').map((l) => l.replace(/[,\t](?=[^,\t]*$)/, ' | ')).join('\n') : v
-  for (const [label = '', raw = ''] of cells(src, 2)) {
-    const value = Number(raw.replace(/[,\s]/g, ''))
-    if (label && raw.trim() !== '' && Number.isFinite(value)) out.push({ label, value: Math.max(0, value) })
-    if (out.length === MAX_POINTS) break
-  }
-  return out
+/** The effect id a stored chartType means: "bar" from the first version becomes "chart-bar". */
+function chartId(v: unknown): string {
+  const raw = str(v).trim()
+  if (CHART_ID_RE.test(raw)) return raw
+  return /^[a-z]+$/.test(raw) ? `chart-${raw}` : 'chart-bar'
 }
 
-/** Comma-separated colours, invalid ones dropped. The list is reused in turn when there are more values. */
-function palette(v: unknown): string[] {
-  const list = str(v)
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s) => COLOR_RE.test(s))
-  return list.length ? list : PALETTE
-}
-
-/** Path for a pie or polar wedge from angle a0 to a1 (radians) around (cx, cy). */
-function arcPath(cx: number, cy: number, r: number, a0: number, a1: number): string {
-  const x0 = cx + r * Math.cos(a0)
-  const y0 = cy + r * Math.sin(a0)
-  const x1 = cx + r * Math.cos(a1)
-  const y1 = cy + r * Math.sin(a1)
-  const large = a1 - a0 > Math.PI ? 1 : 0
-  return `M${f2(cx)} ${f2(cy)}L${f2(x0)} ${f2(y0)}A${f2(r)} ${f2(r)} 0 ${large} 1 ${f2(x1)} ${f2(y1)}Z`
-}
-
-/** Label anchor for a point at angle `cos` from the centre: text grows away from the middle. */
-const anchorFor = (cos: number) => (cos > 0.2 ? 'start' : cos < -0.2 ? 'end' : 'middle')
-
-type ColorAt = (i: number) => string
-
-function barSvg(data: Point[], color: ColorAt, showValues: boolean, label: string): React.ReactNode {
-  const W = 480
-  const H = 280
-  const PAD_T = 32
-  const PAD_B = 56
-  const PAD_X = 12
-  const max = Math.max(...data.map((d) => d.value)) || 1
-  const plotH = H - PAD_T - PAD_B
-  const slot = (W - PAD_X * 2) / data.length
-  const barW = Math.min(64, slot * 0.6)
-  return (
-    <svg className="be-el-48-chart__svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
-      {data.map((d, i) => {
-        const h = (d.value / max) * plotH
-        const x = PAD_X + i * slot + (slot - barW) / 2
-        const y = PAD_T + plotH - h
-        const cx = x + barW / 2
-        return (
-          <g key={i}>
-            <rect className="be-el-48-chart__bar" x={x} y={y} width={barW} height={h} rx={3} fill={color(i)} />
-            {showValues && (
-              <text x={cx} y={y - 6} textAnchor="middle" className="be-el-48-chart__value">
-                {fmt(d.value)}
-              </text>
-            )}
-            <text x={cx} y={H - PAD_B + 20} textAnchor="middle" className="be-el-48-chart__label">
-              {d.label}
-            </text>
-          </g>
-        )
-      })}
-      <line x1={PAD_X} x2={W - PAD_X} y1={PAD_T + plotH} y2={PAD_T + plotH} className="be-el-48-chart__axis" />
-    </svg>
-  )
-}
-
-function lineSvg(data: Point[], color: ColorAt, showValues: boolean, label: string): React.ReactNode {
-  const W = 480
-  const H = 280
-  const PAD_T = 32
-  const PAD_B = 56
-  const PAD_X = 16
-  const max = Math.max(...data.map((d) => d.value)) || 1
-  const plotH = H - PAD_T - PAD_B
-  const step = (W - PAD_X * 2) / data.length
-  const pts = data.map((d, i) => ({ d, x: PAD_X + (i + 0.5) * step, y: PAD_T + plotH - (d.value / max) * plotH }))
-  const ink = color(0)
-  return (
-    <svg className="be-el-48-chart__svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
-      <line x1={PAD_X} x2={W - PAD_X} y1={PAD_T + plotH} y2={PAD_T + plotH} className="be-el-48-chart__axis" />
-      {pts.length > 1 && (
-        <polyline className="be-el-48-chart__line" fill="none" stroke={ink} points={pts.map((p) => `${f2(p.x)},${f2(p.y)}`).join(' ')} />
-      )}
-      {pts.map((p, i) => (
-        <g key={i}>
-          <circle cx={p.x} cy={p.y} r={4} fill={ink} />
-          {showValues && (
-            <text x={p.x} y={p.y - 10} textAnchor="middle" className="be-el-48-chart__value">
-              {fmt(p.d.value)}
-            </text>
-          )}
-          <text x={p.x} y={H - PAD_B + 20} textAnchor="middle" className="be-el-48-chart__label">
-            {p.d.label}
-          </text>
-        </g>
-      ))}
-    </svg>
-  )
-}
-
-function radarSvg(data: Point[], color: ColorAt, showValues: boolean, label: string): React.ReactNode {
-  const W = 480
-  const H = 300
-  const CX = 240
-  const CY = 150
-  const R = 100
-  const n = data.length
-  const max = Math.max(...data.map((d) => d.value)) || 1
-  const angle = (i: number) => START + (i * Math.PI * 2) / n
-  const at = (i: number, frac: number): [number, number] => [CX + R * frac * Math.cos(angle(i)), CY + R * frac * Math.sin(angle(i))]
-  const ring = (frac: number) => data.map((_, i) => at(i, frac).map(f2).join(',')).join(' ')
-  const ink = color(0)
-  return (
-    <svg className="be-el-48-chart__svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
-      {[0.25, 0.5, 0.75, 1].map((f) => (
-        <polygon key={f} className="be-el-48-chart__grid" points={ring(f)} />
-      ))}
-      {data.map((_, i) => {
-        const [x, y] = at(i, 1)
-        return <line key={i} className="be-el-48-chart__spoke" x1={CX} y1={CY} x2={x} y2={y} />
-      })}
-      <polygon
-        className="be-el-48-chart__area"
-        fill={ink}
-        stroke={ink}
-        points={data.map((d, i) => at(i, d.value / max).map(f2).join(',')).join(' ')}
-      />
-      {data.map((d, i) => {
-        const [lx, ly] = at(i, 1.16)
-        const [px, py] = at(i, d.value / max)
-        return (
-          <g key={i}>
-            <text x={lx} y={ly} textAnchor={anchorFor(Math.cos(angle(i)))} className="be-el-48-chart__label">
-              {d.label}
-            </text>
-            {showValues && (
-              <text x={px} y={py - 6} textAnchor="middle" className="be-el-48-chart__value">
-                {fmt(d.value)}
-              </text>
-            )}
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-function polarSvg(data: Point[], color: ColorAt, showValues: boolean, label: string): React.ReactNode {
-  const W = 480
-  const H = 300
-  const CX = 240
-  const CY = 150
-  const R = 110
-  const max = Math.max(...data.map((d) => d.value)) || 1
-  const slice = (Math.PI * 2) / data.length
-  return (
-    <svg className="be-el-48-chart__svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
-      {[0.5, 1].map((f) => (
-        <circle key={f} className="be-el-48-chart__grid" cx={CX} cy={CY} r={R * f} />
-      ))}
-      {data.map((d, i) => {
-        // Radius grows with the square root of the value, so the wedge area is in proportion to it.
-        const r = R * Math.sqrt(d.value / max)
-        const a0 = START + i * slice
-        const mid = a0 + slice / 2
-        const lx = CX + (R + 16) * Math.cos(mid)
-        const ly = CY + (R + 16) * Math.sin(mid)
-        return (
-          <g key={i}>
-            {r > 0 &&
-              (data.length === 1 ? (
-                <circle cx={CX} cy={CY} r={r} fill={color(i)} />
-              ) : (
-                <path d={arcPath(CX, CY, r, a0, a0 + slice)} fill={color(i)} />
-              ))}
-            <text x={lx} y={ly} textAnchor={anchorFor(Math.cos(mid))} className="be-el-48-chart__label">
-              {d.label}
-            </text>
-            {showValues && r > 0 && (
-              <text x={CX + r * 0.6 * Math.cos(mid)} y={CY + r * 0.6 * Math.sin(mid)} textAnchor="middle" className="be-el-48-chart__value">
-                {fmt(d.value)}
-              </text>
-            )}
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
-
-function pieSvg(data: Point[], color: ColorAt, total: number, label: string): React.ReactNode {
-  const C = 100
-  const R = 96
-  return (
-    <svg className="be-el-48-chart__svg be-el-48-chart__svg--pie" viewBox="0 0 200 200" role="img" aria-label={label}>
-      {data.map((d, i) => {
-        const frac = d.value / total
-        const before = data.slice(0, i).reduce((s, x) => s + x.value, 0)
-        const a0 = START + (before / total) * Math.PI * 2
-        const a1 = a0 + frac * Math.PI * 2
-        return frac >= 0.9999 ? (
-          <circle key={i} cx={C} cy={C} r={R} fill={color(i)} />
-        ) : (
-          <path key={i} d={arcPath(C, C, R, a0, a1)} fill={color(i)} />
-        )
-      })}
-    </svg>
-  )
+function seriesAttrs(table: string[][]): Record<string, string> {
+  const head = table[0] ?? []
+  const body = table.slice(1)
+  const series = head.slice(1).map((_, c) => body.map((r) => String(Number((r[c + 1] ?? '').replace(/[,\s]/g, '')) || 0)).join(','))
+  return { 'data-spark-labels': body.map((r) => r[0] ?? '').join('|'), 'data-spark-data': series.join('|'), 'data-spark-names': head.slice(1).join('|') }
 }
 
 /**
- * `chart`: bar, line, pie, radar or polar area in inline SVG. A legend (optional) and a visually hidden table
- * repeat the data for everyone who cannot see the drawing. Renders nothing when there is no data to plot.
+ * `chart`: any Spark chart, diagram or visualisation (asticore/spark). Renders the Spark class and `data-spark-*`
+ * attributes; the Spark loader draws the chart in the browser, in the Shine colours of the theme unless colours are set.
+ * The same data is also in a visually hidden table for screen readers and for visitors without scripts.
  */
 export const ChartElement: React.FC<P> = (p) => {
-  const type = pick(p.chartType, CHART_TYPES, 'bar')
-  const points = dataPoints(p.data).filter((d) => type !== 'pie' || d.value > 0)
-  const total = points.reduce((s, d) => s + d.value, 0)
-  if (points.length === 0 || (type === 'pie' && total <= 0)) return null
-
+  const id = chartId(p.chartType)
   const title = str(p.title).trim()
-  const colors = palette(p.colors)
-  const showLegend = flag(p.showLegend, false)
-  const showValues = flag(p.showValues, true)
-  const label = title || CHART_NAME[type]
-  // Line and radar draw one series, so they use the first colour throughout.
-  const color: ColorAt = (i) => (type === 'line' || type === 'radar' ? colors[0] ?? DEFAULT_COLOR : colors[i % colors.length] ?? DEFAULT_COLOR)
-  const share = (d: Point) => Math.round((d.value / total) * 100)
+  const tabular = CSV_CHARTS.has(id) || SERIES_CHARTS.has(id)
+  const csv = tabular ? legacyRowsToCsv(p.data) : ''
+  const table = csv ? parseCsv(csv).slice(0, MAX_ROWS) : []
+  const raw = tabular ? '' : str(p[`d_${id}`]).trim() || (typeof p.data === 'string' && !/^[\w\s]+\|/.test(p.data) ? p.data.trim() : '')
+  if (tabular && table.length < 2) return null
+  if (!tabular && !raw && !['chart-gauge', 'diagram-fishbone', 'diagram-tree', 'diagram-flow', 'diagram-cycle'].includes(id)) return null
 
-  const svg =
-    type === 'line'
-      ? lineSvg(points, color, showValues, label)
-      : type === 'radar'
-        ? radarSvg(points, color, showValues, label)
-        : type === 'polar'
-          ? polarSvg(points, color, showValues, label)
-          : type === 'pie'
-            ? pieSvg(points, color, total, label)
-            : barSvg(points, color, showValues, label)
+  const attrs: Record<string, string> = sparkAttrs(p, `o_${id}_`)
+  if (tabular) Object.assign(attrs, CSV_CHARTS.has(id) ? { 'data-spark-csv': csv } : seriesAttrs(table))
+  else if (raw) attrs['data-spark-data'] = raw
+  if (title) attrs['data-spark-title'] = title
 
   return (
-    <figure className={`be-el-48-chart be-el-48-chart--${type}`}>
+    <figure className="be-el-48-chart">
       {title && <figcaption className="be-el-48-chart__title">{title}</figcaption>}
-      {svg}
-      {showLegend && (
-        <ul className="be-el-48-chart__legend" aria-hidden="true">
-          {points.map((d, i) => (
-            <li key={i}>
-              <span className="be-el-48-chart__swatch" style={{ background: color(i) }} />
-              {d.label}: {fmt(d.value)}
-              {type === 'pie' && ` (${share(d)}%)`}
-            </li>
-          ))}
-        </ul>
-      )}
-      <table className="be-el-48-sr">
-        <caption>{label}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Item</th>
-            <th scope="col">Value</th>
-            {type === 'pie' && <th scope="col">Share</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {points.map((d, i) => (
-            <tr key={i}>
-              <th scope="row">{d.label}</th>
-              <td>{fmt(d.value)}</td>
-              {type === 'pie' && <td>{share(d)}%</td>}
+      <div className={`spark-${id}`} {...attrs} />
+      {table.length > 1 && (
+        <table className="be-el-48-sr">
+          <caption>{title || 'Chart data'}</caption>
+          <thead>
+            <tr>
+              {table[0]!.map((c, i) => (
+                <th key={i} scope="col">
+                  {c}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {table.slice(1).map((r, i) => (
+              <tr key={i}>
+                {table[0]!.map((_, j) =>
+                  j === 0 ? (
+                    <th key={j} scope="row">
+                      {r[j] ?? ''}
+                    </th>
+                  ) : (
+                    <td key={j}>{r[j] ?? ''}</td>
+                  ),
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </figure>
   )
 }

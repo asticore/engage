@@ -16,7 +16,8 @@ const ALIGN_LR: EditorField = { name: 'align', label: 'Alignment', type: 'select
 const text = (name: string, label: string, extra: Partial<EditorField> = {}): EditorField => ({ name, label, type: 'text', ...extra })
 const area = (name: string, label: string, helpText?: string): EditorField => ({ name, label, type: 'textarea', helpText })
 const select = (name: string, label: string, options: { label: string; value: string }[], extra: Partial<EditorField> = {}): EditorField => ({ name, label, type: 'select', width: 'half', options, ...extra })
-const check = (name: string, label: string): EditorField => ({ name, label, type: 'checkbox' })
+const check = (name: string, label: string, helpText?: string): EditorField => ({ name, label, type: 'checkbox', helpText })
+const number = (name: string, label: string, helpText?: string): EditorField => ({ name, label, type: 'number', width: 'half', helpText })
 /** Range slider for a numeric prop. Stores a plain number. min/max mirror the renderer's clamp. */
 const slider = (name: string, label: string, min: number, max: number, step = 1): EditorField => ({ name, label, type: 'range', width: 'half', min, max, step })
 const color = (name = 'color', label = 'Colour'): EditorField => ({ name, label, type: 'color', width: 'half' })
@@ -27,13 +28,22 @@ export const WAVE36_ELEMENTS: ElementDef[] = [
   // ---- text ----
   {
     type: 'table', label: 'Table', icon: String.fromCodePoint(0x25a5), category: 'text',
-    description: 'A data table with an optional header row, stripes and caption. Scrolls sideways on small screens.',
+    description: 'A data table on Shine table styles. Optionally sortable, searchable, filterable and paged, with a sticky header, column visibility, row selection, a stacked phone layout and CSV download. Scrolls sideways on small screens.',
     fields: [
-      area('rows', 'Rows', 'One row per line, cells separated by "|". Up to 6 columns.'),
-      check('headerRow', 'First row is a header'), check('striped', 'Striped rows'), text('caption', 'Caption'),
+      area('rows', 'Data', 'Paste CSV from a spreadsheet, or type one row per line with cells separated by "|". Up to 500 rows and 24 columns.'),
+      check('headerRow', 'First row is a header'), text('caption', 'Caption'),
+      check('striped', 'Striped rows'), check('hover', 'Highlight row on hover'), check('bordered', 'Borders'), check('compact', 'Compact'),
+      check('o_table_stack', 'Stack cells on phones', 'Each row becomes a card on narrow screens, with the column name beside each value.'),
+      check('o_table_sort', 'Sortable columns', 'Click a column heading to sort. Numbers sort as numbers.'),
+      check('o_table_search', 'Search box'), check('o_table_filters', 'Filter box per column'),
+      number('o_table_page-size', 'Rows per page', '0 shows every row.'),
+      check('o_table_sticky', 'Sticky header'), text('o_table_height', 'Height when sticky', { helpText: 'For example 400px. The table scrolls inside it.' }),
+      check('o_table_columns', 'Column visibility menu'), check('o_table_select', 'Row selection'),
+      check('o_table_csv', 'CSV download button'), text('o_table_filename', 'Download file name'),
+      text('o_table_empty', 'Text when nothing matches'), text('o_table_placeholder', 'Search box placeholder'),
     ],
     defaultProps: () => ({
-      rows: 'Day | Hours\nMonday to Friday | 9am to 5pm\nSaturday | 10am to 2pm\nSunday | Closed',
+      rows: 'Day,Hours\nMonday to Friday,9am to 5pm\nSaturday,10am to 2pm\nSunday,Closed',
       headerRow: true, striped: true, caption: 'Opening hours',
     }),
   },

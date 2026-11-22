@@ -27,6 +27,10 @@ import { HTML_ELEMENT, STEP_ELEMENT, isFieldElementType, nodeToField, type Layou
 import { previewTextFor } from '@/lib/blockContextFrom'
 import { EmbedCodeCanvasCard } from '@/components/blocks/elements/EmbedCodeFrame'
 import { PreviewContext } from './previewContext'
+import { SparkCanvasPreview } from './SparkCanvasPreview'
+
+/** Elements drawn by Spark in the browser; the canvas starts Spark for them. */
+const SPARK_DRAWN_ELEMENTS = new Set(['chart', 'table'])
 import { useResolvedMedia, useResolvedMediaList } from './useResolvedMedia'
 
 /** A form field as it will look on the site. Typing in it does nothing: the canvas is for arranging. */
@@ -195,9 +199,10 @@ export const CanvasBlockPreview: React.FC<{ data: Record<string, unknown> }> = (
           </div>
         )
       }
-      return renderElement(elementType, props) ?? (
+      const rendered = renderElement(elementType, props) ?? (
         <DynamicPlaceholder icon="🧩" label={elementType || 'Element'} data={data} detail="This element shows nothing here." />
       )
+      return SPARK_DRAWN_ELEMENTS.has(elementType) ? <SparkCanvasPreview signature={JSON.stringify(props)}>{rendered}</SparkCanvasPreview> : rendered
     }
     default:
       return <div className="ve-unknown-block">Unknown block type: {blockType}</div>

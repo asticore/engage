@@ -5,7 +5,6 @@ import { describe, expect, it } from 'vitest'
 import { renderElement } from '@/components/blocks/elements/renderElement'
 import { ELEMENT_COMPONENTS } from '@/components/blocks/elements/elementComponents'
 import { cells, mapEmbedSrc, parseVideoUrl, sanitizeHtml } from '@/components/blocks/elements/elementUtil'
-import { splitDuration } from '@/components/blocks/elements/CountdownElement'
 import { ELEMENT_CATEGORIES, ELEMENTS } from '@/lib/elements/registry'
 import { WAVE26_ELEMENTS } from '@/lib/elements/wave26Defs'
 import { BLOCK_CATEGORIES, libraryCards } from '@/views/visualEditor/blockSchemas'
@@ -126,9 +125,21 @@ describe('parsing and small helpers', () => {
   it('splits cells on the first separators only', () => {
     expect(cells('A | B | C | D\nOnly', 3)).toEqual([['A', 'B', 'C | D'], ['Only']])
   })
-  it('splits a duration', () => {
-    expect(splitDuration(90061000)).toEqual({ d: 1, h: 1, m: 1, s: 1 })
-    expect(splitDuration(-5)).toEqual({ d: 0, h: 0, m: 0, s: 0 })
+  it('renders the countdown, counter, progress bar and accordion with Spark and Shine', () => {
+    const countdown = render(renderElement('countdown', { target: '2027-01-31T18:00', units: 3, expiredText: 'Over', hoursLabel: 'Std' }))
+    expect(countdown).toContain('class="spark-countdown"')
+    expect(countdown).toContain('data-spark-to="2027-01-31T18:00"')
+    expect(countdown).toContain('data-spark-units="hms"')
+    expect(countdown).toContain('data-spark-labels="Days|Std|Minutes|Seconds"')
+    expect(render(renderElement('countdown', { target: 'soon' }))).toContain('el-countdown--empty')
+    const animated = render(renderElement('counter', { number: 1200, animate: true, suffix: '+', duration: 99999 }))
+    expect(animated).toContain('class="spark-counter"')
+    expect(animated).toContain('data-spark-to="1200"')
+    expect(animated).toContain('data-spark-duration="5000"')
+    expect(animated).toContain('data-spark-suffix="+"')
+    expect(render(renderElement('counter', { number: 1200, suffix: '+' }))).not.toContain('spark-counter')
+    expect(render(renderElement('progress-bar', { title: 'Done', percent: 40 }))).toContain('<progress class="progress" max="100" value="40" aria-label="Done">')
+    expect(render(renderElement('accordion', { items: 'Q | A' }))).toContain('class="accordion spark-collapse"')
   })
   it('does not render unsafe links', () => {
     expect(render(renderElement('icon-box', { title: 'x', link: 'javascript:alert(1)' }))).not.toContain('javascript')
