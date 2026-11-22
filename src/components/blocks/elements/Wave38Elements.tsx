@@ -1,3 +1,5 @@
+import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import { requestDomain } from '@/features/domains/request'
 import { domainTagline } from '@/features/domains/brand'
 import Link from 'next/link'
@@ -358,6 +360,7 @@ export const PostListElement: React.FC<P> = async (p) => {
 
   const all = await readPosts()
   if (!all) return null
+  const blogBase = await readBlogBase()
   const rows = all.flatMap((post) => {
     if (!post.title || !post.slug) return []
     if (category && !(post.categories || []).some((c) => str(c.name).trim().toLowerCase() === category)) return []
@@ -378,7 +381,7 @@ export const PostListElement: React.FC<P> = async (p) => {
               {image && (
                 <img className="be-el-posts__image" src={image.url} alt={image.alt || title} width={IMAGE_W} height={image.height} loading="lazy" decoding="async" />
               )}
-              {React.createElement(Heading, { className: 'be-el-posts__title' }, <a href={`/blog/${encodeURIComponent(slug)}`}>{title}</a>)}
+              {React.createElement(Heading, { className: 'be-el-posts__title' }, <a href={blogPath(blogBase, `/${encodeURIComponent(slug)}`)}>{title}</a>)}
               {date && (
                 <time className="be-el-posts__date" dateTime={date.iso}>
                   {date.label}

@@ -1,3 +1,4 @@
+import { blogPath } from '@/features/seo/permalinks'
 import type { ArchiveFilterValues, ArchiveItem } from '@/lib/blockContext'
 import { parseColumns } from '@/lib/sectionTree'
 import { slugify } from '@/utilities/formatSlug'
@@ -163,7 +164,7 @@ export function loopItemBlocks(blocks: unknown[], item: ArchiveItem): unknown[] 
 }
 
 /** Archive cards for a list of documents of one source. Public fields only, same shape the archive pages use. */
-export function loopItemsFromDocs(source: Exclude<LoopGridSource, ''>, docs: Record<string, unknown>[]): ArchiveItem[] {
+export function loopItemsFromDocs(source: Exclude<LoopGridSource, ''>, docs: Record<string, unknown>[], blogBase?: string): ArchiveItem[] {
   return docs.map((doc) => {
     const slug = str(doc.slug)
     const names = (list: unknown): string[] =>
@@ -173,7 +174,7 @@ export function loopItemsFromDocs(source: Exclude<LoopGridSource, ''>, docs: Rec
       const author = publicAuthor(doc as ArchivePost)
       return {
         title: str(doc.title),
-        href: `/blog/${slug}`,
+        href: blogPath(blogBase ?? '', `/${slug}`),
         excerpt: str(doc.excerpt) || undefined,
         date: doc.publishedDate,
         image: image && str(image.url) ? { url: str(image.url), alt: str(image.alt) } : undefined,

@@ -1,3 +1,5 @@
+import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import { storeTexts } from '@/features/uiStrings/storeTextsServer'
 import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
@@ -57,7 +59,7 @@ export default async function NotFound() {
       </p>
       <nav className="mt-8 flex flex-wrap justify-center gap-6 text-[var(--color-ink)] underline underline-offset-4" aria-label={t('store.helpfulLinks')}>
         <Link href="/">{t('store.home')}</Link>
-        {flags.blog !== false && <Link href="/blog">{t('store.blog')}</Link>}
+        {flags.blog !== false && <Link href={blogPath(await readBlogBase())}>{t('store.blog')}</Link>}
         {flags.ecommerce !== false && <Link href="/shop">{t('store.shop')}</Link>}
       </nav>
     </section>

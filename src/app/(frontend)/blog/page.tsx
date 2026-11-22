@@ -79,10 +79,11 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
   const ordered = filters.sort === 'newest' ? orderBlogPosts(kept.map((k) => k.post)) : sortArchiveItems(kept, filters.sort).map((k) => k.post)
   const paged = paginate(ordered, parsePage(params.page), settings?.postsPerPage || 9)
   const posts = paged.items
-  const basePath = `/blog${archiveQueryString(filters)}`
+  const blogBase = await readBlogBase()
+  const basePath = `${blogPath(blogBase)}${archiveQueryString(filters)}`
   setBlockContext({
     path: '/blog',
-    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(posts, blogTree), kind: 'posts', filters, facets: archiveFacets(pool) },
+    archive: { basePath, page: paged.page, pages: paged.pages, items: postArchiveItems(posts, blogTree, blogBase), kind: 'posts', filters, facets: archiveFacets(pool) },
   })
 
   const layout = settings?.archiveLayout || 'grid'
@@ -95,11 +96,11 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
         schemaType: 'CollectionPage',
         title,
         description: settings?.archiveIntro,
-        url: context.baseUrl + '/blog',
+        url: context.baseUrl + blogPath(blogBase),
         baseUrl: context.baseUrl,
         siteName: context.siteName,
-        breadcrumbs: breadcrumbSchemaOn(context.settings) ? listBreadcrumbs({ baseUrl: context.baseUrl, path: '/blog', name: 'Blog' }) : [],
-        listItems: postArchiveItems(posts).map((item) => ({ name: item.title, url: context.baseUrl + item.href })),
+        breadcrumbs: breadcrumbSchemaOn(context.settings) ? listBreadcrumbs({ baseUrl: context.baseUrl, path: blogPath(blogBase), name: 'Blog' }) : [],
+        listItems: postArchiveItems(posts, [], blogBase).map((item) => ({ name: item.title, url: context.baseUrl + item.href })),
       })
     : null
 
@@ -131,7 +132,7 @@ export default async function BlogArchivePage({ searchParams }: { searchParams: 
             const readTime = readingTimeLabel(post.readingTime)
             return (
               <React.Fragment key={post.id}>
-                <Link href={`/blog/${post.slug}`} className="blog-card block">
+                <Link href={blogPath(blogBase, `/${post.slug}`)} className="blog-card block">
                 {image?.url && (
                   <div className="blog-card__image mb-4 overflow-hidden">
                     <Image src={image.url} alt={post.title} width={640} height={420} style={{ width: '100%', height: 'auto', objectFit: 'cover' }} />
