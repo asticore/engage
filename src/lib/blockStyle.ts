@@ -10,7 +10,7 @@
  */
 
 import { BUILT_IN_FONTS, fontStack, sanitizeFamily } from '@/features/fonts/installed'
-import { cleanDays, cleanLangs, cleanRoles, cleanTime, cleanUrlText, isIsoDate, rulesFromStyle } from '@/lib/visibilityRules'
+import { cleanCountries, cleanDays, cleanDevices, cleanLangs, cleanNameValue, cleanRoles, cleanTime, cleanUrlText, isIsoDate, rulesFromStyle } from '@/lib/visibilityRules'
 
 import { safeUrl } from '@/lib/mergeTags'
 import { isDesignV2Raw, readFlatDesign } from '@/lib/design/upgrade'
@@ -356,6 +356,11 @@ export type BlockStyle = {
   showUntilTime?: string
   /** Comma list of language codes the page must be in (html lang). */
   showLang?: string
+  /** Display conditions: devices (comma list of mobile, tablet, desktop), query parameter, cookie, countries (comma list of codes). */
+  showDevices?: string
+  showParam?: string
+  showCookie?: string
+  showCountry?: string
 
   // Visibility
   hideOnMobile?: boolean
@@ -555,7 +560,7 @@ export function cornerRadiusValue(s: BlockStyle): string | undefined {
   return RADIUS_CORNER_KEYS.map((k) => `${isNum(s[k]) ? s[k] : base}px`).join(' ')
 }
 
-const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang'] as const
+const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang', 'showDevices', 'showParam', 'showCookie', 'showCountry'] as const
 
 /** Validates the Display conditions keys: ISO dates, in/out, slug-shaped roles, short clean URL text. */
 function sanitizeVisibility(style: BlockStyle): BlockStyle {
@@ -578,6 +583,14 @@ function sanitizeVisibility(style: BlockStyle): BlockStyle {
   if (tu) out.showUntilTime = tu
   const langs = cleanLangs(raw.showLang)
   if (langs.length > 0) out.showLang = langs.join(',')
+  const devices = cleanDevices(raw.showDevices)
+  if (devices.length > 0) out.showDevices = devices.join(',')
+  const param = cleanNameValue(raw.showParam)
+  if (param) out.showParam = param
+  const cookie = cleanNameValue(raw.showCookie)
+  if (cookie) out.showCookie = cookie
+  const countries = cleanCountries(raw.showCountry)
+  if (countries.length > 0) out.showCountry = countries.join(',')
   return out as BlockStyle
 }
 

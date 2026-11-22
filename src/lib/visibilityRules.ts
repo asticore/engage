@@ -28,7 +28,17 @@ export type VisRules = {
   tu?: string
   /** Page languages (BCP 47 codes, lower case); a bare code such as "pt" also matches "pt-br". */
   l?: string[]
+  /** Devices by viewport width: mobile (under 600 px), tablet (600 to 899 px), desktop (900 px and up). */
+  v?: VisDevice[]
+  /** Query parameter: "name" (present) or "name=value" (exact, case-insensitive value). */
+  p?: string
+  /** Cookie: "name" (present) or "name=value". Read in the browser only. */
+  k?: string
+  /** Visitor countries, upper-case ISO 3166-1 alpha-2 codes, from the edge. Unknown country fails closed. */
+  c?: string[]
 }
+
+export type VisDevice = 'mobile' | 'tablet' | 'desktop'
 
 export type VisContext = {
   /** Epoch milliseconds. */
@@ -44,6 +54,12 @@ export type VisContext = {
   minutes?: number
   /** The page's current language (html lang). Empty/absent = unknown, language rules then fail closed. */
   lang?: string
+  /** Viewport width in px. Absent = unknown, device rules then fail closed. */
+  width?: number
+  /** document.cookie text. */
+  cookie?: string
+  /** Visitor's two-letter country from the edge; null/absent = unknown. */
+  country?: string | null
 }
 
 export const VIS_MAX_ROLES = 10
@@ -129,6 +145,45 @@ export function cleanLangs(v: unknown): string[] {
   return out
 }
 
+const DEVICES: readonly VisDevice[] = ['mobile', 'tablet', 'desktop']
+const PARAM_TEXT = /^[A-Za-z0-9_.\-[\]]{1,40}(?:=[^&\s"'<>\\]{0,60})?$/
+const COUNTRY = /^[A-Z]{2}$/
+
+/** Cleans a comma list of devices: mobile, tablet, desktop; unique. All three selected means no rule. */
+export function cleanDevices(v: unknown): VisDevice[] {
+  const parts = Array.isArray(v) ? v : typeof v === 'string' ? v.split(',') : []
+  const out: VisDevice[] = []
+  for (const part of parts) {
+    const t = typeof part === 'string' ? part.trim().toLowerCase() : ''
+    if ((DEVICES as readonly string[]).includes(t) && !out.includes(t as VisDevice)) out.push(t as VisDevice)
+  }
+  return out.length === DEVICES.length ? [] : out
+}
+
+/** "name" or "name=value" for a query parameter or cookie name; '' when it is not that shape. */
+export const cleanNameValue = (v: unknown): string => (typeof v === 'string' && PARAM_TEXT.test(v.trim()) ? v.trim() : '')
+
+/** Comma list of two-letter country codes, upper case, unique, at most 30. */
+export function cleanCountries(v: unknown): string[] {
+  const parts = Array.isArray(v) ? v : typeof v === 'string' ? v.split(',') : []
+  const out: string[] = []
+  for (const part of parts) {
+    const t = typeof part === 'string' ? part.trim().toUpperCase() : ''
+    if (COUNTRY.test(t) && !out.includes(t)) out.push(t)
+    if (out.length >= 30) break
+  }
+  return out
+}
+
+export const deviceOf = (width: number): VisDevice => (width < 600 ? 'mobile' : width < 900 ? 'tablet' : 'desktop')
+
+const matchesNameValue = (rule: string, pairs: Array<[string, string]>): boolean => {
+  const eq = rule.indexOf('=')
+  const name = (eq === -1 ? rule : rule.slice(0, eq)).toLowerCase()
+  const value = eq === -1 ? null : rule.slice(eq + 1).toLowerCase()
+  return pairs.some(([n, v]) => n.toLowerCase() === name && (value === null || v.toLowerCase() === value))
+}
+
 const toMinutes = (hhmm: string): number => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5))
 
 type VisKeys = {
@@ -141,6 +196,10 @@ type VisKeys = {
   showFromTime?: unknown
   showUntilTime?: unknown
   showLang?: unknown
+  showDevices?: unknown
+  showParam?: unknown
+  showCookie?: unknown
+  showCountry?: unknown
 }
 
 /** Builds the compact rule set from (already sanitised) style keys; null when no rule is set. */
@@ -161,14 +220,22 @@ export function rulesFromStyle(style: VisKeys): VisRules | null {
   if (tu) r.tu = tu
   const l = cleanLangs(style.showLang)
   if (l.length > 0) r.l = l
+  const v = cleanDevices(style.showDevices)
+  if (v.length > 0) r.v = v
+  const p = cleanNameValue(style.showParam)
+  if (p) r.p = p
+  const k = cleanNameValue(style.showCookie)
+  if (k) r.k = k
+  const c = cleanCountries(style.showCountry)
+  if (c.length > 0) r.c = c
   return Object.keys(r).length > 0 ? r : null
 }
 
 /** True when the rules need the visitor (login, role, URL): those start hidden until the script decides. */
-export const needsClientGate = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || r.q || (r.d && r.d.length > 0) || r.tf || r.tu || (r.l && r.l.length > 0))
+export const needsClientGate = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || r.q || (r.d && r.d.length > 0) || r.tf || r.tu || (r.l && r.l.length > 0) || (r.v && r.v.length > 0) || r.p || r.k || (r.c && r.c.length > 0))
 
 /** True when the rules need to know who is signed in. */
-export const needsAuthState = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0))
+export const needsAuthState = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || (r.c && r.c.length > 0))
 
 /** Parses a data-eg-cond value back into rules; null for anything malformed. */
 export function parseRules(json: string | null | undefined): VisRules | null {
@@ -194,6 +261,14 @@ export function parseRules(json: string | null | undefined): VisRules | null {
     if (tu) r.tu = tu
     const l = cleanLangs(raw.l)
     if (l.length > 0) r.l = l
+    const v = cleanDevices(raw.v)
+    if (v.length > 0) r.v = v
+    const p = cleanNameValue(raw.p)
+    if (p) r.p = p
+    const k = cleanNameValue(raw.k)
+    if (k) r.k = k
+    const c = cleanCountries(raw.c)
+    if (c.length > 0) r.c = c
     return Object.keys(r).length > 0 ? r : null
   } catch {
     return null
@@ -232,6 +307,21 @@ export function evaluateRules(rules: VisRules, ctx: VisContext): boolean {
     } else if (until !== null && m >= until) return false
   }
   if (rules.l && rules.l.length > 0 && !langMatches(rules.l, ctx.lang)) return false
+  if (rules.v && rules.v.length > 0 && (typeof ctx.width !== 'number' || !rules.v.includes(deviceOf(ctx.width)))) return false
+  if (rules.p) {
+    const q = ctx.href.includes('?') ? ctx.href.slice(ctx.href.indexOf('?') + 1).split('#')[0]! : ''
+    const pairs = Array.from(new URLSearchParams(q).entries())
+    if (!matchesNameValue(rules.p, pairs)) return false
+  }
+  if (rules.k) {
+    const pairs = (ctx.cookie ?? '').split(';').map((c): [string, string] => {
+      const i = c.indexOf('=')
+      const safe = (x: string) => { try { return decodeURIComponent(x) } catch { return x } }
+      return i === -1 ? [c.trim(), ''] : [c.slice(0, i).trim(), safe(c.slice(i + 1).trim())]
+    }).filter(([n]) => n)
+    if (!matchesNameValue(rules.k, pairs)) return false
+  }
+  if (rules.c && rules.c.length > 0 && !(ctx.country && rules.c.includes(ctx.country.toUpperCase()))) return false
   return true
 }
 

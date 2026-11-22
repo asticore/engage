@@ -98,3 +98,41 @@ describe('visibility rules: sources', () => {
     }
   })
 })
+
+describe('visibility rules: device, parameter, cookie and country', () => {
+  it('sanitises the new keys', () => {
+    const out = asBlockStyle({ showDevices: 'Mobile, tablet, bogus', showParam: 'utm_source=news', showCookie: 'bad name!', showCountry: 'au, nz, xyz, 1' })
+    expect(out.showDevices).toBe('mobile,tablet')
+    expect(out.showParam).toBe('utm_source=news')
+    expect(out.showCookie).toBeUndefined()
+    expect(out.showCountry).toBe('AU,NZ')
+    expect(asBlockStyle({ showDevices: 'mobile,tablet,desktop' }).showDevices).toBeUndefined()
+  })
+  it('decides by device width and fails closed when unknown', () => {
+    const r = { v: ['mobile' as const] }
+    expect(evaluateRules(r, ctx({ width: 390 }))).toBe(true)
+    expect(evaluateRules(r, ctx({ width: 700 }))).toBe(false)
+    expect(evaluateRules({ v: ['tablet' as const, 'desktop' as const] }, ctx({ width: 1200 }))).toBe(true)
+    expect(evaluateRules(r, ctx())).toBe(false)
+  })
+  it('matches query parameters', () => {
+    expect(evaluateRules({ p: 'ref' }, ctx())).toBe(true)
+    expect(evaluateRules({ p: 'ref=NEWS' }, ctx())).toBe(true)
+    expect(evaluateRules({ p: 'ref=other' }, ctx())).toBe(false)
+    expect(evaluateRules({ p: 'x' }, ctx({ href: '/shop' }))).toBe(false)
+  })
+  it('matches cookies', () => {
+    expect(evaluateRules({ k: 'returning=1' }, ctx({ cookie: 'a=b; returning=1' }))).toBe(true)
+    expect(evaluateRules({ k: 'returning' }, ctx({ cookie: 'a=b' }))).toBe(false)
+    expect(evaluateRules({ k: 'returning=1' }, ctx({ cookie: 'returning=2' }))).toBe(false)
+  })
+  it('matches countries and fails closed when unknown', () => {
+    expect(evaluateRules({ c: ['AU', 'NZ'] }, ctx({ country: 'au' }))).toBe(true)
+    expect(evaluateRules({ c: ['AU'] }, ctx({ country: 'GB' }))).toBe(false)
+    expect(evaluateRules({ c: ['AU'] }, ctx({ country: null }))).toBe(false)
+  })
+  it('round trips through the compact rules', () => {
+    const r = rulesFromStyle({ showDevices: 'mobile', showParam: 'a=b', showCookie: 'c', showCountry: 'AU' })
+    expect(parseRules(JSON.stringify(r))).toEqual({ v: ['mobile'], p: 'a=b', k: 'c', c: ['AU'] })
+  })
+})

@@ -768,6 +768,52 @@ const ConditionControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSty
         help="Comma list of language codes. Shown only when the page is in one of them (en also matches en-GB). Up to 10."
         onChange={(v) => set({ showLang: v ? v.slice(0, 120) : undefined })}
       />
+      <div className="ve-row" role="group" aria-label="Devices">
+        <span className="ve-row__label">Devices</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {(['mobile', 'tablet', 'desktop'] as const).map((name) => {
+            const cur = (value.showDevices ?? '').split(',').filter(Boolean)
+            const on = cur.includes(name)
+            return (
+              <button
+                key={name}
+                type="button"
+                className="ve-btn ve-btn--ghost"
+                aria-pressed={on}
+                style={on ? { outline: '2px solid currentColor', fontWeight: 700 } : undefined}
+                onClick={() => {
+                  const next = on ? cur.filter((d) => d !== name) : [...cur, name]
+                  set({ showDevices: next.length > 0 && next.length < 3 ? next.join(',') : undefined })
+                }}
+              >
+                {name}
+              </button>
+            )
+          })}
+        </div>
+        <span className="ve-row__help">None selected = every device. Mobile is under 600 px wide, tablet 600 to 899 px, desktop 900 px and up.</span>
+      </div>
+      <TextRow
+        label="Query parameter"
+        value={value.showParam}
+        placeholder="utm_source=news"
+        help="Shown only when the address has this parameter, or this name and value. Read in the browser."
+        onChange={(v) => set({ showParam: v ? v.slice(0, 100) : undefined })}
+      />
+      <TextRow
+        label="Cookie"
+        value={value.showCookie}
+        placeholder="returning=1"
+        help="Shown only when the browser has this cookie, or this name and value. Read in the browser, so cached pages are not split."
+        onChange={(v) => set({ showCookie: v ? v.slice(0, 100) : undefined })}
+      />
+      <TextRow
+        label="Visitor country"
+        value={value.showCountry}
+        placeholder="AU, NZ, GB"
+        help="Comma list of two-letter country codes. Shown only to visitors the network places in one of them. Hidden when the country is unknown."
+        onChange={(v) => set({ showCountry: v ? v.slice(0, 120) : undefined })}
+      />
     </>
   )
 }
