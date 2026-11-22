@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { suggestTests } from '@/features/abTesting/suggestions'
+import { goalChoices, suggestTests } from '@/features/abTesting/suggestions'
 import type { SectionNode } from '@/lib/sectionTree'
 
 const el = (elementType: string, props: Record<string, unknown>): SectionNode => ({ blockType: 'element', elementType, props })
@@ -30,5 +30,26 @@ describe('A/B test ideas', () => {
     expect(suggestTests([section(undefined, [el('heading', { text: 'Hi' })])])[0].sectionId).toBeNull()
     const many = [0, 1].map((i) => section(`s${i}`, [el('heading', { text: `H${i}` }), el('button', { text: 'Submit' }), el('image', {})], 3))
     expect(suggestTests(many, 2)).toHaveLength(2)
+  })
+})
+
+describe('A/B goal picker', () => {
+  it('lists the page buttons and forms as wins, and refuses unsafe links', () => {
+    const tree = [
+      section('s1', [
+        el('button', { text: 'Book now', url: '/book?x=1' }),
+        el('button', { text: 'Docs', url: 'https://example.com/docs' }),
+        el('button', { text: 'Bad', url: 'javascript:alert(1)' }),
+        el('button', { text: 'Quote', url: '/book?x=1' }),
+        { blockType: 'form', form: 7 } as unknown as SectionNode,
+      ]),
+    ]
+    const choices = goalChoices(tree)
+    expect(choices.map((c) => c.goal)).toEqual([
+      { type: 'element-clicked', selector: 'a[href="/book?x=1"]' },
+      { type: 'page-visited', path: '/book' },
+      { type: 'element-clicked', selector: 'a[href="https://example.com/docs"]' },
+      { type: 'form-submitted', formId: '7' },
+    ])
   })
 })
