@@ -1,7 +1,7 @@
 /**
  * Templates follow the theme (Task 14, 33d). A library item uses Shine colour tokens, written
  * `var(--sh-primary)` (also `var(--shine-primary)` or `var(--eg-c-primary)`), instead of fixed colours.
- * On insert each token becomes the site's own theme colour reference (`@primary`, drawn from `--eg-c-primary`),
+ * On insert each token becomes the site's own theme colour variable (`var(--eg-c-primary)`, the same value the colour picker's theme tokens store),
  * so the inserted section picks up the site's colours and its dark value under [data-theme="dark"].
  *
  * An item may also list fixed colours it was drawn with, as `requires.colours` (a map from a hex colour to a
@@ -32,19 +32,19 @@ export function readColourMap(requires: unknown): Record<string, string> {
   return map
 }
 
-/** Maps one string value: a whole-string token or hex becomes `@id`; tokens inside longer text (gradients, shadows) become `var(--eg-c-id)`. */
+/** Maps one string value: a whole-string token or listed hex, and tokens inside longer text (gradients, shadows), become `var(--eg-c-id)`. */
 export function mapColourString(value: string, options: ThemeMapOptions): { value: string; mapped: number } {
   const ids = new Set(options.siteColourIds)
   const trimmed = value.trim()
   if (HEX_RE.test(trimmed)) {
     const id = options.hexMap?.[trimmed.toLowerCase()]
-    return id && ids.has(id) ? { value: `@${id}`, mapped: 1 } : { value, mapped: 0 }
+    return id && ids.has(id) ? { value: `var(--eg-c-${id})`, mapped: 1 } : { value, mapped: 0 }
   }
   let mapped = 0
   const whole = /^var\(\s*--(?:sh|shine|eg-c)-([a-z0-9-]{1,32})\s*(?:,[^)]*)?\)$/i.exec(trimmed)
   if (whole) {
     const id = whole[1].toLowerCase()
-    return ids.has(id) ? { value: `@${id}`, mapped: 1 } : { value, mapped: 0 }
+    return ids.has(id) ? { value: `var(--eg-c-${id})`, mapped: 1 } : { value, mapped: 0 }
   }
   const replaced = value.replace(TOKEN_RE, (match, rawId: string) => {
     const id = rawId.toLowerCase()
