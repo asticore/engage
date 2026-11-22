@@ -72,11 +72,14 @@ export const WAVE37_ELEMENTS: ElementDef[] = [
       area('items', 'Entries', 'One entry per line: "label | anchor". The anchor is the id of the heading on this page, without the #. Letters, digits, - and _ only.'),
       select('style', 'Style', opts('numbered', 'bullets')),
       check('sticky', 'Stay in view while scrolling'),
+      check('auto', 'Fill from this page\'s headings'),
+      select('levels', 'Headings to list (automatic)', [{ label: 'Main headings (H2)', value: 'h2' }, { label: 'H2 and H3', value: 'h2-h3' }, { label: 'H2 to H4', value: 'h2-h4' }]),
+      check('collapsible', 'Readers can open and close the list (automatic)'),
     ],
     defaultProps: () => ({
       title: 'On this page',
       items: 'Introduction | intro\nSizing guide | sizing\nCare instructions | care\nReturns | returns',
-      style: 'numbered', sticky: false,
+      style: 'numbered', sticky: false, auto: false, levels: 'h2-h4', collapsible: true,
     }),
   },
   // ---- text ----

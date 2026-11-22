@@ -26,6 +26,7 @@ import { REQUEST_BUTTON_COMPONENTS } from './RequestButtonServer'
 import { EMBED_CODE_COMPONENTS } from './EmbedCodeServer'
 import { TEMPLATE_PART_COMPONENTS } from './TemplatePartServer'
 import { COMING_SOON_COMPONENTS } from './ComingSoonServer'
+import { LEGACY_REPLACEMENT_COMPONENTS } from './LegacyReplacementServer'
 import { DynamicTextElement } from './DynamicText'
 import SearchSuggest from './SearchSuggest'
 import { ChatWidget } from '@/features/chatbot/components/ChatWidget'
@@ -423,6 +424,7 @@ const SITE_RENDERERS: Record<string, React.ComponentType<P>> = {
   ...EMBED_CODE_COMPONENTS,
   ...TEMPLATE_PART_COMPONENTS,
   ...COMING_SOON_COMPONENTS,
+  ...LEGACY_REPLACEMENT_COMPONENTS,
 }
 
 /**

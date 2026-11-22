@@ -7,6 +7,7 @@
  */
 
 import { convertHtml, type HtmlConversion } from './htmlToBlocks'
+import { modernizeBlocks } from '@/features/legacyBlocks/convertTree'
 import { itemSlug } from './items'
 import { lexicalRoot, paragraph } from './lexical'
 import { creationOrder, planItems, type ExistingIndex, type PlanOptions, type PlanRow } from './plan'
@@ -89,7 +90,7 @@ function documentData(item: ImportItem, row: PlanRow, converted: HtmlConversion,
     data.categories = item.categories.map((name) => ({ name }))
     if (item.date) data.publishedDate = item.date
   } else {
-    data.blocks = converted.children.length ? [{ blockType: 'richText', content: lexicalRoot(converted.children) }] : []
+    data.blocks = converted.children.length ? modernizeBlocks([{ blockType: 'richText', content: lexicalRoot(converted.children) }]) : []
     if (item.parentSlug) {
       const parentId = pageIds.get(item.parentSlug)
       if (parentId) data.parent = parentId

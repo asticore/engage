@@ -1,4 +1,5 @@
 import type { Engine } from '@/engine'
+import { modernizeBlocks } from '@/features/legacyBlocks/convertTree'
 
 import { siteNameOf } from '@/features/brand/siteName'
 
@@ -62,7 +63,7 @@ export async function seedHomeAndTemplates(
         slug: 'home',
         isHomepage: true,
         _status: 'published',
-        blocks: [
+        blocks: modernizeBlocks([
           {
             blockType: 'hero',
             heading: siteName,
@@ -92,7 +93,7 @@ export async function seedHomeAndTemplates(
             buttonUrl: '/#newsletter',
             style: 'dark',
           },
-        ],
+        ]),
       },
     })
     engine.logger.info('[seed] Created and published Home page.')
@@ -116,7 +117,7 @@ export async function seedHomeAndTemplates(
       data: {
         name: 'Homepage Starter',
         description: 'Hero, intro copy, a product grid, and a call-to-action banner - a full landing page in one click.',
-        blocks: [
+        blocks: modernizeBlocks([
           { blockType: 'hero', heading: 'Your headline here', subheading: 'A short supporting line about the brand.' },
           { blockType: 'richText', content: lexicalParagraph('Write an introduction to your brand or offer here.') },
           { blockType: 'productGrid', heading: 'Featured products', limit: 4 },
@@ -128,7 +129,7 @@ export async function seedHomeAndTemplates(
             buttonUrl: '/shop',
             style: 'dark',
           },
-        ],
+        ]),
       },
     })
 
@@ -138,7 +139,7 @@ export async function seedHomeAndTemplates(
       data: {
         name: 'About / Story',
         description: 'Hero, a longer story section, and an FAQ - good for About or brand-story pages.',
-        blocks: [
+        blocks: modernizeBlocks([
           { blockType: 'hero', heading: 'Our story' },
           {
             blockType: 'richText',
@@ -147,7 +148,7 @@ export async function seedHomeAndTemplates(
             ),
           },
           { blockType: 'faq', heading: 'Frequently asked questions', source: 'category' },
-        ],
+        ]),
       },
     })
 
@@ -157,10 +158,10 @@ export async function seedHomeAndTemplates(
       data: {
         name: 'Simple Landing',
         description: 'A minimal one-section landing page - hero plus a single call-to-action banner.',
-        blocks: [
+        blocks: modernizeBlocks([
           { blockType: 'hero', heading: 'Your headline here' },
           { blockType: 'ctaBanner', heading: 'Ready to get started?', buttonLabel: 'Get started', buttonUrl: '/', style: 'light' },
-        ],
+        ]),
       },
     })
 

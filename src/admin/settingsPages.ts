@@ -237,6 +237,7 @@ export const SETTINGS_PAGES: SettingsPage[] = [
     sections: [
       { kind: 'global', slug: 'backup-settings' },
       { kind: 'link', label: 'Database', href: '/database', description: 'Per-feature table usage and cleanup.', type: 'view' },
+      { kind: 'link', label: 'Legacy blocks', href: '/legacy-blocks', description: 'Count the first-generation blocks still on pages and convert them to editable sections, with a backup and undo.', type: 'view' },
       { kind: 'link', label: 'Bookings', href: '/bookings', description: 'Appointment booking pages with opening hours and a link for customers to cancel. Switch the feature on in Site Settings.', type: 'view' },
       { kind: 'link', label: 'Quotes and requests', href: '/quotes', description: 'Quote, offer and item requests, with priced quotes customers accept from an emailed link. Switch the feature on in Site Settings.', type: 'view' },
       { kind: 'link', label: 'Purchase limits', href: '/purchase-limits', description: 'Per-person limits on limited products and tickets, a wait between orders and a report of refused attempts. Switch the feature on in Site Settings.', type: 'view' },

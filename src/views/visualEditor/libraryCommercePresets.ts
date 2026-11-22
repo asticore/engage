@@ -24,7 +24,7 @@ const PRESETS: Preset[] = [
           width: 12 as const,
           blocks: [
             el('heading', { text: 'Shop', tag: 'h2', align: 'center' }),
-            { blockType: 'productGrid', heading: '', limit: 6, design: { layout: { display: 'grid', gridColumns: 3 } } },
+            el('product-grid', { heading: '', limit: 6 }),
           ],
         },
       ],

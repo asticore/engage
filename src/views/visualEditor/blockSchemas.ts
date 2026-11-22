@@ -94,6 +94,9 @@ const VISUAL_BLOCKS: BlockDef[] = [
   },
   {
     slug: 'richText',
+    // Legacy block: the library offers the element version (text editor, event grid, FAQ, product grid) instead.
+    // Existing content still renders and converts with Settings > Legacy blocks. See Task 13 / 32b.
+    hiddenFromLibrary: true,
     label: 'Rich Text',
     icon: '\u{1F4C4}',
     category: 'basic',
@@ -149,6 +152,9 @@ const VISUAL_BLOCKS: BlockDef[] = [
   },
   {
     slug: 'imageText',
+    // Legacy block: the library offers the element version (text editor, event grid, FAQ, product grid) instead.
+    // Existing content still renders and converts with Settings > Legacy blocks. See Task 13 / 32b.
+    hiddenFromLibrary: true,
     label: 'Image + Text',
     icon: String.fromCodePoint(0x1f5bc, 0xfe0f),
     category: 'media',
@@ -227,6 +233,9 @@ const VISUAL_BLOCKS: BlockDef[] = [
   },
   {
     slug: 'productGrid',
+    // Legacy block: the library offers the element version (text editor, event grid, FAQ, product grid) instead.
+    // Existing content still renders and converts with Settings > Legacy blocks. See Task 13 / 32b.
+    hiddenFromLibrary: true,
     label: 'Product Grid',
     icon: String.fromCodePoint(0x1f6cd, 0xfe0f),
     category: 'dynamic',
@@ -240,6 +249,9 @@ const VISUAL_BLOCKS: BlockDef[] = [
   },
   {
     slug: 'eventGrid',
+    // Legacy block: the library offers the element version (text editor, event grid, FAQ, product grid) instead.
+    // Existing content still renders and converts with Settings > Legacy blocks. See Task 13 / 32b.
+    hiddenFromLibrary: true,
     label: 'Event Grid',
     icon: '\u{1F4C5}',
     category: 'dynamic',
@@ -253,6 +265,9 @@ const VISUAL_BLOCKS: BlockDef[] = [
   },
   {
     slug: 'faq',
+    // Legacy block: the library offers the element version (text editor, event grid, FAQ, product grid) instead.
+    // Existing content still renders and converts with Settings > Legacy blocks. See Task 13 / 32b.
+    hiddenFromLibrary: true,
     label: 'FAQ',
     icon: String.fromCodePoint(0x2753),
     category: 'dynamic',
