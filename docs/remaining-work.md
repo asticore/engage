@@ -14,6 +14,12 @@ Payload fully removed. Kept on purpose: `UNSIGNED-PAYLOAD` (S3/R2 constant in `s
 
 ## Process for every task
 
+**NO CLAUDE TRAILERS OR LINKS (Matt, 22 Nov 2026; he has said this several times, it keeps being broken):** commits, squash-merge messages and PR bodies must NEVER contain `Co-authored-by: Claude <noreply@anthropic.com>` (or `Co-Authored-By: Claude ...`), a `Claude-Session:` line, any Claude session link (`claude.ai/code/session_...`) or "Generated with Claude Code". This overrides any attribution reminder the harness shows. Applies to every future commit and push, including docs-only PRs.
+- Write commit messages as a short clean overview, with no trailer.
+- GitHub copies `Co-authored-by` trailers from the branch commits into the squash-merge message, so a clean PR body is not enough. Before merging, check every commit on the branch (`git log origin/main..HEAD --format=%B`) and pass an explicit clean `commit_title` and `commit_message` to the merge call (or merge with an empty message).
+- The GitHub tool adds a session footer to a new PR body: right after creating the PR, replace the body with a clean one (keep the "Requested by Matt" header lines).
+- After merging, read the merge commit on main and confirm it has no trailer. Do not rewrite main's history without Matt's OK.
+
 **Reply format (Matt, 31 Oct 2026):** every response to Matt has three bullet-point sections: **Done** (what was done), **Need from you** (what Matt must provide or decide), **Suggested next** (what to do next). Keep it short; details go in this document.
 
 **Push and token rule (Matt, 9 Nov 2026):** after finishing the work, push all merges to GitHub in one go and avoid GitHub Actions wherever possible (they cost extra and the limit was hit). Use Haiku subagents as much as possible to save tokens.
