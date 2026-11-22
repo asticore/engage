@@ -481,6 +481,39 @@ export const DesignPanel: React.FC<{
           value={value.customClass}
           onChange={(v) => set('customClass', v)}
         />
+        <TextRow
+          label="Make the whole block a link"
+          value={value.wrapLink}
+          placeholder="https://... or /page"
+          help="A link over the whole block. Links and buttons inside it stay clickable. Only http, https, mailto, tel, /path and #anchor links are kept."
+          onChange={(v) => set('wrapLink', v)}
+        />
+        {value.wrapLink && (
+          <>
+            <TextRow
+              label="Link label for screen readers"
+              value={value.wrapLinkLabel}
+              placeholder="e.g. Read the pricing page"
+              onChange={(v) => set('wrapLinkLabel', v)}
+            />
+            <CheckRow label="Open in a new tab" checked={Boolean(value.wrapLinkNewTab)} onChange={(v) => set('wrapLinkNewTab', v || undefined)} />
+            <CheckRow label="Add nofollow" checked={Boolean(value.wrapLinkNoFollow)} onChange={(v) => set('wrapLinkNoFollow', v || undefined)} />
+          </>
+        )}
+        <NumberRow
+          label="Read more: clamp height (px)"
+          value={value.collapseHeight}
+          min={40}
+          max={1200}
+          help="Shows only this much of the block with a Read more button that expands it. Empty = off."
+          onChange={(v) => set('collapseHeight', v)}
+        />
+        {value.collapseHeight !== undefined && (
+          <>
+            <TextRow label="Expand button text" value={value.collapseMore} placeholder="Read more" onChange={(v) => set('collapseMore', v)} />
+            <TextRow label="Collapse button text" value={value.collapseLess} placeholder="Show less" onChange={(v) => set('collapseLess', v)} />
+          </>
+        )}
       </Acc>
     </div>
     </DesignCtx.Provider>

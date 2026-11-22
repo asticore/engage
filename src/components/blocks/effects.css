@@ -136,3 +136,15 @@
 .be-fx--textfx-shadow-glow :is(h1,h2,h3,h4,h5,h6,p,li){
   text-shadow:0 0 .12em var(--be-tfx-c,#00a9ff),0 0 .35em var(--be-tfx-c,#00a9ff);
 }
+
+/* Wrapper link: a stretched link over the whole block. Content with its own links sits above it. */
+.be-wraplink { position: absolute; inset: 0; z-index: 2; border-radius: inherit; }
+.be-wraplink:focus-visible { outline: 3px solid currentColor; outline-offset: -3px; }
+[id]:has(> .be-wraplink) { position: relative; }
+[id]:has(> .be-wraplink) .be-block__content :is(a, button) { position: relative; z-index: 3; }
+
+/* Read more: clamped block with an expand and collapse button. */
+.be-collapse__body { overflow: hidden; transition: max-height .25s ease; }
+.be-collapse[data-open='true'] .be-collapse__body { max-height: none; }
+.be-collapse__btn { margin-top: .5rem; background: none; border: 0; padding: .25rem 0; color: inherit; font: inherit; text-decoration: underline; cursor: pointer; position: relative; z-index: 3; }
+@media (prefers-reduced-motion: reduce) { .be-collapse__body { transition: none; } }
