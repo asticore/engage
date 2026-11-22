@@ -9,6 +9,8 @@ import { socialRowId, socialTestMessage } from '../testResult'
 export function TestConnectionField({ path }: { path: string }) {
   const rowPath = path.split('.').slice(0, -1).join('.')
   const rawId = useFormFields(([fields]) => fields?.[`${rowPath}.id`]?.value)
+  const provider = useFormFields(([fields]) => fields?.[`${rowPath}.provider`]?.value)
+  const isReview = typeof provider === 'string' && provider.endsWith('-reviews')
   const id = socialRowId(rawId)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -18,7 +20,7 @@ export function TestConnectionField({ path }: { path: string }) {
     setBusy(true)
     setMsg(null)
     try {
-      const res = await fetch('/api/admin-social-accounts', {
+      const res = await fetch(isReview ? '/api/admin-review-sources' : '/api/admin-social-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
