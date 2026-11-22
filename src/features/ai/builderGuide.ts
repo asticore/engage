@@ -40,11 +40,14 @@ const FONT_NAME = /^[A-Za-z0-9 _-]{1,40}$/
 
 const oneLine = (text: string | undefined, max: number): string => (text ?? '').replace(/[^\x20-\x7e]+/g, ' ').replace(/[\r\n\t<>]+/g, ' ').trim().slice(0, max)
 
-/** The guide, before any examples, must stay under this many characters (the aim is about 15k; theme context, media notes and the cart elements added to it). */
+/** The guide, before any examples, must stay under this many characters (the aim is about 15k). Each catalogue line is capped at MAX_ELEMENT_LINE so a new element with many fields cannot push the guide over; add a usage hint for any element whose fields are cut. */
 export const GUIDE_MAX_CHARS = 19_000
 
 /** Element types the builder never uses: they need a record, a relation, or a table/form context. */
-const EXCLUDED_ELEMENT_TYPES = new Set(['content-slot', 'data-view', 'ad'])
+const EXCLUDED_ELEMENT_TYPES = new Set(['content-slot', 'data-view', 'ad', 'embed-code', 'page-effects', 'request-button', 'language-switcher', 'archive-filter', 'loop-grid', 'chat-button'])
+
+/** A catalogue line longer than this loses its last fields (whole fields only) and ends with "...". Long elements such as charts are covered by the usage hints. */
+const MAX_ELEMENT_LINE = 230
 
 /** Fields the builder never fills in: pictures, files and links to records are added by the admin. */
 const SKIPPED_FIELD_TYPES = new Set(['media', 'mediaMulti', 'relationship', 'formOptions', 'formLogic', 'dimensions', 'typography', 'shadow', 'gradient'])
@@ -106,7 +109,19 @@ export function elementCatalogue(): string {
   return builderElements()
     .map((def) => {
       const fields = def.fields.map((f) => fieldLine(f, def)).filter((s): s is string => s !== null)
-      return `${def.type}|${def.label}|${fields.join(' ')}`
+      const head = `${def.type}|${def.label}|`
+      let line = head + fields.join(' ')
+      if (line.length > MAX_ELEMENT_LINE) {
+        const kept: string[] = []
+        let size = head.length + 4
+        for (const f of fields) {
+          if (size + f.length + 1 > MAX_ELEMENT_LINE) break
+          kept.push(f)
+          size += f.length + 1
+        }
+        line = head + kept.join(' ') + ' ...'
+      }
+      return line
     })
     .join('\n')
 }
@@ -211,7 +226,7 @@ export function buildGuide(ctx: GuideContext): string {
     'list marker: bullets|numbers|none|icon|check|arrow|dash; items {"text","href"}.',
     'counter: number, prefix, suffix, title, animate. progress-bar: percent 0-100, shape bar|ring.',
     'gallery: layout grid|masonry|carousel|logos; images left empty.',
-    'chart: chartType chart-bar|chart-line|chart-pie|chart-radar|chart-polar|chart-funnel|chart-combo|chart-gauge|chart-heatmap|chart-treemap|chart-waterfall; data is CSV, header row first ("Month,Sales\\nJan,120").',
+    'chart: chartType chart-bar|chart-line|chart-pie|chart-radar|chart-polar|chart-funnel|chart-combo|chart-gauge|chart-heatmap|chart-treemap|chart-waterfall; data is CSV with one row per line, header row first (for example a Month,Sales header then Jan,120 on the next line).',
     'loop: source posts|products|events|faqs|pages; count 1-24; layout grid|list|carousel; orderBy date|title|menu order|random-stable; category text.',
     'embed: provider youtube|vimeo|x|instagram|facebook-video|google-calendar|typeform|custom-iframe; https address. X, Instagram and Facebook show a link card.',
     'reviews: items {name, rating 1-5, text, source}; layout grid|list. pagination: current, total, baseUrl with {page}.',
