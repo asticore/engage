@@ -39,6 +39,17 @@ function firstImage(images: unknown): { url: unknown; alt: unknown } | undefined
   return undefined
 }
 
+/** Every picture of a product (public url and alt), at most 20. */
+function allImages(images: unknown): Array<{ url: string; alt: string }> {
+  const out: Array<{ url: string; alt: string }> = []
+  for (const item of Array.isArray(images) ? images : []) {
+    const img = item && typeof item === 'object' ? rec(item) : null
+    if (img && str(img.url)) out.push({ url: str(img.url), alt: str(img.alt) })
+    if (out.length === 20) break
+  }
+  return out
+}
+
 /** Context for a post document (depth 1). Shared by /blog/[slug] and the editor's "Preview as". */
 export function postBlockContext(post: Record<string, unknown>, path: string, siteName?: string, opts?: { authors?: boolean; tree?: CategoryRow[] }): BlockContext {
   const showAuthor = opts?.authors !== false && post.hideAuthor !== true
@@ -70,6 +81,13 @@ export function productBlockContext(product: Record<string, unknown>, path: stri
       title: product.title,
       price: (product.priceInAUD as number | null | undefined) ?? undefined,
       featuredImage: image,
+      sku: str(product.sku) || undefined,
+      gtin: str(product.gtin) || undefined,
+      shortDescription: str(product.shortDescription) || undefined,
+      category: str(product.category) || undefined,
+      images: allImages(product.images),
+      lowStockThreshold: product.lowStockThreshold as number | null | undefined,
+      backorders: str(product.backorders) || undefined,
     },
     path,
   }

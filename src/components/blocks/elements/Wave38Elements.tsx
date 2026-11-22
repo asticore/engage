@@ -15,6 +15,7 @@ import { LoopGridElement } from './LoopGridServer'
 import { ArchiveFilterElement } from './ArchiveFilter'
 import { WAVE65_SERVER_COMPONENTS } from './Wave65Server'
 import { WAVE66_COMPONENTS } from './Wave66Server'
+import { WAVE69_COMPONENTS } from './Wave69Server'
 import { WAVE67_COMPONENTS } from './Wave67Server'
 import { AFFILIATE_COMPONENTS } from './AffiliateServer'
 import { REQUEST_BUTTON_COMPONENTS } from './RequestButtonServer'
@@ -408,6 +409,7 @@ const SITE_RENDERERS: Record<string, React.ComponentType<P>> = {
   'archive-filter': ArchiveFilterElement as unknown as React.ComponentType<P>,
   ...WAVE65_SERVER_COMPONENTS,
   ...WAVE66_COMPONENTS,
+  ...WAVE69_COMPONENTS,
   ...WAVE67_COMPONENTS,
   ...AFFILIATE_COMPONENTS,
   ...REQUEST_BUTTON_COMPONENTS,
