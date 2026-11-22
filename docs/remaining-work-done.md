@@ -829,6 +829,10 @@ Task 14b (leftovers, built 17 Nov 2026): AI tagging. `POST /api/admin-media-ai-t
 
 ### Task 7 Add several pages on the Pages screen (22 Nov 2026)
 Pages list header has an Add several pages button (`src/features/bulkCreate/AddSeveralPages.tsx`, loaded in the browser only). A dialog takes one title per line, an optional shared parent page, template, status (draft, or published for users with publish permission) and, when Languages is on, the language the titles are written in (saved as that language's title translation). Show the addresses runs the same plan as Bulk create (clashes, missing parents) and lists the slugs; Create makes the pages through the signed-in user's own access rules; Undo this batch works for a day while nothing is published. It reuses `/api/admin-bulk-create` (new `options` action and `defaults` field) and the Task 11g plan and run code; tests in `tests/int/bulk-create.int.spec.ts`. Live check in Live checks.
+### Task 4 leftovers 41a to 41c (built 22 Nov 2026)
+- 41a: the Permalinks group and Blog address field labels are in the UI strings (`label.field.permalinks`, `label.field.blogBase`) in all 13 languages. Hints and save errors stay English: the SEO screen is English only for descriptions, and there is no translation path for field descriptions. Raise with Matt if he wants descriptions translated everywhere.
+- 41b: `tests/int/bid-terms-field.int.spec.ts` covers `BidTermsField`; every message from the Authentication overview actions (switch, allow or block, Test button and provider checks) now reads from `auth.msg.*` strings in the admin's language, in all 13 languages (`authMethodActions.ts`, `authMethodTest.ts`).
+- 41c: `tests/int/d1-column-limit-guard.int.spec.ts` fails when a table comes within 5 columns of D1's 100-column limit; the four tables already there (`eg_integrations` 97, `eg_shop_settings` 100, `eg_security_settings` 100, `_eg_products_v` 99) are listed and may not grow.
 
 ## Appendix: Events and tickets audit (closed Task 1, moved from remaining-work.md 22 Nov 2026)
 ### Events and tickets audit (Task 5, 9 Nov 2026)
