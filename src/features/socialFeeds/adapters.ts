@@ -1,5 +1,7 @@
+import { resolveEmbed } from '@/lib/embedProviders'
+
 import { count, isoDate, parseFeed, parseJson, safeHttpUrl, str, truncate } from './parse'
-import type { SocialAccount, SocialAdapter, SocialPost, SocialProvider } from './types'
+import { EMBED_ONLY_PROVIDERS, type SocialAccount, type SocialAdapter, type SocialPost, type SocialProvider } from './types'
 
 /**
  * One adapter per provider: how to build the request, which hosts it may talk to, and how to turn the answer into
@@ -139,9 +141,122 @@ const rss: SocialAdapter = {
   parse: (body) => parseFeed(body),
 }
 
-export const ADAPTERS: Record<SocialProvider, SocialAdapter> = { instagram, facebook, pinterest, tiktok, youtube, rss }
+/** Vimeo: user id or "me" with a personal access token (public scope). */
+const vimeo: SocialAdapter = {
+  provider: 'vimeo',
+  hosts: ['api.vimeo.com'],
+  imageHosts: ['.vimeocdn.com'],
+  buildRequest: (a, limit) => ({
+    url: `https://api.vimeo.com/${/^\d+$/.test(a.accountId) ? `users/${a.accountId}` : 'me'}/videos?per_page=${limit}&fields=uri,name,description,link,created_time,pictures.sizes,stats.plays`,
+    init: { method: 'GET', headers: { Authorization: `Bearer ${a.token}` } },
+  }),
+  parse: (body) =>
+    arr(parseJson(body).data).map((v): SocialPost => {
+      const sizes = arr(obj(v.pictures).sizes)
+      const pic = sizes.find((s) => Number(s.width) >= 600) ?? sizes[sizes.length - 1]
+      return {
+        id: str(v.uri),
+        url: safeHttpUrl(v.link),
+        imageUrl: safeHttpUrl(pic?.link),
+        caption: truncate(str(v.name) || str(v.description)),
+        date: isoDate(v.created_time),
+        likes: count(obj(v.stats).plays),
+        video: true,
+      }
+    }),
+}
 
-export const needsToken = (p: SocialProvider): boolean => p !== 'youtube' && p !== 'rss'
+/** Twitch: account id is the numeric user id; the token field holds "clientId:accessToken". */
+const twitchCreds = (token: string): { id: string; bearer: string } => {
+  const i = token.indexOf(':')
+  return i < 0 ? { id: '', bearer: token } : { id: token.slice(0, i), bearer: token.slice(i + 1) }
+}
+const twitch: SocialAdapter = {
+  provider: 'twitch',
+  hosts: ['api.twitch.tv'],
+  imageHosts: ['.jtvnw.net'],
+  buildRequest: (a, limit) => {
+    const c = twitchCreds(a.token)
+    return {
+      url: `https://api.twitch.tv/helix/videos?user_id=${enc(a.accountId)}&first=${Math.min(limit, 100)}`,
+      init: { method: 'GET', headers: { Authorization: `Bearer ${c.bearer}`, 'Client-Id': c.id } },
+    }
+  },
+  parse: (body) =>
+    arr(parseJson(body).data).map((v): SocialPost => ({
+      id: str(v.id),
+      url: safeHttpUrl(v.url),
+      imageUrl: safeHttpUrl(str(v.thumbnail_url).replace('%{width}', '640').replace('%{height}', '360')),
+      caption: truncate(str(v.title)),
+      date: isoDate(v.created_at),
+      likes: count(v.view_count),
+      video: true,
+    })),
+}
+
+/** Spotify: a show (podcast) id and a bearer access token. */
+const spotify: SocialAdapter = {
+  provider: 'spotify',
+  hosts: ['api.spotify.com'],
+  imageHosts: ['.scdn.co'],
+  buildRequest: (a, limit) => ({
+    url: `https://api.spotify.com/v1/shows/${enc(a.accountId)}/episodes?limit=${Math.min(limit, 50)}`,
+    init: { method: 'GET', headers: { Authorization: `Bearer ${a.token}` } },
+  }),
+  parse: (body) =>
+    arr(parseJson(body).items).map((e): SocialPost => ({
+      id: str(e.id),
+      url: safeHttpUrl(obj(e.external_urls).spotify),
+      imageUrl: safeHttpUrl(arr(e.images)[0]?.url),
+      caption: truncate(str(e.name) || str(e.description)),
+      date: isoDate(e.release_date),
+      likes: null,
+      video: false,
+    })),
+}
+
+/** Google Business posts: account id like "accounts/123/locations/456", OAuth access token. */
+export const GOOGLE_BUSINESS_ID = /^accounts\/\d{1,30}\/locations\/\d{1,30}$/
+const googleBusiness: SocialAdapter = {
+  provider: 'google-business',
+  hosts: ['mybusiness.googleapis.com'],
+  imageHosts: ['.googleusercontent.com', '.ggpht.com'],
+  buildRequest: (a, limit) => ({
+    url: GOOGLE_BUSINESS_ID.test(a.accountId.trim()) ? `https://mybusiness.googleapis.com/v4/${a.accountId.trim()}/localPosts?pageSize=${Math.min(limit, 100)}` : '',
+    init: { method: 'GET', headers: { Authorization: `Bearer ${a.token}` } },
+  }),
+  parse: (body) =>
+    arr(parseJson(body).localPosts).map((m): SocialPost => ({
+      id: str(m.name),
+      url: safeHttpUrl(m.searchUrl),
+      imageUrl: safeHttpUrl(arr(m.media)[0]?.googleUrl),
+      caption: truncate(str(m.summary)),
+      date: isoDate(m.createTime),
+      likes: null,
+      video: false,
+    })),
+}
+
+/** X and LinkedIn have no usable free feed API: the account holds post links, shown as consent-gated embeds. */
+const embedOnly = (provider: 'x' | 'linkedin'): SocialAdapter => ({ provider, hosts: [], imageHosts: [], buildRequest: () => ({ url: '', init: { method: 'GET' } }), parse: () => [] })
+
+/** Posts for an embed-only account: one per valid link in the account field (one per line or comma separated). */
+export function embedPosts(account: SocialAccount, limit: number): SocialPost[] {
+  const provider = account.provider === 'linkedin' ? 'linkedin' : 'x'
+  const out: SocialPost[] = []
+  for (const raw of account.accountId.split(/[\s,]+/)) {
+    if (!raw) continue
+    const target = resolveEmbed(provider, raw)
+    if (target?.kind !== 'iframe') continue
+    out.push({ id: raw, url: raw, imageUrl: '', caption: '', date: '', likes: null, video: false, embed: provider })
+    if (out.length >= limit) break
+  }
+  return out
+}
+
+export const ADAPTERS: Record<SocialProvider, SocialAdapter> = { instagram, facebook, pinterest, tiktok, youtube, rss, vimeo, twitch, spotify, 'google-business': googleBusiness, x: embedOnly('x'), linkedin: embedOnly('linkedin') }
+
+export const needsToken = (p: SocialProvider): boolean => p !== 'youtube' && p !== 'rss' && !(EMBED_ONLY_PROVIDERS as readonly string[]).includes(p)
 
 const hostMatches = (host: string, allowed: string[]): boolean =>
   allowed.some((h) => (h.startsWith('.') ? host.endsWith(h) : host === h))
@@ -182,6 +297,11 @@ export async function fetchPosts(account: SocialAccount, limit: number, fetchImp
   if (!adapter) throw new Error('Unsupported provider')
   if (needsToken(account.provider) && !account.token) throw new Error('No access token saved for this account')
   const n = Math.max(1, Math.min(24, Math.floor(limit) || 12))
+  if ((EMBED_ONLY_PROVIDERS as readonly string[]).includes(account.provider)) {
+    const posts = embedPosts(account, n)
+    if (!posts.length) throw new Error('Add at least one post link from this provider')
+    return posts
+  }
   const req = adapter.buildRequest(account, n)
   let host = ''
   try {
