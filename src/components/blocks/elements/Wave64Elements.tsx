@@ -6,6 +6,7 @@ import { safeUrl } from '@/lib/mergeTags'
 import { LANGS, parsePlaylist, tokenize } from '@/lib/elements/wave64Util'
 
 import { flag, mediaOf, parseVideoUrl, pick, str } from './elementUtil'
+import { BillingToggle } from './BillingToggle'
 import { LottieClient } from './LottieClient'
 import { CopyButton, ImageAccordion, VideoPlaylist } from './Wave64Client'
 import type { Panel } from './Wave64Client'
@@ -97,7 +98,13 @@ export const LottiePlayerElement: React.FC<P> = (p) => {
   return <LottieClient src={url} mode={mode} loop={flag(p.loop, true)} label={str(p.label, 'Animation')} height={height} />
 }
 
+/** `billing-toggle`: a monthly and yearly switch that flips every pricing table on the page that has a yearly price. */
+export const BillingToggleElement: React.FC<P> = (p) => (
+  <BillingToggle monthlyLabel={str(p.monthlyLabel, 'Monthly')} yearlyLabel={str(p.yearlyLabel, 'Yearly')} saveText={str(p.saveText)} startYearly={flag(p.startYearly, false)} />
+)
+
 export const WAVE64_COMPONENTS: Record<string, React.ComponentType<P>> = {
+  'billing-toggle': BillingToggleElement,
   'lottie-player': LottiePlayerElement,
   audio: AudioElement,
   'code-highlight': CodeHighlightElement,
