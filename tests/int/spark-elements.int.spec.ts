@@ -75,6 +75,9 @@ describe('second batch on Spark and Shine', () => {
   })
   it('gallery lightbox is the Spark lightbox wrapper', () => {
     expect(html('gallery', { urls: 'https://cdn.example.com/a.jpg', lightbox: true })).toContain('class="spark-lightbox"')
+  })
+})
+
 describe('Data view as a source', () => {
   it('turns a view into CSV for the Chart and Table elements', async () => {
     const { modelToCsv } = await import('@/features/dataViews/csv')
