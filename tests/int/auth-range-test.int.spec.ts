@@ -32,3 +32,13 @@ describe('auth method test', () => {
     expect(ok.ok).toBe(true)
   })
 })
+
+describe('auth method test messages are translated', () => {
+  it('uses the translator for provider checks', () => {
+    const tr = (key: string, vars?: Record<string, string | number>) => `${key}|${JSON.stringify(vars ?? {})}`
+    const miss = checkProviderConfig('google', emptyProviderConfig(), tr as never)
+    expect(miss.message.startsWith('auth.msg.providerMissing|')).toBe(true)
+    const off = checkProviderConfig('google', { ...emptyProviderConfig(), enabled: false, clientId: 'a', clientSecret: 'b' }, tr as never)
+    expect(off.message.startsWith('auth.msg.providerOff|')).toBe(true)
+  })
+})
