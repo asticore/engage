@@ -3,6 +3,7 @@ import React from 'react'
 import { getEngine } from '@/lib/engine'
 import { applyTranslations, currentRequestLocale } from '@/features/multilingual/applyTranslations'
 import { canExpandReusableSection, reusableSectionIdOf, tagReusableSections } from '@/lib/reusableSection'
+import { applyParams, findParamDecls, resolveParamValues } from '@/lib/sectionParams'
 import type { SectionNode } from '@/lib/sectionTree'
 
 import { StyledBlock } from './StyledBlock'
@@ -18,10 +19,13 @@ import { StyledBlock } from './StyledBlock'
 export async function ReusableSectionBlock({
   section,
   chain = [],
+  values,
   renderNode,
 }: {
   section?: unknown
   chain?: number[]
+  /** Values an instance sets for the section's declared inputs (Task 13 / 32c). Others follow the declared defaults. */
+  values?: unknown
   renderNode: (node: SectionNode, key: string) => React.ReactNode
 }) {
   const sectionId = reusableSectionIdOf(section)
@@ -39,6 +43,10 @@ export async function ReusableSectionBlock({
     return null
   }
   if (blocks.length === 0) return null
+
+  // Inputs: {{param:key}} in the section's content becomes the instance's value, or the declared default.
+  const decls = findParamDecls(blocks)
+  if (decls.length > 0) blocks = applyParams(blocks, resolveParamValues(decls, values))
 
   const nested = tagReusableSections(blocks, [...chain, sectionId])
   return (

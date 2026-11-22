@@ -18,6 +18,7 @@ import {
 } from '@/lib/sectionTree'
 
 import type { BlockDef, EditorField } from './blockSchemas'
+import type { ParamDecl } from '@/lib/sectionParams'
 import { ALIGN_CONTENT_VALUES, CONTAINER_TAGS, LAYOUT_UNITS, OVERFLOW_VALUES, parseSectionLayout, safeHref, type DeviceFlow, type Dim, type LayoutUnit, type SectionLayout } from '@/lib/sectionLayout'
 
 import { Accordion, CheckRow, DesignPanel, HeightRows, makeResponsive, NumberRow, SelectRow, type EditDevice, type RowResp } from './DesignPanel'
@@ -153,7 +154,8 @@ export const FieldPanel: React.FC<{
             </fieldset>
           ) : isElement ? (
             elementDef ? (
-              elementDef.fields.filter((field) => isFieldVisible(field, elementValues)).map((field) => {
+              <>
+              {elementDef.fields.filter((field) => isFieldVisible(field, elementValues)).map((field) => {
                 const input = <FieldInput field={field} value={elementProps[field.name]} onChange={(v) => setElementProp(field.name, v)} />
                 if (data.elementType !== 'embed' || field.name !== 'url') {
                   return (
@@ -168,7 +170,13 @@ export const FieldPanel: React.FC<{
                     <div onPaste={() => window.setTimeout(() => resolveEmbedAddress(), 0)} onBlur={() => resolveEmbedAddress()}>{input}</div>
                   </fieldset>
                 )
-              })
+              })}
+              {data.elementType === 'section-instance' && (
+                <fieldset className="ve-lockset" disabled={blocked}>
+                  <SectionParamForm section={elementProps.section} values={elementProps.values} onChange={(values) => setElementProp('values', values)} />
+                </fieldset>
+              )}
+              </>
             ) : (
               <p className="ve-panel__empty">Unknown element type &quot;{String(data.elementType)}&quot;.</p>
             )
@@ -1212,6 +1220,66 @@ const RepeaterCards: React.FC<{ field: EditorField; value: unknown; onChange: (v
       <button type="button" className="ve-repeater__add" onClick={addRow}>
         + Add item
       </button>
+    </div>
+  )
+}
+
+/**
+ * The inputs a reusable section declares (Task 13 / 32c), as a small form. Only values you change are stored; an input
+ * you leave alone, or reset, follows the default in the source section. The declaration list comes from the section.
+ */
+const SectionParamForm: React.FC<{ section: unknown; values: unknown; onChange: (values: Record<string, unknown>) => void }> = ({ section, values, onChange }) => {
+  const id = typeof section === 'string' || typeof section === 'number' ? String(section) : ''
+  const [decls, setDecls] = useState<ParamDecl[]>([])
+  useEffect(() => {
+    if (!/^\d+$/.test(id)) {
+      setDecls([])
+      return
+    }
+    let live = true
+    fetch(`/api/admin-section-params?id=${id}`, { credentials: 'include' })
+      .then((r) => r.json() as Promise<{ decls?: ParamDecl[] }>)
+      .then((json) => {
+        if (live) setDecls(Array.isArray(json.decls) ? json.decls : [])
+      })
+      .catch(() => {
+        if (live) setDecls([])
+      })
+    return () => {
+      live = false
+    }
+  }, [id])
+
+  if (decls.length === 0) return id ? <p className="ve-panel__hint">This section declares no inputs. Add a Section inputs element to it to give each use its own values.</p> : null
+  const current: Record<string, unknown> = values && typeof values === 'object' && !Array.isArray(values) ? (values as Record<string, unknown>) : {}
+  const set = (key: string, v: unknown) => {
+    const next = { ...current }
+    if (v === undefined || v === '') delete next[key]
+    else next[key] = v
+    onChange(next)
+  }
+  return (
+    <div className="ve-section-fields">
+      <p className="ve-panel__hint">Inputs of this section. Leave one empty to follow the default set in the source.</p>
+      {decls.map((decl) => {
+        const own = Object.prototype.hasOwnProperty.call(current, decl.key)
+        const field: EditorField =
+          decl.type === 'image'
+            ? { name: decl.key, label: decl.label, type: 'media', width: 'full' }
+            : decl.type === 'colour'
+              ? { name: decl.key, label: decl.label, type: 'color', width: 'full' }
+              : decl.type === 'number'
+                ? { name: decl.key, label: decl.label, type: 'number', width: 'full' }
+                : decl.type === 'choice'
+                  ? { name: decl.key, label: decl.label, type: 'select', width: 'full', options: (decl.choices ?? []).map((c) => ({ label: c, value: c })) }
+                  : { name: decl.key, label: decl.label, type: 'text', width: 'full', helpText: decl.type === 'link' ? 'A web address, /page, mailto: or tel:' : undefined }
+        return (
+          <div key={decl.key} className="ve-row">
+            <FieldInput field={field} value={own ? current[decl.key] : undefined} onChange={(v) => set(decl.key, v)} />
+            <span className="ve-field__help">{own ? <button type="button" className="ve-btn ve-btn--ghost" onClick={() => set(decl.key, undefined)}>Use the source default</button> : `Default: ${decl.default ?? 'empty'}`}</span>
+          </div>
+        )
+      })}
     </div>
   )
 }

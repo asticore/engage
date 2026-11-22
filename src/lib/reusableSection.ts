@@ -56,7 +56,10 @@ export function tagReusableSections(blocks: SectionNode[], chain: readonly numbe
 }
 
 function tagNode(node: SectionNode, chain: readonly number[]): SectionNode {
-  if (node.blockType === 'reusableSection') return { ...node, [REUSABLE_CHAIN_KEY]: [...chain] }
+  // A section-instance element (a reusable section with inputs) expands a section too, so it carries the chain as well.
+  if (node.blockType === 'reusableSection' || (node.blockType === 'element' && (node as { elementType?: unknown }).elementType === 'section-instance')) {
+    return { ...node, [REUSABLE_CHAIN_KEY]: [...chain] }
+  }
   if (node.blockType === 'section' && Array.isArray(node.columns)) {
     return { ...node, columns: node.columns.map((column) => tagColumn(column, chain)) }
   }

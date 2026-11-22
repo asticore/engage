@@ -33,7 +33,11 @@ export const FaqListElement = (p: P): React.ReactElement => (
 /** `product-grid`: the same cards the Product Grid block drew. */
 export const ProductGridElement = (p: P): React.ReactElement => <ProductGridBlock heading={str(p.heading)} category={str(p.category)} limit={int(p.limit, 1, 24)} />
 
+/** `section-params` only declares inputs for a reusable section; it draws nothing. */
+export const SectionParamsElement = (): null => null
+
 export const LEGACY_REPLACEMENT_COMPONENTS: Record<string, React.ComponentType<P>> = {
+  'section-params': SectionParamsElement as unknown as React.ComponentType<P>,
   'event-grid': EventGridElement as unknown as React.ComponentType<P>,
   'faq-list': FaqListElement as unknown as React.ComponentType<P>,
   'product-grid': ProductGridElement as unknown as React.ComponentType<P>,

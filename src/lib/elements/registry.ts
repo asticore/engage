@@ -27,6 +27,7 @@ import { EMBED_CODE_ELEMENTS } from './embedCodeDefs'
 import { TEMPLATE_PART_ELEMENTS } from './templatePartDefs'
 import { COMING_SOON_ELEMENTS } from './comingSoonDefs'
 import { LEGACY_REPLACEMENT_ELEMENTS } from './legacyReplacementDefs'
+import { SECTION_PARAM_ELEMENTS } from './sectionParamDefs'
 
 /**
  * The per-element-type catalogue that lives inside the `element` block
@@ -240,6 +241,7 @@ ELEMENTS.push(...EMBED_CODE_ELEMENTS)
 ELEMENTS.push(...TEMPLATE_PART_ELEMENTS)
 ELEMENTS.push(...COMING_SOON_ELEMENTS)
 ELEMENTS.push(...LEGACY_REPLACEMENT_ELEMENTS)
+ELEMENTS.push(...SECTION_PARAM_ELEMENTS)
 
 export function getElementDef(type: string): ElementDef | undefined {
   return ELEMENTS.find((e) => e.type === type)
