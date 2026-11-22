@@ -65,19 +65,27 @@ export const WAVE36_ELEMENTS: ElementDef[] = [
   },
   // ---- layout ----
   {
-    type: 'timeline', label: 'Timeline', icon: String.fromCodePoint(0x1f4c6), category: 'layout', hidden: true,
-    description: 'A vertical list of dated events with a line running down the side.',
+    type: 'timeline', label: 'Timeline', icon: String.fromCodePoint(0x1f4c6), category: 'layout',
+    description: 'Dated events along a line: vertical, alternating or horizontal, with an icon or picture per item, optional year groups, scroll reveal and Event structured data.',
     fields: [
-      { name: 'items', label: 'Events', type: 'repeater', repeater: { fields: [text('date', 'Date (e.g. 2019 or 2019-06-01)'), text('title', 'Title'), area('text', 'Text')] } },
+      { name: 'items', label: 'Events', type: 'repeater', repeater: { fields: [
+        text('date', 'Date (e.g. 2019 or 2019-06-01)'), text('group', 'Group heading', { helpText: 'Starts a new group (for example a year) above this item. Leave empty to continue the last group.' }),
+        text('title', 'Title'), area('text', 'Text'), icon(), text('image', 'Picture address', { helpText: 'Shown above the text. Use a full address or a /media path.' }),
+        text('alt', 'Picture description'), text('url', 'Link address'), text('linkLabel', 'Link text'), color('color', 'Item colour'),
+      ] } },
+      select('layout', 'Layout', opts('vertical', 'alternating', 'horizontal')),
       headingTag('tag', ['h2', 'h3', 'h4']), ALIGN_LR,
+      color('lineColor', 'Line colour'), color('dotColor', 'Dot colour'),
+      select('reveal', 'Reveal on scroll (Spark)', [{ label: 'None', value: '' }, ...opts('fade', 'fade-up', 'slide-left', 'slide-right', 'zoom')]),
+      check('schema', 'Add Event structured data', 'Describes dated items to search engines. Use it for real events, not company history.'),
     ],
     defaultProps: () => ({
       items: [
-        { date: '2019', title: 'Founded', text: 'Started in a spare room with two people.' },
-        { date: '2021', title: 'First shop open', text: 'Moved to a shop on the high street.' },
-        { date: '2024', title: 'Online store launched', text: 'Orders now ship across the country.' },
+        { date: '2019', title: 'Founded', text: 'Started in a spare room with two people.', icon: 'star' },
+        { date: '2021', title: 'First shop open', text: 'Moved to a shop on the high street.', icon: 'star' },
+        { date: '2024', title: 'Online store launched', text: 'Orders now ship across the country.', icon: 'star' },
       ],
-      tag: 'h3', align: 'left',
+      layout: 'vertical', tag: 'h3', align: 'left', reveal: '', schema: false,
     }),
   },
   {

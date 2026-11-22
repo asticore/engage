@@ -553,6 +553,48 @@ export const TEMPLATE_PRESETS: TemplatePreset[] = [
     ],
   },
   {
+    slug: 'timeline-vertical',
+    name: 'Timeline: vertical',
+    description: 'Dated events down the left with an icon on each step.',
+    kind: 'section',
+    category: 'other',
+    blocks: () => [section(col(12, [heading('Our story'), el('timeline', { layout: 'vertical', reveal: 'fade-up' })]))],
+  },
+  {
+    slug: 'timeline-alternating',
+    name: 'Timeline: alternating',
+    description: 'A centre line with events swapping sides, grouped by year.',
+    kind: 'section',
+    category: 'other',
+    blocks: () => [
+      section(col(12, [heading('Milestones'), el('timeline', {
+        layout: 'alternating', reveal: 'fade-up',
+        items: [
+          { date: '2019-03', group: '2019', title: 'Founded', text: 'Two people and one idea.', icon: 'star' },
+          { date: '2021-06', group: '2021', title: 'First shop', text: 'Opened on the high street.', icon: 'home' },
+          { date: '2024-09', group: '2024', title: 'Online store', text: 'Shipping nationwide.', icon: 'truck' },
+        ],
+      })])),
+    ],
+  },
+  {
+    slug: 'timeline-horizontal',
+    name: 'Timeline: horizontal',
+    description: 'A row of steps along a line that scrolls sideways on small screens.',
+    kind: 'section',
+    category: 'other',
+    blocks: () => [
+      section(col(12, [heading('How it works'), el('timeline', {
+        layout: 'horizontal',
+        items: [
+          { date: 'Step 1', title: 'Choose', text: 'Pick a plan that fits.', icon: 'check' },
+          { date: 'Step 2', title: 'Set up', text: 'We configure everything.', icon: 'sparkle' },
+          { date: 'Step 3', title: 'Launch', text: 'Go live in days.', icon: 'truck' },
+        ],
+      })])),
+    ],
+  },
+  {
     slug: 'tabs-section',
     name: 'Tabs',
     description: 'Three tabs; put any blocks (text, images, buttons, inner sections) inside each tab.',
