@@ -29,4 +29,15 @@ export const UTILITY_ELEMENTS: ElementDef[] = [
     ],
     defaultProps: () => ({ file: undefined, url: '', height: 600, title: 'Document', download: true }),
   },
+  {
+    type: 'floating-action-button', label: 'Floating action button', icon: String.fromCodePoint(0x2795), category: 'layout',
+    description: 'A round button fixed to a corner of the screen that opens a small menu: call, email, chat, scroll to top or any link. Works without JavaScript.',
+    fields: [
+      { name: 'label', label: 'Button label (screen readers)', type: 'text', width: 'half' },
+      { name: 'icon', label: 'Button symbol', type: 'text', width: 'half', helpText: 'One character or emoji, for example + or a phone.' },
+      { name: 'corner', label: 'Corner', type: 'select', width: 'half', options: [{ label: 'Bottom right', value: 'bottom-right' }, { label: 'Bottom left', value: 'bottom-left' }] },
+      { name: 'items', label: 'Menu items', type: 'textarea', helpText: 'One per line: Label | address. Use tel:+123456, mailto:you@example.com, #top for scroll to top, or a page address.' },
+    ],
+    defaultProps: () => ({ label: 'Quick actions', icon: '+', corner: 'bottom-right', items: 'Call us | tel:+10000000000\nEmail us | mailto:hello@example.com\nBack to top | #top' }),
+  },
 ]
