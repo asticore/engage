@@ -94,6 +94,7 @@ export const RESPONSIVE_KEYS = [
   'wordSpacing',
   'textTransform',
   'blendMode',
+  'borderWidth',
   'fontStyle',
   'textDecoration',
   'minWidth',
@@ -1309,7 +1310,7 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
   }
   if (typeof r.position === 'string' && POSITION_OPTIONS.some((o) => o.value === r.position)) out.position = r.position as BlockPosition
   for (const [key, min, max] of [
-    ['posTop', -2000, 2000], ['posRight', -2000, 2000], ['posBottom', -2000, 2000], ['posLeft', -2000, 2000],
+    ['posTop', -2000, 2000], ['posRight', -2000, 2000], ['posBottom', -2000, 2000], ['posLeft', -2000, 2000], ['borderWidth', 0, 50],
     ['zIndex', -10, 9999], ['opacity', 0, 100], ['wordSpacing', -20, 100],
     ['tfRotate', -360, 360], ['tfScale', 10, 300], ['tfTranslateX', -600, 600], ['tfTranslateY', -600, 600],
   ] as const) {
@@ -1693,6 +1694,14 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
   }
   if (isNum(own.fontWeight)) decls.push(`font-weight:${own.fontWeight} !important`)
   if (own.textTransform && TEXT_TRANSFORMS.includes(own.textTransform)) decls.push(`text-transform:${own.textTransform} !important`)
+  if (isNum(own.borderWidth)) {
+    const merged: BlockStyle = { ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }
+    decls.push(`border-width:${own.borderWidth}px !important`)
+    if (own.borderWidth > 0) {
+      decls.push(`border-style:${BORDER_STYLES.includes(merged.borderStyle ?? '') ? merged.borderStyle : 'solid'} !important`)
+      decls.push(`border-color:${merged.borderColor ? merged.borderColor : 'currentColor'} !important`)
+    }
+  }
   if (own.blendMode && BLEND_MODE_OPTIONS.some((o) => o.value === own.blendMode)) decls.push(`mix-blend-mode:${own.blendMode} !important`)
   if (own.fontStyle && FONT_STYLES.includes(own.fontStyle)) decls.push(`font-style:${own.fontStyle} !important`)
   if (own.textDecoration && TEXT_DECORATIONS.includes(own.textDecoration)) decls.push(`text-decoration:${own.textDecoration} !important`)

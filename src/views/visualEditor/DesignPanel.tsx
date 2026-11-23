@@ -318,14 +318,8 @@ export const DesignPanel: React.FC<{
       </Acc>
 
       <Acc g="border" title={t('dp.section.border')}>
-        <NumberRow
-          label={t('dp.field.border_width_px')}
-          value={value.borderWidth}
-          onChange={(v) => set('borderWidth', v)}
-          onReset={() => set('borderWidth', undefined)}
-          min={0}
-        />
-        {Boolean(value.borderWidth) && (
+        <RespNumber ctl={resp} k="borderWidth" label={t('dp.field.border_width_px')} min={0} max={50} />
+        {Boolean(resp.effective('borderWidth')) && (
           <>
             <SelectRow
               label={t('dp.field.border_style')}
