@@ -160,7 +160,7 @@ export const DesignPanel: React.FC<{
         />
 
         {value.bgType === 'color' && (
-          <ColorRow label={t('dp.field.colour')} value={value.bgColor} onChange={(v) => set('bgColor', v)} />
+          <ColorRow label={t('dp.field.colour')} value={(resp.own('bgColor') as string | undefined)} onChange={(v) => resp.set('bgColor', v)} />
         )}
 
         {value.bgType === 'gradient' && (

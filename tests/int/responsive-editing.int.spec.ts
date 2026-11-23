@@ -115,7 +115,7 @@ describe('per-device section flow settings', () => {
 describe('tablet / mobile style overrides', () => {
   it('sanitises on read: only whitelisted, well typed keys survive', () => {
     expect(
-      sanitizeDeviceOverride({ paddingTop: 12, bgColor: 'red', textAlign: 'diagonal', minHeight: -3, hide: true, selfWidth: 'custom', selfWidthPercent: 60 }),
+      sanitizeDeviceOverride({ paddingTop: 12, bgGradientFrom: 'red', textAlign: 'diagonal', minHeight: -3, hide: true, selfWidth: 'custom', selfWidthPercent: 60 }),
     ).toEqual({ paddingTop: 12, hide: true, selfWidth: 'custom', selfWidthPercent: 60 })
     expect(sanitizeDeviceOverride('x')).toBeUndefined()
     expect(sanitizeDeviceOverride({ nope: 1 })).toBeUndefined()
