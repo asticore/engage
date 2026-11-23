@@ -3230,6 +3230,14 @@ Product meta has Show brand and Show tags options (off by default; rows appear o
 
 **Where to find it:** Visual editor, single product template, Product meta and Product images
 
+#### BLD-085 · Task 10 29d Cart, Checkout and Mini cart elements (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Three commerce elements in the Shop group: Cart contents (the cart page body), Checkout form (the checkout page body with its currency note) and Mini cart (the cart button that opens the drawer or dropdown from Shop settings, or the cart page). They embed the existing client components (CartPageClient, CheckoutForm, MiniCart's cart link) and add no payment or cart code. Code: `wave74Defs.ts`, `Wave74Elements.tsx`, `registry.ts`, `elementComponents.tsx`, `tests/int/wave74-elements.int.spec.ts`.
+
+**Where to find it:** Visual editor, Elements, Shop
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3590,6 +3598,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-085](#bld-085) Task 10 29d Cart, Checkout and Mini cart elements
 - [BLD-084](#bld-084) Task 10 29d Product meta brand and tags, variation images
 - [BLD-083](#bld-083) Task 10 29b My account element
 - [BLD-082](#bld-082) Task 3 chart and table data, grid editor, Spark carousel, flip and typed text
