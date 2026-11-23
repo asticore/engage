@@ -9,6 +9,7 @@ import { ConnectionVersionsContext, rememberVersions, versionHeaders } from '@/f
 import type { ConnectionVersions } from '@/features/integrations/versionHeaders'
 import type { GoogleConnectionStatus } from '@/features/google/status'
 
+import { GoogleCalendarSyncCard } from './GoogleCalendarSyncCard'
 import { GoogleFlagNotice } from './GoogleFlagNotice'
 import { PickerRow } from './GooglePickers'
 import './google-connection.css'
@@ -245,6 +246,8 @@ function GoogleConnectionScreen({ status, redirectUri }: Omit<Props, 'versions'>
           <AdminLink path="/settings/site#integrations">{t('integrations.openLink')}</AdminLink> {t('integrations.seeIds')}
         </p>
       </CollapsibleCard>
+
+      <GoogleCalendarSyncCard connected={connected} />
     </div>
   )
 }

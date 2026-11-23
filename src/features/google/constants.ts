@@ -41,6 +41,7 @@ export const GOOGLE_SCOPES: readonly string[] = [
   'https://www.googleapis.com/auth/webmasters',
   'https://www.googleapis.com/auth/tagmanager.readonly',
   'https://www.googleapis.com/auth/adsense.readonly',
+  'https://www.googleapis.com/auth/calendar.events',
 ]
 
 /** The redirect address the site owner pastes into the Google Cloud client. */

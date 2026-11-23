@@ -172,4 +172,13 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
       hasRule: async (event) => rulesFor(await listRules(d1), event).length > 0,
     })
   },
+  'gcal-sync': async ({ engine, now }) => {
+    const { gcalDb, readConfig } = await import('@/features/gcalSync/store')
+    const { runSync, syncDue } = await import('@/features/gcalSync/run')
+    const { createCalendarApi } = await import('@/features/gcalSync/api')
+    const db = await gcalDb()
+    const cfg = await readConfig(db)
+    if (!cfg.enabled || !syncDue(cfg.lastRunAt, cfg.intervalMin, now)) return null
+    return runSync({ engine: engine as never, db, api: createCalendarApi(engine as never), now })
+  },
 }
