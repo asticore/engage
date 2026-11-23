@@ -100,6 +100,7 @@ export const RESPONSIVE_KEYS = [
   'minWidthUnit',
   'lineHeightUnit',
   'wordSpacingUnit',
+  'posUnit',
   'maxWidth',
   'maxWidthUnit',
   'maxHeight',
@@ -500,6 +501,8 @@ export type BlockStyle = {
   /** Focus-visible outline colour for the block and anything focusable inside it. */
   focusRing?: string
   position?: BlockPosition
+  /** Unit shared by the four position offsets. Unset = px. Per device. */
+  posUnit?: LengthUnit
   posTop?: number
   posRight?: number
   posBottom?: number
@@ -556,7 +559,7 @@ export const BLEND_MODE_OPTIONS: { label: string; value: BlendMode }[] = [
 
 export const EMPTY_STYLE: BlockStyle = {}
 
-const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit'] as const
+const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit', 'posUnit'] as const
 /** Drops unit keys that are not on the whitelist. */
 function withSafeUnits(style: BlockStyle): BlockStyle {
   const raw = style as Record<string, unknown>
@@ -1275,7 +1278,7 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const n = clampNum(r[key], 0, 10000)
     if (n !== undefined) out[key] = n
   }
-  for (const key of ['minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit'] as const) {
+  for (const key of ['minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit', 'posUnit'] as const) {
     const u = lengthUnit(r[key])
     if (u) out[key] = u
   }
@@ -1497,10 +1500,10 @@ function advancedCss(style: BlockStyle): React.CSSProperties {
   }
   if (style.position && POSITION_OPTIONS.some((o) => o.value === style.position)) {
     css.position = style.position
-    if (isNum(style.posTop)) css.top = `${style.posTop}px`
-    if (isNum(style.posRight)) css.right = `${style.posRight}px`
-    if (isNum(style.posBottom)) css.bottom = `${style.posBottom}px`
-    if (isNum(style.posLeft)) css.left = `${style.posLeft}px`
+    if (isNum(style.posTop)) css.top = `${style.posTop}${lengthUnit(style.posUnit) ?? 'px'}`
+    if (isNum(style.posRight)) css.right = `${style.posRight}${lengthUnit(style.posUnit) ?? 'px'}`
+    if (isNum(style.posBottom)) css.bottom = `${style.posBottom}${lengthUnit(style.posUnit) ?? 'px'}`
+    if (isNum(style.posLeft)) css.left = `${style.posLeft}${lengthUnit(style.posUnit) ?? 'px'}`
   }
   if (isNum(style.zIndex)) css.zIndex = style.zIndex
   if (isNum(style.opacity)) css.opacity = style.opacity / 100
@@ -1703,8 +1706,8 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
   if (mergedU.position && POSITION_OPTIONS.some((o) => o.value === mergedU.position)) {
     // A changed position type also re-emits inherited offsets: the base ones are only inline when the base had a position.
     for (const [prop, key] of offsets) {
-      const v = own.position !== undefined ? mergedU[key] : own[key]
-      if (isNum(v)) decls.push(`${prop}:${v}px !important`)
+      const v = own.position !== undefined || own.posUnit !== undefined ? mergedU[key] : own[key]
+      if (isNum(v)) decls.push(`${prop}:${v}${lengthUnit(mergedU.posUnit) ?? 'px'} !important`)
     }
   }
   if (isNum(own.zIndex)) decls.push(`z-index:${own.zIndex} !important`)

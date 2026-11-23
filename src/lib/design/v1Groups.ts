@@ -251,6 +251,7 @@ export const V1_GROUP_OF = {
   focusRing: 'motion',
   position: 'transform',
   posTop: 'transform',
+  posUnit: 'transform',
   posRight: 'transform',
   posBottom: 'transform',
   posLeft: 'transform',

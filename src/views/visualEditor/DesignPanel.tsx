@@ -2062,7 +2062,7 @@ const FILTER_ROWS: { k: keyof BlockStyle; labelKey: UiStringKey; unit: string; m
 const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   ...TRANSFORM_ROWS.map((r) => tfKey('tf', r.suffix)),
   ...TRANSFORM_ROWS.map((r) => tfKey('tfh', r.suffix)),
-  'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
+  'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
   'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
 
@@ -2104,10 +2104,11 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
         />
         {positioned && (
           <>
-            <TypoRange ctl={ctl} k="posTop" label={`${t('dp.field.top')} (px)`} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posRight" label={`${t('dp.lit.right')} (px)`} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posBottom" label={`${t('dp.field.bottom')} (px)`} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posLeft" label={`${t('dp.lit.left')} (px)`} def={0} min={-2000} max={2000} step={1} />
+            <div className="ve-row"><UnitSelect ctl={ctl} unitKey={'posUnit' as RespKey} label="Offset unit" defaultLabel="px" units={['%', 'em', 'rem', 'vw', 'vh']} /></div>
+            <TypoRange ctl={ctl} k="posTop" label={t('dp.field.top')} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posRight" label={t('dp.lit.right')} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posBottom" label={t('dp.field.bottom')} def={0} min={-2000} max={2000} step={1} />
+            <TypoRange ctl={ctl} k="posLeft" label={t('dp.lit.left')} def={0} min={-2000} max={2000} step={1} />
           </>
         )}
         <RespNumber ctl={ctl} k="zIndex" label={t('dp.lit.z_index')} min={-10} max={9999} />
