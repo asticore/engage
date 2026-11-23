@@ -4,6 +4,7 @@
  * request), shared by the admin screen, the layout, the CSP and the tests.
  */
 import type { AssetKind } from './builtin'
+import { fontAwesomeCsp, fontAwesomeTag, normaliseFontAwesome, validateFontAwesome, type FontAwesomeConfig } from './fontAwesome'
 
 export type FrontendAsset = {
   id: string
@@ -22,7 +23,7 @@ export type FrontendAsset = {
   enabled: boolean
 }
 
-export type FrontendAssetsConfig = { assets: FrontendAsset[] }
+export type FrontendAssetsConfig = { assets: FrontendAsset[]; /** The owner's own Font Awesome Pro licence (Task 12, 31g). Absent means the free built-in icons only. */ fontAwesome?: FontAwesomeConfig }
 
 export const EMPTY_FRONTEND_ASSETS: FrontendAssetsConfig = { assets: [] }
 export const MAX_ASSETS = 30
@@ -72,12 +73,15 @@ export function normaliseAssets(input: unknown): FrontendAssetsConfig {
       enabled: r.enabled !== false,
     })
   }
-  return { assets }
+  const fontAwesome = normaliseFontAwesome((input as { fontAwesome?: unknown } | null)?.fontAwesome)
+  return fontAwesome.mode === 'off' ? { assets } : { assets, fontAwesome }
 }
 
 /** A message for the first problem in a posted list, or null. Run on the raw input before normalising. */
 export function validateAssets(input: unknown): string | null {
   const list = (input && typeof input === 'object' ? (input as { assets?: unknown }).assets : null)
+  const faProblem = validateFontAwesome((input as { fontAwesome?: unknown } | null)?.fontAwesome)
+  if (faProblem) return faProblem
   if (!Array.isArray(list)) return null
   if (list.length > MAX_ASSETS) return `At most ${MAX_ASSETS} files can be added.`
   for (const item of list) {
@@ -95,6 +99,8 @@ const matches = (asset: FrontendAsset, portal: boolean): boolean => asset.enable
 /** The enabled entries for this kind of page, split by where they are written. */
 export function assetsFor(config: FrontendAssetsConfig, portal: boolean): { css: FrontendAsset[]; headScripts: FrontendAsset[]; bodyScripts: FrontendAsset[] } {
   const live = config.assets.filter((a) => matches(a, portal))
+  const fa = config.fontAwesome ? fontAwesomeTag(config.fontAwesome) : null
+  if (fa) live.push({ id: 'font-awesome-pro', label: 'Font Awesome Pro', kind: fa.kind, url: fa.url, integrity: '', position: 'head', defer: false, async: false, scope: 'everywhere', enabled: true })
   return {
     css: live.filter((a) => a.kind === 'css'),
     headScripts: live.filter((a) => a.kind === 'js' && a.position === 'head'),
@@ -115,6 +121,12 @@ export function assetCspAdditions(config: FrontendAssetsConfig): AssetCsp {
       out.style.push(origin)
       out.font.push(origin)
     }
+  }
+  if (config.fontAwesome) {
+    const fa = fontAwesomeCsp(config.fontAwesome)
+    out.script.push(...fa.script)
+    out.style.push(...fa.style)
+    out.font.push(...fa.font)
   }
   return { script: [...new Set(out.script)], style: [...new Set(out.style)], font: [...new Set(out.font)] }
 }

@@ -3,6 +3,8 @@ import type { SectionNode } from '@/lib/sectionTree'
 import {
   CLIPBOARD_FORMAT,
   countNodes,
+  upgradeClipboardTree,
+  serializeSelection,
   exportPage,
   parseClipboardText,
   parsePageImport,
@@ -128,5 +130,25 @@ describe('file names', () => {
   it('slugifies titles to ASCII file stems', () => {
     expect(slugifyFileName('Caf\u00e9 Page: Spring & Summer!')).toBe('cafe-page-spring-summer')
     expect(slugifyFileName('!!!')).toBe('page')
+  })
+})
+
+describe('schema upgrades and element or section files (31d)', () => {
+  it('runs each older step in order and leaves a current tree alone', () => {
+    const steps = { 1: (t: unknown[]) => [...t, 'two'], 2: (t: unknown[]) => [...t, 'three'] }
+    expect(upgradeClipboardTree(['one'], 1, 3, steps)).toEqual(['one', 'two', 'three'])
+    expect(upgradeClipboardTree(['one'], 3, 3, steps)).toEqual(['one'])
+    expect(upgradeClipboardTree(['one'], 1, 2, {})).toEqual(['one'])
+  })
+  it('a section and an element export and import on their own, with their kind', () => {
+    const section = serializeSelection(page, [0])
+    expect(section?.kind).toBe('section')
+    const sectionBack = parsePageImport(section!.text)
+    expect(sectionBack.ok && sectionBack.summary.kind).toBe('section')
+    const element = serializeSelection(page, [0, 0, 0])
+    expect(element?.kind).toBe('block')
+    const elementBack = parsePageImport(element!.text)
+    expect(elementBack.ok && elementBack.summary.nodes).toHaveLength(1)
+    expect(element!.text).not.toContain('"_id"')
   })
 })

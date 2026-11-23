@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 44 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 48 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -2855,6 +2855,40 @@ _Date: 23 Nov 2026_
 **Task 15 34a Timeline (23 Nov 2026).** The `timeline` element is now in the library (no longer hidden). Layouts vertical, alternating and horizontal (sideways scroll), per item icon, picture, link, colour and group heading, line and dot colours, Spark `spark-reveal` option, opt-in Event structured data for ISO dates. Three Examples in the presets (`timeline-vertical`, `timeline-alternating`, `timeline-horizontal`). Code: `wave36Defs.ts`, `Wave36Elements.tsx`, `wave36.css`, `templatePresets.ts`, test `tests/int/timeline-element.int.spec.ts`. Leftover: items filled from a collection (posts, events, course steps) stays in Task 15 as 34a2.
 
 **Where to find it:** Visual editor > Elements > Timeline, and Templates > Timeline examples
+#### BLD-044 · Task 12 editor contrast and blue dark mode (31a, 31b) (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 12 31a and 31b (23 Nov 2026).** The canvas root (`.ve-frame-root`) now sets the site's page colours and `color-scheme: light`, so no editor token reaches canvas text. The admin dark theme maps the whole elevation ramp onto a new blue ramp (`--ac-navy-*` in `custom.css`, both the `data-theme` and the OS-dark blocks). `tests/int/editor-theme-contrast.int.spec.ts` checks every filled editor button pair (accent, danger, select, chrome) and the text pairs in both editor themes at 4.5:1, border and focus colours at 3:1, and the navy ramp steps. The editor Checks contrast warning (theme tokens, gradients, images, hover) already existed from Task 20c.
+
+**Where to find it:** Visual editor and admin in dark mode; `tests/int/editor-theme-contrast.int.spec.ts`
+
+<a id="bld-046"></a>
+#### BLD-046 · Task 12 panels and mechanics (31c, 31d) (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 12 31c and 31d (23 Nov 2026).** Verified the docked Elements, Settings, Navigator and History panel (no popup in the add flow, Templates tab in the library, 820 px and 390 px previews, per-device badge) and added Arrow, Home and End keys to the dock tab list. Import now has an upgrade layer (`CLIPBOARD_UPGRADES`, `upgradeClipboardTree`) for older files; newer files still fail with a clear message, unknown elements stay as placeholders, section and element exports are tested. Decision: the inline text editor stays the hardened contentEditable, with the read-only guard for formatted content (`canEditAsPlainText`); a Lexical swap is not needed.
+
+**Where to find it:** Visual editor > left dock tabs; top bar > Import / Export
+
+<a id="bld-047"></a>
+#### BLD-047 · Task 12 shared field kit and first design controls (31e, 31h part) (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 12 31e and 31h, first slice (23 Nov 2026).** `fieldKit.tsx`: `PopoverGroup` (non-modal, Escape and outside click close it), `LengthField` (number plus the six units px, %, em, rem, vw, vh, per device), `SizeLimitRows`, `FlipRows`, `TextShadowStrokePopover`. New design keys in `blockStyle.ts`: min width, max width, max height with units and per-device overrides (a 0 max clears an inherited limit), flip horizontal and vertical per device, justify alignment, text stroke (width and colour), custom text shadow (x, y, blur, colour). Emitted as scoped CSS with media queries; sanitised on read; mapped in `v1Groups.ts` and `designHelpers.ts`. Tests in `tests/int/design-size-limits-flip-stroke.int.spec.ts`.
+
+**Where to find it:** Visual editor > selected block > Design > Spacing (size limits), Typography (text shadow and stroke), Advanced > Transform (flip)
+
+<a id="bld-048"></a>
+#### BLD-048 · Task 12 reference matrix and Font Awesome Pro (31f, 31g) (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 12 31f and 31g (23 Nov 2026).** `docs/visual-builder-reference-matrix.md` lists every builder capability against Elementor free and Pro and the ten add-on products (competitor cells marked uncertain until checked live). Font Awesome Pro: Admin > Front-end files > Font Awesome Pro takes a kit code or a Font Awesome Pro stylesheet address (only Font Awesome hosts, https), a Test button, CSP hosts added automatically; the icon picker then offers the Pro styles for this site only and falls back to solid free icons when the licence is removed. Nothing from Pro is bundled. Stored in the front-end files record (no new table). Tests: `tests/int/font-awesome-pro.int.spec.ts`.
+
+**Where to find it:** Admin > Front-end files; icon picker style menu
 
 <a id="bld-044"></a>
 #### BLD-044 · Task 15 34b Social feeds, wall and embeds (23 Nov 2026)
@@ -3227,6 +3261,10 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 - [BLD-044](#bld-044) Task 15 34b Social feeds, wall and embeds
 - [BLD-043](#bld-043) Task 15 34a Timeline element
+- [BLD-045](#bld-045) Task 12 editor contrast and blue dark mode
+- [BLD-046](#bld-046) Task 12 panels and mechanics
+- [BLD-047](#bld-047) Task 12 field kit and first design controls
+- [BLD-048](#bld-048) Task 12 reference matrix and Font Awesome Pro
 - [STY-014](#sty-014) 40d third batch and data source (23 Nov 2026)
 - [STY-015](#sty-015) 40d second batch (23 Nov 2026)
 - [STY-016](#sty-016) 40d (part)
