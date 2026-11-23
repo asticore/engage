@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 79 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 80 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3190,6 +3190,15 @@ Every colour field in the design panel already offered the Theme picker. The one
 
 **Where to find it:** Visual editor, Section settings, Tabs
 
+<a id="bld-080"></a>
+#### BLD-080 · Hover gradient background (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+The Hover group has a linear gradient background (from colour, to colour, angle). It is validated like the other hover keys and written into the scoped hover rule. A test covers the output, the defaults and the sanitising.
+
+**Where to find it:** Visual editor, Design panel, Hover
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3550,6 +3559,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-080](#bld-080) Hover gradient background
 - [BLD-079](#bld-079) Task 15 34a2 Timeline from events or posts
 - [BLD-078](#bld-078) Theme colour tokens on every design colour field
 - [BLD-077](#bld-077) Task 10 29e Cart and order display conditions
