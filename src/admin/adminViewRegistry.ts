@@ -71,6 +71,7 @@ const PurchaseLimitsView = lazyView(() => import('@/admin/views/PurchaseLimitsVi
 const AuthenticationView = lazyView(() => import('@/admin/views/AuthenticationView').then((mod) => mod.AuthenticationView))
 const RateRulesView = lazyView(() => import('@/admin/views/RateRulesView').then((mod) => mod.RateRulesView))
 const IpRulesView = lazyView(() => import('@/admin/views/IpRulesView').then((mod) => mod.IpRulesView))
+const MapsWeatherView = lazyView(() => import('@/admin/views/MapsWeatherView').then((mod) => mod.MapsWeatherView))
 const FrontendAssetsView = lazyView(() => import('@/admin/views/FrontendAssetsView').then((mod) => mod.FrontendAssetsView))
 const CspBuilderView = lazyView(() => import('@/admin/views/CspBuilderView').then((mod) => mod.CspBuilderView))
 const UserBansView = lazyView(() => import('@/admin/views/UserBansView').then((mod) => mod.UserBansView))
@@ -276,6 +277,7 @@ export const CUSTOM_ADMIN_VIEWS = [
   { key: 'rate-rules', Component: RateRulesView, path: '/security/rate-rules', meta: { title: 'Rate limit rules', description: 'Limit requests per address to a path.' } },
   { key: 'ip-rules', Component: IpRulesView, path: '/security/ip-lists', meta: { title: 'IP lists', description: 'Block or allow addresses and ranges.' } },
   { key: 'frontend-files', Component: FrontendAssetsView, path: '/frontend-files', meta: { title: 'Front-end files', description: 'Add Bootstrap, Tailwind, Font Awesome or other CSS and JavaScript files to the public site and portal.' } },
+  { key: 'maps-weather', Component: MapsWeatherView, path: '/maps-weather', meta: { title: 'Maps and weather', description: 'Pick the map and weather providers, add keys and test them.' } },
   { key: 'csp-builder', Component: CspBuilderView, path: '/security/csp', meta: { title: 'Content-Security-Policy builder', description: 'Pick allowed sources per directive, test in report-only mode, and allow reported hosts.' } },
   { key: 'user-bans', Component: UserBansView, path: '/security/bans', meta: { title: 'Banned accounts', description: 'Ban and unban accounts.' } },
   { key: 'affiliates', Component: AffiliatesView, path: '/affiliates', meta: { title: 'Affiliates', description: 'Partners with referral links and the visits they bring.' } },

@@ -168,7 +168,7 @@ export const renderBlockBody = (node: SectionNode, key: string): React.ReactNode
         return <ReviewsLiveElement {...(get<Record<string, unknown>>('props') || {})} />
       }
       // Manual breadcrumbs stay a plain element on the canvas; live they read the sitewide SEO breadcrumb settings.
-      if (SITE_ELEMENT_TYPES.has(get<string>('elementType')) || get<string>('elementType') === 'breadcrumbs') {
+      if (SITE_ELEMENT_TYPES.has(get<string>('elementType')) || get<string>('elementType') === 'breadcrumbs' || get<string>('elementType') === 'map') {
         return <SiteElement elementType={get<string>('elementType')} props={get<Record<string, unknown>>('props') || {}} />
       }
       if (MEDIA_PROP_KEYS[get<string>('elementType')]) {

@@ -20,6 +20,8 @@ export const EMBED_IFRAME_HOST = {
   /** Map element: Google keyless embed and OpenStreetMap. */
   googleMaps: 'www.google.com',
   openStreetMap: 'www.openstreetmap.org',
+  /** Map element with a MapTiler key saved. */
+  mapTiler: 'api.maptiler.com',
 } as const
 
 /** Extra hosts that are framed but not tied to one provider key (kept for the CSP; youtube.com for plain embeds). */

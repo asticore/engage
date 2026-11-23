@@ -1,7 +1,9 @@
 import React from 'react'
 
 import { getBlockContext, getRequestQuery } from '@/lib/blockContext'
-import { describeCode, loadWeather } from '@/features/weather/openMeteo'
+import { describeCode } from '@/features/weather/openMeteo'
+import { loadConfiguredWeather } from '@/features/weather/providers'
+import { readMapsWeather } from '@/features/mapsWeather/store'
 import { getEngine } from '@/lib/engine'
 
 import './wave70.css'
@@ -89,9 +91,10 @@ export async function ArchiveTitleElement(props: P): Promise<React.ReactElement 
 
 export async function WeatherElement(props: P): Promise<React.ReactElement | null> {
   const place = typeof props.place === 'string' ? props.place : ''
-  const units = props.units === 'imperial' ? 'imperial' : 'metric'
-  const w = await loadWeather(place, units, Number(props.cacheMinutes) || 30)
+  const config = await readMapsWeather()
+  const w = await loadConfiguredWeather(config, place, props.units === 'imperial' ? 'imperial' : props.units === 'metric' ? 'metric' : undefined, Number(props.cacheMinutes) || undefined)
   if (!w) return null
+  const units = w.units
   const deg = units === 'imperial' ? '\u00b0F' : '\u00b0C'
   const spd = units === 'imperial' ? 'mph' : 'km/h'
   const now = describeCode(w.now.code)

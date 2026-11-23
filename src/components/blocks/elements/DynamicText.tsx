@@ -40,6 +40,18 @@ export async function DynamicTextElement(props: Record<string, unknown>): Promis
   } catch {
     // site.name stays empty
   }
+  const template = typeof props.template === 'string' ? props.template : ''
+  const place = typeof props.weatherPlace === 'string' ? props.weatherPlace.trim() : ''
+  if (place && /\{\{\s*weather\./i.test(template)) {
+    try {
+      const [{ loadConfiguredWeather }, { describeCode }, { readMapsWeather }] = await Promise.all([import('@/features/weather/providers'), import('@/features/weather/openMeteo'), import('@/features/mapsWeather/store')])
+      const config = await readMapsWeather()
+      const w = await loadConfiguredWeather(config, place)
+      if (w) ctx.weather = { temp: `${w.now.temp}${w.units === 'imperial' ? '\u00b0F' : '\u00b0C'}`, condition: describeCode(w.now.code).label, place: w.place, wind: `${w.now.wind} ${w.units === 'imperial' ? 'mph' : 'km/h'}` }
+    } catch {
+      // the weather tags stay empty
+    }
+  }
   return <DynamicTextView props={props} ctx={ctx} />
 }
 
