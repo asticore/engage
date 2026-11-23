@@ -29,4 +29,19 @@ export const CALENDAR_ELEMENTS: ElementDef[] = [
     ],
     defaultProps: () => ({ views: 'month\nweek\nagenda\nlist', defaultView: 'month', firstDay: '1', hours: '12', density: 'comfortable', timeZone: '', categories: '', defaultCategory: 'Events', accent: '#2e3192', textColor: '', background: '', fontFamily: '', colorByCategory: true, showFilters: true, showSubscribe: true }),
   },
+  {
+    type: 'timeline-feed', label: 'Timeline from events or posts', icon: String.fromCodePoint(0x1f4c6), category: 'media',
+    description: 'A timeline filled automatically from your Events or blog posts, newest or soonest first. Same look options as the Timeline element.',
+    fields: [
+      { name: 'source', label: 'Fill from', type: 'select', width: 'half', options: opt([['events', 'Events (upcoming)'], ['past-events', 'Events (past)'], ['posts', 'Blog posts']]) },
+      { name: 'count', label: 'How many', type: 'range', width: 'half', min: 1, max: 24, step: 1 },
+      { name: 'layout', label: 'Layout', type: 'select', width: 'half', options: opt([['vertical', 'Vertical'], ['alternating', 'Alternating'], ['horizontal', 'Horizontal']]) },
+      { name: 'linkLabel', label: 'Link text', type: 'text', width: 'half' },
+      { name: 'lineColor', label: 'Line colour', type: 'color', width: 'half' },
+      { name: 'dotColor', label: 'Dot colour', type: 'color', width: 'half' },
+      { name: 'reveal', label: 'Reveal on scroll (Spark)', type: 'select', width: 'half', options: [{ label: 'None', value: '' }, ...opt([['fade', 'Fade'], ['fade-up', 'Fade up'], ['slide-left', 'Slide left'], ['slide-right', 'Slide right'], ['zoom', 'Zoom']])] },
+      { name: 'schema', label: 'Add Event structured data', type: 'checkbox', helpText: 'For real events only.' },
+    ],
+    defaultProps: () => ({ source: 'events', count: 6, layout: 'vertical', linkLabel: 'Read more', lineColor: '', dotColor: '', reveal: '', schema: false }),
+  },
 ]
