@@ -49,3 +49,15 @@ describe('site template starters', () => {
     }
   })
 })
+
+describe('header and footer starters (33g)', () => {
+  it('has a desktop and a mobile header, a members-only header and a footer with socials', () => {
+    const header = STARTERS.find((s) => s.id === 'header-responsive')!
+    const designs = header.blocks().map((b) => JSON.stringify((b as { design?: unknown }).design))
+    expect(designs).toEqual(['{"hideOnMobile":true}', '{"hideOnDesktop":true}'])
+    expect(JSON.stringify(header.blocks())).toContain('offcanvas')
+    const members = STARTERS.find((s) => s.id === 'header-members')!
+    expect(members.conditions?.()).toEqual([[{ param: 'audience', operator: 'equals', value: 'members' }]])
+    expect(JSON.stringify(STARTERS.find((s) => s.id === 'footer-columns')!.blocks())).toContain('social-icons')
+  })
+})
