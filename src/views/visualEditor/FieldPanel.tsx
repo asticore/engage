@@ -21,7 +21,7 @@ import type { BlockDef, EditorField } from './blockSchemas'
 import type { ParamDecl } from '@/lib/sectionParams'
 import { ALIGN_CONTENT_VALUES, CONTAINER_TAGS, LAYOUT_UNITS, OVERFLOW_VALUES, parseSectionLayout, safeHref, type DeviceFlow, type Dim, type LayoutUnit, type SectionLayout } from '@/lib/sectionLayout'
 
-import { Accordion, CheckRow, DesignPanel, HeightRows, makeResponsive, NumberRow, SelectRow, type EditDevice, type RowResp } from './DesignPanel'
+import { Accordion, CheckRow, ColorRow, DesignPanel, HeightRows, makeResponsive, NumberRow, SelectRow, type EditDevice, type RowResp } from './DesignPanel'
 import { columnsForStructure, STRUCTURES } from './columnOps'
 import { StructureIcon } from './StructurePicker'
 import { canEditAsPlainText, lexicalToPlainText, plainTextToLexical, RICH_TEXT_NOTICE } from './richTextUtil'
@@ -899,10 +899,7 @@ const SectionLayoutFields: React.FC<{
           />
         )}
         {layout.display && (
-          <div className="ve-row">
-            <label className="ve-row__label">{t('ve.fp.activeColour')}</label>
-            <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(layout.tabsColor || '') ? (layout.tabsColor as string) : '#2563eb'} onChange={(e) => setLayout({ tabsColor: e.target.value })} aria-label={t('ve.fp.activeColour')} />
-          </div>
+          <ColorRow label={t('ve.fp.activeColour')} value={layout.tabsColor} onChange={(v) => setLayout({ tabsColor: v })} />
         )}
         <SelectRow
           label={t('ve.fp.contentWidth')}

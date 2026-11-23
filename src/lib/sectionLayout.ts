@@ -274,7 +274,7 @@ export function parseSectionLayout(raw: unknown): SectionLayout | undefined {
   if (schemaType && (display === 'tabs' || display === 'accordion')) out.schemaType = schemaType
   const tabsAlign = pick(raw.tabsAlign, ['start', 'center', 'end', 'stretch'] as const)
   if (tabsAlign) out.tabsAlign = tabsAlign
-  if (typeof raw.tabsColor === 'string' && /^[#a-zA-Z0-9(),.%\s/-]{1,64}$/.test(raw.tabsColor)) out.tabsColor = raw.tabsColor
+  if (typeof raw.tabsColor === 'string' && (/^var\(--[a-z0-9_-]+\)$/.test(raw.tabsColor.trim()) || (/^[#a-zA-Z0-9(),.%\s/-]{1,64}$/.test(raw.tabsColor) && !/var\s*\(|url\s*\(|expression|import|\\/i.test(raw.tabsColor)))) out.tabsColor = raw.tabsColor.trim()
   if (isNum(raw.carouselPerView) && Number.isInteger(raw.carouselPerView) && raw.carouselPerView >= 1 && raw.carouselPerView <= 4) {
     out.carouselPerView = raw.carouselPerView as 1 | 2 | 3 | 4
   }
