@@ -85,3 +85,18 @@ describe('library item kinds from the templates repo draft (33c)', () => {
     expect(validateLibraryManifest(make([{ ...base, kind: 'section', pairWith: 'y' }, { ...base, slug: 'y', kind: 'section', pairWith: 'x' }])).ok).toBe(true)
   })
 })
+
+import { pickThemeVariant } from '@/features/templateLibraries/list'
+
+describe('light and dark twins (leftover 4)', () => {
+  const light = { slug: 'a', theme: 'light', pairWith: 'a-dark' } as never
+  const dark = { slug: 'a-dark', theme: 'dark', pairWith: 'a' } as never
+  const both = { slug: 'b', theme: 'both' } as never
+  it('uses the twin that matches the preferred theme', () => {
+    expect(pickThemeVariant([light, dark], light, 'dark')).toBe(dark)
+    expect(pickThemeVariant([light, dark], dark, 'light')).toBe(light)
+    expect(pickThemeVariant([light, dark], light, 'light')).toBe(light)
+    expect(pickThemeVariant([light, dark], light, '')).toBe(light)
+    expect(pickThemeVariant([both], both, 'dark')).toBe(both)
+  })
+})

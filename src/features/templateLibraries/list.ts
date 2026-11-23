@@ -57,6 +57,16 @@ export async function listLibraries(engine: LibraryStoreEngine, options: { fresh
   return { libraries, items }
 }
 
+/**
+ * Picks the light or dark twin of an item. When the item has a `pairWith` partner and is written for the other theme,
+ * the partner (if it is for the preferred theme) is used instead. Items marked `both`, or with no partner, are kept.
+ */
+export function pickThemeVariant(items: LibraryItem[], item: LibraryItem, prefer: 'light' | 'dark' | ''): LibraryItem {
+  if (!prefer || !item.pairWith || !item.theme || item.theme === 'both' || item.theme === prefer) return item
+  const partner = items.find((candidate) => candidate.slug === item.pairWith)
+  return partner && partner.theme === prefer ? partner : item
+}
+
 /** Finds a saved library row and one of its manifest items. Both are looked up by the saved id and the item slug. */
 export async function findLibraryItem(
   engine: LibraryStoreEngine,

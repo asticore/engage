@@ -309,7 +309,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ library: card.repo.libraryId, item: card.repo.slug }),
+          body: JSON.stringify({ library: card.repo.libraryId, item: card.repo.slug, prefer: previewDark ? 'dark' : themeFilter || 'light' }),
         })
         const json = (await res.json().catch((): null => null)) as { ok?: boolean; error?: string; tree?: unknown } | null
         const tree = asNodes(json?.tree)
@@ -327,7 +327,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         setLoadingKey(null)
       }
     },
-    [loadingKey, onPickTemplate, insertMode],
+    [loadingKey, onPickTemplate, insertMode, previewDark, themeFilter],
   )
 
   const onPick = (card: Card) => {
