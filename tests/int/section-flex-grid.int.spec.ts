@@ -59,15 +59,15 @@ describe('flex / grid CSS output', () => {
 
 describe('device copy helpers', () => {
   it('copies desktop responsive values into the tablet override, keeping other keys', () => {
-    const style = asBlockStyle({ paddingTop: 20, textAlign: 'center', bgColor: '#fff', tablet: { paddingTop: 5, fontSize: 14 } })
+    const style = asBlockStyle({ paddingTop: 20, textAlign: 'center', wrapLink: 'https://x.test/p', tablet: { paddingTop: 5, fontSize: 14 } })
     const next = copyDesktopToDevice(style, 'tablet')
     expect(next.tablet).toMatchObject({ paddingTop: 20, textAlign: 'center', fontSize: 14 })
-    expect((next.tablet as Record<string, unknown>).bgColor).toBeUndefined()
+    expect((next.tablet as Record<string, unknown>).wrapLink).toBeUndefined()
     expect(next.mobile).toBeUndefined()
     expect(style.tablet).toEqual({ paddingTop: 5, fontSize: 14 })
   })
   it('returns the same object when there is nothing to copy', () => {
-    const style = asBlockStyle({ bgColor: '#fff' })
+    const style = asBlockStyle({ wrapLink: 'https://x.test/p' })
     expect(copyDesktopToDevice(style, 'mobile')).toBe(style)
   })
   it('detects and clears overrides', () => {

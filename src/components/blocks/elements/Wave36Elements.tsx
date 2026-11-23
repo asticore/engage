@@ -152,13 +152,16 @@ export const TimelineElement: React.FC<P> = (p) => {
         ...(r.text ? { description: r.text } : {}), ...(absoluteUrl(r.url) ? { url: absoluteUrl(r.url) } : {}),
       }))
     : []
-  let lastGroup = ''
+  const groupLabels = items.map((r, i) => {
+    if (!r.group) return ''
+    const prev = items.slice(0, i).reverse().find((x) => x.group)
+    return r.group !== prev?.group ? r.group : ''
+  })
   return (
     <>
       <ol className={`be-el-timeline be-el-timeline--${layout} be-el-timeline--${center}`} style={rootStyle}>
         {items.map((r, i) => {
-          const group = r.group && r.group !== lastGroup ? r.group : ''
-          if (r.group) lastGroup = r.group
+          const group = groupLabels[i]
           const href = linkHref(r.url)
           const img = mediaOf(r.image)
           const itemColor = cssColour(r.color)

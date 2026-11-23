@@ -22,7 +22,7 @@ describe('image mask and link rel options (31e)', () => {
   })
   it('the wrapper link carries sponsored and ugc in rel', () => {
     const html = renderToString(
-      React.createElement(StyledBlock, { index: 0, style: { wrapLink: 'https://x.test/p', wrapLinkSponsored: true, wrapLinkUgc: true, wrapLinkNoFollow: true } as BlockStyle, children: 'hi' }),
+      React.createElement(StyledBlock, { index: 0, style: { wrapLink: 'https://x.test/p', wrapLinkSponsored: true, wrapLinkUgc: true, wrapLinkNoFollow: true } as BlockStyle } as React.ComponentProps<typeof StyledBlock>, 'hi'),
     )
     expect(html).toContain('rel="nofollow sponsored ugc"')
   })
