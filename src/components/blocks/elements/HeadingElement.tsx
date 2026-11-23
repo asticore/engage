@@ -70,7 +70,7 @@ function effectMarkup(p: HeadingElementProps, effect: HeadingEffect, tag: Headin
     }
     case 'rotate': {
       if (lines(p.words).length === 0) return null
-      return <AnimatedHeadlineElement before={text} words={p.words} after="" tag={tag} style="fade" />
+      return <AnimatedHeadlineElement before={text} words={p.words} after="" tag={tag} style="fade" speed={SPEED[pick(p.speed, ['slow', 'normal', 'fast'] as const, 'normal')]} />
     }
     case 'split': {
       if (!text) return null
