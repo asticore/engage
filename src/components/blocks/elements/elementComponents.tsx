@@ -17,6 +17,7 @@ import { WAVE64_COMPONENTS } from './Wave64Elements'
 import { WAVE65_COMPONENTS } from './Wave65Elements'
 import { WAVE68_COMPONENTS } from './Wave68Elements'
 import { UTILITY_COMPONENTS } from './UtilityElements'
+import { THREE_D_COMPONENTS } from './ThreeDElements'
 import { WAVE70_COMPONENTS } from './Wave70Elements'
 import { WAVE71_COMPONENTS } from './Wave71Elements'
 
@@ -82,4 +83,5 @@ export const ELEMENT_COMPONENTS: Record<string, React.ComponentType<Record<strin
   ...WAVE70_COMPONENTS,
   ...WAVE71_COMPONENTS,
   ...UTILITY_COMPONENTS,
+  ...THREE_D_COMPONENTS,
 }

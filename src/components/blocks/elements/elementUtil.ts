@@ -199,6 +199,7 @@ export const MEDIA_PROP_KEYS: Record<string, readonly string[]> = {
   // A video picked from the media library (an uploaded file or a video link) and its poster picture.
   video: ['video', 'poster'],
   'pdf-viewer': ['file'],
+  'model-viewer': ['file', 'poster'],
 }
 
 /* ---------- video ---------- */
