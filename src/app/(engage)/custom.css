@@ -158,6 +158,23 @@
   --color-blue-900: #050e2e;
   --color-blue-950: #01071b;
 
+  /* Dark theme blue ramp (Task 12, 31b): deep navy surfaces, readable blue-grey neutrals.
+     tests/int/editor-theme-contrast.int.spec.ts checks text, border and button pairs on these. */
+  --ac-navy-0: #0b1730;
+  --ac-navy-50: #0f1e3d;
+  --ac-navy-100: #14264b;
+  --ac-navy-150: #1a3059;
+  --ac-navy-200: #213a69;
+  --ac-navy-250: #2a4678;
+  --ac-navy-300: #4f70ab;
+  --ac-navy-400: #8ea3c8;
+  --ac-navy-500: #a3b5d6;
+  --ac-navy-600: #b8c6e0;
+  --ac-navy-700: #ccd6ea;
+  --ac-navy-800: #dde5f3;
+  --ac-navy-900: #eef2fa;
+  --ac-navy-1000: #ffffff;
+
   /* Elevation - identity mapping in light theme. */
   --theme-elevation-0: var(--color-base-0);
   --theme-elevation-50: var(--color-base-50);
@@ -192,20 +209,20 @@
    used - elevation-0 becomes a DARK step, not white) and swap the surface
    roles. The base ramp itself is NOT redefined. */
 [data-theme='dark'] {
-  --theme-elevation-0: var(--color-base-900);
-  --theme-elevation-50: var(--color-base-850);
-  --theme-elevation-100: var(--color-base-800);
-  --theme-elevation-150: var(--color-base-750);
-  --theme-elevation-200: var(--color-base-700);
-  --theme-elevation-250: var(--color-base-650);
-  --theme-elevation-300: var(--color-base-600);
-  --theme-elevation-400: var(--color-base-450);
-  --theme-elevation-500: var(--color-base-350);
-  --theme-elevation-600: var(--color-base-300);
-  --theme-elevation-700: var(--color-base-200);
-  --theme-elevation-800: var(--color-base-100);
-  --theme-elevation-900: var(--color-base-50);
-  --theme-elevation-1000: var(--color-base-0);
+  --theme-elevation-0: var(--ac-navy-0);
+  --theme-elevation-50: var(--ac-navy-50);
+  --theme-elevation-100: var(--ac-navy-100);
+  --theme-elevation-150: var(--ac-navy-150);
+  --theme-elevation-200: var(--ac-navy-200);
+  --theme-elevation-250: var(--ac-navy-250);
+  --theme-elevation-300: var(--ac-navy-300);
+  --theme-elevation-400: var(--ac-navy-400);
+  --theme-elevation-500: var(--ac-navy-500);
+  --theme-elevation-600: var(--ac-navy-600);
+  --theme-elevation-700: var(--ac-navy-700);
+  --theme-elevation-800: var(--ac-navy-800);
+  --theme-elevation-900: var(--ac-navy-900);
+  --theme-elevation-1000: var(--ac-navy-1000);
 
   --theme-bg: var(--theme-elevation-0);
   --theme-text: var(--theme-elevation-1000);
@@ -230,20 +247,20 @@
    attribute itself gets applied. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --theme-elevation-0: var(--color-base-900);
-    --theme-elevation-50: var(--color-base-850);
-    --theme-elevation-100: var(--color-base-800);
-    --theme-elevation-150: var(--color-base-750);
-    --theme-elevation-200: var(--color-base-700);
-    --theme-elevation-250: var(--color-base-650);
-    --theme-elevation-300: var(--color-base-600);
-    --theme-elevation-400: var(--color-base-450);
-    --theme-elevation-500: var(--color-base-350);
-    --theme-elevation-600: var(--color-base-300);
-    --theme-elevation-700: var(--color-base-200);
-    --theme-elevation-800: var(--color-base-100);
-    --theme-elevation-900: var(--color-base-50);
-    --theme-elevation-1000: var(--color-base-0);
+    --theme-elevation-0: var(--ac-navy-0);
+    --theme-elevation-50: var(--ac-navy-50);
+    --theme-elevation-100: var(--ac-navy-100);
+    --theme-elevation-150: var(--ac-navy-150);
+    --theme-elevation-200: var(--ac-navy-200);
+    --theme-elevation-250: var(--ac-navy-250);
+    --theme-elevation-300: var(--ac-navy-300);
+    --theme-elevation-400: var(--ac-navy-400);
+    --theme-elevation-500: var(--ac-navy-500);
+    --theme-elevation-600: var(--ac-navy-600);
+    --theme-elevation-700: var(--ac-navy-700);
+    --theme-elevation-800: var(--ac-navy-800);
+    --theme-elevation-900: var(--ac-navy-900);
+    --theme-elevation-1000: var(--ac-navy-1000);
 
     --theme-bg: var(--theme-elevation-0);
     --theme-text: var(--theme-elevation-1000);

@@ -20,7 +20,7 @@ export type BackgroundType = 'none' | 'color' | 'gradient' | 'image' | 'video' |
 export type MaskShape = 'none' | 'circle' | 'rounded' | 'blob' | 'hexagon' | 'diamond' | 'arch' | 'triangle' | 'wave' | 'blob-morph'
 export type SlideTransition = 'fade' | 'slide' | 'zoom'
 export type BlobSpeed = 'slow' | 'medium' | 'fast'
-export type TextAlign = 'left' | 'center' | 'right'
+export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 export type BlockWidth = 'contained' | 'wide' | 'full'
 export type DividerShape =
   | 'none' | 'wave' | 'tilt' | 'curve' | 'triangle' | 'arrow'
@@ -90,6 +90,14 @@ export const RESPONSIVE_KEYS = [
   'opacity',
   'fontWeight',
   'wordSpacing',
+  'minWidth',
+  'minWidthUnit',
+  'maxWidth',
+  'maxWidthUnit',
+  'maxHeight',
+  'maxHeightUnit',
+  'tfFlipX',
+  'tfFlipY',
   'tfRotate',
   'tfScale',
   'tfTranslateX',
@@ -384,6 +392,24 @@ export type BlockStyle = {
 
   // Advanced (Elementor-style). All optional; unset emits no CSS.
   /** Transform, normal state: deg, percent, px. Emitted inline. */
+  /** Size limits (31e). Per device. A 0 means "no limit" for max values and 0 for min values. Unit unset = px. */
+  minWidth?: number
+  minWidthUnit?: LengthUnit
+  maxWidth?: number
+  maxWidthUnit?: LengthUnit
+  maxHeight?: number
+  maxHeightUnit?: LengthUnit
+  /** Flip, per device: 1 mirrors the element, 0 switches an inherited flip off. */
+  tfFlipX?: number
+  tfFlipY?: number
+  /** Text stroke (31e): width in px and colour, separate from the outline effect. */
+  textStrokeWidth?: number
+  textStrokeColor?: string
+  /** Custom text shadow (31e): x, y, blur in px and colour. Any of them set replaces the preset. */
+  textShadowX?: number
+  textShadowY?: number
+  textShadowBlur?: number
+  textShadowColor?: string
   tfRotate?: number
   tfScale?: number
   tfTranslateX?: number
@@ -472,7 +498,7 @@ export const BLEND_MODE_OPTIONS: { label: string; value: BlendMode }[] = [
 
 export const EMPTY_STYLE: BlockStyle = {}
 
-const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit'] as const
+const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit'] as const
 /** Drops unit keys that are not on the whitelist. */
 function withSafeUnits(style: BlockStyle): BlockStyle {
   const raw = style as Record<string, unknown>
@@ -718,6 +744,8 @@ const TYPE_PRESET_ID = /^[a-z0-9-]{1,32}$/
 const TYPO_KEYS = [
   'typePreset', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit',
   'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow',
+  'textStrokeWidth', 'textStrokeColor', 'textShadowX', 'textShadowY', 'textShadowBlur', 'textShadowColor',
+  'minWidth', 'maxWidth', 'maxHeight', 'tfFlipX', 'tfFlipY',
 ] as const
 
 const FONT_SIZE_UNITS: readonly string[] = ['px', 'em', 'rem', 'vw']
@@ -752,6 +780,16 @@ function sanitizeTypography(style: BlockStyle): BlockStyle {
   en('textDecoration', TEXT_DECORATIONS)
   num('wordSpacing', -20, 100)
   en('textShadow', TEXT_SHADOWS)
+  num('textStrokeWidth', 0, 20)
+  num('textShadowX', -100, 100)
+  num('textShadowY', -100, 100)
+  num('textShadowBlur', 0, 200)
+  num('minWidth', 0, 10000)
+  num('maxWidth', 0, 10000)
+  num('maxHeight', 0, 10000)
+  num('tfFlipX', 0, 1, Math.round)
+  num('tfFlipY', 0, 1, Math.round)
+  for (const k of ['textStrokeColor', 'textShadowColor']) if (raw[k] !== undefined && sanitizeColor(raw[k]) === undefined) delete out[k]
   if (raw.typePreset !== undefined && !(typeof raw.typePreset === 'string' && TYPE_PRESET_ID.test(raw.typePreset))) delete out.typePreset
   return out as BlockStyle
 }
@@ -784,7 +822,16 @@ export function typographyCss(style: BlockStyle): React.CSSProperties {
   if (style.textShadow && style.textShadow !== 'none' && TEXT_SHADOWS.includes(style.textShadow)) {
     css.textShadow = TEXT_SHADOW_PRESETS[style.textShadow]
   }
+  const custom = customTextShadow(style)
+  if (custom) css.textShadow = custom
+  if (isNum(style.textStrokeWidth) && style.textStrokeWidth > 0) css.WebkitTextStroke = `${style.textStrokeWidth}px ${sanitizeColor(style.textStrokeColor) ?? 'currentColor'}`
   return css
+}
+
+/** The custom text shadow (x, y, blur, colour), or undefined when none of its four values is set. */
+function customTextShadow(style: BlockStyle): string | undefined {
+  if (![style.textShadowX, style.textShadowY, style.textShadowBlur].some(isNum) && !style.textShadowColor) return undefined
+  return `${isNum(style.textShadowX) ? style.textShadowX : 0}px ${isNum(style.textShadowY) ? style.textShadowY : 2}px ${isNum(style.textShadowBlur) ? style.textShadowBlur : 4}px ${sanitizeColor(style.textShadowColor) ?? 'rgba(0, 0, 0, 0.35)'}`
 }
 
 /** Typography properties (kebab-case) that are set on this style or any device override, so headings must inherit them. */
@@ -798,7 +845,8 @@ function typographyInheritProps(style: BlockStyle): string[] {
   if (style.textTransform) props.push('text-transform')
   if (style.fontStyle) props.push('font-style')
   if (isNum(style.wordSpacing)) props.push('word-spacing')
-  if (style.textShadow && style.textShadow !== 'none') props.push('text-shadow')
+  if ((style.textShadow && style.textShadow !== 'none') || customTextShadow(style)) props.push('text-shadow')
+  if (isNum(style.textStrokeWidth) && style.textStrokeWidth > 0) props.push('-webkit-text-stroke')
   return props
 }
 
@@ -1092,7 +1140,7 @@ export function overlayStyle(style: BlockStyle): React.CSSProperties | null {
   return out
 }
 
-const TEXT_ALIGNS: readonly string[] = ['left', 'center', 'right']
+const TEXT_ALIGNS: readonly string[] = ['left', 'center', 'right', 'justify']
 const SELF_ALIGNS: readonly string[] = ['stretch', 'start', 'center', 'end']
 const SELF_WIDTHS: readonly string[] = ['auto', 'full', 'custom']
 
@@ -1107,6 +1155,18 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
   }
   for (const key of ['marginTop', 'marginBottom', 'marginLeft', 'marginRight'] as const) {
     if (isNum(r[key])) out[key] = r[key]
+  }
+  for (const key of ['minWidth', 'maxWidth', 'maxHeight'] as const) {
+    const n = clampNum(r[key], 0, 10000)
+    if (n !== undefined) out[key] = n
+  }
+  for (const key of ['minWidthUnit', 'maxWidthUnit', 'maxHeightUnit'] as const) {
+    const u = lengthUnit(r[key])
+    if (u) out[key] = u
+  }
+  for (const key of ['tfFlipX', 'tfFlipY'] as const) {
+    const n = clampNum(r[key], 0, 1)
+    if (n !== undefined) out[key] = Math.round(n)
   }
   if (typeof r.textAlign === 'string' && TEXT_ALIGNS.includes(r.textAlign)) out.textAlign = r.textAlign as TextAlign
   if (isNum(r.fontSize) && r.fontSize > 0) out.fontSize = Math.min(400, Math.max(0.1, r.fontSize))
@@ -1217,6 +1277,7 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
   if (style.textAlign) css.textAlign = style.textAlign
   Object.assign(css, typographyCss(style))
   if (isNum(style.minHeight)) css.minHeight = minHeightValue(style.minHeight, style.minHeightUnit)
+  Object.assign(css, sizeLimitCss(style))
 
   if (isNum(style.borderWidth) && style.borderWidth > 0) {
     css.borderWidth = `${style.borderWidth}px`
@@ -1269,6 +1330,10 @@ function transformValue(style: BlockStyle, prefix: 'tf' | 'tfh'): string {
   if (skewY !== undefined) parts.push(`skewY(${skewY}deg)`)
   const scale = num('Scale')
   if (scale !== undefined) parts.push(`scale(${scale / 100})`)
+  if (prefix === 'tf') {
+    if (raw.tfFlipX === 1) parts.push('scaleX(-1)')
+    if (raw.tfFlipY === 1) parts.push('scaleY(-1)')
+  }
   return parts.join(' ')
 }
 
@@ -1313,6 +1378,28 @@ function advancedCss(style: BlockStyle): React.CSSProperties {
 }
 
 const minHeightValue = (value: number, unit: string | undefined): string => `${value}${lengthUnit(unit) ?? 'px'}`
+
+/** Min and max width and max height (31e) as inline CSS. A max of 0 means no limit, so it writes nothing on desktop. */
+function sizeLimitCss(style: BlockStyle): React.CSSProperties {
+  const css: React.CSSProperties = {}
+  if (isNum(style.minWidth) && style.minWidth > 0) css.minWidth = minHeightValue(style.minWidth, style.minWidthUnit)
+  if (isNum(style.maxWidth) && style.maxWidth > 0) css.maxWidth = minHeightValue(style.maxWidth, style.maxWidthUnit)
+  if (isNum(style.maxHeight) && style.maxHeight > 0) css.maxHeight = minHeightValue(style.maxHeight, style.maxHeightUnit)
+  return css
+}
+
+/** Declarations for the three limits on one device, from the merged style. Value 0 clears an inherited limit. */
+function sizeLimitDecls(merged: BlockStyle): string[] {
+  const decls: string[] = []
+  const val = (v: number | undefined, u: string | undefined, none: string) => (isNum(v) ? (v > 0 ? minHeightValue(v, u) : none) : undefined)
+  const minW = val(merged.minWidth, merged.minWidthUnit, '0')
+  const maxW = val(merged.maxWidth, merged.maxWidthUnit, 'none')
+  const maxH = val(merged.maxHeight, merged.maxHeightUnit, 'none')
+  if (minW) decls.push(`min-width:${minW} !important`)
+  if (maxW) decls.push(`max-width:${maxW} !important`)
+  if (maxH) decls.push(`max-height:${maxH} !important`)
+  return decls
+}
 
 /**
  * Width and alignment of a block inside its column. Blocks are normal-flow boxes, so
@@ -1441,7 +1528,7 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
   }
   if (isNum(own.zIndex)) decls.push(`z-index:${own.zIndex} !important`)
   if (isNum(own.opacity)) decls.push(`opacity:${own.opacity / 100} !important`)
-  if (own.tfRotate !== undefined || own.tfScale !== undefined || own.tfTranslateX !== undefined || own.tfTranslateY !== undefined) {
+  if (own.tfRotate !== undefined || own.tfScale !== undefined || own.tfTranslateX !== undefined || own.tfTranslateY !== undefined || own.tfFlipX !== undefined || own.tfFlipY !== undefined) {
     decls.push(`transform:${transformValue(mergedU, 'tf') || 'none'} !important`)
   }
   if (own.letterSpacing !== undefined) {
@@ -1461,6 +1548,10 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
     const left = isNum(merged.marginLeft) ? `${merged.marginLeft}${mu}` : (pos.marginLeft ?? '0')
     const right = isNum(merged.marginRight) ? `${merged.marginRight}${mu}` : (pos.marginRight ?? '0')
     decls.push(`margin-left:${left} !important`, `margin-right:${right} !important`)
+  }
+  const limitsTouched = [own.minWidth, own.maxWidth, own.maxHeight, own.minWidthUnit, own.maxWidthUnit, own.maxHeightUnit].some((v) => v !== undefined)
+  if (limitsTouched || (posTouched && [style.maxWidth, style.tablet?.maxWidth, style.mobile?.maxWidth].some(isNum))) {
+    decls.push(...sizeLimitDecls({ ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }))
   }
   return decls
 }

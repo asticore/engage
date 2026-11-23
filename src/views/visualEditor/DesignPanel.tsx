@@ -61,6 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
+import { FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -300,6 +301,7 @@ export const DesignPanel: React.FC<{
         <UnitRow ctl={resp} k="paddingUnit" label={t('dp.lit.padding_unit')} />
         <LinkedSides ctl={resp} keys={PADDING_SIDE_KEYS} noun="Padding" min={0} />
         <HeightRows ctl={resp} />
+        <SizeLimitRows ctl={resp} />
         <UnitRow ctl={resp} k="marginUnit" label={t('dp.lit.margin_unit')} />
         <LinkedSides ctl={resp} keys={MARGIN_SIDE_KEYS} noun="Margin" />
       </Acc>
@@ -370,6 +372,7 @@ export const DesignPanel: React.FC<{
             { label: t('dp.lit.left'), value: 'left' },
             { label: t('dp.opt.centre'), value: 'center' },
             { label: t('dp.lit.right'), value: 'right' },
+            { label: 'Justify', value: 'justify' },
           ]}
           defaultLabel={t('dp.lit.default')}
         />
@@ -624,7 +627,7 @@ export const DeviceIcon: React.FC<{ device: EditDevice }> = ({ device }) => (
  * A setting row. `applied` marks a value that is set (the dot) and `onReset` clears just this
  * setting. Responsive rows that already show an inherited-value reset keep that button instead.
  */
-const Row: React.FC<{ label: string; help?: string; resp?: RowResp; applied?: boolean; onReset?: () => void; children: React.ReactNode }> = ({ label, help, resp, applied, onReset, children }) => {
+export const Row: React.FC<{ label: string; help?: string; resp?: RowResp; applied?: boolean; onReset?: () => void; children: React.ReactNode }> = ({ label, help, resp, applied, onReset, children }) => {
   const t = useAdminT()
   const showApplied = applied === true
   const showSettingReset = showApplied && Boolean(onReset) && !resp?.overridden
@@ -851,7 +854,9 @@ export const NumberRow: React.FC<{
   applied?: boolean
   onReset?: () => void
   onChange: (v: number | undefined) => void
-}> = ({ label, value, min, max, help, placeholder, resp, applied, onReset, onChange }) => (
+  /** Extra controls beside the number, such as a unit select. */
+  children?: React.ReactNode
+}> = ({ label, value, min, max, help, placeholder, resp, applied, onReset, onChange, children }) => (
   <Row label={label} help={help} resp={resp} applied={applied ?? typeof value === 'number'} onReset={onReset ?? (() => onChange(undefined))}>
     <input
       type="number"
@@ -861,6 +866,7 @@ export const NumberRow: React.FC<{
       value={typeof value === 'number' ? value : ''}
       onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
     />
+    {children}
   </Row>
 )
 
@@ -1035,7 +1041,7 @@ export const RespNumber: React.FC<{ ctl: ResponsiveCtl; k: RespKey; label: strin
   )
 }
 
-const UNIT_OPTIONS = ['px', '%', 'em', 'rem', 'vw', 'vh'].map((u) => ({ label: u, value: u }))
+export const UNIT_OPTIONS = ['px', '%', 'em', 'rem', 'vw', 'vh'].map((u) => ({ label: u, value: u }))
 
 /** Unit picker for a spacing / size value. Unset means the default unit (px, or % for custom width). */
 const UnitRow: React.FC<{ ctl: ResponsiveCtl; k: RespKey; label: string; def?: string }> = ({ ctl, k, label, def = 'px' }) => {
@@ -1192,7 +1198,7 @@ export const HeightRows: React.FC<{ ctl: ResponsiveCtl }> = ({ ctl }) => {
   )
 }
 
-const ColorRow: React.FC<{ label: string; value?: string; onChange: (v: string | undefined) => void }> = ({
+export const ColorRow: React.FC<{ label: string; value?: string; onChange: (v: string | undefined) => void }> = ({
   label,
   value,
   onChange,
@@ -1599,6 +1605,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
         onReset={() => patch({ textShadow: undefined })}
         onChange={(v) => patch({ textShadow: v === 'none' ? undefined : v })}
       />
+      <TextShadowStrokePopover value={value} patch={patch} />
       <SelectRow
         label={t('dp.field.text_effect')}
         help={t('dp.lit.applies_to_the_text_inside_this_block')}
@@ -2027,7 +2034,7 @@ const FILTER_ROWS: { k: keyof BlockStyle; labelKey: UiStringKey; unit: string; m
 const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   ...TRANSFORM_ROWS.map((r) => tfKey('tf', r.suffix)),
   ...TRANSFORM_ROWS.map((r) => tfKey('tfh', r.suffix)),
-  'tfDuration', 'position', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
+  'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
   'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
 
@@ -2044,6 +2051,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
         {TRANSFORM_ROWS.map((r) => (
           <TypoRange key={r.suffix} ctl={ctl} k={tfKey('tf', r.suffix) as RespKey} label={r.unit ? `${t(r.labelKey)} (${r.unit})` : t(r.labelKey)} def={r.def} min={r.min} max={r.max} step={1} />
         ))}
+        <FlipRows ctl={ctl} />
       </div>
       <div className="ve-divider-group">
         <p className="ve-row__label">{t('dp.state.hover')}</p>

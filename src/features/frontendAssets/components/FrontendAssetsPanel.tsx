@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
 import type { AssetPreset } from '../builtin'
+import { EMPTY_FONT_AWESOME, type FontAwesomeConfig } from '../fontAwesome'
 import { EMPTY_FRONTEND_ASSETS, type FrontendAsset, type FrontendAssetsConfig } from '../config'
 
 type Loaded = { config?: FrontendAssetsConfig; presets?: AssetPreset[]; builtin?: { shine: { version: string; url: string }; spark: { version: string; url: string } }; error?: string }
@@ -17,6 +18,7 @@ export const FrontendAssetsPanel: React.FC = () => {
   const [builtin, setBuiltin] = useState<Loaded['builtin']>()
   const [message, setMessage] = useState('')
   const [dirty, setDirty] = useState(false)
+  const [faMessage, setFaMessage] = useState('')
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin-frontend-assets')
@@ -32,7 +34,7 @@ export const FrontendAssetsPanel: React.FC = () => {
   }, [load])
 
   const edit = (next: FrontendAsset[]) => {
-    setConfig({ assets: next })
+    setConfig({ ...config, assets: next })
     setDirty(true)
   }
   const change = (id: string, patch: Partial<FrontendAsset>) => edit(config.assets.map((a) => (a.id === id ? { ...a, ...patch } : a)))
@@ -41,6 +43,19 @@ export const FrontendAssetsPanel: React.FC = () => {
     const preset = presets.find((p) => p.id === id)
     if (!preset) return
     edit([...config.assets, ...preset.assets.map((a) => ({ ...blank(), label: `${preset.label} (${a.kind === 'css' ? 'CSS' : 'JS'})`, kind: a.kind, url: a.url, integrity: a.integrity ?? '', defer: a.defer ?? true }))])
+  }
+
+  const fa: FontAwesomeConfig = config.fontAwesome ?? EMPTY_FONT_AWESOME
+  const setFa = (patch: Partial<FontAwesomeConfig>) => {
+    setConfig({ ...config, fontAwesome: { ...fa, ...patch } })
+    setDirty(true)
+    setFaMessage('')
+  }
+  const testFa = async () => {
+    setFaMessage('Checking...')
+    const res = await fetch('/api/admin-frontend-assets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'test-font-awesome', fontAwesome: fa }) })
+    const data = (await res.json().catch((): null => null)) as { message?: string } | null
+    setFaMessage(data?.message ?? 'The check did not run.')
   }
 
   const save = async () => {
@@ -66,6 +81,36 @@ export const FrontendAssetsPanel: React.FC = () => {
             </>
           )}
         </p>
+      </section>
+
+      <section style={{ display: 'grid', gap: '0.5rem', maxWidth: '48rem' }}>
+        <h2>Font Awesome Pro</h2>
+        <p>
+          Own a Font Awesome Pro licence? Add it here and the Pro icon styles (regular, light, thin, duotone, sharp) appear in the icon picker for this site only. Nothing from Pro is bundled with Engage. Without a licence, or if it stops working, icons use the free set.
+        </p>
+        <label>How you load it<br />
+          <select value={fa.mode} onChange={(e) => setFa({ mode: e.target.value === 'kit' ? 'kit' : e.target.value === 'cdn' ? 'cdn' : 'off' })}>
+            <option value="off">Off (free icons only)</option>
+            <option value="kit">Kit code</option>
+            <option value="cdn">Pro stylesheet address</option>
+          </select>
+        </label>
+        {fa.mode === 'kit' && (
+          <label>Kit code (10 letters and numbers, or paste the kit address)<br />
+            <input type="text" value={fa.kitCode} onChange={(e) => setFa({ kitCode: e.target.value })} placeholder="1a2b3c4d5e" autoComplete="off" />
+          </label>
+        )}
+        {fa.mode === 'cdn' && (
+          <label>Pro stylesheet address<br />
+            <input type="url" value={fa.cdnUrl} onChange={(e) => setFa({ cdnUrl: e.target.value })} placeholder="https://kit-pro.fontawesome.com/releases/v6/css/pro.min.css" autoComplete="off" />
+          </label>
+        )}
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button type="button" disabled={fa.mode === 'off'} onClick={() => void testFa()}>Test</button>
+          <button type="button" disabled={!dirty} onClick={() => void save()}>Save</button>
+          {faMessage && <span role="status">{faMessage}</span>}
+        </div>
+        <p>A kit also needs this site&apos;s domain allowed in the Font Awesome kit settings. Removing the licence switches every Pro icon back to its solid free version.</p>
       </section>
 
       <section style={{ display: 'grid', gap: '0.75rem' }}>

@@ -894,6 +894,11 @@ html[data-theme='dark'] .ve-root {
 .ve-frame-root {
   min-height: 100%;
   padding-bottom: 120px;
+  /* 31a: the canvas always shows the live page, whatever the editor theme is. It sets the site's own
+     page colours and a light colour scheme so no editor or browser dark token can reach canvas text. */
+  background: var(--color-cream, #ffffff);
+  color: var(--color-ink, #1b1d29);
+  color-scheme: light;
 }
 
 .ve-node {

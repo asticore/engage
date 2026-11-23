@@ -16,6 +16,20 @@ export const CLIPBOARD_FORMAT = 'engage-template'
 export const CLIPBOARD_FORMAT_STYLE = 'engage-style'
 export const CLIPBOARD_SCHEMA_VERSION = 1
 
+/**
+ * Upgrades from an older file to the next schema version, keyed by the version they upgrade FROM
+ * (31d: older files are upgraded, newer files fail loudly). Empty while the schema is at version 1; the first
+ * schema change adds `1: (tree) => ...` and raises CLIPBOARD_SCHEMA_VERSION to 2.
+ */
+export const CLIPBOARD_UPGRADES: Record<number, (tree: unknown[]) => unknown[]> = {}
+
+/** Runs every upgrade from `fromVersion` up to the current version. A missing step leaves the tree as it is. */
+export function upgradeClipboardTree(tree: unknown[], fromVersion: number, target: number = CLIPBOARD_SCHEMA_VERSION, upgrades: Record<number, (tree: unknown[]) => unknown[]> = CLIPBOARD_UPGRADES): unknown[] {
+  let next = tree
+  for (let v = fromVersion; v < target; v++) next = upgrades[v]?.(next) ?? next
+  return next
+}
+
 export type ClipboardKind = 'section' | 'block' | 'page'
 
 export const CLIPBOARD_LIMITS = { maxChars: 1_000_000, maxDepth: 8, maxNodes: 300, maxRootNodes: 50, maxStringLength: 200_000 }
@@ -352,8 +366,9 @@ export function parsePageImport(text: unknown): ImportParseResult {
     }
   }
   if (data.kind !== 'page' && data.kind !== 'section' && data.kind !== 'block') return { ok: false, error: 'The file has an unknown kind.' }
-  const tree = data.tree
-  if (!Array.isArray(tree) || tree.length === 0) return { ok: false, error: 'The file has no blocks.' }
+  const rawTree = data.tree
+  if (!Array.isArray(rawTree) || rawTree.length === 0) return { ok: false, error: 'The file has no blocks.' }
+  const tree = upgradeClipboardTree(rawTree, version)
   if (tree.length > IMPORT_LIMITS.maxRootNodes) return { ok: false, error: 'The file has too many top-level blocks.' }
   const unknown: string[] = []
   const problem = checkNodes(tree, 0, { n: 0, maxNodes: IMPORT_LIMITS.maxNodes, unknown })

@@ -5,6 +5,9 @@ import React, { useMemo, useState } from 'react'
 
 import { Icon, ICON_NAMES } from '@/components/blocks/elements/icons'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
+import { FA_PRO_STYLES, iconClass, proStylesAvailable } from '@/features/frontendAssets/fontAwesome'
+
+import { useFontAwesomePro } from './useFontAwesomePro'
 
 type IconValue = {
   icon?: string
@@ -131,6 +134,8 @@ const FontAwesomePicker: React.FC<{
   const selectedIcon = iconData.icon || ''
   const [search, setSearch] = useState('')
   const [isOpen, setIsOpen] = useState(false)
+  const pro = useFontAwesomePro()
+  const [style, setStyle] = useState<string>('fa-solid')
 
   const filteredIcons = useMemo(() => {
     if (!search.trim()) return FONTAWESOME_ICONS.slice(0, 20)
@@ -139,7 +144,7 @@ const FontAwesomePicker: React.FC<{
   }, [search])
 
   const handleSelect = (icon: string) => {
-    onChange({ icon: `fa-solid ${icon}` })
+    onChange({ icon: iconClass(`${style} ${icon}`, pro) })
     setIsOpen(false)
     setSearch('')
   }
@@ -167,7 +172,7 @@ const FontAwesomePicker: React.FC<{
           {selectedIcon ? (
             <>
               <i
-                className={selectedIcon}
+                className={iconClass(selectedIcon, pro)}
                 style={{
                   fontSize: '1.2rem',
                   minWidth: '1.5rem',
@@ -244,6 +249,13 @@ const FontAwesomePicker: React.FC<{
               flexDirection: 'column',
             }}
           >
+            {proStylesAvailable(pro) && (
+              <select aria-label="Icon style" value={style} onChange={(e) => setStyle(e.target.value)} style={{ padding: '0.5rem' }}>
+                {FA_PRO_STYLES.map((s) => (
+                  <option key={s} value={s}>{s.replace('fa-', '')}</option>
+                ))}
+              </select>
+            )}
             <input
               type="text"
               placeholder="Search icons (e.g., arrow, heart)..."
@@ -294,7 +306,7 @@ const FontAwesomePicker: React.FC<{
                   }}
                 >
                   <i
-                    className={`fa-solid ${icon}`}
+                    className={`${proStylesAvailable(pro) ? style : 'fa-solid'} ${icon}`}
                     style={{
                       fontSize: '1.5rem',
                     }}

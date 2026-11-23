@@ -287,7 +287,23 @@ export const EditorDock: React.FC<{
   const dock = collapsed ? null : (
     <div className="ve-dock">
       {tree && onSelectPath && <SelectionPath tree={tree} selectedPath={selectedPath} onSelectPath={onSelectPath} />}
-      <div className="ve-dock__tabs" role="tablist" aria-label={t('ve.dock.tabs')}>
+      <div
+        className="ve-dock__tabs"
+        role="tablist"
+        aria-label={t('ve.dock.tabs')}
+        onKeyDown={(e) => {
+          // Arrow keys, Home and End move between the dock tabs (Elements, Settings, ...) like any ARIA tab list.
+          const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End']
+          if (!keys.includes(e.key)) return
+          const tabs = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
+          const at = tabs.indexOf(document.activeElement as HTMLButtonElement)
+          if (at < 0 || !tabs.length) return
+          e.preventDefault()
+          const next = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (at + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length
+          tabs[next]!.focus()
+          tabs[next]!.click()
+        }}
+      >
         <button
           type="button"
           role="tab"

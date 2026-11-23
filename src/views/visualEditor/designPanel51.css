@@ -14,3 +14,6 @@
 .ve-d51-devbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 16px 8px; }
 .ve-d51-badge { font-size: 11px; opacity: .8; }
 .ve-d51-devbar .ve-d51-reset { position: static; }
+.ve-popover { position: relative; }
+.ve-popover__btn { font-size: 12px; padding: 3px 8px; border: 1px solid currentColor; border-radius: 4px; background: transparent; color: inherit; cursor: pointer; }
+.ve-popover__panel { margin-top: 6px; padding: 8px; border: 1px solid var(--ve-border-strong); border-radius: 6px; background: var(--ve-surface); color: var(--ve-text); box-shadow: var(--ve-shadow-pop); }

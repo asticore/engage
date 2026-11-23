@@ -40,13 +40,14 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   spacing: [
     'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTopMobile', 'paddingBottomMobile', 'paddingUnit',
     'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginUnit', 'minHeight', 'minHeightUnit',
+    'minWidth', 'minWidthUnit', 'maxWidth', 'maxWidthUnit', 'maxHeight', 'maxHeightUnit',
   ],
   border: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow'],
   layout: ['width', 'textAlign', 'textColor'],
   typography: [
     'typePreset', 'fontFamily', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit', 'textTransform',
     'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow', 'textFx', 'textFxColor', 'textFxColor2', 'textFxAngle',
-    'textFxStroke', 'textFxAnimated',
+    'textFxStroke', 'textFxAnimated', 'textStrokeWidth', 'textStrokeColor', 'textShadowX', 'textShadowY', 'textShadowBlur', 'textShadowColor',
   ],
   position: ['selfAlign', 'selfWidth', 'selfWidthPercent', 'selfWidthPercentUnit'],
   dividers: [
@@ -60,7 +61,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'borderFxColor2', 'borderFxWidth', 'borderFxSpeed',
   ],
   advanced: [
-    ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom',
+    ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom',
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
     'filterGrayscale', 'filterHue', 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],
