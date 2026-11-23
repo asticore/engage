@@ -72,6 +72,11 @@ export function loopGridSection(templateId: string | number, request: LoopReques
   ])
 }
 
+/** The filter form (search, category, tag, price, sort) that drives the Loop grid on the same archive. */
+export function archiveFilterSection(source: LoopRequest['source']): SectionNode {
+  return section([el('archive-filter', { showPrice: source === 'products', showTag: source === 'posts' })])
+}
+
 const onlyContentSlot = (node: SectionNode): boolean => {
   const columns = (node as { columns?: Array<{ blocks?: SectionNode[] }> }).columns
   if (node.blockType !== 'section' || !Array.isArray(columns)) return false
@@ -83,10 +88,12 @@ const onlyContentSlot = (node: SectionNode): boolean => {
  * Puts a loop section on an archive template's blocks: replaces the section that holds only the plain list (the content
  * slot), or is added at the end when there is none. A loop already placed (same template id) is not added twice.
  */
-export function placeLoopOnArchive(blocks: SectionNode[], gridSection: SectionNode): { blocks: SectionNode[]; replaced: boolean; already: boolean } {
+export function placeLoopOnArchive(blocks: SectionNode[], gridInput: SectionNode | SectionNode[]): { blocks: SectionNode[]; replaced: boolean; already: boolean } {
+  const parts = Array.isArray(gridInput) ? gridInput : [gridInput]
+  const gridSection = parts[parts.length - 1]
   const grid = JSON.stringify(gridSection).match(/"loopTemplate":"([^"]*)"/)?.[1]
   if (grid && blocks.some((node) => JSON.stringify(node).includes(`"loopTemplate":"${grid}"`))) return { blocks, replaced: false, already: true }
   const index = blocks.findIndex(onlyContentSlot)
-  if (index === -1) return { blocks: [...blocks, gridSection], replaced: false, already: false }
-  return { blocks: [...blocks.slice(0, index), gridSection, ...blocks.slice(index + 1)], replaced: true, already: false }
+  if (index === -1) return { blocks: [...blocks, ...parts], replaced: false, already: false }
+  return { blocks: [...blocks.slice(0, index), ...parts, ...blocks.slice(index + 1)], replaced: true, already: false }
 }

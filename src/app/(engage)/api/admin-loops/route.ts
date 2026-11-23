@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { adminRequestRefusal } from '@/features/forms/origin'
 import { KIND_LABELS } from '@/features/siteTemplates/kinds'
-import { loopCardBlocks, loopGridSection, parseLoopRequest, placeLoopOnArchive } from '@/features/siteTemplates/loops'
+import { archiveFilterSection, loopCardBlocks, loopGridSection, parseLoopRequest, placeLoopOnArchive } from '@/features/siteTemplates/loops'
 import { getStarter } from '@/features/siteTemplates/starters'
 import type { SectionNode } from '@/lib/sectionTree'
 
@@ -45,7 +45,7 @@ export async function POST(request: Request): Promise<Response> {
       const inUse = (found.docs ?? [])
         .filter((doc) => doc.enabled !== false && Array.isArray(doc.blocks) && doc.blocks.length > 0)
         .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))[0]
-      const grid = loopGridSection(loop.id, req)
+      const grid = [archiveFilterSection(req.source), loopGridSection(loop.id, req)]
       if (inUse) {
         const result = placeLoopOnArchive(inUse.blocks as SectionNode[], grid)
         if (!result.already) await context.engine.update({ collection: 'site-templates', id: inUse.id, data: { blocks: result.blocks }, overrideAccess: true } as never)

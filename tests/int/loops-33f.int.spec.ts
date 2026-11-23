@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 
-import { loopCardBlocks, loopGridSection, parseLoopRequest, placeLoopOnArchive } from '@/features/siteTemplates/loops'
+import { archiveFilterSection, loopCardBlocks, loopGridSection, parseLoopRequest, placeLoopOnArchive } from '@/features/siteTemplates/loops'
 import type { SectionNode } from '@/lib/sectionTree'
 
 describe('named loops', () => {
@@ -35,5 +35,16 @@ describe('named loops', () => {
     const once = placeLoopOnArchive([head], grid)
     expect(once.blocks).toHaveLength(2)
     expect(placeLoopOnArchive(once.blocks, grid).already).toBe(true)
+  })
+})
+
+describe('archive filter with the loop (leftover 5)', () => {
+  it('places the filter above the grid and still dedupes by loop', () => {
+    const req2 = (parseLoopRequest({ name: 'L', source: 'products' }) as { value: Parameters<typeof loopGridSection>[1] }).value
+    const parts = [archiveFilterSection('products'), loopGridSection(9, req2)]
+    const out = placeLoopOnArchive([], parts)
+    expect(out.blocks).toHaveLength(2)
+    expect(JSON.stringify(out.blocks[0])).toContain('archive-filter')
+    expect(placeLoopOnArchive(out.blocks, parts).already).toBe(true)
   })
 })
