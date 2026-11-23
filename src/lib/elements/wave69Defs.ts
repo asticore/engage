@@ -41,8 +41,10 @@ export const WAVE69_ELEMENTS: ElementDef[] = [
       { name: 'showSku', label: 'Show SKU', type: 'checkbox' },
       { name: 'showGtin', label: 'Show GTIN', type: 'checkbox' },
       { name: 'showCategory', label: 'Show category', type: 'checkbox' },
+      { name: 'showBrand', label: 'Show brand', type: 'checkbox' },
+      { name: 'showTags', label: 'Show tags', type: 'checkbox' },
     ],
-    defaultProps: () => ({ showSku: true, showGtin: false, showCategory: true }),
+    defaultProps: () => ({ showSku: true, showGtin: false, showCategory: true, showBrand: false, showTags: false }),
   },
   {
     type: 'product-tabs', label: 'Product tabs', icon: String.fromCodePoint(0x1f4d1), category: 'commerce',

@@ -47,6 +47,8 @@ export async function ProductMetaElement(props: P): Promise<React.ReactElement |
   if (props.showSku !== false && p.sku) rows.push(['SKU', p.sku])
   if (props.showGtin === true && p.gtin) rows.push(['GTIN', p.gtin])
   if (props.showCategory !== false && p.category) rows.push(['Category', p.category])
+  if (props.showBrand === true && p.brand) rows.push(['Brand', p.brand])
+  if (props.showTags === true && p.tags?.length) rows.push(['Tags', p.tags.join(', ')])
   if (!rows.length) return null
   return (
     <dl className="w69-meta">

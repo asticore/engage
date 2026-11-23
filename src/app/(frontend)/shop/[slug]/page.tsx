@@ -227,7 +227,6 @@ export default async function ProductPage({
 
   setBlockContext(productBlockContext(priceHidden ? ({ ...product, priceInAUD: undefined } as unknown as Record<string, unknown>) : (product as unknown as Record<string, unknown>), productPath))
   const body = (
-    <VariationImageProvider>
     <div className="page-shell grid grid-cols-[1.1fr_0.9fr] gap-14 max-[900px]:grid-cols-1">
       <AdsPageScope collection="products" noAds={(product as { noAds?: boolean }).noAds} />
       <PageJsonLd collection="products" doc={product} path={productPath} extra={jsonLdExtra} />
@@ -338,11 +337,16 @@ export default async function ProductPage({
         </div>
       )}
     </div>
+  )
+  // The provider wraps the whole template output, not only the built-in body: template blocks such as
+  // product-images sit beside the content slot and must also see the chosen variation.
+  return (
+    <VariationImageProvider>
+      {await renderWithTemplate({
+        kind: 'single-product',
+        ctx: { path: productPath, productCategory: product.category ? String(product.category) : null, productType: typeof catalogue.productType === 'string' ? catalogue.productType : null },
+        content: body,
+      })}
     </VariationImageProvider>
   )
-  return renderWithTemplate({
-    kind: 'single-product',
-    ctx: { path: productPath, productCategory: product.category ? String(product.category) : null, productType: typeof catalogue.productType === 'string' ? catalogue.productType : null },
-    content: body,
-  })
 }

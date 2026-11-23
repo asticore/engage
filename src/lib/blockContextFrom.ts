@@ -98,6 +98,8 @@ export function productBlockContext(product: Record<string, unknown>, path: stri
       description: product.description ?? undefined,
       weight: typeof product.weight === 'number' && product.weight > 0 ? product.weight : undefined,
       dimensions: dimensionsText(product),
+      brand: namesOf([product.brand])[0],
+      tags: namesOf(product.tags),
     },
     path,
   }

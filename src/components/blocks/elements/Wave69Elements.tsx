@@ -1,14 +1,23 @@
 'use client'
 import React, { useState } from 'react'
 
+import { useVariationImage } from '@/components/VariationImageProvider'
+import { orderGallery } from '@/features/ecommerce/lib/variationImage'
+
 import './wave69.css'
 
-/** Wave 69 client island (Task 10): the product gallery with thumbnails and hover zoom. */
-
+/**
+ * Wave 69 client island (Task 10): the product gallery with thumbnails and hover zoom.
+ * When the buyer chooses a variation with its own image, that image moves to the front (orderGallery), the same
+ * as the product page gallery. A thumbnail picked before a new variation is chosen is not kept.
+ */
 export function ProductGallery({ images, thumbnails, zoom }: { images: Array<{ url: string; alt: string }>; thumbnails: boolean; zoom: boolean }): React.ReactElement {
-  const [i, setI] = useState(0)
+  const { imageUrl } = useVariationImage()
+  const ordered = orderGallery(images, imageUrl)
+  const [picked, setPicked] = useState<{ variation: string | null; url: string } | null>(null)
   const [pos, setPos] = useState<string | null>(null)
-  const cur = images[Math.min(i, images.length - 1)]!
+  const chosen = picked && picked.variation === imageUrl ? ordered.find((img) => img.url === picked.url) : undefined
+  const cur = chosen ?? ordered[0]!
   return (
     <div className="w69-gallery">
       <div
@@ -18,10 +27,10 @@ export function ProductGallery({ images, thumbnails, zoom }: { images: Array<{ u
       >
         <img src={cur.url} alt={cur.alt} style={pos ? { transformOrigin: pos, transform: 'scale(2)' } : undefined} />
       </div>
-      {thumbnails && images.length > 1 ? (
+      {thumbnails && ordered.length > 1 ? (
         <div className="w69-thumbs">
-          {images.map((img, n) => (
-            <button key={`${n}-${img.url}`} type="button" aria-label={`Show picture ${n + 1}`} aria-current={n === i ? 'true' : undefined} onClick={() => setI(n)}>
+          {ordered.map((img, n) => (
+            <button key={`${n}-${img.url}`} type="button" aria-label={`Show picture ${n + 1}`} aria-current={img.url === cur.url ? 'true' : undefined} onClick={() => setPicked({ variation: imageUrl, url: img.url })}>
               <img src={img.url} alt="" loading="lazy" />
             </button>
           ))}
