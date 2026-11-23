@@ -3509,7 +3509,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
-- [BLD-075](#bld-074) Task 10 29d Pay button
+- [BLD-075](#bld-075) Task 10 29d Pay button
 - [BLD-074](#bld-074) Hover blend mode and hover text stroke
 - [BLD-073](#bld-073) Font family per device
 - [BLD-072](#bld-072) Task 15 34g2 Poll element
