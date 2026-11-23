@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 74 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 75 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3157,6 +3157,15 @@ The Hover group now has a blend mode and a text stroke (width and colour). Value
 
 **Where to find it:** Visual editor, Design panel, Hover
 
+<a id="bld-076"></a>
+#### BLD-076 · Shape divider width, invert and bring to front (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Each shape divider (top and bottom) now has a width from 100 to 400 percent, centred on the block, an invert option that mirrors it vertically, and a bring to front option that draws it above the block content. The editor canvas and the live site share the same component. Width is clamped on save. A test covers the markup and the clamp.
+
+**Where to find it:** Visual editor, Design panel, Dividers
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3517,6 +3526,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-076](#bld-076) Shape divider width, invert and bring to front
 - [BLD-075](#bld-075) Task 10 29d Pay button
 - [BLD-074](#bld-074) Hover blend mode and hover text stroke
 - [BLD-073](#bld-073) Font family per device

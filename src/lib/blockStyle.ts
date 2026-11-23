@@ -266,10 +266,17 @@ export type BlockStyle = {
   dividerTopColor?: string
   dividerTopHeight?: number
   dividerTopFlip?: boolean
+  /** Divider width as a percent of the block (100-400), vertical invert, and drawing above the content (31e). */
+  dividerTopWidth?: number
+  dividerTopInvert?: boolean
+  dividerTopFront?: boolean
   dividerBottom?: DividerShape
   dividerBottomColor?: string
   dividerBottomHeight?: number
   dividerBottomFlip?: boolean
+  dividerBottomWidth?: number
+  dividerBottomInvert?: boolean
+  dividerBottomFront?: boolean
   dividerTopAnim?: DividerAnim
   dividerBottomAnim?: DividerAnim
   /** Seconds per loop, 4-60 (default 14). */
@@ -755,6 +762,8 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
   colorKey('borderFxColor')
   colorKey('borderFxColor2')
   numKey('dividerTopSpeed', 4, 60)
+  numKey('dividerTopWidth', 100, 400)
+  numKey('dividerBottomWidth', 100, 400)
   numKey('dividerBottomSpeed', 4, 60)
   numKey('bgEffectIntensity', 0, 100)
   numKey('particlesCount', 10, 120)
@@ -1010,7 +1019,7 @@ export const REVEAL_EASING_OPTIONS: { label: string; value: NonNullable<BlockSty
 
 const FX_KEYS = [
   ...NUM_FX.map((n) => n[0]), 'parallaxDirection', 'particlesShape', 'revealEasing', 'particlesLinks',
-  'dividerTop', 'dividerBottom', 'dividerTopAnim', 'dividerBottomAnim', 'dividerTopSpeed', 'dividerBottomSpeed',
+  'dividerTop', 'dividerBottom', 'dividerTopAnim', 'dividerBottomAnim', 'dividerTopSpeed', 'dividerBottomSpeed', 'dividerTopWidth', 'dividerBottomWidth',
   'bgEffect', 'bgEffectColor', 'bgEffectColor2', 'bgEffectIntensity', 'particlesCount', 'particlesInteract',
   'parallax', 'parallaxStrength', 'reveal', 'hover', 'glass', 'glassBlur',
   'pointerFx', 'pointerFxStrength', 'spotlightColor', 'kenBurns', 'kenBurnsDuration',
