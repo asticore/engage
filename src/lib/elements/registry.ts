@@ -18,6 +18,7 @@ import { WAVE64_ELEMENTS } from './wave64Defs'
 import { WAVE65_ELEMENTS } from './wave65Defs'
 import { WAVE66_ELEMENTS } from './wave66Defs'
 import { WAVE67_ELEMENTS } from './wave67Defs'
+import { UTILITY_ELEMENTS } from './utilityDefs'
 import { CALENDAR_ELEMENTS } from './calendarDefs'
 import { WAVE68_ELEMENTS } from './wave68Defs'
 import { WAVE69_ELEMENTS } from './wave69Defs'
@@ -243,6 +244,7 @@ ELEMENTS.push(...AFFILIATE_ELEMENTS)
 ELEMENTS.push(...REQUEST_BUTTON_ELEMENTS)
 ELEMENTS.push(...EMBED_CODE_ELEMENTS)
 ELEMENTS.push(...TEMPLATE_PART_ELEMENTS)
+ELEMENTS.push(...UTILITY_ELEMENTS)
 ELEMENTS.push(...COMING_SOON_ELEMENTS)
 ELEMENTS.push(...LEGACY_REPLACEMENT_ELEMENTS)
 ELEMENTS.push(...SECTION_PARAM_ELEMENTS)

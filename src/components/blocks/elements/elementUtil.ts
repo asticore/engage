@@ -198,6 +198,7 @@ export const MEDIA_PROP_KEYS: Record<string, readonly string[]> = {
   hotspots: ['image'],
   // A video picked from the media library (an uploaded file or a video link) and its poster picture.
   video: ['video', 'poster'],
+  'pdf-viewer': ['file'],
 }
 
 /* ---------- video ---------- */

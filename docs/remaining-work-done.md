@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 62 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 63 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3016,6 +3016,13 @@ _Date: 23 Nov 2026_
 **Where to find it:** Visual editor > selected block > Design > Background (gradient) and Border > Custom shadow
 
 <a id="bld-062"></a>
+#### BLD-063 · Task 15 34g Elfsight catalogue sweep (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34g (23 Nov 2026).** Checked the Elfsight list against the element registry. **Already built:** announcement and notification bar (`sticky-bar`), before and after slider (`image-comparison`), cookie banner (consent settings), Google Calendar embed (`embed` provider), Spotify and SoundCloud players (`audio`, `embed`), news ticker (`text-ticker`), lead capture popups with triggers (popup sections), WhatsApp, Messenger and Telegram buttons (`chat-button`), back to top (`back-to-top`). **Built now:** QR code (`qr-code`, drawn locally with the sign-in QR encoder, no outside service) and PDF viewer (`pdf-viewer`, browser viewer in a lazy frame with a download link). **Tasked as 34g2:** Poll and survey with stored votes, sales and social proof popups, floating action button menu, Trustpilot and Tripadvisor review sources. Code: `utilityDefs.ts`, `UtilityElements.tsx`, `elementUtil.ts` (media key), `registry.ts`; tests `tests/int/utility-elements-34g.int.spec.ts`.
+
+**Where to find it:** Visual editor > Elements > QR code, PDF viewer
 #### BLD-062 · Transform controls as popover groups (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3384,6 +3391,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-063](#bld-063) Task 15 34g Elfsight catalogue sweep
 - [BLD-062](#bld-062) Transform controls as popover groups
 - [BLD-061](#bld-061) Task 15 34e Archive filters
 - [BLD-060](#bld-060) Task 12 gradient kinds and second shadow layer (31e part)
