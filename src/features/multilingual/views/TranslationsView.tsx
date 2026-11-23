@@ -1,4 +1,5 @@
 import { getAdminRoot } from '@/features/security/settings'
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import React from 'react'
 import type { AdminViewServerProps } from '@/engine'
 
@@ -109,6 +110,7 @@ export const TranslationsView: React.FC<AdminViewServerProps> = async (props) =>
     `?${serializeListState(state, { page: state.page })}&item=${encodeURIComponent(`collection:${collection}:${documentId}`)}`
   const rows = buildDocumentRows({
     adminRoot: await getAdminRoot(),
+    blogBase: await readBlogBase(),
     items: data.items,
     stored: data.stored,
     targetLocales: targets,

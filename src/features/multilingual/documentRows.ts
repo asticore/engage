@@ -172,13 +172,13 @@ export function translateTarget(args: { collection: string; documentId: string; 
 }
 
 /** The public page for a document, where the site has one per document. */
-export function publicPathFor(collection: string, slug: string | null): string | null {
+export function publicPathFor(collection: string, slug: string | null, blogBase = 'blog'): string | null {
   if (!slug) return collection === 'faqs' ? '/faq' : null
   switch (collection) {
     case 'pages':
       return `/${slug}`
     case 'posts':
-      return `/blog/${slug}`
+      return `/${blogBase}/${slug}`
     case 'products':
       return `/shop/${slug}`
     case 'events':
@@ -204,6 +204,8 @@ export function buildDocumentRows(args: {
   documentHref: (collection: string, documentId: string) => string
   /** The configured admin root for builder links. Defaults to /admin. */
   adminRoot?: string
+  /** The blog address (no slashes). Defaults to blog. */
+  blogBase?: string
 }): DocumentRow[] {
   const base = buildOverviewRows({ items: args.items, stored: args.stored, targetLocales: args.targetLocales, rules: args.rules })
   const itemBySource = new Map(args.items.map((item) => [item.sourceId, item]))
@@ -261,7 +263,7 @@ export function buildDocumentRows(args: {
       ...row,
       collection,
       documentId,
-      url: publicPathFor(collection, live?.slug ?? null),
+      url: publicPathFor(collection, live?.slug ?? null, args.blogBase),
       counts: total,
       cells,
       inactive,

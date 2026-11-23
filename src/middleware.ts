@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { domainMiddleware } from '@/features/domains/middleware'
 import { multilingualMiddleware } from '@/features/multilingual/middleware'
+import { LOCALE_HEADER } from '@/features/multilingual/routing'
 import { securityMiddleware, readSecuritySettingsFromD1 } from '@/features/security'
 import { STAGING_NOINDEX, isStaging } from '@/features/site/staging'
 import { NOINDEX_HEADER_VALUE, isPickerRequest, isNoindexPath } from '@/features/security/noindex'
@@ -151,7 +152,41 @@ async function serveAdminAware(request: NextRequest): Promise<NextResponse> {
       return NextResponse.redirect(target, { status: 307, headers: { 'cache-control': 'private, no-store' } })
     }
   }
-  return multilingualMiddleware(request, securityMiddleware)
+  // With a custom blog address, a language prefix goes first (`/fr/news/hello`): the handler sees the stripped path.
+  return multilingualMiddleware(request, blog !== DEFAULT_BLOG_BASE ? blogAwareSecurity(blog) : securityMiddleware)
+}
+
+/**
+ * The security pipeline for a request whose language prefix has already been stripped, on a site with a custom blog address:
+ * the custom address is served by the /blog folder, and the old /blog address redirects to it (under the same language prefix).
+ */
+function blogAwareSecurity(blog: string): (request: NextRequest) => Promise<NextResponse> {
+  const custom = `/${blog}`
+  const fallback = `/${DEFAULT_BLOG_BASE}`
+  return async (request) => {
+    const { pathname } = request.nextUrl
+    if (isUnderPath(pathname, custom)) {
+      const url = new URL(request.url)
+      url.pathname = `${fallback}${pathname.slice(custom.length)}`
+      const readable = request.method === 'GET' || request.method === 'HEAD'
+      const target = readable ? new NextRequest(url, { headers: request.headers, method: request.method }) : request
+      const inner = await securityMiddleware(target)
+      if (!readable || inner.headers.get('x-middleware-next') !== '1') return inner
+      const out = NextResponse.rewrite(url, { request: { headers: target.headers } })
+      inner.headers.forEach((value, key) => {
+        if (!key.startsWith('x-middleware-') && key !== 'set-cookie') out.headers.set(key, value)
+      })
+      for (const cookie of inner.headers.getSetCookie()) out.headers.append('set-cookie', cookie)
+      return out
+    }
+    if (isUnderPath(pathname, fallback) && isPlainNavigation(request)) {
+      const locale = request.headers.get(LOCALE_HEADER)
+      const target = new URL(request.url)
+      target.pathname = `${locale ? `/${locale}` : ''}${custom}${pathname.slice(fallback.length)}`
+      return NextResponse.redirect(target, { status: 308, headers: { 'cache-control': 'private, no-store' } })
+    }
+    return securityMiddleware(request)
+  }
 }
 
 /** A page view (GET or HEAD, not a server action): the only request that is redirected off the old sign-in path. */
