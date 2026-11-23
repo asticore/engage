@@ -172,6 +172,7 @@ export const V1_GROUP_OF = {
   textFxStroke: 'typography',
   textFxAnimated: 'typography',
   selfAlign: 'size',
+  order: 'size',
   selfWidth: 'size',
   selfWidthPercent: 'size',
   marginLeft: 'spacing',

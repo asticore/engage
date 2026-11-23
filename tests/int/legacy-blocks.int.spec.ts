@@ -8,7 +8,7 @@ import { getElementDef } from '@/lib/elements/registry'
 import { SITE_ELEMENT_TYPES } from '@/lib/elements/wave38Defs'
 import { parseFaqIds } from '@/components/blocks/elements/LegacyReplacementServer'
 
-const para = { root: { type: 'root', children: [] } }
+const para = { root: { type: 'root', children: [] as unknown[] } }
 const legacy = () => [
   { id: 'a', blockType: 'richText', content: para, design: { bgColor: '#fff' } },
   { id: 'b', blockType: 'eventGrid', heading: 'Events', limit: 5, showPast: true },
