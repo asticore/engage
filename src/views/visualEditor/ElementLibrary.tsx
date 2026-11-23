@@ -8,6 +8,7 @@ import type { Locks } from '@/features/roles/locks'
 
 import { BLOCK_CATEGORIES, libraryCards, type BlockDef } from './blockSchemas'
 import { globalCards, globalNode, type GlobalCard } from './libraryGlobals'
+import { examplePresetCards, examplePresetNode, filterExamplePresetCards } from './libraryExamplePresets'
 import { commercePresetCards, commercePresetNode, filterCommercePresetCards } from './libraryCommercePresets'
 import { createFormFromPreset, filterFormPresetCards, formPresetCards } from './libraryFormPresets'
 import { TemplateBrowser, type TemplateInsertMode } from './TemplateBrowser'
@@ -172,6 +173,7 @@ export const ElementLibrary: React.FC<{
 
   const formCards = useMemo(() => filterFormPresetCards(formPresetCards(), query), [query])
 
+  const exampleCards = useMemo(() => filterExamplePresetCards(examplePresetCards(), query), [query])
   const shopCards = useMemo(() => filterCommercePresetCards(commercePresetCards(), query), [query])
 
   const results = useMemo(() => {
@@ -410,6 +412,32 @@ export const ElementLibrary: React.FC<{
                       aria-label={c.label}
                     >
                       <span className="ve-library__card-icon">{String.fromCodePoint(0x1f6d2)}</span>
+                      <span className="ve-library__card-label">{c.label}</span>
+                      {density === 'list' && <span className="ve-library__card-desc">{c.description}</span>}
+                    </div></Tooltip>
+                  ))}
+                </div>
+              </Group>
+            )}
+
+            {!formMode && category === 'all' && exampleCards.length > 0 && (
+              <Group id="examples" title={t('templateLibraries.tabLibrary')} collapsed={collapsed.includes('examples')} forceOpen={searching} onToggle={toggleGroup} testId="ve-lib-examples">
+                <div className="ve-library__grid">
+                  {exampleCards.map((c) => (
+                    <Tooltip text={`${c.label}: ${c.description}`} key={c.id}><div
+                      role="button"
+                      tabIndex={0}
+                      className="ve-library__card"
+                      onClick={() => onPickTemplate([examplePresetNode(c.id)!])}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          onPickTemplate([examplePresetNode(c.id)!])
+                        }
+                      }}
+                      aria-label={c.label}
+                    >
+                      <span className="ve-library__card-icon">{String.fromCodePoint(0x1f9e9)}</span>
                       <span className="ve-library__card-label">{c.label}</span>
                       {density === 'list' && <span className="ve-library__card-desc">{c.description}</span>}
                     </div></Tooltip>
