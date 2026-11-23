@@ -6,11 +6,28 @@
 import { effectiveMapProvider, mapKeyFor, MAP_STYLES, type MapProvider, type MapsWeatherConfig, type MapStyle } from './config'
 
 export type MapMarker = { lat: number; lng: number; label: string }
+export type MapEngineSpec = {
+  tiles: string
+  attribution: string
+  centre: { lat: number; lng: number }
+  zoom: number
+  markers: MapMarker[]
+  colour: string
+  cluster: boolean
+  lockScroll: boolean
+  markerImage: string
+  /** CSS filter that gives the OpenStreetMap tiles a dark or grayscale look when no keyed style is available. */
+  filter: string
+}
 export type MapView = {
   provider: MapProvider
   embedSrc: string | null
   staticSrc: string | null
   directionsUrl: string | null
+  /** Set when the map can run on the interactive engine (OpenStreetMap, MapTiler, Mapbox). */
+  engine?: MapEngineSpec
+  /** One OpenStreetMap tile at the centre, shown with scripts blocked. */
+  noscriptSrc?: string | null
 }
 
 export const MARKER_COLOURS = /^#?[0-9a-fA-F]{6}$/
@@ -57,7 +74,36 @@ export type MapInput = {
   height: number
   markers: MapMarker[]
   markerColour?: unknown
+  /** Interactive engine switches from the element. `interactive` false keeps the plain embed. */
+  interactive?: unknown
+  cluster?: unknown
+  lockScroll?: unknown
+  markerImage?: unknown
 }
+
+const truthy = (v: unknown, fallback: boolean): boolean => (v === undefined || v === '' || v === null ? fallback : v === true || v === 'true')
+/** Only an https address is accepted as a marker picture. */
+export const cleanImage = (v: unknown): string => {
+  if (typeof v !== 'string') return ''
+  try {
+    const u = new URL(v.trim())
+    return u.protocol === 'https:' && !u.username && !u.password && u.toString().length <= 500 ? u.toString() : ''
+  } catch {
+    return ''
+  }
+}
+
+/** The OpenStreetMap tile that holds a point, as a picture address. */
+export function osmTileUrl(lat: number, lng: number, zoom: number): string {
+  const z = Math.round(clamp(zoom, 1, 17))
+  const n = 2 ** z
+  const x = Math.min(n - 1, Math.max(0, Math.floor(((lng + 180) / 360) * n)))
+  const rad = (lat * Math.PI) / 180
+  const y = Math.min(n - 1, Math.max(0, Math.floor(((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * n)))
+  return `https://tile.openstreetmap.org/${z}/${x}/${y}.png`
+}
+
+const OSM_FILTER: Record<MapStyle, string> = { light: '', dark: 'invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9)', grayscale: 'grayscale(1)', satellite: '', terrain: '' }
 
 /** OpenStreetMap's embed takes one marker and a box; this converts a centre and zoom to the box. */
 export function osmEmbed(lat: number, lng: number, zoom: number): string {
@@ -99,6 +145,17 @@ export function buildMapView(input: MapInput): MapView {
     return { provider: 'osm', embedSrc, staticSrc: null, directionsUrl }
   }
 
+  const wantEngine = truthy(input.interactive, true)
+  const engineBase = {
+    centre: { lat: centre.lat, lng: centre.lng },
+    zoom,
+    markers: pins,
+    colour,
+    cluster: truthy(input.cluster, true),
+    lockScroll: truthy(input.lockScroll, true),
+    markerImage: cleanImage(input.markerImage),
+  }
+
   if (provider === 'maptiler') {
     const s = MAPTILER_STYLE[style]
     const marks = pins.map((p) => `${p.lng},${p.lat}`).join('|')
@@ -107,6 +164,7 @@ export function buildMapView(input: MapInput): MapView {
       embedSrc: `https://api.maptiler.com/maps/${s}/?key=${encodeURIComponent(key)}#${zoom}/${centre.lat}/${centre.lng}`,
       staticSrc: `https://api.maptiler.com/maps/${s}/static/${centre.lng},${centre.lat},${zoom}/${Math.min(w, 2048)}x${Math.min(h, 2048)}.png?key=${encodeURIComponent(key)}&markers=${marks}|color:%23${colour}`,
       directionsUrl,
+      engine: wantEngine ? { ...engineBase, tiles: `https://api.maptiler.com/maps/${s}/256/{z}/{x}/{y}.png?key=${encodeURIComponent(key)}`, attribution: '\u00a9 MapTiler \u00a9 OpenStreetMap contributors', filter: '' } : undefined,
     }
   }
 
@@ -114,8 +172,21 @@ export function buildMapView(input: MapInput): MapView {
     const s = MAPBOX_STYLE[style]
     const marks = pins.map((p) => `pin-s+${colour}(${p.lng},${p.lat})`).join(',')
     const staticSrc = `https://api.mapbox.com/styles/v1/mapbox/${s}/static/${marks}/${centre.lng},${centre.lat},${zoom}/${Math.min(w, 1280)}x${Math.min(h, 1280)}?access_token=${encodeURIComponent(key)}`
-    return { provider, embedSrc: null, staticSrc, directionsUrl }
+    return {
+      provider,
+      embedSrc: null,
+      staticSrc,
+      directionsUrl,
+      engine: wantEngine ? { ...engineBase, tiles: `https://api.mapbox.com/styles/v1/mapbox/${s}/tiles/256/{z}/{x}/{y}@2x?access_token=${encodeURIComponent(key)}`, attribution: '\u00a9 Mapbox \u00a9 OpenStreetMap contributors', filter: '' } : undefined,
+    }
   }
 
-  return { provider: 'osm', embedSrc: osmEmbed(centre.lat, centre.lng, zoom), staticSrc: null, directionsUrl }
+  return {
+    provider: 'osm',
+    embedSrc: osmEmbed(centre.lat, centre.lng, zoom),
+    staticSrc: null,
+    directionsUrl,
+    noscriptSrc: osmTileUrl(centre.lat, centre.lng, zoom),
+    engine: wantEngine ? { ...engineBase, tiles: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '\u00a9 OpenStreetMap contributors', filter: OSM_FILTER[style] } : undefined,
+  }
 }

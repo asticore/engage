@@ -952,3 +952,6 @@ html[data-billing='yearly'] .el-pricing__m { display: none; }
 .be-el-49-filter__chip:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
 .be-el-49-filter li[hidden] { display: none; }
 .el-map__preview ~ .el-map__label, .el-map__preview ~ .el-map__action, .el-map__preview ~ svg { background: var(--color-cream, #fff); color: var(--color-ink, #1f2230); padding: 2px 8px; }
+.el-map__engine, .el-map__canvas { position: absolute; inset: 0; }
+.el-map__canvas .maplibregl-canvas-container canvas.maplibregl-canvas { filter: var(--el-map-filter, none); }
+.el-map__loading { position: absolute; left: 8px; top: 8px; padding: 2px 8px; background: var(--color-cream, #fff); color: var(--color-ink, #1f2230); font-size: 0.8125rem; }

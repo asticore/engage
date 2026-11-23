@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_MAPS_WEATHER, effectiveMapProvider, effectiveWeatherProvider, mergePosted, normaliseConfig, redactConfig } from '@/features/mapsWeather/config'
-import { buildMapView, parseLatLng, parseMarkers } from '@/features/mapsWeather/mapView'
+import { buildMapView, cleanImage, osmTileUrl, parseLatLng, parseMarkers } from '@/features/mapsWeather/mapView'
 import { owCode, parseOpenWeather, parseTomorrow, parseWeatherApi, tmCode, waCode } from '@/features/weather/providers'
 import { resolveTags } from '@/lib/dynamicTags'
 
@@ -76,6 +76,49 @@ describe('map views', () => {
   it('with no position falls back to the keyless Google embed for words', () => {
     const v = buildMapView({ ...base, point: null })
     expect(v.embedSrc).toContain('https://www.google.com/maps?q=1%20Test%20St')
+  })
+})
+
+describe('interactive map engine', () => {
+  it('OpenStreetMap runs on the engine with a style filter and a scripts-blocked tile', () => {
+    const v = buildMapView({ ...base, config: DEFAULT_MAPS_WEATHER, style: 'dark' })
+    expect(v.engine?.tiles).toBe('https://tile.openstreetmap.org/{z}/{x}/{y}.png')
+    expect(v.engine?.filter).toContain('invert')
+    expect(v.engine?.lockScroll).toBe(true)
+    expect(v.noscriptSrc).toMatch(/^https:\/\/tile\.openstreetmap\.org\/14\/\d+\/\d+\.png$/)
+  })
+  it('keyed providers get raster tiles with their key, and switches turn the engine off or change it', () => {
+    expect(buildMapView({ ...base, provider: 'maptiler', style: 'satellite' }).engine?.tiles).toContain('maps/hybrid/256/')
+    expect(buildMapView({ ...base, provider: 'mapbox' }).engine?.tiles).toContain('access_token=')
+    expect(buildMapView({ ...base, provider: 'maptiler', interactive: false }).engine).toBeUndefined()
+    const e = buildMapView({ ...base, provider: 'maptiler', cluster: 'false', lockScroll: false, markerImage: 'https://example.com/pin.png', markers: parseMarkers('51.5,-0.12 | A') }).engine
+    expect(e?.cluster).toBe(false)
+    expect(e?.lockScroll).toBe(false)
+    expect(e?.markerImage).toBe('https://example.com/pin.png')
+    expect(e?.markers).toHaveLength(1)
+  })
+  it('accepts only https marker pictures and computes the tile', () => {
+    expect(cleanImage('http://x.test/a.png')).toBe('')
+    expect(cleanImage('javascript:alert(1)')).toBe('')
+    expect(cleanImage('https://u:p@x.test/a.png')).toBe('')
+    expect(osmTileUrl(0, 0, 1)).toBe('https://tile.openstreetmap.org/1/1/1.png')
+  })
+})
+
+describe('hourly weather', () => {
+  it('OpenWeather uses the city offset for local hours', () => {
+    const w = parseOpenWeather({ main: { temp: 1 }, wind: {}, weather: [{ id: 800 }] }, { city: { timezone: 3600 }, list: [{ dt: Date.UTC(2026, 10, 23, 12) / 1000, dt_txt: '2026-11-23 12:00:00', main: { temp: 7.4, temp_max: 8, temp_min: 6 }, weather: [{ id: 800 }] }] }, 'metric', 'x')
+    expect(w?.hours).toEqual([{ label: '13:00', temp: 7, code: 0 }])
+  })
+  it('WeatherAPI starts at the current local hour and crosses midnight', () => {
+    const hr = (time: string, c: number) => ({ time, temp_c: c, temp_f: c, condition: { code: 1000 } })
+    const j = { location: { localtime: '2026-11-23 22:40' }, current: { temp_c: 9, temp_f: 48, condition: { code: 1000 } }, forecast: { forecastday: [{ date: '2026-11-23', day: { condition: {} }, hour: [hr('2026-11-23 21:00', 1), hr('2026-11-23 22:00', 2), hr('2026-11-23 23:00', 3)] }, { date: '2026-11-24', day: { condition: {} }, hour: [hr('2026-11-24 00:00', 4)] }] } }
+    expect(parseWeatherApi(j, 'metric', 'x')?.hours?.map((h) => `${h.label}=${h.temp}`)).toEqual(['22:00=2', '23:00=3', '00:00=4'])
+  })
+  it('Tomorrow.io labels hours in the place time zone', () => {
+    const j = { timelines: { hourly: [{ time: '2026-11-23T12:00:00Z', values: { temperature: 3.2, weatherCode: 1000, windSpeed: 1 } }], daily: [] as unknown[] } }
+    expect(parseTomorrow(j, 'metric', 'x', 'Australia/Brisbane')?.hours).toEqual([{ label: '22:00', temp: 3, code: 0 }])
+    expect(parseTomorrow(j, 'metric', 'x')?.hours?.[0]?.label).toBe('12:00')
   })
 })
 

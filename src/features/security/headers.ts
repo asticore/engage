@@ -51,6 +51,8 @@ export const DEFAULT_CONTENT_SECURITY_POLICY = [
   "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net",
   "connect-src 'self' https:",
   "media-src 'self' https:",
+  // The interactive map (MapLibre from jsDelivr) runs its tile decoder in a blob worker.
+  "worker-src 'self' blob:",
   // The GTM noscript fallback is an iframe, plus the embed/video/map element hosts (src/lib/embedHosts.ts).
   ['frame-src', "'self'", 'https://www.googletagmanager.com', ...EMBED_FRAME_SOURCES].join(' '),
   "object-src 'none'",

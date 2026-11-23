@@ -3,7 +3,7 @@
  * the Weather element does not care where the data came from. Server only. Parsers are pure and tested; the
  * fetch goes through a per-place cache so visitors never reach a provider directly.
  */
-import { getJson, loadWeather, resolvePlace, type WeatherData, type WeatherDay, type WeatherUnits } from './openMeteo'
+import { getJson, hourIn, hourLabel, loadWeather, resolvePlace, type WeatherData, type WeatherDay, type WeatherHour, type WeatherUnits } from './openMeteo'
 import { weatherKeyFor, effectiveWeatherProvider, type MapsWeatherConfig, type WeatherProvider } from '@/features/mapsWeather/config'
 import { countWeatherCall } from '@/features/mapsWeather/store'
 
@@ -70,7 +70,10 @@ export function parseOpenWeather(current: unknown, forecast: unknown, units: Wea
     byDay.set(date, { max: Math.max(cur?.max ?? -Infinity, num(m.temp_max)), min: Math.min(cur?.min ?? Infinity, num(m.temp_min)), code: cur ? (String(item.dt_txt).includes('12:00') ? code : cur.code) : code })
   }
   const days: WeatherDay[] = [...byDay.entries()].slice(0, 5).map(([date, d]) => ({ date, max: r(d.max), min: r(d.min), code: d.code }))
-  return { place, units, now: { temp: r(main.temp), code: owCode(num(first.id)), wind: Math.round(units === 'metric' ? wind * 3.6 : wind) }, days }
+  // 3 hour steps; the city offset (seconds) turns the UTC instant into the place's local hour.
+  const offset = num(obj(obj(forecast).city).timezone)
+  const hours: WeatherHour[] = arr(obj(forecast).list).slice(0, 8).map((item) => ({ label: hourIn(new Date((num(item.dt) + offset) * 1000).toISOString()), temp: r(obj(item.main).temp), code: owCode(num(obj(arr(item.weather)[0]).id)) }))
+  return { place, units, now: { temp: r(main.temp), code: owCode(num(first.id)), wind: Math.round(units === 'metric' ? wind * 3.6 : wind) }, days, hours }
 }
 
 export function parseWeatherApi(j: unknown, units: WeatherUnits, place: string): WeatherData | null {
@@ -82,10 +85,16 @@ export function parseWeatherApi(j: unknown, units: WeatherUnits, place: string):
     const day = obj(d.day)
     return { date: String(d.date ?? ''), max: r(metric ? day.maxtemp_c : day.maxtemp_f), min: r(metric ? day.mintemp_c : day.mintemp_f), code: waCode(num(obj(day.condition).code)) }
   })
-  return { place, units, now: { temp: r(metric ? cur.temp_c : cur.temp_f), code: waCode(num(obj(cur.condition).code)), wind: r(metric ? cur.wind_kph : cur.wind_mph) }, days }
+  const local = String(obj(root.location).localtime ?? '').replace(' ', 'T').slice(0, 13)
+  const hours: WeatherHour[] = arr(obj(root.forecast).forecastday)
+    .flatMap((d) => arr(d.hour))
+    .filter((h) => String(h.time ?? '').replace(' ', 'T').slice(0, 13) >= local)
+    .slice(0, 12)
+    .map((h) => ({ label: hourLabel(String(h.time ?? '')), temp: r(metric ? h.temp_c : h.temp_f), code: waCode(num(obj(h.condition).code)) }))
+  return { place, units, now: { temp: r(metric ? cur.temp_c : cur.temp_f), code: waCode(num(obj(cur.condition).code)), wind: r(metric ? cur.wind_kph : cur.wind_mph) }, days, hours }
 }
 
-export function parseTomorrow(j: unknown, units: WeatherUnits, place: string): WeatherData | null {
+export function parseTomorrow(j: unknown, units: WeatherUnits, place: string, timeZone?: string): WeatherData | null {
   const t = obj(obj(j).timelines)
   const hour = obj(obj(arr(t.hourly)[0]).values)
   if (typeof hour.temperature !== 'number') return null
@@ -94,7 +103,8 @@ export function parseTomorrow(j: unknown, units: WeatherUnits, place: string): W
     return { date: String(d.time ?? '').slice(0, 10), max: r(v.temperatureMax), min: r(v.temperatureMin), code: tmCode(num(v.weatherCodeMax ?? v.weatherCodeMin)) }
   })
   const wind = num(hour.windSpeed)
-  return { place, units, now: { temp: r(hour.temperature), code: tmCode(num(hour.weatherCode)), wind: Math.round(units === 'metric' ? wind * 3.6 : wind) }, days }
+  const hours: WeatherHour[] = arr(t.hourly).slice(0, 12).map((h) => ({ label: hourIn(String(h.time ?? ''), timeZone), temp: r(obj(h.values).temperature), code: tmCode(num(obj(h.values).weatherCode)) }))
+  return { place, units, now: { temp: r(hour.temperature), code: tmCode(num(hour.weatherCode)), wind: Math.round(units === 'metric' ? wind * 3.6 : wind) }, days, hours }
 }
 
 const mem = new Map<string, { at: number; data: WeatherData }>()
@@ -102,7 +112,7 @@ const mem = new Map<string, { at: number; data: WeatherData }>()
 async function fetchKeyed(provider: Exclude<WeatherProvider, 'open-meteo'>, key: string, place: string, units: WeatherUnits, lang: string, ttl: number): Promise<WeatherData | null> {
   const where = await resolvePlace(place)
   if (!where) return null
-  const { lat, lon, name } = where
+  const { lat, lon, name, timezone } = where
   const imperial = units === 'imperial'
   await countWeatherCall(provider)
   if (provider === 'openweather') {
@@ -113,7 +123,7 @@ async function fetchKeyed(provider: Exclude<WeatherProvider, 'open-meteo'>, key:
   if (provider === 'weatherapi') {
     return parseWeatherApi(await getJson(`https://api.weatherapi.com/v1/forecast.json?key=${encodeURIComponent(key)}&q=${lat},${lon}&days=5&lang=${encodeURIComponent(lang)}`, ttl), units, name)
   }
-  return parseTomorrow(await getJson(`https://api.tomorrow.io/v4/weather/forecast?location=${lat},${lon}&units=${imperial ? 'imperial' : 'metric'}&apikey=${encodeURIComponent(key)}`, ttl), units, name)
+  return parseTomorrow(await getJson(`https://api.tomorrow.io/v4/weather/forecast?location=${lat},${lon}&units=${imperial ? 'imperial' : 'metric'}&apikey=${encodeURIComponent(key)}`, ttl), units, name, timezone)
 }
 
 /** The weather for a place through the provider chosen in settings; a provider with no key falls back to Open-Meteo. */
