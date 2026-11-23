@@ -25,7 +25,7 @@ const summary = (counts: Record<string, number | undefined>): string =>
 
 async function call<T>(init?: RequestInit): Promise<T | null> {
   try {
-    const res = await fetch('/api/admin-legacy-blocks', { credentials: 'same-origin', ...init })
+    const res = await fetch('/api/admin-legacy-blocks', { credentials: 'same-origin', cache: 'no-store', ...init })
     return res.ok ? ((await res.json()) as T) : null
   } catch {
     return null
@@ -62,20 +62,27 @@ export const LegacyBlocksPanel: React.FC = () => {
     const result = await call<ConvertReport>(post({ action: 'convert', execute, ...(only ?? {}) }))
     setReport(result)
     setFailed(result === null)
-    if (execute) await refresh()
+    if (execute && result) {
+      // Show the new state at once; the fresh count follows from the server.
+      const done = new Set(result.entries.filter((e) => e.status === 'converted').map((e) => `${e.collection}-${e.id}`))
+      setScan((prev) => (prev ? { ...prev, documents: prev.documents.filter((d) => !done.has(`${d.collection}-${d.id}`)) } : prev))
+    }
     setBusy(false)
+    if (execute) void refresh()
   }
 
   const undoBatch = async (batchId: string): Promise<void> => {
     setBusy(true)
     setUndo(await call<UndoReport>(post({ action: 'undo', batchId })))
-    await refresh()
+    setReport(null)
     setBusy(false)
+    void refresh()
   }
 
   return (
     <div className="flex flex-col gap-[var(--base)]">
       {failed && <p className="m-0 text-[var(--theme-error-500,var(--theme-elevation-800))]">That did not work. Check you are signed in as an admin and try again.</p>}
+      {busy && scan && <p className={note} role="status">Working...</p>}
       {!scan && !failed && <p className={note}>Counting...</p>}
       {scan && (
         <>
