@@ -46,6 +46,7 @@ import { SeoCard } from './SeoCard'
 import { TrashBanner } from '@/features/editScreens/admin/TrashBanner'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
 import { CollapseAllBar } from '@/admin/components/CollapseAllBar'
+import { RedirectPromptDialog } from './RedirectPromptDialog'
 import { useDocumentSave, type SaveTarget } from './useDocumentSave'
 import { LocalDraftRecovery } from '@/admin/edit/useLocalDraft'
 import { SettingsResetDefaults } from './SettingsResetDefaults'
@@ -181,7 +182,7 @@ export function splitFieldSections(fields: Field[]): FieldSection[] {
  */
 const SaveButton: React.FC<SaveTarget> = (target) => {
   const t = useAdminT()
-  const { busy, error, save } = useDocumentSave(target)
+  const { busy, error, redirectPrompt, save } = useDocumentSave(target)
   const { draftsEnabled } = target
   return (
     <div style={{ alignItems: 'center', display: 'flex', gap: 12, marginTop: 24 }}>
@@ -194,6 +195,7 @@ const SaveButton: React.FC<SaveTarget> = (target) => {
         {busy === 'published' ? t('common.saving') : draftsEnabled ? t('common.publish') : t('common.save')}
       </button>
       {error && <span style={{ color: 'var(--theme-error-500, #b3261e)' }}>{error}</span>}
+      <RedirectPromptDialog prompt={redirectPrompt} />
     </div>
   )
 }
