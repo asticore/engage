@@ -64,10 +64,10 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   advanced: [
     ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom',
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
-    'filterGrayscale', 'filterHue', 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
+    'filterGrayscale', 'filterHue', 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],
   conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang', 'showDevices', 'showParam', 'showCookie', 'showCountry'],
-  visibility: ['hide', 'hideOnMobile', 'hideOnDesktop', 'anchorId', 'customClass', 'wrapLink', 'wrapLinkNewTab', 'wrapLinkNoFollow', 'wrapLinkLabel', 'collapseHeight', 'collapseMore', 'collapseLess'],
+  visibility: ['hide', 'hideOnMobile', 'hideOnDesktop', 'anchorId', 'customClass', 'wrapLink', 'wrapLinkNewTab', 'wrapLinkNoFollow', 'wrapLinkSponsored', 'wrapLinkUgc', 'wrapLinkLabel', 'collapseHeight', 'collapseMore', 'collapseLess'],
 }
 
 /** Words searched for each group (its title plus the control labels inside it). */

@@ -131,7 +131,7 @@ export const StyledBlock: React.FC<{
           href={parsed.wrapLink}
           aria-label={parsed.wrapLinkLabel || undefined}
           target={parsed.wrapLinkNewTab ? '_blank' : undefined}
-          rel={[parsed.wrapLinkNewTab && 'noopener noreferrer', parsed.wrapLinkNoFollow && 'nofollow'].filter(Boolean).join(' ') || undefined}
+          rel={[parsed.wrapLinkNewTab && 'noopener noreferrer', parsed.wrapLinkNoFollow && 'nofollow', parsed.wrapLinkSponsored && 'sponsored', parsed.wrapLinkUgc && 'ugc'].filter(Boolean).join(' ') || undefined}
         />
       )}
       <ShapeDivider
