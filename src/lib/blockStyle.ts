@@ -93,6 +93,7 @@ export const RESPONSIVE_KEYS = [
   'fontWeight',
   'wordSpacing',
   'textTransform',
+  'blendMode',
   'fontStyle',
   'textDecoration',
   'minWidth',
@@ -1283,6 +1284,7 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     if (n !== undefined) out[key] = Math.round(n)
   }
   if (typeof r.textTransform === 'string' && TEXT_TRANSFORMS.includes(r.textTransform)) out.textTransform = r.textTransform as TextTransform
+  if (typeof r.blendMode === 'string' && BLEND_MODE_OPTIONS.some((o) => o.value === r.blendMode)) out.blendMode = r.blendMode as BlendMode
   if (typeof r.fontStyle === 'string' && FONT_STYLES.includes(r.fontStyle)) out.fontStyle = r.fontStyle as BlockStyle['fontStyle']
   if (typeof r.textDecoration === 'string' && TEXT_DECORATIONS.includes(r.textDecoration)) out.textDecoration = r.textDecoration as BlockStyle['textDecoration']
   if (typeof r.textAlign === 'string' && TEXT_ALIGNS.includes(r.textAlign)) out.textAlign = r.textAlign as TextAlign
@@ -1688,6 +1690,7 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
   }
   if (isNum(own.fontWeight)) decls.push(`font-weight:${own.fontWeight} !important`)
   if (own.textTransform && TEXT_TRANSFORMS.includes(own.textTransform)) decls.push(`text-transform:${own.textTransform} !important`)
+  if (own.blendMode && BLEND_MODE_OPTIONS.some((o) => o.value === own.blendMode)) decls.push(`mix-blend-mode:${own.blendMode} !important`)
   if (own.fontStyle && FONT_STYLES.includes(own.fontStyle)) decls.push(`font-style:${own.fontStyle} !important`)
   if (own.textDecoration && TEXT_DECORATIONS.includes(own.textDecoration)) decls.push(`text-decoration:${own.textDecoration} !important`)
   if (isNum(own.wordSpacing) || own.wordSpacingUnit !== undefined) {

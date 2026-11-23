@@ -2116,12 +2116,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
       <p className="ve-row__label">{t('dp.field.appearance')}</p>
       <div className="ve-divider-group">
         <TypoRange ctl={ctl} k="opacity" label={`${t('dp.field.opacity')} (%)`} def={100} min={0} max={100} step={1} />
-        <SelectRow
-          label={t('dp.field.blend_mode')}
-          value={value.blendMode ?? 'normal'}
-          options={BLEND_MODE_OPTIONS}
-          applied={value.blendMode !== undefined} onReset={() => set('blendMode', undefined)} onChange={(v) => set('blendMode', v === 'normal' ? undefined : (v as BlendMode))}
-        />
+        <RespSelect ctl={ctl} k="blendMode" label={t('dp.field.blend_mode')} defaultLabel={t('dp.lit.default')} options={BLEND_MODE_OPTIONS.map((o) => ({ label: o.label, value: o.value }))} />
         {FILTER_ROWS.map((r) => (
           <FxRange key={String(r.k)} k={r.k} label={t(r.labelKey)} unit={r.unit} value={value} onChange={onChange} def={r.def} min={r.min} max={r.max} />
         ))}

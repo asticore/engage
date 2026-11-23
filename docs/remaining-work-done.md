@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 64 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 65 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3040,6 +3040,15 @@ Line height can be a multiplier or px, em or rem. Word spacing can be px, em or 
 
 **Where to find it:** Visual editor, Design panel, Typography
 
+<a id="bld-065"></a>
+#### BLD-065 · Blend mode per device (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Blend mode is now a per-device setting (Default, then tablet and mobile overrides, including a device set back to Normal). It is validated against the blend list and emitted in the tablet and mobile media queries. A test covers it.
+
+**Where to find it:** Visual editor, Design panel, Advanced, Appearance
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3400,6 +3409,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-065](#bld-065) Blend mode per device
 - [BLD-064](#bld-064) Line height and word spacing units per device
 - [BLD-063](#bld-063) Task 15 34g Elfsight catalogue sweep
 - [BLD-062](#bld-062) Transform controls as popover groups
