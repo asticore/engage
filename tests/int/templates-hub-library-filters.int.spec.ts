@@ -6,8 +6,8 @@ import { EMPTY_LIBRARY_FILTER, filterLibraryItems, libraryTypes, libraryValues }
 import { validateLibraryManifest } from '@/features/templateLibraries/manifest'
 import type { LibraryItemRow } from '@/features/templateLibraries/types'
 
-const popupSection = { blockType: 'section', design: { layout: { display: 'modal' } }, columns: [] }
-const plainSection = { blockType: 'section', columns: [] }
+const popupSection = { blockType: 'section', design: { layout: { display: 'modal' } }, columns: [] as unknown[] }
+const plainSection = { blockType: 'section', columns: [] as unknown[] }
 
 describe('templates hub: popups and global widgets', () => {
   it('detects a reusable section shown as a popup', () => {
