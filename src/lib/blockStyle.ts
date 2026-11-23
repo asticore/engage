@@ -491,6 +491,10 @@ export type BlockStyle = {
   tfDuration?: number
   /** Normal | Hover state: colours, shadow and radius applied on hover (hover-capable devices only). Unset = same as normal. */
   hoverBgColor?: string
+  /** Hover state: blend mode and text stroke (31e). */
+  hoverBlendMode?: BlendMode
+  hoverTextStrokeWidth?: number
+  hoverTextStrokeColor?: string
   hoverTextColor?: string
   hoverBorderColor?: string
   /** Same presets as boxShadow; 'none' removes the shadow on hover. */
@@ -767,6 +771,9 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
   colorKey('overlayColor')
   colorKey('overlayColor2')
   colorKey('hoverBgColor')
+  enumKey('hoverBlendMode', BLEND_MODE_OPTIONS)
+  numKey('hoverTextStrokeWidth', 0, 20)
+  colorKey('hoverTextStrokeColor')
   colorKey('hoverTextColor')
   colorKey('hoverBorderColor')
   enumKey('hoverBoxShadow', BOX_SHADOW_OPTIONS)
@@ -1012,14 +1019,14 @@ const FX_KEYS = [
   'position', 'blendMode', 'cssClasses', 'customCss', 'customAttrs', 'maskShape',
   'slideInterval', 'slideTransition', 'blobMorphSpeed', 'noise',
   'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
-  'hoverOpacity', 'hoverTransform', 'focusRing',
+  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'focusRing',
   'textFx', 'textFxColor', 'textFxColor2', 'textFxAngle', 'textFxStroke', 'textFxAnimated',
 ] as const
 
 /** Normal | Hover state keys (Elementor-style). Any of them set turns on the hover transition. */
 const HOVER_STATE_KEYS = [
   'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
-  'hoverOpacity', 'hoverTransform', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset',
+  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset',
 ] as const
 /** Properties that animate between the normal and hover values. */
 const HOVER_TRANSITION_PROPS = ['background-color', 'color', 'border-color', 'box-shadow', 'border-radius'] as const
@@ -1857,6 +1864,8 @@ function hoverStateDecls(style: BlockStyle): string[] {
   const hoverCustom = customBoxShadow(style, 'hbs')
   if (hoverCustom) decls.push(`box-shadow:${hoverCustom} !important`)
   if (isNum(style.hoverBorderRadius)) decls.push(`border-radius:${style.hoverBorderRadius}px !important`)
+  if (style.hoverBlendMode && BLEND_MODE_OPTIONS.some((o) => o.value === style.hoverBlendMode)) decls.push(`mix-blend-mode:${style.hoverBlendMode} !important`)
+  if (isNum(style.hoverTextStrokeWidth)) decls.push(`-webkit-text-stroke:${style.hoverTextStrokeWidth}px ${sanitizeColor(style.hoverTextStrokeColor) ?? 'currentColor'} !important`)
   if (isNum(style.hoverOpacity) && style.hoverOpacity >= 0 && style.hoverOpacity <= 1) decls.push(`opacity:${style.hoverOpacity} !important`)
   return decls
 }

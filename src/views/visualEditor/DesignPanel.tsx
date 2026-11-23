@@ -1754,6 +1754,14 @@ const StateTabs: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => v
             options={HOVER_TRANSFORM_OPTIONS}
             applied={value.hoverTransform !== undefined} onReset={() => set('hoverTransform', undefined)} onChange={(v) => set('hoverTransform', v === 'none' ? undefined : (v as HoverTransformPreset))}
           />
+          <SelectRow
+            label={t('dp.field.blend_mode')}
+            value={value.hoverBlendMode ?? 'normal'}
+            options={BLEND_MODE_OPTIONS}
+            applied={value.hoverBlendMode !== undefined} onReset={() => set('hoverBlendMode', undefined)} onChange={(v) => set('hoverBlendMode', v === 'normal' ? undefined : (v as BlendMode))}
+          />
+          <FxRange k="hoverTextStrokeWidth" label="Text stroke width" unit="px" value={value} onChange={onChange} def={0} min={0} max={20} />
+          <ColorRow label="Text stroke colour" value={value.hoverTextStrokeColor} onChange={(v) => set('hoverTextStrokeColor', v)} />
           <FxRange k="hoverOpacity" label={t('dp.field.opacity')} value={value} onChange={onChange} def={1} min={0} max={1} step={0.05} help={t('dp.lit.the_lift_scale_transform_is_skipped_for')} />
           <FxRange k="hoverBorderRadius" label={t('dp.lit.corner_radius')} unit="px" value={value} onChange={onChange} def={0} min={0} max={200} />
           <FxRange k="hoverTransitionMs" label={t('dp.field.transition')} unit="ms" value={value} onChange={onChange} def={150} min={0} max={2000} step={10} />
