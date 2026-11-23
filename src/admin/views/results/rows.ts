@@ -300,3 +300,41 @@ export function buildAllRsvpsCsv(rows: AllRsvpRow[]): string {
 export function allCsvFilename(kind: 'submissions' | 'rsvps', now = new Date()): string {
   return `all-${kind}-${now.toISOString().slice(0, 10)}.csv`
 }
+
+/** Sort and per-field filters for one form's entries. `field` is an answer field name or 'submittedAt'. */
+export type EntryQuery = { sort: string; dir: 'asc' | 'desc'; filters: Record<string, string> }
+
+/** Reads `sort`, `dir` and `f_<field>` params; only names in `columns` are kept. */
+export function parseEntryQuery(params: URLSearchParams, columns: SubmissionColumn[]): EntryQuery {
+  const names = new Set(columns.map((c) => c.name))
+  const sort = params.get('sort') ?? ''
+  const filters: Record<string, string> = {}
+  for (const name of names) {
+    const value = params.get(`f_${name}`)?.trim()
+    if (value) filters[name] = value.slice(0, 100)
+  }
+  return { sort: sort === 'submittedAt' || names.has(sort) ? sort : '', dir: params.get('dir') === 'asc' ? 'asc' : 'desc', filters }
+}
+
+export const hasEntryQuery = (q: EntryQuery): boolean => q.sort !== '' || Object.keys(q.filters).length > 0
+
+/** Filters (case-insensitive contains) then sorts mapped rows. Numbers sort as numbers; empty values stay last. */
+export function applyEntryQuery(rows: SubmissionRow[], q: EntryQuery): SubmissionRow[] {
+  let out = rows.filter((row) =>
+    Object.entries(q.filters).every(([name, needle]) => cellText(row.values[name]).toLowerCase().includes(needle.toLowerCase())),
+  )
+  if (q.sort) {
+    const key = (row: SubmissionRow): string => (q.sort === 'submittedAt' ? row.submittedAt : cellText(row.values[q.sort]))
+    const sign = q.dir === 'asc' ? 1 : -1
+    out = [...out].sort((a, b) => {
+      const x = key(a)
+      const y = key(b)
+      if (x === '' || y === '') return x === y ? 0 : x === '' ? 1 : -1
+      const nx = Number(x)
+      const ny = Number(y)
+      const c = x.trim() !== '' && y.trim() !== '' && Number.isFinite(nx) && Number.isFinite(ny) ? nx - ny : x.localeCompare(y, undefined, { numeric: true, sensitivity: 'base' })
+      return c * sign
+    })
+  }
+  return out
+}
