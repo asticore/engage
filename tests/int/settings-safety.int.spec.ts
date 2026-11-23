@@ -20,8 +20,8 @@ describe('custom Content-Security-Policy: merge with the default', () => {
   })
 
   it('adds a directive the default does not have, and keeps valueless directives', () => {
-    const merged = mergeCustomPolicy(DEFAULT_CONTENT_SECURITY_POLICY, 'worker-src blob:')
-    expect(directive(merged, 'worker-src')).toBe('worker-src blob:')
+    const merged = mergeCustomPolicy(DEFAULT_CONTENT_SECURITY_POLICY, 'manifest-src blob:')
+    expect(directive(merged, 'manifest-src')).toBe('manifest-src blob:')
     expect(merged).toContain('upgrade-insecure-requests')
   })
 

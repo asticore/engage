@@ -85,7 +85,7 @@ export const WAVE70_WEATHER_ELEMENTS: ElementDef[] = [
     fields: [
       text('place', 'Place', { helpText: 'A town name, like "Brisbane", or "latitude,longitude", like "-27.47,153.03".' }),
       { name: 'units', label: 'Units', type: 'select', width: 'half', options: labelled([['', 'Site default'], ['metric', 'Celsius, km/h'], ['imperial', 'Fahrenheit, mph']]) },
-      { name: 'view', label: 'Show', type: 'select', width: 'half', options: labelled([['current', 'Current only'], ['forecast', 'Current and 5 day forecast']]) },
+      { name: 'view', label: 'Show', type: 'select', width: 'half', options: labelled([['current', 'Current only'], ['forecast', 'Current and 5 day forecast'], ['hourly', 'Current and next hours']]) },
       { name: 'cacheMinutes', label: 'Refresh after (minutes)', type: 'number', width: 'half', helpText: '5 to 1440.' },
     ],
     defaultProps: () => ({ place: 'Brisbane', units: '', view: 'forecast', cacheMinutes: 30 }),

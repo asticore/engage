@@ -26,12 +26,12 @@ export async function MapServerElement(p: P): Promise<React.ReactElement> {
   try {
     const config = await readMapsWeather()
     const point = address ? await geocodeAddress(address) : null
-    view = buildMapView({ config, provider: p.provider, style: p.style, address, point, zoom, width: 1000, height, markers: parseMarkers(p.markers), markerColour: p.markerColour })
+    view = buildMapView({ config, provider: p.provider, style: p.style, address, point, zoom, width: 1000, height, markers: parseMarkers(p.markers), markerColour: p.markerColour, interactive: p.interactive, cluster: p.cluster, lockScroll: p.lockScroll, markerImage: p.markerImage })
   } catch {
     view = null
   }
   const src = view?.embedSrc ?? mapEmbedSrc(address, '', zoom)
   const directions = p.showDirections === false || p.showDirections === 'false' ? null : view?.directionsUrl ?? null
-  if (!src && !view?.staticSrc) return <div className="el-placeholder" style={{ height }}>Enter an address for the map</div>
-  return <MapFacade src={src ?? ''} title={title} label={label} height={height} preview={view?.staticSrc ?? undefined} directions={directions ?? undefined} />
+  if (!src && !view?.staticSrc && !view?.engine) return <div className="el-placeholder" style={{ height }}>Enter an address for the map</div>
+  return <MapFacade src={src ?? ''} title={title} label={label} height={height} preview={view?.staticSrc ?? undefined} directions={directions ?? undefined} engine={view?.engine} noscriptSrc={view?.noscriptSrc ?? undefined} />
 }

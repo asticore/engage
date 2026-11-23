@@ -105,7 +105,15 @@ export async function WeatherElement(props: P): Promise<React.ReactElement | nul
         <span className="w70-weather__temp">{w.now.temp}{deg}</span>
         <span>{w.place}: {now.label}, wind {w.now.wind} {spd}</span>
       </p>
-      {props.view === 'current' ? null : (
+      {props.view === 'hourly' && w.hours && w.hours.length > 0 ? (
+        <ul className="w70-weather__hours" aria-label="Next hours">
+          {w.hours.map((h, i) => {
+            const c = describeCode(h.code)
+            return (<li key={`${h.label}-${i}`}><span>{h.label}</span><span aria-hidden="true">{c.icon}</span><span className="w70-sr">{c.label}</span><span>{h.temp}{deg}</span></li>)
+          })}
+        </ul>
+      ) : null}
+      {props.view === 'current' || props.view === 'hourly' ? null : (
         <ul className="w70-weather__days">
           {w.days.map((d) => {
             const c = describeCode(d.code)

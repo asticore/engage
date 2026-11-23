@@ -6,7 +6,22 @@
 export type WeatherUnits = 'metric' | 'imperial'
 export type WeatherNow = { temp: number; code: number; wind: number }
 export type WeatherDay = { date: string; max: number; min: number; code: number }
-export type WeatherData = { place: string; units: WeatherUnits; now: WeatherNow; days: WeatherDay[] }
+export type WeatherHour = { label: string; temp: number; code: number }
+export type WeatherData = { place: string; units: WeatherUnits; now: WeatherNow; days: WeatherDay[]; hours?: WeatherHour[] }
+
+/** "HH:00" from an ISO-like local time ("2026-11-23T14:00" or "2026-11-23 14:00"). */
+export const hourLabel = (t: string): string => (/[T ](\d{2}):/.exec(t)?.[1] ?? '00') + ':00'
+
+/** "HH:00" for a UTC instant in an IANA time zone, or in UTC when the zone is unknown. */
+export function hourIn(iso: string, timeZone?: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  try {
+    return new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: timeZone || 'UTC' }).format(d).replace(/:\d{2}$/, ':00')
+  } catch {
+    return ''
+  }
+}
 
 const GEO = 'https://geocoding-api.open-meteo.com/v1/search'
 const API = 'https://api.open-meteo.com/v1/forecast'
@@ -36,14 +51,14 @@ export function describeCode(code: number): { label: string; icon: string } {
 }
 
 /** A place name or "lat,lon" to coordinates and a display name, through Open-Meteo's free geocoder. Null when not found. */
-export async function resolvePlace(place: string): Promise<{ lat: number; lon: number; name: string } | null> {
+export async function resolvePlace(place: string): Promise<{ lat: number; lon: number; name: string; timezone?: string } | null> {
   const c = parseCoords(place)
   if (c) return { lat: c.lat, lon: c.lon, name: place.trim() }
   const name = place.trim()
   if (!name || name.length > 80) return null
-  const g = (await getJson(`${GEO}?name=${encodeURIComponent(name)}&count=1&format=json`, 86400)) as { results?: Array<{ latitude: number; longitude: number; name: string }> }
+  const g = (await getJson(`${GEO}?name=${encodeURIComponent(name)}&count=1&format=json`, 86400)) as { results?: Array<{ latitude: number; longitude: number; name: string; timezone?: string }> }
   const r = g.results?.[0]
-  return r ? { lat: r.latitude, lon: r.longitude, name: r.name } : null
+  return r ? { lat: r.latitude, lon: r.longitude, name: r.name, timezone: r.timezone } : null
 }
 
 const mem = new Map<string, { at: number; data: WeatherData }>()
@@ -73,10 +88,11 @@ export async function loadWeather(place: string, units: WeatherUnits, cacheMinut
       lat = r.latitude; lon = r.longitude; name = r.name
     }
     const imperial = units === 'imperial'
-    const url = `${API}?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=5&timezone=auto${imperial ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : ''}`
+    const url = `${API}?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code&forecast_hours=12&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=5&timezone=auto${imperial ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : ''}`
     const j = (await getJson(url, ttl)) as {
       current?: { temperature_2m?: number; weather_code?: number; wind_speed_10m?: number }
       daily?: { time?: string[]; weather_code?: number[]; temperature_2m_max?: number[]; temperature_2m_min?: number[] }
+      hourly?: { time?: string[]; temperature_2m?: number[]; weather_code?: number[] }
     }
     if (!j.current || !j.daily?.time) return null
     const d = j.daily
@@ -84,6 +100,7 @@ export async function loadWeather(place: string, units: WeatherUnits, cacheMinut
       place: name, units,
       now: { temp: Math.round(num(j.current.temperature_2m)), code: num(j.current.weather_code), wind: Math.round(num(j.current.wind_speed_10m)) },
       days: d.time!.map((date, i) => ({ date, max: Math.round(num(d.temperature_2m_max?.[i])), min: Math.round(num(d.temperature_2m_min?.[i])), code: num(d.weather_code?.[i]) })),
+      hours: (j.hourly?.time ?? []).slice(0, 12).map((t, i) => ({ label: hourLabel(t), temp: Math.round(num(j.hourly?.temperature_2m?.[i])), code: num(j.hourly?.weather_code?.[i]) })),
     }
     mem.set(key, { at: Date.now(), data })
     if (mem.size > 200) mem.delete(mem.keys().next().value as string)
