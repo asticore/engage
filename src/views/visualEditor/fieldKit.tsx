@@ -140,3 +140,45 @@ export const TextShadowStrokePopover: React.FC<{ value: BlockStyle; patch: (p: P
     </Row>
   )
 }
+
+type Patch = (p: Partial<BlockStyle>) => void
+
+const numRow = (value: BlockStyle, patch: Patch, label: string, k: keyof BlockStyle, min: number, max: number) => (
+  <NumberRow key={String(k)} label={label} value={typeof value[k] === 'number' ? (value[k] as number) : undefined} min={min} max={max} onChange={(v) => patch({ [k]: v } as Partial<BlockStyle>)} />
+)
+
+/** Border width for each side (top, right, bottom, left). A side left empty uses the main border width. */
+export const BorderSidesPopover: React.FC<{ value: BlockStyle; patch: Patch }> = ({ value, patch }) => (
+  <Row label="Border sides">
+    <PopoverGroup label="Edit" summary={[value.borderTopWidth, value.borderRightWidth, value.borderBottomWidth, value.borderLeftWidth].some((v) => typeof v === 'number') ? '(set)' : undefined}>
+      {numRow(value, patch, 'Top (px)', 'borderTopWidth', 0, 50)}
+      {numRow(value, patch, 'Right (px)', 'borderRightWidth', 0, 50)}
+      {numRow(value, patch, 'Bottom (px)', 'borderBottomWidth', 0, 50)}
+      {numRow(value, patch, 'Left (px)', 'borderLeftWidth', 0, 50)}
+    </PopoverGroup>
+  </Row>
+)
+
+/** Custom box shadow (x, y, blur, spread, colour, inset) for Normal and for Hover, replacing the preset when set. */
+export const BoxShadowPopover: React.FC<{ value: BlockStyle; patch: Patch }> = ({ value, patch }) => {
+  const [tab, setTab] = useState<'bs' | 'hbs'>('bs')
+  const k = (s: string) => `${tab}${s}` as keyof BlockStyle
+  const inset = value[k('Inset')] === true
+  const any = ['bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor'].some((x) => (value as Record<string, unknown>)[x] !== undefined)
+  return (
+    <Row label="Custom shadow">
+      <PopoverGroup label="Edit" summary={any ? '(set)' : undefined}>
+        <SelectRow label="State" value={tab} options={[{ label: 'Normal', value: 'bs' }, { label: 'Hover', value: 'hbs' }]} onChange={(v) => setTab(v === 'hbs' ? 'hbs' : 'bs')} />
+        {numRow(value, patch, 'X (px)', k('X'), -200, 200)}
+        {numRow(value, patch, 'Y (px)', k('Y'), -200, 200)}
+        {numRow(value, patch, 'Blur (px)', k('Blur'), 0, 300)}
+        {numRow(value, patch, 'Spread (px)', k('Spread'), -100, 200)}
+        <ColorRow label="Colour" value={value[k('Color')] as string | undefined} onChange={(v) => patch({ [k('Color')]: v } as Partial<BlockStyle>)} />
+        <label className="ve-row ve-row--check">
+          <input type="checkbox" checked={inset} onChange={(e) => patch({ [k('Inset')]: e.target.checked ? true : undefined } as Partial<BlockStyle>)} />
+          <span className="ve-row__label">Inset</span>
+        </label>
+      </PopoverGroup>
+    </Row>
+  )
+}

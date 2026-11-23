@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 49 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 50 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -2908,6 +2908,14 @@ _Date: 23 Nov 2026_
 **Task 11 maps and weather connections (30a, 30b; 23 Nov 2026).** New admin screen Maps and weather (`/maps-weather`, `src/admin/views/MapsWeatherView.tsx`, API `admin-maps-weather`), settings kept in one `eg_kv` row (`src/features/mapsWeather/store.ts`, keys encrypted, never returned to the browser, admin only, no migration). Maps: default provider OpenStreetMap (no key), plus Google Maps, MapTiler and Mapbox with keys; a provider without a key falls back to OpenStreetMap. Per element override of provider and style (light, dark, grayscale, satellite, terrain), extra markers ("lat,lng | Label"), marker colour, directions link. The published Map element is now server rendered (`MapServer.tsx`): addresses are geocoded once through Nominatim and stored (`geocode.ts`), a picture placeholder (MapTiler, Mapbox, Google static) shows before the visitor presses Show map, the iframe loads only then (the consent gate), a pasted embed link still wins, and the editor canvas keeps the client preview. Weather: Open-Meteo (default, no key), OpenWeather, WeatherAPI and Tomorrow.io through one normalised shape (`src/features/weather/providers.ts`), units, language, cache minutes, Test button, monthly call counter, and the Weather element and Dynamic text tags `{{weather.temp}}`, `{{weather.condition}}`, `{{weather.place}}`, `{{weather.wind}}` (with a place field) use the chosen provider. Tests: `tests/int/maps-weather.int.spec.ts`.
 
 **Where to find it:** Settings > General > Maps and weather; Map and Weather elements in the visual editor
+<a id="bld-050"></a>
+#### BLD-050 · Task 12 border sides, custom shadow, 20 dividers (31e part) (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 12 31e second slice (23 Nov 2026).** Per-side border widths and the double border style; a custom box shadow layer (x, y, blur, spread, colour, inset) for Normal and for Hover, replacing the preset when set; five new shape dividers (book, split, tilt with opacity, curve with opacity, fan) for 20 in total. Popovers in `fieldKit.tsx` (`BorderSidesPopover`, `BoxShadowPopover`); keys sanitised on read and mapped in `v1Groups.ts`. Tests: `tests/int/design-border-shadow-dividers.int.spec.ts`.
+
+**Where to find it:** Visual editor > selected block > Design > Border; Design > Dividers
 
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
@@ -3270,6 +3278,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 ### 23 Nov 2026
 
 - [BLD-049](#bld-049) Task 11 maps and weather connections (23 Nov 2026)
+- [BLD-050](#bld-050) Task 12 border sides, custom shadow, 20 dividers
 - [BLD-044](#bld-044) Task 15 34b Social feeds, wall and embeds
 - [BLD-043](#bld-043) Task 15 34a Timeline element
 - [BLD-045](#bld-045) Task 12 editor contrast and blue dark mode

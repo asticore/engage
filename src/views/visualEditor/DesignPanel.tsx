@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
+import { BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -325,6 +325,7 @@ export const DesignPanel: React.FC<{
                 { label: t('dp.lit.solid'), value: 'solid' },
                 { label: t('dp.lit.dashed'), value: 'dashed' },
                 { label: t('dp.lit.dotted'), value: 'dotted' },
+                { label: 'Double', value: 'double' },
               ]}
               onChange={(v) => set('borderStyle', v as BlockStyle['borderStyle'])}
             />
@@ -347,6 +348,8 @@ export const DesignPanel: React.FC<{
           onReset={() => set('boxShadow', undefined)}
           onChange={(v) => set('boxShadow', v === 'none' ? undefined : (v as BlockStyle['boxShadow']))}
         />
+        <BorderSidesPopover value={value} patch={(p) => onChange({ ...value, ...p } as BlockStyle)} />
+        <BoxShadowPopover value={value} patch={(p) => onChange({ ...value, ...p } as BlockStyle)} />
       </Acc>
 
       <Acc g="layout" title={t('dp.section.layout')}>
