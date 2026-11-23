@@ -3173,6 +3173,15 @@ Each shape divider (top and bottom) now has a width from 100 to 400 percent, cen
 
 **Where to find it:** Visual editor, Design panel, Dividers
 
+<a id="bld-082"></a>
+#### BLD-082 · Task 3 chart and table data, grid editor, Spark carousel, flip and typed text (23 Nov 2026)
+
+_Date: 23 Nov 2026 · Original group: Task 3, 40b to 40d_
+
+Chart and Table data has a grid editor (add and remove rows and columns, import a CSV file, edit as text). The image carousel and gallery carousel layout use Shine `carousel` plus `spark-carousel`, card flip uses `spark-flip`, and the rotating headline and Rotate heading effect use `spark-typed`. The Data view Table or chart element uses Shine `table` and `spark-table`; its own sort, search and paging script is gone. Form submissions on a form's Submissions tab sort by any column and filter by any answer (newest 2,000 entries). PRs 646, 654 and 662. Slides, tabs and breadcrumbs stay custom (no Spark equivalent). Form results as a chart source was dropped: submissions stay private and are viewed in the admin.
+
+**Where to find it:** Visual editor, Chart, Table, Image carousel, Card; Forms, Submissions tab
+
 <a id="bld-078"></a>
 #### BLD-081 · Task 9 content, layout and marketing options and examples (23 Nov 2026)
 
@@ -3565,6 +3574,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-082](#bld-082) Task 3 chart and table data, grid editor, Spark carousel, flip and typed text
 - [BLD-081](#bld-081) Task 9 content, layout and marketing options and examples
 - [BLD-080](#bld-080) Hover gradient background
 - [BLD-079](#bld-079) Task 15 34a2 Timeline from events or posts
