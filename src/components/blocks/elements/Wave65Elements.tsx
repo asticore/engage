@@ -2,7 +2,8 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 
 import { linkHref, mediaOf, num, str } from './elementUtil'
-import { MAX_SLIDES, shouldLoad, slidesSettings, stepIndex, textAnimationOf, videoSrc, type TextAnimation } from '@/lib/elements/slidesLogic'
+import { effectById } from '@/features/effects/catalog'
+import { layersOf, MAX_SLIDES, shouldLoad, slidesSettings, stepIndex, swipeDirection, textAnimationOf, videoSrc, type SlideLayer, type TextAnimation } from '@/lib/elements/slidesLogic'
 import './wave65.css'
 
 /** Wave 65 client elements: business-hours and slides (defs: src/lib/elements/wave65Defs.ts). */
@@ -90,13 +91,30 @@ export function BusinessHoursElement(props: P): React.ReactElement | null {
 /** Wrap-around slide index. */
 export const nextIndex = (i: number, count: number, step: number): number => (count <= 0 ? 0 : (((i + step) % count) + count) % count)
 
-type Slide = { heading: string; text: string; label: string; href: string; image: string; alt: string; video: string; animation: TextAnimation }
+type Slide = { heading: string; text: string; label: string; href: string; image: string; alt: string; video: string; animation: TextAnimation; spark: string; layers: SlideLayer[] }
 const slidesOf = (v: unknown): Slide[] =>
   (Array.isArray(v) ? v : []).slice(0, MAX_SLIDES).map((s) => {
     const o = (s && typeof s === 'object' ? s : {}) as P
     const m = mediaOf(o.image) ?? mediaOf(o.imageUrl)
-    return { heading: str(o.heading), text: str(o.text), label: str(o.buttonLabel), href: linkHref(o.buttonUrl), image: m?.url ?? '', alt: m?.alt ?? '', video: videoSrc(o.videoUrl), animation: textAnimationOf(o.textAnimation) }
+    return { heading: str(o.heading), text: str(o.text), label: str(o.buttonLabel), href: linkHref(o.buttonUrl), image: m?.url ?? '', alt: m?.alt ?? '', video: videoSrc(o.videoUrl), animation: textAnimationOf(o.textAnimation), spark: effectById(str(o.sparkEffect))?.className ?? '', layers: layersOf(o.layers) }
   })
+
+/** One free-position layer: text, picture or button, placed by percentages, with its own animation and delay. */
+function SlideLayerView({ layer, active }: { layer: SlideLayer; active: boolean }): React.ReactElement | null {
+  const m = layer.type === 'image' ? mediaOf(layer.image) : null
+  const src = m?.url || (layer.type === 'image' && /^(https?:\/\/|\/(?!\/))/i.test(layer.url) ? layer.url : '')
+  const href = layer.type === 'button' ? linkHref(layer.url) : ''
+  if (layer.type === 'image' && !src) return null
+  if (layer.type !== 'image' && !layer.text) return null
+  const spark = effectById(layer.spark)?.className
+  const cls = `be-el-65-slides__layer${active && layer.animation !== 'none' ? ` anim-${layer.animation}` : ''}${spark ? ` ${spark}` : ''}`
+  const style = { left: `${layer.x}%`, top: `${layer.y}%`, width: `${layer.width}%`, animationDelay: `${layer.delay}s` } as React.CSSProperties
+  return (
+    <div className={cls} style={style}>
+      {layer.type === 'image' ? <img src={src} alt={m?.alt ?? ''} loading="lazy" /> : layer.type === 'button' && href ? <a className="be-el-65-slides__btn" href={href} tabIndex={active ? 0 : -1}>{layer.text}</a> : <p>{layer.text}</p>}
+    </div>
+  )
+}
 
 /** Extra class that hides a control on one kind of screen. */
 export const deviceClass = (desktop: boolean, mobile: boolean): string => (desktop && mobile ? '' : desktop ? ' is-desktop-only' : ' is-mobile-only')
@@ -107,6 +125,8 @@ export function SlidesElement(props: P): React.ReactElement | null {
   const [paused, setPaused] = useState(false)
   const reduced = useSyncExternalStore(subscribeReduced, () => window.matchMedia(REDUCED).matches, () => true)
   const root = useRef<HTMLDivElement>(null)
+  const drag = useRef<{ x: number; t: number } | null>(null)
+  const dragged = useRef(false)
   const count = slides.length
   const cfg = slidesSettings(props)
   const auto = props.autoplay === true && !paused && !reduced && count > 1
@@ -126,16 +146,27 @@ export function SlidesElement(props: P): React.ReactElement | null {
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}
       onKeyDown={(e) => { if (e.key === 'ArrowLeft') go(-1); else if (e.key === 'ArrowRight') go(1) }}
+      onPointerDown={(e) => { if (e.pointerType === 'mouse' && e.button !== 0) return; drag.current = { x: e.clientX, t: Date.now() }; dragged.current = false }}
+      onPointerUp={(e) => {
+        const start = drag.current
+        drag.current = null
+        if (!start || count < 2) return
+        const dir = swipeDirection(e.clientX - start.x, Date.now() - start.t)
+        if (dir !== 0) { dragged.current = true; go(dir) }
+      }}
+      onPointerCancel={() => { drag.current = null }}
+      onClickCapture={(e) => { if (dragged.current) { e.preventDefault(); e.stopPropagation(); dragged.current = false } }}
     >
       {slides.map((s, i) => (
         <div key={i} className={`be-el-65-slides__slide${i === index ? ' is-active' : ''}`} role="group" aria-roledescription="slide" aria-label={`${i + 1} of ${count}`} aria-hidden={i === index ? undefined : true}
           style={s.image && shouldLoad(i, index, count) ? { backgroundImage: `url("${s.image.replace(/"/g, '%22')}")` } : undefined}>
           {s.video && shouldLoad(i, index, count) && !reduced ? <video className="be-el-65-slides__video" src={s.video} muted loop playsInline autoPlay={i === index} preload="metadata" aria-hidden="true" tabIndex={-1} /> : null}
-          <div key={i === index ? `on-${index}` : 'off'} className={`be-el-65-slides__body${s.animation !== 'none' && i === index ? ` anim-${s.animation}` : ''}`}>
+          <div key={i === index ? `on-${index}` : 'off'} className={`be-el-65-slides__body${s.animation !== 'none' && i === index ? ` anim-${s.animation}` : ''}${s.spark ? ` ${s.spark}` : ''}`}>
             {s.heading ? <h2>{s.heading}</h2> : null}
             {s.text ? <p>{s.text}</p> : null}
             {s.label && s.href ? <a className="be-el-65-slides__btn" href={s.href} tabIndex={i === index ? 0 : -1}>{s.label}</a> : null}
           </div>
+          {s.layers.map((l, li) => <SlideLayerView key={`${i === index ? 'on' : 'off'}-${index}-${li}`} layer={l} active={i === index} />)}
         </div>
       ))}
       {count > 1 ? (

@@ -964,7 +964,7 @@ const SectionLayoutFields: React.FC<{
 
 type RepeaterField = { name: string; label?: string; type: string; [k: string]: unknown }
 
-const repeaterEmpty = (type: string): unknown => (type === 'checkbox' ? false : type === 'number' ? 0 : '')
+const repeaterEmpty = (type: string): unknown => (type === 'checkbox' ? false : type === 'number' ? 0 : type === 'repeater' ? [] : '')
 
 const RepeaterCards: React.FC<{ field: EditorField; value: unknown; onChange: (v: unknown) => void }> = ({
   field,

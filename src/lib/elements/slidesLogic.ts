@@ -66,3 +66,52 @@ export const shouldLoad = (slide: number, active: number, count: number): boolea
   const d = Math.abs(slide - active)
   return d <= 1 || d >= count - 1
 }
+
+export const LAYER_TYPES = ['text', 'image', 'button'] as const
+export type LayerType = (typeof LAYER_TYPES)[number]
+export const MAX_LAYERS = 8
+
+/** One free-position layer on a slide. `x`, `y` and `width` are percentages of the slide; `delay` is in seconds. */
+export type SlideLayer = {
+  type: LayerType
+  text: string
+  url: string
+  image: unknown
+  x: number
+  y: number
+  width: number
+  delay: number
+  animation: TextAnimation
+  /** Spark effect id (see features/effects/catalog), or ''. */
+  spark: string
+}
+
+/** Reads a slide's layers: at most 8, positions kept inside the slide, delay 0 to 10 seconds. */
+export const layersOf = (v: unknown): SlideLayer[] =>
+  (Array.isArray(v) ? v : []).slice(0, MAX_LAYERS).map((raw) => {
+    const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+    const type = (LAYER_TYPES as readonly string[]).includes(o.layerType as string) ? (o.layerType as LayerType) : 'text'
+    return {
+      type,
+      text: typeof o.text === 'string' ? o.text : '',
+      url: typeof o.url === 'string' ? o.url : '',
+      image: o.image ?? o.imageUrl,
+      x: clamp(o.x, 10, 0, 100),
+      y: clamp(o.y, 10, 0, 100),
+      width: clamp(o.width, 40, 5, 100),
+      delay: clamp(o.delay, 0, 0, 10),
+      animation: textAnimationOf(o.animation),
+      spark: typeof o.sparkEffect === 'string' ? o.sparkEffect.replace(/[^\w-]/g, '').slice(0, 60) : '',
+    }
+  })
+
+/**
+ * Which way a finished drag moves the slider: -1 previous, 1 next, 0 stay. A long drag counts, and so does a short
+ * quick flick (momentum): at least 24 px at 0.4 px per millisecond or faster. Dragging left moves to the next slide.
+ */
+export const swipeDirection = (dx: number, ms: number): -1 | 0 | 1 => {
+  const distance = Math.abs(dx)
+  const fast = distance >= 24 && distance / Math.max(1, ms) >= 0.4
+  if (distance < 80 && !fast) return 0
+  return dx < 0 ? 1 : -1
+}

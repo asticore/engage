@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { shouldLoad, slidesSettings, stepIndex, textAnimationOf, videoSrc } from '@/lib/elements/slidesLogic'
+import { layersOf, shouldLoad, slidesSettings, swipeDirection, stepIndex, textAnimationOf, videoSrc } from '@/lib/elements/slidesLogic'
 
 describe('slides settings', () => {
   it('keeps the old look for slides saved before the new options', () => {
@@ -37,5 +37,22 @@ describe('slides settings', () => {
   it('falls back to fade up for an unknown text animation', () => {
     expect(textAnimationOf('zoom')).toBe('zoom')
     expect(textAnimationOf('spin')).toBe('fade-up')
+  })
+})
+
+describe('slide layers and swipe', () => {
+  it('keeps layers inside the slide and drops unknown kinds to text', () => {
+    const [a, b] = layersOf([{ layerType: 'button', text: 'Go', url: '/x', x: 500, y: -4, width: 1, delay: 99, animation: 'zoom', sparkEffect: 'a b<c' }, { layerType: 'weird' }])
+    expect(a).toMatchObject({ type: 'button', x: 100, y: 0, width: 5, delay: 10, animation: 'zoom', spark: 'abc' })
+    expect(b.type).toBe('text')
+    expect(layersOf('nope')).toEqual([])
+    expect(layersOf(Array.from({ length: 20 }, () => ({}))).length).toBe(8)
+  })
+  it('moves on a long drag or a short quick flick, not a small slow one', () => {
+    expect(swipeDirection(-120, 600)).toBe(1)
+    expect(swipeDirection(120, 600)).toBe(-1)
+    expect(swipeDirection(-30, 50)).toBe(1)
+    expect(swipeDirection(-30, 400)).toBe(0)
+    expect(swipeDirection(10, 10)).toBe(0)
   })
 })
