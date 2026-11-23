@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import { listCategoriesSafe, linkedDocIds } from '@/features/categories/store'
 import { descendantIds, findBySlug, subtreeNames } from '@/features/categories/tree'
 import { getEngine } from '@/lib/engine'
@@ -113,6 +114,7 @@ export async function LoopBlock({
   if (items.length === 0) return null
 
   // Custom fields per item: only groups whose location matches that item, with media URLs fetched once.
+  const blogBase = collection === 'posts' ? await readBlogBase() : undefined
   const tagContexts = await buildItemTagContexts(collection, items, { needsOptions: JSON.stringify(templateBlocks).includes('{{option:') })
 
   const columnCount = Math.min(Math.max(columns || 3, 1), 6)
@@ -127,7 +129,7 @@ export async function LoopBlock({
         )}
         <div className="be-loop-grid" style={{ ['--loop-columns' as string]: String(columnCount) }}>
           {items.map((item, index) => {
-            const base = buildMergeContext(item, collection, (amount) => formatPriceInAUD(amount, currency), tagContexts[index])
+            const base = buildMergeContext(item, collection, (amount) => formatPriceInAUD(amount, currency), tagContexts[index], blogBase)
             const context = fillLoopItemTagFallbacks(base, item)
             const resolved = resolveTagsDeep(templateBlocks, context)
 

@@ -75,7 +75,9 @@ const docPath = async (collection: HookCollection, doc: HookDoc): Promise<string
   if (collection === 'pages') return pagePath(doc)
   if (typeof doc.slug !== 'string' || doc.slug === '') return null
   const { normalisePath } = await import('./settings')
-  return normalisePath(`${PREFIXES[collection]}/${doc.slug}`)
+  const { readBlogBase } = await import('./permalinkStore')
+  const prefix = collection === 'posts' ? `/${await readBlogBase()}` : PREFIXES[collection]
+  return normalisePath(`${prefix}/${doc.slug}`)
 }
 
 /**

@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import { getEngine } from '@/lib/engine'
 import { formatPriceInAUD } from '@/lib/formatCurrency'
 import { loadShopCurrency } from '@/features/ecommerce/lib/shopCurrency'
@@ -44,8 +45,9 @@ async function fetchItems(s: LoopSettings, currentId: unknown): Promise<{ items:
     totalPages = Math.max(1, Math.ceil(docs.length / s.count))
     docs = docs.slice((Math.min(s.page, totalPages) - 1) * s.count, Math.min(s.page, totalPages) * s.count)
   }
+  const blogBase = s.source === 'posts' ? await readBlogBase() : undefined
   const items = docs.map((doc): LoopItem => {
-    const ctx = buildMergeContext(doc, s.source, (amount) => formatPriceInAUD(amount, currency))
+    const ctx = buildMergeContext(doc, s.source, (amount) => formatPriceInAUD(amount, currency), undefined, blogBase)
     const raw = doc[DATE_FIELD[s.source]]
     return {
       id: String(doc.id),

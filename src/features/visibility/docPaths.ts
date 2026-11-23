@@ -1,4 +1,6 @@
 import { purgeCache } from '@/features/speed/purge'
+import { readBlogBase } from '@/features/seo/permalinkStore'
+import { blogPath } from '@/features/seo/permalinks'
 
 /**
  * Public URLs of a protected document, for cache purging when its protection changes.
@@ -15,7 +17,7 @@ export async function documentPaths(engine: EngineLike, collection: string, id: 
 
   const doc = await load(id)
   if (!doc) return []
-  if (collection === 'posts') return doc.slug ? [`/blog/${doc.slug}`] : []
+  if (collection === 'posts') return doc.slug ? [blogPath(await readBlogBase(), `/${doc.slug}`)] : []
   if (collection === 'products') return doc.slug ? [`/shop/${doc.slug}`, '/shop'] : []
   if (collection === 'events') return doc.slug ? [`/events/${doc.slug}`, '/events'] : []
   if (doc.isHomepage) return ['/']

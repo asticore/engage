@@ -93,6 +93,8 @@ export function breadcrumbTrail(input: {
   localePrefix?: string
   /** Sitewide Home label from SEO settings. Defaults to 'Home'. */
   homeLabel?: string
+  /** The blog address (no slashes), when the site does not use /blog. */
+  blogBase?: string
 }): Crumb[] {
   if (input.path === '/' || !input.title) return []
   const at = (path: string): string => `${input.baseUrl}${withLocalePrefix(path, input.localePrefix)}`
@@ -102,7 +104,8 @@ export function breadcrumbTrail(input: {
     return [home, ...(input.pageTrail ?? []).map((item) => ({ name: item.name, url: at(item.path) })), self]
   }
   const section = SECTIONS[input.collection]
-  return section ? [home, { name: section.name, url: at(section.path) }, self] : [home, self]
+  const sectionPath = section && input.collection === 'posts' && input.blogBase ? `/${input.blogBase}` : section?.path
+  return section ? [home, { name: section.name, url: at(sectionPath as string) }, self] : [home, self]
 }
 
 /** Home, then the list page itself, for an index page such as /blog or /shop. */

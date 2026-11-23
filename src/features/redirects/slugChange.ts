@@ -14,12 +14,13 @@ export type SlugRedirectCollection = 'posts' | 'products' | 'events' | 'courses'
 export const SLUG_REDIRECT_PREFIX: Record<SlugRedirectCollection, string> = { posts: '/blog', products: '/shop', events: '/events', courses: '/courses' }
 
 /** The old and new paths when the slug changed, or null when there is nothing to redirect. */
-export function slugRedirectPaths(collection: SlugRedirectCollection, oldSlug: unknown, newSlug: unknown): { fromPath: string; toPath: string } | null {
+export function slugRedirectPaths(collection: SlugRedirectCollection, oldSlug: unknown, newSlug: unknown, blogBase?: string): { fromPath: string; toPath: string } | null {
   if (typeof oldSlug !== 'string' || typeof newSlug !== 'string') return null
   const from = oldSlug.trim()
   const to = newSlug.trim()
   if (!from || !to || from === to) return null
-  return { fromPath: `${SLUG_REDIRECT_PREFIX[collection]}/${from}`, toPath: `${SLUG_REDIRECT_PREFIX[collection]}/${to}` }
+  const prefix = collection === 'posts' && blogBase ? `/${blogBase}` : SLUG_REDIRECT_PREFIX[collection]
+  return { fromPath: `${prefix}/${from}`, toPath: `${prefix}/${to}` }
 }
 
 type SlugDoc = { id?: unknown; slug?: unknown; _status?: unknown }
@@ -33,7 +34,8 @@ export const slugRedirectAfterChange =
       const before = previousDoc as SlugDoc | null | undefined
       if (!record || !before) return doc
       if (record._status !== 'published' || before._status !== 'published') return doc
-      const paths = slugRedirectPaths(collection, before.slug, record.slug)
+      const { readBlogBase } = await import('@/features/seo/permalinkStore')
+      const paths = slugRedirectPaths(collection, before.slug, record.slug, collection === 'posts' ? await readBlogBase() : undefined)
       if (!paths) return doc
 
       const { getEngine } = await import('@/lib/engine')

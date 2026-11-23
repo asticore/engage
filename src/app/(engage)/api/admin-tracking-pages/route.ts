@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { getEngine } from '@/lib/engine'
 import { getAllResolvedPages } from '@/utilities/pagePaths'
 import { trackingApiGate } from '@/features/tracking/apiGate'
+import { readBlogBase } from '@/features/seo/permalinkStore'
+import { blogPath } from '@/features/seo/permalinks'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,7 +34,7 @@ export async function GET(): Promise<NextResponse> {
   try {
     const engine = await getEngine()
     for (const [collection, kind, prefix] of [
-      ['posts', 'post', '/blog'],
+      ['posts', 'post', blogPath(await readBlogBase())],
       ['products', 'product', '/shop'],
     ] as const) {
       const { docs } = (await engine.find({ collection, limit: LIMIT, depth: 0, overrideAccess: true })) as { docs: Record<string, unknown>[] }
