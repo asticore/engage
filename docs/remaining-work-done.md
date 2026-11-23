@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 68 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 69 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3008,6 +3008,14 @@ _Date: 23 Nov 2026_
 **Where to find it:** Visual editor > Heading > HTML tag; Design > Typography with the device toggle
 
 <a id="bld-060"></a>
+#### BLD-069 · Task 15 34d 3D viewer and product configurator (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34d part (23 Nov 2026).** Two new elements. **3D model viewer** (`model-viewer`): GLB or glTF from Media or an address (other file types are refused), poster picture, height, slow turn (off for reduced motion), AR button on phones; the open model-viewer component loads from unpkg only when scrolled near, like the Lottie player. **Product configurator** (`product-configurator`): built from pictures only. Option lines `Group | Option | picture | price change` become radio groups, the chosen option of each group is a stacked layer, the total updates from the base price, an Exploded view button spreads the layers apart and shows hotspot dots (`across % | down % | label`), and the chosen options are shown as a summary line. Unsafe picture addresses are dropped. Code: `threeDDefs.ts`, `ThreeDElements.tsx`, `ThreeDClient.tsx`, `wave36.css`, `registry.ts`, `elementComponents.tsx`, `elementUtil.ts` (media key); tests `tests/int/three-d-34d.int.spec.ts`. The other parts of 34d are tasked as 34d2.
+
+**Where to find it:** Visual editor > Elements > Media > 3D model viewer, Product configurator
+
 #### BLD-068 · Task 15 34h Oxygen and Storyblok parity check (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3451,6 +3459,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-069](#bld-069) Task 15 34d 3D viewer and product configurator
 - [BLD-068](#bld-068) Border width per device
 - [BLD-067](#bld-067) Position offsets with units per device
 - [BLD-066](#bld-066) Task 15 34i AI on any selected element
