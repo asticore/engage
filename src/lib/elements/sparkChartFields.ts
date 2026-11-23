@@ -56,6 +56,7 @@ export function chartFields(): EditorField[] {
       name: 'data',
       label: 'Data',
       type: 'textarea',
+      grid: true,
       helpText: 'CSV: first row = series names, first column = labels, for example "Month,Sales" then "Jan,120". Paste from a spreadsheet saved as CSV.',
       showIf: { field: 'chartType', in: TABULAR_CHARTS },
     },

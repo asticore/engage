@@ -16,13 +16,13 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [INT](#cat-int) | Integrations, API and webhooks | 19 |
 | [EVT](#cat-evt) | Events, tickets and bookings | 11 |
 | [COM](#cat-com) | Commerce and shop | 51 |
-| [FRM](#cat-frm) | Forms, comments and spam | 9 |
+| [FRM](#cat-frm) | Forms, comments and spam | 10 |
 | [MEM](#cat-mem) | Members, companies and portal | 11 |
 | [MED](#cat-med) | Media and files | 10 |
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 74 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 75 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -1671,6 +1671,14 @@ _Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 
 **Where to find it:** /admin/settings/content > Form settings > Spam (Test CAPTCHA keys button, Appearance: Visible or Invisible); fallback reCAPTCHA keys: /admin/settings/site > Integrations
 
 <a id="frm-009"></a>
+#### FRM-010 · Task 15 34h5 Datasources: shared option lists (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34h5 (23 Nov 2026).** Shared option lists edited once. In the visual editor, Form settings > Shared lists (admins) creates a list (name, title, one `Label | value` per line). A Dropdown, Radio or Checkbox field has a new Shared list box: type the list name and its choices replace the field's own, in the form view and in the submission check, because the form is filled in when loaded (`withDatasources` in `loadForm` and the Form block). An unknown or removed list keeps the field's own choices. Lists live in `eg_datasources`, created on first use. Code: `src/features/datasources/{core,store,withDatasources}.ts`, `api/admin-datasources/route.ts`, `SharedListsCard.tsx`, `FormSettingsPanel.tsx`, `forms/elementDefs.ts`, `forms/server.ts`; tests `tests/int/datasources-34h5.int.spec.ts`. Custom fields on other collections do not use shared lists yet.
+
+**Where to find it:** Visual editor > Form settings > Shared lists; any choice field > Shared list
+
 #### FRM-009 · Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026)
 
 _Date: 22 Nov 2026 · Original group: Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)_
@@ -3149,13 +3157,21 @@ The Hover group now has a blend mode and a text stroke (width and colour). Value
 
 **Where to find it:** Visual editor, Design panel, Hover
 
-#### BLD-076 · Task 10 29e Cart and order display conditions (23 Nov 2026)
+#### BLD-077 · Task 10 29e Cart and order display conditions (23 Nov 2026)
 
 _Date: 23 Nov 2026_
 
 Display conditions gain Cart (has items or is empty) and Customer orders (has ordered before or has not). The cart rule reads an item count the cart keeps in the browser, so it needs no request and updates when items are added or removed. The orders rule asks `/api/visibility-state?orders=1` (one small lookup, only on pages that use it, never cached); signed out or unknown hides the block. Code: `visibilityRules.ts` (`ca`, `o`), `VisibilityGate.tsx`, `EcommerceProvider` count mirror, `tests/int/visibility-rules.int.spec.ts`.
 
 **Where to find it:** Visual editor, Design panel, Display conditions
+<a id="bld-076"></a>
+#### BLD-076 · Shape divider width, invert and bring to front (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Each shape divider (top and bottom) now has a width from 100 to 400 percent, centred on the block, an invert option that mirrors it vertically, and a bring to front option that draws it above the block content. The editor canvas and the live site share the same component. Width is clamped on save. A test covers the markup and the clamp.
+
+**Where to find it:** Visual editor, Design panel, Dividers
 
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
@@ -3517,7 +3533,8 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
-- [BLD-076](#bld-076) Task 10 29e Cart and order display conditions
+- [BLD-077](#bld-077) Task 10 29e Cart and order display conditions
+- [BLD-076](#bld-076) Shape divider width, invert and bring to front
 - [BLD-075](#bld-075) Task 10 29d Pay button
 - [BLD-074](#bld-074) Hover blend mode and hover text stroke
 - [BLD-073](#bld-073) Font family per device
@@ -3571,6 +3588,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 - [BLD-042](#bld-042) Task 10 chat button batch 5 (22 Nov 2026)
 - [EVT-011](#evt-011) 16g Event page type on posts (built 22 Nov 2026)
 - [FRM-008](#frm-008) Site-wide CAPTCHA keys, test and look (Task 5, 21a, built 22 Nov 2026)
+- [FRM-010](#frm-010) Task 15 34h5 Datasources: shared option lists
 - [FRM-009](#frm-009) Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026)
 - [I18N-012](#i18n-012) 41a
 - [INT-019](#int-019) Task 15 34j Two-way Google Calendar sync

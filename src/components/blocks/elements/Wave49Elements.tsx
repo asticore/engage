@@ -3,9 +3,9 @@ import React from 'react'
 import { flag, gridSizes, mediaListOf, num, pick, ratioCss, str } from './elementUtil'
 import type { MediaRef } from './elementUtil'
 import { GalleryFilter } from './GalleryFilter'
-import { GalleryCarousel } from './Wave49Client'
 import { SparkLightbox } from './SparkLightbox'
-import type { GalleryItem } from './Wave49Client'
+/** A picture in the gallery. */
+export type GalleryItem = { url: string; alt: string; srcSet?: string }
 import './wave49.css'
 
 /**
@@ -69,13 +69,13 @@ export const GalleryElement: React.FC<P> = (p) => {
 
   if (layout === 'carousel') {
     const track = (
-      <GalleryCarousel autoplay={autoplay} label={label} style={vars}>
+      <div className="carousel spark-carousel be-el-49-car" role="region" aria-roledescription="carousel" aria-label={label} style={vars} data-spark-autoplay={autoplay ? 6000 : undefined} data-spark-per-view={cols > 1 ? cols : undefined}>
         {items.map((m, i) => (
           <div className="be-el-49-car__slide" key={i} role="group" aria-roledescription="slide" aria-label={`${i + 1} of ${items.length}`}>
             {figure(m, i)}
           </div>
         ))}
-      </GalleryCarousel>
+      </div>
     )
     return lightbox ? <SparkLightbox>{track}</SparkLightbox> : track
   }

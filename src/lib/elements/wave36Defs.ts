@@ -31,7 +31,7 @@ export const WAVE36_ELEMENTS: ElementDef[] = [
     description: 'A data table on Shine table styles. Optionally sortable, searchable, filterable and paged, with a sticky header, column visibility, row selection, a stacked phone layout and CSV download. Scrolls sideways on small screens.',
     fields: [
       { name: 'view', label: 'Data from a saved table or chart', type: 'relationship' as const, relationTo: 'data-views', helpText: 'Optional. Uses the rows of a view from Content > Tables and charts (public views only) instead of the data typed here. Shown on the live page, not on the canvas.' },
-      area('rows', 'Data', 'Paste CSV from a spreadsheet, or type one row per line with cells separated by "|". Up to 500 rows and 24 columns.'),
+      { ...area('rows', 'Data', 'Paste CSV from a spreadsheet, or type one row per line with cells separated by "|". Up to 500 rows and 24 columns.'), grid: true },
       check('headerRow', 'First row is a header'), text('caption', 'Caption'),
       check('striped', 'Striped rows'), check('hover', 'Highlight row on hover'), check('bordered', 'Borders'), check('compact', 'Compact'),
       check('o_table_stack', 'Stack cells on phones', 'Each row becomes a card on narrow screens, with the column name beside each value.'),

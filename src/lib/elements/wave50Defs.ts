@@ -33,11 +33,13 @@ export const WAVE50_ELEMENTS: ElementDef[] = [
       check('showPrice', 'Show price', 'Products.'),
       { name: 'emptyText', label: 'Text when nothing matches', type: 'text' },
       check('loadMore', 'Next page link', 'A plain link to ?page=2 and so on.'),
+      { name: 'loadMoreMode', label: 'Next page: how it works', type: 'select', width: 'half', options: [{ label: 'Plain link', value: 'link' }, { label: 'Load more button', value: 'button' }, { label: 'Infinite scroll', value: 'scroll' }], showIf: { field: 'loadMore', equals: 'true' }, helpText: 'Button and scroll add the next items to this list without reloading. Without script visitors still get the plain link.' },
+      { name: 'loadMoreLabel', label: 'Button text', type: 'text', width: 'half', showIf: { field: 'loadMoreMode', equals: 'button' } },
       check('pagination', 'Numbered page links'),
     ],
     defaultProps: () => ({
       source: 'posts', count: 6, orderBy: 'date', order: 'desc', category: '', related: false, layout: 'grid', columns: 3,
-      showImage: true, showExcerpt: true, showDate: true, showPrice: true, emptyText: 'Nothing to show yet.', loadMore: false, pagination: false,
+      showImage: true, showExcerpt: true, showDate: true, showPrice: true, emptyText: 'Nothing to show yet.', loadMore: false, loadMoreMode: 'link', loadMoreLabel: 'Load more', pagination: false,
     }),
   },
 ]

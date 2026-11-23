@@ -88,6 +88,8 @@ export type FormFieldDef = {
   helpText?: string
   defaultValue?: string
   options?: FormFieldOption[]
+  /** Name of a shared option list (Task 15, 34h5); its items replace `options` when the form is loaded. */
+  datasource?: string
   width?: FieldWidth
   /** Raw markup for an `html` field, and the body of a `section` heading. */
   html?: string

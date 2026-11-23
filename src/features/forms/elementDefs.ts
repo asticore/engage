@@ -123,7 +123,7 @@ const SPECS: FieldSpec[] = [
     label: 'Dropdown',
     icon: String.fromCodePoint(0x25be),
     description: 'Choose one from a list.',
-    fields: base([placeholder, { name: 'options', label: 'Choices', type: 'formOptions' }, ...pricing]),
+    fields: base([placeholder, { name: 'options', label: 'Choices', type: 'formOptions' }, { name: 'datasource', label: 'Shared list (optional)', type: 'text', helpText: 'The name of a shared list from Form settings. Its choices replace the ones above and update everywhere when the list changes.' }, ...pricing]),
     defaults: { label: 'Choose one', options: [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] },
   },
   {
@@ -131,7 +131,7 @@ const SPECS: FieldSpec[] = [
     label: 'Radio buttons',
     icon: String.fromCodePoint(0x25c9),
     description: 'Choose one, all choices visible.',
-    fields: base([{ name: 'options', label: 'Choices', type: 'formOptions' }, ...pricing]),
+    fields: base([{ name: 'options', label: 'Choices', type: 'formOptions' }, { name: 'datasource', label: 'Shared list (optional)', type: 'text', helpText: 'The name of a shared list from Form settings. Its choices replace the ones above and update everywhere when the list changes.' }, ...pricing]),
     defaults: { label: 'Choose one', options: [{ label: 'Option 1', value: 'option_1' }, { label: 'Option 2', value: 'option_2' }] },
   },
   {

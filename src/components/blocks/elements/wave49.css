@@ -106,47 +106,8 @@
 
 /* ---- carousel: a scroll-snapped track, one viewful of slides at a time ---- */
 
-.be-el-49-car {
-  position: relative;
-}
-
-.be-el-49-car__track {
-  display: flex;
-  gap: var(--be-el-49-gap, 12px);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scroll-snap-type: x mandatory;
-  border-radius: 4px;
-}
-
 .be-el-49-car__slide {
-  flex: 0 0 calc((100% - (var(--be-el-49-cols, 1) - 1) * var(--be-el-49-gap, 12px)) / var(--be-el-49-cols, 1));
   min-width: 0;
-  scroll-snap-align: start;
-}
-
-.be-el-49-car__controls {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.be-el-49-car__btn {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 14px;
-  font: inherit;
-  color: inherit;
-  background: transparent;
-  border: 1px solid currentColor;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.be-el-49-car__btn:focus-visible {
-  outline: 3px solid currentColor;
-  outline-offset: 2px;
 }
 
 /* Text for screen readers only. */
