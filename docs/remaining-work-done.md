@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 61 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 62 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3015,6 +3015,15 @@ _Date: 23 Nov 2026_
 
 **Where to find it:** Visual editor > selected block > Design > Background (gradient) and Border > Custom shadow
 
+<a id="bld-062"></a>
+#### BLD-062 · Transform controls as popover groups (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Rotate, Offset, Scale and Skew are now four popover groups in the Advanced tab. Each holds its Normal rows (per device) and its Hover rows, and every saved tf and tfh value is kept. Flip sits in the Scale group. A test covers the structure.
+
+**Where to find it:** Visual editor, Design panel, Advanced, Transform
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3375,6 +3384,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-062](#bld-062) Transform controls as popover groups
 - [BLD-061](#bld-061) Task 15 34e Archive filters
 - [BLD-060](#bld-060) Task 12 gradient kinds and second shadow layer (31e part)
 - [BLD-059](#bld-059) Task 12 heading tag choice and per-device text styling (31e part)

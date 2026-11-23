@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
+import { PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -2043,6 +2043,13 @@ const TRANSFORM_ROWS: { suffix: string; labelKey: UiStringKey; unit: string; min
   { suffix: 'SkewY', labelKey: 'dp.lit.skew_y', unit: 'deg', min: -60, max: 60, def: 0 },
 ]
 
+const TRANSFORM_POPOVERS: { id: string; labelKey: UiStringKey; suffixes: string[] }[] = [
+  { id: 'rotate', labelKey: 'dp.lit.rotate', suffixes: ['Rotate'] },
+  { id: 'offset', labelKey: 'dp.lit.move_x', suffixes: ['TranslateX', 'TranslateY'] },
+  { id: 'scale', labelKey: 'dp.lit.scale', suffixes: ['Scale'] },
+  { id: 'skew', labelKey: 'dp.lit.skew_x', suffixes: ['SkewX', 'SkewY'] },
+]
+
 const FILTER_ROWS: { k: keyof BlockStyle; labelKey: UiStringKey; unit: string; min: number; max: number; def: number }[] = [
   { k: 'filterBlur', labelKey: 'dp.lit.blur', unit: 'px', min: 0, max: 40, def: 0 },
   { k: 'filterBrightness', labelKey: 'dp.lit.brightness', unit: '%', min: 0, max: 200, def: 100 },
@@ -2067,19 +2074,23 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
   return (
     <>
       <p className="ve-row__label">{t('dp.field.transform')}</p>
-      <div className="ve-divider-group">
-        <p className="ve-row__label">{t('dp.state.normal')}</p>
-        {TRANSFORM_ROWS.map((r) => (
-          <TypoRange key={r.suffix} ctl={ctl} k={tfKey('tf', r.suffix) as RespKey} label={r.unit ? `${t(r.labelKey)} (${r.unit})` : t(r.labelKey)} def={r.def} min={r.min} max={r.max} step={1} />
-        ))}
-        <FlipRows ctl={ctl} />
-      </div>
-      <div className="ve-divider-group">
-        <p className="ve-row__label">{t('dp.state.hover')}</p>
-        {TRANSFORM_ROWS.map((r) => (
-          <FxRange key={r.suffix} k={tfKey('tfh', r.suffix)} label={t(r.labelKey)} unit={r.unit} value={value} onChange={onChange} def={r.def} min={r.min} max={r.max} />
-        ))}
-      </div>
+      {TRANSFORM_POPOVERS.map((g) => {
+        const rows = TRANSFORM_ROWS.filter((r) => g.suffixes.includes(r.suffix))
+        const setAny = rows.some((r) => ctl.own(tfKey('tf', r.suffix) as RespKey) !== undefined || value[tfKey('tfh', r.suffix)] !== undefined)
+        return (
+          <PopoverGroup key={g.id} label={t(g.labelKey)} summary={setAny ? '(set)' : undefined}>
+            <p className="ve-row__label">{t('dp.state.normal')}</p>
+            {rows.map((r) => (
+              <TypoRange key={r.suffix} ctl={ctl} k={tfKey('tf', r.suffix) as RespKey} label={r.unit ? `${t(r.labelKey)} (${r.unit})` : t(r.labelKey)} def={r.def} min={r.min} max={r.max} step={1} />
+            ))}
+            {g.id === 'scale' && <FlipRows ctl={ctl} />}
+            <p className="ve-row__label">{t('dp.state.hover')}</p>
+            {rows.map((r) => (
+              <FxRange key={r.suffix} k={tfKey('tfh', r.suffix)} label={t(r.labelKey)} unit={r.unit} value={value} onChange={onChange} def={r.def} min={r.min} max={r.max} />
+            ))}
+          </PopoverGroup>
+        )
+      })}
       <FxRange k="tfDuration" label={t('dp.field.transition')} unit="ms" value={value} onChange={onChange} def={250} min={0} max={2000} step={10} help={t('dp.lit.how_long_transform_changes_take')} />
 
       <p className="ve-row__label">{t('dp.field.position')}</p>
