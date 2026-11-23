@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 67 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 68 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3008,6 +3008,14 @@ _Date: 23 Nov 2026_
 **Where to find it:** Visual editor > Heading > HTML tag; Design > Typography with the device toggle
 
 <a id="bld-060"></a>
+#### BLD-068 · Task 15 34h Oxygen and Storyblok parity check (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34h (23 Nov 2026).** Checked each line against the code. **Oxygen.** Query loops with conditions: built (loop elements, Archive filter). Design sets and templates: built (Task 14). Code blocks for CSS and JS: built (`embed-code`, `html`, per block custom CSS). Dynamic data: built (dynamic link and image sources, loop context). Spark based effects and reveal: built; click, scroll and hover triggers that run chosen actions: partial, tasked as 34h2. Reusable components: built as reusable sections (`ReusableSections`), without per-instance properties, tasked as 34h3. Shared class and selector styles with CSS variables edited once: partial (theme colours and fonts become variables; no named shared style classes), tasked as 34h4. **Storyblok.** Nestable components with schema: built (sections and elements). Content types and fields: built (`customFields`). Workflow stages: built (`approval`). Version history with compare: built (`VersionsList`, `versionDiff`). Field level translation: built (`multilingual`). Roles, webhooks and REST API: built (`roles`, `webhooks`, `apiBuilder`). Preview links, tags and click-to-edit visual preview: built. Asset manager: built (Task 24). Scheduled publishing: built (`schedule`). **Gaps tasked:** datasources (shared option lists used by select fields) as 34h5, and releases (publish a bundle of changes together) as 34h6.
+
+**Where to find it:** Task list items 34h2 to 34h6 in `docs/remaining-work.md`
+
 #### BLD-061 · Task 15 34e Archive filters (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3438,6 +3446,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 - [BLD-066](#bld-066) Task 15 34i AI on any selected element
 - [BLD-065](#bld-065) Blend mode per device
 - [BLD-064](#bld-064) Line height and word spacing units per device
+- [BLD-068](#bld-068) Task 15 34h Oxygen and Storyblok parity check
 - [BLD-063](#bld-063) Task 15 34g Elfsight catalogue sweep
 - [BLD-062](#bld-062) Transform controls as popover groups
 - [BLD-061](#bld-061) Task 15 34e Archive filters
