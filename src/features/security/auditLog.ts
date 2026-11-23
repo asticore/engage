@@ -40,6 +40,7 @@ export type AuditAction =
   | 'rate-rule'
   | 'csp.builder'
   | 'frontend-assets.save'
+  | 'maps-weather.save'
   | 'user.banned'
   | 'user.unbanned'
   | 'wholesale.approved'

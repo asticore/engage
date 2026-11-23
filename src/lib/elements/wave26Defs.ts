@@ -303,8 +303,19 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
   // ---- site ----
   {
     type: 'map', label: 'Map', icon: '🗺', category: 'siteMeta',
-    description: 'An embedded map from an address or coordinates (Google Maps or OpenStreetMap).',
-    fields: [text('address', 'Address or "lat,lng"'), text('embedUrl', 'Or a pasted embed link', { helpText: 'Only google.com/maps and openstreetmap.org embed links are accepted.' }), number('zoom', 'Zoom (1-20)'), number('height', 'Height (px)'), text('title', 'Title (for screen readers)')],
-    defaultProps: () => ({ address: 'Trafalgar Square, London', zoom: 14, height: 320, title: 'Map' }),
+    description: 'A map from an address or coordinates. OpenStreetMap by default (no key); Google Maps, MapTiler or Mapbox once a key is saved under Settings > Maps and weather.',
+    fields: [
+      text('address', 'Address or "lat,lng"', { helpText: 'An address is looked up once and the answer is stored, so visitors cause no lookups.' }),
+      text('embedUrl', 'Or a pasted embed link', { helpText: 'Only google.com/maps and openstreetmap.org embed links are accepted.' }),
+      select('provider', 'Map provider', [{ label: 'Site default', value: '' }, ...opts('osm', 'google', 'maptiler', 'mapbox')]),
+      select('style', 'Map style', [{ label: 'Site default', value: '' }, ...opts('light', 'dark', 'grayscale', 'satellite', 'terrain')]),
+      area('markers', 'More markers', 'One per line: "lat,lng | Label". Shown on the Google, MapTiler and Mapbox pictures and as the centre on OpenStreetMap.'),
+      text('markerColour', 'Marker colour (hex, optional)', { width: 'half' }),
+      { name: 'showDirections', label: 'Show a directions link', type: 'checkbox', width: 'half' },
+      number('zoom', 'Zoom (1-20)'),
+      number('height', 'Height (px)'),
+      text('title', 'Title (for screen readers)'),
+    ],
+    defaultProps: () => ({ address: 'Trafalgar Square, London', zoom: 14, height: 320, title: 'Map', provider: '', style: '', showDirections: true }),
   },
 ]

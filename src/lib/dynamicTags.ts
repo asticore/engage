@@ -13,6 +13,8 @@ export type TagContext = {
   site?: { name?: unknown; year?: unknown }
   product?: { title?: unknown; price?: unknown }
   event?: { title?: unknown; date?: unknown; location?: unknown; summary?: unknown }
+  /** Filled by the Dynamic text element when the template uses a weather tag. */
+  weather?: { temp?: unknown; condition?: unknown; place?: unknown; wind?: unknown }
   /** Locale for dates. Default en-AU. */
   locale?: string
   /** Currency code for numeric prices. Default AUD. */
@@ -22,7 +24,7 @@ export type TagContext = {
 
 export const TAG_NAMES = [
   'post.title', 'post.date', 'post.excerpt', 'post.author', 'post.category_path', 'post.category_url', 'page.title', 'site.name', 'site.year', 'product.title', 'product.price',
-  'event.title', 'event.date', 'event.location', 'event.summary',
+  'event.title', 'event.date', 'event.location', 'event.summary', 'weather.temp', 'weather.condition', 'weather.place', 'weather.wind',
 ] as const
 
 export function escapeHtml(value: string): string {
@@ -77,6 +79,10 @@ function rawValue(name: string, ctx: TagContext): string {
     case 'event.date': return formatTagDate(ctx.event?.date, ctx.dateFormat, locale)
     case 'event.location': return str(ctx.event?.location)
     case 'event.summary': return str(ctx.event?.summary)
+    case 'weather.temp': return str(ctx.weather?.temp)
+    case 'weather.condition': return str(ctx.weather?.condition)
+    case 'weather.place': return str(ctx.weather?.place)
+    case 'weather.wind': return str(ctx.weather?.wind)
     default: return ''
   }
 }

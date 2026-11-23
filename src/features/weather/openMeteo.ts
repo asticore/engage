@@ -35,9 +35,20 @@ export function describeCode(code: number): { label: string; icon: string } {
   return { label: 'Unknown', icon: e(0x2753) }
 }
 
+/** A place name or "lat,lon" to coordinates and a display name, through Open-Meteo's free geocoder. Null when not found. */
+export async function resolvePlace(place: string): Promise<{ lat: number; lon: number; name: string } | null> {
+  const c = parseCoords(place)
+  if (c) return { lat: c.lat, lon: c.lon, name: place.trim() }
+  const name = place.trim()
+  if (!name || name.length > 80) return null
+  const g = (await getJson(`${GEO}?name=${encodeURIComponent(name)}&count=1&format=json`, 86400)) as { results?: Array<{ latitude: number; longitude: number; name: string }> }
+  const r = g.results?.[0]
+  return r ? { lat: r.latitude, lon: r.longitude, name: r.name } : null
+}
+
 const mem = new Map<string, { at: number; data: WeatherData }>()
 
-async function getJson(url: string, ttlSeconds: number): Promise<unknown> {
+export async function getJson(url: string, ttlSeconds: number): Promise<unknown> {
   const res = await fetch(url, { headers: { Accept: 'application/json' }, cf: { cacheTtl: ttlSeconds, cacheEverything: true } } as RequestInit)
   if (!res.ok) throw new Error(`weather ${res.status}`)
   return res.json()
