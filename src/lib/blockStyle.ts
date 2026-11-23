@@ -121,6 +121,11 @@ export type BlockStyle = {
   bgGradientFrom?: string
   bgGradientTo?: string
   bgGradientAngle?: number
+  /** Gradient kind (31e). Unset = linear. Radial and conic ignore the angle (conic uses it as the start angle). */
+  bgGradientKind?: 'linear' | 'radial' | 'conic'
+  /** Optional middle colour stop and where it sits, 0-100 percent (default 50). */
+  bgGradientMid?: string
+  bgGradientMidPos?: number
   /** Media doc id for an image background. */
   bgImage?: number | null
   /** Media URL, resolved at render time; cached here so previews avoid a refetch. */
@@ -189,6 +194,13 @@ export type BlockStyle = {
   bsSpread?: number
   bsColor?: string
   bsInset?: boolean
+  /** A second shadow layer, same fields (31e). Layers join with a comma. */
+  bs2X?: number
+  bs2Y?: number
+  bs2Blur?: number
+  bs2Spread?: number
+  bs2Color?: string
+  bs2Inset?: boolean
   /** The same custom layer on hover. */
   hbsX?: number
   hbsY?: number
@@ -784,7 +796,7 @@ export const BG_IMAGE_SIZES: readonly string[] = ['cover', 'contain', 'auto']
 export const BG_IMAGE_POSITIONS: readonly string[] = ['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left', 'bottom right']
 export const BG_IMAGE_REPEATS: readonly string[] = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y']
 const BORDER_STYLES: readonly string[] = ['solid', 'dashed', 'dotted', 'double']
-const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
+const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bgGradientKind', 'bgGradientMid', 'bgGradientMidPos', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
 
 /** Validates per-side border widths, the border style and the custom box shadow layers (normal and hover). */
 function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
@@ -798,7 +810,7 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
     else out[k] = n
   }
   for (const k of ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth']) num(k, 0, 50)
-  for (const p of ['bs', 'hbs']) {
+  for (const p of ['bs', 'bs2', 'hbs']) {
     num(p + 'X', -200, 200)
     num(p + 'Y', -200, 200)
     num(p + 'Blur', 0, 300)
@@ -810,6 +822,13 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
     if (raw[k] !== undefined && !(typeof raw[k] === 'string' && opts.includes(raw[k] as string))) delete out[k]
   }
   bgEnum('bgImageSize', BG_IMAGE_SIZES)
+  bgEnum('bgGradientKind', ['linear', 'radial', 'conic'])
+  if (raw.bgGradientMid !== undefined && sanitizeColor(raw.bgGradientMid) === undefined) delete out.bgGradientMid
+  if (raw.bgGradientMidPos !== undefined) {
+    const n = clampNum(raw.bgGradientMidPos, 0, 100)
+    if (n === undefined) delete out.bgGradientMidPos
+    else out.bgGradientMidPos = n
+  }
   bgEnum('bgImagePosition', BG_IMAGE_POSITIONS)
   bgEnum('bgImageRepeat', BG_IMAGE_REPEATS)
   bgEnum('bgImageAttachment', ['scroll', 'fixed'])
@@ -1321,7 +1340,7 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
     const from = style.bgGradientFrom || 'transparent'
     const to = style.bgGradientTo || 'transparent'
     const angle = isNum(style.bgGradientAngle) ? style.bgGradientAngle : 180
-    css.backgroundImage = `linear-gradient(${angle}deg, ${from}, ${to})`
+    css.backgroundImage = gradientCss(style, angle, from, to)
   }
 
   // The image moves to its own layer (kenburnsLayer) when Ken Burns is on, so the wrapper must not paint it too.
@@ -1378,8 +1397,8 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
   const corners = cornerRadiusValue(style)
   if (corners) css.borderRadius = corners
   if (style.boxShadow && style.boxShadow !== 'none') css.boxShadow = BOX_SHADOW_PRESETS[style.boxShadow]
-  const customShadow = customBoxShadow(style, 'bs')
-  if (customShadow) css.boxShadow = customShadow
+  const layers = [customBoxShadow(style, 'bs'), customBoxShadow(style, 'bs2')].filter(Boolean)
+  if (layers.length > 0) css.boxShadow = layers.join(', ')
   const sides = borderSideCss(style)
   if (sides) Object.assign(css, sides)
   const clip = maskClipPath(style.maskShape)
@@ -1480,7 +1499,7 @@ function advancedCss(style: BlockStyle): React.CSSProperties {
 }
 
 /** The custom box shadow for prefix 'bs' (normal) or 'hbs' (hover), or undefined when none of its values is set. */
-function customBoxShadow(style: BlockStyle, prefix: 'bs' | 'hbs'): string | undefined {
+function customBoxShadow(style: BlockStyle, prefix: 'bs' | 'hbs' | 'bs2'): string | undefined {
   const r = style as Record<string, unknown>
   const n = (k: string, d: number) => (isNum(r[prefix + k]) ? (r[prefix + k] as number) : d)
   const set = ['X', 'Y', 'Blur', 'Spread'].some((k) => isNum(r[prefix + k])) || typeof r[prefix + 'Color'] === 'string' || r[prefix + 'Inset'] === true
@@ -1500,6 +1519,16 @@ function borderSideCss(style: BlockStyle): React.CSSProperties | undefined {
     borderColor: style.borderColor || 'currentColor',
     borderWidth: `${w(sides[0])} ${w(sides[1])} ${w(sides[2])} ${w(sides[3])}`,
   }
+}
+
+/** The background gradient for the chosen kind, with an optional middle stop. */
+function gradientCss(style: BlockStyle, angle: number, from: string, to: string): string {
+  const mid = sanitizeColor(style.bgGradientMid)
+  const pos = isNum(style.bgGradientMidPos) ? Math.min(100, Math.max(0, style.bgGradientMidPos)) : 50
+  const stops = mid ? `${from}, ${mid} ${pos}%, ${to}` : `${from}, ${to}`
+  if (style.bgGradientKind === 'radial') return `radial-gradient(circle, ${stops})`
+  if (style.bgGradientKind === 'conic') return `conic-gradient(from ${angle}deg, ${stops})`
+  return `linear-gradient(${angle}deg, ${stops})`
 }
 
 const minHeightValue = (value: number, unit: string | undefined): string => `${value}${lengthUnit(unit) ?? 'px'}`

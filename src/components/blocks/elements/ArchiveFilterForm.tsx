@@ -31,7 +31,7 @@ export default function ArchiveFilterForm({ path, instant, chips, children }: { 
         action={path}
         className="archive-filter"
         aria-label="Filter"
-        onChange={instant ? (e) => { if ((e.target as HTMLElement).tagName !== 'INPUT' || (e.target as HTMLInputElement).type !== 'search') go() } : undefined}
+        onChange={instant ? (e) => { const field = e.target as unknown as HTMLInputElement; if (field.tagName !== 'INPUT' || field.type !== 'search') go() } : undefined}
         onSubmit={(e) => { e.preventDefault(); go() }}
       >
         {children}

@@ -161,14 +161,14 @@ export const BorderSidesPopover: React.FC<{ value: BlockStyle; patch: Patch }> =
 
 /** Custom box shadow (x, y, blur, spread, colour, inset) for Normal and for Hover, replacing the preset when set. */
 export const BoxShadowPopover: React.FC<{ value: BlockStyle; patch: Patch }> = ({ value, patch }) => {
-  const [tab, setTab] = useState<'bs' | 'hbs'>('bs')
+  const [tab, setTab] = useState<'bs' | 'bs2' | 'hbs'>('bs')
   const k = (s: string) => `${tab}${s}` as keyof BlockStyle
   const inset = value[k('Inset')] === true
-  const any = ['bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor'].some((x) => (value as Record<string, unknown>)[x] !== undefined)
+  const any = ['bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor'].some((x) => (value as Record<string, unknown>)[x] !== undefined)
   return (
     <Row label="Custom shadow">
       <PopoverGroup label="Edit" summary={any ? '(set)' : undefined}>
-        <SelectRow label="State" value={tab} options={[{ label: 'Normal', value: 'bs' }, { label: 'Hover', value: 'hbs' }]} onChange={(v) => setTab(v === 'hbs' ? 'hbs' : 'bs')} />
+        <SelectRow label="State" value={tab} options={[{ label: 'Normal', value: 'bs' }, { label: 'Second layer', value: 'bs2' }, { label: 'Hover', value: 'hbs' }]} onChange={(v) => setTab(v === 'hbs' ? 'hbs' : v === 'bs2' ? 'bs2' : 'bs')} />
         {numRow(value, patch, 'X (px)', k('X'), -200, 200)}
         {numRow(value, patch, 'Y (px)', k('Y'), -200, 200)}
         {numRow(value, patch, 'Blur (px)', k('Blur'), 0, 300)}
