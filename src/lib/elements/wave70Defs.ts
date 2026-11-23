@@ -32,8 +32,10 @@ export const WAVE70_CLIENT_ELEMENTS: ElementDef[] = [
       text('message', 'Message'),
       text('denyUrl', 'Where "No" goes', { helpText: 'An https address, or a path like /sorry. Leave empty to show a message.' }),
       { name: 'rememberDays', label: 'Remember for days', type: 'number', width: 'half' },
+      text('countries', 'Countries', { helpText: 'Optional. Two-letter codes separated by commas, eg US, GB. Only these countries use the ages below.' }),
+      text('countryAges', 'Minimum age by country', { helpText: 'Optional. Pairs like US:21,GB:18. Visitors from other countries (or with an unknown country) use the minimum age above.' }),
     ],
-    defaultProps: () => ({ mode: 'button', minAge: 18, heading: 'Are you over 18?', message: 'You must be 18 or older to enter this site.', denyUrl: '', rememberDays: 30 }),
+    defaultProps: () => ({ mode: 'button', minAge: 18, heading: 'Are you over 18?', message: 'You must be 18 or older to enter this site.', denyUrl: '', rememberDays: 30, countries: '', countryAges: '' }),
   },
 ]
 

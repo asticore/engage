@@ -104,6 +104,19 @@ export function publicAuthor(post: ArchivePost): { name: string; slug: string } 
   return name && termSlug(slug) ? { name, slug } : null
 }
 
+/**
+ * The keys a post's author can be matched by in a template condition: the slug, the display name and the id. Empty when
+ * the post has no author. Reads a populated author (depth 1) and also a bare id.
+ */
+export function postAuthorKeys(post: ArchivePost): string[] {
+  const a = post.author
+  if (typeof a === 'number' || typeof a === 'string') return [String(a)]
+  if (!a || typeof a !== 'object') return []
+  const { id, slug, displayName } = a as { id?: unknown; slug?: unknown; displayName?: unknown }
+  const keys = [id, slug, displayName].filter((k): k is number | string => (typeof k === 'number' || typeof k === 'string') && String(k).trim() !== '')
+  return keys.map(String)
+}
+
 /** Distinct public authors across posts, keyed by slug. */
 export function authorIndex(posts: ArchivePost[]): Map<string, string> {
   const out = new Map<string, string>()

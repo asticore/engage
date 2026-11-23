@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { ageOn, chatHref, inChatHours, safeDeny } from '@/components/blocks/elements/Wave70Elements'
+import { ageOn, chatHref, countryAgeTable, inChatHours, minAgeFor, parseCountryAges, safeDeny } from '@/components/blocks/elements/Wave70Elements'
 import { archiveKind, buildSitemap } from '@/components/blocks/elements/Wave70Server'
 import { parseLoopGridSettings } from '@/features/siteTemplates/loopGrid'
 import { getElementDef } from '@/lib/elements/registry'
@@ -66,5 +66,29 @@ describe('wave70 elements', () => {
   it('reads the loop grid carousel option', () => {
     expect(parseLoopGridSettings({ loopTemplate: 'a1', display: 'carousel', autoplay: 99999 })).toMatchObject({ display: 'carousel', autoplay: 30000 })
     expect(parseLoopGridSettings({ loopTemplate: 'a1', display: 'x' }).display).toBe('grid')
+  })
+  it('parses per-country ages and ignores bad pairs', () => {
+    expect(parseCountryAges('US:21,GB:18')).toEqual({ US: 21, GB: 18 })
+    expect(parseCountryAges(' us : 21 , xx:0, ZZZ:20, FR:abc, de:16, DE:30, FR:121, NZ:17:3')).toEqual({ US: 21, DE: 16 })
+    expect(parseCountryAges('')).toEqual({})
+    expect(parseCountryAges(null)).toEqual({})
+    expect(parseCountryAges(['US:21'])).toEqual({})
+  })
+  it('limits the age table to the listed countries', () => {
+    expect(countryAgeTable('', 'US:21,GB:18')).toEqual({ US: 21, GB: 18 })
+    expect(countryAgeTable('us, FR', 'US:21,GB:18')).toEqual({ US: 21 })
+    expect(countryAgeTable(' ', 'US:21')).toEqual({ US: 21 })
+  })
+  it('picks the minimum age for a visitor, failing safe to the strictest', () => {
+    const table = { US: 21, GB: 18, DE: 16 }
+    expect(minAgeFor(18, table, 'US')).toBe(21)
+    expect(minAgeFor(18, table, 'us')).toBe(21)
+    expect(minAgeFor(18, table, 'DE')).toBe(16)
+    expect(minAgeFor(18, table, 'FR')).toBe(18)
+    expect(minAgeFor(18, table, null)).toBe(18)
+    expect(minAgeFor(18, table, null, true)).toBe(21)
+    expect(minAgeFor(25, { US: 21 }, null, true)).toBe(25)
+    expect(minAgeFor(18, {}, null, true)).toBe(18)
+    expect(minAgeFor(18, {}, 'US')).toBe(18)
   })
 })

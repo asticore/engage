@@ -32,6 +32,38 @@ export type LocationContext = {
   pageId?: string | null
   /** Options pages: the page's values (a field value rule reads one by name). Undefined = not an options page context. */
   fieldValues?: Record<string, unknown> | null
+  /** Blog post pages: the post's author as keys (slug, display name and id). Undefined = not a post context. */
+  postAuthors?: string[] | null
+  /** Blog post pages: the post's published date (ISO). Undefined = not a post context; null = no date. */
+  postDate?: string | null
+}
+
+const DAY_MS = 86_400_000
+/** Date rule values: `before:YYYY-MM-DD`, `after:YYYY-MM-DD` or `within:N` (the last N days, 1 to 3650). */
+export const DATE_RULE = /^(?:(before|after):(\d{4}-\d{2}-\d{2})|within:(\d{1,4}))$/
+
+/** A valid date rule value (the calendar date must exist), or false. */
+export function isDateRuleValue(value: string): boolean {
+  const m = DATE_RULE.exec(value)
+  if (!m) return false
+  if (m[3] !== undefined) return Number(m[3]) >= 1 && Number(m[3]) <= 3650
+  const [y, mo, d] = m[2]!.split('-').map(Number) as [number, number, number]
+  const date = new Date(Date.UTC(y, mo - 1, d))
+  return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d
+}
+
+/**
+ * Whether a published date satisfies a date rule. `before` and `after` compare with the start of the given day (UTC):
+ * before means earlier than that, after means that day or later. `within:N` means published in the last N days up to now.
+ */
+export function dateRuleMatches(value: string, published: string | null, now: number): boolean {
+  if (!isDateRuleValue(value) || published === null) return false
+  const when = Date.parse(published)
+  if (!Number.isFinite(when)) return false
+  const m = DATE_RULE.exec(value)!
+  if (m[3] !== undefined) return when >= now - Number(m[3]) * DAY_MS && when <= now
+  const start = Date.parse(`${m[2]}T00:00:00Z`)
+  return m[1] === 'before' ? when < start : when >= start
 }
 
 /** Like `includes`, but the context value may be a single string or a list; a rule matches when any equals it. */
@@ -115,6 +147,14 @@ function ruleMatches(rule: LocationRule, ctx: LocationContext, options: MatchOpt
       hit = ctx.pageId !== null && ids.includes(ctx.pageId)
       break
     }
+    case 'author':
+      if (ctx.postAuthors === undefined) return false
+      hit = (ctx.postAuthors ?? []).some((key) => key.toLowerCase() === rule.value.trim().toLowerCase())
+      break
+    case 'date':
+      if (ctx.postDate === undefined) return false
+      hit = dateRuleMatches(rule.value, ctx.postDate, options.now ?? Date.now())
+      break
     case 'productCategory':
     case 'productType':
     case 'eventType': {
@@ -136,6 +176,8 @@ export type MatchOptions = {
    * the values as they are edited.
    */
   ignoreFieldValues?: boolean
+  /** The time date rules are judged at (ms). Defaults to now; tests pass a fixed time. */
+  now?: number
 }
 
 /** The context of an Options page: its slug, its values and the roles of the person looking at it (undefined when not known). */

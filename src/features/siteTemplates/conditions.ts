@@ -1,4 +1,5 @@
 import { TEMPLATE_AUDIENCES, TEMPLATE_LOCATION_PARAMS, type LocationGroups, type LocationRule } from '@/fields/customFields/types'
+import { isDateRuleValue } from '@/features/customFields/location'
 
 /** Params a template condition may use: the template ones plus the post ones that already exist. */
 const ALLOWED_PARAMS = new Set<string>([...TEMPLATE_LOCATION_PARAMS, 'postCategory', 'postTag'])
@@ -61,6 +62,7 @@ export function sanitizeConditions(input: unknown): SanitizedConditions {
       if (operator !== 'equals' && operator !== 'notEquals') return { groups: [], valid: false }
       if (typeof value !== 'string') return { groups: [], valid: false }
       if (param === 'audience' && !(TEMPLATE_AUDIENCES as readonly string[]).includes(value)) return { groups: [], valid: false }
+      if (param === 'date' && !isDateRuleValue(value)) return { groups: [], valid: false }
       if (param === 'page') {
         if (value.length > MAX_PAGE_VALUE || !PAGE_IDS.test(value)) return { groups: [], valid: false }
       } else if (value.length > MAX_VALUE) return { groups: [], valid: false }
