@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 
 import { NewTemplate, siteTemplateEditorPath, templateButtonClass } from '@/features/siteTemplates/admin/NewTemplate'
+import { NewLoop } from './NewLoop'
 import { TemplateImport } from '@/features/siteTemplates/admin/TemplateImport'
 import { useAdminHref } from '@/admin/adminRoute/AdminRouteProvider'
 import { KIND_LABELS, type SiteTemplateKind } from '@/features/siteTemplates/kinds'
@@ -24,6 +25,7 @@ export const SuggestedTemplates: React.FC<{ warnings: SuggestionWarning[]; showC
   const [creating, setCreating] = useState<SiteTemplateKind | null>(null)
   const [oneClick, setOneClick] = useState<SiteTemplateKind | null>(null)
   const [error, setError] = useState('')
+  const [newLoop, setNewLoop] = useState(false)
   const adminHref = useAdminHref()
 
   /** One click: the first starter for the type (or a blank template when there is none), then the visual builder. */
@@ -61,10 +63,12 @@ export const SuggestedTemplates: React.FC<{ warnings: SuggestionWarning[]; showC
           <button type="button" className={templateButtonClass} onClick={() => setCreating(creating ?? 'header')}>
             New site template
           </button>
+          <button type="button" className={templateButtonClass} onClick={() => setNewLoop(true)}>New loop</button>
           <TemplateImport />
         </div>
       </div>
 
+      {newLoop ? <NewLoop onClose={() => setNewLoop(false)} /> : null}
       {creating ? <NewTemplate key={creating} initialKind={creating} onClose={() => setCreating(null)} /> : null}
 
       {missing.length === 0 && notes.length === 0 && showCoverageOk ? (
