@@ -25,6 +25,7 @@ export type BlockWidth = 'contained' | 'wide' | 'full'
 export type DividerShape =
   | 'none' | 'wave' | 'tilt' | 'curve' | 'triangle' | 'arrow'
   | 'waves' | 'zigzag' | 'clouds' | 'drips' | 'mountains' | 'curve-asym' | 'slant-double' | 'pill' | 'steps' | 'spikes'
+  | 'book' | 'split' | 'tilt-opacity' | 'curve-opacity' | 'fan'
 export type DividerAnim = 'none' | 'drift' | 'layers' | 'float'
 export type BgEffect = 'none' | 'aurora' | 'mesh' | 'gradient-shift' | 'grain' | 'dots' | 'grid' | 'particles'
 export type ParticlesInteract = 'none' | 'repel' | 'attract' | 'connect'
@@ -161,7 +162,26 @@ export type BlockStyle = {
 
   // Border
   borderWidth?: number
-  borderStyle?: 'solid' | 'dashed' | 'dotted'
+  borderStyle?: 'solid' | 'dashed' | 'dotted' | 'double'
+  /** Per-side border widths in px (31e). Any set replaces borderWidth for that side. */
+  borderTopWidth?: number
+  borderRightWidth?: number
+  borderBottomWidth?: number
+  borderLeftWidth?: number
+  /** Custom box shadow layer (31e): x, y, blur, spread in px, colour, inset. Any set replaces the preset. */
+  bsX?: number
+  bsY?: number
+  bsBlur?: number
+  bsSpread?: number
+  bsColor?: string
+  bsInset?: boolean
+  /** The same custom layer on hover. */
+  hbsX?: number
+  hbsY?: number
+  hbsBlur?: number
+  hbsSpread?: number
+  hbsColor?: string
+  hbsInset?: boolean
   borderColor?: string
   borderRadius?: number
   /** Per-corner radius in px (0-999). When any is set, unset corners fall back to borderRadius. Responsive. */
@@ -549,7 +569,7 @@ export function asBlockStyle(value: unknown): BlockStyle {
   // A v2 value with no groups (a stray typed value) reads as {} in readFlatDesign.
   const style = (isDesignV2Raw(value) ? readFlatDesign(value) : value) as BlockStyle
   if (Object.keys(style).length === 0) return EMPTY_STYLE
-  const fx = withSafeWrapCollapse(withSafeAnchor(withSafeUnits(sanitizeRadius(sanitizeTypography(sanitizeVisibility(sanitizeFx(sanitizeSlides(sanitizeBgVideo(style)))))))))
+  const fx = withSafeWrapCollapse(withSafeAnchor(withSafeUnits(sanitizeBorderShadow(sanitizeRadius(sanitizeTypography(sanitizeVisibility(sanitizeFx(sanitizeSlides(sanitizeBgVideo(style))))))))))
   if (style.tablet === undefined && style.mobile === undefined) return fx
   // Overrides come out of JSON: keep only whitelisted, well-typed keys.
   const { tablet: rawTablet, mobile: rawMobile, ...rest } = fx
@@ -739,6 +759,33 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
   return out as BlockStyle
 }
 
+const BORDER_STYLES: readonly string[] = ['solid', 'dashed', 'dotted', 'double']
+const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
+
+/** Validates per-side border widths, the border style and the custom box shadow layers (normal and hover). */
+function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
+  const raw = style as Record<string, unknown>
+  if (!BORDER_SHADOW_KEYS.some((k) => raw[k] !== undefined)) return style
+  const out: Record<string, unknown> = { ...raw }
+  const num = (k: string, min: number, max: number) => {
+    if (raw[k] === undefined) return
+    const n = clampNum(raw[k], min, max)
+    if (n === undefined) delete out[k]
+    else out[k] = n
+  }
+  for (const k of ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth']) num(k, 0, 50)
+  for (const p of ['bs', 'hbs']) {
+    num(p + 'X', -200, 200)
+    num(p + 'Y', -200, 200)
+    num(p + 'Blur', 0, 300)
+    num(p + 'Spread', -100, 200)
+    if (raw[p + 'Color'] !== undefined && sanitizeColor(raw[p + 'Color']) === undefined) delete out[p + 'Color']
+    if (raw[p + 'Inset'] !== undefined && typeof raw[p + 'Inset'] !== 'boolean') delete out[p + 'Inset']
+  }
+  if (raw.borderStyle !== undefined && !(typeof raw.borderStyle === 'string' && BORDER_STYLES.includes(raw.borderStyle))) delete out.borderStyle
+  return out as BlockStyle
+}
+
 const TYPE_PRESET_ID = /^[a-z0-9-]{1,32}$/
 
 const TYPO_KEYS = [
@@ -895,13 +942,13 @@ const FX_KEYS = [
 /** Normal | Hover state keys (Elementor-style). Any of them set turns on the hover transition. */
 const HOVER_STATE_KEYS = [
   'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
-  'hoverOpacity', 'hoverTransform',
+  'hoverOpacity', 'hoverTransform', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset',
 ] as const
 /** Properties that animate between the normal and hover values. */
 const HOVER_TRANSITION_PROPS = ['background-color', 'color', 'border-color', 'box-shadow', 'border-radius'] as const
 
 /** The pre-existing hover keys; when only the newer ones (opacity / transform preset) are set the default transition is 150ms. */
-const HOVER_TRANSITION_PROPS_KEYS = ['hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius'] as const
+const HOVER_TRANSITION_PROPS_KEYS = ['hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
 
 function hasHoverState(style: BlockStyle): boolean {
   return HOVER_STATE_KEYS.some((k) => style[k] !== undefined)
@@ -1288,6 +1335,10 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
   const corners = cornerRadiusValue(style)
   if (corners) css.borderRadius = corners
   if (style.boxShadow && style.boxShadow !== 'none') css.boxShadow = BOX_SHADOW_PRESETS[style.boxShadow]
+  const customShadow = customBoxShadow(style, 'bs')
+  if (customShadow) css.boxShadow = customShadow
+  const sides = borderSideCss(style)
+  if (sides) Object.assign(css, sides)
   const clip = maskClipPath(style.maskShape)
   if (clip) css.clipPath = clip
   Object.assign(css, advancedCss(style))
@@ -1375,6 +1426,29 @@ function advancedCss(style: BlockStyle): React.CSSProperties {
   const filter = filterValue(style)
   if (filter) css.filter = filter
   return css
+}
+
+/** The custom box shadow for prefix 'bs' (normal) or 'hbs' (hover), or undefined when none of its values is set. */
+function customBoxShadow(style: BlockStyle, prefix: 'bs' | 'hbs'): string | undefined {
+  const r = style as Record<string, unknown>
+  const n = (k: string, d: number) => (isNum(r[prefix + k]) ? (r[prefix + k] as number) : d)
+  const set = ['X', 'Y', 'Blur', 'Spread'].some((k) => isNum(r[prefix + k])) || typeof r[prefix + 'Color'] === 'string' || r[prefix + 'Inset'] === true
+  if (!set) return undefined
+  const color = sanitizeColor(r[prefix + 'Color']) ?? 'rgba(0, 0, 0, 0.25)'
+  return `${r[prefix + 'Inset'] === true ? 'inset ' : ''}${n('X', 0)}px ${n('Y', 4)}px ${n('Blur', 12)}px ${n('Spread', 0)}px ${color}`
+}
+
+/** Per-side border widths. Any side set switches the border on; unset sides fall back to borderWidth (or 0). */
+function borderSideCss(style: BlockStyle): React.CSSProperties | undefined {
+  const sides = [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth]
+  if (!sides.some(isNum)) return undefined
+  const base = isNum(style.borderWidth) ? style.borderWidth : 0
+  const w = (v: number | undefined) => `${isNum(v) ? v : base}px`
+  return {
+    borderStyle: style.borderStyle || 'solid',
+    borderColor: style.borderColor || 'currentColor',
+    borderWidth: `${w(sides[0])} ${w(sides[1])} ${w(sides[2])} ${w(sides[3])}`,
+  }
 }
 
 const minHeightValue = (value: number, unit: string | undefined): string => `${value}${lengthUnit(unit) ?? 'px'}`
@@ -1651,6 +1725,8 @@ function hoverStateDecls(style: BlockStyle): string[] {
     const preset = BOX_SHADOW_PRESETS[shadow as Exclude<BoxShadowPreset, 'none'>]
     if (preset) decls.push(`box-shadow:${preset} !important`)
   }
+  const hoverCustom = customBoxShadow(style, 'hbs')
+  if (hoverCustom) decls.push(`box-shadow:${hoverCustom} !important`)
   if (isNum(style.hoverBorderRadius)) decls.push(`border-radius:${style.hoverBorderRadius}px !important`)
   if (isNum(style.hoverOpacity) && style.hoverOpacity >= 0 && style.hoverOpacity <= 1) decls.push(`opacity:${style.hoverOpacity} !important`)
   return decls
@@ -1707,11 +1783,19 @@ const DIVIDER_PATHS: Record<Exclude<DividerShape, 'none'>, string> = {
   pill: 'M0,120L0,110L400,110A40,40 0 0 1 440,70L760,70A40,40 0 0 1 800,110L1200,110L1200,120Z',
   steps: 'M0,120L0,100L300,100L300,70L600,70L600,40L900,40L900,10L1200,10L1200,120Z',
   spikes: teeth(20, 110, 15),
+  book: 'M0,120L0,70C300,20,500,100,600,95C700,100,900,20,1200,70L1200,120Z',
+  split: 'M0,120L0,60L560,60L600,100L640,60L1200,60L1200,120Z',
+  'tilt-opacity': 'M0,120L1200,30L1200,120Z',
+  'curve-opacity': 'M0,120L0,60C300,110,900,110,1200,60L1200,120Z',
+  fan: 'M0,120L600,10L1200,120Z',
 }
 
 /** Back layer drawn behind the main path (lower opacity) for two-layer shapes. */
 const DIVIDER_BACK_PATHS: Partial<Record<DividerShape, string>> = {
   waves: 'M0,60C200,100,400,100,600,60S1000,20,1200,60L1200,120L0,120Z',
+  'tilt-opacity': 'M0,120L1200,80L1200,120Z',
+  'curve-opacity': 'M0,120L0,30C300,80,900,80,1200,30L1200,120Z',
+  fan: 'M0,120L300,50L600,110L900,50L1200,120Z',
 }
 
 /** Shapes that repeat horizontally with a 1200 unit period, so they can slide seamlessly. */
@@ -1745,6 +1829,11 @@ export const DIVIDER_OPTIONS: { label: string; value: DividerShape }[] = [
   { label: 'Pill', value: 'pill' },
   { label: 'Steps', value: 'steps' },
   { label: 'Spikes', value: 'spikes' },
+  { label: 'Book', value: 'book' },
+  { label: 'Split', value: 'split' },
+  { label: 'Tilt with opacity', value: 'tilt-opacity' },
+  { label: 'Curve with opacity', value: 'curve-opacity' },
+  { label: 'Fan', value: 'fan' },
 ]
 
 export const DIVIDER_ANIM_OPTIONS: { label: string; value: DividerAnim }[] = [
