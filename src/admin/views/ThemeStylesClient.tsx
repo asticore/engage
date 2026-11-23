@@ -13,6 +13,9 @@ import { ColourControls } from './themeStyles/ColourControls'
 import { LayoutControls } from './themeStyles/LayoutControls'
 import { PresetControls } from './themeStyles/PresetControls'
 import { TableControls } from './themeStyles/TableControls'
+import { CloneThemeControls } from './themeStyles/CloneThemeControls'
+import { ThemeTour } from './themeStyles/ThemeTour'
+import { DomainThemeControls } from './themeStyles/DomainThemeControls'
 import { ThemeStylesPreview } from './themeStyles/ThemeStylesPreview'
 import { TypePresetControls } from './themeStyles/TypePresetControls'
 import { TypographyControls, type InstalledFontOption } from './themeStyles/TypographyControls'
@@ -28,6 +31,8 @@ const TABS: ReadonlyArray<{ key: TabKey; label: string }> = [
   { key: 'tables', label: 'Tables' },
   { key: 'layout', label: 'Layout and forms' },
   { key: 'presets', label: 'Presets' },
+  { key: 'domains', label: 'Domains' },
+  { key: 'clone', label: 'Clone a site' },
 ]
 
 /** The Theme styles screen (/admin/theme-styles): editor on the left, live preview on the right. */
@@ -36,6 +41,7 @@ export function ThemeStylesClient({ initialStyles, saved, fonts }: Props) {
   const [styles, setStyles] = useState<ThemeStyles>(initialStyles)
   const [baseline, setBaseline] = useState<string>(() => JSON.stringify(initialStyles))
   const [tab, setTab] = useState<TabKey>('colours')
+  const [sample, setSample] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(saved ? null : { tone: 'warn', text: 'Nothing is saved yet. The site keeps its original look until you save.' })
   const fileRef = useRef<HTMLInputElement>(null)
@@ -110,8 +116,9 @@ export function ThemeStylesClient({ initialStyles, saved, fonts }: Props) {
   return (
     <div className="ts-screen">
       <div className="ts-toolbar">
+        <ThemeTour saved={saved} />
         <button type="button" className="ts-btn ts-btn--primary" disabled={busy || !dirty} onClick={save}>{busy ? 'Saving...' : 'Save changes'}</button>
-        {tab !== 'presets' && <button type="button" className="ts-btn" disabled={busy} onClick={reset}>Reset this tab to defaults</button>}
+        {tab !== 'presets' && tab !== 'domains' && tab !== 'clone' && <button type="button" className="ts-btn" disabled={busy} onClick={reset}>Reset this tab to defaults</button>}
         <span className="ts-toolbar__spacer" />
         <button type="button" className="ts-btn" onClick={exportJson}>Export</button>
         <button type="button" className="ts-btn" onClick={() => fileRef.current?.click()}>Import</button>
@@ -139,13 +146,18 @@ export function ThemeStylesClient({ initialStyles, saved, fonts }: Props) {
               {tab === 'buttons' && <ButtonControls buttons={styles.buttons} colours={styles.colours} onChange={(buttons) => setStyles({ ...styles, buttons })} />}
               {tab === 'tables' && <TableControls styles={styles} colours={styles.colours} onChange={setStyles} />}
               {tab === 'layout' && <LayoutControls styles={styles} onChange={setStyles} />}
+              {tab === 'domains' && <DomainThemeControls styles={styles} />}
+              {tab === 'clone' && <CloneThemeControls styles={styles} onChange={setStyles} onNotice={(text) => setNotice({ tone: 'warn', text })} />}
               {tab === 'presets' && <PresetControls styles={styles} onChange={setStyles} onNotice={(text) => setNotice({ tone: 'warn', text })} />}
             </CollapsibleCard>
           </div>
         </div>
         <aside className="ts-aside" aria-label={t('aria.theme.livePreview')}>
           <h2 className="ts-aside__title">Live preview</h2>
-          <ThemeStylesPreview styles={styles} tab={tab} fonts={fonts} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '0 0 8px', fontSize: 13 }}>
+            <input type="checkbox" checked={sample} onChange={(event) => setSample(event.target.checked)} /> Show a sample homepage
+          </label>
+          <ThemeStylesPreview styles={styles} tab={tab} fonts={fonts} sample={sample} />
           <p className="ts-help">The preview shows your edits before they are saved.</p>
         </aside>
       </div>

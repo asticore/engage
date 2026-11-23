@@ -10,7 +10,7 @@ import { BLOCK_CATEGORIES, libraryCards, type BlockDef } from './blockSchemas'
 import { globalCards, globalNode, type GlobalCard } from './libraryGlobals'
 import { commercePresetCards, commercePresetNode, filterCommercePresetCards } from './libraryCommercePresets'
 import { createFormFromPreset, filterFormPresetCards, formPresetCards } from './libraryFormPresets'
-import { TemplateBrowser } from './TemplateBrowser'
+import { TemplateBrowser, type TemplateInsertMode } from './TemplateBrowser'
 import { createStorageStore, useStoredString } from '@/lib/clientStore'
 import { FAVS_KEY, RECENTS_KEY, pushRecent, sanitiseList, toggleFavourite } from './libraryRecents'
 import './navLibraryPresets.css'
@@ -109,7 +109,7 @@ const Group: React.FC<{
 export const ElementLibrary: React.FC<{
   targetLabel: string
   onPickBlock: (blockType: string) => void
-  onPickTemplate: (blocks: SectionNode[], locks?: Locks) => void
+  onPickTemplate: (blocks: SectionNode[], locks?: Locks, mode?: TemplateInsertMode) => void
   /** Form builder: only layout and form fields are offered, and page templates are hidden. */
   formMode?: boolean
 }> = ({ targetLabel, onPickBlock, onPickTemplate, formMode }) => {

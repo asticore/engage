@@ -3,8 +3,8 @@ import { readLibraryState, type LibraryStoreEngine } from './store'
 import type { LibraryItem, LibraryItemRow, LibrarySummary } from './types'
 
 /** The path of a library item's preview picture, served through the library routes (never a GitHub URL). */
-export function previewPathFor(libraryId: string, slug: string): string {
-  return `/api/template-libraries/preview?library=${encodeURIComponent(libraryId)}&item=${encodeURIComponent(slug)}`
+export function previewPathFor(libraryId: string, slug: string, variant?: 'dark'): string {
+  return `/api/template-libraries/preview?library=${encodeURIComponent(libraryId)}&item=${encodeURIComponent(slug)}${variant ? `&variant=${variant}` : ''}`
 }
 
 export type LibraryListing = { libraries: LibrarySummary[]; items: LibraryItemRow[] }
@@ -40,6 +40,13 @@ export async function listLibraries(engine: LibraryStoreEngine, options: { fresh
           category: item.category,
           tags: item.tags,
           previewUrl: previewPathFor(row.id, item.slug),
+          type: item.type ?? item.kind,
+          industry: item.industry ?? '',
+          style: item.style ?? '',
+          theme: item.theme ?? 'both',
+          pairWith: item.pairWith ?? '',
+          siteKind: item.siteKind ?? '',
+          previewDarkUrl: item.previewDark ? previewPathFor(row.id, item.slug, 'dark') : '',
         })
       }
     } else if (result && !result.ok) {

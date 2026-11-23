@@ -3420,7 +3420,7 @@ export const UI_STRING_SOURCE = {
   "blog.ai.busy": "Working...",
   // Template libraries (task 2b slice 1, added 31 Oct 2026). Keys prefixed templateLibraries.
   "templateLibraries.title": "Template libraries",
-  "templateLibraries.intro": "Add a public GitHub folder that holds a library.json file. Its sections and pages then appear in the Templates hub, under Library, and in the visual editor.",
+  "templateLibraries.intro": "Add a public GitHub folder that holds a library.json file. Its sections and pages then appear in the Templates hub, under Examples, and in the visual editor.",
   "templateLibraries.addHeading": "Add a library",
   "templateLibraries.addLabel": "GitHub address",
   "templateLibraries.nameLabel": "Name (optional)",
@@ -3466,7 +3466,7 @@ export const UI_STRING_SOURCE = {
   "siteTemplates.pagesFailed": "The page list could not be loaded.",
   "siteTemplates.pagesNone": "No pages yet.",
   "templateLibraries.tabTemplates": "Templates",
-  "templateLibraries.tabLibrary": "Library",
+  "templateLibraries.tabLibrary": "Examples",
   "templateLibraries.filter": "Filter by name or tag",
   "templateLibraries.createPage": "Create page from this template",
   "templateLibraries.creating": "Creating page...",

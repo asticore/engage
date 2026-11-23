@@ -104,7 +104,19 @@ function layout(tr: PreviewT): string {
 <div class="group"><h6 class="label">${tr('ve.nav.section')}</h6><section class="eg-preview-section" style="background:var(--eg-c-surface);border:1px dashed var(--eg-c-border);padding:var(--eg-section-padding, 40px) 16px"><div style="display:grid;gap:var(--eg-gap, 16px);max-width:var(--max-width,1180px);margin:0 auto"><div class="sw" style="padding:8px">${tr('tsp.blockOne')}</div><div class="sw" style="padding:8px">${tr('tsp.blockTwo')}</div></div></section></div>`
 }
 
-export function buildPreviewDoc(styles: ThemeStyles, tab: TabKey, fonts: InstalledFontOption[] = [], tr: PreviewT = englishPreviewT): string {
+/** A whole sample homepage drawn with the theme: header, hero, cards, a form, a shop card and a footer. */
+export function sampleHomepage(styles: ThemeStyles): string {
+  const primary = styles.buttons[0]?.id ?? 'primary'
+  const secondary = styles.buttons[1]?.id ?? primary
+  const card = (title: string) => `<article class="sw" style="padding:0"><i style="height:88px;background:var(--eg-c-border)"></i><div style="padding:12px"><h3 style="margin:0 0 6px">${title}</h3><p style="margin:0 0 10px;opacity:.8">A short line about this card.</p><a class="btn btn--${primary}" href="#">Read more</a></div></article>`
+  return `<header style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0 14px;border-bottom:1px solid var(--eg-c-border);margin:0 0 20px"><strong style="font-family:var(--font-display);font-size:1.2em">Your site</strong><nav class="row" style="gap:14px"><a href="#">Home</a><a href="#">Shop</a><a href="#">Blog</a><a href="#">Contact</a></nav></header>
+<section style="background:var(--eg-c-surface);border:1px solid var(--eg-c-border);padding:36px 20px;text-align:center;margin:0 0 20px"><h1>Welcome to your new site</h1><p>One clear sentence about what you do and who it is for.</p><div class="row" style="justify-content:center"><a class="btn btn--${primary}" href="#">Get started</a><a class="btn btn--${secondary}" href="#">Learn more</a></div></section>
+<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--eg-gap,16px);margin:0 0 20px">${card('Feature one')}${card('Feature two')}${card('Feature three')}</section>
+<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--eg-gap,16px);margin:0 0 20px"><article class="sw" style="padding:0"><i style="height:110px;background:var(--eg-c-border)"></i><div style="padding:12px"><h3 style="margin:0 0 4px">Shop product</h3><p style="margin:0 0 8px"><strong>$49.00</strong></p><a class="btn btn--${primary}" href="#">Add to cart</a></div></article><form class="sw" style="padding:12px" onsubmit="return false"><h3>Get in touch</h3><label for="n">Name</label><input id="n" type="text"><label for="m">Message</label><textarea id="m" rows="3"></textarea><p style="margin:10px 0 0"><a class="btn btn--${primary}" href="#">Send</a></p></form></section>
+<footer style="border-top:1px solid var(--eg-c-border);padding:14px 0 0;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.9em"><span>© Your site</span><span class="row" style="gap:12px"><a href="#">Privacy</a><a href="#">Terms</a></span></footer>`
+}
+
+export function buildPreviewDoc(styles: ThemeStyles, tab: TabKey, fonts: InstalledFontOption[] = [], tr: PreviewT = englishPreviewT, sample = false): string {
   let css = ''
   try {
     // Force-hover: the class .is-hover behaves like :hover in the preview only.
@@ -113,12 +125,12 @@ export function buildPreviewDoc(styles: ThemeStyles, tab: TabKey, fonts: Install
   } catch {
     css = ''
   }
-  const body = tab === 'colours' ? swatches(styles, tr) : tab === 'typography' ? typography(styles) : tab === 'buttons' ? buttons(styles, tr) : tab === 'tables' ? tables(styles, tr) : tab === 'layout' ? layout(tr) : swatches(styles, tr) + layout(tr)
+  const body = sample ? sampleHomepage(styles) : tab === 'colours' ? swatches(styles, tr) : tab === 'typography' ? typography(styles) : tab === 'buttons' ? buttons(styles, tr) : tab === 'tables' ? tables(styles, tr) : tab === 'layout' ? layout(tr) : swatches(styles, tr) + layout(tr)
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${BASE_CSS}${css.replace(/<\/style/gi, '')}</style></head><body>${body}</body></html>`
 }
 
-export function ThemeStylesPreview({ styles, tab, fonts = [] }: { styles: ThemeStyles; tab: TabKey; fonts?: InstalledFontOption[] }) {
+export function ThemeStylesPreview({ styles, tab, fonts = [], sample = false }: { styles: ThemeStyles; tab: TabKey; fonts?: InstalledFontOption[]; sample?: boolean }) {
   const t = useAdminT()
-  const doc = useMemo(() => buildPreviewDoc(styles, tab, fonts, t), [styles, tab, fonts, t])
+  const doc = useMemo(() => buildPreviewDoc(styles, tab, fonts, t, sample), [styles, tab, fonts, t, sample])
   return <iframe className="ts-preview" title={t('tsp.iframeTitle')} sandbox="" srcDoc={doc} />
 }

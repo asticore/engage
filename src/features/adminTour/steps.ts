@@ -25,8 +25,11 @@ export type TourStep = {
   id: string
   /** CSS selector of the element to point at, or null for a centred card. */
   target: string | null
-  titleKey: UiStringKey
-  bodyKey: UiStringKey
+  titleKey?: UiStringKey
+  bodyKey?: UiStringKey
+  /** Plain English text for steps that have no translation key (the theme guide). */
+  title?: string
+  body?: string
 }
 
 export const TOUR_STEPS: readonly TourStep[] = [
@@ -38,6 +41,20 @@ export const TOUR_STEPS: readonly TourStep[] = [
   { id: 'settings', target: '#nav-view-all-settings', titleKey: 'tour.settings.title', bodyKey: 'tour.settings.body' },
   { id: 'features', target: '#nav-view-all-settings', titleKey: 'tour.features.title', bodyKey: 'tour.features.body' },
   { id: 'done', target: null, titleKey: 'tour.done.title', bodyKey: 'tour.done.body' },
+]
+
+/** Window event that starts the theme guide (the Theme guide button on the theme page). */
+export const THEME_TOUR_START_EVENT = 'theme-tour:start'
+
+/** The theme guide: pick a theme, set colours, upload the logo, choose header and footer, preview, publish. */
+export const THEME_TOUR_STEPS: readonly TourStep[] = [
+  { id: 'theme-welcome', target: null, title: 'Make it look like you', body: 'Six quick steps: pick a theme, set your colours, add your logo, choose a header and footer, check the preview, and publish a homepage that uses it.' },
+  { id: 'theme-pick', target: '#ts-tab-presets', title: '1. Pick a theme', body: 'Start from a preset, or choose the styles you like and generate one. Nothing is saved until you choose Save changes.' },
+  { id: 'theme-colours', target: '#ts-tab-colours', title: '2. Set your colours', body: 'Change any colour, with a separate value for dark mode. Pages that use a colour from the theme follow it everywhere.' },
+  { id: 'theme-logo', target: '.ts-tabs', title: '3. Upload your logo', body: 'Your logo and site name live in Settings, General. Upload it there; the header picks it up. You can come back to this guide any time.' },
+  { id: 'theme-chrome', target: '[aria-label="Edit templates in the visual builder"]', title: '4. Choose a header and footer', body: 'Open the Header and Footer here. Each one is edited in the visual builder, with a separate layout for mobile and desktop.' },
+  { id: 'theme-preview', target: '.ts-aside', title: '5. Check the preview', body: 'Tick Show a sample homepage to see a header, hero, cards, a form, a shop card and a footer in your theme as you change it.' },
+  { id: 'theme-done', target: null, title: '6. Publish your homepage', body: 'Save changes, then open Pages, edit your homepage and set it to Published. It now uses your theme.' },
 ]
 
 /** Reads a stored value into a TourPref, or null when it is not one. */

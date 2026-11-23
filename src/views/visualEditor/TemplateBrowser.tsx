@@ -16,6 +16,9 @@ export const VE_TEMPLATE_LOCKS_MIME = VE_TEMPLATE_LOCKS_TYPE
 
 export const TEMPLATES_CHANGED_EVENT = 've-templates-changed'
 
+/** Where an inserted template goes: the chosen spot, the end of the page, or over the selected section. */
+export type TemplateInsertMode = 'here' | 'end' | 'replace'
+
 type Filter = 'all' | 'page' | 'section' | 'mine'
 type Origin = 'starter' | 'mine' | 'repo'
 
@@ -40,6 +43,11 @@ type RepoItem = {
   category: string
   tags?: string[]
   previewUrl: string
+  type?: string
+  industry?: string
+  style?: string
+  theme?: 'light' | 'dark' | 'both'
+  previewDarkUrl?: string
 }
 
 type Card = {
@@ -56,6 +64,8 @@ type Card = {
   /** The template's section locks (local templates only). */
   locks?: Locks
   image?: string
+  /** Library items only: filter metadata and the optional dark preview. */
+  meta?: { type: string; industry: string; style: string; theme: 'light' | 'dark' | 'both'; imageDark: string }
   repo?: { libraryId: string; slug: string }
   disabled?: boolean
 }
@@ -102,7 +112,19 @@ const previewUrlOf = (doc: PageTemplateDoc): string | undefined => {
   return undefined
 }
 
-export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[], locks?: Locks) => void }> = ({ onPickTemplate }) => {
+const TYPE_LABELS: Record<string, string> = {
+  page: 'Whole page',
+  section: 'Section',
+  'shop-page': 'Shop page',
+  header: 'Header',
+  footer: 'Footer',
+  hero: 'Hero',
+  loop: 'Loop',
+  'site-template': 'Site template',
+  popup: 'Popup',
+}
+
+export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[], locks?: Locks, mode?: TemplateInsertMode) => void }> = ({ onPickTemplate }) => {
   const rootRef = useRef<HTMLDivElement>(null)
   const [palette, setPalette] = useState<Partial<ThumbnailPalette>>({})
   const [filter, setFilter] = useState<Filter>('all')
@@ -115,6 +137,12 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
   const [toast, setToast] = useState<string | null>(null)
   const [brokenImages, setBrokenImages] = useState<Record<string, true>>({})
   const [reloadTick, setReloadTick] = useState(0)
+  const [insertMode, setInsertMode] = useState<TemplateInsertMode>('here')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [industryFilter, setIndustryFilter] = useState('')
+  const [styleFilter, setStyleFilter] = useState('')
+  const [themeFilter, setThemeFilter] = useState<'' | 'light' | 'dark'>('')
+  const [previewDark, setPreviewDark] = useState(false)
 
   useEffect(() => {
     setPalette(readPalette(rootRef.current))
@@ -217,6 +245,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         categoryLabel: CATEGORY_LABELS[cat] || cat,
         tags: item.tags || [],
         image: item.previewUrl || undefined,
+        meta: { type: item.type || item.kind, industry: item.industry || '', style: item.style || '', theme: item.theme || 'both', imageDark: item.previewDarkUrl || '' },
         repo: { libraryId: item.libraryId, slug: item.slug },
       })
     }
@@ -228,6 +257,10 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
     const needle = query.trim().toLowerCase()
     return cards.filter((card) => {
       if (filter === 'mine' && card.origin !== 'mine') return false
+      if (typeFilter && card.meta?.type !== typeFilter) return false
+      if (industryFilter && card.meta?.industry !== industryFilter) return false
+      if (styleFilter && card.meta?.style !== styleFilter) return false
+      if (themeFilter && !(card.meta ? card.meta.theme === 'both' || card.meta.theme === themeFilter : false)) return false
       if ((filter === 'page' || filter === 'section') && card.kind !== filter) return false
       if (!needle) return true
       return (
@@ -237,7 +270,18 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         card.tags.some((tag) => tag.toLowerCase().includes(needle))
       )
     })
-  }, [cards, filter, query])
+  }, [cards, filter, query, typeFilter, industryFilter, styleFilter, themeFilter])
+
+  // Choices for the library pickers come from the library items only.
+  const facets = useMemo(() => {
+    const uniq = (values: string[]) => [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
+    const lib = cards.filter((c) => c.meta)
+    return {
+      types: Object.keys(TYPE_LABELS).filter((t) => lib.some((c) => c.meta?.type === t)),
+      industries: uniq(lib.map((c) => c.meta?.industry || '')),
+      styles: uniq(lib.map((c) => c.meta?.style || '')),
+    }
+  }, [cards])
 
   const categoryChoices = useMemo(() => {
     const counts = new Map<string, { label: string; count: number }>()
@@ -272,14 +316,18 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         if (!res.ok || !json || json.ok === false || tree.length === 0) {
           throw new Error(json?.error || 'That template could not be loaded.')
         }
-        onPickTemplate(tree)
+        onPickTemplate(tree, undefined, insertMode)
+        const saved = Number((json as { saved?: number }).saved ?? 0)
+        const reused = Number((json as { reused?: number }).reused ?? 0)
+        const themed = Number((json as { themed?: number }).themed ?? 0)
+        setToast(`Added "${card.name}".${themed > 0 ? ` ${themed} colour${themed === 1 ? '' : 's'} now follow your theme.` : ''}${saved + reused > 0 ? ` ${saved} picture${saved === 1 ? '' : 's'} saved to Media${reused > 0 ? `, ${reused} already there` : ''}.` : ''}`)
       } catch (err) {
         setToast(`Could not add "${card.name}": ${(err as Error)?.message || 'something went wrong.'}`)
       } finally {
         setLoadingKey(null)
       }
     },
-    [loadingKey, onPickTemplate],
+    [loadingKey, onPickTemplate, insertMode],
   )
 
   const onPick = (card: Card) => {
@@ -288,7 +336,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
       void pickRepo(card)
       return
     }
-    if (card.blocks) onPickTemplate(card.blocks(), card.locks)
+    if (card.blocks) onPickTemplate(card.blocks(), card.locks, insertMode)
   }
 
   const FILTERS: Array<{ key: Filter; label: string }> = [
@@ -324,6 +372,43 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         ))}
       </div>
 
+      <select className="ve-tpl__select" aria-label="Insert template" value={insertMode} onChange={(e) => setInsertMode(e.target.value as TemplateInsertMode)}>
+        <option value="here">Insert at the chosen spot</option>
+        <option value="end">Insert at the end of the page</option>
+        <option value="replace">Replace the selected section</option>
+      </select>
+
+      {facets.types.length + facets.industries.length + facets.styles.length > 0 && (
+        <div className="ve-tpl__facets" role="group" aria-label="Examples filters" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          {facets.types.length > 0 && (
+            <select className="ve-tpl__select" aria-label="Example type" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+              <option value="">Any type</option>
+              {facets.types.map((t) => <option key={t} value={t}>{TYPE_LABELS[t]}</option>)}
+            </select>
+          )}
+          {facets.industries.length > 0 && (
+            <select className="ve-tpl__select" aria-label="Example industry" value={industryFilter} onChange={(e) => setIndustryFilter(e.target.value)}>
+              <option value="">Any industry</option>
+              {facets.industries.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          )}
+          {facets.styles.length > 0 && (
+            <select className="ve-tpl__select" aria-label="Example colour style" value={styleFilter} onChange={(e) => setStyleFilter(e.target.value)}>
+              <option value="">Any style</option>
+              {facets.styles.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          )}
+          <select className="ve-tpl__select" aria-label="Example light or dark" value={themeFilter} onChange={(e) => setThemeFilter(e.target.value as '' | 'light' | 'dark')}>
+            <option value="">Light or dark</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+            <input type="checkbox" checked={previewDark} onChange={(e) => setPreviewDark(e.target.checked)} /> Dark previews
+          </label>
+        </div>
+      )}
+
       <select className="ve-tpl__select" aria-label="Template category" value={activeCategory} onChange={(e) => setCategory(e.target.value)}>
         <option value="all">All categories ({byFilter.length})</option>
         {categoryChoices.map((c) => (
@@ -350,7 +435,8 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         <div className="ve-tpl__grid">
           {visible.map((card) => {
             const loading = loadingKey === card.key
-            const showImage = card.image && !brokenImages[card.key]
+            const shownImage = previewDark && card.meta?.imageDark ? card.meta.imageDark : card.image
+            const showImage = shownImage && !brokenImages[card.key]
             return (
               <Tooltip text={card.description} key={card.key} placement="bottom"><div
                 role="button"
@@ -374,7 +460,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
                 <span className="ve-tpl__thumb">
                   {showImage ? (
                     <img
-                      src={card.image}
+                      src={shownImage}
                       alt=""
                       loading="lazy"
                       draggable={false}
@@ -388,7 +474,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
                 <span className="ve-tpl__name">{card.name}</span>
                 <span className="ve-tpl__chips">
                   <span className="ve-tpl__chip">{card.categoryLabel}</span>
-                  {card.origin === 'repo' && <span className="ve-tpl__chip ve-tpl__chip--repo">Library</span>}
+                  {card.origin === 'repo' && <span className="ve-tpl__chip ve-tpl__chip--repo">Example</span>}
                   {card.origin === 'mine' && <span className="ve-tpl__chip ve-tpl__chip--mine">{card.kind === 'section' ? 'Section' : 'Page'}</span>}
                 </span>
               </div></Tooltip>

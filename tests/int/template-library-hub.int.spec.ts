@@ -28,6 +28,13 @@ const item = (over: Partial<LibraryItemRow>): LibraryItemRow => ({
   category: 'Hero',
   tags: ['hero'],
   previewUrl: '',
+  type: 'section',
+  industry: '',
+  style: '',
+  theme: 'both',
+  previewDarkUrl: '',
+  pairWith: '',
+  siteKind: '',
   ...over,
 })
 

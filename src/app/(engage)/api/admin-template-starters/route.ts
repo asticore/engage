@@ -31,7 +31,7 @@ export async function POST(request: Request): Promise<Response> {
     if (body?.starterId !== undefined) {
       const starter = getStarter(body.starterId)
       if (!starter || !SITE_TEMPLATE_KINDS.includes(starter.kind)) return json({ error: 'Unknown starter.' }, 400)
-      data = { name: `${starter.label} (draft)`, kind: starter.kind, enabled: false, conditions: [], blocks: starter.blocks() }
+      data = { name: `${starter.label} (draft)`, kind: starter.kind, enabled: false, conditions: starter.conditions ? starter.conditions() : [], blocks: starter.blocks() }
     } else {
       // Blank draft for a kind that has no starter yet. Same defaults as a starter: switched off, everywhere for its type.
       const kind = SITE_TEMPLATE_KINDS.find((k) => k === body?.kind)

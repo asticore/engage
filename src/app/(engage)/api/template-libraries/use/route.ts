@@ -36,7 +36,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const imported = await importItemPictures(access.context, found.row.config, template.value, `${found.row.url}#${item.file}`, body?.allowRawHtml === true)
     if (!imported.ok) return libraryJson({ ok: false, error: imported.error }, 422)
-    return libraryJson({ ok: true, tree: imported.tree, title: item.title, kind: item.kind, saved: imported.saved, reused: imported.reused })
+    return libraryJson({ ok: true, tree: imported.tree, title: item.title, kind: item.kind, saved: imported.saved, reused: imported.reused, themed: imported.themed })
   } catch (error) {
     console.error('template-libraries use error:', error instanceof Error ? error.name : 'unknown')
     return libraryJson({ ok: false, error: 'The template could not be added.' }, 500)

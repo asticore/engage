@@ -77,7 +77,7 @@ function cellFor(column: string, row: HubRow, ui: AdminUiServer): ReactNode {
     case 'where':
       return row.where
     case 'whereUsed':
-      return row.type === 'page-template' || row.type === 'reusable-section' ? '-' : usedInCell(row, ui)
+      return row.type === 'page-template' || row.type === 'reusable-section' || row.type === 'popup' ? '-' : usedInCell(row, ui)
     case 'priority':
       return row.priority === null ? '-' : String(row.priority)
     case 'updatedAt':

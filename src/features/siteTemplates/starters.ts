@@ -11,6 +11,8 @@ export type TemplateStarter = {
   description: string
   /** The template's `blocks` value: a list of section nodes, built only from registered elements. */
   blocks: () => SectionNode[]
+  /** Display rules the draft starts with (default none: everywhere for its type). */
+  conditions?: () => unknown[]
 }
 
 /** An `element` node built from the element's own defaults with a few props overridden. */
@@ -160,6 +162,65 @@ export const STARTERS: TemplateStarter[] = [
           { width: 8, blocks: [el('nav-menu')] },
         ],
       },
+    ],
+  },
+  {
+    id: 'header-responsive',
+    kind: 'header',
+    label: 'Desktop and mobile header',
+    description: 'A full desktop header (logo, menu, search, social icons) and a separate mobile header with a menu button and off-canvas panel.',
+    blocks: () => [
+      {
+        blockType: 'section',
+        design: { hideOnMobile: true },
+        columns: [
+          { width: 3, blocks: [el('site-logo')] },
+          { width: 6, blocks: [el('nav-menu')] },
+          { width: 3, blocks: [el('search-box'), el('social-icons')] },
+        ],
+      },
+      {
+        blockType: 'section',
+        design: { hideOnDesktop: true },
+        columns: [
+          { width: 6, blocks: [el('site-logo', { width: 120 })] },
+          { width: 6, blocks: [el('nav-menu', { mobileBreakpoint: '1024', mobileStyle: 'offcanvas', sticky: true })] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'header-members',
+    kind: 'header',
+    label: 'Members-only header',
+    description: 'Logo, menu and an account button. Shows to signed in members only; guests keep the other header.',
+    conditions: () => [[{ param: 'audience', operator: 'equals', value: 'members' }]],
+    blocks: () => [
+      {
+        blockType: 'section',
+        columns: [
+          { width: 3, blocks: [el('site-logo')] },
+          { width: 6, blocks: [el('nav-menu')] },
+          { width: 3, blocks: [el('button', { text: 'My account', url: '/account', variant: 'primary', align: 'right' })] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'footer-columns',
+    kind: 'footer',
+    label: 'Columns with socials',
+    description: 'Logo and note, the menu, social icons and a copyright line.',
+    blocks: () => [
+      {
+        blockType: 'section',
+        columns: [
+          { width: 4, blocks: [el('site-logo', { width: 120 }), copy('Thanks for visiting.')] },
+          { width: 4, blocks: [el('nav-menu', { layout: 'vertical' })] },
+          { width: 4, blocks: [el('social-icons')] },
+        ],
+      },
+      section([copy('© Your site. All rights reserved.')]),
     ],
   },
   {

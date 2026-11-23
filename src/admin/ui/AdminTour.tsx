@@ -10,6 +10,7 @@ import {
   TOUR_BLOCKED_PATH,
   TOUR_STEPS,
   type TourStatus,
+  type TourStep,
 } from '@/features/adminTour/steps'
 
 import { useFocusTrap } from './useFocusTrap'
@@ -59,7 +60,20 @@ const clamp = (value: number, min: number, max: number) => Math.max(min, Math.mi
  * preference), and again whenever the Help button fires ADMIN_TOUR_START_EVENT.
  * Finishing, skipping or closing all count as seen and are saved once.
  */
-export function AdminTour({ autoStart }: { autoStart: boolean }) {
+export function AdminTour({
+  autoStart,
+  steps = TOUR_STEPS,
+  startEvent = ADMIN_TOUR_START_EVENT,
+  persist = true,
+  onClose,
+}: {
+  autoStart: boolean
+  steps?: readonly TourStep[]
+  startEvent?: string
+  /** False for guides that keep no account preference (the theme guide). */
+  persist?: boolean
+  onClose?: (status: TourStatus) => void
+}) {
   const t = useAdminT()
   const pathname = usePathname() ?? ''
   const hydrated = useHydrated()
@@ -74,14 +88,14 @@ export function AdminTour({ autoStart }: { autoStart: boolean }) {
   // Set as soon as the save is sent, so the tour cannot start by itself again before the write lands.
   const seenRef = useRef(false)
 
-  const step = TOUR_STEPS[index]
-  const total = TOUR_STEPS.length
+  const step = steps[index]
+  const total = steps.length
   const isLast = index === total - 1
 
   // Starts by itself only for a user who has never seen it (autoStart comes from the server), never on sign-in,
   // two-factor or visual editor routes. Browser-only state (session flag) is read only once hydrated, so the
   // server render and the first client render match.
-  const autoActive = hydrated && autoStart && !dismissed && !TOUR_BLOCKED_PATH.test(pathname) && !seenThisSession()
+  const autoActive = hydrated && autoStart && !dismissed && !TOUR_BLOCKED_PATH.test(pathname) && (!persist || !seenThisSession())
   const active = requested || autoActive
 
   const start = useCallback(() => {
@@ -91,13 +105,15 @@ export function AdminTour({ autoStart }: { autoStart: boolean }) {
 
   // Replay from the Help button.
   useEffect(() => {
-    window.addEventListener(ADMIN_TOUR_START_EVENT, start)
-    return () => window.removeEventListener(ADMIN_TOUR_START_EVENT, start)
-  }, [start])
+    window.addEventListener(startEvent, start)
+    return () => window.removeEventListener(startEvent, start)
+  }, [start, startEvent])
 
   const close = useCallback((status: TourStatus) => {
     setRequested(false)
     setDismissed(true)
+    onClose?.(status)
+    if (!persist) return
     if (seenRef.current || seenThisSession()) return
     seenRef.current = true
     markSeenThisSession()
@@ -112,7 +128,7 @@ export function AdminTour({ autoStart }: { autoStart: boolean }) {
     } catch {
       // Fire and forget: a failed save only means the tour may show once more.
     }
-  }, [])
+  }, [persist, onClose])
 
   const next = useCallback(() => {
     if (index >= total - 1) close('completed')
@@ -221,10 +237,10 @@ export function AdminTour({ autoStart }: { autoStart: boolean }) {
       >
         <p className="admin-tour__count">{t('tour.stepOf', { n: index + 1, total })}</p>
         <h2 className="admin-tour__title" id={titleId} ref={headingRef} tabIndex={-1}>
-          {t(step.titleKey)}
+          {step.title ?? (step.titleKey ? t(step.titleKey) : '')}
         </h2>
         <p className="admin-tour__body" id={bodyId}>
-          {t(step.bodyKey)}
+          {step.body ?? (step.bodyKey ? t(step.bodyKey) : '')}
         </p>
         <div className="admin-tour__actions">
           <button className="admin-tour__btn" disabled={index === 0} onClick={back} type="button">

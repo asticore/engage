@@ -55,6 +55,17 @@ export type LibraryItemRow = {
   category: string
   tags: string[]
   previewUrl: string
+  /** Optional metadata for the picker filters (see LibraryItem). */
+  type: string
+  industry: string
+  style: string
+  theme: 'light' | 'dark' | 'both'
+  /** Set when the item ships a dark preview picture. */
+  previewDarkUrl: string
+  /** Slug of the same design in the other theme, or ''. */
+  pairWith: string
+  /** Site templates and loops: the Templates hub kind the item creates, or ''. */
+  siteKind: string
 }
 
 /** The library every install lists by default (reference/references.json, id `engage-templates`). */

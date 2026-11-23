@@ -21,7 +21,7 @@ import {
   type TypeStyle,
 } from '@/features/themeStyles/types'
 
-export type TabKey = 'colours' | 'typography' | 'buttons' | 'tables' | 'layout' | 'presets'
+export type TabKey = 'colours' | 'typography' | 'buttons' | 'tables' | 'layout' | 'presets' | 'domains' | 'clone'
 
 const SLUG_MAX = 32
 
@@ -176,6 +176,8 @@ export function resetTab(styles: ThemeStyles, tab: TabKey): ThemeStyles {
     case 'layout':
       return { ...styles, globals: clone(DEFAULT_GLOBALS) }
     case 'presets':
+    case 'domains':
+    case 'clone':
       return styles
   }
 }

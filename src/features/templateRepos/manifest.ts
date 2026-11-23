@@ -308,8 +308,10 @@ function checkValue(value: unknown, depth: number): string | null {
 export function validateTemplate(data: unknown): Result<TemplateFile> {
   if (!isPlainObject(data)) return fail('The template must be a JSON object.')
   if (data.format !== 'engage-template') return fail('This file is not an engage-template.')
-  if (data.schemaVersion !== 1) return fail('The template "schemaVersion" must be 1.')
-  if (data.kind !== 'page' && data.kind !== 'section') return fail('The template "kind" must be "page" or "section".')
+  if (data.schemaVersion !== 1 && data.schemaVersion !== 2) return fail('The template "schemaVersion" must be 1 or 2.')
+  // Library files may say site-template, loop or popup: they hold a tree like a section, and insert as one.
+  const fileKind = data.kind === 'site-template' || data.kind === 'loop' || data.kind === 'popup' ? 'section' : data.kind
+  if (fileKind !== 'page' && fileKind !== 'section') return fail('The template "kind" must be "page", "section", "site-template", "loop" or "popup".')
   if (!Array.isArray(data.tree) || data.tree.length === 0) return fail('The template needs a "tree" with at least one item.')
   const problem = checkTree(data.tree, 1, { nodes: 0 })
   if (problem) return fail(problem)
@@ -341,7 +343,7 @@ export function validateTemplate(data: unknown): Result<TemplateFile> {
   return ok({
     format: 'engage-template',
     schemaVersion: 1,
-    kind: data.kind,
+    kind: fileKind,
     tree: data.tree as TemplateNode[],
     assets,
     requires,

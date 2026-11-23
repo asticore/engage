@@ -43,6 +43,8 @@ import { sanitizeInstalledFonts } from '@/features/fonts/installed'
 import type { InstalledFont } from '@/features/fonts/types'
 import { BODY_FONT_VARS, FONT_FACE_VARS, HEADING_FONT_VARS } from '@/features/fonts/siteFontVars'
 import { buildThemeStylesCss } from '@/features/themeStyles/css'
+import { loadDomainOverrides } from '@/features/themeStyles/domainStore'
+import { applyThemeOverrides } from '@/features/themeStyles/inherit'
 import { loadThemeStyles } from '@/features/themeStyles/store'
 import { SiteEffects } from '@/components/site/SiteEffects'
 import { SparkLoader } from '@/components/site/SparkLoader'
@@ -211,7 +213,11 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
   // Global theme styles (colours, text, buttons, tables). A failure here must never break the page.
   let themeStylesCss = ''
   try {
-    const { styles, saved } = await themeStylesRead
+    const { styles: masterStyles, saved } = await themeStylesRead
+    // A registered domain other than the primary inherits the master theme and overrides only the tokens chosen for it.
+    let styles = masterStyles
+    const onDomain = await domainRead
+    if (onDomain && !onDomain.isPrimary) styles = applyThemeOverrides(masterStyles, await loadDomainOverrides(onDomain.host))
     themeStylesCss = buildThemeStylesCss(styles, {
       saved,
       legacy: {

@@ -1,5 +1,6 @@
 'use client'
 
+import type { TemplateInsertMode } from './TemplateBrowser'
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import type { SectionNode } from '@/lib/sectionTree'
@@ -165,7 +166,7 @@ export const EditorDock: React.FC<{
   onTabChange: (tab: DockTab) => void
   targetLabel: string
   onPickBlock: (blockType: string) => void
-  onPickTemplate: (blocks: SectionNode[], locks?: Locks) => void
+  onPickTemplate: (blocks: SectionNode[], locks?: Locks, mode?: TemplateInsertMode) => void
   selectedNode: Record<string, unknown> | undefined
   selectedDef: BlockDef | undefined
   onChangeSelected: (next: Record<string, unknown>) => void
