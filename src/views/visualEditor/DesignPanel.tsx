@@ -1509,18 +1509,16 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
         onReset={() => patch({ typePreset: undefined })}
         onChange={(v) => patch({ typePreset: v || undefined })}
       />
-      <SelectRow
+      <RespSelect
+        ctl={ctl}
+        k="fontFamily"
         label={t('dp.field.family')}
-        value={value.fontFamily || ''}
+        defaultLabel={t('dp.lit.site_default')}
         options={[
-          { label: t('dp.lit.site_default'), value: '' },
           ...FONT_TOKEN_OPTIONS,
           ...BUILT_IN_FONTS.map((font) => ({ label: font.label, value: font.value })),
           ...siteFonts.map((font) => ({ label: `${font.family} (installed)`, value: `family:${font.family}` })),
         ]}
-        applied={value.fontFamily !== undefined}
-        onReset={() => patch({ fontFamily: undefined })}
-        onChange={(v) => patch({ fontFamily: v || undefined })}
       />
       <TypoRange
         ctl={ctl}

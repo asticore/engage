@@ -94,6 +94,7 @@ export const RESPONSIVE_KEYS = [
   'wordSpacing',
   'textTransform',
   'blendMode',
+  'fontFamily',
   'borderWidth',
   'bgColor',
   'fontStyle',
@@ -1293,6 +1294,7 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
   }
   if (typeof r.textTransform === 'string' && TEXT_TRANSFORMS.includes(r.textTransform)) out.textTransform = r.textTransform as TextTransform
   { const c = sanitizeColor(r.bgColor); if (c !== undefined) out.bgColor = c }
+  if (typeof r.fontFamily === 'string' && blockFontStack(r.fontFamily)) out.fontFamily = r.fontFamily
   if (typeof r.blendMode === 'string' && BLEND_MODE_OPTIONS.some((o) => o.value === r.blendMode)) out.blendMode = r.blendMode as BlendMode
   if (typeof r.fontStyle === 'string' && FONT_STYLES.includes(r.fontStyle)) out.fontStyle = r.fontStyle as BlockStyle['fontStyle']
   if (typeof r.textDecoration === 'string' && TEXT_DECORATIONS.includes(r.textDecoration)) out.textDecoration = r.textDecoration as BlockStyle['textDecoration']
@@ -1709,6 +1711,7 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
     }
   }
   if (own.bgColor !== undefined && isSafeColor(own.bgColor)) decls.push(`background-color:${own.bgColor} !important`)
+  { const ff = blockFontStack(own.fontFamily); if (ff) decls.push(`font-family:${ff} !important`) }
   if (own.blendMode && BLEND_MODE_OPTIONS.some((o) => o.value === own.blendMode)) decls.push(`mix-blend-mode:${own.blendMode} !important`)
   if (own.fontStyle && FONT_STYLES.includes(own.fontStyle)) decls.push(`font-style:${own.fontStyle} !important`)
   if (own.textDecoration && TEXT_DECORATIONS.includes(own.textDecoration)) decls.push(`text-decoration:${own.textDecoration} !important`)
