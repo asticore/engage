@@ -848,6 +848,18 @@ const ConditionControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSty
         help="Comma list of two-letter country codes. Shown only to visitors the network places in one of them. Hidden when the country is unknown."
         onChange={(v) => set({ showCountry: v ? v.slice(0, 120) : undefined })}
       />
+      <SelectRow
+        label="Cart"
+        value={value.showCart || 'any'}
+        options={[{ label: 'Any', value: 'any' }, { label: 'Has items', value: 'full' }, { label: 'Is empty', value: 'empty' }]}
+        applied={value.showCart !== undefined} onReset={() => set({ showCart: undefined })} onChange={(v) => set({ showCart: v === 'full' || v === 'empty' ? v : undefined })}
+      />
+      <SelectRow
+        label="Customer orders"
+        value={value.showOrdered || 'any'}
+        options={[{ label: 'Any', value: 'any' }, { label: 'Has ordered before', value: 'yes' }, { label: 'Has not ordered', value: 'no' }]}
+        applied={value.showOrdered !== undefined} onReset={() => set({ showOrdered: undefined })} onChange={(v) => set({ showOrdered: v === 'yes' || v === 'no' ? v : undefined })}
+      />
     </>
   )
 }
