@@ -2,6 +2,8 @@ import React from 'react'
 
 import { renderQrSvg } from '@/features/security/twoFactorQr'
 
+import { PollClient } from './PollClient'
+import { cleanPollId } from '@/features/polls/core'
 import { cells, mediaOf, num, pick, str } from './elementUtil'
 
 type P = Record<string, unknown>
@@ -82,8 +84,17 @@ export const FloatingActionButtonElement: React.FC<P> = (p) => {
   )
 }
 
+/** `poll`: options come from the lines; the vote id must be a clean key. */
+export const PollElement: React.FC<P> = (p) => {
+  const id = cleanPollId(p.pollId)
+  const options = String(p.options ?? '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 12)
+  if (!id || options.length < 2) return <p className="be-el-poll__note">Give the poll an id, a question and at least two options.</p>
+  return <PollClient pollId={id} question={str(p.question)} options={options} showResults={p.showResults !== false} />
+}
+
 export const UTILITY_COMPONENTS: Record<string, React.ComponentType<P>> = {
   'qr-code': QrCodeElement,
   'pdf-viewer': PdfViewerElement,
+  poll: PollElement,
   'floating-action-button': FloatingActionButtonElement,
 }
