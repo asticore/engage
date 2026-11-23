@@ -1548,36 +1548,39 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
         onReset={() => ctl.reset('fontWeight')}
         onChange={(v) => ctl.set('fontWeight', v ? Number(v) : undefined)}
       />
-      <ToggleRow
+      <RespSelect
+        ctl={ctl}
+        k="textTransform"
         label={t('dp.field.transform')}
-        current={value.textTransform}
+        defaultLabel={t('dp.lit.default')}
         options={[
           { label: t('dp.opt.none'), value: 'none' },
-          { label: 'AA', value: 'uppercase', title: t('dp.lit.uppercase') },
-          { label: 'aa', value: 'lowercase', title: t('dp.lit.lowercase') },
-          { label: 'Aa', value: 'capitalize', title: t('dp.lit.capitalize') },
+          { label: t('dp.lit.uppercase'), value: 'uppercase' },
+          { label: t('dp.lit.lowercase'), value: 'lowercase' },
+          { label: t('dp.lit.capitalize'), value: 'capitalize' },
         ]}
-        onPick={(v) => patch({ textTransform: v })}
       />
-      <ToggleRow
+      <RespSelect
+        ctl={ctl}
+        k="fontStyle"
         label={t('dp.field.style')}
-        current={value.fontStyle}
+        defaultLabel={t('dp.lit.default')}
         options={[
           { label: t('dp.opt.normal'), value: 'normal' },
           { label: t('dp.lit.italic'), value: 'italic' },
         ]}
-        onPick={(v) => patch({ fontStyle: v })}
       />
-      <ToggleRow
+      <RespSelect
+        ctl={ctl}
+        k="textDecoration"
         label={t('dp.field.decoration')}
-        current={value.textDecoration}
+        defaultLabel={t('dp.lit.default')}
         options={[
           { label: t('dp.opt.none'), value: 'none' },
           { label: t('dp.lit.underline'), value: 'underline' },
-          { label: t('dp.lit.strike'), value: 'line-through', title: t('dp.lit.line_through') },
-          { label: 'Over', value: 'overline', title: 'Overline' },
+          { label: t('dp.lit.strike'), value: 'line-through' },
+          { label: 'Overline', value: 'overline' },
         ]}
-        onPick={(v) => patch({ textDecoration: v })}
       />
       <TypoRange ctl={ctl} k="lineHeight" label={t('dp.field.line_height')} def={1.5} min={0.8} max={3} step={0.05} />
       <TypoRange

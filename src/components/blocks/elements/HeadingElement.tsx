@@ -5,12 +5,16 @@ import { SafeInlineHtml } from './SafeInlineHtml'
 import { AnimatedHeadlineElement, DualHeadingElement } from './Wave36Elements'
 import { HighlightTextElement, SplitTextElement } from './Wave43Elements'
 
+const HEADING_LEVELS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'] as const
+type HeadingLevel = (typeof HEADING_LEVELS)[number]
+export const HEADING_RENDER_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'span', 'p'] as const
 export const HEADING_EFFECTS = ['none', 'two-tone', 'rotate', 'split', 'highlight'] as const
 export type HeadingEffect = (typeof HEADING_EFFECTS)[number]
 
 export type HeadingElementProps = {
   text?: string
-  tag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+  /** h1 to h6, or div, span and p for a heading that must not be a heading in the outline (effects always use a heading). */
+  tag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'div' | 'span' | 'p'
   align?: 'left' | 'center' | 'right'
   link?: unknown
   /** Styling variant. Unset or 'none' renders the plain heading. */
@@ -56,7 +60,7 @@ function splitAround(text: string, phrase: string): { before: string; phrase: st
  * Wave43Elements), so the classes and motion are the same ones those widgets use. Null when the effect has
  * nothing to show, so the caller falls back to the plain heading.
  */
-function effectMarkup(p: HeadingElementProps, effect: HeadingEffect, tag: NonNullable<HeadingElementProps['tag']>, align: string): React.ReactNode {
+function effectMarkup(p: HeadingElementProps, effect: HeadingEffect, tag: HeadingLevel, align: string): React.ReactNode {
   const text = (p.text ?? '').trim()
   switch (effect) {
     case 'two-tone': {
@@ -101,10 +105,12 @@ function effectMarkup(p: HeadingElementProps, effect: HeadingEffect, tag: NonNul
  * matching widget markup in `.be-heading-fx` (styles in src/components/blocks/effects.css).
  */
 export const HeadingElement: React.FC<HeadingElementProps> = (props) => {
-  const { text, tag = 'h2', align = 'left', link } = props
+  const { text, align = 'left', link } = props
+  const tag = pick(props.tag, HEADING_RENDER_TAGS, 'h2')
   const Tag = tag
+  const levelTag = (HEADING_LEVELS as readonly string[]).includes(tag) ? (tag as HeadingLevel) : 'h2'
   const effect = pick(props.effect, HEADING_EFFECTS, 'none')
-  const effectNode = effect === 'none' ? null : effectMarkup(props, effect, tag, align)
+  const effectNode = effect === 'none' ? null : effectMarkup(props, effect, levelTag, align)
   const body = effectNode ? (
     <div
       className={`be-heading-fx be-heading-fx--${effect}`}

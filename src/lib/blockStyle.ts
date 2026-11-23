@@ -92,6 +92,9 @@ export const RESPONSIVE_KEYS = [
   'opacity',
   'fontWeight',
   'wordSpacing',
+  'textTransform',
+  'fontStyle',
+  'textDecoration',
   'minWidth',
   'minWidthUnit',
   'maxWidth',
@@ -921,8 +924,9 @@ function typographyInheritProps(style: BlockStyle): string[] {
   if (any((s) => (isNum(s.fontWeight) ? 1 : undefined))) props.push('font-weight')
   if (any((s) => (isNum(s.lineHeight) ? 1 : undefined))) props.push('line-height')
   if (any(letterSpacingValue)) props.push('letter-spacing')
-  if (style.textTransform) props.push('text-transform')
-  if (style.fontStyle) props.push('font-style')
+  if (any((s) => s.textTransform)) props.push('text-transform')
+  if (any((s) => s.fontStyle)) props.push('font-style')
+  if (any((s) => s.textDecoration)) props.push('text-decoration')
   if (isNum(style.wordSpacing)) props.push('word-spacing')
   if ((style.textShadow && style.textShadow !== 'none') || customTextShadow(style)) props.push('text-shadow')
   if (isNum(style.textStrokeWidth) && style.textStrokeWidth > 0) props.push('-webkit-text-stroke')
@@ -1247,6 +1251,9 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const n = clampNum(r[key], 0, 1)
     if (n !== undefined) out[key] = Math.round(n)
   }
+  if (typeof r.textTransform === 'string' && TEXT_TRANSFORMS.includes(r.textTransform)) out.textTransform = r.textTransform as TextTransform
+  if (typeof r.fontStyle === 'string' && FONT_STYLES.includes(r.fontStyle)) out.fontStyle = r.fontStyle as BlockStyle['fontStyle']
+  if (typeof r.textDecoration === 'string' && TEXT_DECORATIONS.includes(r.textDecoration)) out.textDecoration = r.textDecoration as BlockStyle['textDecoration']
   if (typeof r.textAlign === 'string' && TEXT_ALIGNS.includes(r.textAlign)) out.textAlign = r.textAlign as TextAlign
   if (isNum(r.fontSize) && r.fontSize > 0) out.fontSize = Math.min(400, Math.max(0.1, r.fontSize))
   if (typeof r.fontSizeUnit === 'string' && FONT_SIZE_UNITS.includes(r.fontSizeUnit)) out.fontSizeUnit = r.fontSizeUnit as FontSizeUnit
@@ -1635,6 +1642,9 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
   }
   if (isNum(own.lineHeight)) decls.push(`line-height:${own.lineHeight} !important`)
   if (isNum(own.fontWeight)) decls.push(`font-weight:${own.fontWeight} !important`)
+  if (own.textTransform && TEXT_TRANSFORMS.includes(own.textTransform)) decls.push(`text-transform:${own.textTransform} !important`)
+  if (own.fontStyle && FONT_STYLES.includes(own.fontStyle)) decls.push(`font-style:${own.fontStyle} !important`)
+  if (own.textDecoration && TEXT_DECORATIONS.includes(own.textDecoration)) decls.push(`text-decoration:${own.textDecoration} !important`)
   if (isNum(own.wordSpacing)) decls.push(`word-spacing:${own.wordSpacing}px !important`)
   if (own.position && POSITION_OPTIONS.some((o) => o.value === own.position)) decls.push(`position:${own.position} !important`)
   const offsets = [['top', 'posTop'], ['right', 'posRight'], ['bottom', 'posBottom'], ['left', 'posLeft']] as const
