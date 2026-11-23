@@ -305,9 +305,10 @@ describe('table rendering', () => {
   })
   it('marks sortable headings and sets page size for the script', () => {
     const html = renderToStaticMarkup(React.createElement(DataTable, { model: model({ display: { ...defaultDisplay(), pageSize: 2, searchable: true } }) }))
-    expect(html).toContain('data-dv-pagesize="2"')
-    expect(html).toContain('data-dv-search="1"')
-    expect(html).toContain('data-sort-col="1"')
+    expect(html).toContain('data-spark-page-size="2"')
+    expect(html).toContain('data-spark-search="true"')
+    expect(html).toContain('spark-table')
+    expect(html).toContain('data-spark-sort="true"')
   })
   it('escapes cell text, headings and captions', () => {
     const html = renderToStaticMarkup(
