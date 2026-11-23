@@ -63,6 +63,18 @@ export const WAVE70_TITLE_ELEMENTS: ElementDef[] = [
     ],
     defaultProps: () => ({ level: 'h1', showPrefix: true }),
   },
+  {
+    type: 'taxonomy-list', label: 'Categories and tags', icon: String.fromCodePoint(0x1f3f7), category: 'siteMeta',
+    description: 'The blog categories or tags as a list, a tag cloud (bigger means more posts) or a grid of links to their archives. Terms with no published posts are left out.',
+    fields: [
+      { name: 'kind', label: 'Show', type: 'select', width: 'half', options: labelled([['categories', 'Categories'], ['tags', 'Tags']]) },
+      { name: 'layout', label: 'Layout', type: 'select', width: 'half', options: labelled([['list', 'List'], ['cloud', 'Tag cloud'], ['grid', 'Grid']]) },
+      { name: 'showCount', label: 'Show the number of posts', type: 'checkbox' },
+      { name: 'orderBy', label: 'Order', type: 'select', width: 'half', options: labelled([['name', 'A to Z'], ['count', 'Most posts first']]) },
+      { name: 'limit', label: 'Most to show (1 to 100)', type: 'number', width: 'half' },
+    ],
+    defaultProps: () => ({ kind: 'categories', layout: 'list', showCount: true, orderBy: 'name', limit: 30 }),
+  },
 ]
 
 export const WAVE70_PRELOADER_ELEMENTS: ElementDef[] = [

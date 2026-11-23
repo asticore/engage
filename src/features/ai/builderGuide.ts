@@ -44,10 +44,10 @@ const oneLine = (text: string | undefined, max: number): string => (text ?? '').
 export const GUIDE_MAX_CHARS = 19_000
 
 /** Element types the builder never uses: they need a record, a relation, or a table/form context. */
-const EXCLUDED_ELEMENT_TYPES = new Set(['content-slot', 'data-view', 'ad', 'embed-code', 'page-effects', 'request-button', 'language-switcher', 'archive-filter', 'loop-grid', 'chat-button'])
+const EXCLUDED_ELEMENT_TYPES = new Set(['content-slot', 'data-view', 'ad', 'embed-code', 'page-effects', 'request-button', 'language-switcher', 'archive-filter', 'loop-grid', 'chat-button', 'taxonomy-list', 'cart-lines', 'cart-lines-compact', 'cart-totals', 'cart-extras', 'cart-summary', 'cart-link', 'product-images', 'product-stock', 'product-short-description', 'product-meta', 'product-tabs', 'product-rating', 'world-clock', 'dark-mode-toggle', 'billing-toggle', 'lottie-player', 'calendar', 'progress-tracker', 'social-feed'])
 
 /** A catalogue line longer than this loses its last fields (whole fields only) and ends with "...". Long elements such as charts are covered by the usage hints. */
-const MAX_ELEMENT_LINE = 230
+const MAX_ELEMENT_LINE = 200
 
 /** Fields the builder never fills in: pictures, files and links to records are added by the admin. */
 const SKIPPED_FIELD_TYPES = new Set(['media', 'mediaMulti', 'relationship', 'formOptions', 'formLogic', 'dimensions', 'typography', 'shadow', 'gradient'])
