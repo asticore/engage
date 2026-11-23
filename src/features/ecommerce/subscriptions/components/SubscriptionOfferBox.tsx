@@ -1,11 +1,13 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useShopPath } from '@/features/seo/ShopBaseContext'
 
 type Props = { productId: number; slug: string; signedIn: boolean; priceText: string; trialText: string; feeText: string; cancelText: string }
 
 /** The Subscribe button. Asks the server for a Stripe Checkout address and sends the shopper there. */
 export function SubscriptionOfferBox({ productId, slug, signedIn, priceText, trialText, feeText, cancelText }: Props) {
+  const shop = useShopPath()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -41,7 +43,7 @@ export function SubscriptionOfferBox({ productId, slug, signedIn, priceText, tri
           {busy ? 'Starting...' : 'Start subscription'}
         </button>
       ) : (
-        <a href={`/account/sign-in?next=${encodeURIComponent(`/shop/${slug}`)}`}>Sign in to subscribe</a>
+        <a href={`/account/sign-in?next=${encodeURIComponent(shop(`/${slug}`))}`}>Sign in to subscribe</a>
       )}
       {error ? (
         <p role="alert" style={{ color: 'var(--theme-error-500, #b42318)', margin: '8px 0 0' }}>

@@ -33,13 +33,15 @@ import { categoryUrl } from '@/features/categories/frontend'
 import { childrenOf, findBySlug } from '@/features/categories/tree'
 import { slugify } from '@/utilities/formatSlug'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
+import { shopPath } from '@/features/seo/permalinks'
+import { readShopBase } from '@/features/seo/permalinkStore'
 import { productArchiveItems } from '@/lib/blockContextFrom'
 import { pricesHiddenFor } from '@/features/ecommerce/lib/wholesale'
 import { wholesaleViewer } from '@/features/ecommerce/server/wholesale'
 import type { Product, ShopSetting } from '@/engage-types'
 
 export async function generateMetadata() {
-  return buildMetadata({ title: 'Shop', path: '/shop' })
+  return buildMetadata({ title: 'Shop', path: shopPath(await readShopBase()) })
 }
 
 export const dynamic = 'force-dynamic'
@@ -54,6 +56,8 @@ const CATEGORIES = [
 export default async function ShopPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const flags = await getFeatureFlags()
   if (!flags.ecommerce) notFound()
+  const shopRootBase = await readShopBase()
+  const shopRoot = shopPath(shopRootBase)
 
   const params = await searchParams
   const storeDict = await storeTexts()
@@ -124,7 +128,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     const brand = over.brand ?? brandParam
     if (brand) qs.set('brand', brand)
     const text = qs.toString()
-    return `/shop${text ? `?${text}` : ''}`
+    return `${shopRoot}${text ? `?${text}` : ''}`
   }
   const archiveBase = shopHref({})
   const pageHref = (n: number) => archivePageHref(archiveBase, n)
@@ -140,10 +144,10 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         collection: 'pages',
         schemaType: 'CollectionPage',
         title: 'Shop',
-        url: context.baseUrl + '/shop',
+        url: context.baseUrl + shopRoot,
         baseUrl: context.baseUrl,
         siteName: context.siteName,
-        breadcrumbs: breadcrumbSchemaOn(context.settings) ? listBreadcrumbs({ baseUrl: context.baseUrl, path: '/shop', name: 'Shop' }) : [],
+        breadcrumbs: breadcrumbSchemaOn(context.settings) ? listBreadcrumbs({ baseUrl: context.baseUrl, path: shopRoot, name: 'Shop' }) : [],
       })
     : null
 
@@ -171,16 +175,16 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
 
       {settings?.showCategoryFilters !== false && (
         <div className="mb-8 flex flex-wrap gap-4 text-[0.8rem] uppercase tracking-[0.06em]">
-          <Link href="/shop" className={filterLinkClassName(!category)}>
+          <Link href={shopRoot} className={filterLinkClassName(!category)}>
             All
           </Link>
           {(treeRows.length > 0
             ? [
                 // Top level, then the sub categories of the chosen category (so a visitor can drill down).
-                ...childrenOf(treeRows, null).map((r) => ({ label: r.name, value: r.slug, href: categoryUrl('shop', treeRows, r.id) })),
-                ...(treeCategory ? childrenOf(treeRows, treeCategory.id).map((r) => ({ label: r.name, value: r.slug, href: categoryUrl('shop', treeRows, r.id) })) : []),
+                ...childrenOf(treeRows, null).map((r) => ({ label: r.name, value: r.slug, href: categoryUrl('shop', treeRows, r.id, shopRootBase) })),
+                ...(treeCategory ? childrenOf(treeRows, treeCategory.id).map((r) => ({ label: r.name, value: r.slug, href: categoryUrl('shop', treeRows, r.id, shopRootBase) })) : []),
               ]
-            : CATEGORIES.map((cat) => ({ ...cat, href: `/shop?category=${cat.value}` }))
+            : CATEGORIES.map((cat) => ({ ...cat, href: `${shopRoot}?category=${cat.value}` }))
           ).map((cat) => (
             <Link key={cat.value} href={cat.href} className={filterLinkClassName(category === cat.value)}>
               {cat.label}
@@ -195,7 +199,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
             <div key={option.name} className="flex flex-wrap items-center gap-3">
               <span className="uppercase tracking-[0.06em] opacity-70">{option.name}</span>
               {option.values.map((value) => (
-                <Link key={value} href={filterHref({ category }, filters, { name: option.name, value })} className={filterLinkClassName(filters[option.name]?.toLowerCase() === value.toLowerCase())}>
+                <Link key={value} href={filterHref({ category }, filters, { name: option.name, value }, shopRoot)} className={filterLinkClassName(filters[option.name]?.toLowerCase() === value.toLowerCase())}>
                   {value}
                 </Link>
               ))}
@@ -255,16 +259,16 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   )
   const shopCategories = treeRows.length > 0 ? treeRows.map((r) => ({ slug: r.slug, name: r.name })) : CATEGORIES.map((c) => ({ slug: c.value, name: c.label }))
   setBlockContext({
-    path: '/shop',
+    path: shopRoot,
     archive: {
       basePath: archiveBase,
       page: paged.page,
       pages: paged.pages,
-      items: productArchiveItems(products).map((item) => (priceHidden ? { ...item, price: undefined } : item)),
+      items: productArchiveItems(products, shopRootBase).map((item) => (priceHidden ? { ...item, price: undefined } : item)),
       kind: 'products',
       filters: { ...archiveFilters, category: category ?? '' },
       facets: { categories: shopCategories, tags: tagChoices },
     },
   })
-  return renderWithTemplate({ kind: 'archive-shop', ctx: { path: '/shop', productCategory: category ?? null }, content: body })
+  return renderWithTemplate({ kind: 'archive-shop', ctx: { path: shopRoot, productCategory: category ?? null }, content: body })
 }

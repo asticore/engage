@@ -1,5 +1,5 @@
-import { blogPath } from '@/features/seo/permalinks'
-import { readBlogBase } from '@/features/seo/permalinkStore'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
 import { getEngine } from '@/lib/engine'
 import { getFeatureFlags } from '@/utilities/features'
 import { getAllResolvedPages } from '@/utilities/pagePaths'
@@ -97,9 +97,10 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
   }
   const products = async (): Promise<Suggestion[]> => {
     const out: Suggestion[] = []
+    const shopBase = await readShopBase()
     for (const d of await findDocs('products', terms, ['title', 'slug', 'shortDescription'], '-createdAt', limit)) {
       if (!d.slug || !(await isOpen('products', d.id))) continue
-      out.push({ title: String(d.title ?? ''), url: `/shop/${d.slug}`, type: 'Product', excerpt: gated(d) ? '' : clipExcerpt((d as Record<string, unknown>).shortDescription) })
+      out.push({ title: String(d.title ?? ''), url: shopPath(shopBase, `/${d.slug}`), type: 'Product', excerpt: gated(d) ? '' : clipExcerpt((d as Record<string, unknown>).shortDescription) })
     }
     return out
   }

@@ -67,7 +67,7 @@ export function availableFilterOptions(products: Filterable[]): FilterOption[] {
 }
 
 /** Builds a shop URL with the given category and filters ("" value removes a filter). */
-export function filterHref(base: { category?: string }, filters: AttributeFilters, change?: { name: string; value: string | null }): string {
+export function filterHref(base: { category?: string }, filters: AttributeFilters, change?: { name: string; value: string | null }, shopRoot = '/shop'): string {
   const next: AttributeFilters = { ...filters }
   if (change) {
     if (change.value === null || next[change.name]?.toLowerCase() === change.value.toLowerCase()) delete next[change.name]
@@ -77,7 +77,7 @@ export function filterHref(base: { category?: string }, filters: AttributeFilter
   if (base.category) query.set('category', base.category)
   for (const [name, value] of Object.entries(next)) query.set(`${FILTER_PREFIX}${name}`, value)
   const text = query.toString()
-  return text ? `/shop?${text}` : '/shop'
+  return text ? `${shopRoot}?${text}` : shopRoot
 }
 
 export { splitValues }

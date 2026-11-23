@@ -1,5 +1,5 @@
-import { blogPath } from '@/features/seo/permalinks'
-import { readBlogBase } from '@/features/seo/permalinkStore'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
 import Link from 'next/link'
 import React from 'react'
 import type { Metadata } from 'next'
@@ -129,6 +129,7 @@ async function searchProducts(query: string): Promise<Found> {
     depth: 0,
   })) as unknown as { docs: Product[]; totalDocs: number }
   const titleVisible = await excludeProtected('products', docs, viewer)
+  const shopBase = await readShopBase()
   // Products whose brand or tag name contains the query: the matching brand and tag ids are read first,
   // then the products are asked for by id, so the whole shop is searched and not only the newest products.
   const needle = query.trim().toLowerCase()
@@ -155,7 +156,7 @@ async function searchProducts(query: string): Promise<Found> {
       key: `product-${product.id}`,
       type: 'Product',
       title: product.title,
-      href: `/shop/${product.slug}`,
+      href: shopPath(shopBase, `/${product.slug}`),
       excerpt: '',
     }))
   return { hits, total: Math.max(0, totalDocs - (docs.length - titleVisible.length)) + taxonomyVisible.length }

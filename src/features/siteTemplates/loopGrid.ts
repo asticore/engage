@@ -1,4 +1,4 @@
-import { blogPath } from '@/features/seo/permalinks'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
 import type { ArchiveFilterValues, ArchiveItem } from '@/lib/blockContext'
 import { parseColumns } from '@/lib/sectionTree'
 import { slugify } from '@/utilities/formatSlug'
@@ -169,7 +169,7 @@ export function loopItemBlocks(blocks: unknown[], item: ArchiveItem): unknown[] 
 }
 
 /** Archive cards for a list of documents of one source. Public fields only, same shape the archive pages use. */
-export function loopItemsFromDocs(source: Exclude<LoopGridSource, ''>, docs: Record<string, unknown>[], blogBase?: string): ArchiveItem[] {
+export function loopItemsFromDocs(source: Exclude<LoopGridSource, ''>, docs: Record<string, unknown>[], blogBase?: string, shopBase?: string): ArchiveItem[] {
   return docs.map((doc) => {
     const slug = str(doc.slug)
     const names = (list: unknown): string[] =>
@@ -192,7 +192,7 @@ export function loopItemsFromDocs(source: Exclude<LoopGridSource, ''>, docs: Rec
       const first = (Array.isArray(doc.images) ? doc.images : []).find((i): i is { url?: unknown; alt?: unknown } => !!i && typeof i === 'object' && !!str((i as { url?: unknown }).url))
       return {
         title: str(doc.title),
-        href: `/shop/${slug}`,
+        href: shopPath(shopBase, `/${slug}`),
         excerpt: str(doc.shortDescription) || undefined,
         price: doc.priceInAUD ?? undefined,
         image: first ? { url: str(first.url), alt: str(first.alt) } : undefined,

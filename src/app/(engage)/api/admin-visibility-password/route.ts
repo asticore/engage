@@ -7,8 +7,8 @@ import { hashPassword } from '@/features/visibility/password'
 import { noteDocumentChanged } from '@/features/dataViews/cache'
 import { purgeCache } from '@/features/speed/purge'
 import { canManagePasswords } from '@/features/visibility/passwordAccess'
-import { readBlogBase } from '@/features/seo/permalinkStore'
-import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,8 +45,9 @@ async function purgeDocument(
       path = blogPath(await readBlogBase(), `/${doc.slug}`)
     } else if (collection === 'products') {
       if (!doc.slug) return
-      path = `/shop/${doc.slug}`
-      extra.push('/shop')
+      const shopBase = await readShopBase()
+      path = shopPath(shopBase, `/${doc.slug}`)
+      extra.push(shopPath(shopBase))
     } else if (collection === 'events') {
       if (!doc.slug) return
       path = `/events/${doc.slug}`

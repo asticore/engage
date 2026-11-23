@@ -19,8 +19,8 @@ import { requestDomain } from '@/features/domains/request'
 import { availableOnHost, parseHostList } from '@/features/domains/scope'
 import { isNoindexPath } from '@/features/security/noindex'
 import { getAdminRoot } from '@/features/security/settings'
-import { blogPath } from './permalinks'
-import { readBlogBase } from './permalinkStore'
+import { blogPath, shopPath } from './permalinks'
+import { readBlogBase, readShopBase } from './permalinkStore'
 
 export type ChangeFrequency = 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never'
 
@@ -230,8 +230,9 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
     }
   }
   if (flags?.ecommerce) {
-    add('/shop', undefined, 0.9)
-    await addCollection('products', '/shop', 0.7)
+    const shop = shopPath(await readShopBase())
+    add(shop, undefined, 0.9)
+    await addCollection('products', shop, 0.7)
   }
   if (flags?.events) {
     add('/events', undefined, 0.7)

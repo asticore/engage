@@ -21,10 +21,10 @@ import {
   resolveSignInPaths,
   type SignInPlace,
 } from '@/features/security/signInPath'
-import { DEFAULT_BLOG_BASE, isUnderPath } from '@/features/seo/permalinks'
+import { DEFAULT_BLOG_BASE, DEFAULT_SHOP_BASE, isUnderPath } from '@/features/seo/permalinks'
 import { parseFeedAddress } from '@/features/blog/feedAddress'
 import { traceMark } from '@/features/speed/d1Timing'
-import { readBlogBase } from '@/features/seo/permalinkStore'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
 import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
 import { readDomainsFromD1 } from '@/features/domains/store'
 import { readIpRulesCached } from '@/features/security/ipRulesStore'
@@ -88,6 +88,7 @@ async function warmSettingCaches(): Promise<void> {
     readRateRulesCached(),
     refreshCspBuilder(),
     readBlogBase(),
+    readShopBase(),
   ])
 }
 
@@ -130,9 +131,10 @@ async function serveAdminAware(request: NextRequest): Promise<NextResponse> {
     target.search = `?${feed.query}=${encodeURIComponent(feed.slug)}`
     return NextResponse.rewrite(target)
   }
-  if (blog !== DEFAULT_BLOG_BASE) {
-    const custom = `/${blog}`
-    const fallback = `/${DEFAULT_BLOG_BASE}`
+  // Moved addresses: the blog and the shop (with its products and categories). A custom one is served by the app folder,
+  // and the old address redirects to it.
+  const moves = addressMoves(blog, await readShopBase())
+  for (const { custom, fallback } of moves) {
     if (isUnderPath(pathname, custom)) return serveRewritten(request, custom, fallback)
     if (isUnderPath(pathname, fallback) && isPlainNavigation(request)) {
       const target = new URL(request.url)
@@ -152,38 +154,48 @@ async function serveAdminAware(request: NextRequest): Promise<NextResponse> {
       return NextResponse.redirect(target, { status: 307, headers: { 'cache-control': 'private, no-store' } })
     }
   }
-  // With a custom blog address, a language prefix goes first (`/fr/news/hello`): the handler sees the stripped path.
-  return multilingualMiddleware(request, blog !== DEFAULT_BLOG_BASE ? blogAwareSecurity(blog) : securityMiddleware)
+  // With a custom address, a language prefix goes first (`/fr/news/hello`): the handler sees the stripped path.
+  return multilingualMiddleware(request, moves.length > 0 ? addressAwareSecurity(moves) : securityMiddleware)
+}
+
+type AddressMove = { custom: string; fallback: string }
+
+/** The addresses that differ from the app folder they are served from. Empty when the blog and the shop keep /blog and /shop. */
+function addressMoves(blog: string, shop: string): AddressMove[] {
+  const moves: AddressMove[] = []
+  if (blog !== DEFAULT_BLOG_BASE) moves.push({ custom: `/${blog}`, fallback: `/${DEFAULT_BLOG_BASE}` })
+  if (shop !== DEFAULT_SHOP_BASE) moves.push({ custom: `/${shop}`, fallback: `/${DEFAULT_SHOP_BASE}` })
+  return moves
 }
 
 /**
- * The security pipeline for a request whose language prefix has already been stripped, on a site with a custom blog address:
- * the custom address is served by the /blog folder, and the old /blog address redirects to it (under the same language prefix).
+ * The security pipeline for a request whose language prefix has already been stripped, on a site with a custom blog or shop
+ * address: the custom address is served by the app folder, and the old address redirects to it (under the same language prefix).
  */
-function blogAwareSecurity(blog: string): (request: NextRequest) => Promise<NextResponse> {
-  const custom = `/${blog}`
-  const fallback = `/${DEFAULT_BLOG_BASE}`
+function addressAwareSecurity(moves: AddressMove[]): (request: NextRequest) => Promise<NextResponse> {
   return async (request) => {
     const { pathname } = request.nextUrl
-    if (isUnderPath(pathname, custom)) {
-      const url = new URL(request.url)
-      url.pathname = `${fallback}${pathname.slice(custom.length)}`
-      const readable = request.method === 'GET' || request.method === 'HEAD'
-      const target = readable ? new NextRequest(url, { headers: request.headers, method: request.method }) : request
-      const inner = await securityMiddleware(target)
-      if (!readable || inner.headers.get('x-middleware-next') !== '1') return inner
-      const out = NextResponse.rewrite(url, { request: { headers: target.headers } })
-      inner.headers.forEach((value, key) => {
-        if (!key.startsWith('x-middleware-') && key !== 'set-cookie') out.headers.set(key, value)
-      })
-      for (const cookie of inner.headers.getSetCookie()) out.headers.append('set-cookie', cookie)
-      return out
-    }
-    if (isUnderPath(pathname, fallback) && isPlainNavigation(request)) {
-      const locale = request.headers.get(LOCALE_HEADER)
-      const target = new URL(request.url)
-      target.pathname = `${locale ? `/${locale}` : ''}${custom}${pathname.slice(fallback.length)}`
-      return NextResponse.redirect(target, { status: 308, headers: { 'cache-control': 'private, no-store' } })
+    for (const { custom, fallback } of moves) {
+      if (isUnderPath(pathname, custom)) {
+        const url = new URL(request.url)
+        url.pathname = `${fallback}${pathname.slice(custom.length)}`
+        const readable = request.method === 'GET' || request.method === 'HEAD'
+        const target = readable ? new NextRequest(url, { headers: request.headers, method: request.method }) : request
+        const inner = await securityMiddleware(target)
+        if (!readable || inner.headers.get('x-middleware-next') !== '1') return inner
+        const out = NextResponse.rewrite(url, { request: { headers: target.headers } })
+        inner.headers.forEach((value, key) => {
+          if (!key.startsWith('x-middleware-') && key !== 'set-cookie') out.headers.set(key, value)
+        })
+        for (const cookie of inner.headers.getSetCookie()) out.headers.append('set-cookie', cookie)
+        return out
+      }
+      if (isUnderPath(pathname, fallback) && isPlainNavigation(request)) {
+        const locale = request.headers.get(LOCALE_HEADER)
+        const target = new URL(request.url)
+        target.pathname = `${locale ? `/${locale}` : ''}${custom}${pathname.slice(fallback.length)}`
+        return NextResponse.redirect(target, { status: 308, headers: { 'cache-control': 'private, no-store' } })
+      }
     }
     return securityMiddleware(request)
   }

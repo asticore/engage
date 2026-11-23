@@ -9,11 +9,13 @@ import type { WishlistCard } from '@/features/ecommerce/lib/wishlistCards'
 import { useWishlist } from '@/features/ecommerce/lib/useWishlist'
 import { useShopCurrency } from '@/components/ShopCurrencyContext'
 import { formatPriceInAUD } from '@/lib/formatCurrency'
+import { useShopPath } from '@/features/seo/ShopBaseContext'
 
 type Loaded = { key: string; cards: WishlistCard[] | null }
 
 /** The saved products. Ids come from this browser; the cards come from the public endpoint. */
 export function WishlistList() {
+  const shop = useShopPath()
   const t = useStoreText()
   const currency = useShopCurrency()
   const { ids, toggle } = useWishlist()
@@ -44,7 +46,7 @@ export function WishlistList() {
   if (ids.length === 0) {
     return (
       <p className="empty-state">
-        Nothing saved yet. Tap the heart on a product to save it here. <Link href="/shop">Browse the shop</Link>
+        Nothing saved yet. Tap the heart on a product to save it here. <Link href={shop()}>Browse the shop</Link>
       </p>
     )
   }
@@ -58,7 +60,7 @@ export function WishlistList() {
     <ul className="m-0 grid list-none grid-cols-2 gap-6 p-0 max-[700px]:grid-cols-1">
       {cards.map((card) => (
         <li key={card.id} className="border border-[var(--color-line)] bg-white">
-          <Link href={`/shop/${card.slug}`} className="block">
+          <Link href={shop(`/${card.slug}`)} className="block">
             <div className="relative aspect-[4/5] overflow-hidden bg-[var(--color-cream-dim)]">
               {card.image ? (
                 <Image src={card.image} alt={card.title} width={480} height={600} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />

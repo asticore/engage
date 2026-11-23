@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server'
 import { getEngine } from '@/lib/engine'
 import { getAllResolvedPages } from '@/utilities/pagePaths'
 import { trackingApiGate } from '@/features/tracking/apiGate'
-import { readBlogBase } from '@/features/seo/permalinkStore'
-import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,8 +20,9 @@ export async function GET(): Promise<NextResponse> {
   const denied = await trackingApiGate('read')
   if (denied) return denied
 
+  const shopBase = await readShopBase()
   const options: TrackingPageOption[] = [
-    { kind: 'shop', title: 'Shop', path: '/shop' },
+    { kind: 'shop', title: 'Shop', path: shopPath(shopBase) },
     { kind: 'cart', title: 'Cart', path: '/cart' },
     { kind: 'checkout', title: 'Checkout', path: '/checkout' },
   ]
@@ -35,7 +36,7 @@ export async function GET(): Promise<NextResponse> {
     const engine = await getEngine()
     for (const [collection, kind, prefix] of [
       ['posts', 'post', blogPath(await readBlogBase())],
-      ['products', 'product', '/shop'],
+      ['products', 'product', shopPath(shopBase)],
     ] as const) {
       const { docs } = (await engine.find({ collection, limit: LIMIT, depth: 0, overrideAccess: true })) as { docs: Record<string, unknown>[] }
       for (const doc of docs) {

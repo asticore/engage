@@ -71,6 +71,7 @@ export type SeoSettingsDoc = {
   } | null
   permalinks?: {
     blogBase?: string | null
+    shopBase?: string | null
   } | null
   breadcrumbs?: {
     separator?: string | null

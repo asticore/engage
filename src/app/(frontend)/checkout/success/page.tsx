@@ -1,4 +1,6 @@
 import { storeTexts } from '@/features/uiStrings/storeTextsServer'
+import { shopPath } from '@/features/seo/permalinks'
+import { readShopBase } from '@/features/seo/permalinkStore'
 import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
 import Link from 'next/link'
@@ -27,7 +29,7 @@ export default async function CheckoutSuccessPage({
       <h1>{t('store.thankYou')}</h1>
       <p>{t('store.orderPlaced')}</p>
       {order && <p>{t('store.orderReference')} {order}</p>}
-      <Link href="/shop" className="btn btn--primary">
+      <Link href={shopPath(await readShopBase())} className="btn btn--primary">
         {t('store.continueShopping')}
       </Link>
     </div>

@@ -101,6 +101,9 @@ export const Pages: CollectionConfig = {
           const { readBlogBase } = await import('@/features/seo/permalinkStore')
           const blogBase = await readBlogBase().catch((): string => 'blog')
           if (blogBase !== 'blog' && slug === blogBase) return BLOG_BASE_PAGE_MESSAGE
+          const { readShopBase } = await import('@/features/seo/permalinkStore')
+          const shopBase = await readShopBase().catch((): string => 'shop')
+          if (shopBase !== 'shop' && slug === shopBase) return 'That address is the shop address (Settings > SEO > Permalinks). Choose another slug or change the shop address first.'
         }
 
         const parentId = data?.parent

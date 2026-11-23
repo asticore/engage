@@ -1,4 +1,4 @@
-import { readBlogBase } from '@/features/seo/permalinkStore'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
 import Link from 'next/link'
 import React from 'react'
 
@@ -46,7 +46,7 @@ async function scanSource(source: 'posts' | 'products' | 'events'): Promise<Arch
     depth: 1,
   } as never)) as unknown as { docs?: Record<string, unknown>[] }
   const docs = await excludeProtected(source, Array.isArray(result?.docs) ? result.docs : [])
-  return loopItemsFromDocs(source, docs as Record<string, unknown>[], source === 'posts' ? await readBlogBase() : undefined)
+  return loopItemsFromDocs(source, docs as Record<string, unknown>[], source === 'posts' ? await readBlogBase() : undefined, source === 'products' ? await readShopBase() : undefined)
 }
 
 /** The items for the settings, before paging. Empty on any problem. */

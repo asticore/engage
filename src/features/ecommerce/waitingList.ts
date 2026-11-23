@@ -5,6 +5,8 @@
  * person in line (the scheduled sweep, and every product save). Every function here is best effort and never throws.
  */
 
+import { readShopBase } from '@/features/seo/permalinkStore'
+import { shopPath } from '@/features/seo/permalinks'
 import { heldForOthers, holdEnds, normaliseWaitingListSettings, pickOffers, placesFor, type WaitRow, type WaitingListSettings } from './lib/waitingList'
 import { normalizeEmail } from './lib/email'
 import { loadStrings, t } from '@/features/uiStrings'
@@ -60,6 +62,7 @@ export async function offerReleasedPlaces(engine: WaitingListEngine, product: Pr
     if (settings.mode !== 'ordered') return 0
     const baseUrl = configuredSiteOrigin()
     if (!baseUrl) return 0
+    const shopBase = await readShopBase()
     const docs = await rowsFor(engine, product.id, ['pending', 'offered'])
     if (docs.length === 0) return 0
     const rows = docs.map(toRow)
@@ -86,7 +89,7 @@ export async function offerReleasedPlaces(engine: WaitingListEngine, product: Pr
           to: doc.email,
           template: 'stock.back-in-stock',
           subject: t('email.waitingList.subject', locale, { label }),
-          text: t('email.waitingList.body', locale, { label, url: `${baseUrl}/shop/${product.slug ?? ''}`, hours: String(settings.holdHours) }),
+          text: t('email.waitingList.body', locale, { label, url: `${baseUrl}${shopPath(shopBase, `/${product.slug ?? ''}`)}`, hours: String(settings.holdHours) }),
         }).catch((): { ok: false } => ({ ok: false }))
         if (sent.ok) offered += 1
       }

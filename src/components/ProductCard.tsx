@@ -1,4 +1,6 @@
 import Image from 'next/image'
+import { shopPath } from '@/features/seo/permalinks'
+import { readShopBase } from '@/features/seo/permalinkStore'
 import { storeTexts } from '@/features/uiStrings/storeTextsServer'
 import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
@@ -37,6 +39,7 @@ export async function ProductCard({
   promoBadges?: PromoBadge[]
 }) {
   // Wholesale mode: hidden prices show the shop's text instead (lib/wholesale.ts). Read once per request.
+  const shopBase = await readShopBase()
   const { cfg, buyer } = await wholesaleViewer()
   const priceHidden = pricesHiddenFor(cfg, buyer)
   const storeDict = priceHidden ? await storeTexts() : null
@@ -61,7 +64,7 @@ export async function ProductCard({
 
   return (
     <Link
-      href={`/shop/${product.slug}`}
+      href={shopPath(shopBase, `/${product.slug}`)}
       className={`product-card product-card--${aspect} block border border-[var(--color-line)] bg-white`}
     >
       <div className="product-card__image relative aspect-[4/5] overflow-hidden bg-[var(--color-cream-dim)]">

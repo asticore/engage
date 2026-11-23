@@ -6,6 +6,7 @@ import React, { useState } from 'react'
 
 import { CurrencySwitcher } from '@/components/CurrencySwitcher'
 import { DEFAULT_SITE_NAME } from '@/features/brand/siteName'
+import { useShopPath } from '@/features/seo/ShopBaseContext'
 
 export type NavLink = {
   href: string
@@ -14,8 +15,8 @@ export type NavLink = {
   children?: NavLink[]
 }
 
-const DEFAULT_LINKS: NavLink[] = [
-  { href: '/shop', label: 'Shop' },
+const defaultLinks = (shopHref: string): NavLink[] => [
+  { href: shopHref, label: 'Shop' },
   { href: '/events', label: 'Events' },
   { href: '/#about', label: 'About' },
 ]
@@ -52,11 +53,12 @@ export const Header: React.FC<{
   homeHref = '/',
   cartHref = '/cart',
 }) => {
+  const shop = useShopPath()
   const [open, setOpen] = useState(false)
   const [dismissed, setDismissed] = useState(false)
   const { cart } = useCart()
   const itemCount = cart?.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
-  const links = navLinks && navLinks.length > 0 ? navLinks : DEFAULT_LINKS
+  const links = navLinks && navLinks.length > 0 ? navLinks : defaultLinks(shop())
   const socialLinks = (socials?.links || []).filter((link) => link.url)
 
   const logo =

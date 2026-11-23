@@ -172,7 +172,7 @@ export function translateTarget(args: { collection: string; documentId: string; 
 }
 
 /** The public page for a document, where the site has one per document. */
-export function publicPathFor(collection: string, slug: string | null, blogBase = 'blog'): string | null {
+export function publicPathFor(collection: string, slug: string | null, blogBase = 'blog', shopBase = 'shop'): string | null {
   if (!slug) return collection === 'faqs' ? '/faq' : null
   switch (collection) {
     case 'pages':
@@ -180,7 +180,7 @@ export function publicPathFor(collection: string, slug: string | null, blogBase 
     case 'posts':
       return `/${blogBase}/${slug}`
     case 'products':
-      return `/shop/${slug}`
+      return `/${shopBase}/${slug}`
     case 'events':
       return `/events/${slug}`
     default:
@@ -206,6 +206,8 @@ export function buildDocumentRows(args: {
   adminRoot?: string
   /** The blog address (no slashes). Defaults to blog. */
   blogBase?: string
+  /** The shop address (no slashes). Defaults to shop. */
+  shopBase?: string
 }): DocumentRow[] {
   const base = buildOverviewRows({ items: args.items, stored: args.stored, targetLocales: args.targetLocales, rules: args.rules })
   const itemBySource = new Map(args.items.map((item) => [item.sourceId, item]))
@@ -263,7 +265,7 @@ export function buildDocumentRows(args: {
       ...row,
       collection,
       documentId,
-      url: publicPathFor(collection, live?.slug ?? null, args.blogBase),
+      url: publicPathFor(collection, live?.slug ?? null, args.blogBase, args.shopBase),
       counts: total,
       cells,
       inactive,

@@ -8,9 +8,11 @@ import React, { useEffect, useState } from 'react'
 import { AddToCartButton } from '@/components/AddToCartButton'
 import { useDisplayMoney } from '@/components/DisplayCurrencyContext'
 import { cartProductIds, type CrossSellCard } from '@/features/ecommerce/lib/crossSells'
+import { useShopPath } from '@/features/seo/ShopBaseContext'
 
 /** "You may also like" under the cart items, from the cross-sells of the products in the cart. Hidden when empty or switched off. */
 export function CartCrossSells() {
+  const shop = useShopPath()
   const { cart } = useCart()
   const money = useDisplayMoney()
   const ids = cartProductIds(cart?.items as Array<{ product?: unknown }> | undefined)
@@ -48,7 +50,7 @@ export function CartCrossSells() {
       <ul className="grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5 p-0">
         {cards.map((card) => (
           <li key={card.id} className="flex flex-col gap-2">
-            <Link href={card.slug ? `/shop/${card.slug}` : '/shop'} className="block">
+            <Link href={card.slug ? shop(`/${card.slug}`) : shop()} className="block">
               {card.image ? (
                 <Image src={card.image} alt={card.title} width={320} height={400} style={{ objectFit: 'cover', width: '100%', height: 'auto' }} />
               ) : (

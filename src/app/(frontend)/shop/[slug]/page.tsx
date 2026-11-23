@@ -15,6 +15,8 @@ import { SubscriptionOffer } from '@/features/ecommerce/subscriptions/components
 import { ProductReviewForm } from '@/components/ProductReviewForm'
 import { AdsPageScope } from '@/features/ads/components/AdsPageScope'
 import { setBlockContext, setRequestQuery } from '@/lib/blockContext'
+import { shopPath } from '@/features/seo/permalinks'
+import { readShopBase } from '@/features/seo/permalinkStore'
 import { productBlockContext } from '@/lib/blockContextFrom'
 import { BlockRenderer } from '@/components/blocks/BlockRenderer'
 import { FaqList } from '@/components/FaqList'
@@ -93,7 +95,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: product.title,
     seo: product.seo,
     availableDomains: (product as { availableDomains?: unknown }).availableDomains,
-    path: `/shop/${slug}`,
+    path: shopPath(await readShopBase(), `/${slug}`),
     contentType: 'product',
     tokens: { price: formatPriceInAUD(product.priceInAUD, 'AUD', priceLocale(await publicLocale())), excerpt: product.shortDescription },
   })
@@ -120,6 +122,7 @@ export default async function ProductPage({
   // A source slug with a translation is redirected to the translated URL; a translated slug answers for its product.
   const slug = await sourceSlugFor(requestLocale, 'shop', requested, { redirect: true })
   const product = await applyTranslations(await getProduct(slug), 'products', requestLocale)
+  const productPath = shopPath(await readShopBase(), `/${slug}`)
 
   if (!product) {
     notFound()
@@ -134,7 +137,7 @@ export default async function ProductPage({
 
   const gateState = await getPasswordGateState({ collection: 'products', id: product.id, cookies: await cookies() })
   if (gateState === 'locked') {
-    return <PasswordGate collection="products" currentPath={`/shop/${slug}`} id={product.id} wrongPassword={sp.pw === 'wrong'} />
+    return <PasswordGate collection="products" currentPath={productPath} id={product.id} wrongPassword={sp.pw === 'wrong'} />
   }
 
   const [settings] = (await Promise.all([engine.findGlobal({ slug: 'shop-settings' }).catch((): null => null)])) as unknown as [ShopSetting | null]
@@ -218,16 +221,16 @@ export default async function ProductPage({
   const jsonLdExtra: Record<string, unknown> = {
     ...(view.sku ? { sku: view.sku } : {}),
     ...(brandName ? { brand: { '@type': 'Brand', name: brandName } } : {}),
-    ...(offersJsonLd(view, currencyFromShopSettings(settings), `/shop/${slug}`) ? { offers: offersJsonLd(view, currencyFromShopSettings(settings)) } : {}),
+    ...(offersJsonLd(view, currencyFromShopSettings(settings), productPath) ? { offers: offersJsonLd(view, currencyFromShopSettings(settings)) } : {}),
     ...(aggregateRatingJsonLd(ratings) ? { aggregateRating: aggregateRatingJsonLd(ratings) } : {}),
   }
 
-  setBlockContext(productBlockContext(priceHidden ? ({ ...product, priceInAUD: undefined } as unknown as Record<string, unknown>) : (product as unknown as Record<string, unknown>), `/shop/${slug}`))
+  setBlockContext(productBlockContext(priceHidden ? ({ ...product, priceInAUD: undefined } as unknown as Record<string, unknown>) : (product as unknown as Record<string, unknown>), productPath))
   const body = (
     <VariationImageProvider>
     <div className="page-shell grid grid-cols-[1.1fr_0.9fr] gap-14 max-[900px]:grid-cols-1">
       <AdsPageScope collection="products" noAds={(product as { noAds?: boolean }).noAds} />
-      <PageJsonLd collection="products" doc={product} path={`/shop/${slug}`} extra={jsonLdExtra} />
+      <PageJsonLd collection="products" doc={product} path={productPath} extra={jsonLdExtra} />
       <ProductGallery images={images} title={product.title} />
 
       <div>
@@ -339,7 +342,7 @@ export default async function ProductPage({
   )
   return renderWithTemplate({
     kind: 'single-product',
-    ctx: { path: `/shop/${slug}`, productCategory: product.category ? String(product.category) : null, productType: typeof catalogue.productType === 'string' ? catalogue.productType : null },
+    ctx: { path: productPath, productCategory: product.category ? String(product.category) : null, productType: typeof catalogue.productType === 'string' ? catalogue.productType : null },
     content: body,
   })
 }

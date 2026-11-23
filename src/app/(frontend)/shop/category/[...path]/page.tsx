@@ -8,6 +8,7 @@ import { ProductCard } from '@/components/ProductCard'
 import { categoryCrumbs, categoryUrl, subCategoryLinks } from '@/features/categories/frontend'
 import { listCategoriesSafe, linkedDocIds } from '@/features/categories/store'
 import { descendantIds, resolvePath } from '@/features/categories/tree'
+import { readShopBase } from '@/features/seo/permalinkStore'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { applyTranslationsToDocs, currentRequestLocale } from '@/features/multilingual/applyTranslations'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const found = await load(path).catch((): null => null)
   if (!found) return { title: 'Not found', robots: { index: false, follow: false } }
   // The canonical address is the full path, whichever way the visitor arrived.
-  return buildMetadata({ title: found.category.name, path: categoryUrl('shop', found.rows, found.category.id) })
+  return buildMetadata({ title: found.category.name, path: categoryUrl('shop', found.rows, found.category.id, await readShopBase()) })
 }
 
 /** A shop category page: breadcrumbs, links to sub categories, and the products of the category and everything below it. */
@@ -52,12 +53,13 @@ export default async function ShopCategoryPage({ params }: Params) {
       : Promise.resolve({ docs: [] }),
   ])) as unknown as [ShopSetting | null, { docs: Product[] }]
   const products = await applyTranslationsToDocs(await excludeProtected('products', result.docs), 'products', await currentRequestLocale())
-  const subs = subCategoryLinks('shop', rows, category.id)
-  const url = categoryUrl('shop', rows, category.id)
+  const shopBase = await readShopBase()
+  const subs = subCategoryLinks('shop', rows, category.id, shopBase)
+  const url = categoryUrl('shop', rows, category.id, shopBase)
 
   const body = (
     <div className="page-shell">
-      <BreadcrumbsElement items={categoryCrumbs('shop', rows, category.id)} separator=">" />
+      <BreadcrumbsElement items={categoryCrumbs('shop', rows, category.id, shopBase)} separator=">" />
       <header className="page-header">
         <h1>{category.name}</h1>
       </header>
