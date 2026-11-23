@@ -122,6 +122,11 @@ export type BlockStyle = {
   bgImage?: number | null
   /** Media URL, resolved at render time; cached here so previews avoid a refetch. */
   bgImageUrl?: string | null
+  /** Image background placement (31e). Unset keeps cover and center. */
+  bgImageSize?: 'cover' | 'contain' | 'auto'
+  bgImagePosition?: 'center' | 'top' | 'bottom' | 'left' | 'right' | 'top left' | 'top right' | 'bottom left' | 'bottom right'
+  bgImageRepeat?: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y'
+  bgImageAttachment?: 'scroll' | 'fixed'
   /** Background video (bgType 'video'): https or site-relative .mp4/.webm. See isSafeMediaUrl(). */
   bgVideoUrl?: string | null
   /** Poster image: shown until the video plays, and in its place under reduced motion. */
@@ -214,7 +219,7 @@ export type BlockStyle = {
   letterSpacingUnit?: LetterSpacingUnit
   textTransform?: TextTransform
   fontStyle?: 'normal' | 'italic'
-  textDecoration?: 'none' | 'underline' | 'line-through'
+  textDecoration?: 'none' | 'underline' | 'line-through' | 'overline'
   /** px, -20..100. */
   wordSpacing?: number
   textShadow?: TextShadowPreset
@@ -762,8 +767,11 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
   return out as BlockStyle
 }
 
+export const BG_IMAGE_SIZES: readonly string[] = ['cover', 'contain', 'auto']
+export const BG_IMAGE_POSITIONS: readonly string[] = ['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left', 'bottom right']
+export const BG_IMAGE_REPEATS: readonly string[] = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y']
 const BORDER_STYLES: readonly string[] = ['solid', 'dashed', 'dotted', 'double']
-const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
+const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
 
 /** Validates per-side border widths, the border style and the custom box shadow layers (normal and hover). */
 function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
@@ -785,6 +793,13 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
     if (raw[p + 'Color'] !== undefined && sanitizeColor(raw[p + 'Color']) === undefined) delete out[p + 'Color']
     if (raw[p + 'Inset'] !== undefined && typeof raw[p + 'Inset'] !== 'boolean') delete out[p + 'Inset']
   }
+  const bgEnum = (k: string, opts: readonly string[]) => {
+    if (raw[k] !== undefined && !(typeof raw[k] === 'string' && opts.includes(raw[k] as string))) delete out[k]
+  }
+  bgEnum('bgImageSize', BG_IMAGE_SIZES)
+  bgEnum('bgImagePosition', BG_IMAGE_POSITIONS)
+  bgEnum('bgImageRepeat', BG_IMAGE_REPEATS)
+  bgEnum('bgImageAttachment', ['scroll', 'fixed'])
   if (raw.borderStyle !== undefined && !(typeof raw.borderStyle === 'string' && BORDER_STYLES.includes(raw.borderStyle))) delete out.borderStyle
   return out as BlockStyle
 }
@@ -802,7 +817,7 @@ const FONT_SIZE_UNITS: readonly string[] = ['px', 'em', 'rem', 'vw']
 const LETTER_SPACING_UNITS: readonly string[] = ['px', 'em']
 const TEXT_TRANSFORMS: readonly string[] = ['none', 'uppercase', 'lowercase', 'capitalize']
 const FONT_STYLES: readonly string[] = ['normal', 'italic']
-const TEXT_DECORATIONS: readonly string[] = ['none', 'underline', 'line-through']
+const TEXT_DECORATIONS: readonly string[] = ['none', 'underline', 'line-through', 'overline']
 const TEXT_SHADOWS: readonly string[] = ['none', 'sm', 'md', 'lg']
 
 /** Validates the typography keys read from JSON (enum membership, numeric clamps). Same object back when none are set. */
@@ -1291,8 +1306,10 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
   // The image moves to its own layer (kenburnsLayer) when Ken Burns is on, so the wrapper must not paint it too.
   if (style.bgType === 'image' && isStr(style.bgImageUrl) && !(style.parallax === 'background') && !hasKenBurnsLayer(style)) {
     css.backgroundImage = `url(${style.bgImageUrl})`
-    css.backgroundSize = 'cover'
-    css.backgroundPosition = 'center'
+    css.backgroundSize = style.bgImageSize && BG_IMAGE_SIZES.includes(style.bgImageSize) ? style.bgImageSize : 'cover'
+    css.backgroundPosition = style.bgImagePosition && BG_IMAGE_POSITIONS.includes(style.bgImagePosition) ? style.bgImagePosition : 'center'
+    if (style.bgImageRepeat && BG_IMAGE_REPEATS.includes(style.bgImageRepeat)) css.backgroundRepeat = style.bgImageRepeat
+    if (style.bgImageAttachment === 'fixed') css.backgroundAttachment = 'fixed'
   }
 
   // Video background: the poster is the wrapper's own background, so it shows until the video

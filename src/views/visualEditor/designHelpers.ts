@@ -33,7 +33,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'particlesInteract', 'particlesSizeMin', 'particlesSizeMax', 'particlesSpeed', 'particlesOpacity', 'particlesLinks',
     'particlesLinkDistance', 'particlesInteractRadius', 'particlesShape', 'dotSize', 'dotSpacing', 'gridSize',
     'gridLineWidth', 'auroraBlur', 'auroraSize', 'auroraSpeed', 'gradientAngle', 'gradientSpeed', 'grainOpacity', 'grainSize',
-    'bgSlides', 'bgSlideIds', 'slideInterval', 'slideTransition', 'noise',
+    'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'bgSlides', 'bgSlideIds', 'slideInterval', 'slideTransition', 'noise',
   ],
   hover: ['hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
     'hoverOpacity', 'hoverTransform', 'focusRing', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'],

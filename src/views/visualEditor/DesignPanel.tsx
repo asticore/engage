@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
+import { BgImagePlacement, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -192,6 +192,7 @@ export const DesignPanel: React.FC<{
               min={0}
               max={100}
             />
+            <BgImagePlacement value={value} set={set} />
             <ParallaxBgControls value={value} onChange={onChange} />
           </>
         )}
@@ -1572,6 +1573,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
           { label: t('dp.opt.none'), value: 'none' },
           { label: t('dp.lit.underline'), value: 'underline' },
           { label: t('dp.lit.strike'), value: 'line-through', title: t('dp.lit.line_through') },
+          { label: 'Over', value: 'overline', title: 'Overline' },
         ]}
         onPick={(v) => patch({ textDecoration: v })}
       />

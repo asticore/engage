@@ -2,7 +2,7 @@
 
 import React, { useEffect, useId, useRef, useState } from 'react'
 
-import type { BlockStyle } from '@/lib/blockStyle'
+import { BG_IMAGE_POSITIONS, BG_IMAGE_REPEATS, BG_IMAGE_SIZES, type BlockStyle } from '@/lib/blockStyle'
 
 import { ColorRow, NumberRow, Row, SelectRow, UNIT_OPTIONS, type ResponsiveCtl } from './DesignPanel'
 
@@ -180,5 +180,30 @@ export const BoxShadowPopover: React.FC<{ value: BlockStyle; patch: Patch }> = (
         </label>
       </PopoverGroup>
     </Row>
+  )
+}
+
+const opts = (values: readonly string[], none: string) => [{ label: none, value: '' }, ...values.map((v) => ({ label: v.charAt(0).toUpperCase() + v.slice(1), value: v }))]
+
+/** Image background size, position, repeat and attachment. Empty keeps the default (cover, centred, no repeat, scrolls). */
+export const BgImagePlacement: React.FC<{ value: BlockStyle; set: (k: keyof BlockStyle, v: unknown) => void }> = ({ value, set }) => {
+  const row = (label: string, k: keyof BlockStyle, values: readonly string[], none: string) => (
+    <SelectRow
+      key={String(k)}
+      label={label}
+      value={(value[k] as string | undefined) ?? ''}
+      options={opts(values, none)}
+      applied={value[k] !== undefined}
+      onReset={() => set(k, undefined)}
+      onChange={(v) => set(k, v || undefined)}
+    />
+  )
+  return (
+    <>
+      {row('Image size', 'bgImageSize', BG_IMAGE_SIZES, 'Cover (default)')}
+      {row('Image position', 'bgImagePosition', BG_IMAGE_POSITIONS, 'Centre (default)')}
+      {row('Image repeat', 'bgImageRepeat', BG_IMAGE_REPEATS, 'No repeat (default)')}
+      {row('Image attachment', 'bgImageAttachment', ['scroll', 'fixed'], 'Scrolls (default)')}
+    </>
   )
 }
