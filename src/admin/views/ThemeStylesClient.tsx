@@ -14,6 +14,7 @@ import { LayoutControls } from './themeStyles/LayoutControls'
 import { PresetControls } from './themeStyles/PresetControls'
 import { TableControls } from './themeStyles/TableControls'
 import { CloneThemeControls } from './themeStyles/CloneThemeControls'
+import { ThemeTour } from './themeStyles/ThemeTour'
 import { DomainThemeControls } from './themeStyles/DomainThemeControls'
 import { ThemeStylesPreview } from './themeStyles/ThemeStylesPreview'
 import { TypePresetControls } from './themeStyles/TypePresetControls'
@@ -115,6 +116,7 @@ export function ThemeStylesClient({ initialStyles, saved, fonts }: Props) {
   return (
     <div className="ts-screen">
       <div className="ts-toolbar">
+        <ThemeTour saved={saved} />
         <button type="button" className="ts-btn ts-btn--primary" disabled={busy || !dirty} onClick={save}>{busy ? 'Saving...' : 'Save changes'}</button>
         {tab !== 'presets' && tab !== 'domains' && tab !== 'clone' && <button type="button" className="ts-btn" disabled={busy} onClick={reset}>Reset this tab to defaults</button>}
         <span className="ts-toolbar__spacer" />
