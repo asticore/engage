@@ -83,6 +83,15 @@ export type SectionLayout = {
   carouselGap?: number
   /** Carousel: show previous / next arrows. Unset = true. */
   carouselArrows?: boolean
+  /** Carousel: dots, one per page. Unset = off. */
+  carouselDots?: boolean
+  /** Carousel: arrows wrap from the last slide to the first. Unset = off. */
+  carouselLoop?: boolean
+  /** Carousel: seconds between automatic moves (1..30). Unset = no autoplay. */
+  carouselAutoplay?: number
+  /** Carousel: slides visible on tablets and phones (1..4). Unset = same as desktop. */
+  carouselPerViewTablet?: 1 | 2 | 3 | 4
+  carouselPerViewMobile?: 1 | 2 | 3 | 4
   /** Grid: columns per row on desktop (1..6). Unset = 3. */
   gridColumns?: number
   /** Grid: columns per row on tablet (1..6). Unset = same as desktop. */
@@ -271,6 +280,13 @@ export function parseSectionLayout(raw: unknown): SectionLayout | undefined {
   }
   if (isNum(raw.carouselGap) && raw.carouselGap >= 0 && raw.carouselGap <= 64) out.carouselGap = raw.carouselGap
   if (typeof raw.carouselArrows === 'boolean') out.carouselArrows = raw.carouselArrows
+  if (raw.carouselDots === true) out.carouselDots = true
+  if (raw.carouselLoop === true) out.carouselLoop = true
+  if (isNum(raw.carouselAutoplay) && raw.carouselAutoplay >= 1 && raw.carouselAutoplay <= 30) out.carouselAutoplay = Math.round(raw.carouselAutoplay)
+  for (const key of ['carouselPerViewTablet', 'carouselPerViewMobile'] as const) {
+    const v = raw[key]
+    if (isNum(v) && Number.isInteger(v) && v >= 1 && v <= 4) out[key] = v as 1 | 2 | 3 | 4
+  }
   const isColumnCount = (v: unknown): v is number => isNum(v) && Number.isInteger(v) && v >= 1 && v <= 6
   if (isColumnCount(raw.gridColumns)) out.gridColumns = raw.gridColumns
   if (isColumnCount(raw.gridColumnsTablet)) out.gridColumnsTablet = raw.gridColumnsTablet
@@ -493,6 +509,8 @@ export function carouselStyle(rawLayout: unknown): Record<string, string> {
   return {
     '--be-carousel-per': String(layout.carouselPerView ?? 1),
     '--be-carousel-gap': `${layout.carouselGap ?? 16}px`,
+    ...(layout.carouselPerViewTablet ? { '--be-carousel-per-t': String(layout.carouselPerViewTablet) } : {}),
+    ...(layout.carouselPerViewMobile ? { '--be-carousel-per-m': String(layout.carouselPerViewMobile) } : {}),
   }
 }
 

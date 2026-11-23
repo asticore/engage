@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 57 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 58 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -2975,6 +2975,13 @@ _Date: 23 Nov 2026_
 **Where to find it:** Visual editor > Elements > Calendar; /api/events/feed
 
 <a id="bld-057"></a>
+#### BLD-058 · Task 15 34f Slider options (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34f (23 Nov 2026).** Checked: the `slides` element is the hero slider (one slide at a time, any heading, text, button, picture or video, autoplay, loop, arrows, dots, thumbnails) and the section "Slider" display mode takes any blocks per slide. Added to the section slider: dots (`carouselDots`), loop-around arrows (`carouselLoop`), autoplay in seconds (`carouselAutoplay`, a small script that pauses on hover and focus and stays off with reduced motion: `CarouselAutoplay.tsx`) and slides per view on tablets and phones (`carouselPerViewTablet`, `carouselPerViewMobile`). Options are in `sectionLayout.ts`, `FieldPanel.tsx`, `SectionBlock.tsx` and `tabs.css`; labels in all thirteen languages; the AI builder hint lists them. Three Examples: `slider-hero`, `slider-testimonials`, `slider-logos`. Test: `tests/int/section-slider-34f.int.spec.ts`. The Spark `spark-carousel` behaviour is still used by the Image carousel element; the section slider keeps its own scroll-snap track so every slide stays in the HTML.
+
+**Where to find it:** Visual editor > a section > Display as > Slider; Templates > Slider examples
 #### BLD-057 · Task 12 image mask and link rel options (31e part) (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3343,6 +3350,8 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-058](#bld-058) Task 15 34f Slider options
+- [BLD-045](#bld-045) Task 15 34c Calendar element
 - [BLD-057](#bld-057) Task 12 image mask and link rel options (31e part)
 - [BLD-056](#bld-056) Task 15 34c Calendar element
 - [BLD-055](#bld-055) Task 12 image placement and overline
