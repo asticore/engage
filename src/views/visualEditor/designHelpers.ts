@@ -27,7 +27,7 @@ const tf = ['Rotate', 'Scale', 'TranslateX', 'TranslateY', 'SkewX', 'SkewY']
 /** The style keys each Design accordion owns (the group's Reset clears exactly these). 'hide' = the per-device hide flag. */
 export const GROUP_KEYS: Record<string, readonly string[]> = {
   background: [
-    'bgType', 'bgColor', 'bgGradientFrom', 'bgGradientTo', 'bgGradientAngle', 'bgImage', 'bgImageUrl', 'bgVideoUrl',
+    'bgType', 'bgColor', 'bgGradientFrom', 'bgGradientTo', 'bgGradientAngle', 'bgGradientKind', 'bgGradientMid', 'bgGradientMidPos', 'bgImage', 'bgImageUrl', 'bgVideoUrl',
     'bgVideoPoster', 'bgVideoLoop', 'bgOverlay', 'overlayType', 'overlayColor', 'overlayColor2', 'overlayAngle',
     'overlayOpacity', 'overlayBlend', 'bgEffect', 'bgEffectColor', 'bgEffectColor2', 'bgEffectIntensity', 'particlesCount',
     'particlesInteract', 'particlesSizeMin', 'particlesSizeMax', 'particlesSpeed', 'particlesOpacity', 'particlesLinks',
@@ -43,7 +43,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'minWidth', 'minWidthUnit', 'maxWidth', 'maxWidthUnit', 'maxHeight', 'maxHeightUnit',
   ],
   border: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow',
-    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset'],
+    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset'],
   layout: ['width', 'textAlign', 'textColor'],
   typography: [
     'typePreset', 'fontFamily', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit', 'textTransform',

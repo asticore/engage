@@ -165,7 +165,17 @@ export const DesignPanel: React.FC<{
 
         {value.bgType === 'gradient' && (
           <>
+            <SelectRow
+              label="Gradient type"
+              value={value.bgGradientKind ?? 'linear'}
+              options={[{ label: 'Linear', value: 'linear' }, { label: 'Radial', value: 'radial' }, { label: 'Conic', value: 'conic' }]}
+              applied={value.bgGradientKind !== undefined}
+              onReset={() => set('bgGradientKind', undefined)}
+              onChange={(v) => set('bgGradientKind', v === 'linear' ? undefined : (v as BlockStyle['bgGradientKind']))}
+            />
             <ColorRow label={t('dp.field.from')} value={value.bgGradientFrom} onChange={(v) => set('bgGradientFrom', v)} />
+            <ColorRow label="Middle colour (optional)" value={value.bgGradientMid} onChange={(v) => set('bgGradientMid', v)} />
+            {value.bgGradientMid && <NumberRow label="Middle stop (%)" value={value.bgGradientMidPos} min={0} max={100} onChange={(v) => set('bgGradientMidPos', v)} />}
             <ColorRow label={t('dp.field.to')} value={value.bgGradientTo} onChange={(v) => set('bgGradientTo', v)} />
             <NumberRow
               label={t('dp.field.angle_deg')}
