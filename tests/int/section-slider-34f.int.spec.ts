@@ -8,7 +8,7 @@ import { carouselStyle, parseSectionLayout } from '@/lib/sectionLayout'
 const layout = { display: 'carousel', carouselPerView: 3, carouselPerViewTablet: 2, carouselPerViewMobile: 1, carouselDots: true, carouselLoop: true, carouselAutoplay: 5, carouselArrows: true }
 const columns = [1, 2, 3, 4].map((n) => ({ width: 12, blocks: [{ blockType: 'element', elementType: 'heading', props: { text: `S${n}`, tag: 'h3' } }] }))
 const html = (lay: Record<string, unknown>) =>
-  renderToStaticMarkup(React.createElement(SectionBlock, { columns, design: { layout: lay }, renderNode: (n: { props?: { text?: string } }, k: string) => React.createElement('p', { key: k }, n.props?.text) }))
+  renderToStaticMarkup(React.createElement(SectionBlock, { columns, design: { layout: lay }, renderNode: ((n: { props?: { text?: string } }, k: string) => React.createElement('p', { key: k }, n.props?.text)) as never }))
 
 describe('section slider options (34f)', () => {
   it('keeps valid options and drops invalid ones', () => {
