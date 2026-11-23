@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 80 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 81 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3174,6 +3174,12 @@ Each shape divider (top and bottom) now has a width from 100 to 400 percent, cen
 **Where to find it:** Visual editor, Design panel, Dividers
 
 <a id="bld-078"></a>
+#### BLD-081 · Task 9 content, layout and marketing options and examples (23 Nov 2026)
+
+_Date: 23 Nov 2026 · Original group: Task 9, 28a to 28c_
+
+Built across 22 and 23 Nov: Wrapper link and Read more (height clamp) on any block, the `{{readingTime}}` merge tag, dismissible alert and toast, button hover effects, FAQ and How-To schema options, Lottie player, Video popup, Billing toggle, filterable gallery, the Categories and tags element (list, tag cloud, grid), Load more button and infinite scroll on the Loop element, and an Examples group in the Elements panel (Number box, Ticket and offer card, Promo box, Icon label, Blog sidebar). Live reviews (28d) are INT-018. Everything else in the old scope is built in `engage-templates` (see Task 9 leftovers) or in Task 46. Tests: wrap-collapse-reading-time, alert-dismiss-toast, button-fx, section-schema, video-popup, billing-toggle, gallery-filter, taxonomy-list, loop-load-more, example-presets.
+
 #### BLD-079 · Task 15 34a2 Timeline from events or posts (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3559,6 +3565,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-081](#bld-081) Task 9 content, layout and marketing options and examples
 - [BLD-080](#bld-080) Hover gradient background
 - [BLD-079](#bld-079) Task 15 34a2 Timeline from events or posts
 - [BLD-078](#bld-078) Theme colour tokens on every design colour field
