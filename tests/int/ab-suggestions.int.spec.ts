@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { goalChoices, suggestTests } from '@/features/abTesting/suggestions'
+import { goalChoices, resultIdeas, suggestTests } from '@/features/abTesting/suggestions'
 import type { SectionNode } from '@/lib/sectionTree'
 
 const el = (elementType: string, props: Record<string, unknown>): SectionNode => ({ blockType: 'element', elementType, props })
@@ -51,5 +51,22 @@ describe('A/B goal picker', () => {
       { type: 'element-clicked', selector: 'a[href="https://example.com/docs"]' },
       { type: 'form-submitted', formId: '7' },
     ])
+  })
+})
+
+describe('A/B ideas from past results', () => {
+  type Outcome = { winner: string | null; leader: string | null; uplift: number | null; readiness: string; visitors: number }
+  const outcome = (o: Partial<Outcome>): Outcome => ({ winner: null, leader: null, uplift: null, readiness: 'inconclusive', visitors: 400, ...o })
+  it('points past a winner, a held-up original and an unclear result, and ignores running or empty tests', () => {
+    const ideas = resultIdeas([
+      { name: 'Hero text', status: 'stopped', outcome: outcome({ winner: 'Variant B', uplift: 0.123, readiness: 'significant' }) },
+      { name: 'Button', status: 'stopped', outcome: outcome({ winner: 'Original', readiness: 'significant' }) },
+      { name: 'Layout', status: 'stopped', outcome: outcome({ leader: 'Variant B', uplift: 0.05 }) },
+      { name: 'Live', status: 'running', outcome: outcome({}) },
+      { name: 'Empty', status: 'stopped', outcome: outcome({ visitors: 0 }) },
+    ], 5)
+    expect(ideas.map((i) => i.id)).toEqual(['won:Hero text', 'kept:Button', 'open:Layout'])
+    expect(ideas[0].reason).toContain('+12.3%')
+    expect(ideas[2].title).toContain('bigger change')
   })
 })

@@ -121,3 +121,32 @@ export function goalChoices(tree: SectionNode[]): GoalChoice[] {
   tree.forEach(visit)
   return out
 }
+
+export type PastTest = {
+  name: string
+  status: string
+  outcome: { winner: string | null; leader: string | null; uplift: number | null; readiness: string; visitors: number } | null
+}
+export type ResultIdea = { id: string; title: string; reason: string; impact: string }
+
+const pct = (v: number | null): string => (v === null || !Number.isFinite(v) ? '' : `${v >= 0 ? '+' : ''}${(v * 100).toFixed(1)}%`)
+
+/**
+ * Ideas from this page's finished tests: a test that found a winner points at the next thing to try; one that did not
+ * reach a clear answer says what would help. Pure. Only stopped tests count, and a test with no data gives no idea.
+ */
+export function resultIdeas(past: PastTest[], limit = 3): ResultIdea[] {
+  const ideas: ResultIdea[] = []
+  for (const t of past) {
+    if (t.status !== 'stopped' || !t.outcome || t.outcome.visitors === 0) continue
+    const o = t.outcome
+    if (o.readiness === 'significant' && o.winner && !/^original$/i.test(o.winner)) {
+      ideas.push({ id: `won:${t.name}`, title: `Build on “${t.name}”`, reason: `${o.winner} won${pct(o.uplift) ? ` (${pct(o.uplift)})` : ''} from ${o.visitors} visitors.`, impact: 'Keep the winner, then test the next thing on the page, such as the button label or the top picture, so the gains add up.' })
+    } else if (o.readiness === 'significant') {
+      ideas.push({ id: `kept:${t.name}`, title: `The original held up in “${t.name}”`, reason: `No variant beat the original after ${o.visitors} visitors.`, impact: 'Try a bolder change next time: a different promise or layout, not a small wording tweak.' })
+    } else {
+      ideas.push({ id: `open:${t.name}`, title: `Run “${t.name}” again with a bigger change`, reason: `It stopped without a clear result after ${o.visitors} visitors${o.leader ? ` (${o.leader} was ahead${pct(o.uplift) ? ` by ${pct(o.uplift)}` : ''}, but that could be chance)` : ''}.`, impact: 'Tests of small changes need many visitors. A bolder variant, or a longer run, gives a clearer answer.' })
+    }
+  }
+  return ideas.slice(0, limit)
+}

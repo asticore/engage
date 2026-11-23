@@ -15,7 +15,7 @@ import dynamic from 'next/dynamic'
 /** The field panel and the design panel it holds are large; they load as their own chunk when the dock needs them. */
 const FieldPanel = dynamic(() => import('./FieldPanel').then((mod) => mod.FieldPanel), { ssr: false })
 import type { EditDevice } from './DesignPanel'
-import { AbIdeasPanel } from './AbIdeasPanel'
+import { AbIdeasPanel, AbVariantNotice } from './AbIdeasPanel'
 import { collectWarnings, indexNodePaths, type DesignWarning } from './designWarnings'
 import type { LockUi } from './LockControls'
 import { SelectionPath } from './SelectionPath'
@@ -202,6 +202,9 @@ export const EditorDock: React.FC<{
   tree?: SectionNode[]
   /** The saved page id when the editor is on a page: turns on the A/B tests panel (Task 21a). */
   abPageId?: number
+  /** The section template or page being edited when it may be a variant of an A/B test. */
+  abVariantTemplateId?: number
+  abVariantPageId?: number
   /** The selected node's path (null = nothing selected); drives the breadcrumb. */
   selectedPath?: NodePath | null
   /** Selects a path: a block, a column, or null for the page. Used by the breadcrumb and the Checks list. */
@@ -237,6 +240,8 @@ export const EditorDock: React.FC<{
   aiBuilder,
   tree,
   abPageId,
+  abVariantTemplateId,
+  abVariantPageId,
   selectedPath = null,
   onSelectPath,
   selectedExtraPanel,
@@ -368,6 +373,7 @@ export const EditorDock: React.FC<{
             {navigatorPanel || <p className="ve-dock__empty">{t('ve.dock.navigatorUnavailable')}</p>}
             {tree && onSelectPath && <ChecksList warnings={warnings} onSelect={selectWarningNode} />}
             {tree && abPageId ? <AbIdeasPanel tree={tree} pageId={abPageId} /> : null}
+            {abVariantTemplateId || abVariantPageId ? <AbVariantNotice templateId={abVariantTemplateId} variantPageId={abVariantPageId} /> : null}
           </>
         ) : tab === 'elements' ? (
           <>
