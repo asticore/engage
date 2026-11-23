@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 43 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 44 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -2856,6 +2856,15 @@ _Date: 23 Nov 2026_
 
 **Where to find it:** Visual editor > Elements > Timeline, and Templates > Timeline examples
 
+<a id="bld-044"></a>
+#### BLD-044 · Task 15 34b Social feeds, wall and embeds (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34b (23 Nov 2026).** Social accounts gained Vimeo, Twitch (token `clientId:accessToken`), Spotify podcast, Google Business posts, and embed-only X and LinkedIn (account field holds post links; each shows as a consent-gated embed through `EmbedConsentFrame` and `resolveEmbed`). The Social feed element gained Masonry wall, Highlight and Slider layouts, moderation lists (hide, pin, only containing, hide containing: `src/features/socialFeeds/moderate.ts`), refresh time per element (`ttlFor`), Load more (CSS only, no script), popup (CSS `:target`, no script), Follow button and a marketing-cookie gate for pictures. Test button works for every provider through `fetchPosts`. Code: `adapters.ts`, `types.ts`, `service.ts`, `Wave67Server.tsx`, `wave67Defs.ts`, `social-feed.css`, `Integrations.ts`; tests `tests/int/social-feeds-34b.int.spec.ts`. Not built: LinkedIn and X posts as API feeds (no free API), a per-post Hide button in the admin (the lists take addresses), hashtag filter on providers whose posts carry no caption.
+
+**Where to find it:** Settings > Integrations > Social accounts; Visual editor > Elements > Social feed
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3216,6 +3225,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-044](#bld-044) Task 15 34b Social feeds, wall and embeds
 - [BLD-043](#bld-043) Task 15 34a Timeline element
 - [STY-014](#sty-014) 40d third batch and data source (23 Nov 2026)
 - [STY-015](#sty-015) 40d second batch (23 Nov 2026)

@@ -1129,7 +1129,7 @@ export const Integrations: GlobalConfig = {
       labels: { singular: 'Social account', plural: 'Social accounts' },
       admin: {
         description:
-          'Accounts the Social feed element can show posts from. Tokens are stored encrypted, visible only to admins, and never sent to visitors. YouTube and RSS feeds need no token. X (Twitter) is not supported because its API is paid-only. The Google, Facebook and Yelp review options hold your own API key for the Reviews element; they do not appear in the Social feed picker.',
+          'Accounts the Social feed element can show posts from. Tokens are stored encrypted, visible only to admins, and never sent to visitors. YouTube and RSS feeds need no token. X (Twitter) has a paid-only API, so X and LinkedIn accounts hold post links (one per line) and show as embeds after the visitor accepts marketing cookies. The Google, Facebook and Yelp review options hold your own API key for the Reviews element; they do not appear in the Social feed picker.',
       },
       fields: [
         {
@@ -1144,6 +1144,12 @@ export const Integrations: GlobalConfig = {
             { label: 'TikTok', value: 'tiktok' },
             { label: 'YouTube channel or playlist', value: 'youtube' },
             { label: 'RSS or Atom feed', value: 'rss' },
+            { label: 'Vimeo (access token)', value: 'vimeo' },
+            { label: 'Twitch videos (clientId:accessToken)', value: 'twitch' },
+            { label: 'Spotify podcast (show ID and access token)', value: 'spotify' },
+            { label: 'Google Business posts (OAuth token)', value: 'google-business' },
+            { label: 'X posts (links, embed only)', value: 'x' },
+            { label: 'LinkedIn posts (links, embed only)', value: 'linkedin' },
             { label: 'Google reviews (Places API key)', value: 'google-reviews' },
             { label: 'Facebook Page reviews (Graph API token)', value: 'facebook-reviews' },
             { label: 'Yelp reviews (Fusion API key)', value: 'yelp-reviews' },
@@ -1156,7 +1162,7 @@ export const Integrations: GlobalConfig = {
           label: 'Account ID, handle or feed URL',
           admin: {
             description:
-              'Instagram user ID, Facebook Page ID, Pinterest board ID, TikTok (leave empty), YouTube channel ID (UC...) or playlist ID (PL...), or the full https feed URL for RSS. For review sources: the default Google place ID, Facebook Page ID or Yelp business ID (a Reviews block can use its own).',
+              'Instagram user ID, Facebook Page ID, Pinterest board ID, TikTok (leave empty), YouTube channel ID (UC...) or playlist ID (PL...), the full https feed URL for RSS, Vimeo user ID (or empty for your own), Twitch numeric user ID (token field: clientId:accessToken), Spotify show ID, Google Business accounts/ID/locations/ID, or post links (one per line) for X and LinkedIn. For review sources: the default Google place ID, Facebook Page ID or Yelp business ID (a Reviews block can use its own).',
           },
         },
         {

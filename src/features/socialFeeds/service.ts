@@ -42,6 +42,13 @@ const inflight = new Map<string, Promise<SocialPost[]>>()
 /** Cache key. Includes the account address but never the token. */
 const keyOf = (a: SocialAccount): string => `${a.id}|${a.provider}|${a.accountId}`
 
+/** Refresh times an element may ask for, in minutes. Anything else uses the default. */
+export const REFRESH_MINUTES = [5, 15, 30, 60, 360, 1440] as const
+export const ttlFor = (minutes: unknown): number => {
+  const m = Number(minutes)
+  return (REFRESH_MINUTES as readonly number[]).includes(m) ? m * 60_000 : FEED_TTL_MS
+}
+
 const cacheRequest = (key: string): Request => new Request(`https://social-feed-cache.invalid/${encodeURIComponent(key)}`)
 
 async function edgeGet(key: string): Promise<Entry | null> {
@@ -74,12 +81,12 @@ export const clearFeedCache = (): void => {
  * Posts for an account: fresh cache first, then the provider. On a provider failure the last good copy (however old)
  * is served, and with none the result is empty. Never throws and never leaks the token.
  */
-export async function getFeed(account: SocialAccount, fetchImpl?: Parameters<typeof fetchPosts>[2], now = Date.now()): Promise<SocialPost[]> {
+export async function getFeed(account: SocialAccount, fetchImpl?: Parameters<typeof fetchPosts>[2], now = Date.now(), ttl = FEED_TTL_MS): Promise<SocialPost[]> {
   const key = keyOf(account)
   const mem = memory.get(key)
-  if (mem && now - mem.at < FEED_TTL_MS) return mem.posts
+  if (mem && now - mem.at < ttl) return mem.posts
   const edge = mem ? null : await edgeGet(key)
-  if (edge && now - edge.at < FEED_TTL_MS) {
+  if (edge && now - edge.at < ttl) {
     memory.set(key, edge)
     return edge.posts
   }
@@ -95,7 +102,7 @@ export async function getFeed(account: SocialAccount, fetchImpl?: Parameters<typ
     } catch {
       const stale = (mem ?? edge)?.posts
       // Back off for two minutes so a broken account is not retried on every render.
-      memory.set(key, { at: now - FEED_TTL_MS + 120_000, posts: stale ?? [] })
+      memory.set(key, { at: now - ttl + 120_000, posts: stale ?? [] })
       return stale ?? []
     } finally {
       inflight.delete(key)

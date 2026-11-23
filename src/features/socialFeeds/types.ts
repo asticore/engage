@@ -1,4 +1,7 @@
-export const SOCIAL_PROVIDERS = ['instagram', 'facebook', 'pinterest', 'tiktok', 'youtube', 'rss'] as const
+export const SOCIAL_PROVIDERS = ['instagram', 'facebook', 'pinterest', 'tiktok', 'youtube', 'rss', 'vimeo', 'twitch', 'spotify', 'google-business', 'x', 'linkedin'] as const
+
+/** Providers with no feed API: the account holds post links and each post shows as a consent-gated embed. */
+export const EMBED_ONLY_PROVIDERS = ['x', 'linkedin'] as const
 export type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]
 
 /** A connected account as read from the Integrations global. `token` is server-side only. */
@@ -20,6 +23,8 @@ export type SocialPost = {
   date: string
   likes: number | null
   video: boolean
+  /** Set for embed-only providers: the post renders as an embed of this kind (url is the post address). */
+  embed?: 'x' | 'linkedin'
 }
 
 export type AdapterRequest = { url: string; init: { method: string; headers?: Record<string, string>; body?: string } }
