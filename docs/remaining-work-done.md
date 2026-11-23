@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 55 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 56 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -2965,6 +2965,15 @@ _Date: 23 Nov 2026_
 
 **Where to find it:** Visual editor > selected block > Design > Background (image) and Typography > Decoration
 
+<a id="bld-056"></a>
+#### BLD-056 · Task 15 34c Calendar element (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34c (23 Nov 2026).** New `calendar` element backed by the Events collection (recurring events are already separate occurrences). Views month, week, day, agenda and list; category filter (keyword rules `keyword | Category | #colour`, no new database field) and tag filter (#hashtags in title or summary); colour by category; event popup with image, map link, Add to Google, Add to calendar (ICS) and details link; Subscribe link to the new `/api/events/feed` iCalendar feed (`buildEventsCalendar` in `ics.ts`); design options for accent, text and background colour, font family, density, first day of week, 12 or 24 hour, optional fixed time zone (day cells follow it). Events are read on the server and the views run in the browser, so a static page snapshot stays correct (today is read in the browser). Code: `src/features/calendar/{model,feed}.ts`, `CalendarServer.tsx`, `CalendarClient.tsx`, `calendar.css`, `calendarDefs.ts`; tests `tests/int/calendar-34c.int.spec.ts`. Leftovers are Task 15 item 34c2.
+
+**Where to find it:** Visual editor > Elements > Calendar; /api/events/feed
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3325,6 +3334,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-056](#bld-056) Task 15 34c Calendar element
 - [BLD-055](#bld-055) Task 12 image placement and overline
 - [BLD-049](#bld-049) Task 11 maps and weather connections (23 Nov 2026)
 - [BLD-050](#bld-050) Task 12 border sides, custom shadow, 20 dividers
