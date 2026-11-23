@@ -1592,7 +1592,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
           { label: 'Overline', value: 'overline' },
         ]}
       />
-      <TypoRange ctl={ctl} k="lineHeight" label={t('dp.field.line_height')} def={1.5} min={0.8} max={ctl.effective('lineHeightUnit' as RespKey) ? 200 : 3} step={ctl.effective('lineHeightUnit' as RespKey) ? 1 : 0.05} unit={<UnitSelect ctl={ctl} unitKey={'lineHeightUnit' as RespKey} label="Line height unit" defaultLabel="×" units={['px', 'em', 'rem']} />} />
+      <TypoRange ctl={ctl} k="lineHeight" label={t('dp.field.line_height')} def={1.5} min={0.8} max={ctl.effective('lineHeightUnit' as RespKey) ? 200 : 3} step={ctl.effective('lineHeightUnit' as RespKey) ? 1 : 0.05} unit={<UnitSelect ctl={ctl} unitKey={'lineHeightUnit' as RespKey} label="Line height unit" defaultLabel={String.fromCodePoint(0xd7)} units={['px', 'em', 'rem']} />} />
       <TypoRange
         ctl={ctl}
         k="letterSpacing"

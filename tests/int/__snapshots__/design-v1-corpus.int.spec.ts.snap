@@ -164,6 +164,18 @@ exports[`v1 corpus from the template presets > pins the v1 render output for eve
     "classes": "be-block be-block--contained",
     "css": "",
     "inline": {},
+    "slug": "slider-testimonials#0",
+  },
+  {
+    "classes": "be-block be-block--contained",
+    "css": "",
+    "inline": {},
+    "slug": "slider-logos#0",
+  },
+  {
+    "classes": "be-block be-block--contained",
+    "css": "",
+    "inline": {},
     "slug": "grid-section#0",
   },
   {

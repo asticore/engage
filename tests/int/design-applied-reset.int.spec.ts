@@ -97,7 +97,7 @@ describe('style panel applied dot and per-setting reset', () => {
     render({ bgType: 'video', bgVideoLoop: false, noise: 20, textTransform: 'uppercase', borderWidth: 2 } as BlockStyle, onChange)
     expect(rowFor('Loop').querySelector('.ve-d51-dot')).not.toBeNull()
     expect(rowFor('Noise').querySelector('.ve-d51-dot')).not.toBeNull()
-    const toggleRow = rowFor('Transform', (r) => r.querySelector('button[aria-pressed="true"]') !== null)
+    const toggleRow = rowFor('Transform', (r) => r.querySelector('select')?.value === 'uppercase')
     expect(toggleRow.querySelector('.ve-d51-dot')).not.toBeNull()
 
     act(() => {
