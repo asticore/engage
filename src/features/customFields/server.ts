@@ -160,7 +160,7 @@ export async function resolveDocumentContent<T extends object>(collection: 'page
   const raw = JSON.stringify({ blocks: record.blocks, layout: record.layout, content: record.content })
   if (!raw || !raw.includes('{{')) return doc
   const tags = await buildDocumentTagContext(collection, record, { needsOptions: raw.includes('{{option:') })
-  const context = buildMergeContext(record, collection, undefined, tags)
+  const context = buildMergeContext(record, collection, undefined, tags, collection === 'posts' ? await (await import('@/features/seo/permalinkStore')).readBlogBase() : undefined)
   const out: Record<string, unknown> = { ...record }
   for (const key of ['blocks', 'layout', 'content']) {
     if (record[key] !== undefined) out[key] = resolveDocumentBlocks(record[key], context)

@@ -25,6 +25,9 @@ async function getD1(): Promise<D1Database | null> {
 }
 
 async function readBlogBaseImpl(): Promise<string> {
+  // Recovery: an environment variable wins over the saved value, for a site locked out by a bad address.
+  const override = typeof process !== 'undefined' ? process.env?.ENGAGE_BLOG_BASE : undefined
+  if (typeof override === 'string' && override.trim()) return resolveBlogBase(override)
   const now = Date.now()
   if (cached && now - cached.at < CACHE_TTL_MS) return cached.value
 

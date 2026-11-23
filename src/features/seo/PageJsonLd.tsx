@@ -1,5 +1,6 @@
 import React from 'react'
 
+import { readBlogBase } from '@/features/seo/permalinkStore'
 import { buildFaqPageJsonLd, buildPageJsonLd } from './pageSchema'
 import { videoElementsOf, videoObjectNodes } from './videoNodes'
 import { resolveVideoFacts } from './videoResolve'
@@ -143,6 +144,7 @@ export const PageJsonLd = async ({
       title: doc.title || title,
       pageTrail: trail,
       localePrefix,
+      blogBase: collection === 'posts' ? await readBlogBase() : undefined,
     }),
     extra: { ...eventFields, ...extra },
   })

@@ -26,6 +26,8 @@ import { summariseFormLayout } from '@/features/forms/layoutSummary'
 import { pageLiveHref, loadFormUsage, withUsageLinks } from '@/features/forms/pageUsageServer'
 import { FormPagesCard } from './FormUsage'
 import { CollapsibleCard } from '@/admin/components/CollapsibleCard'
+import { readBlogBase } from '@/features/seo/permalinkStore'
+import { blogPath } from '@/features/seo/permalinks'
 
 type AdminEngine = Awaited<ReturnType<typeof getAdminContext>>['engine']
 
@@ -64,7 +66,7 @@ function resultsPanelFor(slug: string, id: number, doc: Record<string, unknown> 
 
 async function liveHrefFor(engine: AdminEngine, collectionSlug: string, doc: Record<string, unknown>): Promise<string | undefined> {
   if (collectionSlug === 'pages') return pageLiveHref(engine, doc)
-  if (collectionSlug === 'posts' && typeof doc.slug === 'string') return `/blog/${doc.slug}`
+  if (collectionSlug === 'posts' && typeof doc.slug === 'string') return blogPath(await readBlogBase(), `/${doc.slug}`)
   return undefined
 }
 

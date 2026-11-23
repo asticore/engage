@@ -154,6 +154,7 @@ const collectSections = async (ctx: FileContext, withBodies: boolean): Promise<L
   }
 
   const sections: LlmsSection[] = []
+  const blogBase = await (await import('./permalinkStore')).readBlogBase()
   let total = 0
   const keep = (path: string): boolean => !pathMatches(path, ctx.excluded)
   const absolute = (path: string): string => `${ctx.baseUrl}${path}`
@@ -197,7 +198,7 @@ const collectSections = async (ctx: FileContext, withBodies: boolean): Promise<L
         for (const raw of docs as LooseDoc[]) {
           if (!raw.slug) continue
           if (isNoIndexedPage(raw)) continue
-          const url = `${PREFIXES[collection]}/${raw.slug}`
+          const url = `${collection === 'posts' ? `/${blogBase}` : PREFIXES[collection]}/${raw.slug}`
           if (!keep(url)) continue
           if (isGated(gated, raw.id)) continue
           const summary = clean(raw.excerpt) || clean(raw.summary) || clean(raw.shortDescription)
