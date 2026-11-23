@@ -9,6 +9,7 @@ import { FEED_FIELDS, NO_REQUEST_FEED, type FeedField } from '@/features/forms/r
 import { CUSTOMER_FIELDS, NO_CHECKOUT, type CustomerField } from '@/features/forms/checkoutHandoff'
 import { WebhookDeliveryLog, WebhookTestButton } from './FormWebhookTools'
 import { FormEditorContext } from './formInputs'
+import { SharedListsCard } from './SharedListsCard'
 import type { FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from '@/features/forms/types'
 
 /**
@@ -381,6 +382,12 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
               + Add webhook
             </button>
             <WebhookDeliveryLog formId={formId} />
+          </Section>
+        )}
+
+        {isAdmin && (
+          <Section title="Shared lists">
+            <SharedListsCard />
           </Section>
         )}
 

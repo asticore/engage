@@ -5,6 +5,7 @@ import type { FormDoc } from '../types'
 import { isPublished } from '../layout'
 import { formsEnabled, getFormSettings, resolveForForm, toPublicConfig } from '../settings'
 import { readPlacesBrowserKey } from '../placesKey'
+import { withDatasources } from '@/features/datasources/withDatasources'
 import { loadForm } from '../server'
 import { FormRendererLazy } from './FormRendererLazy'
 
@@ -42,7 +43,7 @@ export async function FormBlockRenderer({
 
   const doc =
     typeof form === 'object'
-      ? (form as FormDoc)
+      ? await withDatasources(form as FormDoc)
       : await loadForm(engine as never, form as number | string)
 
   if (!doc?.id) return null

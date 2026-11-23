@@ -33,7 +33,13 @@ export const isEmbedKey = (value: string): boolean => EMBED_KEY.test(value)
  * Reads with the local API's default `overrideAccess` so a draft is findable;
  * callers decide whether a draft may be shown (`isPublished`).
  */
+import { withDatasources } from '@/features/datasources/withDatasources'
+
 export async function loadForm(engine: LookupEngine, idOrKey: string | number): Promise<FormDoc | null> {
+  return withDatasources(await loadFormRaw(engine, idOrKey))
+}
+
+async function loadFormRaw(engine: LookupEngine, idOrKey: string | number): Promise<FormDoc | null> {
   const id = parseFormId(idOrKey)
   try {
     if (id !== null) {
