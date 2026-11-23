@@ -39,8 +39,7 @@ export function CalendarClient(p: CalendarClientProps): React.ReactElement {
       setCursor(t)
     }
     setOrigin(window.location.origin)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [p.timeZone])
   const [category, setCategory] = useState('')
   const [tag, setTag] = useState('')
   const [open, setOpen] = useState<CalEvent | null>(null)

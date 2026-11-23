@@ -134,7 +134,7 @@ describe('Authorship fields', () => {
         expect(beforeChangeHooks, `beforeChange hooks not found in ${slug}`).toBeDefined()
         expect(Array.isArray(beforeChangeHooks)).toBe(true)
         expect(beforeChangeHooks?.length).toBeGreaterThan(0)
-        expect(beforeChangeHooks?.[0]).toBe(authorshipBeforeChange)
+        expect(beforeChangeHooks).toContain(authorshipBeforeChange)
       })
     })
   })

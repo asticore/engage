@@ -57,7 +57,6 @@ export const ConfiguratorClient: React.FC<{ title: string; groups: ConfigGroup[]
           const o = g.options[picked[i] ?? 0]
           if (!o?.image) return null
           return (
-            // eslint-disable-next-line @next/next/no-img-element -- configurator layers are plain pictures
             <img
               key={g.name}
               src={o.image}
