@@ -13,7 +13,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [SPD](#cat-spd) | Speed, builds and updates | 18 |
 | [STY](#cat-sty) | Spark, Shine and fonts | 18 |
 | [SEC](#cat-sec) | Security, sign-in and privacy | 54 |
-| [INT](#cat-int) | Integrations, API and webhooks | 18 |
+| [INT](#cat-int) | Integrations, API and webhooks | 19 |
 | [EVT](#cat-evt) | Events, tickets and bookings | 11 |
 | [COM](#cat-com) | Commerce and shop | 51 |
 | [FRM](#cat-frm) | Forms, comments and spam | 9 |
@@ -1015,6 +1015,14 @@ _Date: 16 Nov 2026 · Original group: Built in the 15 to 32 run (16 Nov 2026), m
 **Where to find it:** /admin/shop/orders > order > Shipping panel (timeline and manual update); /admin/globals/shop-extra-settings, Email the customer as their parcel moves; webhook at /api/shipment-tracking
 
 <a id="int-018"></a>
+#### INT-019 · Task 15 34j Two-way Google Calendar sync (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34j (23 Nov 2026).** Events now sync both ways with Google Calendar. Settings sit on the Google connection page (Google Calendar sync card): on/off, default calendar, rules `word | calendar address` to send matching events to other calendars, sync interval (5 to 1440 minutes), Test connection, Sync now and a log. A five-minute cron job (`gcal-sync`, runs on the chosen interval) reads Google changes with sync tokens (repeating events arrive as single occurrences, a lapsed token restarts with a fresh read), creates, edits and deletes the matching events here, then sends new, edited and deleted site events to Google. When both sides changed since the last sync the later edit wins and the clash is logged; echoes of our own writes are ignored (5 second clock tolerance). Times go to Google in UTC; all-day Google events import as full days. Tables are created on first use (no migration). The Google sign-in now also asks for the Calendar events permission, so an existing connection must click Connect with Google again. Code: `src/features/gcalSync/{map,store,api,run}.ts`, `admin-gcal-sync` route, `GoogleCalendarSyncCard.tsx`, `cron/jobs.ts`, `google/constants.ts`; tests `tests/int/gcal-sync-34j.int.spec.ts`.
+
+**Where to find it:** Admin > Google connection > Google Calendar sync
+
 #### INT-018 · Task 9, 28d Live review sources (built 22 Nov 2026)
 
 _Date: 22 Nov 2026_
@@ -3472,6 +3480,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 - [FRM-008](#frm-008) Site-wide CAPTCHA keys, test and look (Task 5, 21a, built 22 Nov 2026)
 - [FRM-009](#frm-009) Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026)
 - [I18N-012](#i18n-012) 41a
+- [INT-019](#int-019) Task 15 34j Two-way Google Calendar sync
 - [INT-018](#int-018) Task 9, 28d Live review sources (built 22 Nov 2026)
 - [SEO-020](#seo-020) 16p Audit columns: image file sizes and last modified (built 22 Nov 2026)
 - [SEO-021](#seo-021) 16e Visitor-facing blog links follow the blog address (built 22 Nov 2026)
