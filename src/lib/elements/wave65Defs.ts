@@ -1,3 +1,5 @@
+import { EFFECT_CATALOG } from '@/features/effects/catalog'
+
 import type { EditorField } from './fieldTypes'
 import type { ElementDef } from './registry'
 
@@ -10,6 +12,7 @@ const text = (name: string, label: string, extra: Partial<EditorField> = {}): Ed
 const area = (name: string, label: string, helpText?: string): EditorField => ({ name, label, type: 'textarea', helpText })
 const check = (name: string, label: string, helpText?: string): EditorField => ({ name, label, type: 'checkbox', helpText })
 const labelled = (pairs: [string, string][]) => pairs.map(([value, label]) => ({ label, value }))
+const SPARK_OPTIONS = [{ label: 'None', value: '' }, ...EFFECT_CATALOG.map((e) => ({ label: `${e.group}: ${e.label}`, value: e.id }))]
 const DAYS = labelled([['mon', 'Monday'], ['tue', 'Tuesday'], ['wed', 'Wednesday'], ['thu', 'Thursday'], ['fri', 'Friday'], ['sat', 'Saturday'], ['sun', 'Sunday']])
 
 const hoursRow = (day: string, open = '09:00', close = '17:00', closed = false) => ({ day, open, close, closed })
@@ -53,6 +56,22 @@ export const WAVE65_ELEMENTS: ElementDef[] = [
           text('imageUrl', 'Or picture address', { helpText: 'Used when no picture is chosen above.' }),
           text('videoUrl', 'Background video (.mp4 or .webm)', { helpText: 'Plays muted and looped behind the text. The picture shows until it loads, and for visitors who prefer reduced motion.' }),
           { name: 'textAnimation', label: 'Text animation', type: 'select', width: 'half', options: [{ label: 'Fade up', value: 'fade-up' }, { label: 'Slide in', value: 'slide-left' }, { label: 'Zoom', value: 'zoom' }, { label: 'None', value: 'none' }] },
+          { name: 'sparkEffect', label: 'Spark effect on the text', type: 'select', width: 'half', options: SPARK_OPTIONS, helpText: 'Added on top of the text animation. Runs on the live page.' },
+          {
+            name: 'layers', label: 'Layers (free position)', type: 'repeater',
+            repeater: { fields: [
+              { name: 'layerType', label: 'Kind', type: 'select', width: 'half', options: labelled([['text', 'Text'], ['image', 'Picture'], ['button', 'Button']]) },
+              text('text', 'Text or button label', { width: 'half' }),
+              text('url', 'Link or picture address', { helpText: 'For a button, where it goes. For a picture, used when none is chosen below.' }),
+              { name: 'image', label: 'Picture', type: 'media' },
+              { name: 'x', label: 'Left (%)', type: 'number', width: 'half' },
+              { name: 'y', label: 'Top (%)', type: 'number', width: 'half' },
+              { name: 'width', label: 'Width (%)', type: 'number', width: 'half' },
+              { name: 'delay', label: 'Starts after (seconds)', type: 'number', width: 'half' },
+              { name: 'animation', label: 'Animation', type: 'select', width: 'half', options: [{ label: 'Fade up', value: 'fade-up' }, { label: 'Slide in', value: 'slide-left' }, { label: 'Zoom', value: 'zoom' }, { label: 'None', value: 'none' }] },
+              { name: 'sparkEffect', label: 'Spark effect', type: 'select', width: 'half', options: SPARK_OPTIONS },
+            ] },
+          },
         ] },
       },
       check('loop', 'Loop', 'Off stops at the first and last slide.'),
