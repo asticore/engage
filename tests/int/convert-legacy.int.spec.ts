@@ -73,16 +73,16 @@ const GALLERY = {
 }
 
 describe('canConvertLegacy', () => {
-  it('is true for the four legacy monolith types and false for everything else', () => {
-    for (const type of ['hero', 'ctaBanner', 'imageText', 'gallery']) expect(canConvertLegacy(type)).toBe(true)
-    for (const type of ['section', 'richText', 'element', 'productGrid', '']) expect(canConvertLegacy(type)).toBe(false)
+  it('is true for the legacy monolith types and false for everything else', () => {
+    for (const type of ['hero', 'ctaBanner', 'imageText', 'gallery', 'richText', 'toc', 'eventGrid', 'faq', 'productGrid']) expect(canConvertLegacy(type)).toBe(true)
+    for (const type of ['section', 'element', 'columns', '']) expect(canConvertLegacy(type)).toBe(false)
   })
 })
 
 describe('convertLegacyBlock', () => {
   it('returns null for an unsupported block type', () => {
-    expect(convertLegacyBlock({ blockType: 'richText', content: 'Hello' })).toBeNull()
-    expect(convertLegacyBlock({ blockType: 'productGrid', heading: 'Shop' })).toBeNull()
+    expect(convertLegacyBlock({ blockType: 'section', content: 'Hello' })).toBeNull()
+    expect(convertLegacyBlock({ blockType: 'element', heading: 'Shop' })).toBeNull()
     expect(convertLegacyBlock({ heading: 'No type at all' })).toBeNull()
   })
 
