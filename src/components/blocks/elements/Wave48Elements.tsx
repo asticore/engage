@@ -33,6 +33,30 @@ function chartId(v: unknown): string {
   return /^[a-z]+$/.test(raw) ? `chart-${raw}` : 'chart-bar'
 }
 
+const SUMMARY_ROWS = 12
+
+/**
+ * Text summary of a tabular chart for screen readers, read as the name of the role=img wrapper. Names the chart kind,
+ * the series and (for stacked or horizontal charts) the layout, then up to 12 rows as "label: series value, ...".
+ * Longer data is left to the table that follows the chart. `table` is the parsed CSV (header row first).
+ */
+export function chartSummary(table: string[][], kind: string, options: { title?: string; stacked?: boolean; horizontal?: boolean } = {}): string {
+  const head = table[0] ?? []
+  const names = head.slice(1).map((n, i) => n.trim() || `Series ${i + 1}`)
+  const body = table.slice(1)
+  const kindLabel = kind.charAt(0).toUpperCase() + kind.slice(1)
+  const parts = [`${kindLabel} chart${options.title ? `: ${options.title}` : ''}.`]
+  if (names.length) parts.push(`${names.length === 1 ? '1 series' : `${names.length} series`}: ${names.join(', ')}.`)
+  if (options.stacked) parts.push('Stacked.')
+  if (options.horizontal) parts.push('Horizontal.')
+  if (body.length) {
+    const rows = body.slice(0, SUMMARY_ROWS).map((r) => `${r[0] || 'Item'}: ${names.map((n, i) => `${n} ${r[i + 1] ?? ''}`.trim()).join(', ')}`)
+    parts.push(`${rows.join('; ')}.`)
+    if (body.length > SUMMARY_ROWS) parts.push(`${body.length - SUMMARY_ROWS} more rows are in the table.`)
+  }
+  return parts.join(' ')
+}
+
 function seriesAttrs(table: string[][]): Record<string, string> {
   const head = table[0] ?? []
   const body = table.slice(1)
@@ -59,11 +83,16 @@ export const ChartElement: React.FC<P> = (p) => {
   if (tabular) Object.assign(attrs, CSV_CHARTS.has(id) ? { 'data-spark-csv': csv } : seriesAttrs(table))
   else if (raw) attrs['data-spark-data'] = raw
   if (title) attrs['data-spark-title'] = title
+  // Tabular charts name themselves with a text summary; the visually hidden table below stays the full data.
+  const summary =
+    tabular && table.length > 1
+      ? chartSummary(table, id.replace(/^chart-/, '').replace(/-/g, ' '), { title, stacked: flag(p[`o_${id}_stacked`], false), horizontal: flag(p[`o_${id}_horizontal`], false) })
+      : ''
 
   return (
     <figure className="be-el-48-chart">
       {title && <figcaption className="be-el-48-chart__title">{title}</figcaption>}
-      <div className={`spark-${id}`} {...attrs} />
+      <div className={`spark-${id}`} {...attrs} role={summary ? 'img' : undefined} aria-label={summary || undefined} />
       {table.length > 1 && (
         <table className="be-el-48-sr">
           <caption>{title || 'Chart data'}</caption>

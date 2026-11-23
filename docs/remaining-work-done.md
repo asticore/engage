@@ -3238,6 +3238,14 @@ Three commerce elements in the Shop group: Cart contents (the cart page body), C
 
 **Where to find it:** Visual editor, Elements, Shop
 
+#### BLD-086 - Task 10 29a Chart series and table tools (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+The chart's Spark container now has role=img with a text summary for screen readers: the chart kind, the series names, stacked or horizontal, then up to 12 rows of values. `chartSummary` in `Wave48Elements.tsx` builds it, and the visually hidden data table stays for the full data. Checked the existing options rather than adding new ones: stacked bar, line and combo charts, mixed bars and line (combo series types), several CSV series and per-series colours already reach Spark, and the Table element's sort, search, CSV download and sticky header come from Spark too, so nothing was added there. Tests: `tests/int/wave75-charts.int.spec.ts`. Left open: chart tooltips, and Weather with a keyed provider.
+
+**Where to find it:** Visual editor, Elements, Chart
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3598,6 +3606,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-086](#bld-086) Task 10 29a Chart series and table tools
 - [BLD-085](#bld-085) Task 10 29d Cart, Checkout and Mini cart elements
 - [BLD-084](#bld-084) Task 10 29d Product meta brand and tags, variation images
 - [BLD-083](#bld-083) Task 10 29b My account element
