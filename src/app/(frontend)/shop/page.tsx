@@ -22,6 +22,8 @@ import { paginate, parsePage } from '@/features/siteTemplates/archiveQueries'
 import { storeTexts } from '@/features/uiStrings/storeTextsServer'
 import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
+import { computeStockStatus } from '@/features/ecommerce/stock'
+import { isSaleActive } from '@/features/ecommerce/pricing'
 import { archiveQueryString, filterArchiveItems, parseArchiveFilters, sortArchiveItems } from '@/features/siteTemplates/archiveFilter'
 import { archivePageHref } from '@/lib/templateWidgets'
 import { brandOptionsOf, tagOptionsOf, tagNames } from '@/features/ecommerce/lib/productTaxonomy'
@@ -109,8 +111,8 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   // The brand, tag and search params are applied by the query above. The price and sort are applied here, before paging.
   const matching = matchingAttributes
   const pool = matching.map((product) => {
-    const p = product as unknown as { title?: unknown; shortDescription?: unknown; priceInAUD?: unknown; createdAt?: unknown; tags?: unknown }
-    return { product, title: String(p.title ?? ''), excerpt: typeof p.shortDescription === 'string' ? p.shortDescription : '', price: priceHidden ? undefined : p.priceInAUD, date: p.createdAt, categories: [] as string[], tags: tagNames(p.tags) }
+    const p = product as unknown as { title?: unknown; shortDescription?: unknown; priceInAUD?: unknown; createdAt?: unknown; tags?: unknown; ratingAverage?: number | null }
+    return { product, title: String(p.title ?? ''), excerpt: typeof p.shortDescription === 'string' ? p.shortDescription : '', price: priceHidden ? undefined : p.priceInAUD, date: p.createdAt, categories: [] as string[], tags: tagNames(p.tags), inStock: computeStockStatus(product as never) !== 'outofstock', onSale: isSaleActive(product as never), rating: p.ratingAverage ?? null }
   })
   const kept = filterArchiveItems(pool, { ...archiveFilters, category: '' })
   const ordered = archiveFilters.sort === 'newest' ? kept.map((k) => k.product) : sortArchiveItems(kept, archiveFilters.sort).map((k) => k.product)

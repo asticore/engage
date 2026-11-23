@@ -2,7 +2,9 @@ import Link from 'next/link'
 import React from 'react'
 
 import { getBlockContext } from '@/lib/blockContext'
-import { isArchiveFilterActive, NO_ARCHIVE_FILTERS } from '@/features/siteTemplates/archiveFilter'
+import { archiveQueryString, isArchiveFilterActive, NO_ARCHIVE_FILTERS } from '@/features/siteTemplates/archiveFilter'
+
+import ArchiveFilterForm from './ArchiveFilterForm'
 
 /**
  * Filter widget: a plain GET form (works without JavaScript) that writes the archive filter params
@@ -35,11 +37,16 @@ export async function ArchiveFilterElement(props: P): Promise<React.ReactElement
   const showTag = flag(props.showTag, true) && facets.tags.length > 0
   const showPrice = flag(props.showPrice, true) && isProducts
   const showSort = flag(props.showSort, true)
+  const showInStock = flag(props.showInStock, true) && isProducts
+  const showOnSale = flag(props.showOnSale, true) && isProducts
+  const showRating = flag(props.showRating, true) && isProducts
+  const showChips = flag(props.showChips, true)
+  const instant = flag(props.instant, true)
   const sortOptions = SORT_OPTIONS.filter((o) => isProducts || !o.value.startsWith('price'))
 
   const field = 'archive-filter__field'
   return (
-    <form method="get" action={path} className="archive-filter" aria-label="Filter">
+    <ArchiveFilterForm path={path} instant={instant} chips={showChips ? chipsFor(f, path, facets) : []}>
       <div className="archive-filter__fields" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end' }}>
         {showSearch && (
           <label className={field}>
@@ -91,9 +98,49 @@ export async function ArchiveFilterElement(props: P): Promise<React.ReactElement
             </select>
           </label>
         )}
+        {showInStock && (
+          <label className={field}>
+            <input type="checkbox" name="instock" value="1" defaultChecked={!!f.inStock} />
+            <span> In stock only</span>
+          </label>
+        )}
+        {showOnSale && (
+          <label className={field}>
+            <input type="checkbox" name="onsale" value="1" defaultChecked={!!f.onSale} />
+            <span> On sale</span>
+          </label>
+        )}
+        {showRating && (
+          <label className={field}>
+            <span>Rating</span>
+            <select name="rating" defaultValue={f.rating ? String(f.rating) : ''}>
+              <option value="">Any rating</option>
+              {[4, 3, 2, 1].map((n) => (
+                <option key={n} value={String(n)}>{`${n} stars and up`}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <button type="submit" className="archive-filter__apply">Apply</button>
         {isArchiveFilterActive(f) && <Link href={path} className="archive-filter__clear">Clear filters</Link>}
       </div>
-    </form>
+    </ArchiveFilterForm>
   )
+}
+
+type Chip = { label: string; href: string }
+
+/** One removable chip per active filter. Each link is the same archive address without that one filter. */
+function chipsFor(f: NonNullable<ReturnType<typeof getBlockContext>['archive']>['filters'] & object, path: string, facets: { categories: { slug: string; name: string }[]; tags: { slug: string; name: string }[] }): Chip[] {
+  const without = (patch: Partial<typeof f>): string => `${path}${archiveQueryString({ ...f, ...patch })}`
+  const chips: Chip[] = []
+  if (f.q) chips.push({ label: `Search: ${f.q}`, href: without({ q: '' }) })
+  if (f.category) chips.push({ label: facets.categories.find((c) => c.slug === f.category)?.name ?? f.category, href: without({ category: '' }) })
+  if (f.tag) chips.push({ label: `#${facets.tags.find((t) => t.slug === f.tag)?.name ?? f.tag}`, href: without({ tag: '' }) })
+  if (f.min !== null) chips.push({ label: `From ${f.min}`, href: without({ min: null }) })
+  if (f.max !== null) chips.push({ label: `Up to ${f.max}`, href: without({ max: null }) })
+  if (f.inStock) chips.push({ label: 'In stock', href: without({ inStock: false }) })
+  if (f.onSale) chips.push({ label: 'On sale', href: without({ onSale: false }) })
+  if (f.rating) chips.push({ label: `${f.rating} stars and up`, href: without({ rating: null }) })
+  return chips
 }

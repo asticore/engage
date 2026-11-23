@@ -38,7 +38,20 @@ export type ArchiveItem = {
 export type ArchiveSort = 'newest' | 'oldest' | 'title' | 'price-asc' | 'price-desc'
 
 /** The values of the archive filter params (?category=&tag=&min=&max=&q=&sort=). Defaults mean "no filter". */
-export type ArchiveFilterValues = { category: string; tag: string; min: number | null; max: number | null; q: string; sort: ArchiveSort }
+export type ArchiveFilterValues = {
+  category: string
+  tag: string
+  min: number | null
+  max: number | null
+  q: string
+  sort: ArchiveSort
+  /** Shop only: show products that can be bought now (?instock=1). */
+  inStock?: boolean
+  /** Shop only: show products with an active sale price (?onsale=1). */
+  onSale?: boolean
+  /** Shop only: minimum average rating 1 to 5 (?rating=4). */
+  rating?: number | null
+}
 
 /** `basePath` may carry a query (e.g. /shop?category=x); page links add `page` after it. */
 export type ArchiveContext = {

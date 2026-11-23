@@ -9,7 +9,7 @@ import { slugify } from '@/utilities/formatSlug'
 
 export const ARCHIVE_SORTS: readonly ArchiveSort[] = ['newest', 'oldest', 'title', 'price-asc', 'price-desc']
 
-export const NO_ARCHIVE_FILTERS: ArchiveFilterValues = { category: '', tag: '', min: null, max: null, q: '', sort: 'newest' }
+export const NO_ARCHIVE_FILTERS: ArchiveFilterValues = { category: '', tag: '', min: null, max: null, q: '', sort: 'newest', inStock: false, onSale: false, rating: null }
 
 type Raw = Record<string, string | string[] | undefined>
 
@@ -25,6 +25,12 @@ function money(raw: string | string[] | undefined): number | null {
   return Number(v)
 }
 
+/** A minimum rating: a whole number 1 to 5. Anything else is no bound. */
+function ratingBound(raw: string | string[] | undefined): number | null {
+  const v = one(raw).trim()
+  return /^[1-5]$/.test(v) ? Number(v) : null
+}
+
 /** Reads the filter params. Unknown sort values fall back to newest; text is trimmed and length-capped. */
 export function parseArchiveFilters(params: Raw): ArchiveFilterValues {
   const sort = one(params.sort).trim()
@@ -34,13 +40,16 @@ export function parseArchiveFilters(params: Raw): ArchiveFilterValues {
     min: money(params.min),
     max: money(params.max),
     q: one(params.q).trim().slice(0, 100),
+    inStock: one(params.instock) === '1',
+    onSale: one(params.onsale) === '1',
+    rating: ratingBound(params.rating),
     sort: (ARCHIVE_SORTS as readonly string[]).includes(sort) ? (sort as ArchiveSort) : 'newest',
   }
 }
 
 /** True when any filter is set (a non-default sort counts). */
 export function isArchiveFilterActive(f: ArchiveFilterValues): boolean {
-  return f.category !== '' || f.tag !== '' || f.min !== null || f.max !== null || f.q !== '' || f.sort !== 'newest'
+  return f.category !== '' || f.tag !== '' || f.min !== null || f.max !== null || f.q !== '' || f.sort !== 'newest' || !!f.inStock || !!f.onSale || (f.rating ?? null) !== null
 }
 
 /** The query string for the active values (without `page`), or '' when nothing is set. */
@@ -51,6 +60,9 @@ export function archiveQueryString(f: ArchiveFilterValues): string {
   if (f.min !== null) q.set('min', String(f.min))
   if (f.max !== null) q.set('max', String(f.max))
   if (f.q) q.set('q', f.q)
+  if (f.inStock) q.set('instock', '1')
+  if (f.onSale) q.set('onsale', '1')
+  if (f.rating) q.set('rating', String(f.rating))
   if (f.sort !== 'newest') q.set('sort', f.sort)
   const s = q.toString()
   return s ? `?${s}` : ''
@@ -64,6 +76,10 @@ export type FilterableItem = {
   date?: unknown
   categories?: string[] | null
   tags?: string[] | null
+  /** Products only. */
+  inStock?: boolean
+  onSale?: boolean
+  rating?: number | null
 }
 
 const same = (a: string, b: string): boolean => slugify(a.trim()) === slugify(b.trim())
@@ -91,6 +107,9 @@ export function filterArchiveItems<T extends FilterableItem>(items: T[], f: Arch
       if (f.min !== null && p < f.min) return false
       if (f.max !== null && p > f.max) return false
     }
+    if (f.inStock && item.inStock !== true) return false
+    if (f.onSale && item.onSale !== true) return false
+    if (f.rating && !((item.rating ?? 0) >= f.rating)) return false
     if (needle && !`${item.title} ${item.excerpt ?? ''}`.toLowerCase().includes(needle)) return false
     return true
   })
