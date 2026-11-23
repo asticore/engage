@@ -95,7 +95,7 @@ import { EditLockBanner } from '@/admin/views/EditLockBanner'
 import { savedByAnotherSince, updatedAtFromSave } from './visualEditor/saveConflict'
 import { CoachMarks, coachMarksSeen } from './visualEditor/CoachMarks'
 import { isDirtyAfterRestore } from './visualEditor/dirtyState'
-import { TopBarMore, useCompactTopBar } from './visualEditor/TopBarMore'
+import { TopBarMore } from './visualEditor/TopBarMore'
 import './visualEditor/topbar.css'
 import './visualEditor/veShell.css'
 import { blockDraftKey, clearBlockDraft, comparableTree, draftNeedsOffer, readBlockDraft, writeBlockDraft, type BlockDraft } from './visualEditor/blockDraft'
@@ -226,8 +226,6 @@ export const VisualEditorView: React.FC = () => {
   /** Where a "Select your structure" pick will insert the new section; null while the picker is closed. */
   const [structureTarget, setStructureTarget] = useState<{ containerPath: NodePath; at: number } | null>(null)
   const [dirty, setDirty] = useState(false)
-  /** Narrow viewport: Import / Export and Save as template move into the top bar's More menu. */
-  const compactBar = useCompactTopBar()
   /** Locks, page settings or form config changed since the last save (tree changes are judged against savedTreeRef instead). */
   const extraDirtyRef = useRef(false)
   /** Another user holds the edit lock on this document (and this user has not taken it over): saving is off. */
@@ -1735,6 +1733,14 @@ export const VisualEditorView: React.FC = () => {
     }
   }
 
+  const clearSiteCache = async () => {
+    try {
+      const response = await fetch('/api/admin-cache-clear', { method: 'POST', credentials: 'include' })
+      notifyTranslate(response.ok ? t('ve.top.clearCacheDone') : t('ve.top.clearCacheFailed'))
+    } catch {
+      notifyTranslate(t('ve.top.clearCacheFailed'))
+    }
+  }
   /**
    * Preview page: saves a dirty page first, then opens its public address. The frontend serves the page marked
    * as homepage at "/", and any other page at its slug under its parents' slugs (the same rule as pagePaths.ts).
@@ -1940,17 +1946,6 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.shortcut.redo')}
             </button></Tooltip>
           </div>
-          {!compactBar && (
-            <Tooltip text={t('ve.top.importTitle')}><button type="button" className="ve-btn ve-btn--ghost" onClick={() => setImportOpen(true)}>
-              {t('ve.top.importExport')}
-            </button></Tooltip>
-          )}
-          <ShortcutsHelp
-            modLabel={modLabel}
-            open={helpOpen}
-            onOpenChange={setHelpOpen}
-            onTour={() => setTourOpen(true)}
-          />
           <div className="ve-device-toggle" role="group" aria-label={t('ve.top.devicePreview')}>
             <Tooltip text={t('ve.top.desktopPreviewTitle')}><button
               type="button"
@@ -1977,37 +1972,6 @@ export const VisualEditorView: React.FC = () => {
               {t('ve.top.mobile')}
             </button></Tooltip>
           </div>
-          {!formMode && !compactBar && (
-            <Tooltip text={selectedPath && selectedPath.length === 1 ? t('ve.top.templateSection') : t('ve.top.templatePage')}><button
-              type="button"
-              className="ve-btn"
-              onClick={() => setSaveTemplateOpen(true)}
-              disabled={blocks.length === 0}
-            >
-              {t('ve.top.saveAsTemplate')}
-            </button></Tooltip>
-          )}
-          {compactBar && (
-            <TopBarMore
-              items={[
-                { key: 'import', label: t('ve.top.importExport'), onSelect: () => setImportOpen(true) },
-                ...(formMode ? [] : [{ key: 'template', label: t('ve.top.saveAsTemplate'), onSelect: () => setSaveTemplateOpen(true), disabled: blocks.length === 0 }]),
-              ]}
-            />
-          )}
-          {pageSettings && surface?.slug === 'pages' && (
-            <Tooltip text={status !== 'published' ? t('ve.top.previewDraft') : t('ve.top.preview')}><button
-              type="button"
-              className="ve-btn ve-btn--icon"
-              onClick={() => void openPreview()}
-              aria-label={t('ve.top.preview')}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            </button></Tooltip>
-          )}
           <SaveStatusChip status={saving} dirty={dirty} savedAt={savedAt} onRetry={() => save(false)} />
           <button type="button" className="ve-btn" onClick={() => save(false)} disabled={saving === 'saving' || !dirty || lockedByOther}>
             {saving === 'saving' ? t('ve.top.saving') : saving === 'saved' ? t('status.saved') : t('common.saveDraft')}
@@ -2020,6 +1984,22 @@ export const VisualEditorView: React.FC = () => {
           >
             {saving === 'publishing' ? t('ve.top.publishing') : saving === 'published' ? t('status.published') : t('common.publish')}
           </button>
+          <TopBarMore
+            items={[
+              ...(pageSettings && surface?.slug === 'pages' ? [{ key: 'preview', label: t('ve.top.preview'), onSelect: (): void => void openPreview() }] : []),
+              { key: 'clearCache', label: t('ve.top.clearCache'), onSelect: () => void clearSiteCache() },
+              { key: 'shortcuts', label: t('ve.shortcuts.title'), onSelect: () => setHelpOpen(true) },
+              { key: 'import', label: t('ve.top.importExport'), onSelect: () => setImportOpen(true) },
+              ...(formMode ? [] : [{ key: 'template', label: t('ve.top.saveAsTemplate'), onSelect: () => setSaveTemplateOpen(true), disabled: blocks.length === 0 }]),
+            ]}
+          />
+          <ShortcutsHelp
+            hideButton
+            modLabel={modLabel}
+            open={helpOpen}
+            onOpenChange={setHelpOpen}
+            onTour={() => setTourOpen(true)}
+          />
         </div>
       </div>
       {surface?.kind === 'collection' && route?.id && Number.isFinite(Number(route.id)) && (

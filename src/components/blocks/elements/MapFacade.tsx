@@ -13,8 +13,8 @@ import { MapEngine } from './MapEngine'
  * against every page with a map, even when nobody looked at it. Until the button is pressed this renders a light
  * placeholder with the place name, so the page paints at once and no third-party request is made.
  */
-export const MapFacade = ({ src, title, label, height, preview, directions, engine, noscriptSrc }: { src: string; title: string; label: string; height: number; preview?: string; directions?: string; engine?: MapEngineSpec; noscriptSrc?: string }) => {
-  const [open, setOpen] = useState(false)
+export const MapFacade = ({ src, title, label, height, preview, directions, engine, noscriptSrc, auto, showLabel = true }: { src: string; title: string; label: string; height: number; preview?: string; directions?: string; engine?: MapEngineSpec; noscriptSrc?: string; auto?: boolean; showLabel?: boolean }) => {
+  const [open, setOpen] = useState(!!auto && !!(src || engine))
   const [failed, setFailed] = useState(false)
   const fail = useCallback(() => setFailed(true), [])
   return (
@@ -30,7 +30,7 @@ export const MapFacade = ({ src, title, label, height, preview, directions, engi
             <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
             <circle cx="12" cy="9.5" r="2.5" />
           </svg>
-          <span className="el-map__label">{label}</span>
+          {showLabel && <span className="el-map__label">{label}</span>}
           <span className="el-map__action">{src || engine ? 'Show map' : 'Open map'}</span>
         </button>
       )}

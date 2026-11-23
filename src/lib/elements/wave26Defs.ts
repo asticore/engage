@@ -311,7 +311,10 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
       select('style', 'Map style', [{ label: 'Site default', value: '' }, ...opts('light', 'dark', 'grayscale', 'satellite', 'terrain')]),
       area('markers', 'More markers', 'One per line: "lat,lng | Label". Shown on the Google, MapTiler and Mapbox pictures and as the centre on OpenStreetMap.'),
       text('markerColour', 'Marker colour (hex, optional)', { width: 'half' }),
+      select('loadMode', 'How the map appears', [{ label: 'Behind a Show map button (fastest page)', value: 'button' }, { label: 'Show the map automatically', value: 'auto' }]),
       { name: 'showDirections', label: 'Show a directions link', type: 'checkbox', width: 'half' },
+      { name: 'showMarkers', label: 'Show markers (pins)', type: 'checkbox', width: 'half' },
+      { name: 'showLabel', label: 'Show the place name on the button', type: 'checkbox', width: 'half' },
       { name: 'interactive', label: 'Interactive map (popups, clusters)', type: 'checkbox', width: 'half', helpText: 'OpenStreetMap, MapTiler and Mapbox only. Loads the map library from a CDN after the visitor presses Show map.' },
       { name: 'cluster', label: 'Group markers that are close (over 3 markers)', type: 'checkbox', width: 'half' },
       { name: 'lockScroll', label: 'Scroll zoom needs ctrl or two fingers', type: 'checkbox', width: 'half' },
@@ -320,6 +323,6 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
       number('height', 'Height (px)'),
       text('title', 'Title (for screen readers)'),
     ],
-    defaultProps: () => ({ address: 'Trafalgar Square, London', zoom: 14, height: 320, title: 'Map', provider: '', style: '', showDirections: true, interactive: true, cluster: true, lockScroll: true }),
+    defaultProps: () => ({ address: 'Trafalgar Square, London', zoom: 14, height: 320, title: 'Map', provider: '', style: '', loadMode: 'button', showDirections: true, showMarkers: true, showLabel: true, interactive: true, cluster: true, lockScroll: true }),
   },
 ]
