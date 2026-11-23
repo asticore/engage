@@ -8,7 +8,7 @@ export type BlockContext = {
   audience?: 'members' | 'guests'
   post?: { title?: unknown; date?: unknown; excerpt?: unknown; author?: unknown; featuredImage?: { url?: unknown; alt?: unknown }; categories?: string[]; categoryTrail?: string[]; categoryHref?: string }
   page?: { title?: unknown }
-  product?: { id?: number; title?: unknown; price?: unknown; inventory?: number | null; ratingAverage?: number | null; ratingCount?: number | null; featuredImage?: { url?: unknown; alt?: unknown }; sku?: string; gtin?: string; shortDescription?: string; category?: string; images?: Array<{ url: string; alt: string }>; lowStockThreshold?: number | null; backorders?: string; description?: unknown; weight?: number; dimensions?: string }
+  product?: { id?: number; title?: unknown; price?: unknown; inventory?: number | null; ratingAverage?: number | null; ratingCount?: number | null; featuredImage?: { url?: unknown; alt?: unknown }; sku?: string; gtin?: string; shortDescription?: string; category?: string; images?: Array<{ url: string; alt: string }>; lowStockThreshold?: number | null; backorders?: string; description?: unknown; weight?: number; dimensions?: string; brand?: string; tags?: string[] }
   /** Public event fields. `location` is the venue name and address as one line. */
   event?: { title?: unknown; date?: unknown; location?: unknown; summary?: unknown }
   /** URL path of the page being viewed, for breadcrumbs. */

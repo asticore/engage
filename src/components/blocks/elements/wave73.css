@@ -1,0 +1,10 @@
+.w73-account{max-width:34rem}
+.w73-heading{margin:0 0 .75rem}
+.w73-tabs{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.5rem}
+.w73-tabs a{display:inline-block;padding:.5rem .9rem;border:1px solid color-mix(in srgb,currentColor 30%,transparent);border-radius:.4rem;text-decoration:none;color:inherit}
+.w73-tabs a:hover,.w73-tabs a:focus-visible{background:color-mix(in srgb,currentColor 8%,transparent)}
+.w73-form .account-form{display:grid;gap:.75rem}
+.w73-form label{display:grid;gap:.25rem}
+.w73-form input:not([type="hidden"]):not([type="checkbox"]){padding:.55rem .7rem;font:inherit;border:1px solid color-mix(in srgb,currentColor 30%,transparent);border-radius:.4rem;background:transparent;color:inherit}
+.w73-form button[type="submit"]{padding:.6rem 1rem;font:inherit;border-radius:.4rem;border:0;background:var(--be-accent,#2e3192);color:#fff;cursor:pointer}
+.w73-note{opacity:.7}
