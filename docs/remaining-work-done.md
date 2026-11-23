@@ -3262,6 +3262,14 @@ Site template conditions gain Post author (matches the author's slug, display na
 
 **Where to find it:** Admin, Site templates, a single post template's Conditions (Post author, Post date); Visual editor, Elements, Age gate (Countries, Minimum age by country)
 
+#### BLD-088 - Task 10 29b Form styling options (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+The form block's look gains per-form colour options in the form's settings (Look section): field background, field text, field border, focus border, label, button background, button text, error message and success message. Each is a hex colour checked by the existing colour cleaner (`cleanColour` in `src/features/forms/config.ts`), kept under `style.colours` in the form's config, drawn as `--eg-form-*` custom properties on the form root, and read by `forms.css` with the current look as fallback, so a form with no overrides draws exactly as before. The site-wide label and focus colours are exposed on the form root too (`--eg-site-label`, `--eg-site-focus`, in `themeStyles/css.ts`) so the per-form fallback keeps the site colours when no override is set. Presets stay as they were; the form style presets as Examples are still to move to engage-templates. Code: `src/features/forms/formColours.ts`, `config.ts` (`cleanFormColours`), `types.ts`, `settings.ts`, `components/FormRenderer.tsx`, `components/forms.css`, `src/features/themeStyles/css.ts`, `src/views/visualEditor/FormSettingsPanel.tsx`. Tests: `tests/int/forms-builder.int.spec.ts`. Left open: the live check (batch 18 in Task 47), and the other colours in the site theme (for example the success colour outside a form) are not changed.
+
+**Where to find it:** Visual editor, Form settings, Look (Focus border, Label, Button background, and the other colour boxes)
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3622,6 +3630,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-088](#bld-088) Task 10 29b Form styling options
 - [BLD-087](#bld-087) Task 10 29e and 29c Template author and date conditions, age gate per country
 - [SEO-026](#seo-026) Redirect popup when an address changes
 - [BLD-086](#bld-086) Task 10 29a Chart screen reader summary

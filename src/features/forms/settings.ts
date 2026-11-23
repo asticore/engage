@@ -302,6 +302,7 @@ export const toPublicConfig = (
     layout: sanitiseLayoutHtml((options.layout as unknown[]) || (layout.legacy ? undefined : layout.layout)),
     stylePreset: config.style?.preset || 'theme',
     accent: config.style?.accent,
+    formColours: config.style?.colours,
     customCss: config.style?.customCss || undefined,
     steps: {
       showProgress: config.steps?.showProgress !== false,

@@ -1,6 +1,7 @@
 import { normaliseCheckoutConfig } from './checkoutHandoff'
 import { normaliseRequestFeed } from './requestFeed'
-import type { ConditionalLogic, FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from './types'
+import { FORM_COLOUR_FIELDS } from './formColours'
+import type { ConditionalLogic, FormColours, FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from './types'
 
 /**
  * The per-form options column, read and written defensively.
@@ -42,6 +43,17 @@ export const cleanColour = (value: unknown): string | undefined =>
   typeof value === 'string' && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value.trim())
     ? value.trim()
     : undefined
+
+/** Keeps only the colour overrides that pass cleanColour. Unknown keys are dropped. */
+export function cleanFormColours(input: unknown): FormColours {
+  const raw = record(input)
+  const out: FormColours = {}
+  for (const { key } of FORM_COLOUR_FIELDS) {
+    const colour = cleanColour(raw[key])
+    if (colour) out[key] = colour
+  }
+  return out
+}
 
 /**
  * One origin as the browser sends it in `Origin`: scheme, host, optional port,
@@ -150,6 +162,7 @@ export function normaliseFormConfig(input: unknown): FormConfig {
     style: {
       preset,
       accent: cleanColour(style.accent),
+      colours: cleanFormColours(style.colours),
       customCss: str(style.customCss, MAX_CUSTOM_CSS_LENGTH) || '',
     },
     steps: {

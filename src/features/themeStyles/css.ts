@@ -244,7 +244,7 @@ function buildGlobals(g: ThemeGlobals, saved: boolean): string {
       ':where(.engage-form, form) :where(input:not([type=checkbox]):not([type=radio]):not([type=submit]):not([type=button]), select, textarea)'
     const focusColour = col(f.focusBorder)
     out.push(
-      `.engage-form{${[decl('--eg-field-bg', col(f.fieldBg)), decl('--eg-ink', col(f.fieldText)), decl('--eg-radius', px(f.fieldRadius)), decl('--eg-line', col(f.fieldBorder)), decl('--eg-accent', focusColour)].join('')}}`,
+      `.engage-form{${[decl('--eg-field-bg', col(f.fieldBg)), decl('--eg-ink', col(f.fieldText)), decl('--eg-radius', px(f.fieldRadius)), decl('--eg-line', col(f.fieldBorder)), decl('--eg-accent', focusColour), decl('--eg-site-label', col(f.labelColour)), decl('--eg-site-focus', focusColour)].join('')}}`,
     )
     out.push(
       `${fields}{${[
