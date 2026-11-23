@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 76 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 79 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3174,6 +3174,14 @@ Each shape divider (top and bottom) now has a width from 100 to 400 percent, cen
 **Where to find it:** Visual editor, Design panel, Dividers
 
 <a id="bld-078"></a>
+#### BLD-079 · Task 15 34a2 Timeline from events or posts (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34a2 (23 Nov 2026).** New `timeline-feed` element (Elements > Media, Timeline from events or posts): fills a timeline on the server from upcoming Events, past Events or blog Posts (1 to 24, soonest or newest first), skipping drafts, trashed and protected items, with each item linking to its page (`/events/slug` or `/blog/slug`) and grouped by year. It draws with the normal Timeline (layout, line and dot colours, Spark reveal, optional Event structured data for events only). It is a separate element so the existing Timeline keeps working on the canvas. Code: `calendarDefs.ts`, `features/calendar/timelineFeed.ts`, `TimelineFeedServer.tsx`, `Wave38Elements.tsx`; tests `tests/int/timeline-feed-34a2.int.spec.ts`. Course steps are not a source yet.
+
+**Where to find it:** Visual editor > Elements > Media > Timeline from events or posts
+
 #### BLD-078 · Theme colour tokens on every design colour field (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3542,6 +3550,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-079](#bld-079) Task 15 34a2 Timeline from events or posts
 - [BLD-078](#bld-078) Theme colour tokens on every design colour field
 - [BLD-077](#bld-077) Task 10 29e Cart and order display conditions
 - [BLD-076](#bld-076) Shape divider width, invert and bring to front
