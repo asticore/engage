@@ -17,6 +17,7 @@ export const V1_GROUP_OF = {
   bgGradientTo: 'background',
   bgGradientAngle: 'background',
   bgGradientKind: 'background',
+  bgGradientFlow: 'background',
   bgGradientMid: 'background',
   bgGradientMidPos: 'background',
   bgImage: 'background',

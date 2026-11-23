@@ -27,7 +27,7 @@ const tf = ['Rotate', 'Scale', 'TranslateX', 'TranslateY', 'SkewX', 'SkewY']
 /** The style keys each Design accordion owns (the group's Reset clears exactly these). 'hide' = the per-device hide flag. */
 export const GROUP_KEYS: Record<string, readonly string[]> = {
   background: [
-    'bgType', 'bgColor', 'bgGradientFrom', 'bgGradientTo', 'bgGradientAngle', 'bgGradientKind', 'bgGradientMid', 'bgGradientMidPos', 'bgImage', 'bgImageUrl', 'bgVideoUrl',
+    'bgType', 'bgColor', 'bgGradientFrom', 'bgGradientTo', 'bgGradientAngle', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgImage', 'bgImageUrl', 'bgVideoUrl',
     'bgVideoPoster', 'bgVideoLoop', 'bgOverlay', 'overlayType', 'overlayColor', 'overlayColor2', 'overlayAngle',
     'overlayOpacity', 'overlayBlend', 'bgEffect', 'bgEffectColor', 'bgEffectColor2', 'bgEffectIntensity', 'particlesCount',
     'particlesInteract', 'particlesSizeMin', 'particlesSizeMax', 'particlesSpeed', 'particlesOpacity', 'particlesLinks',
