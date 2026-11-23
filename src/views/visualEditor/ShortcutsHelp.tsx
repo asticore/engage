@@ -17,7 +17,9 @@ export const ShortcutsHelp: React.FC<{
   open: boolean
   onOpenChange: (open: boolean) => void
   onTour?: () => void
-}> = ({ modLabel, open, onOpenChange, onTour }) => {
+  /** Hide the button: the panel is opened from elsewhere (the gear menu). */
+  hideButton?: boolean
+}> = ({ modLabel, open, onOpenChange, onTour, hideButton }) => {
   const t = useAdminT()
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -42,7 +44,7 @@ export const ShortcutsHelp: React.FC<{
 
   return (
     <div className="ve-shortcuts" ref={rootRef}>
-      <Tooltip text={t('ve.shortcuts.buttonTitle')}><button
+      {!hideButton && <Tooltip text={t('ve.shortcuts.buttonTitle')}><button
         type="button"
         className="ve-btn ve-btn--ghost"
         aria-haspopup="dialog"
@@ -51,7 +53,7 @@ export const ShortcutsHelp: React.FC<{
         onClick={() => onOpenChange(!open)}
       >
         {t('ve.shortcuts.button')}
-      </button></Tooltip>
+      </button></Tooltip>}
       {open && (
         <div className="ve-shortcuts__panel" role="dialog" aria-label={t('ve.shortcuts.title')}>
           <div className="ve-shortcuts__head">

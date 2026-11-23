@@ -33,7 +33,7 @@ export function useCompactTopBar(): boolean {
 
 export type TopBarMoreItem = { key: string; label: string; onSelect: () => void; disabled?: boolean }
 
-/** Overflow menu for the top bar: a button that opens a short list of actions. Closes on pick, outside click and Escape. */
+/** Gear menu at the right end of the top bar: a button that opens a short list of actions. Closes on pick, outside click and Escape. */
 export const TopBarMore: React.FC<{ items: TopBarMoreItem[] }> = ({ items }) => {
   const t = useAdminT()
   const [open, setOpen] = useState(false)
@@ -58,8 +58,11 @@ export const TopBarMore: React.FC<{ items: TopBarMoreItem[] }> = ({ items }) => 
   if (items.length === 0) return null
   return (
     <div className="ve-more" ref={rootRef}>
-      <button type="button" className="ve-btn ve-btn--ghost" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        {t('ve.top.more')} {String.fromCodePoint(0x25be)}
+      <button type="button" className="ve-btn ve-btn--ghost ve-btn--icon ve-gear" aria-haspopup="menu" aria-expanded={open} aria-label={t('ve.top.settingsMenu')} title={t('ve.top.settingsMenu')} onClick={() => setOpen((o) => !o)}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
       </button>
       {open && (
         <div className="ve-more__menu" role="menu">

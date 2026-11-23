@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 81 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 82 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3269,6 +3269,14 @@ _Date: 23 Nov 2026_
 The form block's look gains per-form colour options in the form's settings (Look section): field background, field text, field border, focus border, label, button background, button text, error message and success message. Each is a hex colour checked by the existing colour cleaner (`cleanColour` in `src/features/forms/config.ts`), kept under `style.colours` in the form's config, drawn as `--eg-form-*` custom properties on the form root, and read by `forms.css` with the current look as fallback, so a form with no overrides draws exactly as before. The site-wide label and focus colours are exposed on the form root too (`--eg-site-label`, `--eg-site-focus`, in `themeStyles/css.ts`) so the per-form fallback keeps the site colours when no override is set. Presets stay as they were; the form style presets as Examples are still to move to engage-templates. Code: `src/features/forms/formColours.ts`, `config.ts` (`cleanFormColours`), `types.ts`, `settings.ts`, `components/FormRenderer.tsx`, `components/forms.css`, `src/features/themeStyles/css.ts`, `src/views/visualEditor/FormSettingsPanel.tsx`. Tests: `tests/int/forms-builder.int.spec.ts`. Left open: the live check (batch 18 in Task 47), and the other colours in the site theme (for example the success colour outside a form) are not changed.
 
 **Where to find it:** Visual editor, Form settings, Look (Focus border, Label, Button background, and the other colour boxes)
+<a id="bld-089"></a>
+#### BLD-089 · Map options and editor gear menu (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Map element: new "How the map appears" choice (behind a Show map button, the default and fastest, or shown automatically), plus Show markers and Show the place name on the button next to the existing directions link. Code: `wave26Defs.ts`, `MapServer.tsx`, `MapFacade.tsx`. Visual editor top bar: the More button is now a gear at the right end holding Preview, Clear cache (calls `/api/admin-cache-clear`, shows a toast), Keyboard shortcuts, Import / Export and Save as example; the separate Preview, Import / Export, Save as example and Shortcuts buttons are gone. Code: `TopBarMore.tsx`, `ShortcutsHelp.tsx`, `VisualEditor.tsx`, `ve.top.*` strings in all dictionaries.
+
+**Where to find it:** Visual editor > Map element > Settings; visual editor top bar > gear icon
 
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
@@ -3635,6 +3643,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 - [SEO-026](#seo-026) Redirect popup when an address changes
 - [BLD-086](#bld-086) Task 10 29a Chart screen reader summary
 - [BLD-085](#bld-085) Task 10 29d Cart, Checkout and Mini cart elements
+- [BLD-089](#bld-089) Map options (button or auto, markers, label) and editor gear menu with Clear cache
 - [BLD-084](#bld-084) Task 10 29d Product meta brand and tags, variation images
 - [BLD-083](#bld-083) Task 10 29b My account element
 - [BLD-082](#bld-082) Task 3 chart and table data, grid editor, Spark carousel, flip and typed text

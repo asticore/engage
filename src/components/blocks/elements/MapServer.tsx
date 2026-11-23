@@ -20,8 +20,12 @@ export async function MapServerElement(p: P): Promise<React.ReactElement> {
   const title = str(p.title, 'Map')
   const address = str(p.address).trim()
   const label = address || title
+  const off = (v: unknown) => v === false || v === 'false'
+  const auto = p.loadMode === 'auto'
+  const showLabel = !off(p.showLabel)
+  const showMarkers = !off(p.showMarkers)
   const pasted = mapEmbedSrc('', p.embedUrl, zoom)
-  if (pasted) return <MapFacade src={pasted} title={title} label={label} height={height} />
+  if (pasted) return <MapFacade src={pasted} title={title} label={label} height={height} auto={auto} showLabel={showLabel} />
   let view
   try {
     const config = await readMapsWeather()
@@ -30,8 +34,12 @@ export async function MapServerElement(p: P): Promise<React.ReactElement> {
   } catch {
     view = null
   }
+  if (view && !showMarkers) {
+    if (view.embedSrc) view = { ...view, embedSrc: view.embedSrc.replace(/&marker=[^&]*/, '') }
+    if (view.engine) view = { ...view, engine: { ...view.engine, markers: [] } }
+  }
   const src = view?.embedSrc ?? mapEmbedSrc(address, '', zoom)
-  const directions = p.showDirections === false || p.showDirections === 'false' ? null : view?.directionsUrl ?? null
+  const directions = off(p.showDirections) ? null : view?.directionsUrl ?? null
   if (!src && !view?.staticSrc && !view?.engine) return <div className="el-placeholder" style={{ height }}>Enter an address for the map</div>
-  return <MapFacade src={src ?? ''} title={title} label={label} height={height} preview={view?.staticSrc ?? undefined} directions={directions ?? undefined} engine={view?.engine} noscriptSrc={view?.noscriptSrc ?? undefined} />
+  return <MapFacade src={src ?? ''} title={title} label={label} height={height} preview={view?.staticSrc ?? undefined} directions={directions ?? undefined} engine={view?.engine} noscriptSrc={view?.noscriptSrc ?? undefined} auto={auto} showLabel={showLabel} />
 }
