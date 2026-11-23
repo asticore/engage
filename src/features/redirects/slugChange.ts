@@ -13,6 +13,17 @@ export type SlugRedirectCollection = 'posts' | 'products' | 'events' | 'courses'
 /** The public address prefix each collection is served under (the sitemap and IndexNow use the same). */
 export const SLUG_REDIRECT_PREFIX: Record<SlugRedirectCollection, string> = { posts: '/blog', products: '/shop', events: '/events', courses: '/courses' }
 
+/** Sent by the admin editor when the editor chose to save without a redirect (the popup's "Save without redirect"). */
+export const SKIP_SLUG_REDIRECT_HEADER = 'x-skip-slug-redirect'
+
+const redirectDeclined = (req: unknown): boolean => {
+  try {
+    return (req as { headers?: Headers } | undefined)?.headers?.get(SKIP_SLUG_REDIRECT_HEADER) === '1'
+  } catch {
+    return false
+  }
+}
+
 /** The old and new paths when the slug changed, or null when there is nothing to redirect. */
 export function slugRedirectPaths(collection: SlugRedirectCollection, oldSlug: unknown, newSlug: unknown, blogBase?: string, shopBase?: string): { fromPath: string; toPath: string } | null {
   if (typeof oldSlug !== 'string' || typeof newSlug !== 'string') return null
@@ -29,8 +40,9 @@ type SlugDoc = { id?: unknown; slug?: unknown; _status?: unknown }
 /** afterChange: a published document whose slug changed gets a 301 from its old address, unless one already exists. */
 export const slugRedirectAfterChange =
   (collection: SlugRedirectCollection): CollectionAfterChangeHook =>
-  async ({ doc, previousDoc }) => {
+  async ({ doc, previousDoc, req }) => {
     try {
+      if (redirectDeclined(req)) return doc
       const record = doc as SlugDoc | null
       const before = previousDoc as SlugDoc | null | undefined
       if (!record || !before) return doc
@@ -79,8 +91,9 @@ const pageParentId = (page: PageDoc): string | null => {
  * tree's job, so only a slug change starts this. Returns quietly when the chain
  * to the root cannot be read.
  */
-export const pageSlugRedirectAfterChange: CollectionAfterChangeHook = async ({ doc, previousDoc }) => {
+export const pageSlugRedirectAfterChange: CollectionAfterChangeHook = async ({ doc, previousDoc, req }) => {
   try {
+    if (redirectDeclined(req)) return doc
     const record = doc as PageDoc | null
     const before = previousDoc as PageDoc | null | undefined
     if (!record || !before || typeof record.id === 'undefined') return doc

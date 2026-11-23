@@ -2480,6 +2480,14 @@ _Date: 22 Nov 2026_
 
 **Where to find it:** /admin/content/posts > Write with AI (Blog list) > Edit questions
 
+#### SEO-026 · Redirect popup when an address changes (built 23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Redirect question on save.** Publishing a page, post, product, event or course whose slug changed asks "Create a redirect?" (Create redirect and save / Save without redirect / Cancel); the choice goes to the save as the `X-Skip-Slug-Redirect` header, which the slug hooks honour (no header, as from an API or import, still creates the 301). Saving SEO settings with a changed blog or shop address asks to confirm that the old address redirects to the new one (the middleware already does it). Code: `useDocumentSave.ts` (`confirmAddressChange`), `RedirectPromptDialog.tsx`, `slugChange.ts` (`SKIP_SLUG_REDIRECT_HEADER`), `tests/int/slug-redirect-decline.int.spec.ts`.
+
+**Where to find it:** edit any page, post or product, change the slug, press Publish; /admin SEO settings > Permalinks.
+
 <a id="cat-bld"></a>
 ### BLD: Visual builder, templates and elements
 
@@ -3606,6 +3614,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [SEO-026](#seo-026) Redirect popup when an address changes
 - [BLD-086](#bld-086) Task 10 29a Chart screen reader summary
 - [BLD-085](#bld-085) Task 10 29d Cart, Checkout and Mini cart elements
 - [BLD-084](#bld-084) Task 10 29d Product meta brand and tags, variation images

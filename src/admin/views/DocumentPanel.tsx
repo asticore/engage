@@ -21,6 +21,7 @@ import { useHydrated } from '@/lib/clientStore'
 import { FieldRenderer } from '@/admin/fields/FieldRenderer'
 import { resolveName } from './authorName'
 import { useAuthorNames } from './useAuthorNames'
+import { RedirectPromptDialog } from './RedirectPromptDialog'
 import { useDocumentSave } from './useDocumentSave'
 import { VisibilityPanel } from './VisibilityPanel'
 import { SchedulePanel } from './SchedulePanel'
@@ -283,7 +284,7 @@ export const DocumentPanel: React.FC<{
 }> = ({ info, readOnly, pageTypeField }) => {
   const t = useAdminT()
   const modified = useFormModified()
-  const { busy, duplicate, error, remove, save, savedAt, setTrashed } = useDocumentSave({
+  const { busy, duplicate, error, redirectPrompt, remove, save, savedAt, setTrashed } = useDocumentSave({
     collectionSlug: info.collectionSlug,
     draftsEnabled: info.draftsEnabled,
     id: info.id,
@@ -300,6 +301,7 @@ export const DocumentPanel: React.FC<{
 
   return (
     <div className="doc-panel">
+      <RedirectPromptDialog prompt={redirectPrompt} />
       <EditLockBanner collectionSlug={info.collectionSlug} id={info.id} onLockedByOther={setLockedByOther} />
       <div className="doc-panel__head">
         <div className="doc-status">
