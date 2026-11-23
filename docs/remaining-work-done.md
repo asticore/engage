@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 71 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 72 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3108,6 +3108,14 @@ Border width is now set per device. A tablet or mobile width re-emits the inheri
 **Where to find it:** Visual editor, Design panel, Border
 
 <a id="bld-071"></a>
+#### BLD-072 · Task 15 34g2 Poll element (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34g2 part (23 Nov 2026).** New `poll` element (Elements > Media): a question with 2 to 12 options. Each browser votes once (an HttpOnly cookie id, stored with the vote in `eg_poll_votes`, created on first use), then sees the results as bars with percentages and its own choice marked. The page is fetched in the browser from `/api/polls`, so published static pages stay static; the vote route checks the origin and limits ids and choices. The poll id keeps or restarts the count. Code: `src/features/polls/core.ts` and `store.ts`, `api/polls/route.ts`, `PollClient.tsx`, `UtilityElements.tsx`, `utilityDefs.ts`; tests `tests/int/poll-34g2.int.spec.ts`. Still open in 34g2: social proof popups, Trustpilot and Tripadvisor sources.
+
+**Where to find it:** Visual editor > Elements > Media > Poll
+
 #### BLD-071 · Background colour per device (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3476,6 +3484,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-072](#bld-072) Task 15 34g2 Poll element
 - [BLD-071](#bld-071) Background colour per device
 - [BLD-070](#bld-070) Task 15 34g2 Floating action button
 - [BLD-069](#bld-069) Task 15 34d 3D viewer and product configurator
