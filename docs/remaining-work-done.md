@@ -3082,6 +3082,15 @@ Top, right, bottom and left offsets share a per-device unit (px, %, em, rem, vw,
 
 **Where to find it:** Visual editor, Design panel, Advanced, Position
 
+<a id="bld-068"></a>
+#### BLD-068 · Border width per device (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Border width is now set per device. A tablet or mobile width re-emits the inherited style and colour in its media query, and 0 removes the border on that device. Width is clamped to 0 to 50 px. A test covers it.
+
+**Where to find it:** Visual editor, Design panel, Border
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3442,6 +3451,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-068](#bld-068) Border width per device
 - [BLD-067](#bld-067) Position offsets with units per device
 - [BLD-066](#bld-066) Task 15 34i AI on any selected element
 - [BLD-065](#bld-065) Blend mode per device
