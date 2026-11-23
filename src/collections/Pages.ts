@@ -1,4 +1,5 @@
 import { noAdsField } from '@/features/ads/fields'
+import { BLOG_BASE_PAGE_MESSAGE } from '@/features/seo/permalinkValidate'
 import { pageSlugRedirectAfterChange } from '@/features/redirects/slugChange'
 import { domainScopedAccess, domainWriteGuard } from '@/features/domains/access'
 import { domainSiteDefault } from '@/features/domains/hooks'
@@ -93,6 +94,13 @@ export const Pages: CollectionConfig = {
           if (signIn && (signIn.customer === `/${slug}` || signIn.member === `/${slug}`)) {
             return 'That address is used by a sign-in page (Settings > Security or Members). Choose another slug or change the sign-in URL first.'
           }
+        }
+
+        // A top-level page at the blog address would be hidden behind the blog (Task 16e). The same check runs when the address is saved.
+        if (!data?.parent && !data?.isHomepage) {
+          const { readBlogBase } = await import('@/features/seo/permalinkStore')
+          const blogBase = await readBlogBase().catch((): string => 'blog')
+          if (blogBase !== 'blog' && slug === blogBase) return BLOG_BASE_PAGE_MESSAGE
         }
 
         const parentId = data?.parent

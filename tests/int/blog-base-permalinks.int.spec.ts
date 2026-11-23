@@ -25,7 +25,18 @@ vi.mock('@/features/security', () => ({
   },
 }))
 vi.mock('@/features/multilingual/middleware', () => ({
-  multilingualMiddleware: async (request: NextRequest, handle: (r: NextRequest) => Promise<NextResponse>) => handle(request),
+  // Mimics a site with French on: a /fr prefix is stripped and the locale header set before the inner handler runs.
+  multilingualMiddleware: async (request: NextRequest, handle: (r: NextRequest) => Promise<NextResponse>) => {
+    const p = request.nextUrl.pathname
+    if (p === '/fr' || p.startsWith('/fr/')) {
+      const url = new URL(request.url)
+      url.pathname = p.slice(3) || '/'
+      const headers = new Headers(request.headers)
+      headers.set('x-eg-locale', 'fr')
+      return handle(new NextRequest(url, { headers, method: request.method }))
+    }
+    return handle(request)
+  },
 }))
 vi.mock('@/features/seo/permalinkStore', () => ({
   readBlogBase: async (): Promise<string> => state.blog,
@@ -137,5 +148,14 @@ describe('middleware with a custom blog address', () => {
     const res = await get('/blog/hello-world')
     expect(res.status).not.toBe(308)
     expect(state.seen).toEqual(['/blog/hello-world'])
+  })
+
+  it('serves the custom address under a language prefix, and sends the old one to it', async () => {
+    const res = await get('/fr/news/hello-world')
+    expect(state.seen).toEqual(['/blog/hello-world'])
+    expect(res.headers.get('x-middleware-rewrite')).toBe('https://site.test/blog/hello-world')
+    const old = await get('/fr/blog/hello-world')
+    expect(old.status).toBe(308)
+    expect(old.headers.get('location')).toBe('https://site.test/fr/news/hello-world')
   })
 })
