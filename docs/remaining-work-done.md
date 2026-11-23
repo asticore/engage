@@ -3254,6 +3254,14 @@ The chart's Spark container now has role=img with a text summary for screen read
 
 **Where to find it:** Visual editor, Elements, Chart
 
+#### BLD-087 - Task 10 29e and 29c Template author and date conditions, age gate per country (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Site template conditions gain Post author (matches the author's slug, display name or id) and Post date (`before:YYYY-MM-DD`, `after:YYYY-MM-DD` or `within:N` for the last N days, with Include or Exclude). They are offered in the conditions editor and checked by the sanitiser, which fails closed on a bad date. The single post template gets both, because its route passes the post's author and published date; archive pages do not, so these rules never match there. The age gate gains Countries and Minimum age by country (`US:21,GB:18`). The visitor's country comes from `/api/visibility-state` after the page loads on the client, so the page stays cacheable; a visitor from a country with no age, or an unknown country, gets the default minimum age, and while the country is unknown or the lookup fails the strictest age applies. Code: `src/features/customFields/location.ts`, `siteTemplates/conditions.ts`, `conditionsSummary.ts`, `archiveQueries.ts`, `blog/[slug]/page.tsx`, `Wave70Elements.tsx` (`parseCountryAges`, `countryAgeTable`, `minAgeFor`), `wave70Defs.ts`. Tests: `tests/int/wave70-elements.int.spec.ts`, `tests/int/site-template-author-date.int.spec.ts`. Left open: the live check (batch 17 in Task 47), and a country list on the age gate only filters the table (it does not decide where the gate shows).
+
+**Where to find it:** Admin, Site templates, a single post template's Conditions (Post author, Post date); Visual editor, Elements, Age gate (Countries, Minimum age by country)
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3614,6 +3622,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-087](#bld-087) Task 10 29e and 29c Template author and date conditions, age gate per country
 - [SEO-026](#seo-026) Redirect popup when an address changes
 - [BLD-086](#bld-086) Task 10 29a Chart screen reader summary
 - [BLD-085](#bld-085) Task 10 29d Cart, Checkout and Mini cart elements

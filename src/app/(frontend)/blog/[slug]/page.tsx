@@ -30,7 +30,7 @@ import { getPasswordGateState } from '@/features/visibility/gate'
 import { resolveDocumentContent } from '@/features/customFields/server'
 import { loadBlogSwitches } from '@/features/blog/switches'
 import { PostComments } from '@/features/comments/components/CommentsSection.server'
-import { authorPath, publicAuthor, tagPath, categoryPath } from '@/features/siteTemplates/archiveQueries'
+import { authorPath, postAuthorKeys, publicAuthor, tagPath, categoryPath, type ArchivePost } from '@/features/siteTemplates/archiveQueries'
 import { slugify } from '@/utilities/formatSlug'
 import { renderWithTemplate } from '@/features/siteTemplates/render'
 import { blogPath } from '@/features/seo/permalinks'
@@ -201,7 +201,7 @@ export default async function BlogPostPage({
   )
   return renderWithTemplate({
     kind: 'single-post',
-    ctx: { path: currentPath, postCategories: (post.categories || []).map((c) => c.name), postTags: tags },
+    ctx: { path: currentPath, postCategories: (post.categories || []).map((c) => c.name), postTags: tags, postAuthors: postAuthorKeys(post as ArchivePost), postDate: post.publishedDate ?? null },
     content: body,
   })
 }

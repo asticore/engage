@@ -1,6 +1,8 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 
+import { cleanCountries } from '@/lib/visibilityRules'
+
 import { num, str } from './elementUtil'
 import './wave70.css'
 
@@ -22,6 +24,49 @@ export function ageOn(dob: string, now: Date): number | null {
   return age
 }
 
+/** Minimum age per two-letter country code, as read from the `countryAges` field. */
+export type CountryAges = Record<string, number>
+
+/**
+ * Reads "US:21,GB:18" into { US: 21, GB: 18 }. Codes are upper cased; a pair with a bad code or an age that is not a whole
+ * number from 1 to 120 is skipped, and the first pair for a code wins. Never throws.
+ */
+export function parseCountryAges(text: unknown): CountryAges {
+  const out: CountryAges = {}
+  if (typeof text !== 'string') return out
+  for (const part of text.split(',')) {
+    const m = /^\s*([A-Za-z]{2})\s*:\s*(\d{1,3})\s*$/.exec(part)
+    if (!m) continue
+    const code = m[1]!.toUpperCase()
+    const age = Number(m[2])
+    if (age < 1 || age > 120 || code in out) continue
+    out[code] = age
+  }
+  return out
+}
+
+/**
+ * The age table the gate uses: `countryAges` entries, limited to the codes in `countries` when that list is set.
+ * An age given for a country that is not listed in `countries` is ignored.
+ */
+export function countryAgeTable(countries: unknown, countryAges: unknown): CountryAges {
+  const table = parseCountryAges(countryAges)
+  const listed = cleanCountries(countries)
+  if (listed.length === 0) return table
+  return Object.fromEntries(Object.entries(table).filter(([code]) => listed.includes(code)))
+}
+
+/**
+ * The minimum age for this visitor. A known country with an age in the table uses it; a known country without one, or no
+ * country, uses the default. When the country lookup failed (or has not finished) the strictest age wins: the default or
+ * the highest age in the table, so a lookup problem never lets someone in at a lower age.
+ */
+export function minAgeFor(defaultMin: number, table: CountryAges, country: string | null, lookupFailed = false): number {
+  if (lookupFailed) return Math.max(defaultMin, ...Object.values(table))
+  if (!country) return defaultMin
+  return table[country.trim().toUpperCase()] ?? defaultMin
+}
+
 /** Only https addresses and same-site paths are followed. */
 export function safeDeny(url: string): string {
   const u = url.trim()
@@ -33,14 +78,34 @@ export function AgeGateElement(props: P): React.ReactElement | null {
   const [open, setOpen] = useState(false)
   const [denied, setDenied] = useState(false)
   const [dob, setDob] = useState('')
-  const minAge = Math.max(1, Math.trunc(num(props.minAge, 18)))
+  const [lookup, setLookup] = useState<{ done: boolean; country: string | null; failed: boolean }>({ done: false, country: null, failed: false })
+  const defaultAge = Math.max(1, Math.trunc(num(props.minAge, 18)))
+  const table = countryAgeTable(props.countries, props.countryAges)
+  const hasTable = Object.keys(table).length > 0
+  // Until the country is known (or when the lookup failed) the strictest age applies.
+  const minAge = !hasTable ? defaultAge : lookup.done && !lookup.failed ? minAgeFor(defaultAge, table, lookup.country) : minAgeFor(defaultAge, table, null, true)
   const days = Math.max(1, Math.trunc(num(props.rememberDays, 30)))
   useEffect(() => {
     if (BOT.test(navigator.userAgent)) return
     let ok = false
     try { const t = Number(localStorage.getItem(KEY)); ok = t > Date.now() } catch { /* storage blocked */ }
-    if (!ok) setOpen(true)
-  }, [])
+    if (ok) return
+    setOpen(true)
+    // Only a gate with per-country ages needs the visitor's country. Read on the client so the page itself stays cacheable.
+    if (!hasTable) return
+    let alive = true
+    fetch('/api/visibility-state', { credentials: 'same-origin', cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((j: { country?: unknown }) => {
+        if (alive) setLookup({ done: true, country: typeof j.country === 'string' ? j.country : null, failed: false })
+      })
+      .catch(() => {
+        if (alive) setLookup({ done: true, country: null, failed: true })
+      })
+    return () => {
+      alive = false
+    }
+  }, [hasTable])
   useEffect(() => {
     if (!open) return
     const prev = document.body.style.overflow

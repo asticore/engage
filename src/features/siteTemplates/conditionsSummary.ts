@@ -12,6 +12,8 @@ export const CONDITION_KINDS = [
   { param: 'eventType', label: 'Event type', hint: 'eg paid' },
   { param: 'postCategory', label: 'Post category', hint: 'category name' },
   { param: 'postTag', label: 'Post tag', hint: 'tag name' },
+  { param: 'author', label: 'Post author', hint: 'author slug, display name or id' },
+  { param: 'date', label: 'Post date', hint: 'before:2026-01-01, after:2026-01-01 or within:30 (days)' },
   { param: 'domain', label: 'Domain', hint: 'eg shop.example.com' },
   { param: 'language', label: 'Language', hint: 'eg fr, or the default language code' },
 ] as const satisfies ReadonlyArray<{ param: LocationRule['param']; label: string; hint: string }>
@@ -32,8 +34,16 @@ const valueText = (rule: LocationRule, pageTitles: PageTitles): string => {
   return `"${rule.value}"`
 }
 
+/** Words for a date rule value (see DATE_RULE in location.ts): "before 2026-01-01", "within the last 30 days". */
+const dateText = (value: string): string => {
+  const [kind, rest = ''] = value.split(':')
+  if (kind === 'within') return `within the last ${rest} days`
+  return `${kind} ${rest}`
+}
+
 const ruleText = (rule: LocationRule, pageTitles: PageTitles): string => {
   const negative = rule.operator === 'notEquals'
+  if (rule.param === 'date') return `post date ${negative ? 'is not' : 'is'} ${dateText(rule.value)}`
   if (rule.param === 'audience') return `visitor is ${negative ? 'not ' : ''}${valueText(rule, pageTitles)}`
   if (rule.param === 'page') return `${negative ? 'page is not' : 'page is'} ${valueText(rule, pageTitles)}`
   return `${LABELS[rule.param] ?? rule.param} ${negative ? 'is not' : 'is'} ${valueText(rule, pageTitles)}`
@@ -50,7 +60,7 @@ export function summariseConditions(input: unknown, pageTitles: PageTitles = {})
 
 /** Null when the conditions are valid, otherwise a message. */
 export function validateConditions(input: unknown): string | null {
-  return sanitizeConditions(input).valid ? null : 'Conditions are invalid: use known condition types, "is"/"is not", text values up to 200 characters, known audiences, page ids, at most 10 groups of 10 rules, and no empty groups.'
+  return sanitizeConditions(input).valid ? null : 'Conditions are invalid: use known condition types, "is"/"is not", text values up to 200 characters, known audiences, page ids, dates as before:YYYY-MM-DD, after:YYYY-MM-DD or within:N, at most 10 groups of 10 rules, and no empty groups.'
 }
 
 /** Editor state -> the stored JSON shape: blank rows and empty groups are dropped. */
