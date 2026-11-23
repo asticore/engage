@@ -173,6 +173,14 @@ export const DesignPanel: React.FC<{
               onReset={() => set('bgGradientKind', undefined)}
               onChange={(v) => set('bgGradientKind', v === 'linear' ? undefined : (v as BlockStyle['bgGradientKind']))}
             />
+            <SelectRow
+              label="Animate the gradient"
+              value={value.bgGradientFlow ?? 'off'}
+              options={[{ label: 'Still', value: 'off' }, { label: 'Slow drift', value: 'slow' }, { label: 'Medium drift', value: 'medium' }, { label: 'Fast drift', value: 'fast' }]}
+              applied={value.bgGradientFlow !== undefined}
+              onReset={() => set('bgGradientFlow', undefined)}
+              onChange={(v) => set('bgGradientFlow', v === 'slow' || v === 'medium' || v === 'fast' ? v : undefined)}
+            />
             <ColorRow label={t('dp.field.from')} value={value.bgGradientFrom} onChange={(v) => set('bgGradientFrom', v)} />
             <ColorRow label="Middle colour (optional)" value={value.bgGradientMid} onChange={(v) => set('bgGradientMid', v)} />
             {value.bgGradientMid && <NumberRow label="Middle stop (%)" value={value.bgGradientMidPos} min={0} max={100} onChange={(v) => set('bgGradientMidPos', v)} />}

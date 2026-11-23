@@ -129,6 +129,8 @@ export type BlockStyle = {
   bgGradientAngle?: number
   /** Gradient kind (31e). Unset = linear. Radial and conic ignore the angle (conic uses it as the start angle). */
   bgGradientKind?: 'linear' | 'radial' | 'conic'
+  /** Animated gradient (Task 10, 29f): the colours drift slowly across the block. Unset = still. Off for reduced motion. */
+  bgGradientFlow?: 'slow' | 'medium' | 'fast'
   /** Optional middle colour stop and where it sits, 0-100 percent (default 50). */
   bgGradientMid?: string
   bgGradientMidPos?: number
@@ -808,7 +810,7 @@ export const BG_IMAGE_SIZES: readonly string[] = ['cover', 'contain', 'auto']
 export const BG_IMAGE_POSITIONS: readonly string[] = ['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left', 'bottom right']
 export const BG_IMAGE_REPEATS: readonly string[] = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y']
 const BORDER_STYLES: readonly string[] = ['solid', 'dashed', 'dotted', 'double']
-const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bgGradientKind', 'bgGradientMid', 'bgGradientMidPos', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
+const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
 
 /** Validates per-side border widths, the border style and the custom box shadow layers (normal and hover). */
 function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
@@ -835,6 +837,7 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
   }
   bgEnum('bgImageSize', BG_IMAGE_SIZES)
   bgEnum('bgGradientKind', ['linear', 'radial', 'conic'])
+  bgEnum('bgGradientFlow', ['slow', 'medium', 'fast'])
   if (raw.bgGradientMid !== undefined && sanitizeColor(raw.bgGradientMid) === undefined) delete out.bgGradientMid
   if (raw.bgGradientMidPos !== undefined) {
     const n = clampNum(raw.bgGradientMidPos, 0, 100)
@@ -1361,6 +1364,7 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
     const to = style.bgGradientTo || 'transparent'
     const angle = isNum(style.bgGradientAngle) ? style.bgGradientAngle : 180
     css.backgroundImage = gradientCss(style, angle, from, to)
+    if (style.bgGradientFlow) css.backgroundSize = '300% 300%'
   }
 
   // The image moves to its own layer (kenburnsLayer) when Ken Burns is on, so the wrapper must not paint it too.
@@ -2100,6 +2104,7 @@ export function blockFxClasses(style: BlockStyle): string {
   if (style.reveal && style.reveal !== 'none') c.push(`be-fx-reveal-${style.reveal}`)
   if (style.hover && style.hover !== 'none') c.push(`be-fx-hover-${style.hover}`)
   if (style.glass) c.push('be-fx-glass')
+  if (style.bgType === 'gradient' && style.bgGradientFlow) c.push('be-fx-gflow', `be-fx-gflow--${style.bgGradientFlow}`)
   if (style.parallax === 'background' && style.bgType === 'image' && isStr(style.bgImageUrl)) c.push('be-fx-parallax-bg')
   else if (style.parallax === 'float-up' || style.parallax === 'float-down') c.push(`be-fx-parallax-${style.parallax}`)
   if (style.pointerFx && style.pointerFx !== 'none') c.push(`be-fx-pointer-${style.pointerFx}`)

@@ -23,7 +23,11 @@
 .be-divider__drift,.be-divider__float{will-change:transform}
 @keyframes be-drift{to{transform:translateX(-50%)}}
 @keyframes be-float{50%{transform:translateY(8%)}}
+@keyframes be-gflow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 @media (prefers-reduced-motion:no-preference){
+  .be-fx-gflow{animation:be-gflow 16s ease infinite}
+  .be-fx-gflow--slow{animation-duration:30s}
+  .be-fx-gflow--fast{animation-duration:8s}
   .be-divider__drift{animation:be-drift 14s linear infinite}
   .be-divider__float{animation:be-float 5s ease-in-out infinite}
   @keyframes be-aur{to{transform:translate(8%,-6%) rotate(12deg) scale(1.1)}}
