@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 50 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 51 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -2917,6 +2917,15 @@ _Date: 23 Nov 2026_
 
 **Where to find it:** Visual editor > selected block > Design > Border; Design > Dividers
 
+<a id="bld-051"></a>
+#### BLD-051 · Task 14 templates, examples and theme builder (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 14 (33a to 33i), built 23 Nov 2026.** **33a** Templates hub: popups (a reusable section whose section shows as a popup) get their own type, reusable sections are marked global, the library tab is renamed Examples, and each missing site template has a one-click Create now (first starter, else blank, opens the visual builder) beside Choose starter (`rows.ts`, `SuggestedTemplates.tsx`). **33b** Example picker: items carry optional type, industry, colour style and light or dark; the hub tab and the editor panel filter by them, a Dark previews switch shows the dark picture, and the editor inserts at the chosen spot, at the end of the page or over the selected section, with a summary of pictures saved to Media (`templateLibraries/filter.ts`, `TemplateLibraryPanel.tsx`, `TemplateBrowser.tsx`, `VisualEditor.tsx`). **33c** Engage side of the templates repo draft: `library.json` and item files accept schemaVersion 2, kinds `site-template`, `loop` and `popup` (listed as sections with a type), `siteKind`, `pairWith`; a site template or loop item has Create template (starts off) and a popup item becomes a reusable section (`/api/template-libraries/create-template`); the author guide lists the fields (`docs/template-libraries.md` section 4). **33d** Items follow the theme: `var(--sh-id)` tokens and fixed colours listed in `requires.colours` become the site's `var(--eg-c-id)` on insert (`templateLibraries/themeMap.ts`), so dark values apply. **33e** Theme builder: a sample homepage preview (header, hero, cards, shop card, form, footer), a Domains tab (the primary domain is the master; other domains inherit it and override chosen colours, light and dark values, fonts and corner radii, saved per host in `eg_theme_domain_overrides`, applied in the public layout; `themeStyles/inherit.ts`, `domainStore.ts`, `/api/admin-theme-domains`), and a Clone a site tab (reads a public page and its stylesheets, proposes colours and radius to tick, `cloneSite.ts`, `/api/admin-theme-clone`). **33f** New loop in the Templates hub: name, source, filter, sort, count, columns, and Place on blog or shop archive (`siteTemplates/loops.ts`, `/api/admin-loops`). **33g** Header and footer starters: desktop and mobile header, members-only header (audience condition), footer with columns and socials. **33h** Buttons on the theme page open the header, footer, blog, post, shop, product, event, search and 404 templates in the visual builder, creating a draft first when none exists (`templatesHub/entryPoints.ts`). **33i** Theme guide: a six step walkthrough on the theme page, first visit of a new site and the Theme guide button (`AdminTour` now takes steps). Tests: `templates-hub-library-filters`, `template-theme-map`, `theme-builder-33e`, `loops-33f`, `template-entry-points`, `theme-tour-33i`, `template-starters`.
+
+**Where to find it:** Templates > Examples; Templates (New loop, Create now); Theme styles (Domains, Clone a site, Theme guide, edit buttons, sample homepage)
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3285,6 +3294,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 - [BLD-046](#bld-046) Task 12 panels and mechanics
 - [BLD-047](#bld-047) Task 12 field kit and first design controls
 - [BLD-048](#bld-048) Task 12 reference matrix and Font Awesome Pro
+- [BLD-051](#bld-051) Task 14 templates, examples and theme builder (33a to 33i)
 - [STY-014](#sty-014) 40d third batch and data source (23 Nov 2026)
 - [STY-015](#sty-015) 40d second batch (23 Nov 2026)
 - [STY-016](#sty-016) 40d (part)
