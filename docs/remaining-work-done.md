@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 70 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 71 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3107,6 +3107,15 @@ Border width is now set per device. A tablet or mobile width re-emits the inheri
 
 **Where to find it:** Visual editor, Design panel, Border
 
+<a id="bld-071"></a>
+#### BLD-071 · Background colour per device (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+The solid background colour can now be set per device. A tablet or mobile colour is validated and emitted in its media query. An unsafe colour string is dropped. A test covers it.
+
+**Where to find it:** Visual editor, Design panel, Background
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3467,6 +3476,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-071](#bld-071) Background colour per device
 - [BLD-070](#bld-070) Task 15 34g2 Floating action button
 - [BLD-069](#bld-069) Task 15 34d 3D viewer and product configurator
 - [BLD-068](#bld-068) Border width per device
