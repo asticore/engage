@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
+import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -1592,7 +1592,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
           { label: 'Overline', value: 'overline' },
         ]}
       />
-      <TypoRange ctl={ctl} k="lineHeight" label={t('dp.field.line_height')} def={1.5} min={0.8} max={3} step={0.05} />
+      <TypoRange ctl={ctl} k="lineHeight" label={t('dp.field.line_height')} def={1.5} min={0.8} max={ctl.effective('lineHeightUnit' as RespKey) ? 200 : 3} step={ctl.effective('lineHeightUnit' as RespKey) ? 1 : 0.05} unit={<UnitSelect ctl={ctl} unitKey={'lineHeightUnit' as RespKey} label="Line height unit" defaultLabel="×" units={['px', 'em', 'rem']} />} />
       <TypoRange
         ctl={ctl}
         k="letterSpacing"
@@ -1612,7 +1612,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
           </select>
         }
       />
-      <TypoRange ctl={ctl} k="wordSpacing" label={`${t('dp.field.word_spacing')} (px)`} def={0} min={-10} max={50} step={1} />
+      <TypoRange ctl={ctl} k="wordSpacing" label={t('dp.field.word_spacing')} def={0} min={-10} max={50} step={1} unit={<UnitSelect ctl={ctl} unitKey={'wordSpacingUnit' as RespKey} label="Word spacing unit" defaultLabel="px" units={['em', 'rem']} />} />
       <SelectRow
         label={t('dp.field.text_shadow')}
         value={value.textShadow || 'none'}

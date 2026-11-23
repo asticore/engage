@@ -47,7 +47,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   layout: ['width', 'textAlign', 'textColor'],
   typography: [
     'typePreset', 'fontFamily', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit', 'textTransform',
-    'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow', 'textFx', 'textFxColor', 'textFxColor2', 'textFxAngle',
+    'fontStyle', 'textDecoration', 'wordSpacing', 'lineHeightUnit', 'wordSpacingUnit', 'textShadow', 'textFx', 'textFxColor', 'textFxColor2', 'textFxAngle',
     'textFxStroke', 'textFxAnimated', 'textStrokeWidth', 'textStrokeColor', 'textShadowX', 'textShadowY', 'textShadowBlur', 'textShadowColor',
   ],
   position: ['selfAlign', 'selfWidth', 'selfWidthPercent', 'selfWidthPercentUnit'],

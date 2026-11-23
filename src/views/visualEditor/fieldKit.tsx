@@ -83,6 +83,23 @@ export const LengthField: React.FC<{ ctl: ResponsiveCtl; k: Key; unitKey: Key; l
   )
 }
 
+/** A per-device unit select for a slider row. The empty option is the default (no unit saved). */
+export const UnitSelect: React.FC<{ ctl: ResponsiveCtl; unitKey: Key; label: string; defaultLabel: string; units?: readonly string[] }> = ({ ctl, unitKey, label, defaultLabel, units = ['px', 'em', 'rem', '%', 'vw', 'vh'] }) => {
+  const own = ctl.own(unitKey)
+  const inherited = ctl.inherited(unitKey)
+  const current = typeof own === 'string' ? own : typeof inherited === 'string' ? inherited : ''
+  return (
+    <select aria-label={label} value={current} onChange={(e) => ctl.set(unitKey, e.target.value === '' ? undefined : e.target.value)}>
+      <option value="">{defaultLabel}</option>
+      {units.map((u) => (
+        <option key={u} value={u}>
+          {u}
+        </option>
+      ))}
+    </select>
+  )
+}
+
 /** Min width, max width and max height, each per device with a unit. 0 on a max means no limit (clears an inherited one). */
 export const SizeLimitRows: React.FC<{ ctl: ResponsiveCtl }> = ({ ctl }) => (
   <>
