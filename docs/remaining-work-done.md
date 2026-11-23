@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 56 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 57 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -2974,6 +2974,15 @@ _Date: 23 Nov 2026_
 
 **Where to find it:** Visual editor > Elements > Calendar; /api/events/feed
 
+<a id="bld-057"></a>
+#### BLD-057 · Task 12 image mask and link rel options (31e part) (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 12 31e fourth slice (23 Nov 2026).** Image mask (SVG or PNG address, https or on this site, with size, position and repeat) and rel sponsored and ugc on the wrapper link. The heading element already offers h1 to h6. Tests: `tests/int/design-mask-image-link-rel.int.spec.ts`.
+
+**Where to find it:** Visual editor > selected block > Design > Advanced > Mask; Design > Visibility > Wrapper link
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3334,6 +3343,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-057](#bld-057) Task 12 image mask and link rel options (31e part)
 - [BLD-056](#bld-056) Task 15 34c Calendar element
 - [BLD-055](#bld-055) Task 12 image placement and overline
 - [BLD-049](#bld-049) Task 11 maps and weather connections (23 Nov 2026)

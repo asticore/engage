@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { BgImagePlacement, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
+import { BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -506,6 +506,8 @@ export const DesignPanel: React.FC<{
             />
             <CheckRow label="Open in a new tab" checked={Boolean(value.wrapLinkNewTab)} onChange={(v) => set('wrapLinkNewTab', v || undefined)} />
             <CheckRow label="Add nofollow" checked={Boolean(value.wrapLinkNoFollow)} onChange={(v) => set('wrapLinkNoFollow', v || undefined)} />
+            <CheckRow label="Add sponsored (paid links)" checked={Boolean(value.wrapLinkSponsored)} onChange={(v) => set('wrapLinkSponsored', v || undefined)} />
+            <CheckRow label="Add ugc (user content)" checked={Boolean(value.wrapLinkUgc)} onChange={(v) => set('wrapLinkUgc', v || undefined)} />
           </>
         )}
         <NumberRow
@@ -2041,7 +2043,7 @@ const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   ...TRANSFORM_ROWS.map((r) => tfKey('tf', r.suffix)),
   ...TRANSFORM_ROWS.map((r) => tfKey('tfh', r.suffix)),
   'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
-  'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
+  'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
 
 const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; ctl: ResponsiveCtl }> = ({ value, onChange, ctl }) => {
@@ -2121,7 +2123,8 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
             />
           </>
         )}
-        {resetBtn(['maskShape', 'blobMorphSpeed'])}
+        <MaskImageRows value={value} set={set} />
+        {resetBtn(['maskShape', 'blobMorphSpeed', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat'])}
       </div>
 
       <p className="ve-row__label">{t('dp.field.custom')}</p>

@@ -123,6 +123,11 @@ export type BlockStyle = {
   /** Media URL, resolved at render time; cached here so previews avoid a refetch. */
   bgImageUrl?: string | null
   /** Image background placement (31e). Unset keeps cover and center. */
+  /** Image mask (31e): an SVG or PNG url whose alpha shapes the block, plus its size, position and repeat. */
+  maskImageUrl?: string
+  maskImageSize?: 'cover' | 'contain' | 'auto'
+  maskImagePosition?: 'center' | 'top' | 'bottom' | 'left' | 'right'
+  maskImageRepeat?: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y'
   bgImageSize?: 'cover' | 'contain' | 'auto'
   bgImagePosition?: 'center' | 'top' | 'bottom' | 'left' | 'right' | 'top left' | 'top right' | 'bottom left' | 'bottom right'
   bgImageRepeat?: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y'
@@ -411,6 +416,9 @@ export type BlockStyle = {
   wrapLink?: string
   wrapLinkNewTab?: boolean
   wrapLinkNoFollow?: boolean
+  /** rel="sponsored" and rel="ugc" on the wrapper link (31e). */
+  wrapLinkSponsored?: boolean
+  wrapLinkUgc?: boolean
   /** Accessible name for the wrapper link (required for screen readers). */
   wrapLinkLabel?: string
   /** Read more: clamp the block to this height in px with an expand and collapse button. */
@@ -548,7 +556,7 @@ function withSafeAnchor(style: BlockStyle): BlockStyle {
 /** Wrapper link and Read more keys: a safe URL, short plain labels, a clamped height. */
 function withSafeWrapCollapse(style: BlockStyle): BlockStyle {
   const raw = style as Record<string, unknown>
-  const keys = ['wrapLink', 'wrapLinkNewTab', 'wrapLinkNoFollow', 'wrapLinkLabel', 'collapseHeight', 'collapseMore', 'collapseLess']
+  const keys = ['wrapLink', 'wrapLinkNewTab', 'wrapLinkNoFollow', 'wrapLinkSponsored', 'wrapLinkUgc', 'wrapLinkLabel', 'collapseHeight', 'collapseMore', 'collapseLess']
   if (!keys.some((k) => raw[k] !== undefined)) return style
   const out: Record<string, unknown> = { ...raw }
   for (const k of keys) delete out[k]
@@ -557,6 +565,8 @@ function withSafeWrapCollapse(style: BlockStyle): BlockStyle {
     out.wrapLink = url
     if (raw.wrapLinkNewTab === true) out.wrapLinkNewTab = true
     if (raw.wrapLinkNoFollow === true) out.wrapLinkNoFollow = true
+    if (raw.wrapLinkSponsored === true) out.wrapLinkSponsored = true
+    if (raw.wrapLinkUgc === true) out.wrapLinkUgc = true
     if (typeof raw.wrapLinkLabel === 'string' && raw.wrapLinkLabel.trim()) out.wrapLinkLabel = raw.wrapLinkLabel.trim().slice(0, 120)
   }
   const h = clampNum(raw.collapseHeight, 40, 1200)
@@ -771,7 +781,7 @@ export const BG_IMAGE_SIZES: readonly string[] = ['cover', 'contain', 'auto']
 export const BG_IMAGE_POSITIONS: readonly string[] = ['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left', 'bottom right']
 export const BG_IMAGE_REPEATS: readonly string[] = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y']
 const BORDER_STYLES: readonly string[] = ['solid', 'dashed', 'dotted', 'double']
-const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
+const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
 
 /** Validates per-side border widths, the border style and the custom box shadow layers (normal and hover). */
 function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
@@ -800,6 +810,10 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
   bgEnum('bgImagePosition', BG_IMAGE_POSITIONS)
   bgEnum('bgImageRepeat', BG_IMAGE_REPEATS)
   bgEnum('bgImageAttachment', ['scroll', 'fixed'])
+  bgEnum('maskImageSize', BG_IMAGE_SIZES)
+  bgEnum('maskImagePosition', ['center', 'top', 'bottom', 'left', 'right'])
+  bgEnum('maskImageRepeat', BG_IMAGE_REPEATS)
+  if (raw.maskImageUrl !== undefined && !isSafeMediaUrl(raw.maskImageUrl, 'image')) delete out.maskImageUrl
   if (raw.borderStyle !== undefined && !(typeof raw.borderStyle === 'string' && BORDER_STYLES.includes(raw.borderStyle))) delete out.borderStyle
   return out as BlockStyle
 }
@@ -1363,6 +1377,14 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
   if (sides) Object.assign(css, sides)
   const clip = maskClipPath(style.maskShape)
   if (clip) css.clipPath = clip
+  if (isStr(style.maskImageUrl) && isSafeMediaUrl(style.maskImageUrl, 'image')) {
+    const m = `url(${style.maskImageUrl})`
+    css.maskImage = m
+    css.WebkitMaskImage = m
+    css.maskSize = css.WebkitMaskSize = style.maskImageSize && BG_IMAGE_SIZES.includes(style.maskImageSize) ? style.maskImageSize : 'contain'
+    css.maskPosition = css.WebkitMaskPosition = style.maskImagePosition ?? 'center'
+    css.maskRepeat = css.WebkitMaskRepeat = style.maskImageRepeat && BG_IMAGE_REPEATS.includes(style.maskImageRepeat) ? style.maskImageRepeat : 'no-repeat'
+  }
   Object.assign(css, advancedCss(style))
   // One comma-separated list: the transform transition from advancedCss (if any) plus the hover colour/shadow/radius ones.
   if (hasHoverState(style)) {

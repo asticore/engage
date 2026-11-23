@@ -207,3 +207,24 @@ export const BgImagePlacement: React.FC<{ value: BlockStyle; set: (k: keyof Bloc
     </>
   )
 }
+
+/** Image mask: the address of an SVG or PNG (https or on this site) and how it is sized, placed and repeated. */
+export const MaskImageRows: React.FC<{ value: BlockStyle; set: (k: keyof BlockStyle, v: unknown) => void }> = ({ value, set }) => {
+  const sel = (label: string, k: keyof BlockStyle, values: readonly string[], none: string) => (
+    <SelectRow key={String(k)} label={label} value={(value[k] as string | undefined) ?? ''} options={opts(values, none)} applied={value[k] !== undefined} onReset={() => set(k, undefined)} onChange={(v) => set(k, v || undefined)} />
+  )
+  return (
+    <>
+      <Row label="Mask image (SVG or PNG address)" applied={value.maskImageUrl !== undefined} onReset={() => set('maskImageUrl', undefined)}>
+        <input type="text" value={value.maskImageUrl ?? ''} placeholder="https://... or /media/shape.svg" onChange={(e) => set('maskImageUrl', e.target.value.trim() || undefined)} />
+      </Row>
+      {value.maskImageUrl && (
+        <>
+          {sel('Mask size', 'maskImageSize', BG_IMAGE_SIZES, 'Contain (default)')}
+          {sel('Mask position', 'maskImagePosition', ['center', 'top', 'bottom', 'left', 'right'], 'Centre (default)')}
+          {sel('Mask repeat', 'maskImageRepeat', BG_IMAGE_REPEATS, 'No repeat (default)')}
+        </>
+      )}
+    </>
+  )
+}
