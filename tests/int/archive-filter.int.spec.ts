@@ -7,7 +7,7 @@ import { isLoopTemplate, loopItemBlocks, loopItemsFromDocs, LOOP_ITEM_WIDGETS, l
 describe('parseArchiveFilters', () => {
   it('reads every param and defaults the rest', () => {
     expect(parseArchiveFilters({ category: ' gifts ', tag: 'sale', min: '10', max: '99.5', q: ' ring ', sort: 'price-asc' })).toEqual({
-      category: 'gifts', tag: 'sale', min: 10, max: 99.5, q: 'ring', sort: 'price-asc',
+      category: 'gifts', inStock: false, onSale: false, rating: null, tag: 'sale', min: 10, max: 99.5, q: 'ring', sort: 'price-asc',
     })
     expect(parseArchiveFilters({})).toEqual(NO_ARCHIVE_FILTERS)
   })

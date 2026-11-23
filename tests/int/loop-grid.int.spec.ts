@@ -16,6 +16,7 @@ import { SITE_ELEMENT_TYPES } from '@/lib/elements/wave38Defs'
 // React cache() gives a fresh holder outside a request, so the archive context is supplied here instead.
 const ctxRef: { current: BlockContext } = { current: {} }
 vi.mock('@/lib/blockContext', async (orig) => ({ ...(await orig<typeof import('@/lib/blockContext')>()), getBlockContext: () => ctxRef.current }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: (): void => undefined }) }))
 
 describe('loop kind', () => {
   it('is a site template kind labelled Loop item, with its own tab and no coverage warning', () => {

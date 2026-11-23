@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 60 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 61 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3000,6 +3000,13 @@ _Date: 23 Nov 2026_
 **Where to find it:** Visual editor > Heading > HTML tag; Design > Typography with the device toggle
 
 <a id="bld-060"></a>
+#### BLD-061 · Task 15 34e Archive filters (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34e (23 Nov 2026).** Checked: the archive filter already had search, category, tag, price range and sort, and the shop page already had attribute and brand facets with shareable links. Added to the Archive filter element and the shop archive: In stock only (`?instock=1`), On sale (`?onsale=1`) and minimum rating (`?rating=1..5`, from the cached `ratingAverage`), removable chips for every active filter, and an update-without-reload mode (`ArchiveFilterForm.tsx`: a soft navigation on change, the plain GET form and Apply button remain the no-JavaScript path). Code: `archiveFilter.ts`, `blockContext.ts`, `ArchiveFilter.tsx`, `ArchiveFilterForm.tsx`, `loopDefs.ts`, `shop/page.tsx`; tests `tests/int/archive-filter-34e.int.spec.ts`. Tags on every content type with a tag cloud stay in Task 28c and gallery category filters in 33b, as the original item said.
+
+**Where to find it:** Visual editor > Elements > Archive filter; /shop
 #### BLD-060 · Task 12 gradient kinds and second shadow layer (31e part) (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3368,6 +3375,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-061](#bld-061) Task 15 34e Archive filters
 - [BLD-060](#bld-060) Task 12 gradient kinds and second shadow layer (31e part)
 - [BLD-059](#bld-059) Task 12 heading tag choice and per-device text styling (31e part)
 - [BLD-058](#bld-058) Task 15 34f Slider options

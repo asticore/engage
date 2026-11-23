@@ -49,7 +49,12 @@ export const LOOP_GRID_ELEMENTS: ElementDef[] = [
       check('showTag', 'Show tag', 'Blog only, when posts have tags.'),
       check('showPrice', 'Show price range', 'Shop only.'),
       check('showSort', 'Show sort'),
+      check('showInStock', 'Show In stock only', 'Shop only.'),
+      check('showOnSale', 'Show On sale only', 'Shop only.'),
+      check('showRating', 'Show minimum rating', 'Shop only. Uses the average of approved reviews.'),
+      check('showChips', 'Show active filters as removable chips'),
+      check('instant', 'Update the list without reloading the page', 'Filters apply as soon as one is changed. Without JavaScript the Apply button still works.'),
     ],
-    defaultProps: () => ({ showSearch: true, showCategory: true, showTag: true, showPrice: true, showSort: true }),
+    defaultProps: () => ({ showSearch: true, showCategory: true, showTag: true, showPrice: true, showSort: true, showInStock: true, showOnSale: true, showRating: true, showChips: true, instant: true }),
   },
 ]
