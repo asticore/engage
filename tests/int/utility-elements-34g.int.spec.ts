@@ -30,3 +30,10 @@ describe('34g utility elements', () => {
     expect(html(PdfViewerElement, {})).toContain('Choose a PDF')
   })
 })
+
+import { parseFabItems } from '@/components/blocks/elements/UtilityElements'
+describe('34g2 floating action button', () => {
+  it('keeps safe items only', () => {
+    expect(parseFabItems('Call | tel:+123\nTop | #top\nBad | javascript:alert(1)\nSite | https://example.com/x').map((i) => i.label)).toEqual(['Call', 'Top', 'Site'])
+  })
+})

@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 69 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 70 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3008,6 +3008,14 @@ _Date: 23 Nov 2026_
 **Where to find it:** Visual editor > Heading > HTML tag; Design > Typography with the device toggle
 
 <a id="bld-060"></a>
+#### BLD-070 · Task 15 34g2 Floating action button (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34g2 part (23 Nov 2026).** New `floating-action-button` element: a round button fixed to the bottom right or left that opens a menu of links (call, email, scroll to top, any page) using a native details element, so it works without JavaScript. Only safe web, tel, mailto and in-page addresses are kept, at most 8 items. Code: `utilityDefs.ts`, `UtilityElements.tsx`; test in `tests/int/utility-elements-34g.int.spec.ts`. Still open in 34g2: poll, social proof popups, Trustpilot and Tripadvisor sources.
+
+**Where to find it:** Visual editor > Elements > Layout > Floating action button
+
 #### BLD-069 · Task 15 34d 3D viewer and product configurator (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3459,6 +3467,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-070](#bld-070) Task 15 34g2 Floating action button
 - [BLD-069](#bld-069) Task 15 34d 3D viewer and product configurator
 - [BLD-068](#bld-068) Border width per device
 - [BLD-067](#bld-067) Position offsets with units per device

@@ -2,7 +2,7 @@ import React from 'react'
 
 import { renderQrSvg } from '@/features/security/twoFactorQr'
 
-import { mediaOf, num, pick, str } from './elementUtil'
+import { cells, mediaOf, num, pick, str } from './elementUtil'
 
 type P = Record<string, unknown>
 
@@ -53,7 +53,37 @@ export const PdfViewerElement: React.FC<P> = (p) => {
   )
 }
 
+/** Menu lines `Label | address`; only safe web, tel, mailto and in-page addresses are kept. Exported for tests. */
+export function parseFabItems(v: unknown): { label: string; href: string }[] {
+  return cells(v, 2).flatMap(([label, href]) => {
+    const h = (href ?? '').trim()
+    const ok = h === '#top' || /^#[\w-]+$/.test(h) || /^(tel|mailto):[^\s]+$/i.test(h) || Boolean(mediaOf(h))
+    return label && ok ? [{ label, href: h }] : []
+  }).slice(0, 8)
+}
+
+/** `floating-action-button`: a fixed round button with a native details menu, so it needs no script. */
+export const FloatingActionButtonElement: React.FC<P> = (p) => {
+  const items = parseFabItems(p.items)
+  if (items.length === 0) return <p className="be-el-fab__note">Add menu items, one per line: Label | address.</p>
+  const corner = pick(p.corner, ['bottom-right', 'bottom-left'] as const, 'bottom-right')
+  const side = corner === 'bottom-left' ? { left: 16 } : { right: 16 }
+  return (
+    <details className="be-el-fab" style={{ position: 'fixed', bottom: 16, zIndex: 50, ...side }}>
+      <summary aria-label={str(p.label, 'Quick actions')} style={{ listStyle: 'none', cursor: 'pointer', width: 56, height: 56, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, background: 'var(--accent, #111)', color: '#fff', boxShadow: '0 2px 10px rgb(0 0 0 / .3)' }}>
+        {str(p.icon, '+').slice(0, 4)}
+      </summary>
+      <ul style={{ position: 'absolute', bottom: 64, [corner === 'bottom-left' ? 'left' : 'right']: 0, listStyle: 'none', margin: 0, padding: 8, background: '#fff', color: '#111', borderRadius: 8, boxShadow: '0 2px 12px rgb(0 0 0 / .25)', minWidth: 160 }}>
+        {items.map((it) => (
+          <li key={it.label + it.href}><a href={it.href} style={{ display: 'block', padding: '6px 10px', color: 'inherit' }}>{it.label}</a></li>
+        ))}
+      </ul>
+    </details>
+  )
+}
+
 export const UTILITY_COMPONENTS: Record<string, React.ComponentType<P>> = {
   'qr-code': QrCodeElement,
   'pdf-viewer': PdfViewerElement,
+  'floating-action-button': FloatingActionButtonElement,
 }
