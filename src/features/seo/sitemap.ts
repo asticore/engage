@@ -240,6 +240,14 @@ export const buildSitemapEntries = async (): Promise<SitemapEntry[] | null> => {
   }
   if (flags?.faq) {
     add('/faq', undefined, 0.5)
+    try {
+      const { faqTypes, faqTypePath } = await import('@/features/faq/archive')
+      const engine = await getEngine()
+      const found = await engine.find({ collection: 'faqs', limit: 0 })
+      for (const type of faqTypes(found.docs as unknown as { category?: string }[])) add(faqTypePath(type.slug), undefined, 0.4)
+    } catch {
+      // Type pages are optional entries.
+    }
   }
 
   // Translated slugs (localizedSlugs.ts): each entry's URL in every locale, worked out from the rows loaded above.

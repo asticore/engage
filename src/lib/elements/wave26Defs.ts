@@ -132,13 +132,16 @@ export const WAVE26_ELEMENTS: ElementDef[] = [
   },
   // ---- interactive ----
   {
-    type: 'accordion', label: 'Accordion', icon: '≡', category: 'interactive', hidden: true,
-    description: 'Headings that open to show text. Opening one closes the others.',
+    type: 'accordion', label: 'Accordion', icon: '≡', category: 'interactive',
+    description: 'Headings that open to show text. Type your own, or fill it from your FAQ entries (a whole category or hand-picked).',
     fields: [
-      { name: 'items', label: 'Items', type: 'repeater', repeater: { fields: [text('heading', 'Heading'), area('content', 'Content')] } },
-      { name: 'openFirst', label: 'First item open', type: 'checkbox' }
+      { name: 'source', label: 'Content', type: 'select', options: [{ label: 'My own items', value: '' }, { label: 'FAQs from a category', value: 'faq-category' }, { label: 'Hand-picked FAQs', value: 'faq-manual' }] },
+      { name: 'items', label: 'Items', type: 'repeater', showIf: { field: 'source', in: ['', 'own'] }, repeater: { fields: [text('heading', 'Heading'), area('content', 'Content')] } },
+      text('category', 'FAQ category', { helpText: 'Matches the Category on the FAQ entries. Leave blank for all FAQs.', showIf: { field: 'source', equals: 'faq-category' } }),
+      text('faqs', 'FAQ ids', { helpText: 'The ids of the FAQ entries to show, separated by commas.', showIf: { field: 'source', equals: 'faq-manual' } }),
+      { name: 'openFirst', label: 'First item open', type: 'checkbox', showIf: { field: 'source', in: ['', 'own'] } }
     ],
-    defaultProps: () => ({ items: [{heading: 'How long is delivery?', content: 'Usually 3 to 5 working days.'}, {heading: 'Can I return something?', content: 'Yes, within 30 days.'}], openFirst: true }),
+    defaultProps: () => ({ source: '', items: [{heading: 'How long is delivery?', content: 'Usually 3 to 5 working days.'}, {heading: 'Can I return something?', content: 'Yes, within 30 days.'}], openFirst: true }),
   },
   {
     type: 'toggle', label: 'Toggle', icon: '⊞', category: 'interactive', hidden: true,
