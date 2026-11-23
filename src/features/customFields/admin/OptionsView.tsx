@@ -2,7 +2,9 @@ import { AdminLink } from '@/admin/adminRoute/AdminLink'
 import React from 'react'
 
 import { loadFieldGroups, fetchMediaUrls } from '../server'
-import { getOptionValues, isValidOptionSlug } from '../options'
+import { getOptionValues, isValidOptionSlug, defaultValuesOf, overridesOf } from '../options'
+import { readMultilingualSettingsFromD1, type MultilingualSettings } from '@/features/multilingual/settings'
+import { isLocaleRoutable } from '@/features/multilingual/routing'
 import { collectMediaIds } from '../stringify'
 import { editorRoles } from '../adminRoles'
 import { matchesLocation, optionsPageContext } from '../location'
@@ -47,6 +49,8 @@ export async function OptionsView({ searchParams }: { searchParams?: Record<stri
 
   const userRoles = await editorRoles()
   const stored = await getOptionValues(current)
+  const mlSettings: MultilingualSettings = await readMultilingualSettingsFromD1().catch(() => ({ activeLocales: [], defaultLocale: '' }) as unknown as MultilingualSettings)
+  const otherLocales = isLocaleRoutable(mlSettings) ? mlSettings.activeLocales.filter((l) => l !== mlSettings.defaultLocale) : []
   // Groups that could show on this page; the form checks field value rules as the values change.
   const pageGroups = groups.filter((g) => matchesLocation(g.location, optionsPageContext(current, stored.values, userRoles), { ignoreFieldValues: true }))
   const mediaUrls = await fetchMediaUrls(collectMediaIds(pageGroups.flatMap((g) => g.fields), stored.values))
@@ -73,7 +77,9 @@ export async function OptionsView({ searchParams }: { searchParams?: Record<stri
         slug={current}
         groups={pageGroups}
         userRoles={userRoles}
-        initialValues={stored.values}
+        initialValues={defaultValuesOf(stored.values)}
+        locales={otherLocales}
+        initialL10n={overridesOf(stored.values)}
         initialUpdatedAt={stored.updatedAt}
         initialMediaUrls={Object.fromEntries(mediaUrls)}
       />

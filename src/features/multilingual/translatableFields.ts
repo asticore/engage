@@ -141,6 +141,7 @@ export function fieldsForDocument(slug: string, doc: unknown): TranslatableField
   if (!source) return []
   const fixed = source.fields.flatMap((field) => (field.richText ? richTextFieldsFor(field, doc) : [field]))
   if (source.tiersField) fixed.push(...tierFieldsFor(doc, source.tiersField))
+  fixed.push(...customFieldTextFor(slug, doc))
   if (!source.blocksField) return fixed
   const blockFields: TranslatableFieldDef[] = blockTextAddresses(doc, source.blocksField).map((address) => ({
     path: address.fieldPath,
@@ -149,6 +150,32 @@ export function fieldsForDocument(slug: string, doc: unknown): TranslatableField
     group: address.group,
   }))
   return [...fixed, ...blockFields]
+}
+
+/** Collections whose documents carry Extra fields (the `customFields` JSON), so their text values can be translated. */
+const CUSTOM_FIELD_SOURCES = new Set(['pages', 'posts', 'products', 'events'])
+const CUSTOM_FIELD_NAME = /^[a-z0-9_]{1,64}$/
+/** Values that are data rather than wording: addresses, numbers, dates and colours stay as they are. */
+const NOT_WORDING = /^(?:https?:\/\/|mailto:|tel:|\/|#|\d{4}-\d{2}-\d{2}|[+-]?[\d.,\s]+$)/i
+
+/**
+ * The text values of a document's Extra fields, one translatable field per top-level text value, so a
+ * `{{field:tagline}}` merge tag can show the visitor's language. Nested values (groups, repeaters) are
+ * left in the default language. Grouped, so a missing translation shows the default text.
+ */
+function customFieldTextFor(slug: string, doc: unknown): TranslatableFieldDef[] {
+  if (!CUSTOM_FIELD_SOURCES.has(slug) || !doc || typeof doc !== 'object') return []
+  const values = (doc as Record<string, unknown>).customFields
+  if (!values || typeof values !== 'object' || Array.isArray(values)) return []
+  const out: TranslatableFieldDef[] = []
+  for (const [name, value] of Object.entries(values as Record<string, unknown>)) {
+    if (!CUSTOM_FIELD_NAME.test(name) || typeof value !== 'string') continue
+    const text = value.trim()
+    if (text === '' || text.length > 5000 || NOT_WORDING.test(text)) continue
+    const group = { key: 'customFields', blockType: 'customFields', blockLabel: 'Extra fields', preview: text.slice(0, 60) }
+    out.push({ path: `customFields.${name}`, label: `Extra field · ${name}`, size: text.length > 80 || text.includes('\n') ? 'long' : 'text', group })
+  }
+  return out
 }
 
 /**

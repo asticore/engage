@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import { getAdminContext } from '@/admin/auth'
-import { isValidOptionSlug, getOptionValues, saveOptionValues } from '@/features/customFields/options'
+import { isValidOptionSlug, getOptionValues, saveOptionValues, saveOptionLocale, defaultValuesOf, overridesOf } from '@/features/customFields/options'
+import { readMultilingualSettingsFromD1 } from '@/features/multilingual/settings'
 import { pruneHiddenValues } from '@/features/customFields/conditions'
 import { loadFieldGroups } from '@/features/customFields/server'
 import { definitionsFor, definedValueKeys, validateFieldValues } from '@/features/customFields/validate'
@@ -20,6 +21,7 @@ const MAX_OPTIONS_KEYS = 200
  *
  * GET  /api/admin-field-options/<slug>  -> { values, updatedAt, groups }
  * POST /api/admin-field-options/<slug>  body { values } -> validated, hidden values dropped, saved
+ * POST /api/admin-field-options/<slug>  body { locale, values } -> that language's text values (text fields only; empty = use the default)
  *
  * Read needs admin or field-groups:read; write needs admin or field-groups:update.
  */
@@ -44,7 +46,7 @@ export async function GET(_request: Request, { params }: Ctx): Promise<Response>
     // Every group whose rules could hold for this page. Field value rules are checked as the page is edited.
     const ctx = optionsPageContext(slug, values, userRoles)
     const applicable = groups.filter((g) => matchesLocation(g.location, ctx, { ignoreFieldValues: true }))
-    return NextResponse.json({ slug, values, updatedAt, groups: applicable, userRoles }, { headers: { 'Cache-Control': 'no-store' } })
+    return NextResponse.json({ slug, values: defaultValuesOf(values), l10n: overridesOf(values), updatedAt, groups: applicable, userRoles }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('admin-field-options GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -64,7 +66,7 @@ export async function POST(request: Request, { params }: Ctx): Promise<Response>
     }
     const body = (() => {
       try {
-        return JSON.parse(raw) as { values?: unknown } | null
+        return JSON.parse(raw) as { values?: unknown; locale?: unknown } | null
       } catch {
         return null
       }
@@ -76,6 +78,23 @@ export async function POST(request: Request, { params }: Ctx): Promise<Response>
     }
 
     const groups = await loadFieldGroups()
+
+    if (typeof body?.locale === 'string' && body.locale !== '') {
+      const settings = await readMultilingualSettingsFromD1()
+      if (body.locale === settings.defaultLocale || !settings.activeLocales.includes(body.locale)) {
+        return NextResponse.json({ error: 'Choose one of the other active languages' }, { status: 400 })
+      }
+      // Only text fields this page defines can be translated; the default values decide which fields apply.
+      const stored = defaultValuesOf((await getOptionValues(slug)).values)
+      const textNames = new Set(definitionsFor(groups, optionsPageContext(slug, stored, await editorRoles())).filter((d) => d.type === 'text' || d.type === 'textarea').map((d) => d.name))
+      const texts: Record<string, string> = {}
+      for (const [key, value] of Object.entries(incoming)) {
+        if (textNames.has(key) && typeof value === 'string' && value.length <= 5000) texts[key] = value
+      }
+      const updatedAt = await saveOptionLocale(slug, body.locale, texts)
+      return NextResponse.json({ ok: true, updatedAt, l10n: { [body.locale]: texts } }, { headers: { 'Cache-Control': 'no-store' } })
+    }
+
     // The values sent are the ones the form shows, so a field value rule is checked against them.
     const defs = definitionsFor(groups, optionsPageContext(slug, incoming, await editorRoles()))
     // Only keys this options page's groups define are kept. Anything else is ignored, not stored.
