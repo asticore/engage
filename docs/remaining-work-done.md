@@ -16,7 +16,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [INT](#cat-int) | Integrations, API and webhooks | 19 |
 | [EVT](#cat-evt) | Events, tickets and bookings | 11 |
 | [COM](#cat-com) | Commerce and shop | 51 |
-| [FRM](#cat-frm) | Forms, comments and spam | 9 |
+| [FRM](#cat-frm) | Forms, comments and spam | 10 |
 | [MEM](#cat-mem) | Members, companies and portal | 11 |
 | [MED](#cat-med) | Media and files | 10 |
 | [I18N](#cat-i18n) | Languages and translations | 12 |
@@ -1671,6 +1671,14 @@ _Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 
 **Where to find it:** /admin/settings/content > Form settings > Spam (Test CAPTCHA keys button, Appearance: Visible or Invisible); fallback reCAPTCHA keys: /admin/settings/site > Integrations
 
 <a id="frm-009"></a>
+#### FRM-010 · Task 15 34h5 Datasources: shared option lists (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34h5 (23 Nov 2026).** Shared option lists edited once. In the visual editor, Form settings > Shared lists (admins) creates a list (name, title, one `Label | value` per line). A Dropdown, Radio or Checkbox field has a new Shared list box: type the list name and its choices replace the field's own, in the form view and in the submission check, because the form is filled in when loaded (`withDatasources` in `loadForm` and the Form block). An unknown or removed list keeps the field's own choices. Lists live in `eg_datasources`, created on first use. Code: `src/features/datasources/{core,store,withDatasources}.ts`, `api/admin-datasources/route.ts`, `SharedListsCard.tsx`, `FormSettingsPanel.tsx`, `forms/elementDefs.ts`, `forms/server.ts`; tests `tests/int/datasources-34h5.int.spec.ts`. Custom fields on other collections do not use shared lists yet.
+
+**Where to find it:** Visual editor > Form settings > Shared lists; any choice field > Shared list
+
 #### FRM-009 · Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026)
 
 _Date: 22 Nov 2026 · Original group: Task 3 (Spark and Shine for every element), first batch (23 Nov 2026)_
@@ -3544,6 +3552,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 - [BLD-042](#bld-042) Task 10 chat button batch 5 (22 Nov 2026)
 - [EVT-011](#evt-011) 16g Event page type on posts (built 22 Nov 2026)
 - [FRM-008](#frm-008) Site-wide CAPTCHA keys, test and look (Task 5, 21a, built 22 Nov 2026)
+- [FRM-010](#frm-010) Task 15 34h5 Datasources: shared option lists
 - [FRM-009](#frm-009) Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026)
 - [I18N-012](#i18n-012) 41a
 - [INT-019](#int-019) Task 15 34j Two-way Google Calendar sync
