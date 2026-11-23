@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 65 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 66 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3041,6 +3041,14 @@ Line height can be a multiplier or px, em or rem. Word spacing can be px, em or 
 **Where to find it:** Visual editor, Design panel, Typography
 
 <a id="bld-065"></a>
+#### BLD-066 · Task 15 34i AI on any selected element (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+**Task 15 34i (23 Nov 2026).** The Build with AI edit mode now works on any selected element, nested section or column block, not only top-level sections. Non-section nodes are wrapped in a one-column section carrying their own id (`wrapForAi`), the reply is unwrapped to the replacing blocks (`unwrapAiReplacement`) and spliced into the owning column as one undo step; locked parts block the replace. The element settings panel has a new Edit with AI button (all 13 languages) that opens the dialog; with no provider the connect hint stays. Code: `src/features/ai/subtreeEdit.ts`, `VisualEditor.tsx` (`aiReplaceSelected`), `FieldPanel.tsx`, `EditorDock.tsx`; tests `tests/int/subtree-ai-34i.int.spec.ts`.
+
+**Where to find it:** Visual editor > select any element > Edit with AI
+
 #### BLD-065 · Blend mode per device (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3409,6 +3417,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-066](#bld-066) Task 15 34i AI on any selected element
 - [BLD-065](#bld-065) Blend mode per device
 - [BLD-064](#bld-064) Line height and word spacing units per device
 - [BLD-063](#bld-063) Task 15 34g Elfsight catalogue sweep

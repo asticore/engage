@@ -2180,6 +2180,7 @@ const nl: UiDictionary = {
   'cv.lit.drag_to_move': "Slepen om te verplaatsen",
   'cv.lit.drag_to_resize_these_two_columns': "Slepen om deze twee kolommen te verkleinen of vergroten",
   'cv.lit.duplicate': "Dupliceren",
+  'cv.lit.ai_edit': "Bewerken met AI",
   'cv.lit.duplicate_column': "Kolom dupliceren",
   'cv.lit.fully_locked': "Volledig vergrendeld",
   'cv.lit.grid_each_column_is_a_cell': "Raster: elke kolom is een cel",

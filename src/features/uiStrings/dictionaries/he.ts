@@ -731,6 +731,7 @@ const he: UiDictionary = {
   'cv.lit.drag_to_move': 'גררו כדי להזיז',
   'cv.lit.drag_to_resize_these_two_columns': 'גררו כדי לשנות את גודל שתי העמודות האלה',
   'cv.lit.duplicate': 'שכפול',
+  'cv.lit.ai_edit': "עריכה עם AI",
   'cv.lit.duplicate_column': 'שכפול עמודה',
   'cv.lit.fully_locked': 'נעול לגמרי',
   'cv.lit.grid_each_column_is_a_cell': 'רשת: כל עמודה היא תא',

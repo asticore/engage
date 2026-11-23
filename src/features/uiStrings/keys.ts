@@ -2256,6 +2256,7 @@ export const UI_STRING_SOURCE = {
   'cv.lit.drag_to_move': "Drag to move",
   'cv.lit.drag_to_resize_these_two_columns': "Drag to resize these two columns",
   'cv.lit.duplicate': "Duplicate",
+  'cv.lit.ai_edit': "Edit with AI",
   'cv.lit.duplicate_column': "Duplicate column",
   'cv.lit.fully_locked': "Fully locked",
   'cv.lit.grid_each_column_is_a_cell': "Grid: each column is a cell",

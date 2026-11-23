@@ -58,6 +58,8 @@ export const FieldPanel: React.FC<{
   onClose: () => void
   onDelete: () => void
   onDuplicate: () => void
+  /** Opens Build with AI in edit mode on this element. */
+  onAiEdit?: () => void
   userPermissions?: { canEditStyle: boolean; canEditLayout: boolean } | null
   lockUi?: LockUi
   /** The device being edited (top bar toggle): responsive settings read and write that device's value. */
@@ -66,7 +68,7 @@ export const FieldPanel: React.FC<{
   onSelectColumn?: (index: number) => void
   /** Replaces a legacy block (hero, CTA banner, image + text, gallery) with editable sections. */
   onConvertLegacy?: () => void
-}> = ({ blockDef, data, onChange, onClose, onDelete, onDuplicate, userPermissions, lockUi, device = 'desktop', onSelectColumn, onConvertLegacy }) => {
+}> = ({ blockDef, data, onChange, onClose, onDelete, onDuplicate, onAiEdit, userPermissions, lockUi, device = 'desktop', onSelectColumn, onConvertLegacy }) => {
   const t = useAdminT()
   const blocked = Boolean(lockUi?.lock?.blocked)
   const fieldDisabled = (name: string) => blocked && (lockUi?.lock?.mode === 'full' || !lockUi?.lock?.editableProps.includes(name))
@@ -207,6 +209,11 @@ export const FieldPanel: React.FC<{
         <button type="button" className="ve-btn ve-btn--ghost" onClick={onDuplicate} disabled={blocked}>
           Duplicate
         </button>
+        {onAiEdit && (
+          <button type="button" className="ve-btn ve-btn--ghost" onClick={onAiEdit} disabled={blocked}>
+            {t('cv.lit.ai_edit')}
+          </button>
+        )}
         <button type="button" className="ve-btn ve-btn--danger" onClick={onDelete} disabled={blocked}>
           Delete
         </button>

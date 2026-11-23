@@ -2180,6 +2180,7 @@ const hi: UiDictionary = {
   'cv.lit.drag_to_move': "खींचकर ले जाएँ",
   'cv.lit.drag_to_resize_these_two_columns': "इन दो कॉलम का आकार बदलने के लिए खींचें",
   'cv.lit.duplicate': "डुप्लिकेट करें",
+  'cv.lit.ai_edit': "AI से संपादित करें",
   'cv.lit.duplicate_column': "कॉलम डुप्लिकेट करें",
   'cv.lit.fully_locked': "पूरी तरह लॉक",
   'cv.lit.grid_each_column_is_a_cell': "ग्रिड: हर कॉलम एक सेल है",

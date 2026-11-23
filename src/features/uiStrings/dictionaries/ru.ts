@@ -2180,6 +2180,7 @@ const ru: UiDictionary = {
   'cv.lit.drag_to_move': "Перетащите, чтобы переместить",
   'cv.lit.drag_to_resize_these_two_columns': "Перетащите, чтобы изменить ширину этих двух столбцов",
   'cv.lit.duplicate': "Дублировать",
+  'cv.lit.ai_edit': "Изменить с помощью ИИ",
   'cv.lit.duplicate_column': "Дублировать столбец",
   'cv.lit.fully_locked': "Полностью заблокировано",
   'cv.lit.grid_each_column_is_a_cell': "Сетка: каждый столбец: ячейка",
