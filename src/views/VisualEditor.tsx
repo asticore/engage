@@ -809,7 +809,7 @@ export const VisualEditorView: React.FC = () => {
 
   /** Templates (a curated preset or a saved Page Template) insert several blocks at once. */
   const insertTemplateAt = useCallback(
-    (templateBlocks: SectionNode[], containerPath: NodePath, at: number, templateLocks?: Locks, label = 'Template inserted') => {
+    (templateBlocks: SectionNode[], containerPath: NodePath, at: number, templateLocks?: Locks, label = 'Example inserted') => {
       if (templateBlocks.length === 0) return
       if (insertBlocked(containerPath)) return
       const withFreshIds = templateBlocks.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
@@ -838,7 +838,7 @@ export const VisualEditorView: React.FC = () => {
         const at = path[path.length - 1] as number
         if (insertBlocked(containerPath)) return
         const fresh = templateBlocks.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
-        applyBlocks((prev) => insertNodes(updateNode(prev, path, () => null), containerPath, at, uniquifyAnchors(prev, fresh)), undefined, 'Replaced with template')
+        applyBlocks((prev) => insertNodes(updateNode(prev, path, () => null), containerPath, at, uniquifyAnchors(prev, fresh)), undefined, 'Replaced with example')
         setSelectedPath([...containerPath, at])
         setDockTab('settings')
         return
@@ -1519,7 +1519,7 @@ export const VisualEditorView: React.FC = () => {
         const templateLocks = payload.locksJson ? parseLocks(JSON.parse(payload.locksJson)) : undefined
         if (Array.isArray(parsed)) insertTemplateAt(parsed as SectionNode[], slot.containerPath, slot.at, templateLocks)
       } catch {
-        setLockNotice('That template could not be dropped.')
+        setLockNotice('That example could not be dropped.')
         setTimeout(() => setLockNotice(null), 4000)
       }
     },
@@ -1826,7 +1826,7 @@ export const VisualEditorView: React.FC = () => {
       ...convertibleKinds(getNode(blocks, path)).map((kind, i) => ({ id: `convert-${kind}`, label: CONVERT_LABELS[kind], disabled: locked, divider: i === 0 })),
       { id: 'up', label: 'Move up', hint: 'Alt+Up', disabled: locked || index <= 0 },
       { id: 'down', label: 'Move down', hint: 'Alt+Down', disabled: locked || index >= list.length - 1 },
-      ...(formMode ? [] : [{ id: 'template', label: 'Save as template' }]),
+      ...(formMode ? [] : [{ id: 'template', label: 'Save as example' }]),
       { id: 'delete', label: 'Delete', hint: 'Del', disabled: locked, danger: true },
     ]
   }
@@ -2284,7 +2284,7 @@ export const VisualEditorView: React.FC = () => {
           onClose={() => setSaveTemplateOpen(false)}
           onSaved={() => {
             setSaveTemplateOpen(false)
-            setTemplateToast('Saved to My templates')
+            setTemplateToast('Saved to My examples')
             setTimeout(() => setTemplateToast(null), 4000)
           }}
         />

@@ -57,7 +57,7 @@ export const SaveAsTemplateDialog: React.FC<{
     e.preventDefault()
     const trimmed = name.trim()
     if (!trimmed) {
-      setError('Give the template a name.')
+      setError('Give the example a name.')
       return
     }
     const source = scope === 'section' && selectedSection ? [selectedSection] : pageBlocks
@@ -99,15 +99,15 @@ export const SaveAsTemplateDialog: React.FC<{
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
-      if (res.status === 401 || res.status === 403) throw new Error('You do not have permission to save templates.')
+      if (res.status === 401 || res.status === 403) throw new Error('You do not have permission to save examples.')
       if (!res.ok) {
         const json = (await res.json().catch((): null => null)) as { errors?: Array<{ message?: string }> } | null
-        throw new Error(json?.errors?.[0]?.message || `The template could not be saved (${res.status}).`)
+        throw new Error(json?.errors?.[0]?.message || `The example could not be saved (${res.status}).`)
       }
       window.dispatchEvent(new CustomEvent(TEMPLATES_CHANGED_EVENT))
       onSaved()
     } catch (err) {
-      setError((err as Error)?.message || 'The template could not be saved.')
+      setError((err as Error)?.message || 'The example could not be saved.')
       setBusy(false)
     }
   }
@@ -116,7 +116,7 @@ export const SaveAsTemplateDialog: React.FC<{
     <div className="ve-modal-overlay" role="presentation" onClick={onClose}>
       <div className="ve-modal ve-tpl-dialog" role="dialog" aria-modal="true" aria-labelledby="ve-tpl-dialog-title" onClick={(e) => e.stopPropagation()}>
         <div className="ve-modal__header">
-          <strong id="ve-tpl-dialog-title">Save as template</strong>
+          <strong id="ve-tpl-dialog-title">Save as example</strong>
           <button type="button" className="ve-btn ve-btn--ghost ve-btn--icon" aria-label="Close" onClick={onClose}>
             x
           </button>
@@ -193,7 +193,7 @@ export const SaveAsTemplateDialog: React.FC<{
               Cancel
             </button>
             <button type="submit" className="ve-btn ve-btn--primary" disabled={busy}>
-              {busy ? 'Saving' : 'Save template'}
+              {busy ? 'Saving' : 'Save example'}
             </button>
           </div>
         </form>
