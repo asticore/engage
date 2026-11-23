@@ -1787,6 +1787,9 @@ const StateTabs: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => v
             options={HOVER_TRANSFORM_OPTIONS}
             applied={value.hoverTransform !== undefined} onReset={() => set('hoverTransform', undefined)} onChange={(v) => set('hoverTransform', v === 'none' ? undefined : (v as HoverTransformPreset))}
           />
+          <ColorRow label="Gradient from" value={value.hoverGradFrom} onChange={(v) => set('hoverGradFrom', v)} />
+          <ColorRow label="Gradient to" value={value.hoverGradTo} onChange={(v) => set('hoverGradTo', v)} />
+          <FxRange k="hoverGradAngle" label="Gradient angle" unit="deg" value={value} onChange={onChange} def={180} min={0} max={360} />
           <SelectRow
             label={t('dp.field.blend_mode')}
             value={value.hoverBlendMode ?? 'normal'}

@@ -35,7 +35,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'gridLineWidth', 'auroraBlur', 'auroraSize', 'auroraSpeed', 'gradientAngle', 'gradientSpeed', 'grainOpacity', 'grainSize',
     'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'bgSlides', 'bgSlideIds', 'slideInterval', 'slideTransition', 'noise',
   ],
-  hover: ['hoverBgColor', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
+  hover: ['hoverBgColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
     'hoverOpacity', 'hoverTransform', 'focusRing', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'],
   spacing: [
     'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTopMobile', 'paddingBottomMobile', 'paddingUnit',
