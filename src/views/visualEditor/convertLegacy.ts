@@ -1,5 +1,5 @@
 /**
- * Turns a legacy monolithic block (hero, ctaBanner, imageText, gallery) into the equivalent
+ * Turns a legacy monolithic block (hero, ctaBanner, imageText, gallery, richText, toc, eventGrid, faq, productGrid) into the equivalent
  * granular section tree: a Section holding heading / text-editor / button / image elements, the
  * same shape the template presets build. Pure - the editor does the state update and id assignment.
  *
@@ -14,7 +14,8 @@ import type { SectionColumn, SectionNode } from '@/lib/sectionTree'
 
 type Rec = Record<string, unknown>
 
-const CONVERTIBLE_TYPES: readonly string[] = ['hero', 'ctaBanner', 'imageText', 'gallery']
+export const LEGACY_BLOCK_TYPES = ['hero', 'ctaBanner', 'imageText', 'gallery', 'richText', 'toc', 'eventGrid', 'faq', 'productGrid'] as const
+const CONVERTIBLE_TYPES: readonly string[] = LEGACY_BLOCK_TYPES
 
 /** True for the legacy monolithic block types that have a granular equivalent. */
 export function canConvertLegacy(blockType: string): boolean {
@@ -93,7 +94,7 @@ const section = (design: BlockStyle, ...columns: SectionColumn[]): SectionNode =
 
 /** Any other non-empty string on the legacy block becomes a text element, so nothing is silently lost. */
 function leftoverText(block: Rec, known: readonly string[]): SectionNode[] {
-  const skip = new Set<string>(['blockType', '_id', 'design', 'anchorId', ...known])
+  const skip = new Set<string>(['blockType', '_id', 'id', 'blockName', 'design', 'anchorId', 'headings', ...known])
   const out: SectionNode[] = []
   for (const [key, value] of Object.entries(block)) {
     if (!skip.has(key) && typeof value === 'string' && value !== '') out.push(textEl(value))
@@ -187,6 +188,62 @@ function convertGallery(block: Rec): SectionNode {
   return section(sectionDesign(block, {}), column(12, children))
 }
 
+const RICH_TEXT_KEYS = ['content']
+
+function convertRichText(block: Rec): SectionNode {
+  const has = block.content !== undefined && block.content !== null && block.content !== ''
+  const children: SectionNode[] = [el('text-editor', { align: 'left', ...(has ? { content: richText(block.content) } : {}) }), ...leftoverText(block, RICH_TEXT_KEYS)]
+  return section(sectionDesign(block, {}), column(12, children))
+}
+
+const TOC_KEYS = ['title', 'levels', 'collapsible']
+
+function convertToc(block: Rec): SectionNode {
+  const levels = block.levels === 'h2' || block.levels === 'h2-h3' ? block.levels : 'h2-h4'
+  const props: Rec = { auto: true, levels, collapsible: block.collapsible !== false, title: typeof block.title === 'string' ? block.title : 'On this page' }
+  return section(sectionDesign(block, {}), column(12, [el('toc', props), ...leftoverText(block, TOC_KEYS)]))
+}
+
+const EVENT_GRID_KEYS = ['heading', 'showPast', 'limit']
+
+function convertEventGrid(block: Rec): SectionNode {
+  const limit = typeof block.limit === 'number' && Number.isFinite(block.limit) ? Math.min(24, Math.max(1, Math.round(block.limit))) : 3
+  const props: Rec = { heading: typeof block.heading === 'string' ? block.heading : '', showPast: block.showPast === true, limit }
+  return section(sectionDesign(block, {}), column(12, [el('event-grid', props), ...leftoverText(block, EVENT_GRID_KEYS)]))
+}
+
+const FAQ_KEYS = ['heading', 'source', 'category', 'faqs']
+
+/** The ids of hand-picked FAQs, whether the block stored ids or populated documents. */
+function faqIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  const ids: string[] = []
+  for (const item of value) {
+    const id = isRec(item) ? item.id : item
+    if (typeof id === 'number' || (typeof id === 'string' && id !== '')) ids.push(String(id))
+  }
+  return ids
+}
+
+function convertFaq(block: Rec): SectionNode {
+  const manual = block.source === 'manual'
+  const props: Rec = {
+    heading: typeof block.heading === 'string' ? block.heading : '',
+    source: manual ? 'manual' : 'category',
+    category: typeof block.category === 'string' ? block.category : '',
+    faqs: manual ? faqIds(block.faqs).join(',') : '',
+  }
+  return section(sectionDesign(block, {}), column(12, [el('faq-list', props), ...leftoverText(block, FAQ_KEYS)]))
+}
+
+const PRODUCT_GRID_KEYS = ['heading', 'category', 'limit']
+
+function convertProductGrid(block: Rec): SectionNode {
+  const limit = typeof block.limit === 'number' && Number.isFinite(block.limit) ? Math.min(24, Math.max(1, Math.round(block.limit))) : 4
+  const props: Rec = { heading: typeof block.heading === 'string' ? block.heading : '', category: typeof block.category === 'string' ? block.category : '', limit }
+  return section(sectionDesign(block, {}), column(12, [el('product-grid', props), ...leftoverText(block, PRODUCT_GRID_KEYS)]))
+}
+
 /**
  * The granular section that replaces a legacy block, or null when the block type has no equivalent.
  * The result carries no editor ids; the caller assigns them (withFreshIds) and may keep the old node's _id.
@@ -203,6 +260,16 @@ export function convertLegacyBlock(block: Record<string, unknown>): Record<strin
       return convertImageText(block)
     case 'gallery':
       return convertGallery(block)
+    case 'richText':
+      return convertRichText(block)
+    case 'toc':
+      return convertToc(block)
+    case 'eventGrid':
+      return convertEventGrid(block)
+    case 'faq':
+      return convertFaq(block)
+    case 'productGrid':
+      return convertProductGrid(block)
     default:
       return null
   }

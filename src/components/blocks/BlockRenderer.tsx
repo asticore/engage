@@ -152,6 +152,21 @@ export const renderBlockBody = (node: SectionNode, key: string): React.ReactNode
         const props = get<Record<string, unknown>>('props') || {}
         return <AdSlot placement={typeof props.placement === 'string' ? props.placement : undefined} unit={typeof props.unit === 'string' ? props.unit : undefined} />
       }
+      if (get<string>('elementType') === 'section-instance') {
+        const props = get<Record<string, unknown>>('props') || {}
+        return <ReusableSectionBlock section={props.section} chain={reusableChainOf(get('_chain'))} values={props.values} renderNode={renderBlockBody} />
+      }
+      if (get<string>('elementType') === 'toc' && get<Record<string, unknown>>('props')?.auto === true) {
+        const props = get<Record<string, unknown>>('props') || {}
+        return (
+          <TableOfContentsBlock
+            title={typeof props.title === 'string' ? props.title : null}
+            levels={typeof props.levels === 'string' ? props.levels : null}
+            collapsible={props.collapsible !== false}
+            headings={Array.isArray(props.headings) ? (props.headings as never) : null}
+          />
+        )
+      }
       if (get<string>('elementType') === 'data-view') {
         const props = get<Record<string, unknown>>('props') || {}
         const raw = props.view

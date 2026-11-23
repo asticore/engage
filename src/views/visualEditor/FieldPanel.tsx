@@ -18,7 +18,8 @@ import {
 } from '@/lib/sectionTree'
 
 import type { BlockDef, EditorField } from './blockSchemas'
-import { parseSectionLayout, type DeviceFlow, type SectionLayout } from '@/lib/sectionLayout'
+import type { ParamDecl } from '@/lib/sectionParams'
+import { ALIGN_CONTENT_VALUES, CONTAINER_TAGS, LAYOUT_UNITS, OVERFLOW_VALUES, parseSectionLayout, safeHref, type DeviceFlow, type Dim, type LayoutUnit, type SectionLayout } from '@/lib/sectionLayout'
 
 import { Accordion, CheckRow, DesignPanel, HeightRows, makeResponsive, NumberRow, SelectRow, type EditDevice, type RowResp } from './DesignPanel'
 import { columnsForStructure, STRUCTURES } from './columnOps'
@@ -153,7 +154,8 @@ export const FieldPanel: React.FC<{
             </fieldset>
           ) : isElement ? (
             elementDef ? (
-              elementDef.fields.filter((field) => isFieldVisible(field, elementValues)).map((field) => {
+              <>
+              {elementDef.fields.filter((field) => isFieldVisible(field, elementValues)).map((field) => {
                 const input = <FieldInput field={field} value={elementProps[field.name]} onChange={(v) => setElementProp(field.name, v)} />
                 if (data.elementType !== 'embed' || field.name !== 'url') {
                   return (
@@ -168,7 +170,13 @@ export const FieldPanel: React.FC<{
                     <div onPaste={() => window.setTimeout(() => resolveEmbedAddress(), 0)} onBlur={() => resolveEmbedAddress()}>{input}</div>
                   </fieldset>
                 )
-              })
+              })}
+              {data.elementType === 'section-instance' && (
+                <fieldset className="ve-lockset" disabled={blocked}>
+                  <SectionParamForm section={elementProps.section} values={elementProps.values} onChange={(values) => setElementProp('values', values)} />
+                </fieldset>
+              )}
+              </>
             ) : (
               <p className="ve-panel__empty">Unknown element type &quot;{String(data.elementType)}&quot;.</p>
             )
@@ -249,6 +257,37 @@ const DISPLAY_HELP: Record<string, UiStringKey> = {
 const clampField = (v: number | undefined, min: number, max: number): number | undefined =>
   v === undefined ? undefined : Math.min(max, Math.max(min, Math.round(v)))
 
+/** A length with one of the six units (px, %, em, rem, vw, vh), per device; empty clears the value. */
+const DimRow: React.FC<{ label: string; device: EditDevice; value?: Dim; inheritedFrom: string; onChange: (d: Dim | undefined) => void }> = ({ label, device, value, inheritedFrom, onChange }) => (
+  <div className="ve-row">
+    <label className="ve-row__label">
+      {label}
+      {device !== 'desktop' && value === undefined ? ` (inherited from ${inheritedFrom})` : ''}
+    </label>
+    <span className="ve-col-row__custom">
+      <input
+        type="number"
+        min={0}
+        value={value?.v ?? ''}
+        onChange={(e) => (e.target.value === '' ? onChange(undefined) : onChange({ v: Math.max(0, Number(e.target.value)), u: value?.u ?? 'px' }))}
+        aria-label={`${label} value (${device})`}
+      />
+      <select
+        value={value?.u ?? 'px'}
+        onChange={(e) => value && onChange({ ...value, u: e.target.value as LayoutUnit })}
+        disabled={!value}
+        aria-label={`${label} unit (${device})`}
+      >
+        {LAYOUT_UNITS.map((u) => (
+          <option key={u} value={u}>
+            {u}
+          </option>
+        ))}
+      </select>
+    </span>
+  </div>
+)
+
 /**
  * Structure and flow settings for a Section block. Everything that can differ per device
  * (column widths, direction, gap, wrap, justify, align, height, padding) follows the top bar's
@@ -277,7 +316,7 @@ const SectionLayoutFields: React.FC<{
     else delete updated.layout
     onDesignChange?.(updated)
   }
-  const setForDevice = (key: 'direction' | 'gap', value: unknown) => {
+  const setForDevice = (key: 'direction' | 'gap' | 'rowGap' | 'columnGap' | 'boxed' | 'width' | 'maxWidth' | 'overflow' | 'alignContent', value: unknown) => {
     const current = { ...((layout[key] as Record<string, unknown> | undefined) || {}) }
     if (value === undefined) delete current[device]
     else current[device] = value
@@ -923,13 +962,19 @@ const SectionLayoutFields: React.FC<{
         <SelectRow
           label={t('ve.fp.wrap')}
           resp={flowResp('wrap')}
-          value={wrapNow === undefined ? '' : wrapNow === false ? 'nowrap' : 'wrap'}
+          value={flowGet('wrapReverse') ? 'reverse' : wrapNow === undefined ? '' : wrapNow === false ? 'nowrap' : 'wrap'}
           options={[
             { label: inheritedFirst('Wrap (default)'), value: '' },
             { label: t('ve.fp.wrapOpt'), value: 'wrap' },
+            { label: 'Wrap reverse', value: 'reverse' },
             { label: t('ve.fp.noWrap'), value: 'nowrap' },
           ]}
-          onChange={(v) => flowSet('wrap', v === '' ? undefined : v === 'wrap')}
+          onChange={(v) => {
+            const base = device === 'desktop' ? layout : { ...(layout[device] || {}) }
+            const next = { ...base, wrap: v === '' ? undefined : v !== 'nowrap', wrapReverse: v === 'reverse' ? true : device === 'desktop' ? undefined : v === '' ? undefined : false }
+            if (device === 'desktop') setLayout({ wrap: next.wrap, wrapReverse: next.wrapReverse } as Partial<SectionLayout>)
+            else setLayout({ [device]: { ...(layout[device] || {}), wrap: next.wrap, wrapReverse: next.wrapReverse } } as Partial<SectionLayout>)
+          }}
         />
         <SelectRow
           label={t('ve.fp.justify')}
@@ -954,9 +999,72 @@ const SectionLayoutFields: React.FC<{
             { label: t('ve.fp.centre'), value: 'center' },
             { label: t('ve.fp.vBottom'), value: 'end' },
             { label: t('ve.fp.stretchEqual'), value: 'stretch' },
+            { label: 'Baseline', value: 'baseline' },
           ]}
           onChange={(v) => flowSet('alignItems', (v || undefined) as DeviceFlow['alignItems'])}
         />
+      </Accordion>
+
+      <Accordion title="Container layout" defaultOpen={false}>
+        <p className="ve-panel__hint">Same controls as an Elementor container: content width, width, gaps, overflow and the HTML tag. Values are per device and fall back to the wider one.</p>
+        <DimRow label="Content width (boxed)" device={device} value={layout.boxed?.[device] ?? (device === 'desktop' && layout.boxedWidth ? { v: layout.boxedWidth, u: 'px' } : undefined)} inheritedFrom={from} onChange={(d) => setForDevice('boxed', d)} />
+        <DimRow label="Width" device={device} value={layout.width?.[device]} inheritedFrom={from} onChange={(d) => setForDevice('width', d)} />
+        <DimRow label="Max width" device={device} value={layout.maxWidth?.[device]} inheritedFrom={from} onChange={(d) => setForDevice('maxWidth', d)} />
+        <CheckRow
+          label="Link the gaps"
+          help="On: one gap for rows and columns (the Columns gap above). Off: set the row gap and the column gap separately."
+          checked={layout.rowGap?.[device] === undefined && layout.columnGap?.[device] === undefined}
+          onChange={(on) => {
+            if (on) {
+              setForDevice('rowGap', undefined)
+              setForDevice('columnGap', undefined)
+            } else {
+              const base = gapNow ?? 24
+              const rowGap = { ...(layout.rowGap || {}), [device]: base }
+              const columnGap = { ...(layout.columnGap || {}), [device]: base }
+              setLayout({ rowGap, columnGap })
+            }
+          }}
+        />
+        {(layout.rowGap?.[device] !== undefined || layout.columnGap?.[device] !== undefined) && (
+          <>
+            <NumberRow label="Row gap (px)" value={layout.rowGap?.[device]} min={0} onChange={(v) => setForDevice('rowGap', v)} />
+            <NumberRow label="Column gap (px)" value={layout.columnGap?.[device]} min={0} onChange={(v) => setForDevice('columnGap', v)} />
+          </>
+        )}
+        <SelectRow
+          label="Overflow"
+          resp={{ device, overridden: device !== 'desktop' && layout.overflow?.[device] !== undefined, onReset: () => setForDevice('overflow', undefined) }}
+          value={layout.overflow?.[device] || ''}
+          options={[{ label: inheritedFirst('Visible (default)'), value: '' }, ...OVERFLOW_VALUES.map((v) => ({ label: v.charAt(0).toUpperCase() + v.slice(1), value: v }))]}
+          onChange={(v) => setForDevice('overflow', v || undefined)}
+        />
+        <SelectRow
+          label="Align content"
+          resp={{ device, overridden: device !== 'desktop' && layout.alignContent?.[device] !== undefined, onReset: () => setForDevice('alignContent', undefined) }}
+          value={layout.alignContent?.[device] || ''}
+          options={[{ label: inheritedFirst('Default'), value: '' }, ...ALIGN_CONTENT_VALUES.map((v) => ({ label: v === 'between' ? 'Space between' : v === 'around' ? 'Space around' : v === 'evenly' ? 'Space evenly' : v.charAt(0).toUpperCase() + v.slice(1), value: v }))]}
+          onChange={(v) => setForDevice('alignContent', v || undefined)}
+        />
+        <SelectRow
+          label="HTML tag"
+          help="The element the container renders as. A link needs a web address."
+          value={layout.tag || 'div'}
+          options={CONTAINER_TAGS.map((v) => ({ label: v === 'a' ? 'a (link)' : v, value: v }))}
+          onChange={(v) => setLayout({ tag: v === 'div' ? undefined : (v as SectionLayout['tag']) })}
+        />
+        {layout.tag === 'a' && (
+          <div className="ve-row">
+            <label className="ve-row__label">Link address</label>
+            <input
+              type="text"
+              value={layout.href || ''}
+              placeholder="https://, /page, mailto: or tel:"
+              onChange={(e) => setLayout({ href: e.target.value === '' ? undefined : safeHref(e.target.value) ?? e.target.value.slice(0, 500) })}
+              aria-label="Link address"
+            />
+          </div>
+        )}
       </Accordion>
     </div>
   )
@@ -1112,6 +1220,66 @@ const RepeaterCards: React.FC<{ field: EditorField; value: unknown; onChange: (v
       <button type="button" className="ve-repeater__add" onClick={addRow}>
         + Add item
       </button>
+    </div>
+  )
+}
+
+/**
+ * The inputs a reusable section declares (Task 13 / 32c), as a small form. Only values you change are stored; an input
+ * you leave alone, or reset, follows the default in the source section. The declaration list comes from the section.
+ */
+const SectionParamForm: React.FC<{ section: unknown; values: unknown; onChange: (values: Record<string, unknown>) => void }> = ({ section, values, onChange }) => {
+  const id = typeof section === 'string' || typeof section === 'number' ? String(section) : ''
+  const [decls, setDecls] = useState<ParamDecl[]>([])
+  useEffect(() => {
+    if (!/^\d+$/.test(id)) {
+      setDecls([])
+      return
+    }
+    let live = true
+    fetch(`/api/admin-section-params?id=${id}`, { credentials: 'include' })
+      .then((r) => r.json() as Promise<{ decls?: ParamDecl[] }>)
+      .then((json) => {
+        if (live) setDecls(Array.isArray(json.decls) ? json.decls : [])
+      })
+      .catch(() => {
+        if (live) setDecls([])
+      })
+    return () => {
+      live = false
+    }
+  }, [id])
+
+  if (decls.length === 0) return id ? <p className="ve-panel__hint">This section declares no inputs. Add a Section inputs element to it to give each use its own values.</p> : null
+  const current: Record<string, unknown> = values && typeof values === 'object' && !Array.isArray(values) ? (values as Record<string, unknown>) : {}
+  const set = (key: string, v: unknown) => {
+    const next = { ...current }
+    if (v === undefined || v === '') delete next[key]
+    else next[key] = v
+    onChange(next)
+  }
+  return (
+    <div className="ve-section-fields">
+      <p className="ve-panel__hint">Inputs of this section. Leave one empty to follow the default set in the source.</p>
+      {decls.map((decl) => {
+        const own = Object.prototype.hasOwnProperty.call(current, decl.key)
+        const field: EditorField =
+          decl.type === 'image'
+            ? { name: decl.key, label: decl.label, type: 'media', width: 'full' }
+            : decl.type === 'colour'
+              ? { name: decl.key, label: decl.label, type: 'color', width: 'full' }
+              : decl.type === 'number'
+                ? { name: decl.key, label: decl.label, type: 'number', width: 'full' }
+                : decl.type === 'choice'
+                  ? { name: decl.key, label: decl.label, type: 'select', width: 'full', options: (decl.choices ?? []).map((c) => ({ label: c, value: c })) }
+                  : { name: decl.key, label: decl.label, type: 'text', width: 'full', helpText: decl.type === 'link' ? 'A web address, /page, mailto: or tel:' : undefined }
+        return (
+          <div key={decl.key} className="ve-row">
+            <FieldInput field={field} value={own ? current[decl.key] : undefined} onChange={(v) => set(decl.key, v)} />
+            <span className="ve-field__help">{own ? <button type="button" className="ve-btn ve-btn--ghost" onClick={() => set(decl.key, undefined)}>Use the source default</button> : `Default: ${decl.default ?? 'empty'}`}</span>
+          </div>
+        )
+      })}
     </div>
   )
 }

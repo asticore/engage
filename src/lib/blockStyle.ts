@@ -72,6 +72,7 @@ export const RESPONSIVE_KEYS = [
   'minHeight',
   'minHeightUnit',
   'selfAlign',
+  'order',
   'selfWidth',
   'selfWidthPercent',
   'fontSize',
@@ -350,6 +351,8 @@ export type BlockStyle = {
   // Position inside a column (all optional; unset keeps normal block flow)
   /** How the block sits across its column. 'stretch' fills it; start/center/end shrink to fit and align. */
   selfAlign?: 'stretch' | 'start' | 'center' | 'end'
+  /** Flex order inside its column (-20..20, per device). Unset = source order. */
+  order?: number
   /** 'full' = 100% of the column, 'custom' = selfWidthPercent. Unset = automatic. */
   selfWidth?: 'auto' | 'full' | 'custom'
   selfWidthPercent?: number
@@ -1224,6 +1227,7 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const u = lengthUnit(r[key])
     if (u) out[key] = u
   }
+  if (isNum(r.order)) out.order = Math.min(20, Math.max(-20, Math.round(r.order)))
   if (typeof r.selfAlign === 'string' && SELF_ALIGNS.includes(r.selfAlign)) out.selfAlign = r.selfAlign as BlockStyle['selfAlign']
   if (typeof r.selfWidth === 'string' && SELF_WIDTHS.includes(r.selfWidth)) out.selfWidth = r.selfWidth as BlockStyle['selfWidth']
   if (isNum(r.selfWidthPercent) && r.selfWidthPercent > 0) out.selfWidthPercent = r.selfWidthPercent
@@ -1322,6 +1326,7 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
   if (fontValue) css.fontFamily = fontValue
   if (isStr(style.textColor)) css.color = style.textColor
   if (style.textAlign) css.textAlign = style.textAlign
+  if (isNum(style.order)) css.order = style.order
   Object.assign(css, typographyCss(style))
   if (isNum(style.minHeight)) css.minHeight = minHeightValue(style.minHeight, style.minHeightUnit)
   Object.assign(css, sizeLimitCss(style))
@@ -1582,6 +1587,7 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
     const cr = cornerRadiusValue(mergedU)
     if (cr) decls.push(`border-radius:${cr} !important`)
   }
+  if (isNum(own.order)) decls.push(`order:${own.order} !important`)
   if (own.textAlign) decls.push(`text-align:${own.textAlign} !important`)
   if (own.fontSize !== undefined || own.fontSizeUnit !== undefined) {
     const merged: BlockStyle = { ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }

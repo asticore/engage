@@ -836,7 +836,7 @@ const CanvasColumn: React.FC<{
       id={scopeId}
       className={`ve-column ${selected ? 've-column--selected' : ''} ${blockFxClasses(design)}`}
       data-ve-column={JSON.stringify(columnPath)}
-      style={{ ...columnWidthVars(column), ...blockStyleToCss(design) }}
+      style={{ ...((column.blocks || []).some((n) => { const d = asBlockStyle(n.design); return typeof d.order === 'number' || typeof d.tablet?.order === 'number' || typeof d.mobile?.order === 'number' }) ? { display: 'flex', flexDirection: 'column' as const } : {}), ...columnWidthVars(column), ...blockStyleToCss(design) }}
       onClick={(event) => {
         // A block inside stops its own click, so this only fires for the column itself.
         event.stopPropagation()

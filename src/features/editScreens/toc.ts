@@ -97,6 +97,10 @@ function attachHeadings(node: unknown, headings: TocHeading[], depth: number): u
   const out: Record<string, unknown> = {}
   for (const [key, child] of Object.entries(node)) out[key] = attachHeadings(child, headings, depth + 1)
   if (node.blockType === 'toc') out.headings = headings
+  // The Table of contents element in automatic mode reads the same list from its props.
+  if (node.blockType === 'element' && node.elementType === 'toc' && isRecord(node.props) && node.props.auto === true) {
+    out.props = { ...node.props, headings }
+  }
   return out
 }
 

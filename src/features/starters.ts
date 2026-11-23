@@ -9,6 +9,7 @@
 import type { Engine } from '@/engine'
 
 import type { FeatureKey } from './registry'
+import { modernizeBlocks } from '@/features/legacyBlocks/convertTree'
 
 type Starter = { name: string; description: string; blocks: Record<string, unknown>[] }
 
@@ -17,25 +18,25 @@ export const FEATURE_STARTERS: Partial<Record<FeatureKey, Starter[]>> = {
     {
       name: 'Shop landing',
       description: 'Hero, a product grid and a call-to-action banner for a shop front page.',
-      blocks: [
+      blocks: modernizeBlocks([
         { blockType: 'hero', heading: 'Shop the collection' },
         { blockType: 'productGrid', heading: 'Featured products', limit: 8 },
         { blockType: 'ctaBanner', heading: 'Free delivery over the minimum order', buttonLabel: 'Browse all', buttonUrl: '/shop', style: 'dark' },
-      ],
+      ]),
     },
   ],
   events: [
     {
       name: 'Events landing',
       description: 'Hero and the upcoming events grid.',
-      blocks: [{ blockType: 'hero', heading: 'What is on' }, { blockType: 'eventGrid', heading: 'Upcoming events' }],
+      blocks: modernizeBlocks([{ blockType: 'hero', heading: 'What is on' }, { blockType: 'eventGrid', heading: 'Upcoming events' }]),
     },
   ],
   faq: [
     {
       name: 'FAQ page',
       description: 'Hero and the frequently asked questions.',
-      blocks: [{ blockType: 'hero', heading: 'Questions and answers' }, { blockType: 'faq', heading: 'Frequently asked questions', source: 'category' }],
+      blocks: modernizeBlocks([{ blockType: 'hero', heading: 'Questions and answers' }, { blockType: 'faq', heading: 'Frequently asked questions', source: 'category' }]),
     },
   ],
 }

@@ -16,6 +16,7 @@ import { enabledPageEffects } from '@/components/blocks/elements/Wave44Elements'
 import { reusableSectionIdOf } from '@/lib/reusableSection'
 import { getElementDef } from '@/lib/elements/registry'
 import { SITE_ELEMENT_TYPES, WAVE38_ELEMENTS } from '@/lib/elements/wave38Defs'
+import { LEGACY_REPLACEMENT_ELEMENTS } from '@/lib/elements/legacyReplacementDefs'
 import { UNKNOWN_ELEMENT_DETAIL, unknownElementTitle } from '@/lib/elements/unknownElement'
 
 import type { Media } from '@/engage-types'
@@ -175,7 +176,7 @@ export const CanvasBlockPreview: React.FC<{ data: Record<string, unknown> }> = (
       if (SITE_ELEMENT_TYPES.has(elementType)) {
         const sample = previewTextFor(elementType, props, previewCtx)
         if (sample) return <div className="ve-sample-text">{sample}</div>
-        const site = WAVE38_ELEMENTS.find((e) => e.type === elementType)
+        const site = [...WAVE38_ELEMENTS, ...LEGACY_REPLACEMENT_ELEMENTS].find((e) => e.type === elementType)
         return <DynamicPlaceholder icon={site?.icon ?? '\u{1F310}'} label={site?.label ?? elementType} data={data} detail="Reads live site data on the published page." />
       }
       if (elementType === 'ad') return <AdPlaceholder label={`Ad: ${String(props.placement || props.unit || 'choose a placement')}`} />

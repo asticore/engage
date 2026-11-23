@@ -687,7 +687,7 @@ export const TEMPLATE_PRESETS: TemplatePreset[] = [
     category: 'shop',
     blocks: () => [
       heroBand('Shop the collection', 'Handmade pieces, made to last.', 'Browse all', '/shop'),
-      { blockType: 'productGrid', heading: 'Shop', limit: 8 },
+      el('product-grid', { heading: 'Shop', limit: 8 }),
       ctaBand('Join the list', 'News and offers, now and then.', 'Sign up', '/contact'),
     ],
   },

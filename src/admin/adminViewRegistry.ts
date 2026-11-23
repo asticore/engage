@@ -38,6 +38,7 @@ const HeaderFooterView = lazyView(() => import('@/admin/views/HeaderFooterView')
 const TranslationsView = lazyView(() => import('@/features/multilingual/views/TranslationsView').then((mod) => mod.TranslationsView))
 const DatabaseView = lazyView(() => import('@/features/cleanup/DatabaseView').then((mod) => mod.DatabaseView))
 const ReferencesView = lazyView(() => import('@/features/references/ReferencesView').then((mod) => mod.ReferencesView))
+const LegacyBlocksView = lazyView(() => import('@/features/legacyBlocks/LegacyBlocksView').then((mod) => mod.LegacyBlocksView))
 const UnusedTablesView = lazyView(() => import('@/features/cleanup/UnusedTablesView').then((mod) => mod.UnusedTablesView))
 const ABResultsView = lazyView(() => import('@/features/abTesting/components/ABResultsView').then((mod) => mod.ABResultsView))
 const VisualEditorView = lazyView(() => import('@/admin/ui/NoSsrVisualEditor').then((mod) => mod.NoSsrVisualEditor))
@@ -209,6 +210,12 @@ export const CUSTOM_ADMIN_VIEWS = [
     Component: ReferencesView,
     path: '/references',
     meta: { title: 'Reference sources', description: 'The shared sources Engage follows (Shine, Spark), their pinned versions and whether a newer one exists.' },
+  },
+  {
+    key: 'legacyBlocks',
+    Component: LegacyBlocksView,
+    path: '/legacy-blocks',
+    meta: { title: 'Legacy blocks', description: 'Count the first-generation blocks still on pages and convert them to editable sections, with a backup and undo.' },
   },
   {
     key: 'unusedTables',

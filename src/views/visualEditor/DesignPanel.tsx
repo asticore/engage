@@ -400,6 +400,7 @@ export const DesignPanel: React.FC<{
             ]}
             defaultLabel={t('dp.lit.default')}
           />
+          <RespNumber ctl={resp} k="order" label="Order in the column (lower first)" min={-20} max={20} />
           <RespSelect
             ctl={resp}
             k="selfWidth"

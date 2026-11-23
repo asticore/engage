@@ -7,6 +7,7 @@ import {
   hscrollStyle,
   modalDataAttrs,
   modalStyleVars,
+  containerTag,
   parseSectionLayout,
   sectionLayoutProps,
   stackStyle,
@@ -268,10 +269,13 @@ export const SectionBlock: React.FC<{
     )
   }
 
+  const { tag, href } = containerTag(rawLayout)
+  const Tag = tag as React.ElementType
   return (
-    <div
+    <Tag
       className={layout.className ? `be-section ${layout.className}` : 'be-section'}
       data-depth={depth}
+      {...(tag === 'a' ? { href } : {})}
       {...layout.attrs}
       style={Object.keys(layout.style).length > 0 ? (layout.style as React.CSSProperties) : undefined}
     >
@@ -285,7 +289,7 @@ export const SectionBlock: React.FC<{
           scope={scope}
         />
       ))}
-    </div>
+    </Tag>
   )
 }
 
@@ -305,13 +309,19 @@ const SectionColumnView: React.FC<{
   // Tablet / mobile padding and hide settings of the column itself.
   const columnCss = blockStyleCss(design, design.anchorId || columnScope)
 
+  const num = (v: unknown) => typeof v === 'number'
+  // A block with an order only moves inside a flex column, so the column becomes one when any block sets it.
+  const usesOrder = (column.blocks || []).some((node) => {
+    const d = asBlockStyle(node.design)
+    return num(d.order) || num(d.tablet?.order) || num(d.mobile?.order)
+  })
   return (
     <div
       id={design.anchorId || (columnCss ? columnScope : panel?.id)}
       role={panel?.role}
       aria-labelledby={panel?.labelledBy}
       className={`be-column ${blockStyleClasses(design)} ${blockFxClasses(design)}`}
-      style={{ ...columnWidthVars(column), ...blockStyleToCss(design), ...extraStyle }}
+      style={{ ...(usesOrder ? { display: 'flex', flexDirection: 'column' as const } : {}), ...columnWidthVars(column), ...blockStyleToCss(design), ...extraStyle }}
     >
       {columnCss && <style dangerouslySetInnerHTML={{ __html: columnCss }} />}
       {(column.blocks || []).map((node, nodeIndex) => {

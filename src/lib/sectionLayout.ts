@@ -18,9 +18,22 @@ export type PerDevice<T> = { desktop?: T; tablet?: T; mobile?: T }
 
 export type FlowDirection = 'row' | 'row-reverse' | 'column' | 'column-reverse'
 export type JustifyContent = 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly'
-export type AlignItemsValue = 'start' | 'center' | 'end' | 'stretch'
+export type AlignItemsValue = 'start' | 'center' | 'end' | 'stretch' | 'baseline'
 export type AlignSelfValue = 'stretch' | 'start' | 'center' | 'end'
 export type VerticalAlign = 'top' | 'middle' | 'bottom' | 'between'
+
+/** The six length units the container controls offer. */
+export type LayoutUnit = 'px' | '%' | 'em' | 'rem' | 'vw' | 'vh'
+export const LAYOUT_UNITS: readonly LayoutUnit[] = ['px', '%', 'em', 'rem', 'vw', 'vh']
+/** A length with its unit (container width, max width, boxed content width). */
+export type Dim = { v: number; u: LayoutUnit }
+export type OverflowValue = 'visible' | 'hidden' | 'auto' | 'scroll'
+export const OVERFLOW_VALUES: readonly OverflowValue[] = ['visible', 'hidden', 'auto', 'scroll']
+export type AlignContentValue = 'start' | 'center' | 'end' | 'between' | 'around' | 'evenly' | 'stretch'
+export const ALIGN_CONTENT_VALUES: readonly AlignContentValue[] = ['start', 'center', 'end', 'between', 'around', 'evenly', 'stretch']
+/** HTML element a container renders as ('a' needs a link). Unset = div. */
+export type ContainerTag = 'div' | 'section' | 'header' | 'footer' | 'main' | 'article' | 'aside' | 'nav' | 'a'
+export const CONTAINER_TAGS: readonly ContainerTag[] = ['div', 'section', 'header', 'footer', 'main', 'article', 'aside', 'nav', 'a']
 
 export type SectionDisplay = 'columns' | 'tabs' | 'accordion' | 'carousel' | 'grid' | 'flex' | 'modal' | 'stack' | 'hscroll' | 'sticky-steps'
 
@@ -135,6 +148,23 @@ export type SectionLayout = {
   stickyStepsTop?: number
   /** Sticky steps: space between the steps, px (0..160). Unset = 48. */
   stickyStepsGap?: number
+  /** Row gap and column gap, per device, when they differ (unset follows `gap`). Same unit as `gapUnit`. */
+  rowGap?: PerDevice<number>
+  columnGap?: PerDevice<number>
+  /** Boxed content width with a unit, per device. Takes over from `boxedWidth` (px, desktop) when set. */
+  boxed?: PerDevice<Dim>
+  /** Container width and max width with units, per device. */
+  width?: PerDevice<Dim>
+  maxWidth?: PerDevice<Dim>
+  /** Overflow per device. Unset = visible. */
+  overflow?: PerDevice<OverflowValue>
+  /** align-content (rows inside a taller container) per device. Overrides verticalAlign. */
+  alignContent?: PerDevice<AlignContentValue>
+  /** wrap-reverse on desktop (needs wrap). */
+  wrapReverse?: boolean
+  /** Container HTML tag; 'a' renders a link to `href`. */
+  tag?: ContainerTag
+  href?: string
   /** Tablet / mobile overrides of the flow settings that are not per-device on their own. */
   tablet?: DeviceFlow
   mobile?: DeviceFlow
@@ -145,6 +175,7 @@ export type DeviceFlow = {
   wrap?: boolean
   justify?: JustifyContent
   alignItems?: AlignItemsValue
+  wrapReverse?: boolean
 }
 
 export type ColumnLayout = {
@@ -169,6 +200,17 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 /** Rounds a number and clamps it into [min, max]; anything that is not a finite number is dropped. */
 const clampInt = (v: unknown, min: number, max: number): number | undefined =>
   isNum(v) ? Math.min(max, Math.max(min, Math.round(v))) : undefined
+const readDim = (v: unknown): Dim | undefined => {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined
+  const r = v as Record<string, unknown>
+  const u = typeof r.u === 'string' && (LAYOUT_UNITS as readonly string[]).includes(r.u) ? (r.u as LayoutUnit) : undefined
+  return u && isNum(r.v) && r.v >= 0 ? { v: r.v, u } : undefined
+}
+/** CSS for a stored length. */
+export const dimCss = (d: Dim): string => `${d.v}${d.u}`
+/** Only plain links: http(s), mailto, tel, site-relative or a hash. Anything else is dropped. */
+export const safeHref = (v: unknown): string | undefined =>
+  typeof v === 'string' && /^(https?:\/\/|mailto:|tel:|\/(?!\/)|#)[^\s<>"']{0,500}$/i.test(v.trim()) ? v.trim() : undefined
 const isObj = (v: unknown): v is Record<string, unknown> => Boolean(v) && typeof v === 'object' && !Array.isArray(v)
 const pick = <T extends string>(v: unknown, allowed: readonly T[]): T | undefined =>
   typeof v === 'string' && (allowed as readonly string[]).includes(v) ? (v as T) : undefined
@@ -194,8 +236,25 @@ export function parseSectionLayout(raw: unknown): SectionLayout | undefined {
   if (gap) out.gap = gap
   const justify = pick(raw.justify, ['start', 'center', 'end', 'between', 'around', 'evenly'] as const)
   if (justify) out.justify = justify
-  const alignItems = pick(raw.alignItems, ['start', 'center', 'end', 'stretch'] as const)
+  const alignItems = pick(raw.alignItems, ['start', 'center', 'end', 'stretch', 'baseline'] as const)
   if (alignItems) out.alignItems = alignItems
+  if (raw.wrapReverse === true) out.wrapReverse = true
+  const rowGap = perDevice(raw.rowGap, (v) => (isNum(v) && v >= 0 ? v : undefined))
+  if (rowGap) out.rowGap = rowGap
+  const columnGap = perDevice(raw.columnGap, (v) => (isNum(v) && v >= 0 ? v : undefined))
+  if (columnGap) out.columnGap = columnGap
+  for (const key of ['boxed', 'width', 'maxWidth'] as const) {
+    const dims = perDevice(raw[key], readDim)
+    if (dims) out[key] = dims
+  }
+  const overflow = perDevice(raw.overflow, (v) => pick(v, OVERFLOW_VALUES))
+  if (overflow) out.overflow = overflow
+  const alignContent = perDevice(raw.alignContent, (v) => pick(v, ALIGN_CONTENT_VALUES))
+  if (alignContent) out.alignContent = alignContent
+  const tag = pick(raw.tag, CONTAINER_TAGS)
+  if (tag && tag !== 'div') out.tag = tag
+  const href = safeHref(raw.href)
+  if (href) out.href = href
   if (raw.contentWidth === 'boxed') out.contentWidth = 'boxed'
   if (isNum(raw.boxedWidth) && raw.boxedWidth > 0) out.boxedWidth = raw.boxedWidth
   const verticalAlign = pick(raw.verticalAlign, ['top', 'middle', 'bottom'] as const)
@@ -283,8 +342,9 @@ function parseDeviceFlow(raw: unknown): DeviceFlow | undefined {
   if (typeof raw.wrap === 'boolean') out.wrap = raw.wrap
   const justify = pick(raw.justify, ['start', 'center', 'end', 'between', 'around', 'evenly'] as const)
   if (justify) out.justify = justify
-  const alignItems = pick(raw.alignItems, ['start', 'center', 'end', 'stretch'] as const)
+  const alignItems = pick(raw.alignItems, ['start', 'center', 'end', 'stretch', 'baseline'] as const)
   if (alignItems) out.alignItems = alignItems
+  if (typeof raw.wrapReverse === 'boolean') out.wrapReverse = raw.wrapReverse
   return Object.keys(out).length > 0 ? out : undefined
 }
 
@@ -329,11 +389,13 @@ const JUSTIFY_CSS: Record<JustifyContent, string> = {
   evenly: 'space-evenly',
 }
 const ALIGN_CSS: Record<AlignItemsValue | AlignSelfValue, string> = {
+  baseline: 'baseline',
   start: 'flex-start',
   center: 'center',
   end: 'flex-end',
   stretch: 'stretch',
 }
+const ALIGN_CONTENT_CSS: Record<AlignContentValue, string> = { ...JUSTIFY_CSS, stretch: 'stretch' } as Record<AlignContentValue, string>
 const VALIGN_CSS: Record<VerticalAlign, string> = {
   top: 'flex-start',
   middle: 'center',
@@ -367,20 +429,58 @@ export function sectionLayoutProps(rawLayout: unknown, baseClass = 'be-section')
   }
   if (layout.justify) out.style.justifyContent = JUSTIFY_CSS[layout.justify]
   if (layout.alignItems) out.style.alignItems = ALIGN_CSS[layout.alignItems]
+  if (layout.wrapReverse && layout.wrap !== false) out.attrs['data-wrap-rev'] = '1'
+  for (const d of DEVICES) {
+    const k = DEVICE_KEY[d]
+    const unit = layout.gapUnit ?? 'px'
+    const rg = layout.rowGap?.[d]
+    if (rg !== undefined) out.style[`--be-rg-${k}`] = `${rg}${unit}`
+    const cg = layout.columnGap?.[d]
+    if (cg !== undefined) out.style[`--be-cg-${k}`] = `${cg}${unit}`
+    const w = layout.width?.[d]
+    if (w) {
+      out.style[`--be-w-${k}`] = dimCss(w)
+      out.attrs['data-w'] = '1'
+    }
+    const mw = layout.maxWidth?.[d]
+    if (mw) {
+      out.style[`--be-mw-${k}`] = dimCss(mw)
+      out.attrs['data-mw'] = '1'
+    }
+    const ov = layout.overflow?.[d]
+    if (ov) out.attrs[`data-ov-${k}`] = ov
+    const ac = layout.alignContent?.[d]
+    if (ac) out.attrs[`data-ac-${k}`] = ac
+  }
   if (layout.contentWidth === 'boxed') {
     out.className = `${baseClass}--boxed`
-    if (layout.boxedWidth) out.style['--be-boxed'] = `${layout.boxedWidth}px`
+    if (layout.boxed) {
+      for (const d of DEVICES) {
+        const b = layout.boxed[d]
+        if (b) out.style[`--be-bx-${DEVICE_KEY[d]}`] = dimCss(b)
+      }
+      out.attrs['data-bx'] = '1'
+    } else if (layout.boxedWidth) out.style['--be-boxed'] = `${layout.boxedWidth}px`
   }
   if (layout.verticalAlign) out.style.alignContent = VALIGN_CSS[layout.verticalAlign]
   for (const d of ['tablet', 'mobile'] as const) {
     const flow = layout[d]
     if (!flow) continue
     const k = DEVICE_KEY[d]
-    if (flow.wrap !== undefined) out.attrs[`data-wrap-${k}`] = flow.wrap ? '1' : '0'
+    if (flow.wrapReverse) out.attrs[`data-wrap-${k}`] = 'r'
+    else if (flow.wrap !== undefined) out.attrs[`data-wrap-${k}`] = flow.wrap ? '1' : '0'
     if (flow.justify) out.attrs[`data-jc-${k}`] = flow.justify
     if (flow.alignItems) out.attrs[`data-ai-${k}`] = flow.alignItems
   }
   return out
+}
+
+/** The element a container renders as. 'a' without a safe link falls back to div. */
+export function containerTag(rawLayout: unknown): { tag: ContainerTag; href?: string } {
+  const layout = parseSectionLayout(rawLayout)
+  const tag = layout?.tag ?? 'div'
+  if (tag === 'a') return layout?.href ? { tag, href: layout.href } : { tag: 'div' }
+  return { tag }
 }
 
 /**
@@ -582,6 +682,32 @@ const widthChain = (run: readonly ('d' | 't' | 'm')[]): string =>
   [...run].reduceRight<string>((acc, x) => `var(--be-col-${x}-w,var(--be-col-${x},${acc}))`, '100%')
 const stackDecls = (run: readonly ('d' | 't' | 'm')[]): string => `flex-basis:auto;flex-grow:0;width:${widthChain(run)};max-width:100%`
 
+const NAMES = ['rg', 'cg', 'bx', 'w', 'mw'] as const
+const OVERFLOW_ATTR = OVERFLOW_VALUES
+/** Row / column gap, container width and max width, boxed width, overflow and align-content (desktop). */
+function containerBaseCss(S: string): string[] {
+  const reset = NAMES.flatMap((n) => ['d', 't', 'm'].map((k) => `--be-${n}-${k}:initial`)).join(';')
+  const cur = NAMES.map((n) => `--be-${n}:var(--be-${n}-d)`).join(';')
+  const out = [
+    `${S}{${reset};${cur};row-gap:var(--be-rg,var(--be-gap));column-gap:var(--be-cg,var(--be-gap))}`,
+    `${S}[data-w]{width:var(--be-w,auto)}`,
+    `${S}--boxed[data-bx]{max-width:var(--be-bx,var(--be-boxed,var(--max-width,1200px)))}`,
+    `${S}[data-mw]{max-width:var(--be-mw,none)}`,
+    `${S}[data-wrap-rev]{flex-wrap:wrap-reverse}`,
+  ]
+  for (const v of OVERFLOW_ATTR) out.push(`${S}[data-ov-d="${v}"]{overflow:${v}}`)
+  for (const [name, css] of Object.entries(ALIGN_CONTENT_CSS)) out.push(`${S}[data-ac-d="${name}"]{align-content:${css} !important}`)
+  return out
+}
+/** The same settings for one narrower device (tablet falls back to desktop, mobile to tablet). */
+function containerMediaCss(S: string, k: 't' | 'm'): string {
+  const chain = (n: string) => (k === 'm' ? `var(--be-${n}-m,var(--be-${n}-t,var(--be-${n}-d)))` : `var(--be-${n}-t,var(--be-${n}-d))`)
+  const out = [`${S}{${NAMES.map((n) => `--be-${n}:${chain(n)}`).join(';')}}`, `${S}[data-wrap-${k}="r"]{flex-wrap:wrap-reverse}`]
+  for (const v of OVERFLOW_ATTR) out.push(`${S}[data-ov-${k}="${v}"]{overflow:${v}}`)
+  for (const [name, css] of Object.entries(ALIGN_CONTENT_CSS)) out.push(`${S}[data-ac-${k}="${name}"]{align-content:${css} !important}`)
+  return out.join('')
+}
+
 /**
  * Emits the rules that turn the data from sectionLayoutProps() / columnWidthVars() into
  * layout. Order matters and is part of the contract (and unit-tested): base rules, then
@@ -600,6 +726,7 @@ export function sectionLayoutCss(opts: SectionLayoutCssOptions): string {
       `--be-gap:var(--be-gap-d,${opts.defaultGap}px);display:flex;flex-wrap:wrap;gap:var(--be-gap);align-items:flex-start;${opts.sectionExtra ?? ''}}`,
   )
   out.push(`${S}[data-nowrap]{flex-wrap:nowrap}`)
+  out.push(...containerBaseCss(S))
   out.push(`${boxed}{width:100%;max-width:var(--be-boxed,var(--max-width,1200px));margin-left:auto;margin-right:auto}`)
   out.push(
     `${C}{${COL_RESET};min-width:0;flex-grow:${growChain('d')};flex-shrink:var(--be-col-shrink,1);` +
@@ -653,7 +780,7 @@ export function sectionLayoutCss(opts: SectionLayoutCssOptions): string {
       `@media (max-width:${max}px){` +
         `${S}{--be-gap:var(--be-gap-${k},${k === 'm' ? 'var(--be-gap-t,' : ''}var(--be-gap-d,${opts.defaultGap}px)${k === 'm' ? ')' : ''})}` +
         `${C}{flex-basis:${basisChain(k)};flex-grow:${growChain(k)};order:${orderChain(k)}}` +
-        `${flow.join('')}${dirRules(k, true).join('')}}`,
+        `${flow.join('')}${containerMediaCss(S, k)}${dirRules(k, true).join('')}}`,
     )
   }
   media('t', bp.tablet)

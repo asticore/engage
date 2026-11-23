@@ -12,6 +12,8 @@ import { REQUEST_BUTTON_ELEMENTS } from './requestButtonDefs'
 import { EMBED_CODE_ELEMENTS } from './embedCodeDefs'
 import { TEMPLATE_PART_ELEMENTS } from './templatePartDefs'
 import { COMING_SOON_ELEMENTS } from './comingSoonDefs'
+import { LEGACY_REPLACEMENT_ELEMENTS } from './legacyReplacementDefs'
+import { SECTION_PARAM_ELEMENTS } from './sectionParamDefs'
 
 /**
  * Wave 38: site elements. Each one reads live site data on the server (site settings, the Header menu, the blog)
@@ -115,4 +117,4 @@ export const WAVE38_ELEMENTS: ElementDef[] = [
 ]
 
 /** Element types that read live site data on the server. The editor canvas shows a placeholder for these. */
-export const SITE_ELEMENT_TYPES: ReadonlySet<string> = new Set([...WAVE38_ELEMENTS.map((e) => e.type), 'loop', 'dynamic-text', ...WAVE63_ELEMENTS.map((e) => e.type), ...LOOP_GRID_ELEMENTS.map((e) => e.type), ...WAVE65_SERVER_TYPES, ...WAVE66_ELEMENTS.map((e) => e.type), ...WAVE69_ELEMENTS.map((e) => e.type), ...WAVE70_SITEMAP_ELEMENTS.map((e) => e.type), ...WAVE70_TITLE_ELEMENTS.map((e) => e.type), ...WAVE70_WEATHER_ELEMENTS.map((e) => e.type), ...WAVE67_ELEMENTS.map((e) => e.type), ...AFFILIATE_ELEMENTS.map((e) => e.type), ...REQUEST_BUTTON_ELEMENTS.map((e) => e.type), ...EMBED_CODE_ELEMENTS.map((e) => e.type), ...TEMPLATE_PART_ELEMENTS.map((e) => e.type), ...COMING_SOON_ELEMENTS.map((e) => e.type)])
+export const SITE_ELEMENT_TYPES: ReadonlySet<string> = new Set([...WAVE38_ELEMENTS.map((e) => e.type), 'loop', 'dynamic-text', ...WAVE63_ELEMENTS.map((e) => e.type), ...LOOP_GRID_ELEMENTS.map((e) => e.type), ...WAVE65_SERVER_TYPES, ...WAVE66_ELEMENTS.map((e) => e.type), ...WAVE69_ELEMENTS.map((e) => e.type), ...WAVE70_SITEMAP_ELEMENTS.map((e) => e.type), ...WAVE70_TITLE_ELEMENTS.map((e) => e.type), ...WAVE70_WEATHER_ELEMENTS.map((e) => e.type), ...WAVE67_ELEMENTS.map((e) => e.type), ...AFFILIATE_ELEMENTS.map((e) => e.type), ...REQUEST_BUTTON_ELEMENTS.map((e) => e.type), ...EMBED_CODE_ELEMENTS.map((e) => e.type), ...TEMPLATE_PART_ELEMENTS.map((e) => e.type), ...COMING_SOON_ELEMENTS.map((e) => e.type), ...LEGACY_REPLACEMENT_ELEMENTS.map((e) => e.type), ...SECTION_PARAM_ELEMENTS.map((e) => e.type)])

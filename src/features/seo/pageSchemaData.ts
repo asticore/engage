@@ -46,11 +46,33 @@ const faqFromRecord = (value: unknown): FaqItem | null => {
   return question ? { question, answer: value.answer } : null
 }
 
+/**
+ * The page's FAQ blocks and FAQ elements (`faq-list`, what the Legacy blocks tool converts FAQ blocks into), at any depth
+ * of section columns, each as { source, category, faqs } like the block's own fields.
+ */
+export function collectFaqBlocks(blocks: unknown[]): Raw[] {
+  const found: Raw[] = []
+  const visit = (list: unknown[], depth: number): void => {
+    if (depth > 12) return
+    for (const node of list) {
+      if (!isRecord(node)) continue
+      if (node.blockType === 'faq') found.push(node)
+      else if (node.blockType === 'element' && node.elementType === 'faq-list' && isRecord(node.props)) {
+        const props = node.props
+        const ids = typeof props.faqs === 'string' ? props.faqs.split(',').map((x) => x.trim()).filter(Boolean).map((x) => (/^\d+$/.test(x) ? Number(x) : x)) : listOf(props.faqs)
+        found.push({ blockType: 'faq', source: props.source === 'manual' ? 'manual' : 'category', category: props.category, faqs: ids })
+      } else if (node.blockType === 'section') {
+        for (const column of listOf(node.columns)) if (isRecord(column)) visit(listOf(column.blocks), depth + 1)
+      }
+    }
+  }
+  visit(blocks, 0)
+  return found
+}
+
 /** FAQ entries from the page's FAQ blocks, in block order: by category, or hand-picked. */
 export async function loadFaqItems(doc: Raw): Promise<FaqItem[]> {
-  const blocks = [...listOf(doc.blocks), ...listOf(doc.layout)].filter(
-    (block): block is Raw => isRecord(block) && block.blockType === 'faq',
-  )
+  const blocks = collectFaqBlocks([...listOf(doc.blocks), ...listOf(doc.layout)])
   if (blocks.length === 0) return []
 
   const engine = await getEngine()
