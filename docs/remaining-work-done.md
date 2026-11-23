@@ -2855,7 +2855,7 @@ _Date: 23 Nov 2026_
 **Task 15 34a Timeline (23 Nov 2026).** The `timeline` element is now in the library (no longer hidden). Layouts vertical, alternating and horizontal (sideways scroll), per item icon, picture, link, colour and group heading, line and dot colours, Spark `spark-reveal` option, opt-in Event structured data for ISO dates. Three Examples in the presets (`timeline-vertical`, `timeline-alternating`, `timeline-horizontal`). Code: `wave36Defs.ts`, `Wave36Elements.tsx`, `wave36.css`, `templatePresets.ts`, test `tests/int/timeline-element.int.spec.ts`. Leftover: items filled from a collection (posts, events, course steps) stays in Task 15 as 34a2.
 
 **Where to find it:** Visual editor > Elements > Timeline, and Templates > Timeline examples
-#### BLD-044 · Task 12 editor contrast and blue dark mode (31a, 31b) (23 Nov 2026)
+#### BLD-045 · Task 12 editor contrast and blue dark mode (31a, 31b) (23 Nov 2026)
 
 _Date: 23 Nov 2026_
 
