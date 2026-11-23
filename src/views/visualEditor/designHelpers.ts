@@ -66,7 +66,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
     'filterGrayscale', 'filterHue', 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],
-  conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang', 'showDevices', 'showParam', 'showCookie', 'showCountry'],
+  conditions: ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang', 'showDevices', 'showParam', 'showCookie', 'showCountry', 'showCart', 'showOrdered'],
   visibility: ['hide', 'hideOnMobile', 'hideOnDesktop', 'anchorId', 'customClass', 'wrapLink', 'wrapLinkNewTab', 'wrapLinkNoFollow', 'wrapLinkSponsored', 'wrapLinkUgc', 'wrapLinkLabel', 'collapseHeight', 'collapseMore', 'collapseLess'],
 }
 

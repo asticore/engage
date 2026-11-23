@@ -36,6 +36,10 @@ export type VisRules = {
   k?: string
   /** Visitor countries, upper-case ISO 3166-1 alpha-2 codes, from the edge. Unknown country fails closed. */
   c?: string[]
+  /** Cart: "full" (at least one item) or "empty". Read from the browser's cart count. */
+  ca?: 'full' | 'empty'
+  /** Orders: "yes" (the signed-in customer has ordered before) or "no". Unknown or signed out fails closed. */
+  o?: 'yes' | 'no'
 }
 
 export type VisDevice = 'mobile' | 'tablet' | 'desktop'
@@ -60,6 +64,10 @@ export type VisContext = {
   cookie?: string
   /** Visitor's two-letter country from the edge; null/absent = unknown. */
   country?: string | null
+  /** Items in the visitor's cart (0 when there is no cart). */
+  cartCount?: number
+  /** True when the signed-in customer has at least one order; null/absent = unknown. */
+  hasOrdered?: boolean | null
 }
 
 export const VIS_MAX_ROLES = 10
@@ -200,6 +208,8 @@ type VisKeys = {
   showParam?: unknown
   showCookie?: unknown
   showCountry?: unknown
+  showCart?: unknown
+  showOrdered?: unknown
 }
 
 /** Builds the compact rule set from (already sanitised) style keys; null when no rule is set. */
@@ -228,14 +238,16 @@ export function rulesFromStyle(style: VisKeys): VisRules | null {
   if (k) r.k = k
   const c = cleanCountries(style.showCountry)
   if (c.length > 0) r.c = c
+  if (style.showCart === 'full' || style.showCart === 'empty') r.ca = style.showCart
+  if (style.showOrdered === 'yes' || style.showOrdered === 'no') r.o = style.showOrdered
   return Object.keys(r).length > 0 ? r : null
 }
 
 /** True when the rules need the visitor (login, role, URL): those start hidden until the script decides. */
-export const needsClientGate = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || r.q || (r.d && r.d.length > 0) || r.tf || r.tu || (r.l && r.l.length > 0) || (r.v && r.v.length > 0) || r.p || r.k || (r.c && r.c.length > 0))
+export const needsClientGate = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || r.q || (r.d && r.d.length > 0) || r.tf || r.tu || (r.l && r.l.length > 0) || (r.v && r.v.length > 0) || r.p || r.k || (r.c && r.c.length > 0) || r.ca || r.o)
 
 /** True when the rules need to know who is signed in. */
-export const needsAuthState = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || (r.c && r.c.length > 0))
+export const needsAuthState = (r: VisRules): boolean => Boolean(r.a || (r.r && r.r.length > 0) || (r.c && r.c.length > 0) || r.o)
 
 /** Parses a data-eg-cond value back into rules; null for anything malformed. */
 export function parseRules(json: string | null | undefined): VisRules | null {
@@ -269,6 +281,8 @@ export function parseRules(json: string | null | undefined): VisRules | null {
     if (k) r.k = k
     const c = cleanCountries(raw.c)
     if (c.length > 0) r.c = c
+    if (raw.ca === 'full' || raw.ca === 'empty') r.ca = raw.ca
+    if (raw.o === 'yes' || raw.o === 'no') r.o = raw.o
     return Object.keys(r).length > 0 ? r : null
   } catch {
     return null
@@ -322,6 +336,10 @@ export function evaluateRules(rules: VisRules, ctx: VisContext): boolean {
     if (!matchesNameValue(rules.k, pairs)) return false
   }
   if (rules.c && rules.c.length > 0 && !(ctx.country && rules.c.includes(ctx.country.toUpperCase()))) return false
+  if (rules.ca === 'full' && !((ctx.cartCount ?? 0) > 0)) return false
+  if (rules.ca === 'empty' && (ctx.cartCount ?? 0) > 0) return false
+  if (rules.o === 'yes' && ctx.hasOrdered !== true) return false
+  if (rules.o === 'no' && ctx.hasOrdered !== false) return false
   return true
 }
 

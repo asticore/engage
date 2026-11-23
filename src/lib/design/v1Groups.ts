@@ -216,6 +216,8 @@ export const V1_GROUP_OF = {
   showParam: 'visibility',
   showCookie: 'visibility',
   showCountry: 'visibility',
+  showCart: 'visibility',
+  showOrdered: 'visibility',
   hideOnMobile: 'visibility',
   hideOnDesktop: 'visibility',
   customClass: 'meta',

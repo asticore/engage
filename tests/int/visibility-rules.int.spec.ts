@@ -131,6 +131,17 @@ describe('visibility rules: device, parameter, cookie and country', () => {
     expect(evaluateRules({ c: ['AU'] }, ctx({ country: 'GB' }))).toBe(false)
     expect(evaluateRules({ c: ['AU'] }, ctx({ country: null }))).toBe(false)
   })
+  it('matches cart and order state, failing closed when unknown', () => {
+    expect(evaluateRules({ ca: 'full' }, ctx({ cartCount: 2 }))).toBe(true)
+    expect(evaluateRules({ ca: 'full' }, ctx({}))).toBe(false)
+    expect(evaluateRules({ ca: 'empty' }, ctx({}))).toBe(true)
+    expect(evaluateRules({ ca: 'empty' }, ctx({ cartCount: 1 }))).toBe(false)
+    expect(evaluateRules({ o: 'yes' }, ctx({ hasOrdered: true }))).toBe(true)
+    expect(evaluateRules({ o: 'yes' }, ctx({ hasOrdered: null }))).toBe(false)
+    expect(evaluateRules({ o: 'no' }, ctx({ hasOrdered: false }))).toBe(true)
+    expect(evaluateRules({ o: 'no' }, ctx({}))).toBe(false)
+    expect(parseRules(JSON.stringify(rulesFromStyle({ showCart: 'full', showOrdered: 'no' })))).toEqual({ ca: 'full', o: 'no' })
+  })
   it('round trips through the compact rules', () => {
     const r = rulesFromStyle({ showDevices: 'mobile', showParam: 'a=b', showCookie: 'c', showCountry: 'AU' })
     expect(parseRules(JSON.stringify(r))).toEqual({ v: ['mobile'], p: 'a=b', k: 'c', c: ['AU'] })

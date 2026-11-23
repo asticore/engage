@@ -3149,6 +3149,14 @@ The Hover group now has a blend mode and a text stroke (width and colour). Value
 
 **Where to find it:** Visual editor, Design panel, Hover
 
+#### BLD-076 · Task 10 29e Cart and order display conditions (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Display conditions gain Cart (has items or is empty) and Customer orders (has ordered before or has not). The cart rule reads an item count the cart keeps in the browser, so it needs no request and updates when items are added or removed. The orders rule asks `/api/visibility-state?orders=1` (one small lookup, only on pages that use it, never cached); signed out or unknown hides the block. Code: `visibilityRules.ts` (`ca`, `o`), `VisibilityGate.tsx`, `EcommerceProvider` count mirror, `tests/int/visibility-rules.int.spec.ts`.
+
+**Where to find it:** Visual editor, Design panel, Display conditions
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3509,6 +3517,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-076](#bld-076) Task 10 29e Cart and order display conditions
 - [BLD-075](#bld-075) Task 10 29d Pay button
 - [BLD-074](#bld-074) Hover blend mode and hover text stroke
 - [BLD-073](#bld-073) Font family per device

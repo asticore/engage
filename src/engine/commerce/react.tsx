@@ -188,6 +188,21 @@ export const EcommerceProvider: React.FC<{ children: React.ReactNode; defaultCur
   const requestAddresses = useCallback((): void => setAddressesWanted(true), [])
   const [paymentsLoading, setPaymentsLoading] = useState(false)
 
+  // Mirror the item count for the Cart display condition (VisibilityGate reads it with no request).
+  useEffect(() => {
+    if (cartLoading) return
+    try {
+      const n = (cart?.items ?? []).reduce((sum, it) => sum + (Number((it as { quantity?: unknown }).quantity) || 0), 0)
+      const prev = window.localStorage.getItem('gracengatsby-cart-count')
+      if (prev !== String(n)) {
+        window.localStorage.setItem('gracengatsby-cart-count', String(n))
+        window.dispatchEvent(new Event('engage:cart-count'))
+      }
+    } catch {
+      /* storage blocked: the Cart condition then treats the cart as empty */
+    }
+  }, [cart, cartLoading])
+
   // Load (or create) the guest cart once on mount - client-only.
   useEffect(() => {
     let cancelled = false

@@ -426,6 +426,9 @@ export type BlockStyle = {
   showParam?: string
   showCookie?: string
   showCountry?: string
+  /** Display conditions: cart state (full or empty) and whether the signed-in customer has ordered (yes or no). */
+  showCart?: 'full' | 'empty'
+  showOrdered?: 'yes' | 'no'
 
   // Visibility
   hideOnMobile?: boolean
@@ -658,7 +661,7 @@ export function cornerRadiusValue(s: BlockStyle): string | undefined {
   return RADIUS_CORNER_KEYS.map((k) => `${isNum(s[k]) ? s[k] : base}px`).join(' ')
 }
 
-const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang', 'showDevices', 'showParam', 'showCookie', 'showCountry'] as const
+const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang', 'showDevices', 'showParam', 'showCookie', 'showCountry', 'showCart', 'showOrdered'] as const
 
 /** Validates the Display conditions keys: ISO dates, in/out, slug-shaped roles, short clean URL text. */
 function sanitizeVisibility(style: BlockStyle): BlockStyle {
@@ -689,6 +692,8 @@ function sanitizeVisibility(style: BlockStyle): BlockStyle {
   if (cookie) out.showCookie = cookie
   const countries = cleanCountries(raw.showCountry)
   if (countries.length > 0) out.showCountry = countries.join(',')
+  if (raw.showCart === 'full' || raw.showCart === 'empty') out.showCart = raw.showCart
+  if (raw.showOrdered === 'yes' || raw.showOrdered === 'no') out.showOrdered = raw.showOrdered
   return out as BlockStyle
 }
 
