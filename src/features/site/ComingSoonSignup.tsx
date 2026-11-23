@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 
+import { AuthCaptcha } from '@/features/security/AuthCaptcha'
+
 export type ComingSoonSignupText = {
   label: string
   placeholder: string
@@ -11,27 +13,33 @@ export type ComingSoonSignupText = {
   error: string
 }
 
+export type ComingSoonCaptcha = { provider: 'turnstile' | 'recaptcha'; siteKey: string; appearance?: 'visible' | 'invisible' }
+
 /**
  * The email signup on the coming soon screen. Posts the address to the built-in
  * "Coming soon" form (see src/features/forms/comingSoon.ts), so each signup is
  * an ordinary form entry. Plain styling from the theme variables, like the rest
- * of the screen.
+ * of the screen. With a captcha on forms the challenge is drawn above the error line
+ * and its token is posted under the field name the form route reads.
  */
-export function ComingSoonSignup({ action, strings }: { action: string; strings: ComingSoonSignupText }) {
+export function ComingSoonSignup({ action, strings, captcha }: { action: string; strings: ComingSoonSignupText; captcha?: ComingSoonCaptcha }) {
   const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
   // Sent with the post so the form's fill-time check sees a real visit, not an instant bot.
   const [renderedAt] = useState(() => Date.now())
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const email = String(new FormData(event.currentTarget).get('email') ?? '').trim()
+    const form = new FormData(event.currentTarget)
+    const email = String(form.get('email') ?? '').trim()
+    // The challenge fills a hidden field; the form route reads it under the same name the form block uses.
+    const token = captcha ? String(form.get(captcha.provider === 'turnstile' ? 'cf-turnstile-response' : 'g-recaptcha-response') ?? '') : ''
     setState('sending')
     try {
       const response = await fetch(action, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ email, eg_rendered_at: renderedAt }),
+        body: JSON.stringify({ email, eg_rendered_at: renderedAt, ...(captcha && token ? { [captcha.provider === 'turnstile' ? 'cf-turnstile-response' : 'g-recaptcha-response']: token } : {}) }),
       })
       const data = (await response.json().catch((): null => null)) as { ok?: boolean } | null
       setState(response.ok && data?.ok ? 'done' : 'error')
@@ -71,6 +79,7 @@ export function ComingSoonSignup({ action, strings }: { action: string; strings:
           {state === 'sending' ? strings.sending : strings.button}
         </button>
       </div>
+      {captcha && <AuthCaptcha provider={captcha.provider} siteKey={captcha.siteKey} appearance={captcha.appearance} />}
       {state === 'error' && (
         <p role="alert" className="text-sm text-[var(--color-ink)]">
           {strings.error}

@@ -9,7 +9,7 @@ type P = Record<string, unknown>
 export function ComingSoonSignupElement(_props: P): React.ReactElement | null {
   const signup = getScreenSignup()
   if (!signup) return null
-  return <ComingSoonSignup action={signup.action} strings={signup.strings} />
+  return <ComingSoonSignup action={signup.action} strings={signup.strings} captcha={signup.captcha} />
 }
 
 export const COMING_SOON_COMPONENTS: Record<string, React.ComponentType<P>> = {
