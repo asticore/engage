@@ -623,6 +623,47 @@ export const TEMPLATE_PRESETS: TemplatePreset[] = [
     ],
   },
   {
+    slug: 'slider-hero',
+    name: 'Slider: hero',
+    description: 'A full width hero slider of two slides with a heading, text and button, a background picture slot and dots.',
+    kind: 'section',
+    category: 'other',
+    blocks: () => [el('slides', { autoplay: false, dots: true, arrows: true, loop: true })],
+  },
+  {
+    slug: 'slider-testimonials',
+    name: 'Slider: testimonials',
+    description: 'Testimonials in a slider: one at a time on phones, two on tablets, three on desktop, with dots and slow autoplay.',
+    kind: 'section',
+    category: 'other',
+    blocks: () => [
+      {
+        blockType: 'section',
+        design: { layout: { display: 'carousel', carouselPerView: 3, carouselPerViewTablet: 2, carouselPerViewMobile: 1, carouselDots: true, carouselLoop: true, carouselAutoplay: 6, carouselArrows: true } },
+        columns: [
+          { width: 12 as const, blocks: [el('testimonial')] },
+          { width: 12 as const, blocks: [el('testimonial', { quote: 'Exactly what I hoped for. Will order again.', name: 'Sam T.' })] },
+          { width: 12 as const, blocks: [el('testimonial', { quote: 'Friendly service and lovely packaging.', name: 'Riley K.' })] },
+          { width: 12 as const, blocks: [el('testimonial', { quote: 'Fast, careful and great value.', name: 'Jo M.' })] },
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'slider-logos',
+    name: 'Slider: logos',
+    description: 'A row of logos that slides on by itself: five at once on desktop, three on tablets, two on phones.',
+    kind: 'section',
+    category: 'other',
+    blocks: () => [
+      {
+        blockType: 'section',
+        design: { layout: { display: 'carousel', carouselPerView: 4, carouselPerViewTablet: 3, carouselPerViewMobile: 2, carouselGap: 24, carouselLoop: true, carouselAutoplay: 3 } },
+        columns: ['Partner one', 'Partner two', 'Partner three', 'Partner four', 'Partner five', 'Partner six'].map((name) => ({ width: 12 as const, blocks: [heading(name, 'center', 'h4')] })),
+      },
+    ],
+  },
+  {
     slug: 'grid-section',
     name: 'Grid',
     description: 'Three equal cells side by side; each holds a heading and some text. Cards in a row share a height.',

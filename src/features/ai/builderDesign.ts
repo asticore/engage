@@ -229,7 +229,7 @@ export const BUILDER_LAYOUT_OPTIONS = [
   'boxedWidth:px (with boxed)',
   'verticalAlign:top|middle|bottom',
   'tabsAlign:start|center|end|stretch; tabsColor:colour',
-  'carouselPerView:1..4; carouselGap:0..64; carouselArrows:bool',
+  'carouselPerView:1..4; carouselGap:0..64; carouselArrows:bool; carouselDots:bool; carouselLoop:bool; carouselAutoplay:1..30 seconds; carouselPerViewTablet:1..4; carouselPerViewMobile:1..4',
   'gridColumns:1..6; gridColumnsTablet:1..6; gridColumnsMobile:1..6; gridGap:0..64; gridAlign:start|center|end|stretch',
   'modalLabel:text (button text); modalWidth:320..1200; modalStyle:button|link',
   'stackTop:0..200; stackOffset:0..60; stackMinHeight:30..100 (vh)',

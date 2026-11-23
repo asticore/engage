@@ -19,6 +19,7 @@ import { columnWidthVars, parseColumns, type SectionColumn, type SectionNode } f
 
 import { autoTriggersOf, popupCloseRules } from '@/lib/popupTriggers'
 
+import CarouselAutoplay from './CarouselAutoplay'
 import PopupController from './PopupControllerLazy'
 import { safeScope, StyledBlock } from './StyledBlock'
 import './tabs.css'
@@ -61,8 +62,11 @@ export const SectionBlock: React.FC<{
     // An arrow jumps one page (carouselPerView slides): with 2+ visible, the neighbour is already on screen and
     // a plain anchor to it would not scroll the track.
     const step = Math.max(1, parsedLayout?.carouselPerView ?? 1)
-    const prevIndex = (index: number) => Math.max(0, index - step)
-    const nextIndex = (index: number) => Math.min(count - 1, index + step)
+    const loop = parsedLayout?.carouselLoop === true
+    const autoplay = parsedLayout?.carouselAutoplay ?? 0
+    const pages = Math.ceil(count / step)
+    const prevIndex = (index: number) => (loop && index === 0 ? count - 1 : Math.max(0, index - step))
+    const nextIndex = (index: number) => (loop && index >= count - 1 ? 0 : Math.min(count - 1, index + step))
     return (
       <div className="be-carousel" data-depth={depth} style={carouselStyle(rawLayout) as React.CSSProperties} role="region" aria-roledescription="carousel" aria-label="Carousel">
         <div className="be-carousel__track" tabIndex={0}>
@@ -76,12 +80,12 @@ export const SectionBlock: React.FC<{
               aria-label={`${index + 1} of ${count}`}
             >
               <SectionColumnView column={column} index={index} renderNode={renderNode} depth={depth} scope={scope} />
-              {arrows && index > 0 && (
+              {arrows && (loop || index > 0) && (
                 <a className="be-carousel__arrow be-carousel__arrow--prev" href={`#${slideId(prevIndex(index))}`} aria-label={`Previous slide, ${prevIndex(index) + 1} of ${count}`}>
                   <span aria-hidden="true">{String.fromCharCode(0x2039)}</span>
                 </a>
               )}
-              {arrows && index < count - 1 && (
+              {arrows && (loop || index < count - 1) && (
                 <a className="be-carousel__arrow be-carousel__arrow--next" href={`#${slideId(nextIndex(index))}`} aria-label={`Next slide, ${nextIndex(index) + 1} of ${count}`}>
                   <span aria-hidden="true">{String.fromCharCode(0x203a)}</span>
                 </a>
@@ -89,6 +93,14 @@ export const SectionBlock: React.FC<{
             </div>
           ))}
         </div>
+        {parsedLayout?.carouselDots === true && pages > 1 ? (
+          <nav className="be-carousel__dots" aria-label="Slides">
+            {Array.from({ length: pages }, (_, page) => (
+              <a key={page} className="be-carousel__dot" href={`#${slideId(page * step)}`} aria-label={`Go to slide ${page * step + 1} of ${count}`} />
+            ))}
+          </nav>
+        ) : null}
+        {autoplay > 0 && count > 1 ? <CarouselAutoplay seconds={autoplay} loop={loop} /> : null}
       </div>
     )
   }

@@ -536,6 +536,28 @@ const SectionLayoutFields: React.FC<{
               checked={layout.carouselArrows === true}
               onChange={(on) => setLayout({ carouselArrows: on ? true : undefined })}
             />
+            <CheckRow label={t('ve.fp.carouselDots')} checked={layout.carouselDots === true} onChange={(on) => setLayout({ carouselDots: on ? true : undefined })} />
+            <CheckRow label={t('ve.fp.carouselLoop')} checked={layout.carouselLoop === true} onChange={(on) => setLayout({ carouselLoop: on ? true : undefined })} />
+            <NumberRow
+              label={t('ve.fp.carouselAutoplay')}
+              value={layout.carouselAutoplay}
+              min={0}
+              max={30}
+              placeholder="0"
+              onChange={(v) => setLayout({ carouselAutoplay: v === undefined || v < 1 ? undefined : Math.min(30, Math.round(v)) })}
+            />
+            <SelectRow
+              label={t('ve.fp.slidesTablet')}
+              value={String(layout.carouselPerViewTablet ?? 0)}
+              options={[{ label: '-', value: '0' }, ...[1, 2, 3, 4].map((n) => ({ label: String(n), value: String(n) }))]}
+              onChange={(v) => setLayout({ carouselPerViewTablet: Number(v) === 0 ? undefined : (Number(v) as 1 | 2 | 3 | 4) })}
+            />
+            <SelectRow
+              label={t('ve.fp.slidesMobile')}
+              value={String(layout.carouselPerViewMobile ?? 0)}
+              options={[{ label: '-', value: '0' }, ...[1, 2, 3, 4].map((n) => ({ label: String(n), value: String(n) }))]}
+              onChange={(v) => setLayout({ carouselPerViewMobile: Number(v) === 0 ? undefined : (Number(v) as 1 | 2 | 3 | 4) })}
+            />
           </>
         )}
         {layout.display === 'grid' && (

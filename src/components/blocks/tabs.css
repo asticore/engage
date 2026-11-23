@@ -140,6 +140,11 @@
 .be-carousel__track::-webkit-scrollbar{height:6px}
 .be-carousel__track::-webkit-scrollbar-thumb{background:rgba(128,128,128,.45);border-radius:3px}
 .be-carousel__slide{position:relative;box-sizing:border-box;min-width:0;flex:0 0 calc((100% - var(--be-carousel-gap,16px) * (var(--be-carousel-per,1) - 1)) / var(--be-carousel-per,1));scroll-snap-align:start;width:auto;max-width:none}
+.be-carousel__dots{display:flex;justify-content:center;gap:8px;margin-top:10px}
+.be-carousel__dot{width:12px;height:12px;border-radius:50%;background:rgba(128,128,128,.5);display:block}
+.be-carousel__dot:hover,.be-carousel__dot:focus-visible{background:var(--be-tab-color,#2563eb)}
+@media (max-width:900px){.be-carousel__slide{flex-basis:calc((100% - var(--be-carousel-gap,16px) * (var(--be-carousel-per-t,var(--be-carousel-per,1)) - 1)) / var(--be-carousel-per-t,var(--be-carousel-per,1)))}}
+@media (max-width:600px){.be-carousel__slide{flex-basis:calc((100% - var(--be-carousel-gap,16px) * (var(--be-carousel-per-m,var(--be-carousel-per-t,var(--be-carousel-per,1))) - 1)) / var(--be-carousel-per-m,var(--be-carousel-per-t,var(--be-carousel-per,1))))}}
 .be-carousel__arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:2;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:rgba(17,24,39,.6);color:#fff;text-decoration:none;font-size:26px;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.3)}
 .be-carousel__arrow:hover{background:rgba(17,24,39,.85)}
 .be-carousel__arrow:focus-visible{outline:2px solid var(--be-tab-color,#2563eb);outline-offset:2px}
