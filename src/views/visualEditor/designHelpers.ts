@@ -62,7 +62,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'borderFxColor2', 'borderFxWidth', 'borderFxSpeed',
   ],
   advanced: [
-    ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posTop', 'posRight', 'posBottom',
+    ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom',
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
     'filterGrayscale', 'filterHue', 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],
