@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { BUILT_IN_FONTS, sanitizeInstalledFonts } from '@/features/fonts/installed'
 import { loadThemeStyles } from '@/features/themeStyles/store'
+import { buildEntries, type EntryDoc } from '@/features/templatesHub/entryPoints'
+import { TemplateEntryButtons } from '@/features/templatesHub/admin/TemplateEntryButtons'
 import { ThemeStylesClient } from './ThemeStylesClient.nossr'
 
 /**
@@ -25,5 +27,16 @@ export async function ThemeStylesView() {
     .filter((font) => !builtInIds.has(font.id))
     .map((font) => ({ id: font.id, label: font.family }))
 
-  return <ThemeStylesClient initialStyles={styles} saved={saved} fonts={fonts} />
+  // Blog, shop, product, header and footer are templates: these buttons open each one in the visual builder.
+  const found = (await context.engine
+    .find({ collection: 'site-templates', depth: 0, limit: 200, user: context.user } as never)
+    .catch((): { docs?: unknown[] } => ({}))) as { docs?: unknown[] }
+  const entries = buildEntries((found.docs ?? []) as EntryDoc[])
+
+  return (
+    <>
+      <TemplateEntryButtons entries={entries} />
+      <ThemeStylesClient initialStyles={styles} saved={saved} fonts={fonts} />
+    </>
+  )
 }
