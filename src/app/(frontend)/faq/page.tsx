@@ -3,7 +3,8 @@ import React from 'react'
 import type { Metadata } from 'next'
 
 import { BlockRenderer } from '@/components/blocks/BlockRenderer'
-import { FaqList } from '@/components/FaqList'
+import { FaqBrowser } from '@/features/faq/FaqBrowser'
+import { faqTypes, filterFaqs } from '@/features/faq/archive'
 import { getEngine } from '@/lib/engine'
 import { getFeatureFlags } from '@/utilities/features'
 import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
@@ -20,7 +21,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({ title: settings?.pageTitle || 'FAQ', path: '/faq' })
 }
 
-export default async function FaqPage() {
+export default async function FaqPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const rawQ = (await searchParams).q
+  const q = (Array.isArray(rawQ) ? rawQ[0] : rawQ || '').trim().slice(0, 200)
   const flags = await getFeatureFlags()
   if (!flags.faq) notFound()
 
@@ -47,11 +50,7 @@ export default async function FaqPage() {
       {settings?.intro && <p className="mb-8 max-w-[640px] opacity-80">{settings.intro}</p>}
       {faqNode && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqNode).replaceAll('</', '<\\/') }} />}
 
-      {faqs.length === 0 ? (
-        <p className="empty-state">No FAQs added yet - add some in the admin panel.</p>
-      ) : (
-        <FaqList faqs={faqs} layout={settings?.layout || 'accordion'} groupByCategory={settings?.groupByCategory !== false} />
-      )}
+      <FaqBrowser faqs={filterFaqs(faqs, { q })} types={faqTypes(faqs)} q={q} layout={settings?.layout || 'accordion'} groupByCategory={settings?.groupByCategory !== false} />
     </div>
   )
 }

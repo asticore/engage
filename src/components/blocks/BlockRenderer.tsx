@@ -183,6 +183,11 @@ export const renderBlockBody = (node: SectionNode, key: string): React.ReactNode
         return <ReviewsLiveElement {...(get<Record<string, unknown>>('props') || {})} />
       }
       // Manual breadcrumbs stay a plain element on the canvas; live they read the sitewide SEO breadcrumb settings.
+      // An accordion filled from FAQ entries reads them on the server, like the FAQ element.
+      if (get<string>('elementType') === 'accordion' && String(get<Record<string, unknown>>('props')?.source || '').startsWith('faq-')) {
+        const accordion = get<Record<string, unknown>>('props') || {}
+        return <SiteElement elementType="faq-list" props={{ source: accordion.source === 'faq-manual' ? 'manual' : 'category', category: accordion.category, faqs: accordion.faqs }} />
+      }
       if (SITE_ELEMENT_TYPES.has(get<string>('elementType')) || get<string>('elementType') === 'breadcrumbs' || get<string>('elementType') === 'map') {
         return <SiteElement elementType={get<string>('elementType')} props={get<Record<string, unknown>>('props') || {}} />
       }
