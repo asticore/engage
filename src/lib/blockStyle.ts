@@ -97,6 +97,8 @@ export const RESPONSIVE_KEYS = [
   'textDecoration',
   'minWidth',
   'minWidthUnit',
+  'lineHeightUnit',
+  'wordSpacingUnit',
   'maxWidth',
   'maxWidthUnit',
   'maxHeight',
@@ -446,6 +448,10 @@ export type BlockStyle = {
   /** Size limits (31e). Per device. A 0 means "no limit" for max values and 0 for min values. Unit unset = px. */
   minWidth?: number
   minWidthUnit?: LengthUnit
+  /** Line height unit. Unset = unitless multiplier. Per device. */
+  lineHeightUnit?: LengthUnit
+  /** Word spacing unit. Unset = px. Per device. */
+  wordSpacingUnit?: LengthUnit
   maxWidth?: number
   maxWidthUnit?: LengthUnit
   maxHeight?: number
@@ -549,7 +555,7 @@ export const BLEND_MODE_OPTIONS: { label: string; value: BlendMode }[] = [
 
 export const EMPTY_STYLE: BlockStyle = {}
 
-const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit'] as const
+const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit'] as const
 /** Drops unit keys that are not on the whitelist. */
 function withSafeUnits(style: BlockStyle): BlockStyle {
   const raw = style as Record<string, unknown>
@@ -873,7 +879,7 @@ function sanitizeTypography(style: BlockStyle): BlockStyle {
   num('fontSize', 0.1, 400)
   en('fontSizeUnit', FONT_SIZE_UNITS)
   num('fontWeight', 100, 900, (n) => Math.round(n / 100) * 100)
-  num('lineHeight', 0.5, 5)
+  num('lineHeight', 0.5, 400)
   num('letterSpacing', -20, 50)
   en('letterSpacingUnit', LETTER_SPACING_UNITS)
   en('textTransform', TEXT_TRANSFORMS)
@@ -904,6 +910,10 @@ const TEXT_SHADOW_PRESETS: Record<Exclude<TextShadowPreset, 'none'>, string> = {
 /** The font-size value for a style (base, or merged with device overrides by the caller). */
 const fontSizeValue = (s: BlockStyle): string | undefined =>
   isNum(s.fontSize) && s.fontSize > 0 ? `${s.fontSize}${FONT_SIZE_UNITS.includes(s.fontSizeUnit ?? '') ? s.fontSizeUnit : 'px'}` : undefined
+const lineHeightValue = (s: BlockStyle): string | number | undefined =>
+  isNum(s.lineHeight) ? (lengthUnit(s.lineHeightUnit) ? `${s.lineHeight}${s.lineHeightUnit}` : s.lineHeight) : undefined
+const wordSpacingValue = (s: BlockStyle): string | undefined =>
+  isNum(s.wordSpacing) ? `${s.wordSpacing}${lengthUnit(s.wordSpacingUnit) ?? 'px'}` : undefined
 const letterSpacingValue = (s: BlockStyle): string | undefined =>
   isNum(s.letterSpacing) ? `${s.letterSpacing}${s.letterSpacingUnit === 'em' ? 'em' : 'px'}` : undefined
 
@@ -913,13 +923,15 @@ export function typographyCss(style: BlockStyle): React.CSSProperties {
   const size = fontSizeValue(style)
   if (size) css.fontSize = size
   if (isNum(style.fontWeight)) css.fontWeight = style.fontWeight
-  if (isNum(style.lineHeight)) css.lineHeight = style.lineHeight
+  const lh = lineHeightValue(style)
+  if (lh !== undefined) css.lineHeight = lh
   const ls = letterSpacingValue(style)
   if (ls) css.letterSpacing = ls
   if (style.textTransform && TEXT_TRANSFORMS.includes(style.textTransform)) css.textTransform = style.textTransform
   if (style.fontStyle && FONT_STYLES.includes(style.fontStyle)) css.fontStyle = style.fontStyle
   if (style.textDecoration && TEXT_DECORATIONS.includes(style.textDecoration)) css.textDecoration = style.textDecoration
-  if (isNum(style.wordSpacing)) css.wordSpacing = `${style.wordSpacing}px`
+  const ws = wordSpacingValue(style)
+  if (ws) css.wordSpacing = ws
   if (style.textShadow && style.textShadow !== 'none' && TEXT_SHADOWS.includes(style.textShadow)) {
     css.textShadow = TEXT_SHADOW_PRESETS[style.textShadow]
   }
@@ -1262,7 +1274,7 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const n = clampNum(r[key], 0, 10000)
     if (n !== undefined) out[key] = n
   }
-  for (const key of ['minWidthUnit', 'maxWidthUnit', 'maxHeightUnit'] as const) {
+  for (const key of ['minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit'] as const) {
     const u = lengthUnit(r[key])
     if (u) out[key] = u
   }
@@ -1276,7 +1288,7 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
   if (typeof r.textAlign === 'string' && TEXT_ALIGNS.includes(r.textAlign)) out.textAlign = r.textAlign as TextAlign
   if (isNum(r.fontSize) && r.fontSize > 0) out.fontSize = Math.min(400, Math.max(0.1, r.fontSize))
   if (typeof r.fontSizeUnit === 'string' && FONT_SIZE_UNITS.includes(r.fontSizeUnit)) out.fontSizeUnit = r.fontSizeUnit as FontSizeUnit
-  if (isNum(r.lineHeight)) out.lineHeight = Math.min(5, Math.max(0.5, r.lineHeight))
+  if (isNum(r.lineHeight)) out.lineHeight = Math.min(400, Math.max(0.5, r.lineHeight))
   if (isNum(r.letterSpacing)) out.letterSpacing = Math.min(50, Math.max(-20, r.letterSpacing))
   for (const key of ['minHeightUnit', 'paddingUnit', 'marginUnit', 'selfWidthPercentUnit'] as const) {
     const u = lengthUnit(r[key])
@@ -1669,12 +1681,20 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
     const size = fontSizeValue(merged)
     if (size) decls.push(`font-size:${size} !important`)
   }
-  if (isNum(own.lineHeight)) decls.push(`line-height:${own.lineHeight} !important`)
+  if (isNum(own.lineHeight) || own.lineHeightUnit !== undefined) {
+    const merged: BlockStyle = { ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }
+    const lh = lineHeightValue(merged)
+    if (lh !== undefined) decls.push(`line-height:${lh} !important`)
+  }
   if (isNum(own.fontWeight)) decls.push(`font-weight:${own.fontWeight} !important`)
   if (own.textTransform && TEXT_TRANSFORMS.includes(own.textTransform)) decls.push(`text-transform:${own.textTransform} !important`)
   if (own.fontStyle && FONT_STYLES.includes(own.fontStyle)) decls.push(`font-style:${own.fontStyle} !important`)
   if (own.textDecoration && TEXT_DECORATIONS.includes(own.textDecoration)) decls.push(`text-decoration:${own.textDecoration} !important`)
-  if (isNum(own.wordSpacing)) decls.push(`word-spacing:${own.wordSpacing}px !important`)
+  if (isNum(own.wordSpacing) || own.wordSpacingUnit !== undefined) {
+    const merged: BlockStyle = { ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }
+    const ws = wordSpacingValue(merged)
+    if (ws) decls.push(`word-spacing:${ws} !important`)
+  }
   if (own.position && POSITION_OPTIONS.some((o) => o.value === own.position)) decls.push(`position:${own.position} !important`)
   const offsets = [['top', 'posTop'], ['right', 'posRight'], ['bottom', 'posBottom'], ['left', 'posLeft']] as const
   if (mergedU.position && POSITION_OPTIONS.some((o) => o.value === mergedU.position)) {

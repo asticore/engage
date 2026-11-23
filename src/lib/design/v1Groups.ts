@@ -99,6 +99,8 @@ export const V1_GROUP_OF = {
   fontStyle: 'typography',
   textDecoration: 'typography',
   wordSpacing: 'typography',
+  lineHeightUnit: 'typography',
+  wordSpacingUnit: 'typography',
   textShadow: 'typography',
   textStrokeWidth: 'typography',
   textStrokeColor: 'typography',
