@@ -35,7 +35,11 @@ const ctx = (createdBy: number) => ({
 const future = new Date(Date.now() + 86_400_000).toISOString()
 
 describe('own-scoped users on feature routes', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // The password route refuses to set a password without a signing secret, before it checks the page owner.
+    process.env.ENGAGE_SECRET ||= 'test-secret'
+  })
 
   it('schedule: other people\'s page is refused, own page works', async () => {
     const req = () => new Request('http://x/api/admin-schedule', { method: 'PUT', body: JSON.stringify({ collection: 'pages', id: 1, publishAt: future }) })

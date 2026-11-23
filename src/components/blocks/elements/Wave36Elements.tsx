@@ -183,7 +183,6 @@ export const TimelineElement: React.FC<P> = (p) => {
               )}
               {r.title && <Heading level={level} className="be-el-timeline__title">{r.title}</Heading>}
               {img && (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img className="be-el-timeline__image" src={img.url} alt={r.alt} loading="lazy" decoding="async" />
               )}
               {r.text && <p className="be-el-timeline__text">{r.text}</p>}
