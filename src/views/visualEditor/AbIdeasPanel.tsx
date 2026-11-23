@@ -2,19 +2,43 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { goalChoices, suggestTests, type AbIdea } from '@/features/abTesting/suggestions'
+import { goalChoices, resultIdeas, suggestTests, type AbIdea, type PastTest } from '@/features/abTesting/suggestions'
 import type { SectionNode } from '@/lib/sectionTree'
 
-type Test = { id: number; name: string; status: string; variants: Array<{ key: string; label: string; weight?: number; isControl: boolean; templateId: number | null }> }
+type Test = { id: number; name: string; status: string; scope?: string; outcome?: PastTest['outcome']; variants: Array<{ key: string; label: string; weight?: number; isControl: boolean; templateId: number | null; pageId?: number | null }> }
 
 /**
  * "A/B tests" under the Checks list: ideas for this page, a form to turn one into a draft section test (the section is
  * copied into a template that becomes variant B), and the page's tests with Edit variant, Start, Stop and Results.
  * Editing a variant opens its template in this same editor.
  */
+const WHOLE_PAGE_IDEA: AbIdea = { id: 'whole-page', kind: 'layout', sectionId: 'page', sectionIndex: 0, title: 'Whole page', reason: '', impact: '' }
+
+/**
+ * Shown while editing a variant (a section template or a copied page): says which test it belongs to and links back to the original page.
+ */
+export const AbVariantNotice: React.FC<{ templateId?: number; variantPageId?: number }> = ({ templateId, variantPageId }) => {
+  const [info, setInfo] = useState<{ testName: string; label: string; pageId: number | null } | null>(null)
+  useEffect(() => {
+    const q = templateId ? `templateId=${templateId}` : `variantPageId=${variantPageId}`
+    void fetch(`/api/admin-ab-quick?${q}`, { credentials: 'include' })
+      .then((r): Promise<{ variantOf?: { testName: string; label: string; pageId: number | null } | null }> => (r.ok ? r.json() : Promise.resolve({})))
+      .then((j) => setInfo(j.variantOf ?? null))
+      .catch((): void => undefined)
+  }, [templateId, variantPageId])
+  if (!info?.pageId) return null
+  const back = window.location.pathname.replace(/\/visual-editor\/collection\/[^/]+\/[^/]+/, `/visual-editor/collection/pages/${info.pageId}`)
+  return (
+    <p className="ve-checks__none">
+      You are editing {info.label} of the test “{info.testName}”. <a href={back}>Back to the original page</a>
+    </p>
+  )
+}
+
 export const AbIdeasPanel: React.FC<{ tree: SectionNode[]; pageId: number }> = ({ tree, pageId }) => {
   const ideas = useMemo(() => suggestTests(tree), [tree])
   const [tests, setTests] = useState<Test[]>([])
+  const fromResults = useMemo(() => resultIdeas(tests.map((t) => ({ name: t.name, status: t.status, outcome: t.outcome ?? null }))), [tests])
   const [error, setError] = useState('')
   const [open, setOpen] = useState<AbIdea | null>(null)
   const [name, setName] = useState('')
@@ -52,6 +76,7 @@ export const AbIdeasPanel: React.FC<{ tree: SectionNode[]; pageId: number }> = (
 
   if (off) return null
   const editHref = (templateId: number) => window.location.pathname.replace(/\/visual-editor\/collection\/[^/]+\/[^/]+/, `/visual-editor/collection/page-templates/${templateId}`)
+  const editPageHref = (id: number) => window.location.pathname.replace(/\/visual-editor\/collection\/[^/]+\/[^/]+/, `/visual-editor/collection/pages/${id}`)
   const resultsHref = (id: number) => window.location.pathname.replace(/\/visual-editor\/.*$/, `/collections/ab-tests/${id}`)
 
   return (
@@ -64,17 +89,23 @@ export const AbIdeasPanel: React.FC<{ tree: SectionNode[]; pageId: number }> = (
       {tests.length > 0 ? (
         <ul className="ve-checks__list">
           {tests.map((t) => {
-            const variant = t.variants.find((v) => !v.isControl)
+            const variants = t.variants.filter((v) => !v.isControl)
+            const share = Math.round(variants.reduce((sum, v) => sum + (v.weight || 0), 0))
             return (
               <li key={t.id} className="ve-checks__item">
-                <strong>{t.name}</strong> <span>({t.status})</span>{' '}
-                {variant?.templateId ? <a href={editHref(variant.templateId)}>Edit variant</a> : null}{' '}
+                <strong>{t.name}</strong> <span>({t.status}{t.scope === 'page' ? ', whole page' : ''})</span>{' '}
+                {variants.map((v) => {
+                  const href = t.scope === 'page' ? (v.pageId ? editPageHref(v.pageId) : '') : v.templateId ? editHref(v.templateId) : ''
+                  return href ? <span key={v.key}><a href={href}>Edit {v.label}</a>{' '}</span> : null
+                })}
                 {t.status !== 'running' ? <button type="button" className="ve-btn" disabled={busy} onClick={() => void post({ action: 'start', testId: t.id })}>Start</button> : <button type="button" className="ve-btn" disabled={busy} onClick={() => void post({ action: 'stop', testId: t.id })}>Stop</button>}{' '}
+                {t.status !== 'running' && t.variants.length < 4 ? <button type="button" className="ve-btn" disabled={busy} onClick={() => void post({ action: 'addVariant', testId: t.id })}>Add a variant</button> : null}{' '}
                 <a href={resultsHref(t.id)}>Open</a>
-                {variant && t.status !== 'running' ? (
+                {t.outcome ? <div>{t.outcome.visitors} visitors{t.outcome.winner ? `, ${t.outcome.winner} is winning` : t.outcome.leader ? `, ${t.outcome.leader} is ahead but it is not clear yet` : ''}</div> : null}
+                {variants.length > 0 && t.status !== 'running' ? (
                   <label className="ve-checks__none" style={{ display: 'block' }}>
-                    Variant gets {variant.weight || 50}% of visitors
-                    <input type="range" min={5} max={95} step={5} defaultValue={variant.weight || 50} disabled={busy} onMouseUp={(e) => void post({ action: 'split', testId: t.id, weightB: Number((e.target as HTMLInputElement).value) })} onTouchEnd={(e) => void post({ action: 'split', testId: t.id, weightB: Number((e.target as HTMLInputElement).value) })} onKeyUp={(e) => void post({ action: 'split', testId: t.id, weightB: Number((e.target as HTMLInputElement).value) })} />
+                    Variants share {share || 50}% of visitors
+                    <input type="range" min={5} max={95} step={5} defaultValue={share || 50} disabled={busy} onMouseUp={(e) => void post({ action: 'split', testId: t.id, weightB: Number((e.target as HTMLInputElement).value) })} onTouchEnd={(e) => void post({ action: 'split', testId: t.id, weightB: Number((e.target as HTMLInputElement).value) })} onKeyUp={(e) => void post({ action: 'split', testId: t.id, weightB: Number((e.target as HTMLInputElement).value) })} />
                   </label>
                 ) : null}
               </li>
@@ -95,13 +126,30 @@ export const AbIdeasPanel: React.FC<{ tree: SectionNode[]; pageId: number }> = (
           ))}
         </ul>
       )}
+      {fromResults.length > 0 ? (
+        <>
+          <p className="ve-checks__none">From your past results</p>
+          <ul className="ve-checks__list">
+            {fromResults.map((idea) => (
+              <li key={idea.id} className="ve-checks__item">
+                <strong>{idea.title}</strong>
+                <div>{idea.reason}</div>
+                <div><em>{idea.impact}</em></div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      <p className="ve-checks__none">
+        <button type="button" className="ve-btn" onClick={() => { setOpen(WHOLE_PAGE_IDEA); setName('Whole page test'); setGoalValue(''); setPicked(''); setWeightB(50) }}>Test the whole page</button>
+      </p>
       {open ? (
         <form
           className="ve-checks__item"
           onSubmit={(e) => {
             e.preventDefault()
             const chosen = choices.find((c) => c.id === picked)
-            void post({ action: 'create', pageId, blockId: open.sectionId, name, weightB, goal: chosen ? chosen.goal : goalType === 'page-visited' ? { type: goalType, path: goalValue } : { type: goalType, selector: goalValue } }).then((ok) => { if (ok) setOpen(null) })
+            void post({ action: 'create', pageId, blockId: open.sectionId, ...(open.id === 'whole-page' ? { scope: 'page' } : {}), name, weightB, goal: chosen ? chosen.goal : goalType === 'page-visited' ? { type: goalType, path: goalValue } : { type: goalType, selector: goalValue } }).then((ok) => { if (ok) setOpen(null) })
           }}
         >
           <label>Name <input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></label>
@@ -126,7 +174,7 @@ export const AbIdeasPanel: React.FC<{ tree: SectionNode[]; pageId: number }> = (
             <input type="range" min={5} max={95} step={5} value={weightB} onChange={(e) => setWeightB(Number(e.target.value))} />
           </label>
           {open.sectionId ? null : <p role="alert">Save the page first so this section has an id.</p>}
-          <p>This copies the section as Variant B. Edit it, then press Start. Nothing is split until then.</p>
+          <p>{open.id === 'whole-page' ? 'This copies the whole page as a draft page for Variant B (it is never published on its own). Edit it, then press Start. Nothing is split until then.' : 'This copies the section as Variant B. Edit it, then press Start. Nothing is split until then.'}</p>
           <button type="submit" className="ve-btn" disabled={busy || !open.sectionId}>Create draft test</button>{' '}
           <button type="button" className="ve-btn" onClick={() => setOpen(null)}>Cancel</button>
         </form>
