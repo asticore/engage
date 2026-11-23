@@ -8,7 +8,17 @@ import { matchesLocation, optionsPageContext, type LocationContext } from './loc
 import { normalizeFieldGroup } from './normalize'
 import { definitionsFor } from './validate'
 import { buildCustomFieldContext, collectMediaIds, type MediaUrls } from './stringify'
-import { getAllOptionValues } from './options'
+import { getAllOptionValues, valuesForLocale } from './options'
+
+/** The language of the current request, or null on a one-language site or outside a request. Never throws. */
+async function requestLocaleOrNull(): Promise<string | null> {
+  try {
+    const { currentRequestLocale } = await import('@/features/multilingual/applyTranslations')
+    return await currentRequestLocale()
+  } catch {
+    return null
+  }
+}
 
 /**
  * Server-side loading of Field Groups for the write hook, the admin route and
@@ -92,7 +102,7 @@ export async function buildDocumentTagContext(
     const values = (doc.customFields && typeof doc.customFields === 'object' ? doc.customFields : {}) as Record<string, unknown>
     const mediaUrls = await fetchMediaUrls(collectMediaIds(defs, values))
     const tags = buildCustomFieldContext(defs, values, { mediaUrls })
-    if (options.needsOptions) Object.assign(tags, await loadOptionContext(groups))
+    if (options.needsOptions) Object.assign(tags, await loadOptionContext(groups, await requestLocaleOrNull()))
     return tags
   } catch (error) {
     console.error('custom field tag context failed; rendering without it', error)
@@ -109,9 +119,11 @@ export function groupsMatching(groups: FieldGroupDoc[], ctx: LocationContext): F
  * Merge-tag map for every Options page: `option:<slug>.<name>`. Each page's
  * values are stringified with the definitions of the groups that apply to it.
  */
-export async function loadOptionContext(groups?: FieldGroupDoc[]): Promise<Record<string, string>> {
+export async function loadOptionContext(groups?: FieldGroupDoc[], locale?: string | null): Promise<Record<string, string>> {
   const out: Record<string, string> = {}
-  const all = await getAllOptionValues()
+  const stored = await getAllOptionValues()
+  // A non-default language shows its own text where one was entered, the default value otherwise.
+  const all = Object.fromEntries(Object.entries(stored).map(([slug, values]) => [slug, valuesForLocale(values, locale)]))
   const allGroups = groups ?? (await loadFieldGroups())
   // Public pages: the viewer's roles are not known here, so a user role rule never adds a tag.
   const perPage = Object.entries(all).map(([slug, values]) => ({ slug, values, defs: definitionsFor(allGroups, optionsPageContext(slug, values)) }))
@@ -142,7 +154,7 @@ export async function buildItemTagContexts(
     const defsPerItem = items.map((item) => definitionsFor(groups, locationContextFor(collection, item, undefined, { tags: tagsOn })))
     const mediaIds = defsPerItem.flatMap((defs, i) => collectMediaIds(defs, valuesOf(items[i])))
     const mediaUrls = await fetchMediaUrls([...new Set(mediaIds)])
-    const optionTags = options.needsOptions ? await loadOptionContext(groups) : {}
+    const optionTags = options.needsOptions ? await loadOptionContext(groups, await requestLocaleOrNull()) : {}
     return items.map((item, i) => ({ ...buildCustomFieldContext(defsPerItem[i], valuesOf(item), { mediaUrls }), ...optionTags }))
   } catch (error) {
     console.error('loop tag contexts failed; rendering items without custom fields', error)

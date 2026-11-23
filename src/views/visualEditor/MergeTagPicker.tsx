@@ -26,13 +26,23 @@ const TYPE_HINT: Partial<Record<CustomFieldDef['type'], string>> = {
   checkbox: 'checkbox: Yes / No',
 }
 
-function tagsFor(defs: CustomFieldDef[], prefix: string): { tag: string; label: string }[] {
+/** Options page slugs a group is shown on ("Options page: site-contact"). */
+export function optionsPagesOf(group: FieldGroupDoc): string[] {
+  const slugs = new Set<string>()
+  for (const rules of group.location ?? []) {
+    for (const rule of rules) if (rule.param === 'optionsPage' && rule.operator === 'equals' && /^[a-z0-9][a-z0-9-]{0,63}$/.test(rule.value)) slugs.add(rule.value)
+  }
+  return [...slugs].sort()
+}
+
+/** `field` tags for a document's Extra fields, `option` tags (`{{option:slug.name}}`) for a site-wide Options page. */
+export function tagsFor(defs: CustomFieldDef[], prefix: string, kind: string = 'field'): { tag: string; label: string }[] {
   const out: { tag: string; label: string }[] = []
   for (const def of defs) {
     const key = `${prefix}${def.name}`
-    out.push({ tag: `{{field:${key}}}`, label: def.label + (TYPE_HINT[def.type] ? ` (${TYPE_HINT[def.type]})` : '') })
+    out.push({ tag: `{{${kind}:${key}}}`, label: def.label + (TYPE_HINT[def.type] ? ` (${TYPE_HINT[def.type]})` : '') })
     if (def.type === 'group') {
-      for (const sub of def.subFields ?? []) out.push({ tag: `{{field:${key}.${sub.name}}}`, label: `${def.label} › ${sub.label}` })
+      for (const sub of def.subFields ?? []) out.push({ tag: `{{${kind}:${key}.${sub.name}}}`, label: `${def.label} › ${sub.label}` })
     }
   }
   return out
@@ -42,12 +52,17 @@ export const MergeTagPicker: React.FC<{ onInsert: (tag: string) => void; collect
   const t = useAdminT()
   const [open, setOpen] = useState(false)
   const [groups, setGroups] = useState<FieldGroupDoc[] | null>(null)
+  const [optionGroups, setOptionGroups] = useState<FieldGroupDoc[]>([])
 
   useEffect(() => {
     if (!open || groups !== null) return
     let cancelled = false
     fetchFieldGroups(collection ?? '').then(({ groups: docs }) => {
       if (!cancelled) setGroups(docs)
+    })
+    // Site-wide Options pages are listed too, so the builder can pick them without knowing the slug.
+    fetchFieldGroups('').then(({ groups: all }) => {
+      if (!cancelled) setOptionGroups(all.filter((g) => optionsPagesOf(g).length > 0))
     })
     return () => {
       cancelled = true
@@ -106,6 +121,23 @@ export const MergeTagPicker: React.FC<{ onInsert: (tag: string) => void; collect
                 </div>
               )
             })}
+            {optionGroups.flatMap((group) =>
+              optionsPagesOf(group).map((slug) => {
+                const tags = tagsFor(group.fields, `${slug}.`, 'option')
+                if (tags.length === 0) return null
+                return (
+                  <div className="ve-tagpicker__group" key={`${group.id}:${slug}`}>
+                    <h5>{`Site-wide: ${slug} · ${group.name}`}</h5>
+                    {tags.map((entry) => (
+                      <button key={entry.tag} type="button" className="ve-tagpicker__item" onClick={() => insert(entry.tag)}>
+                        <code>{entry.tag}</code>
+                        <span>{entry.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )
+              }),
+            )}
           </div>
         </>
       )}
