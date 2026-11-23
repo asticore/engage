@@ -284,6 +284,9 @@ const CanvasNode: React.FC<{
           color={design.dividerTopColor}
           height={design.dividerTopHeight}
           flip={design.dividerTopFlip}
+          width={design.dividerTopWidth}
+          invert={design.dividerTopInvert}
+          front={design.dividerTopFront}
           anim={design.dividerTopAnim}
           speed={design.dividerTopSpeed}
           position="top"
@@ -345,6 +348,9 @@ const CanvasNode: React.FC<{
           color={design.dividerBottomColor}
           height={design.dividerBottomHeight}
           flip={design.dividerBottomFlip}
+          width={design.dividerBottomWidth}
+          invert={design.dividerBottomInvert}
+          front={design.dividerBottomFront}
           anim={design.dividerBottomAnim}
           speed={design.dividerBottomSpeed}
           position="bottom"

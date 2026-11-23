@@ -116,6 +116,9 @@ export const StyledBlock: React.FC<{
         color={parsed.dividerTopColor}
         height={parsed.dividerTopHeight}
         flip={parsed.dividerTopFlip}
+        width={parsed.dividerTopWidth}
+        invert={parsed.dividerTopInvert}
+        front={parsed.dividerTopFront}
         anim={parsed.dividerTopAnim}
         speed={parsed.dividerTopSpeed}
         position="top"
@@ -139,6 +142,9 @@ export const StyledBlock: React.FC<{
         color={parsed.dividerBottomColor}
         height={parsed.dividerBottomHeight}
         flip={parsed.dividerBottomFlip}
+        width={parsed.dividerBottomWidth}
+        invert={parsed.dividerBottomInvert}
+        front={parsed.dividerBottomFront}
         anim={parsed.dividerBottomAnim}
         speed={parsed.dividerBottomSpeed}
         position="bottom"
@@ -152,11 +158,17 @@ export const ShapeDivider: React.FC<{
   color?: string
   height?: number
   flip?: boolean
+  /** Percent of the block width (100-400), centred. */
+  width?: number
+  /** Mirrors vertically. */
+  invert?: boolean
+  /** Draws above the block content. */
+  front?: boolean
   position: 'top' | 'bottom'
   anim?: DividerAnim
   /** Seconds per loop, 4-60. */
   speed?: number
-}> = ({ shape, color, height, flip, position, anim, speed }) => {
+}> = ({ shape, color, height, flip, width, invert, front, position, anim, speed }) => {
   const path = dividerPath(shape || 'none')
   if (!path) return null
 
@@ -169,7 +181,7 @@ export const ShapeDivider: React.FC<{
 
   // The base paths are drawn to sit against the bottom edge, so a top divider
   // is the same shape rotated 180deg. `flip` mirrors horizontally on top of that.
-  const transforms = [position === 'top' ? 'rotate(180deg)' : null, flip ? 'scaleX(-1)' : null].filter(Boolean)
+  const transforms = [position === 'top' ? 'rotate(180deg)' : null, flip ? 'scaleX(-1)' : null, invert ? 'scaleY(-1)' : null].filter(Boolean)
 
   const paths = (offset: number) => (
     <>
@@ -208,6 +220,8 @@ export const ShapeDivider: React.FC<{
       style={{
         height: `${typeof height === 'number' && height > 0 ? height : 60}px`,
         transform: transforms.length > 0 ? transforms.join(' ') : undefined,
+        ...(typeof width === 'number' && width > 100 ? { width: `${Math.min(400, width)}%`, left: `${(100 - Math.min(400, width)) / 2}%` } : {}),
+        ...(front ? { zIndex: 20 } : {}),
       }}
       aria-hidden="true"
     >

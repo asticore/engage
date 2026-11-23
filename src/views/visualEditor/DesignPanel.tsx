@@ -441,6 +441,12 @@ export const DesignPanel: React.FC<{
           color={value.dividerTopColor}
           height={value.dividerTopHeight}
           flip={value.dividerTopFlip}
+          width={value.dividerTopWidth}
+          invert={value.dividerTopInvert}
+          front={value.dividerTopFront}
+          onWidth={(v) => set('dividerTopWidth', v)}
+          onInvert={(v) => set('dividerTopInvert', v)}
+          onFront={(v) => set('dividerTopFront', v)}
           anim={value.dividerTopAnim}
           speed={value.dividerTopSpeed}
           onAnim={(v) => set('dividerTopAnim', v)}
@@ -456,6 +462,12 @@ export const DesignPanel: React.FC<{
           color={value.dividerBottomColor}
           height={value.dividerBottomHeight}
           flip={value.dividerBottomFlip}
+          width={value.dividerBottomWidth}
+          invert={value.dividerBottomInvert}
+          front={value.dividerBottomFront}
+          onWidth={(v) => set('dividerBottomWidth', v)}
+          onInvert={(v) => set('dividerBottomInvert', v)}
+          onFront={(v) => set('dividerBottomFront', v)}
           anim={value.dividerBottomAnim}
           speed={value.dividerBottomSpeed}
           onAnim={(v) => set('dividerBottomAnim', v)}
@@ -1321,6 +1333,12 @@ const DividerControls: React.FC<{
   color?: string
   height?: number
   flip?: boolean
+  width?: number
+  invert?: boolean
+  front?: boolean
+  onWidth: (v: number | undefined) => void
+  onInvert: (v: boolean | undefined) => void
+  onFront: (v: boolean | undefined) => void
   anim?: DividerAnim
   speed?: number
   onAnim: (v: DividerAnim | undefined) => void
@@ -1329,7 +1347,7 @@ const DividerControls: React.FC<{
   onColor: (v: string | undefined) => void
   onHeight: (v: number | undefined) => void
   onFlip: (v: boolean | undefined) => void
-}> = ({ label, shape, color, height, flip, anim, speed, onAnim, onSpeed, onShape, onColor, onHeight, onFlip }) => {
+}> = ({ label, shape, color, height, flip, width, invert, front, onWidth, onInvert, onFront, anim, speed, onAnim, onSpeed, onShape, onColor, onHeight, onFlip }) => {
   const t = useAdminT()
   return (
   <div className="ve-divider-group">
@@ -1346,6 +1364,9 @@ const DividerControls: React.FC<{
         <ColorRow label={`${label} colour`} value={color} onChange={onColor} />
         <NumberRow label={`${label} height (px)`} value={height} onChange={onHeight} min={10} max={400} />
         <CheckRow label={`Flip ${label.toLowerCase()}`} checked={Boolean(flip)} applied={flip !== undefined} onReset={() => onFlip(undefined)} onChange={(v) => onFlip(v || undefined)} />
+        <NumberRow label={`${label} width (%)`} value={width} onChange={onWidth} min={100} max={400} />
+        <CheckRow label={`Invert ${label.toLowerCase()}`} checked={Boolean(invert)} applied={invert !== undefined} onReset={() => onInvert(undefined)} onChange={(v) => onInvert(v || undefined)} />
+        <CheckRow label={`Bring ${label.toLowerCase()} to front`} checked={Boolean(front)} applied={front !== undefined} onReset={() => onFront(undefined)} onChange={(v) => onFront(v || undefined)} />
         <SelectRow
           label={`${label} animation`}
           value={anim || 'none'}
