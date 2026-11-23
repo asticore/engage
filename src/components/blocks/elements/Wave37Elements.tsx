@@ -222,7 +222,7 @@ export const TocElement: React.FC<P> = (p) => {
   }
   const title = str(p.title).trim()
   // Automatic mode is drawn by the page renderer from the page's headings; the editor canvas shows a note instead.
-  if (p.auto === true) return <nav className="be-el-toc be-el-toc--auto" aria-label={title || 'Table of contents'}><p className="be-el-toc__title">{title || 'On this page'}</p><p>Filled from this page's headings when published.</p></nav>
+  if (p.auto === true) return <nav className="be-el-toc be-el-toc--auto" aria-label={title || 'Table of contents'}><p className="be-el-toc__title">{title || 'On this page'}</p><p>Filled from this page&apos;s headings when published.</p></nav>
   if (entries.length === 0) return null
   const numbered = pick(p.style, ['numbered', 'bullets'] as const, 'numbered') === 'numbered'
   const cls = `be-el-toc be-el-toc--${numbered ? 'numbered' : 'bullets'}${flag(p.sticky, false) ? ' be-el-toc--sticky' : ''}`
