@@ -40,4 +40,15 @@ export const UTILITY_ELEMENTS: ElementDef[] = [
     ],
     defaultProps: () => ({ label: 'Quick actions', icon: '+', corner: 'bottom-right', items: 'Call us | tel:+10000000000\nEmail us | mailto:hello@example.com\nBack to top | #top' }),
   },
+  {
+    type: 'poll', label: 'Poll', icon: String.fromCodePoint(0x1f4ca), category: 'media',
+    description: 'A one-question poll. Each visitor votes once (remembered in their browser) and then sees the results as bars. Votes are stored on your own site.',
+    fields: [
+      { name: 'pollId', label: 'Poll id', type: 'text', width: 'half', helpText: 'Letters, numbers and dashes. Keep it the same to keep the votes; use a new id to start fresh.' },
+      { name: 'question', label: 'Question', type: 'text', width: 'half' },
+      { name: 'options', label: 'Options', type: 'textarea', helpText: 'One answer per line, up to 12.' },
+      { name: 'showResults', label: 'Show results after voting', type: 'checkbox' },
+    ],
+    defaultProps: () => ({ pollId: `poll-${Math.random().toString(36).slice(2, 8)}`, question: 'What should we do next?', options: 'Option one\nOption two\nOption three', showResults: true }),
+  },
 ]
