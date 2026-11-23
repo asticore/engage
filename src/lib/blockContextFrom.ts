@@ -40,6 +40,12 @@ function firstImage(images: unknown): { url: unknown; alt: unknown } | undefined
   return undefined
 }
 
+/** "L x W x H" from the product's length, width and height when all three are set. */
+function dimensionsText(product: Record<string, unknown>): string | undefined {
+  const d = [product.length, product.width, product.height]
+  return d.every((n) => typeof n === 'number' && n > 0) ? d.join(' x ') : undefined
+}
+
 /** Every picture of a product (public url and alt), at most 20. */
 function allImages(images: unknown): Array<{ url: string; alt: string }> {
   const out: Array<{ url: string; alt: string }> = []
@@ -89,6 +95,9 @@ export function productBlockContext(product: Record<string, unknown>, path: stri
       images: allImages(product.images),
       lowStockThreshold: product.lowStockThreshold as number | null | undefined,
       backorders: str(product.backorders) || undefined,
+      description: product.description ?? undefined,
+      weight: typeof product.weight === 'number' && product.weight > 0 ? product.weight : undefined,
+      dimensions: dimensionsText(product),
     },
     path,
   }

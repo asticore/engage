@@ -1,5 +1,7 @@
 import React from 'react'
 
+import { RichText } from '@/engine/editor/react'
+import { ProductRecommendations } from '@/components/ProductRecommendations'
 import { getBlockContext } from '@/lib/blockContext'
 
 import { ProductGallery } from './Wave69Elements'
@@ -60,9 +62,60 @@ export async function ProductImagesElement(props: P): Promise<React.ReactElement
   return <ProductGallery images={images} thumbnails={props.thumbnails !== false} zoom={props.zoom !== false} />
 }
 
+export type TabId = 'description' | 'info' | 'reviews'
+
+/** Which tabs have something to show, in order, honouring the switches. */
+export function tabsFor(p: { description?: unknown; sku?: string; gtin?: string; weight?: number; dimensions?: string; ratingCount?: number | null }, on: { description: boolean; info: boolean; reviews: boolean }): TabId[] {
+  const out: TabId[] = []
+  if (on.description && p.description) out.push('description')
+  if (on.info && (p.sku || p.gtin || p.weight || p.dimensions)) out.push('info')
+  if (on.reviews && typeof p.ratingCount === 'number' && p.ratingCount > 0) out.push('reviews')
+  return out
+}
+
+const TAB_LABEL: Record<TabId, string> = { description: 'Description', info: 'Additional information', reviews: 'Reviews' }
+
+export async function ProductTabsElement(props: P): Promise<React.ReactElement | null> {
+  const p = getBlockContext().product
+  if (!p) return null
+  const tabs = tabsFor(p, { description: props.showDescription !== false, info: props.showInfo !== false, reviews: props.showReviews !== false })
+  if (!tabs.length) return null
+  const info: Array<[string, string]> = []
+  if (p.sku) info.push(['SKU', p.sku])
+  if (p.gtin) info.push(['GTIN', p.gtin])
+  if (p.weight) info.push(['Weight', String(p.weight)])
+  if (p.dimensions) info.push(['Dimensions', p.dimensions])
+  const id = `w69t-${p.id ?? 0}`
+  return (
+    <div className="w69-tabs">
+      {tabs.map((t, i) => (
+        <React.Fragment key={t}>
+          <input type="radio" name={id} id={`${id}-${t}`} className="w69-tabs__radio" defaultChecked={i === 0} />
+          <label htmlFor={`${id}-${t}`} className="w69-tabs__tab">{TAB_LABEL[t]}</label>
+        </React.Fragment>
+      ))}
+      {tabs.map((t) => (
+        <div key={t} className={`w69-tabs__panel w69-tabs__panel--${t}`}>
+          {t === 'description' ? <RichText data={p.description as never} /> : null}
+          {t === 'info' ? <dl className="w69-meta">{info.map(([k, v]) => (<div key={k}><dt>{k}</dt><dd>{v}</dd></div>))}</dl> : null}
+          {t === 'reviews' ? <p>Rated {(p.ratingAverage ?? 0).toFixed(1)} out of 5 from {p.ratingCount} reviews.</p> : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export async function RelatedProductsElement(): Promise<React.ReactElement | null> {
+  const p = getBlockContext().product
+  if (typeof p?.id !== 'number') return null
+  return <ProductRecommendations productId={p.id} category={p.category ?? null} />
+}
+
 export const WAVE69_COMPONENTS: Record<string, React.ComponentType<P>> = {
   'product-stock': ProductStockElement as never,
   'product-short-description': ProductShortDescriptionElement as never,
   'product-meta': ProductMetaElement as never,
   'product-images': ProductImagesElement as never,
+  'product-tabs': ProductTabsElement as never,
+  'related-products': RelatedProductsElement as never,
 }

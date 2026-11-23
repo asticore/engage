@@ -17,3 +17,12 @@
 .w69-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 .w69-thumbs button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.w69-main img{transition:none}}
+.w69-tabs{display:flex;flex-wrap:wrap;gap:.25rem}
+.w69-tabs__radio{position:absolute;opacity:0;pointer-events:none}
+.w69-tabs__tab{padding:.5rem 1rem;border:1px solid color-mix(in srgb,currentColor 25%,transparent);border-radius:.5rem .5rem 0 0;cursor:pointer}
+.w69-tabs__panel{display:none;flex:0 0 100%;order:2;padding:1rem 0}
+.w69-tabs__radio:nth-of-type(n):checked + .w69-tabs__tab{font-weight:700;border-bottom-color:transparent}
+.w69-tabs__radio[id$='-description']:checked ~ .w69-tabs__panel--description{display:block}
+.w69-tabs__radio[id$='-info']:checked ~ .w69-tabs__panel--info{display:block}
+.w69-tabs__radio[id$='-reviews']:checked ~ .w69-tabs__panel--reviews{display:block}
+.w69-tabs__radio:focus-visible + .w69-tabs__tab{outline:2px solid currentColor;outline-offset:2px}
