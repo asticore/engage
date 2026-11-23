@@ -3238,7 +3238,7 @@ Three commerce elements in the Shop group: Cart contents (the cart page body), C
 
 **Where to find it:** Visual editor, Elements, Shop
 
-#### BLD-086 - Task 10 29a Chart series and table tools (23 Nov 2026)
+#### BLD-086 - Task 10 29a Chart screen reader summary (23 Nov 2026)
 
 _Date: 23 Nov 2026_
 
@@ -3606,7 +3606,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
-- [BLD-086](#bld-086) Task 10 29a Chart series and table tools
+- [BLD-086](#bld-086) Task 10 29a Chart screen reader summary
 - [BLD-085](#bld-085) Task 10 29d Cart, Checkout and Mini cart elements
 - [BLD-084](#bld-084) Task 10 29d Product meta brand and tags, variation images
 - [BLD-083](#bld-083) Task 10 29b My account element
