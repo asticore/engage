@@ -72,6 +72,7 @@
   display: block;
   font-weight: 600;
   margin-bottom: 0.35rem;
+  color: var(--eg-form-label, var(--eg-site-label, inherit));
 }
 
 .form-field abbr {
@@ -91,11 +92,19 @@
 .form-field select {
   width: 100%;
   padding: 0.6rem 0.75rem;
-  border: 1px solid var(--eg-line);
+  /* The --eg-form-* variables are the per-form colour overrides; unset, each falls back to the current look. */
+  border: 1px solid var(--eg-form-field-border, var(--eg-line));
   border-radius: var(--eg-radius);
-  background: var(--eg-field-bg);
-  color: inherit;
+  background: var(--eg-form-field-bg, var(--eg-field-bg));
+  color: var(--eg-form-field-text, inherit);
   font: inherit;
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+  /* --eg-site-focus is the site's focus border (themeStyles/css.ts); with neither set the border does not change. */
+  border-color: var(--eg-form-focus, var(--eg-site-focus, var(--eg-line)));
 }
 
 .form-field input:focus-visible,
@@ -104,6 +113,19 @@
 .engage-form button:focus-visible {
   outline: 2px solid var(--eg-accent);
   outline-offset: 1px;
+}
+
+/* The submit button uses the primary button's colours unless the form overrides them. */
+.engage-form .btn--primary {
+  background-color: var(--eg-form-button-bg, var(--ac-gold));
+  border-color: var(--eg-form-button-bg, var(--ac-gold));
+  color: var(--eg-form-button-text, var(--ac-gold-contrast));
+}
+
+.engage-form .btn--primary:hover {
+  background-color: var(--eg-form-button-bg, var(--ac-gold-soft));
+  border-color: var(--eg-form-button-bg, var(--ac-gold-soft));
+  color: var(--eg-form-button-text, var(--ac-gold-soft-contrast));
 }
 
 .form-field__group {
@@ -130,7 +152,7 @@
 .form-error {
   display: block;
   margin-top: 0.25rem;
-  color: #b3261e;
+  color: var(--eg-form-error, #b3261e);
 }
 
 .form-field--error input,
@@ -346,8 +368,9 @@
 
 .engage-form--success {
   padding: 1rem;
-  border: 1px solid var(--eg-line);
+  border: 1px solid var(--eg-form-success, var(--eg-line));
   border-radius: var(--eg-radius);
+  color: var(--eg-form-success, inherit);
 }
 
 /* Presets */

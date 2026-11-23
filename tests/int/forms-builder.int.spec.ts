@@ -17,6 +17,7 @@ import { FormRenderer } from '@/features/forms/components/FormRenderer'
 import { cleanOrigin, generateEmbedKey, normaliseFormConfig } from '@/features/forms/config'
 import { buildCsv } from '@/features/forms/csv'
 import { scopeCustomCss } from '@/features/forms/customCss'
+import { FORM_COLOUR_VARS, formColourVars } from '@/features/forms/formColours'
 import { applyEmbedFrame, decideEmbedFrame, embedPathKey } from '@/features/forms/embedFrame'
 import { iframeSnippet, loaderScript, scriptSnippet } from '@/features/forms/embedScript'
 import {
@@ -35,6 +36,8 @@ import { handleSubmitRequest } from '@/features/forms/submitRequest'
 import { hasFormShortcode, splitFormShortcodes } from '@/features/forms/shortcode'
 import { checkFillTime, checkHoneypot, checkRecaptcha } from '@/features/forms/spam'
 import { DEFAULT_FORM_SETTINGS, toPublicConfig } from '@/features/forms/settings'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { applyInboxPatch, parseInboxPatch, parseSubmissionFilters, submissionsWhere } from '@/features/forms/submissionsApi'
 import { fieldPolicy, inspectFiles } from '@/features/forms/upload'
 import { validateSubmission } from '@/features/forms/validate'
@@ -166,6 +169,37 @@ describe('layout rendering', () => {
     )
     expect(html).toContain('.eg-form-7 .form-field')
     expect(html).not.toContain('@import')
+  })
+
+  it('sets the per-form colour overrides as CSS variables on the form root, and only the ones set', () => {
+    const coloured = renderToString(
+      React.createElement(FormRenderer, {
+        config: config(twoColumnLayout(), { formConfig: { style: { colours: { fieldBg: '#101010', buttonBg: '#ff0000', successColour: '#00aa55' } } } }),
+      }),
+    )
+    expect(coloured).toContain('--eg-form-field-bg:#101010')
+    expect(coloured).toContain('--eg-form-button-bg:#ff0000')
+    expect(coloured).toContain('--eg-form-success:#00aa55')
+    expect(coloured).not.toContain('--eg-form-label')
+    const plain = renderToString(React.createElement(FormRenderer, { config: config(twoColumnLayout()) }))
+    expect(plain).not.toContain('--eg-form-')
+  })
+
+  it('draws no colour overrides for a stored value that is not a hex colour', () => {
+    const html = renderToString(
+      React.createElement(FormRenderer, {
+        config: config(twoColumnLayout(), { formConfig: { style: { colours: { fieldBg: 'red; background:url(x)' } } } }),
+      }),
+    )
+    expect(html).not.toContain('--eg-form-field-bg')
+    expect(html).not.toContain('url(x)')
+  })
+
+  it('keeps the form colour fallbacks in forms.css so a form without overrides looks as before', () => {
+    const css = readFileSync(join(process.cwd(), 'src/features/forms/components/forms.css'), 'utf8')
+    for (const cssVar of Object.values(FORM_COLOUR_VARS)) {
+      expect(css, cssVar).toContain(`var(${cssVar},`)
+    }
   })
 
   it('renders a legacy form (no layout) the same way as before', () => {
@@ -511,6 +545,20 @@ describe('custom CSS, prefill and config', () => {
     expect(computePrefill(fields, ['name', 'plan'], { name: 'Ann', secret: 'x', plan: 'pro' })).toEqual({ name: 'Ann', plan: 'pro' })
     expect(computePrefill(fields, ['plan'], { plan: 'enterprise' })).toEqual({})
     expect(computePrefill(fields, [], { name: 'Ann' })).toEqual({})
+  })
+
+  it('keeps only valid hex colour overrides and maps each to its CSS variable', () => {
+    const config = normaliseFormConfig({
+      style: { colours: { fieldBg: '#fff', fieldText: '#1f2230', buttonBg: 'red; background:url(x)', errorColour: 'javascript:1', bogus: '#000', focusBorder: '#2e3192cc' } },
+    })
+    expect(config.style?.colours).toEqual({ fieldBg: '#fff', fieldText: '#1f2230', focusBorder: '#2e3192cc' })
+    expect(normaliseFormConfig(null).style?.colours).toEqual({})
+    expect(formColourVars(config.style?.colours)).toEqual({
+      '--eg-form-field-bg': '#fff',
+      '--eg-form-field-text': '#1f2230',
+      '--eg-form-focus': '#2e3192cc',
+    })
+    expect(formColourVars(undefined)).toEqual({})
   })
 
   it('normalises hostile config', () => {
