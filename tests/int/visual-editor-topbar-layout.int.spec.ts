@@ -35,7 +35,7 @@ ${extra}
 
 
 const COMPACT_MAX = 1599
-const wide = shell(`<button class="ve-btn ve-btn--ghost">Import / Export</button>`).replace('<div class="ve-device-toggle">', '<button class="ve-btn">Save as template</button><div class="ve-device-toggle">')
+const wide = shell(`<button class="ve-btn ve-btn--ghost">Import / Export</button>`).replace('<div class="ve-device-toggle">', '<button class="ve-btn">Save as example</button><div class="ve-device-toggle">')
 const narrow = shell('').replace('<div class="ve-device-toggle">', '<div class="ve-more"><button class="ve-btn ve-btn--ghost">More</button></div><div class="ve-device-toggle">')
 
 let browser: Browser | null = null

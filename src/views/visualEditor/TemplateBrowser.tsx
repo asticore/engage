@@ -222,7 +222,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         key: `mine:${doc.id}`,
         origin: 'mine',
         name: doc.name || 'Untitled',
-        description: doc.description || (blocks.length > 0 ? `${blocks.length} block${blocks.length === 1 ? '' : 's'}` : 'Empty template'),
+        description: doc.description || (blocks.length > 0 ? `${blocks.length} block${blocks.length === 1 ? '' : 's'}` : 'Empty example'),
         kind: asKind(doc.kind),
         category: cat,
         categoryLabel: CATEGORY_LABELS[cat],
@@ -314,7 +314,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         const json = (await res.json().catch((): null => null)) as { ok?: boolean; error?: string; tree?: unknown } | null
         const tree = asNodes(json?.tree)
         if (!res.ok || !json || json.ok === false || tree.length === 0) {
-          throw new Error(json?.error || 'That template could not be loaded.')
+          throw new Error(json?.error || 'That example could not be loaded.')
         }
         onPickTemplate(tree, undefined, insertMode)
         const saved = Number((json as { saved?: number }).saved ?? 0)
@@ -343,22 +343,22 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
     { key: 'all', label: 'All' },
     { key: 'page', label: 'Page' },
     { key: 'section', label: 'Section' },
-    { key: 'mine', label: 'My templates' },
+    { key: 'mine', label: 'My examples' },
   ]
 
   const emptyMessage = (): string => {
     if (filter === 'mine') {
-      if (docsError) return `Couldn't load your templates: ${docsError}`
+      if (docsError) return `Couldn't load your examples: ${docsError}`
       if (docs === null) return 'Loading...'
-      if (query.trim() || docs.length > 0) return 'None of your templates match. Try a different search or category.'
-      return 'You have not saved any templates yet. Use "Save as template" in the top bar to keep a section or a whole page for later.'
+      if (query.trim() || docs.length > 0) return 'None of your examples match. Try a different search or category.'
+      return 'You have not saved any examples yet. Use "Save as example" in the top bar to keep a section or a whole page for later.'
     }
-    return 'No templates match. Try a different search, category or filter.'
+    return 'No examples match. Try a different search, category or filter.'
   }
 
   return (
     <div className="ve-tpl" ref={rootRef}>
-      <div className="ve-tpl__filters" role="group" aria-label="Template type">
+      <div className="ve-tpl__filters" role="group" aria-label="Example type">
         {FILTERS.map((f) => (
           <button
             key={f.key}
@@ -372,7 +372,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         ))}
       </div>
 
-      <select className="ve-tpl__select" aria-label="Insert template" value={insertMode} onChange={(e) => setInsertMode(e.target.value as TemplateInsertMode)}>
+      <select className="ve-tpl__select" aria-label="Insert example" value={insertMode} onChange={(e) => setInsertMode(e.target.value as TemplateInsertMode)}>
         <option value="here">Insert at the chosen spot</option>
         <option value="end">Insert at the end of the page</option>
         <option value="replace">Replace the selected section</option>
@@ -409,7 +409,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
         </div>
       )}
 
-      <select className="ve-tpl__select" aria-label="Template category" value={activeCategory} onChange={(e) => setCategory(e.target.value)}>
+      <select className="ve-tpl__select" aria-label="Example category" value={activeCategory} onChange={(e) => setCategory(e.target.value)}>
         <option value="all">All categories ({byFilter.length})</option>
         {categoryChoices.map((c) => (
           <option key={c.key} value={c.key}>
@@ -421,13 +421,13 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
       <input
         type="search"
         className="ve-library__search"
-        placeholder="Search templates..."
-        aria-label="Search templates"
+        placeholder="Search examples..."
+        aria-label="Search examples"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      {docsError && filter !== 'mine' && <p className="ve-library__empty">Couldn&apos;t load your saved templates: {docsError}</p>}
+      {docsError && filter !== 'mine' && <p className="ve-library__empty">Couldn&apos;t load your saved examples: {docsError}</p>}
 
       {visible.length === 0 ? (
         <p className="ve-library__empty">{emptyMessage()}</p>
@@ -455,7 +455,7 @@ export const TemplateBrowser: React.FC<{ onPickTemplate: (blocks: SectionNode[],
                 }}
                 aria-disabled={card.disabled || (loadingKey !== null && !loading)}
                 aria-busy={loading}
-                aria-label={`Insert template ${card.name}`}
+                aria-label={`Insert example ${card.name}`}
               >
                 <span className="ve-tpl__thumb">
                   {showImage ? (

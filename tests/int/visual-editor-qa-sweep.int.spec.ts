@@ -84,7 +84,7 @@ describe('navigator rows', () => {
   })
 })
 
-describe('Save as template dialog', () => {
+describe('Save as example dialog', () => {
   it('closes on Escape', () => {
     const onClose = vi.fn()
     render(h(SaveAsTemplateDialog, { pageBlocks: [section('a', 'one')], onClose, onSaved: vi.fn() }))

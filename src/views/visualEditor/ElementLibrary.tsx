@@ -249,7 +249,7 @@ export const ElementLibrary: React.FC<{
               className={`ve-library__source-tab ${source === 'templates' ? 've-library__source-tab--active' : ''}`}
               onClick={() => setSource('templates')}
             >
-              Templates
+              Examples
             </button>
           )}
         </div>
