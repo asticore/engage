@@ -1,5 +1,6 @@
 import type { CollectionAfterChangeHook } from '@/engine'
 import { pagePathOf } from '@/features/seo/pagePath'
+import { rewriteLinksToNewAddresses, UPDATE_LINKS_HEADER, type AddressPair } from './linkRewrite'
 import { invalidateRedirectsCache } from './resolve'
 
 /**
@@ -15,6 +16,14 @@ export const SLUG_REDIRECT_PREFIX: Record<SlugRedirectCollection, string> = { po
 
 /** Sent by the admin editor when the editor chose to save without a redirect (the popup's "Save without redirect"). */
 export const SKIP_SLUG_REDIRECT_HEADER = 'x-skip-slug-redirect'
+
+const linksRequested = (req: unknown): boolean => {
+  try {
+    return (req as { headers?: Headers } | undefined)?.headers?.get(UPDATE_LINKS_HEADER) === '1'
+  } catch {
+    return false
+  }
+}
 
 const redirectDeclined = (req: unknown): boolean => {
   try {
@@ -42,7 +51,6 @@ export const slugRedirectAfterChange =
   (collection: SlugRedirectCollection): CollectionAfterChangeHook =>
   async ({ doc, previousDoc, req }) => {
     try {
-      if (redirectDeclined(req)) return doc
       const record = doc as SlugDoc | null
       const before = previousDoc as SlugDoc | null | undefined
       if (!record || !before) return doc
@@ -50,6 +58,8 @@ export const slugRedirectAfterChange =
       const { readBlogBase, readShopBase } = await import('@/features/seo/permalinkStore')
       const paths = slugRedirectPaths(collection, before.slug, record.slug, collection === 'posts' ? await readBlogBase() : undefined, collection === 'products' ? await readShopBase() : undefined)
       if (!paths) return doc
+      if (linksRequested(req)) await rewriteLinksToNewAddresses([{ oldPath: paths.fromPath, newPath: paths.toPath }], { collection, id: record.id })
+      if (redirectDeclined(req)) return doc
 
       const { getEngine } = await import('@/lib/engine')
       const engine = await getEngine()
@@ -93,7 +103,6 @@ const pageParentId = (page: PageDoc): string | null => {
  */
 export const pageSlugRedirectAfterChange: CollectionAfterChangeHook = async ({ doc, previousDoc, req }) => {
   try {
-    if (redirectDeclined(req)) return doc
     const record = doc as PageDoc | null
     const before = previousDoc as PageDoc | null | undefined
     if (!record || !before || typeof record.id === 'undefined') return doc
@@ -143,12 +152,16 @@ export const pageSlugRedirectAfterChange: CollectionAfterChangeHook = async ({ d
     if (!newPrefix || !oldPrefix) return doc
 
     let created = 0
+    const declined = redirectDeclined(req)
+    const pairs: AddressPair[] = []
     for (const page of pagesById.values()) {
       if (page._status !== 'published' && String(page.id) !== String(record.id)) continue
       const newPath = pagePathOf(page as Record<string, unknown>, lookup)
       if (!newPath || !newPath.startsWith(newPrefix)) continue
       const oldPath = oldPrefix + newPath.slice(newPrefix.length)
       if (oldPath === newPath || oldPath === '/') continue
+      pairs.push({ oldPath, newPath })
+      if (declined) continue
       const existing = await engine.find({ collection: 'redirects', where: { fromPath: { equals: oldPath } }, limit: 1, depth: 0, overrideAccess: true })
       if (existing.docs.length > 0) continue
       await engine.create({
@@ -159,6 +172,7 @@ export const pageSlugRedirectAfterChange: CollectionAfterChangeHook = async ({ d
       created += 1
     }
     if (created > 0) invalidateRedirectsCache()
+    if (linksRequested(req)) await rewriteLinksToNewAddresses(pairs, { collection: 'pages', id: record.id })
   } catch (error) {
     console.error('pageSlugRedirectAfterChange error:', error)
   }
