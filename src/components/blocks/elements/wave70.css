@@ -24,3 +24,10 @@
 .w70-weather__days{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(6rem,1fr));gap:.5rem}
 .w70-weather__days li{display:flex;flex-direction:column;align-items:center;gap:.25rem;padding:.5rem;border:1px solid color-mix(in srgb,currentColor 20%,transparent);border-radius:.5rem}
 .w70-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.w70-terms ul{list-style:none;margin:0;padding:0}
+.w70-terms--list li{padding:.25rem 0}
+.w70-terms--cloud ul{display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline}
+.w70-terms--grid ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(10rem,1fr));gap:.5rem}
+.w70-terms--grid li{border:1px solid currentColor;border-radius:6px;padding:.5rem .75rem}
+.w70-terms__s1{font-size:.85em}.w70-terms__s2{font-size:1em}.w70-terms__s3{font-size:1.2em}.w70-terms__s4{font-size:1.5em}.w70-terms__s5{font-size:1.9em}
+.w70-terms--cloud .w70-terms__n{display:none}

@@ -5,6 +5,10 @@ import { describeCode } from '@/features/weather/openMeteo'
 import { loadConfiguredWeather } from '@/features/weather/providers'
 import { readMapsWeather } from '@/features/mapsWeather/store'
 import { getEngine } from '@/lib/engine'
+import { categoryPath, tagPath, termSlug } from '@/features/siteTemplates/archiveQueries'
+import { readBlogBase } from '@/features/seo/permalinkStore'
+import { excludeProtected } from '@/features/visibility/excludeProtected'
+import { slugify } from '@/utilities/formatSlug'
 
 import './wave70.css'
 
@@ -126,8 +130,67 @@ export async function WeatherElement(props: P): Promise<React.ReactElement | nul
   )
 }
 
+export type TermCount = { slug: string; name: string; count: number }
+
+/** Counts published posts per category or tag name (spelling of the first use wins). */
+export function termCounts(posts: Array<{ categories?: { name?: string | null }[] | null; tags?: { name?: string | null }[] | null }>, kind: 'categories' | 'tags', orderBy: string, limit: number): TermCount[] {
+  const map = new Map<string, TermCount>()
+  for (const post of posts) {
+    const seen = new Set<string>()
+    for (const t of post[kind] ?? []) {
+      const name = (t?.name ?? '').trim()
+      const slug = slugify(name)
+      if (!slug || !termSlug(slug) || seen.has(slug)) continue
+      seen.add(slug)
+      const cur = map.get(slug)
+      if (cur) cur.count += 1
+      else map.set(slug, { slug, name, count: 1 })
+    }
+  }
+  const out = [...map.values()]
+  out.sort(orderBy === 'count' ? (a, b) => b.count - a.count || a.name.localeCompare(b.name) : (a, b) => a.name.localeCompare(b.name))
+  return out.slice(0, Math.min(Math.max(Math.trunc(limit) || 30, 1), 100))
+}
+
+/** Cloud size step 1 to 5 from a count relative to the largest and smallest on show. */
+export function cloudStep(count: number, min: number, max: number): number {
+  if (max <= min) return 3
+  return 1 + Math.round(((count - min) / (max - min)) * 4)
+}
+
+export async function TaxonomyListElement(props: P): Promise<React.ReactElement | null> {
+  try {
+    const kind = props.kind === 'tags' ? 'tags' : 'categories'
+    const layout = props.layout === 'cloud' ? 'cloud' : props.layout === 'grid' ? 'grid' : 'list'
+    const engine = await getEngine()
+    const { docs } = (await engine.find({ collection: 'posts', where: { _status: { equals: 'published' } }, limit: 0, depth: 0 })) as unknown as { docs: Array<Record<string, unknown>> }
+    const visible = (await excludeProtected('posts', docs as never)) as unknown as Parameters<typeof termCounts>[0]
+    const terms = termCounts(visible, kind, String(props.orderBy), Number(props.limit))
+    if (!terms.length) return null
+    const base = await readBlogBase()
+    const counts = terms.map((t) => t.count)
+    const min = Math.min(...counts)
+    const max = Math.max(...counts)
+    return (
+      <nav className={`w70-terms w70-terms--${layout}`} aria-label={kind === 'tags' ? 'Tags' : 'Categories'}>
+        <ul>
+          {terms.map((t) => (
+            <li key={t.slug} className={layout === 'cloud' ? `w70-terms__s${cloudStep(t.count, min, max)}` : undefined}>
+              <a href={kind === 'tags' ? tagPath(t.slug, 1, base) : categoryPath(t.slug, 1, base)}>{t.name}</a>
+              {props.showCount !== false ? <span className="w70-terms__n"> ({t.count})</span> : null}
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )
+  } catch {
+    return null
+  }
+}
+
 export const WAVE70_COMPONENTS: Record<string, React.ComponentType<P>> = {
   sitemap: SitemapElement as never,
   'archive-title': ArchiveTitleElement as never,
+  'taxonomy-list': TaxonomyListElement as never,
   weather: WeatherElement as never,
 }
