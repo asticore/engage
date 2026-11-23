@@ -2179,6 +2179,7 @@ const zhHans: UiDictionary = {
   'cv.lit.drag_to_move': "拖动以移动",
   'cv.lit.drag_to_resize_these_two_columns': "拖动以调整这两列的宽度",
   'cv.lit.duplicate': "复制",
+  'cv.lit.ai_edit': "用 AI 编辑",
   'cv.lit.duplicate_column': "复制列",
   'cv.lit.fully_locked': "已完全锁定",
   'cv.lit.grid_each_column_is_a_cell': "网格：每列即一个单元格",

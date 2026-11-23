@@ -2180,6 +2180,7 @@ const ar: UiDictionary = {
   'cv.lit.drag_to_move': "اسحب للتحريك",
   'cv.lit.drag_to_resize_these_two_columns': "اسحب لتغيير حجم هذين العمودين",
   'cv.lit.duplicate': "تكرار",
+  'cv.lit.ai_edit': "تعديل بالذكاء الاصطناعي",
   'cv.lit.duplicate_column': "تكرار العمود",
   'cv.lit.fully_locked': "مقفل بالكامل",
   'cv.lit.grid_each_column_is_a_cell': "الشبكة: كل عمود خلية",

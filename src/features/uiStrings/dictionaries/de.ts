@@ -2181,6 +2181,7 @@ const de: UiDictionary = {
   'cv.lit.drag_to_move': "Zum Verschieben ziehen",
   'cv.lit.drag_to_resize_these_two_columns': "Zum Ändern der Größe dieser beiden Spalten ziehen",
   'cv.lit.duplicate': "Duplizieren",
+  'cv.lit.ai_edit': "Mit KI bearbeiten",
   'cv.lit.duplicate_column': "Spalte duplizieren",
   'cv.lit.fully_locked': "Vollständig gesperrt",
   'cv.lit.grid_each_column_is_a_cell': "Raster: jede Spalte ist eine Zelle",

@@ -40,6 +40,7 @@ import {
   updateNode,
   type NodePath,
 } from './visualEditor/treeOps'
+import { wrapForAi, unwrapAiReplacement } from '@/features/ai/subtreeEdit'
 import type { BlockContext } from '@/lib/blockContext'
 import { PreviewAsPicker } from './visualEditor/PreviewAsPicker'
 import { VISUAL_EDITOR_SURFACES } from './visualEditor/surfaces'
@@ -1026,13 +1027,12 @@ export const VisualEditorView: React.FC = () => {
     [insertBlocked, insertTemplateAt, flashNotice],
   )
 
-  /* Build with AI, edit mode: swaps the selected top-level section for the generated ones (one undo step). */
+  /* Build with AI, edit mode: swaps the selected node (section, nested section or element) for the generated blocks (one undo step). */
   const aiReplaceSelected = useCallback(
     (sections: SectionNode[], sectionId: string | undefined): boolean => {
       const path = selectedRef.current
-      if (!path || path.length !== 1 || sections.length === 0) return false
-      const index = path[0]
-      const current = blocksRef.current[index]
+      if (!path || path.length % 2 === 0 || sections.length === 0) return false
+      const current = getNode(blocksRef.current, path)
       if (!current || current._id !== sectionId) return false
       if (lockedOut(path)) return false
       const lockedKeys = lockedKeySet(lockCtx.current.locks)
@@ -1040,22 +1040,41 @@ export const VisualEditorView: React.FC = () => {
         const key = nodeKey(node)
         return key !== undefined && lockedKeys.has(key)
       })) {
-        setLockNotice('This section has locked parts, so it cannot be replaced. Unlock them first.')
+        setLockNotice('This element has locked parts, so it cannot be replaced. Unlock them first.')
         setTimeout(() => setLockNotice(null), 5000)
         return false
       }
-      const fresh = sections.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
-      applyBlocks((prev) => [...prev.slice(0, index), ...fresh, ...prev.slice(index + 1)], undefined, 'AI insert')
-      setSelectedPath([index])
-      setInsertTarget({ containerPath: [], at: index + 1 })
-      flashNotice(`Replaced the section with ${fresh.length} ${fresh.length === 1 ? 'section' : 'sections'} from AI`, 2500)
+      const replacement = unwrapAiReplacement(current, sections)
+      if (replacement.length === 0) return false
+      const fresh = replacement.map((node) => cloneNode({ ...node, _id: undefined }, nextId))
+      const index = path[path.length - 1]
+      const splice = (list: SectionNode[]) => [...list.slice(0, index), ...fresh, ...list.slice(index + 1)]
+      if (path.length === 1) {
+        applyBlocks((prev) => splice(prev), undefined, 'AI insert')
+      } else {
+        const ownerPath = path.slice(0, -2)
+        const columnIndex = path[path.length - 2]
+        applyBlocks(
+          (prev) =>
+            updateNode(prev, ownerPath, (owner) => ({
+              ...owner,
+              columns: (owner.columns ?? []).map((column, i) =>
+                i === columnIndex ? { ...column, blocks: splice(column.blocks ?? []) } : column,
+              ),
+            })),
+          undefined,
+          'AI insert',
+        )
+      }
+      setSelectedPath(path)
+      flashNotice(`Replaced the selection with ${fresh.length} ${fresh.length === 1 ? 'block' : 'blocks'} from AI`, 2500)
       return true
     },
     [lockedOut, applyBlocks, flashNotice],
   )
 
-  const aiSelectedSection =
-    selectedPath && selectedPath.length === 1 && blocks[selectedPath[0]]?.blockType === 'section' ? blocks[selectedPath[0]] : null
+  const aiSelectedNode = selectedPath && selectedPath.length % 2 === 1 ? getNode(blocks, selectedPath) : undefined
+  const aiSelectedSection = aiSelectedNode ? wrapForAi(aiSelectedNode) : null
 
   const copyNode = useCallback(async (path: NodePath): Promise<boolean> => {
     const serialized = serializeSelection(blocksRef.current, path)

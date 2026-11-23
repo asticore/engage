@@ -413,6 +413,7 @@ export const EditorDock: React.FC<{
               onClose={onCloseSelected}
               onDelete={onDeleteSelected}
               onDuplicate={onDuplicateSelected}
+              onAiEdit={aiBuilder ? () => setAiOpen(true) : undefined}
               userPermissions={userPermissions}
               lockUi={lockUi}
               device={device}

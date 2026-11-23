@@ -2180,6 +2180,7 @@ const es: UiDictionary = {
   'cv.lit.drag_to_move': "Arrastrar para mover",
   'cv.lit.drag_to_resize_these_two_columns': "Arrastrar para cambiar el tamaño de estas dos columnas",
   'cv.lit.duplicate': "Duplicar",
+  'cv.lit.ai_edit': "Editar con IA",
   'cv.lit.duplicate_column': "Duplicar columna",
   'cv.lit.fully_locked': "Totalmente bloqueado",
   'cv.lit.grid_each_column_is_a_cell': "Cuadrícula: cada columna es una celda",

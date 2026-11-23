@@ -2180,6 +2180,7 @@ const ja: UiDictionary = {
   'cv.lit.drag_to_move': "ドラッグして移動",
   'cv.lit.drag_to_resize_these_two_columns': "ドラッグしてこの2つの列のサイズを変更",
   'cv.lit.duplicate': "複製",
+  'cv.lit.ai_edit': "AIで編集",
   'cv.lit.duplicate_column': "列を複製",
   'cv.lit.fully_locked': "完全にロック済み",
   'cv.lit.grid_each_column_is_a_cell': "グリッド：各列がセルになります",

@@ -2180,6 +2180,7 @@ const fr: UiDictionary = {
   'cv.lit.drag_to_move': "Glisser pour déplacer",
   'cv.lit.drag_to_resize_these_two_columns': "Glisser pour redimensionner ces deux colonnes",
   'cv.lit.duplicate': "Dupliquer",
+  'cv.lit.ai_edit': "Modifier avec l’IA",
   'cv.lit.duplicate_column': "Dupliquer la colonne",
   'cv.lit.fully_locked': "Entièrement verrouillé",
   'cv.lit.grid_each_column_is_a_cell': "Grille : chaque colonne est une cellule",

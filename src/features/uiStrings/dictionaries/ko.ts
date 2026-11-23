@@ -2180,6 +2180,7 @@ const ko: UiDictionary = {
   'cv.lit.drag_to_move': "드래그하여 이동",
   'cv.lit.drag_to_resize_these_two_columns': "드래그하여 이 두 열의 크기 조절",
   'cv.lit.duplicate': "복제",
+  'cv.lit.ai_edit': "AI로 편집",
   'cv.lit.duplicate_column': "열 복제",
   'cv.lit.fully_locked': "완전히 잠김",
   'cv.lit.grid_each_column_is_a_cell': "그리드: 각 열이 하나의 셀",
