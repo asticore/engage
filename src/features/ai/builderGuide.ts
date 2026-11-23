@@ -41,7 +41,7 @@ const FONT_NAME = /^[A-Za-z0-9 _-]{1,40}$/
 const oneLine = (text: string | undefined, max: number): string => (text ?? '').replace(/[^\x20-\x7e]+/g, ' ').replace(/[\r\n\t<>]+/g, ' ').trim().slice(0, max)
 
 /** The guide, before any examples, must stay under this many characters (the aim is about 15k). Each catalogue line is capped at MAX_ELEMENT_LINE so a new element with many fields cannot push the guide over; add a usage hint for any element whose fields are cut. */
-export const GUIDE_MAX_CHARS = 19_000
+export const GUIDE_MAX_CHARS = 20_000
 
 /** Element types the builder never uses: they need a record, a relation, or a table/form context. */
 const EXCLUDED_ELEMENT_TYPES = new Set(['content-slot', 'data-view', 'ad', 'embed-code', 'page-effects', 'request-button', 'language-switcher', 'archive-filter', 'loop-grid', 'chat-button', 'taxonomy-list', 'cart-lines', 'cart-lines-compact', 'cart-totals', 'cart-extras', 'cart-summary', 'cart-link', 'product-images', 'product-stock', 'product-short-description', 'product-meta', 'product-tabs', 'product-rating', 'world-clock', 'dark-mode-toggle', 'billing-toggle', 'lottie-player', 'calendar', 'progress-tracker', 'social-feed'])
