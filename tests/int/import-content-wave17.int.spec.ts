@@ -527,7 +527,7 @@ describe('import writes through a fake engine', () => {
     expect(calls[0].args).toMatchObject({ id: 7 })
     const team = calls[3].args.data as { parent?: number; blocks: Array<{ blockType: string }> }
     expect(team.parent).toBe(100)
-    expect(team.blocks[0].blockType).toBe('richText')
+    expect(team.blocks[0].blockType).toBe('section')
   })
 
   it('keeps published status only when asked and never writes a plain draft as published', async () => {
