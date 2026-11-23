@@ -10,6 +10,7 @@ import { StyledBlock } from '@/components/blocks/StyledBlock'
 import type { SectionNode } from '@/lib/sectionTree'
 import { applyCalculations, resolveVisibility } from '../conditions'
 import { scopeClass, scopeCustomCss } from '../customCss'
+import { formColourVars } from '../formColours'
 import { roundTo } from '../expression'
 import {
   HTML_ELEMENT,
@@ -409,8 +410,9 @@ export const FormRenderer: React.FC<{
   const scope = scopeClass(config.id)
   const css = scopeCustomCss(config.customCss, config.id)
   const presetClass = config.stylePreset && config.stylePreset !== 'theme' ? ` engage-form--${config.stylePreset}` : ''
-  // The form's accent, then an embed's own theme on top of it (an embed's colour, radius and font win).
-  const accentStyle = (config.accent || config.embedStyle ? { ...(config.accent ? { '--eg-accent': config.accent } : {}), ...(config.embedStyle ?? {}) } : undefined) as React.CSSProperties | undefined
+  // The form's accent and colour overrides, then an embed's own theme on top of it (an embed's colour, radius and font win).
+  const colourVars = formColourVars(config.formColours)
+  const accentStyle = (config.accent || config.embedStyle || Object.keys(colourVars).length ? { ...colourVars, ...(config.accent ? { '--eg-accent': config.accent } : {}), ...(config.embedStyle ?? {}) } : undefined) as React.CSSProperties | undefined
 
   if (status === 'success') {
     return (

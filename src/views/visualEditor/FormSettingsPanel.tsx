@@ -5,12 +5,13 @@ import React, { useContext, useEffect, useState } from 'react'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 
 import { STYLE_PRESETS } from '@/features/forms/config'
+import { FORM_COLOUR_FIELDS } from '@/features/forms/formColours'
 import { FEED_FIELDS, NO_REQUEST_FEED, type FeedField } from '@/features/forms/requestFeed'
 import { CUSTOMER_FIELDS, NO_CHECKOUT, type CustomerField } from '@/features/forms/checkoutHandoff'
 import { WebhookDeliveryLog, WebhookTestButton } from './FormWebhookTools'
 import { FormEditorContext } from './formInputs'
 import { SharedListsCard } from './SharedListsCard'
-import type { FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from '@/features/forms/types'
+import type { FormColourKey, FormConfig, FormNotificationRule, FormStylePreset, FormWebhook } from '@/features/forms/types'
 
 /**
  * The "Form" tab of the editor dock: everything about the form that is not a
@@ -117,6 +118,17 @@ export const FormSettingsPanel: React.FC<Props> = ({ config, onChange, formId, e
             <span>{t('ve.fsp.accent')}</span>
             <input type="text" placeholder="#2e3192" value={style.accent || ''} onChange={(event) => set('style', { ...style, accent: event.target.value })} />
           </label>
+          {FORM_COLOUR_FIELDS.map(({ key, label }: { key: FormColourKey; label: string }) => (
+            <label className="ve-field ve-field--full" key={key}>
+              <span>{label}</span>
+              <input
+                type="text"
+                placeholder="#hex, blank for the theme"
+                value={style.colours?.[key] || ''}
+                onChange={(event) => set('style', { ...style, colours: { ...style.colours, [key]: event.target.value || undefined } })}
+              />
+            </label>
+          ))}
           <label className="ve-field ve-field--full">
             <span>{t('ve.fsp.customCss')}</span>
             <textarea rows={6} spellCheck={false} value={style.customCss || ''} onChange={(event) => set('style', { ...style, customCss: event.target.value })} />

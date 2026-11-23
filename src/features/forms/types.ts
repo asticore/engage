@@ -173,11 +173,17 @@ export type FormStatus = 'draft' | 'published'
 
 export type FormStylePreset = 'theme' | 'minimal' | 'rounded' | 'underline' | 'card' | 'dark'
 
+/** Per-form colour overrides. Each is a hex colour (see cleanColour); a missing key keeps the look the form had. */
+export type FormColourKey = 'fieldBg' | 'fieldText' | 'fieldBorder' | 'focusBorder' | 'labelColour' | 'buttonBg' | 'buttonText' | 'errorColour' | 'successColour'
+export type FormColours = Partial<Record<FormColourKey, string>>
+
 /** Per-form options stored as one JSON column. Always read through normaliseFormConfig. */
 export type FormConfig = {
   style?: {
     preset?: FormStylePreset
     accent?: string
+    /** Colour overrides for fields, labels, the button, errors and the success message. */
+    colours?: FormColours
     /** Author-written CSS, scoped to this form when rendered. See customCss.ts. */
     customCss?: string
   }
@@ -357,6 +363,8 @@ export type PublicFormConfig = {
   accent?: string
   /** An embed's theme as CSS custom properties for the form root (see embedThemeStyle). Set on an embed page only. */
   embedStyle?: Record<string, string>
+  /** The form's colour overrides (style.colours), already cleaned. Drawn as CSS variables on the form root. */
+  formColours?: FormColours
   customCss?: string
   steps?: { showProgress: boolean; progressStyle: 'bar' | 'steps' | 'text'; nextLabel: string; backLabel: string; titles: string[] }
   prefill?: Record<string, string>
