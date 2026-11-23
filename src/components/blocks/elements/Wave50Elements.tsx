@@ -3,6 +3,7 @@ import React from 'react'
 import { safeUrl } from '@/lib/mergeTags'
 
 import { flag, num, pick, str } from './elementUtil'
+import { LoadMoreLink } from './LoadMore'
 import './wave47.css'
 // Styles: src/styles/public-components.css (one stylesheet for public pages).
 
@@ -36,6 +37,8 @@ export type LoopSettings = {
   showPrice: boolean
   emptyText: string
   loadMore: boolean
+  loadMoreMode: 'link' | 'button' | 'scroll'
+  loadMoreLabel: string
   pagination: boolean
   page: number
 }
@@ -57,6 +60,8 @@ export function loopSettings(p: Record<string, unknown>): LoopSettings {
     showPrice: flag(p.showPrice, true),
     emptyText: str(p.emptyText, 'Nothing to show yet.'),
     loadMore: flag(p.loadMore, false),
+    loadMoreMode: pick(p.loadMoreMode, ['link', 'button', 'scroll'] as const, 'link'),
+    loadMoreLabel: str(p.loadMoreLabel, 'Load more').trim().slice(0, 60) || 'Load more',
     pagination: flag(p.pagination, false),
     page: Math.round(num(p.page ?? p.currentPage, 1, 1, 1000)),
   }
@@ -148,6 +153,13 @@ const Pager: React.FC<{ s: LoopSettings; totalPages: number }> = ({ s, totalPage
   if (!s.pagination) {
     // Next-page link only.
     if (!s.loadMore || page >= totalPages) return null
+    if (s.loadMoreMode !== 'link') {
+      return (
+        <nav className="be-el-50-loop__pager" aria-label="More items">
+          <LoadMoreLink href={pageHref(page + 1)} label={s.loadMoreLabel} auto={s.loadMoreMode === 'scroll'} />
+        </nav>
+      )
+    }
     return (
       <nav className="be-el-50-loop__pager" aria-label="More items">
         <a className="be-el-50-loop__next" href={pageHref(page + 1)} rel="next">
