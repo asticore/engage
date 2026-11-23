@@ -44,4 +44,20 @@ export const WAVE69_ELEMENTS: ElementDef[] = [
     ],
     defaultProps: () => ({ showSku: true, showGtin: false, showCategory: true }),
   },
+  {
+    type: 'product-tabs', label: 'Product tabs', icon: String.fromCodePoint(0x1f4d1), category: 'commerce',
+    description: 'Tabs for the product on this page: description, additional information (SKU, weight, size) and reviews.',
+    fields: [
+      { name: 'showDescription', label: 'Description tab', type: 'checkbox' },
+      { name: 'showInfo', label: 'Additional information tab', type: 'checkbox' },
+      { name: 'showReviews', label: 'Reviews tab', type: 'checkbox' },
+    ],
+    defaultProps: () => ({ showDescription: true, showInfo: true, showReviews: true }),
+  },
+  {
+    type: 'related-products', label: 'Related products', icon: String.fromCodePoint(0x1f517), category: 'commerce',
+    description: 'Products customers also bought, or from the same category. Needs "Customers also bought" switched on in the shop settings.',
+    fields: [],
+    defaultProps: () => ({}),
+  },
 ]
