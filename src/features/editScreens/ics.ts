@@ -159,3 +159,18 @@ export function icsFromEvent(doc: IcsEventSource, origin: string): string | null
     rrule: rruleFromRecurrence(doc.recurrence, start),
   })
 }
+
+/** One VCALENDAR with a VEVENT per usable event, for a subscribable feed. */
+export function buildEventsCalendar(docs: IcsEventSource[], origin: string): string {
+  const header = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Website//Events//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Events']
+  const body: string[] = []
+  for (const doc of docs) {
+    const one = icsFromEvent(doc, origin)
+    if (!one) continue
+    const lines = one.split(CRLF)
+    const a = lines.indexOf('BEGIN:VEVENT')
+    const b = lines.lastIndexOf('END:VEVENT')
+    if (a >= 0 && b > a) body.push(...lines.slice(a, b + 1))
+  }
+  return [...header, ...body, 'END:VCALENDAR'].join(CRLF) + CRLF
+}

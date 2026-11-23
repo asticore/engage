@@ -20,6 +20,7 @@ import { WAVE66_COMPONENTS } from './Wave66Server'
 import { WAVE69_COMPONENTS } from './Wave69Server'
 import { WAVE70_COMPONENTS as WAVE70_SERVER } from './Wave70Server'
 import { MapServerElement } from './MapServer'
+import { CalendarElement } from './CalendarServer'
 import { WAVE67_COMPONENTS } from './Wave67Server'
 import { AFFILIATE_COMPONENTS } from './AffiliateServer'
 import { REQUEST_BUTTON_COMPONENTS } from './RequestButtonServer'
@@ -419,6 +420,7 @@ const SITE_RENDERERS: Record<string, React.ComponentType<P>> = {
   ...WAVE70_SERVER,
   map: MapServerElement as never,
   ...WAVE67_COMPONENTS,
+  calendar: CalendarElement as unknown as React.ComponentType<P>,
   ...AFFILIATE_COMPONENTS,
   ...REQUEST_BUTTON_COMPONENTS,
   ...EMBED_CODE_COMPONENTS,
