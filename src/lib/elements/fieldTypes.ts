@@ -67,6 +67,8 @@ export type EditorField = {
   step?: number
   /** For icon fields: 'builtin' picks from the inline SVG set in src/components/blocks/elements/icons.tsx and stores the plain name. */
   iconSet?: 'builtin'
+  /** Text areas holding CSV: edit them in a grid with CSV file import (views/visualEditor/DataGridInput.tsx). */
+  grid?: boolean
   /** Hide this field unless a sibling prop matches. Hidden values stay stored. See isFieldVisible. */
   showIf?: ShowIf
 }

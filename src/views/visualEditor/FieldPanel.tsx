@@ -32,6 +32,7 @@ import { MergeTagPicker } from './MergeTagPicker'
 import { isShortLinkForProvider, resolveEmbedUrlForEditor } from './embedUrlResolve'
 import { LockControls, type LockUi } from './LockControls'
 import { canConvertLegacy } from './convertLegacy'
+import { DataGridInput } from './DataGridInput'
 import { FormLogicInput, FormOptionsInput } from './formInputs'
 import { RangeSliderField } from '@/admin/fields/RangeSliderField'
 import { DimensionsField, type DimensionValue } from '@/admin/fields/DimensionsField'
@@ -1423,6 +1424,7 @@ const FieldInput: React.FC<{ field: EditorField; value: unknown; onChange: (v: u
         </label>
       )
     case 'textarea':
+      if (field.grid) return <DataGridInput label={field.label} helpText={field.helpText} value={value} onChange={onChange} />
       return (
         <label className={`ve-field ${widthClass}`}>
           {labelRow}

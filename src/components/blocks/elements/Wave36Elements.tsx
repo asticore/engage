@@ -294,28 +294,24 @@ export const DualHeadingElement: React.FC<P> = (p) => {
 /* ---------- rotating headline ---------- */
 
 /**
- * `animated-headline`: every word is in the markup. The visible rotation is CSS only: the track's registered
- * --be-el-p number runs from 0 to the word count, and each word's opacity (and, for "slide", its offset) follows
- * its distance from that number. Reduced motion keeps the first word still.
+ * `animated-headline`: Spark's `spark-typed` (asticore/spark) swaps the words in one place, fading or sliding whole
+ * words. The first word is in the markup, so the headline reads sensibly before the script runs and with reduced
+ * motion (Spark then keeps the first word still and keeps the full list for screen readers). `speed` is a
+ * multiplier on how long each word is held (the Rotate heading effect's slow, normal and fast).
  */
 export const AnimatedHeadlineElement: React.FC<P> = (p) => {
-  const words = lines(p.words)
+  const words = lines(p.words).map((w) => w.replace(/\|/g, ' ')).slice(0, 20)
   if (words.length === 0) return null
   const style = pick(p.style, ['fade', 'slide'] as const, 'fade')
   const before = str(p.before).trim()
   const after = str(p.after).trim()
-  const n = words.length
+  const speed = num(p.speed, 1, 0.25, 4)
   return (
     <Heading level={headingTag(p.tag, 'h1')} className={`be-el-rotor be-el-rotor--${style}`}>
       {before && `${before} `}
-      <span className="be-el-rotor__track" aria-hidden="true" style={{ '--be-el-n': n } as Style}>
-        {words.map((w, i) => (
-          <span key={i} className="be-el-rotor__word" style={{ '--be-el-i': i } as Style}>
-            {w}
-          </span>
-        ))}
+      <span className="spark-typed" data-spark-words={words.join('|')} data-spark-mode={style} data-spark-pause={Math.round(2500 / speed)}>
+        {words[0]}
       </span>
-      <VisuallyHidden>{[before, words.join(', '), after].filter(Boolean).join(' ')}</VisuallyHidden>
       {after && ` ${after}`}
     </Heading>
   )

@@ -111,11 +111,8 @@
 }
 
 /* Heading effects (HeadingElement). The markup and motion of each effect come from wave36.css / wave43.css;
-   this only zeroes the widget margins and sets the rotate speed (a multiplier on the widget's cycle length). */
+   this only zeroes the widget margins. *
 .be-heading-fx>*{margin:0}
-@media (prefers-reduced-motion:no-preference){
-  .be-heading-fx--rotate .be-el-rotor__track{animation-duration:calc(var(--be-el-n,1)*2.5s/var(--be-heading-speed,1))}
-}
 
 /* Block text effects (blockStyle textFx): set on the block wrapper, applied to the headings and paragraphs inside it.
    Colours and angle come from --be-tfx-* vars (blockFxVars). Gradient drift is motion, so it sits under no-preference. */

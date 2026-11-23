@@ -3,8 +3,7 @@ import path from 'node:path'
 
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { act, cleanup, fireEvent, render as rtlRender, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { ELEMENT_COMPONENTS } from '@/components/blocks/elements/elementComponents'
 import { renderElement } from '@/components/blocks/elements/renderElement'
@@ -14,7 +13,6 @@ import { WAVE49_ELEMENTS } from '@/lib/elements/wave49Defs'
 
 const GALLERY = WAVE49_COMPONENTS.gallery as React.ComponentType<Record<string, unknown>>
 const render = (props: Record<string, unknown>) => renderToStaticMarkup(React.createElement(GALLERY, props))
-const mount = (props: Record<string, unknown>) => rtlRender(React.createElement(GALLERY, props))
 const cats = new Set(ELEMENT_CATEGORIES.map((c) => c.key))
 const OLD_PICTURES = ['image-gallery', 'image-carousel', 'logo-strip']
 
@@ -30,9 +28,8 @@ const DIR = path.join(ROOT, 'src/components/blocks/elements')
 const DEFS = path.join(ROOT, 'src/lib/elements/wave49Defs.ts')
 const CSS_PATH = path.join(DIR, 'wave49.css')
 const RENDERER = path.join(DIR, 'Wave49Elements.tsx')
-const CLIENT = path.join(DIR, 'Wave49Client.tsx')
 const SPEC = path.join(ROOT, 'tests/int/elements-wave49.int.spec.ts')
-const SOURCES = [RENDERER, CLIENT, CSS_PATH, DEFS, SPEC]
+const SOURCES = [RENDERER, CSS_PATH, DEFS, SPEC]
 
 /** Declarations that start with "animation" or "transition" outside a reduced-motion guard. */
 function unguardedMotion(css: string): string[] {
@@ -78,28 +75,6 @@ function unguardedTransforms(css: string): string[] {
   return bad
 }
 
-/** Stubs matchMedia so the reduced-motion query matches (or not) for the duration of one test. */
-function stubReducedMotion(matches: boolean) {
-  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: matches && query.includes('reduce'),
-    media: query,
-    onchange: null,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    addListener: () => {},
-    removeListener: () => {},
-    dispatchEvent: () => false,
-  })) as unknown as typeof window.matchMedia
-}
-
-afterEach(() => {
-  cleanup()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (window as any).matchMedia
-  vi.useRealTimers()
-  vi.restoreAllMocks()
-  document.body.style.overflow = ''
-})
 
 describe('wave 49 registry', () => {
   it('defines gallery once, in media, visible in the library', () => {
@@ -231,48 +206,17 @@ describe('carousel markup', () => {
     expect(html).toContain('aria-label="Summer"')
     expect(html.match(/be-el-49-car__slide/g)).toHaveLength(3)
     expect(html).toContain('aria-label="2 of 3"')
-    expect(html).toContain('aria-label="Previous pictures"')
-    expect(html).toContain('aria-label="Next pictures"')
+    expect(html).toContain('class="carousel spark-carousel be-el-49-car"')
     expect(html).toContain('aspect-ratio:4 / 3')
   })
 
-  it('shows no autoplay control unless autoplay is on', () => {
-    expect(render({ ...THREE, layout: 'carousel', autoplay: false })).not.toContain('slideshow')
-    expect(render({ ...THREE, layout: 'carousel', autoplay: true })).toContain('Pause slideshow')
+  it('turns Spark autoplay on only when autoplay is on', () => {
+    expect(render({ ...THREE, layout: 'carousel', autoplay: false })).not.toContain('data-spark-autoplay')
+    expect(render({ ...THREE, layout: 'carousel', autoplay: true })).toContain('data-spark-autoplay="6000"')
   })
 
   it('uses the default label when none is given', () => {
     expect(render({ ...THREE, layout: 'carousel', label: '  ' })).toContain('aria-label="Image gallery"')
-  })
-})
-
-describe('gallery behaviour (client)', () => {
-  it('carousel autoplay advances after the interval and can be paused', () => {
-    vi.useFakeTimers()
-    stubReducedMotion(false)
-    const scrollTo = vi.fn()
-    const original = Element.prototype.scrollTo
-    Element.prototype.scrollTo = scrollTo as unknown as typeof Element.prototype.scrollTo
-    mount({ ...THREE, layout: 'carousel', autoplay: true })
-    act(() => {
-      vi.advanceTimersByTime(6000)
-    })
-    expect(scrollTo).toHaveBeenCalled()
-    fireEvent.click(screen.getByRole('button', { name: 'Pause slideshow' }))
-    expect(screen.getByRole('button', { name: 'Play slideshow' })).toBeTruthy()
-    scrollTo.mockClear()
-    act(() => {
-      vi.advanceTimersByTime(12000)
-    })
-    expect(scrollTo).not.toHaveBeenCalled()
-    Element.prototype.scrollTo = original
-  })
-
-  it('reduced motion turns autoplay off and hides its control', () => {
-    stubReducedMotion(true)
-    mount({ ...THREE, layout: 'carousel', autoplay: true })
-    expect(screen.queryByRole('button', { name: /slideshow/ })).toBeNull()
-    expect(screen.getByRole('region')).toBeTruthy()
   })
 })
 

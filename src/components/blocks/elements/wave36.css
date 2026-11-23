@@ -271,62 +271,8 @@
 
 /* ---- rotating headline ---- */
 
-@property --be-el-p {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 0;
-}
-
 .be-el-rotor {
   margin: 0;
-}
-
-/* Base (also reduced motion): every word is hidden except the first. */
-.be-el-rotor__track {
-  display: inline-grid;
-  position: relative;
-  vertical-align: top;
-}
-
-.be-el-rotor__word {
-  grid-area: 1 / 1;
-  opacity: 0;
-  white-space: nowrap;
-}
-
-.be-el-rotor__word:first-child {
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .be-el-rotor__track {
-    animation: be-el-rotor-cycle calc(var(--be-el-n) * 2.5s) linear infinite;
-  }
-
-  .be-el-rotor--slide .be-el-rotor__track {
-    overflow: hidden;
-    padding-block: 0.1em;
-  }
-
-  /* Distance from the moving position to this word, wrapped to the nearest copy of the cycle so the last word
-     crossfades into the first (without the wrap the headline went blank, then popped back to word 1).
-     Two classes so this beats the ".be-el-rotor__word:first-child" base rule. */
-  .be-el-rotor__track > .be-el-rotor__word {
-    opacity: clamp(0, calc(1 - abs(mod(var(--be-el-p) - var(--be-el-i) + var(--be-el-n) / 2, var(--be-el-n)) - var(--be-el-n) / 2)), 1);
-  }
-
-  .be-el-rotor--slide .be-el-rotor__word {
-    transform: translateY(calc((mod(var(--be-el-p) - var(--be-el-i) + var(--be-el-n) / 2, var(--be-el-n)) - var(--be-el-n) / 2) * 100%));
-  }
-}
-
-@keyframes be-el-rotor-cycle {
-  from {
-    --be-el-p: 0;
-  }
-  to {
-    --be-el-p: var(--be-el-n);
-  }
 }
 
 /* ---- circle progress ---- */

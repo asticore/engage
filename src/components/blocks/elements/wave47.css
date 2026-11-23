@@ -168,40 +168,9 @@
   .be-el-47-card--zoom:focus-within .be-el-47-card__img {
     transform: scale(1.06);
   }
-
-  /* Flip: the faces stack in one grid cell and turn around the Y axis. */
-  .be-el-47-card--flip {
-    perspective: 1200px;
-  }
-
-  .be-el-47-card--flip .be-el-47-card__faces {
-    display: grid;
-    transform-style: preserve-3d;
-  }
-
-  .be-el-47-card--flip .be-el-47-card__faces > .be-el-47-card__face {
-    grid-area: 1 / 1;
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-  }
-
-  .be-el-47-card--flip .be-el-47-card__face--back {
-    transform: rotateY(180deg);
-  }
-
-  .be-el-47-card--flip:hover .be-el-47-card__face--front,
-  .be-el-47-card--flip:focus-within .be-el-47-card__face--front {
-    transform: rotateY(-180deg);
-  }
-
-  .be-el-47-card--flip:hover .be-el-47-card__face--back,
-  .be-el-47-card--flip:focus-within .be-el-47-card__face--back {
-    transform: rotateY(0deg);
-  }
 }
 
-/* Without motion, flip is a plain stack: the back face sits below the front and is always visible. */
+/* The turn itself is Spark's (`spark-flip`). Before it starts, and with reduced motion, flip is a plain stack: the back face sits below the front and is always visible. */
 .be-el-47-card__faces {
   display: flex;
   flex-direction: column;

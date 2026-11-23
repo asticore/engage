@@ -52,12 +52,13 @@ describe('heading effect markup', () => {
     expect(html).not.toContain('be-el-dual__second" style=')
   })
 
-  it('rotate: one word element per word, with the fade animation and the speed multiplier', () => {
+  it('rotate: Spark typed with the words, the fade mode and the speed multiplier', () => {
     const html = render(React.createElement(HeadingElement, { text: 'We build', words: 'websites\nbrands\nexperiences', effect: 'rotate', speed: 'fast' }))
-    expect(count(html, /be-el-rotor__word/g)).toBe(3)
+    expect(html).toContain('class="spark-typed"')
+    expect(html).toContain('data-spark-words="websites|brands|experiences"')
     expect(html).toContain('be-el-rotor--fade')
-    expect(html).toContain('--be-el-n:3')
-    expect(html).toContain('We build websites')
+    expect(html).toContain('data-spark-pause="1250"')
+    expect(html).toContain('We build <span')
     expect(html).toContain('--be-heading-speed:2')
     expect(render(React.createElement(HeadingElement, { text: 'x', effect: 'rotate', words: 'a', speed: 'slow' }))).toContain('--be-heading-speed:0.5')
   })

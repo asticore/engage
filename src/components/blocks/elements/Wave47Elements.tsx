@@ -115,7 +115,7 @@ export const CardElement: React.FC<P> = (p) => {
   }
 
   const front = (
-    <div className={`be-el-47-card__face be-el-47-card__face--front be-el-47-card__front--${layout}`} style={faceStyle(colorOf(p.bgColour))}>
+    <div className={`be-el-47-card__face be-el-47-card__face--front be-el-47-card__front--${layout}${flip ? ' spark-flip__front' : ''}`} style={faceStyle(colorOf(p.bgColour))}>
       {mediaNode}
       <div className="be-el-47-card__body">
         {title && <Title tag={titleTag}>{title}</Title>}
@@ -126,7 +126,7 @@ export const CardElement: React.FC<P> = (p) => {
   )
 
   const back = flip ? (
-    <div className="be-el-47-card__face be-el-47-card__face--back" style={faceStyle(colorOf(p.backColour) || '#2e3192')}>
+    <div className="be-el-47-card__face be-el-47-card__face--back spark-flip__back" style={faceStyle(colorOf(p.backColour) || '#2e3192')}>
       <div className="be-el-47-card__body">
         {backTitle && <p className="be-el-47-card__back-title">{backTitle}</p>}
         {backText && <p className="be-el-47-card__text">{backText}</p>}
@@ -135,7 +135,7 @@ export const CardElement: React.FC<P> = (p) => {
   ) : null
 
   const faces = flip ? (
-    <div className="be-el-47-card__faces">
+    <div className="be-el-47-card__faces spark-flip">
       {front}
       {back}
     </div>
