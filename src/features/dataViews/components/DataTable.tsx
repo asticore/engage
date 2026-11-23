@@ -48,26 +48,25 @@ export function DataTable({ model, plain = false }: { model: DataViewModel; plai
   const totals = display.totalsRow ? totalsFor(columns, rows) : null
   const sortable = display.sortable && !plain
 
-  const classes = ['dv-table', display.zebra ? 'dv-zebra' : '', display.stickyHeader ? 'dv-sticky' : '', display.responsive === 'stacked' ? 'dv-stacked' : ''].filter(Boolean).join(' ')
+  const searchable = display.searchable && !plain
+  const paged = !plain && display.pageSize > 0
+  const behaves = sortable || searchable || paged
+  const classes = ['table', 'dv-table', display.zebra ? 'table-striped dv-zebra' : '', display.stickyHeader ? 'dv-sticky' : '', display.responsive === 'stacked' ? 'table-stack dv-stacked' : '', behaves ? 'spark-table' : ''].filter(Boolean).join(' ')
+  const sparkAttrs: Record<string, string> = behaves
+    ? { 'data-spark-sort': sortable ? 'true' : 'false', ...(searchable ? { 'data-spark-search': 'true' } : {}), ...(paged ? { 'data-spark-page-size': String(display.pageSize) } : {}) }
+    : {}
 
   return (
-    <div className="dv-table-wrap" data-dv-table="" data-dv-sortable={sortable ? '1' : undefined} data-dv-search={display.searchable && !plain ? '1' : undefined} data-dv-pagesize={!plain && display.pageSize > 0 ? String(display.pageSize) : undefined}>
+    <div className="dv-table-wrap table-wrap">
       <div className={display.stickyHeader ? 'dv-scroll dv-scroll--sticky' : 'dv-scroll'} tabIndex={display.responsive === 'scroll' ? 0 : undefined} role={display.responsive === 'scroll' ? 'region' : undefined} aria-label={display.responsive === 'scroll' ? `${view.title} (scrollable table)` : undefined}>
-        <table className={classes}>
+        <table className={classes} {...sparkAttrs}>
           {display.caption ? <caption>{display.caption}</caption> : null}
           {display.showHeader ? (
             <thead>
               <tr>
                 {columns.map((column, ci) => (
-                  <th key={column.key} scope="col" className={column.type === 'number' ? 'dv-num' : undefined} data-col={ci} data-type={column.type} aria-sort={sortable ? 'none' : undefined}>
-                    {sortable ? (
-                      <button type="button" className="dv-sort" data-sort-col={ci}>
-                        {column.label}
-                        <span className="dv-sort-mark" aria-hidden="true" />
-                      </button>
-                    ) : (
-                      column.label
-                    )}
+                  <th key={column.key} scope="col" className={column.type === 'number' ? 'dv-num' : undefined} data-col={ci} data-type={column.type}>
+                    {column.label}
                   </th>
                 ))}
               </tr>
@@ -88,11 +87,11 @@ export function DataTable({ model, plain = false }: { model: DataViewModel; plai
                     const text = formatCell(cell, column)
                     const className = column.type === 'number' ? 'dv-num' : undefined
                     return ci === rowHeader ? (
-                      <th key={ci} scope="row" className={className} data-label={column.label} data-sort={sortable ? sortValue(cell, column) : undefined}>
+                      <th key={ci} scope="row" className={className} data-label={column.label} data-spark-value={sortable ? sortValue(cell, column) : undefined}>
                         {text}
                       </th>
                     ) : (
-                      <td key={ci} className={className} data-label={column.label} data-sort={sortable ? sortValue(cell, column) : undefined}>
+                      <td key={ci} className={className} data-label={column.label} data-spark-value={sortable ? sortValue(cell, column) : undefined}>
                         {text}
                       </td>
                     )

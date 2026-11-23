@@ -105,30 +105,6 @@
   padding: 0.8rem;
   font-size: 0.85rem;
 }
-.dv-sort {
-  all: unset;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-.dv-sort:focus-visible {
-  outline: 2px solid var(--dv-accent);
-  outline-offset: 2px;
-}
-.dv-sort-mark::after {
-  content: '\2195';
-  opacity: 0.35;
-  font-size: 0.8em;
-}
-th[aria-sort='ascending'] .dv-sort-mark::after {
-  content: '\2191';
-  opacity: 1;
-}
-th[aria-sort='descending'] .dv-sort-mark::after {
-  content: '\2193';
-  opacity: 1;
-}
 .dv-search {
   display: block;
   margin: 0 0 0.6rem;
