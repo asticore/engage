@@ -3214,6 +3214,22 @@ The Hover group has a linear gradient background (from colour, to colour, angle)
 
 **Where to find it:** Visual editor, Design panel, Hover
 
+#### BLD-083 · Task 10 29b My account element (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+A My account element for any page. It asks `/api/visibility-state` who is signed in (so a cached page stays static): visitors see the sign-in form, customers see tabs for Orders, Addresses, Profile and Bookings (each can be turned off) that open the real account screens, so every rule stays on the server. Code: `wave73Defs.ts`, `Wave73Elements.tsx` (`accountTabs`), `wave73.css`, `tests/int/wave73-elements.int.spec.ts`.
+
+**Where to find it:** Visual editor, Elements, Interactive, My account
+
+#### BLD-084 · Task 10 29d Product meta brand and tags, variation images in the gallery (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+Product meta has Show brand and Show tags options (off by default; rows appear only when the product has them). Product images moves the selected variation's image to the front, and the product page's variation provider now wraps template blocks too, so a Product images block in a template follows the choice. Code: `wave69Defs.ts`, `Wave69Server.tsx`, `Wave69Elements.tsx`, `blockContext.ts`, `blockContextFrom.ts`, `shop/[slug]/page.tsx`, `tests/int/wave69-elements.int.spec.ts`.
+
+**Where to find it:** Visual editor, single product template, Product meta and Product images
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3574,6 +3590,8 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-084](#bld-084) Task 10 29d Product meta brand and tags, variation images
+- [BLD-083](#bld-083) Task 10 29b My account element
 - [BLD-082](#bld-082) Task 3 chart and table data, grid editor, Spark carousel, flip and typed text
 - [BLD-081](#bld-081) Task 9 content, layout and marketing options and examples
 - [BLD-080](#bld-080) Hover gradient background
