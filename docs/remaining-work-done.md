@@ -22,7 +22,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 25 |
-| [BLD](#cat-bld) | Visual builder, templates and elements | 72 |
+| [BLD](#cat-bld) | Visual builder, templates and elements | 73 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
 Appendices: [Elementor-parity tweaks](#appendix-elementor-parity-tweaks-task-list-closed-ve-01-to-ve-15-built-pr-226), [Visual editor vs Elementor gap review](#appendix-visual-editor-vs-elementor-gap-review-closed-items-3-and-4-moved-to-tasks-in-docsremaining-workmd), [Events and tickets audit](#appendix-events-and-tickets-audit-closed-task-1-moved-from-remaining-workmd-22-nov-2026)
@@ -3124,6 +3124,15 @@ The solid background colour can now be set per device. A tablet or mobile colour
 
 **Where to find it:** Visual editor, Design panel, Background
 
+<a id="bld-073"></a>
+#### BLD-073 · Font family per device (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+The font family in the Typography group can be set per device (Default, then tablet and mobile). Built-in, token and installed families are accepted and anything else is dropped. The override is emitted in the device media query. A test covers it.
+
+**Where to find it:** Visual editor, Design panel, Typography
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3484,6 +3493,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-073](#bld-073) Font family per device
 - [BLD-072](#bld-072) Task 15 34g2 Poll element
 - [BLD-071](#bld-071) Background colour per device
 - [BLD-070](#bld-070) Task 15 34g2 Floating action button
