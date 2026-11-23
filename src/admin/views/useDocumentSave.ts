@@ -57,7 +57,7 @@ const SLUG_COLLECTIONS = ['pages', 'posts', 'products', 'events', 'courses']
 export type RedirectPrompt = {
   kind: 'slug' | 'base'
   lines: string[]
-  resolve: (answer: 'create' | 'skip' | 'cancel') => void
+  resolve: (answer: 'create' | 'skip' | 'cancel', updateLinks?: boolean) => void
 }
 
 const unwrap = (body: unknown): Record<string, unknown> | null => {
@@ -84,13 +84,13 @@ export function useDocumentSave(target: SaveTarget) {
 
   const [redirectPrompt, setRedirectPrompt] = useState<RedirectPrompt | null>(null)
   const ask = (kind: RedirectPrompt['kind'], lines: string[]) =>
-    new Promise<'create' | 'skip' | 'cancel'>((resolve) => {
+    new Promise<{ answer: 'create' | 'skip' | 'cancel'; updateLinks: boolean }>((resolve) => {
       setRedirectPrompt({
         kind,
         lines,
-        resolve: (answer) => {
+        resolve: (answer, updateLinks = false) => {
           setRedirectPrompt(null)
-          resolve(answer)
+          resolve({ answer, updateLinks })
         },
       })
     })
@@ -100,22 +100,23 @@ export function useDocumentSave(target: SaveTarget) {
    * or a changed blog or shop address in the SEO settings. Asks the editor and returns what they chose.
    * Any read failure skips the question (the save goes ahead as before).
    */
-  const confirmAddressChange = async (status: SaveStatus, data: Record<string, unknown>): Promise<'create' | 'skip' | 'cancel' | 'none'> => {
-    if (status !== 'published') return 'none'
+  const confirmAddressChange = async (status: SaveStatus, data: Record<string, unknown>): Promise<{ answer: 'create' | 'skip' | 'cancel' | 'none'; updateLinks: boolean }> => {
+    const none = { answer: 'none' as const, updateLinks: false }
+    if (status !== 'published') return none
     try {
       if (target.collectionSlug && target.id && SLUG_COLLECTIONS.includes(target.collectionSlug)) {
-        if (data.isHomepage === true) return 'none'
+        if (data.isHomepage === true) return none
         const res = await fetch(`/api/${target.collectionSlug}/${target.id}?depth=0`, { credentials: 'include' })
-        if (!res.ok) return 'none'
+        if (!res.ok) return none
         const before = unwrap(await res.json().catch((): unknown => null))
         const oldSlug = before?.slug
         const newSlug = data.slug
-        if (!before || before._status !== 'published' || typeof oldSlug !== 'string' || typeof newSlug !== 'string' || !oldSlug || !newSlug || oldSlug === newSlug) return 'none'
+        if (!before || before._status !== 'published' || typeof oldSlug !== 'string' || typeof newSlug !== 'string' || !oldSlug || !newSlug || oldSlug === newSlug) return none
         return await ask('slug', [`The address ends in "${oldSlug}" now and will end in "${newSlug}".`, 'Create a 301 redirect from the old address to the new one, so old links and search results keep working?'])
       }
       if (target.globalSlug === 'seo-settings') {
         const res = await fetch('/api/globals/seo-settings', { credentials: 'include' })
-        if (!res.ok) return 'none'
+        if (!res.ok) return none
         const before = unwrap(await res.json().catch((): unknown => null))
         const was = (before?.permalinks ?? {}) as { blogBase?: unknown; shopBase?: unknown }
         const now = (data.permalinks ?? {}) as { blogBase?: unknown; shopBase?: unknown }
@@ -125,13 +126,13 @@ export function useDocumentSave(target: SaveTarget) {
           const b = typeof now[key] === 'string' && now[key] ? (now[key] as string) : fallback
           if (a !== b) lines.push(`The ${label} address changes from /${a} to /${b}. A permanent redirect from /${a} to /${b} will be created for every old link.`)
         }
-        if (lines.length === 0) return 'none'
-        return await ask('base', lines)
+        if (lines.length === 0) return none
+        return { ...(await ask('base', lines)), updateLinks: false }
       }
     } catch {
-      return 'none'
+      return none
     }
-    return 'none'
+    return none
   }
 
   const entitySlug = target.collectionSlug ?? target.globalSlug ?? ''
@@ -146,9 +147,10 @@ export function useDocumentSave(target: SaveTarget) {
       // Only "Save draft" carries the flag; unpublish must write the live row.
       const { url, method } = saveRequest(target, status === 'draft')
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      const answer = await confirmAddressChange(status, data)
+      const { answer, updateLinks } = await confirmAddressChange(status, data)
       if (answer === 'cancel') return false
       if (answer === 'skip') headers['X-Skip-Slug-Redirect'] = '1'
+      if (updateLinks) headers['X-Update-Links'] = '1'
       if (target.globalSlug && expectedRef.current) headers['X-Expected-Updated-At'] = expectedRef.current
       const response = await fetch(url, {
         body: JSON.stringify(data),
