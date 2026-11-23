@@ -13,6 +13,9 @@ import {
   parsePage,
   parseSearch,
   RESULTS_PAGE_SIZE,
+  applyEntryQuery,
+  hasEntryQuery,
+  parseEntryQuery,
   submissionColumns,
 } from '@/admin/views/results/rows'
 import type { FormDoc } from '@/features/forms/types'
@@ -22,6 +25,9 @@ const BOM = String.fromCharCode(0xfeff)
 
 /** The across-every-form CSV stops here. */
 const CSV_MAX_ROWS = 5000
+
+/** Sorting or filtering by an answer reads this many of the newest entries. */
+const SCAN_MAX_ROWS = 2000
 
 export const dynamic = 'force-dynamic'
 
@@ -105,6 +111,18 @@ export async function GET(request: Request): Promise<Response> {
 
     const columns = submissionColumns(form)
     const page = parsePage(url.searchParams.get('page'))
+    const entryQuery = parseEntryQuery(url.searchParams, columns)
+    if (hasEntryQuery(entryQuery)) {
+      // Answers live in a JSON column, so sorting and filtering by an answer happens here, over the newest entries.
+      const { docs, truncated } = await collectRows(
+        context.engine as unknown as FindEngine,
+        { collection: 'form-submissions', where: { form: { equals: formId } }, sort: '-createdAt', depth: 0, user: context.user },
+        SCAN_MAX_ROWS,
+      )
+      const matched = applyEntryQuery(docs.map((doc) => mapSubmissionRow(doc, columns)), entryQuery)
+      const info = pageInfo(page, RESULTS_PAGE_SIZE, matched.length)
+      return json({ ...info, columns, truncated, docs: matched.slice((page - 1) * RESULTS_PAGE_SIZE, page * RESULTS_PAGE_SIZE) })
+    }
     const result = await context.engine.find({
       collection: 'form-submissions',
       where: { form: { equals: formId } },

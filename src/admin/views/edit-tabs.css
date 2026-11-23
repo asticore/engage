@@ -293,3 +293,19 @@
 [data-theme='dark'] .et-tab--disabled {
   color: #8a8a8a;
 }
+
+.et-link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.et-link-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
