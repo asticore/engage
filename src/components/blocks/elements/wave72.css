@@ -1,0 +1,5 @@
+.w72-pay{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.w72-amount{display:grid;gap:.2rem}
+.w72-amount input{padding:.5rem .7rem;font:inherit;width:8rem;border:1px solid color-mix(in srgb,currentColor 30%,transparent);border-radius:.4rem;background:transparent;color:inherit}
+.w72-error{flex-basis:100%;color:#b42318;font-size:.9rem}
+.w72-error:empty{display:none}

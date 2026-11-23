@@ -3133,6 +3133,14 @@ The font family in the Typography group can be set per device (Default, then tab
 
 **Where to find it:** Visual editor, Design panel, Typography
 
+#### BLD-074 · Task 10 29d Pay button (23 Nov 2026)
+
+_Date: 23 Nov 2026_
+
+A Pay button element (commerce group): puts one product in the cart and opens the checkout, which runs the normal payment methods (test mode until the shop goes live). Options: label, product ID, quantity, and an optional amount box for pay what you want or donation products with a suggested and a smallest amount (checked in the browser and again by the server). No payment code was added. Code: `wave72Defs.ts`, `Wave72Elements.tsx` (`payLine`, `toCents`), `wave72.css`, `tests/int/wave72-elements.int.spec.ts`.
+
+**Where to find it:** Visual editor, Elements, Commerce, Pay button
+
 <a id="cat-adm"></a>
 ### ADM: Admin and settings
 
@@ -3493,6 +3501,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 23 Nov 2026
 
+- [BLD-074](#bld-074) Task 10 29d Pay button
 - [BLD-073](#bld-073) Font family per device
 - [BLD-072](#bld-072) Task 15 34g2 Poll element
 - [BLD-071](#bld-071) Background colour per device
