@@ -1,5 +1,5 @@
 import { getAdminRoot } from '@/features/security/settings'
-import { readBlogBase } from '@/features/seo/permalinkStore'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
 import React from 'react'
 import type { AdminViewServerProps } from '@/engine'
 
@@ -111,6 +111,7 @@ export const TranslationsView: React.FC<AdminViewServerProps> = async (props) =>
   const rows = buildDocumentRows({
     adminRoot: await getAdminRoot(),
     blogBase: await readBlogBase(),
+    shopBase: await readShopBase(),
     items: data.items,
     stored: data.stored,
     targetLocales: targets,

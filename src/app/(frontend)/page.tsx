@@ -7,6 +7,8 @@ import { BlockRenderer } from '@/components/blocks/BlockRenderer'
 import { annotatePage } from '@/features/editScreens/toc'
 import { EventCard } from '@/components/EventCard'
 import { ProductCard } from '@/components/ProductCard'
+import { shopPath } from '@/features/seo/permalinks'
+import { readShopBase } from '@/features/seo/permalinkStore'
 import { getEngine } from '@/lib/engine'
 import { loadPromoBadges } from '@/features/ecommerce/lib/promoBadges'
 import { getHomepage } from '@/utilities/pagePaths'
@@ -107,6 +109,7 @@ async function DefaultHomepage() {
   ])) as unknown as [{ docs: Product[] }, { docs: Event[] }]
   const products = await excludeProtected('products', allProducts)
   const events = await excludeProtected('events', allEvents)
+  const shopHref = shopPath(await readShopBase())
 
   return (
     <>
@@ -119,7 +122,7 @@ async function DefaultHomepage() {
             evenings worth dressing up for.
           </p>
           <div className="hero__actions">
-            <Link href="/shop" className="btn btn--primary">
+            <Link href={shopHref} className="btn btn--primary">
               Shop the collection
             </Link>
             <Link href="/events" className="btn btn--ghost">
@@ -133,7 +136,7 @@ async function DefaultHomepage() {
         <div className="page-shell">
           <div className="section-heading">
             <h2>New arrivals</h2>
-            <Link href="/shop">View all</Link>
+            <Link href={shopHref}>View all</Link>
           </div>
 
           {products.length === 0 ? (

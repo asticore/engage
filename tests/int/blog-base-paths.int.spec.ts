@@ -16,7 +16,7 @@ describe('places that build the blog path follow the blog address', () => {
   it('the {{url}} merge tag of a post follows the address', () => {
     expect(buildMergeContext({ slug: 'hi', title: 'Hi' }, 'posts', undefined, undefined, 'news').url).toBe('/news/hi')
     expect(buildMergeContext({ slug: 'hi', title: 'Hi' }, 'posts').url).toBe('/blog/hi')
-    expect(buildMergeContext({ slug: 'mug', title: 'Mug' }, 'products', undefined, undefined, 'news').url).toBe('/shop/mug')
+    expect(buildMergeContext({ slug: 'mug', title: 'Mug' }, 'products').url).toBe('/shop/mug')
   })
 
   it('post breadcrumbs use the address for the section crumb', () => {

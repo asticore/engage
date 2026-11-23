@@ -95,6 +95,8 @@ export function breadcrumbTrail(input: {
   homeLabel?: string
   /** The blog address (no slashes), when the site does not use /blog. */
   blogBase?: string
+  /** The shop address (no slashes), when the site does not use /shop. */
+  shopBase?: string
 }): Crumb[] {
   if (input.path === '/' || !input.title) return []
   const at = (path: string): string => `${input.baseUrl}${withLocalePrefix(path, input.localePrefix)}`
@@ -104,7 +106,8 @@ export function breadcrumbTrail(input: {
     return [home, ...(input.pageTrail ?? []).map((item) => ({ name: item.name, url: at(item.path) })), self]
   }
   const section = SECTIONS[input.collection]
-  const sectionPath = section && input.collection === 'posts' && input.blogBase ? `/${input.blogBase}` : section?.path
+  const customBase = input.collection === 'posts' ? input.blogBase : input.collection === 'products' ? input.shopBase : undefined
+  const sectionPath = section && customBase ? `/${customBase}` : section?.path
   return section ? [home, { name: section.name, url: at(sectionPath as string) }, self] : [home, self]
 }
 

@@ -1,5 +1,5 @@
 import { categoryUrl } from '@/features/categories/frontend'
-import { blogPath } from '@/features/seo/permalinks'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
 import { ancestorsOf, type CategoryRow } from '@/features/categories/tree'
 import type { ArchiveItem, BlockContext } from '@/lib/blockContext'
 import { formatTagDate, formatTagPrice, resolveTags } from '@/lib/dynamicTags'
@@ -115,10 +115,10 @@ export function eventBlockContext(event: Record<string, unknown>, path: string):
 }
 
 /** Builds the context for a sample item of the given collection. */
-export function blockContextFor(collection: 'posts' | 'products' | 'events', doc: Record<string, unknown>, siteName?: string, blogBase?: string): BlockContext {
+export function blockContextFor(collection: 'posts' | 'products' | 'events', doc: Record<string, unknown>, siteName?: string, blogBase?: string, shopBase?: string): BlockContext {
   const slug = str(doc.slug)
   if (collection === 'posts') return postBlockContext(doc, blogPath(blogBase ?? '', `/${slug}`), siteName)
-  if (collection === 'products') return productBlockContext(doc, `/shop/${slug}`)
+  if (collection === 'products') return productBlockContext(doc, shopPath(shopBase, `/${slug}`))
   return eventBlockContext(doc, `/events/${slug}`)
 }
 
@@ -195,13 +195,13 @@ export function categoryTreeFields(name: string | undefined, tree: CategoryRow[]
 }
 
 /** Archive cards for products (title, link, price and first image). */
-export function productArchiveItems(products: unknown[]): ArchiveItem[] {
+export function productArchiveItems(products: unknown[], shopBase?: string): ArchiveItem[] {
   return products.map((raw) => {
     const product = rec(raw)
     const image = firstImage(product.images)
     return {
       title: str(product.title),
-      href: `/shop/${str(product.slug)}`,
+      href: shopPath(shopBase, `/${str(product.slug)}`),
       price: product.priceInAUD ?? undefined,
       image: image && str(image.url) ? { url: str(image.url), alt: str(image.alt) } : undefined,
       type: str(product.productType) || undefined,

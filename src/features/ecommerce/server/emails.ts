@@ -1,4 +1,6 @@
 import { sendEmail } from '@/features/email'
+import { readShopBase } from '@/features/seo/permalinkStore'
+import { shopPath } from '@/features/seo/permalinks'
 import { localeForRecipient } from '@/features/email/recipientLocale'
 import { toRenderTokens } from '@/features/email/builtInTemplates'
 import { fallbackChain, loadStrings, t as uiT, type UiStringKey } from '@/features/uiStrings'
@@ -24,7 +26,7 @@ const STATUS_TO_KIND: Record<string, EmailKind | undefined> = {
   failed: 'failed',
 }
 /** Links to the reviews of each product in the order, on the shop's product pages. Needs SITE_URL to be absolute. */
-export function reviewLinksFor(order: Record<string, unknown>, slugById: Map<number, { slug: string; title: string }>): string {
+export function reviewLinksFor(order: Record<string, unknown>, slugById: Map<number, { slug: string; title: string }>, shopBase?: string): string {
   const base = (process.env.SITE_URL ?? '').replace(/\/+$/, '')
   const items = (Array.isArray(order.lineItems) ? order.lineItems : []) as Array<{ productId?: unknown }>
   const seen = new Set<number>()
@@ -34,7 +36,7 @@ export function reviewLinksFor(order: Record<string, unknown>, slugById: Map<num
     const product = slugById.get(id)
     if (!product || seen.has(id)) continue
     seen.add(id)
-    lines.push(base ? `${product.title}: ${base}/shop/${product.slug}#reviews` : product.title)
+    lines.push(base ? `${product.title}: ${base}${shopPath(shopBase, `/${product.slug}`)}#reviews` : product.title)
   }
   return lines.join('\n')
 }
@@ -174,7 +176,7 @@ export async function sendOrderEmail(engine: Engine, order: Record<string, unkno
     // The customer's own language, when they have chosen one. Otherwise English.
     const locale = await localeForRecipient(engine as never, to)
     if (locale) await loadStrings(locale)
-    const msg = renderOrderEmail(kind, order, { note, siteName: site.siteName, locale, template, bodyOverride, ...extra, reviewLinks: kind === 'reviewRequest' ? reviewLinksFor(order, await productsForReview(engine, order)) : undefined, pickupLocation: kind === 'readyForPickup' ? pickupLines((order.shippingMethod as { pickup?: Partial<PickupLocation> } | null)?.pickup).join('\n') : undefined })
+    const msg = renderOrderEmail(kind, order, { note, siteName: site.siteName, locale, template, bodyOverride, ...extra, reviewLinks: kind === 'reviewRequest' ? reviewLinksFor(order, await productsForReview(engine, order), await readShopBase()) : undefined, pickupLocation: kind === 'readyForPickup' ? pickupLines((order.shippingMethod as { pickup?: Partial<PickupLocation> } | null)?.pickup).join('\n') : undefined })
     const result = await sendEmail({ to, template: `order.${kind}`, ...msg })
     return result.ok
   } catch {

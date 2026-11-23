@@ -201,15 +201,15 @@ export function buildMergeContext(
   source: LoopSource,
   formatPrice?: (amount: number) => string,
   customContext?: MergeContext,
-  /** The blog address (no slashes), when the site does not use /blog. */
-  blogBase?: string,
+  /** The blog address (posts) or shop address (products), no slashes, when the site does not use /blog or /shop. */
+  sectionBase?: string,
 ): MergeContext {
   const slug = str(item.slug)
   const context: MergeContext = {
     id: str(item.id),
     title: str(item.title) || str(item.name) || str(item.question),
     slug,
-    url: slug ? (source === 'posts' && blogBase ? `/${blogBase}/${slug}` : ITEM_PATHS[source](slug)) : '',
+    url: slug ? ((source === 'posts' || source === 'products') && sectionBase ? `/${sectionBase}/${slug}` : ITEM_PATHS[source](slug)) : '',
     image: imageUrl(item.images) || imageUrl(item.image) || imageUrl(item.heroImage) || imageUrl(item.featuredImage),
     excerpt: str(item.excerpt) || str(item.shortDescription) || str(item.summary),
   }

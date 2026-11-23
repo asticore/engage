@@ -1,5 +1,5 @@
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
-import { readBlogBase } from '@/features/seo/permalinkStore'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import Link from 'next/link'
@@ -117,7 +117,7 @@ export async function TemplatesHubView({ searchParams = {} }: { searchParams?: R
   }
 
   const { visibleColumns, visibleNames } = resolveVisibleColumns(HUB_COLUMNS, state.cols, savedPrefs.cols, HUB_DEFAULT_COLUMNS)
-  const allRows = buildHubRows({ siteTemplates: siteDocs ?? [], pageTemplates: pageDocs ?? [], reusableSections: sectionDocs ?? [], pages: pageRows ?? [], blogBase: await readBlogBase() })
+  const allRows = buildHubRows({ siteTemplates: siteDocs ?? [], pageTemplates: pageDocs ?? [], reusableSections: sectionDocs ?? [], pages: pageRows ?? [], blogBase: await readBlogBase(), shopBase: await readShopBase() })
   const matching = sortHubRows(filterHubRows(allRows, state.filters, state.q), state.sort)
   const paged = pageHubRows(matching, state.page, state.limit)
 

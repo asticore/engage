@@ -1,8 +1,8 @@
 import { configuredSiteOrigin } from '@/utilities/siteOrigin'
 
 import type { PageSpeedCollection } from './types'
-import { readBlogBase } from '@/features/seo/permalinkStore'
-import { blogPath } from '@/features/seo/permalinks'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
 
 /**
  * Where a document lives on the public site, and the one URL we are willing to send to Google.
@@ -71,7 +71,7 @@ export async function publicPath(
     return null
   }
   if (!validSlug(doc.slug)) return null
-  const prefix = collection === 'posts' ? blogPath(await readBlogBase()) : collection === 'products' ? '/shop' : '/events'
+  const prefix = collection === 'posts' ? blogPath(await readBlogBase()) : collection === 'products' ? shopPath(await readShopBase()) : '/events'
   return `${prefix}/${encodeURIComponent(doc.slug)}`
 }
 

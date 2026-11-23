@@ -1,5 +1,6 @@
 'use client'
 
+import { useShopPath } from '@/features/seo/ShopBaseContext'
 import Link from 'next/link'
 import React from 'react'
 
@@ -31,6 +32,7 @@ import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
 export const CartLinesPart: React.FC = () => {
   const { cart, decrementItem, incrementItem, removeItem, isLoading } = useCart()
   const t = useStoreText()
+  const shop = useShopPath()
   const money = useDisplayMoney()
   const savedLater = useSavedForLater()
   const listRef = React.useRef<HTMLDivElement | null>(null)
@@ -47,7 +49,7 @@ export const CartLinesPart: React.FC = () => {
       {items.length === 0 ? (
         <>
           <p>
-            {t('store.emptyCart')} <Link href="/shop">{t('store.continueShopping')}</Link>
+            {t('store.emptyCart')} <Link href={shop()}>{t('store.continueShopping')}</Link>
           </p>
           {!isLoading && <CartRecommendations empty />}
         </>
@@ -190,13 +192,14 @@ export const CartSummaryPart: React.FC = () => {
 
 /** A compact list of the cart lines (quantity, remove) with the empty-cart message. The mini cart drawer is built from this, and it is the cart-lines-compact element. */
 export const MiniCartLinesPart: React.FC<{ onNavigate?: () => void }> = ({ onNavigate }) => {
+  const shop = useShopPath()
   const { cart, decrementItem, incrementItem, removeItem, isLoading } = useCart()
   const money = useDisplayMoney()
   const items = cart?.items ?? []
   if (items.length === 0) {
     return (
       <p data-cart-part="lines-compact">
-        Your cart is empty. <Link href="/shop" onClick={onNavigate}>Continue shopping</Link>
+        Your cart is empty. <Link href={shop()} onClick={onNavigate}>Continue shopping</Link>
       </p>
     )
   }

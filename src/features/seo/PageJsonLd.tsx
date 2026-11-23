@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { readBlogBase } from '@/features/seo/permalinkStore'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
 import { buildFaqPageJsonLd, buildPageJsonLd } from './pageSchema'
 import { videoElementsOf, videoObjectNodes } from './videoNodes'
 import { resolveVideoFacts } from './videoResolve'
@@ -145,6 +145,7 @@ export const PageJsonLd = async ({
       pageTrail: trail,
       localePrefix,
       blogBase: collection === 'posts' ? await readBlogBase() : undefined,
+      shopBase: collection === 'products' ? await readShopBase() : undefined,
     }),
     extra: { ...eventFields, ...extra },
   })

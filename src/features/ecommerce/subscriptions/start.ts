@@ -1,4 +1,6 @@
 import { loadPricedLines } from '../server/pricing'
+import { readShopBase } from '@/features/seo/permalinkStore'
+import { shopPath } from '@/features/seo/permalinks'
 import { loadShopCurrency } from '../lib/shopCurrency'
 import { getStripeClient } from '../payments/stripeAdapter'
 import { normalisePlan, planProblems, isLiveStatus, signupFeeCents } from './plan'
@@ -67,7 +69,8 @@ export async function startSubscriptionCheckout(args: {
     const feeCents = signupFeeCents(plan)
     const feePriceId = feeCents > 0 ? await ensureFeePrice(stripe, { productId: product.id, title, currency, feeCents }) : null
     const customerId = await findOrCreateCustomer(stripe, email, user.id)
-    const slug = product.slug ? `/shop/${product.slug}` : '/shop'
+    const shopBase = await readShopBase()
+    const slug = product.slug ? shopPath(shopBase, `/${product.slug}`) : shopPath(shopBase)
     const url = await createSubscriptionCheckout(stripe, {
       customerId,
       priceId,

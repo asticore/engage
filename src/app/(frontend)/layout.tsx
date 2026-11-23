@@ -10,6 +10,9 @@ import { Footer } from '@/components/Footer'
 import { Header, type NavLink } from '@/components/Header'
 import { Providers } from '@/components/Providers'
 import { StoreTextsProvider } from '@/features/uiStrings/StoreTextsContext'
+import { ShopBaseProvider } from '@/features/seo/ShopBaseContext'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
 import { publicLocale } from '@/features/uiStrings/storeTextsServer'
 import { storeTexts } from '@/features/uiStrings/storeTextsServer'
 import { ShopCurrencyProvider } from '@/components/ShopCurrencyContext'
@@ -100,6 +103,7 @@ function early<T>(promise: Promise<T>): Promise<T> {
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
   await traceMark('layout start')
+  const [shopBase, blogBase] = await Promise.all([readShopBase(), readBlogBase()])
   // Cloudflare's two-letter country for the visitor; drives the cookie banner's opt-in rule.
   const country = (await headers()).get('cf-ipcountry')
   // Every read below is independent, so start them together instead of one after another: each is a D1 round
@@ -145,10 +149,10 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
 
   const features = settings?.features
   const disabledPrefixes = [
-    features?.ecommerce === false ? '/shop' : null,
+    features?.ecommerce === false ? shopPath(shopBase) : null,
     features?.ecommerce === false ? '/cart' : null,
     features?.events === false ? '/events' : null,
-    features?.blog === false ? '/blog' : null,
+    features?.blog === false ? blogPath(blogBase) : null,
     features?.faq === false ? '/faq' : null,
   ].filter((v): v is string => Boolean(v))
 
@@ -334,6 +338,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
         <ShopCurrencyProvider currency={storeCurrency}>
         <DisplayCurrencyProvider state={displayState}>
         <Providers>
+        <ShopBaseProvider base={shopBase}>
         <StoreTextsProvider value={storeDict} locale={await publicLocale()}>
           {chrome.header ? (
             <header>{chrome.header}</header>
@@ -381,6 +386,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
           />
           )}
         </StoreTextsProvider>
+        </ShopBaseProvider>
         </Providers>
         </DisplayCurrencyProvider>
         </ShopCurrencyProvider>

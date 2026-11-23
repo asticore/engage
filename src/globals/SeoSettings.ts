@@ -2,7 +2,7 @@ import type { GlobalConfig } from '@/engine'
 
 import { isAdmin } from '../access/ecommerceAccess'
 import { indexNowKeyBeforeChange } from '@/features/seo/indexNowKey'
-import { validateBlogBaseField } from '@/features/seo/permalinkValidate'
+import { validateBlogBaseField, validateShopBaseField } from '@/features/seo/permalinkValidate'
 
 /**
  * Site-wide SEO and analytics defaults.
@@ -366,7 +366,7 @@ export const SeoSettings: GlobalConfig = {
       label: 'Permalinks',
       admin: {
         description:
-          'The first part of the blog address. Changing it moves the blog to the new address, and the old /blog addresses redirect to it. Shop and product addresses are not changed here yet.',
+          'The first part of the blog address and of the shop address. Changing one moves the blog or the shop (product pages and product categories too) to the new address, and the old /blog or /shop addresses redirect to it.',
       },
       fields: [
         {
@@ -379,6 +379,18 @@ export const SeoSettings: GlobalConfig = {
             placeholder: 'blog',
             description:
               'One part of the address, such as news (lowercase letters, digits and hyphens, 3 to 40 characters). Leave as blog to keep /blog. The site words, the admin and sign-in addresses, and a page with the same address are refused. Sitemap and canonical tags use the new address at once.',
+          },
+        },
+        {
+          name: 'shopBase',
+          type: 'text',
+          label: 'Shop address',
+          defaultValue: 'shop',
+          validate: validateShopBaseField(),
+          admin: {
+            placeholder: 'shop',
+            description:
+              'One part of the address, such as store (lowercase letters, digits and hyphens, 3 to 40 characters). Leave as shop to keep /shop. Product pages and product categories move with it. The site words, the admin and sign-in addresses, the blog address, and a page with the same address are refused. Sitemap and canonical tags use the new address at once.',
           },
         },
       ],

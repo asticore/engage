@@ -1,5 +1,5 @@
-import { blogPath } from '@/features/seo/permalinks'
-import { readBlogBase } from '@/features/seo/permalinkStore'
+import { blogPath, shopPath } from '@/features/seo/permalinks'
+import { readBlogBase, readShopBase } from '@/features/seo/permalinkStore'
 import { requestDomain } from '@/features/domains/request'
 import { domainTagline } from '@/features/domains/brand'
 import Link from 'next/link'
@@ -154,7 +154,7 @@ async function readMenu(): Promise<NavItem[]> {
     const features = settings?.features
     const off = (key: string) => features?.[key] === false
     const disabled = [
-      ...(off('ecommerce') ? ['/shop', '/cart'] : []),
+      ...(off('ecommerce') ? [shopPath(await readShopBase()), '/cart'] : []),
       ...(off('events') ? ['/events'] : []),
       ...(off('blog') ? ['/blog'] : []),
       ...(off('faq') ? ['/faq'] : []),

@@ -4,6 +4,8 @@
  * the save.
  */
 
+import { readShopBase } from '@/features/seo/permalinkStore'
+import { shopPath } from '@/features/seo/permalinks'
 import type { CollectionAfterChangeHook } from '@/engine'
 
 import { restockedVariations } from './lib/backInStock'
@@ -42,13 +44,14 @@ export async function notifyBackInStock(engine: EngineLike, product: { id: numbe
   // Product links must be absolute; with no SITE_URL the alerts wait (subscriptions stay pending) until it is set.
   const baseUrl = configuredSiteOrigin()
   if (!baseUrl) return 0
+  const shopBase = await readShopBase()
   let sent = 0
   for (const doc of docs) {
     const variation = (doc.variation as string | null) ?? ''
     if (!wanted.has(variation) || typeof doc.email !== 'string') continue
     const row = variation ? product.variations?.find((item) => item.id === variation) : undefined
     const label = `${product.title || 'Product'}${row?.attributeValues ? ` (${row.attributeValues.replace(/\|/g, ', ')})` : ''}`.replace(/[\r\n]+/g, ' ')
-    const url = `${baseUrl}/shop/${product.slug ?? ''}`
+    const url = `${baseUrl}${shopPath(shopBase, `/${product.slug ?? ''}`)}`
     const locale = await localeForRecipient(engine as never, doc.email)
     if (locale) await loadStrings(locale)
     const result = await sendEmail({

@@ -1,5 +1,6 @@
 import { getEngine } from '@/engine'
 
+import { readShopBase } from '@/features/seo/permalinkStore'
 import { excludeProtected } from '@/features/visibility/excludeProtected'
 import { effectiveRate, convertForDisplay, minorDigits, normaliseRounding, type RoundingRule } from '../lib/displayCurrency'
 import { buildFeedItems, type FeedItem } from '../lib/feeds'
@@ -39,6 +40,7 @@ export async function loadFeed(request: Request): Promise<{ items: FeedItem[]; t
   const condition = ['new', 'used', 'refurbished'].includes(String(sf.feedCondition)) ? (sf.feedCondition as 'new' | 'used' | 'refurbished') : 'new'
   const items = buildFeedItems(products.docs, {
     baseUrl: origin,
+    shopBase: await readShopBase(),
     currency: String(payment.general?.currency || 'AUD'),
     brand: String(sf.feedBrand || shop.tax?.businessName || title),
     condition,
@@ -89,6 +91,7 @@ export async function loadFeedFor(request: Request, feed: FeedRecord): Promise<{
 
   const items = buildFeedItems(products, {
     baseUrl: origin,
+    shopBase: await readShopBase(),
     currency,
     brand: String(sf.feedBrand || shop.tax?.businessName || title),
     condition,

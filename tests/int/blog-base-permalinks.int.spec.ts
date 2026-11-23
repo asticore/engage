@@ -14,6 +14,7 @@ import { validateBlogBaseField, BLOG_BASE_PAGE_MESSAGE } from '@/features/seo/pe
 const state = vi.hoisted(() => ({
   adminPath: '/admin' as string,
   blog: 'blog' as string,
+  shop: 'shop' as string,
   seen: [] as string[],
 }))
 
@@ -40,6 +41,7 @@ vi.mock('@/features/multilingual/middleware', () => ({
 }))
 vi.mock('@/features/seo/permalinkStore', () => ({
   readBlogBase: async (): Promise<string> => state.blog,
+  readShopBase: async (): Promise<string> => state.shop,
   invalidateBlogBaseCache: (): void => undefined,
 }))
 
@@ -157,5 +159,64 @@ describe('middleware with a custom blog address', () => {
     const old = await get('/fr/blog/hello-world')
     expect(old.status).toBe(308)
     expect(old.headers.get('location')).toBe('https://site.test/fr/news/hello-world')
+  })
+})
+
+describe('middleware with a custom shop address', () => {
+  beforeEach(() => {
+    state.adminPath = '/admin'
+    state.blog = 'blog'
+    state.shop = 'store'
+    state.seen = []
+  })
+
+  it('serves the new address and the category pages from the /shop folder', async () => {
+    const res = await get('/store/mug')
+    expect(state.seen).toEqual(['/shop/mug'])
+    expect(res.headers.get('x-middleware-rewrite')).toBe('https://site.test/shop/mug')
+    const category = await get('/store/category/tea/green?page=2')
+    expect(category.headers.get('x-middleware-rewrite')).toBe('https://site.test/shop/category/tea/green?page=2')
+  })
+
+  it('308-redirects the old /shop address, keeping the query', async () => {
+    const res = await get('/shop/mug?utm=x')
+    expect(res.status).toBe(308)
+    expect(res.headers.get('location')).toBe('https://site.test/store/mug?utm=x')
+  })
+
+  it('leaves the cart, checkout and cart-recover addresses where they are', async () => {
+    await get('/cart')
+    await get('/checkout/success')
+    await get('/api/shop-cart-recover?t=abc')
+    expect(state.seen).toEqual(['/cart', '/checkout/success', '/api/shop-cart-recover'])
+  })
+
+  it('does not redirect a POST to the old address (an API call keeps working)', async () => {
+    const res = await get('/shop/mug', { method: 'POST' })
+    expect(res.status).not.toBe(308)
+  })
+
+  it('works under a language prefix, and sends the old address to the new one', async () => {
+    const res = await get('/fr/store/mug')
+    expect(state.seen).toEqual(['/shop/mug'])
+    expect(res.headers.get('x-middleware-rewrite')).toBe('https://site.test/shop/mug')
+    const old = await get('/fr/shop/mug')
+    expect(old.status).toBe(308)
+    expect(old.headers.get('location')).toBe('https://site.test/fr/store/mug')
+  })
+
+  it('does nothing while /shop is the address', async () => {
+    state.shop = 'shop'
+    const res = await get('/shop/mug')
+    expect(res.status).not.toBe(308)
+    expect(state.seen).toEqual(['/shop/mug'])
+  })
+
+  it('can run next to a custom blog address', async () => {
+    state.blog = 'news'
+    const blog = await get('/news/hello')
+    expect(blog.headers.get('x-middleware-rewrite')).toBe('https://site.test/blog/hello')
+    const shop = await get('/store/mug')
+    expect(shop.headers.get('x-middleware-rewrite')).toBe('https://site.test/shop/mug')
   })
 })

@@ -87,10 +87,10 @@ export const HUB_COLUMNS: ColumnDef[] = [
   { name: 'updatedAt', label: 'Updated', type: 'date', sortable: true, filterable: false },
 ]
 
-const siteRow = (doc: HubSourceDoc, kind: SiteTemplateKind | string, usedIn: UsedIn[], blogBase = 'blog'): HubRow => {
+const siteRow = (doc: HubSourceDoc, kind: SiteTemplateKind | string, usedIn: UsedIn[], blogBase = 'blog', shopBase = 'shop'): HubRow => {
   const enabled = doc.enabled !== false
   const slug: HubCollection = 'site-templates'
-  const publicPath = kind === 'archive-blog' ? `/${blogBase}` : PUBLIC_PREVIEW_PATH[kind as SiteTemplateKind]
+  const publicPath = kind === 'archive-blog' ? `/${blogBase}` : kind === 'archive-shop' ? `/${shopBase}` : PUBLIC_PREVIEW_PATH[kind as SiteTemplateKind]
   return {
     key: `${slug}:${doc.id}`,
     collection: slug,
@@ -176,6 +176,7 @@ export function buildHubRows(input: {
   pages?: HubSourceDoc[]
   /** The blog address (no slashes), for the blog archive preview link. Defaults to blog. */
   blogBase?: string
+  shopBase?: string
 }): HubRow[] {
   const sites = input.siteTemplates ?? []
   const usage = partUsageIndex([
@@ -185,7 +186,7 @@ export function buildHubRows(input: {
     ...sites.map((doc) => ({ collection: 'site-templates' as const, doc })),
   ])
   return [
-    ...sites.map((doc) => siteRow(doc, typeof doc.kind === 'string' ? doc.kind : '', usage.get(String(doc.id)) ?? [], input.blogBase)),
+    ...sites.map((doc) => siteRow(doc, typeof doc.kind === 'string' ? doc.kind : '', usage.get(String(doc.id)) ?? [], input.blogBase, input.shopBase)),
     ...(input.pageTemplates ?? []).map((doc) => plainRow(doc, 'page-templates')),
     ...(input.reusableSections ?? []).map((doc) => plainRow(doc, 'reusable-sections')),
   ]

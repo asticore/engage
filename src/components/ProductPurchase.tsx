@@ -1,5 +1,6 @@
 'use client'
 
+import { useShopPath } from '@/features/seo/ShopBaseContext'
 import { announceCartAdded } from '@/features/ecommerce/lib/miniCart'
 import { useStoreText } from '@/features/uiStrings/StoreTextsContext'
 import { useCart } from '@/engine/commerce/react'
@@ -130,6 +131,7 @@ function AddControl({ productId, variationId, disabled, label, limits, buyerPric
 
 export function ProductPurchase({ productId, view, grouped = [], giftConfig, composite, hiddenPriceText }: { productId: number; view: ProductView; grouped?: GroupedChild[]; giftConfig?: GiftCardConfig; composite?: CompositeView | null; hiddenPriceText?: string }) {
   const t = useStoreText()
+  const shop = useShopPath()
   const [selection, setSelection] = useState<Record<string, string>>({})
   const { setImageUrl } = useVariationImage()
 
@@ -178,12 +180,12 @@ export function ProductPurchase({ productId, view, grouped = [], giftConfig, com
             <li key={child.id} className="border-b border-[var(--color-line)] py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  {child.slug ? <Link href={`/shop/${child.slug}`}>{child.title}</Link> : child.title}
+                  {child.slug ? <Link href={shop(`/${child.slug}`)}>{child.title}</Link> : child.title}
                   <p className="text-[0.85rem] opacity-70">{child.view.stockMessage}</p>
                 </div>
                 <PriceLine price={child.view.price} regular={child.view.regular} onSale={child.view.onSale} />
               </div>
-              {child.view.purchasable ? <AddControl productId={child.id} /> : child.view.type === 'variable' && child.slug ? <Link href={`/shop/${child.slug}`}>Choose an option</Link> : null}
+              {child.view.purchasable ? <AddControl productId={child.id} /> : child.view.type === 'variable' && child.slug ? <Link href={shop(`/${child.slug}`)}>Choose an option</Link> : null}
             </li>
           ))}
         </ul>

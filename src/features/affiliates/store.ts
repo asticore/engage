@@ -1,4 +1,5 @@
 import { meetsMinimum } from './commission'
+import { shopPath } from '@/features/seo/permalinks'
 import type { AffiliateStatus, ConsentCategory } from './core'
 import { toConsentCategory } from './core'
 
@@ -377,7 +378,7 @@ export async function resolveShortLink(d1: D1, code: string): Promise<{ affiliat
     if (link.product_id !== null && link.product_id !== undefined) {
       const product = (await all(d1, "SELECT slug FROM eg_products WHERE id = ?1 AND _status = 'published' AND deleted_at IS NULL", Number(link.product_id)))[0]
       const slug = String(product?.slug ?? '')
-      if (slug !== '') path = `/shop/${encodeURIComponent(slug)}`
+      if (slug !== '') path = shopPath(await (await import('@/features/seo/permalinkStore')).readShopBase(), `/${encodeURIComponent(slug)}`)
     }
     return { affiliateId: Number(link.affiliate_id), path }
   } catch {

@@ -1,4 +1,6 @@
 import { AdminLink } from '@/admin/adminRoute/AdminLink'
+import { shopPath } from '@/features/seo/permalinks'
+import { readShopBase } from '@/features/seo/permalinkStore'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import React from 'react'
@@ -19,7 +21,7 @@ import { CourseStyles } from './styles'
  * the visitor can do at all, which is the site owner's problem to fix and
  * should read as such rather than as a broken button.
  */
-const Gate: React.FC<{ entitlement: Entitlement; course: CourseDoc }> = ({ entitlement, course }) => {
+const Gate: React.FC<{ entitlement: Entitlement; course: CourseDoc; shopBase: string }> = ({ entitlement, course, shopBase }) => {
   const product = course.product && typeof course.product === 'object' ? (course.product as { slug?: string }) : null
 
   switch (entitlement.reason) {
@@ -39,7 +41,7 @@ const Gate: React.FC<{ entitlement: Entitlement; course: CourseDoc }> = ({ entit
           <h2>Buy this course</h2>
           <p>Lessons unlock as soon as your order is paid.</p>
           {product?.slug ? (
-            <AdminLink className="btn btn--primary" href={`/shop/${product.slug}`}>
+            <AdminLink className="btn btn--primary" href={shopPath(shopBase, `/${product.slug}`)}>
               View in the shop
             </AdminLink>
           ) : (
@@ -120,7 +122,7 @@ export const CourseScreen: React.FC<{ slug: string }> = async ({ slug }) => {
         <ProgressBar percent={progress.percent} completed={progress.completedLessons} total={progress.totalLessons} />
       )}
 
-      <Gate entitlement={entitlement} course={course} />
+      <Gate entitlement={entitlement} course={course} shopBase={await readShopBase()} />
 
       <h2>Curriculum</h2>
       {curriculum.length === 0 ? (

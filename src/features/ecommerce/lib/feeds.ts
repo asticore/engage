@@ -4,6 +4,7 @@
  * variation of a variable product becomes its own row, tied together by item_group_id.
  */
 
+import { shopPath } from '@/features/seo/permalinks'
 import { variationLabel, variationPriceFields } from '../catalogue'
 import { priceInfo } from '../pricing'
 import { canPurchase, computeStockStatus, type StockFields } from '../stock'
@@ -38,6 +39,8 @@ export type FeedItem = {
 export type FeedContext = {
   /** https://example.com, no trailing slash */
   baseUrl: string
+  /** The shop address (no slashes) when the site does not use /shop. */
+  shopBase?: string
   currency: string
   brand: string
   condition?: 'new' | 'used' | 'refurbished'
@@ -130,7 +133,7 @@ export function buildFeedItems(products: Loose[], ctx: FeedContext): FeedItem[] 
     const base = {
       groupId: String(p.id),
       description,
-      link: `${ctx.baseUrl}/shop/${slug}`,
+      link: `${ctx.baseUrl}${shopPath(ctx.shopBase, `/${slug}`)}`,
       brand: ctx.brand,
       condition: ctx.condition ?? 'new',
       productType: typeof p.category === 'string' ? p.category : '',

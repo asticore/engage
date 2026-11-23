@@ -9,9 +9,11 @@ import { AddToCartButton } from '@/components/AddToCartButton'
 import { useShopCurrency } from '@/components/ShopCurrencyContext'
 import { cartProductIds, type CrossSellCard } from '@/features/ecommerce/lib/crossSells'
 import { formatPriceInAUD } from '@/lib/formatCurrency'
+import { useShopPath } from '@/features/seo/ShopBaseContext'
 
 /** "Customers also bought" under the cart items, from paid orders and same-category products. Hidden when empty or switched off. */
 export function CartRecommendations({ empty = false }: { empty?: boolean } = {}) {
+  const shop = useShopPath()
   const { cart } = useCart()
   const currency = useShopCurrency()
   const ids = cartProductIds(cart?.items as Array<{ product?: unknown }> | undefined)
@@ -49,7 +51,7 @@ export function CartRecommendations({ empty = false }: { empty?: boolean } = {})
       <ul className="grid list-none grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-5 p-0">
         {cards.map((card) => (
           <li key={card.id} className="flex flex-col gap-2">
-            <Link href={card.slug ? `/shop/${card.slug}` : '/shop'} className="block">
+            <Link href={card.slug ? shop(`/${card.slug}`) : shop()} className="block">
               {card.image ? (
                 <Image src={card.image} alt={card.title} width={320} height={400} style={{ objectFit: 'cover', width: '100%', height: 'auto' }} />
               ) : (
