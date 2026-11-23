@@ -43,6 +43,18 @@ const PRESETS: Preset[] = [
       ]),
   },
   {
+    id: 'blog-sidebar',
+    label: 'Blog sidebar',
+    description: 'Categories as a list and tags as a cloud, for a blog page side column.',
+    build: () =>
+      one([
+        el('heading', { text: 'Categories', tag: 'h3', align: 'left' }),
+        el('taxonomy-list', { kind: 'categories', layout: 'list', showCount: true }),
+        el('heading', { text: 'Tags', tag: 'h3', align: 'left' }),
+        el('taxonomy-list', { kind: 'tags', layout: 'cloud', orderBy: 'count' }),
+      ]),
+  },
+  {
     id: 'icon-label',
     label: 'Icon label',
     description: 'A small icon with a short label beside it.',
