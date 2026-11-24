@@ -25,7 +25,7 @@ export const MapFacade = ({ src, title, label, height, preview, directions, engi
         <iframe src={src} title={title} referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
       ) : (
         <button type="button" className="el-map__facade" onClick={() => (src || engine ? setOpen(true) : directions ? window.open(directions, '_blank', 'noopener') : undefined)} aria-label={`Show map: ${label}`}>
-          {preview && <img className="el-map__preview" src={preview} alt="" loading="lazy" decoding="async" />}
+          {preview && <img className="el-map__preview" src={preview} alt="" loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = 'none' }} />}
           <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" />
             <circle cx="12" cy="9.5" r="2.5" />
