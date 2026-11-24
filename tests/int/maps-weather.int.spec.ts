@@ -60,8 +60,8 @@ describe('map views', () => {
   })
   it('builds the Google embed with the style as map type', () => {
     const v = buildMapView({ ...base, provider: 'google', style: 'satellite' })
-    expect(v.embedSrc).toContain('google.com/maps/embed/v1/place')
-    expect(v.embedSrc).toContain('maptype=satellite')
+    expect(v.embedSrc).toContain('google.com/maps?q=')
+    expect(v.embedSrc).toContain('&t=k')
     expect(v.staticSrc).toContain('staticmap')
   })
   it('builds MapTiler and Mapbox pictures with the style, colour and every marker', () => {
