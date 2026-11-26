@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auditExport } from '@/features/security/exportAudit'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { collectRows, type FindEngine } from '@/admin/views/results/collectRows'
 import {
@@ -75,6 +76,7 @@ export async function GET(request: Request): Promise<Response> {
           { collection: 'form-submissions', where, sort: '-createdAt', depth: 1, user: context.user },
           CSV_MAX_ROWS,
         )
+        await auditExport(request, context.user, 'form submissions CSV')
         return new Response(`${BOM}${buildAllSubmissionsCsv(docs.map(mapAllSubmissionRow))}`, {
           status: 200,
           headers: {

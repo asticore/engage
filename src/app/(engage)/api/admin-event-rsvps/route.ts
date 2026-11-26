@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { auditExport } from '@/features/security/exportAudit'
 import { getAdminContext, hasAdminPanelAccess } from '@/admin/auth'
 import { collectRows, type FindEngine } from '@/admin/views/results/collectRows'
 import {
@@ -87,6 +88,7 @@ export async function GET(request: Request): Promise<Response> {
           CSV_MAX_ROWS,
         )
         const body = `${BOM}${buildAllRsvpsCsv(docs.map(mapAllRsvpRow))}`
+        await auditExport(request, context.user, 'event RSVPs CSV')
         return new Response(body, {
           status: 200,
           headers: {
@@ -135,6 +137,7 @@ export async function GET(request: Request): Promise<Response> {
         CSV_MAX_ROWS,
       )
       const body = `${BOM}${buildRsvpCsv(docs.map(mapRsvpRow))}`
+      await auditExport(request, context.user, 'event RSVPs CSV')
       return new Response(body, {
         status: 200,
         headers: {

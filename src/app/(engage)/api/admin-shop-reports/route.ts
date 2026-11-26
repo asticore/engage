@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { auditExport } from '@/features/security/exportAudit'
 import { getAdminContext } from '@/admin/auth'
 import { loadShopCurrency } from '@/features/ecommerce/lib/shopCurrency'
 import { rawD1 } from '@/features/ecommerce/server/db'
@@ -41,6 +42,7 @@ export async function GET(request: Request): Promise<Response> {
     const table = params.get('table')
     if (!table || !(CSV_TABLES as readonly string[]).includes(table)) return NextResponse.json({ error: 'Unknown table.' }, { status: 400 })
     const file = await csvFor(table as CsvTable, range, currency)
+    await auditExport(request, context.user, `shop report CSV (${table})`)
     return new Response(file.body, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',

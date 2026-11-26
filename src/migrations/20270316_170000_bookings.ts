@@ -1,7 +1,7 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@/engine/db'
 
 /**
- * Task 17b, phase 1 of docs/bookings-plan.md: appointment bookings. Five tables owned by the `bookings` feature
+ * Task 17b, phase 1 of the Bookings plan appendix in docs/remaining-work.md: appointment bookings. Five tables owned by the `bookings` feature
  * (created only when the section is switched on, see src/features/registry.ts): booking types, resources (who or
  * what is booked, with a time zone), weekly hours, one-off overrides and the bookings. Also the `features_bookings`
  * switch on Site Settings. Idempotent. Down is a no-op.
