@@ -1,6 +1,6 @@
 /**
  * Booking slot engine: weekly hours and one-off changes in, bookable start times out. Pure: no I/O, so the public page,
- * the slot endpoint and the create path all give one answer (docs/bookings-plan.md, "Slot engine rules").
+ * the slot endpoint and the create path all give one answer (Bookings plan appendix in docs/remaining-work.md, "Slot engine rules").
  *
  * Hours are wall-clock times in the resource's time zone. Each start is turned into a real instant with `zonedToUtc`,
  * so a day that crosses a daylight saving change keeps its wall-clock hours and the instants are right.

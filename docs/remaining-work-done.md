@@ -4629,3 +4629,5 @@ Checked against the code, not live.
 - 16b AdSense decision (2026-11-24, Matt): no separate AdSense display unit. AdSense is served through Google Ad Manager (set up as AdSense backfill on the Ad Manager unit in Google's own console), using the existing Ad Manager settings and ad blocks.
 
 - Ad unit sizes and supplier (2026-11-26, Matt): ad unit size boxes now have ticks for common sizes (`src/features/ads/sizes.ts`, `admin/SizesField.tsx`), the Network choice says Ad Manager can take header bidding and AdSense is its own supplier, and the Ad element picks its placement or unit from dropdowns (`/api/admin-ad-options`). Test `tests/int/ad-sizes.int.spec.ts`.
+
+- Open-now cleanups (2026-11-26): bookings comments now cite the Bookings plan appendix (the `repo-issues` pointer no longer exists in code); `auditExport` added to the consent log, event RSVP, form submission, shop report and shop manifest CSV downloads (data view download not found in code, nothing to log). Not type-checked or tested here (no node_modules in this container); CI to confirm.

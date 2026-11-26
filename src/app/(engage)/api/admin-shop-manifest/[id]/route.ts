@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { auditExport } from '@/features/security/exportAudit'
 import { manifestCsv, renderManifestHtml } from '@/features/ecommerce/lib/manifest'
 import { normaliseUnitSystem } from '@/features/ecommerce/lib/units'
 import { authorizeOrders, htmlResponse, parseOrderId } from '@/features/ecommerce/server/adminOrder'
@@ -16,6 +17,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const manifest = await loadManifest(auth.engine as unknown as ShipEngine, id)
   if (!manifest) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   if (new URL(request.url).searchParams.get('format') === 'csv') {
+    await auditExport(request, auth.user, 'shop manifest CSV')
     return new Response(manifestCsv(manifest), {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',

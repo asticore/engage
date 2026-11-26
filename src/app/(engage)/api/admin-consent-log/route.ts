@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { auditExport } from '@/features/security/exportAudit'
 import { getAdminContext } from '@/admin/auth'
 import { isFilterCategory, parseAuditRows, filterRecords, recordsToCsv, summarise, type ConsentLogRecord } from '@/features/consent/logStats'
 
@@ -86,6 +87,7 @@ export async function GET(request: Request): Promise<Response> {
         user: context.user,
       })
       const records = filterRecords(parseAuditRows(rawRows(result.docs)), { category, state })
+      await auditExport(request, context.user, 'consent log CSV')
       return new NextResponse(recordsToCsv(records), {
         status: 200,
         headers: {
