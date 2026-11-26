@@ -24,3 +24,13 @@ describe('34h5 datasources', () => {
     expect(f.options).toEqual([{ label: 'x', value: 'x' }])
   })
 })
+
+import { normalizeDefinition } from '@/features/customFields/normalize'
+describe('34h5b datasources on custom fields', () => {
+  it('keeps the list name on a field and fills choices', () => {
+    const defs = normalizeDefinition([{ name: 'size', type: 'select', datasource: ' Sizes ', options: [{ label: 'old', value: 'old' }] }])
+    expect(defs[0].datasource).toBe('sizes')
+    const out = applyDatasources(defs, { sizes: [{ label: 'S', value: 's' }] })
+    expect(out[0].options).toEqual([{ label: 'S', value: 's' }])
+  })
+})

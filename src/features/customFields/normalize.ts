@@ -102,6 +102,7 @@ export function normalizeDefinition(raw: unknown, depth = 1): CustomFieldDef[] {
       helpText: str(f.helpText),
       defaultValue: str(f.defaultValue),
       options: normalizeOptions(f.options),
+      datasource: str(f.datasource)?.trim().toLowerCase() || null,
       multiple: bool(f.multiple),
       min: num(f.min),
       max: num(f.max),

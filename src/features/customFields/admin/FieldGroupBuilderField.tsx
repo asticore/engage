@@ -406,6 +406,11 @@ function OptionsEditor({ def, onChange }: { def: CustomFieldDef; onChange: (patc
   return (
     <div className="flex flex-col gap-[4px]">
       <span className="text-[12px] font-semibold">Choices</span>
+      <label className="flex flex-col gap-[2px] text-[12px]">
+        Shared list (optional)
+        <input className={inputClass} value={def.datasource ?? ''} placeholder="List name from Form settings, Shared lists" onChange={(e) => onChange({ datasource: e.target.value.trim().toLowerCase() || null })} />
+        <span className="opacity-70">When set, the choices below are replaced by that list and follow it when it changes.</span>
+      </label>
       {options.map((option, index) => (
         <div key={index} className="flex gap-[4px]">
           <input
