@@ -5,6 +5,7 @@ import type { FieldGroupDoc } from '@/fields/customFields/types'
 import { buildMergeContext, resolveDocumentBlocks } from '@/lib/mergeTags'
 
 import { matchesLocation, optionsPageContext, type LocationContext } from './location'
+import { withDatasources } from '@/features/datasources/withDatasources'
 import { normalizeFieldGroup } from './normalize'
 import { definitionsFor } from './validate'
 import { buildCustomFieldContext, collectMediaIds, type MediaUrls } from './stringify'
@@ -35,7 +36,9 @@ export async function loadFieldGroups(): Promise<FieldGroupDoc[]> {
     pagination: false,
     depth: 0,
   })
-  return (result.docs as unknown as Record<string, unknown>[]).map(normalizeFieldGroup)
+  const groups = (result.docs as unknown as Record<string, unknown>[]).map(normalizeFieldGroup)
+  // Shared option lists (Task 15, 34h5b): a field naming a list takes the list's choices.
+  return withDatasources(groups)
 }
 
 /** Location context for a saved or form document in a given collection. */

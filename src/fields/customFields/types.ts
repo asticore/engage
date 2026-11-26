@@ -73,6 +73,8 @@ export type CustomFieldDef = {
   /** Regex the text value must match, with the message shown when it does not. */
   pattern?: string | null
   patternMessage?: string | null
+  /** Name of a shared option list (Task 15, 34h5b); its items replace `options` when the field group is loaded. */
+  datasource?: string | null
   /** checkbox: the label shown next to the box and used in merge tags when true. */
   trueLabel?: string | null
   /** relationship: collections that can be picked from. */
