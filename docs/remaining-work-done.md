@@ -16,7 +16,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [INT](#cat-int) | Integrations, API and webhooks | 19 |
 | [EVT](#cat-evt) | Events, tickets and bookings | 11 |
 | [COM](#cat-com) | Commerce and shop | 51 |
-| [FRM](#cat-frm) | Forms, comments and spam | 10 |
+| [FRM](#cat-frm) | Forms, comments and spam | 11 |
 | [MEM](#cat-mem) | Members, companies and portal | 11 |
 | [MED](#cat-med) | Media and files | 10 |
 | [I18N](#cat-i18n) | Languages and translations | 12 |
@@ -1671,6 +1671,14 @@ _Date: 22 Nov 2026 · Original group: Task 9, 28d Live review sources (built 22 
 **Where to find it:** /admin/settings/content > Form settings > Spam (Test CAPTCHA keys button, Appearance: Visible or Invisible); fallback reCAPTCHA keys: /admin/settings/site > Integrations
 
 <a id="frm-009"></a>
+#### FRM-011 · Task 15 34h5b Shared lists on custom fields (26 Nov 2026)
+
+_Date: 26 Nov 2026_
+
+**Task 15 34h5b (26 Nov 2026).** Select, radio and button group fields in a custom field group have a Shared list box above their choices. A list name (made in the visual editor under Form settings > Shared lists) replaces the field's own choices when the field groups are loaded, in the editor input, the public output and the server value check, so a list edited once updates forms and custom fields alike. An unknown list keeps the field's own choices. Code: `fields/customFields/types.ts`, `customFields/normalize.ts`, `customFields/server.ts`, `FieldGroupBuilderField.tsx`; test added to `tests/int/datasources-34h5.int.spec.ts`.
+
+**Where to find it:** Admin > Custom fields > a select field > Shared list
+
 #### FRM-010 · Task 15 34h5 Datasources: shared option lists (23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3716,6 +3724,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 - [BLD-042](#bld-042) Task 10 chat button batch 5 (22 Nov 2026)
 - [EVT-011](#evt-011) 16g Event page type on posts (built 22 Nov 2026)
 - [FRM-008](#frm-008) Site-wide CAPTCHA keys, test and look (Task 5, 21a, built 22 Nov 2026)
+- [FRM-011](#frm-011) Task 15 34h5b Shared lists on custom fields
 - [FRM-010](#frm-010) Task 15 34h5 Datasources: shared option lists
 - [FRM-009](#frm-009) Spam folder, rule actions and Akismet (Task 5, 21b, built 22 Nov 2026)
 - [I18N-012](#i18n-012) 41a
