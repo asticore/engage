@@ -58,11 +58,31 @@ describe('map views', () => {
     expect(v.staticSrc).toBeNull()
     expect(v.directionsUrl).toContain('openstreetmap.org/directions')
   })
-  it('builds the Google embed with the style as map type', () => {
+  it('uses the keyless Google embed by default, with no static picture', () => {
     const v = buildMapView({ ...base, provider: 'google', style: 'satellite' })
-    expect(v.embedSrc).toContain('google.com/maps?q=')
+    expect(v.provider).toBe('google')
+    expect(v.embedSrc).toContain('https://www.google.com/maps?q=')
     expect(v.embedSrc).toContain('&t=k')
+    expect(v.embedSrc).not.toContain('embed/v1')
+    expect(v.staticSrc).toBeNull()
+  })
+  it('uses the keyed Embed API and Static picture only when the setting is on', () => {
+    const keyedConfig = normaliseConfig({ map: { provider: 'google', googleKey: 'AIzaSyABCDEFGH123', googleEmbedApi: true } })
+    const v = buildMapView({ ...base, config: keyedConfig, provider: 'google', style: 'satellite' })
+    expect(v.embedSrc).toContain('https://www.google.com/maps/embed/v1/place?key=AIzaSyABCDEFGH123')
+    expect(v.embedSrc).toContain('&q=51.5%2C-0.12')
+    expect(v.embedSrc).toContain('&maptype=satellite')
     expect(v.staticSrc).toContain('staticmap')
+    expect(v.staticSrc).toContain('key=AIzaSyABCDEFGH123')
+    const noKey = normaliseConfig({ map: { provider: 'google', googleEmbedApi: true } })
+    expect(buildMapView({ ...base, config: noKey, provider: 'google' }).embedSrc).not.toContain('embed/v1')
+  })
+  it('keeps the Google setting through save, redaction and normalising', () => {
+    expect(normaliseConfig({ map: { googleEmbedApi: 'true' } }).map.googleEmbedApi).toBe(true)
+    expect(normaliseConfig(DEFAULT_MAPS_WEATHER).map.googleEmbedApi).toBe(false)
+    expect(redactConfig(withKeys).map.googleEmbedApi).toBe(false)
+    expect(mergePosted(withKeys, { map: { googleEmbedApi: true } }).map.googleEmbedApi).toBe(true)
+    expect(mergePosted({ ...withKeys, map: { ...withKeys.map, googleEmbedApi: true } }, { map: { googleEmbedApi: false } }).map.googleEmbedApi).toBe(false)
   })
   it('builds MapTiler and Mapbox pictures with the style, colour and every marker', () => {
     const m = buildMapView({ ...base, provider: 'maptiler', style: 'dark', markers: parseMarkers('51.5,-0.12\n51.6,-0.1'), markerColour: '#112233' })

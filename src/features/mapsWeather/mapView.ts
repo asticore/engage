@@ -133,10 +133,14 @@ export function buildMapView(input: MapInput): MapView {
   if (provider === 'google') {
     const place = centre ? `${centre.lat},${centre.lng}` : q
     if (!place) return { provider, embedSrc: null, staticSrc: null, directionsUrl }
-    // Keyless embed: the keyed Embed API shows a grey box unless that API is enabled and the key allows this site.
-    const embedSrc = `https://www.google.com/maps?q=${encodeURIComponent(place)}&z=${zoom}&t=${style === 'satellite' ? 'k' : style === 'terrain' ? 'p' : 'm'}&output=embed`
+    // Keyless by default. The keyed Embed API and Static API only when the admin says the key has them enabled,
+    // since otherwise the keyed embed shows a grey box.
+    const keyed = input.config.map.googleEmbedApi && key !== ''
+    const embedSrc = keyed
+      ? `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(key)}&q=${encodeURIComponent(place)}&zoom=${zoom}&maptype=${GOOGLE_TYPE[style]}`
+      : `https://www.google.com/maps?q=${encodeURIComponent(place)}&z=${zoom}&t=${style === 'satellite' ? 'k' : style === 'terrain' ? 'p' : 'm'}&output=embed`
     const marks = pins.map((p) => `${p.lat},${p.lng}`).join('|')
-    const staticSrc = centre ? `https://maps.googleapis.com/maps/api/staticmap?center=${centre.lat},${centre.lng}&zoom=${zoom}&size=${Math.min(w, 640)}x${Math.min(h, 640)}&maptype=${GOOGLE_TYPE[style]}&markers=color:0x${colour}|${encodeURIComponent(marks)}&key=${encodeURIComponent(key)}` : null
+    const staticSrc = keyed && centre ? `https://maps.googleapis.com/maps/api/staticmap?center=${centre.lat},${centre.lng}&zoom=${zoom}&size=${Math.min(w, 640)}x${Math.min(h, 640)}&maptype=${GOOGLE_TYPE[style]}&markers=color:0x${colour}|${encodeURIComponent(marks)}&key=${encodeURIComponent(key)}` : null
     return { provider, embedSrc, staticSrc, directionsUrl: centre ? `https://www.google.com/maps/dir/?api=1&destination=${centre.lat},${centre.lng}` : directionsUrl }
   }
 

@@ -16,7 +16,7 @@ export const MAP_PROVIDER_LABELS: Record<MapProvider, string> = { osm: 'OpenStre
 export const WEATHER_PROVIDER_LABELS: Record<WeatherProvider, string> = { 'open-meteo': 'Open-Meteo (free, no key)', openweather: 'OpenWeather (key)', weatherapi: 'WeatherAPI (key)', tomorrow: 'Tomorrow.io (key)' }
 
 export type MapsWeatherConfig = {
-  map: { provider: MapProvider; style: MapStyle; googleKey: string; maptilerKey: string; mapboxKey: string }
+  map: { provider: MapProvider; style: MapStyle; googleKey: string; /** Use the keyed Google Embed API (the admin says the key has it enabled). Off: keyless Google embed. */ googleEmbedApi: boolean; maptilerKey: string; mapboxKey: string }
   weather: {
     provider: WeatherProvider
     openweatherKey: string
@@ -30,7 +30,7 @@ export type MapsWeatherConfig = {
 }
 
 export const DEFAULT_MAPS_WEATHER: MapsWeatherConfig = {
-  map: { provider: 'osm', style: 'light', googleKey: '', maptilerKey: '', mapboxKey: '' },
+  map: { provider: 'osm', style: 'light', googleKey: '', googleEmbedApi: false, maptilerKey: '', mapboxKey: '' },
   weather: { provider: 'open-meteo', openweatherKey: '', weatherapiKey: '', tomorrowKey: '', units: 'metric', language: 'en', cacheMinutes: 30 },
 }
 
@@ -58,6 +58,7 @@ export function normaliseConfig(input: unknown): MapsWeatherConfig {
       provider: oneOf(m.provider, MAP_PROVIDERS, 'osm'),
       style: oneOf(m.style, MAP_STYLES, 'light'),
       googleKey: cleanKey(m.googleKey),
+      googleEmbedApi: m.googleEmbedApi === true || m.googleEmbedApi === 'true',
       maptilerKey: cleanKey(m.maptilerKey),
       mapboxKey: cleanKey(m.mapboxKey),
     },
@@ -93,9 +94,9 @@ export function effectiveWeatherProvider(config: MapsWeatherConfig): WeatherProv
 
 /** What the browser may see: every key replaced by whether it is saved. */
 export function redactConfig(config: MapsWeatherConfig): { map: Omit<MapsWeatherConfig['map'], SecretKey> & Record<string, boolean | string>; weather: Record<string, unknown> } {
-  const saved = (k: SecretKey): boolean => Boolean((config.map as Record<string, string>)[k] ?? (config.weather as Record<string, string | number>)[k])
+  const saved = (k: SecretKey): boolean => Boolean((config.map as Record<string, unknown>)[k] ?? (config.weather as Record<string, unknown>)[k])
   return {
-    map: { provider: config.map.provider, style: config.map.style, googleKeySaved: saved('googleKey'), maptilerKeySaved: saved('maptilerKey'), mapboxKeySaved: saved('mapboxKey') },
+    map: { provider: config.map.provider, style: config.map.style, googleKeySaved: saved('googleKey'), googleEmbedApi: config.map.googleEmbedApi, maptilerKeySaved: saved('maptilerKey'), mapboxKeySaved: saved('mapboxKey') },
     weather: { provider: config.weather.provider, units: config.weather.units, language: config.weather.language, cacheMinutes: config.weather.cacheMinutes, openweatherKeySaved: saved('openweatherKey'), weatherapiKeySaved: saved('weatherapiKey'), tomorrowKeySaved: saved('tomorrowKey') },
   }
 }
@@ -109,8 +110,8 @@ export function mergePosted(current: MapsWeatherConfig, posted: unknown): MapsWe
   const next = normaliseConfig({ map: { ...current.map, ...stripBlank(body.map) }, weather: { ...current.weather, ...stripBlank(body.weather) } })
   for (const k of SECRET_KEYS) {
     if (!clear.has(k)) continue
-    if (k in next.map) (next.map as Record<string, string>)[k] = ''
-    else (next.weather as Record<string, string | number>)[k] = ''
+    if (k in next.map) (next.map as Record<string, unknown>)[k] = ''
+    else (next.weather as Record<string, unknown>)[k] = ''
   }
   return next
 }
