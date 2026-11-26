@@ -21,7 +21,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [MED](#cat-med) | Media and files | 10 |
 | [I18N](#cat-i18n) | Languages and translations | 12 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
-| [SEO](#cat-seo) | SEO, blog and content | 25 |
+| [SEO](#cat-seo) | SEO, blog and content | 27 |
 | [BLD](#cat-bld) | Visual builder, templates and elements | 82 |
 | [ADM](#cat-adm) | Admin and settings | 39 |
 
@@ -2480,6 +2480,14 @@ _Date: 22 Nov 2026_
 
 **Where to find it:** /admin/content/posts > Write with AI (Blog list) > Edit questions
 
+#### SEO-027 · Task 15 34h6 Releases (24 Nov 2026)
+
+_Date: 26 Nov 2026_
+
+**Task 15 34h6 (26 Nov 2026).** Releases: a named bundle of pages, posts, events, courses and products that go live together. On the Scheduled tasks screen, the Releases card creates a release (name, optional go-live time in UTC), adds documents by type and id, and has Publish now, Undo release and Delete. Publishing is all or nothing: if any item fails, the ones already published are put back and the release stays open with a note. Undo returns each item to how it was before (items already live stay live). A release with a time is published by the existing five-minute scheduled publishing job. Publishing goes through the engine, so the usual publish hooks and page snapshots run. Tables `eg_releases` and `eg_release_items` are created on first use. Code: `src/features/releases/{core,store,run}.ts`, `api/admin-releases/route.ts`, `ReleasesCard.tsx`, `ScheduledTasksView.tsx`, `cron/jobs.ts`; tests `tests/int/releases-34h6.int.spec.ts`. Not done: approval rules are not applied to release items yet.
+
+**Where to find it:** Admin > Scheduled tasks > Releases
+
 #### SEO-026 · Redirect popup when an address changes (built 23 Nov 2026)
 
 _Date: 23 Nov 2026_
@@ -3640,6 +3648,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 - [BLD-088](#bld-088) Task 10 29b Form styling options
 - [BLD-087](#bld-087) Task 10 29e and 29c Template author and date conditions, age gate per country
+- [SEO-027](#seo-027) Task 15 34h6 Releases
 - [SEO-026](#seo-026) Redirect popup when an address changes
 - [BLD-086](#bld-086) Task 10 29a Chart screen reader summary
 - [BLD-085](#bld-085) Task 10 29d Cart, Checkout and Mini cart elements
