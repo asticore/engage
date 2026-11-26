@@ -22,7 +22,8 @@ describe('maps and weather settings', () => {
     expect(c.weather.language).toBe('en')
   })
   it('falls back to the free provider when a keyed one has no key', () => {
-    expect(effectiveMapProvider(DEFAULT_MAPS_WEATHER, 'google')).toBe('osm')
+    expect(effectiveMapProvider(DEFAULT_MAPS_WEATHER, 'google')).toBe('google')
+    expect(effectiveMapProvider(DEFAULT_MAPS_WEATHER, 'mapbox')).toBe('osm')
     expect(effectiveMapProvider(withKeys, 'google')).toBe('google')
     expect(effectiveMapProvider(withKeys)).toBe('maptiler')
     expect(effectiveWeatherProvider(normaliseConfig({ weather: { provider: 'tomorrow' } }))).toBe('open-meteo')
