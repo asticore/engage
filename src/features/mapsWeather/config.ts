@@ -82,10 +82,10 @@ export function weatherKeyFor(config: MapsWeatherConfig, provider: WeatherProvid
   return provider === 'openweather' ? config.weather.openweatherKey : provider === 'weatherapi' ? config.weather.weatherapiKey : provider === 'tomorrow' ? config.weather.tomorrowKey : ''
 }
 
-/** A provider that needs a key but has none falls back to the free one, so a page never breaks. */
+/** A provider that needs a key but has none falls back to the free one, so a page never breaks. Google works without a key (keyless embed). */
 export function effectiveMapProvider(config: MapsWeatherConfig, wanted?: unknown): MapProvider {
   const p = oneOf(wanted, MAP_PROVIDERS, config.map.provider)
-  return p === 'osm' || mapKeyFor(config, p) ? p : 'osm'
+  return p === 'osm' || p === 'google' || mapKeyFor(config, p) ? p : 'osm'
 }
 export function effectiveWeatherProvider(config: MapsWeatherConfig): WeatherProvider {
   const p = config.weather.provider
