@@ -4609,3 +4609,5 @@ Checked against the code, not live.
 - 16f FAQ knowledgebase (2026-11-23): `/faq` now has a search box and type chips taken from each FAQ's Category, each type has its own page at `/faq/category/<type>` (with FAQPage structured data and sitemap entries), and the Accordion element in the visual builder can be filled from FAQ entries (a category or hand-picked ids). Helpers in `src/features/faq/archive.ts`, shown by `src/features/faq/FaqBrowser.tsx`; test `tests/int/faq-archive.int.spec.ts`.
 
 - 16b AdSense decision (2026-11-24, Matt): no separate AdSense display unit. AdSense is served through Google Ad Manager (set up as AdSense backfill on the Ad Manager unit in Google's own console), using the existing Ad Manager settings and ad blocks.
+
+- Ad unit sizes and supplier (2026-11-26, Matt): ad unit size boxes now have ticks for common sizes (`src/features/ads/sizes.ts`, `admin/SizesField.tsx`), the Network choice says Ad Manager can take header bidding and AdSense is its own supplier, and the Ad element picks its placement or unit from dropdowns (`/api/admin-ad-options`). Test `tests/int/ad-sizes.int.spec.ts`.

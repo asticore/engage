@@ -58,6 +58,7 @@ const FontsManagerField = dynamic(() => import('@/admin/components/FontsManagerF
 const MediaFocalPointField = dynamic(() => import('@/features/media/admin/MediaFocalPointField').then((mod) => mod.MediaFocalPointField))
 const MediaCropField = dynamic(() => import('@/features/media/admin/MediaCropField').then((mod) => mod.MediaCropField))
 const MediaEditPanel = dynamic(() => import('@/features/media/admin/MediaEditPanel').then((mod) => mod.MediaEditPanel))
+const SizesField = dynamic(() => import('@/features/ads/admin/SizesField').then((mod) => mod.SizesField))
 const BiddersField = dynamic(() => import('@/features/ads/admin/BiddersField').then((mod) => mod.BiddersField))
 const SiteFilesField = dynamic(() => import('@/features/seo/admin/SiteFilesField').then((mod) => mod.SiteFilesField))
 const TicketTiersField = dynamic(() => import('@/features/editScreens/admin/TicketTiersField').then((mod) => mod.TicketTiersField))
@@ -105,6 +106,7 @@ export const COMPONENT_REGISTRY: Record<string, ComponentType<any>> = {
   '@/features/media/admin/MediaEditPanel#MediaEditPanel': MediaEditPanel,
   '@/features/seo/admin/SiteFilesField#SiteFilesField': SiteFilesField,
   '@/features/ads/admin/BiddersField#BiddersField': BiddersField,
+  '@/features/ads/admin/SizesField#SizesField': SizesField,
   '@/features/editScreens/admin/TicketTiersField#TicketTiersField': TicketTiersField,
   '@/features/dataViews/admin/DataViewEditorField#DataViewEditorField': DataViewEditorField,
 }

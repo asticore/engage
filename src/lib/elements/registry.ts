@@ -198,8 +198,8 @@ ELEMENTS.push({
   category: 'marketing',
   description: 'An ad slot. Shows a labelled placeholder here; real ads load on the live site after marketing consent.',
   fields: [
-    { name: 'placement', label: 'Placement key', type: 'text', helpText: 'The key of a placement under Ads > Placements.' },
-    { name: 'unit', label: 'Or ad unit key', type: 'text', helpText: 'Use a unit key directly if you have no placement.' },
+    { name: 'placement', label: 'Placement', type: 'select', optionsUrl: '/api/admin-ad-options?kind=placement', options: [], helpText: 'A placement from Ads > Placements.' },
+    { name: 'unit', label: 'Or ad unit', type: 'select', optionsUrl: '/api/admin-ad-options?kind=unit', options: [], helpText: 'Pick a unit directly if you have no placement. The unit says whether Ad Manager, AdSense or header bidding fills it.' },
   ],
   defaultProps: () => ({ placement: '' }),
 })
