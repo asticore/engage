@@ -3,13 +3,13 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
 type Redacted = {
-  map: { provider: string; style: string; googleKeySaved: boolean; maptilerKeySaved: boolean; mapboxKeySaved: boolean }
+  map: { provider: string; style: string; googleKeySaved: boolean; googleEmbedApi: boolean; maptilerKeySaved: boolean; mapboxKeySaved: boolean }
   weather: { provider: string; units: string; language: string; cacheMinutes: number; openweatherKeySaved: boolean; weatherapiKeySaved: boolean; tomorrowKeySaved: boolean }
 }
 type Loaded = { config?: Redacted; mapProviders?: Record<string, string>; mapStyles?: string[]; weatherProviders?: Record<string, string>; usage?: Record<string, number>; error?: string }
 
 const KEYS: Array<{ name: string; label: string; group: 'map' | 'weather'; saved: (c: Redacted) => boolean; help: string }> = [
-  { name: 'googleKey', label: 'Google Maps key', group: 'map', saved: (c) => c.map.googleKeySaved, help: 'Maps Embed API (and Maps Static API for the picture). Restrict the key to your site address in Google Cloud.' },
+  { name: 'googleKey', label: 'Google Maps key', group: 'map', saved: (c) => c.map.googleKeySaved, help: 'Used only when the Maps Embed API box below is ticked. Restrict the key to your site address in Google Cloud.' },
   { name: 'maptilerKey', label: 'MapTiler key', group: 'map', saved: (c) => c.map.maptilerKeySaved, help: 'From cloud.maptiler.com. Restrict it to your site address.' },
   { name: 'mapboxKey', label: 'Mapbox access token', group: 'map', saved: (c) => c.map.mapboxKeySaved, help: 'A public token (pk...) restricted to your site address.' },
   { name: 'openweatherKey', label: 'OpenWeather key', group: 'weather', saved: (c) => c.weather.openweatherKeySaved, help: 'From openweathermap.org.' },
@@ -20,7 +20,7 @@ const KEYS: Array<{ name: string; label: string; group: 'map' | 'weather'; saved
 /** Admin screen: map and weather providers and keys. English only. Keys are never shown after saving. */
 export const MapsWeatherPanel: React.FC = () => {
   const [data, setData] = useState<Loaded>({})
-  const [form, setForm] = useState<{ map: Record<string, string>; weather: Record<string, string | number> }>({ map: {}, weather: {} })
+  const [form, setForm] = useState<{ map: Record<string, string | boolean>; weather: Record<string, string | number> }>({ map: {}, weather: {} })
   const [clear, setClear] = useState<string[]>([])
   const [message, setMessage] = useState('')
   const [testMsg, setTestMsg] = useState('')
@@ -30,14 +30,14 @@ export const MapsWeatherPanel: React.FC = () => {
     const d = (await res.json().catch((): null => null)) as Loaded | null
     if (!res.ok || !d?.config) return setMessage(d?.error ?? 'Could not load the settings.')
     setData(d)
-    setForm({ map: { provider: d.config.map.provider, style: d.config.map.style }, weather: { provider: d.config.weather.provider, units: d.config.weather.units, language: d.config.weather.language, cacheMinutes: d.config.weather.cacheMinutes } })
+    setForm({ map: { provider: d.config.map.provider, style: d.config.map.style, googleEmbedApi: d.config.map.googleEmbedApi }, weather: { provider: d.config.weather.provider, units: d.config.weather.units, language: d.config.weather.language, cacheMinutes: d.config.weather.cacheMinutes } })
     setClear([])
   }, [])
   useEffect(() => {
     void load()
   }, [load])
 
-  const set = (group: 'map' | 'weather', name: string, value: string | number) => setForm((f) => ({ ...f, [group]: { ...f[group], [name]: value } }))
+  const set = (group: 'map' | 'weather', name: string, value: string | number | boolean) => setForm((f) => ({ ...f, [group]: { ...f[group], [name]: value } }))
 
   const save = async () => {
     const res = await fetch('/api/admin-maps-weather', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, clear }) })
@@ -85,6 +85,10 @@ export const MapsWeatherPanel: React.FC = () => {
           </select>
         </label>
         {KEYS.filter((k) => k.group === 'map').map(keyField)}
+        <label>
+          <input type="checkbox" checked={form.map.googleEmbedApi === true} onChange={(e) => set('map', 'googleEmbedApi', e.target.checked)} />{' '}
+          My Google key has the Maps Embed API and Maps Static API enabled (leave off to use the keyless Google map)
+        </label>
         <p>Addresses are looked up once through OpenStreetMap and the answer is stored, so visitors cause no lookups. The map itself loads only after a visitor presses Show map.</p>
       </section>
       <section style={{ display: 'grid', gap: '0.75rem', maxWidth: '48rem' }}>

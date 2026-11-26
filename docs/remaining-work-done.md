@@ -3275,6 +3275,7 @@ The form block's look gains per-form colour options in the form's settings (Look
 _Date: 23 Nov 2026_
 
 Map element: new "How the map appears" choice (behind a Show map button, the default and fastest, or shown automatically), plus Show markers and Show the place name on the button next to the existing directions link. Code: `wave26Defs.ts`, `MapServer.tsx`, `MapFacade.tsx`. Visual editor top bar: the More button is now a gear at the right end holding Preview, Clear cache (calls `/api/admin-cache-clear`, shows a toast), Keyboard shortcuts, Import / Export and Save as example; the separate Preview, Import / Export, Save as example and Shortcuts buttons are gone. Code: `TopBarMore.tsx`, `ShortcutsHelp.tsx`, `VisualEditor.tsx`, `ve.top.*` strings in all dictionaries.
+Google maps use the keyless embed unless Settings > Maps and weather says the Google key has the Embed API enabled.
 
 **Where to find it:** Visual editor > Map element > Settings; visual editor top bar > gear icon
 
