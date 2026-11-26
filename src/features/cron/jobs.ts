@@ -17,6 +17,14 @@ export const JOB_RUNNERS: Record<string, JobRunner> = {
     // Reviews that have waited past their workflow's due days are chased on the same timer (never fails the run).
     const { runOverdueReviewReminders } = await import('@/features/approval/overdue')
     await runOverdueReviewReminders(engine as never, now).catch((): number => 0)
+    // Releases (Task 15, 34h6) whose time has come are published on the same timer; never fails the run.
+    try {
+      const { relDb } = await import('@/features/releases/store')
+      const { runDueReleases } = await import('@/features/releases/run')
+      await runDueReleases(engine as never, await relDb(), now.toISOString())
+    } catch {
+      // Releases must not stop scheduled publishing.
+    }
     return result
   },
   'abandoned-carts': async ({ engine }) => {

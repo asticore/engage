@@ -1,3 +1,4 @@
+import { ReleasesCard } from './ReleasesCard'
 import { adminHref } from '@/features/security/adminPath'
 import { getAdminRoot } from '@/features/security/settings'
 import { getAdminUi } from '@/admin/i18n/serverUi'
@@ -59,6 +60,8 @@ export async function ScheduledTasksView() {
             : 'The scheduled jobs have never run.'}
         </p>
       </header>
+
+      <ReleasesCard />
 
       <CollapsibleCard id="scheduled-tasks-jobs" title={t('st.lit.jobs')}>
         <table className="sh-table">
