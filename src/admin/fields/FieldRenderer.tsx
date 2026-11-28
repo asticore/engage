@@ -48,6 +48,7 @@ import { useHydrated } from '@/lib/clientStore'
 import { childPath, fieldLabel, fieldRequired, getAtPath, reviveCondition, unflattenFields } from './shared'
 
 import { FieldHelp } from './FieldHelp'
+import { useAdminLabel } from '@/admin/i18n/AdminUiProvider'
 import { ArrayFieldRenderer } from './ArrayField'
 import { BlocksFieldRenderer } from './BlocksField'
 import { CheckboxFieldRenderer } from './CheckboxField'
@@ -176,7 +177,7 @@ const SingleFieldRenderer: React.FC<{
     // JSX tag gets is stable across renders even though the lint rule can't
     // see that through the function call.
     // eslint-disable-next-line react-hooks/static-components
-    return withHelp(field, <Override field={field} path={path} readOnly={fieldReadOnly} />)
+    return withHelp(field, <Override field={field} path={path} readOnly={fieldReadOnly} />, path)
   }
 
   switch (field.type) {
@@ -215,19 +216,26 @@ const SingleFieldRenderer: React.FC<{
   if (!name) return null
   const path = childPath(parentPath, name)
 
-  return withHelp(field, renderLeaf(field, path, fieldReadOnly))
+  return withHelp(field, renderLeaf(field, path, fieldReadOnly), path)
 }
 
 /** A leaf field's own plain-text description, shown as a tooltip beside it. Fields with no description render exactly as before. */
-function withHelp(field: Field, node: React.ReactNode): React.ReactNode {
+function withHelp(field: Field, node: React.ReactNode, path: string): React.ReactNode {
   const description = (field as { admin?: { description?: unknown } }).admin?.description
   if (typeof description !== 'string' || !description.trim() || node === null) return node
   return (
     <div className="field-help-wrap">
       {node}
-      <FieldHelp text={description} />
+      <TranslatedHelp path={path} fallback={description} />
     </div>
   )
+}
+
+/** The description in the admin language when the table has `desc.field.<path>` (array row numbers ignored); English otherwise. */
+function TranslatedHelp({ path, fallback }: { path: string; fallback: string }) {
+  const labelFor = useAdminLabel()
+  const slug = `field.${path.replace(/\.\d+(?=\.|$)/g, '')}`
+  return <FieldHelp text={labelFor('desc', slug, fallback)} />
 }
 
 function renderLeaf(field: Field, path: string, fieldReadOnly: boolean): React.ReactNode {

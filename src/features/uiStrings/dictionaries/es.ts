@@ -4474,6 +4474,27 @@ const es: UiDictionary = {
   "planner.defaultName": "Mi plan del sitio",
   "planner.nextPage": "Siguiente página planificada: {title}",
   "planner.saveFirst": "(guarde primero esta página)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "Muestra las insignias de abajo en las tarjetas de producto del archivo de la tienda y en las listas de productos. Desactívalo para ocultar todas las insignias a la vez sin eliminarlas.",
+  'desc.field.promoBadges': "Etiquetas pequeñas como Oferta, Nuevo o Más vendido que se superponen a la imagen del producto. Cada insignia indica en qué productos aparece. Una tarjeta muestra como máximo tres insignias; ganan los números de prioridad más bajos.",
+  'desc.field.promoBadges.text': "El texto de la insignia, p. ej. Oferta. Déjalo en blanco para mostrar solo un icono.",
+  'desc.field.promoBadges.enabled': "Desmarca para desactivar esta insignia.",
+  'desc.field.promoBadges.icon': "Icono opcional que se muestra antes del texto. Elige uno de la lista.",
+  'desc.field.promoBadges.colour': "Color de la insignia.",
+  'desc.field.promoBadges.textColour': "Color del texto y del icono.",
+  'desc.field.promoBadges.position': "En qué esquina de la imagen del producto se coloca la insignia.",
+  'desc.field.promoBadges.style': "Cómo se usa el color.",
+  'desc.field.promoBadges.shape': "Las esquinas de la insignia.",
+  'desc.field.promoBadges.effect': "Un pequeño efecto de movimiento. Los visitantes que piden reducir el movimiento en su dispositivo no lo ven.",
+  'desc.field.promoBadges.appliesTo': "Qué productos reciben esta insignia.",
+  'desc.field.promoBadges.newDays': "Un producto se considera nuevo durante este número de días después de añadirlo.",
+  'desc.field.promoBadges.tag': "El slug de la etiqueta de producto, p. ej. best-seller.",
+  'desc.field.promoBadges.category': "El slug de la categoría, p. ej. prints.",
+  'desc.field.promoBadges.productSlugs': "Marca los productos que recibirán esta insignia.",
+  'desc.field.promoBadges.priority': "Los números más bajos se muestran primero cuando un producto coincide con varias insignias.",
+  'desc.field.promoBadges.startsAt': "Vacío significa que empieza de inmediato.",
+  'desc.field.promoBadges.endsAt': "Vacío significa que nunca termina.",
 }
 
 export default es

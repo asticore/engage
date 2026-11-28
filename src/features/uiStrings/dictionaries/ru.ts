@@ -4474,6 +4474,27 @@ const ru: UiDictionary = {
   "planner.defaultName": "Мой план сайта",
   "planner.nextPage": "Следующая запланированная страница: {title}",
   "planner.saveFirst": "(сначала сохраните эту страницу)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "Показывать приведенные ниже значки на карточках товаров в архиве магазина и в списках товаров. Выключите, чтобы скрыть все значки сразу, не удаляя их.",
+  'desc.field.promoBadges': "Небольшие метки, например Скидка, Новинка или Хит продаж, которые накладываются на изображение товара. Каждый значок указывает, для каких товаров он применяется. На карточке показывается не более трех значков; выигрывают значки с меньшим номером приоритета.",
+  'desc.field.promoBadges.text': "Текст на значке, например Скидка. Оставьте пустым, если нужен только значок-иконка.",
+  'desc.field.promoBadges.enabled': "Снимите флажок, чтобы отключить этот значок.",
+  'desc.field.promoBadges.icon': "Необязательная иконка, которая показывается перед текстом. Выберите из списка.",
+  'desc.field.promoBadges.colour': "Цвет значка.",
+  'desc.field.promoBadges.textColour': "Цвет текста и иконки.",
+  'desc.field.promoBadges.position': "В каком углу изображения товара расположен значок.",
+  'desc.field.promoBadges.style': "Как используется цвет.",
+  'desc.field.promoBadges.shape': "Углы значка.",
+  'desc.field.promoBadges.effect': "Небольшой эффект анимации. Посетители, которые включили на устройстве уменьшение движения, его не видят.",
+  'desc.field.promoBadges.appliesTo': "Какие товары получат этот значок.",
+  'desc.field.promoBadges.newDays': "Товар считается новым в течение такого числа дней после добавления.",
+  'desc.field.promoBadges.tag': "Слаг тега товара, например best-seller.",
+  'desc.field.promoBadges.category': "Слаг категории, например prints.",
+  'desc.field.promoBadges.productSlugs': "Отметьте товары, которые получат этот значок.",
+  'desc.field.promoBadges.priority': "Когда товар подходит под несколько значков, первыми показываются значки с меньшими номерами.",
+  'desc.field.promoBadges.startsAt': "Пустое поле означает, что значок начинает действовать сразу.",
+  'desc.field.promoBadges.endsAt': "Пустое поле означает, что значок никогда не перестанет действовать.",
 }
 
 export default ru

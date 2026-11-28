@@ -4474,6 +4474,27 @@ const ar: UiDictionary = {
   "planner.defaultName": "خطة موقعي",
   "planner.nextPage": "الصفحة المخططة التالية: {title}",
   "planner.saveFirst": "(احفظ هذه الصفحة أولًا)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "أظهر الشارات أدناه على بطاقات المنتجات في أرشيف المتجر وفي قوائم المنتجات. أوقفها لإخفاء كل الشارات دفعة واحدة دون حذفها.",
+  'desc.field.promoBadges': "تسميات صغيرة مثل تخفيض أو جديد أو الأكثر مبيعا تظهر فوق صورة المنتج. تحدد كل شارة المنتجات التي تظهر عليها. تعرض البطاقة ثلاث شارات كحد أقصى، وتظهر الأرقام الأدنى في الأولوية أولا.",
+  'desc.field.promoBadges.text': "النص الظاهر على الشارة، مثل تخفيض. اتركه فارغا لعرض أيقونة فقط.",
+  'desc.field.promoBadges.enabled': "ألغِ التحديد لإيقاف هذه الشارة.",
+  'desc.field.promoBadges.icon': "أيقونة اختيارية تظهر قبل النص. اختر واحدة من القائمة.",
+  'desc.field.promoBadges.colour': "لون الشارة.",
+  'desc.field.promoBadges.textColour': "لون النص والأيقونة.",
+  'desc.field.promoBadges.position': "الركن من صورة المنتج الذي تظهر فيه الشارة.",
+  'desc.field.promoBadges.style': "طريقة استخدام اللون.",
+  'desc.field.promoBadges.shape': "زوايا الشارة.",
+  'desc.field.promoBadges.effect': "تأثير حركة بسيط. لا يراه الزوار الذين طلبوا من أجهزتهم تقليل الحركة.",
+  'desc.field.promoBadges.appliesTo': "المنتجات التي تحصل على هذه الشارة.",
+  'desc.field.promoBadges.newDays': "يُعد المنتج جديدا لهذا العدد من الأيام بعد إضافته.",
+  'desc.field.promoBadges.tag': "المعرّف النصي لوسم المنتج، مثل best-seller.",
+  'desc.field.promoBadges.category': "المعرّف النصي للفئة، مثل prints.",
+  'desc.field.promoBadges.productSlugs': "حدد المنتجات التي تحصل على هذه الشارة.",
+  'desc.field.promoBadges.priority': "تظهر الأرقام الأصغر أولا عندما يطابق المنتج عدة شارات.",
+  'desc.field.promoBadges.startsAt': "الفراغ يعني أنها تبدأ فورا.",
+  'desc.field.promoBadges.endsAt': "الفراغ يعني أنها لا تنتهي أبدا.",
 }
 
 export default ar

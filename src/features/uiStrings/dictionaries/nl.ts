@@ -4474,6 +4474,27 @@ const nl: UiDictionary = {
   "planner.defaultName": "Mijn sitesplan",
   "planner.nextPage": "Volgende geplande pagina: {title}",
   "planner.saveFirst": "(sla eerst deze pagina op)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "Toon de onderstaande badges op productkaarten in het winkelarchief en in productlijsten. Schakel uit om alle badges tegelijk te verbergen zonder ze te verwijderen.",
+  'desc.field.promoBadges': "Kleine labels zoals Actie, Nieuw of Bestseller die over de productafbeelding worden getoond. Elke badge geeft aan op welke producten hij staat. Een kaart toont maximaal drie badges; lagere prioriteitsnummers winnen.",
+  'desc.field.promoBadges.text': "De tekst op de badge, bijv. Actie. Laat leeg voor alleen een pictogram.",
+  'desc.field.promoBadges.enabled': "Haal het vinkje weg om deze badge uit te schakelen.",
+  'desc.field.promoBadges.icon': "Optioneel pictogram dat voor de tekst wordt getoond. Kies er een uit de lijst.",
+  'desc.field.promoBadges.colour': "Badgekleur.",
+  'desc.field.promoBadges.textColour': "Kleur van tekst en pictogram.",
+  'desc.field.promoBadges.position': "In welke hoek van de productafbeelding de badge staat.",
+  'desc.field.promoBadges.style': "Hoe de kleur wordt gebruikt.",
+  'desc.field.promoBadges.shape': "De hoeken van de badge.",
+  'desc.field.promoBadges.effect': "Een klein bewegingseffect. Bezoekers die op hun apparaat minder beweging hebben ingesteld, zien dit niet.",
+  'desc.field.promoBadges.appliesTo': "Welke producten deze badge krijgen.",
+  'desc.field.promoBadges.newDays': "Een product geldt als nieuw gedurende dit aantal dagen na het toevoegen.",
+  'desc.field.promoBadges.tag': "De slug van de producttag, bijv. best-seller.",
+  'desc.field.promoBadges.category': "De slug van de categorie, bijv. prints.",
+  'desc.field.promoBadges.productSlugs': "Vink de producten aan die deze badge krijgen.",
+  'desc.field.promoBadges.priority': "Lagere nummers worden eerst getoond wanneer een product bij meerdere badges past.",
+  'desc.field.promoBadges.startsAt': "Leeg betekent dat het meteen begint.",
+  'desc.field.promoBadges.endsAt': "Leeg betekent dat het nooit eindigt.",
 }
 
 export default nl

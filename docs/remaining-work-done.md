@@ -19,7 +19,7 @@ Everything that has been built and closed, moved here from `docs/remaining-work.
 | [FRM](#cat-frm) | Forms, comments and spam | 11 |
 | [MEM](#cat-mem) | Members, companies and portal | 11 |
 | [MED](#cat-med) | Media and files | 10 |
-| [I18N](#cat-i18n) | Languages and translations | 12 |
+| [I18N](#cat-i18n) | Languages and translations | 13 |
 | [AFF](#cat-aff) | Affiliates, agencies and franchising | 28 |
 | [SEO](#cat-seo) | SEO, blog and content | 27 |
 | [BLD](#cat-bld) | Visual builder, templates and elements | 82 |
@@ -2003,6 +2003,15 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 **Where to find it:** /admin/settings/marketing-seo > Permalinks (Blog address and Permalinks labels translated; hints stay English)
 
+<a id="i18n-013"></a>
+#### I18N-013 · Promo badge field descriptions
+
+_Date: 28 Nov 2026 · Original group: Task 2 (small gaps left by the old tasks 3 to 7)_
+
+The tooltip text (`?`) of every field now looks up `desc.field.<config path>` (array row numbers ignored) and falls back to the English description (`TranslatedHelp` in `src/admin/fields/FieldRenderer.tsx`). The 19 promo badge descriptions are in the UI strings in all 13 languages; the labels were already done (I18N-010). Other fields get a translated tooltip by adding a `desc.field.<path>` key.
+
+**Where to find it:** /admin/settings/shop-extra-settings > Promo badges (hover the ? beside a field, switch admin language)
+
 <a id="cat-aff"></a>
 ### AFF: Affiliates, agencies and franchising
 
@@ -3652,6 +3661,10 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 ---
 
 ## Part 2: Log by date
+
+### 28 Nov 2026
+
+- [I18N-013](#i18n-013) Task 2 promo badge field descriptions
 
 ### 23 Nov 2026
 

@@ -4475,6 +4475,27 @@ const de: UiDictionary = {
   "planner.defaultName": "Mein Seitenplan",
   "planner.nextPage": "Nächste geplante Seite: {title}",
   "planner.saveFirst": "(speichern Sie diese Seite zuerst)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "Zeige die unten stehenden Badges auf Produktkarten im Shop-Archiv und in Produktlisten an. Deaktiviere die Option, um alle Badges gleichzeitig auszublenden, ohne sie zu löschen.",
+  'desc.field.promoBadges': "Kleine Etiketten wie Angebot, Neu oder Bestseller, die über dem Produktbild erscheinen. Jedes Badge legt fest, für welche Produkte es gilt. Eine Karte zeigt höchstens drei Badges; niedrigere Prioritätszahlen gewinnen.",
+  'desc.field.promoBadges.text': "Der Text auf dem Badge, z. B. Angebot. Leer lassen für ein reines Symbol.",
+  'desc.field.promoBadges.enabled': "Abwählen, um dieses Badge zu deaktivieren.",
+  'desc.field.promoBadges.icon': "Optionales Symbol, das vor dem Text angezeigt wird. Aus der Liste wählen.",
+  'desc.field.promoBadges.colour': "Badge-Farbe.",
+  'desc.field.promoBadges.textColour': "Farbe von Text und Symbol.",
+  'desc.field.promoBadges.position': "Welche Ecke des Produktbilds das Badge belegt.",
+  'desc.field.promoBadges.style': "Wie die Farbe verwendet wird.",
+  'desc.field.promoBadges.shape': "Die Ecken des Badges.",
+  'desc.field.promoBadges.effect': "Ein kleiner Bewegungseffekt. Besucher, die auf ihrem Gerät reduzierte Bewegung aktiviert haben, sehen ihn nicht.",
+  'desc.field.promoBadges.appliesTo': "Welche Produkte dieses Badge erhalten.",
+  'desc.field.promoBadges.newDays': "Ein Produkt gilt so viele Tage nach dem Hinzufügen als neu.",
+  'desc.field.promoBadges.tag': "Der Slug des Produkt-Tags, z. B. best-seller.",
+  'desc.field.promoBadges.category': "Der Slug der Kategorie, z. B. prints.",
+  'desc.field.promoBadges.productSlugs': "Markiere die Produkte, die dieses Badge erhalten.",
+  'desc.field.promoBadges.priority': "Niedrigere Zahlen werden zuerst angezeigt, wenn ein Produkt mehrere Badges erfüllt.",
+  'desc.field.promoBadges.startsAt': "Leer bedeutet, dass es sofort beginnt.",
+  'desc.field.promoBadges.endsAt': "Leer bedeutet, dass es nie endet.",
 }
 
 export default de

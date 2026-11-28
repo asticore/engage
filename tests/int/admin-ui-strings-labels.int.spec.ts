@@ -31,4 +31,11 @@ describe('adminLabel: config labels in the admin language', () => {
     const dict = await loadStrings('es-MX')
     expect(adminLabel('collection', 'orders', 'Orders', { locale: 'es-MX', dict })).toBe('Pedidos')
   })
+
+  it('translates a field description by its config path', async () => {
+    const dict = await loadStrings('de')
+    const key = adminLabelKey('desc', 'field.promoBadges.text')
+    expect(key).not.toBeNull()
+    expect(adminLabel('desc', 'field.promoBadges.text', 'The words on the badge', { locale: 'de', dict })).not.toBe('The words on the badge')
+  })
 })

@@ -4474,6 +4474,27 @@ const fr: UiDictionary = {
   "planner.defaultName": "Mon plan de site",
   "planner.nextPage": "Prochaine page prévue : {title}",
   "planner.saveFirst": "(enregistrez d’abord cette page)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "Afficher les badges ci-dessous sur les cartes produits de l'archive de la boutique et dans les listes de produits. Désactiver pour masquer tous les badges d'un coup sans les supprimer.",
+  'desc.field.promoBadges': "Petites étiquettes telles que Promo, Nouveau ou Meilleure vente, affichées sur l'image du produit. Chaque badge indique les produits concernés. Une carte affiche au maximum trois badges ; les numéros de priorité les plus bas l'emportent.",
+  'desc.field.promoBadges.text': "Le texte du badge, par ex. Promo. Laisser vide pour une icône seule.",
+  'desc.field.promoBadges.enabled': "Décocher pour désactiver ce badge.",
+  'desc.field.promoBadges.icon': "Icône facultative affichée avant le texte. Choisissez-en une dans la liste.",
+  'desc.field.promoBadges.colour': "Couleur du badge.",
+  'desc.field.promoBadges.textColour': "Couleur du texte et de l'icône.",
+  'desc.field.promoBadges.position': "Le coin de l'image du produit où se place le badge.",
+  'desc.field.promoBadges.style': "Mode d'utilisation de la couleur.",
+  'desc.field.promoBadges.shape': "Les angles du badge.",
+  'desc.field.promoBadges.effect': "Un petit effet d'animation. Les visiteurs qui demandent à réduire les animations sur leur appareil ne le voient pas.",
+  'desc.field.promoBadges.appliesTo': "Les produits qui reçoivent ce badge.",
+  'desc.field.promoBadges.newDays': "Un produit est considéré comme nouveau pendant ce nombre de jours après son ajout.",
+  'desc.field.promoBadges.tag': "Le slug de l'étiquette produit, par ex. best-seller.",
+  'desc.field.promoBadges.category': "Le slug de la catégorie, par ex. prints.",
+  'desc.field.promoBadges.productSlugs': "Cochez les produits qui reçoivent ce badge.",
+  'desc.field.promoBadges.priority': "Les numéros les plus bas s'affichent en premier lorsqu'un produit correspond à plusieurs badges.",
+  'desc.field.promoBadges.startsAt': "Vide : le badge commence immédiatement.",
+  'desc.field.promoBadges.endsAt': "Vide : le badge ne se termine jamais.",
 }
 
 export default fr

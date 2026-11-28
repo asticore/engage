@@ -4473,6 +4473,27 @@ const zhHans: UiDictionary = {
   "planner.defaultName": "我的站点计划",
   "planner.nextPage": "下一个计划页面：{title}",
   "planner.saveFirst": "（请先保存此页面）",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "在店铺归档页和商品列表的商品卡片上显示以下徽章。关闭后可一次隐藏所有徽章，但不会删除它们。",
+  'desc.field.promoBadges': "叠加在商品图片上的小标签，例如促销、新品或畅销。每个徽章会说明适用于哪些商品。每张卡片最多显示三个徽章；优先级数字越小，越优先显示。",
+  'desc.field.promoBadges.text': "徽章上的文字，例如促销。留空则只显示图标。",
+  'desc.field.promoBadges.enabled': "取消勾选以关闭此徽章。",
+  'desc.field.promoBadges.icon': "可选图标，显示在文字之前。从列表中选择。",
+  'desc.field.promoBadges.colour': "徽章颜色。",
+  'desc.field.promoBadges.textColour': "文字和图标的颜色。",
+  'desc.field.promoBadges.position': "徽章位于商品图片的哪个角。",
+  'desc.field.promoBadges.style': "颜色的使用方式。",
+  'desc.field.promoBadges.shape': "徽章的圆角样式。",
+  'desc.field.promoBadges.effect': "一个小的动效。请求设备减少动态效果的访客将看不到此效果。",
+  'desc.field.promoBadges.appliesTo': "哪些商品会获得此徽章。",
+  'desc.field.promoBadges.newDays': "商品添加后的这段天数内被视为新品。",
+  'desc.field.promoBadges.tag': "商品标签的 slug，例如 best-seller。",
+  'desc.field.promoBadges.category': "分类的 slug，例如 prints。",
+  'desc.field.promoBadges.productSlugs': "勾选会获得此徽章的商品。",
+  'desc.field.promoBadges.priority': "当商品匹配多个徽章时，优先级数字越小越先显示。",
+  'desc.field.promoBadges.startsAt': "留空表示立即开始。",
+  'desc.field.promoBadges.endsAt': "留空表示永不结束。",
 }
 
 export default zhHans

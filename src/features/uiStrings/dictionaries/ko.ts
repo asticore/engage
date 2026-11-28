@@ -4474,6 +4474,27 @@ const ko: UiDictionary = {
   "planner.defaultName": "내 사이트 플랜",
   "planner.nextPage": "다음 예정 페이지: {title}",
   "planner.saveFirst": "(먼저 이 페이지를 저장하세요)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "샵 아카이브와 상품 목록의 상품 카드에 아래 배지를 표시합니다. 끄면 배지를 삭제하지 않고 모두 한꺼번에 숨깁니다.",
+  'desc.field.promoBadges': "상품 사진 위에 겹쳐 표시되는 세일, 신상품, 베스트셀러 같은 작은 라벨입니다. 각 배지마다 적용할 상품을 지정합니다. 카드에는 최대 세 개의 배지가 표시되며, 우선순위 숫자가 낮을수록 먼저 표시됩니다.",
+  'desc.field.promoBadges.text': "배지에 표시할 문구입니다(예: 세일). 아이콘만 사용하려면 비워 두세요.",
+  'desc.field.promoBadges.enabled': "이 배지를 끄려면 체크를 해제하세요.",
+  'desc.field.promoBadges.icon': "텍스트 앞에 표시되는 선택 아이콘입니다. 목록에서 고르세요.",
+  'desc.field.promoBadges.colour': "배지 색상입니다.",
+  'desc.field.promoBadges.textColour': "텍스트와 아이콘의 색상입니다.",
+  'desc.field.promoBadges.position': "상품 사진의 어느 모서리에 배지를 둘지 정합니다.",
+  'desc.field.promoBadges.style': "색상을 사용하는 방식입니다.",
+  'desc.field.promoBadges.shape': "배지 모서리의 모양입니다.",
+  'desc.field.promoBadges.effect': "작은 움직임 효과입니다. 기기에서 모션 감소를 설정한 방문자에게는 표시되지 않습니다.",
+  'desc.field.promoBadges.appliesTo': "이 배지를 받을 상품입니다.",
+  'desc.field.promoBadges.newDays': "상품이 추가된 뒤 이 일수 동안 신상품으로 간주합니다.",
+  'desc.field.promoBadges.tag': "상품 태그의 슬러그입니다(예: best-seller).",
+  'desc.field.promoBadges.category': "카테고리 슬러그입니다(예: prints).",
+  'desc.field.promoBadges.productSlugs': "이 배지를 받을 상품을 선택하세요.",
+  'desc.field.promoBadges.priority': "상품이 여러 배지에 해당하면 숫자가 작은 배지가 먼저 표시됩니다.",
+  'desc.field.promoBadges.startsAt': "비워 두면 바로 시작합니다.",
+  'desc.field.promoBadges.endsAt': "비워 두면 종료되지 않습니다.",
 }
 
 export default ko
