@@ -4495,6 +4495,14 @@ const ja: UiDictionary = {
   'desc.field.promoBadges.priority': "商品が複数のバッジに該当する場合、数字の小さいものから先に表示されます。",
   'desc.field.promoBadges.startsAt': "空欄の場合は直ちに開始します。",
   'desc.field.promoBadges.endsAt': "空欄の場合は終了しません。",
+  'dp.fk.third_layer': "3番目のレイヤー",
+  'dp.fk.link_all_sides': "すべての辺をリンク",
+  'dp.fk.all_sides_px': "すべての辺 (px)",
+  'dp.fk.hover_text_shadow_x': "テキストシャドウ x (px)",
+  'dp.fk.hover_text_shadow_y': "テキストシャドウ y (px)",
+  'dp.fk.hover_text_shadow_blur': "テキストシャドウのぼかし (px)",
+  'dp.fk.hover_text_shadow_colour': "テキストシャドウの色",
+  'dp.fk.device_image': "このデバイス用の画像",
 }
 
 export default ja

@@ -4494,6 +4494,14 @@ const zhHans: UiDictionary = {
   'desc.field.promoBadges.priority': "当商品匹配多个徽章时，优先级数字越小越先显示。",
   'desc.field.promoBadges.startsAt': "留空表示立即开始。",
   'desc.field.promoBadges.endsAt': "留空表示永不结束。",
+  'dp.fk.third_layer': "第三层",
+  'dp.fk.link_all_sides': "链接所有边",
+  'dp.fk.all_sides_px': "所有边 (px)",
+  'dp.fk.hover_text_shadow_x': "文字阴影 x (px)",
+  'dp.fk.hover_text_shadow_y': "文字阴影 y (px)",
+  'dp.fk.hover_text_shadow_blur': "文字阴影模糊 (px)",
+  'dp.fk.hover_text_shadow_colour': "文字阴影颜色",
+  'dp.fk.device_image': "此设备的图片",
 }
 
 export default zhHans

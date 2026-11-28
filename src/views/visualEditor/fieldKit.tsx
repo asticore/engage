@@ -4,6 +4,7 @@ import React, { useEffect, useId, useRef, useState } from 'react'
 
 import { BG_IMAGE_POSITIONS, BG_IMAGE_REPEATS, BG_IMAGE_SIZES, type BlockStyle } from '@/lib/blockStyle'
 
+import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { ColorRow, NumberRow, Row, SelectRow, UNIT_OPTIONS, type ResponsiveCtl } from './DesignPanel'
 
 /**
@@ -160,32 +161,65 @@ export const TextShadowStrokePopover: React.FC<{ value: BlockStyle; patch: (p: P
 
 type Patch = (p: Partial<BlockStyle>) => void
 
+/** Text shadow written only while hovering (x, y, blur in px, colour). Any value set turns it on. */
+export const HoverTextShadowRows: React.FC<{ value: BlockStyle; patch: Patch }> = ({ value, patch }) => {
+  const t = useAdminT()
+  const num = (label: string, k: keyof BlockStyle, min: number, max: number) => (
+    <NumberRow key={String(k)} label={label} value={typeof value[k] === 'number' ? (value[k] as number) : undefined} min={min} max={max} onChange={(v) => patch({ [k]: v } as Partial<BlockStyle>)} />
+  )
+  return (
+    <>
+      {num(t('dp.fk.hover_text_shadow_x'), 'hoverTextShadowX', -100, 100)}
+      {num(t('dp.fk.hover_text_shadow_y'), 'hoverTextShadowY', -100, 100)}
+      {num(t('dp.fk.hover_text_shadow_blur'), 'hoverTextShadowBlur', 0, 200)}
+      <ColorRow label={t('dp.fk.hover_text_shadow_colour')} value={value.hoverTextShadowColor} onChange={(v) => patch({ hoverTextShadowColor: v })} />
+    </>
+  )
+}
+
 const numRow = (value: BlockStyle, patch: Patch, label: string, k: keyof BlockStyle, min: number, max: number) => (
   <NumberRow key={String(k)} label={label} value={typeof value[k] === 'number' ? (value[k] as number) : undefined} min={min} max={max} onChange={(v) => patch({ [k]: v } as Partial<BlockStyle>)} />
 )
 
 /** Border width for each side (top, right, bottom, left). A side left empty uses the main border width. */
-export const BorderSidesPopover: React.FC<{ value: BlockStyle; patch: Patch }> = ({ value, patch }) => (
-  <Row label="Border sides">
-    <PopoverGroup label="Edit" summary={[value.borderTopWidth, value.borderRightWidth, value.borderBottomWidth, value.borderLeftWidth].some((v) => typeof v === 'number') ? '(set)' : undefined}>
-      {numRow(value, patch, 'Top (px)', 'borderTopWidth', 0, 50)}
-      {numRow(value, patch, 'Right (px)', 'borderRightWidth', 0, 50)}
-      {numRow(value, patch, 'Bottom (px)', 'borderBottomWidth', 0, 50)}
-      {numRow(value, patch, 'Left (px)', 'borderLeftWidth', 0, 50)}
-    </PopoverGroup>
-  </Row>
-)
+export const BorderSidesPopover: React.FC<{ value: BlockStyle; patch: Patch }> = ({ value, patch }) => {
+  const t = useAdminT()
+  const keys = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth'] as const
+  const [linked, setLinked] = useState(false)
+  const first = value.borderTopWidth
+  return (
+    <Row label="Border sides">
+      <PopoverGroup label="Edit" summary={keys.some((k) => typeof value[k] === 'number') ? '(set)' : undefined}>
+        <label className="ve-row ve-row--check">
+          <input type="checkbox" checked={linked} onChange={(e) => setLinked(e.target.checked)} />
+          <span className="ve-row__label">{t('dp.fk.link_all_sides')}</span>
+        </label>
+        {linked ? (
+          <NumberRow label={t('dp.fk.all_sides_px')} value={typeof first === 'number' ? first : undefined} min={0} max={50} onChange={(v) => patch(Object.fromEntries(keys.map((k) => [k, v])) as Partial<BlockStyle>)} />
+        ) : (
+          <>
+            {numRow(value, patch, 'Top (px)', 'borderTopWidth', 0, 50)}
+            {numRow(value, patch, 'Right (px)', 'borderRightWidth', 0, 50)}
+            {numRow(value, patch, 'Bottom (px)', 'borderBottomWidth', 0, 50)}
+            {numRow(value, patch, 'Left (px)', 'borderLeftWidth', 0, 50)}
+          </>
+        )}
+      </PopoverGroup>
+    </Row>
+  )
+}
 
 /** Custom box shadow (x, y, blur, spread, colour, inset) for Normal and for Hover, replacing the preset when set. */
 export const BoxShadowPopover: React.FC<{ value: BlockStyle; patch: Patch }> = ({ value, patch }) => {
-  const [tab, setTab] = useState<'bs' | 'bs2' | 'hbs'>('bs')
+  const t = useAdminT()
+  const [tab, setTab] = useState<'bs' | 'bs2' | 'bs3' | 'hbs'>('bs')
   const k = (s: string) => `${tab}${s}` as keyof BlockStyle
   const inset = value[k('Inset')] === true
-  const any = ['bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor'].some((x) => (value as Record<string, unknown>)[x] !== undefined)
+  const any = ['bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs3X', 'bs3Y', 'bs3Blur', 'bs3Spread', 'bs3Color', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor'].some((x) => (value as Record<string, unknown>)[x] !== undefined)
   return (
     <Row label="Custom shadow">
       <PopoverGroup label="Edit" summary={any ? '(set)' : undefined}>
-        <SelectRow label="State" value={tab} options={[{ label: 'Normal', value: 'bs' }, { label: 'Second layer', value: 'bs2' }, { label: 'Hover', value: 'hbs' }]} onChange={(v) => setTab(v === 'hbs' ? 'hbs' : v === 'bs2' ? 'bs2' : 'bs')} />
+        <SelectRow label="State" value={tab} options={[{ label: 'Normal', value: 'bs' }, { label: 'Second layer', value: 'bs2' }, { label: t('dp.fk.third_layer'), value: 'bs3' }, { label: 'Hover', value: 'hbs' }]} onChange={(v) => setTab(v === 'hbs' || v === 'bs2' || v === 'bs3' ? v : 'bs')} />
         {numRow(value, patch, 'X (px)', k('X'), -200, 200)}
         {numRow(value, patch, 'Y (px)', k('Y'), -200, 200)}
         {numRow(value, patch, 'Blur (px)', k('Blur'), 0, 300)}

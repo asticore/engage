@@ -4495,6 +4495,14 @@ const es: UiDictionary = {
   'desc.field.promoBadges.priority': "Los números más bajos se muestran primero cuando un producto coincide con varias insignias.",
   'desc.field.promoBadges.startsAt': "Vacío significa que empieza de inmediato.",
   'desc.field.promoBadges.endsAt': "Vacío significa que nunca termina.",
+  'dp.fk.third_layer': "Tercera capa",
+  'dp.fk.link_all_sides': "Vincular todos los lados",
+  'dp.fk.all_sides_px': "Todos los lados (px)",
+  'dp.fk.hover_text_shadow_x': "Sombra de texto x (px)",
+  'dp.fk.hover_text_shadow_y': "Sombra de texto y (px)",
+  'dp.fk.hover_text_shadow_blur': "Desenfoque de sombra de texto (px)",
+  'dp.fk.hover_text_shadow_colour': "Color de sombra de texto",
+  'dp.fk.device_image': "Imagen para este dispositivo",
 }
 
 export default es

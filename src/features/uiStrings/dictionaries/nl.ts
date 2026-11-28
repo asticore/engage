@@ -4495,6 +4495,14 @@ const nl: UiDictionary = {
   'desc.field.promoBadges.priority': "Lagere nummers worden eerst getoond wanneer een product bij meerdere badges past.",
   'desc.field.promoBadges.startsAt': "Leeg betekent dat het meteen begint.",
   'desc.field.promoBadges.endsAt': "Leeg betekent dat het nooit eindigt.",
+  'dp.fk.third_layer': "Derde laag",
+  'dp.fk.link_all_sides': "Alle zijden koppelen",
+  'dp.fk.all_sides_px': "Alle zijden (px)",
+  'dp.fk.hover_text_shadow_x': "Tekstschaduw x (px)",
+  'dp.fk.hover_text_shadow_y': "Tekstschaduw y (px)",
+  'dp.fk.hover_text_shadow_blur': "Tekstschaduw vervaging (px)",
+  'dp.fk.hover_text_shadow_colour': "Tekstschaduwkleur",
+  'dp.fk.device_image': "Afbeelding voor dit apparaat",
 }
 
 export default nl

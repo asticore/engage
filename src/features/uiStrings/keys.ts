@@ -4546,6 +4546,14 @@ export const UI_STRING_SOURCE = {
   "planner.defaultName": "My site plan",
   "planner.nextPage": "Next planned page: {title}",
   "planner.saveFirst": "(save this page first)",
+  'dp.fk.third_layer': "Third layer",
+  'dp.fk.link_all_sides': "Link all sides",
+  'dp.fk.all_sides_px': "All sides (px)",
+  'dp.fk.hover_text_shadow_x': "Text shadow x (px)",
+  'dp.fk.hover_text_shadow_y': "Text shadow y (px)",
+  'dp.fk.hover_text_shadow_blur': "Text shadow blur (px)",
+  'dp.fk.hover_text_shadow_colour': "Text shadow colour",
+  'dp.fk.device_image': "Image for this device",
 } as const
 
 export type UiStringKey = keyof typeof UI_STRING_SOURCE

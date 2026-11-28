@@ -4495,6 +4495,14 @@ const pt: UiDictionary = {
   'desc.field.promoBadges.priority': "Números menores são exibidos primeiro quando um produto corresponde a vários selos.",
   'desc.field.promoBadges.startsAt': "Em branco significa que começa imediatamente.",
   'desc.field.promoBadges.endsAt': "Em branco significa que nunca termina.",
+  'dp.fk.third_layer': "Terceira camada",
+  'dp.fk.link_all_sides': "Vincular todos os lados",
+  'dp.fk.all_sides_px': "Todos os lados (px)",
+  'dp.fk.hover_text_shadow_x': "Sombra do texto x (px)",
+  'dp.fk.hover_text_shadow_y': "Sombra do texto y (px)",
+  'dp.fk.hover_text_shadow_blur': "Desfoque da sombra do texto (px)",
+  'dp.fk.hover_text_shadow_colour': "Cor da sombra do texto",
+  'dp.fk.device_image': "Imagem para este dispositivo",
 }
 
 export default pt

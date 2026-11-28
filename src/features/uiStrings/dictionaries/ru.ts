@@ -4495,6 +4495,14 @@ const ru: UiDictionary = {
   'desc.field.promoBadges.priority': "Когда товар подходит под несколько значков, первыми показываются значки с меньшими номерами.",
   'desc.field.promoBadges.startsAt': "Пустое поле означает, что значок начинает действовать сразу.",
   'desc.field.promoBadges.endsAt': "Пустое поле означает, что значок никогда не перестанет действовать.",
+  'dp.fk.third_layer': "Третий слой",
+  'dp.fk.link_all_sides': "Связать все стороны",
+  'dp.fk.all_sides_px': "Все стороны (px)",
+  'dp.fk.hover_text_shadow_x': "Тень текста x (px)",
+  'dp.fk.hover_text_shadow_y': "Тень текста y (px)",
+  'dp.fk.hover_text_shadow_blur': "Размытие тени текста (px)",
+  'dp.fk.hover_text_shadow_colour': "Цвет тени текста",
+  'dp.fk.device_image': "Изображение для этого устройства",
 }
 
 export default ru

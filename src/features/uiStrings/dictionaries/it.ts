@@ -4495,6 +4495,14 @@ const it: UiDictionary = {
   'desc.field.promoBadges.priority': "I numeri più bassi vengono mostrati per primi quando un prodotto corrisponde a più badge.",
   'desc.field.promoBadges.startsAt': "Vuoto significa che inizia subito.",
   'desc.field.promoBadges.endsAt': "Vuoto significa che non finisce mai.",
+  'dp.fk.third_layer': "Terzo livello",
+  'dp.fk.link_all_sides': "Collega tutti i lati",
+  'dp.fk.all_sides_px': "Tutti i lati (px)",
+  'dp.fk.hover_text_shadow_x': "Ombra testo x (px)",
+  'dp.fk.hover_text_shadow_y': "Ombra testo y (px)",
+  'dp.fk.hover_text_shadow_blur': "Sfocatura ombra testo (px)",
+  'dp.fk.hover_text_shadow_colour': "Colore ombra testo",
+  'dp.fk.device_image': "Immagine per questo dispositivo",
 }
 
 export default it

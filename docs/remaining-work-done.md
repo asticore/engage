@@ -2946,6 +2946,15 @@ _Date: 23 Nov 2026_
 
 **Where to find it:** Visual editor > selected block > Design > Spacing (size limits), Typography (text shadow and stroke), Advanced > Transform (flip)
 
+<a id="bld-090"></a>
+#### BLD-091 · Task 12 design panel parity, second slice (31e, 31h part) (28 Nov 2026)
+
+_Date: 28 Nov 2026_
+
+**Task 12 second slice (28 Nov 2026).** New design keys in `blockStyle.ts`: `hoverTextShadowX/Y/Blur/Color` (written only in the hover rule), a third box shadow layer `bs3*`, per-device `borderColor`, `borderStyle` and `bgImageUrl` (tablet and mobile), and a `static` position option. The border sides popover has Link all sides (one value writes all four sides). New text is in all 13 locales (`dp.fk.*`). Mapped in `v1Groups.ts` and `designHelpers.ts`. Tests in `tests/int/design-panel-parity-slice.int.spec.ts`.
+
+**Where to find it:** Visual editor > selected block > Design > Border (device colour and style, shadow popover third layer, border sides), Background (image for this device), Typography and Hover (text shadow on hover), Advanced (position Static)
+
 <a id="bld-048"></a>
 #### BLD-048 · Task 12 reference matrix and Font Awesome Pro (31f, 31g) (23 Nov 2026)
 
@@ -3717,6 +3726,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 - [I18N-013](#i18n-013) Task 2 promo badge field descriptions
 - [BLD-090](#bld-090) Task 3 Before and after and Popup elements, Spark and Shine audit closed
+- [BLD-091](#bld-091) Task 12 design panel parity, second slice
 
 ### 23 Nov 2026
 

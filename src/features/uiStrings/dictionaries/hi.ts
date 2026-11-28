@@ -4495,6 +4495,14 @@ const hi: UiDictionary = {
   'desc.field.promoBadges.priority': "जब कोई उत्पाद कई बैज से मेल खाता है, तो कम संख्या पहले दिखाई जाती है।",
   'desc.field.promoBadges.startsAt': "खाली छोड़ने का अर्थ है कि यह तुरंत शुरू होगा।",
   'desc.field.promoBadges.endsAt': "खाली छोड़ने का अर्थ है कि यह कभी समाप्त नहीं होगा।",
+  'dp.fk.third_layer': "तीसरी परत",
+  'dp.fk.link_all_sides': "सभी किनारे जोड़ें",
+  'dp.fk.all_sides_px': "सभी किनारे (px)",
+  'dp.fk.hover_text_shadow_x': "टेक्स्ट शैडो x (px)",
+  'dp.fk.hover_text_shadow_y': "टेक्स्ट शैडो y (px)",
+  'dp.fk.hover_text_shadow_blur': "टेक्स्ट शैडो ब्लर (px)",
+  'dp.fk.hover_text_shadow_colour': "टेक्स्ट शैडो रंग",
+  'dp.fk.device_image': "इस डिवाइस के लिए छवि",
 }
 
 export default hi

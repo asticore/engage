@@ -4496,6 +4496,14 @@ const de: UiDictionary = {
   'desc.field.promoBadges.priority': "Niedrigere Zahlen werden zuerst angezeigt, wenn ein Produkt mehrere Badges erfüllt.",
   'desc.field.promoBadges.startsAt': "Leer bedeutet, dass es sofort beginnt.",
   'desc.field.promoBadges.endsAt': "Leer bedeutet, dass es nie endet.",
+  'dp.fk.third_layer': "Dritte Ebene",
+  'dp.fk.link_all_sides': "Alle Seiten verbinden",
+  'dp.fk.all_sides_px': "Alle Seiten (px)",
+  'dp.fk.hover_text_shadow_x': "Textschatten x (px)",
+  'dp.fk.hover_text_shadow_y': "Textschatten y (px)",
+  'dp.fk.hover_text_shadow_blur': "Textschatten Unschärfe (px)",
+  'dp.fk.hover_text_shadow_colour': "Textschattenfarbe",
+  'dp.fk.device_image': "Bild für dieses Gerät",
 }
 
 export default de

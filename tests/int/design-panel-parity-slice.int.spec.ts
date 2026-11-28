@@ -1,0 +1,45 @@
+import { describe, expect, it } from 'vitest'
+import { asBlockStyle, blockStyleCss, blockStyleToCss, deviceOverrideDecls, type BlockStyle } from '@/lib/blockStyle'
+
+describe('design panel parity slice (Task 12, 31e)', () => {
+  it('three shadow layers join with commas in order', () => {
+    const css = blockStyleToCss({ bsY: 1, bsColor: '#000000', bs2Y: 2, bs2Color: '#111111', bs3Y: 3, bs3Inset: true, bs3Color: '#222222' })
+    expect(css.boxShadow).toBe('0px 1px 12px 0px #000000, 0px 2px 12px 0px #111111, inset 0px 3px 12px 0px #222222')
+  })
+  it('the third layer is range checked', () => {
+    const s = asBlockStyle({ bs3Blur: 9999, bs3Color: 'red;}' } as BlockStyle)
+    expect(s.bs3Blur).toBe(300)
+    expect(s.bs3Color).toBeUndefined()
+  })
+  it('hover text shadow goes into the hover rule only', () => {
+    const style = { hoverTextShadowX: 1, hoverTextShadowY: 3, hoverTextShadowBlur: 5, hoverTextShadowColor: '#ff0000' } as BlockStyle
+    expect(blockStyleCss(style, 'x1')).toContain('text-shadow:1px 3px 5px #ff0000 !important')
+    expect(blockStyleToCss(style).textShadow).toBeUndefined()
+    const bad = asBlockStyle({ hoverTextShadowColor: 'url(x)', hoverTextShadowBlur: 5000 } as BlockStyle)
+    expect(bad.hoverTextShadowColor).toBeUndefined()
+    expect(bad.hoverTextShadowBlur).toBe(200)
+  })
+  it('border colour and style are per device', () => {
+    const style = asBlockStyle({ borderWidth: 2, borderColor: '#111111', tablet: { borderColor: '#222222', borderStyle: 'dashed' }, mobile: { borderColor: 'nope;' } } as BlockStyle)
+    const tablet = deviceOverrideDecls(style, 'tablet')
+    expect(tablet).toContain('border-color:#222222 !important')
+    expect(tablet).toContain('border-style:dashed !important')
+    expect(style.mobile?.borderColor).toBeUndefined()
+  })
+  it('a device border colour writes nothing when the border width is 0', () => {
+    const style = asBlockStyle({ tablet: { borderColor: '#222222' } } as BlockStyle)
+    expect(deviceOverrideDecls(style, 'tablet').join(';')).not.toContain('border-color')
+  })
+  it('static position is kept and writes position:static', () => {
+    expect(blockStyleToCss(asBlockStyle({ position: 'static' } as BlockStyle)).position).toBe('static')
+    expect(deviceOverrideDecls(asBlockStyle({ tablet: { position: 'static' } } as BlockStyle), 'tablet')).toContain('position:static !important')
+  })
+})
+
+describe('per device background image (31e)', () => {
+  it('a tablet image is written in the tablet rule and unsafe urls are dropped', () => {
+    const style = asBlockStyle({ bgType: 'image', bgImageUrl: '/media/a.jpg', tablet: { bgImageUrl: '/media/b.jpg' }, mobile: { bgImageUrl: 'javascript:alert(1)' } } as BlockStyle)
+    expect(deviceOverrideDecls(style, 'tablet')).toContain('background-image:url(/media/b.jpg) !important')
+    expect(style.mobile?.bgImageUrl).toBeUndefined()
+  })
+})

@@ -4495,6 +4495,14 @@ const ko: UiDictionary = {
   'desc.field.promoBadges.priority': "상품이 여러 배지에 해당하면 숫자가 작은 배지가 먼저 표시됩니다.",
   'desc.field.promoBadges.startsAt': "비워 두면 바로 시작합니다.",
   'desc.field.promoBadges.endsAt': "비워 두면 종료되지 않습니다.",
+  'dp.fk.third_layer': "세 번째 레이어",
+  'dp.fk.link_all_sides': "모든 면 연결",
+  'dp.fk.all_sides_px': "모든 면 (px)",
+  'dp.fk.hover_text_shadow_x': "텍스트 그림자 x (px)",
+  'dp.fk.hover_text_shadow_y': "텍스트 그림자 y (px)",
+  'dp.fk.hover_text_shadow_blur': "텍스트 그림자 흐림 (px)",
+  'dp.fk.hover_text_shadow_colour': "텍스트 그림자 색상",
+  'dp.fk.device_image': "이 기기용 이미지",
 }
 
 export default ko

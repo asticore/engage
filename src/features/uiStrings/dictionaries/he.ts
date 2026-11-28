@@ -4391,6 +4391,14 @@ const he: UiDictionary = {
   'desc.field.promoBadges.priority': "מספרים נמוכים מוצגים ראשונים כאשר מוצר תואם למספר תגים.",
   'desc.field.promoBadges.startsAt': "ריק פירושו שהתג מתחיל מיד.",
   'desc.field.promoBadges.endsAt': "ריק פירושו שהתג לעולם לא מסתיים.",
+  'dp.fk.third_layer': "שכבה שלישית",
+  'dp.fk.link_all_sides': "קישור כל הצדדים",
+  'dp.fk.all_sides_px': "כל הצדדים (px)",
+  'dp.fk.hover_text_shadow_x': "צל טקסט x (px)",
+  'dp.fk.hover_text_shadow_y': "צל טקסט y (px)",
+  'dp.fk.hover_text_shadow_blur': "טשטוש צל טקסט (px)",
+  'dp.fk.hover_text_shadow_colour': "צבע צל טקסט",
+  'dp.fk.device_image': "תמונה למכשיר זה",
 }
 
 export default he

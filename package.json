@@ -1,6 +1,6 @@
 {
   "name": "asticore-engage",
-  "version": "1.5.4",
+  "version": "1.5.5",
   "description": "Asticore Engage - the Grace & Gatsby website and content portal, running on Next.js and Cloudflare Workers with D1 and R2.",
   "license": "MIT",
   "type": "module",

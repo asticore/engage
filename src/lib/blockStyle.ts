@@ -96,6 +96,9 @@ export const RESPONSIVE_KEYS = [
   'blendMode',
   'fontFamily',
   'borderWidth',
+  'borderColor',
+  'borderStyle',
+  'bgImageUrl',
   'bgColor',
   'fontStyle',
   'textDecoration',
@@ -210,6 +213,13 @@ export type BlockStyle = {
   bs2Spread?: number
   bs2Color?: string
   bs2Inset?: boolean
+  /** Third shadow layer (31e). */
+  bs3X?: number
+  bs3Y?: number
+  bs3Blur?: number
+  bs3Spread?: number
+  bs3Color?: string
+  bs3Inset?: boolean
   /** The same custom layer on hover. */
   hbsX?: number
   hbsY?: number
@@ -484,6 +494,11 @@ export type BlockStyle = {
   textShadowY?: number
   textShadowBlur?: number
   textShadowColor?: string
+  /** Text shadow on hover (31e): same four values, written only in the hover rule. */
+  hoverTextShadowX?: number
+  hoverTextShadowY?: number
+  hoverTextShadowBlur?: number
+  hoverTextShadowColor?: string
   tfRotate?: number
   tfScale?: number
   tfTranslateX?: number
@@ -549,12 +564,13 @@ export type BlockStyle = {
   customAttrs?: string
 }
 
-export type BlockPosition = 'relative' | 'absolute' | 'fixed' | 'sticky'
+export type BlockPosition = 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky'
 export type BlendMode =
   | 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn'
   | 'hard-light' | 'soft-light' | 'difference' | 'exclusion' | 'hue' | 'saturation' | 'color' | 'luminosity'
 
 export const POSITION_OPTIONS: { label: string; value: BlockPosition }[] = [
+  { label: 'Static', value: 'static' },
   { label: 'Relative', value: 'relative' },
   { label: 'Absolute', value: 'absolute' },
   { label: 'Fixed', value: 'fixed' },
@@ -839,7 +855,7 @@ export const BG_IMAGE_SIZES: readonly string[] = ['cover', 'contain', 'auto']
 export const BG_IMAGE_POSITIONS: readonly string[] = ['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left', 'bottom right']
 export const BG_IMAGE_REPEATS: readonly string[] = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y']
 const BORDER_STYLES: readonly string[] = ['solid', 'dashed', 'dotted', 'double']
-const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
+const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bs3X', 'bs3Y', 'bs3Blur', 'bs3Spread', 'bs3Color', 'bs3Inset', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
 
 /** Validates per-side border widths, the border style and the custom box shadow layers (normal and hover). */
 function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
@@ -853,7 +869,7 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
     else out[k] = n
   }
   for (const k of ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth']) num(k, 0, 50)
-  for (const p of ['bs', 'bs2', 'hbs']) {
+  for (const p of ['bs', 'bs2', 'bs3', 'hbs']) {
     num(p + 'X', -200, 200)
     num(p + 'Y', -200, 200)
     num(p + 'Blur', 0, 300)
@@ -890,6 +906,7 @@ const TYPO_KEYS = [
   'typePreset', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit',
   'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow',
   'textStrokeWidth', 'textStrokeColor', 'textShadowX', 'textShadowY', 'textShadowBlur', 'textShadowColor',
+  'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor',
   'minWidth', 'maxWidth', 'maxHeight', 'tfFlipX', 'tfFlipY',
 ] as const
 
@@ -929,12 +946,15 @@ function sanitizeTypography(style: BlockStyle): BlockStyle {
   num('textShadowX', -100, 100)
   num('textShadowY', -100, 100)
   num('textShadowBlur', 0, 200)
+  num('hoverTextShadowX', -100, 100)
+  num('hoverTextShadowY', -100, 100)
+  num('hoverTextShadowBlur', 0, 200)
   num('minWidth', 0, 10000)
   num('maxWidth', 0, 10000)
   num('maxHeight', 0, 10000)
   num('tfFlipX', 0, 1, Math.round)
   num('tfFlipY', 0, 1, Math.round)
-  for (const k of ['textStrokeColor', 'textShadowColor']) if (raw[k] !== undefined && sanitizeColor(raw[k]) === undefined) delete out[k]
+  for (const k of ['textStrokeColor', 'textShadowColor', 'hoverTextShadowColor']) if (raw[k] !== undefined && sanitizeColor(raw[k]) === undefined) delete out[k]
   if (raw.typePreset !== undefined && !(typeof raw.typePreset === 'string' && TYPE_PRESET_ID.test(raw.typePreset))) delete out.typePreset
   return out as BlockStyle
 }
@@ -1040,14 +1060,14 @@ const FX_KEYS = [
   'position', 'blendMode', 'cssClasses', 'customCss', 'customAttrs', 'maskShape',
   'slideInterval', 'slideTransition', 'blobMorphSpeed', 'noise',
   'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
-  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'focusRing',
+  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'focusRing',
   'textFx', 'textFxColor', 'textFxColor2', 'textFxAngle', 'textFxStroke', 'textFxAnimated',
 ] as const
 
 /** Normal | Hover state keys (Elementor-style). Any of them set turns on the hover transition. */
 const HOVER_STATE_KEYS = [
   'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
-  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset',
+  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset',
 ] as const
 /** Properties that animate between the normal and hover values. */
 const HOVER_TRANSITION_PROPS = ['background-color', 'color', 'border-color', 'box-shadow', 'border-radius'] as const
@@ -1343,6 +1363,9 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const n = clampNum(r[key], 0, RADIUS_MAX)
     if (n !== undefined) out[key] = n
   }
+  { const c = sanitizeColor(r.borderColor); if (c !== undefined) out.borderColor = c }
+  if (typeof r.bgImageUrl === 'string' && isSafeMediaUrl(r.bgImageUrl, 'image')) out.bgImageUrl = r.bgImageUrl
+  if (typeof r.borderStyle === 'string' && BORDER_STYLES.includes(r.borderStyle)) out.borderStyle = r.borderStyle as BlockStyle['borderStyle']
   if (typeof r.position === 'string' && POSITION_OPTIONS.some((o) => o.value === r.position)) out.position = r.position as BlockPosition
   for (const [key, min, max] of [
     ['posTop', -2000, 2000], ['posRight', -2000, 2000], ['posBottom', -2000, 2000], ['posLeft', -2000, 2000], ['borderWidth', 0, 50],
@@ -1451,7 +1474,7 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
   const corners = cornerRadiusValue(style)
   if (corners) css.borderRadius = corners
   if (style.boxShadow && style.boxShadow !== 'none') css.boxShadow = BOX_SHADOW_PRESETS[style.boxShadow]
-  const layers = [customBoxShadow(style, 'bs'), customBoxShadow(style, 'bs2')].filter(Boolean)
+  const layers = [customBoxShadow(style, 'bs'), customBoxShadow(style, 'bs2'), customBoxShadow(style, 'bs3')].filter(Boolean)
   if (layers.length > 0) css.boxShadow = layers.join(', ')
   const sides = borderSideCss(style)
   if (sides) Object.assign(css, sides)
@@ -1553,7 +1576,7 @@ function advancedCss(style: BlockStyle): React.CSSProperties {
 }
 
 /** The custom box shadow for prefix 'bs' (normal) or 'hbs' (hover), or undefined when none of its values is set. */
-function customBoxShadow(style: BlockStyle, prefix: 'bs' | 'hbs' | 'bs2'): string | undefined {
+function customBoxShadow(style: BlockStyle, prefix: 'bs' | 'hbs' | 'bs2' | 'bs3'): string | undefined {
   const r = style as Record<string, unknown>
   const n = (k: string, d: number) => (isNum(r[prefix + k]) ? (r[prefix + k] as number) : d)
   const set = ['X', 'Y', 'Blur', 'Spread'].some((k) => isNum(r[prefix + k])) || typeof r[prefix + 'Color'] === 'string' || r[prefix + 'Inset'] === true
@@ -1730,15 +1753,17 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
   }
   if (isNum(own.fontWeight)) decls.push(`font-weight:${own.fontWeight} !important`)
   if (own.textTransform && TEXT_TRANSFORMS.includes(own.textTransform)) decls.push(`text-transform:${own.textTransform} !important`)
-  if (isNum(own.borderWidth)) {
+  if (isNum(own.borderWidth) || own.borderColor !== undefined || own.borderStyle !== undefined) {
     const merged: BlockStyle = { ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }
-    decls.push(`border-width:${own.borderWidth}px !important`)
-    if (own.borderWidth > 0) {
+    if (isNum(own.borderWidth)) decls.push(`border-width:${own.borderWidth}px !important`)
+    // Colour and style follow the width that applies on this device, so a device colour alone also needs a visible border.
+    if (isNum(merged.borderWidth) && merged.borderWidth > 0) {
       decls.push(`border-style:${BORDER_STYLES.includes(merged.borderStyle ?? '') ? merged.borderStyle : 'solid'} !important`)
       decls.push(`border-color:${merged.borderColor ? merged.borderColor : 'currentColor'} !important`)
     }
   }
   if (own.bgColor !== undefined && isSafeColor(own.bgColor)) decls.push(`background-color:${own.bgColor} !important`)
+  if (typeof own.bgImageUrl === 'string' && isSafeMediaUrl(own.bgImageUrl, 'image')) decls.push(`background-image:url(${own.bgImageUrl}) !important`)
   { const ff = blockFontStack(own.fontFamily); if (ff) decls.push(`font-family:${ff} !important`) }
   if (own.blendMode && BLEND_MODE_OPTIONS.some((o) => o.value === own.blendMode)) decls.push(`mix-blend-mode:${own.blendMode} !important`)
   if (own.fontStyle && FONT_STYLES.includes(own.fontStyle)) decls.push(`font-style:${own.fontStyle} !important`)
@@ -1890,6 +1915,8 @@ function hoverStateDecls(style: BlockStyle): string[] {
     decls.push(`background-image:linear-gradient(${angle}deg, ${sanitizeColor(style.hoverGradFrom) ?? 'transparent'}, ${sanitizeColor(style.hoverGradTo) ?? 'transparent'}) !important`)
   }
   if (style.hoverBlendMode && BLEND_MODE_OPTIONS.some((o) => o.value === style.hoverBlendMode)) decls.push(`mix-blend-mode:${style.hoverBlendMode} !important`)
+  const hoverTextShadow = customTextShadow({ textShadowX: style.hoverTextShadowX, textShadowY: style.hoverTextShadowY, textShadowBlur: style.hoverTextShadowBlur, textShadowColor: style.hoverTextShadowColor })
+  if (hoverTextShadow) decls.push(`text-shadow:${hoverTextShadow} !important`)
   if (isNum(style.hoverTextStrokeWidth)) decls.push(`-webkit-text-stroke:${style.hoverTextStrokeWidth}px ${sanitizeColor(style.hoverTextStrokeColor) ?? 'currentColor'} !important`)
   if (isNum(style.hoverOpacity) && style.hoverOpacity >= 0 && style.hoverOpacity <= 1) decls.push(`opacity:${style.hoverOpacity} !important`)
   return decls

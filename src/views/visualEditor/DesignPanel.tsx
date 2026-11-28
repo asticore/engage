@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
+import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover, HoverTextShadowRows } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -203,6 +203,14 @@ export const DesignPanel: React.FC<{
               onPick={(id, url) => onChange({ ...value, bgImage: id, bgImageUrl: url })}
               onClear={() => onChange({ ...value, bgImage: null, bgImageUrl: null })}
             />
+            {resp.device !== 'desktop' && (
+              <ImageRow
+                label={t('dp.fk.device_image')}
+                url={resp.own('bgImageUrl') as string | undefined}
+                onPick={(_id, url) => resp.set('bgImageUrl', url)}
+                onClear={() => resp.reset('bgImageUrl')}
+              />
+            )}
             <NumberRow
               label={t('dp.field.dark_overlay')}
               value={value.bgOverlay}
@@ -331,18 +339,19 @@ export const DesignPanel: React.FC<{
           <>
             <SelectRow
               label={t('dp.field.border_style')}
-              value={value.borderStyle || 'solid'}
-              applied={value.borderStyle !== undefined}
-              onReset={() => set('borderStyle', undefined)}
+              value={(resp.effective('borderStyle') as string | undefined) || 'solid'}
+              resp={resp.resp('borderStyle')}
+              applied={resp.own('borderStyle') !== undefined}
+              onReset={() => resp.reset('borderStyle')}
               options={[
                 { label: t('dp.lit.solid'), value: 'solid' },
                 { label: t('dp.lit.dashed'), value: 'dashed' },
                 { label: t('dp.lit.dotted'), value: 'dotted' },
                 { label: 'Double', value: 'double' },
               ]}
-              onChange={(v) => set('borderStyle', v as BlockStyle['borderStyle'])}
+              onChange={(v) => resp.set('borderStyle', v)}
             />
-            <ColorRow label={t('dp.field.border_colour')} value={value.borderColor} onChange={(v) => set('borderColor', v)} />
+            <ColorRow label={t('dp.field.border_colour')} value={resp.own('borderColor') as string | undefined} onChange={(v) => resp.set('borderColor', v)} />
           </>
         )}
         <NumberRow
@@ -1798,6 +1807,7 @@ const StateTabs: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => v
           />
           <FxRange k="hoverTextStrokeWidth" label="Text stroke width" unit="px" value={value} onChange={onChange} def={0} min={0} max={20} />
           <ColorRow label="Text stroke colour" value={value.hoverTextStrokeColor} onChange={(v) => set('hoverTextStrokeColor', v)} />
+          <HoverTextShadowRows value={value} patch={(p) => onChange({ ...value, ...p } as BlockStyle)} />
           <FxRange k="hoverOpacity" label={t('dp.field.opacity')} value={value} onChange={onChange} def={1} min={0} max={1} step={0.05} help={t('dp.lit.the_lift_scale_transform_is_skipped_for')} />
           <FxRange k="hoverBorderRadius" label={t('dp.lit.corner_radius')} unit="px" value={value} onChange={onChange} def={0} min={0} max={200} />
           <FxRange k="hoverTransitionMs" label={t('dp.field.transition')} unit="ms" value={value} onChange={onChange} def={150} min={0} max={2000} step={10} />
@@ -2113,7 +2123,7 @@ const ADVANCED_KEYS: (keyof BlockStyle)[] = [
 const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; ctl: ResponsiveCtl }> = ({ value, onChange, ctl }) => {
   const t = useAdminT()
   const { set, resetBtn } = makeFxEditing(value, onChange)
-  const positioned = ctl.effective('position') !== undefined
+  const positioned = ctl.effective('position') !== undefined && ctl.effective('position') !== 'static'
 
   return (
     <>

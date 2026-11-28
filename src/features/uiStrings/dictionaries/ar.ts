@@ -4495,6 +4495,14 @@ const ar: UiDictionary = {
   'desc.field.promoBadges.priority': "تظهر الأرقام الأصغر أولا عندما يطابق المنتج عدة شارات.",
   'desc.field.promoBadges.startsAt': "الفراغ يعني أنها تبدأ فورا.",
   'desc.field.promoBadges.endsAt': "الفراغ يعني أنها لا تنتهي أبدا.",
+  'dp.fk.third_layer': "الطبقة الثالثة",
+  'dp.fk.link_all_sides': "ربط كل الجوانب",
+  'dp.fk.all_sides_px': "كل الجوانب (px)",
+  'dp.fk.hover_text_shadow_x': "إزاحة ظل النص x (px)",
+  'dp.fk.hover_text_shadow_y': "إزاحة ظل النص y (px)",
+  'dp.fk.hover_text_shadow_blur': "تمويه ظل النص (px)",
+  'dp.fk.hover_text_shadow_colour': "لون ظل النص",
+  'dp.fk.device_image': "صورة لهذا الجهاز",
 }
 
 export default ar
