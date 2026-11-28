@@ -4519,6 +4519,8 @@ const it: UiDictionary = {
   'dp.fk.stop3_colour': "Colore della quarta interruzione",
   'dp.fk.stop3_pos': "Posizione della quarta interruzione (%)",
   'dp.fk.hover_image': "Immagine al passaggio del mouse",
+  'dp.fk.divider_height_device': "Altezza su questo dispositivo (px)",
+  'dp.fk.divider_off_device': "Nascondi su questo dispositivo",
 }
 
 export default it

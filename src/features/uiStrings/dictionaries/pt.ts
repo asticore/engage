@@ -4519,6 +4519,8 @@ const pt: UiDictionary = {
   'dp.fk.stop3_colour': "Cor da quarta parada",
   'dp.fk.stop3_pos': "Posição da quarta parada (%)",
   'dp.fk.hover_image': "Imagem ao passar o mouse",
+  'dp.fk.divider_height_device': "Altura neste dispositivo (px)",
+  'dp.fk.divider_off_device': "Ocultar neste dispositivo",
 }
 
 export default pt

@@ -4519,6 +4519,8 @@ const ar: UiDictionary = {
   'dp.fk.stop3_colour': "لون النقطة الرابعة",
   'dp.fk.stop3_pos': "موضع النقطة الرابعة (%)",
   'dp.fk.hover_image': "صورة عند التمرير",
+  'dp.fk.divider_height_device': "الارتفاع على هذا الجهاز (px)",
+  'dp.fk.divider_off_device': "إخفاء على هذا الجهاز",
 }
 
 export default ar

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useId, useRef, useState } from 'react'
 
-import { BG_IMAGE_POSITIONS, BG_IMAGE_REPEATS, BG_IMAGE_SIZES, type BlockStyle } from '@/lib/blockStyle'
+import { DIVIDER_OPTIONS, dividerPath, type DividerShape, BG_IMAGE_POSITIONS, BG_IMAGE_REPEATS, BG_IMAGE_SIZES, type BlockStyle } from '@/lib/blockStyle'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import { ColorRow, NumberRow, Row, SelectRow, UNIT_OPTIONS, makeResponsive, type EditDevice, type ResponsiveCtl } from './DesignPanel'
@@ -328,4 +328,68 @@ function withKey(value: BlockStyle, k: keyof BlockStyle, v: number | undefined):
   if (v === undefined) delete next[k]
   else next[k] = v
   return next as BlockStyle
+}
+
+/** A grid of the divider shapes, each drawn as a small preview. Picking the chosen one again clears it. */
+export const DividerShapeGrid: React.FC<{ label: string; shape?: DividerShape; onShape: (v: DividerShape | undefined) => void }> = ({ label, shape, onShape }) => (
+  <Row label={`${label} shape`} applied={shape !== undefined} onReset={() => onShape(undefined)}>
+    <div role="radiogroup" aria-label={`${label} shape`} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 6 }}>
+      {DIVIDER_OPTIONS.map((o) => {
+        const path = dividerPath(o.value)
+        const on = (shape ?? 'none') === o.value
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            title={o.label}
+            aria-label={o.label}
+            className="ve-btn ve-btn--ghost"
+            style={{ padding: 4, outline: on ? '2px solid currentColor' : undefined }}
+            onClick={() => onShape(o.value === 'none' || on ? undefined : o.value)}
+          >
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none" width="48" height="20" aria-hidden="true" focusable="false">
+              {path ? <path d={path} fill="currentColor" /> : <line x1="0" y1="60" x2="1200" y2="60" stroke="currentColor" strokeWidth="8" />}
+            </svg>
+          </button>
+        )
+      })}
+    </div>
+  </Row>
+)
+
+/** Height and an off switch for one divider on the device being edited. Tablet and mobile write overrides. */
+export const DividerDeviceRows: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; device: EditDevice; pos: 'Top' | 'Bottom' }> = ({ value, onChange, device, pos }) => {
+  const t = useAdminT()
+  const ctl = makeResponsive(value, onChange, device)
+  const hKey = `divider${pos}Height` as Key
+  const offKey = `divider${pos}Off` as Key
+  return (
+    <>
+      <NumberRow
+        label={t('dp.fk.divider_height_device')}
+        value={typeof ctl.own(hKey) === 'number' ? (ctl.own(hKey) as number) : undefined}
+        placeholder={typeof ctl.inherited(hKey) === 'number' ? String(ctl.inherited(hKey)) : undefined}
+        min={10}
+        max={400}
+        resp={ctl.resp(hKey)}
+        applied={ctl.own(hKey) !== undefined}
+        onReset={() => ctl.reset(hKey)}
+        onChange={(v) => ctl.set(hKey, v)}
+      />
+      <label className="ve-row ve-row--check">
+        <input
+          type="checkbox"
+          checked={(ctl.effective(offKey) ?? 0) === 1}
+          onChange={(e) => {
+            if (e.target.checked) ctl.set(offKey, 1)
+            else if (ctl.device !== 'desktop' && ctl.inherited(offKey) === 1) ctl.set(offKey, 0)
+            else ctl.reset(offKey)
+          }}
+        />
+        <span className="ve-row__label">{t('dp.fk.divider_off_device')}</span>
+      </label>
+    </>
+  )
 }

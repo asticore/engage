@@ -52,8 +52,8 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   ],
   position: ['selfAlign', 'selfWidth', 'selfWidthPercent', 'selfWidthPercentUnit'],
   dividers: [
-    'dividerTop', 'dividerTopColor', 'dividerTopHeight', 'dividerTopFlip', 'dividerTopWidth', 'dividerTopInvert', 'dividerTopFront', 'dividerTopAnim', 'dividerTopSpeed',
-    'dividerBottom', 'dividerBottomColor', 'dividerBottomHeight', 'dividerBottomFlip', 'dividerBottomWidth', 'dividerBottomInvert', 'dividerBottomFront', 'dividerBottomAnim', 'dividerBottomSpeed',
+    'dividerTop', 'dividerTopColor', 'dividerTopHeight', 'dividerTopFlip', 'dividerTopWidth', 'dividerTopInvert', 'dividerTopFront', 'dividerTopAnim', 'dividerTopSpeed', 'dividerTopOff',
+    'dividerBottom', 'dividerBottomColor', 'dividerBottomHeight', 'dividerBottomFlip', 'dividerBottomWidth', 'dividerBottomInvert', 'dividerBottomFront', 'dividerBottomAnim', 'dividerBottomSpeed', 'dividerBottomOff',
   ],
   effects: [
     'parallax', 'parallaxStrength', 'parallaxDistance', 'scrollY', 'scrollX', 'scrollRotate', 'scrollScale', 'scrollOpacity', 'scrollBlur', 'scrollStart', 'scrollEnd', 'scrollOff', 'revealOff', 'parallaxDirection', 'reveal', 'revealDistance', 'revealDuration',

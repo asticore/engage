@@ -4519,6 +4519,8 @@ const ja: UiDictionary = {
   'dp.fk.stop3_colour': "4番目のストップの色",
   'dp.fk.stop3_pos': "4番目のストップの位置 (%)",
   'dp.fk.hover_image': "ホバー時の画像",
+  'dp.fk.divider_height_device': "このデバイスでの高さ (px)",
+  'dp.fk.divider_off_device': "このデバイスで非表示",
 }
 
 export default ja

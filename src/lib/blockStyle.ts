@@ -101,6 +101,10 @@ export const RESPONSIVE_KEYS = [
   'bgImageUrl',
   'scrollOff',
   'revealOff',
+  'dividerTopHeight',
+  'dividerBottomHeight',
+  'dividerTopOff',
+  'dividerBottomOff',
   'bgColor',
   'fontStyle',
   'textDecoration',
@@ -284,6 +288,9 @@ export type BlockStyle = {
   dividerTop?: DividerShape
   dividerTopColor?: string
   dividerTopHeight?: number
+  /** Shape dividers per device (31e): a height that replaces the base one on this device, and an off switch (1 hides it, 0 shows it again). */
+  dividerBottomOff?: number
+  dividerTopOff?: number
   dividerTopFlip?: boolean
   /** Divider width as a percent of the block (100-400), vertical invert, and drawing above the content (31e). */
   dividerTopWidth?: number
@@ -1062,7 +1069,7 @@ const NUM_FX: readonly (readonly [string, number, number])[] = [
   ['auroraSpeed', 4, 80], ['gradientAngle', 0, 360], ['gradientSpeed', 3, 60], ['grainOpacity', 0, 100],
   ['grainSize', 40, 400], ['revealDistance', 0, 200], ['revealDuration', 5, 100], ['revealDelay', 0, 60],
   ['scrollY', -400, 400], ['scrollX', -400, 400], ['scrollRotate', -180, 180], ['scrollScale', 20, 200], ['scrollOpacity', 0, 100],
-  ['scrollBlur', 0, 40], ['scrollStart', 0, 100], ['scrollEnd', 0, 100], ['scrollOff', 0, 1], ['revealOff', 0, 1],
+  ['dividerTopOff', 0, 1], ['dividerBottomOff', 0, 1], ['scrollBlur', 0, 40], ['scrollStart', 0, 100], ['scrollEnd', 0, 100], ['scrollOff', 0, 1], ['revealOff', 0, 1],
   ['hoverLift', 0, 40], ['hoverScale', 100, 120], ['glassOpacity', 0, 100], ['glassBorder', 0, 100],
   ['pointerFxStrength', 0, 100], ['kenBurnsDuration', 5, 60], ['borderFxWidth', 1, 8], ['borderFxSpeed', 2, 20],
   // Advanced tab
@@ -1370,7 +1377,11 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const u = lengthUnit(r[key])
     if (u) out[key] = u
   }
-  for (const key of ['tfFlipX', 'tfFlipY', 'scrollOff', 'revealOff'] as const) {
+  for (const key of ['dividerTopHeight', 'dividerBottomHeight'] as const) {
+    const n = clampNum(r[key], 10, 400)
+    if (n !== undefined) out[key] = n
+  }
+  for (const key of ['tfFlipX', 'tfFlipY', 'scrollOff', 'revealOff', 'dividerTopOff', 'dividerBottomOff'] as const) {
     const n = clampNum(r[key], 0, 1)
     if (n !== undefined) out[key] = Math.round(n)
   }
@@ -1884,6 +1895,24 @@ export function blockStyleCss(style: BlockStyle, scopeId: string, options: { edi
   for (const device of ['tablet', 'mobile'] as const) {
     const decls = deviceOverrideDecls(style, device)
     if (decls.length > 0) rules.push(`@media ${deviceQueries(device).cascade}{${sel}{${decls.join(';')}}}`)
+  }
+  // Shape dividers per device: own height, and off switches that inherit like the scroll ones below.
+  for (const [pos, hKey, offKey] of [['top', 'dividerTopHeight', 'dividerTopOff'], ['bottom', 'dividerBottomHeight', 'dividerBottomOff']] as const) {
+    const target = `${sel}>.be-divider--${pos}`
+    for (const device of ['tablet', 'mobile'] as const) {
+      const h = (device === 'tablet' ? style.tablet : style.mobile)?.[hKey]
+      if (isNum(h)) rules.push(`@media ${deviceQueries(device).cascade}{${target}{height:${h}px !important}}`)
+    }
+    let on = style[offKey] === 1
+    const states: Record<string, boolean> = { desktop: on }
+    for (const device of ['tablet', 'mobile'] as const) {
+      const own = (device === 'tablet' ? style.tablet : style.mobile)?.[offKey]
+      if (isNum(own)) on = own === 1
+      states[device] = on
+    }
+    for (const device of ['desktop', 'tablet', 'mobile'] as const) {
+      if (states[device]) rules.push(`@media ${deviceQueries(device).only}{${target}{display:none !important}}`)
+    }
   }
   // Scrolling effects and the entrance animation can be off per device; mobile inherits tablet, tablet inherits desktop.
   for (const [flag, off] of [['scrollOff', `${sel}>.be-block__content{animation:none !important}`], ['revealOff', `${sel}{animation:none !important}`]] as const) {

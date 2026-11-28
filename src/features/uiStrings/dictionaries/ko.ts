@@ -4519,6 +4519,8 @@ const ko: UiDictionary = {
   'dp.fk.stop3_colour': "네 번째 정지점 색상",
   'dp.fk.stop3_pos': "네 번째 정지점 위치 (%)",
   'dp.fk.hover_image': "호버 시 이미지",
+  'dp.fk.divider_height_device': "이 기기에서의 높이 (px)",
+  'dp.fk.divider_off_device': "이 기기에서 숨기기",
 }
 
 export default ko

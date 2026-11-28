@@ -4415,6 +4415,8 @@ const he: UiDictionary = {
   'dp.fk.stop3_colour': "צבע נקודה רביעית",
   'dp.fk.stop3_pos': "מיקום נקודה רביעית (%)",
   'dp.fk.hover_image': "תמונה בריחוף",
+  'dp.fk.divider_height_device': "גובה במכשיר זה (px)",
+  'dp.fk.divider_off_device': "הסתר במכשיר זה",
 }
 
 export default he

@@ -4570,6 +4570,8 @@ export const UI_STRING_SOURCE = {
   'dp.fk.stop3_colour': "Fourth stop colour",
   'dp.fk.stop3_pos': "Fourth stop position (%)",
   'dp.fk.hover_image': "Image on hover",
+  'dp.fk.divider_height_device': "Height on this device (px)",
+  'dp.fk.divider_off_device': "Hide on this device",
 } as const
 
 export type UiStringKey = keyof typeof UI_STRING_SOURCE

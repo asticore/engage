@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover, HoverTextShadowRows, ScrollEffectsRows, DeviceOffRow } from './fieldKit'
+import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover, HoverTextShadowRows, ScrollEffectsRows, DeviceOffRow, DividerShapeGrid, DividerDeviceRows } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -468,6 +468,10 @@ export const DesignPanel: React.FC<{
           onColor={(v) => set('dividerTopColor', v)}
           onHeight={(v) => set('dividerTopHeight', v)}
           onFlip={(v) => set('dividerTopFlip', v)}
+          device={device}
+          pos="Top"
+          styleValue={value}
+          onStyle={onChange}
         />
         <DividerControls
           label={t('dp.field.bottom')}
@@ -489,6 +493,10 @@ export const DesignPanel: React.FC<{
           onColor={(v) => set('dividerBottomColor', v)}
           onHeight={(v) => set('dividerBottomHeight', v)}
           onFlip={(v) => set('dividerBottomFlip', v)}
+          device={device}
+          pos="Bottom"
+          styleValue={value}
+          onStyle={onChange}
         />
       </Acc>
       )}
@@ -1372,22 +1380,20 @@ const DividerControls: React.FC<{
   onColor: (v: string | undefined) => void
   onHeight: (v: number | undefined) => void
   onFlip: (v: boolean | undefined) => void
-}> = ({ label, shape, color, height, flip, width, invert, front, onWidth, onInvert, onFront, anim, speed, onAnim, onSpeed, onShape, onColor, onHeight, onFlip }) => {
+  device: EditDevice
+  pos: 'Top' | 'Bottom'
+  styleValue: BlockStyle
+  onStyle: (next: BlockStyle) => void
+}> = ({ device, pos, styleValue, onStyle, label, shape, color, height, flip, width, invert, front, onWidth, onInvert, onFront, anim, speed, onAnim, onSpeed, onShape, onColor, onHeight, onFlip }) => {
   const t = useAdminT()
   return (
   <div className="ve-divider-group">
-    <SelectRow
-      label={`${label} shape`}
-      value={shape || 'none'}
-      options={DIVIDER_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
-      applied={shape !== undefined}
-      onReset={() => onShape(undefined)}
-      onChange={(v) => onShape(v === 'none' ? undefined : (v as DividerShape))}
-    />
+    <DividerShapeGrid label={label} shape={shape} onShape={onShape} />
     {shape && shape !== 'none' && (
       <>
         <ColorRow label={`${label} colour`} value={color} onChange={onColor} />
-        <NumberRow label={`${label} height (px)`} value={height} onChange={onHeight} min={10} max={400} />
+        {device === 'desktop' ? <NumberRow label={`${label} height (px)`} value={height} onChange={onHeight} min={10} max={400} /> : null}
+        <DividerDeviceRows value={styleValue} onChange={onStyle} device={device} pos={pos} />
         <CheckRow label={`Flip ${label.toLowerCase()}`} checked={Boolean(flip)} applied={flip !== undefined} onReset={() => onFlip(undefined)} onChange={(v) => onFlip(v || undefined)} />
         <NumberRow label={`${label} width (%)`} value={width} onChange={onWidth} min={100} max={400} />
         <CheckRow label={`Invert ${label.toLowerCase()}`} checked={Boolean(invert)} applied={invert !== undefined} onReset={() => onInvert(undefined)} onChange={(v) => onInvert(v || undefined)} />

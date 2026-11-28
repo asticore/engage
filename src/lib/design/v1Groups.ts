@@ -144,6 +144,8 @@ export const V1_GROUP_OF = {
   selfWidthPercentUnit: 'size',
   dividerTop: 'divider',
   dividerTopColor: 'divider',
+  dividerTopOff: 'divider',
+  dividerBottomOff: 'divider',
   dividerTopHeight: 'divider',
   dividerTopFlip: 'divider',
   dividerTopWidth: 'divider',

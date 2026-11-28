@@ -4519,6 +4519,8 @@ const hi: UiDictionary = {
   'dp.fk.stop3_colour': "चौथे स्टॉप का रंग",
   'dp.fk.stop3_pos': "चौथे स्टॉप की स्थिति (%)",
   'dp.fk.hover_image': "होवर पर छवि",
+  'dp.fk.divider_height_device': "इस डिवाइस पर ऊँचाई (px)",
+  'dp.fk.divider_off_device': "इस डिवाइस पर छिपाएँ",
 }
 
 export default hi

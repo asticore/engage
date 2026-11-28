@@ -4518,6 +4518,8 @@ const zhHans: UiDictionary = {
   'dp.fk.stop3_colour': "第四个色标颜色",
   'dp.fk.stop3_pos': "第四个色标位置 (%)",
   'dp.fk.hover_image': "悬停时的图片",
+  'dp.fk.divider_height_device': "此设备上的高度 (px)",
+  'dp.fk.divider_off_device': "在此设备上隐藏",
 }
 
 export default zhHans

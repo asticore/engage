@@ -4520,6 +4520,8 @@ const de: UiDictionary = {
   'dp.fk.stop3_colour': "Farbe des vierten Stopps",
   'dp.fk.stop3_pos': "Position des vierten Stopps (%)",
   'dp.fk.hover_image': "Bild beim Überfahren",
+  'dp.fk.divider_height_device': "Höhe auf diesem Gerät (px)",
+  'dp.fk.divider_off_device': "Auf diesem Gerät ausblenden",
 }
 
 export default de

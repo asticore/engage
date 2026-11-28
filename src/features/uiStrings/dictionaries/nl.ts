@@ -4519,6 +4519,8 @@ const nl: UiDictionary = {
   'dp.fk.stop3_colour': "Kleur van de vierde stop",
   'dp.fk.stop3_pos': "Positie van de vierde stop (%)",
   'dp.fk.hover_image': "Afbeelding bij hover",
+  'dp.fk.divider_height_device': "Hoogte op dit apparaat (px)",
+  'dp.fk.divider_off_device': "Verberg op dit apparaat",
 }
 
 export default nl

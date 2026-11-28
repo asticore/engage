@@ -4519,6 +4519,8 @@ const fr: UiDictionary = {
   'dp.fk.stop3_colour': "Couleur du quatrième arrêt",
   'dp.fk.stop3_pos': "Position du quatrième arrêt (%)",
   'dp.fk.hover_image': "Image au survol",
+  'dp.fk.divider_height_device': "Hauteur sur cet appareil (px)",
+  'dp.fk.divider_off_device': "Masquer sur cet appareil",
 }
 
 export default fr

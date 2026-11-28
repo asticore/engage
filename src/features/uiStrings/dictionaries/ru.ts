@@ -4519,6 +4519,8 @@ const ru: UiDictionary = {
   'dp.fk.stop3_colour': "Цвет четвёртой точки",
   'dp.fk.stop3_pos': "Позиция четвёртой точки (%)",
   'dp.fk.hover_image': "Изображение при наведении",
+  'dp.fk.divider_height_device': "Высота на этом устройстве (px)",
+  'dp.fk.divider_off_device': "Скрыть на этом устройстве",
 }
 
 export default ru

@@ -92,3 +92,15 @@ describe('gradient stops and hover image (31e)', () => {
     expect(asBlockStyle({ hoverBgImageUrl: 'javascript:alert(1)' } as BlockStyle).hoverBgImageUrl).toBeUndefined()
   })
 })
+
+describe('shape dividers per device (31e)', () => {
+  it('a tablet height is written for that divider only', () => {
+    const css = blockStyleCss(asBlockStyle({ dividerTop: 'wave', dividerTopHeight: 80, tablet: { dividerTopHeight: 40 } } as BlockStyle), 'x1')
+    expect(css).toContain('@media (max-width:900px){#x1>.be-divider--top{height:40px !important}}')
+    expect(css).not.toContain('be-divider--bottom')
+  })
+  it('hide per device inherits from tablet to mobile', () => {
+    const css = blockStyleCss(asBlockStyle({ dividerBottom: 'tilt', tablet: { dividerBottomOff: 1 } } as BlockStyle), 'x1')
+    expect(css).toContain('@media (max-width:600px){#x1>.be-divider--bottom{display:none !important}}')
+  })
+})
