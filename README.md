@@ -12,6 +12,10 @@ The button installs the **lean install** in [`installer/`](installer/): a tiny r
 
 You need a Cloudflare account (with the $5 Workers Paid plan, step 3) and a free GitHub account, and about 10 minutes. No command line is needed.
 
+<video src="https://github.com/asticore/engage/raw/main/docs/media/demo-engage-showcase.mp4" controls muted width="100%"></video>
+
+The video above shows Engage in action and complements the written steps below. If it does not play here, [open the video](docs/media/demo-engage-showcase.mp4).
+
 **Step 1. Cloudflare account.** Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up) (or sign in at [dash.cloudflare.com](https://dash.cloudflare.com)). Cloudflare hosts the site.
 
 **Step 2. Turn on R2 storage (one time).** R2 stores your uploaded images and files. Without it, the deploy fails with *"uses R2 which is only available with an R2 subscription"*.
