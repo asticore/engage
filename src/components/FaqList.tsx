@@ -2,6 +2,7 @@ import React from 'react'
 import { RichText } from '@/engine/editor/react'
 
 import type { Faq } from '@/engage-types'
+import { FaqVote } from '@/features/faq/FaqVote'
 import { faqQuestionPath, relatedFaqs } from '@/features/faq/archive'
 
 export const FaqList: React.FC<{ faqs: Faq[]; layout?: 'accordion' | 'list'; groupByCategory?: boolean; showRelated?: boolean }> = ({
@@ -57,6 +58,7 @@ export const FaqList: React.FC<{ faqs: Faq[]; layout?: 'accordion' | 'list'; gro
                 <div className={answerClassName}>
                   <RichText data={faq.answer} />
                   {related(faq)}
+                  {showRelated && typeof faq.id === 'number' && <FaqVote id={faq.id} />}
                 </div>
               </details>
             ) : (
@@ -65,6 +67,7 @@ export const FaqList: React.FC<{ faqs: Faq[]; layout?: 'accordion' | 'list'; gro
                 <div className={answerClassName}>
                   <RichText data={faq.answer} />
                   {related(faq)}
+                  {showRelated && typeof faq.id === 'number' && <FaqVote id={faq.id} />}
                 </div>
               </div>
             ),

@@ -97,7 +97,7 @@ export const CORE_TABLE_BASES = [
   'ad_settings', 'ai_builder_usage', 'api_builder_settings', 'api_categories', 'api_category_members', 'api_endpoint_log', 'api_endpoints', 'api_key_usage', 'api_keys', 'audit_log',
   'backup_settings', 'blog_question_sets', 'blog_settings', 'categories', 'category_links', 'content_access', 'content_org_grants', 'content_org_visibility', 'content_passwords', 'cron_runs', 'cron_job_state', 'csp_builder', 'csp_reports', 'ip_rules', 'user_bans', 'login_seen', 'rate_rules',
   'custom_field_options', 'data_views', 'domain_settings', 'edit_locks', 'email_brand', 'email_log', 'notification_rules', 'setting_locks', 'push_config', 'push_subscriptions', 'email_schedule',
-  'email_settings', 'email_suppressions', 'email_templates', 'email_verifications', 'error_log', 'faq_settings',
+  'email_settings', 'email_suppressions', 'email_templates', 'email_verifications', 'error_log', 'faq_settings', 'faq_votes',
   'feature_tables', 'field_groups', 'footer', 'form_settings', 'google_connection', 'header', 'impersonations',
   'integrations', 'kv', 'language_settings', 'locked_documents', 'login_tokens', 'machine_translation_usage', 'media',
   'media_settings', 'member_settings', 'migrations', 'navigation', 'not_found_log', 'number_counters',

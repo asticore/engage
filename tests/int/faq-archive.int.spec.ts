@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
 
-import { faqQuestionPath, faqTypes, faqTypeSlug, filterFaqs, relatedFaqs } from '../../src/features/faq/archive'
+import { keepTypeKeys, faqQuestionPath, faqTypes, faqTypeSlug, filterFaqs, relatedFaqs } from '../../src/features/faq/archive'
 
 const faqs = [
   { category: 'Shipping', question: 'How long is delivery?', answer: 'Three to five days.' },
@@ -37,5 +37,14 @@ describe('faq archive helpers', () => {
   })
   it('links to the overview filtered to the question', () => {
     expect(faqQuestionPath(' Do you ship abroad? ')).toBe('/faq?q=Do%20you%20ship%20abroad%3F')
+  })
+  it('keeps the type address the same in every language', () => {
+    const source = [{ category: 'Shipping' }, { category: 'Shipping' }]
+    const shown = keepTypeKeys(source as never[], [
+      { category: 'Versand', question: 'a', answer: '' },
+      { category: 'Versand', question: 'b', answer: '' },
+    ] as never[])
+    expect(faqTypes(shown)).toEqual([{ name: 'Versand', slug: 'shipping', count: 2 }])
+    expect(filterFaqs(shown, { type: 'shipping' })).toHaveLength(2)
   })
 })
