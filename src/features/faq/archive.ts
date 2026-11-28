@@ -43,3 +43,12 @@ export function filterFaqs<T extends Pick<Faq, 'category' | 'question' | 'answer
     return words.every((w) => hay.includes(w))
   })
 }
+
+/** Link to the FAQ overview filtered to one question (the overview search matches every word of the question). */
+export const faqQuestionPath = (question: string): string => `/faq?q=${encodeURIComponent(question.trim().slice(0, 200))}`
+
+/** Other questions of the same type, in their own order, for "Related questions" under an answer. */
+export function relatedFaqs<T extends Pick<Faq, 'id' | 'category' | 'question'>>(faqs: T[], faq: Pick<Faq, 'id' | 'category'>, max = 3): T[] {
+  const slug = faqTypeSlug(faqTypeName(faq))
+  return faqs.filter((other) => other.id !== faq.id && other.question && faqTypeSlug(faqTypeName(other)) === slug).slice(0, Math.max(0, max))
+}

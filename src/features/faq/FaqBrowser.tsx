@@ -24,7 +24,7 @@ export function FaqBrowser({ faqs, types, q, activeSlug, layout, groupByCategory
           ))}
         </nav>
       )}
-      {faqs.length === 0 ? <p className="empty-state">{q ? 'No questions match your search.' : 'No questions here yet.'}</p> : <FaqList faqs={faqs} layout={layout} groupByCategory={groupByCategory} />}
+      {faqs.length === 0 ? <p className="empty-state">{q ? 'No questions match your search.' : 'No questions here yet.'}</p> : <FaqList faqs={faqs} layout={layout} groupByCategory={groupByCategory} showRelated />}
     </div>
   )
 }

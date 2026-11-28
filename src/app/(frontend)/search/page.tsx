@@ -15,7 +15,8 @@ import { brandIdsWhere, brandIn, tagIdsWhere, tagIn } from '@/features/ecommerce
 import { storeTexts } from '@/features/uiStrings/storeTextsServer'
 import { translateWith } from '@/features/uiStrings/t'
 import type { UiStringKey } from '@/features/uiStrings/keys'
-import type { Event as EventDoc, Post, Product } from '@/engage-types'
+import { faqQuestionPath } from '@/features/faq/archive'
+import type { Event as EventDoc, Faq, Post, Product } from '@/engage-types'
 
 /**
  * Public site search results at /search?q=... (the search-box element submits here).
@@ -30,7 +31,7 @@ const MAX_SCAN = 200
 const MAX_RESULTS = 20
 const EXCERPT_LENGTH = 160
 
-type HitType = 'Page' | 'Post' | 'Product' | 'Event'
+type HitType = 'Page' | 'Post' | 'Product' | 'Event' | 'FAQ'
 type Hit = { key: string; type: HitType; title: string; href: string; excerpt: string }
 type Found = { hits: Hit[]; total: number }
 
@@ -189,17 +190,33 @@ async function searchEvents(query: string): Promise<Found> {
   return { hits, total: Math.max(0, totalDocs - (docs.length - visible.length)) }
 }
 
+async function searchFaqs(query: string): Promise<Found> {
+  const engine = await getEngine()
+  const { docs, totalDocs } = (await engine.find({
+    collection: 'faqs',
+    where: { or: [{ question: { contains: query } }, { category: { contains: query } }] },
+    sort: 'order',
+    limit: MAX_RESULTS,
+    depth: 0,
+  })) as unknown as { docs: Faq[]; totalDocs: number }
+  const hits = docs
+    .filter((faq) => faq.question)
+    .map((faq): Hit => ({ key: `faq-${faq.id}`, type: 'FAQ', title: faq.question, href: faqQuestionPath(faq.question), excerpt: snippet(faq.category) }))
+  return { hits, total: totalDocs }
+}
+
 /** Searches every source that is switched on. A source that fails contributes nothing; the page never throws. */
 async function runSearch(query: string): Promise<Found> {
   try {
     const flags = await getFeatureFlags()
-    const [pages, posts, products, events] = await Promise.all([
+    const [pages, posts, products, events, faqs] = await Promise.all([
       searchPages(query).catch(() => NONE),
       flags.blog ? searchPosts(query).catch(() => NONE) : NONE,
       flags.ecommerce ? searchProducts(query).catch(() => NONE) : NONE,
       flags.events ? searchEvents(query).catch(() => NONE) : NONE,
+      flags.faq ? searchFaqs(query).catch(() => NONE) : NONE,
     ])
-    const sources = [pages, posts, products, events]
+    const sources = [pages, posts, products, events, faqs]
     return {
       hits: sources.flatMap((found) => found.hits).slice(0, MAX_RESULTS),
       total: sources.reduce((sum, found) => sum + found.total, 0),

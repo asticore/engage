@@ -2,11 +2,13 @@ import React from 'react'
 import { RichText } from '@/engine/editor/react'
 
 import type { Faq } from '@/engage-types'
+import { faqQuestionPath, relatedFaqs } from '@/features/faq/archive'
 
-export const FaqList: React.FC<{ faqs: Faq[]; layout?: 'accordion' | 'list'; groupByCategory?: boolean }> = ({
+export const FaqList: React.FC<{ faqs: Faq[]; layout?: 'accordion' | 'list'; groupByCategory?: boolean; showRelated?: boolean }> = ({
   faqs,
   layout = 'accordion',
   groupByCategory = false,
+  showRelated = false,
 }) => {
   if (!faqs.length) return null
 
@@ -21,6 +23,22 @@ export const FaqList: React.FC<{ faqs: Faq[]; layout?: 'accordion' | 'list'; gro
 
   const questionClassName = 'cursor-pointer font-[family-name:var(--font-display)] text-[1.05rem]'
   const answerClassName = 'mt-3 opacity-85'
+  const related = (faq: Faq) => {
+    const list = showRelated ? relatedFaqs(faqs, faq) : []
+    if (!list.length) return null
+    return (
+      <nav aria-label="Related questions" className="mt-4 text-sm">
+        <p className="mb-1 uppercase tracking-[0.08em] opacity-70">Related questions</p>
+        <ul className="list-disc pl-5">
+          {list.map((r) => (
+            <li key={r.id}>
+              <a href={faqQuestionPath(r.question)}>{r.question}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )
+  }
   const itemClassName = 'faq-item mb-3 border border-[var(--color-line)] px-5 py-[18px]'
 
   return (
@@ -38,6 +56,7 @@ export const FaqList: React.FC<{ faqs: Faq[]; layout?: 'accordion' | 'list'; gro
                 <summary className={questionClassName}>{faq.question}</summary>
                 <div className={answerClassName}>
                   <RichText data={faq.answer} />
+                  {related(faq)}
                 </div>
               </details>
             ) : (
@@ -45,6 +64,7 @@ export const FaqList: React.FC<{ faqs: Faq[]; layout?: 'accordion' | 'list'; gro
                 <h4 className={questionClassName}>{faq.question}</h4>
                 <div className={answerClassName}>
                   <RichText data={faq.answer} />
+                  {related(faq)}
                 </div>
               </div>
             ),

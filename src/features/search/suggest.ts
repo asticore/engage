@@ -6,6 +6,7 @@ import { getAllResolvedPages } from '@/utilities/pagePaths'
 import { getDb } from '@/cms/db/connect'
 import { getPasswordHash } from '@/cms/db/contentPasswords'
 
+import { faqQuestionPath } from '@/features/faq/archive'
 import { searchTerms } from './synonyms'
 
 /**
@@ -57,6 +58,19 @@ async function findDocs(collection: string, terms: string[], fields: string[], s
     limit,
     depth: 0,
   } as never)) as unknown as { docs: Row[] }
+  return docs
+}
+
+/** FAQ entries whose question or type contains any term (FAQs have no draft state and no password). */
+async function findFaqs(terms: string[], limit: number): Promise<{ question?: string | null; category?: string | null }[]> {
+  const engine = await getEngine()
+  const { docs } = (await engine.find({
+    collection: 'faqs',
+    where: { or: ['question', 'category'].flatMap((f) => terms.map((term) => ({ [f]: { contains: term } }))) },
+    sort: 'order',
+    limit,
+    depth: 0,
+  } as never)) as unknown as { docs: { question?: string | null; category?: string | null }[] }
   return docs
 }
 
@@ -113,12 +127,22 @@ export async function findSuggestions(rawQuery: unknown, max = SUGGEST_MAX_RESUL
     return out
   }
 
+  const faqs = async (): Promise<Suggestion[]> => {
+    const out: Suggestion[] = []
+    for (const d of await findFaqs(terms, limit)) {
+      if (!d.question) continue
+      out.push({ title: d.question, url: faqQuestionPath(d.question), type: 'FAQ', excerpt: clipExcerpt(d.category) })
+    }
+    return out
+  }
+
   const none: Suggestion[] = []
   const groups = await Promise.all([
     pages().catch(() => none),
     flags?.blog ? posts().catch(() => none) : none,
     flags?.ecommerce ? products().catch(() => none) : none,
     flags?.events ? events().catch(() => none) : none,
+    flags?.faq ? faqs().catch(() => none) : none,
   ])
   return groups.flat().filter((s) => s.title).slice(0, limit)
 }
