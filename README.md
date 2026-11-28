@@ -10,11 +10,47 @@ The button installs the **lean install** in [`installer/`](installer/): a tiny r
 
 ### Quick start (your own site)
 
-1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up) (or sign in).
-2. Click the **Deploy to Cloudflare** button above and follow the prompts. Cloudflare creates the site's Worker, database and storage in your account and asks for a few settings (the secrets listed under `cloudflare.bindings`; generate each with `openssl rand -hex 32`, and set `SITE_URL` to your address).
-3. Open the Worker's address, go to `/admin` and create the first admin account.
-4. Connect your domain: in Cloudflare, Workers & Pages, your site, Settings, Domains & Routes, Add, Custom domain (the domain must be on your Cloudflare account). Then set `SITE_URL` to the new address.
-5. Optional: to update with one click from the admin, set `UPDATE_REPO` (your site's repository) and `UPDATE_GITHUB_TOKEN` (a token limited to that repository with Contents read and write). Without them, update by retrying the build in Cloudflare.
+You need two free accounts and about 10 minutes. No command line is needed.
+
+**Step 1. Cloudflare account.** Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up) (or sign in at [dash.cloudflare.com](https://dash.cloudflare.com)). Cloudflare hosts the site.
+
+**Step 2. Turn on R2 storage (one time).** R2 stores your uploaded images and files. Without it, the deploy fails with *"uses R2 which is only available with an R2 subscription"*.
+
+1. In the Cloudflare dashboard, open **R2 Object Storage** in the left menu.
+2. Click **Purchase R2 Plan** (or **Subscribe**). The free tier is included and you are not charged within it. Cloudflare may ask for a payment card to activate R2.
+3. Wait until the R2 page shows your (empty) bucket list instead of the purchase screen.
+
+**Step 3. GitHub account.** Create a free [GitHub account](https://github.com/signup) (or sign in at [github.com](https://github.com)). GitHub keeps your site's settings file and lets the site update itself. You do not need to create a repository: the deploy does it for you.
+
+**Step 4. Deploy.** Click the button:
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/engage/tree/main/installer)
+
+1. Sign in to Cloudflare if asked.
+2. Click **Connect to GitHub** and authorise Cloudflare. On the authorise screen, check that the **account or organisation shown is the one you want to own the site**, and switch it if not.
+3. Fill in the form (see below), then click **Deploy**.
+
+Cloudflare creates the repository on GitHub, the database and the storage bucket for you. Nothing to set up by hand.
+
+The form asks for a few settings:
+
+| Setting | What to enter |
+| ------- | ------------- |
+| `ENGAGE_SECRET` | A long random string (32 or more characters). It signs logins and encrypts saved keys, so keep it safe and never change it later. |
+| `INTERNAL_ROUTE_KEY` | Another long random string. |
+| `SITE_URL` | Your site address, for example `https://example.com`. If you do not have a domain yet, put the `workers.dev` address Cloudflare shows after the first deploy and update it later. |
+| `STRIPE_*` | Leave blank unless you are turning on the Shop. |
+| `UPDATE_REPO`, `UPDATE_GITHUB_TOKEN`, `ENGAGE_SOURCE_TOKEN` | Leave blank. They are optional (see step 7). |
+
+To make a random string without any tools: use your password manager's generator (set it to 32+ characters), or a site such as a trusted online password generator. Developers can run `openssl rand -hex 32` instead. The installer cannot create these values for you yet, because Cloudflare passes them in from this form.
+
+**Step 5. Open your site.** When the deploy finishes, open the Worker's address. The first visit sets up the database and starter content by itself (this can take a few seconds). Go to `/admin` and create the first admin account.
+
+**Step 6. Connect your domain.** In Cloudflare: **Workers & Pages**, your site, **Settings**, **Domains & Routes**, **Add**, **Custom domain** (the domain must be on your Cloudflare account). Then change `SITE_URL` to the new address (Settings, Variables and Secrets).
+
+**Step 7. Optional: one-click updates.** To update from the admin, set `UPDATE_REPO` (your site's repository, `owner/name`) and `UPDATE_GITHUB_TOKEN` (a GitHub token limited to that repository with Contents read and write). Without them, update by retrying the build in Cloudflare.
+
+Something failed? The most common causes: R2 not activated (step 2), the wrong GitHub account chosen on the authorise screen (step 4), or a missing `ENGAGE_SECRET`.
 
 When a new release is out, the admin shows an update popup; after updating, a bar offers **Run migration** if the database needs it.
 
