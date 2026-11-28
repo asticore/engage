@@ -2956,7 +2956,7 @@ _Date: 28 Nov 2026_
 **Where to find it:** Visual editor > selected block > Design > Border, Background (image for this device), Typography and Hover, Advanced (position Static)
 
 <a id="bld-091"></a>
-#### BLD-091 · Task 12 motion, background, divider and transform controls (31e) (28 Nov 2026)
+#### BLD-092 · Task 12 motion, background, divider and transform controls (31e) (28 Nov 2026)
 
 _Date: 28 Nov 2026_
 
@@ -2965,7 +2965,7 @@ _Date: 28 Nov 2026_
 **Where to find it:** Visual editor > selected block > Design > Effects (scrolling effects, entrance off), Background and Hover (gradient stops, image on hover), Dividers, Advanced (transform)
 
 <a id="bld-092"></a>
-#### BLD-092 · Task 12 field kit patterns: units, Normal | Hover tabs, breakpoints (31h) (28 Nov 2026)
+#### BLD-093 · Task 12 field kit patterns: units, Normal | Hover tabs, breakpoints (31h) (28 Nov 2026)
 
 _Date: 28 Nov 2026_
 
@@ -3742,15 +3742,11 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 ### 28 Nov 2026
 
-<<<<<<< HEAD
 - [I18N-013](#i18n-013) Task 2 promo badge field descriptions
 - [BLD-090](#bld-090) Task 3 Before and after and Popup elements, Spark and Shine audit closed
+- [BLD-093](#bld-093) Task 12 field kit patterns: units, Normal | Hover tabs, breakpoints
+- [BLD-092](#bld-092) Task 12 motion, background, divider and transform controls
 - [BLD-091](#bld-091) Task 12 design panel parity, second slice
-=======
-- [BLD-092](#bld-092) Task 12 field kit patterns: units, Normal | Hover tabs, breakpoints
-- [BLD-091](#bld-091) Task 12 motion, background, divider and transform controls
-- [BLD-090](#bld-090) Task 12 design panel parity, second slice
->>>>>>> cecfdaf (Task 12 docs: done entries, leftovers, live check)
 
 ### 23 Nov 2026
 
