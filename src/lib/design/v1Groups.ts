@@ -142,6 +142,7 @@ export const V1_GROUP_OF = {
   maxHeightUnit: 'size',
   paddingUnit: 'spacing',
   borderWidthUnit: 'border',
+  shadowUnit: 'border',
   radiusUnit: 'border',
   marginUnit: 'spacing',
   selfWidthPercentUnit: 'size',

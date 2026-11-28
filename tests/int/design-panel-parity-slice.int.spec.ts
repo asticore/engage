@@ -136,3 +136,14 @@ describe('transform per device, curve and hover border width (31e)', () => {
     expect(out).toContain('border-style:solid !important')
   })
 })
+
+describe('shadow unit and pointer follow (31h, 31e)', () => {
+  it('the shadow distances take one unit', () => {
+    expect(blockStyleToCss({ bsX: 1, bsY: 2, bsBlur: 3, bsSpread: 0, bsColor: '#000000', shadowUnit: 'rem' }).boxShadow).toBe('1rem 2rem 3rem 0rem #000000')
+    expect(asBlockStyle({ shadowUnit: 'furlong' } as unknown as BlockStyle).shadowUnit).toBeUndefined()
+  })
+  it('follow is a pointer effect with its own class', () => {
+    expect(asBlockStyle({ pointerFx: 'follow' }).pointerFx).toBe('follow')
+    expect(blockFxClasses({ pointerFx: 'follow' })).toContain('be-fx-pointer-follow')
+  })
+})

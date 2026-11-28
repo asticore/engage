@@ -4533,6 +4533,9 @@ const ko: UiDictionary = {
   'dp.fk.curve_ease': "Ease (기본)",
   'dp.fk.hover_border_width': "호버 시 테두리 두께 (px)",
   'dp.fk.breakpoints': "태블릿은 너비 {tablet}px까지, 모바일은 {mobile}px까지 적용됩니다.",
+  'dp.fk.link_offsets': "모든 오프셋 연결",
+  'dp.fk.all_offsets': "모든 오프셋",
+  'dp.fk.shadow_unit': "그림자 거리 단위",
 }
 
 export default ko

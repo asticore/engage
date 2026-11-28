@@ -4533,6 +4533,9 @@ const pt: UiDictionary = {
   'dp.fk.curve_ease': "Ease (padrão)",
   'dp.fk.hover_border_width': "Largura da borda ao passar o mouse (px)",
   'dp.fk.breakpoints': "Tablet vale até {tablet} px de largura, celular até {mobile} px.",
+  'dp.fk.link_offsets': "Vincular todos os deslocamentos",
+  'dp.fk.all_offsets': "Todos os deslocamentos",
+  'dp.fk.shadow_unit': "Unidade da distância da sombra",
 }
 
 export default pt

@@ -112,7 +112,7 @@ export type SectionLayout = {
   /** Grid: horizontal alignment of cells inside their track. Unset = stretch. */
   gridJustify?: AlignItemsValue
   /** Unit of the flex gap and the grid gaps. Unset = px. */
-  gapUnit?: 'px' | 'rem'
+  gapUnit?: LayoutUnit
   /** Modal: text of the trigger button or link (1..60 chars). Unset = "Open". */
   modalLabel?: string
   /** Modal: dialog width in px (320..1200). Unset = 640. */
@@ -302,7 +302,7 @@ export function parseSectionLayout(raw: unknown): SectionLayout | undefined {
   }
   if (isNum(raw.gridMinWidth) && raw.gridMinWidth >= 80 && raw.gridMinWidth <= 800) out.gridMinWidth = Math.round(raw.gridMinWidth)
   if (raw.gridFlow === 'dense') out.gridFlow = 'dense'
-  if (raw.gapUnit === 'rem') out.gapUnit = 'rem'
+  if (typeof raw.gapUnit === 'string' && raw.gapUnit !== 'px' && (LAYOUT_UNITS as readonly string[]).includes(raw.gapUnit)) out.gapUnit = raw.gapUnit as LayoutUnit
   if (typeof raw.modalLabel === 'string' && raw.modalLabel.trim() !== '') out.modalLabel = raw.modalLabel.trim().slice(0, 60)
   if (isNum(raw.modalWidth) && raw.modalWidth >= 320 && raw.modalWidth <= 1200) out.modalWidth = raw.modalWidth
   const modalStyle = pick(raw.modalStyle, ['button', 'link'] as const)

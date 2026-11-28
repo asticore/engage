@@ -144,6 +144,10 @@ export const DesignPanel: React.FC<{
       </div>
       <p className="ve-row__help">{t('dp.fk.breakpoints', { tablet: DEFAULT_BREAKPOINTS.tablet, mobile: DEFAULT_BREAKPOINTS.mobile })}</p>
       <Acc g="background" title={t('dp.section.background')} defaultOpen>
+        <NormalHoverTabs
+          hoverSet={['hoverBgColor', 'hoverBgImageUrl', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle'].some((k) => (value as Record<string, unknown>)[k] !== undefined)}
+          normal={
+            <>
         <SelectRow
           label={t('dp.field.type')}
           value={value.bgType || 'none'}
@@ -323,6 +327,19 @@ export const DesignPanel: React.FC<{
             <BackgroundEffectControls value={value} onChange={onChange} />
           </>
         )}
+            </>
+          }
+          hover={
+            <>
+              <ColorRow label={t('dp.field.background')} value={value.hoverBgColor} onChange={(v) => set('hoverBgColor', v)} />
+              <ImageRow label={t('dp.fk.hover_image')} url={value.hoverBgImageUrl} onPick={(_id, url) => set('hoverBgImageUrl', url ?? undefined)} onClear={() => set('hoverBgImageUrl', undefined)} />
+              <ColorRow label="Gradient from" value={value.hoverGradFrom} onChange={(v) => set('hoverGradFrom', v)} />
+              <ColorRow label="Gradient to" value={value.hoverGradTo} onChange={(v) => set('hoverGradTo', v)} />
+              <FxRange k="hoverGradAngle" label="Gradient angle" unit="deg" value={value} onChange={onChange} def={180} min={0} max={360} />
+              <FxRange k="hoverTransitionMs" label={t('dp.field.transition')} unit="ms" value={value} onChange={onChange} def={150} min={0} max={2000} step={10} />
+            </>
+          }
+        />
       </Acc>
 
       <Acc g="hover" title={t('dp.section.hover')}>
@@ -2155,6 +2172,26 @@ const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
 
+const POS_KEYS = ['posTop', 'posRight', 'posBottom', 'posLeft'] as const
+
+/** The four position offsets, with an optional "link all offsets" mode that writes one value to every side in one update. */
+const LinkedOffsets: React.FC<{ ctl: ResponsiveCtl }> = ({ ctl }) => {
+  const t = useAdminT()
+  const [linked, setLinked] = useState(false)
+  const { same, value } = linkedValue(POS_KEYS.map((k) => ctl.own(k)))
+  const labels = [t('dp.field.top'), t('dp.lit.right'), t('dp.field.bottom'), t('dp.lit.left')]
+  return (
+    <>
+      <CheckRow label={t('dp.fk.link_offsets')} checked={linked} applied={false} onChange={setLinked} />
+      {linked ? (
+        <NumberRow label={t('dp.fk.all_offsets')} value={value} placeholder={same ? undefined : 'mixed'} min={-2000} max={2000} resp={ctl.resp(POS_KEYS[0])} onChange={(v) => ctl.setMany(linkedPatch(POS_KEYS, v))} />
+      ) : (
+        POS_KEYS.map((k, i) => <TypoRange key={k} ctl={ctl} k={k} label={labels[i]!} def={0} min={-2000} max={2000} step={1} />)
+      )}
+    </>
+  )
+}
+
 const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; ctl: ResponsiveCtl }> = ({ value, onChange, ctl }) => {
   const t = useAdminT()
   const { set, resetBtn } = makeFxEditing(value, onChange)
@@ -2203,10 +2240,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
         {positioned && (
           <>
             <div className="ve-row"><UnitSelect ctl={ctl} unitKey={'posUnit' as RespKey} label="Offset unit" defaultLabel="px" units={['%', 'em', 'rem', 'vw', 'vh']} /></div>
-            <TypoRange ctl={ctl} k="posTop" label={t('dp.field.top')} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posRight" label={t('dp.lit.right')} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posBottom" label={t('dp.field.bottom')} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posLeft" label={t('dp.lit.left')} def={0} min={-2000} max={2000} step={1} />
+            <LinkedOffsets ctl={ctl} />
           </>
         )}
         <RespNumber ctl={ctl} k="zIndex" label={t('dp.lit.z_index')} min={-10} max={9999} />

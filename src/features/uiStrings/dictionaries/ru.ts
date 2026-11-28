@@ -4533,6 +4533,9 @@ const ru: UiDictionary = {
   'dp.fk.curve_ease': "Ease (по умолчанию)",
   'dp.fk.hover_border_width': "Толщина границы при наведении (px)",
   'dp.fk.breakpoints': "Планшет действует до ширины {tablet} px, телефон до {mobile} px.",
+  'dp.fk.link_offsets': "Связать все смещения",
+  'dp.fk.all_offsets': "Все смещения",
+  'dp.fk.shadow_unit': "Единица расстояния тени",
 }
 
 export default ru

@@ -4533,6 +4533,9 @@ const ja: UiDictionary = {
   'dp.fk.curve_ease': "Ease（既定）",
   'dp.fk.hover_border_width': "ホバー時の枠線の太さ (px)",
   'dp.fk.breakpoints': "タブレットは幅 {tablet} px まで、モバイルは {mobile} px までです。",
+  'dp.fk.link_offsets': "すべてのオフセットをリンク",
+  'dp.fk.all_offsets': "すべてのオフセット",
+  'dp.fk.shadow_unit': "シャドウ距離の単位",
 }
 
 export default ja

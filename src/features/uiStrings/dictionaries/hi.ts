@@ -4533,6 +4533,9 @@ const hi: UiDictionary = {
   'dp.fk.curve_ease': "Ease (डिफ़ॉल्ट)",
   'dp.fk.hover_border_width': "होवर पर बॉर्डर की चौड़ाई (px)",
   'dp.fk.breakpoints': "टैबलेट {tablet} px चौड़ाई तक, मोबाइल {mobile} px तक।",
+  'dp.fk.link_offsets': "सभी ऑफ़सेट जोड़ें",
+  'dp.fk.all_offsets': "सभी ऑफ़सेट",
+  'dp.fk.shadow_unit': "शैडो दूरी की इकाई",
 }
 
 export default hi

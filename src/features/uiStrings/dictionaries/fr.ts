@@ -4533,6 +4533,9 @@ const fr: UiDictionary = {
   'dp.fk.curve_ease': "Ease (par défaut)",
   'dp.fk.hover_border_width': "Épaisseur de la bordure au survol (px)",
   'dp.fk.breakpoints': "Tablette jusqu’à {tablet} px de large, mobile jusqu’à {mobile} px.",
+  'dp.fk.link_offsets': "Lier tous les décalages",
+  'dp.fk.all_offsets': "Tous les décalages",
+  'dp.fk.shadow_unit': "Unité des distances d’ombre",
 }
 
 export default fr

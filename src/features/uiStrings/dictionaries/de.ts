@@ -4534,6 +4534,9 @@ const de: UiDictionary = {
   'dp.fk.curve_ease': "Ease (Standard)",
   'dp.fk.hover_border_width': "Rahmenbreite beim Überfahren (px)",
   'dp.fk.breakpoints': "Tablet gilt bis {tablet} px Breite, Mobil bis {mobile} px.",
+  'dp.fk.link_offsets': "Alle Versätze verbinden",
+  'dp.fk.all_offsets': "Alle Versätze",
+  'dp.fk.shadow_unit': "Einheit der Schattenabstände",
 }
 
 export default de

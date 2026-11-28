@@ -39,7 +39,7 @@ export const HOVER_TRANSFORM_PRESETS: Record<Exclude<HoverTransformPreset, 'none
 }
 
 export type HoverFx = 'none' | 'lift' | 'glow' | 'zoom'
-export type PointerFx = 'none' | 'spotlight' | 'tilt' | 'magnetic'
+export type PointerFx = 'none' | 'spotlight' | 'tilt' | 'magnetic' | 'follow'
 export type KenBurns = 'none' | 'zoom-in' | 'zoom-out' | 'pan'
 export type BorderFx = 'none' | 'glow' | 'conic-spin'
 export type BoxShadowPreset = 'none' | 'sm' | 'md' | 'lg'
@@ -230,6 +230,8 @@ export type BlockStyle = {
   bs2Color?: string
   bs2Inset?: boolean
   /** Third shadow layer (31e). */
+  /** Unit of every custom box shadow distance (x, y, blur, spread; all layers and hover). Unset = px (31h). */
+  shadowUnit?: LengthUnit
   bs3X?: number
   bs3Y?: number
   bs3Blur?: number
@@ -643,7 +645,7 @@ export const BLEND_MODE_OPTIONS: { label: string; value: BlendMode }[] = [
 
 export const EMPTY_STYLE: BlockStyle = {}
 
-const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit', 'posUnit', 'borderWidthUnit', 'radiusUnit', 'tfUnit'] as const
+const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit', 'posUnit', 'borderWidthUnit', 'radiusUnit', 'tfUnit', 'shadowUnit'] as const
 /** Drops unit keys that are not on the whitelist. */
 function withSafeUnits(style: BlockStyle): BlockStyle {
   const raw = style as Record<string, unknown>
@@ -1645,7 +1647,8 @@ function customBoxShadow(style: BlockStyle, prefix: 'bs' | 'hbs' | 'bs2' | 'bs3'
   const set = ['X', 'Y', 'Blur', 'Spread'].some((k) => isNum(r[prefix + k])) || typeof r[prefix + 'Color'] === 'string' || r[prefix + 'Inset'] === true
   if (!set) return undefined
   const color = sanitizeColor(r[prefix + 'Color']) ?? 'rgba(0, 0, 0, 0.25)'
-  return `${r[prefix + 'Inset'] === true ? 'inset ' : ''}${n('X', 0)}px ${n('Y', 4)}px ${n('Blur', 12)}px ${n('Spread', 0)}px ${color}`
+  const u = lengthUnit(r.shadowUnit) ?? 'px'
+  return `${r[prefix + 'Inset'] === true ? 'inset ' : ''}${n('X', 0)}${u} ${n('Y', 4)}${u} ${n('Blur', 12)}${u} ${n('Spread', 0)}${u} ${color}`
 }
 
 /** Per-side border widths. Any side set switches the border on; unset sides fall back to borderWidth (or 0). */
@@ -2192,6 +2195,7 @@ export const POINTER_FX_OPTIONS: { label: string; value: PointerFx }[] = [
   { label: 'Spotlight', value: 'spotlight' },
   { label: 'Tilt', value: 'tilt' },
   { label: 'Magnetic', value: 'magnetic' },
+  { label: 'Follow the pointer', value: 'follow' },
 ]
 
 export const KEN_BURNS_OPTIONS: { label: string; value: KenBurns }[] = [

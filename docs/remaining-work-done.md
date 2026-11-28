@@ -2969,7 +2969,7 @@ _Date: 28 Nov 2026_
 
 _Date: 28 Nov 2026_
 
-**Task 12 field kit (28 Nov 2026).** Border width and corner radius take the six units per device (`borderWidthUnit`, `radiusUnit`; border width uses `LengthField`). `NormalHoverTabs` (arrow keys, tab roles) is used on Border (hover border colour, width, radius, shadow) and on a new Text shadow and stroke popover (`TypographyEffectsPopover`) with hover text colour, shadow and stroke. Hover border width `hoverBorderWidth`. The panel states the tablet and mobile breakpoints. Tests: `tests/int/field-kit-patterns.int.spec.ts` (tabs, popover keyboard use, six units) and the CSS tests above.
+**Task 12 field kit (28 Nov 2026).** Border width and corner radius take the six units per device (`borderWidthUnit`, `radiusUnit`; border width uses `LengthField`). `NormalHoverTabs` (arrow keys, tab roles) is used on Border (hover border colour, width, radius, shadow) and on a new Text shadow and stroke popover (`TypographyEffectsPopover`) with hover text colour, shadow and stroke. Hover border width `hoverBorderWidth`. The panel states the tablet and mobile breakpoints. Last small items: Follow the pointer effect (`pointerFx` follow, moves the content against the pointer, desktop with a fine pointer only), Link all offsets on position, `shadowUnit` for every custom shadow distance, container gap in the six units, and Normal | Hover tabs on Background. Spacing has no hover state (Elementor has none either). The dynamic link source is Task 18. Tests: `tests/int/field-kit-patterns.int.spec.ts` (tabs, popover keyboard use, six units) and the CSS tests above.
 
 **Where to find it:** Visual editor > selected block > Design > Border, Typography
 

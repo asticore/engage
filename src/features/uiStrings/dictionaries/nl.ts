@@ -4533,6 +4533,9 @@ const nl: UiDictionary = {
   'dp.fk.curve_ease': "Ease (standaard)",
   'dp.fk.hover_border_width': "Randdikte bij hover (px)",
   'dp.fk.breakpoints': "Tablet geldt tot {tablet} px breed, mobiel tot {mobile} px.",
+  'dp.fk.link_offsets': "Alle verschuivingen koppelen",
+  'dp.fk.all_offsets': "Alle verschuivingen",
+  'dp.fk.shadow_unit': "Eenheid schaduwafstand",
 }
 
 export default nl

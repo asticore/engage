@@ -110,7 +110,8 @@
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
   .be-fx-pointer-spotlight::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle var(--be-spot-r,220px) at var(--mx,50%) var(--my,50%),var(--be-spot,rgba(255,255,255,.35)),transparent)}
   .be-fx-pointer-tilt>.be-block__content{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out}
-  .be-fx-pointer-magnetic{translate:var(--mgx,0px) var(--mgy,0px)}
+  .be-fx-pointer-magnetic,.be-fx-pointer-follow>.be-block__content{translate:var(--mgx,0px) var(--mgy,0px)}
+  .be-fx-pointer-follow>.be-block__content{transition:translate .6s cubic-bezier(.2,.8,.2,1)}
 }
 
 /* Heading effects (HeadingElement). The markup and motion of each effect come from wave36.css / wave43.css;

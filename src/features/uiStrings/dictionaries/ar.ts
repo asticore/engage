@@ -4533,6 +4533,9 @@ const ar: UiDictionary = {
   'dp.fk.curve_ease': "تدرج (افتراضي)",
   'dp.fk.hover_border_width': "عرض الحد عند التمرير (px)",
   'dp.fk.breakpoints': "اللوحي حتى عرض {tablet} px، والجوال حتى {mobile} px.",
+  'dp.fk.link_offsets': "ربط كل الإزاحات",
+  'dp.fk.all_offsets': "كل الإزاحات",
+  'dp.fk.shadow_unit': "وحدة مسافة الظل",
 }
 
 export default ar

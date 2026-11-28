@@ -4584,6 +4584,9 @@ export const UI_STRING_SOURCE = {
   'dp.fk.curve_ease': "Ease (default)",
   'dp.fk.hover_border_width': "Border width on hover (px)",
   'dp.fk.breakpoints': "Tablet applies up to {tablet} px wide, mobile up to {mobile} px.",
+  'dp.fk.link_offsets': "Link all offsets",
+  'dp.fk.all_offsets': "All offsets",
+  'dp.fk.shadow_unit': "Shadow distance unit",
 } as const
 
 export type UiStringKey = keyof typeof UI_STRING_SOURCE

@@ -4429,6 +4429,9 @@ const he: UiDictionary = {
   'dp.fk.curve_ease': "Ease (ברירת מחדל)",
   'dp.fk.hover_border_width': "עובי מסגרת בריחוף (px)",
   'dp.fk.breakpoints': "טאבלט עד רוחב {tablet} px, נייד עד {mobile} px.",
+  'dp.fk.link_offsets': "קישור כל ההיסטים",
+  'dp.fk.all_offsets': "כל ההיסטים",
+  'dp.fk.shadow_unit': "יחידת מרחק צל",
 }
 
 export default he

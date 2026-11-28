@@ -225,6 +225,7 @@ export const BoxShadowPopover: React.FC<{ value: BlockStyle; patch: Patch }> = (
         {numRow(value, patch, 'Blur (px)', k('Blur'), 0, 300)}
         {numRow(value, patch, 'Spread (px)', k('Spread'), -100, 200)}
         <ColorRow label="Colour" value={value[k('Color')] as string | undefined} onChange={(v) => patch({ [k('Color')]: v } as Partial<BlockStyle>)} />
+        <SelectRow label={t('dp.fk.shadow_unit')} value={value.shadowUnit ?? 'px'} options={UNIT_OPTIONS} applied={value.shadowUnit !== undefined} onReset={() => patch({ shadowUnit: undefined })} onChange={(v) => patch({ shadowUnit: v === 'px' ? undefined : (v as BlockStyle['shadowUnit']) })} />
         <label className="ve-row ve-row--check">
           <input type="checkbox" checked={inset} onChange={(e) => patch({ [k('Inset')]: e.target.checked ? true : undefined } as Partial<BlockStyle>)} />
           <span className="ve-row__label">Inset</span>

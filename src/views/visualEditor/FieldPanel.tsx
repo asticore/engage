@@ -665,11 +665,8 @@ const SectionLayoutFields: React.FC<{
           <SelectRow
             label={t('ve.fp.gapUnit')}
             value={layout.gapUnit || 'px'}
-            options={[
-              { label: 'px', value: 'px' },
-              { label: 'rem', value: 'rem' },
-            ]}
-            onChange={(v) => setLayout({ gapUnit: v === 'rem' ? 'rem' : undefined })}
+            options={LAYOUT_UNITS.map((u) => ({ label: u, value: u }))}
+            onChange={(v) => setLayout({ gapUnit: v === 'px' ? undefined : (v as SectionLayout['gapUnit']) })}
           />
         )}
         {layout.display === 'modal' && (

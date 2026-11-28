@@ -42,7 +42,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginUnit', 'minHeight', 'minHeightUnit',
     'minWidth', 'minWidthUnit', 'maxWidth', 'maxWidthUnit', 'maxHeight', 'maxHeightUnit',
   ],
-  border: ['borderWidth', 'borderStyle', 'borderColor', 'borderWidthUnit', 'radiusUnit', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow',
+  border: ['borderWidth', 'borderStyle', 'borderColor', 'borderWidthUnit', 'radiusUnit', 'shadowUnit', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow',
     'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bs3X', 'bs3Y', 'bs3Blur', 'bs3Spread', 'bs3Color', 'bs3Inset'],
   layout: ['width', 'textAlign', 'textColor'],
   typography: [

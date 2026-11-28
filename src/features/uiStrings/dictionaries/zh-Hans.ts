@@ -4532,6 +4532,9 @@ const zhHans: UiDictionary = {
   'dp.fk.curve_ease': "Ease（默认）",
   'dp.fk.hover_border_width': "悬停时边框宽度 (px)",
   'dp.fk.breakpoints': "平板适用于宽度不超过 {tablet} px，手机不超过 {mobile} px。",
+  'dp.fk.link_offsets': "链接所有偏移",
+  'dp.fk.all_offsets': "所有偏移",
+  'dp.fk.shadow_unit': "阴影距离单位",
 }
 
 export default zhHans
