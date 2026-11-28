@@ -28,21 +28,11 @@ You need two free accounts and about 10 minutes. No command line is needed.
 
 1. Sign in to Cloudflare if asked.
 2. Click **Connect to GitHub** and authorise Cloudflare. On the authorise screen, check that the **account or organisation shown is the one you want to own the site**, and switch it if not.
-3. Fill in the form (see below), then click **Deploy**.
+3. Fill in the form, then click **Deploy**. Leave everything as it is, with one exception: **tick "Create private Git repository"**, so your site's repository stays private. Leave the other options alone.
 
-Cloudflare creates the repository on GitHub, the database and the storage bucket for you. Nothing to set up by hand.
+Cloudflare creates the repository on GitHub, the database and the storage bucket for you. The site's two secret keys (`ENGAGE_SECRET` and `INTERNAL_ROUTE_KEY`) are generated automatically on the first build, so there is nothing to type or keep. The first build takes a couple of minutes.
 
-The form asks for a few settings:
-
-| Setting | What to enter |
-| ------- | ------------- |
-| `ENGAGE_SECRET` | A long random string (32 or more characters). It signs logins and encrypts saved keys, so keep it safe and never change it later. |
-| `INTERNAL_ROUTE_KEY` | Another long random string. |
-| `SITE_URL` | Your site address, for example `https://example.com`. If you do not have a domain yet, put the `workers.dev` address Cloudflare shows after the first deploy and update it later. |
-| `STRIPE_*` | Leave blank unless you are turning on the Shop. |
-| `UPDATE_REPO`, `UPDATE_GITHUB_TOKEN`, `ENGAGE_SOURCE_TOKEN` | Leave blank. They are optional (see step 7). |
-
-To make a random string without any tools: use your password manager's generator (set it to 32+ characters), or a site such as a trusted online password generator. Developers can run `openssl rand -hex 32` instead. The installer cannot create these values for you yet, because Cloudflare passes them in from this form.
+Optional settings you can leave blank: `SITE_URL` (your site address; set it once you have a domain, see step 6), `STRIPE_*` (only for the Shop), and `UPDATE_REPO`, `UPDATE_GITHUB_TOKEN`, `ENGAGE_SOURCE_TOKEN` (see step 7).
 
 **Step 5. Open your site.** When the deploy finishes, open the Worker's address. The first visit sets up the database and starter content by itself (this can take a few seconds). Go to `/admin` and create the first admin account.
 
@@ -50,7 +40,7 @@ To make a random string without any tools: use your password manager's generator
 
 **Step 7. Optional: one-click updates.** To update from the admin, set `UPDATE_REPO` (your site's repository, `owner/name`) and `UPDATE_GITHUB_TOKEN` (a GitHub token limited to that repository with Contents read and write). Without them, update by retrying the build in Cloudflare.
 
-Something failed? The most common causes: R2 not activated (step 2), the wrong GitHub account chosen on the authorise screen (step 4), or a missing `ENGAGE_SECRET`.
+Something failed? The most common causes: R2 not activated (step 2), the wrong GitHub account chosen on the authorise screen (step 4).
 
 When a new release is out, the admin shows an update popup; after updating, a bar offers **Run migration** if the database needs it.
 

@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "Lean Engage install. Downloads the release named in engage.config.json; nothing else lives here.",
   "scripts": {
-    "build": "node scripts/install.mjs",
+    "build": "node scripts/install.mjs && node scripts/secrets.mjs",
     "deploy": "node scripts/install.mjs && wrangler deploy",
     "dev": "node scripts/install.mjs && wrangler dev"
   },
@@ -14,10 +14,10 @@
   "cloudflare": {
     "bindings": {
       "ENGAGE_SECRET": {
-        "description": "Signs sessions and encrypts secret settings fields. Generate a random string using `openssl rand -hex 32`."
+        "description": "Optional. Generated automatically on the first build; only set it to use your own value."
       },
       "INTERNAL_ROUTE_KEY": {
-        "description": "Guards the internal maintenance routes (migrate/seed/backup). Generate with `openssl rand -hex 32`."
+        "description": "Optional. Generated automatically on the first build; only set it to use your own value."
       },
       "SITE_URL": {
         "description": "Public site URL, e.g. https://your-domain.example. Used for sitemap.xml, robots.txt and canonical/OG URLs."
