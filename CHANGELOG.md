@@ -2,6 +2,11 @@
 
 Release notes for Engage. The update popup's Changelog link opens the matching GitHub release; keep the text of each release here too, newest first. Tag a release `vX.Y.Z` with the same number as `version` in `package.json`.
 
+## 1.3.1
+
+- **Lean install:** the first build now generates `ENGAGE_SECRET` and `INTERNAL_ROUTE_KEY` itself, so the Deploy form no longer needs them. Existing secrets are never changed.
+- Release assets (`worker.js`, `assets.tar.gz`, `manifest.json`) are attached again; the empty v1.3.0 release made new installs fail with HTTP 404.
+
 ## 1.2.0
 
 - **Lean install:** the Deploy button now installs a small repository (`installer/`) that downloads a release from GitHub instead of cloning the whole project. Releases carry a `manifest.json` (version, notes, migrations, checksums, Worker size); tag `vX.Y.Z` to publish one.
