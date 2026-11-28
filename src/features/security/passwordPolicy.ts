@@ -116,7 +116,7 @@ export const checkBreached = async (
     try {
       const response = await fetchImpl(`${BREACH_RANGE_URL}${prefix}`, {
         method: 'GET',
-        headers: { 'Add-Padding': 'true', 'User-Agent': 'gracengatsby-password-policy' },
+        headers: { 'Add-Padding': 'true', 'User-Agent': 'engage-password-policy' },
         signal: controller.signal,
       })
       if (!response.ok) return false

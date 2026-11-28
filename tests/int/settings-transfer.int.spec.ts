@@ -477,7 +477,7 @@ describe('settings import', () => {
 
   it('accepts an older format version and rejects a file from another app', async () => {
     await expect(readExportFile(incomingFile(1))).resolves.toMatchObject({ version: 1 })
-    await expect(readExportFile({ ...incomingFile(), app: 'other-cms' })).rejects.toThrow(/Gracengatsby/)
+    await expect(readExportFile({ ...incomingFile(), app: 'other-cms' })).rejects.toThrow(/Engage settings export/)
   })
 })
 

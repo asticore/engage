@@ -7,6 +7,7 @@ import React from 'react'
 import { cookies, headers } from 'next/headers'
 
 import { Footer } from '@/components/Footer'
+import { BuiltWithEngage } from '@/components/BuiltWithEngage'
 import { Header, type NavLink } from '@/components/Header'
 import { Providers } from '@/components/Providers'
 import { StoreTextsProvider } from '@/features/uiStrings/StoreTextsContext'
@@ -385,6 +386,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
             copyrightText={footer?.copyrightText}
           />
           )}
+          {footer?.showBuiltWith !== false ? <BuiltWithEngage /> : null}
         </StoreTextsProvider>
         </ShopBaseProvider>
         </Providers>

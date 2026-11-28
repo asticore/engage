@@ -98,7 +98,7 @@ vi.mock('@/features/redirects', () => ({
 // --- Text helpers -----------------------------------------------------------
 
 // Site file URLs are absolute only when an origin is known; this spec sets one (no request scope here).
-process.env.SITE_URL = 'https://gracengatsby.com'
+process.env.SITE_URL = 'https://example.com'
 
 describe('htmlToText', () => {
   it('drops tags and script bodies, and decodes entities once', () => {
@@ -144,7 +144,7 @@ describe('richTextToText', () => {
 describe('buildLlmsTxt', () => {
   it('writes the llmstxt.org layout and skips empty sections', () => {
     const body = buildLlmsTxt({
-      title: 'Grace & Gatsby',
+      title: 'Example Shop',
       summary: 'A boutique.\nSecond line',
       sections: [
         {
@@ -154,7 +154,7 @@ describe('buildLlmsTxt', () => {
         { heading: 'Posts', items: [] },
       ],
     })
-    expect(body.startsWith('# Grace & Gatsby\n\n> A boutique. Second line\n')).toBe(true)
+    expect(body.startsWith('# Example Shop\n\n> A boutique. Second line\n')).toBe(true)
     expect(body).toContain('## Pages\n\n- [About us](https://x.test/about): Our story')
     expect(body).not.toContain('## Posts')
     expect(body.endsWith('\n')).toBe(true)
@@ -218,7 +218,7 @@ describe('evaluateExpires', () => {
 
 describe('normaliseContact', () => {
   it('accepts an address, mailto, tel and https, and refuses the rest', () => {
-    expect(normaliseContact('security@gracengatsby.com')).toBe('mailto:security@gracengatsby.com')
+    expect(normaliseContact('security@example.com')).toBe('mailto:security@example.com')
     expect(normaliseContact('mailto:a@b.co')).toBe('mailto:a@b.co')
     expect(normaliseContact('tel:+61400000000')).toBe('tel:+61400000000')
     expect(normaliseContact('https://example.com/security')).toBe('https://example.com/security')
@@ -230,46 +230,46 @@ describe('normaliseContact', () => {
 
 describe('buildSecurityTxt', () => {
   const base: SiteFilesSettings = {
-    securityTxtContact: 'security@gracengatsby.com',
+    securityTxtContact: 'security@example.com',
     securityTxtExpires: '2027-12-31',
-    securityTxtPolicy: 'https://gracengatsby.com/policy',
+    securityTxtPolicy: 'https://example.com/policy',
     securityTxtLanguages: 'en, fr',
   }
 
   it('builds the RFC 9116 fields with a canonical URL', () => {
-    expect(buildSecurityTxt(base, 'https://gracengatsby.com/', NOW)).toBe(
+    expect(buildSecurityTxt(base, 'https://example.com/', NOW)).toBe(
       [
-        'Contact: mailto:security@gracengatsby.com',
+        'Contact: mailto:security@example.com',
         'Expires: 2027-12-31T00:00:00.000Z',
-        'Policy: https://gracengatsby.com/policy',
+        'Policy: https://example.com/policy',
         'Preferred-Languages: en, fr',
-        'Canonical: https://gracengatsby.com/.well-known/security.txt',
+        'Canonical: https://example.com/.well-known/security.txt',
       ].join('\n') + '\n',
     )
   })
 
   it('leaves out an invalid optional value without refusing the file', () => {
-    const body = buildSecurityTxt({ ...base, securityTxtPolicy: 'http://insecure.test', securityTxtLanguages: '??' }, 'https://gracengatsby.com', NOW)
+    const body = buildSecurityTxt({ ...base, securityTxtPolicy: 'http://insecure.test', securityTxtLanguages: '??' }, 'https://example.com', NOW)
     expect(body).not.toBeNull()
     expect(body).not.toContain('Policy:')
     expect(body).not.toContain('Preferred-Languages:')
   })
 
   it('is not served once the expiry has passed', () => {
-    expect(buildSecurityTxt({ ...base, securityTxtExpires: '2026-01-01' }, 'https://gracengatsby.com', NOW)).toBeNull()
+    expect(buildSecurityTxt({ ...base, securityTxtExpires: '2026-01-01' }, 'https://example.com', NOW)).toBeNull()
   })
 
   it('is not served without a contact', () => {
-    expect(buildSecurityTxt({ ...base, securityTxtContact: '' }, 'https://gracengatsby.com', NOW)).toBeNull()
+    expect(buildSecurityTxt({ ...base, securityTxtContact: '' }, 'https://example.com', NOW)).toBeNull()
   })
 
   it('serves a custom body verbatim, even if the expiry has passed', () => {
     const custom = 'Contact: https://example.com/x\nExpires: 2020-01-01T00:00:00Z\n'
-    expect(buildSecurityTxt({ securityTxtCustom: custom }, 'https://gracengatsby.com', NOW)).toBe(custom)
+    expect(buildSecurityTxt({ securityTxtCustom: custom }, 'https://example.com', NOW)).toBe(custom)
   })
 
   it('refuses a custom body over 100 KB', () => {
-    expect(buildSecurityTxt({ securityTxtCustom: 'x'.repeat(100_001) }, 'https://gracengatsby.com', NOW)).toBeNull()
+    expect(buildSecurityTxt({ securityTxtCustom: 'x'.repeat(100_001) }, 'https://example.com', NOW)).toBeNull()
   })
 
   it('explains why the file is off', () => {
@@ -306,10 +306,10 @@ describe('buildPlainTextFile', () => {
 
 describe('buildManifest', () => {
   it('falls back to the site name and builds a short name from it', () => {
-    const manifest = buildManifest({ siteName: 'Grace & Gatsby', settings: {} })
+    const manifest = buildManifest({ siteName: 'Example Shop', settings: {} })
     expect(manifest).not.toBeNull()
-    expect(manifest?.name).toBe('Grace & Gatsby')
-    expect(manifest?.short_name).toBe(Array.from('Grace & Gatsby').slice(0, 12).join(''))
+    expect(manifest?.name).toBe('Example Shop')
+    expect(manifest?.short_name).toBe(Array.from('Example Shop').slice(0, 12).join(''))
     expect(manifest?.start_url).toBe('/')
     expect(manifest?.display).toBe('standalone')
     expect(manifest?.icons).toBeUndefined()
@@ -466,12 +466,12 @@ const seoSettings = (siteFiles: SiteFilesSettings, extra: Record<string, unknown
 describe('site file routes', () => {
   beforeEach(() => {
     state.seo = seoSettings({
-      llmsTitle: 'Grace & Gatsby',
+      llmsTitle: 'Example Shop',
       llmsSummary: 'A boutique.',
       llmsIncludeCollections: ['pages', 'posts'],
       serverBlockedPaths: '/old-catalogue',
     })
-    state.site = { siteName: 'Grace & Gatsby', favicon: { url: '/media/fav.png' }, logo: null }
+    state.site = { siteName: 'Example Shop', favicon: { url: '/media/fav.png' }, logo: null }
     state.flags = { seo: true, blog: true, ecommerce: true, events: true }
     state.docs = {
       posts: [
@@ -497,12 +497,12 @@ describe('site file routes', () => {
     expect(res.headers.get('content-type')).toBe('text/plain; charset=utf-8')
     expect(res.headers.get('cache-control')).toContain('max-age=300')
     const body = await res.text()
-    expect(body).toContain('# Grace & Gatsby')
+    expect(body).toContain('# Example Shop')
     expect(body).toContain('> A boutique.')
     expect(body).toContain('## Pages')
-    expect(body).toContain('- [Home](https://gracengatsby.com/)')
-    expect(body).toContain('- [About](https://gracengatsby.com/about): Our story')
-    expect(body).toContain('- [Open post](https://gracengatsby.com/blog/open): Public.')
+    expect(body).toContain('- [Home](https://example.com/)')
+    expect(body).toContain('- [About](https://example.com/about): Our story')
+    expect(body).toContain('- [Open post](https://example.com/blog/open): Public.')
     // Noindex, password-gated and blocked content never appears.
     expect(body).not.toContain('Hidden')
     expect(body).not.toContain('Gated')
@@ -544,7 +544,7 @@ describe('site file routes', () => {
     }
     const { GET } = await import('@/app/llms.txt/route')
     const body = await (await GET()).text()
-    expect(body).toContain('- [Kettle](https://gracengatsby.com/shop/kettle): Shiny.')
+    expect(body).toContain('- [Kettle](https://example.com/shop/kettle): Shiny.')
     expect(body).not.toContain('Teapot')
     expect(body).not.toContain('Tasting')
   })
@@ -573,17 +573,17 @@ describe('site file routes', () => {
   })
 
   it('answers 404 for security.txt until a contact and a future expiry are set', async () => {
-    state.seo = seoSettings({ securityTxtContact: 'security@gracengatsby.com', securityTxtExpires: '2020-01-01' })
+    state.seo = seoSettings({ securityTxtContact: 'security@example.com', securityTxtExpires: '2020-01-01' })
     const { GET } = await import('@/app/.well-known/security.txt/route')
     expect((await GET()).status).toBe(404)
   })
 
   it('serves security.txt when it is valid', async () => {
-    state.seo = seoSettings({ securityTxtContact: 'security@gracengatsby.com', securityTxtExpires: '2099-12-31' })
+    state.seo = seoSettings({ securityTxtContact: 'security@example.com', securityTxtExpires: '2099-12-31' })
     const { GET } = await import('@/app/.well-known/security.txt/route')
     const res = await GET()
     expect(res.status).toBe(200)
-    expect(await res.text()).toContain('Contact: mailto:security@gracengatsby.com')
+    expect(await res.text()).toContain('Contact: mailto:security@example.com')
   })
 
   it('serves ads.txt, app-ads.txt and humans.txt, and 404s when blank', async () => {
@@ -598,12 +598,12 @@ describe('site file routes', () => {
 
   it('serves the manifest as JSON with the manifest content type, using the site name and icons', async () => {
     state.seo = seoSettings({ manifestThemeColor: '#1f2230', manifestDisplay: 'minimal-ui' })
-    state.site = { siteName: 'Grace & Gatsby', favicon: { url: '/media/fav.png' }, logo: { url: '/media/logo.png' } }
+    state.site = { siteName: 'Example Shop', favicon: { url: '/media/fav.png' }, logo: { url: '/media/logo.png' } }
     const { GET } = await import('@/app/manifest.webmanifest/route')
     const res = await GET()
     expect(res.headers.get('content-type')).toBe('application/manifest+json; charset=utf-8')
     const manifest = JSON.parse(await res.text())
-    expect(manifest.name).toBe('Grace & Gatsby')
+    expect(manifest.name).toBe('Example Shop')
     expect(manifest.display).toBe('minimal-ui')
     expect(manifest.theme_color).toBe('#1f2230')
     expect(manifest.icons).toHaveLength(2)
@@ -623,7 +623,7 @@ describe('site file routes', () => {
 // --- Middleware passthrough -------------------------------------------------
 
 describe('security middleware and site files', () => {
-  const request = (path: string) => new NextRequest(new URL(`https://gracengatsby.com${path}`))
+  const request = (path: string) => new NextRequest(new URL(`https://example.com${path}`))
 
   beforeEach(() => {
     state.rules = { headers: [], blockedPaths: [] }

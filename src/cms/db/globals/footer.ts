@@ -26,6 +26,7 @@ export type FooterDoc = {
   contact?: { email?: string | null; phone?: string | null; address?: string | null } | null
   socials?: { show?: boolean | null; links?: FooterSocialLink[] | null } | null
   copyrightText?: string | null
+  showBuiltWith?: boolean | null
   updatedAt: string
   createdAt: string
 }

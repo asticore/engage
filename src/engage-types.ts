@@ -4802,6 +4802,10 @@ export interface Footer {
    * Leave blank to use "© {year} {site name}. All rights reserved."
    */
   copyrightText?: string | null;
+  /**
+   * Shows a small "Built with Engage" link under the footer, pointing to the Engage project on GitHub. Untick to hide it.
+   */
+  showBuiltWith?: boolean | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -7376,6 +7380,7 @@ export interface FooterSelect<T extends boolean = true> {
             };
       };
   copyrightText?: T;
+  showBuiltWith?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

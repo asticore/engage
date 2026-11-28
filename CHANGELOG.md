@@ -2,6 +2,12 @@
 
 Release notes for Engage. The update popup's Changelog link opens the matching GitHub release; keep the text of each release here too, newest first. Tag a release `vX.Y.Z` with the same number as `version` in `package.json`.
 
+## 1.5.4
+
+- **Engage logo:** new logo at the top of the README and on the admin sign-in screen.
+- **"Built with Engage" footer link:** every site shows a small link to the Engage project on GitHub under the footer. Turn it off in Admin > Settings > Footer ("Show built with Engage link").
+- **Neutral defaults:** the footer blurb and address and the empty shop heading no longer ship boutique sample text. Sites that had saved their own footer text keep it. Test data, the Stripe app name and the password-check user agent no longer say Grace & Gatsby.
+
 ## 1.5.3
 
 - **First login order fixed:** the start user was bounced forever between the profile screen and the two-step setup screen. Now the order is: change the start email and password, then set up two-step sign-in, then the setup questions. Each target screen is exempt from the other guard, so they cannot loop.

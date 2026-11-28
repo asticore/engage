@@ -195,6 +195,7 @@ export function LoginView({ redirectTo: redirectToProp }: { redirectTo?: string 
     <LastUsedBadge>
     <div className="admin-login">
       <div className="admin-login__card">
+        <img className="admin-login__logo" src="/engage-mark.svg" alt="Engage" width={48} height={48} style={{ display: 'block', margin: '0 auto 1rem' }} />
         <h1 className="admin-login__title">{t('login.heading')}</h1>
 
         <form onSubmit={handleSubmit}>

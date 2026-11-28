@@ -364,7 +364,7 @@ function docList(value: unknown, field: string): JsonObject[] {
  */
 export function parseExportFile(raw: unknown): ExportFile {
   if (!isPlainObject(raw)) throw new ExportFormatError('This file is not a settings export.')
-  if (raw.app !== EXPORT_APP_ID) throw new ExportFormatError('This is not a Gracengatsby settings export.')
+  if (raw.app !== EXPORT_APP_ID) throw new ExportFormatError('This is not an Engage settings export.')
 
   const version = raw.version
   if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {

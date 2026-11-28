@@ -169,7 +169,6 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
       ) : (
         <header className="page-header">
           <h1>Shop</h1>
-          <p>Considered pieces for the modern romantic.</p>
         </header>
       )}
 

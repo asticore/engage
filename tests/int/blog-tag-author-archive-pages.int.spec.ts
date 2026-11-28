@@ -67,8 +67,8 @@ const post = (id: number, slug: string, extra: Record<string, unknown>) => ({
 
 /** Fixture: three posts with tags, two authors (one post has no author), one unpublished-looking extra post. */
 const fixture = () => [
-  post(3, 'silver-care', { tags: [{ name: 'Silver' }, { name: 'Care' }], author: author('Grace Gatsby', 'grace') }),
-  post(2, 'gold-guide', { tags: [{ name: 'Gold' }], author: author('Grace Gatsby', 'grace') }),
+  post(3, 'silver-care', { tags: [{ name: 'Silver' }, { name: 'Care' }], author: author('Ann Author', 'grace') }),
+  post(2, 'gold-guide', { tags: [{ name: 'Gold' }], author: author('Ann Author', 'grace') }),
   post(1, 'silver-history', { tags: [{ name: 'Silver' }], author: author('Ada Smith', 'ada-smith') }),
   post(4, 'no-author', { tags: [{ name: 'Care' }], author: null }),
 ]
@@ -129,7 +129,7 @@ describe('tag archive page', () => {
 describe('author archive page', () => {
   it('lists only the posts by that author, under the author name', async () => {
     const markup = await render('author', 'grace')
-    expect(markup).toContain('<h1>Grace Gatsby</h1>')
+    expect(markup).toContain('<h1>Ann Author</h1>')
     expect(titlesIn(markup)).toEqual(['Post 3', 'Post 2'])
     expect(markup).not.toContain('Post 1')
   })
