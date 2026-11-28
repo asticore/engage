@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react'
 
-export type PointerFxMode = 'spotlight' | 'tilt' | 'magnetic'
+export type PointerFxMode = 'spotlight' | 'tilt' | 'magnetic' | 'follow'
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v))
 
@@ -30,6 +30,15 @@ const PointerFx: React.FC<{ mode: PointerFxMode; strength: number }> = ({ mode, 
 
     const apply = () => {
       raf = 0
+      if (mode === 'follow') {
+        // The pointer anywhere in the window moves the content up to 48px at full strength, against the pointer.
+        const cap = 48 * s
+        const fx = window.innerWidth ? (x / window.innerWidth) * 2 - 1 : 0
+        const fy = window.innerHeight ? (y / window.innerHeight) * 2 - 1 : 0
+        host.style.setProperty('--mgx', `${(-fx * cap).toFixed(2)}px`)
+        host.style.setProperty('--mgy', `${(-fy * cap).toFixed(2)}px`)
+        return
+      }
       const r = host.getBoundingClientRect()
       if (mode === 'spotlight') {
         host.style.setProperty('--mx', `${x - r.left}px`)
@@ -65,7 +74,7 @@ const PointerFx: React.FC<{ mode: PointerFxMode; strength: number }> = ({ mode, 
       if (mode === 'tilt') {
         host.style.setProperty('--rx', '0deg')
         host.style.setProperty('--ry', '0deg')
-      } else if (mode === 'magnetic') {
+      } else if (mode === 'magnetic' || mode === 'follow') {
         host.style.setProperty('--mgx', '0px')
         host.style.setProperty('--mgy', '0px')
       }
@@ -74,14 +83,14 @@ const PointerFx: React.FC<{ mode: PointerFxMode; strength: number }> = ({ mode, 
     const attach = () => {
       if (attached) return
       attached = true
-      host.addEventListener('pointermove', onMove, { passive: true })
-      host.addEventListener('pointerleave', onLeave)
+      ;(mode === 'follow' ? window : host).addEventListener('pointermove', onMove as EventListener, { passive: true })
+      if (mode !== 'follow') host.addEventListener('pointerleave', onLeave)
     }
     const detach = () => {
       if (!attached) return
       attached = false
-      host.removeEventListener('pointermove', onMove)
-      host.removeEventListener('pointerleave', onLeave)
+      ;(mode === 'follow' ? window : host).removeEventListener('pointermove', onMove as EventListener)
+      if (mode !== 'follow') host.removeEventListener('pointerleave', onLeave)
       onLeave()
     }
 

@@ -2946,6 +2946,33 @@ _Date: 23 Nov 2026_
 
 **Where to find it:** Visual editor > selected block > Design > Spacing (size limits), Typography (text shadow and stroke), Advanced > Transform (flip)
 
+<a id="bld-090"></a>
+#### BLD-091 · Task 12 design panel parity, second slice (31e, 31h part) (28 Nov 2026)
+
+_Date: 28 Nov 2026_
+
+**Task 12 second slice (28 Nov 2026).** New design keys in `blockStyle.ts`: `hoverTextShadowX/Y/Blur/Color` (hover rule only), a third box shadow layer `bs3*`, per-device `borderColor`, `borderStyle` and `bgImageUrl`, and a `static` position option. The border sides popover has Link all sides. Strings in all 13 locales (`dp.fk.*`). Tests in `tests/int/design-panel-parity-slice.int.spec.ts`.
+
+**Where to find it:** Visual editor > selected block > Design > Border, Background (image for this device), Typography and Hover, Advanced (position Static)
+
+<a id="bld-091"></a>
+#### BLD-092 · Task 12 motion, background, divider and transform controls (31e) (28 Nov 2026)
+
+_Date: 28 Nov 2026_
+
+**Task 12 third slice (28 Nov 2026).** Scrolling effects: `scrollY`, `scrollX`, `scrollRotate`, `scrollScale`, `scrollOpacity`, `scrollBlur`, `scrollStart`, `scrollEnd` drive a CSS scroll-driven animation on the block content (class `be-fx-scroll`, `effects.css`), and `scrollOff` and `revealOff` switch scrolling effects and the entrance animation off per device (tablet inherits desktop, mobile inherits tablet). Background: two more gradient stops (`bgGradientMid2`, `bgGradientMid3`, sorted by position) and `hoverBgImageUrl`, an image that fades in on hover over `hoverTransitionMs`. Dividers: a shape picker grid, per-device divider height and hide (`dividerTopHeight`, `dividerTopOff` and the bottom pair). Transform: per-device skew, `tfUnit` offset unit, `tfEase` curve. Sticky per device already works through the per-device position with offsets. Tests in `design-panel-parity-slice.int.spec.ts`.
+
+**Where to find it:** Visual editor > selected block > Design > Effects (scrolling effects, entrance off), Background and Hover (gradient stops, image on hover), Dividers, Advanced (transform)
+
+<a id="bld-092"></a>
+#### BLD-093 · Task 12 field kit patterns: units, Normal | Hover tabs, breakpoints (31h) (28 Nov 2026)
+
+_Date: 28 Nov 2026_
+
+**Task 12 field kit (28 Nov 2026).** Border width and corner radius take the six units per device (`borderWidthUnit`, `radiusUnit`; border width uses `LengthField`). `NormalHoverTabs` (arrow keys, tab roles) is used on Border (hover border colour, width, radius, shadow) and on a new Text shadow and stroke popover (`TypographyEffectsPopover`) with hover text colour, shadow and stroke. Hover border width `hoverBorderWidth`. The panel states the tablet and mobile breakpoints. Last small items: Follow the pointer effect (`pointerFx` follow, moves the content against the pointer, desktop with a fine pointer only), Link all offsets on position, `shadowUnit` for every custom shadow distance, container gap in the six units, and Normal | Hover tabs on Background. Spacing has no hover state (Elementor has none either). The dynamic link source is Task 18. Tests: `tests/int/field-kit-patterns.int.spec.ts` (tabs, popover keyboard use, six units) and the CSS tests above.
+
+**Where to find it:** Visual editor > selected block > Design > Border, Typography
+
 <a id="bld-048"></a>
 #### BLD-048 · Task 12 reference matrix and Font Awesome Pro (31f, 31g) (23 Nov 2026)
 
@@ -3717,6 +3744,9 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 
 - [I18N-013](#i18n-013) Task 2 promo badge field descriptions
 - [BLD-090](#bld-090) Task 3 Before and after and Popup elements, Spark and Shine audit closed
+- [BLD-093](#bld-093) Task 12 field kit patterns: units, Normal | Hover tabs, breakpoints
+- [BLD-092](#bld-092) Task 12 motion, background, divider and transform controls
+- [BLD-091](#bld-091) Task 12 design panel parity, second slice
 
 ### 23 Nov 2026
 

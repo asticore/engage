@@ -27,7 +27,7 @@ const tf = ['Rotate', 'Scale', 'TranslateX', 'TranslateY', 'SkewX', 'SkewY']
 /** The style keys each Design accordion owns (the group's Reset clears exactly these). 'hide' = the per-device hide flag. */
 export const GROUP_KEYS: Record<string, readonly string[]> = {
   background: [
-    'bgType', 'bgColor', 'bgGradientFrom', 'bgGradientTo', 'bgGradientAngle', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgImage', 'bgImageUrl', 'bgVideoUrl',
+    'bgType', 'bgColor', 'bgGradientFrom', 'bgGradientTo', 'bgGradientAngle', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgGradientMid2', 'bgGradientMid2Pos', 'bgGradientMid3', 'bgGradientMid3Pos', 'bgImage', 'bgImageUrl', 'bgVideoUrl',
     'bgVideoPoster', 'bgVideoLoop', 'bgOverlay', 'overlayType', 'overlayColor', 'overlayColor2', 'overlayAngle',
     'overlayOpacity', 'overlayBlend', 'bgEffect', 'bgEffectColor', 'bgEffectColor2', 'bgEffectIntensity', 'particlesCount',
     'particlesInteract', 'particlesSizeMin', 'particlesSizeMax', 'particlesSpeed', 'particlesOpacity', 'particlesLinks',
@@ -35,15 +35,15 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'gridLineWidth', 'auroraBlur', 'auroraSize', 'auroraSpeed', 'gradientAngle', 'gradientSpeed', 'grainOpacity', 'grainSize',
     'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'bgSlides', 'bgSlideIds', 'slideInterval', 'slideTransition', 'noise',
   ],
-  hover: ['hoverBgColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
+  hover: ['hoverBgColor', 'hoverBgImageUrl', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverBorderWidth', 'hoverTransitionMs',
     'hoverOpacity', 'hoverTransform', 'focusRing', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'],
   spacing: [
     'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTopMobile', 'paddingBottomMobile', 'paddingUnit',
     'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginUnit', 'minHeight', 'minHeightUnit',
     'minWidth', 'minWidthUnit', 'maxWidth', 'maxWidthUnit', 'maxHeight', 'maxHeightUnit',
   ],
-  border: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow',
-    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset'],
+  border: ['borderWidth', 'borderStyle', 'borderColor', 'borderWidthUnit', 'radiusUnit', 'shadowUnit', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow',
+    'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bs3X', 'bs3Y', 'bs3Blur', 'bs3Spread', 'bs3Color', 'bs3Inset'],
   layout: ['width', 'textAlign', 'textColor'],
   typography: [
     'typePreset', 'fontFamily', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit', 'textTransform',
@@ -52,17 +52,17 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
   ],
   position: ['selfAlign', 'selfWidth', 'selfWidthPercent', 'selfWidthPercentUnit'],
   dividers: [
-    'dividerTop', 'dividerTopColor', 'dividerTopHeight', 'dividerTopFlip', 'dividerTopWidth', 'dividerTopInvert', 'dividerTopFront', 'dividerTopAnim', 'dividerTopSpeed',
-    'dividerBottom', 'dividerBottomColor', 'dividerBottomHeight', 'dividerBottomFlip', 'dividerBottomWidth', 'dividerBottomInvert', 'dividerBottomFront', 'dividerBottomAnim', 'dividerBottomSpeed',
+    'dividerTop', 'dividerTopColor', 'dividerTopHeight', 'dividerTopFlip', 'dividerTopWidth', 'dividerTopInvert', 'dividerTopFront', 'dividerTopAnim', 'dividerTopSpeed', 'dividerTopOff',
+    'dividerBottom', 'dividerBottomColor', 'dividerBottomHeight', 'dividerBottomFlip', 'dividerBottomWidth', 'dividerBottomInvert', 'dividerBottomFront', 'dividerBottomAnim', 'dividerBottomSpeed', 'dividerBottomOff',
   ],
   effects: [
-    'parallax', 'parallaxStrength', 'parallaxDistance', 'parallaxDirection', 'reveal', 'revealDistance', 'revealDuration',
+    'parallax', 'parallaxStrength', 'parallaxDistance', 'scrollY', 'scrollX', 'scrollRotate', 'scrollScale', 'scrollOpacity', 'scrollBlur', 'scrollStart', 'scrollEnd', 'scrollOff', 'revealOff', 'parallaxDirection', 'reveal', 'revealDistance', 'revealDuration',
     'revealDelay', 'revealEasing', 'hover', 'hoverLift', 'hoverScale', 'glass', 'glassBlur', 'glassOpacity', 'glassBorder',
     'pointerFx', 'pointerFxStrength', 'spotlightColor', 'kenBurns', 'kenBurnsDuration', 'borderFx', 'borderFxColor',
     'borderFxColor2', 'borderFxWidth', 'borderFxSpeed',
   ],
   advanced: [
-    ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom',
+    ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfFlipX', 'tfFlipY', 'tfUnit', 'tfEase', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom',
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
     'filterGrayscale', 'filterHue', 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],

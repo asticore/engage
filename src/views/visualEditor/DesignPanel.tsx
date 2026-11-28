@@ -1,6 +1,7 @@
 'use client'
 
 import { EffectsPicker } from './EffectsPicker'
+import { DEFAULT_BREAKPOINTS } from '@/lib/sectionLayout'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings'
 import React, { createContext, useContext, useMemo, useState } from 'react'
@@ -15,7 +16,6 @@ import {
   KEN_BURNS_OPTIONS,
   POINTER_FX_OPTIONS,
   DIVIDER_ANIM_OPTIONS,
-  DIVIDER_OPTIONS,
   HOVER_OPTIONS,
   BLOB_SPEED_OPTIONS,
   MASK_SHAPE_OPTIONS,
@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover } from './fieldKit'
+import { LengthField, UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, HoverTextShadowRows, ScrollEffectsRows, DeviceOffRow, DividerShapeGrid, DividerDeviceRows, NormalHoverTabs, TypographyEffectsPopover } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -142,7 +142,12 @@ export const DesignPanel: React.FC<{
           </button>
         )}
       </div>
+      <p className="ve-row__help">{t('dp.fk.breakpoints', { tablet: DEFAULT_BREAKPOINTS.tablet, mobile: DEFAULT_BREAKPOINTS.mobile })}</p>
       <Acc g="background" title={t('dp.section.background')} defaultOpen>
+        <NormalHoverTabs
+          hoverSet={['hoverBgColor', 'hoverBgImageUrl', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle'].some((k) => (value as Record<string, unknown>)[k] !== undefined)}
+          normal={
+            <>
         <SelectRow
           label={t('dp.field.type')}
           value={value.bgType || 'none'}
@@ -184,6 +189,10 @@ export const DesignPanel: React.FC<{
             <ColorRow label={t('dp.field.from')} value={value.bgGradientFrom} onChange={(v) => set('bgGradientFrom', v)} />
             <ColorRow label="Middle colour (optional)" value={value.bgGradientMid} onChange={(v) => set('bgGradientMid', v)} />
             {value.bgGradientMid && <NumberRow label="Middle stop (%)" value={value.bgGradientMidPos} min={0} max={100} onChange={(v) => set('bgGradientMidPos', v)} />}
+            {value.bgGradientMid && <ColorRow label={t('dp.fk.stop2_colour')} value={value.bgGradientMid2} onChange={(v) => set('bgGradientMid2', v)} />}
+            {value.bgGradientMid2 && <NumberRow label={t('dp.fk.stop2_pos')} value={value.bgGradientMid2Pos} min={0} max={100} onChange={(v) => set('bgGradientMid2Pos', v)} />}
+            {value.bgGradientMid2 && <ColorRow label={t('dp.fk.stop3_colour')} value={value.bgGradientMid3} onChange={(v) => set('bgGradientMid3', v)} />}
+            {value.bgGradientMid3 && <NumberRow label={t('dp.fk.stop3_pos')} value={value.bgGradientMid3Pos} min={0} max={100} onChange={(v) => set('bgGradientMid3Pos', v)} />}
             <ColorRow label={t('dp.field.to')} value={value.bgGradientTo} onChange={(v) => set('bgGradientTo', v)} />
             <NumberRow
               label={t('dp.field.angle_deg')}
@@ -203,6 +212,14 @@ export const DesignPanel: React.FC<{
               onPick={(id, url) => onChange({ ...value, bgImage: id, bgImageUrl: url })}
               onClear={() => onChange({ ...value, bgImage: null, bgImageUrl: null })}
             />
+            {resp.device !== 'desktop' && (
+              <ImageRow
+                label={t('dp.fk.device_image')}
+                url={resp.own('bgImageUrl') as string | undefined}
+                onPick={(_id, url) => resp.set('bgImageUrl', url)}
+                onClear={() => resp.reset('bgImageUrl')}
+              />
+            )}
             <NumberRow
               label={t('dp.field.dark_overlay')}
               value={value.bgOverlay}
@@ -310,6 +327,19 @@ export const DesignPanel: React.FC<{
             <BackgroundEffectControls value={value} onChange={onChange} />
           </>
         )}
+            </>
+          }
+          hover={
+            <>
+              <ColorRow label={t('dp.field.background')} value={value.hoverBgColor} onChange={(v) => set('hoverBgColor', v)} />
+              <ImageRow label={t('dp.fk.hover_image')} url={value.hoverBgImageUrl} onPick={(_id, url) => set('hoverBgImageUrl', url ?? undefined)} onClear={() => set('hoverBgImageUrl', undefined)} />
+              <ColorRow label="Gradient from" value={value.hoverGradFrom} onChange={(v) => set('hoverGradFrom', v)} />
+              <ColorRow label="Gradient to" value={value.hoverGradTo} onChange={(v) => set('hoverGradTo', v)} />
+              <FxRange k="hoverGradAngle" label="Gradient angle" unit="deg" value={value} onChange={onChange} def={180} min={0} max={360} />
+              <FxRange k="hoverTransitionMs" label={t('dp.field.transition')} unit="ms" value={value} onChange={onChange} def={150} min={0} max={2000} step={10} />
+            </>
+          }
+        />
       </Acc>
 
       <Acc g="hover" title={t('dp.section.hover')}>
@@ -326,23 +356,28 @@ export const DesignPanel: React.FC<{
       </Acc>
 
       <Acc g="border" title={t('dp.section.border')}>
-        <RespNumber ctl={resp} k="borderWidth" label={t('dp.field.border_width_px')} min={0} max={50} />
+        <NormalHoverTabs
+          hoverSet={['hoverBorderColor', 'hoverBorderRadius', 'hoverBorderWidth', 'hoverBoxShadow'].some((k) => (value as Record<string, unknown>)[k] !== undefined)}
+          normal={
+            <>
+        <LengthField ctl={resp} k="borderWidth" unitKey="borderWidthUnit" label={t('dp.fk.border_width')} />
         {Boolean(resp.effective('borderWidth')) && (
           <>
             <SelectRow
               label={t('dp.field.border_style')}
-              value={value.borderStyle || 'solid'}
-              applied={value.borderStyle !== undefined}
-              onReset={() => set('borderStyle', undefined)}
+              value={(resp.effective('borderStyle') as string | undefined) || 'solid'}
+              resp={resp.resp('borderStyle')}
+              applied={resp.own('borderStyle') !== undefined}
+              onReset={() => resp.reset('borderStyle')}
               options={[
                 { label: t('dp.lit.solid'), value: 'solid' },
                 { label: t('dp.lit.dashed'), value: 'dashed' },
                 { label: t('dp.lit.dotted'), value: 'dotted' },
                 { label: 'Double', value: 'double' },
               ]}
-              onChange={(v) => set('borderStyle', v as BlockStyle['borderStyle'])}
+              onChange={(v) => resp.set('borderStyle', v)}
             />
-            <ColorRow label={t('dp.field.border_colour')} value={value.borderColor} onChange={(v) => set('borderColor', v)} />
+            <ColorRow label={t('dp.field.border_colour')} value={resp.own('borderColor') as string | undefined} onChange={(v) => resp.set('borderColor', v)} />
           </>
         )}
         <NumberRow
@@ -352,6 +387,7 @@ export const DesignPanel: React.FC<{
           onReset={() => set('borderRadius', undefined)}
           min={0}
         />
+        <div className="ve-row"><UnitSelect ctl={resp} unitKey="radiusUnit" label={t('dp.fk.radius_unit')} defaultLabel="px" units={['%', 'em', 'rem', 'vw', 'vh']} /></div>
         <RadiusCorners ctl={resp} linked={value.radiusLinked === true} onLinked={(b) => set('radiusLinked', b ? true : undefined)} />
         <SelectRow
           label={t('dp.field.shadow')}
@@ -363,6 +399,24 @@ export const DesignPanel: React.FC<{
         />
         <BorderSidesPopover value={value} patch={(p) => onChange({ ...value, ...p } as BlockStyle)} />
         <BoxShadowPopover value={value} patch={(p) => onChange({ ...value, ...p } as BlockStyle)} />
+            </>
+          }
+          hover={
+            <>
+              <ColorRow label={t('dp.field.border_colour')} value={value.hoverBorderColor} onChange={(v) => set('hoverBorderColor', v)} />
+              <NumberRow label={t('dp.fk.hover_border_width')} value={value.hoverBorderWidth} min={0} max={50} onChange={(v) => set('hoverBorderWidth', v)} onReset={() => set('hoverBorderWidth', undefined)} />
+              <NumberRow label={t('dp.lit.corner_radius')} value={value.hoverBorderRadius} min={0} max={200} onChange={(v) => set('hoverBorderRadius', v)} onReset={() => set('hoverBorderRadius', undefined)} />
+              <SelectRow
+                label={t('dp.field.shadow')}
+                value={value.hoverBoxShadow || ''}
+                options={[{ label: t('dp.lit.same_as_normal'), value: '' }, ...BOX_SHADOW_OPTIONS]}
+                applied={value.hoverBoxShadow !== undefined}
+                onReset={() => set('hoverBoxShadow', undefined)}
+                onChange={(v) => set('hoverBoxShadow', (v || undefined) as BlockStyle['hoverBoxShadow'])}
+              />
+            </>
+          }
+        />
       </Acc>
 
       <Acc g="layout" title={t('dp.section.layout')}>
@@ -455,6 +509,10 @@ export const DesignPanel: React.FC<{
           onColor={(v) => set('dividerTopColor', v)}
           onHeight={(v) => set('dividerTopHeight', v)}
           onFlip={(v) => set('dividerTopFlip', v)}
+          device={device}
+          pos="Top"
+          styleValue={value}
+          onStyle={onChange}
         />
         <DividerControls
           label={t('dp.field.bottom')}
@@ -476,13 +534,17 @@ export const DesignPanel: React.FC<{
           onColor={(v) => set('dividerBottomColor', v)}
           onHeight={(v) => set('dividerBottomHeight', v)}
           onFlip={(v) => set('dividerBottomFlip', v)}
+          device={device}
+          pos="Bottom"
+          styleValue={value}
+          onStyle={onChange}
         />
       </Acc>
       )}
 
       {variant === 'block' && (
         <Acc g="effects" title={t('dp.section.effects')}>
-          <EffectsControls value={value} onChange={onChange} />
+          <EffectsControls value={value} onChange={onChange} device={device} />
         </Acc>
       )}
 
@@ -1359,22 +1421,20 @@ const DividerControls: React.FC<{
   onColor: (v: string | undefined) => void
   onHeight: (v: number | undefined) => void
   onFlip: (v: boolean | undefined) => void
-}> = ({ label, shape, color, height, flip, width, invert, front, onWidth, onInvert, onFront, anim, speed, onAnim, onSpeed, onShape, onColor, onHeight, onFlip }) => {
+  device: EditDevice
+  pos: 'Top' | 'Bottom'
+  styleValue: BlockStyle
+  onStyle: (next: BlockStyle) => void
+}> = ({ device, pos, styleValue, onStyle, label, shape, color, height, flip, width, invert, front, onWidth, onInvert, onFront, anim, speed, onAnim, onSpeed, onShape, onColor, onHeight, onFlip }) => {
   const t = useAdminT()
   return (
   <div className="ve-divider-group">
-    <SelectRow
-      label={`${label} shape`}
-      value={shape || 'none'}
-      options={DIVIDER_OPTIONS.map((o) => ({ label: o.label, value: o.value }))}
-      applied={shape !== undefined}
-      onReset={() => onShape(undefined)}
-      onChange={(v) => onShape(v === 'none' ? undefined : (v as DividerShape))}
-    />
+    <DividerShapeGrid label={label} shape={shape} onShape={onShape} />
     {shape && shape !== 'none' && (
       <>
         <ColorRow label={`${label} colour`} value={color} onChange={onColor} />
-        <NumberRow label={`${label} height (px)`} value={height} onChange={onHeight} min={10} max={400} />
+        {device === 'desktop' ? <NumberRow label={`${label} height (px)`} value={height} onChange={onHeight} min={10} max={400} /> : null}
+        <DividerDeviceRows value={styleValue} onChange={onStyle} device={device} pos={pos} />
         <CheckRow label={`Flip ${label.toLowerCase()}`} checked={Boolean(flip)} applied={flip !== undefined} onReset={() => onFlip(undefined)} onChange={(v) => onFlip(v || undefined)} />
         <NumberRow label={`${label} width (%)`} value={width} onChange={onWidth} min={100} max={400} />
         <CheckRow label={`Invert ${label.toLowerCase()}`} checked={Boolean(invert)} applied={invert !== undefined} onReset={() => onInvert(undefined)} onChange={(v) => onInvert(v || undefined)} />
@@ -1659,7 +1719,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
         onReset={() => patch({ textShadow: undefined })}
         onChange={(v) => patch({ textShadow: v === 'none' ? undefined : v })}
       />
-      <TextShadowStrokePopover value={value} patch={patch} />
+      <TypographyEffectsPopover value={value} patch={patch} />
       <SelectRow
         label={t('dp.field.text_effect')}
         help={t('dp.lit.applies_to_the_text_inside_this_block')}
@@ -1787,6 +1847,7 @@ const StateTabs: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => v
             options={HOVER_TRANSFORM_OPTIONS}
             applied={value.hoverTransform !== undefined} onReset={() => set('hoverTransform', undefined)} onChange={(v) => set('hoverTransform', v === 'none' ? undefined : (v as HoverTransformPreset))}
           />
+          <ImageRow label={t('dp.fk.hover_image')} url={value.hoverBgImageUrl} onPick={(_id, url) => set('hoverBgImageUrl', url ?? undefined)} onClear={() => set('hoverBgImageUrl', undefined)} />
           <ColorRow label="Gradient from" value={value.hoverGradFrom} onChange={(v) => set('hoverGradFrom', v)} />
           <ColorRow label="Gradient to" value={value.hoverGradTo} onChange={(v) => set('hoverGradTo', v)} />
           <FxRange k="hoverGradAngle" label="Gradient angle" unit="deg" value={value} onChange={onChange} def={180} min={0} max={360} />
@@ -1798,6 +1859,7 @@ const StateTabs: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => v
           />
           <FxRange k="hoverTextStrokeWidth" label="Text stroke width" unit="px" value={value} onChange={onChange} def={0} min={0} max={20} />
           <ColorRow label="Text stroke colour" value={value.hoverTextStrokeColor} onChange={(v) => set('hoverTextStrokeColor', v)} />
+          <HoverTextShadowRows value={value} patch={(p) => onChange({ ...value, ...p } as BlockStyle)} />
           <FxRange k="hoverOpacity" label={t('dp.field.opacity')} value={value} onChange={onChange} def={1} min={0} max={1} step={0.05} help={t('dp.lit.the_lift_scale_transform_is_skipped_for')} />
           <FxRange k="hoverBorderRadius" label={t('dp.lit.corner_radius')} unit="px" value={value} onChange={onChange} def={0} min={0} max={200} />
           <FxRange k="hoverTransitionMs" label={t('dp.field.transition')} unit="ms" value={value} onChange={onChange} def={150} min={0} max={2000} step={10} />
@@ -2106,14 +2168,34 @@ const FILTER_ROWS: { k: keyof BlockStyle; labelKey: UiStringKey; unit: string; m
 const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   ...TRANSFORM_ROWS.map((r) => tfKey('tf', r.suffix)),
   ...TRANSFORM_ROWS.map((r) => tfKey('tfh', r.suffix)),
-  'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
+  'tfFlipX', 'tfFlipY', 'tfUnit', 'tfEase', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
   'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
+
+const POS_KEYS = ['posTop', 'posRight', 'posBottom', 'posLeft'] as const
+
+/** The four position offsets, with an optional "link all offsets" mode that writes one value to every side in one update. */
+const LinkedOffsets: React.FC<{ ctl: ResponsiveCtl }> = ({ ctl }) => {
+  const t = useAdminT()
+  const [linked, setLinked] = useState(false)
+  const { same, value } = linkedValue(POS_KEYS.map((k) => ctl.own(k)))
+  const labels = [t('dp.field.top'), t('dp.lit.right'), t('dp.field.bottom'), t('dp.lit.left')]
+  return (
+    <>
+      <CheckRow label={t('dp.fk.link_offsets')} checked={linked} applied={false} onChange={setLinked} />
+      {linked ? (
+        <NumberRow label={t('dp.fk.all_offsets')} value={value} placeholder={same ? undefined : 'mixed'} min={-2000} max={2000} resp={ctl.resp(POS_KEYS[0])} onChange={(v) => ctl.setMany(linkedPatch(POS_KEYS, v))} />
+      ) : (
+        POS_KEYS.map((k, i) => <TypoRange key={k} ctl={ctl} k={k} label={labels[i]!} def={0} min={-2000} max={2000} step={1} />)
+      )}
+    </>
+  )
+}
 
 const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; ctl: ResponsiveCtl }> = ({ value, onChange, ctl }) => {
   const t = useAdminT()
   const { set, resetBtn } = makeFxEditing(value, onChange)
-  const positioned = ctl.effective('position') !== undefined
+  const positioned = ctl.effective('position') !== undefined && ctl.effective('position') !== 'static'
 
   return (
     <>
@@ -2127,6 +2209,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
             {rows.map((r) => (
               <TypoRange key={r.suffix} ctl={ctl} k={tfKey('tf', r.suffix) as RespKey} label={r.unit ? `${t(r.labelKey)} (${r.unit})` : t(r.labelKey)} def={r.def} min={r.min} max={r.max} step={1} />
             ))}
+            {g.id === 'offset' && <div className="ve-row"><UnitSelect ctl={ctl} unitKey={'tfUnit' as RespKey} label={t('dp.fk.offset_unit')} defaultLabel="px" units={['%', 'em', 'rem', 'vw', 'vh']} /></div>}
             {g.id === 'scale' && <FlipRows ctl={ctl} />}
             <p className="ve-row__label">{t('dp.state.hover')}</p>
             {rows.map((r) => (
@@ -2135,6 +2218,14 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
           </PopoverGroup>
         )
       })}
+      <SelectRow
+        label={t('dp.fk.transform_curve')}
+        value={value.tfEase ?? ''}
+        options={[{ label: t('dp.fk.curve_ease'), value: '' }, ...REVEAL_EASING_OPTIONS.map((o) => ({ label: o.label, value: o.value }))]}
+        applied={value.tfEase !== undefined}
+        onReset={() => set('tfEase', undefined)}
+        onChange={(v) => set('tfEase', (v || undefined) as BlockStyle['tfEase'])}
+      />
       <FxRange k="tfDuration" label={t('dp.field.transition')} unit="ms" value={value} onChange={onChange} def={250} min={0} max={2000} step={10} help={t('dp.lit.how_long_transform_changes_take')} />
 
       <p className="ve-row__label">{t('dp.field.position')}</p>
@@ -2149,10 +2240,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
         {positioned && (
           <>
             <div className="ve-row"><UnitSelect ctl={ctl} unitKey={'posUnit' as RespKey} label="Offset unit" defaultLabel="px" units={['%', 'em', 'rem', 'vw', 'vh']} /></div>
-            <TypoRange ctl={ctl} k="posTop" label={t('dp.field.top')} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posRight" label={t('dp.lit.right')} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posBottom" label={t('dp.field.bottom')} def={0} min={-2000} max={2000} step={1} />
-            <TypoRange ctl={ctl} k="posLeft" label={t('dp.lit.left')} def={0} min={-2000} max={2000} step={1} />
+            <LinkedOffsets ctl={ctl} />
           </>
         )}
         <RespNumber ctl={ctl} k="zIndex" label={t('dp.lit.z_index')} min={-10} max={9999} />
@@ -2247,7 +2335,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
   )
 }
 
-const EffectsControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void }> = ({ value, onChange }) => {
+const EffectsControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; device: EditDevice }> = ({ value, onChange, device }) => {
   const t = useAdminT()
   const { set, resetBtn } = makeFxEditing(value, onChange)
   const scroll = value.parallax === 'float-up' || value.parallax === 'float-down' ? value.parallax : 'none'
@@ -2278,6 +2366,11 @@ const EffectsControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle
       </div>
 
       <div className="ve-divider-group">
+        <ScrollEffectsRows value={value} onChange={onChange} device={device} />
+        {resetBtn(['scrollY', 'scrollX', 'scrollRotate', 'scrollScale', 'scrollOpacity', 'scrollBlur', 'scrollStart', 'scrollEnd', 'scrollOff'])}
+      </div>
+
+      <div className="ve-divider-group">
         <SelectRow
           label={t('dp.lit.entrance_animation')}
           value={value.reveal || 'none'}
@@ -2298,7 +2391,8 @@ const EffectsControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle
             />
           </>
         )}
-        {resetBtn(['reveal', 'revealDistance', 'revealDuration', 'revealDelay', 'revealEasing'])}
+        {value.reveal && value.reveal !== 'none' && <DeviceOffRow value={value} onChange={onChange} device={device} k="revealOff" label={t('dp.fk.reveal_off_device')} />}
+        {resetBtn(['reveal', 'revealDistance', 'revealDuration', 'revealDelay', 'revealEasing', 'revealOff'])}
       </div>
 
       <div className="ve-divider-group">

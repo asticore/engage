@@ -2,6 +2,10 @@
 
 Release notes for Engage. The update popup's Changelog link opens the matching GitHub release; keep the text of each release here too, newest first. Tag a release `vX.Y.Z` with the same number as `version` in `package.json`.
 
+## 1.5.5
+
+- **Design panel:** text shadow on hover, a third box shadow layer, border colour and style per device, a different background image per device, a Static position option, and Link all sides in the border sides popover. New text is translated in every language.
+
 ## 1.5.4
 
 - **Engage logo:** new logo at the top of the README and on the admin sign-in screen.

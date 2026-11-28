@@ -11,11 +11,12 @@ import {
 describe('flex / grid layout sanitisers', () => {
   it('accepts the flex display and rem gap unit', () => {
     expect(parseSectionLayout({ display: 'flex', gapUnit: 'rem' })).toEqual({ display: 'flex', gapUnit: 'rem' })
+    expect(parseSectionLayout({ display: 'flex', gapUnit: 'vw' })).toEqual({ display: 'flex', gapUnit: 'vw' })
   })
   it('rejects bad values', () => {
     const l = parseSectionLayout({
       display: 'flex',
-      gapUnit: 'em',
+      gapUnit: 'furlong',
       gridMinWidth: 10,
       gridFlow: 'sparse',
       gridJustify: 'left',

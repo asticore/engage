@@ -149,7 +149,7 @@ export const BUILDER_DESIGN_GROUPS: DesignGroup[] = [
       'hover:none|lift|glow|zoom',
       'hoverLift:num:0..40',
       'hoverScale:num:100..120',
-      'pointerFx:none|spotlight|tilt|magnetic',
+      'pointerFx:none|spotlight|tilt|magnetic|follow',
       'pointerFxStrength:num:0..100',
       'spotlightColor:colour',
       'kenBurns:none|zoom-in|zoom-out|pan',

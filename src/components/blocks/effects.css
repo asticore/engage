@@ -71,6 +71,9 @@
     .be-fx--parbg{will-change:transform;animation:be-par-bg linear both;animation-timeline:view();animation-range:cover}
     .be-fx-parallax-float-up>.be-block__content{animation:be-par-up linear both;animation-timeline:view();animation-range:cover}
     .be-fx-parallax-float-down>.be-block__content{animation:be-par-down linear both;animation-timeline:view();animation-range:cover}
+    @keyframes be-sc{from{opacity:var(--be-sc-o,1);filter:blur(var(--be-sc-b,0px));transform:translate(var(--be-sc-x,0px),var(--be-sc-y,0px)) rotate(var(--be-sc-r,0deg)) scale(var(--be-sc-z,1))}}
+    .be-fx-scroll>.be-block__content{animation:be-sc linear both;animation-timeline:view();animation-range:cover var(--be-sc-s,0%) cover var(--be-sc-e,100%)}
+    .ve-node .be-fx-scroll>.be-block__content{animation:none}
   }
 }
 
@@ -107,7 +110,8 @@
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference){
   .be-fx-pointer-spotlight::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle var(--be-spot-r,220px) at var(--mx,50%) var(--my,50%),var(--be-spot,rgba(255,255,255,.35)),transparent)}
   .be-fx-pointer-tilt>.be-block__content{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out}
-  .be-fx-pointer-magnetic{translate:var(--mgx,0px) var(--mgy,0px)}
+  .be-fx-pointer-magnetic,.be-fx-pointer-follow>.be-block__content{translate:var(--mgx,0px) var(--mgy,0px)}
+  .be-fx-pointer-follow>.be-block__content{transition:translate .6s cubic-bezier(.2,.8,.2,1)}
 }
 
 /* Heading effects (HeadingElement). The markup and motion of each effect come from wave36.css / wave43.css;

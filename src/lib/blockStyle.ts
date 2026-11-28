@@ -39,7 +39,7 @@ export const HOVER_TRANSFORM_PRESETS: Record<Exclude<HoverTransformPreset, 'none
 }
 
 export type HoverFx = 'none' | 'lift' | 'glow' | 'zoom'
-export type PointerFx = 'none' | 'spotlight' | 'tilt' | 'magnetic'
+export type PointerFx = 'none' | 'spotlight' | 'tilt' | 'magnetic' | 'follow'
 export type KenBurns = 'none' | 'zoom-in' | 'zoom-out' | 'pan'
 export type BorderFx = 'none' | 'glow' | 'conic-spin'
 export type BoxShadowPreset = 'none' | 'sm' | 'md' | 'lg'
@@ -96,6 +96,17 @@ export const RESPONSIVE_KEYS = [
   'blendMode',
   'fontFamily',
   'borderWidth',
+  'borderColor',
+  'borderStyle',
+  'bgImageUrl',
+  'borderWidthUnit',
+  'radiusUnit',
+  'scrollOff',
+  'revealOff',
+  'dividerTopHeight',
+  'dividerBottomHeight',
+  'dividerTopOff',
+  'dividerBottomOff',
   'bgColor',
   'fontStyle',
   'textDecoration',
@@ -113,6 +124,9 @@ export const RESPONSIVE_KEYS = [
   'tfRotate',
   'tfScale',
   'tfTranslateX',
+  'tfSkewX',
+  'tfSkewY',
+  'tfUnit',
   'tfTranslateY',
 ] as const
 export type ResponsiveKey = (typeof RESPONSIVE_KEYS)[number]
@@ -134,6 +148,11 @@ export type BlockStyle = {
   bgGradientFlow?: 'slow' | 'medium' | 'fast'
   /** Optional middle colour stop and where it sits, 0-100 percent (default 50). */
   bgGradientMid?: string
+  /** Two more gradient stops (31e), placed by position in percent. */
+  bgGradientMid2?: string
+  bgGradientMid2Pos?: number
+  bgGradientMid3?: string
+  bgGradientMid3Pos?: number
   bgGradientMidPos?: number
   /** Media doc id for an image background. */
   bgImage?: number | null
@@ -210,6 +229,15 @@ export type BlockStyle = {
   bs2Spread?: number
   bs2Color?: string
   bs2Inset?: boolean
+  /** Third shadow layer (31e). */
+  /** Unit of every custom box shadow distance (x, y, blur, spread; all layers and hover). Unset = px (31h). */
+  shadowUnit?: LengthUnit
+  bs3X?: number
+  bs3Y?: number
+  bs3Blur?: number
+  bs3Spread?: number
+  bs3Color?: string
+  bs3Inset?: boolean
   /** The same custom layer on hover. */
   hbsX?: number
   hbsY?: number
@@ -217,8 +245,13 @@ export type BlockStyle = {
   hbsSpread?: number
   hbsColor?: string
   hbsInset?: boolean
+  /** Image that fades in over the background on hover (31e); fades over hoverTransitionMs. */
+  hoverBgImageUrl?: string
   borderColor?: string
   borderRadius?: number
+  /** Units for border width and for every corner radius (31h). Unset = px. Per device. */
+  borderWidthUnit?: LengthUnit
+  radiusUnit?: LengthUnit
   /** Per-corner radius in px (0-999). When any is set, unset corners fall back to borderRadius. Responsive. */
   radiusTl?: number
   radiusTr?: number
@@ -265,6 +298,9 @@ export type BlockStyle = {
   dividerTop?: DividerShape
   dividerTopColor?: string
   dividerTopHeight?: number
+  /** Shape dividers per device (31e): a height that replaces the base one on this device, and an off switch (1 hides it, 0 shows it again). */
+  dividerBottomOff?: number
+  dividerTopOff?: number
   dividerTopFlip?: boolean
   /** Divider width as a percent of the block (100-400), vertical invert, and drawing above the content (31e). */
   dividerTopWidth?: number
@@ -474,6 +510,21 @@ export type BlockStyle = {
   maxHeight?: number
   maxHeightUnit?: LengthUnit
   /** Flip, per device: 1 mirrors the element, 0 switches an inherited flip off. */
+  /** Scrolling effects (31e): the block's content starts in this state and settles as it crosses the viewport. */
+  scrollY?: number
+  scrollX?: number
+  scrollRotate?: number
+  /** Start scale and start opacity in percent (100 = no change). */
+  scrollScale?: number
+  scrollOpacity?: number
+  scrollBlur?: number
+  /** Viewport range in percent of the pass (0 = just entering, 100 = just left). */
+  scrollStart?: number
+  scrollEnd?: number
+  /** 1 switches scrolling effects off on this device (per device, 0 switches an inherited off back on). */
+  scrollOff?: number
+  /** 1 switches the entrance animation off on this device. */
+  revealOff?: number
   tfFlipX?: number
   tfFlipY?: number
   /** Text stroke (31e): width in px and colour, separate from the outline effect. */
@@ -484,8 +535,15 @@ export type BlockStyle = {
   textShadowY?: number
   textShadowBlur?: number
   textShadowColor?: string
+  /** Text shadow on hover (31e): same four values, written only in the hover rule. */
+  hoverTextShadowX?: number
+  hoverTextShadowY?: number
+  hoverTextShadowBlur?: number
+  hoverTextShadowColor?: string
   tfRotate?: number
   tfScale?: number
+  /** Unit of the transform offsets (normal and hover). Unset = px. Per device (31e). */
+  tfUnit?: LengthUnit
   tfTranslateX?: number
   tfTranslateY?: number
   tfSkewX?: number
@@ -499,6 +557,8 @@ export type BlockStyle = {
   tfhSkewY?: number
   /** Transition length for transform, ms 0-2000 (default 250). */
   tfDuration?: number
+  /** Easing curve of the transform transition (31e). Unset = ease. */
+  tfEase?: NonNullable<BlockStyle['revealEasing']>
   /** Normal | Hover state: colours, shadow and radius applied on hover (hover-capable devices only). Unset = same as normal. */
   hoverBgColor?: string
   /** Hover state: blend mode and text stroke (31e). */
@@ -517,6 +577,8 @@ export type BlockStyle = {
   hoverBorderRadius?: number
   /** Transition length for the hover colour/shadow/radius changes, ms 0-2000 (default 250). */
   hoverTransitionMs?: number
+  /** Border width on hover in px (31e). Switches the border on when the normal one is off. */
+  hoverBorderWidth?: number
   /** Opacity on hover, 0-1. */
   hoverOpacity?: number
   /** Preset transform on hover; ignored when the Advanced hover transform (tfh*) is set. Skipped under prefers-reduced-motion. */
@@ -549,12 +611,13 @@ export type BlockStyle = {
   customAttrs?: string
 }
 
-export type BlockPosition = 'relative' | 'absolute' | 'fixed' | 'sticky'
+export type BlockPosition = 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky'
 export type BlendMode =
   | 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn'
   | 'hard-light' | 'soft-light' | 'difference' | 'exclusion' | 'hue' | 'saturation' | 'color' | 'luminosity'
 
 export const POSITION_OPTIONS: { label: string; value: BlockPosition }[] = [
+  { label: 'Static', value: 'static' },
   { label: 'Relative', value: 'relative' },
   { label: 'Absolute', value: 'absolute' },
   { label: 'Fixed', value: 'fixed' },
@@ -582,7 +645,7 @@ export const BLEND_MODE_OPTIONS: { label: string; value: BlendMode }[] = [
 
 export const EMPTY_STYLE: BlockStyle = {}
 
-const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit', 'posUnit'] as const
+const UNIT_KEYS = ['paddingUnit', 'marginUnit', 'selfWidthPercentUnit', 'minHeightUnit', 'minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit', 'posUnit', 'borderWidthUnit', 'radiusUnit', 'tfUnit', 'shadowUnit'] as const
 /** Drops unit keys that are not on the whitelist. */
 function withSafeUnits(style: BlockStyle): BlockStyle {
   const raw = style as Record<string, unknown>
@@ -669,7 +732,8 @@ function sanitizeRadius(style: BlockStyle): BlockStyle {
 export function cornerRadiusValue(s: BlockStyle): string | undefined {
   if (!RADIUS_CORNER_KEYS.some((k) => isNum(s[k]))) return undefined
   const base = isNum(s.borderRadius) ? s.borderRadius : 0
-  return RADIUS_CORNER_KEYS.map((k) => `${isNum(s[k]) ? s[k] : base}px`).join(' ')
+  const u = lengthUnit(s.radiusUnit) ?? 'px'
+  return RADIUS_CORNER_KEYS.map((k) => `${isNum(s[k]) ? s[k] : base}${u}`).join(' ')
 }
 
 const VIS_KEYS = ['showFrom', 'showUntil', 'showAuth', 'showRoles', 'showUrl', 'showDays', 'showFromTime', 'showUntilTime', 'showLang', 'showDevices', 'showParam', 'showCookie', 'showCountry', 'showCart', 'showOrdered'] as const
@@ -782,6 +846,7 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
   enumKey('parallaxDirection', [{ value: 'up' }, { value: 'down' }])
   enumKey('particlesShape', [{ value: 'circle' }, { value: 'square' }])
   enumKey('revealEasing', REVEAL_EASING_OPTIONS)
+  enumKey('tfEase', REVEAL_EASING_OPTIONS)
   if (raw.particlesLinks !== undefined && typeof raw.particlesLinks !== 'boolean') drop('particlesLinks')
   colorKey('bgEffectColor')
   colorKey('bgEffectColor2')
@@ -799,6 +864,7 @@ function sanitizeFx(style: BlockStyle): BlockStyle {
   colorKey('hoverBorderColor')
   enumKey('hoverBoxShadow', BOX_SHADOW_OPTIONS)
   numKey('hoverBorderRadius', 0, 200)
+  numKey('hoverBorderWidth', 0, 50)
   numKey('hoverTransitionMs', 0, 2000)
   numKey('hoverOpacity', 0, 1)
   enumKey('hoverTransform', [{ value: 'none' }, { value: 'lift' }, { value: 'scale' }])
@@ -839,7 +905,7 @@ export const BG_IMAGE_SIZES: readonly string[] = ['cover', 'contain', 'auto']
 export const BG_IMAGE_POSITIONS: readonly string[] = ['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left', 'bottom right']
 export const BG_IMAGE_REPEATS: readonly string[] = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y']
 const BORDER_STYLES: readonly string[] = ['solid', 'dashed', 'dotted', 'double']
-const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
+const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bs3X', 'bs3Y', 'bs3Blur', 'bs3Spread', 'bs3Color', 'bs3Inset', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgGradientMid2', 'bgGradientMid2Pos', 'bgGradientMid3', 'bgGradientMid3Pos', 'hoverBgImageUrl', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
 
 /** Validates per-side border widths, the border style and the custom box shadow layers (normal and hover). */
 function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
@@ -853,7 +919,7 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
     else out[k] = n
   }
   for (const k of ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth']) num(k, 0, 50)
-  for (const p of ['bs', 'bs2', 'hbs']) {
+  for (const p of ['bs', 'bs2', 'bs3', 'hbs']) {
     num(p + 'X', -200, 200)
     num(p + 'Y', -200, 200)
     num(p + 'Blur', 0, 300)
@@ -868,6 +934,14 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
   bgEnum('bgGradientKind', ['linear', 'radial', 'conic'])
   bgEnum('bgGradientFlow', ['slow', 'medium', 'fast'])
   if (raw.bgGradientMid !== undefined && sanitizeColor(raw.bgGradientMid) === undefined) delete out.bgGradientMid
+  for (const k of ['bgGradientMid2', 'bgGradientMid3']) if (raw[k] !== undefined && sanitizeColor(raw[k]) === undefined) delete out[k]
+  for (const k of ['bgGradientMid2Pos', 'bgGradientMid3Pos']) {
+    if (raw[k] === undefined) continue
+    const n = clampNum(raw[k], 0, 100)
+    if (n === undefined) delete out[k]
+    else out[k] = n
+  }
+  if (raw.hoverBgImageUrl !== undefined && !isSafeMediaUrl(raw.hoverBgImageUrl, 'image')) delete out.hoverBgImageUrl
   if (raw.bgGradientMidPos !== undefined) {
     const n = clampNum(raw.bgGradientMidPos, 0, 100)
     if (n === undefined) delete out.bgGradientMidPos
@@ -890,6 +964,7 @@ const TYPO_KEYS = [
   'typePreset', 'fontSize', 'fontSizeUnit', 'fontWeight', 'lineHeight', 'letterSpacing', 'letterSpacingUnit',
   'textTransform', 'fontStyle', 'textDecoration', 'wordSpacing', 'textShadow',
   'textStrokeWidth', 'textStrokeColor', 'textShadowX', 'textShadowY', 'textShadowBlur', 'textShadowColor',
+  'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor',
   'minWidth', 'maxWidth', 'maxHeight', 'tfFlipX', 'tfFlipY',
 ] as const
 
@@ -929,12 +1004,15 @@ function sanitizeTypography(style: BlockStyle): BlockStyle {
   num('textShadowX', -100, 100)
   num('textShadowY', -100, 100)
   num('textShadowBlur', 0, 200)
+  num('hoverTextShadowX', -100, 100)
+  num('hoverTextShadowY', -100, 100)
+  num('hoverTextShadowBlur', 0, 200)
   num('minWidth', 0, 10000)
   num('maxWidth', 0, 10000)
   num('maxHeight', 0, 10000)
   num('tfFlipX', 0, 1, Math.round)
   num('tfFlipY', 0, 1, Math.round)
-  for (const k of ['textStrokeColor', 'textShadowColor']) if (raw[k] !== undefined && sanitizeColor(raw[k]) === undefined) delete out[k]
+  for (const k of ['textStrokeColor', 'textShadowColor', 'hoverTextShadowColor']) if (raw[k] !== undefined && sanitizeColor(raw[k]) === undefined) delete out[k]
   if (raw.typePreset !== undefined && !(typeof raw.typePreset === 'string' && TYPE_PRESET_ID.test(raw.typePreset))) delete out.typePreset
   return out as BlockStyle
 }
@@ -1009,6 +1087,8 @@ const NUM_FX: readonly (readonly [string, number, number])[] = [
   ['gridSize', 12, 200], ['gridLineWidth', 0.5, 6], ['auroraBlur', 0, 120], ['auroraSize', 0, 100],
   ['auroraSpeed', 4, 80], ['gradientAngle', 0, 360], ['gradientSpeed', 3, 60], ['grainOpacity', 0, 100],
   ['grainSize', 40, 400], ['revealDistance', 0, 200], ['revealDuration', 5, 100], ['revealDelay', 0, 60],
+  ['scrollY', -400, 400], ['scrollX', -400, 400], ['scrollRotate', -180, 180], ['scrollScale', 20, 200], ['scrollOpacity', 0, 100],
+  ['dividerTopOff', 0, 1], ['dividerBottomOff', 0, 1], ['scrollBlur', 0, 40], ['scrollStart', 0, 100], ['scrollEnd', 0, 100], ['scrollOff', 0, 1], ['revealOff', 0, 1],
   ['hoverLift', 0, 40], ['hoverScale', 100, 120], ['glassOpacity', 0, 100], ['glassBorder', 0, 100],
   ['pointerFxStrength', 0, 100], ['kenBurnsDuration', 5, 60], ['borderFxWidth', 1, 8], ['borderFxSpeed', 2, 20],
   // Advanced tab
@@ -1039,15 +1119,15 @@ const FX_KEYS = [
   'overlayType', 'overlayColor', 'overlayColor2', 'overlayAngle', 'overlayOpacity', 'overlayBlend',
   'position', 'blendMode', 'cssClasses', 'customCss', 'customAttrs', 'maskShape',
   'slideInterval', 'slideTransition', 'blobMorphSpeed', 'noise',
-  'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
-  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'focusRing',
+  'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverBorderWidth', 'hoverTransitionMs',
+  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'focusRing',
   'textFx', 'textFxColor', 'textFxColor2', 'textFxAngle', 'textFxStroke', 'textFxAnimated',
 ] as const
 
 /** Normal | Hover state keys (Elementor-style). Any of them set turns on the hover transition. */
 const HOVER_STATE_KEYS = [
-  'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
-  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset',
+  'hoverBgColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverBorderWidth', 'hoverTransitionMs',
+  'hoverOpacity', 'hoverTransform', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset',
 ] as const
 /** Properties that animate between the normal and hover values. */
 const HOVER_TRANSITION_PROPS = ['background-color', 'color', 'border-color', 'box-shadow', 'border-radius'] as const
@@ -1312,11 +1392,15 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const n = clampNum(r[key], 0, 10000)
     if (n !== undefined) out[key] = n
   }
-  for (const key of ['minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit', 'posUnit'] as const) {
+  for (const key of ['minWidthUnit', 'maxWidthUnit', 'maxHeightUnit', 'lineHeightUnit', 'wordSpacingUnit', 'posUnit', 'borderWidthUnit', 'radiusUnit', 'tfUnit'] as const) {
     const u = lengthUnit(r[key])
     if (u) out[key] = u
   }
-  for (const key of ['tfFlipX', 'tfFlipY'] as const) {
+  for (const key of ['dividerTopHeight', 'dividerBottomHeight'] as const) {
+    const n = clampNum(r[key], 10, 400)
+    if (n !== undefined) out[key] = n
+  }
+  for (const key of ['tfFlipX', 'tfFlipY', 'scrollOff', 'revealOff', 'dividerTopOff', 'dividerBottomOff'] as const) {
     const n = clampNum(r[key], 0, 1)
     if (n !== undefined) out[key] = Math.round(n)
   }
@@ -1343,11 +1427,14 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const n = clampNum(r[key], 0, RADIUS_MAX)
     if (n !== undefined) out[key] = n
   }
+  { const c = sanitizeColor(r.borderColor); if (c !== undefined) out.borderColor = c }
+  if (typeof r.bgImageUrl === 'string' && isSafeMediaUrl(r.bgImageUrl, 'image')) out.bgImageUrl = r.bgImageUrl
+  if (typeof r.borderStyle === 'string' && BORDER_STYLES.includes(r.borderStyle)) out.borderStyle = r.borderStyle as BlockStyle['borderStyle']
   if (typeof r.position === 'string' && POSITION_OPTIONS.some((o) => o.value === r.position)) out.position = r.position as BlockPosition
   for (const [key, min, max] of [
     ['posTop', -2000, 2000], ['posRight', -2000, 2000], ['posBottom', -2000, 2000], ['posLeft', -2000, 2000], ['borderWidth', 0, 50],
     ['zIndex', -10, 9999], ['opacity', 0, 100], ['wordSpacing', -20, 100],
-    ['tfRotate', -360, 360], ['tfScale', 10, 300], ['tfTranslateX', -600, 600], ['tfTranslateY', -600, 600],
+    ['tfRotate', -360, 360], ['tfScale', 10, 300], ['tfTranslateX', -600, 600], ['tfTranslateY', -600, 600], ['tfSkewX', -60, 60], ['tfSkewY', -60, 60],
   ] as const) {
     const n = clampNum(r[key], min, max)
     if (n !== undefined) out[key] = n
@@ -1443,15 +1530,15 @@ export function blockStyleToCss(style: BlockStyle): React.CSSProperties {
   Object.assign(css, sizeLimitCss(style))
 
   if (isNum(style.borderWidth) && style.borderWidth > 0) {
-    css.borderWidth = `${style.borderWidth}px`
+    css.borderWidth = `${style.borderWidth}${lengthUnit(style.borderWidthUnit) ?? 'px'}`
     css.borderStyle = style.borderStyle || 'solid'
     css.borderColor = style.borderColor || 'currentColor'
   }
-  if (isNum(style.borderRadius)) css.borderRadius = `${style.borderRadius}px`
+  if (isNum(style.borderRadius)) css.borderRadius = `${style.borderRadius}${lengthUnit(style.radiusUnit) ?? 'px'}`
   const corners = cornerRadiusValue(style)
   if (corners) css.borderRadius = corners
   if (style.boxShadow && style.boxShadow !== 'none') css.boxShadow = BOX_SHADOW_PRESETS[style.boxShadow]
-  const layers = [customBoxShadow(style, 'bs'), customBoxShadow(style, 'bs2')].filter(Boolean)
+  const layers = [customBoxShadow(style, 'bs'), customBoxShadow(style, 'bs2'), customBoxShadow(style, 'bs3')].filter(Boolean)
   if (layers.length > 0) css.boxShadow = layers.join(', ')
   const sides = borderSideCss(style)
   if (sides) Object.assign(css, sides)
@@ -1496,7 +1583,8 @@ function transformValue(style: BlockStyle, prefix: 'tf' | 'tfh'): string {
   const parts: string[] = []
   const tx = num('TranslateX')
   const ty = num('TranslateY')
-  if (tx !== undefined || ty !== undefined) parts.push(`translate(${tx ?? 0}px,${ty ?? 0}px)`)
+  const tu = lengthUnit(raw.tfUnit) ?? 'px'
+  if (tx !== undefined || ty !== undefined) parts.push(`translate(${tx ?? 0}${tu},${ty ?? 0}${tu})`)
   const rotate = num('Rotate')
   if (rotate !== undefined) parts.push(`rotate(${rotate}deg)`)
   const skewX = num('SkewX')
@@ -1533,7 +1621,7 @@ function advancedCss(style: BlockStyle): React.CSSProperties {
   const tf = transformValue(style, 'tf')
   if (tf) css.transform = tf
   if (tf || transformValue(style, 'tfh')) {
-    css.transition = `transform ${isNum(style.tfDuration) ? style.tfDuration : 250}ms ease`
+    css.transition = `transform ${isNum(style.tfDuration) ? style.tfDuration : 250}ms ${style.tfEase && REVEAL_EASING_OPTIONS.some((o) => o.value === style.tfEase) ? style.tfEase : 'ease'}`
   }
   if (style.position && POSITION_OPTIONS.some((o) => o.value === style.position)) {
     css.position = style.position
@@ -1553,13 +1641,14 @@ function advancedCss(style: BlockStyle): React.CSSProperties {
 }
 
 /** The custom box shadow for prefix 'bs' (normal) or 'hbs' (hover), or undefined when none of its values is set. */
-function customBoxShadow(style: BlockStyle, prefix: 'bs' | 'hbs' | 'bs2'): string | undefined {
+function customBoxShadow(style: BlockStyle, prefix: 'bs' | 'hbs' | 'bs2' | 'bs3'): string | undefined {
   const r = style as Record<string, unknown>
   const n = (k: string, d: number) => (isNum(r[prefix + k]) ? (r[prefix + k] as number) : d)
   const set = ['X', 'Y', 'Blur', 'Spread'].some((k) => isNum(r[prefix + k])) || typeof r[prefix + 'Color'] === 'string' || r[prefix + 'Inset'] === true
   if (!set) return undefined
   const color = sanitizeColor(r[prefix + 'Color']) ?? 'rgba(0, 0, 0, 0.25)'
-  return `${r[prefix + 'Inset'] === true ? 'inset ' : ''}${n('X', 0)}px ${n('Y', 4)}px ${n('Blur', 12)}px ${n('Spread', 0)}px ${color}`
+  const u = lengthUnit(r.shadowUnit) ?? 'px'
+  return `${r[prefix + 'Inset'] === true ? 'inset ' : ''}${n('X', 0)}${u} ${n('Y', 4)}${u} ${n('Blur', 12)}${u} ${n('Spread', 0)}${u} ${color}`
 }
 
 /** Per-side border widths. Any side set switches the border on; unset sides fall back to borderWidth (or 0). */
@@ -1567,7 +1656,8 @@ function borderSideCss(style: BlockStyle): React.CSSProperties | undefined {
   const sides = [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth]
   if (!sides.some(isNum)) return undefined
   const base = isNum(style.borderWidth) ? style.borderWidth : 0
-  const w = (v: number | undefined) => `${isNum(v) ? v : base}px`
+  const bu = lengthUnit(style.borderWidthUnit) ?? 'px'
+  const w = (v: number | undefined) => `${isNum(v) ? v : base}${bu}`
   return {
     borderStyle: style.borderStyle || 'solid',
     borderColor: style.borderColor || 'currentColor',
@@ -1579,7 +1669,14 @@ function borderSideCss(style: BlockStyle): React.CSSProperties | undefined {
 function gradientCss(style: BlockStyle, angle: number, from: string, to: string): string {
   const mid = sanitizeColor(style.bgGradientMid)
   const pos = isNum(style.bgGradientMidPos) ? Math.min(100, Math.max(0, style.bgGradientMidPos)) : 50
-  const stops = mid ? `${from}, ${mid} ${pos}%, ${to}` : `${from}, ${to}`
+  const mids: { c: string; pos: number }[] = []
+  if (mid) mids.push({ c: mid, pos })
+  const m2 = sanitizeColor(style.bgGradientMid2)
+  if (m2) mids.push({ c: m2, pos: isNum(style.bgGradientMid2Pos) ? Math.min(100, Math.max(0, style.bgGradientMid2Pos)) : 75 })
+  const m3 = sanitizeColor(style.bgGradientMid3)
+  if (m3) mids.push({ c: m3, pos: isNum(style.bgGradientMid3Pos) ? Math.min(100, Math.max(0, style.bgGradientMid3Pos)) : 90 })
+  mids.sort((a, b) => a.pos - b.pos)
+  const stops = [from, ...mids.map((m) => `${m.c} ${m.pos}%`), to].join(', ')
   if (style.bgGradientKind === 'radial') return `radial-gradient(circle, ${stops})`
   if (style.bgGradientKind === 'conic') return `conic-gradient(from ${angle}deg, ${stops})`
   return `linear-gradient(${angle}deg, ${stops})`
@@ -1712,7 +1809,7 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
     px('margin-left', own.marginLeft ?? (own.marginUnit ? mergedU.marginLeft : undefined), mu)
     px('margin-right', own.marginRight ?? (own.marginUnit ? mergedU.marginRight : undefined), mu)
   }
-  if (RADIUS_CORNER_KEYS.some((k) => own[k] !== undefined)) {
+  if (RADIUS_CORNER_KEYS.some((k) => own[k] !== undefined) || own.radiusUnit !== undefined) {
     const cr = cornerRadiusValue(mergedU)
     if (cr) decls.push(`border-radius:${cr} !important`)
   }
@@ -1730,15 +1827,17 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
   }
   if (isNum(own.fontWeight)) decls.push(`font-weight:${own.fontWeight} !important`)
   if (own.textTransform && TEXT_TRANSFORMS.includes(own.textTransform)) decls.push(`text-transform:${own.textTransform} !important`)
-  if (isNum(own.borderWidth)) {
+  if (isNum(own.borderWidth) || own.borderWidthUnit !== undefined || own.borderColor !== undefined || own.borderStyle !== undefined) {
     const merged: BlockStyle = { ...style, ...style.tablet, ...(device === 'mobile' ? style.mobile : {}) }
-    decls.push(`border-width:${own.borderWidth}px !important`)
-    if (own.borderWidth > 0) {
+    if (isNum(merged.borderWidth) && (isNum(own.borderWidth) || own.borderWidthUnit !== undefined)) decls.push(`border-width:${merged.borderWidth}${lengthUnit(merged.borderWidthUnit) ?? 'px'} !important`)
+    // Colour and style follow the width that applies on this device, so a device colour alone also needs a visible border.
+    if (isNum(merged.borderWidth) && merged.borderWidth > 0) {
       decls.push(`border-style:${BORDER_STYLES.includes(merged.borderStyle ?? '') ? merged.borderStyle : 'solid'} !important`)
       decls.push(`border-color:${merged.borderColor ? merged.borderColor : 'currentColor'} !important`)
     }
   }
   if (own.bgColor !== undefined && isSafeColor(own.bgColor)) decls.push(`background-color:${own.bgColor} !important`)
+  if (typeof own.bgImageUrl === 'string' && isSafeMediaUrl(own.bgImageUrl, 'image')) decls.push(`background-image:url(${own.bgImageUrl}) !important`)
   { const ff = blockFontStack(own.fontFamily); if (ff) decls.push(`font-family:${ff} !important`) }
   if (own.blendMode && BLEND_MODE_OPTIONS.some((o) => o.value === own.blendMode)) decls.push(`mix-blend-mode:${own.blendMode} !important`)
   if (own.fontStyle && FONT_STYLES.includes(own.fontStyle)) decls.push(`font-style:${own.fontStyle} !important`)
@@ -1759,7 +1858,7 @@ export function deviceOverrideDecls(style: BlockStyle, device: ResponsiveDevice)
   }
   if (isNum(own.zIndex)) decls.push(`z-index:${own.zIndex} !important`)
   if (isNum(own.opacity)) decls.push(`opacity:${own.opacity / 100} !important`)
-  if (own.tfRotate !== undefined || own.tfScale !== undefined || own.tfTranslateX !== undefined || own.tfTranslateY !== undefined || own.tfFlipX !== undefined || own.tfFlipY !== undefined) {
+  if (own.tfRotate !== undefined || own.tfScale !== undefined || own.tfTranslateX !== undefined || own.tfTranslateY !== undefined || own.tfSkewX !== undefined || own.tfSkewY !== undefined || own.tfUnit !== undefined || own.tfFlipX !== undefined || own.tfFlipY !== undefined) {
     decls.push(`transform:${transformValue(mergedU, 'tf') || 'none'} !important`)
   }
   if (own.letterSpacing !== undefined) {
@@ -1819,6 +1918,37 @@ export function blockStyleCss(style: BlockStyle, scopeId: string, options: { edi
     const decls = deviceOverrideDecls(style, device)
     if (decls.length > 0) rules.push(`@media ${deviceQueries(device).cascade}{${sel}{${decls.join(';')}}}`)
   }
+  // Shape dividers per device: own height, and off switches that inherit like the scroll ones below.
+  for (const [pos, hKey, offKey] of [['top', 'dividerTopHeight', 'dividerTopOff'], ['bottom', 'dividerBottomHeight', 'dividerBottomOff']] as const) {
+    const target = `${sel}>.be-divider--${pos}`
+    for (const device of ['tablet', 'mobile'] as const) {
+      const h = (device === 'tablet' ? style.tablet : style.mobile)?.[hKey]
+      if (isNum(h)) rules.push(`@media ${deviceQueries(device).cascade}{${target}{height:${h}px !important}}`)
+    }
+    let on = style[offKey] === 1
+    const states: Record<string, boolean> = { desktop: on }
+    for (const device of ['tablet', 'mobile'] as const) {
+      const own = (device === 'tablet' ? style.tablet : style.mobile)?.[offKey]
+      if (isNum(own)) on = own === 1
+      states[device] = on
+    }
+    for (const device of ['desktop', 'tablet', 'mobile'] as const) {
+      if (states[device]) rules.push(`@media ${deviceQueries(device).only}{${target}{display:none !important}}`)
+    }
+  }
+  // Scrolling effects and the entrance animation can be off per device; mobile inherits tablet, tablet inherits desktop.
+  for (const [flag, off] of [['scrollOff', `${sel}>.be-block__content{animation:none !important}`], ['revealOff', `${sel}{animation:none !important}`]] as const) {
+    let on = isNum(style[flag]) && style[flag] === 1
+    const states = { desktop: on } as Record<string, boolean>
+    for (const device of ['tablet', 'mobile'] as const) {
+      const own = (device === 'tablet' ? style.tablet : style.mobile)?.[flag]
+      if (isNum(own)) on = own === 1
+      states[device] = on
+    }
+    for (const device of ['desktop', 'tablet', 'mobile'] as const) {
+      if (states[device]) rules.push(`@media ${deviceQueries(device).only}{${off}}`)
+    }
+  }
   for (const device of ['tablet', 'mobile'] as const) {
     if ((device === 'tablet' ? style.tablet : style.mobile)?.hide) {
       rules.push(`@media ${deviceQueries(device).only}{${sel}{${hidden}}}`)
@@ -1840,6 +1970,14 @@ export function blockStyleCss(style: BlockStyle, scopeId: string, options: { edi
   // Hover colours, shadow and radius. !important for the same reason: the normal values are inline.
   const hoverDecls = hoverStateDecls(style)
   if (hoverDecls.length > 0) rules.push(`@media (hover:hover){${sel}:hover{${hoverDecls.join(';')}}}`)
+
+  // Hover image: a layer behind the content that fades in over the background.
+  if (typeof style.hoverBgImageUrl === 'string' && isSafeMediaUrl(style.hoverBgImageUrl, 'image')) {
+    const ms = isNum(style.hoverTransitionMs) ? style.hoverTransitionMs : 250
+    rules.push(`${sel}{position:relative;isolation:isolate}`)
+    rules.push(`${sel}::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:url(${style.hoverBgImageUrl}) center/cover no-repeat;opacity:0;transition:opacity ${ms}ms}`)
+    rules.push(`@media (hover:hover){${sel}:hover::before{opacity:1}}`)
+  }
 
   // Custom CSS: `selector` is this block; without it the text is taken as the block's declarations.
   // Sanitized again here, since this is where the text lands inside a <style> element.
@@ -1884,12 +2022,15 @@ function hoverStateDecls(style: BlockStyle): string[] {
   }
   const hoverCustom = customBoxShadow(style, 'hbs')
   if (hoverCustom) decls.push(`box-shadow:${hoverCustom} !important`)
+  if (isNum(style.hoverBorderWidth)) decls.push(`border-width:${style.hoverBorderWidth}${lengthUnit(style.borderWidthUnit) ?? 'px'} !important`, `border-style:${BORDER_STYLES.includes(style.borderStyle ?? '') ? style.borderStyle : 'solid'} !important`)
   if (isNum(style.hoverBorderRadius)) decls.push(`border-radius:${style.hoverBorderRadius}px !important`)
   if (sanitizeColor(style.hoverGradFrom) !== undefined || sanitizeColor(style.hoverGradTo) !== undefined) {
     const angle = isNum(style.hoverGradAngle) ? style.hoverGradAngle : 180
     decls.push(`background-image:linear-gradient(${angle}deg, ${sanitizeColor(style.hoverGradFrom) ?? 'transparent'}, ${sanitizeColor(style.hoverGradTo) ?? 'transparent'}) !important`)
   }
   if (style.hoverBlendMode && BLEND_MODE_OPTIONS.some((o) => o.value === style.hoverBlendMode)) decls.push(`mix-blend-mode:${style.hoverBlendMode} !important`)
+  const hoverTextShadow = customTextShadow({ textShadowX: style.hoverTextShadowX, textShadowY: style.hoverTextShadowY, textShadowBlur: style.hoverTextShadowBlur, textShadowColor: style.hoverTextShadowColor })
+  if (hoverTextShadow) decls.push(`text-shadow:${hoverTextShadow} !important`)
   if (isNum(style.hoverTextStrokeWidth)) decls.push(`-webkit-text-stroke:${style.hoverTextStrokeWidth}px ${sanitizeColor(style.hoverTextStrokeColor) ?? 'currentColor'} !important`)
   if (isNum(style.hoverOpacity) && style.hoverOpacity >= 0 && style.hoverOpacity <= 1) decls.push(`opacity:${style.hoverOpacity} !important`)
   return decls
@@ -2054,6 +2195,7 @@ export const POINTER_FX_OPTIONS: { label: string; value: PointerFx }[] = [
   { label: 'Spotlight', value: 'spotlight' },
   { label: 'Tilt', value: 'tilt' },
   { label: 'Magnetic', value: 'magnetic' },
+  { label: 'Follow the pointer', value: 'follow' },
 ]
 
 export const KEN_BURNS_OPTIONS: { label: string; value: KenBurns }[] = [
@@ -2140,6 +2282,7 @@ export function blockFxClasses(style: BlockStyle): string {
   const c: string[] = []
   if (style.reveal && style.reveal !== 'none') c.push(`be-fx-reveal-${style.reveal}`)
   if (style.hover && style.hover !== 'none') c.push(`be-fx-hover-${style.hover}`)
+  if (hasScrollFx(style)) c.push('be-fx-scroll')
   if (style.glass) c.push('be-fx-glass')
   if (style.bgType === 'gradient' && style.bgGradientFlow) c.push('be-fx-gflow', `be-fx-gflow--${style.bgGradientFlow}`)
   if (style.parallax === 'background' && style.bgType === 'image' && isStr(style.bgImageUrl)) c.push('be-fx-parallax-bg')
@@ -2163,6 +2306,9 @@ export function blockFxClasses(style: BlockStyle): string {
   return c.join(' ')
 }
 
+/** True when any scrolling effect value is set. */
+export const hasScrollFx = (style: BlockStyle): boolean => [style.scrollY, style.scrollX, style.scrollRotate, style.scrollScale, style.scrollOpacity, style.scrollBlur].some(isNum)
+
 export const hasFxLayer = (style: BlockStyle): boolean => !!style.bgEffect && style.bgEffect !== 'none'
 
 /** CSS custom properties the effect classes read; only the ones that were set. */
@@ -2174,6 +2320,16 @@ export function blockFxVars(style: BlockStyle): Record<string, string> {
   if (style.parallax && style.parallax !== 'none') {
     v['--be-par'] = `${isNum(style.parallaxDistance) ? style.parallaxDistance : Math.round((isNum(style.parallaxStrength) ? style.parallaxStrength : 40) * 1.6)}px`
     if (style.parallax === 'background' && style.parallaxDirection === 'down') v['--be-pdir'] = '-1'
+  }
+  if (hasScrollFx(style)) {
+    if (isNum(style.scrollX)) v['--be-sc-x'] = `${style.scrollX}px`
+    if (isNum(style.scrollY)) v['--be-sc-y'] = `${style.scrollY}px`
+    if (isNum(style.scrollRotate)) v['--be-sc-r'] = `${style.scrollRotate}deg`
+    if (isNum(style.scrollScale)) v['--be-sc-z'] = String(style.scrollScale / 100)
+    if (isNum(style.scrollOpacity)) v['--be-sc-o'] = String(style.scrollOpacity / 100)
+    if (isNum(style.scrollBlur)) v['--be-sc-b'] = `${style.scrollBlur}px`
+    if (isNum(style.scrollStart)) v['--be-sc-s'] = `${style.scrollStart}%`
+    if (isNum(style.scrollEnd)) v['--be-sc-e'] = `${style.scrollEnd}%`
   }
   if (style.glass) {
     v['--be-glass'] = `${isNum(style.glassBlur) ? style.glassBlur : 12}px`
