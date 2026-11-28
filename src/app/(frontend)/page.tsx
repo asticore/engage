@@ -117,58 +117,51 @@ async function DefaultHomepage() {
         <div className="hero__inner">
           <h1>{siteName}</h1>
           <div className="hero__actions">
-            <Link href={shopHref} className="btn btn--primary">
-              Shop the collection
-            </Link>
-            <Link href="/events" className="btn btn--ghost">
-              See what&apos;s on
-            </Link>
+            {products.length > 0 && (
+              <Link href={shopHref} className="btn btn--primary">
+                Shop the collection
+              </Link>
+            )}
+            {events.length > 0 && (
+              <Link href="/events" className="btn btn--ghost">
+                See what&apos;s on
+              </Link>
+            )}
           </div>
         </div>
       </section>
 
-      <section className="home-section">
-        <div className="page-shell">
-          <div className="section-heading">
-            <h2>New arrivals</h2>
-            <Link href={shopHref}>View all</Link>
-          </div>
-
-          {products.length === 0 ? (
-            <p className="empty-state">
-              Your shop is ready - add products in the admin panel and they&apos;ll appear here.
-            </p>
-          ) : (
+      {products.length > 0 && (
+        <section className="home-section">
+          <div className="page-shell">
+            <div className="section-heading">
+              <h2>New arrivals</h2>
+              <Link href={shopHref}>View all</Link>
+            </div>
             <div className="product-grid">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} promoBadges={promoBadges} />
               ))}
             </div>
-          )}
-        </div>
-      </section>
-
-      <section className="home-section home-section--dark">
-        <div className="page-shell">
-          <div className="section-heading">
-            <h2>Upcoming events</h2>
-            <Link href="/events">View all</Link>
           </div>
+        </section>
+      )}
 
-          {events.length === 0 ? (
-            <p className="empty-state">
-              Nothing on the calendar yet - add an event in the admin panel to start taking RSVPs
-              and ticket sales.
-            </p>
-          ) : (
+      {events.length > 0 && (
+        <section className="home-section home-section--dark">
+          <div className="page-shell">
+            <div className="section-heading">
+              <h2>Upcoming events</h2>
+              <Link href="/events">View all</Link>
+            </div>
             <div className="event-grid">
               {events.map((event) => (
                 <EventCard key={event.id} event={event} />
               ))}
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       <section className="home-section about-section" id="about">
         <div className="page-shell about-section__inner">

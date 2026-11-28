@@ -56,10 +56,15 @@ async function reportSeedError(db: D1Database, step: string, error: unknown): Pr
   }
 }
 
-/** A site needs seeding when it has no users: covers a fresh database and one whose first-run seed died part way. */
+/**
+ * A site needs seeding when it has no users or no pages at all: covers a fresh database and one whose first-run seed
+ * died part way. The admin is seeded before the Home page, so a first request killed by the Worker's CPU or time limit
+ * between the two leaves a user but no page; checking users alone then never finished the seed.
+ */
 async function needsSeed(db: D1Database): Promise<boolean> {
   if (!(await tableExists(db, 'eg_users'))) return true
-  return (await count(db, 'eg_users')) === 0
+  if ((await count(db, 'eg_users')) === 0) return true
+  return (await tableExists(db, 'eg_pages')) && (await count(db, 'eg_pages')) === 0
 }
 
 export async function initialise(engine: Engine): Promise<void> {
@@ -72,7 +77,7 @@ export async function initialise(engine: Engine): Promise<void> {
     if (errorCount > 0) throw new Error(`First-run migration finished with ${errorCount} error(s).`)
     await setAppliedVersion(db, pkg.version)
   } else {
-    consoleLogger.info('Migrated database has no users - retrying first-run seed.')
+    consoleLogger.info('Migrated database has no users or pages - retrying first-run seed.')
   }
   // Admin first so sign-in works even if the heavier starter content fails. Both steps are idempotent.
   let failed: unknown = null
