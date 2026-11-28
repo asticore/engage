@@ -3972,6 +3972,7 @@ const zhHans: UiDictionary = {
   'setup.q.summary.notesTitle': "须知",
   'setup.q.note.domains': "多个域名或地区：请在「设置 > 域名」中进行设置。",
   'setup.q.note.bookings': "在线预约功能正在规划中，就绪后我们会通知您。",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "空文本 - 双击编辑",
   'cv.empty.select': "空元素 - 选中后添加内容",
   "shop.currency.rounding": "取整",

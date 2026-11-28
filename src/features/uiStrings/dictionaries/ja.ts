@@ -3973,6 +3973,7 @@ const ja: UiDictionary = {
   'setup.q.summary.notesTitle': "ご参考",
   'setup.q.note.domains': "複数のドメインまたは地域: 「設定 > ドメイン」で設定してください。",
   'setup.q.note.bookings': "オンライン予約は準備中です。利用可能になったらお知らせします。",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "空のテキスト - ダブルクリックで編集",
   'cv.empty.select': "空の要素 - 選択してコンテンツを追加",
   "shop.currency.rounding": "端数処理",

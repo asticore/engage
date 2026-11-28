@@ -3973,6 +3973,7 @@ const ar: UiDictionary = {
   'setup.q.summary.notesTitle': "معلومات مفيدة",
   'setup.q.note.domains': "عدة نطاقات أو مناطق: اضبطها من الإعدادات > النطاقات.",
   'setup.q.note.bookings': "الحجوزات عبر الإنترنت مخطط لها؛ سنُعلمك عند جاهزيتها.",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "نص فارغ - انقر نقرًا مزدوجًا للتحرير",
   'cv.empty.select': "عنصر فارغ - حدده لإضافة محتوى",
   "shop.currency.rounding": "التقريب",

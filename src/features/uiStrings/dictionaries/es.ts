@@ -3973,6 +3973,7 @@ const es: UiDictionary = {
   'setup.q.summary.notesTitle': "Conviene saber",
   'setup.q.note.domains': "Varios dominios o regiones: configúralos en Ajustes > Dominios.",
   'setup.q.note.bookings': "Las reservas en línea están previstas. Te avisaremos cuando estén listas.",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "Texto vacío - haz doble clic para editar",
   'cv.empty.select': "Elemento vacío - selecciónalo para añadir contenido",
   "shop.currency.rounding": "Redondeo",

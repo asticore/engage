@@ -3973,6 +3973,7 @@ const nl: UiDictionary = {
   'setup.q.summary.notesTitle': "Goed om te weten",
   'setup.q.note.domains': "Meerdere domeinen of regio's: stel ze in onder Instellingen > Domeinen.",
   'setup.q.note.bookings': "Online boekingen zijn gepland. We laten je weten wanneer ze klaar zijn.",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "Lege tekst - dubbelklik om te bewerken",
   'cv.empty.select': "Leeg element - selecteer het om inhoud toe te voegen",
   "shop.currency.rounding": "Afronding",

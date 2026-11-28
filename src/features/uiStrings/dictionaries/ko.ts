@@ -3973,6 +3973,7 @@ const ko: UiDictionary = {
   'setup.q.summary.notesTitle': "참고 사항",
   'setup.q.note.domains': "여러 도메인 또는 지역: 설정 > 도메인에서 설정하세요.",
   'setup.q.note.bookings': "온라인 예약은 준비 중입니다. 준비되면 알려 드리겠습니다.",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "빈 텍스트 - 두 번 클릭하여 편집",
   'cv.empty.select': "빈 요소 - 선택하여 콘텐츠 추가",
   "shop.currency.rounding": "반올림",

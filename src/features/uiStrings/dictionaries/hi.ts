@@ -3973,6 +3973,7 @@ const hi: UiDictionary = {
   'setup.q.summary.notesTitle': "जानने योग्य बातें",
   'setup.q.note.domains': "कई डोमेन या क्षेत्र: इन्हें सेटिंग्स > डोमेन में सेट करें।",
   'setup.q.note.bookings': "ऑनलाइन बुकिंग की योजना है; तैयार होने पर हम आपको बताएँगे।",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "खाली टेक्स्ट - संपादित करने के लिए डबल-क्लिक करें",
   'cv.empty.select': "खाली तत्व - सामग्री जोड़ने के लिए इसे चुनें",
   "shop.currency.rounding": "राउंडिंग",

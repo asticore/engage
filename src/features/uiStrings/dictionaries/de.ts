@@ -3974,6 +3974,7 @@ const de: UiDictionary = {
   'setup.q.summary.notesTitle': "Gut zu wissen",
   'setup.q.note.domains': "Mehrere Domains oder Regionen: Richten Sie sie unter Einstellungen > Domains ein.",
   'setup.q.note.bookings': "Online-Buchungen sind geplant. Wir informieren Sie, sobald sie verfügbar sind.",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "Leerer Text - zum Bearbeiten doppelklicken",
   'cv.empty.select': "Leeres Element - zum Hinzufügen von Inhalt auswählen",
   "shop.currency.rounding": "Rundung",

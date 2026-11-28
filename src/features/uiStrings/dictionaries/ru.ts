@@ -3973,6 +3973,7 @@ const ru: UiDictionary = {
   'setup.q.summary.notesTitle': "Полезно знать",
   'setup.q.note.domains': "Несколько доменов или регионов: настройте их в разделе Настройки > Домены.",
   'setup.q.note.bookings': "Онлайн-бронирование запланировано. Мы сообщим, когда оно будет готово.",
+  'setup.q.template.installError': 'The example could not be installed: {detail}',
   'cv.empty.editable': "Пустой текст - дважды щёлкните для редактирования",
   'cv.empty.select': "Пустой элемент - выберите его, чтобы добавить содержимое",
   "shop.currency.rounding": "Округление",
