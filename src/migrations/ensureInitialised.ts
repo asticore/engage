@@ -22,6 +22,7 @@ import pkg from '../../package.json'
 import { setAppliedVersion } from '@/features/updates/state'
 import { runInternalMigrate } from '@/migrations/runInternalMigrate'
 import { seedHomeAndTemplates } from '@/seed/seedHomeAndTemplates'
+import { seedDefaultAdmin } from '@/features/security/defaultAdmin'
 import type { Engine } from '@/localapi/engine'
 
 let pending: Promise<void> | null = null
@@ -41,6 +42,7 @@ async function initialise(engine: Engine): Promise<void> {
   if (errorCount > 0) throw new Error(`First-run migration finished with ${errorCount} error(s).`)
   await setAppliedVersion(db, pkg.version)
   await seedHomeAndTemplates(engine)
+  await seedDefaultAdmin(engine)
 }
 
 export function ensureInitialised(engine: Engine): Promise<void> {

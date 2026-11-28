@@ -2,6 +2,11 @@
 
 Release notes for Engage. The update popup's Changelog link opens the matching GitHub release; keep the text of each release here too, newest first. Tag a release `vX.Y.Z` with the same number as `version` in `package.json`.
 
+## 1.5.0
+
+- **Start login:** a new install has one admin, `example@example.com` / `admin`; the admin sends that account to its profile until the email is changed. `reset-admin.mjs create` adds an admin to an existing site.
+- **README:** install steps now include the Workers Paid plan and a reset table.
+
 ## 1.4.0
 
 - **Blank starter site:** a new install now starts with an empty Home page instead of the Grace & Gatsby demo content.

@@ -10,7 +10,7 @@ The button installs the **lean install** in [`installer/`](installer/): a tiny r
 
 ### Quick start (your own site)
 
-You need two free accounts and about 10 minutes. No command line is needed.
+You need a Cloudflare account (with the $5 Workers Paid plan, step 3) and a free GitHub account, and about 10 minutes. No command line is needed.
 
 **Step 1. Cloudflare account.** Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up) (or sign in at [dash.cloudflare.com](https://dash.cloudflare.com)). Cloudflare hosts the site.
 
@@ -20,9 +20,20 @@ You need two free accounts and about 10 minutes. No command line is needed.
 2. Click **Purchase R2 Plan** (or **Subscribe**). The free tier is included and you are not charged within it. Cloudflare may ask for a payment card to activate R2.
 3. Wait until the R2 page shows your (empty) bucket list instead of the purchase screen.
 
-**Step 3. GitHub account.** Create a free [GitHub account](https://github.com/signup) (or sign in at [github.com](https://github.com)). GitHub keeps your site's settings file and lets the site update itself. You do not need to create a repository: the deploy does it for you.
+<!-- ![R2 page](docs/images/step2-r2.png) -->
 
-**Step 4. Deploy.** Click the button:
+**Step 3. Turn on the Workers Paid plan ($5 a month).** The site needs it: the free Workers plan stops each request after 10 ms of processor time, which an Engage page can exceed, so pages fail. The paid plan is a flat $5 a month and includes plenty of requests.
+
+1. In the Cloudflare dashboard open **Workers & Pages**.
+2. Click **Plans** (top right of that page, or **Compute (Workers)**, then **Plans**).
+3. Choose **Workers Paid** and click **Purchase** / **Upgrade**. Enter a payment card if asked.
+4. The page should now show **Workers Paid** as your current plan.
+
+<!-- ![Workers Paid plan](docs/images/step3-workers-paid.png) -->
+
+**Step 4. GitHub account.** Create a free [GitHub account](https://github.com/signup) (or sign in at [github.com](https://github.com)). GitHub keeps your site's settings file and lets the site update itself. You do not need to create a repository: the deploy does it for you.
+
+**Step 5. Deploy.** Click the button:
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/asticore/engage/tree/main/installer)
 
@@ -32,17 +43,21 @@ You need two free accounts and about 10 minutes. No command line is needed.
 
 Cloudflare creates the repository on GitHub, the database and the storage bucket for you. The site's two secret keys (`ENGAGE_SECRET` and `INTERNAL_ROUTE_KEY`) are generated automatically on the first build, so there is nothing to type or keep. The first build takes a couple of minutes.
 
-Optional settings you can leave blank: `SITE_URL` (your site address; set it once you have a domain, see step 6), `STRIPE_*` (only for the Shop), and `UPDATE_REPO`, `UPDATE_GITHUB_TOKEN`, `ENGAGE_SOURCE_TOKEN` (see step 7).
+<!-- ![Deploy form](docs/images/step5-deploy-form.png) -->
 
-**Step 5. Turn on your site address and open it.** Cloudflare gives every Worker a free address of the form `your-worker-name.your-account.workers.dev`. If it is not live yet:
+Optional settings you can leave blank: `SITE_URL` (your site address; set it once you have a domain, see step 6), `STRIPE_*` (only for the Shop), and `UPDATE_REPO`, `UPDATE_GITHUB_TOKEN`, `ENGAGE_SOURCE_TOKEN` (see step 8).
+
+**Step 6. Turn on your site address and open it.** Cloudflare gives every Worker a free address of the form `your-worker-name.your-account.workers.dev`. If it is not live yet:
 
 1. In Cloudflare open **Workers & Pages** and click your site.
 2. Open **Settings**, then **Domains & Routes**.
 3. Next to **workers.dev**, click **Enable** (if it already shows an address, it is on). Copy the address and open it.
 
-The first visit sets up the database by itself (this can take a few seconds). The new site is blank. Go to `/admin`, create the first admin account (see [Keys and admin login](#keys-and-admin-login)), then answer the setup questions. The last question offers example pages from the Engage templates library; the one you pick is installed as your Home page, or keep the site blank.
+<!-- ![workers.dev](docs/images/step6-workersdev.png) -->
 
-**Step 6. Use your own domain name (optional).** Your domain must be added to your Cloudflare account first (**Domains**, **Onboard a domain**, then change the nameservers at your registrar to the two Cloudflare gives you).
+The first visit sets up the database by itself (this can take a few seconds). The new site is blank. Go to `/admin` and sign in with the start login **`example@example.com`** / **`admin`**. You are sent straight to your profile: **change the email and password right away** (anyone who finds the site before you can use the start login). See [Keys and admin login](#keys-and-admin-login). Then answer the setup questions. The last question offers example pages from the Engage templates library; the one you pick is installed as your Home page, or keep the site blank.
+
+**Step 7. Use your own domain name (optional).** Your domain must be added to your Cloudflare account first (**Domains**, **Onboard a domain**, then change the nameservers at your registrar to the two Cloudflare gives you).
 
 1. In Cloudflare open **Workers & Pages**, click your site, then **Settings**, **Domains & Routes**.
 2. Click **Add**, then **Custom domain**.
@@ -50,23 +65,32 @@ The first visit sets up the database by itself (this can take a few seconds). Th
 4. Open **Settings**, **Variables and Secrets** and set `SITE_URL` to the new address, for example `https://www.example.com`, then save. This fixes the sitemap, `robots.txt` and the canonical links.
 5. Optional: once the custom domain works, you can turn the workers.dev address off in the same **Domains & Routes** list.
 
-**Step 7. Optional: one-click updates.** To update from the admin, set `UPDATE_REPO` (your site's repository, `owner/name`) and `UPDATE_GITHUB_TOKEN` (a GitHub token limited to that repository with Contents read and write). Without them, update by retrying the build in Cloudflare.
+**Step 8. Optional: one-click updates.** To update from the admin, set `UPDATE_REPO` (your site's repository, `owner/name`) and `UPDATE_GITHUB_TOKEN` (a GitHub token limited to that repository with Contents read and write). Without them, update by retrying the build in Cloudflare.
 
 #### Keys and admin login
 
-- **There is no default admin username or password.** The first person to open `/admin` on a new site creates the first admin account (email and a password of their choice). Do that straight away after the deploy. Later admins are added in the admin under Users.
-- **Where do I find my email and password?** You choose them. Nothing is emailed and nothing is stored in Cloudflare or GitHub for you. Open `https://<your-site>/admin`, fill in your email and a password (12 or more characters), and press create. Keep them in a password manager. The first account is the super admin.
-- **Lost the password or forgot which email you used?** Run these in your site's repository (the one the Deploy button created), after `npx wrangler login`:
-  1. `npm install` (once).
-  2. `node scripts/reset-admin.mjs list` prints the email of every admin account.
-  3. `node scripts/reset-admin.mjs reset you@example.com` sets a new random password and prints it (or add your own password as a third argument, 12 or more characters). All sessions of that admin are signed out and any lock is cleared.
-  4. Sign in at `/admin` with the new password and change it on your profile page.
+- **Start login:** a new site has one admin, email `example@example.com` and password `admin`. Open `https://<your-site>/admin` and sign in. The admin keeps sending you to your profile until you change the email, so do that first: set your own email and a password of 12 or more characters, and save. Keep them in a password manager. Nothing is emailed and nothing is stored in Cloudflare or GitHub for you.
 
-  If email sending is set up, the **Forgot password** link on the sign-in page also works. The script needs access to your Cloudflare account, so only the site owner can use it.
+  <!-- ![First login](docs/images/step7-first-login.png) -->
+- **Lost the password or forgot which email you used?** Use the **reset script**. It is a small file called `scripts/reset-admin.mjs` inside **your site's GitHub repository** (the one the Deploy button created). You run it on your own computer, in a terminal opened in a copy of that repository:
+  1. Install [Node.js](https://nodejs.org) (once), then copy the repository: `git clone https://github.com/<you>/<your-site>` and `cd <your-site>`.
+  2. `npm install` and `npx wrangler login` (once; a browser window signs you in to Cloudflare).
+  3. Run the command you need from the table. The script talks straight to your site's database, so only someone signed in to your Cloudflare account can use it.
+
+  | I want to | Command |
+  | --------- | ------- |
+  | See every admin email | `node scripts/reset-admin.mjs list` |
+  | Set a new random password (it prints it) | `node scripts/reset-admin.mjs reset you@example.com` |
+  | Set a password I choose (12+ characters) | `node scripts/reset-admin.mjs reset you@example.com 'MyNewPassw0rd!'` |
+  | Add an admin when none exists | `node scripts/reset-admin.mjs create example@example.com admin` |
+
+  A reset signs that admin out everywhere and clears any lock. Sign in at `/admin` and change the password on your profile. If email sending is set up, the **Forgot password** link on the sign-in page also works.
+
+  <!-- ![Reset script](docs/images/reset-script.png) -->
 - **`ENGAGE_SECRET`** signs sessions and encrypts secret settings. **`INTERNAL_ROUTE_KEY`** guards the internal maintenance routes. Both are generated for you on the first build and stored as Worker secrets, so you never type them. Cloudflare never shows a secret again after it is saved; to use your own value, set it under **Settings**, **Variables and Secrets**. Do not change `ENGAGE_SECRET` on a live site: everyone is signed out and encrypted settings stop reading.
 - **Optional keys:** `STRIPE_*` (Shop only), `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN` (one-click updates), `ENGAGE_SOURCE_TOKEN` (only if the source repository is private).
 
-Something failed? The most common causes: R2 not activated (step 2), the wrong GitHub account chosen on the authorise screen (step 4).
+Something failed? The most common causes: R2 not activated (step 2), Workers Paid not turned on (step 3), the wrong GitHub account chosen on the authorise screen (step 5).
 
 When a new release is out, the admin shows an update popup; after updating, a bar offers **Run migration** if the database needs it.
 

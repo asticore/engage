@@ -4,6 +4,7 @@
 //   node scripts/reset-admin.mjs list                       shows the email addresses of every admin
 //   node scripts/reset-admin.mjs reset you@example.com      sets a new random password for that admin and prints it
 //   node scripts/reset-admin.mjs reset you@example.com 'MyNewPassw0rd!'   sets the password you give (12+ characters)
+//   node scripts/reset-admin.mjs create example@example.com admin   adds an admin account (any password, so it can be a throwaway start login)
 //
 // It needs `npx wrangler login` (or CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID) and talks to the
 // remote D1 database named in wrangler.jsonc. Nothing is sent anywhere else. The password is hashed here
@@ -36,6 +37,13 @@ export function resetSql(email, salt, hash) {
   ].join(' ')
 }
 
+export function createSql(email, salt, hash) {
+  return [
+    `INSERT INTO users (email, salt, hash) VALUES (${quote(email)}, ${quote(salt)}, ${quote(hash)});`,
+    `INSERT INTO users_roles ("order", parent_id, value) VALUES (1, (SELECT id FROM users WHERE lower(email) = lower(${quote(email)})), 'admin');`,
+  ].join(' ')
+}
+
 function d1(command) {
   return execFileSync('npx', ['--no-install', 'wrangler', 'd1', 'execute', DB, '--remote', '--json', '--command', command], { cwd: ROOT, encoding: 'utf8' })
 }
@@ -58,7 +66,16 @@ function main() {
     console.log(`Password reset for ${email}.${given ? '' : `\nNew password: ${password}`}\nSign in at /admin, then change it under your profile.`)
     return
   }
-  console.log('Usage:\n  node scripts/reset-admin.mjs list\n  node scripts/reset-admin.mjs reset <email> [new password]')
+  if (action === 'create' && email) {
+    const password = given || newPassword()
+    const { salt, hash } = hashPassword(password)
+    const check = JSON.parse(d1(`SELECT count(*) AS n FROM users WHERE lower(email) = lower(${quote(email)})`))
+    if (check?.[0]?.results?.[0]?.n) throw new Error(`${email} already exists. Use "reset" to change its password.`)
+    d1(createSql(email, salt, hash))
+    console.log(`Admin ${email} created.${given ? '' : `\nPassword: ${password}`}\nSign in at /admin, then change the email and password under your profile.`)
+    return
+  }
+  console.log('Usage:\n  node scripts/reset-admin.mjs list\n  node scripts/reset-admin.mjs reset <email> [new password]\n  node scripts/reset-admin.mjs create <email> [password]')
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
