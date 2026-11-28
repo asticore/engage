@@ -3309,6 +3309,42 @@ _Date: 23 Nov 2026_
 The form block's look gains per-form colour options in the form's settings (Look section): field background, field text, field border, focus border, label, button background, button text, error message and success message. Each is a hex colour checked by the existing colour cleaner (`cleanColour` in `src/features/forms/config.ts`), kept under `style.colours` in the form's config, drawn as `--eg-form-*` custom properties on the form root, and read by `forms.css` with the current look as fallback, so a form with no overrides draws exactly as before. The site-wide label and focus colours are exposed on the form root too (`--eg-site-label`, `--eg-site-focus`, in `themeStyles/css.ts`) so the per-form fallback keeps the site colours when no override is set. Presets stay as they were; the form style presets as Examples are still to move to engage-templates. Code: `src/features/forms/formColours.ts`, `config.ts` (`cleanFormColours`), `types.ts`, `settings.ts`, `components/FormRenderer.tsx`, `components/forms.css`, `src/features/themeStyles/css.ts`, `src/views/visualEditor/FormSettingsPanel.tsx`. Tests: `tests/int/forms-builder.int.spec.ts`. Left open: the live check (batch 18 in Task 47), and the other colours in the site theme (for example the success colour outside a form) are not changed.
 
 **Where to find it:** Visual editor, Form settings, Look (Focus border, Label, Button background, and the other colour boxes)
+<a id="bld-090"></a>
+#### BLD-090 · Task 3 Before and after and Popup elements, Spark and Shine audit closed (28 Nov 2026)
+
+_Date: 28 Nov 2026 · Original group: Task 3, 40d_
+
+Two elements on the Spark features that were still missing from the builder. **Before and after** (Elements > Media): two pictures with a drag handle on `spark-compare`, keyboard slider, start position, top and bottom split, follow the mouse. **Popup** (Elements > Marketing): a Shine `modal` opened by a button or by Spark `spark-popup` on a delay, after scrolling or on exit intent, shown every visit, once per session, every few days or once. Text is escaped, the link is checked, nothing loads until opened. The page-level section popup stays as it was. With this, every builder element that has a Spark or Shine equivalent uses it; slides, tabs and breadcrumbs stay custom (no equivalent, see the Upstream issues live check). Code: `wave64Defs.ts`, `Wave64Elements.tsx`; tests `tests/int/spark-compare-popup.int.spec.ts`.
+
+**Audit of builder elements against Spark and Shine (23 Nov 2026, closed 28 Nov):**
+
+**Audit table (23 Nov 2026).**
+
+| Element | Now | Reason |
+| --- | --- | --- |
+| chart | Spark (`spark-chart-*`, every chart, diagram and viz type) | |
+| table | Shine `table` classes + Spark `spark-table` | |
+| counter (animate) | Spark `spark-counter` | static counter is plain text |
+| countdown | Spark `spark-countdown` | |
+| progress-bar | Shine `progress` | ring shape stays custom SVG (circle-progress) |
+| accordion, toggle | Shine `accordion` + Spark `spark-collapse` | |
+| back-to-top | Spark `spark-totop` + Shine `btn` | |
+| tabs | custom (CSS radio buttons) | Spark has no tabs behaviour; see 40e |
+| breadcrumbs | custom | Shine `breadcrumb` has fixed "/" separator and no JSON-LD; see 40e |
+| image carousel | Shine `carousel` + Spark `spark-carousel` (autoplay, fade, dots, arrows options) | |
+| gallery and image lightbox | Spark `spark-lightbox` (carousel layout uses `spark-carousel`) | |
+| text ticker | Spark `spark-marquee` | |
+| pagination | Shine `pagination` | |
+| count-up | Spark `spark-counter` | hidden legacy element |
+| flip box | Spark `spark-flip` | hidden legacy element |
+| tooltip | Shine `data-tooltip` | |
+| card flip | Spark `spark-flip` | |
+| rotating headline, Rotate heading effect | Spark `spark-typed` | |
+| slides | custom | layered hero slider, no Spark equivalent |
+| bar-chart, pie-chart (hidden, old pages) | custom SVG | hidden legacy elements; convert to Chart on edit, or remove after a migration |
+
+**Where to find it:** Visual editor > Elements > Media > Before and after; Elements > Marketing > Popup
+
 <a id="bld-089"></a>
 #### BLD-089 · Map options and editor gear menu (23 Nov 2026)
 
@@ -3680,6 +3716,7 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 ### 28 Nov 2026
 
 - [I18N-013](#i18n-013) Task 2 promo badge field descriptions
+- [BLD-090](#bld-090) Task 3 Before and after and Popup elements, Spark and Shine audit closed
 
 ### 23 Nov 2026
 

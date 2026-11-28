@@ -103,8 +103,70 @@ export const BillingToggleElement: React.FC<P> = (p) => (
   <BillingToggle monthlyLabel={str(p.monthlyLabel, 'Monthly')} yearlyLabel={str(p.yearlyLabel, 'Yearly')} saveText={str(p.saveText)} startYearly={flag(p.startYearly, false)} />
 )
 
+/** `before-after`: two pictures with a drag handle (Spark `spark-compare` builds the clip, handle and slider). Without scripts the first picture shows. */
+export const BeforeAfterElement: React.FC<P> = (p) => {
+  const before = mediaOf(p.before)?.url || safeUrl(str(p.beforeUrl))
+  const after = mediaOf(p.after)?.url || safeUrl(str(p.afterUrl))
+  if (!before || !after) return <div className="el-placeholder">Choose a before and an after picture</div>
+  const start = Math.min(100, Math.max(0, Number.isFinite(Number(p.start)) && p.start !== undefined && p.start !== '' ? Number(p.start) : 50))
+  return (
+    <div className="spark-compare be-el-compare" data-spark-start={start} data-spark-vertical={flag(p.vertical) ? 'true' : undefined} data-spark-hover={flag(p.hover) ? 'true' : undefined}>
+      <img src={before} alt={str(p.beforeAlt, 'Before')} loading="lazy" decoding="async" />
+      <img src={after} alt={str(p.afterAlt, 'After')} loading="lazy" decoding="async" />
+    </div>
+  )
+}
+
+/**
+ * `popup`: a Shine modal (`dialog.modal`) that Spark's `spark-popup` opens from the button (`data-spark-open`) or on a
+ * timer, scroll depth or exit intent. Spark remembers when it showed (session, days or once). Text is React text.
+ */
+export const PopupElement: React.FC<P> = (p) => {
+  const uid = `eg-popup-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`
+  const title = str(p.title)
+  const paragraphs = str(p.body).split(/\n{2,}/).map((t) => t.trim()).filter(Boolean)
+  const image = mediaOf(p.image)?.url
+  const label = str(p.buttonLabel).trim()
+  const ctaUrl = safeUrl(str(p.ctaUrl).trim())
+  const ctaLabel = str(p.ctaLabel).trim()
+  const num = (v: unknown, d: number) => (v === undefined || v === '' || !Number.isFinite(Number(v)) ? d : Number(v))
+  const delay = Math.max(0, num(p.delay, 0))
+  const scroll = Math.min(100, Math.max(0, num(p.scroll, 0)))
+  const frequency = pick(p.frequency, ['always', 'session', 'days', 'once'] as const, 'session')
+  const close = str(p.closeLabel, 'Close') || 'Close'
+  if (!label && !title && paragraphs.length === 0) return <div className="el-placeholder">Add popup text</div>
+  return (
+    <div className="be-el-popup">
+      {label && <button type="button" className="btn" data-spark-open={uid} aria-haspopup="dialog">{label}</button>}
+      <dialog
+        id={uid}
+        className="modal spark-popup"
+        aria-label={title || label || 'Popup'}
+        data-spark-delay={delay > 0 ? delay : undefined}
+        data-spark-scroll={scroll > 0 ? scroll : undefined}
+        data-spark-exit={flag(p.exit) ? 'true' : undefined}
+        data-spark-frequency={frequency}
+        data-spark-days={frequency === 'days' ? Math.max(1, num(p.days, 7)) : undefined}
+        data-spark-id={uid}
+      >
+        <div className="modal-header">
+          {title && <h2 className="modal-title">{title}</h2>}
+          <button type="button" className="btn" data-spark-close aria-label={close}>{'\u00d7'}</button>
+        </div>
+        <div className="modal-body">
+          {image && <img src={image} alt="" loading="lazy" decoding="async" style={{ maxWidth: '100%', height: 'auto' }} />}
+          {paragraphs.map((t, i) => <p key={i}>{t}</p>)}
+          {ctaUrl && ctaLabel && <a className="btn" href={ctaUrl}>{ctaLabel}</a>}
+        </div>
+      </dialog>
+    </div>
+  )
+}
+
 export const WAVE64_COMPONENTS: Record<string, React.ComponentType<P>> = {
   'billing-toggle': BillingToggleElement,
+  'before-after': BeforeAfterElement,
+  popup: PopupElement,
   'lottie-player': LottiePlayerElement,
   audio: AudioElement,
   'code-highlight': CodeHighlightElement,
