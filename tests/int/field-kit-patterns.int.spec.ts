@@ -20,7 +20,7 @@ describe('field kit patterns (31h)', () => {
     expect(screen.getByText('normal body')).toBeTruthy()
   })
   it('a popover opens, and Escape closes it and returns focus to its button', () => {
-    render(React.createElement(PopoverGroup, { label: 'Edit', children: React.createElement('p', null, 'inside') }))
+    render(React.createElement(PopoverGroup, { label: 'Edit' } as never, React.createElement('p', null, 'inside')))
     const btn = screen.getByRole('button', { name: /Edit/ })
     fireEvent.click(btn)
     expect(screen.getByText('inside')).toBeTruthy()
