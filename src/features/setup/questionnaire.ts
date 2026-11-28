@@ -47,6 +47,8 @@ export type SetupAnswers = {
   /** Locale codes from LOCALE_OPTIONS, only meaningful when `languages` is 'several'. */
   locales?: string[]
   businessType?: BusinessType
+  /** An example page from a template library to install on the blank site. Absent means keep the site blank. */
+  starterTemplate?: { library: string; item: string }
 }
 
 export type SetupQuestionnaireState = {

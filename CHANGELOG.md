@@ -2,6 +2,12 @@
 
 Release notes for Engage. The update popup's Changelog link opens the matching GitHub release; keep the text of each release here too, newest first. Tag a release `vX.Y.Z` with the same number as `version` in `package.json`.
 
+## 1.4.0
+
+- **Blank starter site:** a new install now starts with an empty Home page instead of the Grace & Gatsby demo content.
+- **Example picker in setup:** the setup questions end with a choice of example pages from the Engage templates library; the chosen one is installed as the Home page (or kept blank).
+- **Lost login:** `node scripts/reset-admin.mjs` in the install repository lists admins and resets a password.
+
 ## 1.3.1
 
 - **Lean install:** the first build now generates `ENGAGE_SECRET` and `INTERNAL_ROUTE_KEY` itself, so the Deploy form no longer needs them. Existing secrets are never changed.

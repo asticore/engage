@@ -40,7 +40,7 @@ Optional settings you can leave blank: `SITE_URL` (your site address; set it onc
 2. Open **Settings**, then **Domains & Routes**.
 3. Next to **workers.dev**, click **Enable** (if it already shows an address, it is on). Copy the address and open it.
 
-The first visit sets up the database and starter content by itself (this can take a few seconds). Go to `/admin` and create the first admin account. See [Keys and admin login](#keys-and-admin-login).
+The first visit sets up the database by itself (this can take a few seconds). The new site is blank. Go to `/admin`, create the first admin account (see [Keys and admin login](#keys-and-admin-login)), then answer the setup questions. The last question offers example pages from the Engage templates library; the one you pick is installed as your Home page, or keep the site blank.
 
 **Step 6. Use your own domain name (optional).** Your domain must be added to your Cloudflare account first (**Domains**, **Onboard a domain**, then change the nameservers at your registrar to the two Cloudflare gives you).
 
@@ -55,6 +55,14 @@ The first visit sets up the database and starter content by itself (this can tak
 #### Keys and admin login
 
 - **There is no default admin username or password.** The first person to open `/admin` on a new site creates the first admin account (email and a password of their choice). Do that straight away after the deploy. Later admins are added in the admin under Users.
+- **Where do I find my email and password?** You choose them. Nothing is emailed and nothing is stored in Cloudflare or GitHub for you. Open `https://<your-site>/admin`, fill in your email and a password (12 or more characters), and press create. Keep them in a password manager. The first account is the super admin.
+- **Lost the password or forgot which email you used?** Run these in your site's repository (the one the Deploy button created), after `npx wrangler login`:
+  1. `npm install` (once).
+  2. `node scripts/reset-admin.mjs list` prints the email of every admin account.
+  3. `node scripts/reset-admin.mjs reset you@example.com` sets a new random password and prints it (or add your own password as a third argument, 12 or more characters). All sessions of that admin are signed out and any lock is cleared.
+  4. Sign in at `/admin` with the new password and change it on your profile page.
+
+  If email sending is set up, the **Forgot password** link on the sign-in page also works. The script needs access to your Cloudflare account, so only the site owner can use it.
 - **`ENGAGE_SECRET`** signs sessions and encrypts secret settings. **`INTERNAL_ROUTE_KEY`** guards the internal maintenance routes. Both are generated for you on the first build and stored as Worker secrets, so you never type them. Cloudflare never shows a secret again after it is saved; to use your own value, set it under **Settings**, **Variables and Secrets**. Do not change `ENGAGE_SECRET` on a live site: everyone is signed out and encrypted settings stop reading.
 - **Optional keys:** `STRIPE_*` (Shop only), `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN` (one-click updates), `ENGAGE_SOURCE_TOKEN` (only if the source repository is private).
 

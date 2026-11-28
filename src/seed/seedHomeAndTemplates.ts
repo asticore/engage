@@ -1,8 +1,6 @@
 import type { Engine } from '@/engine'
 import { modernizeBlocks } from '@/features/legacyBlocks/convertTree'
 
-import { siteNameOf } from '@/features/brand/siteName'
-
 // Shared, idempotent seed logic for the starter Home page + Page Templates.
 // Used by BOTH:
 //  - the dev/local migration (src/migrations/20260822_120000_seed_home_and_templates.ts),
@@ -54,47 +52,12 @@ export async function seedHomeAndTemplates(
   if (homepageCount === 0) {
     // The starter hero names the site from Site Settings. Read only when the Home page is created (once per install),
     // through the shared snapshot; a blank or missing name falls back to the neutral default.
-    const siteName = siteNameOf((await (await import('@/features/speed/siteSnapshot')).getSiteSnapshot()).settings)
+    // The starter site is blank: an empty published Home page, so there is always a page to edit. The setup questionnaire
+    // can fill it with an example the owner picks (see /api/template-libraries/install-example).
     await engine.create({
       collection: 'pages',
       overrideAccess: true,
-      data: {
-        title: 'Home',
-        slug: 'home',
-        isHomepage: true,
-        _status: 'published',
-        blocks: modernizeBlocks([
-          {
-            blockType: 'hero',
-            heading: siteName,
-            subheading:
-              'A curated boutique for the modern romantic - considered pieces, small-batch goods, and evenings worth dressing up for.',
-            primaryCtaLabel: 'Shop the collection',
-            primaryCtaUrl: '/shop',
-            secondaryCtaLabel: 'Our story',
-            secondaryCtaUrl: '/about',
-          },
-          {
-            blockType: 'richText',
-            content: lexicalParagraph(
-              'Welcome - this homepage was auto-created so there is always something live to edit. Open it in Pages and click "Edit visually" to rebuild it however you like.',
-            ),
-          },
-          {
-            blockType: 'productGrid',
-            heading: 'Shop the collection',
-            limit: 4,
-          },
-          {
-            blockType: 'ctaBanner',
-            heading: 'Join the list',
-            text: 'New arrivals, small-batch drops, and first access to events.',
-            buttonLabel: 'Sign up',
-            buttonUrl: '/#newsletter',
-            style: 'dark',
-          },
-        ]),
-      },
+      data: { title: 'Home', slug: 'home', isHomepage: true, _status: 'published', blocks: [] },
     })
     engine.logger.info('[seed] Created and published Home page.')
     homeCreated = true
