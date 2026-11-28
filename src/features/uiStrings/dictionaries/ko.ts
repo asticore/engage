@@ -4521,6 +4521,18 @@ const ko: UiDictionary = {
   'dp.fk.hover_image': "호버 시 이미지",
   'dp.fk.divider_height_device': "이 기기에서의 높이 (px)",
   'dp.fk.divider_off_device': "이 기기에서 숨기기",
+  'dp.fk.border_width': "테두리 두께",
+  'dp.fk.radius_unit': "모서리 반경 단위",
+  'dp.fk.tab_normal': "일반",
+  'dp.fk.tab_hover': "호버",
+  'dp.fk.typography_effects': "텍스트 그림자 및 윤곽선",
+  'dp.fk.edit': "편집",
+  'dp.fk.hover_text_colour': "호버 시 글자 색상",
+  'dp.fk.offset_unit': "오프셋 단위",
+  'dp.fk.transform_curve': "변형 곡선",
+  'dp.fk.curve_ease': "Ease (기본)",
+  'dp.fk.hover_border_width': "호버 시 테두리 두께 (px)",
+  'dp.fk.breakpoints': "태블릿은 너비 {tablet}px까지, 모바일은 {mobile}px까지 적용됩니다.",
 }
 
 export default ko

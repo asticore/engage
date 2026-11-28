@@ -4521,6 +4521,18 @@ const ru: UiDictionary = {
   'dp.fk.hover_image': "Изображение при наведении",
   'dp.fk.divider_height_device': "Высота на этом устройстве (px)",
   'dp.fk.divider_off_device': "Скрыть на этом устройстве",
+  'dp.fk.border_width': "Толщина границы",
+  'dp.fk.radius_unit': "Единица радиуса углов",
+  'dp.fk.tab_normal': "Обычный",
+  'dp.fk.tab_hover': "При наведении",
+  'dp.fk.typography_effects': "Тень и обводка текста",
+  'dp.fk.edit': "Изменить",
+  'dp.fk.hover_text_colour': "Цвет текста при наведении",
+  'dp.fk.offset_unit': "Единица смещения",
+  'dp.fk.transform_curve': "Кривая трансформации",
+  'dp.fk.curve_ease': "Ease (по умолчанию)",
+  'dp.fk.hover_border_width': "Толщина границы при наведении (px)",
+  'dp.fk.breakpoints': "Планшет действует до ширины {tablet} px, телефон до {mobile} px.",
 }
 
 export default ru

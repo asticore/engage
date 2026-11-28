@@ -4522,6 +4522,18 @@ const de: UiDictionary = {
   'dp.fk.hover_image': "Bild beim Überfahren",
   'dp.fk.divider_height_device': "Höhe auf diesem Gerät (px)",
   'dp.fk.divider_off_device': "Auf diesem Gerät ausblenden",
+  'dp.fk.border_width': "Rahmenbreite",
+  'dp.fk.radius_unit': "Einheit des Eckenradius",
+  'dp.fk.tab_normal': "Normal",
+  'dp.fk.tab_hover': "Hover",
+  'dp.fk.typography_effects': "Textschatten und Kontur",
+  'dp.fk.edit': "Bearbeiten",
+  'dp.fk.hover_text_colour': "Textfarbe beim Überfahren",
+  'dp.fk.offset_unit': "Einheit des Versatzes",
+  'dp.fk.transform_curve': "Transformationskurve",
+  'dp.fk.curve_ease': "Ease (Standard)",
+  'dp.fk.hover_border_width': "Rahmenbreite beim Überfahren (px)",
+  'dp.fk.breakpoints': "Tablet gilt bis {tablet} px Breite, Mobil bis {mobile} px.",
 }
 
 export default de

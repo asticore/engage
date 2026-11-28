@@ -4521,6 +4521,18 @@ const pt: UiDictionary = {
   'dp.fk.hover_image': "Imagem ao passar o mouse",
   'dp.fk.divider_height_device': "Altura neste dispositivo (px)",
   'dp.fk.divider_off_device': "Ocultar neste dispositivo",
+  'dp.fk.border_width': "Largura da borda",
+  'dp.fk.radius_unit': "Unidade do raio dos cantos",
+  'dp.fk.tab_normal': "Normal",
+  'dp.fk.tab_hover': "Ao passar o mouse",
+  'dp.fk.typography_effects': "Sombra e contorno do texto",
+  'dp.fk.edit': "Editar",
+  'dp.fk.hover_text_colour': "Cor do texto ao passar o mouse",
+  'dp.fk.offset_unit': "Unidade do deslocamento",
+  'dp.fk.transform_curve': "Curva da transformação",
+  'dp.fk.curve_ease': "Ease (padrão)",
+  'dp.fk.hover_border_width': "Largura da borda ao passar o mouse (px)",
+  'dp.fk.breakpoints': "Tablet vale até {tablet} px de largura, celular até {mobile} px.",
 }
 
 export default pt

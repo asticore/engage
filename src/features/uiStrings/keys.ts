@@ -4572,6 +4572,18 @@ export const UI_STRING_SOURCE = {
   'dp.fk.hover_image': "Image on hover",
   'dp.fk.divider_height_device': "Height on this device (px)",
   'dp.fk.divider_off_device': "Hide on this device",
+  'dp.fk.border_width': "Border width",
+  'dp.fk.radius_unit': "Corner radius unit",
+  'dp.fk.tab_normal': "Normal",
+  'dp.fk.tab_hover': "Hover",
+  'dp.fk.typography_effects': "Text shadow and stroke",
+  'dp.fk.edit': "Edit",
+  'dp.fk.hover_text_colour': "Text colour on hover",
+  'dp.fk.offset_unit': "Offset unit",
+  'dp.fk.transform_curve': "Transform curve",
+  'dp.fk.curve_ease': "Ease (default)",
+  'dp.fk.hover_border_width': "Border width on hover (px)",
+  'dp.fk.breakpoints': "Tablet applies up to {tablet} px wide, mobile up to {mobile} px.",
 } as const
 
 export type UiStringKey = keyof typeof UI_STRING_SOURCE

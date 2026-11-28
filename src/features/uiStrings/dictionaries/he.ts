@@ -4417,6 +4417,18 @@ const he: UiDictionary = {
   'dp.fk.hover_image': "תמונה בריחוף",
   'dp.fk.divider_height_device': "גובה במכשיר זה (px)",
   'dp.fk.divider_off_device': "הסתר במכשיר זה",
+  'dp.fk.border_width': "עובי מסגרת",
+  'dp.fk.radius_unit': "יחידת רדיוס פינה",
+  'dp.fk.tab_normal': "רגיל",
+  'dp.fk.tab_hover': "ריחוף",
+  'dp.fk.typography_effects': "צל וקו מתאר לטקסט",
+  'dp.fk.edit': "עריכה",
+  'dp.fk.hover_text_colour': "צבע טקסט בריחוף",
+  'dp.fk.offset_unit': "יחידת היסט",
+  'dp.fk.transform_curve': "עקומת טרנספורם",
+  'dp.fk.curve_ease': "Ease (ברירת מחדל)",
+  'dp.fk.hover_border_width': "עובי מסגרת בריחוף (px)",
+  'dp.fk.breakpoints': "טאבלט עד רוחב {tablet} px, נייד עד {mobile} px.",
 }
 
 export default he

@@ -4521,6 +4521,18 @@ const ja: UiDictionary = {
   'dp.fk.hover_image': "ホバー時の画像",
   'dp.fk.divider_height_device': "このデバイスでの高さ (px)",
   'dp.fk.divider_off_device': "このデバイスで非表示",
+  'dp.fk.border_width': "枠線の太さ",
+  'dp.fk.radius_unit': "角丸の単位",
+  'dp.fk.tab_normal': "通常",
+  'dp.fk.tab_hover': "ホバー",
+  'dp.fk.typography_effects': "テキストシャドウと縁取り",
+  'dp.fk.edit': "編集",
+  'dp.fk.hover_text_colour': "ホバー時の文字色",
+  'dp.fk.offset_unit': "オフセットの単位",
+  'dp.fk.transform_curve': "トランスフォームのカーブ",
+  'dp.fk.curve_ease': "Ease（既定）",
+  'dp.fk.hover_border_width': "ホバー時の枠線の太さ (px)",
+  'dp.fk.breakpoints': "タブレットは幅 {tablet} px まで、モバイルは {mobile} px までです。",
 }
 
 export default ja

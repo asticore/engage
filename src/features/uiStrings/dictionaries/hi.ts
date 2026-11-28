@@ -4521,6 +4521,18 @@ const hi: UiDictionary = {
   'dp.fk.hover_image': "होवर पर छवि",
   'dp.fk.divider_height_device': "इस डिवाइस पर ऊँचाई (px)",
   'dp.fk.divider_off_device': "इस डिवाइस पर छिपाएँ",
+  'dp.fk.border_width': "बॉर्डर की चौड़ाई",
+  'dp.fk.radius_unit': "कोने की त्रिज्या की इकाई",
+  'dp.fk.tab_normal': "सामान्य",
+  'dp.fk.tab_hover': "होवर",
+  'dp.fk.typography_effects': "टेक्स्ट शैडो और स्ट्रोक",
+  'dp.fk.edit': "संपादित करें",
+  'dp.fk.hover_text_colour': "होवर पर टेक्स्ट रंग",
+  'dp.fk.offset_unit': "ऑफ़सेट की इकाई",
+  'dp.fk.transform_curve': "ट्रांसफ़ॉर्म कर्व",
+  'dp.fk.curve_ease': "Ease (डिफ़ॉल्ट)",
+  'dp.fk.hover_border_width': "होवर पर बॉर्डर की चौड़ाई (px)",
+  'dp.fk.breakpoints': "टैबलेट {tablet} px चौड़ाई तक, मोबाइल {mobile} px तक।",
 }
 
 export default hi

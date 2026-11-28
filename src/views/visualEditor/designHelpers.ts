@@ -35,14 +35,14 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'gridLineWidth', 'auroraBlur', 'auroraSize', 'auroraSpeed', 'gradientAngle', 'gradientSpeed', 'grainOpacity', 'grainSize',
     'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'bgSlides', 'bgSlideIds', 'slideInterval', 'slideTransition', 'noise',
   ],
-  hover: ['hoverBgColor', 'hoverBgImageUrl', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
+  hover: ['hoverBgColor', 'hoverBgImageUrl', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverBorderWidth', 'hoverTransitionMs',
     'hoverOpacity', 'hoverTransform', 'focusRing', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'],
   spacing: [
     'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTopMobile', 'paddingBottomMobile', 'paddingUnit',
     'marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'marginUnit', 'minHeight', 'minHeightUnit',
     'minWidth', 'minWidthUnit', 'maxWidth', 'maxWidthUnit', 'maxHeight', 'maxHeightUnit',
   ],
-  border: ['borderWidth', 'borderStyle', 'borderColor', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow',
+  border: ['borderWidth', 'borderStyle', 'borderColor', 'borderWidthUnit', 'radiusUnit', 'borderRadius', 'radiusTl', 'radiusTr', 'radiusBr', 'radiusBl', 'radiusLinked', 'boxShadow',
     'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bs3X', 'bs3Y', 'bs3Blur', 'bs3Spread', 'bs3Color', 'bs3Inset'],
   layout: ['width', 'textAlign', 'textColor'],
   typography: [
@@ -62,7 +62,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'borderFxColor2', 'borderFxWidth', 'borderFxSpeed',
   ],
   advanced: [
-    ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom',
+    ...tf.map((s) => `tf${s}`), ...tf.map((s) => `tfh${s}`), 'tfFlipX', 'tfFlipY', 'tfUnit', 'tfEase', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom',
     'posLeft', 'zIndex', 'opacity', 'blendMode', 'filterBlur', 'filterBrightness', 'filterContrast', 'filterSaturate',
     'filterGrayscale', 'filterHue', 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
   ],

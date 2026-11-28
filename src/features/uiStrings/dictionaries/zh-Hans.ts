@@ -4520,6 +4520,18 @@ const zhHans: UiDictionary = {
   'dp.fk.hover_image': "悬停时的图片",
   'dp.fk.divider_height_device': "此设备上的高度 (px)",
   'dp.fk.divider_off_device': "在此设备上隐藏",
+  'dp.fk.border_width': "边框宽度",
+  'dp.fk.radius_unit': "圆角单位",
+  'dp.fk.tab_normal': "常规",
+  'dp.fk.tab_hover': "悬停",
+  'dp.fk.typography_effects': "文字阴影和描边",
+  'dp.fk.edit': "编辑",
+  'dp.fk.hover_text_colour': "悬停时文字颜色",
+  'dp.fk.offset_unit': "偏移单位",
+  'dp.fk.transform_curve': "变换曲线",
+  'dp.fk.curve_ease': "Ease（默认）",
+  'dp.fk.hover_border_width': "悬停时边框宽度 (px)",
+  'dp.fk.breakpoints': "平板适用于宽度不超过 {tablet} px，手机不超过 {mobile} px。",
 }
 
 export default zhHans

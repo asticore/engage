@@ -104,3 +104,35 @@ describe('shape dividers per device (31e)', () => {
     expect(css).toContain('@media (max-width:600px){#x1>.be-divider--bottom{display:none !important}}')
   })
 })
+
+describe('border width and radius units (31h)', () => {
+  it('writes the chosen unit, px by default', () => {
+    expect(blockStyleToCss({ borderWidth: 2 }).borderWidth).toBe('2px')
+    expect(blockStyleToCss({ borderWidth: 0.2, borderWidthUnit: 'em' }).borderWidth).toBe('0.2em')
+    expect(blockStyleToCss({ borderRadius: 50, radiusUnit: '%' }).borderRadius).toBe('50%')
+    expect(blockStyleToCss({ radiusTl: 1, radiusUnit: 'rem' }).borderRadius).toBe('1rem 0rem 0rem 0rem')
+    expect(blockStyleToCss({ borderTopWidth: 1, borderWidthUnit: 'rem' }).borderWidth).toBe('1rem 0rem 0rem 0rem')
+  })
+  it('a tablet unit is written in the tablet rule and a bad unit is dropped', () => {
+    const style = asBlockStyle({ borderWidth: 2, tablet: { borderWidthUnit: 'rem' }, mobile: { radiusUnit: 'furlong' } } as unknown as BlockStyle)
+    expect(deviceOverrideDecls(style, 'tablet')).toContain('border-width:2rem !important')
+    expect(style.mobile?.radiusUnit).toBeUndefined()
+  })
+})
+
+describe('transform per device, curve and hover border width (31e)', () => {
+  it('skew and offset unit are per device', () => {
+    const style = asBlockStyle({ tfTranslateX: 10, tablet: { tfSkewX: 5, tfUnit: 'rem' } } as BlockStyle)
+    expect(deviceOverrideDecls(style, 'tablet')).toContain('transform:translate(10rem,0rem) skewX(5deg) !important')
+    expect(blockStyleToCss({ tfTranslateX: 4, tfUnit: '%' }).transform).toBe('translate(4%,0%)')
+  })
+  it('the curve is written in the transition and a bad one falls back to ease', () => {
+    expect(blockStyleToCss({ tfRotate: 5, tfEase: 'ease-out' }).transition).toBe('transform 250ms ease-out')
+    expect(blockStyleToCss(asBlockStyle({ tfRotate: 5, tfEase: 'bounce' } as unknown as BlockStyle)).transition).toBe('transform 250ms ease')
+  })
+  it('hover border width goes in the hover rule and turns the border on', () => {
+    const out = blockStyleCss(asBlockStyle({ hoverBorderWidth: 3 } as BlockStyle), 'x1')
+    expect(out).toContain('border-width:3px !important')
+    expect(out).toContain('border-style:solid !important')
+  })
+})

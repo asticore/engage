@@ -4521,6 +4521,18 @@ const fr: UiDictionary = {
   'dp.fk.hover_image': "Image au survol",
   'dp.fk.divider_height_device': "Hauteur sur cet appareil (px)",
   'dp.fk.divider_off_device': "Masquer sur cet appareil",
+  'dp.fk.border_width': "Épaisseur de la bordure",
+  'dp.fk.radius_unit': "Unité du rayon des coins",
+  'dp.fk.tab_normal': "Normal",
+  'dp.fk.tab_hover': "Survol",
+  'dp.fk.typography_effects': "Ombre et contour du texte",
+  'dp.fk.edit': "Modifier",
+  'dp.fk.hover_text_colour': "Couleur du texte au survol",
+  'dp.fk.offset_unit': "Unité du décalage",
+  'dp.fk.transform_curve': "Courbe de la transformation",
+  'dp.fk.curve_ease': "Ease (par défaut)",
+  'dp.fk.hover_border_width': "Épaisseur de la bordure au survol (px)",
+  'dp.fk.breakpoints': "Tablette jusqu’à {tablet} px de large, mobile jusqu’à {mobile} px.",
 }
 
 export default fr

@@ -4521,6 +4521,18 @@ const ar: UiDictionary = {
   'dp.fk.hover_image': "صورة عند التمرير",
   'dp.fk.divider_height_device': "الارتفاع على هذا الجهاز (px)",
   'dp.fk.divider_off_device': "إخفاء على هذا الجهاز",
+  'dp.fk.border_width': "عرض الحد",
+  'dp.fk.radius_unit': "وحدة نصف قطر الزاوية",
+  'dp.fk.tab_normal': "عادي",
+  'dp.fk.tab_hover': "تمرير",
+  'dp.fk.typography_effects': "ظل النص والحد",
+  'dp.fk.edit': "تحرير",
+  'dp.fk.hover_text_colour': "لون النص عند التمرير",
+  'dp.fk.offset_unit': "وحدة الإزاحة",
+  'dp.fk.transform_curve': "منحنى التحويل",
+  'dp.fk.curve_ease': "تدرج (افتراضي)",
+  'dp.fk.hover_border_width': "عرض الحد عند التمرير (px)",
+  'dp.fk.breakpoints': "اللوحي حتى عرض {tablet} px، والجوال حتى {mobile} px.",
 }
 
 export default ar

@@ -4521,6 +4521,18 @@ const nl: UiDictionary = {
   'dp.fk.hover_image': "Afbeelding bij hover",
   'dp.fk.divider_height_device': "Hoogte op dit apparaat (px)",
   'dp.fk.divider_off_device': "Verberg op dit apparaat",
+  'dp.fk.border_width': "Randdikte",
+  'dp.fk.radius_unit': "Eenheid hoekradius",
+  'dp.fk.tab_normal': "Normaal",
+  'dp.fk.tab_hover': "Hover",
+  'dp.fk.typography_effects': "Tekstschaduw en omlijning",
+  'dp.fk.edit': "Bewerken",
+  'dp.fk.hover_text_colour': "Tekstkleur bij hover",
+  'dp.fk.offset_unit': "Eenheid verschuiving",
+  'dp.fk.transform_curve': "Transformatiecurve",
+  'dp.fk.curve_ease': "Ease (standaard)",
+  'dp.fk.hover_border_width': "Randdikte bij hover (px)",
+  'dp.fk.breakpoints': "Tablet geldt tot {tablet} px breed, mobiel tot {mobile} px.",
 }
 
 export default nl

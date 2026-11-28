@@ -4521,6 +4521,18 @@ const es: UiDictionary = {
   'dp.fk.hover_image': "Imagen al pasar el cursor",
   'dp.fk.divider_height_device': "Altura en este dispositivo (px)",
   'dp.fk.divider_off_device': "Ocultar en este dispositivo",
+  'dp.fk.border_width': "Ancho del borde",
+  'dp.fk.radius_unit': "Unidad del radio de esquina",
+  'dp.fk.tab_normal': "Normal",
+  'dp.fk.tab_hover': "Al pasar el cursor",
+  'dp.fk.typography_effects': "Sombra y trazo del texto",
+  'dp.fk.edit': "Editar",
+  'dp.fk.hover_text_colour': "Color del texto al pasar el cursor",
+  'dp.fk.offset_unit': "Unidad del desplazamiento",
+  'dp.fk.transform_curve': "Curva de la transformación",
+  'dp.fk.curve_ease': "Ease (predeterminado)",
+  'dp.fk.hover_border_width': "Ancho del borde al pasar el cursor (px)",
+  'dp.fk.breakpoints': "Tablet se aplica hasta {tablet} px de ancho, móvil hasta {mobile} px.",
 }
 
 export default es

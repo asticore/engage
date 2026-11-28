@@ -1,6 +1,7 @@
 'use client'
 
 import { EffectsPicker } from './EffectsPicker'
+import { DEFAULT_BREAKPOINTS } from '@/lib/sectionLayout'
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
 import type { UiStringKey } from '@/features/uiStrings'
 import React, { createContext, useContext, useMemo, useState } from 'react'
@@ -15,7 +16,6 @@ import {
   KEN_BURNS_OPTIONS,
   POINTER_FX_OPTIONS,
   DIVIDER_ANIM_OPTIONS,
-  DIVIDER_OPTIONS,
   HOVER_OPTIONS,
   BLOB_SPEED_OPTIONS,
   MASK_SHAPE_OPTIONS,
@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover, HoverTextShadowRows, ScrollEffectsRows, DeviceOffRow, DividerShapeGrid, DividerDeviceRows } from './fieldKit'
+import { LengthField, UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, HoverTextShadowRows, ScrollEffectsRows, DeviceOffRow, DividerShapeGrid, DividerDeviceRows, NormalHoverTabs, TypographyEffectsPopover } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -142,6 +142,7 @@ export const DesignPanel: React.FC<{
           </button>
         )}
       </div>
+      <p className="ve-row__help">{t('dp.fk.breakpoints', { tablet: DEFAULT_BREAKPOINTS.tablet, mobile: DEFAULT_BREAKPOINTS.mobile })}</p>
       <Acc g="background" title={t('dp.section.background')} defaultOpen>
         <SelectRow
           label={t('dp.field.type')}
@@ -338,7 +339,11 @@ export const DesignPanel: React.FC<{
       </Acc>
 
       <Acc g="border" title={t('dp.section.border')}>
-        <RespNumber ctl={resp} k="borderWidth" label={t('dp.field.border_width_px')} min={0} max={50} />
+        <NormalHoverTabs
+          hoverSet={['hoverBorderColor', 'hoverBorderRadius', 'hoverBorderWidth', 'hoverBoxShadow'].some((k) => (value as Record<string, unknown>)[k] !== undefined)}
+          normal={
+            <>
+        <LengthField ctl={resp} k="borderWidth" unitKey="borderWidthUnit" label={t('dp.fk.border_width')} />
         {Boolean(resp.effective('borderWidth')) && (
           <>
             <SelectRow
@@ -365,6 +370,7 @@ export const DesignPanel: React.FC<{
           onReset={() => set('borderRadius', undefined)}
           min={0}
         />
+        <div className="ve-row"><UnitSelect ctl={resp} unitKey="radiusUnit" label={t('dp.fk.radius_unit')} defaultLabel="px" units={['%', 'em', 'rem', 'vw', 'vh']} /></div>
         <RadiusCorners ctl={resp} linked={value.radiusLinked === true} onLinked={(b) => set('radiusLinked', b ? true : undefined)} />
         <SelectRow
           label={t('dp.field.shadow')}
@@ -376,6 +382,24 @@ export const DesignPanel: React.FC<{
         />
         <BorderSidesPopover value={value} patch={(p) => onChange({ ...value, ...p } as BlockStyle)} />
         <BoxShadowPopover value={value} patch={(p) => onChange({ ...value, ...p } as BlockStyle)} />
+            </>
+          }
+          hover={
+            <>
+              <ColorRow label={t('dp.field.border_colour')} value={value.hoverBorderColor} onChange={(v) => set('hoverBorderColor', v)} />
+              <NumberRow label={t('dp.fk.hover_border_width')} value={value.hoverBorderWidth} min={0} max={50} onChange={(v) => set('hoverBorderWidth', v)} onReset={() => set('hoverBorderWidth', undefined)} />
+              <NumberRow label={t('dp.lit.corner_radius')} value={value.hoverBorderRadius} min={0} max={200} onChange={(v) => set('hoverBorderRadius', v)} onReset={() => set('hoverBorderRadius', undefined)} />
+              <SelectRow
+                label={t('dp.field.shadow')}
+                value={value.hoverBoxShadow || ''}
+                options={[{ label: t('dp.lit.same_as_normal'), value: '' }, ...BOX_SHADOW_OPTIONS]}
+                applied={value.hoverBoxShadow !== undefined}
+                onReset={() => set('hoverBoxShadow', undefined)}
+                onChange={(v) => set('hoverBoxShadow', (v || undefined) as BlockStyle['hoverBoxShadow'])}
+              />
+            </>
+          }
+        />
       </Acc>
 
       <Acc g="layout" title={t('dp.section.layout')}>
@@ -1678,7 +1702,7 @@ const TypographyControls: React.FC<{ value: BlockStyle; onChange: (next: BlockSt
         onReset={() => patch({ textShadow: undefined })}
         onChange={(v) => patch({ textShadow: v === 'none' ? undefined : v })}
       />
-      <TextShadowStrokePopover value={value} patch={patch} />
+      <TypographyEffectsPopover value={value} patch={patch} />
       <SelectRow
         label={t('dp.field.text_effect')}
         help={t('dp.lit.applies_to_the_text_inside_this_block')}
@@ -2127,7 +2151,7 @@ const FILTER_ROWS: { k: keyof BlockStyle; labelKey: UiStringKey; unit: string; m
 const ADVANCED_KEYS: (keyof BlockStyle)[] = [
   ...TRANSFORM_ROWS.map((r) => tfKey('tf', r.suffix)),
   ...TRANSFORM_ROWS.map((r) => tfKey('tfh', r.suffix)),
-  'tfFlipX', 'tfFlipY', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
+  'tfFlipX', 'tfFlipY', 'tfUnit', 'tfEase', 'tfDuration', 'position', 'posUnit', 'posTop', 'posRight', 'posBottom', 'posLeft', 'zIndex',
   'opacity', 'blendMode', ...FILTER_ROWS.map((r) => r.k), 'maskShape', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'blobMorphSpeed', 'cssClasses', 'customCss', 'customAttrs',
 ]
 
@@ -2148,6 +2172,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
             {rows.map((r) => (
               <TypoRange key={r.suffix} ctl={ctl} k={tfKey('tf', r.suffix) as RespKey} label={r.unit ? `${t(r.labelKey)} (${r.unit})` : t(r.labelKey)} def={r.def} min={r.min} max={r.max} step={1} />
             ))}
+            {g.id === 'offset' && <div className="ve-row"><UnitSelect ctl={ctl} unitKey={'tfUnit' as RespKey} label={t('dp.fk.offset_unit')} defaultLabel="px" units={['%', 'em', 'rem', 'vw', 'vh']} /></div>}
             {g.id === 'scale' && <FlipRows ctl={ctl} />}
             <p className="ve-row__label">{t('dp.state.hover')}</p>
             {rows.map((r) => (
@@ -2156,6 +2181,14 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
           </PopoverGroup>
         )
       })}
+      <SelectRow
+        label={t('dp.fk.transform_curve')}
+        value={value.tfEase ?? ''}
+        options={[{ label: t('dp.fk.curve_ease'), value: '' }, ...REVEAL_EASING_OPTIONS.map((o) => ({ label: o.label, value: o.value }))]}
+        applied={value.tfEase !== undefined}
+        onReset={() => set('tfEase', undefined)}
+        onChange={(v) => set('tfEase', (v || undefined) as BlockStyle['tfEase'])}
+      />
       <FxRange k="tfDuration" label={t('dp.field.transition')} unit="ms" value={value} onChange={onChange} def={250} min={0} max={2000} step={10} help={t('dp.lit.how_long_transform_changes_take')} />
 
       <p className="ve-row__label">{t('dp.field.position')}</p>

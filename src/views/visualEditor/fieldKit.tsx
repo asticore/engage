@@ -393,3 +393,85 @@ export const DividerDeviceRows: React.FC<{ value: BlockStyle; onChange: (next: B
     </>
   )
 }
+
+/** Normal | Hover tabs for one group of controls. Arrow keys move between the tabs; every saved value stays where it was. */
+export const NormalHoverTabs: React.FC<{ normal: React.ReactNode; hover: React.ReactNode; hoverSet?: boolean }> = ({ normal, hover, hoverSet }) => {
+  const t = useAdminT()
+  const [tab, setTab] = useState<'normal' | 'hover'>('normal')
+  const id = useId()
+  const tabs = [
+    { v: 'normal' as const, label: t('dp.fk.tab_normal') },
+    { v: 'hover' as const, label: `${t('dp.fk.tab_hover')}${hoverSet ? ' \u2022' : ''}` },
+  ]
+  return (
+    <div className="ve-nh">
+      <div
+        role="tablist"
+        aria-label={t('dp.state.label')}
+        style={{ display: 'flex', gap: 4, marginBottom: 8 }}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            e.preventDefault()
+            setTab(tab === 'normal' ? 'hover' : 'normal')
+          }
+        }}
+      >
+        {tabs.map((x) => (
+          <button
+            key={x.v}
+            type="button"
+            role="tab"
+            id={`${id}-${x.v}`}
+            aria-selected={tab === x.v}
+            aria-controls={`${id}-panel`}
+            tabIndex={tab === x.v ? 0 : -1}
+            className={`ve-btn${tab === x.v ? ' ve-btn--active' : ''}`}
+            onClick={() => setTab(x.v)}
+          >
+            {x.label}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-${tab}`}>
+        {tab === 'normal' ? normal : hover}
+      </div>
+    </div>
+  )
+}
+
+/** Typography effects as one popover with Normal | Hover: text shadow and stroke, and on hover the colour, shadow and stroke. */
+export const TypographyEffectsPopover: React.FC<{ value: BlockStyle; patch: Patch }> = ({ value, patch }) => {
+  const t = useAdminT()
+  const num = (label: string, k: keyof BlockStyle, min: number, max: number) => (
+    <NumberRow key={String(k)} label={label} value={typeof value[k] === 'number' ? (value[k] as number) : undefined} min={min} max={max} onChange={(v) => patch({ [k]: v } as Partial<BlockStyle>)} />
+  )
+  const hoverSet = ['hoverTextColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverTextStrokeWidth', 'hoverTextStrokeColor'].some((k) => (value as Record<string, unknown>)[k] !== undefined)
+  const normalSet = ['textShadowX', 'textShadowY', 'textShadowBlur', 'textShadowColor', 'textStrokeWidth', 'textStrokeColor'].some((k) => (value as Record<string, unknown>)[k] !== undefined)
+  return (
+    <Row label={t('dp.fk.typography_effects')}>
+      <PopoverGroup label={t('dp.fk.edit')} summary={normalSet || hoverSet ? '(set)' : undefined}>
+        <NormalHoverTabs
+          hoverSet={hoverSet}
+          normal={
+            <>
+              {num('Shadow x (px)', 'textShadowX', -100, 100)}
+              {num('Shadow y (px)', 'textShadowY', -100, 100)}
+              {num('Shadow blur (px)', 'textShadowBlur', 0, 200)}
+              <ColorRow label="Shadow colour" value={value.textShadowColor} onChange={(v) => patch({ textShadowColor: v })} />
+              {num('Stroke width (px)', 'textStrokeWidth', 0, 20)}
+              <ColorRow label="Stroke colour" value={value.textStrokeColor} onChange={(v) => patch({ textStrokeColor: v })} />
+            </>
+          }
+          hover={
+            <>
+              <ColorRow label={t('dp.fk.hover_text_colour')} value={value.hoverTextColor} onChange={(v) => patch({ hoverTextColor: v })} />
+              <HoverTextShadowRows value={value} patch={patch} />
+              {num('Stroke width (px)', 'hoverTextStrokeWidth', 0, 20)}
+              <ColorRow label="Stroke colour" value={value.hoverTextStrokeColor} onChange={(v) => patch({ hoverTextStrokeColor: v })} />
+            </>
+          }
+        />
+      </PopoverGroup>
+    </Row>
+  )
+}
