@@ -28,17 +28,35 @@ You need two free accounts and about 10 minutes. No command line is needed.
 
 1. Sign in to Cloudflare if asked.
 2. Click **Connect to GitHub** and authorise Cloudflare. On the authorise screen, check that the **account or organisation shown is the one you want to own the site**, and switch it if not.
-3. Fill in the form, then click **Deploy**. Leave everything as it is, with one exception: **tick "Create private Git repository"**, so your site's repository stays private. Leave the other options alone.
+3. Fill in the form, then click **Deploy**. Leave everything as it is, with one exception: **make sure "Create private Git repository" is ticked** (Cloudflare decides the starting state of this box and a Deploy button cannot change it, so check it every time), so your site's repository stays private. Leave the other options alone.
 
 Cloudflare creates the repository on GitHub, the database and the storage bucket for you. The site's two secret keys (`ENGAGE_SECRET` and `INTERNAL_ROUTE_KEY`) are generated automatically on the first build, so there is nothing to type or keep. The first build takes a couple of minutes.
 
 Optional settings you can leave blank: `SITE_URL` (your site address; set it once you have a domain, see step 6), `STRIPE_*` (only for the Shop), and `UPDATE_REPO`, `UPDATE_GITHUB_TOKEN`, `ENGAGE_SOURCE_TOKEN` (see step 7).
 
-**Step 5. Open your site.** When the deploy finishes, open the Worker's address. The first visit sets up the database and starter content by itself (this can take a few seconds). Go to `/admin` and create the first admin account.
+**Step 5. Turn on your site address and open it.** Cloudflare gives every Worker a free address of the form `your-worker-name.your-account.workers.dev`. If it is not live yet:
 
-**Step 6. Connect your domain.** In Cloudflare: **Workers & Pages**, your site, **Settings**, **Domains & Routes**, **Add**, **Custom domain** (the domain must be on your Cloudflare account). Then change `SITE_URL` to the new address (Settings, Variables and Secrets).
+1. In Cloudflare open **Workers & Pages** and click your site.
+2. Open **Settings**, then **Domains & Routes**.
+3. Next to **workers.dev**, click **Enable** (if it already shows an address, it is on). Copy the address and open it.
+
+The first visit sets up the database and starter content by itself (this can take a few seconds). Go to `/admin` and create the first admin account. See [Keys and admin login](#keys-and-admin-login).
+
+**Step 6. Use your own domain name (optional).** Your domain must be added to your Cloudflare account first (**Domains**, **Onboard a domain**, then change the nameservers at your registrar to the two Cloudflare gives you).
+
+1. In Cloudflare open **Workers & Pages**, click your site, then **Settings**, **Domains & Routes**.
+2. Click **Add**, then **Custom domain**.
+3. Type the domain, for example `www.example.com` or `example.com`, and click **Add domain**. Cloudflare creates the DNS record and the certificate by itself; it is usually live within a few minutes.
+4. Open **Settings**, **Variables and Secrets** and set `SITE_URL` to the new address, for example `https://www.example.com`, then save. This fixes the sitemap, `robots.txt` and the canonical links.
+5. Optional: once the custom domain works, you can turn the workers.dev address off in the same **Domains & Routes** list.
 
 **Step 7. Optional: one-click updates.** To update from the admin, set `UPDATE_REPO` (your site's repository, `owner/name`) and `UPDATE_GITHUB_TOKEN` (a GitHub token limited to that repository with Contents read and write). Without them, update by retrying the build in Cloudflare.
+
+#### Keys and admin login
+
+- **There is no default admin username or password.** The first person to open `/admin` on a new site creates the first admin account (email and a password of their choice). Do that straight away after the deploy. Later admins are added in the admin under Users.
+- **`ENGAGE_SECRET`** signs sessions and encrypts secret settings. **`INTERNAL_ROUTE_KEY`** guards the internal maintenance routes. Both are generated for you on the first build and stored as Worker secrets, so you never type them. Cloudflare never shows a secret again after it is saved; to use your own value, set it under **Settings**, **Variables and Secrets**. Do not change `ENGAGE_SECRET` on a live site: everyone is signed out and encrypted settings stop reading.
+- **Optional keys:** `STRIPE_*` (Shop only), `UPDATE_REPO` and `UPDATE_GITHUB_TOKEN` (one-click updates), `ENGAGE_SOURCE_TOKEN` (only if the source repository is private).
 
 Something failed? The most common causes: R2 not activated (step 2), the wrong GitHub account chosen on the authorise screen (step 4).
 
