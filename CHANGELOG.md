@@ -2,6 +2,11 @@
 
 Release notes for Engage. The update popup's Changelog link opens the matching GitHub release; keep the text of each release here too, newest first. Tag a release `vX.Y.Z` with the same number as `version` in `package.json`.
 
+## 1.5.3
+
+- **First login order fixed:** the start user was bounced forever between the profile screen and the two-step setup screen. Now the order is: change the start email and password, then set up two-step sign-in, then the setup questions. Each target screen is exempt from the other guard, so they cannot loop.
+- **Super admin notice:** the first profile screen says this account is the super admin and what to do next. The admin tour waits until the start login is changed. New text is translated in every language.
+
 ## 1.5.2
 
 - **First-run seed finishes:** a fresh install whose first request was cut off by the Worker time or CPU limit after creating the admin but before the Home page left the site with no pages and no retry. The seed now also re-runs when the site has no pages.

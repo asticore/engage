@@ -14,6 +14,7 @@ import { isCustomerRoles } from '@/features/impersonation/policy'
 import { getSecuritySettings } from '@/features/security/settings'
 import type { DocumentPanelInfo } from './DocumentPanel'
 import { EditTabs } from './EditTabs'
+import { isDefaultAdminEmail } from '@/features/security/defaultAdmin'
 import { getAdminUi } from '@/admin/i18n/serverUi'
 import { bulkPermissions, isBulkCollection } from '@/features/editScreens/authors'
 import { actionRefusal } from '@/features/editScreens/bulk'
@@ -261,6 +262,10 @@ export async function EditView({ collectionSlug, id }: { collectionSlug: string;
     />
   )
 
+  const currentUser = context.user as { id?: unknown; email?: unknown } | null
+  const superAdminNotice =
+    collectionSlug === 'users' && id !== undefined && Number(id) === Number(currentUser?.id) && isDefaultAdminEmail(currentUser?.email)
+
   return (
     <div className="collection-edit">
       <nav aria-label={ui.t('aria.breadcrumb')} className="doc-breadcrumb" style={{ paddingLeft: 'calc(var(--base) * 2.2)' }}>
@@ -271,6 +276,13 @@ export async function EditView({ collectionSlug, id }: { collectionSlug: string;
         <span>{id === undefined ? ui.t('edit.create') : docTitle || `#${id}`}</span>
       </nav>
       <h1 className="doc-title">{id === undefined ? ui.t('edit.createTitle', { label }) : docTitle || ui.t('edit.editTitle', { label })}</h1>
+      {superAdminNotice ? (
+        <div role="status" className="eg-superadmin-notice" style={{ margin: '0 calc(var(--base) * 2.2) 16px', padding: '12px 16px', border: '1px solid currentColor', borderRadius: 6 }}>
+          <strong>{ui.t('firstLogin.superAdminTitle')}</strong>
+          <p style={{ margin: '6px 0 0' }}>{ui.t('firstLogin.superAdminText')}</p>
+          <p style={{ margin: '6px 0 0' }}>{ui.t('firstLogin.superAdminNext')}</p>
+        </div>
+      ) : null}
       {signInAs ? <SignInAsCustomerButton email={signInAs.email} maxMinutes={signInAs.maxMinutes} /> : null}
       {resultsTab ? (
         <EditTabs

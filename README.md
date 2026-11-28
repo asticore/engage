@@ -55,7 +55,7 @@ Optional settings you can leave blank: `SITE_URL` (your site address; set it onc
 
 <!-- ![workers.dev](docs/images/step6-workersdev.png) -->
 
-The first visit sets up the database by itself (this can take a few seconds). The new site is blank. Go to `/admin` and sign in with the start login **`example@example.com`** / **`admin`**. You are sent straight to your profile: **change the email and password right away** (anyone who finds the site before you can use the start login). See [Keys and admin login](#keys-and-admin-login). Then answer the setup questions. The last question offers example pages from the Engage templates library; the one you pick is installed as your Home page, or keep the site blank.
+The first visit sets up the database by itself (this can take a few seconds). The new site is blank. Go to `/admin` and sign in with the start login **`example@example.com`** / **`admin`**. You are sent straight to your profile: **change the email and password right away** (this is the super admin account and anyone who finds the site before you can use the start login). Then set up two-step sign-in. Only after those two steps do the setup questions appear. See [Keys and admin login](#keys-and-admin-login). The last question offers example pages from the Engage templates library; the one you pick is installed as your Home page, or keep the site blank.
 
 **Step 7. Use your own domain name (optional).** Your domain must be added to your Cloudflare account first (**Domains**, **Onboard a domain**, then change the nameservers at your registrar to the two Cloudflare gives you).
 
@@ -69,7 +69,7 @@ The first visit sets up the database by itself (this can take a few seconds). Th
 
 #### Keys and admin login
 
-- **Start login:** a new site has one admin, email `example@example.com` and password `admin`. Open `https://<your-site>/admin` and sign in. The admin keeps sending you to your profile until you change the email, so do that first: set your own email and a password of 12 or more characters, and save. Keep them in a password manager. Nothing is emailed and nothing is stored in Cloudflare or GitHub for you.
+- **Start login:** a new site has one admin, email `example@example.com` and password `admin`. Open `https://<your-site>/admin` and sign in. The admin keeps sending you to your profile until you change the email, so do that first: set your own email and a password of 12 or more characters, and save. This account is the super admin and controls the whole site. The order is always: new email and password, then two-step sign-in, then the setup questions. Keep them in a password manager. Nothing is emailed and nothing is stored in Cloudflare or GitHub for you.
 
   <!-- ![First login](docs/images/step7-first-login.png) -->
 - **Lost the password or forgot which email you used?** Use the **reset script**. It is a small file called `scripts/reset-admin.mjs` inside **your site's GitHub repository** (the one the Deploy button created). You run it on your own computer, in a terminal opened in a copy of that repository:
