@@ -41,6 +41,7 @@ import { StagingBanner } from '@/admin/components/StagingBanner'
 import { AdminUiProvider } from './i18n/AdminUiProvider'
 import { AdminRouteProvider } from './adminRoute/AdminRouteProvider'
 import { getAdminRoot } from '@/features/security/settings'
+import { isDefaultAdminEmail } from '@/features/security/defaultAdmin'
 import { getAdminUi } from './i18n/serverUi'
 
 export async function RootLayout({ children }: { children: ReactNode; config?: unknown; importMap?: unknown; serverFunction?: unknown }) {
@@ -50,7 +51,9 @@ export async function RootLayout({ children }: { children: ReactNode; config?: u
   const ui = await getAdminUi()
   const adminRoot = await getAdminRoot()
   // Walkthrough: starts by itself only for a user with no saved tour preference (once per account).
-  const tourAutoStart = hasAdminAccess ? await resolveTourAutoStart(context.engine, context.user) : false
+  // It waits while the start login is still unchanged: security steps come first.
+  const startLoginPending = isDefaultAdminEmail((context.user as { email?: unknown } | null)?.email)
+  const tourAutoStart = hasAdminAccess && !startLoginPending ? await resolveTourAutoStart(context.engine, context.user) : false
 
   // The site name for the mobile top bar and the sidebar's brand row.
   const siteName = hasAdminAccess

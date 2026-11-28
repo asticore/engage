@@ -16,6 +16,7 @@ import { VersionsView } from './VersionsView'
 import { assertTwoFactorSatisfied, graceNoticeFor, twoFactorStatus } from '@/features/security/twoFactor'
 import { passwordChangeIsDue } from '@/features/security/passwordCheck'
 import { isDefaultAdminEmail } from '@/features/security/defaultAdmin'
+import { firstLoginRedirect } from '@/features/security/firstLoginGate'
 import { getSecuritySettings } from '@/features/security/settings'
 
 const TWO_FACTOR_VIEW_PATH = '/security/two-factor'
@@ -177,24 +178,30 @@ async function renderRootPage({ params, searchParams }: Args) {
 
   const pathname = `/${segments.join('/')}`
 
-  // Only when a Security setting asks for two-step AND this admin has not set
-  // it up: send them to the setup screen. Never a lockout - that screen (and
-  // signing out) stay reachable - and a no-op while the setting is off.
-  if (pathname !== TWO_FACTOR_VIEW_PATH && !(context.user as { twoFactorEnabled?: boolean } | null)?.twoFactorEnabled) {
+  // First-login order, decided in one place so the two guards cannot ping-pong:
+  // 1) start login / old password -> own profile, 2) required two-step -> setup screen, 3) the dashboard.
+  // Each target screen is exempt from the other guard. Nothing locks out: sign-out stays reachable.
+  const adminUserId = (context.user as { id?: number | string } | null)?.id
+  const profileChangeDue =
+    adminUserId !== undefined &&
+    (isDefaultAdminEmail((context.user as { email?: unknown } | null)?.email) || (await passwordChangeIsDue(context.engine as never, adminUserId).catch((): false => false)))
+  let twoFactorMustEnrol = false
+  let twoFactorEnrolPath: string | undefined
+  if (!(context.user as { twoFactorEnabled?: boolean } | null)?.twoFactorEnabled) {
     const settings = await getSecuritySettings(context.engine as never).catch((): null => null)
     const status = settings ? assertTwoFactorSatisfied(context.user as never, settings) : null
-    if (status?.mustEnrol && status.enrolPath) redirect(status.enrolPath)
+    twoFactorMustEnrol = Boolean(status?.mustEnrol && status.enrolPath)
+    twoFactorEnrolPath = status?.enrolPath
   }
-
-  // Only when a maximum password age is set and this admin's password is older
-  // than it: every other admin page redirects to their own user screen, where the
-  // password is changed. Nothing is locked out, and the change clears the redirect.
-  // A no-op while the setting is off (the default).
-  const adminUserId = (context.user as { id?: number | string } | null)?.id
-  if (adminUserId !== undefined && !pathname.startsWith(`${collectionRoute('users')}/${adminUserId}`)) {
-    const due = isDefaultAdminEmail((context.user as { email?: unknown } | null)?.email) || (await passwordChangeIsDue(context.engine as never, adminUserId).catch((): false => false))
-    if (due) redirect(`${adminCollectionPath('users')}/${adminUserId}`)
-  }
+  const target = firstLoginRedirect({
+    pathname,
+    profilePath: `${collectionRoute('users')}/${adminUserId}`,
+    profileChangeDue,
+    twoFactorMustEnrol,
+    twoFactorPath: TWO_FACTOR_VIEW_PATH,
+  })
+  if (target === 'profile') redirect(`${adminCollectionPath('users')}/${adminUserId}`)
+  if (target === 'twoFactor' && twoFactorEnrolPath) redirect(twoFactorEnrolPath)
 
   const customView = findCustomView(pathname)
   if (customView) {
