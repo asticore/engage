@@ -2,6 +2,12 @@
 
 Release notes for Engage. The update popup's Changelog link opens the matching GitHub release; keep the text of each release here too, newest first. Tag a release `vX.Y.Z` with the same number as `version` in `package.json`.
 
+## 1.5.1
+
+- **First-run seed retries:** the start admin login and starter Home page are now seeded whenever the site has no users, even if an earlier first request migrated the database and then failed or timed out before seeding. The admin is created first so sign-in works even if the starter content fails, and seed errors go to the Error log.
+- **Neutral empty Home:** the built-in fallback Home no longer shows demo copy.
+- **README:** the installer notes now say the Workers Paid plan is required.
+
 ## 1.5.0
 
 - **Start login:** a new install has one admin, `example@example.com` / `admin`; the admin sends that account to its profile until the email is changed. `reset-admin.mjs create` adds an admin to an existing site.

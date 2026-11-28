@@ -16,7 +16,7 @@ pulling code.
 - Moving the Engage repository: change `source` here (or set `ENGAGE_SOURCE`).
 
 **Where updates come from.** Only from GitHub *releases* of the source repository (`releases/latest/download/...`), never from the `main` branch. Merging to `main` changes nothing for customers; tagging `vX.Y.Z` does. With `"version": "latest"`, a site picks up the newest release the next time its build runs (a retry in Cloudflare, or the admin's Update button); a pinned version stays put.
-- Free Cloudflare account: works. The Worker is under the 64 MiB limit, D1 and R2 free tiers are enough (R2 needs a one-time plan activation), and no paid-only binding is used.
+- Cloudflare account: needs the $5 Workers Paid plan. The free Workers plan stops a request after 10 ms of processor time, which an Engage page can exceed. The Worker is under the 64 MiB limit, D1 and R2 free tiers are enough (R2 needs a one-time plan activation), and no paid-only binding is used.
 - Lost admin login: `node scripts/reset-admin.mjs list` and `node scripts/reset-admin.mjs reset you@example.com` (needs `npx wrangler login`).
 
 To work on Engage itself, clone the source repository instead; it deploys the same way it always has.

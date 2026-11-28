@@ -115,12 +115,7 @@ async function DefaultHomepage() {
     <>
       <section className="hero">
         <div className="hero__inner">
-          <p className="hero__eyebrow">Brisbane, Australia</p>
           <h1>{siteName}</h1>
-          <p className="hero__tagline">
-            A curated boutique for the modern romantic - considered pieces, small-batch goods, and
-            evenings worth dressing up for.
-          </p>
           <div className="hero__actions">
             <Link href={shopHref} className="btn btn--primary">
               Shop the collection
@@ -178,11 +173,7 @@ async function DefaultHomepage() {
       <section className="home-section about-section" id="about">
         <div className="page-shell about-section__inner">
           <h2>Our story</h2>
-          <p>
-            {siteName} began as a love letter to considered style - Art Deco glamour reimagined
-            for everyday wear. Every piece in the shop is chosen for the way it makes you feel, and
-            every event on our calendar is an excuse to wear it.
-          </p>
+          <p>Tell your story here: edit this page in the admin panel.</p>
         </div>
       </section>
     </>
