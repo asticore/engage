@@ -71,6 +71,9 @@
     .be-fx--parbg{will-change:transform;animation:be-par-bg linear both;animation-timeline:view();animation-range:cover}
     .be-fx-parallax-float-up>.be-block__content{animation:be-par-up linear both;animation-timeline:view();animation-range:cover}
     .be-fx-parallax-float-down>.be-block__content{animation:be-par-down linear both;animation-timeline:view();animation-range:cover}
+    @keyframes be-sc{from{opacity:var(--be-sc-o,1);filter:blur(var(--be-sc-b,0px));transform:translate(var(--be-sc-x,0px),var(--be-sc-y,0px)) rotate(var(--be-sc-r,0deg)) scale(var(--be-sc-z,1))}}
+    .be-fx-scroll>.be-block__content{animation:be-sc linear both;animation-timeline:view();animation-range:cover var(--be-sc-s,0%) cover var(--be-sc-e,100%)}
+    .ve-node .be-fx-scroll>.be-block__content{animation:none}
   }
 }
 

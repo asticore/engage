@@ -4502,6 +4502,17 @@ const zhHans: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "文字阴影模糊 (px)",
   'dp.fk.hover_text_shadow_colour': "文字阴影颜色",
   'dp.fk.device_image': "此设备的图片",
+  'dp.fk.scroll_title': "滚动效果",
+  'dp.fk.scroll_y': "起始垂直偏移 (px)",
+  'dp.fk.scroll_x': "起始水平偏移 (px)",
+  'dp.fk.scroll_rotate': "起始旋转 (deg)",
+  'dp.fk.scroll_scale': "起始缩放 (%)",
+  'dp.fk.scroll_opacity': "起始不透明度 (%)",
+  'dp.fk.scroll_blur': "起始模糊 (px)",
+  'dp.fk.scroll_start': "效果开始于 (% 行程)",
+  'dp.fk.scroll_end': "效果结束于 (% 行程)",
+  'dp.fk.scroll_off_device': "在此设备上关闭滚动效果",
+  'dp.fk.reveal_off_device': "在此设备上关闭入场动画",
 }
 
 export default zhHans

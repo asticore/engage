@@ -4503,6 +4503,17 @@ const hi: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "टेक्स्ट शैडो ब्लर (px)",
   'dp.fk.hover_text_shadow_colour': "टेक्स्ट शैडो रंग",
   'dp.fk.device_image': "इस डिवाइस के लिए छवि",
+  'dp.fk.scroll_title': "स्क्रॉल प्रभाव",
+  'dp.fk.scroll_y': "शुरू में ऊर्ध्वाधर ऑफ़सेट (px)",
+  'dp.fk.scroll_x': "शुरू में क्षैतिज ऑफ़सेट (px)",
+  'dp.fk.scroll_rotate': "शुरू में घुमाव (deg)",
+  'dp.fk.scroll_scale': "शुरू में स्केल (%)",
+  'dp.fk.scroll_opacity': "शुरू में अपारदर्शिता (%)",
+  'dp.fk.scroll_blur': "शुरू में ब्लर (px)",
+  'dp.fk.scroll_start': "प्रभाव यहाँ शुरू (% पास का)",
+  'dp.fk.scroll_end': "प्रभाव यहाँ समाप्त (% पास का)",
+  'dp.fk.scroll_off_device': "इस डिवाइस पर स्क्रॉल प्रभाव बंद",
+  'dp.fk.reveal_off_device': "इस डिवाइस पर प्रवेश एनिमेशन बंद",
 }
 
 export default hi

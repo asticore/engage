@@ -4504,6 +4504,17 @@ const de: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "Textschatten Unschärfe (px)",
   'dp.fk.hover_text_shadow_colour': "Textschattenfarbe",
   'dp.fk.device_image': "Bild für dieses Gerät",
+  'dp.fk.scroll_title': "Scroll-Effekte",
+  'dp.fk.scroll_y': "Vertikaler Versatz am Anfang (px)",
+  'dp.fk.scroll_x': "Horizontaler Versatz am Anfang (px)",
+  'dp.fk.scroll_rotate': "Drehung am Anfang (deg)",
+  'dp.fk.scroll_scale': "Skalierung am Anfang (%)",
+  'dp.fk.scroll_opacity': "Deckkraft am Anfang (%)",
+  'dp.fk.scroll_blur': "Unschärfe am Anfang (px)",
+  'dp.fk.scroll_start': "Effekt beginnt bei (% des Durchlaufs)",
+  'dp.fk.scroll_end': "Effekt endet bei (% des Durchlaufs)",
+  'dp.fk.scroll_off_device': "Scroll-Effekte auf diesem Gerät aus",
+  'dp.fk.reveal_off_device': "Eingangsanimation auf diesem Gerät aus",
 }
 
 export default de

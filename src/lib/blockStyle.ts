@@ -99,6 +99,8 @@ export const RESPONSIVE_KEYS = [
   'borderColor',
   'borderStyle',
   'bgImageUrl',
+  'scrollOff',
+  'revealOff',
   'bgColor',
   'fontStyle',
   'textDecoration',
@@ -484,6 +486,21 @@ export type BlockStyle = {
   maxHeight?: number
   maxHeightUnit?: LengthUnit
   /** Flip, per device: 1 mirrors the element, 0 switches an inherited flip off. */
+  /** Scrolling effects (31e): the block's content starts in this state and settles as it crosses the viewport. */
+  scrollY?: number
+  scrollX?: number
+  scrollRotate?: number
+  /** Start scale and start opacity in percent (100 = no change). */
+  scrollScale?: number
+  scrollOpacity?: number
+  scrollBlur?: number
+  /** Viewport range in percent of the pass (0 = just entering, 100 = just left). */
+  scrollStart?: number
+  scrollEnd?: number
+  /** 1 switches scrolling effects off on this device (per device, 0 switches an inherited off back on). */
+  scrollOff?: number
+  /** 1 switches the entrance animation off on this device. */
+  revealOff?: number
   tfFlipX?: number
   tfFlipY?: number
   /** Text stroke (31e): width in px and colour, separate from the outline effect. */
@@ -1029,6 +1046,8 @@ const NUM_FX: readonly (readonly [string, number, number])[] = [
   ['gridSize', 12, 200], ['gridLineWidth', 0.5, 6], ['auroraBlur', 0, 120], ['auroraSize', 0, 100],
   ['auroraSpeed', 4, 80], ['gradientAngle', 0, 360], ['gradientSpeed', 3, 60], ['grainOpacity', 0, 100],
   ['grainSize', 40, 400], ['revealDistance', 0, 200], ['revealDuration', 5, 100], ['revealDelay', 0, 60],
+  ['scrollY', -400, 400], ['scrollX', -400, 400], ['scrollRotate', -180, 180], ['scrollScale', 20, 200], ['scrollOpacity', 0, 100],
+  ['scrollBlur', 0, 40], ['scrollStart', 0, 100], ['scrollEnd', 0, 100], ['scrollOff', 0, 1], ['revealOff', 0, 1],
   ['hoverLift', 0, 40], ['hoverScale', 100, 120], ['glassOpacity', 0, 100], ['glassBorder', 0, 100],
   ['pointerFxStrength', 0, 100], ['kenBurnsDuration', 5, 60], ['borderFxWidth', 1, 8], ['borderFxSpeed', 2, 20],
   // Advanced tab
@@ -1336,7 +1355,7 @@ export function sanitizeDeviceOverride(raw: unknown): DeviceOverride | undefined
     const u = lengthUnit(r[key])
     if (u) out[key] = u
   }
-  for (const key of ['tfFlipX', 'tfFlipY'] as const) {
+  for (const key of ['tfFlipX', 'tfFlipY', 'scrollOff', 'revealOff'] as const) {
     const n = clampNum(r[key], 0, 1)
     if (n !== undefined) out[key] = Math.round(n)
   }
@@ -1844,6 +1863,19 @@ export function blockStyleCss(style: BlockStyle, scopeId: string, options: { edi
     const decls = deviceOverrideDecls(style, device)
     if (decls.length > 0) rules.push(`@media ${deviceQueries(device).cascade}{${sel}{${decls.join(';')}}}`)
   }
+  // Scrolling effects and the entrance animation can be off per device; mobile inherits tablet, tablet inherits desktop.
+  for (const [flag, off] of [['scrollOff', `${sel}>.be-block__content{animation:none !important}`], ['revealOff', `${sel}{animation:none !important}`]] as const) {
+    let on = isNum(style[flag]) && style[flag] === 1
+    const states = { desktop: on } as Record<string, boolean>
+    for (const device of ['tablet', 'mobile'] as const) {
+      const own = (device === 'tablet' ? style.tablet : style.mobile)?.[flag]
+      if (isNum(own)) on = own === 1
+      states[device] = on
+    }
+    for (const device of ['desktop', 'tablet', 'mobile'] as const) {
+      if (states[device]) rules.push(`@media ${deviceQueries(device).only}{${off}}`)
+    }
+  }
   for (const device of ['tablet', 'mobile'] as const) {
     if ((device === 'tablet' ? style.tablet : style.mobile)?.hide) {
       rules.push(`@media ${deviceQueries(device).only}{${sel}{${hidden}}}`)
@@ -2167,6 +2199,7 @@ export function blockFxClasses(style: BlockStyle): string {
   const c: string[] = []
   if (style.reveal && style.reveal !== 'none') c.push(`be-fx-reveal-${style.reveal}`)
   if (style.hover && style.hover !== 'none') c.push(`be-fx-hover-${style.hover}`)
+  if (hasScrollFx(style)) c.push('be-fx-scroll')
   if (style.glass) c.push('be-fx-glass')
   if (style.bgType === 'gradient' && style.bgGradientFlow) c.push('be-fx-gflow', `be-fx-gflow--${style.bgGradientFlow}`)
   if (style.parallax === 'background' && style.bgType === 'image' && isStr(style.bgImageUrl)) c.push('be-fx-parallax-bg')
@@ -2190,6 +2223,9 @@ export function blockFxClasses(style: BlockStyle): string {
   return c.join(' ')
 }
 
+/** True when any scrolling effect value is set. */
+export const hasScrollFx = (style: BlockStyle): boolean => [style.scrollY, style.scrollX, style.scrollRotate, style.scrollScale, style.scrollOpacity, style.scrollBlur].some(isNum)
+
 export const hasFxLayer = (style: BlockStyle): boolean => !!style.bgEffect && style.bgEffect !== 'none'
 
 /** CSS custom properties the effect classes read; only the ones that were set. */
@@ -2201,6 +2237,16 @@ export function blockFxVars(style: BlockStyle): Record<string, string> {
   if (style.parallax && style.parallax !== 'none') {
     v['--be-par'] = `${isNum(style.parallaxDistance) ? style.parallaxDistance : Math.round((isNum(style.parallaxStrength) ? style.parallaxStrength : 40) * 1.6)}px`
     if (style.parallax === 'background' && style.parallaxDirection === 'down') v['--be-pdir'] = '-1'
+  }
+  if (hasScrollFx(style)) {
+    if (isNum(style.scrollX)) v['--be-sc-x'] = `${style.scrollX}px`
+    if (isNum(style.scrollY)) v['--be-sc-y'] = `${style.scrollY}px`
+    if (isNum(style.scrollRotate)) v['--be-sc-r'] = `${style.scrollRotate}deg`
+    if (isNum(style.scrollScale)) v['--be-sc-z'] = String(style.scrollScale / 100)
+    if (isNum(style.scrollOpacity)) v['--be-sc-o'] = String(style.scrollOpacity / 100)
+    if (isNum(style.scrollBlur)) v['--be-sc-b'] = `${style.scrollBlur}px`
+    if (isNum(style.scrollStart)) v['--be-sc-s'] = `${style.scrollStart}%`
+    if (isNum(style.scrollEnd)) v['--be-sc-e'] = `${style.scrollEnd}%`
   }
   if (style.glass) {
     v['--be-glass'] = `${isNum(style.glassBlur) ? style.glassBlur : 12}px`

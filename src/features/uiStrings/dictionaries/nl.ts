@@ -4503,6 +4503,17 @@ const nl: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "Tekstschaduw vervaging (px)",
   'dp.fk.hover_text_shadow_colour': "Tekstschaduwkleur",
   'dp.fk.device_image': "Afbeelding voor dit apparaat",
+  'dp.fk.scroll_title': "Scrolleffecten",
+  'dp.fk.scroll_y': "Verticale verschuiving aan het begin (px)",
+  'dp.fk.scroll_x': "Horizontale verschuiving aan het begin (px)",
+  'dp.fk.scroll_rotate': "Rotatie aan het begin (deg)",
+  'dp.fk.scroll_scale': "Schaal aan het begin (%)",
+  'dp.fk.scroll_opacity': "Dekking aan het begin (%)",
+  'dp.fk.scroll_blur': "Vervaging aan het begin (px)",
+  'dp.fk.scroll_start': "Effect begint bij (% van de passage)",
+  'dp.fk.scroll_end': "Effect eindigt bij (% van de passage)",
+  'dp.fk.scroll_off_device': "Scrolleffecten uit op dit apparaat",
+  'dp.fk.reveal_off_device': "Ingangsanimatie uit op dit apparaat",
 }
 
 export default nl

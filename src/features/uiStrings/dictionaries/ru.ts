@@ -4503,6 +4503,17 @@ const ru: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "Размытие тени текста (px)",
   'dp.fk.hover_text_shadow_colour': "Цвет тени текста",
   'dp.fk.device_image': "Изображение для этого устройства",
+  'dp.fk.scroll_title': "Эффекты прокрутки",
+  'dp.fk.scroll_y': "Вертикальное смещение в начале (px)",
+  'dp.fk.scroll_x': "Горизонтальное смещение в начале (px)",
+  'dp.fk.scroll_rotate': "Поворот в начале (deg)",
+  'dp.fk.scroll_scale': "Масштаб в начале (%)",
+  'dp.fk.scroll_opacity': "Прозрачность в начале (%)",
+  'dp.fk.scroll_blur': "Размытие в начале (px)",
+  'dp.fk.scroll_start': "Эффект начинается на (% пути)",
+  'dp.fk.scroll_end': "Эффект заканчивается на (% пути)",
+  'dp.fk.scroll_off_device': "Эффекты прокрутки выключены на этом устройстве",
+  'dp.fk.reveal_off_device': "Анимация появления выключена на этом устройстве",
 }
 
 export default ru

@@ -61,7 +61,7 @@ import {
 } from './designHelpers'
 import './designPanel51.css'
 import { StylePresets } from './StylePresets'
-import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover, HoverTextShadowRows } from './fieldKit'
+import { UnitSelect, PopoverGroup, BgImagePlacement, MaskImageRows, BorderSidesPopover, BoxShadowPopover, FlipRows, SizeLimitRows, TextShadowStrokePopover, HoverTextShadowRows, ScrollEffectsRows, DeviceOffRow } from './fieldKit'
 import { useSettingLocks } from './settingLockContext'
 import { blockedKeys, groupFullyBlocked, guardChange, lockedSettings, resetToTheme } from '@/features/roles/settingLocks'
 import { Tooltip } from '@/components/admin/shared/Tooltip'
@@ -491,7 +491,7 @@ export const DesignPanel: React.FC<{
 
       {variant === 'block' && (
         <Acc g="effects" title={t('dp.section.effects')}>
-          <EffectsControls value={value} onChange={onChange} />
+          <EffectsControls value={value} onChange={onChange} device={device} />
         </Acc>
       )}
 
@@ -2257,7 +2257,7 @@ const AdvancedControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyl
   )
 }
 
-const EffectsControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void }> = ({ value, onChange }) => {
+const EffectsControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; device: EditDevice }> = ({ value, onChange, device }) => {
   const t = useAdminT()
   const { set, resetBtn } = makeFxEditing(value, onChange)
   const scroll = value.parallax === 'float-up' || value.parallax === 'float-down' ? value.parallax : 'none'
@@ -2288,6 +2288,11 @@ const EffectsControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle
       </div>
 
       <div className="ve-divider-group">
+        <ScrollEffectsRows value={value} onChange={onChange} device={device} />
+        {resetBtn(['scrollY', 'scrollX', 'scrollRotate', 'scrollScale', 'scrollOpacity', 'scrollBlur', 'scrollStart', 'scrollEnd', 'scrollOff'])}
+      </div>
+
+      <div className="ve-divider-group">
         <SelectRow
           label={t('dp.lit.entrance_animation')}
           value={value.reveal || 'none'}
@@ -2308,7 +2313,8 @@ const EffectsControls: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle
             />
           </>
         )}
-        {resetBtn(['reveal', 'revealDistance', 'revealDuration', 'revealDelay', 'revealEasing'])}
+        {value.reveal && value.reveal !== 'none' && <DeviceOffRow value={value} onChange={onChange} device={device} k="revealOff" label={t('dp.fk.reveal_off_device')} />}
+        {resetBtn(['reveal', 'revealDistance', 'revealDuration', 'revealDelay', 'revealEasing', 'revealOff'])}
       </div>
 
       <div className="ve-divider-group">

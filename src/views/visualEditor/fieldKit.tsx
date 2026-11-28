@@ -5,7 +5,7 @@ import React, { useEffect, useId, useRef, useState } from 'react'
 import { BG_IMAGE_POSITIONS, BG_IMAGE_REPEATS, BG_IMAGE_SIZES, type BlockStyle } from '@/lib/blockStyle'
 
 import { useAdminT } from '@/admin/i18n/AdminUiProvider'
-import { ColorRow, NumberRow, Row, SelectRow, UNIT_OPTIONS, type ResponsiveCtl } from './DesignPanel'
+import { ColorRow, NumberRow, Row, SelectRow, UNIT_OPTIONS, makeResponsive, type EditDevice, type ResponsiveCtl } from './DesignPanel'
 
 /**
  * Shared field kit (Task 12, 31h): the reusable pieces a design control is built from, so a new control gets
@@ -278,4 +278,54 @@ export const MaskImageRows: React.FC<{ value: BlockStyle; set: (k: keyof BlockSt
       )}
     </>
   )
+}
+
+/** A per-device on/off for an effect: "Off on this device" writes 1, switching it back on writes 0 where a parent device is off. */
+export const DeviceOffRow: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; device: EditDevice; k: 'scrollOff' | 'revealOff'; label: string }> = ({ value, onChange, device, k, label }) => {
+  const ctl = makeResponsive(value, onChange, device)
+  const key = k as Key
+  const off = (ctl.effective(key) ?? 0) === 1
+  return (
+    <label className="ve-row ve-row--check">
+      <input
+        type="checkbox"
+        checked={off}
+        onChange={(e) => {
+          if (e.target.checked) ctl.set(key, 1)
+          else if (ctl.device !== 'desktop' && ctl.inherited(key) === 1) ctl.set(key, 0)
+          else ctl.reset(key)
+        }}
+      />
+      <span className="ve-row__label">{label}</span>
+    </label>
+  )
+}
+
+/** Scrolling effects: vertical and horizontal travel, rotate, start scale, start opacity, blur, and the viewport range. */
+export const ScrollEffectsRows: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => void; device: EditDevice }> = ({ value, onChange, device }) => {
+  const t = useAdminT()
+  const row = (label: string, k: keyof BlockStyle, min: number, max: number) => (
+    <NumberRow key={String(k)} label={label} value={typeof value[k] === 'number' ? (value[k] as number) : undefined} min={min} max={max} onChange={(v) => onChange(withKey(value, k, v))} />
+  )
+  return (
+    <>
+      <p className="ve-row__label">{t('dp.fk.scroll_title')}</p>
+      {row(t('dp.fk.scroll_y'), 'scrollY', -400, 400)}
+      {row(t('dp.fk.scroll_x'), 'scrollX', -400, 400)}
+      {row(t('dp.fk.scroll_rotate'), 'scrollRotate', -180, 180)}
+      {row(t('dp.fk.scroll_scale'), 'scrollScale', 20, 200)}
+      {row(t('dp.fk.scroll_opacity'), 'scrollOpacity', 0, 100)}
+      {row(t('dp.fk.scroll_blur'), 'scrollBlur', 0, 40)}
+      {row(t('dp.fk.scroll_start'), 'scrollStart', 0, 100)}
+      {row(t('dp.fk.scroll_end'), 'scrollEnd', 0, 100)}
+      <DeviceOffRow value={value} onChange={onChange} device={device} k="scrollOff" label={t('dp.fk.scroll_off_device')} />
+    </>
+  )
+}
+
+function withKey(value: BlockStyle, k: keyof BlockStyle, v: number | undefined): BlockStyle {
+  const next = { ...value } as Record<string, unknown>
+  if (v === undefined) delete next[k]
+  else next[k] = v
+  return next as BlockStyle
 }

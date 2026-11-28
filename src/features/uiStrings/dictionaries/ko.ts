@@ -4503,6 +4503,17 @@ const ko: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "텍스트 그림자 흐림 (px)",
   'dp.fk.hover_text_shadow_colour': "텍스트 그림자 색상",
   'dp.fk.device_image': "이 기기용 이미지",
+  'dp.fk.scroll_title': "스크롤 효과",
+  'dp.fk.scroll_y': "시작 시 세로 오프셋 (px)",
+  'dp.fk.scroll_x': "시작 시 가로 오프셋 (px)",
+  'dp.fk.scroll_rotate': "시작 시 회전 (deg)",
+  'dp.fk.scroll_scale': "시작 시 크기 (%)",
+  'dp.fk.scroll_opacity': "시작 시 불투명도 (%)",
+  'dp.fk.scroll_blur': "시작 시 흐림 (px)",
+  'dp.fk.scroll_start': "효과 시작 (% 지점)",
+  'dp.fk.scroll_end': "효과 종료 (% 지점)",
+  'dp.fk.scroll_off_device': "이 기기에서 스크롤 효과 끄기",
+  'dp.fk.reveal_off_device': "이 기기에서 등장 애니메이션 끄기",
 }
 
 export default ko

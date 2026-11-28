@@ -4503,6 +4503,17 @@ const es: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "Desenfoque de sombra de texto (px)",
   'dp.fk.hover_text_shadow_colour': "Color de sombra de texto",
   'dp.fk.device_image': "Imagen para este dispositivo",
+  'dp.fk.scroll_title': "Efectos de desplazamiento",
+  'dp.fk.scroll_y': "Desplazamiento vertical al inicio (px)",
+  'dp.fk.scroll_x': "Desplazamiento horizontal al inicio (px)",
+  'dp.fk.scroll_rotate': "Rotación al inicio (deg)",
+  'dp.fk.scroll_scale': "Escala al inicio (%)",
+  'dp.fk.scroll_opacity': "Opacidad al inicio (%)",
+  'dp.fk.scroll_blur': "Desenfoque al inicio (px)",
+  'dp.fk.scroll_start': "El efecto empieza en (% del recorrido)",
+  'dp.fk.scroll_end': "El efecto termina en (% del recorrido)",
+  'dp.fk.scroll_off_device': "Efectos de desplazamiento desactivados en este dispositivo",
+  'dp.fk.reveal_off_device': "Animación de entrada desactivada en este dispositivo",
 }
 
 export default es

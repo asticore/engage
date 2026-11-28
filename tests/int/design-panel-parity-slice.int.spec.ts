@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { asBlockStyle, blockStyleCss, blockStyleToCss, deviceOverrideDecls, type BlockStyle } from '@/lib/blockStyle'
+import { asBlockStyle, blockFxClasses, blockFxVars, blockStyleCss, blockStyleToCss, deviceOverrideDecls, type BlockStyle } from '@/lib/blockStyle'
 
 describe('design panel parity slice (Task 12, 31e)', () => {
   it('three shadow layers join with commas in order', () => {
@@ -41,5 +41,39 @@ describe('per device background image (31e)', () => {
     const style = asBlockStyle({ bgType: 'image', bgImageUrl: '/media/a.jpg', tablet: { bgImageUrl: '/media/b.jpg' }, mobile: { bgImageUrl: 'javascript:alert(1)' } } as BlockStyle)
     expect(deviceOverrideDecls(style, 'tablet')).toContain('background-image:url(/media/b.jpg) !important')
     expect(style.mobile?.bgImageUrl).toBeUndefined()
+  })
+})
+
+describe('scrolling effects (31e)', () => {
+  it('sets the class and variables, and nothing when unset', () => {
+    const s = { scrollY: 80, scrollRotate: -10, scrollScale: 80, scrollOpacity: 40, scrollBlur: 6, scrollStart: 10, scrollEnd: 60 } as BlockStyle
+    expect(blockFxClasses(s)).toContain('be-fx-scroll')
+    const v = blockFxVars(s)
+    expect(v['--be-sc-y']).toBe('80px')
+    expect(v['--be-sc-r']).toBe('-10deg')
+    expect(v['--be-sc-z']).toBe('0.8')
+    expect(v['--be-sc-o']).toBe('0.4')
+    expect(v['--be-sc-b']).toBe('6px')
+    expect(v['--be-sc-s']).toBe('10%')
+    expect(v['--be-sc-e']).toBe('60%')
+    expect(blockFxClasses({})).not.toContain('be-fx-scroll')
+  })
+  it('values are clamped on read', () => {
+    const s = asBlockStyle({ scrollY: 9999, scrollScale: 1, scrollEnd: 500 } as BlockStyle)
+    expect(s.scrollY).toBe(400)
+    expect(s.scrollScale).toBe(20)
+    expect(s.scrollEnd).toBe(100)
+  })
+  it('off per device: tablet off is inherited by mobile unless mobile switches it on', () => {
+    const css = blockStyleCss(asBlockStyle({ scrollY: 50, tablet: { scrollOff: 1 } } as BlockStyle), 'x1')
+    expect(css).toContain('@media (min-width:601px) and (max-width:900px){#x1>.be-block__content{animation:none !important}}')
+    expect(css).toContain('.be-block__content{animation:none !important}')
+    expect(css).toContain('@media (max-width:600px){#x1>.be-block__content{animation:none !important}}')
+    const back = blockStyleCss(asBlockStyle({ scrollY: 50, tablet: { scrollOff: 1 }, mobile: { scrollOff: 0 } } as BlockStyle), 'x1')
+    expect(back).not.toContain('@media (max-width:600px){#x1>.be-block__content')
+  })
+  it('entrance animation off per device', () => {
+    const css = blockStyleCss(asBlockStyle({ reveal: 'fade', mobile: { revealOff: 1 } } as BlockStyle), 'x1')
+    expect(css).toContain('animation:none !important')
   })
 })

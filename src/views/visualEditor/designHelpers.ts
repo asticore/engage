@@ -56,7 +56,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'dividerBottom', 'dividerBottomColor', 'dividerBottomHeight', 'dividerBottomFlip', 'dividerBottomWidth', 'dividerBottomInvert', 'dividerBottomFront', 'dividerBottomAnim', 'dividerBottomSpeed',
   ],
   effects: [
-    'parallax', 'parallaxStrength', 'parallaxDistance', 'parallaxDirection', 'reveal', 'revealDistance', 'revealDuration',
+    'parallax', 'parallaxStrength', 'parallaxDistance', 'scrollY', 'scrollX', 'scrollRotate', 'scrollScale', 'scrollOpacity', 'scrollBlur', 'scrollStart', 'scrollEnd', 'scrollOff', 'revealOff', 'parallaxDirection', 'reveal', 'revealDistance', 'revealDuration',
     'revealDelay', 'revealEasing', 'hover', 'hoverLift', 'hoverScale', 'glass', 'glassBlur', 'glassOpacity', 'glassBorder',
     'pointerFx', 'pointerFxStrength', 'spotlightColor', 'kenBurns', 'kenBurnsDuration', 'borderFx', 'borderFxColor',
     'borderFxColor2', 'borderFxWidth', 'borderFxSpeed',

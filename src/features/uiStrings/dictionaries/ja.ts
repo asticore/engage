@@ -4503,6 +4503,17 @@ const ja: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "テキストシャドウのぼかし (px)",
   'dp.fk.hover_text_shadow_colour': "テキストシャドウの色",
   'dp.fk.device_image': "このデバイス用の画像",
+  'dp.fk.scroll_title': "スクロール効果",
+  'dp.fk.scroll_y': "開始時の縦オフセット (px)",
+  'dp.fk.scroll_x': "開始時の横オフセット (px)",
+  'dp.fk.scroll_rotate': "開始時の回転 (deg)",
+  'dp.fk.scroll_scale': "開始時の拡大率 (%)",
+  'dp.fk.scroll_opacity': "開始時の不透明度 (%)",
+  'dp.fk.scroll_blur': "開始時のぼかし (px)",
+  'dp.fk.scroll_start': "効果の開始位置 (% )",
+  'dp.fk.scroll_end': "効果の終了位置 (% )",
+  'dp.fk.scroll_off_device': "このデバイスではスクロール効果をオフ",
+  'dp.fk.reveal_off_device': "このデバイスでは登場アニメーションをオフ",
 }
 
 export default ja

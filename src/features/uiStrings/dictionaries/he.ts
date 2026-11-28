@@ -4399,6 +4399,17 @@ const he: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "טשטוש צל טקסט (px)",
   'dp.fk.hover_text_shadow_colour': "צבע צל טקסט",
   'dp.fk.device_image': "תמונה למכשיר זה",
+  'dp.fk.scroll_title': "אפקטי גלילה",
+  'dp.fk.scroll_y': "היסט אנכי בהתחלה (px)",
+  'dp.fk.scroll_x': "היסט אופקי בהתחלה (px)",
+  'dp.fk.scroll_rotate': "סיבוב בהתחלה (deg)",
+  'dp.fk.scroll_scale': "קנה מידה בהתחלה (%)",
+  'dp.fk.scroll_opacity': "אטימות בהתחלה (%)",
+  'dp.fk.scroll_blur': "טשטוש בהתחלה (px)",
+  'dp.fk.scroll_start': "האפקט מתחיל ב־(% מהמעבר)",
+  'dp.fk.scroll_end': "האפקט מסתיים ב־(% מהמעבר)",
+  'dp.fk.scroll_off_device': "אפקטי גלילה כבויים במכשיר זה",
+  'dp.fk.reveal_off_device': "אנימציית כניסה כבויה במכשיר זה",
 }
 
 export default he

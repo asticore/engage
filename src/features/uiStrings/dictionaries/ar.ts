@@ -4503,6 +4503,17 @@ const ar: UiDictionary = {
   'dp.fk.hover_text_shadow_blur': "تمويه ظل النص (px)",
   'dp.fk.hover_text_shadow_colour': "لون ظل النص",
   'dp.fk.device_image': "صورة لهذا الجهاز",
+  'dp.fk.scroll_title': "تأثيرات التمرير",
+  'dp.fk.scroll_y': "الإزاحة الرأسية عند البداية (px)",
+  'dp.fk.scroll_x': "الإزاحة الأفقية عند البداية (px)",
+  'dp.fk.scroll_rotate': "الدوران عند البداية (deg)",
+  'dp.fk.scroll_scale': "المقياس عند البداية (%)",
+  'dp.fk.scroll_opacity': "الشفافية عند البداية (%)",
+  'dp.fk.scroll_blur': "التمويه عند البداية (px)",
+  'dp.fk.scroll_start': "يبدأ التأثير عند (% من المرور)",
+  'dp.fk.scroll_end': "ينتهي التأثير عند (% من المرور)",
+  'dp.fk.scroll_off_device': "إيقاف تأثيرات التمرير على هذا الجهاز",
+  'dp.fk.reveal_off_device': "إيقاف حركة الدخول على هذا الجهاز",
 }
 
 export default ar

@@ -4554,6 +4554,17 @@ export const UI_STRING_SOURCE = {
   'dp.fk.hover_text_shadow_blur': "Text shadow blur (px)",
   'dp.fk.hover_text_shadow_colour': "Text shadow colour",
   'dp.fk.device_image': "Image for this device",
+  'dp.fk.scroll_title': "Scrolling effects",
+  'dp.fk.scroll_y': "Vertical offset at start (px)",
+  'dp.fk.scroll_x': "Horizontal offset at start (px)",
+  'dp.fk.scroll_rotate': "Rotate at start (deg)",
+  'dp.fk.scroll_scale': "Scale at start (%)",
+  'dp.fk.scroll_opacity': "Opacity at start (%)",
+  'dp.fk.scroll_blur': "Blur at start (px)",
+  'dp.fk.scroll_start': "Effect starts at (% of the pass)",
+  'dp.fk.scroll_end': "Effect ends at (% of the pass)",
+  'dp.fk.scroll_off_device': "Scrolling effects off on this device",
+  'dp.fk.reveal_off_device': "Entrance animation off on this device",
 } as const
 
 export type UiStringKey = keyof typeof UI_STRING_SOURCE
