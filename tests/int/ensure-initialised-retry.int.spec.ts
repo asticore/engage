@@ -45,8 +45,8 @@ const engine = {} as never
 
 describe('ensureInitialised - retry after partial first-run failure', () => {
   beforeEach(() => {
-    state.tables = new Set(['eg_migrations', 'eg_users', 'eg_error_log'])
-    state.counts = { eg_migrations: 257, eg_users: 0 }
+    state.tables = new Set(['eg_migrations', 'eg_users', 'eg_pages', 'eg_error_log'])
+    state.counts = { eg_migrations: 257, eg_users: 0, eg_pages: 0 }
     state.errorRows = []
     seedDefaultAdmin.mockReset()
     seedHomeAndTemplates.mockReset()
@@ -60,8 +60,16 @@ describe('ensureInitialised - retry after partial first-run failure', () => {
     expect(seedHomeAndTemplates).toHaveBeenCalledOnce()
   })
 
-  it('does nothing once a user exists', async () => {
+  it('finishes the seed when the first request was killed after the admin but before the Home page', async () => {
     state.counts.eg_users = 1
+    await initialise(engine)
+    expect(runInternalMigrate).not.toHaveBeenCalled()
+    expect(seedHomeAndTemplates).toHaveBeenCalledOnce()
+  })
+
+  it('does nothing once a user and a page exist', async () => {
+    state.counts.eg_users = 1
+    state.counts.eg_pages = 1
     await initialise(engine)
     expect(seedDefaultAdmin).not.toHaveBeenCalled()
     expect(seedHomeAndTemplates).not.toHaveBeenCalled()

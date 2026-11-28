@@ -2,6 +2,11 @@
 
 Release notes for Engage. The update popup's Changelog link opens the matching GitHub release; keep the text of each release here too, newest first. Tag a release `vX.Y.Z` with the same number as `version` in `package.json`.
 
+## 1.5.2
+
+- **First-run seed finishes:** a fresh install whose first request was cut off by the Worker time or CPU limit after creating the admin but before the Home page left the site with no pages and no retry. The seed now also re-runs when the site has no pages.
+- **Blank fallback Home:** until a Home page exists, the built-in fallback shows only the site name, and shop and events blocks and buttons appear only when there are products or events.
+
 ## 1.5.1
 
 - **First-run seed retries:** the start admin login and starter Home page are now seeded whenever the site has no users, even if an earlier first request migrated the database and then failed or timed out before seeding. The admin is created first so sign-in works even if the starter content fails, and seed errors go to the Error log.
