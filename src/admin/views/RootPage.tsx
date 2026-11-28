@@ -15,6 +15,7 @@ import { LoginView } from './LoginView'
 import { VersionsView } from './VersionsView'
 import { assertTwoFactorSatisfied, graceNoticeFor, twoFactorStatus } from '@/features/security/twoFactor'
 import { passwordChangeIsDue } from '@/features/security/passwordCheck'
+import { isDefaultAdminEmail } from '@/features/security/defaultAdmin'
 import { getSecuritySettings } from '@/features/security/settings'
 
 const TWO_FACTOR_VIEW_PATH = '/security/two-factor'
@@ -191,7 +192,7 @@ async function renderRootPage({ params, searchParams }: Args) {
   // A no-op while the setting is off (the default).
   const adminUserId = (context.user as { id?: number | string } | null)?.id
   if (adminUserId !== undefined && !pathname.startsWith(`${collectionRoute('users')}/${adminUserId}`)) {
-    const due = await passwordChangeIsDue(context.engine as never, adminUserId).catch((): false => false)
+    const due = isDefaultAdminEmail((context.user as { email?: unknown } | null)?.email) || (await passwordChangeIsDue(context.engine as never, adminUserId).catch((): false => false))
     if (due) redirect(`${adminCollectionPath('users')}/${adminUserId}`)
   }
 
