@@ -22,7 +22,7 @@ import {
 import type { UiStringKey } from '@/features/uiStrings'
 
 
-const STEP_COUNT = 6
+const STEP_COUNT = 7
 const SUMMARY_STEP = STEP_COUNT
 
 const key = (name: string): UiStringKey => `setup.q.${name}` as UiStringKey
@@ -32,6 +32,8 @@ const NOTE_KEYS: Record<string, string> = { [NOTE_DOMAINS]: 'note.domains', [NOT
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 const toggle = <T,>(list: readonly T[], value: T): T[] => (list.includes(value) ? list.filter((item) => item !== value) : [...list, value])
+
+type ExampleItem = { key: string; libraryId: string; slug: string; title: string; previewUrl: string }
 
 type Props = {
   /** The flags as saved now, so Apply keeps every switch the owner already made. */
@@ -54,6 +56,22 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
   const [chosen, setChosen] = useState<FeatureKey[] | null>(null)
   const [busy, setBusy] = useState<'apply' | 'skip' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [examples, setExamples] = useState<ExampleItem[] | 'loading' | 'failed'>('loading')
+
+  useEffect(() => {
+    let live = true
+    void fetch('/api/template-libraries', { credentials: 'include' })
+      .then((r) => r.json() as Promise<{ ok?: boolean; items?: Array<ExampleItem & { kind: string }> }>)
+      .then((body) => {
+        if (live) setExamples(body.ok ? (body.items ?? []).filter((item) => item.kind === 'page') : 'failed')
+      })
+      .catch(() => {
+        if (live) setExamples('failed')
+      })
+    return () => {
+      live = false
+    }
+  }, [])
 
   const suggestion = useMemo(() => suggestFeatures(answers), [answers])
   const selected = chosen ?? suggestion.on
@@ -94,6 +112,19 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
       setBusy(mode)
       setError(null)
       try {
+        if (mode === 'apply' && answers.starterTemplate) {
+          const install = await fetch('/api/template-libraries/install-example', {
+            body: JSON.stringify(answers.starterTemplate),
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+          })
+          if (!install.ok) {
+            const body = (await install.json().catch((): unknown => null)) as { error?: string } | null
+            setError(t(key('template.installError'), { detail: body?.error ?? '' }))
+            return
+          }
+        }
         const payload = buildSavePayload(mode, { currentFlags, selected, answers })
         const response = await fetch('/api/globals/site-settings', {
           body: JSON.stringify(payload),
@@ -203,6 +234,35 @@ export function SetupQuestionnaire({ currentFlags, onClose }: Props) {
           <fieldset className="eg-setup-group">
             <legend>{t(key('business.legend'))}</legend>
             {radio('business', BUSINESS_TYPES, 'business', answers.businessType, (v) => setAnswer('businessType', v))}
+          </fieldset>
+        )
+      case 7:
+        return (
+          <fieldset className="eg-setup-group">
+            <legend>{t(key('template.legend'))}</legend>
+            <p className="eg-setup-hint">{t(key('template.hint'))}</p>
+            <label className="eg-setup-option">
+              <input checked={!answers.starterTemplate} name="starter" onChange={() => setAnswer('starterTemplate', undefined)} type="radio" value="" />
+              <span>{t(key('template.blank'))}</span>
+            </label>
+            {examples === 'loading' && <p className="eg-setup-hint">{t(key('template.loading'))}</p>}
+            {examples === 'failed' && <p className="eg-setup-hint">{t(key('template.unavailable'))}</p>}
+            {Array.isArray(examples) &&
+              examples.map((item) => (
+                <label className="eg-setup-option" key={item.key}>
+                  <input
+                    checked={answers.starterTemplate?.library === item.libraryId && answers.starterTemplate.item === item.slug}
+                    name="starter"
+                    onChange={() => setAnswer('starterTemplate', { library: item.libraryId, item: item.slug })}
+                    type="radio"
+                    value={item.key}
+                  />
+                  <span>
+                    <img alt="" height={72} src={item.previewUrl} style={{ borderRadius: 4, marginRight: 8, verticalAlign: 'middle' }} width={120} />
+                    {item.title}
+                  </span>
+                </label>
+              ))}
           </fieldset>
         )
       default:
