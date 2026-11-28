@@ -161,9 +161,9 @@ describe('order and invoice numbers on a real D1', () => {
   })
 
   it('finds orders by customer first or last name, case-insensitively', async () => {
-    await insertOrder(10, { firstName: 'Grace', lastName: 'Gatsby' })
+    await insertOrder(10, { firstName: 'Ann', lastName: 'Author' })
     await insertOrder(11, { firstName: 'Ann', lastName: 'Other' })
-    const branches = await orderNameSearchBranches('grace gat')
+    const branches = await orderNameSearchBranches('ann aut')
     expect(branches).toEqual([{ id: { in: [10] } }])
     expect(await orderNameSearchBranches('OTHER')).toEqual([{ id: { in: [11] } }])
     expect(await orderNameSearchBranches('nobody')).toEqual([])

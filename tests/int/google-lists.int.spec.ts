@@ -41,8 +41,8 @@ describe('Analytics property list', () => {
 
 describe('Search Console list', () => {
   it('uses the site address as both value and label', () => {
-    expect(mapSearchConsoleSites({ siteEntry: [{ siteUrl: 'https://gracengatsby.com/', permissionLevel: 'siteOwner' }] })).toEqual([
-      { value: 'https://gracengatsby.com/', label: 'https://gracengatsby.com/' },
+    expect(mapSearchConsoleSites({ siteEntry: [{ siteUrl: 'https://example.com/', permissionLevel: 'siteOwner' }] })).toEqual([
+      { value: 'https://example.com/', label: 'https://example.com/' },
     ])
   })
 })
@@ -113,7 +113,7 @@ describe('connection status', () => {
 
 describe('redirect address', () => {
   it('is the site origin plus the callback path, with no double slash', () => {
-    expect(redirectUriFor('https://gracengatsby.com/')).toBe('https://gracengatsby.com/api/google/callback')
+    expect(redirectUriFor('https://example.com/')).toBe('https://example.com/api/google/callback')
   })
 })
 

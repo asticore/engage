@@ -291,12 +291,12 @@ describe('per-page stats', () => {
 
   it('reads the page numbers for the address the server built', async () => {
     readGoogleConnection.mockResolvedValueOnce(connected())
-    const resolve = vi.fn().mockResolvedValue({ found: true, target: { ok: true, url: 'https://gracengatsby.com/shop/hat' } })
+    const resolve = vi.fn().mockResolvedValue({ found: true, target: { ok: true, url: 'https://example.com/shop/hat' } })
     const { req } = fakeRequester(() => ({ rows: [{ clicks: 4, impressions: 40, position: 2 }] }))
     const result = await loadPageStats(engine, { collection: 'products', id: 9 }, TODAY, req, resolve as never)
     expect(result.state).toBe('ok')
     if (result.state === 'ok') {
-      expect(result.data.url).toBe('https://gracengatsby.com/shop/hat')
+      expect(result.data.url).toBe('https://example.com/shop/hat')
       expect(result.data.totals.clicks).toBe(4)
     }
   })
@@ -311,7 +311,7 @@ describe('formatting helpers', () => {
   })
 
   it('shortens a page address to its path', () => {
-    expect(pathOf('https://gracengatsby.com/shop/hat?x=1')).toBe('/shop/hat?x=1')
+    expect(pathOf('https://example.com/shop/hat?x=1')).toBe('/shop/hat?x=1')
     expect(pathOf('not a url')).toBe('not a url')
   })
 })

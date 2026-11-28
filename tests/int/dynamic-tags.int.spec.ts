@@ -5,14 +5,14 @@ import { MAX_TAG_INPUT, resolveTags } from '@/lib/dynamicTags'
 const ctx = {
   post: { title: 'A <b>Tale</b> & "more"', date: '2026-10-20T10:00:00Z', excerpt: 'Short', author: 'Grace' },
   page: { title: 'Journal' },
-  site: { name: 'Grace & Gatsby', year: 2026 },
+  site: { name: 'Example Shop', year: 2026 },
   product: { title: 'Vase', price: 12.5 },
 }
 
 describe('resolveTags', () => {
   it('replaces all known tags', () => {
     expect(resolveTags('{{post.author}} on {{page.title}} at {{site.name}} {{site.year}} {{product.title}} {{post.excerpt}}', ctx))
-      .toBe('Grace on Journal at Grace &amp; Gatsby 2026 Vase Short')
+      .toBe('Grace on Journal at Example Shop 2026 Vase Short')
   })
   it('escapes values and literal text', () => {
     expect(resolveTags('<i>{{post.title}}</i>', ctx)).toBe('&lt;i&gt;A &lt;b&gt;Tale&lt;/b&gt; &amp; &quot;more&quot;&lt;/i&gt;')

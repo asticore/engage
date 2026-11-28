@@ -449,9 +449,9 @@ describe('localapi/read-operations - findGlobal', () => {
   }
 
   it('overrideAccess defaults to true', async () => {
-    const registry: ReadRegistry = { collections: {}, globals: { settings: makeGlobalEntry({ id: 1, siteName: 'Grace & Gatsby' }, { access: { read: adminOnly } }) } }
+    const registry: ReadRegistry = { collections: {}, globals: { settings: makeGlobalEntry({ id: 1, siteName: 'Example Shop' }, { access: { read: adminOnly } }) } }
     const doc = await findGlobal(registry, 'settings', { req: { user: anon } })
-    expect(doc?.siteName).toBe('Grace & Gatsby')
+    expect(doc?.siteName).toBe('Example Shop')
   })
 
   it('overrideAccess:false + no disableErrors -> throws Forbidden', async () => {

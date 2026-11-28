@@ -108,7 +108,7 @@ describe('limit 7: post author', () => {
     expect(postAuthorName({ displayName: 'Bo' }, 'Site')).toBe('Bo')
   })
   it('falls back to the site name', () => {
-    expect(postAuthorName({ email: 'ann@x.com' }, 'Grace & Gatsby')).toBe('Grace & Gatsby')
+    expect(postAuthorName({ email: 'ann@x.com' }, 'Example Shop')).toBe('Example Shop')
     expect(postAuthorName(5, 'Site')).toBe('Site')
     expect(postAuthorName(null, undefined)).toBe('')
   })

@@ -9,7 +9,7 @@ import {
   TEMPLATE_DESCRIPTION_LIMIT,
 } from '@/features/seo/templates'
 
-const SITE = 'Grace & Gatsby'
+const SITE = 'Example Shop'
 
 const contextWith = (templates: Record<string, string> | null, defaults: Record<string, string> = {}): SeoContext => ({
   enabled: true,
@@ -30,7 +30,7 @@ describe('renderTemplate', () => {
   })
 
   it('fills the title, site and separator tokens', () => {
-    expect(renderTemplate('%title% %sep% %site%', { title: 'Spring Lunch', site: SITE })).toBe('Spring Lunch | Grace & Gatsby')
+    expect(renderTemplate('%title% %sep% %site%', { title: 'Spring Lunch', site: SITE })).toBe('Spring Lunch | Example Shop')
   })
 
   it('fills excerpt, category, price and date tokens', () => {
@@ -56,7 +56,7 @@ describe('renderTemplate', () => {
   })
 
   it('drops a separator left with nothing beside it when an optional token is empty', () => {
-    expect(renderTemplate('%title% %sep% %category% %sep% %site%', { title: 'Spring Lunch', site: SITE })).toBe('Spring Lunch | Grace & Gatsby')
+    expect(renderTemplate('%title% %sep% %category% %sep% %site%', { title: 'Spring Lunch', site: SITE })).toBe('Spring Lunch | Example Shop')
   })
 
   it('drops a leading separator when the first token is empty', () => {
@@ -120,32 +120,32 @@ describe('contentTemplatesFor', () => {
 describe('resolveSeo with content-type templates', () => {
   it('keeps the site title template when no content template is set', () => {
     const result = resolveSeo(contextWith({}), { title: 'Spring Lunch', contentType: 'post' })
-    expect(result.title).toBe('Spring Lunch | Grace & Gatsby')
+    expect(result.title).toBe('Spring Lunch | Example Shop')
   })
 
   it('uses the content-type title template when the document has no SEO title', () => {
     const ctx = contextWith({ postTitleTemplate: '%title% %sep% %category% %sep% %site%' })
     const result = resolveSeo(ctx, { title: 'Spring Lunch', contentType: 'post', tokens: { category: 'Food' } })
-    expect(result.title).toBe('Spring Lunch | Food | Grace & Gatsby')
+    expect(result.title).toBe('Spring Lunch | Food | Example Shop')
     expect(result.rawTitle).toBe('Spring Lunch')
   })
 
   it('does not add the site name twice when a content title template already has it', () => {
     const ctx = contextWith({ productTitleTemplate: '%title% %sep% %site%' })
     const result = resolveSeo(ctx, { title: 'Mug', contentType: 'product' })
-    expect(result.title).toBe('Mug | Grace & Gatsby')
+    expect(result.title).toBe('Mug | Example Shop')
   })
 
   it('lets the document SEO title beat the content-type title template', () => {
     const ctx = contextWith({ postTitleTemplate: '%title% %sep% %site%' })
     const result = resolveSeo(ctx, { title: 'Spring Lunch', contentType: 'post', seo: { metaTitle: 'Custom' } })
-    expect(result.title).toBe('Custom | Grace & Gatsby')
+    expect(result.title).toBe('Custom | Example Shop')
   })
 
   it('falls back to the site title template when the content template is blank', () => {
     const ctx = contextWith({ postTitleTemplate: '   ' })
     const result = resolveSeo(ctx, { title: 'Spring Lunch', contentType: 'post' })
-    expect(result.title).toBe('Spring Lunch | Grace & Gatsby')
+    expect(result.title).toBe('Spring Lunch | Example Shop')
   })
 
   it('uses the content-type description template when the document has no SEO description', () => {
@@ -189,6 +189,6 @@ describe('resolveSeo with content-type templates', () => {
   it('ignores templates when no content type is passed', () => {
     const ctx = contextWith({ pageTitleTemplate: '%title% %sep% Templated' })
     const result = resolveSeo(ctx, { title: 'Plain' })
-    expect(result.title).toBe('Plain | Grace & Gatsby')
+    expect(result.title).toBe('Plain | Example Shop')
   })
 })

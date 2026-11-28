@@ -44,8 +44,8 @@ describe('admin shell chrome', () => {
   afterEach(() => cleanup())
 
   it('mobile top bar shows the site name and its hamburger toggles the drawer', () => {
-    render(wrap(h(AdminTopBar, { siteName: 'Grace & Gatsby' })))
-    expect(screen.getByText('Grace & Gatsby')).toBeTruthy()
+    render(wrap(h(AdminTopBar, { siteName: 'Example Shop' })))
+    expect(screen.getByText('Example Shop')).toBeTruthy()
     const button = screen.getByRole('button', { name: 'Open menu' })
     expect(button.getAttribute('aria-expanded')).toBe('false')
     fireEvent.click(button)

@@ -1,6 +1,13 @@
-# Asticore Engage — Grace & Gatsby
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/engage-logo-dark.svg">
+    <img src="docs/images/engage-logo-light.svg" alt="Engage" width="280">
+  </picture>
+</p>
 
-The public **Grace & Gatsby** website and the **Asticore Engage** content portal that runs it, deployed as a single application.
+# Asticore Engage
+
+**Asticore Engage** is a website, shop and content portal in one application, deployed on Cloudflare.
 
 Editors sign in at `/admin` to build pages, run the shop, publish events and posts, and configure the site. Visitors get the storefront rendered from the same content.
 
@@ -349,6 +356,10 @@ Tracking has three parts, all under Settings > Tracking.
 3. **Runtime**: public pages load a small script only when at least one enabled event exists. When a visitor triggers an event and has given the matching cookie consent, the script sends it straight from the visitor's browser to every connected destination: `fbq` for Meta, `gtag` for GA4, `ttq` for TikTok, and `dataLayer.push` for Tag Manager. A standard page view goes only to the data layer so it is not counted twice with the base tags. Nothing fires before consent, for signed-in admins, in the editor's Navigate mode, or under the admin and preview paths. Test mode in the editor shows a toast instead of sending.
 
 So the tags end up in each platform's own tools (Meta Events Manager, GA4 reports and DebugView, TikTok Events Manager, or your Tag Manager container). The site itself does not keep a log of each time an event fires, and it does not send events from the server (Meta Conversions API and the GA4 Measurement Protocol are not built).
+
+## "Built with Engage" footer link
+
+Every generated site shows a small **Built with Engage** link, pointing to <https://github.com/asticore/engage>, under the footer. It is on by default. To turn it off, open **Admin > Settings > Footer** and untick **Show built with Engage link**. It shows under both the built-in footer and a footer made in Site templates. The setting is stored as `showBuiltWith` on the Footer global (`eg_footer.show_built_with`).
 
 ## Portal theming
 

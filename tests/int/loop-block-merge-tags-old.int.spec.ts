@@ -42,7 +42,7 @@ beforeEach(() => {
       excerpt: 'Keep it bright',
       _status: 'published',
       publishedDate: '2026-10-05T00:00:00.000Z',
-      author: { displayName: 'Grace Gatsby', slug: 'grace' },
+      author: { displayName: 'Ann Author', slug: 'grace' },
       categories: [{ name: 'Jewellery' }, { name: 'Gifts' }],
       featuredImage: { url: 'https://cdn.example.com/ring.jpg' },
     },
@@ -52,7 +52,7 @@ beforeEach(() => {
 describe('old page-template Loop merge tags', () => {
   it('fills title, excerpt, date, author, category, url and image for a blog post item', async () => {
     const markup = await renderLoop('posts')
-    expect(markup).toContain('Silver care | Keep it bright | 05/10/2026 | Grace Gatsby | Jewellery | /blog/silver-care | https://cdn.example.com/ring.jpg')
+    expect(markup).toContain('Silver care | Keep it bright | 05/10/2026 | Ann Author | Jewellery | /blog/silver-care | https://cdn.example.com/ring.jpg')
   })
 
   it('keeps a product value that the base context already has (price is not replaced by the fallback)', async () => {

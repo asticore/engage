@@ -27,11 +27,11 @@ export const Footer: React.FC<{
   logoWidth,
   logoHeight,
   showLogo = true,
-  bottomText = 'A curated boutique for the modern romantic - considered pieces, small-batch goods, and evenings worth dressing up for.',
+  bottomText = '',
   columns = [],
   contactEmail,
   contactPhone,
-  address = 'Brisbane, Australia',
+  address,
   socials,
   layout = 'columns-3',
   copyrightText,
@@ -65,7 +65,7 @@ export const Footer: React.FC<{
           ) : (
             <h2 className="text-[1.75rem]">{siteName}</h2>
           )}
-          <p className="max-w-[40ch] text-[rgba(246,241,231,0.7)]">{bottomText}</p>
+          {bottomText ? <p className="max-w-[40ch] text-[rgba(246,241,231,0.7)]">{bottomText}</p> : null}
           {socials?.show && socialLinks.length > 0 && (
             <div className="mt-4 flex gap-4">
               {socialLinks.map((link, index) => (

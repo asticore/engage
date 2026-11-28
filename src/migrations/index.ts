@@ -200,6 +200,7 @@ import * as migration_20270318_230000_card_prints from './20270318_230000_card_p
 import * as migration_20270318_110000_bot_rules from './20270318_110000_bot_rules';
 import * as migration_20270317_290000_blog_base from './20270317_290000_blog_base';
 import * as migration_20270323_100000_shop_base from './20270323_100000_shop_base';
+import * as migration_20270324_100000_footer_built_with from './20270324_100000_footer_built_with';
 import * as migration_20270316_390000_dam from './20270316_390000_dam';
 import * as migration_20270316_395000_chatbot from './20270316_395000_chatbot';
 import * as migration_20270316_425000_agent_access from './20270316_425000_agent_access';
@@ -1578,5 +1579,10 @@ export const migrations = [
     up: migration_20270323_100000_shop_base.up,
     down: migration_20270323_100000_shop_base.down,
     name: '20270323_100000_shop_base',
+  },
+  {
+    up: migration_20270324_100000_footer_built_with.up,
+    down: migration_20270324_100000_footer_built_with.down,
+    name: '20270324_100000_footer_built_with',
   },
 ];

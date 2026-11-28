@@ -35,8 +35,7 @@ export const Footer: GlobalConfig = {
     {
       name: 'bottomText',
       type: 'textarea',
-      defaultValue:
-        'A curated boutique for the modern romantic - considered pieces, small-batch goods, and evenings worth dressing up for.',
+      defaultValue: '',
       admin: { description: 'Short blurb shown next to the logo.' },
     },
     {
@@ -83,7 +82,7 @@ export const Footer: GlobalConfig = {
       fields: [
         { name: 'email', type: 'text' },
         { name: 'phone', type: 'text' },
-        { name: 'address', type: 'text', defaultValue: 'Brisbane, Australia' },
+        { name: 'address', type: 'text' },
       ],
     },
     {
@@ -117,6 +116,13 @@ export const Footer: GlobalConfig = {
       name: 'copyrightText',
       type: 'text',
       admin: { description: 'Leave blank to use "© {year} {site name}. All rights reserved."' },
+    },
+    {
+      name: 'showBuiltWith',
+      type: 'checkbox',
+      defaultValue: true,
+      label: 'Show built with Engage link',
+      admin: { description: 'Shows a small "Built with Engage" link under the footer, pointing to the Engage project on GitHub. Untick to hide it.' },
     },
   ],
 }
