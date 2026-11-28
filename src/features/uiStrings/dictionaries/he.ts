@@ -4370,6 +4370,27 @@ const he: UiDictionary = {
   "planner.defaultName": "תוכנית האתר שלי",
   "planner.nextPage": "העמוד המתוכנן הבא: {title}",
   "planner.saveFirst": "(שמרו קודם את העמוד הזה)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "הצג את התגים שלהלן על כרטיסי מוצרים בארכיון החנות וברשימות המוצרים. כבה כדי להסתיר את כל התגים בבת אחת מבלי למחוק אותם.",
+  'desc.field.promoBadges': "תוויות קטנות כמו מבצע, חדש או רב מכר, המוצגות מעל תמונת המוצר. כל תג מציין על אילו מוצרים הוא מופיע. כרטיס מציג לכל היותר שלושה תגים; מספרי עדיפות נמוכים יותר גוברים.",
+  'desc.field.promoBadges.text': "הטקסט שעל התג, למשל מבצע. השאר ריק לאייקון בלבד.",
+  'desc.field.promoBadges.enabled': "בטל את הסימון כדי לכבות תג זה.",
+  'desc.field.promoBadges.icon': "אייקון אופציונלי שמוצג לפני הטקסט. בחר אחד מהרשימה.",
+  'desc.field.promoBadges.colour': "צבע התג.",
+  'desc.field.promoBadges.textColour': "צבע הטקסט והאייקון.",
+  'desc.field.promoBadges.position': "באיזו פינה של תמונת המוצר יושב התג.",
+  'desc.field.promoBadges.style': "אופן השימוש בצבע.",
+  'desc.field.promoBadges.shape': "הפינות של התג.",
+  'desc.field.promoBadges.effect': "אפקט תנועה קטן. גולשים שביקשו מהמכשיר שלהם להפחית תנועה לא יראו אותו.",
+  'desc.field.promoBadges.appliesTo': "אילו מוצרים יקבלו תג זה.",
+  'desc.field.promoBadges.newDays': "מוצר נחשב חדש למספר הימים הזה מרגע שנוסף.",
+  'desc.field.promoBadges.tag': "המזהה (slug) של תג המוצר, למשל best-seller.",
+  'desc.field.promoBadges.category': "המזהה (slug) של הקטגוריה, למשל prints.",
+  'desc.field.promoBadges.productSlugs': "סמן את המוצרים שיקבלו תג זה.",
+  'desc.field.promoBadges.priority': "מספרים נמוכים מוצגים ראשונים כאשר מוצר תואם למספר תגים.",
+  'desc.field.promoBadges.startsAt': "ריק פירושו שהתג מתחיל מיד.",
+  'desc.field.promoBadges.endsAt': "ריק פירושו שהתג לעולם לא מסתיים.",
 }
 
 export default he

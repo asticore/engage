@@ -4474,6 +4474,27 @@ const hi: UiDictionary = {
   "planner.defaultName": "मेरी साइट योजना",
   "planner.nextPage": "अगला नियोजित पेज: {title}",
   "planner.saveFirst": "(पहले इस पेज को सहेजें)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "शॉप आर्काइव और उत्पाद सूचियों में उत्पाद कार्डों पर नीचे दिए बैज दिखाएँ। सभी बैज एक साथ छिपाने के लिए बंद करें, बिना उन्हें हटाए।",
+  'desc.field.promoBadges': "छोटे लेबल जैसे सेल, नया या सबसे ज़्यादा बिकने वाला, जो उत्पाद की तस्वीर पर दिखते हैं। हर बैज बताता है कि वह किन उत्पादों पर है। एक कार्ड में अधिकतम तीन बैज दिखते हैं; कम प्राथमिकता संख्या वाले बैज पहले आते हैं।",
+  'desc.field.promoBadges.text': "बैज पर लिखे शब्द, जैसे सेल। केवल आइकन के लिए खाली छोड़ें।",
+  'desc.field.promoBadges.enabled': "इस बैज को बंद करने के लिए अनचेक करें।",
+  'desc.field.promoBadges.icon': "वैकल्पिक आइकन जो टेक्स्ट से पहले दिखता है। सूची में से चुनें।",
+  'desc.field.promoBadges.colour': "बैज का रंग।",
+  'desc.field.promoBadges.textColour': "टेक्स्ट और आइकन का रंग।",
+  'desc.field.promoBadges.position': "उत्पाद की तस्वीर के किस कोने में बैज दिखेगा।",
+  'desc.field.promoBadges.style': "रंग का उपयोग कैसे होगा।",
+  'desc.field.promoBadges.shape': "बैज के कोने।",
+  'desc.field.promoBadges.effect': "एक छोटा मोशन इफ़ेक्ट। जो विज़िटर अपने डिवाइस पर गति कम करने का अनुरोध करते हैं, उन्हें यह नहीं दिखेगा।",
+  'desc.field.promoBadges.appliesTo': "किन उत्पादों को यह बैज मिलेगा।",
+  'desc.field.promoBadges.newDays': "उत्पाद जोड़े जाने के इतने दिनों तक उसे नया माना जाएगा।",
+  'desc.field.promoBadges.tag': "उत्पाद टैग का स्लग, जैसे best-seller।",
+  'desc.field.promoBadges.category': "श्रेणी का स्लग, जैसे prints।",
+  'desc.field.promoBadges.productSlugs': "जिन उत्पादों को यह बैज मिलेगा, उन्हें चुनें।",
+  'desc.field.promoBadges.priority': "जब कोई उत्पाद कई बैज से मेल खाता है, तो कम संख्या पहले दिखाई जाती है।",
+  'desc.field.promoBadges.startsAt': "खाली छोड़ने का अर्थ है कि यह तुरंत शुरू होगा।",
+  'desc.field.promoBadges.endsAt': "खाली छोड़ने का अर्थ है कि यह कभी समाप्त नहीं होगा।",
 }
 
 export default hi

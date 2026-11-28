@@ -4474,6 +4474,27 @@ const pt: UiDictionary = {
   "planner.defaultName": "Meu plano do site",
   "planner.nextPage": "Próxima página planejada: {title}",
   "planner.saveFirst": "(salve esta página primeiro)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "Mostre os selos abaixo nos cartões de produto no arquivo da loja e nas listas de produtos. Desative para ocultar todos os selos de uma vez, sem excluí-los.",
+  'desc.field.promoBadges': "Pequenos rótulos como Promoção, Novo ou Mais vendido sobrepostos à imagem do produto. Cada selo indica em quais produtos aparece. Um cartão mostra no máximo três selos; números de prioridade menores têm precedência.",
+  'desc.field.promoBadges.text': "O texto do selo, por exemplo Promoção. Deixe em branco para exibir apenas um ícone.",
+  'desc.field.promoBadges.enabled': "Desmarque para desativar este selo.",
+  'desc.field.promoBadges.icon': "Ícone opcional exibido antes do texto. Escolha um na lista.",
+  'desc.field.promoBadges.colour': "Cor do selo.",
+  'desc.field.promoBadges.textColour': "Cor do texto e do ícone.",
+  'desc.field.promoBadges.position': "Em qual canto da imagem do produto o selo fica.",
+  'desc.field.promoBadges.style': "Como a cor é usada.",
+  'desc.field.promoBadges.shape': "Os cantos do selo.",
+  'desc.field.promoBadges.effect': "Um pequeno efeito de movimento. Visitantes que pedem para reduzir o movimento no dispositivo não o veem.",
+  'desc.field.promoBadges.appliesTo': "Quais produtos recebem este selo.",
+  'desc.field.promoBadges.newDays': "Um produto é considerado novo por este número de dias após ser adicionado.",
+  'desc.field.promoBadges.tag': "O slug da tag do produto, por exemplo best-seller.",
+  'desc.field.promoBadges.category': "O slug da categoria, por exemplo prints.",
+  'desc.field.promoBadges.productSlugs': "Marque os produtos que recebem este selo.",
+  'desc.field.promoBadges.priority': "Números menores são exibidos primeiro quando um produto corresponde a vários selos.",
+  'desc.field.promoBadges.startsAt': "Em branco significa que começa imediatamente.",
+  'desc.field.promoBadges.endsAt': "Em branco significa que nunca termina.",
 }
 
 export default pt

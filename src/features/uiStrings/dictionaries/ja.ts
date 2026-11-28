@@ -4474,6 +4474,27 @@ const ja: UiDictionary = {
   "planner.defaultName": "マイサイトプラン",
   "planner.nextPage": "次の予定ページ：{title}",
   "planner.saveFirst": "（先にこのページを保存してください）",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "ショップのアーカイブや商品一覧の商品カードに、下記のバッジを表示します。オフにすると、削除せずにすべてのバッジを一度に非表示にできます。",
+  'desc.field.promoBadges': "セール、新着、ベストセラーなどの小さなラベルを商品画像の上に重ねて表示します。各バッジには対象の商品を指定します。1枚のカードに表示されるバッジは最大3つで、優先度の数字が小さいものが優先されます。",
+  'desc.field.promoBadges.text': "バッジに表示する文字(例: セール)。アイコンのみの場合は空欄のままにします。",
+  'desc.field.promoBadges.enabled': "このバッジをオフにするにはチェックを外します。",
+  'desc.field.promoBadges.icon': "テキストの前に表示する任意のアイコンです。一覧から選択します。",
+  'desc.field.promoBadges.colour': "バッジの色です。",
+  'desc.field.promoBadges.textColour': "テキストとアイコンの色です。",
+  'desc.field.promoBadges.position': "バッジを配置する商品画像の角です。",
+  'desc.field.promoBadges.style': "色の使い方です。",
+  'desc.field.promoBadges.shape': "バッジの角の形です。",
+  'desc.field.promoBadges.effect': "小さな動きのエフェクトです。端末で動きを減らす設定にしている訪問者には表示されません。",
+  'desc.field.promoBadges.appliesTo': "このバッジを付ける商品です。",
+  'desc.field.promoBadges.newDays': "商品が追加されてから、この日数の間は新着として扱われます。",
+  'desc.field.promoBadges.tag': "商品タグのスラッグ(例: best-seller)です。",
+  'desc.field.promoBadges.category': "カテゴリーのスラッグ(例: prints)です。",
+  'desc.field.promoBadges.productSlugs': "このバッジを付ける商品にチェックを入れます。",
+  'desc.field.promoBadges.priority': "商品が複数のバッジに該当する場合、数字の小さいものから先に表示されます。",
+  'desc.field.promoBadges.startsAt': "空欄の場合は直ちに開始します。",
+  'desc.field.promoBadges.endsAt': "空欄の場合は終了しません。",
 }
 
 export default ja

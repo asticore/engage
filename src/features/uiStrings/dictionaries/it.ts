@@ -4474,6 +4474,27 @@ const it: UiDictionary = {
   "planner.defaultName": "Il mio piano del sito",
   "planner.nextPage": "Prossima pagina pianificata: {title}",
   "planner.saveFirst": "(salva prima questa pagina)",
+
+  // promo badge field descriptions
+  'desc.field.promoBadgesEnabled': "Mostra i badge qui sotto sulle schede prodotto nell'archivio del negozio e negli elenchi di prodotti. Disattiva per nascondere tutti i badge in una volta senza eliminarli.",
+  'desc.field.promoBadges': "Piccole etichette come Saldi, Novità o Bestseller applicate sull'immagine del prodotto. Ogni badge indica a quali prodotti è assegnato. Una scheda mostra al massimo tre badge; vincono i numeri di priorità più bassi.",
+  'desc.field.promoBadges.text': "Il testo del badge, ad es. Saldi. Lascia vuoto per la sola icona.",
+  'desc.field.promoBadges.enabled': "Deseleziona per disattivare questo badge.",
+  'desc.field.promoBadges.icon': "Icona facoltativa mostrata prima del testo. Scegline una dall'elenco.",
+  'desc.field.promoBadges.colour': "Colore del badge.",
+  'desc.field.promoBadges.textColour': "Colore del testo e dell'icona.",
+  'desc.field.promoBadges.position': "In quale angolo dell'immagine del prodotto si trova il badge.",
+  'desc.field.promoBadges.style': "Come viene usato il colore.",
+  'desc.field.promoBadges.shape': "Gli angoli del badge.",
+  'desc.field.promoBadges.effect': "Un piccolo effetto di movimento. I visitatori che chiedono al dispositivo di ridurre il movimento non lo vedono.",
+  'desc.field.promoBadges.appliesTo': "Quali prodotti ricevono questo badge.",
+  'desc.field.promoBadges.newDays': "Un prodotto è considerato nuovo per questo numero di giorni dopo essere stato aggiunto.",
+  'desc.field.promoBadges.tag': "Lo slug del tag prodotto, ad es. best-seller.",
+  'desc.field.promoBadges.category': "Lo slug della categoria, ad es. prints.",
+  'desc.field.promoBadges.productSlugs': "Seleziona i prodotti che ricevono questo badge.",
+  'desc.field.promoBadges.priority': "I numeri più bassi vengono mostrati per primi quando un prodotto corrisponde a più badge.",
+  'desc.field.promoBadges.startsAt': "Vuoto significa che inizia subito.",
+  'desc.field.promoBadges.endsAt': "Vuoto significa che non finisce mai.",
 }
 
 export default it
