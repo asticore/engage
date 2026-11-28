@@ -4,7 +4,7 @@ import type { Metadata } from 'next'
 
 import { BlockRenderer } from '@/components/blocks/BlockRenderer'
 import { FaqBrowser } from '@/features/faq/FaqBrowser'
-import { faqTypes, filterFaqs } from '@/features/faq/archive'
+import { faqTypes, filterFaqs, keepTypeKeys } from '@/features/faq/archive'
 import { getEngine } from '@/lib/engine'
 import { getFeatureFlags } from '@/utilities/features'
 import { currentRequestLocale, applyTranslations, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
@@ -32,7 +32,7 @@ export default async function FaqPage({ searchParams }: { searchParams: Promise<
     engine.findGlobal({ slug: 'faq-settings' }).catch((): null => null),
     engine.find({ collection: 'faqs', sort: 'order', limit: 200 }),
   ])) as unknown as [FaqSetting | null, { docs: Faq[] }]
-  const faqs = await applyTranslationsToDocs(rawFaqs, 'faqs', await currentRequestLocale())
+  const faqs = keepTypeKeys(rawFaqs, await applyTranslationsToDocs(rawFaqs, 'faqs', await currentRequestLocale()))
 
   // FAQPage structured data for every question on this page (same answers as the list below).
   const seoContext = await getSeoContext()

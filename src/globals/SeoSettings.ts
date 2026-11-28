@@ -328,7 +328,7 @@ export const SeoSettings: GlobalConfig = {
       name: 'breadcrumbs',
       label: 'Breadcrumbs',
       admin: {
-        description: 'How the automatic breadcrumb trail looks on every page, and whether pages describe it to search engines. A Breadcrumbs element can override the separator and the Home label.',
+        description: 'How the automatic breadcrumb trail looks on every page, and whether pages describe it to search engines. These apply only while the SEO feature is on; otherwise the defaults are used. A Breadcrumbs element can override the separator and the Home label.',
       },
       fields: [
         {
@@ -357,6 +357,23 @@ export const SeoSettings: GlobalConfig = {
           type: 'checkbox',
           defaultValue: true,
           admin: { description: 'Tell search engines about the trail (BreadcrumbList), so it can show in results.' },
+        },
+        {
+          type: 'row',
+          fields: [
+            { name: 'textColor', type: 'text', admin: { width: '33%', description: 'Text colour of the automatic trail, like #555555. Empty keeps the theme colour. A Breadcrumbs element has its own design panel.' } },
+            { name: 'linkColor', type: 'text', admin: { width: '33%', description: 'Link colour, like #0a58ca. Empty keeps the theme colour.' } },
+            {
+              name: 'fontSize',
+              type: 'select',
+              options: [
+                { label: 'Theme size', value: '' },
+                { label: 'Small', value: 'small' },
+                { label: 'Large', value: 'large' },
+              ],
+              admin: { width: '33%', description: 'Size of the automatic trail.' },
+            },
+          ],
         },
       ],
     },

@@ -2497,6 +2497,21 @@ _Date: 22 Nov 2026_
 
 **Where to find it:** /admin/content/posts > Write with AI (Blog list) > Edit questions
 
+#### SEO-029 · Task 6 content and SEO gaps closed (28 Nov 2026)
+
+_Date: 28 Nov 2026_
+
+**16f helpful votes.** "Was this helpful?" Yes/No under every FAQ answer on `/faq` and type pages. `POST /api/faq-vote` (rate limited, stores a hash of visitor and question, one vote per visitor and question, a later vote replaces it) writes `eg_faq_votes` (migration `20270324_100000_faq_votes`, listed in `CORE_TABLE_BASES`). Totals for admins: `GET /api/admin-faq-votes`. Code: `src/features/faq/votes.ts`, `FaqVote.tsx`.
+**16f per-language type names.** A type's address stays the same in every language (key = site-language name), while the shown name and chips use the translated Category (`keepTypeKeys`, `faqSlugOf` in `archive.ts`).
+**16f feeds.** `/feed/events.xml` (Events on) and `/feed/products.xml` (shop on), 30 newest, protected items left out, cover image enclosures. Code: `src/features/blog/listFeeds.ts`, `src/app/(frontend)/feed/`.
+**16d.** Sitewide breadcrumb settings now apply only while SEO is on (`resolveBreadcrumbsFor`); new text colour, link colour and size fields (migration `20270324_110000_breadcrumb_style`) styling the automatic trail; the manual Breadcrumbs element uses the block design panel. Tests: `faq-votes`, `list-feeds`, `faq-archive`, `breadcrumb-settings`.
+
+#### SEO-028 · 16f FAQ related questions and site search (28 Nov 2026)
+
+_Date: 28 Nov 2026_
+
+**16f FAQ related questions and site search (28 Nov 2026).** Under each answer on `/faq` and the type pages, a "Related questions" list links up to three other questions of the same type (each link opens the overview filtered to that question). Site search (`/search`) and live suggestions (`/api/search-suggest`) now include FAQ entries (matched on question or type) when the FAQ feature is on, labelled FAQ. No migration. Code: `src/features/faq/archive.ts` (`relatedFaqs`, `faqQuestionPath`), `FaqList.tsx`, `src/features/search/suggest.ts`, `src/app/(frontend)/search/page.tsx`; tests in `tests/int/faq-archive.int.spec.ts`.
+
 #### SEO-027 · Task 15 34h6 Releases (24 Nov 2026)
 
 _Date: 26 Nov 2026_
@@ -3671,6 +3686,8 @@ _Date: 22 Nov 2026 · Original group: Task 4 leftovers 41a to 41c (built 22 Nov 
 - [BLD-088](#bld-088) Task 10 29b Form styling options
 - [BLD-087](#bld-087) Task 10 29e and 29c Template author and date conditions, age gate per country
 - [SEO-027](#seo-027) Task 15 34h6 Releases
+- [SEO-029](#seo-029) Task 6 content and SEO gaps closed
+- [SEO-028](#seo-028) 16f FAQ related questions and site search
 - [SEO-026](#seo-026) Redirect popup when an address changes
 - [BLD-086](#bld-086) Task 10 29a Chart screen reader summary
 - [BLD-085](#bld-085) Task 10 29d Cart, Checkout and Mini cart elements
@@ -4644,3 +4661,5 @@ Checked against the code, not live.
 - Ad unit sizes and supplier (2026-11-26, Matt): ad unit size boxes now have ticks for common sizes (`src/features/ads/sizes.ts`, `admin/SizesField.tsx`), the Network choice says Ad Manager can take header bidding and AdSense is its own supplier, and the Ad element picks its placement or unit from dropdowns (`/api/admin-ad-options`). Test `tests/int/ad-sizes.int.spec.ts`.
 
 - Open-now cleanups (2026-11-26): bookings comments now cite the Bookings plan appendix (the `repo-issues` pointer no longer exists in code); `auditExport` added to the consent log, event RSVP, form submission, shop report and shop manifest CSV downloads (data view download not found in code, nothing to log). Not type-checked or tested here (no node_modules in this container); CI to confirm.
+- 16f FAQ related questions and FAQs in site search and suggest (2026-11-28): [SEO-028](#seo-028).
+- Task 6 votes, per-language types, events and products feeds, 16d breadcrumb style (2026-11-28): [SEO-029](#seo-029).

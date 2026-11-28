@@ -3,7 +3,7 @@ import React from 'react'
 import type { Metadata } from 'next'
 
 import { FaqBrowser } from '@/features/faq/FaqBrowser'
-import { faqTypes, faqTypePath, filterFaqs } from '@/features/faq/archive'
+import { faqTypes, faqTypePath, filterFaqs, keepTypeKeys } from '@/features/faq/archive'
 import { currentRequestLocale, applyTranslationsToDocs } from '@/features/multilingual/applyTranslations'
 import { buildFaqPageJsonLd } from '@/features/seo/pageSchema'
 import { getSeoContext } from '@/features/seo/settings'
@@ -22,7 +22,7 @@ async function load() {
     engine.findGlobal({ slug: 'faq-settings' }).catch((): null => null),
     engine.find({ collection: 'faqs', sort: 'order', limit: 200 }),
   ])) as unknown as [FaqSetting | null, { docs: Faq[] }]
-  return { settings, faqs: await applyTranslationsToDocs(docs, 'faqs', await currentRequestLocale()) }
+  return { settings, faqs: keepTypeKeys(docs, await applyTranslationsToDocs(docs, 'faqs', await currentRequestLocale())) }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

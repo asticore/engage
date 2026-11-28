@@ -5,7 +5,7 @@ import { getBlockContext } from '@/lib/blockContext'
 import { formatTagDate, formatTagPrice } from '@/lib/dynamicTags'
 import { archivePageHref, buildBreadcrumbs, formatPostMeta } from '@/lib/templateWidgets'
 import { BreadcrumbsElement as ManualCrumbs } from './Wave36Elements'
-import { pickSeparator, resolveBreadcrumbs } from '@/features/seo/breadcrumbSettings'
+import { pickSeparator, resolveBreadcrumbsFor } from '@/features/seo/breadcrumbSettings'
 import { getSeoContext } from '@/features/seo/settings'
 import { localizeForRequest } from '@/features/multilingual/requestLinkLocale'
 import { loopItemOf } from '@/features/siteTemplates/loopGrid'
@@ -69,18 +69,18 @@ export async function BreadcrumbsElement(props: P): Promise<React.ReactElement |
   const ctx = getBlockContext()
   if (!ctx.path) return null
   // Sitewide look from SEO settings (Breadcrumbs group); the element's own separator and Home label win.
-  const site = resolveBreadcrumbs((await getSeoContext().catch((): null => null))?.settings)
+  const site = resolveBreadcrumbsFor(await getSeoContext().catch((): null => null))
   const sep = pickSeparator(props.separator, site.separator)
   const crumbs = buildBreadcrumbs(ctx.path, currentTitle(), str(props.homeLabel).trim() || site.homeLabel).map((c) => ({ ...c, href: localizeForRequest(c.href) }))
   if (crumbs.length < 2) return null
   return (
-    <nav className="breadcrumbs" aria-label="Breadcrumb">
+    <nav className="breadcrumbs" aria-label="Breadcrumb" style={{ color: site.textColor || undefined, fontSize: site.fontSize || undefined }}>
       <ol style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5em', listStyle: 'none', padding: 0, margin: 0 }}>
         {crumbs.map((c, i) => {
           const last = i === crumbs.length - 1
           return (
             <li key={c.href}>
-              {!last || site.linkLast ? <Link href={c.href} aria-current={last ? 'page' : undefined}>{c.label}</Link> : <span aria-current="page">{c.label}</span>}
+              {!last || site.linkLast ? <Link href={c.href} aria-current={last ? 'page' : undefined} style={site.linkColor ? { color: site.linkColor } : undefined}>{c.label}</Link> : <span aria-current="page">{c.label}</span>}
               {!last ? <span aria-hidden="true"> {sep}</span> : null}
             </li>
           )
@@ -92,7 +92,7 @@ export async function BreadcrumbsElement(props: P): Promise<React.ReactElement |
 
 /** Manual `breadcrumbs`: typed trail, but the separator, Home label and structured data switch follow SEO settings. */
 export async function ManualBreadcrumbsElement(props: P): Promise<React.ReactElement | null> {
-  const site = resolveBreadcrumbs((await getSeoContext().catch((): null => null))?.settings)
+  const site = resolveBreadcrumbsFor(await getSeoContext().catch((): null => null))
   const items = Array.isArray(props.items)
     ? (props.items as Array<Record<string, unknown>>).map((r, i) => {
         const home = i === 0 && /^home$/i.test(str(r?.label).trim()) && ['', '/'].includes(str(r?.url).trim())

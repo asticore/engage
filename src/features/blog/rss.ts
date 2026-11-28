@@ -1,6 +1,6 @@
 /** Task 21f: the blog's RSS 2.0 feed. Pure: posts in, XML out. */
 
-export type FeedPost = { title: string; slug: string; date: string; excerpt: string; html: string; author: string; categories: string[]; image?: { url: string; mime?: string } }
+export type FeedPost = { path?: string; title: string; slug: string; date: string; excerpt: string; html: string; author: string; categories: string[]; image?: { url: string; mime?: string } }
 export type FeedInput = { title: string; link: string; selfUrl: string; description: string; baseUrl: string; mode: 'summary' | 'full'; posts: FeedPost[]; blogBase?: string }
 
 export const FEED_LIMIT = 30
@@ -18,7 +18,7 @@ const rfc822 = (iso: string): string => {
 
 export function buildRss(input: FeedInput): string {
   const items = input.posts.slice(0, FEED_LIMIT).map((p) => {
-    const url = `${input.baseUrl}/${input.blogBase || 'blog'}/${encodeURIComponent(p.slug)}`
+    const url = p.path ? `${input.baseUrl}${p.path}` : `${input.baseUrl}/${input.blogBase || 'blog'}/${encodeURIComponent(p.slug)}`
     const date = rfc822(p.date)
     return [
       '<item>',
