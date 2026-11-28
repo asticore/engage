@@ -9,8 +9,13 @@ export const BREADCRUMB_SEPARATORS = [
   { value: '•', label: '•' },
 ] as const
 
-export type BreadcrumbSettings = { separator: string; homeLabel: string; linkLast: boolean; structuredData: boolean }
-export const DEFAULT_BREADCRUMBS: BreadcrumbSettings = { separator: '/', homeLabel: 'Home', linkLast: false, structuredData: true }
+export const BREADCRUMB_FONT_SIZES = { small: '0.85em', large: '1.15em' } as const
+
+export type BreadcrumbSettings = { separator: string; homeLabel: string; linkLast: boolean; structuredData: boolean; textColor: string; linkColor: string; fontSize: string }
+export const DEFAULT_BREADCRUMBS: BreadcrumbSettings = { separator: '/', homeLabel: 'Home', linkLast: false, structuredData: true, textColor: '', linkColor: '', fontSize: '' }
+
+/** A #rgb or #rrggbb colour, else empty (nothing from the settings is ever written into a style unchecked). */
+const hex = (v: unknown): string => (typeof v === 'string' && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(v.trim()) ? v.trim() : '')
 
 const allowed = new Set<string>(BREADCRUMB_SEPARATORS.map((s) => s.value))
 const rec = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' ? (v as Record<string, unknown>) : {})
@@ -24,8 +29,18 @@ export function resolveBreadcrumbs(settings: unknown): BreadcrumbSettings {
     homeLabel: home || DEFAULT_BREADCRUMBS.homeLabel,
     linkLast: g.linkLast === true,
     structuredData: g.structuredData !== false,
+    textColor: hex(g.textColor),
+    linkColor: hex(g.linkColor),
+    fontSize: typeof g.fontSize === 'string' && g.fontSize in BREADCRUMB_FONT_SIZES ? BREADCRUMB_FONT_SIZES[g.fontSize as keyof typeof BREADCRUMB_FONT_SIZES] : '',
   }
 }
+
+/**
+ * The sitewide settings apply only while the SEO feature is on; otherwise every value is the default.
+ * `context` is what `getSeoContext()` returns (or null).
+ */
+export const resolveBreadcrumbsFor = (context: { enabled?: boolean; settings?: unknown } | null | undefined): BreadcrumbSettings =>
+  resolveBreadcrumbs(context?.enabled ? context.settings : null)
 
 /** Whether pages should describe their trail as BreadcrumbList structured data. */
 export const breadcrumbSchemaOn = (settings: unknown): boolean => resolveBreadcrumbs(settings).structuredData

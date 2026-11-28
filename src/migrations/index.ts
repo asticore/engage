@@ -262,6 +262,7 @@ import * as migration_20270321_100000_update_popup_probe from './20270321_100000
 import * as migration_20270322_100000_seo_site_audit from './20270322_100000_seo_site_audit';
 import * as migration_20270322_100000_blog_question_sets from './20270322_100000_blog_question_sets';
 import * as migration_20270324_100000_faq_votes from './20270324_100000_faq_votes';
+import * as migration_20270324_110000_breadcrumb_style from './20270324_110000_breadcrumb_style';
 import * as migration_20270318_200000_bid_json_column from './20270318_200000_bid_json_column';
 import * as migration_20270322_110000_captcha_appearance from './20270322_110000_captcha_appearance';
 
@@ -1590,5 +1591,10 @@ export const migrations = [
     up: migration_20270324_100000_faq_votes.up,
     down: migration_20270324_100000_faq_votes.down,
     name: '20270324_100000_faq_votes',
+  },
+  {
+    up: migration_20270324_110000_breadcrumb_style.up,
+    down: migration_20270324_110000_breadcrumb_style.down,
+    name: '20270324_110000_breadcrumb_style',
   },
 ];

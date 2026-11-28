@@ -16,7 +16,7 @@ export type ProductRow = { title?: string | null; slug?: string | null; createdA
 export function eventFeed(input: { rows: EventRow[]; baseUrl: string; selfUrl: string; siteName: string }): string {
   const posts: FeedPost[] = input.rows
     .filter((r) => r.slug && r.title)
-    .map((r) => ({ path: `/events/${encodeURIComponent(r.slug as string)}`, title: r.title as string, slug: r.slug as string, date: r.startDate ?? '', excerpt: (r.summary ?? '').trim(), html: '', author: '', categories: [], image: image(r.coverImage, input.baseUrl) }))
+    .map((r) => ({ path: `/events/${encodeURIComponent(r.slug as string)}`, title: r.title as string, slug: r.slug as string, date: r.startDate ?? '', excerpt: (r.summary ?? '').trim(), html: '', author: '', categories: [] as string[], image: image(r.coverImage, input.baseUrl) }))
   const title = `Events${input.siteName ? ` | ${input.siteName}` : ''}`
   return buildRss({ title, link: `${input.baseUrl}/events`, selfUrl: input.selfUrl, description: title, baseUrl: input.baseUrl, mode: 'summary', posts })
 }
@@ -24,7 +24,7 @@ export function eventFeed(input: { rows: EventRow[]; baseUrl: string; selfUrl: s
 export function productFeed(input: { rows: ProductRow[]; baseUrl: string; selfUrl: string; siteName: string; shopBase: string }): string {
   const posts: FeedPost[] = input.rows
     .filter((r) => r.slug && r.title)
-    .map((r) => ({ path: shopPath(input.shopBase, `/${encodeURIComponent(r.slug as string)}`), title: r.title as string, slug: r.slug as string, date: r.createdAt ?? '', excerpt: (r.shortDescription ?? '').trim(), html: '', author: '', categories: [], image: image(r.images?.[0], input.baseUrl) }))
+    .map((r) => ({ path: shopPath(input.shopBase, `/${encodeURIComponent(r.slug as string)}`), title: r.title as string, slug: r.slug as string, date: r.createdAt ?? '', excerpt: (r.shortDescription ?? '').trim(), html: '', author: '', categories: [] as string[], image: image(r.images?.[0], input.baseUrl) }))
   const title = `New products${input.siteName ? ` | ${input.siteName}` : ''}`
   return buildRss({ title, link: `${input.baseUrl}${shopPath(input.shopBase, '')}`, selfUrl: input.selfUrl, description: title, baseUrl: input.baseUrl, mode: 'summary', posts })
 }
