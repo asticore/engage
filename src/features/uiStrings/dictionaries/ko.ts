@@ -4514,6 +4514,11 @@ const ko: UiDictionary = {
   'dp.fk.scroll_end': "효과 종료 (% 지점)",
   'dp.fk.scroll_off_device': "이 기기에서 스크롤 효과 끄기",
   'dp.fk.reveal_off_device': "이 기기에서 등장 애니메이션 끄기",
+  'dp.fk.stop2_colour': "세 번째 정지점 색상",
+  'dp.fk.stop2_pos': "세 번째 정지점 위치 (%)",
+  'dp.fk.stop3_colour': "네 번째 정지점 색상",
+  'dp.fk.stop3_pos': "네 번째 정지점 위치 (%)",
+  'dp.fk.hover_image': "호버 시 이미지",
 }
 
 export default ko

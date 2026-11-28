@@ -4514,6 +4514,11 @@ const ar: UiDictionary = {
   'dp.fk.scroll_end': "ينتهي التأثير عند (% من المرور)",
   'dp.fk.scroll_off_device': "إيقاف تأثيرات التمرير على هذا الجهاز",
   'dp.fk.reveal_off_device': "إيقاف حركة الدخول على هذا الجهاز",
+  'dp.fk.stop2_colour': "لون النقطة الثالثة",
+  'dp.fk.stop2_pos': "موضع النقطة الثالثة (%)",
+  'dp.fk.stop3_colour': "لون النقطة الرابعة",
+  'dp.fk.stop3_pos': "موضع النقطة الرابعة (%)",
+  'dp.fk.hover_image': "صورة عند التمرير",
 }
 
 export default ar

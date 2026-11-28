@@ -4514,6 +4514,11 @@ const ja: UiDictionary = {
   'dp.fk.scroll_end': "効果の終了位置 (% )",
   'dp.fk.scroll_off_device': "このデバイスではスクロール効果をオフ",
   'dp.fk.reveal_off_device': "このデバイスでは登場アニメーションをオフ",
+  'dp.fk.stop2_colour': "3番目のストップの色",
+  'dp.fk.stop2_pos': "3番目のストップの位置 (%)",
+  'dp.fk.stop3_colour': "4番目のストップの色",
+  'dp.fk.stop3_pos': "4番目のストップの位置 (%)",
+  'dp.fk.hover_image': "ホバー時の画像",
 }
 
 export default ja

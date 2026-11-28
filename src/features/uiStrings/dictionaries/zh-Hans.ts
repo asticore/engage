@@ -4513,6 +4513,11 @@ const zhHans: UiDictionary = {
   'dp.fk.scroll_end': "效果结束于 (% 行程)",
   'dp.fk.scroll_off_device': "在此设备上关闭滚动效果",
   'dp.fk.reveal_off_device': "在此设备上关闭入场动画",
+  'dp.fk.stop2_colour': "第三个色标颜色",
+  'dp.fk.stop2_pos': "第三个色标位置 (%)",
+  'dp.fk.stop3_colour': "第四个色标颜色",
+  'dp.fk.stop3_pos': "第四个色标位置 (%)",
+  'dp.fk.hover_image': "悬停时的图片",
 }
 
 export default zhHans

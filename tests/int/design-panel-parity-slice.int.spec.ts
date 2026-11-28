@@ -77,3 +77,18 @@ describe('scrolling effects (31e)', () => {
     expect(css).toContain('animation:none !important')
   })
 })
+
+describe('gradient stops and hover image (31e)', () => {
+  const g: BlockStyle = { bgType: 'gradient', bgGradientFrom: '#111111', bgGradientTo: '#eeeeee', bgGradientAngle: 90 }
+  it('extra stops are sorted by position', () => {
+    const css = blockStyleToCss({ ...g, bgGradientMid: '#ff0000', bgGradientMidPos: 60, bgGradientMid2: '#00ff00', bgGradientMid2Pos: 30, bgGradientMid3: '#0000ff' })
+    expect(css.backgroundImage).toBe('linear-gradient(90deg, #111111, #00ff00 30%, #ff0000 60%, #0000ff 90%, #eeeeee)')
+  })
+  it('hover image fades in over the transition time and unsafe urls are dropped', () => {
+    const out = blockStyleCss(asBlockStyle({ hoverBgImageUrl: '/media/h.jpg', hoverTransitionMs: 400 } as BlockStyle), 'x1')
+    expect(out).toContain('url(/media/h.jpg)')
+    expect(out).toContain('opacity 400ms')
+    expect(out).toContain(':hover::before{opacity:1}')
+    expect(asBlockStyle({ hoverBgImageUrl: 'javascript:alert(1)' } as BlockStyle).hoverBgImageUrl).toBeUndefined()
+  })
+})

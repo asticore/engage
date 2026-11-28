@@ -4410,6 +4410,11 @@ const he: UiDictionary = {
   'dp.fk.scroll_end': "האפקט מסתיים ב־(% מהמעבר)",
   'dp.fk.scroll_off_device': "אפקטי גלילה כבויים במכשיר זה",
   'dp.fk.reveal_off_device': "אנימציית כניסה כבויה במכשיר זה",
+  'dp.fk.stop2_colour': "צבע נקודה שלישית",
+  'dp.fk.stop2_pos': "מיקום נקודה שלישית (%)",
+  'dp.fk.stop3_colour': "צבע נקודה רביעית",
+  'dp.fk.stop3_pos': "מיקום נקודה רביעית (%)",
+  'dp.fk.hover_image': "תמונה בריחוף",
 }
 
 export default he

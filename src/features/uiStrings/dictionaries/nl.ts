@@ -4514,6 +4514,11 @@ const nl: UiDictionary = {
   'dp.fk.scroll_end': "Effect eindigt bij (% van de passage)",
   'dp.fk.scroll_off_device': "Scrolleffecten uit op dit apparaat",
   'dp.fk.reveal_off_device': "Ingangsanimatie uit op dit apparaat",
+  'dp.fk.stop2_colour': "Kleur van de derde stop",
+  'dp.fk.stop2_pos': "Positie van de derde stop (%)",
+  'dp.fk.stop3_colour': "Kleur van de vierde stop",
+  'dp.fk.stop3_pos': "Positie van de vierde stop (%)",
+  'dp.fk.hover_image': "Afbeelding bij hover",
 }
 
 export default nl

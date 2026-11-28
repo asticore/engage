@@ -4565,6 +4565,11 @@ export const UI_STRING_SOURCE = {
   'dp.fk.scroll_end': "Effect ends at (% of the pass)",
   'dp.fk.scroll_off_device': "Scrolling effects off on this device",
   'dp.fk.reveal_off_device': "Entrance animation off on this device",
+  'dp.fk.stop2_colour': "Third stop colour",
+  'dp.fk.stop2_pos': "Third stop position (%)",
+  'dp.fk.stop3_colour': "Fourth stop colour",
+  'dp.fk.stop3_pos': "Fourth stop position (%)",
+  'dp.fk.hover_image': "Image on hover",
 } as const
 
 export type UiStringKey = keyof typeof UI_STRING_SOURCE

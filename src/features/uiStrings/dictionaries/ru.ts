@@ -4514,6 +4514,11 @@ const ru: UiDictionary = {
   'dp.fk.scroll_end': "Эффект заканчивается на (% пути)",
   'dp.fk.scroll_off_device': "Эффекты прокрутки выключены на этом устройстве",
   'dp.fk.reveal_off_device': "Анимация появления выключена на этом устройстве",
+  'dp.fk.stop2_colour': "Цвет третьей точки",
+  'dp.fk.stop2_pos': "Позиция третьей точки (%)",
+  'dp.fk.stop3_colour': "Цвет четвёртой точки",
+  'dp.fk.stop3_pos': "Позиция четвёртой точки (%)",
+  'dp.fk.hover_image': "Изображение при наведении",
 }
 
 export default ru

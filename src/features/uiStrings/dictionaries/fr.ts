@@ -4514,6 +4514,11 @@ const fr: UiDictionary = {
   'dp.fk.scroll_end': "L’effet se termine à (% du passage)",
   'dp.fk.scroll_off_device': "Effets de défilement désactivés sur cet appareil",
   'dp.fk.reveal_off_device': "Animation d’entrée désactivée sur cet appareil",
+  'dp.fk.stop2_colour': "Couleur du troisième arrêt",
+  'dp.fk.stop2_pos': "Position du troisième arrêt (%)",
+  'dp.fk.stop3_colour': "Couleur du quatrième arrêt",
+  'dp.fk.stop3_pos': "Position du quatrième arrêt (%)",
+  'dp.fk.hover_image': "Image au survol",
 }
 
 export default fr

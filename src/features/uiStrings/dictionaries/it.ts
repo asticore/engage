@@ -4514,6 +4514,11 @@ const it: UiDictionary = {
   'dp.fk.scroll_end': "L’effetto termina al (% del passaggio)",
   'dp.fk.scroll_off_device': "Effetti di scorrimento disattivati su questo dispositivo",
   'dp.fk.reveal_off_device': "Animazione di ingresso disattivata su questo dispositivo",
+  'dp.fk.stop2_colour': "Colore della terza interruzione",
+  'dp.fk.stop2_pos': "Posizione della terza interruzione (%)",
+  'dp.fk.stop3_colour': "Colore della quarta interruzione",
+  'dp.fk.stop3_pos': "Posizione della quarta interruzione (%)",
+  'dp.fk.hover_image': "Immagine al passaggio del mouse",
 }
 
 export default it

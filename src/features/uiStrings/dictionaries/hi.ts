@@ -4514,6 +4514,11 @@ const hi: UiDictionary = {
   'dp.fk.scroll_end': "प्रभाव यहाँ समाप्त (% पास का)",
   'dp.fk.scroll_off_device': "इस डिवाइस पर स्क्रॉल प्रभाव बंद",
   'dp.fk.reveal_off_device': "इस डिवाइस पर प्रवेश एनिमेशन बंद",
+  'dp.fk.stop2_colour': "तीसरे स्टॉप का रंग",
+  'dp.fk.stop2_pos': "तीसरे स्टॉप की स्थिति (%)",
+  'dp.fk.stop3_colour': "चौथे स्टॉप का रंग",
+  'dp.fk.stop3_pos': "चौथे स्टॉप की स्थिति (%)",
+  'dp.fk.hover_image': "होवर पर छवि",
 }
 
 export default hi

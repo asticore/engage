@@ -27,7 +27,7 @@ const tf = ['Rotate', 'Scale', 'TranslateX', 'TranslateY', 'SkewX', 'SkewY']
 /** The style keys each Design accordion owns (the group's Reset clears exactly these). 'hide' = the per-device hide flag. */
 export const GROUP_KEYS: Record<string, readonly string[]> = {
   background: [
-    'bgType', 'bgColor', 'bgGradientFrom', 'bgGradientTo', 'bgGradientAngle', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgImage', 'bgImageUrl', 'bgVideoUrl',
+    'bgType', 'bgColor', 'bgGradientFrom', 'bgGradientTo', 'bgGradientAngle', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgGradientMid2', 'bgGradientMid2Pos', 'bgGradientMid3', 'bgGradientMid3Pos', 'bgImage', 'bgImageUrl', 'bgVideoUrl',
     'bgVideoPoster', 'bgVideoLoop', 'bgOverlay', 'overlayType', 'overlayColor', 'overlayColor2', 'overlayAngle',
     'overlayOpacity', 'overlayBlend', 'bgEffect', 'bgEffectColor', 'bgEffectColor2', 'bgEffectIntensity', 'particlesCount',
     'particlesInteract', 'particlesSizeMin', 'particlesSizeMax', 'particlesSpeed', 'particlesOpacity', 'particlesLinks',
@@ -35,7 +35,7 @@ export const GROUP_KEYS: Record<string, readonly string[]> = {
     'gridLineWidth', 'auroraBlur', 'auroraSize', 'auroraSpeed', 'gradientAngle', 'gradientSpeed', 'grainOpacity', 'grainSize',
     'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'bgSlides', 'bgSlideIds', 'slideInterval', 'slideTransition', 'noise',
   ],
-  hover: ['hoverBgColor', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
+  hover: ['hoverBgColor', 'hoverBgImageUrl', 'hoverGradFrom', 'hoverGradTo', 'hoverGradAngle', 'hoverBlendMode', 'hoverTextStrokeWidth', 'hoverTextStrokeColor', 'hoverTextShadowX', 'hoverTextShadowY', 'hoverTextShadowBlur', 'hoverTextShadowColor', 'hoverTextColor', 'hoverBorderColor', 'hoverBoxShadow', 'hoverBorderRadius', 'hoverTransitionMs',
     'hoverOpacity', 'hoverTransform', 'focusRing', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'],
   spacing: [
     'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight', 'paddingTopMobile', 'paddingBottomMobile', 'paddingUnit',

@@ -4515,6 +4515,11 @@ const de: UiDictionary = {
   'dp.fk.scroll_end': "Effekt endet bei (% des Durchlaufs)",
   'dp.fk.scroll_off_device': "Scroll-Effekte auf diesem Gerät aus",
   'dp.fk.reveal_off_device': "Eingangsanimation auf diesem Gerät aus",
+  'dp.fk.stop2_colour': "Farbe des dritten Stopps",
+  'dp.fk.stop2_pos': "Position des dritten Stopps (%)",
+  'dp.fk.stop3_colour': "Farbe des vierten Stopps",
+  'dp.fk.stop3_pos': "Position des vierten Stopps (%)",
+  'dp.fk.hover_image': "Bild beim Überfahren",
 }
 
 export default de

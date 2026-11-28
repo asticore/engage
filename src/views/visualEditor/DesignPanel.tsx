@@ -184,6 +184,10 @@ export const DesignPanel: React.FC<{
             <ColorRow label={t('dp.field.from')} value={value.bgGradientFrom} onChange={(v) => set('bgGradientFrom', v)} />
             <ColorRow label="Middle colour (optional)" value={value.bgGradientMid} onChange={(v) => set('bgGradientMid', v)} />
             {value.bgGradientMid && <NumberRow label="Middle stop (%)" value={value.bgGradientMidPos} min={0} max={100} onChange={(v) => set('bgGradientMidPos', v)} />}
+            {value.bgGradientMid && <ColorRow label={t('dp.fk.stop2_colour')} value={value.bgGradientMid2} onChange={(v) => set('bgGradientMid2', v)} />}
+            {value.bgGradientMid2 && <NumberRow label={t('dp.fk.stop2_pos')} value={value.bgGradientMid2Pos} min={0} max={100} onChange={(v) => set('bgGradientMid2Pos', v)} />}
+            {value.bgGradientMid2 && <ColorRow label={t('dp.fk.stop3_colour')} value={value.bgGradientMid3} onChange={(v) => set('bgGradientMid3', v)} />}
+            {value.bgGradientMid3 && <NumberRow label={t('dp.fk.stop3_pos')} value={value.bgGradientMid3Pos} min={0} max={100} onChange={(v) => set('bgGradientMid3Pos', v)} />}
             <ColorRow label={t('dp.field.to')} value={value.bgGradientTo} onChange={(v) => set('bgGradientTo', v)} />
             <NumberRow
               label={t('dp.field.angle_deg')}
@@ -1796,6 +1800,7 @@ const StateTabs: React.FC<{ value: BlockStyle; onChange: (next: BlockStyle) => v
             options={HOVER_TRANSFORM_OPTIONS}
             applied={value.hoverTransform !== undefined} onReset={() => set('hoverTransform', undefined)} onChange={(v) => set('hoverTransform', v === 'none' ? undefined : (v as HoverTransformPreset))}
           />
+          <ImageRow label={t('dp.fk.hover_image')} url={value.hoverBgImageUrl} onPick={(_id, url) => set('hoverBgImageUrl', url ?? undefined)} onClear={() => set('hoverBgImageUrl', undefined)} />
           <ColorRow label="Gradient from" value={value.hoverGradFrom} onChange={(v) => set('hoverGradFrom', v)} />
           <ColorRow label="Gradient to" value={value.hoverGradTo} onChange={(v) => set('hoverGradTo', v)} />
           <FxRange k="hoverGradAngle" label="Gradient angle" unit="deg" value={value} onChange={onChange} def={180} min={0} max={360} />

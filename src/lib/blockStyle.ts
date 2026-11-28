@@ -139,6 +139,11 @@ export type BlockStyle = {
   bgGradientFlow?: 'slow' | 'medium' | 'fast'
   /** Optional middle colour stop and where it sits, 0-100 percent (default 50). */
   bgGradientMid?: string
+  /** Two more gradient stops (31e), placed by position in percent. */
+  bgGradientMid2?: string
+  bgGradientMid2Pos?: number
+  bgGradientMid3?: string
+  bgGradientMid3Pos?: number
   bgGradientMidPos?: number
   /** Media doc id for an image background. */
   bgImage?: number | null
@@ -229,6 +234,8 @@ export type BlockStyle = {
   hbsSpread?: number
   hbsColor?: string
   hbsInset?: boolean
+  /** Image that fades in over the background on hover (31e); fades over hoverTransitionMs. */
+  hoverBgImageUrl?: string
   borderColor?: string
   borderRadius?: number
   /** Per-corner radius in px (0-999). When any is set, unset corners fall back to borderRadius. Responsive. */
@@ -872,7 +879,7 @@ export const BG_IMAGE_SIZES: readonly string[] = ['cover', 'contain', 'auto']
 export const BG_IMAGE_POSITIONS: readonly string[] = ['center', 'top', 'bottom', 'left', 'right', 'top left', 'top right', 'bottom left', 'bottom right']
 export const BG_IMAGE_REPEATS: readonly string[] = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y']
 const BORDER_STYLES: readonly string[] = ['solid', 'dashed', 'dotted', 'double']
-const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bs3X', 'bs3Y', 'bs3Blur', 'bs3Spread', 'bs3Color', 'bs3Inset', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
+const BORDER_SHADOW_KEYS = ['borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'bsX', 'bsY', 'bsBlur', 'bsSpread', 'bsColor', 'bsInset', 'bs2X', 'bs2Y', 'bs2Blur', 'bs2Spread', 'bs2Color', 'bs2Inset', 'bs3X', 'bs3Y', 'bs3Blur', 'bs3Spread', 'bs3Color', 'bs3Inset', 'bgGradientKind', 'bgGradientFlow', 'bgGradientMid', 'bgGradientMidPos', 'bgGradientMid2', 'bgGradientMid2Pos', 'bgGradientMid3', 'bgGradientMid3Pos', 'hoverBgImageUrl', 'bgImageSize', 'bgImagePosition', 'bgImageRepeat', 'bgImageAttachment', 'maskImageUrl', 'maskImageSize', 'maskImagePosition', 'maskImageRepeat', 'hbsX', 'hbsY', 'hbsBlur', 'hbsSpread', 'hbsColor', 'hbsInset'] as const
 
 /** Validates per-side border widths, the border style and the custom box shadow layers (normal and hover). */
 function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
@@ -901,6 +908,14 @@ function sanitizeBorderShadow(style: BlockStyle): BlockStyle {
   bgEnum('bgGradientKind', ['linear', 'radial', 'conic'])
   bgEnum('bgGradientFlow', ['slow', 'medium', 'fast'])
   if (raw.bgGradientMid !== undefined && sanitizeColor(raw.bgGradientMid) === undefined) delete out.bgGradientMid
+  for (const k of ['bgGradientMid2', 'bgGradientMid3']) if (raw[k] !== undefined && sanitizeColor(raw[k]) === undefined) delete out[k]
+  for (const k of ['bgGradientMid2Pos', 'bgGradientMid3Pos']) {
+    if (raw[k] === undefined) continue
+    const n = clampNum(raw[k], 0, 100)
+    if (n === undefined) delete out[k]
+    else out[k] = n
+  }
+  if (raw.hoverBgImageUrl !== undefined && !isSafeMediaUrl(raw.hoverBgImageUrl, 'image')) delete out.hoverBgImageUrl
   if (raw.bgGradientMidPos !== undefined) {
     const n = clampNum(raw.bgGradientMidPos, 0, 100)
     if (n === undefined) delete out.bgGradientMidPos
@@ -1621,7 +1636,14 @@ function borderSideCss(style: BlockStyle): React.CSSProperties | undefined {
 function gradientCss(style: BlockStyle, angle: number, from: string, to: string): string {
   const mid = sanitizeColor(style.bgGradientMid)
   const pos = isNum(style.bgGradientMidPos) ? Math.min(100, Math.max(0, style.bgGradientMidPos)) : 50
-  const stops = mid ? `${from}, ${mid} ${pos}%, ${to}` : `${from}, ${to}`
+  const mids: { c: string; pos: number }[] = []
+  if (mid) mids.push({ c: mid, pos })
+  const m2 = sanitizeColor(style.bgGradientMid2)
+  if (m2) mids.push({ c: m2, pos: isNum(style.bgGradientMid2Pos) ? Math.min(100, Math.max(0, style.bgGradientMid2Pos)) : 75 })
+  const m3 = sanitizeColor(style.bgGradientMid3)
+  if (m3) mids.push({ c: m3, pos: isNum(style.bgGradientMid3Pos) ? Math.min(100, Math.max(0, style.bgGradientMid3Pos)) : 90 })
+  mids.sort((a, b) => a.pos - b.pos)
+  const stops = [from, ...mids.map((m) => `${m.c} ${m.pos}%`), to].join(', ')
   if (style.bgGradientKind === 'radial') return `radial-gradient(circle, ${stops})`
   if (style.bgGradientKind === 'conic') return `conic-gradient(from ${angle}deg, ${stops})`
   return `linear-gradient(${angle}deg, ${stops})`
@@ -1897,6 +1919,14 @@ export function blockStyleCss(style: BlockStyle, scopeId: string, options: { edi
   // Hover colours, shadow and radius. !important for the same reason: the normal values are inline.
   const hoverDecls = hoverStateDecls(style)
   if (hoverDecls.length > 0) rules.push(`@media (hover:hover){${sel}:hover{${hoverDecls.join(';')}}}`)
+
+  // Hover image: a layer behind the content that fades in over the background.
+  if (typeof style.hoverBgImageUrl === 'string' && isSafeMediaUrl(style.hoverBgImageUrl, 'image')) {
+    const ms = isNum(style.hoverTransitionMs) ? style.hoverTransitionMs : 250
+    rules.push(`${sel}{position:relative;isolation:isolate}`)
+    rules.push(`${sel}::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:url(${style.hoverBgImageUrl}) center/cover no-repeat;opacity:0;transition:opacity ${ms}ms}`)
+    rules.push(`@media (hover:hover){${sel}:hover::before{opacity:1}}`)
+  }
 
   // Custom CSS: `selector` is this block; without it the text is taken as the block's declarations.
   // Sanitized again here, since this is where the text lands inside a <style> element.

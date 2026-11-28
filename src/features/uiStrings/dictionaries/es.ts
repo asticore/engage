@@ -4514,6 +4514,11 @@ const es: UiDictionary = {
   'dp.fk.scroll_end': "El efecto termina en (% del recorrido)",
   'dp.fk.scroll_off_device': "Efectos de desplazamiento desactivados en este dispositivo",
   'dp.fk.reveal_off_device': "Animación de entrada desactivada en este dispositivo",
+  'dp.fk.stop2_colour': "Color de la tercera parada",
+  'dp.fk.stop2_pos': "Posición de la tercera parada (%)",
+  'dp.fk.stop3_colour': "Color de la cuarta parada",
+  'dp.fk.stop3_pos': "Posición de la cuarta parada (%)",
+  'dp.fk.hover_image': "Imagen al pasar el cursor",
 }
 
 export default es
